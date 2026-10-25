@@ -1,0 +1,200 @@
+{
+  "task": "F-D86-9211",
+  "request_id": "agent-fd86-successor161-1025025816-9211",
+  "result": {
+    "preflight_exit": 0,
+    "body_exit": 1,
+    "status": "terminal"
+  },
+  "outcome_counts": {
+    "selected": 161,
+    "PASS": 6,
+    "FAIL": 43,
+    "ERROR": 112
+  },
+  "argv": {
+    "mode": "-m pytest",
+    "workers": 3,
+    "timeout_seconds": 45,
+    "cache_provider_disabled": true,
+    "addopts_cleared": true,
+    "integration_marker_used": false,
+    "selector_count": 161,
+    "argv_sha256": "df1c59ded28f5b0c3e0cbbf1f10d405227af8db958ce38a3a5343230b808ce8e",
+    "selector_file_sha256": "786d8720f90e300ebeebfdf604d22ee696d89e0e4bf86b458bae8bf1942400d2",
+    "selector_sha256_file_sha256": "df2ebbed244d6f0350d7f3805e0d0e484eb7d5f60aae267725f605cafba174c7"
+  },
+  "tuple": {
+    "agent": {
+      "path": "/home/user/work/wt/agt-pin-cef8a5be",
+      "sha": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9",
+      "tree": "b0c7de33744c89afa5f34394f92debb6498a1c9f",
+      "parents": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9 8dadab251a9b9c1a0d31655125d62338f1ee4482 f32a890e3b949557bd0677cbe6b448d195dce3aa"
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-6634a17f",
+      "sha": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+      "parents": "6634a17f3ffd885567ba3c91b6c7a560df7375a4 766fd6700c3128ea9fc833086a517de2acb535e2 b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0"
+    },
+    "app": {
+      "path": "/home/user/work/wt/app-pin-c1014775",
+      "sha": "c101477597a765235d7cbbcd48ce588f0df3de73",
+      "tree": "a2b173dd4a6623942ca410c86d9e5546b472649a",
+      "parents": "c101477597a765235d7cbbcd48ce588f0df3de73 24865fa212148e9bc149a1285936372656037e55 40966da4730e9aeaa0b4367c01895ee587714579"
+    },
+    "composition": {
+      "path": "/home/user/work/wt/vw-pin-635f4de0",
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a"
+    }
+  },
+  "profile": {
+    "path": "/home/user/work/runtimes/agent-remotion-0013",
+    "package_version": "0.0.13",
+    "lock_sha256": "c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24",
+    "package_archive_sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "registry_sha256": "b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d"
+  },
+  "source_packet_agent": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+  "captured_at_utc": "2026-10-25T02:30:45Z",
+  "current_normal_agent": {
+    "branch": "tl/integration",
+    "commit": "562ee30b6ed567a90a114f5029a96da2ece9789e",
+    "tree": "b4a181a97fd07406ccf5f3c3fd675175f77a2ccf",
+    "clean": true
+  },
+  "preflight_identity": {
+    "preflight_exit": 0,
+    "body_exit": 1,
+    "function_source_hashes_match_captured": true,
+    "source_static_only_before_body": true,
+    "private_preflight_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "private_body_log_sha256": "796efbbcbed165da591506305129f7fce9a99a172b6a0576a2e3bf8134c61981"
+  },
+  "private_artifacts": [
+    {
+      "name": "xml",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/output/fd86-successor161-exact-home-0254.xml",
+      "sha256": "eef3d52683227fe57b2d5e63abce044d11fd68cb31960e9a4ff5194cfeb5aab2",
+      "bytes": 2625666,
+      "exported": false
+    },
+    {
+      "name": "body_log",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/output/fd86-successor161-exact-home-0254.body.log",
+      "sha256": "796efbbcbed165da591506305129f7fce9a99a172b6a0576a2e3bf8134c61981",
+      "bytes": 2612623,
+      "exported": false
+    },
+    {
+      "name": "central_service_log",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/output/central-service.log",
+      "sha256": "796efbbcbed165da591506305129f7fce9a99a172b6a0576a2e3bf8134c61981",
+      "bytes": 2612623,
+      "exported": false
+    },
+    {
+      "name": "per_id_outcomes",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/output/per-id-outcomes.tsv",
+      "sha256": "4788ce330620cc108b96ca5b2db0095f9b924c9b138200cb5b203d700414d56f",
+      "bytes": 41676,
+      "exported": false
+    },
+    {
+      "name": "argv",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/output/fd86-successor161-exact-home-0254.command",
+      "sha256": "df1c59ded28f5b0c3e0cbbf1f10d405227af8db958ce38a3a5343230b808ce8e",
+      "bytes": 22621,
+      "exported": false
+    },
+    {
+      "name": "run_manifest",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/output/fd86-successor161-exact-home-0254.runmanifest",
+      "sha256": "60fd56f307f931810be4363c0cf9168e450b79044a91b367a4caec6408603310",
+      "bytes": 881,
+      "exported": false
+    },
+    {
+      "name": "p4_manifest",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/output/fd86-successor161-exact-home-0254.manifest",
+      "sha256": "ccfaaa0cc56bb37ff166937643c3937ac0bbbf024b95be77d901a207a25b32f4",
+      "bytes": 2385,
+      "exported": false
+    },
+    {
+      "name": "membership",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/inputs/membership.tsv",
+      "sha256": "2bc617115617936b91221096882319305d99f40d98a238ae4c3f901da837c790",
+      "bytes": 91593,
+      "exported": false
+    },
+    {
+      "name": "source_manifest",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/inputs/source-review-merge-dependency-manifest.json",
+      "sha256": "07244392c6ac0db2f4a8678d48136e5f8dcd2075715f7692eaf1471d4d6ee81d",
+      "bytes": 25767,
+      "exported": false
+    },
+    {
+      "name": "original550_rollup",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/inputs/historical-original550-rollup.tsv",
+      "sha256": "5fdefc7f09ec13f2cdf16f3c870a114e9c7097a224afd6127ea8b2f370d87722",
+      "bytes": 469054,
+      "exported": false
+    },
+    {
+      "name": "unexecuted23",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/inputs/unexecuted.tsv",
+      "sha256": "7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca",
+      "bytes": 4558,
+      "exported": false
+    },
+    {
+      "name": "tuple_facts",
+      "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-exact-home-0254/evidence/fd86-successor161-exact-home/aggregate/tuple-facts.exact-home.json",
+      "sha256": "24f1730e6f563b6148552c6b1ffdef3c6c07a1c3a77ac7d6899d0192dcd3e62b",
+      "bytes": 1962,
+      "exported": false
+    }
+  ],
+  "four_repo_receipts": [
+    {
+      "repo": "agent",
+      "path": "/home/user/work/wt/agt-pin-cef8a5be",
+      "head": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9",
+      "tree": "b0c7de33744c89afa5f34394f92debb6498a1c9f",
+      "parents": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9 8dadab251a9b9c1a0d31655125d62338f1ee4482 f32a890e3b949557bd0677cbe6b448d195dce3aa",
+      "receipt_source": "aggregate/tuple-facts.exact-home.json",
+      "receipt_kind": "exact-home tuple receipt"
+    },
+    {
+      "repo": "runtime",
+      "path": "/home/user/work/wt/rt-pin-6634a17f",
+      "head": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+      "parents": "6634a17f3ffd885567ba3c91b6c7a560df7375a4 766fd6700c3128ea9fc833086a517de2acb535e2 b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0",
+      "receipt_source": "aggregate/tuple-facts.exact-home.json",
+      "receipt_kind": "exact-home tuple receipt"
+    },
+    {
+      "repo": "app",
+      "path": "/home/user/work/wt/app-pin-c1014775",
+      "head": "c101477597a765235d7cbbcd48ce588f0df3de73",
+      "tree": "a2b173dd4a6623942ca410c86d9e5546b472649a",
+      "parents": "c101477597a765235d7cbbcd48ce588f0df3de73 24865fa212148e9bc149a1285936372656037e55 40966da4730e9aeaa0b4367c01895ee587714579",
+      "receipt_source": "aggregate/tuple-facts.exact-home.json",
+      "receipt_kind": "exact-home tuple receipt"
+    },
+    {
+      "repo": "composition",
+      "path": "/home/user/work/wt/vw-pin-635f4de0",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a",
+      "receipt_source": "aggregate/tuple-facts.exact-home.json",
+      "receipt_kind": "exact-home tuple receipt"
+    }
+  ]
+}
