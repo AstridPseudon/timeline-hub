@@ -521,6 +521,37 @@ test('D105 launch ownership gives each retained DirectHarness start a distinct s
   assert.equal(path.basename(second.sink), 'p2-commit-phase-2.jsonl');
   assert.notEqual(first.sink, second.sink);
 });
+
+function assertSourcePinnedHelper(config: { helper: string; helperSha256: string }): void {
+  if (config.helperSha256 === NORMAL_HELPER_SHA256) {
+    assert.equal(config.helper, path.join(runtimeCheckout, 'tests/helpers/p2_commit_phase_capture.py'));
+  } else if (config.helperSha256 === REVIEWED_HELPER_SHA256) {
+    assert.equal(config.helperSha256, REVIEWED_HELPER_SHA256);
+    assert.equal(path.basename(config.helper), 'p2_commit_phase_capture.py');
+  } else if (config.helperSha256 === REVIEWED_PROFILER_HELPER_SHA256) {
+    assert.equal(config.helperSha256, REVIEWED_PROFILER_HELPER_SHA256);
+    assert.equal(path.basename(config.helper), 'p2_commit_phase_capture.py');
+  } else {
+    assert.equal(config.helperSha256, REVIEWED_NEW_HELPER_SHA256);
+    assert.equal(path.basename(config.helper), 'p2_commit_phase_capture.py');
+  }
+}
+
+test('D127c source guard accepts every reviewed arm and rejects wrong hash or source', () => {
+  const helper = path.join(runtimeCheckout, 'tests/helpers/p2_commit_phase_capture.py');
+  for (const helperSha256 of [NORMAL_HELPER_SHA256, REVIEWED_HELPER_SHA256, REVIEWED_NEW_HELPER_SHA256, REVIEWED_PROFILER_HELPER_SHA256]) {
+    assert.doesNotThrow(() => assertSourcePinnedHelper({ helper, helperSha256 }));
+  }
+  assert.throws(
+    () => assertSourcePinnedHelper({ helper, helperSha256: `${REVIEWED_PROFILER_HELPER_SHA256.slice(0, -1)}0` }),
+    /Expected values to be strictly equal/,
+  );
+  assert.throws(
+    () => assertSourcePinnedHelper({ helper: path.join(path.dirname(helper), 'unknown-helper.py'), helperSha256: REVIEWED_PROFILER_HELPER_SHA256 }),
+    /Expected values to be strictly equal/,
+  );
+});
+
 function readCapture(sink: string, helperSha256: string): string {
   const text = readFileSync(sink, 'utf8');
   assert.ok(text.length <= 64 * 1024);
@@ -1067,15 +1098,7 @@ test('P2 Runtime observer bootstrap is opt-in, source-pinned, bounded, and flush
   assert.ok(config);
   assert.equal(statSync(config.sink).mode & 0o777, 0o600);
   assert.equal(statSync(config.directory).mode & 0o777, 0o700);
-  if (config.helperSha256 === NORMAL_HELPER_SHA256) {
-    assert.equal(config.helper, path.join(runtimeCheckout, 'tests/helpers/p2_commit_phase_capture.py'));
-  } else if (config.helperSha256 === REVIEWED_HELPER_SHA256) {
-    assert.equal(config.helperSha256, REVIEWED_HELPER_SHA256);
-    assert.equal(path.basename(config.helper), 'p2_commit_phase_capture.py');
-  } else {
-    assert.equal(config.helperSha256, REVIEWED_NEW_HELPER_SHA256);
-    assert.equal(path.basename(config.helper), 'p2_commit_phase_capture.py');
-  }
+  assertSourcePinnedHelper(config);
   const smokeText = readCapture(config.sink, config.helperSha256);
   assert.match(smokeText, /"phase":"handler_entry"/);
   assert.match(smokeText, /"phase":"authorization"/);
