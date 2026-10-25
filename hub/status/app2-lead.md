@@ -1,1 +1,1 @@
-LEAD 13:44Z | up | P1 GO, P3 GO, P4 GO | P2 NO-GO stands, App owns verdict | D125: Node tree verified and accepted by main; manager extracted it early, before authorization (recorded); preflight then one P2 submit under way | disk 6.0G
+LEAD 13:58Z | up | P1 GO, P3 GO, P4 GO | P2 NO-GO stands; D125 hosting stood down by main, App runs the full tour locally | no Proof dispatches | disk 6.0G
