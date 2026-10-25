@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T14:14:45Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
-# app board, 2026-10-25T14:11Z
+<!-- app | 2026-10-25T14:19:02Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+# app board, 2026-10-25T14:16Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -19,11 +19,11 @@
 | D118-full-P2-15203 | Current eight original gestures | Service and Luna | Preflight19156 PASS | gated:recorded-no-go | Producer1004 and reviewer1019 | Exit1/605s; readiness1 PASS; originals2 PASS,2 FAIL,1 ERROR,3 NOTRUN. [Packet](../../design/app-D118-full-P2-current-1004-terminal.md). | 96d475 070dfc d23a8 635f |
 | P2-current-placement | Qualify full native placement tail | Luna independent | Actual15203 terminal | merged | app-D118-P2-15203-pass-review-1019 | Independent GO: exact D113, canonical, history, reload and scoped guarded inverse. Existing retry also PASS. | App96d475 |
 | P2-current-ADD | Qualify current popup ADD | Luna independent | Actual15203 terminal | merged | Same sole reviewer1019 | Independent GO36.819s: exact request, canonical, history, reload and complete guarded inverse tail. | App96d475 |
-| P2-current-SWAP | Resolve current history refusal | Runtime and App Luna | 11251 initial409 | blocked:runtime | Runtime tags released; App adopter1230 | Tags5e9ad adopted at Appd8a1; actual7070 refusal lower guard UNKNOWN. Next meaningful tour uses tags. | Runtime5e9ad |
+| P2-current-SWAP | Name current history refusal | Service and independent Luna | Tagged actual3250 terminal | doing | Sole D127 controller1407 | Qualified5e9ad tags adopted; no Runtime input wait. Earlier7070 lower guard remains UNKNOWN; actual tagged request pending. | Frozen fe3309 tuple |
 | P2-current-parent | Admit gesture after connection panel exit | Luna and independent | D119 final1050 PASS | merged | Author1043; final review1050 | Exact one-line source home; Node20 types/lint, ours file and upstream gate qualified. Existing ledger logged; no browser credit. | 7e92cd9468 |
 | P2-parent-readiness-review | Preserve preliminary source review | Luna independent | Sol1028 count0 proposal | merged | app-P2-parent15203-readiness-review-1036 | Preliminary SOURCE PASS154 retained; final toBeHidden candidate independently reviewed1050 and home7e92. No browser credit from this review. | Proposal only |
 | P2-15203-wholepath | Separate current failure owners | Luna read only | Exact retained15203 artifacts | merged | app-D118-P2-15203-wholepath-1019 | SWAP POST409 belongs Runtime verified history; parent no POST belongs App caller boundary. No guessed lower cause. | Source unchanged |
-| P2-current-element | Qualify actual panel outcome | HARD Sol and Luna | Retained11251 | doing | Sol1222 and timestamps1230 | Actual applied5s FAIL; source promise/status path and retained clock join active. Native1.75s is separate proof. | Source pending |
+| P2-current-element | Qualify actual panel outcome | Service and independent Luna | Tagged actual3250 terminal | doing | Sole controller1407; later sampler1414 | Retained11251 source investigations complete without defect attribution. Current tagged original pending; sampler qualification remains separate. | Source unchanged |
 | P2-current-asset | Qualify exact D115 inverse envelope | Service and Luna | Actual8974 verdict1226 | merged | app-D120-asset8974-GO-review-1226 | Independent GO on same34d464/070dfc/7070/635f. Complete registry/history/reload/guarded inverse and zero legacy tail. | Source unchanged |
 | P2-current-clears | Retain both clear purposes | Service and Luna | Actual11251 verdict1202 | merged | app-D120-P2-11251-pass-review-1202 | Both original full tails independently GO on34d464/070dfc/7070/635f. | Source unchanged |
 | D118-tail-audio2 | Preserve prepared audio vectors | Luna and independent Luna | Independent1017 PASS_SOURCE | merged | Author1015; remote normal receipt | Normal Agent e8b1a517f6. Only fixture env cleanup;52 assertion ASTs exact. Functional core proof still owed. | Agent e8b1a517f6 |
@@ -100,14 +100,14 @@ Host14 author1105 and independent1111 SOURCEPASS: sanitized child copy reaches s
 D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node lower cause observed; script candidate GREEN; atomic source bug handed to Agent. Helper cut1130 now active. Scene1118 author claimed an independent review without a separate worker; that claim is disregarded. Sole independent1123 owns the actual protected verdict. D120 permits own failing-node checks; no acquisition or wider body.
 
 
-Blockers: Runtime current SWAP — Actual11251 returned409 history_unavailable. Tags5e9ad adopted normally at Appd8a1; source wait cleared. Lower guard remains UNKNOWN until a meaningful tagged tour.
-Blockers: App element — Sole App owner. Helper is normal Runtime453b and App hookaf5. Two existing harness contracts are with Luna1350 before the later sampled tour; D125 Proof first tour proceeds separately.
+Blockers: App current SWAP — Actual3250 now runs with qualified5e9ad tags; exact refusing guard awaits its retained stderr. No Runtime source or adoption wait remains.
+Blockers: App element — Sole App owner. Runtime helper453b and App hookaf5 source are home. Author1402 normal/mutation controls PASS; fresh reviewed startup unqualified. Final reviewer1414 awaits source floor.
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
 Next ready: D127 local one-command submit under D89c original admission; no repeated5.2GB gate. Final reviewer1414 starts when source5.0GB floor permits during heavy3250, or after it ends. D127 terminal gets reserved App verdict; Proof is stood down.
 live 1 / cap 1 at current floor; ready-undispatched 0; core open: 2. Sole heavy3250 runs. Final reviewer1414 prepared and gated by source5.0GB admission while heavy runs; current4.869GB.
-Capacity: Sweep3 removed0; corrected compact packed0 scratch/test dirs and gzipped6 old logs. Free about5.33GB at13:49. Ended nonKEEP unrecycled tree scan0. Heavy5.2GB and stop4.0GB; protected targets untouched.
-INBOX consumed through2243784 bytes including D126 and D127 GO. Proof returned zero service IDs; App now sole venue. Retained original outputs and guarded targets remain protected.
+Capacity: Free4.907GB at14:15 during sole actual3250. D89c original5.311GB admission carried once; stop4.0GB. Source reviewer1414 needs5.0GB while heavy runs. All guarded inputs and original outputs retained.
+INBOX consumed through2249381 bytes. D126 approved; D127 sole local actual3250 follows preflight15235 PASS. Proof venue release explicit; old delayed notes do not reopen earlier holds.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 
