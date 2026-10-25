@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "browser_trace": {
+    "header_artifact_present": false,
+    "idempotency_key_hash_available": false,
+    "element_join": "UNKNOWN",
+    "swap_join": "UNKNOWN",
+    "reason": "The retained browser diagnostic records key presence only; no safe browser key hash or exact header/source artifact is retained."
+  },
+  "runtime_candidates": [
+    {
+      "operation": "element",
+      "status": "candidate_only",
+      "idempotency_key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+      "capture_namespace": "pid-12960-birth-19014785-capture-1",
+      "pid": 12960,
+      "birth_ticks": 19014785,
+      "request": 3,
+      "utc": "2026-10-25T14:49:25.626Z",
+      "last_phase": "authorization",
+      "sample_total": 352,
+      "lost_samples": 3,
+      "dispatch_wall_denominator_ms": null,
+      "response": "UNKNOWN",
+      "backend_outcome": "UNKNOWN",
+      "browser_join": "UNKNOWN"
+    }
+  ],
+  "exact_joins": [],
+  "policy": "Do not infer an operation from timing, order, constructor, or source shape. A candidate remains candidate-only until browser key hash, namespace, PID birth, request, and UTC are joined."
+}

@@ -1,0 +1,2755 @@
+{
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "attribution": {
+    "dominant_cost": "NOT_ASSERTED",
+    "native_1_75": "NOT_ASSERTED",
+    "operation_assignment_without_exact_join": "PROHIBITED",
+    "synthetic_20s": "NOT_ASSERTED"
+  },
+  "coverage": {
+    "launches_without_stacks": 3,
+    "per_launch_stacks": 2,
+    "raw_stacks_published": false,
+    "root_stacks": 1
+  },
+  "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+  "independent_verdict": {
+    "original_fail": 2,
+    "original_not_run": 1,
+    "original_pass": 5,
+    "readiness_pass": 1,
+    "timing": "UNKNOWN",
+    "verdict": "NO-GO"
+  },
+  "schema_version": 1,
+  "source_summaries": [
+    {
+      "identities": [
+        {
+          "birth_ticks": 19008422,
+          "namespace": "pid-5942-birth-19008422-capture-1",
+          "pid": 5942
+        },
+        {
+          "birth_ticks": null,
+          "namespace": "pid-5942-birth-19008422-capture-1",
+          "pid": null
+        }
+      ],
+      "key_hash_records": 7,
+      "records": 57,
+      "source_pointer": "exact10721-resultdir/p2-commit-phase.jsonl",
+      "source_sha256": "5fb123e055fbfb36dcbf8d7b5ed5dc37c42800170ba504d539dc1c84c6ecbd74",
+      "source_size_bytes": 16705,
+      "summaries": [
+        {
+          "birth_ticks": 19008422,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 20302.367,
+          "dispatch_ms": 20302.367,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap",
+              "line": 1015,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            },
+            {
+              "dispatch_wall_share": 0.7575471372377418,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap_inner",
+              "line": 1044,
+              "sample_count": 769,
+              "sample_share": 1.0,
+              "sample_total": 769
+            }
+          ],
+          "handler_ms": 20301.432,
+          "interval_ms": 20.0,
+          "key_sha256": "568c9a62da9c114c16d7888dbf5e52989f2535eecb270c1895ad7e64ad27f81a",
+          "last_phase": "http_response",
+          "lost_samples": 19,
+          "namespace": "pid-5942-birth-19008422-capture-1",
+          "observer_cpu_ms": 505.973,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 5942,
+          "provider_ms": 12878.311,
+          "request": 1,
+          "response_ms": 3.293,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 16705,
+              "events": 57,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 0,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 57,
+              "events_seen": 57,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 769,
+          "truncated": false,
+          "utc": "2026-10-25T14:48:08.843Z"
+        }
+      ],
+      "summary_count": 1
+    },
+    {
+      "identities": [
+        {
+          "birth_ticks": 19026162,
+          "namespace": "pid-15472-birth-19026162-capture-1",
+          "pid": 15472
+        },
+        {
+          "birth_ticks": null,
+          "namespace": "pid-15472-birth-19026162-capture-1",
+          "pid": null
+        }
+      ],
+      "key_hash_records": 11,
+      "records": 128,
+      "source_pointer": "exact10721-resultdir/launch-038600ed-c08a-417f-a7ab-fe32440bad44/p2-commit-phase-2.jsonl",
+      "source_sha256": "d3d3c3e99792fe07f347303e6692ae25e0485bc93e83cb94d76b56c872553d5f",
+      "source_size_bytes": 43834,
+      "summaries": [
+        {
+          "birth_ticks": 19026162,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 2256.34,
+          "dispatch_ms": 2256.34,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            },
+            {
+              "dispatch_wall_share": 0.7622964624125796,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 86,
+              "sample_share": 1.0,
+              "sample_total": 86
+            }
+          ],
+          "handler_ms": 2255.384,
+          "interval_ms": 20.0,
+          "key_sha256": "10851f804bbf11e1cde66329a3507d83c6d7bc43a058ddc7c282fdc5b30a6106",
+          "last_phase": "http_response",
+          "lost_samples": 3,
+          "namespace": "pid-15472-birth-19026162-capture-1",
+          "observer_cpu_ms": 1071.246,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 15472,
+          "provider_ms": 1660.798,
+          "request": 1,
+          "response_ms": 1.129,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 43834,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 166,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 294,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 86,
+          "truncated": true,
+          "utc": "2026-10-25T14:51:41.610Z"
+        },
+        {
+          "birth_ticks": 19026162,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 19927.807,
+          "dispatch_ms": 19927.807,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            },
+            {
+              "dispatch_wall_share": 0.7456916859943494,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 743,
+              "sample_share": 1.0,
+              "sample_total": 743
+            }
+          ],
+          "handler_ms": 19926.985,
+          "interval_ms": 20.0,
+          "key_sha256": "68135143919b61e7426cc2eaa0712c9800b9f5e0ea52c2e355375f7c88f307d1",
+          "last_phase": "http_response",
+          "lost_samples": 28,
+          "namespace": "pid-15472-birth-19026162-capture-1",
+          "observer_cpu_ms": 1071.246,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 15472,
+          "provider_ms": 11864.963,
+          "request": 2,
+          "response_ms": 3.749,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 43834,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 166,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 294,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 743,
+          "truncated": true,
+          "utc": "2026-10-25T14:51:41.611Z"
+        },
+        {
+          "birth_ticks": 19026162,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 9930.247,
+          "dispatch_ms": 9930.247,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/service.py",
+              "function": "_execute_timeline_commit",
+              "line": 2546,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/service.py",
+              "function": "commit_timeline",
+              "line": 2478,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            },
+            {
+              "dispatch_wall_share": 0.771380611177144,
+              "file": "<runtime>/timeline_commit_execution.py",
+              "function": "execute",
+              "line": 306,
+              "sample_count": 383,
+              "sample_share": 1.0,
+              "sample_total": 383
+            }
+          ],
+          "handler_ms": 9929.019,
+          "interval_ms": 20.0,
+          "key_sha256": "4f9f4b29fae6d9bafc5830327d413dfb2bea95e190da380e1476c8b286c56945",
+          "last_phase": "http_response",
+          "lost_samples": 3,
+          "namespace": "pid-15472-birth-19026162-capture-1",
+          "observer_cpu_ms": 1071.246,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 15472,
+          "provider_ms": 9803.572,
+          "request": 3,
+          "response_ms": 1.746,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 43834,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 166,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 294,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 383,
+          "truncated": true,
+          "utc": "2026-10-25T14:51:41.612Z"
+        },
+        {
+          "birth_ticks": 19026162,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 4983.889,
+          "dispatch_ms": 4983.889,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/service.py",
+              "function": "_execute_timeline_commit",
+              "line": 2546,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/service.py",
+              "function": "commit_timeline",
+              "line": 2478,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            },
+            {
+              "dispatch_wall_share": 0.7785085101213128,
+              "file": "<runtime>/timeline_commit_execution.py",
+              "function": "execute",
+              "line": 306,
+              "sample_count": 194,
+              "sample_share": 1.0,
+              "sample_total": 194
+            }
+          ],
+          "handler_ms": 4982.898,
+          "interval_ms": 20.0,
+          "key_sha256": "64b1c443e08a2320d9844b29a536bb396d4a88f845bfe7651d995aeee730b84b",
+          "last_phase": "http_response",
+          "lost_samples": 2,
+          "namespace": "pid-15472-birth-19026162-capture-1",
+          "observer_cpu_ms": 1071.246,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 15472,
+          "provider_ms": 4395.927,
+          "request": 4,
+          "response_ms": 1.239,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 43834,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 166,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 294,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 194,
+          "truncated": true,
+          "utc": "2026-10-25T14:51:41.612Z"
+        }
+      ],
+      "summary_count": 4
+    },
+    {
+      "identities": [
+        {
+          "birth_ticks": 19019535,
+          "namespace": "pid-29915-birth-19019535-capture-1",
+          "pid": 29915
+        },
+        {
+          "birth_ticks": null,
+          "namespace": "pid-29915-birth-19019535-capture-1",
+          "pid": null
+        }
+      ],
+      "key_hash_records": 11,
+      "records": 128,
+      "source_pointer": "exact10721-resultdir/launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d/p2-commit-phase-2.jsonl",
+      "source_sha256": "da98c3a1ca13416709303e8eaa507f38dcebc2de93c3bceb9670d27526b36d84",
+      "source_size_bytes": 43835,
+      "summaries": [
+        {
+          "birth_ticks": 19019535,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 2183.723,
+          "dispatch_ms": 2183.723,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            },
+            {
+              "dispatch_wall_share": 0.7784870150655555,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 85,
+              "sample_share": 1.0,
+              "sample_total": 85
+            }
+          ],
+          "handler_ms": 2182.815,
+          "interval_ms": 20.0,
+          "key_sha256": "fe14b1213146728fd90f00683c55b2f17b78e34fd21bb09c73c7ad4c1225a247",
+          "last_phase": "http_response",
+          "lost_samples": 1,
+          "namespace": "pid-29915-birth-19019535-capture-1",
+          "observer_cpu_ms": 986.283,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 29915,
+          "provider_ms": 1571.645,
+          "request": 1,
+          "response_ms": 0.903,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 43835,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 166,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 294,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 85,
+          "truncated": true,
+          "utc": "2026-10-25T14:50:32.630Z"
+        },
+        {
+          "birth_ticks": 19019535,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 20114.454,
+          "dispatch_ms": 20114.454,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap",
+              "line": 1015,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap_inner",
+              "line": 1044,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7596527352917459,
+              "file": "<stdlib>/threading.py",
+              "function": "run",
+              "line": 995,
+              "sample_count": 764,
+              "sample_share": 1.0,
+              "sample_total": 764
+            },
+            {
+              "dispatch_wall_share": 0.7586584254287986,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 763,
+              "sample_share": 0.9986910994764397,
+              "sample_total": 764
+            }
+          ],
+          "handler_ms": 20113.107,
+          "interval_ms": 20.0,
+          "key_sha256": "74616d546703ecaddf24a297a8549dff01914b56f293d83df0a3a19690a56bc0",
+          "last_phase": "http_response",
+          "lost_samples": 11,
+          "namespace": "pid-29915-birth-19019535-capture-1",
+          "observer_cpu_ms": 986.283,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 29915,
+          "provider_ms": 12406.371,
+          "request": 2,
+          "response_ms": 3.44,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 43835,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 166,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 294,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 764,
+          "truncated": true,
+          "utc": "2026-10-25T14:50:32.631Z"
+        },
+        {
+          "birth_ticks": 19019535,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 9828.87,
+          "dispatch_ms": 9828.87,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            },
+            {
+              "dispatch_wall_share": 0.7773019685884542,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 382,
+              "sample_share": 1.0,
+              "sample_total": 382
+            }
+          ],
+          "handler_ms": 9827.777,
+          "interval_ms": 20.0,
+          "key_sha256": "7245afd95406a7a4bc8d91ea80ac5be44b2751c549209a34d66d252a88af468a",
+          "last_phase": "http_response",
+          "lost_samples": 2,
+          "namespace": "pid-29915-birth-19019535-capture-1",
+          "observer_cpu_ms": 986.283,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 29915,
+          "provider_ms": 9720.48,
+          "request": 3,
+          "response_ms": 1.0,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 43835,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 166,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 294,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 382,
+          "truncated": true,
+          "utc": "2026-10-25T14:50:32.640Z"
+        },
+        {
+          "birth_ticks": 19019535,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 4436.881,
+          "dispatch_ms": 4436.881,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap",
+              "line": 1015,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            },
+            {
+              "dispatch_wall_share": 0.7843347612883915,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap_inner",
+              "line": 1044,
+              "sample_count": 174,
+              "sample_share": 1.0,
+              "sample_total": 174
+            }
+          ],
+          "handler_ms": 4434.864,
+          "interval_ms": 20.0,
+          "key_sha256": "fc82e32ed283245f39704d5ec1f418b07ebf1d499d160aacdd01ab934a44920c",
+          "last_phase": "http_response",
+          "lost_samples": 2,
+          "namespace": "pid-29915-birth-19019535-capture-1",
+          "observer_cpu_ms": 986.283,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 29915,
+          "provider_ms": 3848.469,
+          "request": 4,
+          "response_ms": 3.656,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 43835,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 166,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 294,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 174,
+          "truncated": true,
+          "utc": "2026-10-25T14:50:32.640Z"
+        }
+      ],
+      "summary_count": 4
+    },
+    {
+      "identities": [
+        {
+          "birth_ticks": 19043763,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "pid": 31533
+        },
+        {
+          "birth_ticks": null,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "pid": null
+        }
+      ],
+      "key_hash_records": 14,
+      "records": 128,
+      "source_pointer": "exact10721-resultdir/launch-70f545dd-c366-443f-86fa-5f77dc39e04c/p2-commit-phase-2.jsonl",
+      "source_sha256": "fa6675aa39407799fbb0158b8dee644e81c7b8d3ff326b4894d41c3308d0e24c",
+      "source_size_bytes": 61101,
+      "summaries": [
+        {
+          "birth_ticks": 19043763,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 2235.647,
+          "dispatch_ms": 2235.647,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            },
+            {
+              "dispatch_wall_share": 0.7782981839261744,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 87,
+              "sample_share": 1.0,
+              "sample_total": 87
+            }
+          ],
+          "handler_ms": 2234.376,
+          "interval_ms": 20.0,
+          "key_sha256": "8f50a766275c7258b616f46fefd1b1ae3dfa1bc583d3a7e15e667695b4dcaffb",
+          "last_phase": "http_response",
+          "lost_samples": 3,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "observer_cpu_ms": 1254.125,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 31533,
+          "provider_ms": 1647.765,
+          "request": 1,
+          "response_ms": 0.898,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 61101,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 470,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 598,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 87,
+          "truncated": true,
+          "utc": "2026-10-25T14:55:26.930Z"
+        },
+        {
+          "birth_ticks": 19043763,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 19263.063,
+          "dispatch_ms": 19263.063,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            },
+            {
+              "dispatch_wall_share": 0.7527359485872004,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 725,
+              "sample_share": 1.0,
+              "sample_total": 725
+            }
+          ],
+          "handler_ms": 19262.405,
+          "interval_ms": 20.0,
+          "key_sha256": "c8fcbd8361622e24ab4bb3db51b2c30c8e5dab46bcb03fa97e29f5b94a11c1d7",
+          "last_phase": "http_response",
+          "lost_samples": 13,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "observer_cpu_ms": 1254.125,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 31533,
+          "provider_ms": 11757.381,
+          "request": 2,
+          "response_ms": 3.841,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 61101,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 470,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 598,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 725,
+          "truncated": true,
+          "utc": "2026-10-25T14:55:26.930Z"
+        },
+        {
+          "birth_ticks": 19043763,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 1676.021,
+          "dispatch_ms": 1676.021,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap",
+              "line": 1015,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            },
+            {
+              "dispatch_wall_share": 0.8114456799765636,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap_inner",
+              "line": 1044,
+              "sample_count": 68,
+              "sample_share": 1.0,
+              "sample_total": 68
+            }
+          ],
+          "handler_ms": 1672.998,
+          "interval_ms": 20.0,
+          "key_sha256": "72c5d258c42e456784ea38129f3a281efcbee1ec3730bea0eefd86d51206d8d0",
+          "last_phase": "http_response",
+          "lost_samples": 0,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "observer_cpu_ms": 1254.125,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 31533,
+          "provider_ms": 1387.922,
+          "request": 3,
+          "response_ms": 3.187,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 61101,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 470,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 598,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 68,
+          "truncated": true,
+          "utc": "2026-10-25T14:55:26.931Z"
+        },
+        {
+          "birth_ticks": 19043763,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 4848.897,
+          "dispatch_ms": 4848.897,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<runtime>/service.py",
+              "function": "commit_timeline",
+              "line": 2478,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            },
+            {
+              "dispatch_wall_share": 0.779558732635484,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 189,
+              "sample_share": 1.0,
+              "sample_total": 189
+            }
+          ],
+          "handler_ms": 4848.01,
+          "interval_ms": 20.0,
+          "key_sha256": "6b7162df2dedc8ffdfeb6015fbf797c672f35b4a7c1665a49f25ddbab150952d",
+          "last_phase": "http_response",
+          "lost_samples": 3,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "observer_cpu_ms": 1254.125,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 31533,
+          "provider_ms": 4355.924,
+          "request": 4,
+          "response_ms": 2.608,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 61101,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 470,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 598,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 189,
+          "truncated": true,
+          "utc": "2026-10-25T14:55:26.931Z"
+        },
+        {
+          "birth_ticks": 19043763,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 1117.222,
+          "dispatch_ms": 1117.222,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            },
+            {
+              "dispatch_wall_share": 0.7876679836236665,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 44,
+              "sample_share": 1.0,
+              "sample_total": 44
+            }
+          ],
+          "handler_ms": 1114.891,
+          "interval_ms": 20.0,
+          "key_sha256": "21974ab7157713b62f9e38b1ab10bbd7cca5a721061b5f96d9332b0cb0d64fab",
+          "last_phase": "http_response",
+          "lost_samples": 0,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "observer_cpu_ms": 1254.125,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 31533,
+          "provider_ms": 1023.586,
+          "request": 5,
+          "response_ms": 0.919,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 61101,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 470,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 598,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 44,
+          "truncated": true,
+          "utc": "2026-10-25T14:55:26.932Z"
+        },
+        {
+          "birth_ticks": 19043763,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 1961.164,
+          "dispatch_ms": 1961.164,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<runtime>/service.py",
+              "function": "commit_timeline",
+              "line": 2478,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            },
+            {
+              "dispatch_wall_share": 0.8464360961143486,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 83,
+              "sample_share": 1.0,
+              "sample_total": 83
+            }
+          ],
+          "handler_ms": 1960.566,
+          "interval_ms": 20.0,
+          "key_sha256": "7942ec62e1b92ec3fd6698c69b42f534af463346235a26db4744401c38538a63",
+          "last_phase": "http_response",
+          "lost_samples": 0,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "observer_cpu_ms": 1254.125,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 31533,
+          "provider_ms": 1654.829,
+          "request": 6,
+          "response_ms": 1.716,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 61101,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 470,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 598,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 83,
+          "truncated": true,
+          "utc": "2026-10-25T14:55:26.932Z"
+        },
+        {
+          "birth_ticks": 19043763,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 1303.379,
+          "dispatch_ms": 1303.379,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            },
+            {
+              "dispatch_wall_share": 0.7825812752852395,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 51,
+              "sample_share": 1.0,
+              "sample_total": 51
+            }
+          ],
+          "handler_ms": 1299.431,
+          "interval_ms": 20.0,
+          "key_sha256": "4178442cf48df7f1f4c332d2a0b205081ce1c594519341116be1ad6a5db55195",
+          "last_phase": "http_response",
+          "lost_samples": 1,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "observer_cpu_ms": 1254.125,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 31533,
+          "provider_ms": 1125.496,
+          "request": 7,
+          "response_ms": 22.196,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 61101,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 470,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 598,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 51,
+          "truncated": true,
+          "utc": "2026-10-25T14:55:26.933Z"
+        },
+        {
+          "birth_ticks": 19043763,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 2246.523,
+          "dispatch_ms": 2246.523,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            },
+            {
+              "dispatch_wall_share": 0.83684876584838,
+              "file": "<stdlib>/threading.py",
+              "function": "_bootstrap",
+              "line": 1015,
+              "sample_count": 94,
+              "sample_share": 1.0,
+              "sample_total": 94
+            }
+          ],
+          "handler_ms": 2245.367,
+          "interval_ms": 20.0,
+          "key_sha256": "8e21d0afa2a2bcd8bf8939e518f5c9448706ca488fb0e1d607391cbac6281e72",
+          "last_phase": "http_response",
+          "lost_samples": 0,
+          "namespace": "pid-31533-birth-19043763-capture-1",
+          "observer_cpu_ms": 1254.125,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 31533,
+          "provider_ms": 1908.15,
+          "request": 8,
+          "response_ms": 5.523,
+          "retention": {
+            "final_request": null,
+            "output": {
+              "bytes": 61101,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 470,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 598,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 94,
+          "truncated": true,
+          "utc": "2026-10-25T14:55:26.933Z"
+        }
+      ],
+      "summary_count": 8
+    },
+    {
+      "identities": [],
+      "key_hash_records": 0,
+      "records": 0,
+      "source_pointer": "exact10721-resultdir/launch-d15d840a-f5ce-447f-8e06-e3b003792872/p2-commit-phase-2.jsonl",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_size_bytes": 0,
+      "summaries": [],
+      "summary_count": 0
+    },
+    {
+      "identities": [
+        {
+          "birth_ticks": 19014785,
+          "namespace": "pid-12960-birth-19014785-capture-1",
+          "pid": 12960
+        },
+        {
+          "birth_ticks": null,
+          "namespace": "pid-12960-birth-19014785-capture-1",
+          "pid": null
+        }
+      ],
+      "key_hash_records": 15,
+      "records": 128,
+      "source_pointer": "exact10721-resultdir/launch-d22e9a6e-f0c4-46ea-a6b2-3567bdccc62c/p2-commit-phase-2.jsonl",
+      "source_sha256": "eea2a7de954dd422ef5bbb3c07ef3d5dd71072e41ee49ad4a17cb5ad015fbaf0",
+      "source_size_bytes": 40763,
+      "summaries": [
+        {
+          "birth_ticks": 19014785,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 2056.032,
+          "dispatch_ms": 2056.032,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            },
+            {
+              "dispatch_wall_share": 0.7781980047003159,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 80,
+              "sample_share": 1.0,
+              "sample_total": 80
+            }
+          ],
+          "handler_ms": 2055.124,
+          "interval_ms": 20.0,
+          "key_sha256": "05eb857a8c4fc9744dad771c1f15dd8a1384b6f9cd484a1209aa19d33173f45b",
+          "last_phase": "http_response",
+          "lost_samples": 1,
+          "namespace": "pid-12960-birth-19014785-capture-1",
+          "observer_cpu_ms": 743.938,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 12960,
+          "provider_ms": 1509.814,
+          "request": 1,
+          "response_ms": 0.607,
+          "retention": {
+            "final_request": {
+              "complete": true,
+              "events_retained": 22,
+              "events_seen": 22,
+              "incomplete_limit": null,
+              "outcome": "pending",
+              "request": 3
+            },
+            "output": {
+              "bytes": 40763,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 7,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 135,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 80,
+          "truncated": true,
+          "utc": "2026-10-25T14:49:25.624Z"
+        },
+        {
+          "birth_ticks": 19014785,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": 19603.087,
+          "dispatch_ms": 19603.087,
+          "frames": [
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<runtime>/server.py",
+              "function": "do_POST",
+              "line": 1243,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<stdlib>/socketserver.py",
+              "function": "finish_request",
+              "line": 362,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            },
+            {
+              "dispatch_wall_share": 0.7498818936017578,
+              "file": "<stdlib>/socketserver.py",
+              "function": "process_request_thread",
+              "line": 697,
+              "sample_count": 735,
+              "sample_share": 0.998641304347826,
+              "sample_total": 736
+            }
+          ],
+          "handler_ms": 19601.985,
+          "interval_ms": 20.0,
+          "key_sha256": "792afde7e20d0feb8fbde18ce6afbb8985a88581b5f62bbda772c38ccef265ff",
+          "last_phase": "http_response",
+          "lost_samples": 14,
+          "namespace": "pid-12960-birth-19014785-capture-1",
+          "observer_cpu_ms": 743.938,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 12960,
+          "provider_ms": 11840.358,
+          "request": 2,
+          "response_ms": 3.815,
+          "retention": {
+            "final_request": {
+              "complete": true,
+              "events_retained": 22,
+              "events_seen": 22,
+              "incomplete_limit": null,
+              "outcome": "pending",
+              "request": 3
+            },
+            "output": {
+              "bytes": 40763,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 7,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 135,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 736,
+          "truncated": true,
+          "utc": "2026-10-25T14:49:25.625Z"
+        },
+        {
+          "birth_ticks": 19014785,
+          "dedup_rule": "each safe frame identity is counted at most once per sample",
+          "denominator_ms": null,
+          "dispatch_ms": null,
+          "frames": [
+            {
+              "dispatch_wall_share": null,
+              "file": "<runtime>/door.py",
+              "function": "_admit",
+              "line": 556,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<runtime>/door.py",
+              "function": "_door",
+              "line": 513,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<runtime>/door.py",
+              "function": "do_POST",
+              "line": 777,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<runtime>/server.py",
+              "function": "_dispatch",
+              "line": 1208,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<runtime>/server.py",
+              "function": "_route",
+              "line": 528,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<runtime>/server.py",
+              "function": "_timeline_commit",
+              "line": 313,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<runtime>/service.py",
+              "function": "wrapped",
+              "line": 438,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<stdlib>/server.py",
+              "function": "handle",
+              "line": 451,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<stdlib>/server.py",
+              "function": "handle_one_request",
+              "line": 439,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            },
+            {
+              "dispatch_wall_share": null,
+              "file": "<stdlib>/socketserver.py",
+              "function": "__init__",
+              "line": 766,
+              "sample_count": 352,
+              "sample_share": 1.0,
+              "sample_total": 352
+            }
+          ],
+          "handler_ms": null,
+          "interval_ms": 20.0,
+          "key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+          "last_phase": "authorization",
+          "lost_samples": 3,
+          "namespace": "pid-12960-birth-19014785-capture-1",
+          "observer_cpu_ms": 743.938,
+          "observer_cpu_scope": "capture-wide",
+          "pid": 12960,
+          "provider_ms": null,
+          "request": 3,
+          "response_ms": null,
+          "retention": {
+            "final_request": {
+              "complete": true,
+              "events_retained": 22,
+              "events_seen": 22,
+              "incomplete_limit": null,
+              "outcome": "pending",
+              "request": 3
+            },
+            "output": {
+              "bytes": 40763,
+              "events": 128,
+              "max_bytes": 65536
+            },
+            "rolling": {
+              "capacity_dropped_events": 7,
+              "capacity_events": 128,
+              "complete": true,
+              "events_retained": 128,
+              "events_seen": 135,
+              "incomplete_limit": null
+            }
+          },
+          "sample_total": 352,
+          "truncated": true,
+          "utc": "2026-10-25T14:49:25.626Z"
+        }
+      ],
+      "summary_count": 3
+    }
+  ],
+  "task": "D127b retained10721 safe stack packet",
+  "tuple": {
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "app": "84857c45347539c7820bb054b69e2e5ad4079081",
+    "composition": "635f4de06da22a85fc2e4cfc764d0153a4c9f40",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344"
+  }
+}
