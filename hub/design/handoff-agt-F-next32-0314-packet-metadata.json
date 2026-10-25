@@ -1,0 +1,82 @@
+{
+  "packet": "F-D86-next-inputs-0314",
+  "scope": "flat source/static qualification input only; no behavior or final-gate credit",
+  "captured_head": {
+    "branch": "tl/agt-F-next-inputs-0314",
+    "integration_branch": "tl/integration",
+    "commit": "7e23790248f17b8a4492fc9aee88d2c4e1df328d",
+    "tree": "2f6468bfc2534643400add3647e087e770d8a2b1"
+  },
+  "eligible_selector_count": 32,
+  "eligible_families": {
+    "D86-parent-media20": 20,
+    "D86-parent-auto2": 2,
+    "inverse7-stage7": 7,
+    "D92-docpatch5-compound3": 3
+  },
+  "source_receipts": {
+    "media": {
+      "source_commit": "2a04d92fca1e6b4f86f33609bb4391accae93aa0",
+      "normal_receipt": "7f4ea9ce7d7915a5e99bc803fceaedb1ec402c0c",
+      "review": "rt-D86-parent-media-review-0245-report.md",
+      "source_sha256": "6f68086f887b8c984597b5a7940261ae6fd18564f1da4dccff96351c03afdf76"
+    },
+    "auto": {
+      "source_commit": "824e03f6a2139561af65a9c69779ea7a1a7a0a4c",
+      "normal_receipt": "7e23790248f17b8a4492fc9aee88d2c4e1df328d",
+      "review": "rt-D86-parent-auto-review-0254-report.md",
+      "source_sha256": "3138f2ac264cf3a5e52bdd44677eb6f8cf9f70d362a0630e5b16490307a6b22c",
+      "reviewed_target_blob": "30ed39e4"
+    },
+    "inverse7": {
+      "source_commit": "e6ffc8f62b",
+      "normal_receipt": "caffef8d93",
+      "review": "agt-F-inverse7-review-log-0239.md; agt-F-inverse7-clean-join-0245.md",
+      "source_sha256": "6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1"
+    },
+    "D92": {
+      "source_commit": "57ad7d2987",
+      "normal_receipt": "562ee30b6e",
+      "review": "agt-F-D92-protected-review-0243.md; agt-F-D92-clean-join-0250.md",
+      "source_sha256": "dd18f9bce71355a655413c6534c66300e29c2da1e42ff59bc3515b5727f8f634"
+    }
+  },
+  "set_accounting": {
+    "canonical_original161": {
+      "membership_sha256": "2bc617115617936b91221096882319305d99f40d98a238ae4c3f901da837c790",
+      "disposition": "Runtime-owned; service9211; no duplicate"
+    },
+    "canonical_later69": {
+      "membership_sha256": "cf445ed85d689a69da92b1a8a8b03852a03b59eed70663dc4c47800c93d0296d",
+      "disposition": "Contained in later102; no duplicate"
+    },
+    "later102": {
+      "receipt": "rt-D86-later-receipts-0256-report.md",
+      "composition": "prior95 + pool6 + coreliteral1",
+      "disposition": "MAIN receiving set; no duplicate"
+    },
+    "supplement0252": {
+      "membership_sha256": "017406abb9909b197998ae6b4a4362005eb459cacfafa636ee27f0651d3c94f9",
+      "overlap_with_later102": "core-element-optional1 + netzero1 + livefrontend6 + M2pool6",
+      "d91_separate_queue": "D91-shared-inverse10",
+      "eligible_after_subtraction": "inverse7-stage7 + D92-docpatch5-compound3"
+    },
+    "historical_actual10077": "30 PASS / 39 FAIL / 176 ERROR / 23 NO_JUNIT_CASE; preserve only",
+    "historical_original550": "preserve original dispositions; no rewrite"
+  },
+  "held": {
+    "parent_auto_acceptance": "six guarded-address failures remain held Agent guard row",
+    "D92": "atomic and ABA originals remain separate/live/unqualified",
+    "actual10077": "historical summary only; no inferred proof"
+  },
+  "publication": {
+    "manager_byte_publication": [
+      "evidence/flat-ready-source-selector-manifest.tsv",
+      "evidence/per-id-eligibility.tsv",
+      "evidence/set-accounting.tsv",
+      "evidence/packet-metadata.json"
+    ],
+    "receiving_main_owner": "Agent MAIN affected-node batch owner",
+    "private_copies_hashes": "evidence/private-copies/SHA256SUMS"
+  }
+}

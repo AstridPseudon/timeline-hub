@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T03:15:04Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
+<!-- agent | 2026-10-25T03:18:07Z | dispatcher heartbeat 12s | live 4 (sol 1, luna 3, other 0) | busy30 17 | status age 0m -->
 # agent board, 2026-10-25T03:12:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -213,11 +213,11 @@
 
 | F held thirteen | Route exact word and sheet inputs | Luna read only | Named owner follow-through | merged | Source disposition0301 complete | Zero eligible unchanged retries. Ten live seams and three retired CLI setup routes mapped. Five receiving source/input workers0314 assigned. | 562ee source facts |
 
-| F parent guard six | Resolve exact rebase guard projection | Luna read only | Existing10077 traces and current source | doing | agt-F-parent-guard-six-0314 | Source only; exact kind/ref/path remains unknown until trace. No Runtime preview reached. | Current7e237 |
-| F sheet CLI three | Migrate current-sheet retired CLI setup | Luna | Current ordinary commit and sheet routes | doing | agt-F-sheet-cli3-migrate-0314 | Three live scenarios keep all pins, retry, inverse and ABA predicates. No new native envelope. | Current7e237 |
-| F word source four | Resolve timing, registry and status scope | Luna read only | Current C0 and exact held IDs | doing | agt-F-word-four-source-0314 | Four precise cases; existing D14/D23 checked before source author. No unchanged body. | Current7e237 |
+| F parent guard six | Fix asset collection guard projection | HARD Sol | Exact source finding0314 | doing | agt-R1-asset-guard-sol-0317 | Collection asset read becomes whole-parent scope. Narrow R1 correction; all real dependencies preserved. Review and MAIN proof before merge. | Current7e237 |
+| F sheet CLI three | Migrate current-sheet retired CLI setup | Luna | Independent protected source review | review | Author0314; review0317 | Candidatefadd preserves ordinary commit, sheet and persisted outbox routes. Static PASS; no behavioral proof. | faddacda1b held |
+| F word source four | Preserve exact choice and current C0 tests | Luna | Exact source disposition0314 | doing | Choice0317; oracle0317 | Exact binding lost to legacy validation in two cases. Two stale registry/status literals separately owned. All originals conserved. | Current7e237 |
 | F inverse source six | Bind inverse failures to exact owner | Luna read only | Exact source disposition complete | merged | Source0314 complete | Two exact D14 positives remain deferred. Four live auth seams handed to Runtime with conditional Agent producer follow-up. No body. | Current7e237 |
-| F next exact input | Join new source receipts to later delta | Luna | Media20 and auto two normal merges | doing | agt-F-next-inputs-0314 | Existing34 supplement preserved. Subtract current161, later102 and scheduled D91; no duplicate body. | Current7e237 |
+| F next exact input | Join new source receipts to later delta | Luna / MAIN receiver | Existing next10 extends to32 | merging | Inputs0314; receiving Runtime0306 | Exact32 published; four source hashes match7e237, zero161 overlap. Receiver subtracts later102 and coalesces inverse7/D92. Behavior owed. | Current7e237 |
 
 | R2 inverse auth four | Preserve retained inverse scenarios | Runtime / Agent source | Exact producer and auth follow-through | blocked:runtime | Agent0314 complete; peer sent | Four historical10077 inverse range/boundary/coverage failures remain live. No present-source failure or cure inferred. | Current7e237 /6634 |
 
@@ -232,7 +232,7 @@ Disk: D89 amended source/review6 above5.0GB; heavy1 above5.2GB; nothing new belo
 Blockers: Runtime source — P4 measured correction0301 requires one independent review and normal release before meaningful original.
 Blockers: MAIN proof — Actual161 then D91 and exact later delta must qualify merged scenarios. All no-case and held live scenarios remain visible.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
-Next ready: Five assigned source/input0314 jobs; sheet correction receives one protected review on completion. No new review for already reviewed media/auto branches.
-live 4 / cap6; ready-undispatched0 eligible source starts. Current pending review inventory is24 scopes, not24 unresolved diffs.
+Next ready: Assigned parent guardSol, word choiceLuna, word oracleLuna and protected sheet review0317. Source findings need one review; exact MAIN bodies stay serialized.
+live 0 plus queued4 / cap6; ready-undispatched0 eligible source starts. Current pending review inventory is24 scopes, not24 unresolved diffs.
 
-Inbox consumed through1318650 bytes. Updated 2026-10-25T03:12:03Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.
+Inbox consumed through1322979 bytes. Updated 2026-10-25T03:17:50Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.

@@ -1,0 +1,12 @@
+set_id	selector_source_or_receipt	membership_or_source_hash	disposition	disjointness_fact
+actual161	original-0200/membership.tsv; Runtime service9211	2bc617115617936b91221096882319305d99f40d98a238ae4c3f901da837c790	RUNTIME_OWNED_NO_DUPLICATE	Canonical original161; do not resubmit or merge into this packet
+later102	F-D86 later packet0256; later receipt0256	prior95 plus pool6 plus coreliteral1	MAIN_RECEIVING_SET_NO_DUPLICATE	Later prior95 is Agent69 plus netzero1 plus D87 live6 plus CLI8 plus WC6; pool6 and coreliteral1 are separate later rows
+supplement0252	F-D89 supplement return0252	017406abb9909b197998ae6b4a4362005eb459cacfafa636ee27f0651d3c94f9	CONSUMED_WITH_OVERLAP_ACCOUNTING	34 exact rows retained privately; no source bytes rewritten
+supplement0252_later_overlap	supplement0252 families: core-element-optional1, netzero1, livefrontend6, M2pool6	14 exact canonical rows	ALREADY_IN_LATER102	Do not schedule these supplement rows again
+supplement0252_d91	supplement0252 rows 1-10, D91-shared-inverse10	10 exact canonical rows	SEPARATE_D91_QUEUE	D91 remains separately queued; no duplicate in this packet
+supplement0252_new_inverse	supplement0252 rows 25-31, inverse7-stage7	6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1	ELIGIBLE_IN_THIS_PACKET	Existing reviewed source/hash only; final helper remains unexecuted
+supplement0252_new_d92	supplement0252 rows 32-34, D92-docpatch5-compound3	dd18f9bce71355a655413c6534c66300e29c2da1e42ff59bc3515b5727f8f634	ELIGIBLE_IN_THIS_PACKET	Existing reviewed source/hash only; swap[True], swap[False], compound_inverse only; atomic/ABA separate
+new_media20	tests/editing_conformance/test_commit_runtime_parent_media.py	6f68086f887b8c984597b5a7940261ae6fd18564f1da4dccff96351c03afdf76	ELIGIBLE_IN_THIS_PACKET	Source 2a04d92fca normal 7f4ea9ce7d; reviewed PASS_SOURCE; disjoint from 161/later102/D91/supplement34
+new_auto2	tests/editing_conformance/test_commit_runtime_parent_auto_completion.py	3138f2ac264cf3a5e52bdd44677eb6f8cf9f70d362a0630e5b16490307a6b22c	ELIGIBLE_IN_THIS_PACKET	Source 824e03f6a2 normal 7e23790248; track-label literals only; six guarded-address failures held
+historical_actual10077	actual10077 authentic terminal summary	30 PASS; 39 FAIL; 176 ERROR; 23 NO_JUNIT_CASE	PRESERVE_HISTORICAL_DISPOSITIONS	No behavior credit or inferred proof; service-ID XML remains distinct/missing
+original550	original550 dispositions	abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2	PRESERVE_HISTORICAL_DISPOSITIONS	No rows retired, rewritten, or reclassified
