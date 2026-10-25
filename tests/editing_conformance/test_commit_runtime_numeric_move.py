@@ -1,14 +1,15 @@
 """Native numeric moves on API-built films, including the M1 command surface."""
 from __future__ import annotations
 
+import copy
 from types import SimpleNamespace
 
 import pytest
 
 from astrid.sdk.timeline import commit
-from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.emitter import emit_document_commands
 from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 
 pytestmark = pytest.mark.integration
@@ -37,12 +38,14 @@ def numeric_film(tmp_path, monkeypatch):
 
     def submit(calls, key):
         base = head()
+        patch = [change for call in calls if call['op'] == 'doc.patch'
+                 for change in call['args']['changes']]
         body = {'api_version': 1, 'project_id': film.project_id, 'timeline_id': film.timeline_id,
                 'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id'],
                 'commands': calls, 'label': key, 'merge': 'atomic', 'reads': [],
                 'steps': [{'id': key, 'label': key, 'intent': 'Numeric conformance edit',
                            'tags': ['numeric'], 'command_ordinals': list(range(len(calls))),
-                           'patch': [], 'reads': []}],
+                           'patch': patch, 'reads': []}],
                 'dry_run': False, 'source': {'via': 'python'},
                 'rationale': 'Preserve exact numeric authored values', 'group_id': key}
         return case.service.commit_timeline(
@@ -72,13 +75,14 @@ def test_native_move_keeps_exact_numeric_image_and_unchanged_history(numeric_fil
 
     bundle = commit.bundle_from_document(case.document())
     hold = 0.25 if scope == 'occurrence' else State(bundle).entity(ref)['hold']
-    values = {'at': start,
-              'app': {'astrid': {'fixed_start': True, 'for': hold},
-                      'org.example/opaque': [None, False, 1, 1.0]}}
+    candidate = copy.deepcopy(bundle)
+    target = State(candidate).entity(ref)
+    target['at'] = start
+    target['app'] = {'astrid': {'fixed_start': True, 'for': hold},
+                     'org.example/opaque': [None, False, 1, 1.0]}
     if scope == 'occurrence':
-        values['hold'] = 0.25
-    baseline = capture_clip_set(bundle, ref, values=values)
-    case.submit([baseline], 'numeric-baseline')
+        target['hold'] = 0.25
+    case.submit(emit_document_commands(bundle, candidate), 'numeric-baseline')
     original, base = case.document(), case.head()
     bundle = commit.bundle_from_document(original)
     command = capture_move(bundle, ref, on)
