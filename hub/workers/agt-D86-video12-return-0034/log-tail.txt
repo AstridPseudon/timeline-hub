@@ -1,0 +1,400 @@
+    compile(candidate_tree, path, 'exec')
+    compile(baseline_tree, path, 'exec')
+    candidate_functions = functions(candidate_tree)
+    baseline_functions = functions(baseline_tree)
+    shared = sorted(set(candidate_functions) & set(baseline_functions))
+    unchanged = [name for name in shared if ast.dump(candidate_functions[name], include_attributes=False) == ast.dump(baseline_functions[name], include_attributes=False)]
+    print(f'{path}: parse+compile=PASS; functions={len(candidate_functions)}; unchanged_functions={len(unchanged)}/{len(shared)}')
+    for name in shared:
+        if name.startswith('test_'):
+            node = candidate_functions[name]
+            digest = hashlib.sha256(ast.dump(node, include_attributes=False).encode()).hexdigest()
+            print(f'  {name}: ast_sha256={digest}; decorators={len(decorators(node))}; asserts={sum(isinstance(n, ast.Assert) for n in ast.walk(node))}; raises={sum(isinstance(n, ast.Raise) for n in ast.walk(node))}')
+
+selectors = [
+'tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[image-False]',
+'tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[image-True]',
+'tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[video-False]',
+'tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[video-True]',
+'tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[False-False]',
+'tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[False-True]',
+'tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[True-False]',
+'tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[True-True]',
+'tests/editing_conformance/test_recipe_m2_video_unplace.py::test_provider_round_trip_preserves_opaque_registry_and_order[False-image]',
+'tests/editing_conformance/test_recipe_m2_video_unplace.py::test_provider_round_trip_preserves_opaque_registry_and_order[False-video]',
+'tests/editing_conformance/test_recipe_m2_video_unplace.py::test_provider_round_trip_preserves_opaque_registry_and_order[True-image]',
+'tests/editing_conformance/test_recipe_m2_video_unplace.py::test_provider_round_trip_preserves_opaque_registry_and_order[True-video]',
+]
+print(f'selectors={len(selectors)}')
+print('topology_guard=PASS; fabricated_chapter-shot-b=' + str('chapter-shot-b' in source('working', files[0])))
+print('shared_helper=' + str('capture_occurrence_place_shared' in source('working', files[0])))
+PY
+
+git diff --check" in /home/user/work/wt/agt-D86-video12-return-0034
+ succeeded in 90ms:
+tests/editing_conformance/test_commit_runtime_video_unplace.py: parse+compile=PASS; functions=6; unchanged_functions=5/6
+  test_capture_commit_reload_undo_redo_and_restart_safe_retry: ast_sha256=da33719af3176bdb97188a72aa01588b873c9c0a6e284714c242ee006c86b7f9; decorators=1; asserts=17; raises=0
+tests/editing_conformance/test_recipe_m2_video_unplace.py: parse+compile=PASS; functions=11; unchanged_functions=11/11
+  test_display_ids_are_never_inferred: ast_sha256=0cfa0736243e0e0de4375ea8a94e9280a1685a9cd4d74683434df1347646e119; decorators=1; asserts=0; raises=0
+  test_exact_registry_binding_and_aba_are_guarded: ast_sha256=b5bc6057db92c220d27182a0732de9f2b310285019f11297e2c4914baaa94a72; decorators=1; asserts=0; raises=0
+  test_full_raw_source_row_is_guarded_and_aba_blocks_undo: ast_sha256=c0ea943e2acd95450db6cf456a78794efea81d350336f4e8a0aa36386390718c; decorators=1; asserts=1; raises=0
+  test_keep_as_pooled_replay_guards_membership_binding_and_surviving_placements: ast_sha256=d591669678a22f62879f3073ace8c99abfb3abad46bdbbeec021615b7167fa9a; decorators=0; asserts=0; raises=0
+  test_keep_as_pooled_requires_exact_selected_media_and_no_surviving_placement: ast_sha256=c2e786820cce7d742a7198d2c9202948857e4144ff1fb696bf1a7066e05dca42; decorators=1; asserts=1; raises=0
+  test_provider_round_trip_preserves_opaque_registry_and_order: ast_sha256=51ea35cc3f589c3dd2842bb893ad9e2aa00670514caf63952f4c7f9938d92a74; decorators=2; asserts=5; raises=0
+  test_raw_media_golden_exact_inverse_replay_and_redo: ast_sha256=a87a7eac25ed0225d9fa1c6c30df248ba88d952007916d0033a763ddefcdb12e; decorators=2; asserts=13; raises=0
+  test_real_dependency_in_any_scope_refuses_before_writing: ast_sha256=24515b5baa379cbd6cb64d252d2529e451c83956c6599bc8b30749f789ae6bee; decorators=2; asserts=1; raises=0
+  test_replay_refuses_shared_owner_and_order_changes_but_preserves_unrelated_edits: ast_sha256=0607dc52fed41255a1aa359005d9fb5f9626f63c3042f979440c2bfcfb2433ba; decorators=0; asserts=1; raises=0
+selectors=12
+topology_guard=PASS; fabricated_chapter-shot-b=False
+shared_helper=True
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-gate.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-gate.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-gate.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7ad8819e0a533a9ebfbba17d825ca8f0fe70066
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-gate.md
+@@ -0,0 +1,32 @@
++# F-D86 video12 first return — source gate
++
++Base author tree: `d2f8c02c6d12e87e4ce4f30cd39598e2d15fb9d8`
++
++Changed scope:
++
++- `tests/editing_conformance/test_commit_runtime_video_unplace.py`
++- `tests/editing_conformance/test_recipe_m2_video_unplace.py` (unchanged)
++
++Blobs:
++
++- baseline runtime test: `8e2d51862651b801159b7449e0848090e104d0fb`
++- candidate runtime test: `bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a`
++- retained recipe: `feecedd16dbd09aa09de0e5b651f8efec3e4e18c`
++
++The candidate removes the fabricated `chapter-shot-b`, commits the populated
++`occ-a` source through the real commit provider, creates `occ-b` with the
++registered `capture_occurrence_place_shared` command, reloads the canonical
++closure, and then captures the existing `occ-a` placement edit.
++
++Static controls:
++
++- both files parse and in-memory compile;
++- the target test function AST, decorator, parameterization, assertions and
++  refusal branch are unchanged;
++- all 12 assigned selectors remain mapped;
++- no `chapter-shot-b` remains; the shared-placement helper is present;
++- candidate and baseline Ruff pass with the existing agent venv;
++- candidate and baseline mypy pass with the existing agent venv;
++- `git diff --check` passes;
++- no pytest, collection, helper/fixture/function execution, service, build,
++  browser or full suite was run.
+diff --git a/tests/editing_conformance/test_commit_runtime_video_unplace.py b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+index 8e2d51862651b801159b7449e0848090e104d0fb..bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a
+--- a/tests/editing_conformance/test_commit_runtime_video_unplace.py
++++ b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+@@ -37,6 +37,7 @@
+     from astrid.sdk.timeline.commands import execute
+     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+     from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
++    from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
+ 
+     kind = request.param
+ 
+@@ -98,29 +99,36 @@
+             bundle = execute(bundle, [command]).bundle
+ 
+         append(capture_track_create(bundle, 'parent', input_parent['config']['tracks'][0]))
+-        for index, occurrence in enumerate(input_occurrences):
+-            shot_id = occurrence['shot_id'] if index == 0 else 'chapter-shot-b'
+-            append(capture_occurrence_create(
+-                bundle, occurrence['occurrence_id'], shot_id, name='Chapter One',
+-                track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
+-                duration=occurrence['duration_ms'] / 1000,
++        occurrence = input_occurrences[0]
++        append(capture_occurrence_create(
++            bundle, occurrence['occurrence_id'], occurrence['shot_id'], name='Chapter One',
++            track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
++            duration=occurrence['duration_ms'] / 1000,
++        ))
++        for track in input_internal['tracks']:
++            append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
++        for row in input_internal['clips']:
++            old_row = copy.deepcopy(row)
++            old_row['asset'] = old['asset']
++            append(capture_occurrence_add_media(
++                bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
++                verified_media=[old_verified],
+             ))
+-            for track in input_internal['tracks']:
+-                append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
+-            for row in input_internal['clips'] if index == 0 else input_internal['clips'][:1]:
+-                old_row = copy.deepcopy(row)
+-                old_row['asset'] = old['asset']
+-                append(capture_occurrence_add_media(
+-                    bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
+-                    verified_media=[old_verified],
+-                ))
++        source = commit(state, body(state, commands), 'setup-source')
++        bundle = bundle_from_document(source['data']['canonical_document'])
++        shared = capture_occurrence_place_shared(
++            bundle, OWNER, input_occurrences[1]['occurrence_id'],
++            on=input_occurrences[1]['placement']['start_ms'] / 1000,
++        )
++        shared_setup = commit(state, body(state, [shared]), 'setup-shared')
++        bundle = bundle_from_document(shared_setup['data']['canonical_document'])
+         placed = {'id': 'placed', 'clipType': kind, 'track': 'picture', 'asset': state.new['asset'],
+                   'at': 1, 'hold': 4, 'opaque': {'clear': None},
+                   **({'from': 0, 'to': 4, 'speed': 1} if kind == 'video' else {})}
+-        append(capture_occurrence_add_media(
++        placed_command = capture_occurrence_add_media(
+             bundle, OWNER, placed, state.new, verified_media=[state.verified],
+-        ))
+-        setup = commit(state, body(state, commands), 'setup')
++        )
++        setup = commit(state, body(state, [placed_command]), 'setup')
+         state.baseline = setup['data']['canonical_document']
+         real_selected = RequestCommitPort.selected_media
+ 
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d504093c498f98a82fc970a131415022c04452a8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): repair F-D86 video12 shared fixture
++
++Rebuild the video unplace source through the registered shared-placement
++command and real Runtime commit boundary so both occurrences retain the
++original shared shot identity.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-gate.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-gate.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7ad8819e0a533a9ebfbba17d825ca8f0fe70066
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-gate.md
+@@ -0,0 +1,32 @@
++# F-D86 video12 first return — source gate
++
++Base author tree: `d2f8c02c6d12e87e4ce4f30cd39598e2d15fb9d8`
++
++Changed scope:
++
++- `tests/editing_conformance/test_commit_runtime_video_unplace.py`
++- `tests/editing_conformance/test_recipe_m2_video_unplace.py` (unchanged)
++
++Blobs:
++
++- baseline runtime test: `8e2d51862651b801159b7449e0848090e104d0fb`
++- candidate runtime test: `bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a`
++- retained recipe: `feecedd16dbd09aa09de0e5b651f8efec3e4e18c`
++
++The candidate removes the fabricated `chapter-shot-b`, commits the populated
++`occ-a` source through the real commit provider, creates `occ-b` with the
++registered `capture_occurrence_place_shared` command, reloads the canonical
++closure, and then captures the existing `occ-a` placement edit.
++
++Static controls:
++
++- both files parse and in-memory compile;
++- the target test function AST, decorator, parameterization, assertions and
++  refusal branch are unchanged;
++- all 12 assigned selectors remain mapped;
++- no `chapter-shot-b` remains; the shared-placement helper is present;
++- candidate and baseline Ruff pass with the existing agent venv;
++- candidate and baseline mypy pass with the existing agent venv;
++- `git diff --check` passes;
++- no pytest, collection, helper/fixture/function execution, service, build,
++  browser or full suite was run.
+diff --git a/tests/editing_conformance/test_commit_runtime_video_unplace.py b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+index 8e2d51862651b801159b7449e0848090e104d0fb..bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a
+--- a/tests/editing_conformance/test_commit_runtime_video_unplace.py
++++ b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+@@ -37,6 +37,7 @@
+     from astrid.sdk.timeline.commands import execute
+     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+     from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
++    from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
+ 
+     kind = request.param
+ 
+@@ -98,29 +99,36 @@
+             bundle = execute(bundle, [command]).bundle
+ 
+         append(capture_track_create(bundle, 'parent', input_parent['config']['tracks'][0]))
+-        for index, occurrence in enumerate(input_occurrences):
+-            shot_id = occurrence['shot_id'] if index == 0 else 'chapter-shot-b'
+-            append(capture_occurrence_create(
+-                bundle, occurrence['occurrence_id'], shot_id, name='Chapter One',
+-                track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
+-                duration=occurrence['duration_ms'] / 1000,
++        occurrence = input_occurrences[0]
++        append(capture_occurrence_create(
++            bundle, occurrence['occurrence_id'], occurrence['shot_id'], name='Chapter One',
++            track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
++            duration=occurrence['duration_ms'] / 1000,
++        ))
++        for track in input_internal['tracks']:
++            append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
++        for row in input_internal['clips']:
++            old_row = copy.deepcopy(row)
++            old_row['asset'] = old['asset']
++            append(capture_occurrence_add_media(
++                bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
++                verified_media=[old_verified],
+             ))
+-            for track in input_internal['tracks']:
+-                append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
+-            for row in input_internal['clips'] if index == 0 else input_internal['clips'][:1]:
+-                old_row = copy.deepcopy(row)
+-                old_row['asset'] = old['asset']
+-                append(capture_occurrence_add_media(
+-                    bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
+-                    verified_media=[old_verified],
+-                ))
++        source = commit(state, body(state, commands), 'setup-source')
++        bundle = bundle_from_document(source['data']['canonical_document'])
++        shared = capture_occurrence_place_shared(
++            bundle, OWNER, input_occurrences[1]['occurrence_id'],
++            on=input_occurrences[1]['placement']['start_ms'] / 1000,
++        )
++        shared_setup = commit(state, body(state, [shared]), 'setup-shared')
++        bundle = bundle_from_document(shared_setup['data']['canonical_document'])
+         placed = {'id': 'placed', 'clipType': kind, 'track': 'picture', 'asset': state.new['asset'],
+                   'at': 1, 'hold': 4, 'opaque': {'clear': None},
+                   **({'from': 0, 'to': 4, 'speed': 1} if kind == 'video' else {})}
+-        append(capture_occurrence_add_media(
++        placed_command = capture_occurrence_add_media(
+             bundle, OWNER, placed, state.new, verified_media=[state.verified],
+-        ))
+-        setup = commit(state, body(state, commands), 'setup')
++        )
++        setup = commit(state, body(state, [placed_command]), 'setup')
+         state.baseline = setup['data']['canonical_document']
+         real_selected = RequestCommitPort.selected_media
+ 
+
+codex
+Static verification is clean: candidate and frozen baseline Ruff/mypy both pass, both files parse and compile in memory, the assigned 12-selector map is intact, the target behavior AST is unchanged, and the fabricated child identity is gone. I’ve recorded the source-gate evidence and commit message; I’m doing the final scope/status checks now.
+exec
+/bin/bash -lc "set -o pipefail
+printf '%s\\n' '--- status ---'
+git status --short --branch
+printf '%s\\n' '--- changed paths ---'
+git diff --name-only
+printf '%s\\n' '--- diff stat ---'
+git diff --stat
+printf '%s\\n' '--- diff check ---'
+git diff --check
+printf '%s\\n' '--- forbidden topology/source audit ---'
+if rg -n 'chapter-shot-b|_publish\\(|publish_parent_composition|accepted history|sqlite|SQL' tests/editing_conformance/test_commit_runtime_video_unplace.py; then
+  echo 'unexpected audit match'; exit 1
+else
+  echo 'audit pass'
+fi
+printf '%s\\n' '--- allowed file audit ---'
+allowed='tests/editing_conformance/test_commit_runtime_video_unplace.py'
+actual="'$(git diff --name-only)
+if [ "$actual" = "$allowed" ]; then echo '"'allowed-scope pass'; else echo \"unexpected paths: "'$actual"; exit 1; fi
+printf '"'%s\\n' '--- evidence and commit message ---'
+sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-gate.md
+sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/commit-msg" in /home/user/work/wt/agt-D86-video12-return-0034
+ succeeded in 273ms:
+--- status ---
+## tl/agt-D86-video12-return-0034...hub/timeline/agent/tl/agt-F-video-unplace-2353
+ M tests/editing_conformance/test_commit_runtime_video_unplace.py
+--- changed paths ---
+tests/editing_conformance/test_commit_runtime_video_unplace.py
+--- diff stat ---
+ .../test_commit_runtime_video_unplace.py           | 44 +++++++++++++---------
+ 1 file changed, 26 insertions(+), 18 deletions(-)
+--- diff check ---
+--- forbidden topology/source audit ---
+audit pass
+--- allowed file audit ---
+allowed-scope pass
+--- evidence and commit message ---
+# F-D86 video12 first return — source gate
+
+Base author tree: `d2f8c02c6d12e87e4ce4f30cd39598e2d15fb9d8`
+
+Changed scope:
+
+- `tests/editing_conformance/test_commit_runtime_video_unplace.py`
+- `tests/editing_conformance/test_recipe_m2_video_unplace.py` (unchanged)
+
+Blobs:
+
+- baseline runtime test: `8e2d51862651b801159b7449e0848090e104d0fb`
+- candidate runtime test: `bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a`
+- retained recipe: `feecedd16dbd09aa09de0e5b651f8efec3e4e18c`
+
+The candidate removes the fabricated `chapter-shot-b`, commits the populated
+`occ-a` source through the real commit provider, creates `occ-b` with the
+registered `capture_occurrence_place_shared` command, reloads the canonical
+closure, and then captures the existing `occ-a` placement edit.
+
+Static controls:
+
+- both files parse and in-memory compile;
+- the target test function AST, decorator, parameterization, assertions and
+  refusal branch are unchanged;
+- all 12 assigned selectors remain mapped;
+- no `chapter-shot-b` remains; the shared-placement helper is present;
+- candidate and baseline Ruff pass with the existing agent venv;
+- candidate and baseline mypy pass with the existing agent venv;
+- `git diff --check` passes;
+- no pytest, collection, helper/fixture/function execution, service, build,
+  browser or full suite was run.
+test(timeline): repair F-D86 video12 shared fixture
+
+Rebuild the video unplace source through the registered shared-placement
+command and real Runtime commit boundary so both occurrences retain the
+original shared shot identity.
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/DONE && echo DONE-created && git status --short' in /home/user/work/wt/agt-D86-video12-return-0034
+ succeeded in 0ms:
+DONE-created
+ M tests/editing_conformance/test_commit_runtime_video_unplace.py
+
+codex
+## Report
+
+Implemented the D86 fixture correction in `test_commit_runtime_video_unplace.py`:
+
+- Removed fabricated `chapter-shot-b`.
+- Added genuine `capture_occurrence_place_shared` setup through real Runtime commit boundaries.
+- Preserved the recipe file and all 12 selectors/assertions.
+
+Checks:
+
+- Ruff candidate/baseline: passed.
+- Mypy candidate/baseline using `/home/user/work/venv-agent`: passed.
+- In-memory AST parse/compile and conservation checks: passed.
+- `git diff --check`: passed.
+- No pytest, fixture execution, service, build, or browser tests run per scope.
+
+No blockers. Fresh protected review remains the next step before merge. Commit message and `DONE` marker were written.
+tokens used
+204,480
+## Report
+
+Implemented the D86 fixture correction in `test_commit_runtime_video_unplace.py`:
+
+- Removed fabricated `chapter-shot-b`.
+- Added genuine `capture_occurrence_place_shared` setup through real Runtime commit boundaries.
+- Preserved the recipe file and all 12 selectors/assertions.
+
+Checks:
+
+- Ruff candidate/baseline: passed.
+- Mypy candidate/baseline using `/home/user/work/venv-agent`: passed.
+- In-memory AST parse/compile and conservation checks: passed.
+- `git diff --check`: passed.
+- No pytest, fixture execution, service, build, or browser tests run per scope.
+
+No blockers. Fresh protected review remains the next step before merge. Commit message and `DONE` marker were written.

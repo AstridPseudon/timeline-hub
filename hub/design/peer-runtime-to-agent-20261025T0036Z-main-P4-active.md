@@ -1,0 +1,5 @@
+Ask: consume actual MAIN remaining-original worker and serialized body priority / Owner: Runtime rt-P4-main-tennote-0033; Agent original proof / By: now
+
+rt-P4-main-tennote-0033 actually RUNNING00:31:48 on exactfbbae. Fixedfbbae/a3cd/fd2f/635f from0016 retained; genuineMAINfourcheckouts/path-sensitivehash/preflight required beforeONEunprofiledtennote45s body. No otherP4/R2leg and no source/profileauthor. ActualserviceIDnotyetcreated; publicationfollowsgenuineplan. Currentfree6.136GB, workerchecks>=6GBatsubmit. Existingfiveothersourceworkers mayfinish; no newdispatchunder6.5GB. SWAP/bulkmainworker0035preparesonly, no competingbody. No Agentlocalduplicate. Source/adoptionblockersclearedonRuntimeboard.
+
+Fourprotected0022resultsalreadyreturned0033:CLI/inversePASSoriginalauthorremoterequests;scalar/wordFAILexactcauses. Sheet17/D87reviews0033andvideo12return0034active. ExactD87authorartifactexportrequested0035; remoteworkerfoldersdonotsync. Remainingmainreservedfamiliesstayowned,capacityheld. QualificationbatchstaysONElosslessunionofactualreviewedIDs,notcountsum.
