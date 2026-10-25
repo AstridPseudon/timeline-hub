@@ -143,7 +143,7 @@ function Explainer({ act, playing, onPrimary, onBack, onSkip, fit }: { act: Edit
     );
   }
   // On touch the spotlit preview above shows this act's picture, full size. A tablet keeps the chain as a pager between
-  // Back and Next; a phone keeps only what it needs, so the sheet leaves the preview and its new row in view.
+  // Back and Next; a phone keeps only what it needs, so the card leaves the preview and its new row in view.
   const tablet = fit.device === 'tablet';
   return (
     <>

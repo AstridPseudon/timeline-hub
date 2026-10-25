@@ -16,7 +16,7 @@ import { NewChatMenu } from './NewChatMenu';
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { AgentIcon, agentNames } from './agentIdentity';
 import { AgentChatMessage, AgentChatToolGroup } from './AgentChatMessage.tsx';
-import { buildRenderedTurns } from './buildRenderedTurns';
+import { buildRenderedTurns, type RenderedTurn } from './buildRenderedTurns';
 import { buildTourTurns, tourActStartMs, type TourChatProgress } from './tourChatTurns';
 import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
 import { useChatScroll } from './useChatScroll';
@@ -161,7 +161,23 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
   );
   const renderedTurns = useMemo(() => buildRenderedTurns(turns), [turns]);
   const currentActStart = new Date(tourActStartMs(baseMs, act)).toISOString();
+  const turnAt = (item: RenderedTurn) => (item.kind === 'message' ? item.turn.timestamp : item.pairs[0].call.timestamp);
+  // The act's reply and actions come after its prompt; a phone's spotlight lights them alone.
+  const replyFrom = renderedTurns.findIndex((item) => turnAt(item) > currentActStart);
+  const conversation = replyFrom < 0 ? renderedTurns : renderedTurns.slice(0, replyFrom);
+  const reply = replyFrom < 0 ? [] : renderedTurns.slice(replyFrom);
   const { scrollContainerRef, scrollContentRef, onScroll } = useChatScroll(`tour:${runId}`, true, renderedTurns.length);
+
+  const renderTurn = (item: RenderedTurn) => (
+    <div
+      key={item.key}
+      className={cn(item.kind === 'message' ? 'flex flex-col gap-2.5' : 'space-y-2', reducedMotion && turnAt(item) >= currentActStart && 'animate-in fade-in duration-300')}
+    >
+      {item.kind === 'message'
+        ? <AgentChatMessage turn={item.turn} />
+        : <AgentChatToolGroup pairs={item.pairs} defaultOpen />}
+    </div>
+  );
 
   const composerText = beat === 'compose' && !sent ? script.prompt.slice(0, progress.typed) : '';
   // As in the real chat, the indicator gives way once the reply text starts.
@@ -211,23 +227,16 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
         )}
 
         <div ref={scrollContentRef} className="flex flex-col gap-2.5">
-          {renderedTurns.map((item) => {
-            const at = item.kind === 'message' ? item.turn.timestamp : item.pairs[0].call.timestamp;
-            return (
-              <div
-                key={item.key}
-                className={cn(item.kind === 'message' ? 'flex flex-col gap-2.5' : 'space-y-2', reducedMotion && at >= currentActStart && 'animate-in fade-in duration-300')}
-              >
-                {item.kind === 'message'
-                  ? <AgentChatMessage turn={item.turn} />
-                  : <AgentChatToolGroup pairs={item.pairs} defaultOpen />}
-              </div>
-            );
-          })}
-          {thinking && (
-            <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Thinking...
+          {conversation.map(renderTurn)}
+          {(reply.length > 0 || thinking) && (
+            <div className="flex flex-col gap-2.5" {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.chatReply }}>
+              {reply.map(renderTurn)}
+              {thinking && (
+                <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Thinking...
+                </div>
+              )}
             </div>
           )}
         </div>

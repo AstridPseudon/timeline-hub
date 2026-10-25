@@ -6,6 +6,7 @@ import {
   markEditorTourReady,
   markEditorTourSent,
   setEditorTourBeat,
+  showEditorTourBeat,
   startEditorTour,
 } from './editorTourStore';
 
@@ -37,5 +38,16 @@ describe('editorTourStore', () => {
 
     exitEditorTour();
     expect(getEditorTourState().status).toBe('idle');
+  });
+
+  it('keeps the shown beat apart from the beat until the runner shows it, and resets it on start', () => {
+    startEditorTour();
+    expect(getEditorTourState()).toMatchObject({ beat: 'welcome', shownBeat: 'welcome' });
+    setEditorTourBeat(1, 'compose');
+    expect(getEditorTourState()).toMatchObject({ beat: 'compose', shownBeat: 'welcome' });
+    showEditorTourBeat('compose');
+    expect(getEditorTourState().shownBeat).toBe('compose');
+    startEditorTour();
+    expect(getEditorTourState().shownBeat).toBe('welcome');
   });
 });

@@ -175,6 +175,10 @@ function transcript(): HTMLElement {
   return document.querySelector<HTMLElement>(editorTourSelector(EDITOR_TOUR_ANCHORS.chatTranscript))!;
 }
 
+function reply(): HTMLElement {
+  return document.querySelector<HTMLElement>(editorTourSelector(EDITOR_TOUR_ANCHORS.chatReply))!;
+}
+
 function advance(ms: number) {
   act(() => {
     vi.advanceTimersByTime(ms);
@@ -348,6 +352,9 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     expect(transcript().textContent).not.toContain(ACT1.reply.slice(0, 20));
 
     expect(screen.getByText('Thinking...')).toBeInTheDocument();
+    // A phone lights the act's answer alone: it starts as the indicator, under the prompt and outside it.
+    expect(reply()).toContainElement(screen.getByText('Thinking...'));
+    expect(reply()).not.toContainElement(within(transcript()).getByText(ACT1.prompt));
     expect(composer().placeholder).toBe('Type to queue next message...');
     advance(450);
     expect(transcript().textContent).toContain(ACT1.reply.slice(0, 20));
@@ -376,7 +383,10 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     for (const card of ACT1.toolCards) {
       expect(transcript().textContent).toContain(card.name);
       expect(transcript().textContent).toContain(card.detail);
+      expect(reply().textContent).toContain(card.name);
     }
+    expect(reply().textContent).toContain(ACT1.reply);
+    expect(reply().textContent).not.toContain(ACT1.prompt);
     expect(screen.queryByText('Thinking...')).toBeNull();
 
     act(() => setEditorTourBeat(2, 'compose'));
