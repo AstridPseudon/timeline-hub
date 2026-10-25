@@ -1,0 +1,3 @@
+parent: terminal NO-GO; readiness 1 passed; body 1 failed; Playwright timeout waiting for POST commit response after 90000ms; no body commit response observed; no retry.
+single: GO; readiness 1 passed; body 1 passed; transition None raw clear and guarded Undo completed.
+D90: not repeated.

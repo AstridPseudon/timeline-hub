@@ -1,0 +1,29 @@
+Corrected P2 native-reply successor origins and execution
+Captured: 2026-10-25 UTC
+
+Source checkouts were detached, clean, and verified by the source-preflight manifests:
+App         /home/user/work/wt/app-pin-24865fa2  normal home /home/user/work/wt/rt-P2-native-reply-resume-0217
+Agent       /home/user/work/wt/agt-pin-6386c700   normal home /home/user/work/agent
+Runtime     /home/user/work/wt/rt-pin-6634a17f    normal home /home/user/work/runtime
+Composition /home/user/work/wt/vw-pin-635f4de0    normal home /home/user/work/composition
+
+Qualified private profile origin:
+source ref: tl/rt-P2-main-dependency-2250, commit 5671cd8dbef709fb9068d6db11eef28313b4b102 (profile files materialized into this worker worktree only)
+execution root: /home/user/work/wt/rt-P2-native-reply-resume-0217
+profile script: /home/user/work/wt/rt-P2-native-reply-resume-0217/scripts/testing/d66-plain-stack-profile.mjs
+Vite config: /home/user/work/wt/rt-P2-native-reply-resume-0217/scripts/testing/d66-vite-profile.config.ts
+Node executable: /home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+Node invocation: --max-old-space-size=6144 --import tsx
+App dependencies: /home/user/work/app/node_modules (read-only shared dependency)
+Agent Python: /home/user/work/venv-agent/bin/python
+Runtime Python: /home/user/work/venv-runtime/bin/python
+Remotion project: /home/user/work/runtimes/agent-remotion-current
+
+Central service requests (serial, one body per authorized original):
+parent: rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-parent-1025022203-12208
+single: rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678
+old parent 24629: terminal, retained, not retargeted
+old single 11446: terminal, retained, not retargeted
+D90 request 28969: terminal, not repeated
+
+The preserved 0216 checkpoint stated that no old-tuple body had been submitted before the App0206 successor was consumed. The corrected tuple above was therefore used for both authorized originals.
