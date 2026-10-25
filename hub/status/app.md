@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T13:41:12Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
+<!-- app | 2026-10-25T13:45:20Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
 # app board, 2026-10-25T13:38Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -103,5 +103,5 @@ Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and 
 Next ready: Proof resolves normal Node prerequisite or explicitly returns cannot host; local D125 fallback brief prepared and source pins ready. App1337 closes only three prior bootstrap controls. No racing venue or extra original.
 live 1 / cap 6; ready-undispatched 0; core open: 2. Read-only normal bootstrap qualification1337 active. First D125 tour venue is pending Proof, with explicit fallback prepared. No local heavy body.
 Capacity: Corrected compact ran within current scope:0 scratch dirs,17 old logs gzipped,4 finished test dirs packed losslessly. Free5.364GB at13:14. Ended clean nonKEEP scan0. Heavy5.2GB and stop4.0GB; prior refused and dirty targets untouched.
-INBOX consumed through2216799 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
+INBOX consumed through2220387 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
