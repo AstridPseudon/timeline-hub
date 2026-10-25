@@ -26,6 +26,7 @@ from astrid.sdk.timeline.native_initialize import capture_initialize
 from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
 from astrid.sdk.timeline.native_occurrence_shared import foreign_shared_command
+from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_editing import add_track
@@ -100,18 +101,32 @@ def tiny_cut_parent(service, project):
     source = json.loads((Path(__file__).parents[1] / 'fixtures' / 'timeline_editing' / 'tiny.json').read_text())
     timeline = source['shots']['B']['internal_timeline']
     media_ids = {}
-    for asset in ('P', 'Q'):
-        result = service.ingest(
-            project, f'native-sheet-cut-{asset}'.encode(), media_type='application/octet-stream',
-            original_name=f'native-sheet-cut-{asset}', idempotency_key=f'native-sheet-cut-media-{asset}',
-        )
-        media_ids[asset] = result['data']['object_id']
+    media_files = {
+        'P': ('idea-1.wav', 'audio/wav', {'duration_seconds': 1}),
+        'Q': ('idea-1.png', 'image/png', {'width': 64, 'height': 64}),
+        'R': ('idea-1-alt.png', 'image/png', {'width': 64, 'height': 64}),
+    }
+    media_root = Path(__file__).parents[1] / 'fixtures' / 'storyboard-assets'
+    for asset, (filename, media_type, metadata) in media_files.items():
+        result = service.import_media(
+            project, (media_root / filename).read_bytes(), media_type=media_type,
+            original_name=filename, actor_id='native-sheet-current',
+            **metadata,
+            idempotency_key=f'native-sheet-cut-media-{asset}',
+        )['data']
+        selection = service.get_project_media_selection(project, {
+            'asset': result['variant_id'], 'generation_id': result['generation_id'],
+            'variant_id': result['variant_id'],
+        }, authorize=lambda: None)
+        verified = service.get_project_verified_media(project, selection, authorize=lambda: None)
+        assert verified['selection'] == selection
+        media_ids[asset] = verified['object_id']
 
     clips = copy.deepcopy(timeline['clips'])
     registry = copy.deepcopy(timeline['registry'])
-    for asset, entry in registry['assets'].items():
-        if asset in media_ids:
-            entry['media_id'] = media_ids[asset]
+    replacements = {f'm-{asset.lower()}': media_id for asset, media_id in media_ids.items()}
+    _replace_media_ids(clips, replacements)
+    _replace_media_ids(registry, replacements)
     tracks = copy.deepcopy(timeline['tracks'])
     payload = {
         'config': {
@@ -183,6 +198,13 @@ def _publish_current_candidate(runtime, timeline, payload, shots, internals, *, 
     publication = publish_authoring_candidate(candidate, writer, idempotency_key=key)['publication']
     assert publication['accepted_revision_id'] == publication['canonical_document']['parent_revision']['revision_id']
     assert publication['previous_revision_id'] == head['revision_id']
+    canonical, canonical_head = _public_document(service, runtime.project, timeline)
+    assert canonical_head == {
+        'revision_id': publication['accepted_revision_id'],
+        'publication_id': publication['receipt']['receipt_id'],
+    }
+    assert canonical == publication['canonical_document']
+    publication['canonical_document'] = canonical
     return publication
 
 
@@ -256,18 +278,82 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
                 collect(child)
 
     collect([parent, *shots, *internals])
-    replacements = {}
+    roles = {source_id: set() for source_id in media_ids}
+    video_registry_sources = []
+    for scope in [parent, *shots, *internals]:
+        payload = scope.get('payload', scope)
+        for entry in payload.get('registry', {}).get('assets', {}).values():
+            source_id = entry.get('media_id')
+            media_type = entry.get('type')
+            if source_id in roles and media_type in {'image', 'image/png'}:
+                roles[source_id].add('image/png')
+            elif source_id in roles and media_type in {'video', 'video/mp4'}:
+                roles[source_id].add('video/mp4')
+            elif source_id in roles and media_type in {'audio', 'audio/wav'}:
+                roles[source_id].add('audio/wav')
+            if source_id in roles and media_type in {'video', 'video/mp4'}:
+                video_registry_sources.append((entry, source_id))
+        for binding in payload.get('audio_bindings', []):
+            source_id = binding.get('object_id')
+            if source_id in roles:
+                roles[source_id].add('audio/wav')
+        for item in payload.get('items', []):
+            source_id = item.get('media_id')
+            if source_id in roles:
+                roles[source_id].add(
+                    'audio/wav' if item.get('metadata', {}).get('role') == 'voiceover'
+                    else 'image/png')
+        visual = payload.get('generation_inputs', {}).get('visual', {})
+        source_id = visual.get('object_id')
+        if source_id in roles:
+            roles[source_id].add('image/png')
+
+    media_root = Path(__file__).parents[1] / 'fixtures' / 'storyboard-assets'
+    video_path = Path(__file__).parents[1] / 'fixtures' / 'reshape' / 'hype_regression' / 'broll.mp4'
+    media_files = {
+        'image/png': ('idea-1.png', {'width': 64, 'height': 64}),
+        'video/mp4': (video_path, {'width': 1280, 'height': 720, 'duration_seconds': 12}),
+        'audio/wav': ('idea-1.wav', {'duration_seconds': 1}),
+    }
+    role_media = {}
+    verified_by_object = {}
     for index, source_id in enumerate(sorted(media_ids)):
-        ingested = runtime.service().ingest(
-            project, f'connected-occurrence-source-{index}'.encode(),
-            media_type='application/octet-stream',
-            original_name=f'connected-occurrence-source-{index}',
-            idempotency_key=f'connected-occurrence-source-{index}',
-        )
-        replacements[source_id] = ingested['data']['object_id']
-    _replace_media_ids(parent, replacements)
-    _replace_media_ids(shots, replacements)
-    _replace_media_ids(internals, replacements)
+        role_media[source_id] = {}
+        for media_type in sorted(roles[source_id]):
+            filename, metadata = media_files[media_type]
+            media_path = filename if isinstance(filename, Path) else media_root / filename
+            extension = media_path.suffix.lstrip('.')
+            imported = runtime.service().import_media(
+                project, media_path.read_bytes(), media_type=media_type,
+                original_name=f'connected-occurrence-source-{index}-{media_path.name}',
+                actor_id='native-sheet-current',
+                **metadata,
+                idempotency_key=f'connected-occurrence-source-{index}-{extension}',
+            )['data']
+            selection = runtime.service().get_project_media_selection(project, {
+                'asset': imported['variant_id'], 'generation_id': imported['generation_id'],
+                'variant_id': imported['variant_id'],
+            }, authorize=lambda: None)
+            verified = runtime.service().get_project_verified_media(project, selection, authorize=lambda: None)
+            assert verified['selection'] == selection
+            role_media[source_id][media_type] = verified
+            verified_by_object[verified['object_id']] = verified
+
+    primary_replacements = {
+        source_id: (role_media[source_id].get('image/png')
+                    or role_media[source_id].get('audio/wav')
+                    or role_media[source_id]['video/mp4'])['object_id']
+        for source_id in sorted(media_ids)
+    }
+    _replace_media_ids(parent, primary_replacements)
+    _replace_media_ids(shots, primary_replacements)
+    _replace_media_ids(internals, primary_replacements)
+    for entry, source_id in video_registry_sources:
+        video = role_media[source_id]['video/mp4']['object_id']
+        entry['media_id'] = video
+        entry['content_sha256'] = video
+
+    all_verified_media = list(verified_by_object.values())
 
     if identity_scope is not None:
         shot = shots[0]
@@ -330,9 +416,16 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     source_owner = 'occurrence:' + source_occurrence['occurrence_id']
     for track in internals[0]['payload']['tracks']:
         append_source(capture_track_create(source_bundle, source_owner, track))
+    for row in source_payload['clips']:
+        pin = verified_by_object[source_payload['registry']['assets'][row['asset']]['media_id']]['selection']
+        source_commands.append(capture_clip_add_media(
+            source_bundle, row, pin, verified_media=all_verified_media,
+        ))
+        source_bundle = execute(source_bundle, [source_commands[-1]], verified_media=all_verified_media).bundle
     source_session.commit_many(
         source_commands, idempotency_key='native-sheet-source-semantic',
         via='python', label='NativeSheet shared-source setup', merge='atomic',
+        verified_media=all_verified_media,
     )
 
     source_current, _source_head = _public_document(runtime.service(), project, source_timeline)
@@ -378,6 +471,21 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     destination.commit_many(
         track_commands, idempotency_key='native-sheet-destination-skeleton',
         via='python', label='NativeSheet destination setup', merge='atomic',
+    )
+    destination_bundle = destination._capture_bundle(destination._state())
+    managed_commands = []
+    for row in parent['payload']['clips']:
+        pin = verified_by_object[parent['payload']['registry']['assets'][row['asset']]['media_id']]['selection']
+        managed_commands.append(capture_clip_add_media(
+            destination_bundle, row, pin, verified_media=all_verified_media,
+        ))
+        destination_bundle = execute(
+            destination_bundle, [managed_commands[-1]], verified_media=all_verified_media,
+        ).bundle
+    destination.commit_many(
+        managed_commands, idempotency_key='native-sheet-destination-managed-media',
+        via='python', label='NativeSheet managed media setup', merge='atomic',
+        verified_media=all_verified_media,
     )
     foreign_commands = [
         foreign_shared_command(source_ref, source_occurrence['occurrence_id'], occurrence_id, on=on)
