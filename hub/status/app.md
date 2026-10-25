@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T00:24:22Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 0m -->
-# app board, 2026-10-25T00:23Z
+<!-- app | 2026-10-25T00:27:58Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 2m -->
+# app board, 2026-10-25T00:26Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -106,7 +106,7 @@
 
 | P2-placement-8259 | Attribute placement response timeout | Luna | Retained actual8259 | merged | app-A3-placement-8259-cause-2313 | Exact missing wiring proven: mounted generic handleFileDrop/dropAsset never reaches occurrenceAddMediaPort.97 controls/types PASS; no source change. | Evidence only |
 
-| P2-popup-ADD-current | Qualify strict popup ADD | Luna; service | Actual17228 terminal | gated:source-fix | Launcher0002; actual17228 | NO-GO259s; readiness1 PASS. Missing shared occurrence group356 via assertReloadUndo850. Finite attribution next; cause unknown. | Appa317 |
+| P2-popup-ADD-current | Qualify strict popup ADD | Luna; service | New Runtime a3cd ready; asset20057 owns body slot | ready | Launcher0002; actual17228 | NO-GO259s; readiness1 PASS. Missing shared occurrence group356 via assertReloadUndo850. Finite attribution next; cause unknown. | Appa317 |
 
 | P2-popup-7872 | Exact parent canonical expectation | Luna independent | Independent2309 PASS | merged | app-P2-popup-parent-oracle-review-2309 | Normal merge32036; exact raw-before parent wrappers. Whole document/reload/undo strict; 2 Node, 3 types/lint PASS; ledger logged. | Home32036b3cc0 |
 
@@ -133,12 +133,14 @@
 
 | P2-drop-geometry | Align intended file drop start | Luna; independent | Independent0014 PASS | merged | Author0004; review0014 | Independent6 real coordinator plus42 neighbors/types/lint PASS; protected six exact. Normal merge complete; browser proof owed. | Home50cfedd889 |
 | U4p-provider | Adopt full provider freshness release | Luna | Runtime a3cd released | merged | app-U4p-provider-release-adoption-0008 | Normal tools,8 strict,15 vendor and14 mappings PASS; protected six exact. Only lock/install manifest. | Home fd2f843a69 |
-| P2-element-provider | Qualify current element on provider fix | Luna; service | Actual8897 terminal | gated:source-fix | Launcher0014; facts0019 | NO-GO201s. Native/readiness PASS; original applied412 failed5s. New a3cd release did not clear wait; eventual outcome unknown. | Appfd2f /Runtime a3cd |
+| P2-element-provider | Qualify current element on provider fix | Luna; service | Actual8897 terminal | blocked:runtime | Launcher0014; facts0019 | NO-GO201s. Native/readiness PASS; original applied412 failed5s. New a3cd release did not clear wait; eventual outcome unknown. | Appfd2f /Runtime a3cd |
 
 | P2-ADD-17228 | Attribute missing group after reload | Luna | Actual17228 terminal | merged | app-P2-ADD-17228-reload-cause-0015 | Initial canonical and history PASS. Two internal revision GETs pending 10.1s after reload; later undo NOTREACHED. No App fix justified. | Evidence only |
 
 | P2-element-8897-facts | Return exact request phases and dump | Luna read only | Actual8897 terminal | merged | app-P2-element-8897-safe-facts-0019 | 123 records, no truncation; element ordinal3 dump validates at173. Provider has no observed end; accept/receipt/response unknown. Runtime peer0023 sent. | Evidence only |
 | P2-asset-geometry | Qualify corrected intended drop start | Luna; service | Preflight6582 PASS | doing | Launcher0019; actual20057 | Submitted00:22:56 on50cf/0d142/a3cd/635f. One original; preserve same ID and all outputs. | App 50cf |
+
+| P2-placement-geometry | Prove embedded drop intended start | Luna | Actual8259 and helper source | doing | app-P2-placement-drop-geometry-0024 | Embedded helper still uses unadjusted pointer. Real coordinator proof first; minimal strict setup correction only if proved. | Source pending |
 
 Integration: App 50cfedd889 adds independently reviewed drop geometry330f over fd2f843a69, which merges normal Runtime a3cd provider adoption over bulk2341, SWAPa317, inspectc07 and tour364f. Adoption normal tools and exact protected six PASS. Runtime release a3cd has independent2346 security PASS; no further source approval wait.
 
@@ -146,12 +148,13 @@ core open: All eight isolated P2 gestures remain unqualified. Actual17228 ADD fa
 regressions: No browser closure from source controls. D69 complete at recorded source. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Final cut — all eight isolated P2, one App full tour, pinned final P1–P5/core and genuine installed render. Runtime coordinates matrix and ZIP. Geometry independent PASS copied verbatim into the existing App ledger.
+Blockers: Runtime source — new-release element8897 still failed original5s. Exact ordinal3 dump and123 phase records sent in peer0023; next source decision belongs to Runtime.
 Blockers: Runtime venue — next SWAP/bulk fd2f/0d142/a3cd/635f requested. Existing0006 parent/single364f comparison owns its fixed plans; wait actual IDs/results.
-Next ready: Asset20057 same-ID terminal, then placement on same geometry tuple if prior boundary cleared. Newsource ADD follows. Main SWAP/bulk requested; preserve0006 parent/single. Main parent/single current qualification remains peer-owned. No P3, D79 or E work.
+Next ready: Asset20057 terminal. Placement source0024 independent review on completion; one newsource ADD ready after body slot. Main SWAP/bulk requested; preserve0006 parent/single. Main parent/single current qualification remains peer-owned. No P3, D79 or E work.
 
-live 2 / cap 2 source; ready-undispatched 0. Dispatcher00:20:47 had2; facts0019 completed00:23, launcher0019 finishing handoff. Sole App body20057 running. No independent ready source row waits.
+live 0 / cap 2 source; ready-undispatched 0. Dispatcher00:24:22 showed0 just before geometry0024 started; its actual running marker is present. Sole App body20057 running. All independent ready source rows assigned.
 Capacity: Current and run tuples retained. Read-only scan found zero eligible finished clean non-KEEP trees; two old U3 dirty guarded trees preserved. Prior refused dirty U3, orphan and compact routes stay stopped; no retry.
-Disk: 6.470GB at00:21 during asset preparation; owner orphan release on host consumed as capacity fact. App critical source/gate floor5.2GB; stop4.5GB non-element first; one App heavy body at a time below7.5GB. Noncritical floor7.5GB; D85 source cap6 only above6.5GB.
+Disk: 6.244GB at00:25 during asset20057 and placement source0024. Owner orphan release on host consumed as capacity fact. App critical source/gate floor5.2GB; stop4.5GB non-element first; one App heavy body at a time below7.5GB. Noncritical floor7.5GB; D85 source cap6 only above6.5GB.
 Safety: No new safety or permission refusal. No direct product/test/pin edits by manager.
 Inbox consumed through1824835 bytes; Runtime0006 actual owner consumed; owner00:12 source cap6 above6.5GB consumed; Runtime a3cd release clears source wait. Current contract request/reply sections, PLAN/common, header D85/D86 and Runtime board read.
 Evidence: [Bulk independent PASS](../../workers/app-A3-bulk-none-review-2355/report.md), [12239 no POST](../../workers/app-A3-mounted-12239-return-sol-2353/report.md), [U4p adoption](../../workers/app-U4p-provider-release-adoption-0008/report.md), [current ADD plan](../../workers/app-P2-popup-reviewed-submit-0002/submission/p2-popup-add/p2-popup-add-submit-plan.json).
