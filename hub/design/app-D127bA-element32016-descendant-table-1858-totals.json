@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "status": "EXACTMISSING",
+  "sample_population": 828,
+  "lost_samples": 15,
+  "retained_events": 57,
+  "events_seen": 57,
+  "retained_thread_dumps": 5,
+  "retained_stack_frame_records": 65,
+  "exact_sample_chains": 0,
+  "authentic_full_counters": false,
+  "descendant_row_count": 0,
+  "edge_row_count": 0,
+  "inclusive_sample_sum": null,
+  "self_sample_sum": null,
+  "edge_sample_sum": null,
+  "arithmetic": {
+    "sample_population_reconciles": true,
+    "lost_samples_separate": true,
+    "inclusive_overlap_sum_not_forced_to_population": true,
+    "edge_sum_available": false
+  },
+  "coverage": {
+    "exact_chain_coverage": "0/828",
+    "thread_dump_coverage": "5 thread dumps / 65 frame records",
+    "ranking_exact_available": false
+  },
+  "unavailable": [
+    "inclusive_counts",
+    "self_counts",
+    "edge_counts",
+    "top25_ranking",
+    "outside_root_bin",
+    "truncated_chain_bin",
+    "per_sample_root_membership"
+  ]
+}

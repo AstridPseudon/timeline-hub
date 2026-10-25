@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "status": "EXACTMISSING",
+  "scope": "descendant_frames_under_timeline_commit",
+  "root": {
+    "file": "<runtime>/server.py",
+    "function": "_timeline_commit",
+    "line": 332
+  },
+  "population": {
+    "sample_population": 828,
+    "lost_samples": 15,
+    "retained_events": 57,
+    "events_seen": 57,
+    "retained_thread_dumps": 5,
+    "retained_stack_frame_records": 65,
+    "exact_sample_chains": 0,
+    "authentic_full_counters": false
+  },
+  "rows": [],
+  "unavailable": [
+    "descendant_inclusive_samples",
+    "descendant_self_samples",
+    "top25_rank",
+    "per_sample_frame_membership",
+    "sample_chain_order",
+    "self_frame_identity_per_sample"
+  ],
+  "method": "The current request-1 retained artifact has lifecycle events and thread-dump text, not sampled call chains or authentic full counters. The existing 828-sample top-frame summary was not used to reconstruct descendants. No frame or count was inferred from a thread dump, top summary, filter, invocation count, or wall time. Therefore exact descendant rows are unavailable and the finite exact row set is empty. Module paths, if available, would be normalized to Runtime/Agent/stdlib/package-relative paths only; private host/project prefixes would be removed. Frame identities and edge identities would be deduplicated once per sample before inclusive counting; the innermost relevant frame would provide self count."
+}

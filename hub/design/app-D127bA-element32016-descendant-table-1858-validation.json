@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "status": "PASS_WITH_EXACTMISSING",
+  "checks": {
+    "json_parse": "PASS",
+    "sample_population": "PASS_828",
+    "lost_samples_separate": "PASS_15",
+    "edge_arithmetic": "PASS_EMPTY_EXACTMISSING",
+    "coverage_rank_descending": "PASS_EMPTY_EXACTMISSING",
+    "no_impossible_counts_over_828": "PASS",
+    "privacy_projection": "PASS",
+    "source_sha256_unchanged": "PASS",
+    "source_modes_unchanged": "PASS",
+    "output_directory_mode": "PASS_0700",
+    "safe_output_modes": "PASS_0600"
+  },
+  "row_counts": {
+    "descendants": 0,
+    "edges": 0
+  },
+  "method": "Validation covers JSON parsing, the separately reported 828 sample population and 15 lost samples, empty-row arithmetic, descending-rank vacuity, count ceilings, public-field allowlisting, and private custody hash/mode checks. Exact descendant and edge counts remain unavailable because no sampled chains or authentic counters were retained."
+}

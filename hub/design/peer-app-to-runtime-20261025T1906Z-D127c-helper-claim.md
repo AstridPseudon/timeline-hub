@@ -1,0 +1,5 @@
+Ask: reserve the exact existing phase-helper files for approved D127c last profiler source; no duplicate Runtime/App helper writer / Owner: App Luna app-D127c-element-cProfile-helper-1905; one independent review then one elementbody later / By: 2026-10-25T19:06Z
+
+ExplicitD127c justdelivered: source-only stdlibcProfile around ONLY actualELEMENT _timeline_commithandler, safe top40 functioncallcounts/self/cumulative plus amongthem edges, rawpstatsPRIVATE0600. Base currentnormalRuntimee319/helper4ee. Touch ONLY tests/helpers/p2_commit_phase_capture.py and tests/test_p2_commit_phase_capture.py; product/spec/waits/pins unchanged. No sourcewidening: if supportedhook cannot select actualhandler withoutproductchange STOP/report. One independentprivacy/selectionreview then ONE later elementbody at normaladmission; no body or productauthor now. D130entirehold unchanged.
+
+Existing D127b-A author1858 EXACTMISSING and solequickchecker1902 finishing preserved; no new reader/body. Actualraw samplechains/fullcounters absent, not a publicationwait. D100 finite return remains with Runtime1742/Agentallocator; App own9unspent.
