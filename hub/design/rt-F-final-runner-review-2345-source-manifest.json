@@ -1,0 +1,141 @@
+{
+  "allowed_delta_check": true,
+  "candidate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-runner-inventory-return-2342/evidence/candidate",
+  "candidate_file_count": 66,
+  "changed_files": [
+    {
+      "path": "__pycache__/run-final-services.cpython-313.pyc",
+      "predecessor": "ef0330a746ab80a67d1c3a98ffd6626194dde9eb8b10c3c89b278de9d9116fc7",
+      "successor": "5616892532e5204a8ec203b02511110dad3fbdcabc2214ac1791a96c94c345f2"
+    },
+    {
+      "path": "run-final-services.py",
+      "predecessor": "a2d463b32c9a1e13be1c0c7f1c003867094554b3a9a78ed6c332d273e03ce963",
+      "successor": "49df8dfe2a5f889c49894c1e302181ca893547e74d0943abba7faf4c7e36c8c2"
+    }
+  ],
+  "matrix": {
+    "all_byte_exact_vs_predecessor": true,
+    "file_count": 41,
+    "files": {
+      "d59-final-matrix/README.md": "3fe3aa4bede266e29232a6b54eb65edab973175763e4f2d29290b5cfbb3e7970",
+      "d59-final-matrix/__pycache__/run-final-matrix.cpython-313.pyc": "d7aaec0e36f7a2315a4048c1b84f107bddeb2fc6d1e911b2d99195f35ed28d3f",
+      "d59-final-matrix/__pycache__/stubcontrols.cpython-313.pyc": "e35e84d809e9ed05ca3ac514a2d924f782936ccb7e16f95f6f04a5979133b838",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-current-live-five-row.txt": "db3ee5aac42aa0be7e98a5bd7b8a0bf2cd87c228db3806aaf53d187b92ea7f59",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-final-p4-pending-input.env": "a700903f5274c674ecd5ee31d8e0fff0c02f41b538e30afebb2398c3c831c974",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-final-p4-three-selector.command.sh": "08ce890cc876acf3686b164f7a02dc7064f16fa8fea98914cfbcc25b0169c748",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-final-p4-three-selector.membership.tsv": "66ba84d59cf704e567db8afa63ae72f1b5563f296d6ebb40b35a74d7492e0c8e",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-matrix-handoff.md": "3f7b5f6b638f5392f802196e00f1e41a3dd44e35a0489ee313c712af1de14348",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-missing-files.txt": "6470a66c616f388031428c8a56e39b57e8a1c6a08415bf96324bf8d6cbbf7708",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-normalmerge-applicability.txt": "d752299fe0e24d6085ce4d6771a9169ee514e9b946798c71e3b16b88ba06a947",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-sha256manifest": "c1663840d1411fb2c80edcee0cac0c3af9d5706e0a3f0a10537647d67455ec88",
+      "d59-final-matrix/agent2236/handoff-agt-F-matrix-2236-source-identity.json": "83d48108e5dabcba0e76d98910eedb2f2e8a2eeb9c4a023030299c274fc22f52",
+      "d59-final-matrix/agent2236/prepared-1755/final-core-collection.json": "3314895c1995e61d3235424728690888aeff0adb94cec82cef15c03e34ac0388",
+      "d59-final-matrix/agent2236/prepared-1755/final-core-pending-input.env": "ca125d7e5b2018cf61e2d488a081ad664ba1c976c84d25890cd141f01a407abe",
+      "d59-final-matrix/agent2236/prepared-1755/final-core-prep-dry-2.command": "e3b6f064af23004effe139af86af2768b669a8fa7cc19566737b744d3d26489b",
+      "d59-final-matrix/agent2236/prepared-1755/final-core-prep-dry-2.manifest": "be8760dfdf3574b3079e53e8b65998ef02c1175e1af02d2054898cba40c101ca",
+      "d59-final-matrix/agent2236/prepared-1755/final-core-prep-dry-2.result": "b99bea235107702c2bb978c401257fdafc1c94e2821c2f0778f18aab43aa7926",
+      "d59-final-matrix/agent2236/prepared-1755/final-core-prep-poison.result": "3b13b4b44a419372f46e5cf3e4d9433a109399999ef519ffd2b6f6c54af2b11d",
+      "d59-final-matrix/agent2236/prepared-1755/final-core-row-1755.txt": "d5c595d6afe776ab7e8f94b5675ec4e48df9a8f3c483b43bac13085803e7cfb2",
+      "d59-final-matrix/agent2236/prepared-1755/source-collection.sha256": "5c9fc7390634b3ce66334a55a449da01979d4f77684f7267a30ac10e9e106e5e",
+      "d59-final-matrix/agent2236/prepared-1755/worker-report.md": "0220ea6c2421eaeed5f4167212ad70723afde39228f0f748e51b6ba254503c25",
+      "d59-final-matrix/agent2236/source/install_p4_launcher.py": "46595ea2b6e0738736ebf181f731930144737ac8d39902e4903b94e23c2c94f2",
+      "d59-final-matrix/agent2236/source/p4-d73-pinned-launch.sh": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+      "d59-final-matrix/commands.sh": "ff23c02659a163a63c8e84a5909a5858948c0297ab5080e6e20775e7fc1e50bf",
+      "d59-final-matrix/final-source-tuple.template.json": "f2e5ee57ffaed096c1a984e26fa0f63df1a6b385b588dadd6fb1c557e688106e",
+      "d59-final-matrix/inherited-d84/__pycache__/acceptance-d73.cpython-313.pyc": "2d6b1e682fb20c1c71d16dc42cc30e8a87e9e4e4dc1c15978b7915fe97664395",
+      "d59-final-matrix/inherited-d84/__pycache__/install-final-services.cpython-313.pyc": "69c865b26d36375f083e5e4ac7d07ddbb48c28632ae9ef759b135b1d79d9b154",
+      "d59-final-matrix/inherited-d84/__pycache__/run-final-delivery.cpython-313.pyc": "c3d1995aafba95b2440afaa35d1eb6cf6583f5bd16c830a572b3b119c7178f7a",
+      "d59-final-matrix/inherited-d84/__pycache__/run-final-services.cpython-313.pyc": "d538e1ba5f89eb20e8ae26dde478e3d2194f9b21552242e470f9cc636ea9e08e",
+      "d59-final-matrix/inherited-d84/__pycache__/submit-final.cpython-313.pyc": "3e7008f069bca23b5e1b955cee241e57d041ca479b7f3f59bd5073900775abae",
+      "d59-final-matrix/inherited-d84/acceptance-d73.py": "08d69d10a58c8b65ded99165054e6f11e42fcaf9c9c9471b57cdaa2d2d81d8f8",
+      "d59-final-matrix/inherited-d84/core-inventory.json": "9705979776ebb9182d986e9364a29911fafd04227e817f5f19346e8fd116bb97",
+      "d59-final-matrix/inherited-d84/install-final-services.py": "6e7eafca3f31c559e07d85a69ef9ac1f785679f727dad831b005a9cb9c6e01f1",
+      "d59-final-matrix/inherited-d84/run-final-delivery.py": "cf714b7d6105ddf1bd752f311bb2982896e5b67e4988b4096417e6b30f8237f8",
+      "d59-final-matrix/inherited-d84/run-final-services.py": "05c5662aa14c3bb288f672421d448335a0b10df659fd58439e6abd296c4c3a97",
+      "d59-final-matrix/inherited-d84/runtime-final-service-rows.txt": "be2572c2b4ea888237a8696c15e68505010da4453df93aba9ff876b724e2553a",
+      "d59-final-matrix/inherited-d84/submit-final.py": "345c8663dde1379264f913e0b72657dbe0d326aac13571dd5cc1e0700087bcca",
+      "d59-final-matrix/inherited-d84/submit-packet.md": "450f67c20acbf5dee1ec229a150ca35e1ea438e432145f66a1c6e9958cd7ca93",
+      "d59-final-matrix/run-final-matrix.py": "3e9c15cb535fc567768d920d2f9c4fddbdbe51800a44334486dc400e14c47f44",
+      "d59-final-matrix/source-hash-manifest.json": "01ddd1522cc42c3be60699ed6eac502afa6f37b58f8035d711f5971d222fe9f2",
+      "d59-final-matrix/stubcontrols.py": "fd8f0434b78e3daae85850aa21762004a5b3f7c545b49324d5164398cfaad138"
+    }
+  },
+  "outside_file_count": 25,
+  "outside_files": {
+    "__pycache__/acceptance-d73.cpython-313.pyc": "06b0956c8e11430f8e2d2ec0d912ed1a630ffb9a86b375a53cd4adcee90c86bc",
+    "__pycache__/install-final-services.cpython-313.pyc": "db850c35fb6aabed1d1ea795fc7339a908e48305cd410aa69008b1c41b0c8e0d",
+    "__pycache__/run-final-delivery.cpython-313.pyc": "3852d229d4c1ddeb24efe7359eac2b8b9c58bc84e7ab8621c2b17ce8a44230c5",
+    "__pycache__/run-final-services.cpython-313.pyc": "5616892532e5204a8ec203b02511110dad3fbdcabc2214ac1791a96c94c345f2",
+    "__pycache__/submit-final.cpython-313.pyc": "bf550cd78089ff9416efbff06999939db4bf992fe36118170e846851d417ef77",
+    "acceptance-d73.py": "08d69d10a58c8b65ded99165054e6f11e42fcaf9c9c9471b57cdaa2d2d81d8f8",
+    "core-inventory.json": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+    "install-final-services.py": "456e7dc506d13fb713d6085207e842e364fb68afddfc96106c2f6bfaf17f89ce",
+    "release-7070-closure-inventory.json": "7ff28625a73301b3bc3621a111fd7c4d369f99d2e22a1c0b8ecfa63a6338a661",
+    "run-final-delivery.py": "a8a3f2328cce11dde7efead5a76bc78e92df21830c4aeb0ccdeae1c179bf1798",
+    "run-final-services.py": "49df8dfe2a5f889c49894c1e302181ca893547e74d0943abba7faf4c7e36c8c2",
+    "runtime-final-service-rows.txt": "5c0426e7fb999fdb789c230061c07e3d23977068c5cb4d119a26ed7f026f25a9",
+    "source-inputs/__pycache__/test_timeline_command_output_manifest_auth.cpython-313.pyc": "db7ebc0b724edea383d298e1aee35278a573700a89d65beb73d00c86eb49bf07",
+    "source-inputs/__pycache__/test_timeline_intermediate_image_auth.cpython-313.pyc": "4b7cd6a87ac2cb5c9aaa96d7e33a8b79111d7816e986387f5e90f5ac0d9b0344",
+    "source-inputs/__pycache__/test_timeline_popup_fork_authority.cpython-313.pyc": "5564f6aafbe5052c9aed472776ec4dd099208dbcb27b2229e35dae233f8b9f32",
+    "source-inputs/__pycache__/test_timeline_schema_resolution.cpython-313.pyc": "0605d8a8cc6a6c112f69bcdc3a5c02a2dffa408d1b7a664923d3b1fa83c165c0",
+    "source-inputs/__pycache__/test_timeline_validation_cost.cpython-313.pyc": "c394b9c0c0a83c943c5a42181434d3ebbab5da047cc512a866a088b73f527391",
+    "source-inputs/test_timeline_command_output_manifest_auth.py": "e516d3280a1ed3606361e41c06add6b0395751b3015f259e57b5333de9590e81",
+    "source-inputs/test_timeline_intermediate_image_auth.py": "90c09fa44d098333e6b7dcbbd20ed0af5c653ebd5c37f7667d0d9883e18ad6c1",
+    "source-inputs/test_timeline_missing_observation_diagnostics.py": "e2c82f375397a7bc64c198b61b06561e2d11e7fda205ed4aeb2f721af117dc4e",
+    "source-inputs/test_timeline_popup_fork_authority.py": "16dc1297695bf9203601ff1063953b71c19728c15843c62274f3827683492468",
+    "source-inputs/test_timeline_schema_resolution.py": "2283e7169f4f82dafeec0b8d5affd9dca2bf65639dad5a46004d7db27b0d75ae",
+    "source-inputs/test_timeline_validation_cost.py": "68e27d3a3b703f7c9feb29802078a29ad4840da57f40775d79bcad17e386eeb2",
+    "submit-final.py": "345c8663dde1379264f913e0b72657dbe0d326aac13571dd5cc1e0700087bcca",
+    "submit-packet.md": "1f16cf0c4339cebeb88c398a6d20952867b7b18282fa86651f83bfcaf65cb4f3"
+  },
+  "pending_and_shapes": {
+    "c0_schema_sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
+    "gate_tuple": "PENDING",
+    "non_runner_candidate_files_byte_exact": true,
+    "tuple": "PENDING"
+  },
+  "predecessor_file_count": 66,
+  "route_binding": {
+    "delivery_caller_core_runner_sha256": "a2d463b32c9a1e13be1c0c7f1c003867094554b3a9a78ed6c332d273e03ce963",
+    "installer_core_runner_expected_sha256": "5ab35ec0ed5e9456b7cdcf7b5e5486415544eac3d7fe9283a8cd7a54ce14ca9c",
+    "service_rows_bind_predecessor_runner": true,
+    "service_rows_sha256": "5c0426e7fb999fdb789c230061c07e3d23977068c5cb4d119a26ed7f026f25a9",
+    "successor_runner_is_bound_by_rows": false
+  },
+  "runner": {
+    "inventory_sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+    "inventory_target_count": 101,
+    "inventory_unique_count": 101,
+    "runtime_files_present": true,
+    "sha256": "49df8dfe2a5f889c49894c1e302181ca893547e74d0943abba7faf4c7e36c8c2"
+  },
+  "source_repositories": {
+    "agent": {
+      "head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "root": "/home/user/work/agent",
+      "status": "",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7"
+    },
+    "app": {
+      "head": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+      "root": "/home/user/work/app",
+      "status": "",
+      "tree": "0748df404125114a0f68b701fa76f43abd3fc79a"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "root": "/home/user/work/composition",
+      "status": "",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "head": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+      "root": "/home/user/work/runtime",
+      "status": "",
+      "tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef"
+    }
+  },
+  "status": "FAIL",
+  "task": "rt-F-final-runner-review-2345"
+}
