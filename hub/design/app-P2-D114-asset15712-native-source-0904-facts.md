@@ -1,0 +1,7 @@
+# asset15712 facts
+
+- The immutable run had readiness PASS and one original FAIL at the native Undo reply comparison (`three-products.p2-elements-assets.spec.ts:655`, registerAsset case `:1179`). Both commit POSTs were observed as HTTP 200; both replies were `accepted`. Four authenticated history GETs and twenty canonical readback GETs were observed as HTTP 200.
+- Exact differing reply field: `data.steps[0].dependencies`. The App oracle expected `{kind: "scope", ref: "parent", path: []}` for `parent/collection:asset`; the saved authoritative reply contained field guards `{kind: "field", ref: "parent", path: ["registry"]}` and `{kind: "field", ref: "parent", path: ["config", "registry"]}` (the latter absent).
+- First production owner of this ABI is Agent `_commit_patch.py:542-546` (`native_asset_reads`), independently enforced by Runtime `timeline_commit_auth.py:399-402`. This is App expectation drift, not evidence of a product defect.
+- The authorized App correction mirrors that source rule in `nativeAssetReads`, updates the existing independent asset transcript, and leaves all other request/reply/receipt/history/canonical/reload/Undo predicates intact.
+- Old/new file hashes and verification results are in `asset15712-facts.json`. The exact semantic-oracle command was attempted but could not resolve the pre-existing missing `@astrid/packs` package; no install or shared dependency mutation was performed.

@@ -1,0 +1,75 @@
+{
+  "disposition": "corrected App expectation",
+  "source_scope": [
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "tests/e2e/local/support/p2-elements-assets-receipt.test.mjs"
+  ],
+  "observed_run": {
+    "readiness": "PASS",
+    "original": "FAIL",
+    "first_unmet_predicate": "three-products.p2-elements-assets.spec.ts:655 (invoked by the registerAsset case at :1179)",
+    "http": {
+      "commit_posts": 2,
+      "commit_statuses": [200, 200],
+      "history_gets": 4,
+      "history_statuses": [200, 200, 200, 200],
+      "canonical_gets": 20,
+      "canonical_statuses": "all 20 observed 200"
+    },
+    "undo_reply_status": "accepted",
+    "independent_readback": "canonical readback completed with HTTP 200 responses and was captured for comparison",
+    "authenticated_history": "history reads completed with HTTP 200 responses; the reply receipt result and data were equal in the saved response"
+  },
+  "mismatch": {
+    "classification": "App test-oracle source drift; no product defect established",
+    "reply_field": "data.steps[0].dependencies",
+    "expected_old": [
+      { "kind": "scope", "ref": "parent", "path": [] }
+    ],
+    "actual_saved_reply": [
+      { "kind": "field", "ref": "parent", "path": ["registry"], "state": "present" },
+      { "kind": "field", "ref": "parent", "path": ["config", "registry"], "state": "absent" }
+    ],
+    "typed_difference": "one broad scope dependency was expected; the authoritative native asset collection capture expands it to two physical parent registry field guards"
+  },
+  "independent_source_owners": [
+    {
+      "repo": "Agent",
+      "location": "astrid/sdk/timeline/_commit_patch.py:542-546",
+      "rule": "parent/collection:asset is captured through native_asset_reads"
+    },
+    {
+      "repo": "Runtime",
+      "location": "runtime_protocol/timeline_commit_auth.py:399-402",
+      "rule": "validate_step independently requires each native_asset_reads capture"
+    }
+  ],
+  "change": {
+    "spec_location": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:204-213, :371-373",
+    "support_location": "tests/e2e/local/support/p2-elements-assets-receipt.test.mjs:18 and :418-419",
+    "rule": "derive parent registry and config.registry field guards from the source ABI; preserve all other predicates"
+  },
+  "hashes": {
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": {
+      "old": "777966e38459f13dec60a180253f3ed88e83995eee3fdbf81570a86946e78e7e",
+      "new": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"
+    },
+    "tests/e2e/local/support/p2-elements-assets-receipt.test.mjs": {
+      "old": "8247e9a60d4c46c8ada16dbbf330fd93d8f01d7c59421a11e4e5d7347b7c2f8f",
+      "new": "a09328297f7a90d34c5c135bc4e8879d910f36f6be2963173769c9b06ddd671e"
+    }
+  },
+  "verification": {
+    "node": "v22.22.0 (Node 20 executable was not present)",
+    "receipt_and_neighbours": "PASS: 4 file runner; 4/4 file-level subtests, with 138/138 inner receipt-oracle tests",
+    "semantic_oracle_exact_command": "BLOCKED: ERR_MODULE_NOT_FOUND for @astrid/packs from astrid-element-catalog.ts; no install or shared-dependency mutation performed",
+    "typescript": "PASS: tsconfig.json, tsconfig.app.json, tsconfig.node.json sequentially under /home/user/work/.app-tsc.lock",
+    "eslint": "PASS: exact two changed paths, --max-warnings 0",
+    "diff_check": "PASS"
+  },
+  "protected": {
+    "D113_two_line_modal_close_change": "preserved",
+    "other_files": "unchanged",
+    "wrong_but_valid_counterexamples": "preserved and passing"
+  }
+}
