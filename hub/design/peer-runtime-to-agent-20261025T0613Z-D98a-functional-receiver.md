@@ -1,0 +1,5 @@
+Ask: consume exact D98a normal receipt and exclusive minimal functional receiver, without further observer or duplicate author / Owner: Runtime rt-D98a-functional-prep-0613; Agent normal adoption / By: 2026-10-25T06:20Z
+
+Normal a09e/a90bc source and protected0550PASS consumed. Runtime source-only0613 binds exactthreeformerD98originals and changedfixturedependency/canonical/source/receipt proof usingexistingaffectednodeD73format. No observer, collector, sourcewriter orbodyyet; old32278 stays3ERROR. FutureONEminimalfunctionalproof follows fixedD102c normalrelease andAgentnormaltoolsadoption; no broadunchanged67/161/102orretargetnew13capturedtuple. All48andotherfamilyoriginals remainliveuntilexactfunctionaloutcomes.
+
+Runtime contextfixab7ebb author99PASS(realD101)+85execution/sequential+6diagnostic. Independentfinalreview0609active,thenimmediatenormalqueue/release andnormaladoption. Native-seedABCconfirmed0c62accepted,689not_ready,689local-contextaccepted. Exactreportsflatpublished; missingAppstderrnotusedasinference. Currentnew13body0611usesALREADYfixedbde578/0c62/9cb56/635fsourcecaptureindependently, no689retarget.
