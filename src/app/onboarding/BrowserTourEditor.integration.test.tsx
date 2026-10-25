@@ -5,7 +5,8 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { webcrypto } from 'node:crypto';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
-import { setEditorTourBeat } from '@/shared/state/editorTourStore';
+import { getEditorTourState, setEditorTourBeat } from '@/shared/state/editorTourStore';
+import { finishEditorTour } from '@/tools/video-editor/tour/runner/tourBeats';
 import { useTimelineEditorData, useTimelineOpsFromStoreSafe } from '@/tools/video-editor/hooks/timelineStore';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { useClipTypeRegistryContext } from '@/tools/video-editor/clip-types/ClipTypeRegistryContext';
@@ -59,15 +60,17 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 it('admits the bundled world and applies all three stages with only shipped asset fetches', async () => {
+  const onFinish = vi.fn();
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><TooltipProvider><MemoryRouter>
-    <BrowserTourEditor onFinish={() => undefined} />
+    <BrowserTourEditor onFinish={onFinish} />
   </MemoryRouter></TooltipProvider></QueryClientProvider>);
   const pane = screen.getByRole('complementary', { name: 'Task and chat pane' });
   expect(pane).toHaveAttribute('data-tasks-pane', 'true');
   expect(pane).toHaveAttribute('data-pane-side', 'right');
   const main = screen.getByRole('main', { name: 'Lantern Valley guided demo' });
   const header = screen.getByTestId('video-editor-header');
-  expect(header.nextElementSibling).toBe(main);
+  expect(screen.getByTestId('global-header-slot')).toContainElement(header);
+  expect(main.parentElement).toHaveAttribute('data-video-editor-route', 'true');
   expect(within(header).getAllByTestId('editor-project-timeline-selectors')).toHaveLength(1);
   expect(within(header).getAllByRole('combobox')).toHaveLength(1);
   expect(within(header).getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Onboarding project');
@@ -76,13 +79,11 @@ it('admits the bundled world and applies all three stages with only shipped asse
   expect(within(header).getByRole('button', { name: 'Project settings' })).toBeDisabled();
   expect(within(header).getByRole('button', { name: 'New project' })).toBeDisabled();
   expect(within(header).getByRole('button', { name: 'Settings' })).toBeDisabled();
-  const previewNavigation = within(screen.getByTestId('video-editor-preview-navigation-controls'));
+  const previewNavigation = within(screen.getByTestId('video-editor-editor-navigation-controls'));
   expect(previewNavigation.getByRole('combobox', { name: 'Select timeline' })).toHaveTextContent('Lantern Valley');
   expect(previewNavigation.getByRole('combobox', { name: 'Select timeline' })).toBeDisabled();
-  // The same right-pane width used by the connected editor reserves the second desktop column.
-  expect(main).toHaveStyle({ '--tasks-pane-width': '300px' });
-  expect(main.lastElementChild).toBe(pane);
-  expect(main).toHaveClass('md:grid-cols-[minmax(0,1fr)_var(--tasks-pane-width)]');
+  // The shared app content reserves the same pane width while the fixed Tasks surface stays at the right edge.
+  expect(main.parentElement).toHaveStyle({ marginRight: '300px' });
   const extensionsDock = screen.getByTestId('video-editor-right-panel-dock');
   expect(extensionsDock).toHaveAttribute('data-open', 'true');
   expect(within(extensionsDock).getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
@@ -111,4 +112,12 @@ it('admits the bundled world and applies all three stages with only shipped asse
   expect(requests.length).toBeGreaterThan(0);
   expect(requests.every(url => url.startsWith('/astrid/onboarding/'))).toBe(true);
   expect(EDITOR_TOUR_MEDIA.video).toBeTruthy();
+  // The runner's visual interaction is outside this fixture; the real finish operation must
+  // still invoke the callback registered by BrowserTourEditor and stop the tour exactly once.
+  expect(onFinish).not.toHaveBeenCalled();
+  act(() => finishEditorTour());
+  expect(onFinish).toHaveBeenCalledOnce();
+  expect(getEditorTourState().status).toBe('idle');
+  act(() => finishEditorTour());
+  expect(onFinish).toHaveBeenCalledOnce();
 });

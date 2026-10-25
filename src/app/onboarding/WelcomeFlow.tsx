@@ -30,6 +30,6 @@ export function WelcomeFlow({ entry, localBuild = false }: { entry: WelcomeEntry
     {phase === 'tour' && <BrowserTourEditor onFinish={finishTour} />}
     {phase === 'choose' && <WelcomeRunMode onContinue={enter} windowMode={windowMode} setWindowMode={setWindowMode} runMode={runMode} setRunMode={setRunMode} />}
     {phase === 'local' && <WelcomeLocalSetup onBack={() => enter('choose')} />}
-    {phase === 'connection' && <Suspense fallback={<><EditorBackdrop /><p role="status" className="sr-only">Connecting to Astrid…</p></>}><WelcomeConnection /></Suspense>}
+    {phase === 'connection' && <Suspense fallback={<><EditorBackdrop /><p role="status" className="sr-only">Connecting to Astrid…</p></>}><WelcomeConnection onBack={() => enter('choose')} /></Suspense>}
   </MemoryRouter></TooltipProvider></QueryClientProvider>;
 }

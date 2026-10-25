@@ -109,15 +109,15 @@ describe('PublicAstridShell route announcements', () => {
   vi.useFakeTimers();
   __resetSelectionStoreForTests();
   configureMotionPreference(false);
-  // The App view is explicit; an unqualified home URL intentionally lands in Agent.
+  // Use an explicit App link for the shared setup.
   setRoute('?experience=app');
   });
 
   it.each([
-    ['/home', 'Agent.'],
+    ['/home', 'App.'],
     ['/home?experience=agent', 'Agent.'],
-    // The flat preview link lands on the default Agent view.
-    ['/home?view=preview', 'Agent.'],
+    // The flat preview link lands on the default App view.
+    ['/home?view=preview', 'App.'],
   ])('announces the direct-link state once after shell commit: %s', async (path, expected) => {
     setRoute(path.replace('/home', ''));
     const announcements = observeRouteAnnouncements();
@@ -224,8 +224,8 @@ describe('PublicAstridShell route announcements', () => {
     expect(window.location.search).toBe('');
     await advance(720);
     await flushAnnouncementObserver();
-    expect(readRouteStatus()).toBe('Agent.');
-    expect(announcements.messages).toEqual(['Agent.']);
+    expect(readRouteStatus()).toBe('App.');
+    expect(announcements.messages).toEqual(['Agent.', 'App.']);
     announcements.disconnect();
   });
 
@@ -281,7 +281,7 @@ describe('PublicAstridShell route announcements', () => {
     expect(screen.getByRole('main')).toHaveAttribute('data-audience', 'agent');
     fireEvent.click(stage);
     expect(screen.getByRole('main')).toHaveAttribute('data-audience', 'app');
-    expect(new URL(window.location.href).searchParams.get('experience')).toBe('app');
+    expect(new URL(window.location.href).searchParams.get('experience')).toBeNull();
   });
 
   it('returns a verified result to App on its exact clip without starting playback', async () => {
@@ -291,7 +291,7 @@ describe('PublicAstridShell route announcements', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Open test verified result' }));
 
     const currentUrl = new URL(window.location.href);
-    expect(currentUrl.searchParams.get('experience')).toBe('app');
+    expect(currentUrl.searchParams.get('experience')).toBeNull();
     expect(currentUrl.searchParams.get('view')).toBeNull();
     expect(screen.getByRole('main')).toHaveAttribute('data-audience', 'app');
     expect(__getSelectionStateForTests().timeline.selectedClipId).toBe('light-study-02');

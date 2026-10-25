@@ -123,7 +123,7 @@ function renderProvider(
   props: Partial<React.ComponentProps<typeof RuntimeConnectionProvider>> = {},
 ) {
   return render(
-    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions} pollIntervalMs={10} {...props}>
+    <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={permissions} pollIntervalMs={10} {...props}>
       <Probe />
     </RuntimeConnectionProvider>,
   );
@@ -135,7 +135,7 @@ function renderPanelProvider(
   props: Partial<React.ComponentProps<typeof RuntimeConnectionProvider>> = {},
 ) {
   return render(
-    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions} pollIntervalMs={10} {...props}>
+    <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={permissions} pollIntervalMs={10} {...props}>
       <PanelProbe />
     </RuntimeConnectionProvider>,
   );
@@ -356,7 +356,7 @@ describe('granted', () => {
       return realmAnswer.promise;
     }) as unknown as typeof fetch;
     render(
-      <RuntimeConnectionProvider gated fetchImpl={fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000}>
         <Probe />
         <RuntimeConnectionGate panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} />}>
           <div data-testid="app" />
@@ -533,7 +533,7 @@ describe('granted', () => {
     gateway.down();
     const permissions = fakePermissions('granted');
     const view = render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions.permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={permissions.permissions} pollIntervalMs={10}>
         <RuntimeConnectionGate panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} />}>
           <div data-testid="app" />
         </RuntimeConnectionGate>
@@ -914,7 +914,7 @@ describe('gate', () => {
       return <div data-testid="app" />;
     }
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
         <RuntimeConnectionGate>
           <RuntimeQueryOwner />
         </RuntimeConnectionGate>
@@ -934,7 +934,7 @@ describe('gate', () => {
     const gateway = fakeGateway();
     gateway.down();
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
         <RuntimeConnectionGate>
           <div data-testid="app" />
         </RuntimeConnectionGate>
@@ -947,7 +947,7 @@ describe('gate', () => {
     const gateway = fakeGateway();
     gateway.down();
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
         <RuntimeConnectionGate
           panel={({ state }, exit) => (exit ? <LeaveAtOnce exit={exit} /> : <p data-testid="custom-panel">{state.status}</p>)}
           pill={({ realmName }) => <p data-testid="custom-pill">{realmName}</p>}
@@ -980,7 +980,7 @@ const leavesAtOnce = (screen: (connection: RuntimeConnectionValue) => React.Reac
 describe('gate: the panel on its way out', () => {
   /** Shows the screen it is given; on its way out, a button stands for the panel's leaving motion. */
   const gate = (gateway: ReturnType<typeof fakeGateway>) => render(
-    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+    <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
       <RuntimeConnectionGate
         panel={({ state }, exit) => (
           <div data-testid="panel" data-exit={exit ? '' : undefined}>
@@ -1021,7 +1021,7 @@ describe('gate: the panel on its way out', () => {
     const gateway = fakeGateway();
     gateway.down();
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
         <RuntimeConnectionGate panel={({ state }, exit) => (exit ? <LeavesOnMount exit={exit} /> : <div data-testid="panel">{state.status}</div>)}>
           <div data-testid="app" />
         </RuntimeConnectionGate>
@@ -1054,7 +1054,7 @@ describe('gate: the landing page already asked to go in', () => {
       : <p data-testid="panel-state">{state.status}</p>
   );
   const renderGate = (gateway: ReturnType<typeof fakeGateway>, permission: string, pollIntervalMs = 10) => render(
-    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions(permission).permissions} pollIntervalMs={pollIntervalMs}>
+    <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions(permission).permissions} pollIntervalMs={pollIntervalMs}>
       <Probe />
       <RuntimeConnectionGate panel={leavesAtOnce(panel)}>
         <div data-testid="app" />
@@ -1147,7 +1147,7 @@ describe('gate: the landing page already asked to go in', () => {
     window.localStorage.setItem(STORAGE_KEY, '1');
     const permissions = fakePermissions('prompt');
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions.permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={permissions.permissions} pollIntervalMs={10}>
         <RuntimeConnectionGate panel={leavesAtOnce(panel)}><div data-testid="app" /></RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
     );
@@ -1220,7 +1220,7 @@ describe('permission and setup evidence matrix', () => {
     }) as unknown as typeof fetch;
 
     render(
-      <RuntimeConnectionProvider gated fetchImpl={fetchImpl} permissions={permission.permissions} pollIntervalMs={600_000}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={fetchImpl} permissions={permission.permissions} pollIntervalMs={600_000}>
         <RecordingProbe states={observedStates} />
       <RuntimeConnectionGate connectOnEntry={entry === 'onboarding-continue'} panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} />}>
           <div data-testid="app" />
@@ -1358,6 +1358,28 @@ describe('same-origin build', () => {
     vi.unstubAllGlobals();
   });
 
+  it('a configured Runtime origin equal to the page origin is gated without querying local-network permission', async () => {
+    const connection = await import('./connection.ts');
+    connection.setRuntimeOrigin({ VITE_RUNTIME_ORIGIN: window.location.origin });
+    const { RuntimeConnectionProvider: Provider, useRuntimeConnection: useFresh } = await import('./RuntimeConnectionProvider.tsx');
+    function FreshProbe() {
+      latest = useFresh();
+      return <span data-testid="status">{latest.state.status}</span>;
+    }
+    const gateway = fakeGateway();
+    const permission = fakePermissions('prompt');
+    render(
+      <Provider fetchImpl={gateway.fetchImpl} permissions={permission.permissions} pollIntervalMs={10}>
+        <FreshProbe />
+      </Provider>,
+    );
+
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(latest.gated).toBe(true);
+    expect(permission.permissions.query).not.toHaveBeenCalled();
+    expect(gateway.calls[0]).toBe(`${window.location.origin}/api/runtime/v1/health`);
+  });
+
   it('is gated once a Runtime origin is configured, and probes that origin', async () => {
     const connection = await import('./connection.ts');
     connection.setRuntimeOrigin({ VITE_RUNTIME_ORIGIN: 'http://127.0.0.1:17340' });
@@ -1387,7 +1409,7 @@ describe('gate: incompatible Runtime and local-service update flag', () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => json({ status: 'ok', schema_digest: 'sha256:old-runtime' });
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
         <RuntimeConnectionGate panel={leavesAtOnce(marker)}>
           <div data-testid="app" />
         </RuntimeConnectionGate>
@@ -1401,7 +1423,7 @@ describe('gate: incompatible Runtime and local-service update flag', () => {
   it('a local-service update flag keeps the connected state and the app, and clears again', async () => {
     const gateway = fakeGateway();
     render(
-      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
         <Probe />
         <RuntimeConnectionGate panel={leavesAtOnce(marker)}>
           <div data-testid="app" />

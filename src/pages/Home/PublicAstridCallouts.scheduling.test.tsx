@@ -40,15 +40,7 @@ function Stage({ active = true, beforeReveal = false, audience = 'app', reducedM
         </>}
       </div>}
       <div className="astrid-inspector-surface" data-test-inspector hidden={inspectorHidden}>
-        <div role="tablist" className="grid-cols-4" data-test-hidden-tablist>
-          <button role="tab" />
-          <button role="tab" aria-controls="hidden-inspector" />
-        </div>
-        <div role="tablist" className="grid-cols-4">
-          <button role="tab" aria-controls="effects-panel" />
-          <button role="tab" />
-          <button role="tab" />
-        </div>
+        <p>Select a clip to edit timing, position, audio, text, or effects.</p>
       </div>
     </div></div>
     <div className="astrid-preview-transport-outlet" />
@@ -500,23 +492,27 @@ describe('bounded stage passes', () => {
     }
   });
 
-  it('rechecks the App Effects connector when its Inspector target becomes visible', () => {
+  it.each([false, true])('connects to the empty Inspector card center when visible (phone: %s)', (isPhone) => {
+    phone = isPhone;
     const view = render(<Stage inspectorHidden />);
     settle();
     const path = view.container.querySelector<SVGPathElement>('path[data-callout="effects"]')!;
-    const effectsTab = view.container.querySelector<HTMLElement>('.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]')!;
+    const inspectorCard = view.container.querySelector<HTMLElement>('.astrid-inspector-surface')!;
     expect(path.getAttribute('data-connector-target')).toBeNull();
-    expect(resizeObservers.some(observer => observer.targets.has(effectsTab))).toBe(true);
+    expect(resizeObservers.some(observer => observer.targets.has(inspectorCard))).toBe(true);
 
     view.rerender(<Stage />);
     act(() => resizeObservers
-      .filter(observer => observer.targets.has(effectsTab))
-      .forEach(observer => observer.callback([{ target: effectsTab, contentRect: new DOMRect(100, 100, 100, 80) } as ResizeObserverEntry], observer as unknown as ResizeObserver)));
+      .filter(observer => observer.targets.has(inspectorCard))
+      .forEach(observer => observer.callback([{ target: inspectorCard, contentRect: new DOMRect(100, 100, 100, 80) } as ResizeObserverEntry], observer as unknown as ResizeObserver)));
     expect(frames.size).toBeGreaterThan(0);
     paint();
 
     expect(path.getAttribute('data-connector-target')).toBe('effects');
     settle();
+    const endpoint = view.container.querySelector('.astrid-callout-dot-end[data-callout="effects"]')!;
+    expect(Number(endpoint.getAttribute('cx'))).toBe(150);
+    expect(Number(endpoint.getAttribute('cy'))).toBe(140);
     expect(frames.size).toBe(0);
   });
 

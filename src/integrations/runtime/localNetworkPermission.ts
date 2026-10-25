@@ -11,6 +11,26 @@ export type LocalNetworkPermissionState = 'granted' | 'prompt' | 'denied' | 'uns
 
 export const LOCAL_NETWORK_PERMISSION_NAME = 'local-network-access';
 
+function isLoopbackHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '::1') return true;
+  const octets = host.split('.').map(Number);
+  return octets.length === 4 && octets[0] === 127 && octets.every(value => Number.isInteger(value) && value >= 0 && value <= 255);
+}
+
+/** Only a public page reaching a separate loopback origin needs Chromium's local-network permission. */
+export function requiresLocalNetworkPermission(runtimeOrigin: string, pageOrigin: string): boolean {
+  if (!runtimeOrigin) return false;
+  try {
+    const runtime = new URL(runtimeOrigin);
+    const page = new URL(pageOrigin);
+    return runtime.origin !== page.origin && isLoopbackHost(runtime.hostname) && !isLoopbackHost(page.hostname);
+  } catch {
+    // A configured origin should be validated elsewhere; if either origin is unexpectedly malformed, fail closed.
+    return true;
+  }
+}
+
 /** The slice of `PermissionStatus` the gate needs; `onchange` drives re-checks. */
 export interface LocalNetworkPermissionStatus {
   state: string;

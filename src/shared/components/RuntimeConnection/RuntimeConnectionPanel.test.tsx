@@ -64,6 +64,18 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
   });
 
+  it('places an optional onboarding Back action in the card corner only for its caller', () => {
+    const onBack = vi.fn();
+    const view = render(<RuntimeConnectionPanel connection={connectionFor({ status: 'not_running' })} onBack={onBack} />);
+    const back = screen.getByRole('button', { name: 'Back' });
+    expect(back.closest(CARD)).not.toBeNull();
+    fireEvent.click(back);
+    expect(onBack).toHaveBeenCalledOnce();
+
+    view.rerender(<RuntimeConnectionPanel connection={connectionFor({ status: 'not_running' })} />);
+    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
+  });
+
   it.each(ALL_SCREENS)('%s: speaks of Astrid and never names a Runtime, workspace, port or command', (_name, connection) => {
     panel(connection());
     expect(shownText()).toContain('Astrid');

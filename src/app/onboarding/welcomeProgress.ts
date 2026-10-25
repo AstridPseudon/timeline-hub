@@ -39,6 +39,9 @@ export function writeWelcomePhase(phase: WelcomePhase | null): void {
 export function entryFor(url: URL, phase: WelcomePhase | null, localBuild = false): WelcomeEntry {
   if (url.pathname !== APP_ENTRY_PATH) return 'editor';
   if (['project', 'timeline', 'localProject', 'localTimeline'].some(key => url.searchParams.has(key))) return 'editor';
+  // The tour's explicit Open editor link can still work when browser storage is blocked.
+  // The editor's normal Runtime gate remains responsible for connecting before workspace data loads.
+  if (url.searchParams.get('entry') === 'editor') return 'editor';
   if (phase === 'local') return 'local';
   if (url.searchParams.get('connect') === '1') return 'connection';
   if (localBuild && phase === 'choose') return 'connection';
@@ -51,6 +54,6 @@ export function completeWelcome(selection?: {projectId: string; timelineId: stri
   if (selection) {
     params.set('project', selection.projectId);
     if (selection.timelineId) params.set('timeline', selection.timelineId);
-  }
+  } else params.set('entry', 'editor');
   return `${APP_ENTRY_PATH}${params.size ? `?${params}` : ''}`;
 }

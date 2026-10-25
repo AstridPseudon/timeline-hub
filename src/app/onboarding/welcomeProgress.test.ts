@@ -15,6 +15,9 @@ describe('welcome entry', () => {
     ['/tools/video-editor?localProject=p', 'tour', 'editor'],
     ['/tools/video-editor?localTimeline=t', 'tour', 'editor'],
     ['/tools/video-editor?project=p&connect=1', 'tour', 'editor'],
+    ['/tools/video-editor?entry=editor', null, 'editor'],
+    ['/tools/video-editor?entry=editor', 'tour', 'editor'],
+    ['/tools/video-editor?entry=editor', 'local', 'editor'],
     ['/tools/video-editor?connect=0', 'local', 'local'],
     ['/tools/video-editor?connect=1', 'local', 'local', true],
     ['/tools/video-editor', 'tour', 'tour', true],
@@ -58,5 +61,18 @@ describe('welcome entry', () => {
     progress.writeWelcomePhase('local');
     expect(progress.readWelcomePhase()).toBe('local');
     expect(progress.entryFor(new URL('https://astrid.haus/tools/video-editor'), progress.readWelcomePhase())).toBe('local');
+  });
+
+  it('opens the editor from its explicit URL when storage is unavailable in a fresh module', async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    const progress = await import('./welcomeProgress');
+    const target = progress.completeWelcome();
+    vi.resetModules();
+    const freshProgress = await import('./welcomeProgress');
+
+    expect(target).toBe('/tools/video-editor?entry=editor');
+    expect(freshProgress.readWelcomePhase()).toBeNull();
+    expect(freshProgress.entryFor(new URL(`https://astrid.haus${target}`), freshProgress.readWelcomePhase())).toBe('editor');
   });
 });

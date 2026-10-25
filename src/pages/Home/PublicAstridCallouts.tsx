@@ -131,14 +131,9 @@ const APP_CALLOUTS: readonly CalloutDefinition[] = [
     id: 'effects',
     title: 'Live vibe code effects and visuals',
     body: 'Describe a look and edit the effect’s code live.',
-    // The public preview contains hidden Outline/Inspector tablists before the
-    // visible inspector tabs. Geometry resolution below skips zero-sized tabs.
-    target: '.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]',
-    at: [0.5, 0],
-    // The mobile inspector has a full-width tab row beneath the clip name. Aim
-    // at Position so the curve points back toward the inspector's centre.
-    phoneTarget: '.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]:nth-child(3)',
-    phoneAt: [0.5, 0],
+    // Target the whole card so the connector also works with no clip selected.
+    target: '.astrid-inspector-surface',
+    at: [0.5, 0.5],
     side: 'bottom',
     phoneSide: 'bottom',
     phoneAnchor: 0.88,

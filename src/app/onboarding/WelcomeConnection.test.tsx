@@ -18,6 +18,11 @@ vi.mock('@/shared/hooks/platformInstall/signals.ts', () => ({
     return event.userChoice;
   },
 }));
+// This suite models the public astrid.haus page reaching its loopback Runtime door.
+vi.mock('@/integrations/runtime/localNetworkPermission.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/integrations/runtime/localNetworkPermission.ts')>();
+  return { ...actual, requiresLocalNetworkPermission: () => true };
+});
 vi.mock('./StarterProjectHandoff.tsx', () => ({
   StarterProjectHandoff: () => <div data-testid="starter-project-handoff" />,
 }));
