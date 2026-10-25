@@ -99,10 +99,16 @@ def _duration(clip):
             number(clip['at'], 'clip.at'), number(clip['at_ms'], 'clip.at_ms') / 1000,
             abs_tol=1e-9):
         raise CommandError("contradictory at/at_ms timing codecs", kind='unsupported_timing')
-    value = dict(clip, at=clip.get('at', _exact_seconds(clip.get('at_ms', 0), 'at_ms') / 1000))
+    if 'at' in clip:
+        value = dict(clip)
+        start = number(clip['at'], 'clip start')
+    else:
+        exact_at = _exact_seconds(clip.get('at_ms', 0), 'at_ms') / 1000
+        value = dict(clip, at=exact_at)
+        # The synthesized seconds are internal exact time, not authored input.
+        start = float(exact_at)
     if 'at' not in clip and 'at_ms' not in clip:
         raise CommandError('move requires an explicit authored start', kind='unsupported_timing')
-    start = number(value['at'], 'clip start')
     if start < 0:
         raise CommandError('clip.move v1 does not support a clipped negative start', kind='unsupported_timing')
     lengths = []
