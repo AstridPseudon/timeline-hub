@@ -1,0 +1,400 @@
+if command -v ruff >/dev/null 2>&1; then ruff check tests/editing_conformance/test_commit_runtime_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_fork.py tests/editing_conformance/test_commit_runtime_opaque_items.py; else echo 'ruff unavailable'; fi" in /home/user/work/wt/agt-D86-opaque9-actual-0315
+ succeeded in 398ms:
+diff --git a/tests/editing_conformance/test_commit_runtime_opaque_items.py b/tests/editing_conformance/test_commit_runtime_opaque_items.py
+index a7902fac3b..6769100370 100644
+--- a/tests/editing_conformance/test_commit_runtime_opaque_items.py
++++ b/tests/editing_conformance/test_commit_runtime_opaque_items.py
+@@ -7,6 +7,7 @@ from types import SimpleNamespace
+ 
+ import pytest
+ 
++from astrid.sdk.timeline._command_state import present
+ from tests.editing_conformance.test_commit_runtime_identity import occurrence_image
+ from tests.helpers.runtime import use_runtime
+ 
+@@ -23,6 +24,38 @@ def opaque():
+     }}
+ 
+ 
++def occurrence_patch(before, rows):
++    """Capture authored occurrence fields without changing managed edges."""
++    current = {row["occurrence_id"]: row for row in before["parent_revision"]["payload"]["occurrences"]}
++    order = [row["occurrence_id"] for row in before["parent_revision"]["payload"]["occurrences"]]
++    target_order = [row["occurrence_id"] for row in rows]
++    changes = []
++    for index, identity in enumerate(target_order):
++        if order[index] == identity:
++            continue
++        row = copy.deepcopy(current[identity])
++        changes.append({
++            "op": "list.move", "ref": "parent", "path": ["occurrences"],
++            "id": identity, "before": present(row), "order_before": list(order),
++            "after_id": target_order[index - 1] if index else None,
++        })
++        old_index = order.index(identity)
++        moved = order.pop(old_index)
++        insert_at = order.index(target_order[index - 1]) + 1 if index else 0
++        order.insert(insert_at, moved)
++    for row in rows:
++        identity = row["occurrence_id"]
++        if current[identity] == row:
++            continue
++        changes.append({
++            "op": "set", "ref": "parent",
++            "path": ["occurrences", "occurrence_id:" + identity],
++            "before": present(current[identity]), "value": copy.deepcopy(row),
++        })
++    return {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
++            "args": {"changes": changes}}
++
++
+ @pytest.fixture(params=["item_id", "id", "both"])
+ def opaque_film(request, tmp_path, monkeypatch):
+     runtime = use_runtime()
+@@ -87,7 +120,17 @@ def opaque_film(request, tmp_path, monkeypatch):
+             target["shot_revisions"], target["internal_timeline_revisions"],
+             target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+         )
+-        setup = emit_document_commands(bundle_from_document(staged), bundle_from_document(target))
++        staged_bundle = bundle_from_document(staged)
++        target_bundle = bundle_from_document(target)
++        authored_target = copy.deepcopy(staged_bundle)
++        authored_target["parent"] = target_bundle["parent"]
++        for local, shot in authored_target["shots"].items():
++            shot["payload"] = target_bundle["shots"][local]["payload"]
++            shot["internal_timeline"] = target_bundle["shots"][local]["internal_timeline"]
++        setup = emit_document_commands(staged_bundle, authored_target)
++        source_row = copy.deepcopy(staged["parent_revision"]["payload"]["occurrences"][0])
++        source_row.update(data=opaque(), app=opaque(), opaque=opaque())
++        setup.append(occurrence_patch(staged, [source_row, *staged["parent_revision"]["payload"]["occurrences"][1:]]))
+         source = edit.commit(edit.body(setup), "opaque-source")
+ 
+         source_document = source["data"]["canonical_document"]
+@@ -99,9 +142,8 @@ def opaque_film(request, tmp_path, monkeypatch):
+ 
+         # Restore the premigration occurrence rows and order while retaining
+         # the authenticated source revision returned by place-shared.
+-        target = copy.deepcopy(shared_document)
+-        parent = target["parent_revision"]["payload"]
+-        current = {row["occurrence_id"]: row for row in parent["occurrences"]}
++        current = {row["occurrence_id"]: row for row in
++                   shared_document["parent_revision"]["payload"]["occurrences"]}
+         original_rows = {
+             row["occurrence_id"]: row
+             for row in original["parent_revision"]["payload"]["occurrences"]
+@@ -117,16 +159,7 @@ def opaque_film(request, tmp_path, monkeypatch):
+                 row["shot_revision_id"] = source_row["shot_revision_id"]
+                 row.update(data=opaque(), app=opaque(), opaque=opaque())
+             rows.append(row)
+-        parent["occurrences"] = rows
+-        target["parent_revision"]["content_digest"] = _digest(parent)
+-        target["dependency_manifest"] = _manifest(
+-            target["shot_revisions"], target["internal_timeline_revisions"],
+-            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+-        )
+-        setup = emit_document_commands(
+-            bundle_from_document(shared_document), bundle_from_document(target),
+-        )
+-        baseline = edit.commit(edit.body(setup), "opaque-baseline")
++        baseline = edit.commit(edit.body([occurrence_patch(shared_document, rows)]), "opaque-baseline")
+         baseline_document = baseline["data"]["canonical_document"]
+         first = occurrence_image(baseline_document, "occurrence-1")
+         second = occurrence_image(baseline_document, "occurrence-2")
+compile OK: tests/editing_conformance/test_commit_runtime_occurrence_create.py
+compile OK: tests/editing_conformance/test_commit_runtime_occurrence_fork.py
+compile OK: tests/editing_conformance/test_commit_runtime_opaque_items.py
+All checks passed!
+
+codex
+The bounded patch is now source-only and limited to `test_commit_runtime_opaque_items.py`; create/fork remain byte-for-byte unchanged. Static parse/compile, Ruff, and `git diff --check` pass. The patch preserves the nine test selectors and their assertions, while the final setup uses guarded parent occurrence patches (including order) after authenticated semantic allocation. I’m validating AST conservation and baseline-vs-candidate type/lint deltas next.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+
+path = Path('tests/editing_conformance/test_commit_runtime_opaque_items.py')
+old = subprocess.check_output(['git', 'show', 'HEAD:' + str(path)], text=True)
+new = path.read_text()
+
+def signature(node):
+    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return None
+    return (node.name, len(node.args.posonlyargs), len(node.args.args), len(node.args.kwonlyargs),
+            tuple(ast.unparse(d) for d in node.decorator_list))
+
+def authored(node):
+    if isinstance(node, ast.Assert):
+        return ('assert', ast.unparse(node.test), ast.unparse(node.msg) if node.msg else None)
+    if isinstance(node, ast.Raise):
+        return ('raise', ast.unparse(node.exc) if node.exc else None)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'raises':
+        return ('raises', ast.unparse(node))
+    return None
+
+def collect(source):
+    tree = ast.parse(source)
+    functions = {}
+    for node in ast.walk(tree):
+        sig = signature(node)
+        if sig:
+            body = [item for item in ast.walk(node) if (value := authored(item)) is not None]
+            functions.setdefault(sig[0], []).append((sig, body))
+    return functions
+oldf, newf = collect(old), collect(new)
+for name in sorted(set(oldf) & set(newf)):
+    old_sigs = [item[0] for item in oldf[name]]
+    new_sigs = [item[0] for item in newf[name]]
+    assert old_sigs == new_sigs, (name, old_sigs, new_sigs)
+    old_bodies = sorted(item for pair in oldf[name] for item in pair[1])
+    new_bodies = sorted(item for pair in newf[name] for item in pair[1])
+    assert old_bodies == new_bodies, name
+print('AST selector/decorator/assert/raise conservation: PASS')
+PY
+printf '%s\\n' '--- allowed-file hashes ---'
+git hash-object tests/editing_conformance/test_commit_runtime_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_fork.py tests/editing_conformance/test_commit_runtime_opaque_items.py
+printf '%s\\n' '--- changed paths ---'
+git diff --name-only
+printf '%s\\n' '--- diff stats ---'
+git diff --stat
+if command -v mypy >/dev/null 2>&1; then mypy --config-file pyproject.toml tests/editing_conformance/test_commit_runtime_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_fork.py tests/editing_conformance/test_commit_runtime_opaque_items.py; else echo 'mypy unavailable'; fi" in /home/user/work/wt/agt-D86-opaque9-actual-0315
+ succeeded in 2249ms:
+Traceback (most recent call last):
+  File "<stdin>", line 40, in <module>
+AssertionError: assert_opaque
+--- allowed-file hashes ---
+0178b098cb6298f9f36c58ef35eb5e7d2391cea7
+e17b6c466566ace2848a5f230dc6830b72c7e28b
+67691003702da64b03a3ebb66aa2972920f90787
+--- changed paths ---
+tests/editing_conformance/test_commit_runtime_opaque_items.py
+--- diff stats ---
+ .../test_commit_runtime_opaque_items.py            | 61 +++++++++++++++++-----
+ 1 file changed, 47 insertions(+), 14 deletions(-)
+Success: no issues found in 3 source files
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast, subprocess
+p='tests/editing_conformance/test_commit_runtime_opaque_items.py'
+old=ast.parse(subprocess.check_output(['git','show','HEAD:'+p], text=True)); new=ast.parse(open(p).read())
+def get(t, name):
+ n=next(x for x in t.body if isinstance(x, ast.FunctionDef) and x.name==name)
+ return [ast.dump(x, include_attributes=False) for x in ast.walk(n) if isinstance(x, (ast.Assert, ast.Raise)) or (isinstance(x, ast.Call) and isinstance(x.func, ast.Attribute) and x.func.attr=='raises')]
+for a,b in zip(get(old,'assert_opaque'),get(new,'assert_opaque')):
+ if a"'!=b:
+  print('"'OLD',a); print('NEW',b)
+print(len(get(old,'assert_opaque')),len(get(new,'assert_opaque')))
+PY" in /home/user/work/wt/agt-D86-opaque9-actual-0315
+ succeeded in 116ms:
+1 1
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast, subprocess
+from pathlib import Path
+p='tests/editing_conformance/test_commit_runtime_opaque_items.py'
+old=ast.parse(subprocess.check_output(['git','show','HEAD:'+p], text=True)); new=ast.parse(Path(p).read_text())
+def tests(tree):
+ return {node.name: ast.dump(node, include_attributes=False)
+         for node in ast.walk(tree)
+         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith('test_')}
+a,b=tests(old),tests(new)
+assert a==b, sorted(set(a)"'^set(b)) or [name for name in a if a[name]!=b[name]]
+print('"'AST test selectors/bodies/decorators/assertions: PASS')
+PY
+ruff check tests/editing_conformance/test_commit_runtime_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_fork.py tests/editing_conformance/test_commit_runtime_opaque_items.py
+git diff --check" in /home/user/work/wt/agt-D86-opaque9-actual-0315
+ succeeded in 425ms:
+AST test selectors/bodies/decorators/assertions: PASS
+All checks passed!
+
+codex
+Static validation is clean: mypy reports no issues on all three allowed files, Ruff passes, and an AST comparison confirms all nine test selectors/decorators/bodies/assertions are unchanged. The create and fork blobs remain exactly the pre-edit blobs; their recorded failures are outside this permitted test-only seam. I’m recording the required commit message and completion marker now, then I’ll provide the exact remaining findings and unverified status.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque9-actual-0315/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque9-actual-0315/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque9-actual-0315/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..10ac8e462bd048061146152a71e59ecb7aeb8037
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque9-actual-0315/commit-msg
+@@ -0,0 +1,5 @@
++test(F-D86): repair opaque occurrence setup through guarded patches
++
++Preserve the staged bundle provenance while emitting authored payload changes,
++then restore occurrence fields and order with guarded doc.patch after semantic
++shared allocation.
+diff --git a/tests/editing_conformance/test_commit_runtime_opaque_items.py b/tests/editing_conformance/test_commit_runtime_opaque_items.py
+index a7902fac3b3925be7b8392dc43440bb3f3cd4a28..67691003702da64b03a3ebb66aa2972920f90787
+--- a/tests/editing_conformance/test_commit_runtime_opaque_items.py
++++ b/tests/editing_conformance/test_commit_runtime_opaque_items.py
+@@ -7,6 +7,7 @@
+ 
+ import pytest
+ 
++from astrid.sdk.timeline._command_state import present
+ from tests.editing_conformance.test_commit_runtime_identity import occurrence_image
+ from tests.helpers.runtime import use_runtime
+ 
+@@ -23,6 +24,38 @@
+     }}
+ 
+ 
++def occurrence_patch(before, rows):
++    """Capture authored occurrence fields without changing managed edges."""
++    current = {row["occurrence_id"]: row for row in before["parent_revision"]["payload"]["occurrences"]}
++    order = [row["occurrence_id"] for row in before["parent_revision"]["payload"]["occurrences"]]
++    target_order = [row["occurrence_id"] for row in rows]
++    changes = []
++    for index, identity in enumerate(target_order):
++        if order[index] == identity:
++            continue
++        row = copy.deepcopy(current[identity])
++        changes.append({
++            "op": "list.move", "ref": "parent", "path": ["occurrences"],
++            "id": identity, "before": present(row), "order_before": list(order),
++            "after_id": target_order[index - 1] if index else None,
++        })
++        old_index = order.index(identity)
++        moved = order.pop(old_index)
++        insert_at = order.index(target_order[index - 1]) + 1 if index else 0
++        order.insert(insert_at, moved)
++    for row in rows:
++        identity = row["occurrence_id"]
++        if current[identity] == row:
++            continue
++        changes.append({
++            "op": "set", "ref": "parent",
++            "path": ["occurrences", "occurrence_id:" + identity],
++            "before": present(current[identity]), "value": copy.deepcopy(row),
++        })
++    return {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
++            "args": {"changes": changes}}
++
++
+ @pytest.fixture(params=["item_id", "id", "both"])
+ def opaque_film(request, tmp_path, monkeypatch):
+     runtime = use_runtime()
+@@ -87,7 +120,17 @@
+             target["shot_revisions"], target["internal_timeline_revisions"],
+             target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+         )
+-        setup = emit_document_commands(bundle_from_document(staged), bundle_from_document(target))
++        staged_bundle = bundle_from_document(staged)
++        target_bundle = bundle_from_document(target)
++        authored_target = copy.deepcopy(staged_bundle)
++        authored_target["parent"] = target_bundle["parent"]
++        for local, shot in authored_target["shots"].items():
++            shot["payload"] = target_bundle["shots"][local]["payload"]
++            shot["internal_timeline"] = target_bundle["shots"][local]["internal_timeline"]
++        setup = emit_document_commands(staged_bundle, authored_target)
++        source_row = copy.deepcopy(staged["parent_revision"]["payload"]["occurrences"][0])
++        source_row.update(data=opaque(), app=opaque(), opaque=opaque())
++        setup.append(occurrence_patch(staged, [source_row, *staged["parent_revision"]["payload"]["occurrences"][1:]]))
+         source = edit.commit(edit.body(setup), "opaque-source")
+ 
+         source_document = source["data"]["canonical_document"]
+@@ -99,9 +142,8 @@
+ 
+         # Restore the premigration occurrence rows and order while retaining
+         # the authenticated source revision returned by place-shared.
+-        target = copy.deepcopy(shared_document)
+-        parent = target["parent_revision"]["payload"]
+-        current = {row["occurrence_id"]: row for row in parent["occurrences"]}
++        current = {row["occurrence_id"]: row for row in
++                   shared_document["parent_revision"]["payload"]["occurrences"]}
+         original_rows = {
+             row["occurrence_id"]: row
+             for row in original["parent_revision"]["payload"]["occurrences"]
+@@ -117,16 +159,7 @@
+                 row["shot_revision_id"] = source_row["shot_revision_id"]
+                 row.update(data=opaque(), app=opaque(), opaque=opaque())
+             rows.append(row)
+-        parent["occurrences"] = rows
+-        target["parent_revision"]["content_digest"] = _digest(parent)
+-        target["dependency_manifest"] = _manifest(
+-            target["shot_revisions"], target["internal_timeline_revisions"],
+-            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+-        )
+-        setup = emit_document_commands(
+-            bundle_from_document(shared_document), bundle_from_document(target),
+-        )
+-        baseline = edit.commit(edit.body(setup), "opaque-baseline")
++        baseline = edit.commit(edit.body([occurrence_patch(shared_document, rows)]), "opaque-baseline")
+         baseline_document = baseline["data"]["canonical_document"]
+         first = occurrence_image(baseline_document, "occurrence-1")
+         second = occurrence_image(baseline_document, "occurrence-2")
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque9-actual-0315/DONE && git status --short --branch && printf '%s\\n' '--- final diff check ---' && git diff --check && printf '%s\\n' '--- final blobs ---' && git hash-object tests/editing_conformance/test_commit_runtime_occurrence_create.py tests/editing_conformance/test_commit_runtime_occurrence_fork.py tests/editing_conformance/test_commit_runtime_opaque_items.py && printf '%s\\n' '--- commit message ---' && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque9-actual-0315/commit-msg" in /home/user/work/wt/agt-D86-opaque9-actual-0315
+ succeeded in 317ms:
+## tl/agt-D86-opaque9-actual-0315
+ M tests/editing_conformance/test_commit_runtime_opaque_items.py
+--- final diff check ---
+--- final blobs ---
+0178b098cb6298f9f36c58ef35eb5e7d2391cea7
+e17b6c466566ace2848a5f230dc6830b72c7e28b
+67691003702da64b03a3ebb66aa2972920f90787
+--- commit message ---
+test(F-D86): repair opaque occurrence setup through guarded patches
+
+Preserve the staged bundle provenance while emitting authored payload changes,
+then restore occurrence fields and order with guarded doc.patch after semantic
+shared allocation.
+
+codex
+Implemented one bounded source-only patch in [test_commit_runtime_opaque_items.py](/home/user/work/wt/agt-D86-opaque9-actual-0315/tests/editing_conformance/test_commit_runtime_opaque_items.py).
+
+- Preserved bundle provenance while emitting payload `doc.patch` changes.
+- Restored occurrence fields/order via guarded patches after semantic shared allocation.
+- Create/fork files unchanged.
+- Base: `7e23790248f17b8a4492fc9aee88d2c4e1df328d`
+- Blobs: create `0178b098…`, fork `e17b6c46…`, opaque `67691003…`
+- Commit message recorded; harness will commit.
+
+Checks passed:
+
+- AST parse/compile
+- AST test selector/body/assertion conservation
+- Ruff
+- Mypy
+- `git diff --check`
+
+No pytest, collection, fixture execution, service, or browser runs performed per source-only requirements.
+
+Remaining unverified findings:
+
+- IDs 78–79: create subprocess assertion at test line 70.
+- ID 80: fork inverse native-write coverage at `runtime_protocol/service.py:2518`, outside allowed ownership.
+- IDs 81–86: prior emitter failures; source seam is corrected but behavior remains unverified.
+
+Protected review and later functional qualification remain pending.
+tokens used
+162,882
+Implemented one bounded source-only patch in [test_commit_runtime_opaque_items.py](/home/user/work/wt/agt-D86-opaque9-actual-0315/tests/editing_conformance/test_commit_runtime_opaque_items.py).
+
+- Preserved bundle provenance while emitting payload `doc.patch` changes.
+- Restored occurrence fields/order via guarded patches after semantic shared allocation.
+- Create/fork files unchanged.
+- Base: `7e23790248f17b8a4492fc9aee88d2c4e1df328d`
+- Blobs: create `0178b098…`, fork `e17b6c46…`, opaque `67691003…`
+- Commit message recorded; harness will commit.
+
+Checks passed:
+
+- AST parse/compile
+- AST test selector/body/assertion conservation
+- Ruff
+- Mypy
+- `git diff --check`
+
+No pytest, collection, fixture execution, service, or browser runs performed per source-only requirements.
+
+Remaining unverified findings:
+
+- IDs 78–79: create subprocess assertion at test line 70.
+- ID 80: fork inverse native-write coverage at `runtime_protocol/service.py:2518`, outside allowed ownership.
+- IDs 81–86: prior emitter failures; source seam is corrected but behavior remains unverified.
+
+Protected review and later functional qualification remain pending.

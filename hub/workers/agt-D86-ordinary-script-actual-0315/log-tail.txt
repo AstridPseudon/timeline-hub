@@ -1,0 +1,400 @@
++        submit([capture_clip_add(bundle(), 'parent', caption)], 's3-caption')
+         content = build_transcript(case.pins['new']['object_id'], 'line', 'again again',
+                                    [[0, .25, 'again'], [.5, .75, 'again']])
+         identity = transcript_document_id(case.project, content['media_id'], content['source_id'])
+diff --git a/tests/sdk/test_timeline_script.py b/tests/sdk/test_timeline_script.py
+index 91c85a2cbeed4a68b5ce08943a11d1cd14dc8dcc..729445cd499dd2f975b7374cce95ed8a44b97e5d
+--- a/tests/sdk/test_timeline_script.py
++++ b/tests/sdk/test_timeline_script.py
+@@ -254,10 +254,25 @@
+             def get_object(self, object_id):
+                 return {"data": service.cas.path_for(object_id.removeprefix("sha256:")).read_bytes()}
+ 
+-        service.set_project_shot_text_binding(project_id, {
+-            "binding_id": pin["binding_id"], "text": "New mutable head.", "expected_head": pin["head"],
+-        }, idempotency_key="rebind-script")
+-        result = read_composition_script(Timelines(), Transport(), project_id, "main")
++        rebound_raw = b"New mutable head."
++        rebound_stored = service.ingest(project_id, rebound_raw, media_type="text/plain; charset=utf-8",
++                                        idempotency_key="rebind-script-text")
++        rebound = rebound_stored["data"]
++        rebound_text = {key: rebound[key] for key in ("object_id", "digest", "size", "media_type")}
++        rebound_verified = {**rebound_text, "utf8": True}
++        rebound_bundle = bundle_from_document(binding_result["data"]["canonical_document"])
++        rebound_command = capture_text_binding_set(
++            rebound_bundle, "occurrence:" + rebound_occurrence["occurrence_id"],
++            {"kind": "voiceover_script", "slot": None},
++            text=rebound_text, verified_text=[rebound_verified])
++        rebound_result = commit([rebound_command], "rebind-script")
++        assert rebound_result["data"]["accepted_revision_id"]
++        live = next(row for row in service.list_project_shot_text_bindings(
++            project_id, kind="voiceover_script")["items"] if row["shot_id"] == shot["shot_id"])
++        assert live["media_id"] == rebound["object_id"]
++        result = read_composition_script(
++            Timelines(), Transport(), project_id, "main",
++            revision_id=binding_result["data"]["accepted_revision_id"])
+         assert result.ok
+         canonical = binding_result["data"]["canonical_document"]
+         expected_revision = "authoring-parent-revision-" + hashlib.sha256(json.dumps(
+
+exec
+/bin/bash -lc "E=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
+printf '%s\\n' '--- ordinary family reservation ---'
+rg -n -C 28 'ordinaryscript4|ordinary-script|script4' \""'$E/agt-D86-main-families.md" "$E/rt-D86-M1-script-review-0147.md" "$E/peer-runtime-to-agent-20261025T0152Z-M1-script-opaque-PASS.md"
+printf '"'%s\\n' '--- final diff ---'
+git diff -- tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/editing_conformance/test_next_ordinary_union_runtime.py tests/sdk/test_timeline_script.py" in /home/user/work/wt/agt-D86-ordinary-script-actual-0315
+ succeeded in 0ms:
+--- ordinary family reservation ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-1-## PASS_SOURCE — A
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-2-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-3-- Candidate: `tl/agt-D86-M1-functional-0145` (`4f4f26c706`)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-4-- File blob: `test_commit_runtime_m1.py` `d0689387aa984830f90529329e6d019f61f21854`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-5-- Split `timeline.duplicate` into semantic step `copy` and emitted `doc.patch` commands into `baseline`.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-6-- Preserves all commands, claims, inputs, patches, history fields, opaque values, decorators, and all 10 parametrized selectors.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-7-- Matches C0’s contiguous step partition and semantic-step empty-patch rules.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-8-- `FAIL_SOURCE`: none.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-9-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-10-## PASS_SOURCE — B
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-11-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md:12:- Author baseline: `tl/agt-D86-ordinary-script-0121` (`04ee36aa64`)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-13-- Candidate: `tl/agt-D86-script-return-0145` (`96dbc67014`)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-14-- Candidate file blob: `test_timeline_script.py` `91c85a2cbeed4a68b5ce08943a11d1cd14dc8dcc`
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-15-- Replaced only the stale `parent-2` assertion at the original first-return site.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-16-- Independently matched the active `document_from_bundle()` production identity formula over canonical `project_id`, `timeline_id`, parent payload, and dependency manifest.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-17-- Original rebind inputs, old-script text, binding-head assertion, callers, predicates, and selectors remain live.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-18-- The two other migrated family files are byte-identical to the author baseline.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-19-- `FAIL_SOURCE`: none.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-20-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-21-## Checks
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-22-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-23-Using pinned `/home/user/work/venv-agent` tools:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-24-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-25-- In-memory compilation: baseline and candidate A/B sources passed.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-26-- Ruff 0.12.0: all scoped baseline/candidate files passed.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-27-- Mypy 1.17.0: baseline and candidate shadow checks passed.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-28-- `git diff --check`: A and B passed.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-29-- No pytest, collection, fixtures, helpers, Runtime service, browser, or full-suite execution performed as required.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-30-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-31-Runtime contract reference: `contract/commit-v2.md`, blob `257024df6fa93be767f0c74ee10014a6770c4fcb`.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-32-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-M1-script-review-0147.md-33-No worktree source files were changed. Commit message and empty `DONE` marker were created. Functional behavior remains for later main-branch verification.
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-183-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[add-undo-redo]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-184-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[swap-create-undo]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-185-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[swap-undo-redo]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-186-- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[add]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-187-- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[swap]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-188-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-189-FAMILY: D86-occurrence-opaque9
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-190-NODES: 9
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-191-FILES: tests/editing_conformance/test_commit_runtime_occurrence_create.py, tests/editing_conformance/test_commit_runtime_occurrence_fork.py, tests/editing_conformance/test_commit_runtime_opaque_items.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-192-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-193-- tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-194-- tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-195-- tests/editing_conformance/test_commit_runtime_occurrence_fork.py::test_registered_fork_normal_wire_accept_edit_and_guarded_undo
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-196-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[item_id]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-197-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[id]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-198-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[both]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-199-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[item_id]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-200-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[id]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-201-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[both]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-202-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-203-FAMILY: D86-parent-track3
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-204-NODES: 3
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-205-FILES: tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py, tests/editing_conformance/test_commit_runtime_parent_track_label.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-206-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-207-- tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py::test_grouped_parent_track_create_move_reload_undo_redo
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-208-- tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-209-- tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_native_label_cli_lost_ack_then_python_suffix_keeps_original_claims
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-210-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md:211:FAMILY: D86-ordinary-script4
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-212-NODES: 4
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-213-FILES: tests/editing_conformance/test_next_ordinary_union_runtime.py, tests/editing_conformance/test_s3_reviewed_cohort_runtime.py, tests/sdk/test_timeline_script.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-214-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-215-- tests/editing_conformance/test_s3_reviewed_cohort_runtime.py::test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-216-- tests/editing_conformance/test_next_ordinary_union_runtime.py::test_born_occurrence_text_order_clear_grouped_inverse_and_redo[]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-217-- tests/editing_conformance/test_next_ordinary_union_runtime.py::test_born_occurrence_text_order_clear_grouped_inverse_and_redo[new occurrence text\r\n]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-218-- tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-219-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-220-FAMILY: D86-provider-custody4
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-221-LOCAL OWNER D89: agt-F-provider-custody4-0100 (Agent source-only; do not dispatch main duplicate).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-222-NODES: 4
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-223-FILES: tests/sdk/test_timeline_commit_provider.py, tests/sdk/test_timeline_commit_provider_add_delete_runtime.py, tests/sdk/test_timeline_semantic_reservations.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-224-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-225-- tests/sdk/test_timeline_commit_provider.py::test_restore_undo_redo_exact_full_closure_and_unknown_fields
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-226-- tests/sdk/test_timeline_commit_provider_add_delete_runtime.py::test_native_add_delete_one_publication_inverse_redo_restart_reservations[net-zero]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-227-- tests/sdk/test_timeline_commit_provider_add_delete_runtime.py::test_native_add_delete_one_publication_inverse_redo_restart_reservations[replace-existing]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-228-- tests/sdk/test_timeline_semantic_reservations.py::test_aggregate_children_are_retired_in_their_occurrence_scope
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-229-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-230-FAMILY: D86-docpatch5
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-231-LOCAL OWNER D89: agt-F-docpatch5-0100 (Agent source-only; do not dispatch main duplicate).
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-232-NODES: 5
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-233-FILES: tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py, tests/timeline/test_authoring_media.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-234-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-235-- tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py::test_complete_json_script_commit_authenticates_materialized_atomic_scopes
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-236-- tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-237-- tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-238-- tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md-239-- tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+--- final diff ---
+diff --git a/tests/editing_conformance/test_next_ordinary_union_runtime.py b/tests/editing_conformance/test_next_ordinary_union_runtime.py
+index e9351f0b6e..52d6254965 100644
+--- a/tests/editing_conformance/test_next_ordinary_union_runtime.py
++++ b/tests/editing_conformance/test_next_ordinary_union_runtime.py
+@@ -35,7 +35,9 @@ def test_born_occurrence_text_order_clear_grouped_inverse_and_redo(tmp_path, mon
+             command['intent'] = {'ownership': 'occurrence'}
+             return command
+ 
+-        request = parent.body(case, [birth, text('transcript'), text('voiceover_script')])
++        birth_request = parent.body(case, [birth])
++        birth_accepted = parent.commit(case, birth_request, 'union-birth')
++        request = parent.body(case, [text('transcript'), text('voiceover_script')])
+         accepted = parent.commit(case, request, 'union-birth-text')
+         document = parent.current(case)
+         shot = next(row for row in document['shot_revisions'] if row['shot_id'] == 'text-shot')
+@@ -46,7 +48,8 @@ def test_born_occurrence_text_order_clear_grouped_inverse_and_redo(tmp_path, mon
+         assert parent.current(case) == document
+         # Reverse the clear/restore edges too, retaining their authenticated order.
+         inverse = parent.body(case, [parent.call('timeline.inverse', {'publications': [
+-            item['receipt']['receipt_id'] for item in (initialized, accepted, cleared, restored)]}, None)])
++            item['receipt']['receipt_id'] for item in
++            (initialized, birth_accepted, accepted, cleared, restored)]}, None)])
+         undone = parent.commit(case, inverse, 'union-group-undo')
+         assert parent.current(case) == original
+         redone = parent.undo(case, undone, 'union-group-redo')
+@@ -55,6 +58,7 @@ def test_born_occurrence_text_order_clear_grouped_inverse_and_redo(tmp_path, mon
+         assert parent.current(case) == document
+         with monkeypatch.context() as retry:
+             retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('retry executed semantics'))
++            assert parent.commit(case, birth_request, 'union-birth') == birth_accepted
+             assert parent.commit(case, request, 'union-birth-text') == accepted
+             assert parent.commit(case, inverse, 'union-group-undo') == undone
+         assert case.service.store.integrity_report()['ok']
+diff --git a/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py b/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+index de9f02efa0..b6c0224200 100644
+--- a/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
++++ b/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+@@ -7,6 +7,7 @@ import pytest
+ 
+ from astrid.sdk.media_transcript import build_transcript, transcript_document_id
+ from astrid.sdk.timeline import commands
++from astrid.sdk.timeline._clip_commands import capture_clip_add
+ from astrid.sdk.timeline.capture import capture_track_create
+ from astrid.sdk.timeline.commit import _digest, bundle_from_document
+ from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+@@ -65,8 +66,9 @@ def test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart(t
+                        if row['id'] == 'parent-media')
+         assert swapped == {**row, 'asset': case.pins['new']['asset']}
+         submit([parent.call('clip.delete', {}, 'parent/clip:parent-media')], 's3-parent-delete')
+-        submit([parent.call('clip.add', {'row': {'id': 'caption', 'clipType': 'am-type',
+-            'track': 'overlay', 'at': 0, 'hold': .5, 'opaque': [None, False, 0.0]}})], 's3-caption')
++        caption = {'id': 'caption', 'clipType': 'am-type', 'track': 'overlay', 'at': 0,
++                   'hold': .5, 'opaque': [None, False, 0.0]}
++        submit([capture_clip_add(bundle(), 'parent', caption)], 's3-caption')
+         content = build_transcript(case.pins['new']['object_id'], 'line', 'again again',
+                                    [[0, .25, 'again'], [.5, .75, 'again']])
+         identity = transcript_document_id(case.project, content['media_id'], content['source_id'])
+diff --git a/tests/sdk/test_timeline_script.py b/tests/sdk/test_timeline_script.py
+index 91c85a2cbe..729445cd49 100644
+--- a/tests/sdk/test_timeline_script.py
++++ b/tests/sdk/test_timeline_script.py
+@@ -254,10 +254,25 @@ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
+             def get_object(self, object_id):
+                 return {"data": service.cas.path_for(object_id.removeprefix("sha256:")).read_bytes()}
+ 
+-        service.set_project_shot_text_binding(project_id, {
+-            "binding_id": pin["binding_id"], "text": "New mutable head.", "expected_head": pin["head"],
+-        }, idempotency_key="rebind-script")
+-        result = read_composition_script(Timelines(), Transport(), project_id, "main")
++        rebound_raw = b"New mutable head."
++        rebound_stored = service.ingest(project_id, rebound_raw, media_type="text/plain; charset=utf-8",
++                                        idempotency_key="rebind-script-text")
++        rebound = rebound_stored["data"]
++        rebound_text = {key: rebound[key] for key in ("object_id", "digest", "size", "media_type")}
++        rebound_verified = {**rebound_text, "utf8": True}
++        rebound_bundle = bundle_from_document(binding_result["data"]["canonical_document"])
++        rebound_command = capture_text_binding_set(
++            rebound_bundle, "occurrence:" + rebound_occurrence["occurrence_id"],
++            {"kind": "voiceover_script", "slot": None},
++            text=rebound_text, verified_text=[rebound_verified])
++        rebound_result = commit([rebound_command], "rebind-script")
++        assert rebound_result["data"]["accepted_revision_id"]
++        live = next(row for row in service.list_project_shot_text_bindings(
++            project_id, kind="voiceover_script")["items"] if row["shot_id"] == shot["shot_id"])
++        assert live["media_id"] == rebound["object_id"]
++        result = read_composition_script(
++            Timelines(), Transport(), project_id, "main",
++            revision_id=binding_result["data"]["accepted_revision_id"])
+         assert result.ok
+         canonical = binding_result["data"]["canonical_document"]
+         expected_revision = "authoring-parent-revision-" + hashlib.sha256(json.dumps(
+
+codex
+The reservation and family map confirm exactly four selectors: one S3 test, two `data` cases in the ordinary-union test, and one script test. The final diff preserves those selectors, decorators, arguments, original assertions/raises, opaque values, and command identities; only the source-required caller seams changed. I’m doing the final static pass now and will record the exact resulting blobs and the intentional lack of functional execution.
+exec
+/bin/bash -lc 'TMP=/tmp/agt-D86-ordinary-script-actual-0315
+mkdir -p "$TMP/mypy-baseline" "$TMP/mypy-candidate"
+V=/home/user/work/venv-agent
+printf '"'%s\\n' '--- ruff candidate ---'
+\""'$V/bin/ruff" check --isolated --no-cache tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/editing_conformance/test_next_ordinary_union_runtime.py tests/sdk/test_timeline_script.py
+printf '"'%s\\n' '--- ruff baseline ---'
+\""'$V/bin/ruff" check --isolated --no-cache /home/user/work/agent/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py /home/user/work/agent/tests/editing_conformance/test_next_ordinary_union_runtime.py /home/user/work/agent/tests/sdk/test_timeline_script.py
+printf '"'%s\\n' '--- mypy candidate ---'
+PYTHONPATH=\""'$PWD" "$V/bin/mypy" --cache-dir "$TMP/mypy-candidate" tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/editing_conformance/test_next_ordinary_union_runtime.py tests/sdk/test_timeline_script.py
+printf '"'%s\\n' '--- mypy baseline ---'
+PYTHONPATH=/home/user/work/agent \""'$V/bin/mypy" --cache-dir "$TMP/mypy-baseline" /home/user/work/agent/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py /home/user/work/agent/tests/editing_conformance/test_next_ordinary_union_runtime.py /home/user/work/agent/tests/sdk/test_timeline_script.py
+printf '"'%s\\n' '--- diff check ---'
+git diff --check
+printf '%s\\n' '--- status and blobs ---'
+git status --short
+for f in tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/editing_conformance/test_next_ordinary_union_runtime.py tests/sdk/test_timeline_script.py; do
+  printf '%s baseline=' \""'$f"; git rev-parse "HEAD:$f"; printf '"'%s candidate=' \""'$f"; git hash-object "$f";
+done' in /home/user/work/wt/agt-D86-ordinary-script-actual-0315
+ succeeded in 3458ms:
+--- ruff candidate ---
+All checks passed!
+--- ruff baseline ---
+All checks passed!
+--- mypy candidate ---
+Success: no issues found in 3 source files
+--- mypy baseline ---
+Success: no issues found in 3 source files
+--- diff check ---
+--- status and blobs ---
+ M tests/editing_conformance/test_next_ordinary_union_runtime.py
+ M tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+ M tests/sdk/test_timeline_script.py
+tests/editing_conformance/test_s3_reviewed_cohort_runtime.py baseline=de9f02efa055e0999500432334b5ea21a0819ac8
+tests/editing_conformance/test_s3_reviewed_cohort_runtime.py candidate=b6c0224200543ed30af96361c0d6bddf3caeca9f
+tests/editing_conformance/test_next_ordinary_union_runtime.py baseline=e9351f0b6eb623a331bce10b99042cfdd61bf18c
+tests/editing_conformance/test_next_ordinary_union_runtime.py candidate=52d62549652d089268bcf6b59d96ff43e68a62ca
+tests/sdk/test_timeline_script.py baseline=91c85a2cbeed4a68b5ce08943a11d1cd14dc8dcc
+tests/sdk/test_timeline_script.py candidate=729445cd499dd2f975b7374cce95ed8a44b97e5d
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-actual-0315/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-actual-0315/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-actual-0315/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f4cfbf0f7e44b7dacbc8d800563e2ccd4661204a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-actual-0315/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): F-D86 correct ordinary script callers
++
++Align the reserved ordinary-script scenarios with current allocation, capture,
++and timeline text-binding APIs while preserving their original proofs.
+diff --git a/tests/editing_conformance/test_next_ordinary_union_runtime.py b/tests/editing_conformance/test_next_ordinary_union_runtime.py
+index e9351f0b6eb623a331bce10b99042cfdd61bf18c..52d62549652d089268bcf6b59d96ff43e68a62ca
+--- a/tests/editing_conformance/test_next_ordinary_union_runtime.py
++++ b/tests/editing_conformance/test_next_ordinary_union_runtime.py
+@@ -35,7 +35,9 @@
+             command['intent'] = {'ownership': 'occurrence'}
+             return command
+ 
+-        request = parent.body(case, [birth, text('transcript'), text('voiceover_script')])
++        birth_request = parent.body(case, [birth])
++        birth_accepted = parent.commit(case, birth_request, 'union-birth')
++        request = parent.body(case, [text('transcript'), text('voiceover_script')])
+         accepted = parent.commit(case, request, 'union-birth-text')
+         document = parent.current(case)
+         shot = next(row for row in document['shot_revisions'] if row['shot_id'] == 'text-shot')
+@@ -46,7 +48,8 @@
+         assert parent.current(case) == document
+         # Reverse the clear/restore edges too, retaining their authenticated order.
+         inverse = parent.body(case, [parent.call('timeline.inverse', {'publications': [
+-            item['receipt']['receipt_id'] for item in (initialized, accepted, cleared, restored)]}, None)])
++            item['receipt']['receipt_id'] for item in
++            (initialized, birth_accepted, accepted, cleared, restored)]}, None)])
+         undone = parent.commit(case, inverse, 'union-group-undo')
+         assert parent.current(case) == original
+         redone = parent.undo(case, undone, 'union-group-redo')
+@@ -55,6 +58,7 @@
+         assert parent.current(case) == document
+         with monkeypatch.context() as retry:
+             retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('retry executed semantics'))
++            assert parent.commit(case, birth_request, 'union-birth') == birth_accepted
+             assert parent.commit(case, request, 'union-birth-text') == accepted
+             assert parent.commit(case, inverse, 'union-group-undo') == undone
+         assert case.service.store.integrity_report()['ok']
+diff --git a/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py b/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+index de9f02efa055e0999500432334b5ea21a0819ac8..b6c0224200543ed30af96361c0d6bddf3caeca9f
+--- a/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
++++ b/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+@@ -7,6 +7,7 @@
+ 
+ from astrid.sdk.media_transcript import build_transcript, transcript_document_id
+ from astrid.sdk.timeline import commands
++from astrid.sdk.timeline._clip_commands import capture_clip_add
+ from astrid.sdk.timeline.capture import capture_track_create
+ from astrid.sdk.timeline.commit import _digest, bundle_from_document
+ from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+@@ -65,8 +66,9 @@
+                        if row['id'] == 'parent-media')
+         assert swapped == {**row, 'asset': case.pins['new']['asset']}
+         submit([parent.call('clip.delete', {}, 'parent/clip:parent-media')], 's3-parent-delete')
+-        submit([parent.call('clip.add', {'row': {'id': 'caption', 'clipType': 'am-type',
+-            'track': 'overlay', 'at': 0, 'hold': .5, 'opaque': [None, False, 0.0]}})], 's3-caption')
++        caption = {'id': 'caption', 'clipType': 'am-type', 'track': 'overlay', 'at': 0,
++                   'hold': .5, 'opaque': [None, False, 0.0]}
++        submit([capture_clip_add(bundle(), 'parent', caption)], 's3-caption')
+         content = build_transcript(case.pins['new']['object_id'], 'line', 'again again',
+                                    [[0, .25, 'again'], [.5, .75, 'again']])
+         identity = transcript_document_id(case.project, content['media_id'], content['source_id'])
+diff --git a/tests/sdk/test_timeline_script.py b/tests/sdk/test_timeline_script.py
+index 91c85a2cbeed4a68b5ce08943a11d1cd14dc8dcc..729445cd499dd2f975b7374cce95ed8a44b97e5d
+--- a/tests/sdk/test_timeline_script.py
++++ b/tests/sdk/test_timeline_script.py
+@@ -254,10 +254,25 @@
+             def get_object(self, object_id):
+                 return {"data": service.cas.path_for(object_id.removeprefix("sha256:")).read_bytes()}
+ 
+-        service.set_project_shot_text_binding(project_id, {
+-            "binding_id": pin["binding_id"], "text": "New mutable head.", "expected_head": pin["head"],
+-        }, idempotency_key="rebind-script")
+-        result = read_composition_script(Timelines(), Transport(), project_id, "main")
++        rebound_raw = b"New mutable head."
++        rebound_stored = service.ingest(project_id, rebound_raw, media_type="text/plain; charset=utf-8",
++                                        idempotency_key="rebind-script-text")
++        rebound = rebound_stored["data"]
++        rebound_text = {key: rebound[key] for key in ("object_id", "digest", "size", "media_type")}
++        rebound_verified = {**rebound_text, "utf8": True}
++        rebound_bundle = bundle_from_document(binding_result["data"]["canonical_document"])
++        rebound_command = capture_text_binding_set(
++            rebound_bundle, "occurrence:" + rebound_occurrence["occurrence_id"],
++            {"kind": "voiceover_script", "slot": None},
++            text=rebound_text, verified_text=[rebound_verified])
++        rebound_result = commit([rebound_command], "rebind-script")
++        assert rebound_result["data"]["accepted_revision_id"]
++        live = next(row for row in service.list_project_shot_text_bindings(
++            project_id, kind="voiceover_script")["items"] if row["shot_id"] == shot["shot_id"])
++        assert live["media_id"] == rebound["object_id"]
++        result = read_composition_script(
++            Timelines(), Transport(), project_id, "main",
++            revision_id=binding_result["data"]["accepted_revision_id"])
+         assert result.ok
+         canonical = binding_result["data"]["canonical_document"]
+         expected_revision = "authoring-parent-revision-" + hashlib.sha256(json.dumps(
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-actual-0315/DONE
+printf '%s\\n' '--- commit message ---'
+sed -n '1,40p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-actual-0315/commit-msg
+printf '%s\\n' '--- markers ---'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-actual-0315/DONE
+printf '%s\\n' '--- final worktree status ---'
+git status --short --branch" in /home/user/work/wt/agt-D86-ordinary-script-actual-0315
+ succeeded in 34ms:
+--- commit message ---
+test(timeline): F-D86 correct ordinary script callers
+
+Align the reserved ordinary-script scenarios with current allocation, capture,
+and timeline text-binding APIs while preserving their original proofs.
+--- markers ---
+-rw-r--r-- 1 root root 0 Oct 25 03:19 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-actual-0315/DONE
+--- final worktree status ---
+## tl/agt-D86-ordinary-script-actual-0315
+ M tests/editing_conformance/test_next_ordinary_union_runtime.py
+ M tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+ M tests/sdk/test_timeline_script.py
+

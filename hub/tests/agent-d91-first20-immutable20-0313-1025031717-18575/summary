@@ -1,0 +1,64 @@
+test agent-d91-first20-immutable20-0313-1025031717-18575: fail exit=1 in 26s — d91-first20-immutable20-0313 on integration:agent (agent tree 2f6468bfc2534643400add3647e087e770d8a2b1)
+cmd: env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 P4_LAUNCHER=/home/user/work/wt/agt-pin-562ee30b/tools/p4-d73-pinned-launch.sh P4_D73_MANIFEST=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D91-next10-immutable20-0313/evidence/input/d91-first20.manifest P4_D73_EVIDENCE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D91-next10-immutable20-0313/evidence/output P4_D73_REQUEST_ID=d91-first20-immutable20-0313 MAIN_BATCH_SELECTOR_FILE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D91-next10-immutable20-0313/evidence/input/selector-argv.txt MAIN_BATCH_EXPECTED_SELECTOR_COUNT=20 /bin/bash --noprofile --norc -c 'set -eu; exec /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D91-next10-immutable20-0313/evidence/route/main-affected-batch-recipe.sh'
+counts: 3 failed, 7 passed, 10 errors in 23.24s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d91-first20-immutable20-0313-1025031717-18575/log.txt ---
+                            or (key != "duration_seconds" and type(value) is not int)):
+                        raise ValueError("invalid intrinsic media metadata")
+                    if key in entry and entry[key] != value:
+                        raise ValueError("contradictory intrinsic media metadata")
+                    entry[key] = value
+            record = {"realm_id": self.realm["id"], "project_id": project_id,
+                      **{k: selection[k] for k in ("asset", "generation_id", "variant_id")},
+                      "object_id": object_id,
+                      "generation": {"type": row["type"], "source_task_id": row["source_task_id"],
+                                     "metadata": _media_metadata(generation_metadata)},
+                      "variant": {"variant_type": row["variant_type"], "metadata": _media_metadata(variant_metadata)},
+                      "entry": entry}
+            associations = self.store.conn.execute(
+                "SELECT association_id FROM managed_output_associations WHERE project_id=? AND generation_id=? AND object_digest=?",
+                (project_id, selection["generation_id"], row["object_digest"]),
+            ).fetchall()
+            matched = [self.store.get_managed_output(item["association_id"]) for item in associations]
+            matched = [item for item in matched if self._variant_matches(item, variant_metadata)]
+            if associations and len(matched) != 1:
+                raise ConflictError("selected variant has no unique exact managed output binding")
+            if matched:
+                association, variant = self._output_selection_binding(project_id, matched[0]["association_id"])
+                if (variant["id"] != selection["variant_id"]
+                        or association["size"] != entry["size"] or association["media_type"] != entry["media_type"]):
+                    raise ConflictError("selected media output identity changed")
+                record["variant"]["managed_output"] = {key: association[key] for key in (
+                    "association_id", "task_id", "attempt_id", "project_id", "generation_id", "object_id",
+                    "output_port", "group_key", "variant_key", "ordinal", "role", "size", "media_type",
+                    "filename", "durability", "lifecycle", "provenance",
+                )}
+            if entry["media_type"].startswith(("video/", "audio/")) and "duration_seconds" not in entry:
+                raise ValueError("selected audio/video requires intrinsic duration")
+            # A selected command input is authoritative only while its exact
+            # managed object bytes still match the catalog size and digest.
+            # Keep this scoped to consumed selections; the acceptance closure
+            # remains responsible for its existing manifest checks.
+            self.service._verify_child_object_bytes(
+                row["object_digest"], row["size"], label="selected media CAS object",
+            )
+            record["catalog_digest"] = digest(record)
+        except (ValueError, TypeError, OverflowError) as exc:
+>           raise ValidationError("invalid selected media metadata") from exc
+E           runtime_protocol.errors.ValidationError: invalid selected media metadata
+
+../rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py:1018: ValidationError
+=========================== short test summary info ============================
+FAILED tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original
+FAILED tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]
+FAILED tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_slot_move_inverse_redo_and_rematerialization[original-third]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_preserves_newer_disjoint_sibling_edit[original-third]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_preserves_newer_disjoint_parent_edit[original-third]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_slot_move_inverse_redo_and_rematerialization[authored-first]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_preserves_newer_disjoint_sibling_edit[authored-first]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_refuses_touching_aba_atomically[original-third]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_preserves_newer_disjoint_parent_edit[authored-first]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_refuses_touching_aba_atomically[authored-first]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_redo_refuses_intervening_aba_after_exact_undo[authored-first]
+ERROR tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_redo_refuses_intervening_aba_after_exact_undo[original-third]
+3 failed, 7 passed, 10 errors in 23.24s

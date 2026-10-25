@@ -201,6 +201,23 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D94, verified-history state survives across requests while the store has not been changed by anyone else (03:22Z).**
+  - **The evidence** (Agent cross-process sample 0242, 432 samples):
+    - P4 ten-note is CPU-bound in ONE process: 42.6 s CPU over 46.3 s wall.
+    - The hot frames are RUNTIME's, not Agent's: digesting, SQL fetch/recheck, JSON decode.
+    - There are zero CLI spawns and no sleeps.
+    - Undo cost grows with every note: 1.4, 5.0, 10.3, 12.4 s, and notes 5–10 were never reached.
+    - D88b removed the replays, but every request still RE-READS, re-decodes and re-hashes the whole history to recompute the memo keys. That is O(N) per request, O(N²) per session.
+  - **The decision:** Runtime is the sole writer, and its store is SQLite, which already exposes `PRAGMA data_version` (used in timeline_commit_store.py:239). That value changes whenever ANOTHER connection writes the database.
+    - Runtime keeps, per process, its decoded and verified history state (entries, chain digests, replay-OK flags).
+    - That state is reused across requests as long as (a) `data_version` is unchanged since Runtime's own last write, and (b) the DB/WAL file identity (device, inode) and size match what Runtime recorded after its own last write.
+    - Runtime's own accepted commits update the state incrementally, verifying only the new entry.
+    - Any external change, any refusal or error, and any restart clear the state and force a full re-verify. Startup always does a full verify.
+    - Cost becomes O(new entries) per request.
+  - **Threat model, stated plainly:** the cache trusts bytes Runtime itself already verified, unless something outside Runtime touched the database. The one case it does not catch: an attacker with raw write access to Runtime's data directory who edits the file without changing its size, inode or data_version, and only until the next restart. That attacker can equally replace Runtime's own code, so verifying history against them is not meaningful. Everything else is still caught: tampering through any other DB connection, offline edits (caught at restart), and refusals.
+  - **Owner:** one HARD Sol, then ONE independent security review. The review attacks the external-write detection: another connection, WAL edits, rewind, restart, and the pre-change legacy mix. It reuses the retained D88 forgery witness, which must be rejected after an external write. No new exploit tooling.
+  - **Gate:** the local loop shows per-request time flat in N; then P4 ten-note < 45 s.
+  - The owner is informed of the threat-model narrowing.
 - **D93, the P4 cost harness 401 (02:28Z), deciding escalation runtime-20261025T0223Z-cost-harness-permission:**
   - This is the PRODUCT's own test-fixture credential being refused scopes. It is not a Claude permission or safety refusal, and no scope may be invented.
   - **HOLD** cost worker 0215 until the unchanged P4 ten-note proof on D88b (6634) reports. If it passes under 45 s, the cost worker is not needed: close it.
