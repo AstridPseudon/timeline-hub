@@ -1,0 +1,16 @@
+{
+  "handoff": "agt-R1-D100-seed-review-1104",
+  "ask": "record one protected review for corrected six-node D100 fixture",
+  "owner": "existing Runtime receiving owner",
+  "by": "D120 normal merge",
+  "selected": 6,
+  "pass": 6,
+  "fail": 0,
+  "error": 0,
+  "seconds": 4.0,
+  "runtime": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+  "scope": "same six duplicate chapter-1 setup nodes; one review only",
+  "source_result_custody": true,
+  "product_release": false,
+  "remaining": ["original TEN/inverse", "product batch", "full chain"]
+}

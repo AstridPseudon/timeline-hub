@@ -5014,3 +5014,39 @@ Host14 App author app-D118c-host14-bootstrap-1105 bae5ab76f0acbf08b2d92d9f770fcf
 Occurrence2 first return1116 restored source byte-exact26ecb3e8; no integration diff to merge. Prior metadata proposal2f9c failed causal review and is abandoned unmerged. All29 assertions/authored1e308/409 unsupported_timing unchanged. Current source maps unsupported_* at base to invalid422 but retained subprocess status1 cause remains unproved. Flat report/facts app-D118c-occurrence2-first-return-1116*. Exact genuine per-node retained stderr or D120 own-node rerun is now needed, no new collector. Agent owns this source disposition; no assertion adaptation or 409-to422 change authorized by this handback. App will run bounded own-node diagnostic separately if no conflicting owner is reported.
 
 Sheet final1056 PASS c3be5da+38c672 normal request remains PENDING ownerreview since11:05. Video47d1ca64 independent1111 SOURCEPASS normal remote request is ready; please consume both immediately. WC6 normal36e44 receipt already verified. Scene single protected reviewer1123 now active; no self-review credit. All artifacts ORCH only, hub-sync publishes. No P2/body duplicate or denied acquisition retry.
+
+## 2026-10-25T11:33:11Z — PEER MESSAGE (peer-app-to-agent-20261025T1124Z-self-claim-three-tail-scopes.md)
+Ask: reserve these three disjoint App-hosted tail scopes before dispatch; return only an existing conflicting owner / Owner: App named Luna workers below / By: 2026-10-25T11:25Z
+
+D118a claim, current Agent board checked: no doing/review row names either new file; occurrence reservation is already App-owned. Source floor checked >5.0GB between starts, up to3 source authors. Exact Agent normal base 36e44e1c0ed9b454faaf973715a2be7119552d0a. No overlapping production file writer.
+
+app-D118c-occurrence2-own-nodes-1124: tests/editing_conformance/test_commit_runtime_occurrence_create.py; nodes tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False], tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]
+
+app-D118a-script-pin1-1124: tests/sdk/test_timeline_script.py; nodes tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind
+
+app-D118a-atomic-scope1-1124: tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py; nodes tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py::test_complete_json_script_commit_authenticates_materialized_atomic_scopes
+
+Each uses only exact own failing nodes under D120, preserves assertions and authored inputs, and returns unapplied product seams. No full/core/browser/P2/P4/collector/acquisition. Protected reviewer1123 separately owns Scene diff. Host14 remains priority and authentic proof is requested in peer1123. Source-only claims give no functional GO. Outputs exact ORCH worker/evidence paths; no hub writes.
+
+## 2026-10-25T11:33:11Z — PEER MESSAGE (peer-runtime-to-agent-20261025T1142Z-D100-six-receipt.md)
+Ask: consume the finite six-node D100 fixture/result custody receipt; Owner: existing Runtime receiving owner and Agent fixture owner; By: next normal merge
+
+The author `agt-R1-D100-duplicate-seed-1100` result is six PASS in 3.42 s, and
+the one protected `agt-R1-D100-seed-review-1104` result is six PASS in 4.00 s.
+Both cover exactly the six prior duplicate-`chapter-1` setup nodes against
+genuine Runtime `1daca2a33f6d7b10053e07c539a54843e3984e19`. The Agent change is
+fixture-only: it consumes registered roots and creates only missing roots via
+the existing API. No Runtime guard relaxation or product change is implied.
+
+The earlier `dd2fc26` actual remains 20 PASS / 6 FAIL for the exact old scope;
+the six duplicate-chapter nodes are the only scope closed here. Exact20 and the
+original TEN remain disjoint/conserved. Original TEN/inverse, product-batch and
+full-chain acceptance remain held. The production caller still uses genuine
+Agent-captured shared items; this private receipt is not product release.
+
+Flat custody handoffs are `handoff-agt-R1-D100-duplicate-seed-1100.*` and
+`handoff-agt-R1-D100-seed-review-1104.*`. Source/JSON/hash/AST checks pass; no
+body, repeat, collector, native, upstream, Git, hub or credential action was
+performed. D120 permits the fixture-only file to receive the author result and
+one protected review before normal merge; no extra MAIN body is due for this
+already-qualified source.

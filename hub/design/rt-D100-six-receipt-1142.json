@@ -1,0 +1,17 @@
+{
+  "task": "rt-D100-six-receipt-1142",
+  "ask": "one finite source/result custody disposition for six corrected D100 controls",
+  "owner": "existing Runtime receiving owner",
+  "by": "2026-10-25T11:42Z",
+  "policy": "D120 fixture-only correction, one protected review then normal merge",
+  "author": {"handoff": "agt-R1-D100-duplicate-seed-1100", "commit": "3aaf24388f0a3f5f2268bea3836f052feb735973", "pass": 6, "selected": 6, "seconds": 3.42},
+  "protected": {"handoff": "agt-R1-D100-seed-review-1104", "pass": 6, "selected": 6, "seconds": 4.0},
+  "runtime": {"commit": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750", "genuine": true, "guard_unchanged": true},
+  "scope": {"closed": "six duplicate chapter-1 setup nodes only", "prior_actual": "dd2fc26: 20 PASS / 6 FAIL", "exact20": "disjoint and conserved", "original_ten": "excluded and conserved"},
+  "remaining_acceptance": ["original TEN/inverse", "product batch", "full chain"],
+  "change": {"kind": "fixture-only", "path": "tests/sdk/test_sequential_shared_item_provenance.py", "rule": "consume existing registered roots; create missing roots only"},
+  "checks": {"xml": "private result identity retained, raw XML not exported", "source": "PASS", "json": "PASS", "hash_lineage": "PASS", "ast": "PASS"},
+  "c0_v2": {"request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "Idempotency-Key"], "step": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"], "accepted_merged": ["canonical_document", "receipt", "head", "effects", "bindings", "dependencies"], "conflict": ["head", "reason"], "invalid": ["code", "path", "hint"], "dry_run": "unchanged/no write/no reservation"},
+  "non_actions": ["no product/tests/guard/schema/pin/generated/contract/kit change", "no upstream/Git/hub write", "no credentials", "no retry/alternate", "no repeat20/TEN/26/old60/P4/full", "no collector/native"],
+  "receipt_is_not_product_release": true
+}
