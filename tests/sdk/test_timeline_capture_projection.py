@@ -277,6 +277,58 @@ def saved_closure(saved_runtime):
 
     runtime = saved_runtime
     document = _saved_document(runtime)
+    # D100's reviewed physical-membership path (Agent d3b5cfef76b4b3abef5db5f8288abc214a61354f)
+    # admits the empty published item list directly on its original physical
+    # source through a guarded doc.patch, then reloads the accepted canonical
+    # closure before the opaque source graph is authored below.
+    source_bundle = bundle_from_document(document)
+    source_placement = source_bundle["placements"][0]
+    source_shot = source_bundle["shots"][source_placement["shot_id"]]
+    source_media_id = source_shot["internal_timeline"]["registry"]["assets"][
+        source_shot["internal_timeline"]["clips"][0]["asset"]
+    ]["media_id"]
+    source_item = {
+        "item_id": "item-1", "media_id": source_media_id,
+        "source_frame": None, "metadata": {"opaque_literal": "item-1"},
+    }
+    item_patch = {
+        "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+        "args": {"changes": [{
+            "op": "set", "ref": "shot-revision:" + source_shot["revision_id"],
+            "path": ["items"], "before": {"state": "present", "value": []},
+            "value": [copy.deepcopy(source_item)],
+        }]},
+    }
+    head = runtime.service.get_project_timeline(runtime.project_id, runtime.timeline_id)
+    item_change = copy.deepcopy(item_patch["args"]["changes"][0])
+    admitted = runtime.service.commit_timeline(
+        runtime.project_id, runtime.timeline_id,
+        {
+            "api_version": 1, "project_id": runtime.project_id,
+            "timeline_id": runtime.timeline_id,
+            "base_revision_id": head["head_revision_id"],
+            "base_publication_id": head["head_publication_id"],
+            "commands": [item_patch],
+            "label": "Original source items",
+            "steps": [
+                {"id": "0", "label": item_patch["op"],
+                 "intent": "Original physical edit", "tags": ["integration"],
+                 "command_ordinals": [0], "patch": [item_change]},
+            ],
+            "merge": "fields",
+            "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
+            "dry_run": False, "source": {"via": "python"},
+            "rationale": "Sequential source provenance",
+        },
+        idempotency_key="capture-projection-source-items",
+        publisher="capture-projection-fixture",
+        invocation_path=f"/v1/projects/{runtime.project_id}/timelines/{runtime.timeline_id}/commit",
+        authorize=lambda: None,
+    )
+    assert admitted["data"]["status"] == "accepted"
+    canonical = admitted["data"]["canonical_document"]
+    runtime.parent_revision_id = canonical["parent_revision"]["revision_id"]
+    document = _saved_document(runtime)
     parent = document["parent_revision"]
     bundle = open_authoring_bundle(
         {**parent, "project_id": runtime.project_id, "timeline_id": runtime.timeline_id},
