@@ -1,0 +1,2259 @@
+{
+  "at": "2026-10-25T18:27:41.384605+00:00",
+  "action": "lossless compression of remaining bounded ended unreferenced App logs",
+  "guards": "ended over one hour, no running/KEEP/lease/ACTIVE/status/suite/env/livebrief reference, regular single-link files; output exclusive-create and decompressed hash exact",
+  "before_free": 5054357504,
+  "after_free": 5163966464,
+  "count": 281,
+  "logical_saved": 109521967,
+  "items": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132a-graph-created-review-1720/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132a-graph-created-review-1720/log.txt.gz",
+      "plain_bytes": 1034189,
+      "gzip_bytes": 169574,
+      "sha256": "cb0c55e85104ab458247882a8bee543c813e526fab1f31d394913559ad97d01f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-executor-retirement-0051/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-executor-retirement-0051/log.txt.gz",
+      "plain_bytes": 747124,
+      "gzip_bytes": 144951,
+      "sha256": "5dde708cdbc9c557ab158bab99cdcdf211f0c840dce61cfc759e966b42c94129",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-phase-sink-rereview-0719/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-phase-sink-rereview-0719/log.txt.gz",
+      "plain_bytes": 740646,
+      "gzip_bytes": 197983,
+      "sha256": "65410d088ff71ff8bd0e5ac6a3ff56b3fdd9790cf1e416b4273d56c47c1cd77c",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-D39-caller-sol-1022/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-D39-caller-sol-1022/log.txt.gz",
+      "plain_bytes": 740601,
+      "gzip_bytes": 165682,
+      "sha256": "7ff074c897aafe444d190853734f434c8fc70f0ae7399dc1519a8553cb1ce242",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D88b-SWAP-submit-0235/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D88b-SWAP-submit-0235/log.txt.gz",
+      "plain_bytes": 739925,
+      "gzip_bytes": 138086,
+      "sha256": "c47957284b3d8560b5a539c98c6f4714913fd07c8e7517fb1b38b79c97c30d41",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-hook-protected-review-1320/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-hook-protected-review-1320/log.txt.gz",
+      "plain_bytes": 739407,
+      "gzip_bytes": 166017,
+      "sha256": "b77557ea2c0639a2ace37f12ca44e8411915122b54cfd5aa27a6b88544e3c0a8",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-tour-batched-return-2338/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-tour-batched-return-2338/log.txt.gz",
+      "plain_bytes": 737567,
+      "gzip_bytes": 168950,
+      "sha256": "b88111c91208eab28521974272c16b1dad1bfdc9dc92c1d8529b945974aa0cd1",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-current-caller-prep-0442/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-current-caller-prep-0442/log.txt.gz",
+      "plain_bytes": 736026,
+      "gzip_bytes": 110295,
+      "sha256": "5875f655d5fcecab761760bdb13d51d642b46b6a9a7121f0a2d53acadc54da3e",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native-topology4-protected-1653/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native-topology4-protected-1653/log.txt.gz",
+      "plain_bytes": 727767,
+      "gzip_bytes": 137641,
+      "sha256": "d7fd3c6a1fe05878659038a816b775a0198f37d08335e62937ee08ba48d15fdf",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-recovery-proposal-review-1731/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-recovery-proposal-review-1731/log.txt.gz",
+      "plain_bytes": 726894,
+      "gzip_bytes": 142067,
+      "sha256": "7cb49b864ce83ff3a97f16eed20a8d30f380505ca353bf72fd9cb9a468e1d221",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-home-and-preflight-1704/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-home-and-preflight-1704/log.txt.gz",
+      "plain_bytes": 726776,
+      "gzip_bytes": 174383,
+      "sha256": "b17aeb4f9a366090792e7770249060d1527d65f9cfec99ac2b0c8e65808532ba",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D88b-element-submit-0200/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D88b-element-submit-0200/log.txt.gz",
+      "plain_bytes": 725912,
+      "gzip_bytes": 158954,
+      "sha256": "c1ebca75f2b935a1c143e5ccadd6e38b1e0b578afc8ec4d7d5ad30bab7dc6ccc",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132a-graph-schema-enumerate-1653/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132a-graph-schema-enumerate-1653/log.txt.gz",
+      "plain_bytes": 725747,
+      "gzip_bytes": 109870,
+      "sha256": "87c8f5264bd3be5dd82c6e0a7c43f861f2eea9133510c34af96b8d1dfa4fd725",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-caller-protected-return-sol-1307/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-caller-protected-return-sol-1307/log.txt.gz",
+      "plain_bytes": 724847,
+      "gzip_bytes": 188397,
+      "sha256": "744f8d4a7c90415337cfe9d1dd365ed421848722e30de3c3be5d411dd405ed6c",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-recovery-basis-tests-0215/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-recovery-basis-tests-0215/log.txt.gz",
+      "plain_bytes": 721695,
+      "gzip_bytes": 142175,
+      "sha256": "c589adff6d87ce0eb2c0a49dd611b84207c712a7fd762928ee38f86a4b2adb49",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-graph-protected-review-1601/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-graph-protected-review-1601/log.txt.gz",
+      "plain_bytes": 720172,
+      "gzip_bytes": 142678,
+      "sha256": "4e6a9ea1f29f47f8c238d4ea0a4b6399625f361d2fdd0b50a5119c30427c95e2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-provider-ADD-submit-0028/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-provider-ADD-submit-0028/log.txt.gz",
+      "plain_bytes": 720041,
+      "gzip_bytes": 124113,
+      "sha256": "7e7530a13f8bba39bd716d5eeefa1a79c5eed564305b3f58181f73066d387acf",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-placement-sol-review-1657/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-placement-sol-review-1657/log.txt.gz",
+      "plain_bytes": 718408,
+      "gzip_bytes": 142181,
+      "sha256": "b5f055dff647c73e8c9fc4014f9c497fe99565f35d5bb425f22e024582eff987",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-placement-repro-0745/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-placement-repro-0745/log.txt.gz",
+      "plain_bytes": 717027,
+      "gzip_bytes": 151738,
+      "sha256": "65b6cc8ddddae145e358e69e0bd3dd529be8d072f99f2123f24861899e2077b8",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-recovery-proposal-return-1736/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-recovery-proposal-return-1736/log.txt.gz",
+      "plain_bytes": 714012,
+      "gzip_bytes": 107140,
+      "sha256": "7096e0dc1e10ca0c8c311874aebcb87a254796e7e285f6a07ce690cdd7e315f1",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-envelope-artifact-return-2005/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-envelope-artifact-return-2005/log.txt.gz",
+      "plain_bytes": 713656,
+      "gzip_bytes": 87759,
+      "sha256": "4dcbecda7f554033e18b3b41bb85767fe0e2f2b632d82979fa7b09471c3f639f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-protocol-joined-proof-0306/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-protocol-joined-proof-0306/log.txt.gz",
+      "plain_bytes": 710042,
+      "gzip_bytes": 153550,
+      "sha256": "44d4027cff228fb488a09e109f78252c054cb4724312947ba068b0f3d19cf376",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-placement-geometry-review-0031/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-placement-geometry-review-0031/log.txt.gz",
+      "plain_bytes": 707230,
+      "gzip_bytes": 182967,
+      "sha256": "c6ce1c8f9843edcb4125bee57e15dfb8c0f6862d069649487ac78c71754979bf",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-current-terminal-1435/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-current-terminal-1435/log.txt.gz",
+      "plain_bytes": 705260,
+      "gzip_bytes": 200931,
+      "sha256": "4bb16ba16086337147c9419cd0c309e418b08d7228b29a8b246ffb293d866ca2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-runner-review-0940/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-runner-review-0940/log.txt.gz",
+      "plain_bytes": 702435,
+      "gzip_bytes": 140579,
+      "sha256": "42a243a9de9efbcbaa52080f43fcd13c3a599d753f46eb19ccc798a1b4e41016",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-setup-sol-1606/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-setup-sol-1606/log.txt.gz",
+      "plain_bytes": 702147,
+      "gzip_bytes": 165874,
+      "sha256": "c46d10287f04be4b33b0b8e45049659131e996a5c3691b9c29e49f9388d88c34",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132a-graph-protected-own9-1658/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132a-graph-protected-own9-1658/log.txt.gz",
+      "plain_bytes": 699428,
+      "gzip_bytes": 120506,
+      "sha256": "196fdaa8d78b37ad113946c2c1812495c29afa9e0cba0205c5f6b0464406f07d",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102b-bounded-phase-ring-0521/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102b-bounded-phase-ring-0521/log.txt.gz",
+      "plain_bytes": 695162,
+      "gzip_bytes": 103506,
+      "sha256": "43a66e3f5a7a5e6e804ad0a96fe1cc1040769f78070f67b0febe4ce16ab8d365",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-media-closure-review-0025/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-media-closure-review-0025/log.txt.gz",
+      "plain_bytes": 692266,
+      "gzip_bytes": 137693,
+      "sha256": "460e9ccffa96fca52d82ac9c461c0b864ee9b4f8fa93518af9e2172e6e9d8bd4",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D62-home-rebind-1539/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D62-home-rebind-1539/log.txt.gz",
+      "plain_bytes": 690678,
+      "gzip_bytes": 138499,
+      "sha256": "71b3650795c3c095f20218b7ecccbcd070ea879bd9fe58e6790fd1bbdecbb7bf",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-leaf-retention-author-1606/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-leaf-retention-author-1606/log.txt.gz",
+      "plain_bytes": 687370,
+      "gzip_bytes": 116180,
+      "sha256": "d0ee19839d7dfc808e7807b0f02de44cf844e73016a6ac99d27668f482f88e78",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102-seed-caller-retention-0553/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102-seed-caller-retention-0553/log.txt.gz",
+      "plain_bytes": 685935,
+      "gzip_bytes": 141246,
+      "sha256": "d4cdf54d730fb96747d5bbd560452cee807ca2e12e79a62a29eb811e0d05725e",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-diagnostic-cumulative-0816/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-diagnostic-cumulative-0816/log.txt.gz",
+      "plain_bytes": 681665,
+      "gzip_bytes": 119611,
+      "sha256": "f9bcbab2f62b17bce3be6e463763a8678f5d3630d91af683bc9f2ee7e48b230e",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-install-schema-skew-1507/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-install-schema-skew-1507/log.txt.gz",
+      "plain_bytes": 681118,
+      "gzip_bytes": 154105,
+      "sha256": "738439a9e46128f4b30fa89c2cc2e9a32dc0c264d95fb3f8fb3ea2953d175562",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-D39-tool-return-sol-1005/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-D39-tool-return-sol-1005/log.txt.gz",
+      "plain_bytes": 679706,
+      "gzip_bytes": 161326,
+      "sha256": "3dee5a38055d90fccff50461ddee615851e964ee30455da78e2e2295be31e324",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D45-parent-cause-sol-0505/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D45-parent-cause-sol-0505/log.txt.gz",
+      "plain_bytes": 678266,
+      "gzip_bytes": 164804,
+      "sha256": "3c4f312073cf1a405fc032d53d1c320e1100e5c5e28816230c22e7a3f92073d0",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132-graph-numeric-setup-1627/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132-graph-numeric-setup-1627/log.txt.gz",
+      "plain_bytes": 677523,
+      "gzip_bytes": 135937,
+      "sha256": "754b7a6cd7529e9e9c7138c2cbb212a2ea3991dd82f3cc4553a5039d9851488a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-scene-summary-protected-review-1123/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-scene-summary-protected-review-1123/log.txt.gz",
+      "plain_bytes": 677042,
+      "gzip_bytes": 123974,
+      "sha256": "d5cc5c77599abdd2660d948e58b86dec21e0d6eca46f41b5f33a6e7ee25a6885",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D52-complete-task-independent-1143/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D52-complete-task-independent-1143/log.txt.gz",
+      "plain_bytes": 676589,
+      "gzip_bytes": 145907,
+      "sha256": "99a80fdc59d3d832d2334fd164b7eb0d52a36605d55d6cffc616db19b21d570d",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-sheet15-final-protected-review-1056/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-sheet15-final-protected-review-1056/log.txt.gz",
+      "plain_bytes": 676309,
+      "gzip_bytes": 103949,
+      "sha256": "a4dbad99a24a294cfaaf33268e2e95e70b88c074aceeefd6620700eca9c2ecac",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-leaf-first-return-1619/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-leaf-first-return-1619/log.txt.gz",
+      "plain_bytes": 675074,
+      "gzip_bytes": 162114,
+      "sha256": "cd0c6fa29a71c8e13ea3a21380320fad3e7fe9d54621697d4a69314c8bebcf4f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P1-P3-resume-0655/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P1-P3-resume-0655/log.txt.gz",
+      "plain_bytes": 674946,
+      "gzip_bytes": 119855,
+      "sha256": "888656e304b39d13d391c2e1804067373afcfdab7bbf21185a5abcdc8d8c0998",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-current-asset-isolated-1217/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-current-asset-isolated-1217/log.txt.gz",
+      "plain_bytes": 672664,
+      "gzip_bytes": 99949,
+      "sha256": "ef55db2857ab696149bb045db93f7775cfe525aeebc6825270c4147a86693f62",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-current-full-producer-1446/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-current-full-producer-1446/log.txt.gz",
+      "plain_bytes": 670211,
+      "gzip_bytes": 130880,
+      "sha256": "10c96c44d4bc91e3819547bcfcb4a2ccc8d566c974dcd9da7418e8f30e64ef50",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-owner-current-packet-0226/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-owner-current-packet-0226/log.txt.gz",
+      "plain_bytes": 669366,
+      "gzip_bytes": 136138,
+      "sha256": "05265396394d2b5c7ab395266c408d31138f547e029c86f7fb450b5e2f8b871a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-F-integrated-result-review-1133/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-F-integrated-result-review-1133/log.txt.gz",
+      "plain_bytes": 668486,
+      "gzip_bytes": 143843,
+      "sha256": "81d7e05c62c0a2edde8b40d264834a49d4589826142abe18adf3fb54693e1b70",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-public-executor-review-0208/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-public-executor-review-0208/log.txt.gz",
+      "plain_bytes": 667575,
+      "gzip_bytes": 133723,
+      "sha256": "015ff1f1a421b317612fae58e4b82b910182fad67902f7daf6e4b06aad2b579a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-provider-element-submit-0014/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-provider-element-submit-0014/log.txt.gz",
+      "plain_bytes": 666998,
+      "gzip_bytes": 137246,
+      "sha256": "ba1a3c1f48548af9c244ac6484b991feea22dfcec9b2ffa14476e6457893e542",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D84a-app-sweep-2225/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D84a-app-sweep-2225/log.txt.gz",
+      "plain_bytes": 664549,
+      "gzip_bytes": 138418,
+      "sha256": "ee6fa7f3d688800b363cbb25235575c1e7e1e4820ed81d3160300b0397a0e941",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native-topology4-1644/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native-topology4-1644/log.txt.gz",
+      "plain_bytes": 664254,
+      "gzip_bytes": 138169,
+      "sha256": "21da2823bb96d11291c73c8a54cb8c5f4b347f411bbd755331a20e824fc34f19",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element29218-lifecycle-0755/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element29218-lifecycle-0755/log.txt.gz",
+      "plain_bytes": 662999,
+      "gzip_bytes": 94180,
+      "sha256": "9b0ae1c0519edad4693ab78c6f4609e518d0e3f3cd2873d24cd7399f35f23931",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D73-launch-return-1713/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D73-launch-return-1713/log.txt.gz",
+      "plain_bytes": 659870,
+      "gzip_bytes": 94045,
+      "sha256": "d88067b750e4377c548d4b2d1618c9e08ea5548c2cfdd66372179199d0d4d1c8",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-fullscreen-review-1636/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-fullscreen-review-1636/log.txt.gz",
+      "plain_bytes": 658787,
+      "gzip_bytes": 134990,
+      "sha256": "7e272814e066558db1982f16189f40a33a1716dcd8fa7a6579e7b9734918e51f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D121-tags-adoption-1230/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D121-tags-adoption-1230/log.txt.gz",
+      "plain_bytes": 658041,
+      "gzip_bytes": 143230,
+      "sha256": "0e217b3d83559ee6b2b5418d41c63790453d61c6deee6a2c5afd4a9d7f4bb0ef",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-phase-sink-startup-0653/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-phase-sink-startup-0653/log.txt.gz",
+      "plain_bytes": 657703,
+      "gzip_bytes": 146786,
+      "sha256": "b134b43867abb8667fc5ef196bd60a09cf66f11928eb724045e55b1c0de52b1f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-final-live-predicates-1343/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-final-live-predicates-1343/log.txt.gz",
+      "plain_bytes": 657052,
+      "gzip_bytes": 148559,
+      "sha256": "39c5e69d4ae08187c6c3efccc8d49ce607d983fdb2d9be8b962464a393c80bdc",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-asset-drop-return-2150/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-asset-drop-return-2150/log.txt.gz",
+      "plain_bytes": 653934,
+      "gzip_bytes": 161141,
+      "sha256": "cc5be1dd6925ed805c229ae8b080bb30267cbb69ab3b3b45a0e18c8d1a0ed1ac",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-D45-artifact-return-0518/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-D45-artifact-return-0518/log.txt.gz",
+      "plain_bytes": 653605,
+      "gzip_bytes": 117271,
+      "sha256": "38e68e8c4daa0097233e75653f1e4be2009f42aa7756fa79b947c264d3c4c04e",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-caller-inventory-review-1342/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-caller-inventory-review-1342/log.txt.gz",
+      "plain_bytes": 652933,
+      "gzip_bytes": 150761,
+      "sha256": "e38b467ce1d5f8b8d6dea91a0b0d2b7211fd7573f12d89823565d857730b59db",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-popup-wrapper-sol-0349/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-popup-wrapper-sol-0349/log.txt.gz",
+      "plain_bytes": 651976,
+      "gzip_bytes": 156074,
+      "sha256": "8d1ef2e9162956555e21a41ef9d3bea6620f7cc805d348f15c5badb0b3346a2a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-lifecycle-source-sol-1705/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-lifecycle-source-sol-1705/log.txt.gz",
+      "plain_bytes": 650916,
+      "gzip_bytes": 145615,
+      "sha256": "803f40e7ec716874275acd90e4b4dde9cbe4a1c67985bb195400921b9de09221",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102c-retained-cause-0650/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102c-retained-cause-0650/log.txt.gz",
+      "plain_bytes": 650404,
+      "gzip_bytes": 127292,
+      "sha256": "75e871161ad3be36e61d2e51f548fa291d9bcd71014d0bad7d0df606e16161bb",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D78-native-pending-capture-1941/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D78-native-pending-capture-1941/log.txt.gz",
+      "plain_bytes": 647630,
+      "gzip_bytes": 163948,
+      "sha256": "6133347a22aeb660271c6482653a9c4b653123d4583fa04a4852a794e4322941",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-Agent-tree-return-sol-1130/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-Agent-tree-return-sol-1130/log.txt.gz",
+      "plain_bytes": 647491,
+      "gzip_bytes": 154991,
+      "sha256": "2169dffa7b3779ef9ca69cfb8f03d4e999dba60940de7f12cfad6fde69d317f5",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-current-provenance-1635/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-current-provenance-1635/log.txt.gz",
+      "plain_bytes": 647330,
+      "gzip_bytes": 160891,
+      "sha256": "b88fa19161cfafc5ec41777e2341979c95cb50fe4cb133f380f55147d55268f5",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-clean-port-1024/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-clean-port-1024/log.txt.gz",
+      "plain_bytes": 646949,
+      "gzip_bytes": 153690,
+      "sha256": "0f57609d873cf3091615d5b597f85c4ef59f8a2ab8fa15a00f6ed3d5c78da391",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-state-review-0142/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-state-review-0142/log.txt.gz",
+      "plain_bytes": 642346,
+      "gzip_bytes": 116109,
+      "sha256": "b436f425281e3cb8835ec4f7f04e06a55181e1d71b05dc080e634ef8a959b607",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-state-runner-retirement-0135/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-state-runner-retirement-0135/log.txt.gz",
+      "plain_bytes": 642277,
+      "gzip_bytes": 122705,
+      "sha256": "b538919c0f54fbd40336bdf1808435906cda947bf5924a83de497160a33d9671",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D66-current-source-positive-1652/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D66-current-source-positive-1652/log.txt.gz",
+      "plain_bytes": 640449,
+      "gzip_bytes": 181620,
+      "sha256": "cd296e253fd3071926a16c8bc5c4bbe480aa7223feff5b4febc86fe9d3a6fd88",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D53-dry-source-preflight-1203/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D53-dry-source-preflight-1203/log.txt.gz",
+      "plain_bytes": 640079,
+      "gzip_bytes": 166213,
+      "sha256": "610779c477e8526c785ed605d1e037a8d18e53d2388d7bff85f3916851281c83",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-registry-identity-return-0124/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-registry-identity-return-0124/log.txt.gz",
+      "plain_bytes": 638263,
+      "gzip_bytes": 120505,
+      "sha256": "a6ed0c6dfcb5851a8f59f014a47bf4daf68c5570d89eaf4ad83d64080410d34a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-14240-envelope-review-1954/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-14240-envelope-review-1954/log.txt.gz",
+      "plain_bytes": 636262,
+      "gzip_bytes": 153897,
+      "sha256": "8813344b06484454dab4799dbf449a5a9756327b7ee31151396790a59d82fc34",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element-retained-diagnostic-0955/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element-retained-diagnostic-0955/log.txt.gz",
+      "plain_bytes": 635617,
+      "gzip_bytes": 138098,
+      "sha256": "fbf2825209430fd114a90ed1c135e717083bcf1597c08da9c93786b8b7ebb13f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-persistent-return-1510/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-persistent-return-1510/log.txt.gz",
+      "plain_bytes": 635297,
+      "gzip_bytes": 108612,
+      "sha256": "1f4571bb90455e7c310926d80d78ff0bce6932a7b08ed5754433ca356e91a23b",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132-graph-protected-own9-1632/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D132-graph-protected-own9-1632/log.txt.gz",
+      "plain_bytes": 632351,
+      "gzip_bytes": 88834,
+      "sha256": "5450212000a20a49ec4c478806b7c950c9fb45316eb1857ab36d3c9c2e1b0d49",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-script-pin-protected-review-1132/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-script-pin-protected-review-1132/log.txt.gz",
+      "plain_bytes": 632040,
+      "gzip_bytes": 125358,
+      "sha256": "3e221da3cb6d9741cf09cbc2fa2dae65b7ef789279484b3393ccf04be77230ac",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-22847-verdict-count-return-1809/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-22847-verdict-count-return-1809/log.txt.gz",
+      "plain_bytes": 630555,
+      "gzip_bytes": 110771,
+      "sha256": "276e589f709dcb40f19b95b472f10bf419b78afa6691f6f3f150c973657b717c",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-catalog-exact-motion-sol-0557/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-catalog-exact-motion-sol-0557/log.txt.gz",
+      "plain_bytes": 629478,
+      "gzip_bytes": 129555,
+      "sha256": "3fdc39192fcbc40e96eb3e9c3383f874ff9fb71bf2955ace2980978c18edcf1c",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-media-closure-sol-0008/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-media-closure-sol-0008/log.txt.gz",
+      "plain_bytes": 627439,
+      "gzip_bytes": 146191,
+      "sha256": "17423182c01d443bab704d13855fa0b317d511d06a272586169bdf1df01e5eb9",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-import-fixed-submit-2337/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-import-fixed-submit-2337/log.txt.gz",
+      "plain_bytes": 625583,
+      "gzip_bytes": 149093,
+      "sha256": "601aee7084a7928c9fe7c10f5f98fadddebd4390a427b1e1b7714484a1db0af0",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102-retention-return-0609/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102-retention-return-0609/log.txt.gz",
+      "plain_bytes": 624148,
+      "gzip_bytes": 101068,
+      "sha256": "114c7a8fcff1dfe9659358e4cb2d6931240049bf84b9288b5d1a7824f862d9ce",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-31083-independent-verdict-1846/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-31083-independent-verdict-1846/log.txt.gz",
+      "plain_bytes": 619463,
+      "gzip_bytes": 151195,
+      "sha256": "f5980e10ca4fe29722ce10804b3d44eec5d11663e18d697d026af85e9ef51bcb",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-parent-path-sol-0714/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-parent-path-sol-0714/log.txt.gz",
+      "plain_bytes": 617027,
+      "gzip_bytes": 150225,
+      "sha256": "743dbf5a599a58be7b38f7fb9caf470641532cfaa99ddfa53bc123842852fdb0",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-mounted-12239-return-sol-2353/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-mounted-12239-return-sol-2353/log.txt.gz",
+      "plain_bytes": 616796,
+      "gzip_bytes": 137468,
+      "sha256": "4a513c2de26924a0ba49473666954054ada7125afbedf6f29bd7eb2eca21460e",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D83-batched-correction-2040/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D83-batched-correction-2040/log.txt.gz",
+      "plain_bytes": 615857,
+      "gzip_bytes": 136596,
+      "sha256": "0d09aaf4a1e921c3676dc8ce637d936fedd25ec6aedf8df79feb52f4be9ecf8a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-final-review-1558/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-final-review-1558/log.txt.gz",
+      "plain_bytes": 609216,
+      "gzip_bytes": 130133,
+      "sha256": "008a6bda3bb9c6d22214f353fbd0f9f3f0670d9bc19a7a2efc116080adb4cd05",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-occurrence-claims-audit-0420/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-occurrence-claims-audit-0420/log.txt.gz",
+      "plain_bytes": 606257,
+      "gzip_bytes": 134902,
+      "sha256": "7aecf6a6a988e41f99cd1dea235994e42b5b5a49bf5a501b910f803cff31d0dd",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102-preseed-retention-wiring-0559/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102-preseed-retention-wiring-0559/log.txt.gz",
+      "plain_bytes": 606245,
+      "gzip_bytes": 145678,
+      "sha256": "cad63010c18bb92e27ab917a167d4adede07c76ad600fabf8b810ee5fe7e849f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-phase-sink-portability-path-0726/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-phase-sink-portability-path-0726/log.txt.gz",
+      "plain_bytes": 604945,
+      "gzip_bytes": 145408,
+      "sha256": "7b8b51a943fe95520f026d4e5d84afdd8fba5db3bc3071a804d0c3bdf5ca0dcf",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-D39-early-stack-sol-0955/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-D39-early-stack-sol-0955/log.txt.gz",
+      "plain_bytes": 602704,
+      "gzip_bytes": 129481,
+      "sha256": "dbf86f31076356f287f9264c95a95c47aa197691be47fc7f92e4828b4eb451ff",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D73-explicit-tuple-review-0327/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D73-explicit-tuple-review-0327/log.txt.gz",
+      "plain_bytes": 602493,
+      "gzip_bytes": 139831,
+      "sha256": "ce186696d522f0d6ff98ba2eb8f5104ce92d070e4d0e4a80abf750bf97ff3360",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-popup-wrapper-review-0408/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-popup-wrapper-review-0408/log.txt.gz",
+      "plain_bytes": 598325,
+      "gzip_bytes": 122707,
+      "sha256": "cba641e4abcb679f806583cf238c5c7d0afc450af812a439565cc3db6e5758eb",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-register-precheck-1246/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-register-precheck-1246/log.txt.gz",
+      "plain_bytes": 594757,
+      "gzip_bytes": 124781,
+      "sha256": "c049fa748c6fc446b555283616655360f798e5f2c35d0f91f2b46ad114240bf8",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-bulk-none-review-2355/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-bulk-none-review-2355/log.txt.gz",
+      "plain_bytes": 592493,
+      "gzip_bytes": 116943,
+      "sha256": "adec11665023d528a00c548c352af97e14eb9276f4640d978952b2682f9ea8e4",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-solo-terminal-producer-1033/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-solo-terminal-producer-1033/log.txt.gz",
+      "plain_bytes": 585755,
+      "gzip_bytes": 144851,
+      "sha256": "0c2de332cd598d6cb013db9da8a0922224c0e8aede4b3d0642b23a5fd8b5f632",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-protected-review-1545/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-protected-review-1545/log.txt.gz",
+      "plain_bytes": 585684,
+      "gzip_bytes": 136540,
+      "sha256": "b675187cc363d2f5ab45ab8d2e0c45cb2737e13418bda9ca4ba45cf57616a553",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-current-release-1656/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-current-release-1656/log.txt.gz",
+      "plain_bytes": 584762,
+      "gzip_bytes": 112021,
+      "sha256": "5b2f82010c06006f2d67e40c1aa6eab6a9f8071752ddcfd14cef2dcb12480e97",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-service-recipe-review-1309/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-service-recipe-review-1309/log.txt.gz",
+      "plain_bytes": 583665,
+      "gzip_bytes": 117512,
+      "sha256": "6e0aefd399fbbddf6c77957baf6b948e229a0de8589b843bba00a167d930e324",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D45-final-caller-sol-0446/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D45-final-caller-sol-0446/log.txt.gz",
+      "plain_bytes": 582963,
+      "gzip_bytes": 164562,
+      "sha256": "3c5eaaf9ea6c55e5c9bcfa65ebc46e2be6533b2fb07f567c6885442a245c77e9",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-media-runner-wrappers-0155/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-media-runner-wrappers-0155/log.txt.gz",
+      "plain_bytes": 582935,
+      "gzip_bytes": 99723,
+      "sha256": "00d737c1cf7dbf33c926df583d04d95f567ce12d0e30405be60bebb0120be787",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-review-0230/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-review-0230/log.txt.gz",
+      "plain_bytes": 581258,
+      "gzip_bytes": 128364,
+      "sha256": "a67a22c66366899624ad4d4a2b784efac2432e1a5d86c9f2feb80633ebaba034",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-placement-provenance-original-0535/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-placement-provenance-original-0535/log.txt.gz",
+      "plain_bytes": 578776,
+      "gzip_bytes": 84048,
+      "sha256": "cfecc6f2c900cf2bf1d86b209b68d0498c866e023e554b418aac306a34f49642",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-identity-sol-1650/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-identity-sol-1650/log.txt.gz",
+      "plain_bytes": 578252,
+      "gzip_bytes": 134030,
+      "sha256": "6e4082ceeef497dde62792b9ff155f01d9619e850be013be8a8f3a132d589ce6",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-mounted-fixture-return-0059/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-mounted-fixture-return-0059/log.txt.gz",
+      "plain_bytes": 572455,
+      "gzip_bytes": 117569,
+      "sha256": "1581f63ce01a7f8ed54c25d72959028655697852237a0bfc7212a69f28fb8fdb",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-18800-cause-review-0019/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-18800-cause-review-0019/log.txt.gz",
+      "plain_bytes": 572045,
+      "gzip_bytes": 124013,
+      "sha256": "33abffaa09868cffc127982e9c62c4fda6047ef9f19bf182a5846840ad045dab",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-current-packet-0430/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-current-packet-0430/log.txt.gz",
+      "plain_bytes": 569415,
+      "gzip_bytes": 132654,
+      "sha256": "05ddc3bbb3f01989f7a26c6cf1e7e6a6aa479d9c45fd8e7ec9ea6a97c07f026f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-Sol-protected-review-1616/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-Sol-protected-review-1616/log.txt.gz",
+      "plain_bytes": 568870,
+      "gzip_bytes": 132667,
+      "sha256": "7d3322fcde7639770a49b495996d0830a5dfe26a78f69ebb340cb7bc510e09ae",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-E4-history-undo-design-2005/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-E4-history-undo-design-2005/log.txt.gz",
+      "plain_bytes": 566904,
+      "gzip_bytes": 112122,
+      "sha256": "9baaf060ef5f63e3fd723c56e11b80d0b7c5e5972278366e57e945b53abde1a6",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D114-register-asset-submit-0855/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D114-register-asset-submit-0855/log.txt.gz",
+      "plain_bytes": 564316,
+      "gzip_bytes": 118266,
+      "sha256": "42dbead0e65a1fae90b41ecebe563cf2c70d2ff4ea05f6138d415f8c185c7d35",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-Home-independent-review-1137/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-Home-independent-review-1137/log.txt.gz",
+      "plain_bytes": 563426,
+      "gzip_bytes": 125185,
+      "sha256": "02f1ad08aa0fd1db415de90fe017456e8a5e5ee5704b29c936882f0e801e4dfa",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-bulk-exact-fixture-return-0234/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-bulk-exact-fixture-return-0234/log.txt.gz",
+      "plain_bytes": 559947,
+      "gzip_bytes": 67527,
+      "sha256": "4aad0bef8b588585c78ae97a7f688b1e8791ca7794a40c294b4ea40f54db1d6f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-phase-diagnostics-sol-0318/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-phase-diagnostics-sol-0318/log.txt.gz",
+      "plain_bytes": 557891,
+      "gzip_bytes": 129852,
+      "sha256": "27d3d041a3852129896ea84c002bad1821ee6bbd78e49753992d93650cb9fb75",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D53-caller-cumulative-1206/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D53-caller-cumulative-1206/log.txt.gz",
+      "plain_bytes": 557675,
+      "gzip_bytes": 119702,
+      "sha256": "81b27b8bdcd862d473f5f19941ebbb7f7fc05f36c49e09f0054c829420c10087",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-SWAP-recipe-review-1501/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-SWAP-recipe-review-1501/log.txt.gz",
+      "plain_bytes": 555644,
+      "gzip_bytes": 141538,
+      "sha256": "2912e9e2daa2c499e33385b8f6fbb565b9c97365df1fa2e5fa5439d5820a7d1f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-actual-source-return-1714/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-actual-source-return-1714/log.txt.gz",
+      "plain_bytes": 554439,
+      "gzip_bytes": 146085,
+      "sha256": "57125e99d17d79287d28c8bce701c7e0fbe535191769b8bae414b89b3d02e5a3",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D78-retained-request-handoff-1819/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D78-retained-request-handoff-1819/log.txt.gz",
+      "plain_bytes": 553903,
+      "gzip_bytes": 88212,
+      "sha256": "571a2cf12d231c04acf0967b9b59f0dc054c6ff1d7dc777503e3cb100ce7aaca",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-mounted-drop-original-2344/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-mounted-drop-original-2344/log.txt.gz",
+      "plain_bytes": 551044,
+      "gzip_bytes": 105354,
+      "sha256": "b0d593f3e448137d892916e40574914a93a46f5d77fcb8d74945cffd85968236",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-joined-current-custody-review-1358/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-joined-current-custody-review-1358/log.txt.gz",
+      "plain_bytes": 545553,
+      "gzip_bytes": 130736,
+      "sha256": "e9440ee4d679673fefd34717b24821b17d67d1aecf9086feff9e9f2e1335bb0b",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element-handler-retained-0808/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element-handler-retained-0808/log.txt.gz",
+      "plain_bytes": 545242,
+      "gzip_bytes": 88711,
+      "sha256": "95171c3466ec8cb9efbfee604acb51bb6e96fd3756d4eb9287dc374ee2541bba",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-D52-dormant-delete-1118/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-D52-dormant-delete-1118/log.txt.gz",
+      "plain_bytes": 544677,
+      "gzip_bytes": 114547,
+      "sha256": "c0de9ca9c0399610de74bb3e40847437fe9b116a039238b1916363bbee397970",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-native-asset-placement-prep-0257/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-native-asset-placement-prep-0257/log.txt.gz",
+      "plain_bytes": 544385,
+      "gzip_bytes": 105704,
+      "sha256": "b13061fa11bda45ff70657fb2e6a47fc5010b6ccea19bab902d8f70b4fc0c318",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-phase-sink-portable-review-0736/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-phase-sink-portable-review-0736/log.txt.gz",
+      "plain_bytes": 544375,
+      "gzip_bytes": 124268,
+      "sha256": "2eea020cd751c974f03b976cc53ed0ee7bb9e949eea984fd6fda5c9e968b7637",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D41-cause-sol-0309/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D41-cause-sol-0309/log.txt.gz",
+      "plain_bytes": 540435,
+      "gzip_bytes": 118838,
+      "sha256": "0d6de488fe5494e694ba920c3746b71727b5c8003236daa751562b3b88a612c2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-media-wrappers-current-packet-0205/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-media-wrappers-current-packet-0205/log.txt.gz",
+      "plain_bytes": 538805,
+      "gzip_bytes": 125046,
+      "sha256": "dfce744b7d0009ceb4d3e1d8ea1ac20151d10bc63578563fe9e135dbbba9ed54",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P3-31792-GO-review-0706/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P3-31792-GO-review-0706/log.txt.gz",
+      "plain_bytes": 538431,
+      "gzip_bytes": 132076,
+      "sha256": "780cbf413b6bb8d1b9e304c746aaeed28c2d226e419beaf53ca79baa626ea3d9",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-D41-result-handoff-0307/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-D41-result-handoff-0307/log.txt.gz",
+      "plain_bytes": 538001,
+      "gzip_bytes": 125129,
+      "sha256": "a79ccdca02011ccee6a892def529c2bec91798034f4ade6a68e76955034c0aa0",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D119-final-protected-review-1050/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D119-final-protected-review-1050/log.txt.gz",
+      "plain_bytes": 533411,
+      "gzip_bytes": 133552,
+      "sha256": "6288ff6bbff434bebbb279724da463f39ffaa805b490660b2e26bb84319700b4",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-outbox-sol-0352/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-outbox-sol-0352/log.txt.gz",
+      "plain_bytes": 532155,
+      "gzip_bytes": 119327,
+      "sha256": "1578a0e85dd5ff15f1ef334ea74dc6bbef17a7d9a390b42ba41afb197f2e7f3f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-popup-binding-return-sol-0417/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-popup-binding-return-sol-0417/log.txt.gz",
+      "plain_bytes": 531850,
+      "gzip_bytes": 126680,
+      "sha256": "b2be04c405bffcab05a5f4305e82a7895c178fd3a26a04bfd059904772d8dbf5",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-own9-resume-1630/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-own9-resume-1630/log.txt.gz",
+      "plain_bytes": 531582,
+      "gzip_bytes": 110510,
+      "sha256": "8614f53c026280fd95b86f4b2622fa67b993c0fb0c7f61a33264ef07a9a008c9",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-bootstrap-lifecycle-2354/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-bootstrap-lifecycle-2354/log.txt.gz",
+      "plain_bytes": 531173,
+      "gzip_bytes": 110687,
+      "sha256": "bcd322195684d6d7b61090f4403caa2704b6b693d61e7ef9bb9de5abd9593fd2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-preview-retirement-sol-0112/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-preview-retirement-sol-0112/log.txt.gz",
+      "plain_bytes": 528049,
+      "gzip_bytes": 105571,
+      "sha256": "f3bd6035175f60b255ceb2eed8a385853eacf2ce9874680397762248833bcacc",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-diagnostic-review-0802/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-diagnostic-review-0802/log.txt.gz",
+      "plain_bytes": 527103,
+      "gzip_bytes": 122224,
+      "sha256": "fc5249714bad9a2970d184ba3843e1b94e063c051fed81c36d04058ea128ba1a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-current-pair16-1540/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-current-pair16-1540/log.txt.gz",
+      "plain_bytes": 525207,
+      "gzip_bytes": 91512,
+      "sha256": "5c46db8d7af7abad9adc33587934ccc31506befaa6109e66b531f1fc5f6957c0",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-lifecycle-return-0202/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-lifecycle-return-0202/log.txt.gz",
+      "plain_bytes": 522766,
+      "gzip_bytes": 101500,
+      "sha256": "3f7a07667fa9d89619b5e8546594b0360abefc783c4bb6b25a7cba33c404f90d",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-fullscreen-restore-1626/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-fullscreen-restore-1626/log.txt.gz",
+      "plain_bytes": 521668,
+      "gzip_bytes": 110584,
+      "sha256": "3b2ebf8b746267d40566fe17ce2d8464f008f7db6887c2a5d1054e655a50e699",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-host14-bootstrap-1105/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-host14-bootstrap-1105/log.txt.gz",
+      "plain_bytes": 520946,
+      "gzip_bytes": 110353,
+      "sha256": "7642dd87efd173467729145b9235dcfc382274b07941be0dbfe4d703e612d41a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D39-test-identity-1035/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D39-test-identity-1035/log.txt.gz",
+      "plain_bytes": 519228,
+      "gzip_bytes": 131788,
+      "sha256": "09a21bd1eb732eee3c23b1048a0bce576413b43255b1108ea5f83982b4bcd149",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D62-adopt-1528/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D62-adopt-1528/log.txt.gz",
+      "plain_bytes": 518162,
+      "gzip_bytes": 125149,
+      "sha256": "4fbb72451b1344d34f9e776910e06ea86b0660b914ff4287da61e9bb5b56ea28",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-owner-recovery-tests-0156/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-owner-recovery-tests-0156/log.txt.gz",
+      "plain_bytes": 515796,
+      "gzip_bytes": 90416,
+      "sha256": "20b32d3e0d21346142b09bbc91ac4e4b023da4bd5cb5a4cfbc702f770e10ebbc",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-full-P2-early-0753/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-full-P2-early-0753/log.txt.gz",
+      "plain_bytes": 515349,
+      "gzip_bytes": 111734,
+      "sha256": "3e7b00af6a89a16c9c7eeaad900fab42215e59fddff59e622e2e61728f1ee535",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-register-positive-return-1303/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-register-positive-return-1303/log.txt.gz",
+      "plain_bytes": 514635,
+      "gzip_bytes": 122382,
+      "sha256": "99d247a402c54871ec0d8ab8fd52c7ef2ccc14404ddd7175e8d1e7891fa8c290",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-own9-final-1646/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-own9-final-1646/log.txt.gz",
+      "plain_bytes": 509233,
+      "gzip_bytes": 57727,
+      "sha256": "ccb745f1e52ed9662de08ad0725f9779172fec3682504aeff7cb6018e48c0be3",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D78-live-submit-1856/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D78-live-submit-1856/log.txt.gz",
+      "plain_bytes": 509114,
+      "gzip_bytes": 105390,
+      "sha256": "7c61c3da38cc45d2d36a2740fd04e7bf761a5ce8360280e3ddf26ca89a73fb48",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-D37-wording-0222/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-D37-wording-0222/log.txt.gz",
+      "plain_bytes": 505436,
+      "gzip_bytes": 89223,
+      "sha256": "2d038aba6136eb91c44de0aa20958c57ce82883f604384db1f0348ab21c91e45",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-asset-drop-rereview-2154/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-asset-drop-rereview-2154/log.txt.gz",
+      "plain_bytes": 505347,
+      "gzip_bytes": 112528,
+      "sha256": "a06d7347e9cd015bb9cb0361fa029a4b495ee82700439bdba4227e774a8a54ab",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-drop-pointer-geometry-0004/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-drop-pointer-geometry-0004/log.txt.gz",
+      "plain_bytes": 504976,
+      "gzip_bytes": 119516,
+      "sha256": "e5745053f0abdbcbaa8e4d555273fd8c05e9432725b24637b9e63ee6bbb5d703",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-catalog-resume-0543/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-catalog-resume-0543/log.txt.gz",
+      "plain_bytes": 503183,
+      "gzip_bytes": 102200,
+      "sha256": "4e8eba753dd1b35fd36a9a5deb299cff2da1e7bd20d16fa3d5609f2cb5ead394",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102-retention-causal-sol-0619/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102-retention-causal-sol-0619/log.txt.gz",
+      "plain_bytes": 501954,
+      "gzip_bytes": 120062,
+      "sha256": "9fc19a1ad82d6be75c59e161bb103779df8648847c57063e248f5f91d9714bf8",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-lifecycle-review-0741/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-lifecycle-review-0741/log.txt.gz",
+      "plain_bytes": 501248,
+      "gzip_bytes": 119732,
+      "sha256": "54fe667685dbae5432d4d579f25ec0510bf580a49bbf4493ca397d79909fad5f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-intermediate-pinned-run-1933/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-intermediate-pinned-run-1933/log.txt.gz",
+      "plain_bytes": 500362,
+      "gzip_bytes": 102288,
+      "sha256": "7c44e9af5a94e049aafac8cedf4a5b37e16a49e360461c003ad2d118b47bb69f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-intermediate-clean-apply-1925/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-intermediate-clean-apply-1925/log.txt.gz",
+      "plain_bytes": 499224,
+      "gzip_bytes": 96813,
+      "sha256": "b57cd47053c7af054d68f910dcd8dbb73d5eefba783501ec626352632aa8202e",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-bootstrap-protected-review-1354/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-bootstrap-protected-review-1354/log.txt.gz",
+      "plain_bytes": 499029,
+      "gzip_bytes": 110397,
+      "sha256": "d45b22ed33968fab02eb520715ca27f7b1ce55fdacf277c481c54cc09c33c433",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-10973-14249-review-0105/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-10973-14249-review-0105/log.txt.gz",
+      "plain_bytes": 492695,
+      "gzip_bytes": 111712,
+      "sha256": "caad45328457e82b32af3c0fa503b4e7755fec2b25fa701c6e68996bf896ad30",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-label-refusal-current-0257/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-label-refusal-current-0257/log.txt.gz",
+      "plain_bytes": 490653,
+      "gzip_bytes": 98800,
+      "sha256": "28d70d9d7ad8ac8a5dc355ae5d983c4fa4ad2bdec028e93f4b3143d3c233a9f6",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-occurrence2-first-return-1116/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-occurrence2-first-return-1116/log.txt.gz",
+      "plain_bytes": 488844,
+      "gzip_bytes": 95570,
+      "sha256": "8eaf152f6d8c35113d4b5e787bda85a157ab16f8494c513764df82f37e86a5bd",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-staged-review-0133/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-staged-review-0133/log.txt.gz",
+      "plain_bytes": 485718,
+      "gzip_bytes": 96932,
+      "sha256": "b772bc599490d96271432679314e38834ffec0ae23940bca9d647eea7d9075cb",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-verified-target-result-0648/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-verified-target-result-0648/log.txt.gz",
+      "plain_bytes": 485600,
+      "gzip_bytes": 115678,
+      "sha256": "0ead83be7e27c6264cb3db987be380e56b343fbf7d702279e4da13472b573871",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D45-original-cause-sol-0501/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D45-original-cause-sol-0501/log.txt.gz",
+      "plain_bytes": 484698,
+      "gzip_bytes": 111217,
+      "sha256": "23d1a50ab0024d4b24256f9257701e43d7dd7171cf473fcfbe78b04d00622713",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-diagnostic-scope-review-0818/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-diagnostic-scope-review-0818/log.txt.gz",
+      "plain_bytes": 483924,
+      "gzip_bytes": 118472,
+      "sha256": "67ff9144394d2c39d1f394f15ba7c6483a560bde885e0173bc65bc4809471de4",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-working-binding-review-1319/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-working-binding-review-1319/log.txt.gz",
+      "plain_bytes": 481095,
+      "gzip_bytes": 95263,
+      "sha256": "ab91445a0e65187fa265aee2fdf658900635749289e24e4cfcdad5942a0fe64d",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-media-wrappers-final-review-0200/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-media-wrappers-final-review-0200/log.txt.gz",
+      "plain_bytes": 479166,
+      "gzip_bytes": 109783,
+      "sha256": "273532a301aca94f70afdefa83dccebc47893c3bcffd3a03447488b42091a6fe",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D97-placement-resume-0515/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D97-placement-resume-0515/log.txt.gz",
+      "plain_bytes": 476815,
+      "gzip_bytes": 81469,
+      "sha256": "376467fe974e3ef0adc9684718f8ed4b71ca2a47b9bd90ba3907ad392dcaf3e6",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-upstream-hypothesis-sol-0046/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-upstream-hypothesis-sol-0046/log.txt.gz",
+      "plain_bytes": 476507,
+      "gzip_bytes": 119859,
+      "sha256": "0d50a324b09efbd35e3b4010bbfa0f77a0071f5e2b6449b1ccb757a0defdc0a3",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-parent-trace-review-0720/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-parent-trace-review-0720/log.txt.gz",
+      "plain_bytes": 474977,
+      "gzip_bytes": 88667,
+      "sha256": "7d68dff8c599eec7b9c00e69c331f7928604d08c97fca791dcfe5a18d12f7efc",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-sol-0224/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-sol-0224/log.txt.gz",
+      "plain_bytes": 474737,
+      "gzip_bytes": 92919,
+      "sha256": "d74408e3e33b5fb97e350c6680dd29a6363665522bbf1219cb519e3b976a39d7",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-helper-final-review-1315/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-helper-final-review-1315/log.txt.gz",
+      "plain_bytes": 471534,
+      "gzip_bytes": 99219,
+      "sha256": "3808d5ac40cead4d707b276efe0e5d4649144a94160aabf0aca2edff2960878f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P1-independent-GO-review-0655-r2/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P1-independent-GO-review-0655-r2/log.txt.gz",
+      "plain_bytes": 465929,
+      "gzip_bytes": 100326,
+      "sha256": "2a06acc74fdcdb5c0ffb92b807b61f9970c9f23b334284342c2d1582a1336977",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D122-D116-join-review-1205/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D122-D116-join-review-1205/log.txt.gz",
+      "plain_bytes": 465303,
+      "gzip_bytes": 76124,
+      "sha256": "0f0bb1e0767baf7d1f0e0ebee471c7162c4d55e6b83bb34847e52e48d695c22c",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-10973-14249-cause-sol-0105/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-10973-14249-cause-sol-0105/log.txt.gz",
+      "plain_bytes": 464336,
+      "gzip_bytes": 99888,
+      "sha256": "1a8da8f4e8c39cfd795a43295284c6466d3bdea9dee3ea98e5fc5384820cd5ee",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-corrected-result-handoff-0634/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-corrected-result-handoff-0634/log.txt.gz",
+      "plain_bytes": 464235,
+      "gzip_bytes": 118671,
+      "sha256": "bc3673a8764e9113ff43da7b3e5f9532bcf019dfa1e0da8027b87db24def0e90",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-public-executor-exports-0203/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-public-executor-exports-0203/log.txt.gz",
+      "plain_bytes": 464028,
+      "gzip_bytes": 91607,
+      "sha256": "2c16e9e76072abe7c27a97c1a8fe85fd14c23ba6755675e3e148af0f754041bc",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D83-isolated-qualification-2058/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D83-isolated-qualification-2058/log.txt.gz",
+      "plain_bytes": 464014,
+      "gzip_bytes": 87306,
+      "sha256": "8051fb83e35844b1f70c773d9423d4998352b2692318e2b4df9e19aae47dc7af",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-current-caller-cumulative-review-1507/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-current-caller-cumulative-review-1507/log.txt.gz",
+      "plain_bytes": 462601,
+      "gzip_bytes": 107430,
+      "sha256": "b8553e350b0c8d82e93f98044aa7519b539c1fed32ff19e6eacd640f28538ab5",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-placement-restore-1625/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-placement-restore-1625/log.txt.gz",
+      "plain_bytes": 461191,
+      "gzip_bytes": 100637,
+      "sha256": "1cb5c047026be25dd1b1881f1de51f1c7bc1ac46e13faa8660f63ef9bcd284d8",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-intermediate-recovery-review-1920/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-intermediate-recovery-review-1920/log.txt.gz",
+      "plain_bytes": 459199,
+      "gzip_bytes": 94455,
+      "sha256": "89144dab33998c767467c2bbebfcb81bdea6eadc31fae9e32d2de15b7e82f518",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native-topology-final-review-1705/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native-topology-final-review-1705/log.txt.gz",
+      "plain_bytes": 457498,
+      "gzip_bytes": 97791,
+      "sha256": "5a2be9b4138bb198afe4ecd0660218eb8b04106a362294470c62820fab76c1da",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-consumed-custody-sol-1514/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-consumed-custody-sol-1514/log.txt.gz",
+      "plain_bytes": 453814,
+      "gzip_bytes": 98746,
+      "sha256": "a8241ff952d939ec3768c946c51f2207447371623484e975af3125dbf0728278",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-whole-path-review-0336/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-whole-path-review-0336/log.txt.gz",
+      "plain_bytes": 449417,
+      "gzip_bytes": 111072,
+      "sha256": "287f480b1322c163a147e9c9723ca67fc23c80e2923f3e379999444493b0840b",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-placement-sol-1650/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-placement-sol-1650/log.txt.gz",
+      "plain_bytes": 448658,
+      "gzip_bytes": 111192,
+      "sha256": "e0e2023597e304a82a9e6d1895d4d822f6ccbc58d7a02660f2f17519b9ebd80b",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-runtime45-caller-sol-0222/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-runtime45-caller-sol-0222/log.txt.gz",
+      "plain_bytes": 447358,
+      "gzip_bytes": 98847,
+      "sha256": "4ecfab2344b945cdcd27ddd8fb505d42ba0723dc1bd07f247070bd9e42bf8ce9",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-voice-restore-1626/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D69-voice-restore-1626/log.txt.gz",
+      "plain_bytes": 445229,
+      "gzip_bytes": 103155,
+      "sha256": "250cf4d39860618a9684079dfbe0ef85fd2d4a30c9830e7bc4312d59bde2f526",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-geometry-asset-submit-0019/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-geometry-asset-submit-0019/log.txt.gz",
+      "plain_bytes": 444545,
+      "gzip_bytes": 80165,
+      "sha256": "ddc3dca90bd9bbf56c98451a84d848f5e50b937aae9c0f9c4190b015e1487d4a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D70-apply-1655/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D70-apply-1655/log.txt.gz",
+      "plain_bytes": 444499,
+      "gzip_bytes": 104539,
+      "sha256": "6151d92fb3cc61ba99e0c71b4efd463940cbd8fd1f427217354a5d991ef3daeb",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D42-caller-sol-0348/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D42-caller-sol-0348/log.txt.gz",
+      "plain_bytes": 444288,
+      "gzip_bytes": 124036,
+      "sha256": "8f7fd3d0608e8afed880733fe4a9bea97ea2711c21f69299fd6467194a7f9bd2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-App-lifecycle-first-return-1643/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-App-lifecycle-first-return-1643/log.txt.gz",
+      "plain_bytes": 440382,
+      "gzip_bytes": 108098,
+      "sha256": "6b8c104e001d9d9dde6054221a3d51d3865b6efbdfa5f1c90f0775959afd4b77",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-basis-hang-sol-0113/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-basis-hang-sol-0113/log.txt.gz",
+      "plain_bytes": 432890,
+      "gzip_bytes": 100433,
+      "sha256": "1164add035ef7834e2e8f8430c6f793fbb83784ebd2fee2c867d686144020f3d",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-auto-conflict-final-review-1152/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-auto-conflict-final-review-1152/log.txt.gz",
+      "plain_bytes": 432836,
+      "gzip_bytes": 88311,
+      "sha256": "d02561954e66b23aad4134c57e3dc6c667f56c0bb58b1765cd4483e3e2b1da91",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D78-stack-wire-1859/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D78-stack-wire-1859/log.txt.gz",
+      "plain_bytes": 432560,
+      "gzip_bytes": 102279,
+      "sha256": "c43f32871c2536b857cb7ea69bf624c0935d8a3eac0954c50137e6d602f1a943",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D126-reviewed-clean-import-1425/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D126-reviewed-clean-import-1425/log.txt.gz",
+      "plain_bytes": 429435,
+      "gzip_bytes": 73710,
+      "sha256": "6cdadd8fd085f56e56bbc8cded1cc474bde6eb4fb619cd7a5e938b1e489da779",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-return-review-0240/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-return-review-0240/log.txt.gz",
+      "plain_bytes": 428462,
+      "gzip_bytes": 89962,
+      "sha256": "82d0c1f09671a4b97e04c3e35e4cb93f044f7f6ddbe881004735cc53c554d902",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element-handler-review-0814/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element-handler-review-0814/log.txt.gz",
+      "plain_bytes": 426274,
+      "gzip_bytes": 102870,
+      "sha256": "fc75551f4ae47b5a62e488ab652c4e4fbee566201364fa0dae2754d788a8dd48",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P2-19078-pass-review-0807/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P2-19078-pass-review-0807/log.txt.gz",
+      "plain_bytes": 425989,
+      "gzip_bytes": 96026,
+      "sha256": "4a545129122281f88a3c66d919227520799b9f47ad05d182758867db9a1e0083",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-clip-scalars-first-return-1155/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-clip-scalars-first-return-1155/log.txt.gz",
+      "plain_bytes": 425813,
+      "gzip_bytes": 75117,
+      "sha256": "5b312f7adccafdc5b193cde379bbad015e35a43d31cd32c0278d387d525c093b",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D79-normal-auth-resume-1922/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D79-normal-auth-resume-1922/log.txt.gz",
+      "plain_bytes": 425419,
+      "gzip_bytes": 83246,
+      "sha256": "e82199578a73ae99972b72a980911c46b2e6a7c526368325b90e2a9b378cdb47",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-current-0250/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-current-0250/log.txt.gz",
+      "plain_bytes": 424495,
+      "gzip_bytes": 83356,
+      "sha256": "ff6e2414c4e3c83d6740a0f7f99a6b16ba71179eb34fe3917f7da77820a4d366",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element3111-correlation-return-0221/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-element3111-correlation-return-0221/log.txt.gz",
+      "plain_bytes": 423060,
+      "gzip_bytes": 62457,
+      "sha256": "b776f7bc09e33d4fcc11775868b14f5bc117f6afdeae71e94230ae19753743f0",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-materialization-sol-0525/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-materialization-sol-0525/log.txt.gz",
+      "plain_bytes": 421406,
+      "gzip_bytes": 111038,
+      "sha256": "db55d975a13b1c76dee11cd62891b22d16e59968647fd8583b8b358e44ef9883",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-26312-current-verdict-1616/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-26312-current-verdict-1616/log.txt.gz",
+      "plain_bytes": 420408,
+      "gzip_bytes": 88646,
+      "sha256": "bf8e0e372aa9c77027119b0887a4fa3d5f4e92eb9f32ad467cbe88bc1c24c521",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-diagnostic-return-0806/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-diagnostic-return-0806/log.txt.gz",
+      "plain_bytes": 417650,
+      "gzip_bytes": 88367,
+      "sha256": "a13670319a339c3510a3a5db09b070f20b1fc81aa6dce7e6714aa7dfc0d0a164",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-tail-audio2-1015/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-tail-audio2-1015/log.txt.gz",
+      "plain_bytes": 412019,
+      "gzip_bytes": 69944,
+      "sha256": "90ccfcf73ce45e29aeee76852bb04ffcf9a7efa04e9fede6dfa09b1d51c755f1",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-media-wrappers-review-0152/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-media-wrappers-review-0152/log.txt.gz",
+      "plain_bytes": 408350,
+      "gzip_bytes": 91615,
+      "sha256": "3f229ae173dad21fd81c590bbe09367e78b897232d1f79ce919c1b81c637364d",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native4-own-proof-1711/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native4-own-proof-1711/log.txt.gz",
+      "plain_bytes": 405972,
+      "gzip_bytes": 88256,
+      "sha256": "9ee5da32f3126132f0a916b5009c65457743f6c0d260efa5730e0c16553e77a0",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-transition-sol-0401/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-transition-sol-0401/log.txt.gz",
+      "plain_bytes": 402857,
+      "gzip_bytes": 102900,
+      "sha256": "f3f4256679a561721a23310d1022bda03bc22d5c5ba432af3d9a62f897eafb2b",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-tagged-full-P2-1306/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-tagged-full-P2-1306/log.txt.gz",
+      "plain_bytes": 402232,
+      "gzip_bytes": 117836,
+      "sha256": "e3bda8907fc6a278c91a9eba5e32df8e95e5b3d86ddefbeecd444a17a66f1ae2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-transition-resume-sol-0411/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-transition-resume-sol-0411/log.txt.gz",
+      "plain_bytes": 397202,
+      "gzip_bytes": 90412,
+      "sha256": "f520ac89b7b2a509a2e27c615119d1f04566ad0dbaf929ec5070b07dd47e717e",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-D41-caller-return-sol-0950/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-D41-caller-return-sol-0950/log.txt.gz",
+      "plain_bytes": 395061,
+      "gzip_bytes": 94417,
+      "sha256": "ae98f72329378aa0013d47e633b982955bc272164088482cb1c12fc599e330fd",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-tail-sheet15-1015/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-tail-sheet15-1015/log.txt.gz",
+      "plain_bytes": 386260,
+      "gzip_bytes": 83992,
+      "sha256": "23420d28403f0267f91d53ab928630d70f0fa6cf466f2a022af195bbcfe9ea08",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D115-output-adoption-1102/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D115-output-adoption-1102/log.txt.gz",
+      "plain_bytes": 385528,
+      "gzip_bytes": 65967,
+      "sha256": "d3872dd5fb1224bf0f1619cb76d63811333b39dd9a42b50e98ae9275bb6004e4",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-source-control-submit-0350/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-parent-source-control-submit-0350/log.txt.gz",
+      "plain_bytes": 383370,
+      "gzip_bytes": 70557,
+      "sha256": "d8f907c48242ef41c99c8eb44158a56579c41c3902dd35d53aa57b2eeb5c5342",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-conflict-fix-sol-0731/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-conflict-fix-sol-0731/log.txt.gz",
+      "plain_bytes": 382016,
+      "gzip_bytes": 84734,
+      "sha256": "7425ddc14bb7c00d1b1f5cb927a827589d7cb3b4903404cc7d5291edaed595a4",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-occurrence2-invalid-exact-1132/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-occurrence2-invalid-exact-1132/log.txt.gz",
+      "plain_bytes": 375498,
+      "gzip_bytes": 89159,
+      "sha256": "6d0e67d247ca0a53f7567fc88e1a600b129c6e1c8e1ff509a07d6eb8aa087b7f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-atomic-scope1-1124/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-atomic-scope1-1124/log.txt.gz",
+      "plain_bytes": 375261,
+      "gzip_bytes": 91866,
+      "sha256": "84202cb80502b318ca1c12af4a6d6943a13298fe39e65e4aa1b4943b119b6fc2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-dormant-protocol-sol-0306/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-dormant-protocol-sol-0306/log.txt.gz",
+      "plain_bytes": 371662,
+      "gzip_bytes": 103487,
+      "sha256": "1aeb02056d786f7b2918c83b81275ac04848d8c021d1eb2f9142ba179c082080",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D122-D116-seed-join-1204/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D122-D116-seed-join-1204/log.txt.gz",
+      "plain_bytes": 371334,
+      "gzip_bytes": 57334,
+      "sha256": "1d8968100804729e6b1054085f5e4b7be83aa98f9a231555bdecda18c8020f2b",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-clean-proof-1623/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-clean-proof-1623/log.txt.gz",
+      "plain_bytes": 369851,
+      "gzip_bytes": 47538,
+      "sha256": "9898df50373723b34a3712fb3dd00bd746cb475e0b0d100367207d9116537da8",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-capture-projection9-1540/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-capture-projection9-1540/log.txt.gz",
+      "plain_bytes": 367054,
+      "gzip_bytes": 72964,
+      "sha256": "62fc0aee6cbf138ae7eac373be8fcabfe567207ca620253df2d684523e77b856",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-return-sol-0235/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-basis-return-sol-0235/log.txt.gz",
+      "plain_bytes": 354419,
+      "gzip_bytes": 75913,
+      "sha256": "193d1c7443d403d59b9587b97622583b4a0156b3dd5e4371aec4e0a05dd306e1",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-18800-lifecycle-cause-sol-0019/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-18800-lifecycle-cause-sol-0019/log.txt.gz",
+      "plain_bytes": 354152,
+      "gzip_bytes": 80836,
+      "sha256": "f991e5ab1fa3d95ff601d7e3a3d080dccd92694b4ff254ac3d3f11edb420e093",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-reviewed-submit-2320/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-reviewed-submit-2320/log.txt.gz",
+      "plain_bytes": 353961,
+      "gzip_bytes": 89841,
+      "sha256": "14dcd5b3b7360ea785715d5cde6a53e291d82c102588495391865459cba068b2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-final-caller-cumulative-review-1103/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-final-caller-cumulative-review-1103/log.txt.gz",
+      "plain_bytes": 348281,
+      "gzip_bytes": 85914,
+      "sha256": "1b328680becd0ca76b2e718274824f362ebf889ac4685677229fe4f9488427c7",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-python-path-return-2327/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-python-path-return-2327/log.txt.gz",
+      "plain_bytes": 344934,
+      "gzip_bytes": 69723,
+      "sha256": "fc5a4bc3935a8fd2a75ce037852c0180687d83131e033dcf5622f26ef7fe0f68",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-placement19078-undo-sol-0819/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-placement19078-undo-sol-0819/log.txt.gz",
+      "plain_bytes": 344441,
+      "gzip_bytes": 86008,
+      "sha256": "3425de5e27173aff69a463f380b525f3b893c0fabcd563d81ed105b4e361f9a3",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P1-independent-GO-review-0655/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P1-independent-GO-review-0655/log.txt.gz",
+      "plain_bytes": 343743,
+      "gzip_bytes": 98677,
+      "sha256": "67c4fb7f64e939f31c4f6d4ed7b277264bd8af716bf2956a7cb18ac1e30664ec",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D42-trace-sol-0325/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D42-trace-sol-0325/log.txt.gz",
+      "plain_bytes": 342997,
+      "gzip_bytes": 91346,
+      "sha256": "5b1af4bb3cb7aecf1593fe4ed396c0614745fd100ce10e171db0f13a7cf2aae7",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-exports-lifecycle-current-0213/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-exports-lifecycle-current-0213/log.txt.gz",
+      "plain_bytes": 342534,
+      "gzip_bytes": 63084,
+      "sha256": "a2636814276cb19d4af781756267b516186b47593a77a2b7bea33837c0d1c4ce",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-ADD-submit-return-2255/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-ADD-submit-return-2255/log.txt.gz",
+      "plain_bytes": 341060,
+      "gzip_bytes": 92317,
+      "sha256": "c9dbeecdd473ad32ff484f38138241d56c52cf2d993a0abfbc08e1a5fd9d206f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-lifecycle-caller-sol-0004/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-lifecycle-caller-sol-0004/log.txt.gz",
+      "plain_bytes": 339893,
+      "gzip_bytes": 96116,
+      "sha256": "460db4b68a0b0e25c857e267f6309928d1b9b336616ec228cb47b7e63e636b33",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-tagged-full-P2-local-1404/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-tagged-full-P2-local-1404/log.txt.gz",
+      "plain_bytes": 338045,
+      "gzip_bytes": 70629,
+      "sha256": "bfa76f12e8ced4a1c3ce4cafc6a8b1facfff6036de9fb97550409a59fe5b9c93",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D80-submit-produce-1855/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D80-submit-produce-1855/log.txt.gz",
+      "plain_bytes": 337771,
+      "gzip_bytes": 55831,
+      "sha256": "bc998e97f3094fff9ecd40d8006fd0c213490636e288107c1255c0283531fd6a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D50-ledger-receipt-review-0822/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D50-ledger-receipt-review-0822/log.txt.gz",
+      "plain_bytes": 336030,
+      "gzip_bytes": 68617,
+      "sha256": "85071ef968defc5f57874893795c681c6eadd072bf7474aa978c3a467c6e712d",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D113-modal-final-review-0836/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D113-modal-final-review-0836/log.txt.gz",
+      "plain_bytes": 334186,
+      "gzip_bytes": 82819,
+      "sha256": "abfbfd291c9f73ed006ae4d2da5ea13cd801d6b804155f8972860757e12a45c2",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/log.txt.gz",
+      "plain_bytes": 330716,
+      "gzip_bytes": 68083,
+      "sha256": "088d06b7d06d530707c6ca6a5ccb363c93ad5889137e3b7b956784bd217b1058",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-D52-runner-delete-1137/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-D52-runner-delete-1137/log.txt.gz",
+      "plain_bytes": 328955,
+      "gzip_bytes": 73778,
+      "sha256": "25f06e1a1e218deaa821bbc9be9cf7cedccd98553486ae596a13c9903da92769",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-element-join-review-0355/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-element-join-review-0355/log.txt.gz",
+      "plain_bytes": 328862,
+      "gzip_bytes": 61471,
+      "sha256": "e628b3eb59f0c1276d0e68557df7882773ece81c3925c48d21260ca1b383d3ed",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-final-caller-sol-1245/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-final-caller-sol-1245/log.txt.gz",
+      "plain_bytes": 327005,
+      "gzip_bytes": 88796,
+      "sha256": "593695bf0b0be2e0e5566a72a725efbc3f50eede4161b0cd303eb9787f517629",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-D52-transcript-retire-1210/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-D52-transcript-retire-1210/log.txt.gz",
+      "plain_bytes": 321688,
+      "gzip_bytes": 71484,
+      "sha256": "ad0b5ba2bae79d139f943b7b7e9b902b9a1e7801eda04a526f7609c0fa3fad41",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-18792-result-handoff-0029/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-18792-result-handoff-0029/log.txt.gz",
+      "plain_bytes": 317026,
+      "gzip_bytes": 57455,
+      "sha256": "08201912acba6ad013ebfa5e523c018536a5b4b90a46d2c3b7b25a37ee3a0530",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D41-caller-sol-0250/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-D41-caller-sol-0250/log.txt.gz",
+      "plain_bytes": 311297,
+      "gzip_bytes": 87842,
+      "sha256": "05ec3252d5beb07c847c2cb38926bf67607541b2e9b2a8652ab3e60463743198",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-phase-return-sol-0339/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-phase-return-sol-0339/log.txt.gz",
+      "plain_bytes": 301913,
+      "gzip_bytes": 74333,
+      "sha256": "6770753e808015129879758d87cd7e618a2c475c2ef263cb51601f9466d37807",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-single5678-GO-resume-0255/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-single5678-GO-resume-0255/log.txt.gz",
+      "plain_bytes": 301441,
+      "gzip_bytes": 76564,
+      "sha256": "bfd973db951813f71ae790f4db655437bdb0e7ad52fa3f0a63b8c12eef333758",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-scalar-final-review-1209/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-scalar-final-review-1209/log.txt.gz",
+      "plain_bytes": 287254,
+      "gzip_bytes": 62281,
+      "sha256": "8c5bab1a269252b9be95483507ee956ef6f9b8bd47eb98e49dd42d83e83e043c",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D73-service-snapshot-sol-1739/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D73-service-snapshot-sol-1739/log.txt.gz",
+      "plain_bytes": 287098,
+      "gzip_bytes": 64680,
+      "sha256": "423838d6bc4184e09a46deb353965bc25a7c8774d13a6990c380f0088c2a8440",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-first-return-1551/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-first-return-1551/log.txt.gz",
+      "plain_bytes": 283450,
+      "gzip_bytes": 56679,
+      "sha256": "16d135f3e0e76808f2ba006d860cd513d1eebc065119d81c0708b7d5daf135a4",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D75b-controls-sol-1843/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D75b-controls-sol-1843/log.txt.gz",
+      "plain_bytes": 271230,
+      "gzip_bytes": 60375,
+      "sha256": "6cc6b6d81a115bb24dc0886a8637ec03a47ccfa33a23ee4115974b4c274d4f40",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-reviewed-leaves-caller-sol-0013/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-reviewed-leaves-caller-sol-0013/log.txt.gz",
+      "plain_bytes": 270486,
+      "gzip_bytes": 74737,
+      "sha256": "5175d2224281e0f34d513d13eb3787a8f475367f997f5724ba7dec23b64a5e08",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-terminal-producer-1119/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-terminal-producer-1119/log.txt.gz",
+      "plain_bytes": 266913,
+      "gzip_bytes": 71276,
+      "sha256": "d32d0dfcb5f5e15cbef84aa8875f5853d3077d5f18ac97cad8a74210824911ac",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-producer-standby-0520/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-producer-standby-0520/log.txt.gz",
+      "plain_bytes": 255472,
+      "gzip_bytes": 45429,
+      "sha256": "5a6add29c664df1425da90f61e4c3c5bdc245f8a91cf444b6e794b42f0c79f9a",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-type-cut-review-0102/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-type-cut-review-0102/log.txt.gz",
+      "plain_bytes": 249223,
+      "gzip_bytes": 50483,
+      "sha256": "cbc4ee47efaec3d3b02dc529b0dc0b5a49db4dc7986623d366b9dee1f07ee519",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-early-full-producer-1108/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-early-full-producer-1108/log.txt.gz",
+      "plain_bytes": 245267,
+      "gzip_bytes": 35309,
+      "sha256": "eb0b37038aade1cc23d275899ec47b91f0831a5e1c8d0cb6dff4e8b22edeb2fc",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-fixture-runner-sol-0935/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-fixture-runner-sol-0935/log.txt.gz",
+      "plain_bytes": 242019,
+      "gzip_bytes": 61481,
+      "sha256": "1423137bcd75675cd09412a2c5ca8c166e019813e9c401b8d1b49b0a8abd760c",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-early-full-producer-resume-1119/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-early-full-producer-resume-1119/log.txt.gz",
+      "plain_bytes": 236786,
+      "gzip_bytes": 42529,
+      "sha256": "a3322396e01d28e39e0ef1062dab8453b95ed3898d5658f2cebdc930235d98ed",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D65-final-manifest-pin-1545/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D65-final-manifest-pin-1545/log.txt.gz",
+      "plain_bytes": 236297,
+      "gzip_bytes": 63329,
+      "sha256": "b13065bc13e57576c3395565b95ab35287e16c63c6411022d9bc649467791a01",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-terminal-producer-1158/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-terminal-producer-1158/log.txt.gz",
+      "plain_bytes": 226056,
+      "gzip_bytes": 63021,
+      "sha256": "3eb3a85495e0fe2899bd88730116ef2635a6a56e56f9731744b90f1121dd2ca6",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-13564-verdict-1600/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-13564-verdict-1600/log.txt.gz",
+      "plain_bytes": 220869,
+      "gzip_bytes": 36480,
+      "sha256": "6d0a172bdaa9d08fe78ff7e16249a929e5abff1f6f35f938f42f46b139193077",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-authoring-independent-review-1137/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-authoring-independent-review-1137/log.txt.gz",
+      "plain_bytes": 211144,
+      "gzip_bytes": 58353,
+      "sha256": "1580ec85d7e7177af1ce7292b5c00ea260c2aeb17ad682ae7a8a88e49378b966",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-sheet15-role-callers-fix-1054/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-sheet15-role-callers-fix-1054/log.txt.gz",
+      "plain_bytes": 210108,
+      "gzip_bytes": 52260,
+      "sha256": "73b3a5101add41d9cd0717f0456ed38c2d35c84b92122c5d39e788630fb267be",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-current-producer-0059/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-current-producer-0059/log.txt.gz",
+      "plain_bytes": 209388,
+      "gzip_bytes": 47682,
+      "sha256": "aa6d16afed8c542e551afda9a251cf575e50c35f00e04c294a834cf782927936",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D84a-7131-safe-facts-2227/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D84a-7131-safe-facts-2227/log.txt.gz",
+      "plain_bytes": 205307,
+      "gzip_bytes": 34811,
+      "sha256": "358687a93c9dcf770b5a9a2393cf6a59a9031b2f99ed6099bffd5499366287c1",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-auto-conflict-exact-author-1148/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-auto-conflict-exact-author-1148/log.txt.gz",
+      "plain_bytes": 203934,
+      "gzip_bytes": 54113,
+      "sha256": "829ae30ec17ce2d2bd5828f6f0b4cfcbd295390cf090956faa1a2567c7d7340f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stack-final-review-1521/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stack-final-review-1521/log.txt.gz",
+      "plain_bytes": 200320,
+      "gzip_bytes": 37851,
+      "sha256": "fa3b1cf7d9e8a02539a6560e60a5f43383a61e44dbff2d695db59327660efb50",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-element-join-sol-0351/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-readiness-element-join-sol-0351/log.txt.gz",
+      "plain_bytes": 200151,
+      "gzip_bytes": 49439,
+      "sha256": "d61a9f4802a46aa854aa4f8e68f0f8234d7764cc5bb709d10029cca4f034d0ab",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-preview-review-0120/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-preview-review-0120/log.txt.gz",
+      "plain_bytes": 199843,
+      "gzip_bytes": 46204,
+      "sha256": "982150ec9947c7b1359c266b377824c0774b2dbe449157748b298cc4ba0c0c2d",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-SWAP-recipe-return-1505/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-SWAP-recipe-return-1505/log.txt.gz",
+      "plain_bytes": 198390,
+      "gzip_bytes": 37838,
+      "sha256": "b337c07de7b5eb06ca2a43a520fa46b11908acd608665b915acb05ead070e48e",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-ADD3964-owner-review-0234/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-ADD3964-owner-review-0234/log.txt.gz",
+      "plain_bytes": 192201,
+      "gzip_bytes": 45682,
+      "sha256": "bdb65adc5b67d0740cba424255031bcea4ec73e793a246d17056a68316f27cce",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-created-producer-0206/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-created-producer-0206/log.txt.gz",
+      "plain_bytes": 192177,
+      "gzip_bytes": 36876,
+      "sha256": "f802dfcce813a70d08876579ae5c61c1e4d3fac6e276b33bba306c042e334e9b",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-binding-clean-import-1245/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-binding-clean-import-1245/log.txt.gz",
+      "plain_bytes": 187923,
+      "gzip_bytes": 46372,
+      "sha256": "59fa2767533a47cc02a4b9b52c588f8f947697e2512bed677df52e9b92911a53",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D50-ledger-line-0756/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D50-ledger-line-0756/log.txt.gz",
+      "plain_bytes": 178009,
+      "gzip_bytes": 60429,
+      "sha256": "981e61e42ee98440c815226e0bfec89a8d4c860ba1963a27139d21f76eedc105",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-25943-verdict-1625/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-25943-verdict-1625/log.txt.gz",
+      "plain_bytes": 177938,
+      "gzip_bytes": 35733,
+      "sha256": "031d3524dd65471657887e0b73cf81932e759bf932ff7cb364d7d27cad2180d1",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-popup-current-adopt-1711/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-popup-current-adopt-1711/log.txt.gz",
+      "plain_bytes": 175909,
+      "gzip_bytes": 48965,
+      "sha256": "65b4e927a4e8555021139dd4fc2689fae65178596d264f7894ef377c9cb9e333",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-binding-final-import-review-1250/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118a-binding-final-import-review-1250/log.txt.gz",
+      "plain_bytes": 174878,
+      "gzip_bytes": 33766,
+      "sha256": "4724f398e4cce07a6435d94e71cd7f8d99bdb9614f8a7bf144e6bd43f53ed3b7",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-current-trace-review-return-0714/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-current-trace-review-return-0714/log.txt.gz",
+      "plain_bytes": 174311,
+      "gzip_bytes": 40296,
+      "sha256": "5370dae97631272bfe2f7c480d4c5624b3138cdef4bfc20b6b4fc81011e827d6",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-D45-snapshot-review-sol-0521/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-D45-snapshot-review-sol-0521/log.txt.gz",
+      "plain_bytes": 172882,
+      "gzip_bytes": 43664,
+      "sha256": "a745201c06cefd8c8991f8ad9bdc887b1e2ae61cf97f0ba2b4c0bf6d1b3483b6",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D125-exact-handoff-sol-1332/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D125-exact-handoff-sol-1332/log.txt.gz",
+      "plain_bytes": 162016,
+      "gzip_bytes": 47349,
+      "sha256": "3a86d257c364ebc5ad7fbaa472bc4e2483c76835d167a2a9f836c5ede15ed3ee",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-diagnostic-clean-port-1025/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-diagnostic-clean-port-1025/log.txt.gz",
+      "plain_bytes": 153104,
+      "gzip_bytes": 38919,
+      "sha256": "fa325ff1d0be9bce58dabff5b093985fe0adad0833a8afb09f1281bf6e799708",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P1-15075-GO-review-0657/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D108-P1-15075-GO-review-0657/log.txt.gz",
+      "plain_bytes": 147999,
+      "gzip_bytes": 34230,
+      "sha256": "cfbe5d9cb80526f1a82f048f49399473bb2e2eaa2038f0308f52813afe11677f",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-digest-ADD-original-2251/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-popup-digest-ADD-original-2251/log.txt.gz",
+      "plain_bytes": 128009,
+      "gzip_bytes": 37024,
+      "sha256": "50326de0c033c2ce73bea998e3fa424dcb6fd38bd5ce2dff0e628fa713140452",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-own9-resume-1643/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-own9-resume-1643/log.txt.gz",
+      "plain_bytes": 117202,
+      "gzip_bytes": 28249,
+      "sha256": "11bc4a9df23d8a354ebeb7327ce27df544f2a7fa5558f3118b39a4d3841947f1",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-durable-custody-sol-1524/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-durable-custody-sol-1524/log.txt.gz",
+      "plain_bytes": 94843,
+      "gzip_bytes": 27881,
+      "sha256": "0d2a82434d3cd974c6b481c9476918aef03a9057360808a19cb8867f586a9b43",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D119-panel-hidden-author-1043/log.txt",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D119-panel-hidden-author-1043/log.txt.gz",
+      "plain_bytes": 91095,
+      "gzip_bytes": 24715,
+      "sha256": "0ba1b3751e8cd744c0c185fad80f36a8265fd11829ba9fead85cdc3d2bbebf89",
+      "decompressed_hash_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native4-own-proof-1711/own4.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native4-own-proof-1711/own4.log.gz",
+      "plain_bytes": 72161,
+      "gzip_bytes": 10426,
+      "sha256": "586bd0a66488db7e0701148b249ba2f3a13317cd208521d86b63ea03710d3f09",
+      "decompressed_hash_exact": true
+    }
+  ]
+}
