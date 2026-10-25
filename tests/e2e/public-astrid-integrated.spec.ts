@@ -148,10 +148,12 @@ test('A04/A05/A06/A07/A08 daylight palettes, resize, disclosure and live motion'
     await page.evaluate(() => window.scrollTo(0, 500));
     await page.waitForTimeout(400);
     await expect(page.locator('.astrid-sky canvas')).toHaveCount(4);
+    // Touch screens get the sky 120px past both edges (TOUCH_SKY_BLEED, e59243855): 2 * ceil(120 / 6) extra rows.
+    const bleedRows = (await page.evaluate(() => window.matchMedia('(pointer: coarse)').matches)) ? 2 * Math.ceil(120 / 6) : 0;
     const dimensions = await page.locator('.astrid-sky canvas').evaluateAll((elements) => elements.map((element) => ({ width: (element as HTMLCanvasElement).width, height: (element as HTMLCanvasElement).height })));
     expect(new Set(dimensions.map((value) => JSON.stringify(value))).size).toBe(1);
     expect(dimensions[0].width).toBe(Math.ceil((size.width + 48) / 6));
-    expect(dimensions[0].height).toBe(Math.ceil((size.height + 48) / 6));
+    expect(dimensions[0].height).toBe(Math.ceil((size.height + 48) / 6) + bleedRows);
     await shot(page, info, `resize-${size.width}`);
   }
   const issue = page.locator('.astrid-vision-issues summary').first();
