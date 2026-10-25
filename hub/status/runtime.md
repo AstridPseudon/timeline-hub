@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T00:18:40Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 3m -->
-# runtime board, 2026-10-25T00:15:44Z
+<!-- main | 2026-10-25T00:21:44Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
+# runtime board, 2026-10-25T00:19:37Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -181,7 +181,7 @@
 | D83-schema-churn | Preserve stopped setup experiment | Sol | Structural fix supersedes experiment | gated:superseded | Worker2141 stopped | Checkpoint retained. No released source or original credit; no further micro-gain task. | Held |
 
 | D84-structural-history | Reuse replay proof within one request | Sol / Luna | Normal apply complete | merged | Author2145; release2202 | Security243+13 pass; author1038 pass. Ten new attacks pass on candidate. [Release](../../design/runtime-D84a-release-2205.md) | beb1dafbd /732c48c6f |
-| R-P2-parent-runtime | Qualify corrected parent on main | Luna / main service | Reviewed App tour364f | doing | rt-P2-parent-single-current-0006 | Actual parent6629 running after preflight/readiness PASS. Fixed364f/039f/732/635f; one single follows terminal. | App364f /Runtime732 |
+| R-P2-parent-runtime | Qualify corrected parent on main | Luna / main service | Serial single original still running | doing | Parent6629 NO-GO; single4151 | Parent reaches strict Undo envelope355 then fails equality. Same fixed364f/039f/732/635f; single has preflight/readiness PASS. | App364f /Runtime732 |
 
 | D84-lock-placement | Test head-only CAS authority limit | Sol / Luna | Exact candidate tests passed | merged | Author2147; release2202 | Ten tests pass on memo candidate. No product lock change; head-only CAS insufficient. [Proof](../../design/runtime-D84-lock-placement-2147.md) | 746d745478 /61a16a221 |
 
@@ -220,11 +220,11 @@
 
 | D86-main-batch-union | Retain smaller private batch recipe | Luna | Authentic251 successor | gated:superseded | rt-D86-batch-union-2356 PREPARED | Private110 selector strings prepared; exact expanded ABI family joins authentic251 in successor. No live install/body; no fresh stub credit. | Private candidate only |
 | D86-main-batch-251 | Bind authentic affected-node membership | Luna | Reviewed source union and tuple | gated:source-union | rt-D86-bind-251-0003 PREPARED | Exact251 hash/member/argv/AST PASS;299 remainder visible. Five source hashes, final receipts/profile and later37 inputs pending. No body. | Private candidate only |
-| D86-next-families | Host next disjoint source families | Luna | Two exact Agent reservations received | doing | Parent swap0013; numeric0013 | New21 IDs assigned and dispatched on actual993e base. No per-family bodies; later membership joins with reviewed source. | Source pending |
+| D86-next-families | Host next disjoint source families | Luna / Agent review | All eight assigned authors returned | review | Parent swap0013; numeric0013 | New21 source branches sent to Agent protected queue. Original six returns and first corrections retained; no unassigned received family. | Source only |
 | D86-inverse7-review | Review original inverse custody purpose | Luna | Agent normal author merge | merging | rt-D86-inverse7-review-0010 PASS | Exact debb current custody authentic;7 originals conserved. Scoped Ruff/mypy PASS; full mypy env-blocked. Agent can merge original author. | debb643fa3 held for Agent |
 | D86-video12-review | Preserve original shared video topology | Luna / Agent return | Agent first correction | blocked:agent | Runtime0010 FAIL; Agent original author | Fixture separated original shared shot into two physical children.12 ASTs exact but input changed. Exact finding returned; candidate held. | d2f8c02c6d held |
-| D86-parent-swap12 | Preserve selected parent swap scenarios | Luna | Agent reserved exact file | doing | agt-D86-main-parent-swap-0013 | Twelve assigned nodes; genuine setup/physical identity and all original predicates retained. Source-only, no body. | Agent993e base |
-| D86-numeric9 | Preserve exact numeric move and params | Luna | Agent reserved two exact files | doing | agt-D86-main-numeric-0013 | Nine assigned nodes; original types/spelling/previous values and inverse/refusal predicates preserved. Source-only, no body. | Agent993e base |
+| D86-parent-swap12 | Preserve selected parent swap scenarios | Luna / Agent review | Protected source review | review | agt-D86-main-parent-swap-0013 | Twelve selectors and six bodies conserved. Compile/mypy PASS; Ruff parent-equivalent. Normal remote review requested; no body. | 2f935f6d4d held |
+| D86-numeric9 | Preserve exact numeric move and params | Luna / Agent review | Protected source review | review | agt-D86-main-numeric-0013 | Exact original types/ASTs retained, statics PASS. Fixture-builder probe outside brief disclosed and uncredited; no family qualification. | ec76fa69e6 held |
 | F-final-D87 | Preserve retired CLI migration notes | Luna / Agent text | Exact reviewed Agent0007 handback | blocked:agent | Agent ledger0007; existing Runtime docs owner | D87 forbids new native envelope. Approved24 IDs need named current replacements; same exact map drives final docs and main live membership. | Text and map pending |
 Runtime producer: RELEASED a3cd1a3214fa1632879c21d82d1abb9ea720b1de, tree64bb0caf0b7b950e02c4075077868a3dcd12ee06. Canonical15/schema867f unchanged. [Security and release](../../design/runtime-R2-provider-security-2346.md).
 
@@ -243,5 +243,5 @@ Delivery: Runtime merge, Agent merge, authentic App manifest command with schema
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7521595392 available bytes at23:31; sourcecap6 underD85, service tiers retained. Sweep3 removed0; compact packed0 and gzipped10old logs. No ended clean nonKEEP Runtime tree eligible; no refused-target retry.
 
-live 3 / cap 6 source; ready-undispatched 0. Parent/single producer0006 active; parent-swap12 and numeric9 authors0013 queued. Two reviews0010 complete: inverse7 PASS, video12 FAIL returned. Heavy body cap1; no source dispatch below6.5GB.
-Current pass 2026-10-25T00:15:44Z: INBOX through647565 bytes and headerD87 consumed. Word/media/auto normal home receipts accepted. Source cap checks made; new parent-swap12/numeric9 active. Parent6629 terminal NO-GO at strict equality; sole single4151 now running, original waits intact.
+live 1 / cap 6 source; ready-undispatched 0. Main producer0006 finishing serial single4151 and same-ID packet. All eight Agent authors returned; protected reviews/home joins pending. No main family body or live batch install. Heavy cap1 below7.5GB.
+Current pass 2026-10-25T00:19:37Z: INBOX through647565 bytes. Main parent6629 progressed to strict Undo355 NO-GO; single4151 remains same-ID. Extra21 reports exported verbatim and remote requests issued. Numeric fixture probe remains explicitly outside accepted proof. No new source tasks unassigned.

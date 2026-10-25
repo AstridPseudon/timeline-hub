@@ -44,11 +44,17 @@ if [ "$1" = runtime ]; then for a in runtime app agent; do f=/home/user/timeline
 # hourly read-only upstream fetch (01:45Z, LOOPS #39): lanes need origin/main current for U-drafts and D32 pre-existing checks. Fetch only; never push.
 if [ -z "$(find $O/.upstream-fetch-$A -mmin -60 2>/dev/null)" ]; then touch $O/.upstream-fetch-$A
   for r in agent runtime app composition; do [ -d /home/user/work/$r/.git ] || [ -f /home/user/work/$r/.git ] || continue
-    ( timeout 90 git -C /home/user/work/$r fetch -q origin main >/dev/null 2>&1 & ) ; done
+    ( git -C /home/user/work/$r config gc.auto 0; timeout 90 git -C /home/user/work/$r -c gc.auto=0 fetch -q origin main >/dev/null 2>&1 & ) ; done
   ( $O/bin/sweep-tmp 1 >/dev/null 2>&1; $O/bin/compact-scratch >/dev/null 2>&1
     # 09:50Z LOOPS #59: repeated fetches leave many packs (main's upstream Agent clone had 27 packs / 2.13 GiB -> 1 / 1.32 GiB). Consolidate any clone with >12 packs, keeping all objects (-A).
     for g in /home/user/peteromallet/* /home/user/banodoco/* /home/user/work/agent /home/user/work/runtime /home/user/work/app /home/user/work/composition /home/user/timeline-hub; do
-      [ -d "$g/.git/objects/pack" ] || continue; n=$(ls $g/.git/objects/pack/*.pack 2>/dev/null | wc -l); [ "$n" -gt 12 ] && nice -n 15 timeout 1200 git -C "$g" repack -A -d -q >/dev/null 2>&1; done ) &   # 03:00Z LOOPS #45: hourly housekeeping without anyone remembering
+      [ -d "$g/.git/objects/pack" ] || continue; git -C "$g" config gc.auto 0 2>/dev/null
+      # 00:25Z 25 Oct LOOPS #76: a repack writes the whole new pack before dropping the old ones (+1.4 GB transient per big clone), and
+      # fetch-triggered auto-gc ran several at once (Agent machine 7.1 -> 3.8 GB). So auto-gc is off everywhere, and repack runs one clone at
+      # a time, only when free disk exceeds 8 GB plus twice that clone's pack size.
+      n=$(ls $g/.git/objects/pack/*.pack 2>/dev/null | wc -l); [ "$n" -gt 12 ] || continue
+      need=$(( 8192 + 2 * $(du -sm $g/.git/objects/pack | cut -f1) )); [ $(df -BM --output=avail /home/user | tail -1 | tr -d ' M') -gt $need ] || continue
+      nice -n 15 timeout 1200 git -C "$g" repack -A -d -q >/dev/null 2>&1; done ) &   # 03:00Z LOOPS #45: hourly housekeeping without anyone remembering
 fi
 dead=""; fin=""
 for d in $O/workers/*/; do
