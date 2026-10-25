@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T09:41:50Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 11m -->
-# agent board, 2026-10-25T09:30:52Z
+<!-- agent | 2026-10-25T09:45:24Z | dispatcher heartbeat 2s | live 6 (sol 1, luna 5, other 0) | busy30 21 | status age 0m -->
+# agent board, 2026-10-25T09:45Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -305,16 +305,23 @@
 | D115 legacy27 | Correct legacy archive caller | Luna / Luna | One sequential metadata failure | merging | Legacy27-0926; review0932 PASS | Normal0c2cb contains exact reviewed setup.26 actual PASS,1 metadata FAIL and control1 PASS; originals unchanged. | 0c2cbce9c2 |
 | D115 validation27 | Trace historical binding validation | Luna | Runtime fixture purpose | blocked:runtime | Validation27-0926; peer0923 | Exact27 share pre-cut film with word:word-1 and no transcript pin. No validator edit; Runtime source owner has precise purpose question. | Evidence only |
 | D115 current pair16 | Correct authenticated pair reader | Luna / Luna | Actual source applicability | merged | Pair16-0926; review0932 PASS | Genuine archive2915 default, env override and all predicates kept;16 actual PASS. Normal7f183 has exact reviewed test blob. | 7f18374f56 |
-| D115 PARAM16 | Preserve neutral stage parameters | Luna / Luna | Independent custody review | review | Param16-0926; reviewer0938 | Exact16 and full32 PASS on author; neighbor40 PASS3 FAIL. Review challenges staged versus accepted-record authority preservation. | Candidate held |
+| D115 PARAM16 | Preserve accepted PARAM authority | HARD Sol | Exact accepted record comparison | doing | PARAM Sol0942 | Review0938 FAIL; firstreturn restores original custody but accepted16 FAIL before mutation. Staged16 PASS; no candidate merge. | d00f5dda held |
 | D115 next full core | Measure after cluster fixes | Luna / service | Reviewed cluster fixes and disk | gated:cluster-fixes | No body submitted | One unfiltered full rerun after meaningful cluster repairs. Heavy floor5.2GB; no duplicate or P4 repeat. | Current count437 |
 | D69 narrow source review | Review actual predicate equivalence | Luna independent | Exact original400 assertions | merged | Core/stage/writers0918 | Core72 PASS1 gap; stage65 PASS1 gap2 unresolved; writers71 PASS. Exact purposes mapped; faithful repairs remain, no full audit PASS. | Read only |
 
-| D115 effect image83 | Repair prepared effect images | HARD Sol | Genuine retained source | doing | Effect83Sol0932 | Largest service107 subgroup. One producer owner on commit.py and preview; sample RED/GREEN and strict guards required before review. | Product pending |
+| D115 effect image83 | Authenticate unchanged intermediate images | HARD Sol / Runtime | Runtime ownership check | blocked:runtime | Sol0932; peer0940 | Genuine provider sample RED; two comparison controls PASS and Runtime28 PASS. No Agent product fix; [Report](../../workers/agt-F-D115-effect83-sol-0932/report.md). | Candidate unmerged |
 | D115 fixture reviews | Review three disjoint corrections | Luna independent | Source PASS for each diff | merged | Batch0932 PASS A/B/C | Pair16, legacy27 and native54 each conserve input and predicates. Former ENV42 PASS; one metadata failure and native legacy scope remain open. | Source reviews only |
 | D115 native seed scope | Decide authored first-use baseline | Orchestrator | D104 authored-input exception | blocked:orchestrator | Escalation0923 | Address/steps/FPS corrected; legacy seed and two short-input purposes need exact scope decision. No validator or assertion weakening. | Candidate held |
-| D69 faithful restore | Restore closure and render predicates | Luna | Independent review next | doing | Faithful restore0936 | Two source files only: add exact missing old purposes while keeping every current predicate, including strict frame equality. | Source pending |
+| D69 faithful restore | Restore closure and render predicates | Luna / independent Luna | Next meaningful integrated proof | merging | Author0936; review0944 PASS | Core1 PASS; all original predicates retained. Renderer source PASS, behavior blocked by missing provisioned dependencies. Normal mergee9e3. | f480342d4f |
 
-Integration: Normal26a8c01468 includes exact reviewed D110 fixture, swap callable, archive readers and native word address/step/FPS corrections. All changes since released070dfc are tests only; production remains070dfc and Runtime1daca adoption. Canonical15 unchanged. Full2016 tuple remains immutable.
+| D115 inverse remainder | Trace inverse stage authority groups | Luna read only | Retained exact107 records | doing | inverse-source0942 | Nineteen exact IDs; compare full path and passing controls before assigning a product fix. No guard change or new body. | Source only |
+| D115 identity remainder | Trace created identity and array claims | Luna read only | Exact commit78 subgroup source | doing | identities-source0942 | Ordinarysheet8, opaque6, parentmedia4 and timing8 remain open; existing normal and held source applicability checked first. | Source only |
+| D115 sequential remainder | Trace prepared metadata and promotions | Luna read only | Retained exact107 and legacy result | doing | sequential-source0945 | Promotion2, sequential2 and unknown3934 plus legacy stale merge metadata; no cause inferred from wrapper. | Source only |
+| D69 residual even | Preserve exact remaining predicates | Luna independent | Original membership and settled15 | doing | residual-even0945 | Immutable even-index residual source purposes; excludes prior three five-function reviews and exact approved rows. No body. | Read only |
+| D69 residual odd | Preserve exact remaining predicates | Luna independent | Original membership and settled15 | doing | residual-odd0945 | Immutable odd-index residual source purposes; all missing or unapproved predicates stay explicit. No body. | Read only |
+| D115 archive custody | Consume authentic historical bytes | Runtime Luna / Agent | Corrected input behavior | merged | Runtime0923; Agent0926/0932 | Genuine2915 custody PASS consumed. Readers16 PASS and legacy26 PASS; one sequential metadata failure remains. No new acquisition. | Evidence only |
+
+Integration: Normale9e3b8f78a adds independently reviewed D69 closure and renderer predicates after26a8. All normal changes since070dfc are tests only; production remains070dfc and Runtime1daca. Full2016 tuple is immutable.
 core open: 437 current; actual2016 had438 on070dfc/1daca/04beed/635f. One D110 setup node now resolves to2 actual add/swap PASS on exact home treef3c0.  Exact506bad=438 NEWcore+59 ENV+8non-core+1D23deferred; PRE0/REG0 proven. All506 have per-node924 comparison; Runtime baseline isolation UNCERTAIN.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later named proofs retain exact source scope; no full/core-zero/ZIP claim.
 Families: Actual6058 14PASS7FAIL75ERROR;19214 13PASS21FAIL27ERROR;1565 3FAIL57ERROR. Actual17724 original13 remains4FAIL9ERROR; source returns never imply behavior PASS.
@@ -322,14 +329,14 @@ D100: Runtime receiver0634 has exact dd2fc new26 with lock1daca; actual old30890
 Restore: Exact44cf combines reviewed restore and two word-choice originals on corrected mirror and released1daca. Prior new regression and strict3 PASS retained; only ID5 and choices3/9 owed. No four-control or unchanged60 repeat.
 D107: Exact2e3331 protected0715 PASS_SOURCE remains held on2154. Core2016 is terminal; original ten unchanged. Runtime owns the smallest meaningful current-equivalent proof.
 Safety: Withdrawn D88 action stopped. D93 original credential/session/scope limits persist. D98a diagnostic spent; no new observer/body. D106 denies hub writes; all new worker outputs use exact ORCH paths.
-Disk: About4.92GB; new starts held below5.0GB. Two finished unreferenced baseline scratch directories packed losslessly, every member hash verified:65.6MB to3.75MB. No eligible clean worktree; KEEP/refused targets/Codex sessions untouched.
+Disk: 5.15GB before new small read-only starts; decimal D89 floor is5.0GB. sweep-tmp3 removed0; compact-scratch found no scratch/log candidates. Finished worktrees auto-recycled; dirty G2 source untouched.
 Blockers: Agent D107 — Current equivalent remains held on2154. Source review0715 PASS; core2016 terminal clears the full-run wait. Runtime owns the needed exact candidate proof.
 Blockers: Agent core437 — D115 cluster workers own the top locations; current count is measured438 minus one independently qualified D110 setup fix. No whole-cluster closure from source alone.
 Blockers: Agent D69 — Exact129/113/287 membership mapped in two0902 partitions. Predicate purpose and approved replacement receipts remain uncleared; two manifest blob mismatches remain explicit.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
-Next ready: PARAM protected result, D69 source review, exact missing-source fixes from the D115 inverse/identity groups, then one full rerun after meaningful cluster repairs. Source-start floor5.0GB applies.
-live 3 / cap 6; ready-undispatched 0 eligible starts below5.0GB. Effect83Sol, PARAM custody review and D69 faithful restore active. New source slices resume as worktree headroom returns.
-Inbox consumed through1502414 bytes. Updated 2026-10-25T09:30:52Z.
+Next ready: exact source returns and independent PARAM protected review when a candidate qualifies; one full rerun after meaningful cluster repairs. No P4 repeat.
+live 6 / cap 6; ready-undispatched 0. One HARD Sol PARAM author, three disjoint D115 readers and two D69 residual reviewers dispatched; no heavy body.
+Inbox consumed through1504922 bytes. Updated 2026-10-25T09:45Z.
 Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
 Later: MAIN profile input — Resolved by D108b local venue. Runtime confirms MAIN0759 unsubmitted and retained; no duplicate body. Local0811 uses genuine819acf/lockf4fc/registryd609.
 Later: Runtime snapshot coverage e6b669 is test-only; no adoption or running-tuple retarget. Final source application must include new reviewed snapshot assertions. D112 remains unreleased pending security/native proof.
