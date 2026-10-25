@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T23:27:25Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 0m -->
+<!-- app | 2026-10-25T23:32:04Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
 # app board, 2026-10-25T23:27Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -117,20 +117,20 @@
 
 | D136b | Classify observation producer consistency | HARD Sol and independent Luna | Final independent2240 PASS | merged | App2231 and independent2240 | Finite evidence only:135UNKNOWN,0 proved product/setup;25 hashes,52 nodes,43 edges and predicates PASS. Actual9 remains NO-GO. | No source change |
 
-| D136c | Read safe original nine refusal facts | Luna and independent Luna | Runtime 2f1f security 2312 PASS | doing | app-D136c-original9-controller-2331 | Exact candidate tree and three hashes verified. Sole unchanged nine queued on ab1e plus diagnostics. Result review follows. | Agent d133; Runtime 2f1f delta |
+| D136c | Read safe original nine refusal facts | Luna and independent Luna | Runtime 2f1f security 2312 PASS | doing | app-D136c-original9-resume-2330 | Carrier777f exact. Prior worker zero bodies; resume uses prescribed supported Python3.13. Original nine remains unspent. | Agent d133; Runtime 2f1f delta |
 
 Integration: App 5696769dfca056676cde1ab46d8bc94354b3a44a/tree0748df404125114a0f68b701fa76f43abd3fc79a. Entire tree equals reviewed/tested79699 no-measurement route;30Node20 controls/types/lint PASS. Predecessor b5c9 retained for historical15200 only. U3 sourcehome2f362/tree687e4c equals reviewedeba8;127 affected and warmup2/types/lint PASS. Qualified bootstrap59a4 normalHOME atop U3. Existing manifest Runtimeab1e/Agent070dfc/Composition635f. D139 requested U3 join already HOME; fresh ancestor36e1 check PASS. Latest lead150a19 deferred to small live-tip cut merge-forward. Producer-first final cut pins/proofs still owed.
 
 Current P2 NO-GO. Historical six complete tails qualified on recorded tuples; full original tour/final tuple still owed. Actual2136 finalFPS20db+D10042040+f53b original9 failed9setupERROR at intermediate authenticated physical observation. Independent2144 custody/source/counts PASS and actualNO_GO; no next9 until owner all-boundary inventory and meaningful qualified repair.
 
 Blockers: SWAP safety — D130 holds recovery, acceptance, release, adoption and related tours after automatic classifier refusal1537. No retry, alternate route, transfer or rollback. Existing Runtime escalation owns decision.
-Blockers: Projection9 — Runtime exact2f1f/tree37cf and independent security2312 PASS received. Sole controller2331 queued on ab1e plus exact diagnostics; actual facts and independent result remain owed.
+Blockers: Projection9 — Runtime exact2f1f/tree37cf and independent security2312 PASS received. Controller2331 prepared carrier777f, zero bodies. Sole resume2330 uses supported prescribed interpreter; actual facts and review owed.
 Blockers: Element cost — D127e census2153 and independent2202 complete: D112 path statically reachable, actual waits UNKNOWN. Header22:16 records D130 hold and combined owner decision pending. No fix or verify body. App route HOME5696769 retained.
 Blockers: Graph child birth — Runtime1814/final1821 C0 sequential operands defined. Authentic intermediate physical bindings/stages absent; causalownerUNKNOWN. No invented guardwriter or unchangedrerun.
 Blockers: Agent core and render — Runtime D139 recipe2153 and Agent input census2149/reviewer2210 own missing child imports. No ship core started. Farm step0 remains held for complete final merged tuple inputs; no App duplicate.
 Blockers: Final cut — ship-grade core, REG0, full P2, final P1-P5/D69, installed render, platform and ZIP remain owed. No final gate or ZIP claim.
 Next ready: D136c independent result/privacy/custody review immediately after sole controller2331 terminal. No other admitted App source or body.
-live 1 / cap 6; ready-undispatched 0. Sole D136c controller2331 queued; independent review ready only on actual terminal.
+live 1 / cap 6; ready-undispatched 0. Sole D136c resume2330 queued; independent review ready only on actual terminal.
 INBOX consumed through 2540676 bytes. H6 Runtime23:12, Agent23:15 and Farm23:10 read. D136c handoff read directly from normal hub/design then byte-preserved locally.
 
 Safety: Manager edits only ORCH briefs/board/peers and byte-publishes authored SAFE artifacts. No manager product/test/generated/pin changes, direct Git writes, upstream push, M5, credentials or refused-route retry. Dirty U3/orphan guards and exact1.107GB orphan graph remain untouched.
@@ -149,3 +149,5 @@ Custody: compact-scratch SHA1f6926c6164e73dd9c0c36556fa4897a933f7a742b5a8acfc26c
 Disk: fresh 5347082240 bytes before exact receiving prep. No protected raw/KEEP or refused target cleanup. New ended nonKEEP worktree scan follows.
 
 Current pass 2026-10-25T23:27Z: exact Runtime2f1f/tree37cf/source hashes match security2312 zero findings. ab1e preimages exact. Ordinary exact Agentd133 checkout requested after security PASS; no moving normal tuple substitution. Controller2331 receives only three reviewed files into its own ab1e worktree, then original nine once at fresh5GB. Source carrier remains held; no normal adoption or new guard author. D130 and final cut unchanged.
+
+Pass 2026-10-25T23:30Z: controller2331 source777f exact but original9 NOTRUN due manager draft exactPython3.11 wording. Both pyprojects require>=3.11; actual prescribedvenv3.13.16 supported. Corrected brief, sole resume2330 on sameWIP; zero previous bodies. No install/substitution/new source; no safety refusal.
