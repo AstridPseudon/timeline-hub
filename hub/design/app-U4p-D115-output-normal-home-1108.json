@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-25T11:08Z",
+  "head": "96af9c08b0d80e0bdebda998662ff9773eab6caf",
+  "tree": "a6190929019538bca9d76552ce6b915501193f73",
+  "tested_author": "c2a43ce28cc6690c3ec9d56e04025a1fcaa3036e",
+  "tested_tree": "a6190929019538bca9d76552ce6b915501193f73",
+  "entire_tree_equal": true,
+  "normal_receipt": "queue/done/merge-app-U4p-D115-output-adoption-1102",
+  "Runtime": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+  "Agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+  "D119_retained": true,
+  "not_browser_GO": true
+}

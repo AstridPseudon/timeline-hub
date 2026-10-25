@@ -1,0 +1,52 @@
+{
+  "task": "U4p D115 output release tool-only adoption",
+  "app": {
+    "base_commit": "7e92cd9468b883b009e8840786e832301479c3ed",
+    "base_tree": "d7d1d8877dd226acef2d442275428c566fae4de0",
+    "changed_files": ["runtime.lock.json", "public/install-manifest.json"],
+    "runtime_lock_sha256": "eae1a926e56188b8603ac9fb80178113980d859cdde6ef7d214ad6dff160c79e",
+    "install_manifest_sha256": "d08533e09ba299693812ef2cb81a2eb8db8a1618b19d063105310ebe5cc55691"
+  },
+  "runtime": {
+    "checkout": "/home/user/work/runtime",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "reviewed_commit": "e65422348314084a1a3cb6687fcdc520c73347e8",
+    "reviewed_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "tree_exact_against_reviewed": true,
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "source_scope": [
+      "runtime_protocol/timeline_commit_auth.py",
+      "tests/test_timeline_command_output_manifest_auth.py"
+    ],
+    "source_blobs": {
+      "runtime_protocol/timeline_commit_auth.py": "66d899edaac201a1700e7ddf9f62091753201bc9",
+      "tests/test_timeline_command_output_manifest_auth.py": "f8c29e32f8ade76401163c953eb476033343b25d"
+    }
+  },
+  "agent": {
+    "checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+    "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+  "checks": [
+    "vendor-lock check: PASS",
+    "update-manifest.test.mjs: PASS 2/2",
+    "manifest.test.mjs: PASS 2/2",
+    "runtime-schema-guard.test.mjs: PASS 2/2",
+    "Vitest installManifestSkew/vendorLock: PASS 17/17",
+    "Runtime generators/generate.py --check: PASS",
+    "Runtime artifact_manifest.py --check: PASS",
+    "Runtime tests/test_artifact_manifest.py: PASS 3/3",
+    "exact producer mappings: PASS 14/14",
+    "canonical Runtime files: PASS 15/15",
+    "Node syntax: PASS 3/3",
+    "JSON parse: PASS 2/2",
+    "scoped ESLint: PASS",
+    "git diff --check: PASS"
+  ],
+  "known_limit": "Release evidence retains one parent-identical SimpleNamespace db_path authentication failure; no new source/security/full/native/browser/service proof was run.",
+  "not_adopted": ["D111b", "tags", "pending Agent 82b6", "wire/schema changes"]
+}
