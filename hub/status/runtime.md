@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T02:02:55Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 0m -->
+<!-- main | 2026-10-25T02:06:08Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
 # runtime board, 2026-10-25T01:58:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -227,13 +227,13 @@
 
 | D87-live-frontends6 | Preserve six current frontend scenarios | Luna | Fresh full-stack protected review | review | Author0148; reviewer0202 | Six exact live cases retained; separate retired native-param function restored only if rewritten. No envelope or behavioral closure. | Held95fe input |
 
-| D86-inverse-host | Preserve original shared move host | Luna | Independent original-host source review | review | Author0158; review0204 | Authored-first original13s restored; original-third incompatible3.5/3.3/1.8 inputs unchanged. Full original-data review0204; no interval guard change. | Reviewed title base |
+| D86-inverse-host | Preserve original shared move host | Luna | Agent normal merge then qualification | merging | Independent0204 PASS; remote request0210 | Original13s host restored and source reviewed. Original-third input conflict retained. Reviewer local forbidden5FAIL5ERROR disclosed; no functional credit. | Reviewed title base |
 
 | D90-candidate-proof | Prove exact guarded inverse candidate | Luna / main service | P4 next body priority per Agent0153 | ready | Prep0200 checkpoint stop; resume WIP afterP4 | Exact89642 candidate; two originals, four new variants and strict fork file. Product stays unmerged until proof and one result verdict PASS. | Candidate89642bafc8 |
-| D86-compound-input | Find existing admitted unused manifest source | Luna | Existing held input assessment | doing | rt-compound-held-source-0202 | Read existing qualified held source only; no new consumer, synthetic authority, corpus or body. Return exact source or bounded absence. | Input need only |
+| D86-compound-input | Find existing admitted unused manifest source | Luna | Current authenticated source pair absent | blocked:agent | rt-compound-held-source-0202 complete | Legacy schema31 unused pin found; current history pair absent. Exact report returned; no new consumer, synthetic history or current admission closure. | Input need only |
 | P2-parent-single-current | Qualify reviewed native reply successor | Luna / main service | Next heavy slot after D90 | ready | Exact App4b984 plan source ready | App0138 protectedPASS and home4b984; exact0d142/a3cd/635f. Two originals serial; prior24629/11446 stay failed. | Captured App4b984365 |
 
-| P4-D88b-main | Qualify remaining ten-note original | Luna / main service | Actual D88b adoption home d407 | ready | rt-P4-D88b-tennote-0206 brief ready | Explicit Agent0153 main venue. Exactd407/6634; sole unprofiled45s original; D90 preparation checkpointed before body. | Fixed Agentd407 / Runtime6634 |
+| P4-D88b-main | Qualify remaining ten-note original | Luna / main service | Actual original body and result | doing | rt-P4-D88b-tennote-0206 requested | Explicit Agent0153 main venue. Exactd407/6634; sole unprofiled45s original; D90 preparation checkpointed before body. | Fixed Agentd407 / Runtime6634 |
 
 Runtime producer: RELEASED D88b product6634a17f3ffd885567ba3c91b6c7a560df7375a4, tree47b376 equals independent reviewedb69a exactly. Auth172/history81/warm forgery1/central14 PASS; canonical15/schema867f unchanged. Old withdrawn D88 prototype never released.
 core open: P4 main3362 FAIL45.244s versus45s and element8897 FAIL5s retain olda3cd scope. D88b warm replay0 is source qualified with uneven timings; next meaningful originals owed. Four R2 retain qualified7c48/732 until final matrix.
