@@ -1,0 +1,114 @@
+{
+  "task": "D100 R1 finite source-owner boundary disposition",
+  "status": "PASS_WITH_BOUNDARY_SOURCE_HELD",
+  "decision": "FIXTURE_SETUP_USE_ADMITTED_DEFAULT_SOURCE_OFFSET",
+  "product_semantic_support_required_for_current_D100": false,
+  "source_release": "HELD",
+  "candidate": {
+    "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "base_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "test_sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58"
+  },
+  "actual_result_correspondence": {
+    "parent": {"tests": 27, "passed": 23, "failed": 4, "duration": "4.99s", "exit_code": 1},
+    "candidate": {"tests": 27, "passed": 24, "failed": 3, "duration": "3.65s", "exit_code": 1},
+    "meaningful_registered_provider_node": {
+      "selector": "test_registered_runtime_first_source_item_birth_and_no_write_refusal",
+      "parent": "RED: prior physical-item correspondence refusal",
+      "candidate": "PASS: accepted first physical item and retained wrong-previous no-write refusal",
+      "source": "tests/sdk/test_d100_item_birth_boundary.py:173-214"
+    },
+    "remaining_failures": [
+      {
+        "selectors": [
+          "test_first_physical_item_preserves_custody_and_opaque_fields[False]",
+          "test_first_physical_item_preserves_custody_and_opaque_fields[True]"
+        ],
+        "classification": "COMPILER_CACHE_EXPECTATION_SETUP_MISMATCH",
+        "first_boundary": "_doc_patch_materialize.remember adds private source_mapping._doc_patch_images",
+        "product_fault": false,
+        "source": "tests/sdk/test_d100_item_birth_boundary.py:35-54; astrid/sdk/timeline/_doc_patch.py:478-531"
+      },
+      {
+        "selector": "test_registered_shared_owner_uses_the_same_physical_custody_without_alias_birth",
+        "classification": "AUTHORED_NEW_TEST_SETUP_MISMATCH",
+        "first_boundary": "existing compiler guard rejects candidate.placements[occ-b].source_offset before the doc.patch",
+        "parent_same_failure": true,
+        "product_fault": false,
+        "source": "tests/sdk/test_d100_item_birth_boundary.py:156-170; astrid/core/timeline/authoring_bundle.py:837-849"
+      }
+    ],
+    "not_run_or_not_applied": [
+      "App projection9",
+      "App own9",
+      "fixture receiving",
+      "provider/native/own9/TEN/full/P4/browser/collector/acquisition"
+    ]
+  },
+  "source_owner_assessment": {
+    "production_callgraph": [
+      "RuntimeService.commit_timeline",
+      "registered Astrid provider",
+      "RuntimeCommitService provider execution",
+      "commands.execute",
+      "doc.patch",
+      "State.set/project_shot_items"
+    ],
+    "production_callers": [
+      "tests/sdk/test_d100_item_birth_boundary.py:188-200 submits the existing commitTimeline body with doc.patch",
+      "tests/sdk/test_capture_source_runtime.py:216 and 251-260 register the provider and call RuntimeService.commit_timeline"
+    ],
+    "contract_basis": [
+      "C0 commit-v2.md:62-92 requires the existing commitTimeline route, commands, and atomic whole-batch failure",
+      "C0 commit-v2.md:102-110 makes provider-derived effects authoritative",
+      "C0 commit-v2.md:254-274 preserves exact idempotent accepted outcomes",
+      "C0 commit-v2.md:276-293 defines guarded doc.patch closure addressing",
+      "C0 commit-v2.md:703-715 defines accepted/merged replies and complete canonical closure"
+    ],
+    "direct_shared_owner_is_not_the_accepted_production_path": "The failing node is a local execute(bundle, [occurrence.place-shared, doc.patch]) authored in the additive D100 test. The passing registered node uses RuntimeService.commit_timeline with doc.patch against an already qualified physical source. No observed production caller requires occurrence.place-shared to carry a non-default trim for this item-birth behavior.",
+    "source_offset_disposition": "Use a new-test fixture whose shared-owner placement has an already admitted default source_offset (0, or the existing canonical default spelling) and recompute its authored parent digest. Do not alter the product guard, the protected live fixture, or the meaning of the D100 item-birth assertion.",
+    "passing_comparators": [
+      "tests/sdk/test_timeline_commit_provider.py:719-735 sets every shared occurrence source_offset to 0 before the existing shared-occurrence path and asserts sibling/source preservation",
+      "tests/sdk/test_timeline_commit_provider.py:738-749 does the same before shared-sibling rebase",
+      "astrid/sdk/timeline/native_occurrence_create.py:46-50 creates a new occurrence with source_offset 0"
+    ],
+    "compiler_guard": "astrid/core/timeline/authoring_bundle.py:829-849 treats only None/0/0.0/{}/zero start+end as default and raises UnsupportedAuthoringEditError for non-default source_offset because an internal clip source trim is required. The D100 document_fixture authored input is {start: 0, end: 10000} at tests/sdk/test_timeline_commit_provider_document.py:40-44.",
+    "scope_question_if_requirement_expands": "If D100 is intended to certify occurrence.place-shared with a non-default source trim, that is a separate product scope request: should the provider implement and qualify an explicit shared-placement/source-trim semantic operation, including its internal clip trim and custody/rebase behavior? That support is not implied by the current registered doc.patch caller and must not be inferred here."
+  },
+  "custody_invariants": {
+    "must_remain_exact": [
+      "source_mapping.shots, including authenticated shot/revision/digest/internal IDs and item_id_map",
+      "source_mapping.placements",
+      "source_mapping._runtime_document and its immutable shot/internal payloads",
+      "first physical item identity is accepted without extending or allocating source_mapping.shots.*.item_id_map",
+      "wrong source/revision/digest, duplicate or empty item IDs, previous-value mismatch, and no-write refusal remain fail-closed"
+    ],
+    "source": [
+      "astrid/sdk/timeline/_common.py:9-16 marks source_mapping as provenance and underscore keys as derived helpers",
+      "astrid/sdk/timeline/_command_state.py:316-393 authenticates custody and separates physical birth from copied correspondence",
+      "tests/sdk/test_d100_item_birth_boundary.py:47-54 and 61-153 protect acceptance, custody, opaque payload, and no-write predicates"
+    ],
+    "allowed_compiler_cache": {
+      "key": "source_mapping._doc_patch_images",
+      "authority": "private compiler projection cache only; never historical/source custody",
+      "source": "astrid/sdk/timeline/_doc_patch_materialize.py:13-45",
+      "equal_strength_assertion": "Compare source_mapping.shots, source_mapping.placements, and source_mapping._runtime_document exactly to before; assert the only extra top-level source_mapping key is _doc_patch_images, then assert its owner key, source_shot_revision/source_internal_revision, shot_id/internal_timeline_id, and cached payload/internal_timeline equal the expected authored projection. Keep the existing item_id_map equality, canonical document equality, internal revision equality, and original bundle immutability assertions unchanged."
+    }
+  },
+  "smallest_next_changed_path": {
+    "path": "tests/sdk/test_d100_item_birth_boundary.py",
+    "scope": "Only the authored direct shared-owner setup and the two broad internal-map equality assertions; no product source, runtime source, fixture receiving, or public contract change.",
+    "sequence": [
+      "Set the direct shared-owner test's copied placement to admitted default source_offset before execute and update only its authored parent digest.",
+      "Split custody assertions from the separately asserted _doc_patch_images cache as described above.",
+      "Then request the normal bounded acceptance/whole-path owner runs; do not treat this disposition as behavioral qualification."
+    ]
+  },
+  "test_policy": {
+    "rerun": "NONE",
+    "reason": "Task explicitly forbids test reruns; actual parent/candidate result is immutable evidence from receiver1837 and independent review1843.",
+    "lint_type": "N/A read-only"
+  }
+}

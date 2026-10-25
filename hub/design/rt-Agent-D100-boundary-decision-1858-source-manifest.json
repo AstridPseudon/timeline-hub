@@ -1,0 +1,49 @@
+{
+  "worker": "rt-Agent-D100-boundary-decision-1858",
+  "status": "READ_ONLY_SOURCE_ASSESSMENT",
+  "candidate": {
+    "repo": "Agent",
+    "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "base_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "files": [
+      {"path": "astrid/sdk/timeline/_command_state.py", "blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40", "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3", "lines": "316-422", "role": "physical custody and item correspondence"},
+      {"path": "astrid/sdk/timeline/_doc_patch.py", "blob": "e55d400c00ed727a244aecdaef95a67205e623fa", "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f", "lines": "478-531", "role": "production doc.patch closure and cache invocation"},
+      {"path": "astrid/sdk/timeline/_doc_patch_materialize.py", "blob": "981f1e2ee1ba6209fb4df4fa5e863b9d91d25786", "sha256": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252", "lines": "13-45", "role": "private compiler projection cache"},
+      {"path": "astrid/core/timeline/authoring_bundle.py", "blob": "e329c565bbaea9acac81c71929b7f3c3cadd0a17", "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d", "lines": "829-849", "role": "non-default source_offset compiler guard"},
+      {"path": "astrid/sdk/timeline/native_occurrence_shared.py", "blob": "a439abcdab7bf73931766f1150a6be1b08ebc68e", "sha256": "931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840", "lines": "300-325", "role": "direct shared-owner setup"},
+      {"path": "astrid/sdk/timeline/commit.py", "blob": "3ca7c6e970cc162cef30989ad9cb5e0e2a61715c", "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3", "lines": "1025-1037,1165-1335,1437-1444", "role": "registered provider execution and Runtime accept/preview handoff"},
+      {"path": "astrid/sdk/timeline/_common.py", "blob": "0a42217669c8833d4d01df13c68f83e1fb77182e", "sha256": "f05689fda870353180f01aed0f1bf17371e90359fdc282c23028748d271b8b12", "lines": "9-16", "role": "provenance versus derived key convention"},
+      {"path": "tests/sdk/test_d100_item_birth_boundary.py", "blob": "68f0999397aa301607128f7747def12001b73a6e", "sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58", "lines": "35-214", "role": "additive D100 authored setup and registered production comparator"},
+      {"path": "tests/sdk/test_timeline_commit_provider_document.py", "blob": "bd5c5488279a96693d69dd75c365c84af1bec53516653cbe65c3a99006cc5e12", "sha256": "bd5c5488279a96693d69dd75c365c84af1bec53516653cbe65c3a99006cc5e12", "lines": "22-61", "role": "authored source_offset fixture"},
+      {"path": "tests/sdk/test_timeline_commit_provider.py", "blob": "cde797633e42e21fc7219c2b5288ce8238cdacf92e094450e02e4e746c871434", "sha256": "cde797633e42e21fc7219c2b5288ce8238cdacf92e094450e02e4e746c871434", "lines": "719-749", "role": "protected passing shared-placement comparators"}
+      ,{"path": "tests/sdk/test_capture_source_runtime.py", "blob": "092b212d4708c0a19fa4d183632ca5c64abc4da7", "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48", "lines": "155-160,216-260", "role": "real Runtime source qualification, registration, and commit caller"}
+    ]
+  },
+  "runtime": {
+    "repo": "Runtime",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "files": [
+      {"path": "runtime_protocol/service.py", "blob": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144", "sha256": "6a2a9447cb6bb598834b08bfbf3b4ee406363c97be961c2b1a7edf1a0b7ab364", "lines": "2412-2424,2468-2483", "role": "provider registration and production commitTimeline caller"},
+      {"path": "runtime_protocol/timeline_commit_provider.py", "blob": "a05812e82ee2930f29e277f260f3329855378932", "lines": "16-18,72-88", "role": "registered Astrid provider factory"},
+      {"path": "runtime_protocol/daemon.py", "blob": "725d4386c2e2690ddd10a233a028ac2f9d48c96c", "lines": "242-256", "role": "startup registration path"}
+    ]
+  },
+  "contract": {
+    "repo": "Runtime integration",
+    "commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "files": [
+      {"path": "contract/commit-v2.md", "blob": "257024df6fa93be767f0c74ee10014a6770c4fcb", "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7", "lines": "60-110,254-293,595-612,703-715", "role": "C0 request/doc.patch/conflict/reply contract"},
+      {"path": "contract/schemas/timeline-commit.json", "blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815", "lines": "184-265,604-763,1019-1141", "role": "generated request/result shape cross-check"}
+    ]
+  },
+  "retained_evidence": [
+    "design/app-D100-behavior-result-review-1843-{report.md,verdict.json,findings.md,source-custody.json}",
+    "design/app-D100-projection-proof-resume-1837-{report.md,facts.json,source-custody.json,verdict.md}",
+    "design/rt-Agent-D100-item-birth-sol-1742-{report.md,source-manifest.json,red-green.json,validation.md}",
+    "design/rt-Agent-D100-security-review-1803-{report.md,review.json,source-manifest.json,validation.md}"
+  ],
+  "note": "The _common.py sha256 is a read-only source-manifest entry for the candidate file; no product files were edited by this worker."
+}

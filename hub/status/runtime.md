@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T18:57:06Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 0m -->
+<!-- main | 2026-10-25T19:02:25Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 3m -->
 # runtime board, 2026-10-25T18:56:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -452,7 +452,7 @@ core open:425 and REG14 from immutable30693. No newer core body or bounded-proof
 Gates: P1/P3 recorded GO; P4 independent GO28.101seconds. Full P2 NO-GO for element/SWAP. No cut, build or ZIP.
 Blockers: Agent core — portable674d review1847 FAIL; focused return1855 active. Installer1826 PASS and maker1744 PASS stay held until genuine Agent E2E and independent result. Live0857 unchanged.
 Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
-Blockers: Element — App sole durable recipe1824/finalreview1834. Normal helper e319 and App validator/bootstrap qualified. No authentic provider leaf or dominant-cost author yet.
+Blockers: Element — actual32016 terminal exit1, App independent1847 active. Lifecycle21.741s/provider13.781s are provisional; exact request binding and leaf verdict await review. No duplicate body.
 Blockers: Final render — Farm717e layout EXACTMISSING. Qualified changed kit and actual receiving receipt precede any D77 retry; Farm core remains dropped.
 Blockers: D69 and cut — current core, REG0, full P2, installed render90, final tuple P1–P5, wheel, Windows and final build/ZIP remain owed.
 Blockers: ZIP patch dryrun — Farm test-only receiving requested1844, exact source/tips supplied. No final-cut/build/ZIP credit; no duplicate Main run.
@@ -464,6 +464,6 @@ Safety: D130 and prior D88/D111/retirement refusals held. ORCH-only outputs; no 
 Venues: Agent sole genuine E2E venue. No Main heavy or production child. Historical tuples/results never retargeted. Cancelled control-binding request not dispatched.
 Later: D13420:00Z conditional interim count only if custody E2E not GREEN; no early run/acquisition/bypass/ship credit. Agent owns trigger and recovered exact bindings.
 Later: OriginalTrue redo birth and graph initial child alias remain failed/unknown with missing authentic physical records. No unchanged retry or speculative guard author. Scalar/compound and Gate3 remain visible; D133 final B deferred.
-Disk: Fresh4.89GB before three source starts. Sweep3/compact active; finished1844 and reviews autorecycled. No dirty, KEEP or refused target retried. Three source-only starts maximum under D89b.
-live 3 / cap 3; ready-undispatched 0 local. Portable1855, pristine1857 and D100 disposition1858 queued/running. Farm patch-export test pending receiving owner.
+Disk: Fresh4.74GB after three admitted source starts. Sweep3 removed0; compact packed0 and losslessly gzipped5 old logs. Finished1844/reviews autorecycled; no protected or refused target retried.
+live 3 / cap 3; ready-undispatched 0 local. All three Luna1855/1857/1858 actual dispatched. Initial relative brief paths rejected before workers; absolute paths corrected. Farm receiver requested.
 INBOX consumed through1434828bytes. Updated 2026-10-25T18:56:28Z.
