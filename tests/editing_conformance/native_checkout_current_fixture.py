@@ -74,10 +74,12 @@ def prepare(case, *, gate3: bool = False):
     assert [clip["id"] for clip in parent["clips"][-2:]] == ["music-bed", "music-other"]
 
     if gate3:
+        from astrid.sdk.timeline._clip_commands import capture_clip_add
+        from astrid.sdk.timeline.commands import execute
+        from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
+
         authored = current_bundle(case)
-        desired = copy.deepcopy(authored)
-        desired["parent"]["occurrences"] = []
-        desired["parent"]["clips"].append({
+        gate3_title = {
             "id": "gate3-title",
             "at": 0,
             "track": "picture",
@@ -85,11 +87,13 @@ def prepare(case, *, gate3: bool = False):
             "hold": 1,
             "params": {"content": "Gate3"},
             "elementRef": {"packId": "rendering", "kind": "effects", "id": "text-card"},
-        })
-        desired["parent"]["config"]["clips"] = copy.deepcopy(desired["parent"]["clips"])
+        }
+        delete_occurrence = capture_occurrence_delete(authored, "occurrence:occ")
+        without_occurrence = execute(authored, [delete_occurrence]).bundle
+        add_gate3_title = capture_clip_add(without_occurrence, "parent", gate3_title)
         topology = _current_commit(
             case,
-            emit_document_commands(authored, desired),
+            [delete_occurrence, add_gate3_title],
             "native-checkout-current-gate3",
         )
         parent = topology["data"]["canonical_document"]["parent_revision"]["payload"]
