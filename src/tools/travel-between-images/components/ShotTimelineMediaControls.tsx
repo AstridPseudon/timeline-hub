@@ -6,6 +6,7 @@ import type { PreparedMediaDiagnostic } from '@/tools/video-editor/commands/medi
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useTimelineCommandsService } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
+import { useTimelineMultiSelect } from '@/shared/state/selectionStore.ts';
 import {
   useTimelineChromeContext,
   useTimelineEditorData,
@@ -84,6 +85,7 @@ export function ShotTimelineMediaControls({
 }: ShotTimelineMediaControlsProps) {
   const runtime = useVideoEditorRuntime();
   const editor = useTimelineEditorData();
+  const { selectedClipIds, selectedClipIdsRef } = useTimelineMultiSelect(runtime.agentSelectionOwner);
   const { saveStatus } = useTimelineChromeContext();
   const saveStatusRef = useRef(saveStatus);
   saveStatusRef.current = saveStatus;
@@ -122,8 +124,8 @@ export function ShotTimelineMediaControls({
   const [errorDiagnostic, setErrorDiagnostic] = useState<PreparedMediaDiagnostic | null>(null);
   const visualTracks = editor.resolvedConfig?.tracks.filter(track => track.kind === 'visual' && track.role !== 'source') ?? [];
   const trackId = visualTracks.find(track => track.id === editor.selectedTrackId)?.id ?? visualTracks[0]?.id;
-  const selectedClip = editor.selectedClipIds.size === 1
-    ? editor.resolvedConfig?.clips.find(clip => editor.selectedClipIds.has(clip.id))
+  const selectedClip = selectedClipIds.size === 1
+    ? editor.resolvedConfig?.clips.find(clip => selectedClipIds.has(clip.id))
     : undefined;
   const canSwap = Boolean(selectedClip?.asset)
     && !['text', 'hold', 'effect-layer'].includes(selectedClip?.clipType ?? '')
@@ -158,7 +160,7 @@ export function ShotTimelineMediaControls({
     try {
       const currentProjectId = validatedProjectId(runtime.project.projectId);
       const data = editor.dataRef.current;
-      const selection = clipSelectionSnapshot(editor.selectedClipIds, editor.selectedTrackId, selectedClip);
+      const selection = clipSelectionSnapshot(selectedClipIds, editor.selectedTrackId, selectedClip);
       const time = swap || after ? selectedClip?.at : currentTime;
       if (!supported || !editable || !trackId || !data || (swap && !canSwap) || (after && !canDuplicateVideo)) return;
       if (!currentProjectId) {
@@ -228,11 +230,11 @@ export function ShotTimelineMediaControls({
       const currentRuntime = runtimeRef.current;
       const currentData = currentEditor.dataRef.current;
       const currentConfig = currentData?.resolvedConfig ?? currentEditor.resolvedConfig;
-      const currentSelectedClip = currentEditor.selectedClipIds.size === 1
-        ? currentConfig?.clips.find(clip => currentEditor.selectedClipIds.has(clip.id))
+      const currentSelectedClip = selectedClipIdsRef.current.size === 1
+        ? currentConfig?.clips.find(clip => selectedClipIdsRef.current.has(clip.id))
         : undefined;
       const currentSelection = clipSelectionSnapshot(
-        currentEditor.selectedClipIds,
+        selectedClipIdsRef.current,
         currentEditor.selectedTrackId,
         currentSelectedClip,
       );

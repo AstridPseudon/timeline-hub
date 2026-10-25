@@ -18,6 +18,9 @@ const state = vi.hoisted(() => ({
     selectedClipIds: new Set<string>(),
     selectedTrackId: 'V1',
   },
+  selection: {
+    selectedClipIds: new Set<string>(),
+  },
   chrome: { saveStatus: 'saved' as const },
   playback: { currentTime: 1.25 },
   runtime: {
@@ -59,6 +62,13 @@ vi.mock('@/tools/video-editor/hooks/useTimelineCommandsService.ts', () => ({
   useTimelineCommandsService: () => state.commands,
 }));
 
+vi.mock('@/shared/state/selectionStore.ts', () => ({
+  useTimelineMultiSelect: () => ({
+    selectedClipIds: state.selection.selectedClipIds,
+    selectedClipIdsRef: { current: state.selection.selectedClipIds },
+  }),
+}));
+
 describe('ShotTimelineMediaControls', () => {
   beforeEach(() => {
     state.data.current = {};
@@ -67,6 +77,7 @@ describe('ShotTimelineMediaControls', () => {
       clips: [],
     };
     state.editor.selectedClipIds = new Set();
+    state.selection.selectedClipIds = new Set();
     state.editor.selectedTrackId = 'V1';
     state.playback.currentTime = 1.25;
     state.runtime.project.projectId = 'project-1';
@@ -75,6 +86,23 @@ describe('ShotTimelineMediaControls', () => {
     state.assets.uploadVideoGeneration.mockReset();
     state.assets.prepareGenerationAsset.mockReset();
     state.commands.addClip.mockReset().mockReturnValue({ ok: true, data: { clipId: 'clip-new', trackId: 'V1' } });
+  });
+
+  it('renders the mounted occurrence-qualified selected identity', () => {
+    state.editor.resolvedConfig = {
+      tracks: [{ id: 'V1', kind: 'visual' }],
+      clips: [{
+        id: 'occ-1:clip-old', track: 'V1', at: 0.75, asset: 'asset-old', clipType: 'media',
+        app: { canonical: { ownerRef: 'occurrence:occ-1', clipRef: 'occurrence:occ-1/clip:clip-old' } },
+      }],
+    };
+    state.editor.selectedClipIds = new Set();
+    state.selection.selectedClipIds = new Set(['occ-1:clip-old']);
+
+    render(<ShotTimelineMediaControls occurrenceId="occ-1" parentDocumentId="document-1" />);
+
+    expect(screen.getByText('Selected clip: occ-1:clip-old', { exact: true })).toBeVisible();
+    expect(screen.queryByText('Selected clip: clip-old', { exact: true })).not.toBeInTheDocument();
   });
 
   it('imports selected media and sends an add command through the mounted editor', async () => {
@@ -180,6 +208,7 @@ describe('ShotTimelineMediaControls', () => {
       clips: [{ id: 'clip-old', track: 'V1', at: 0.75, asset: 'asset-old', clipType: 'media' }],
     };
     state.editor.selectedClipIds = new Set(['clip-old']);
+    state.selection.selectedClipIds = new Set(['clip-old']);
     const uploaded = { generationId: 'generation-new', variantId: 'variant-new' };
     const preparedAsset = { assetKey: 'asset-new', mediaType: 'image', entry: { file: 'asset-new' } };
     state.assets.uploadImageGeneration.mockResolvedValue(uploaded);
@@ -209,6 +238,7 @@ describe('ShotTimelineMediaControls', () => {
       }],
     };
     state.editor.selectedClipIds = new Set(['clip-old']);
+    state.selection.selectedClipIds = new Set(['clip-old']);
     state.assets.uploadImageGeneration.mockReturnValue(new Promise(resolve => { resolveUpload = resolve; }));
 
     const rendered = render(<ShotTimelineMediaControls occurrenceId="occ-1" parentDocumentId="document-1" />);
@@ -224,6 +254,7 @@ describe('ShotTimelineMediaControls', () => {
       }],
     };
     state.editor.selectedClipIds = new Set(['clip-new']);
+    state.selection.selectedClipIds = new Set(['clip-new']);
     rendered.rerender(<ShotTimelineMediaControls occurrenceId="occ-1" parentDocumentId="document-1" />);
     resolveUpload({ generationId: 'generation-new', variantId: 'variant-new' });
 
@@ -319,6 +350,7 @@ describe('ShotTimelineMediaControls', () => {
     state.data.current = current;
     state.editor.resolvedConfig = current.resolvedConfig;
     state.editor.selectedClipIds = kind === 'swap' ? new Set(['clip-old']) : new Set();
+    state.selection.selectedClipIds = kind === 'swap' ? new Set(['clip-old']) : new Set();
     state.editor.selectedTrackId = kind === 'add' ? 'V2' : 'V1';
     state.assets.uploadImageGeneration.mockResolvedValue({ generationId: 'generation-new', variantId: 'variant-new' });
     state.assets.prepareGenerationAsset.mockReturnValue({
