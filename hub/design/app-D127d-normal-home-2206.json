@@ -1,0 +1,20 @@
+{
+  "task": "D127d normal App source home",
+  "verified_utc": "2026-10-25T22:06:55.895464+00:00",
+  "author_commit": "79699d23f0cabef17eaa68463618132556c47902",
+  "review": "app-D127d-route-protected-review-2159 PASS_SOURCE_REVIEW",
+  "normal_head": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+  "normal_tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+  "author_tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+  "whole_tree_equal": true,
+  "queue_receipt": "merged tl/app-D127d-no-measurement-route-2150 into app tl/integration -> 5696769dfc\n",
+  "source_checks": "author and independent30Node20 controls, tscnode/app,eslint,MJSsyntax,diff PASS; exact entire integrated tree equals tested source",
+  "acceptance": "NOTRUN; Runtime cost candidate PENDING, no body/preflight/claim",
+  "file_sha256": {
+    "scripts/testing/d66-plain-stack.mjs": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "scripts/testing/d66-plain-stack.test.mjs": "78e73d8716d47ef5a4a02da2bef0dd92dc6be642e5c9348bbea9fade80ab654d",
+    "tests/e2e/local/support/harness.ts": "f2d3a3b198fe4b4972cd816694ced5466e9f854e9c3ba508b8b87c1f0e181403",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef"
+  }
+}

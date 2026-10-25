@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-25T22:07:59.293782+00:00",
+  "target": "/home/user/work/wt/app-pin-b5c9eadf",
+  "pin_head": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+  "normal_app": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+  "noncurrent": true,
+  "clean": true,
+  "live_actual_test_plan_hits": [],
+  "live_worker_path_hits": [],
+  "lease_hits": [],
+  "keep_untouched": true,
+  "host_process_visibility": "NOT_PROVED; lead scan required",
+  "eligible_for_host_audit": true,
+  "raw_runs_untouched": true
+}

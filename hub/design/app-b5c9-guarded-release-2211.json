@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-25T22:10:37.649185+00:00",
+  "target": "/home/user/work/wt/app-pin-b5c9eadf",
+  "pin_head": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+  "normal_app": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+  "clean": true,
+  "test_hits": [],
+  "worker_hits": [],
+  "lease_hits": [],
+  "host_CLEAR_receipt": "design/app-pin-host-process-use-2210.md",
+  "all8_raw_KEEP_present": true,
+  "free_before": 5382295552,
+  "KEEP_named_release": true,
+  "free_after": 5548589056,
+  "observed_net_bytes": 166293504,
+  "pin_path_absent": true,
+  "recycled_marker": true,
+  "raw_and_branches_reports_untouched": true,
+  "completed_utc": "2026-10-25T22:10:38.897804+00:00"
+}
