@@ -1,0 +1,400 @@
+astrid/core/timeline/shot_composition.py:314: error: Incompatible types in assignment (expression has type "Mapping[str, Any]", variable has type "dict[str, Any]")  [assignment]
+astrid/core/timeline/shot_composition.py:321: error: Need type annotation for "raw_occurrence"  [var-annotated]
+astrid/core/timeline/shot_composition.py:321: error: Argument 1 to "enumerate" has incompatible type "object"; expected "Iterable[Never]"  [arg-type]
+astrid/core/timeline/shot_composition.py:532: error: Argument 1 to "enumerate" has incompatible type "Any | None"; expected "Iterable[Any]"  [arg-type]
+astrid/core/timeline/shot_composition.py:572: error: Argument 1 to "enumerate" has incompatible type "Any | None"; expected "Iterable[Any]"  [arg-type]
+astrid/core/timeline/shot_composition.py:586: error: Argument 1 to "enumerate" has incompatible type "Any | None"; expected "Iterable[Any]"  [arg-type]
+astrid/core/timeline/shot_composition.py:600: error: Argument 1 to "enumerate" has incompatible type "Any | None"; expected "Iterable[Any]"  [arg-type]
+astrid/core/timeline/shot_composition.py:614: error: Argument 1 to "enumerate" has incompatible type "Any | None"; expected "Iterable[Any]"  [arg-type]
+astrid/core/timeline/shot_composition.py:664: error: Argument 1 to "validate_shot_composition" has incompatible type "Mapping[str, Any] | str | bytes"; expected "Mapping[str, Any]"  [arg-type]
+astrid/core/timeline/music_edit.py:67: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/core/timeline/music_edit.py:110: error: Unsupported operand types for - ("None" and "float")  [operator]
+astrid/core/timeline/music_edit.py:110: note: Left operand is of type "float | None"
+astrid/core/timeline/music_edit.py:112: error: Incompatible types in assignment (expression has type "float | None", variable has type "float")  [assignment]
+astrid/core/timeline/events/schema/payloads/_base.py:127: error: Argument "mode" to "ClipPosition" has incompatible type "Any | None"; expected "Literal['index', 'after', 'before']"  [arg-type]
+astrid/core/runtime/manifest.py:27: error: Argument 1 to "Path" has incompatible type "str | Path | None"; expected "str | PathLike[str]"  [arg-type]
+astrid/core/rendering/publication.py:30: error: Name "Timeout" already defined (possibly by an import)  [no-redef]
+astrid/core/rendering/publication.py:236: error: Argument 1 to "_resolved" has incompatible type "str | PathLike[Any]"; expected "str | Path"  [arg-type]
+astrid/core/rendering/publication.py:263: error: Argument 1 to "Path" has incompatible type "Any | object"; expected "str | PathLike[str]"  [arg-type]
+astrid/core/rendering/provenance.py:185: error: Name "lineage" already defined on line 165  [no-redef]
+astrid/core/rendering/provenance.py:187: error: Name "seen_attachment_names" already defined on line 149  [no-redef]
+astrid/core/rendering/provenance.py:221: error: "dict[str, Any]" has no attribute "append"  [attr-defined]
+astrid/core/rendering/assets.py:226: error: Argument 1 to "deepcopy" has incompatible type "Mapping[Any, Any]"; expected "dict[str, Any]"  [arg-type]
+astrid/core/pack/loader.py:11: error: Library stubs not installed for "yaml"  [import-untyped]
+astrid/core/experiments/capture.py:273: error: Argument 1 to "guess_media_type_from_name" has incompatible type "Path"; expected "str"  [arg-type]
+astrid/core/experiments/capture.py:274: error: Argument 1 to "guess_media_type_from_name" has incompatible type "Path"; expected "str"  [arg-type]
+astrid/core/execution/network_policy.py:74: error: Incompatible types in assignment (expression has type "str", variable has type "int | None")  [assignment]
+astrid/core/execution/network_policy.py:75: error: Value of type "int | None" is not indexable  [index]
+astrid/core/execution/network_policy.py:75: error: Item "int" of "int | None" has no attribute "startswith"  [union-attr]
+astrid/core/execution/network_policy.py:75: error: Item "None" of "int | None" has no attribute "startswith"  [union-attr]
+astrid/core/execution/network_policy.py:76: error: Incompatible types in assignment (expression has type "str", variable has type "int | None")  [assignment]
+astrid/core/execution/network_policy.py:77: error: Item "int" of "int | None" has no attribute "isdigit"  [union-attr]
+astrid/core/execution/network_policy.py:77: error: Item "None" of "int | None" has no attribute "isdigit"  [union-attr]
+astrid/core/execution/network_policy.py:77: error: Argument 1 to "int" has incompatible type "int | None"; expected "str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+astrid/core/execution/network_policy.py:184: error: Unsupported target for indexed assignment ("Mapping[tuple[Any, str], Any]")  [index]
+astrid/core/execution/network_policy.py:185: error: Unsupported target for indexed assignment ("Mapping[tuple[Any, str], Any]")  [index]
+astrid/core/execution/network_policy.py:186: error: Unsupported target for indexed assignment ("Mapping[tuple[Any, str], Any]")  [index]
+astrid/core/execution/network_policy.py:187: error: Unsupported target for indexed assignment ("Mapping[tuple[Any, str], Any]")  [index]
+astrid/core/execution/network_policy.py:189: error: Incompatible types in assignment (expression has type "Callable[[socket.socket, Any], Any]", variable has type "Callable[[_socket.socket, tuple[Any, ...] | str | Buffer], None]")  [assignment]
+astrid/core/execution/network_policy.py:189: note: Error code "assignment" not covered by "type: ignore" comment
+astrid/core/execution/network_policy.py:190: error: Incompatible types in assignment (expression has type "Callable[[socket.socket, Any], Any]", variable has type "Callable[[_socket.socket, tuple[Any, ...] | str | Buffer], int]")  [assignment]
+astrid/core/execution/network_policy.py:190: note: Error code "assignment" not covered by "type: ignore" comment
+astrid/core/execution/network_policy.py:191: error: Incompatible types in assignment (expression has type "Callable[[socket.socket, Any, Any, VarArg(Any)], Any]", variable has type overloaded function)  [assignment]
+astrid/core/execution/network_policy.py:191: note: Error code "assignment" not covered by "type: ignore" comment
+astrid/core/execution/network_policy.py:200: error: Unsupported target for indexed assignment ("Mapping[tuple[Any, str], Any]")  [index]
+astrid/core/execution/network_policy.py:341: error: Unsupported target for indexed assignment ("Mapping[tuple[Any, str], Any]")  [index]
+astrid/core/execution/network_policy.py:342: error: Cannot assign to a type  [misc]
+astrid/core/execution/network_policy.py:342: note: Error code "misc" not covered by "type: ignore" comment
+astrid/core/execution/network_policy.py:358: error: Unsupported target for indexed assignment ("Mapping[tuple[Any, str], Any]")  [index]
+astrid/core/execution/orchestrator/schema.py:182: error: Argument 4 has incompatible type "<typing special form>"; expected "type[Literal['built_in']] | type[Literal['external']]"  [arg-type]
+astrid/core/execution/orchestrator/schema.py:225: error: Need type annotation for "kind"  [var-annotated]
+astrid/core/execution/orchestrator/schema.py:227: error: Argument 4 has incompatible type "<typing special form>"; expected "type[Never]"  [arg-type]
+astrid/core/execution/orchestrator/schema.py:243: error: Argument 4 has incompatible type "<typing special form>"; expected "type[Literal['string']] | type[Literal['path']] | type[Literal['file']] | type[Literal['directory']] | type[Literal['json']] | type[Literal['boolean']] | type[Literal['number']] | type[Literal['integer']] | type[Literal['html']]"  [arg-type]
+astrid/core/execution/orchestrator/schema.py:258: error: Argument 4 has incompatible type "<typing special form>"; expected "type[Literal['string']] | type[Literal['path']] | type[Literal['file']] | type[Literal['directory']] | type[Literal['json']] | type[Literal['boolean']] | type[Literal['number']] | type[Literal['integer']] | type[Literal['html']]"  [arg-type]
+astrid/core/execution/orchestrator/schema.py:261: error: Argument 4 has incompatible type "<typing special form>"; expected "type[Literal['mutate']] | type[Literal['create']] | type[Literal['create_or_replace']]"  [arg-type]
+astrid/core/execution/orchestrator/schema.py:321: error: Argument 1 has incompatible type "tuple[Port, ...]"; expected "tuple[_Named, ...]"  [arg-type]
+astrid/core/execution/orchestrator/schema.py:322: error: Argument 1 has incompatible type "tuple[Output, ...]"; expected "tuple[_Named, ...]"  [arg-type]
+astrid/sdk/storage_ownership.py:103: error: Cannot infer type of lambda  [misc]
+astrid/sdk/storage_ownership.py:122: error: Item "None" of "Any | list[Any] | None" has no attribute "__iter__" (not iterable)  [union-attr]
+astrid/sdk/storage_ownership.py:172: error: Need type annotation for "found" (hint: "found: list[<type>] = ...")  [var-annotated]
+astrid/sdk/storage_ownership.py:220: error: Generator has incompatible item type "object"; expected "bool"  [misc]
+astrid/sdk/storage_ownership.py:229: error: Argument 1 to "Path" has incompatible type "object"; expected "str | PathLike[str]"  [arg-type]
+astrid/sdk/storage_ownership.py:250: error: "object" has no attribute "__iter__"; maybe "__dir__" or "__str__"? (not iterable)  [attr-defined]
+astrid/sdk/storage_ownership.py:253: error: Generator has incompatible item type "object"; expected "bool"  [misc]
+astrid/sdk/exceptions.py:486: error: "BaseException" has no attribute "probe_reason"  [attr-defined]
+astrid/sdk/exceptions.py:493: error: "BaseException" has no attribute "probe_reason"  [attr-defined]
+astrid/sdk/exceptions.py:494: error: "BaseException" has no attribute "media_kind"  [attr-defined]
+astrid/sdk/exceptions.py:495: error: "BaseException" has no attribute "mime_type"  [attr-defined]
+astrid/sdk/exceptions.py:496: error: "BaseException" has no attribute "extension"  [attr-defined]
+astrid/sdk/exceptions.py:506: error: "BaseException" has no attribute "ref"  [attr-defined]
+astrid/sdk/exceptions.py:507: error: "BaseException" has no attribute "project_id"  [attr-defined]
+astrid/sdk/exceptions.py:517: error: "BaseException" has no attribute "slug"  [attr-defined]
+astrid/sdk/exceptions.py:518: error: "BaseException" has no attribute "project_id"  [attr-defined]
+astrid/sdk/exceptions.py:529: error: "BaseException" has no attribute "name"  [attr-defined]
+astrid/sdk/exceptions.py:530: error: "BaseException" has no attribute "candidates"  [attr-defined]
+astrid/sdk/exceptions.py:541: error: "BaseException" has no attribute "detail"  [attr-defined]
+astrid/sdk/exceptions.py:542: error: "BaseException" has no attribute "media_id"  [attr-defined]
+astrid/sdk/exceptions.py:543: error: "BaseException" has no attribute "project_id"  [attr-defined]
+astrid/sdk/exceptions.py:549: error: "BaseException" has no attribute "shot_id"  [attr-defined]
+astrid/sdk/exceptions.py:550: error: "BaseException" has no attribute "shot_id"  [attr-defined]
+astrid/sdk/exceptions.py:560: error: "BaseException" has no attribute "shot_id"  [attr-defined]
+astrid/sdk/exceptions.py:561: error: "BaseException" has no attribute "detail"  [attr-defined]
+astrid/sdk/exceptions.py:562: error: "BaseException" has no attribute "item_ids"  [attr-defined]
+astrid/sdk/exceptions.py:574: error: "BaseException" has no attribute "detail"  [attr-defined]
+astrid/sdk/exceptions.py:575: error: "BaseException" has no attribute "media_id"  [attr-defined]
+astrid/sdk/exceptions.py:576: error: "BaseException" has no attribute "project_id"  [attr-defined]
+astrid/sdk/exceptions.py:586: error: "BaseException" has no attribute "detail"  [attr-defined]
+astrid/sdk/exceptions.py:612: error: "BaseException" has no attribute "reference_id"  [attr-defined]
+astrid/sdk/exceptions.py:622: error: "BaseException" has no attribute "detail"  [attr-defined]
+astrid/sdk/exceptions.py:639: error: "BaseException" has no attribute "detail"  [attr-defined]
+astrid/sdk/exceptions.py:658: error: "BaseException" has no attribute "project_id"  [attr-defined]
+astrid/sdk/exceptions.py:659: error: "BaseException" has no attribute "idempotency_key"  [attr-defined]
+astrid/sdk/exceptions.py:703: error: "BaseException" has no attribute "reason"  [attr-defined]
+astrid/sdk/exceptions.py:713: error: "BaseException" has no attribute "project_id"  [attr-defined]
+astrid/sdk/exceptions.py:723: error: "BaseException" has no attribute "slug"  [attr-defined]
+astrid/sdk/exceptions.py:733: error: "BaseException" has no attribute "project_id"  [attr-defined]
+astrid/sdk/exceptions.py:744: error: "BaseException" has no attribute "name"  [attr-defined]
+astrid/sdk/exceptions.py:745: error: "BaseException" has no attribute "candidates"  [attr-defined]
+astrid/sdk/exceptions.py:750: error: "BaseException" has no attribute "details"  [attr-defined]
+astrid/sdk/exceptions.py:752: error: "BaseException" has no attribute "details"  [attr-defined]
+astrid/sdk/exceptions.py:759: error: "BaseException" has no attribute "run_id"  [attr-defined]
+astrid/sdk/exceptions.py:761: error: "BaseException" has no attribute "skipped_task_ids"  [attr-defined]
+astrid/packs/video_editing/actions/hype/config.py:12: error: Library stubs not installed for "yaml"  [import-untyped]
+astrid/packs/video_editing/actions/hype/config.py:114: error: No overload variant of "list" matches argument type "object"  [call-overload]
+astrid/packs/video_editing/actions/hype/config.py:114: note: Possible overload variants:
+astrid/packs/video_editing/actions/hype/config.py:114: note:     def [_T] __init__(self) -> list[_T]
+astrid/packs/video_editing/actions/hype/config.py:114: note:     def [_T] __init__(self, Iterable[_T], /) -> list[_T]
+astrid/packs/video_editing/actions/hype/config.py:124: error: "object" has no attribute "items"  [attr-defined]
+astrid/packs/video_editing/actions/animate_image/run.py:623: error: Module "os" does not explicitly export attribute "sys"  [attr-defined]
+astrid/packs/training/shared/manifest_adapters/ai_toolkit_ltx.py:82: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/shared/manifest_adapters/ai_toolkit_ltx.py:87: error: Incompatible types in assignment (expression has type "float", target has type "str")  [assignment]
+astrid/packs/training/actions/training_run/trainer_adapters/ai_toolkit_ltx.py:12: error: Library stubs not installed for "yaml"  [import-untyped]
+astrid/packs/training/actions/search_loras/run.py:435: error: Item "None" of "Any | list[Any] | None" has no attribute "__iter__" (not iterable)  [union-attr]
+astrid/packs/training/actions/dataset_build/config.py:17: error: Library stubs not installed for "yaml"  [import-untyped]
+astrid/packs/training/actions/dataset_build/config.py:230: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/config.py:231: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/config.py:238: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/caption_validation.py:56: error: Argument 1 to "_validation_rules" has incompatible type "Any | dict[Any, Any] | None"; expected "Mapping[str, Any]"  [arg-type]
+astrid/packs/training/actions/dataset_build/caption_validation.py:83: error: Argument 1 to "_raw_response" has incompatible type "Any | dict[Any, Any] | None"; expected "Mapping[str, Any]"  [arg-type]
+astrid/packs/training/actions/dataset_build/filter_stages/transcript_keyword.py:176: error: Item "None" of "Path | None" has no attribute "parent"  [union-attr]
+astrid/packs/training/actions/dataset_build/filter_stages/transcript_keyword.py:193: error: Item "None" of "Path | None" has no attribute "resolve"  [union-attr]
+astrid/packs/training/actions/dataset_build/caption_providers/understanding.py:438: error: Incompatible types in assignment (expression has type "VideoUnderstandCaptionProvider", variable has type "VisualUnderstandCaptionProvider")  [assignment]
+astrid/packs/media/actions/gif_search/run.py:174: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "items"  [union-attr]
+astrid/packs/iteration/actions/experiment_review_session/run.py:297: error: No overload variant of "get" of "dict" matches argument type "str"  [call-overload]
+astrid/packs/iteration/actions/experiment_review_session/run.py:297: note: Possible overload variants:
+astrid/packs/iteration/actions/experiment_review_session/run.py:297: note:     def get(self, Never, None = ..., /) -> None
+astrid/packs/iteration/actions/experiment_review_session/run.py:297: note:     def get(self, Never, Never, /) -> Never
+astrid/packs/iteration/actions/experiment_review_session/run.py:297: note:     def [_T] get(self, Never, _T, /) -> _T
+astrid/packs/iteration/actions/experiment_review/run.py:186: error: Unsupported target for indexed assignment ("object")  [index]
+astrid/packs/iteration/actions/experiment_review/run.py:187: error: Unsupported target for indexed assignment ("object")  [index]
+astrid/packs/iteration/actions/experiment_review/run.py:191: error: Unsupported target for indexed assignment ("object")  [index]
+astrid/packs/iteration/actions/experiment_review/run.py:192: error: Unsupported target for indexed assignment ("object")  [index]
+astrid/packs/h3_av/actions/verify/verify.py:321: error: Argument "masks" to "_verify_spatial_mask_complement" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/h3_av/actions/verify/verify.py:321: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/h3_av/actions/verify/verify.py:321: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/generation/actions/generate_image_openai/run.py:368: error: Argument 2 to "_call_image_api" has incompatible type "str | None"; expected "str"  [arg-type]
+astrid/core/remote_targets.py:57: error: Argument 1 to "removeprefix" of "bytes" has incompatible type "str"; expected "Buffer"  [arg-type]
+astrid/core/remote_targets.py:57: error: Argument 1 to "removesuffix" of "bytes" has incompatible type "str"; expected "Buffer"  [arg-type]
+astrid/core/timeline/shot_composition_projection.py:556: error: Invalid index type "tuple[Any | None, Any | None]" for "dict[tuple[str, str], Mapping[str, Any]]"; expected type "tuple[str, str]"  [index]
+astrid/core/timeline/shot_composition_projection.py:589: error: Incompatible types in assignment (expression has type "Mapping[str, Any] | None", variable has type "Mapping[str, Any]")  [assignment]
+astrid/core/timeline/shot_composition_projection.py:598: error: Incompatible types in assignment (expression has type "Mapping[str, Any] | None", variable has type "Mapping[str, Any]")  [assignment]
+astrid/core/rendering/fixtures/renderer_parity/remotion_backend_wrapper.py:72: error: Cannot assign to a type  [misc]
+astrid/core/rendering/fixtures/renderer_parity/remotion_backend_wrapper.py:72: error: Incompatible types in assignment (expression has type "type[StaticPublicAssetMaterializer]", variable has type "type[AssetMaterializer]")  [assignment]
+astrid/core/model_setup/acquire.py:181: error: Item "object" of "object | Any" has no attribute "__enter__"  [union-attr]
+astrid/core/model_setup/acquire.py:181: note: Error code "union-attr" not covered by "type: ignore" comment
+astrid/core/model_setup/acquire.py:181: error: Item "object" of "object | Any" has no attribute "__exit__"  [union-attr]
+astrid/core/generation/backends/fal.py:254: error: Incompatible types in assignment (expression has type "CloudI2IStoragePolicy", variable has type "CloudT2IStoragePolicy | None")  [assignment]
+astrid/core/generation/backends/fal.py:261: error: Incompatible types in assignment (expression has type "CloudEditStoragePolicy", variable has type "CloudT2IStoragePolicy | None")  [assignment]
+astrid/core/generation/backends/fal.py:266: error: Incompatible types in assignment (expression has type "CloudUnifiedEditStoragePolicy", variable has type "CloudT2IStoragePolicy | None")  [assignment]
+astrid/core/generation/backends/fal.py:421: error: "CloudT2IStoragePolicy" has no attribute "mask_max_bytes"; maybe "manifest_max_bytes"?  [attr-defined]
+astrid/core/generation/backends/fal.py:423: error: "CloudT2IStoragePolicy" has no attribute "source_max_bytes"  [attr-defined]
+astrid/core/experiments/normalize.py:145: error: Name "source_manifest" already defined on line 127  [no-redef]
+astrid/core/experiments/normalize.py:646: error: Name "entry" already defined on line 615  [no-redef]
+astrid/core/execution/provider_route_resolvers.py:77: error: Argument 1 to "int" has incompatible type "Any | None"; expected "str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+astrid/core/execution/orchestrator/api.py:108: error: Argument 1 to "asdict" has incompatible type "DataclassInstance | type[DataclassInstance]"; expected "DataclassInstance"  [arg-type]
+astrid/packs/video_editing/actions/vary_grid/run.py:510: error: Dict entry 1 has incompatible type "str": "list[dict[str, Any]]"; expected "str": "Sequence[str]"  [dict-item]
+astrid/packs/video_editing/actions/vary_grid/run.py:510: error: Dict entry 2 has incompatible type "str": "None"; expected "str": "Sequence[str]"  [dict-item]
+astrid/packs/video_editing/actions/vary_grid/run.py:526: error: Dict entry 2 has incompatible type "str": "Any | None"; expected "str": "Sequence[str]"  [dict-item]
+astrid/packs/video_editing/actions/vary_grid/run.py:527: error: Dict entry 3 has incompatible type "str": "list[dict[str, Any]]"; expected "str": "Sequence[str]"  [dict-item]
+astrid/packs/understanding/actions/audio_understand/run.py:412: error: Need type annotation for "extracted" (hint: "extracted: list[<type>] = ...")  [var-annotated]
+astrid/packs/training/actions/dataset_build/filter_stages/semantic.py:131: error: Item "None" of "Path | None" has no attribute "resolve"  [union-attr]
+astrid/packs/training/actions/dataset_build/filter_stages/semantic.py:219: error: Item "None" of "Path | None" has no attribute "parent"  [union-attr]
+astrid/core/cli/list_narrow.py:22: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/core/cli/list_narrow.py:23: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/video_editing/actions/iteration_video/admission.py:134: error: Incompatible return value type (got "None", expected "dict[str, Any]")  [return-value]
+astrid/packs/video_editing/actions/iteration_video/admission.py:178: error: Value of type "dict[str, Any] | None" is not indexable  [index]
+astrid/packs/video_editing/actions/iteration_video/admission.py:180: error: Value of type "dict[str, Any] | None" is not indexable  [index]
+astrid/packs/rendering/rendering/finalizers/ffmpeg/run.py:799: error: Argument 1 to "get" of "dict" has incompatible type "int | None"; expected "int"  [arg-type]
+astrid/packs/rendering/rendering/finalizers/ffmpeg/run.py:1365: error: Incompatible types in assignment (expression has type "str", variable has type "Literal['protocol', 'unsupported', 'binary_missing', 'timeout', 'interrupted', 'invalid_artifact', 'internal']")  [assignment]
+astrid/packs/rendering/rendering/finalizers/compositor/run.py:595: error: Item "None" of "AudioOwnership | None" has no attribute "value"  [union-attr]
+astrid/packs/rendering/rendering/finalizers/compositor/run.py:975: error: Incompatible types in assignment (expression has type "str", variable has type "Literal['protocol', 'unsupported', 'binary_missing', 'timeout', 'interrupted', 'invalid_artifact', 'internal']")  [assignment]
+astrid/packs/h3_av/actions/transform/receipt.py:576: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:577: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:578: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:579: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:580: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:581: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:582: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:583: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:593: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:623: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/h3_av/actions/transform/receipt.py:624: error: Item "None" of "Mapping[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/core/cli/domain_tasks.py:230: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/core/cli/domain_tasks.py:238: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/core/cli/domain_tasks.py:249: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/core/cli/domain_tasks.py:260: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/core/cli/domain_tasks.py:281: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/core/cli/domain_runs.py:126: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/core/cli/domain_runs.py:134: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/core/cli/domain_runs.py:145: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/core/cli/domain_runs.py:157: error: Incompatible return value type (got "int | None", expected "int")  [return-value]
+astrid/packs/training/actions/dataset_build/phases.py:237: error: Argument 2 to "_record_processed_sources" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/phases.py:237: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/phases.py:237: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/phases.py:283: error: Argument 1 to "_stage_runtime_config" has incompatible type "Any | dict[Any, Any] | None"; expected "Mapping[str, Any]"  [arg-type]
+astrid/packs/training/actions/dataset_build/phases.py:372: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/phases.py:482: error: Argument 2 to "write_review_data" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/phases.py:482: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/phases.py:482: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/phases.py:539: error: Incompatible types in assignment (expression has type "Generator[tuple[Any | None, Mapping[Any, Any]], None, None]", variable has type "ItemsView[Any, Any]")  [assignment]
+astrid/packs/training/actions/dataset_build/phases.py:621: error: Argument 1 to "_accept_all_decisions" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/phases.py:621: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/phases.py:621: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/phases.py:645: error: Argument 1 to "apply_review_decisions" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/phases.py:645: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/phases.py:645: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/phases.py:649: error: Argument 1 to "build_canonical_manifest" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/phases.py:649: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/phases.py:649: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/phases.py:694: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/phases.py:695: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/phases.py:696: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/run.py:169: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/run.py:217: error: Argument "items" to "_maybe_write_quality_report" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:217: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:217: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:218: error: Argument 1 to "_bucket_shortfalls" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:218: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:218: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:234: error: Argument 1 to "_bucket_shortfalls" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:234: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:234: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:246: error: Argument "items" to "_maybe_write_quality_report" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:246: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:246: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:263: error: Argument 1 to "apply_review_decisions" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:263: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:263: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:264: error: Argument 1 to "validate_accepted_captions" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:264: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:264: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:288: error: Argument "items" to "_maybe_write_quality_report" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:288: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:288: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:321: error: Argument "items" to "_maybe_write_quality_report" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:321: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:321: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:347: error: Argument "items" to "_maybe_write_quality_report" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:347: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:347: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:440: error: Argument 2 to "_record_processed_sources" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:440: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:440: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:510: error: Argument 1 to "_bucket_shortfalls" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:510: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:510: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:517: error: Argument 1 to "_bucket_shortfalls" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:517: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:517: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:518: error: Argument 2 to "_update_bucket_progress" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:518: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:518: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:524: error: Argument 3 to "_top_up_acquisition_request" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:524: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:524: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:542: error: Argument 2 to "_update_bucket_progress" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:542: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:542: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:555: error: Argument 1 to "apply_review_decisions" has incompatible type "list[dict[str, Any]]"; expected "list[Mapping[str, Any]]"  [arg-type]
+astrid/packs/training/actions/dataset_build/run.py:555: note: "list" is invariant -- see https://mypy.readthedocs.io/en/stable/common_issues.html#variance
+astrid/packs/training/actions/dataset_build/run.py:555: note: Consider using "Sequence" instead, which is covariant
+astrid/packs/training/actions/dataset_build/run.py:560: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/run.py:562: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/run.py:576: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "items"  [union-attr]
+astrid/packs/training/actions/dataset_build/run.py:613: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "items"  [union-attr]
+astrid/packs/training/actions/dataset_build/run.py:793: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/run.py:794: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/training/actions/dataset_build/run.py:795: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/editorial/actions/script_pipeline/run.py:30: error: Library stubs not installed for "yaml"  [import-untyped]
+astrid/packs/runpod/worker_preparation.py:280: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/runpod/worker_preparation.py:281: error: Item "None" of "Any | dict[Any, Any] | None" has no attribute "get"  [union-attr]
+astrid/packs/runpod/worker_preparation.py:322: error: Argument "network_volume_size_gb" to "RunPodTargetObservation" has incompatible type "int | None"; expected "int"  [arg-type]
+astrid/packs/runpod/worker_preparation.py:523: error: Argument "pod_id" to "RunPodTargetContract" has incompatible type "str | None"; expected "str"  [arg-type]
+astrid/packs/runpod/worker_preparation.py:525: error: Argument "gpu_type" to "RunPodTargetContract" has incompatible type "str | None"; expected "str"  [arg-type]
+astrid/packs/runpod/worker_preparation.py:526: error: Argument "worker_image" to "RunPodTargetContract" has incompatible type "str | None"; expected "str"  [arg-type]
+astrid/packs/runpod/worker_preparation.py:527: error: Argument "network_volume_id" to "RunPodTargetContract" has incompatible type "str | None"; expected "str"  [arg-type]
+astrid/packs/runpod/worker_preparation.py:529: error: Argument "network_volume_size_gb" to "RunPodTargetContract" has incompatible type "int | None"; expected "int"  [arg-type]
+astrid/packs/runpod/worker_preparation.py:1207: error: Argument "pod_id" to "_target_contract" has incompatible type "str | None"; expected "str"  [arg-type]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/mypy/__main__.py", line 37, in <module>
+    console_entry()
+    ~~~~~~~~~~~~~^^
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/mypy/__main__.py", line 15, in console_entry
+    main()
+    ~~~~^^
+  File "mypy/main.py", line 127, in main
+  File "mypy/main.py", line 211, in run_build
+    res = build.build(sources, options, None, flush_errors, fscache, stdout, stderr)
+  File "mypy/build.py", line 191, in build
+  File "mypy/build.py", line 267, in _build
+    graph = dispatch(sources, manager, stdout)
+  File "mypy/build.py", line 2939, in dispatch
+    process_graph(graph, manager)
+  File "mypy/build.py", line 3337, in process_graph
+    process_stale_scc(graph, scc, manager)
+  File "mypy/build.py", line 3464, in process_stale_scc
+    graph[id].write_cache()
+  File "mypy/build.py", line 2501, in write_cache
+    new_interface_hash, self.meta = write_cache(
+  File "mypy/build.py", line 1562, in write_cache
+    data = tree.serialize()
+  File "mypy/nodes.py", line 367, in serialize
+  File "mypy/nodes.py", line 4138, in serialize
+    data[key] = value.serialize(fullname, key)
+  File "mypy/nodes.py", line 4074, in serialize
+    data["node"] = self.node.serialize()
+  File "mypy/nodes.py", line 3806, in serialize
+    "alias_tvars": [v.serialize() for v in self.alias_tvars],
+  File "mypy/types.py", line 696, in serialize
+  File "mypy/types.py", line 3191, in serialize
+    assert False, f"Internal error: unresolved placeholder type {self.fullname}"
+AssertionError: Internal error: unresolved placeholder type None
+
+codex
+The repair is complete and limited to the authorized production file; the test file remains byte-for-byte unchanged. The authenticated capture path and Runtime refusal guard are untouched, and inverse removals still execute after the merged pin set. I’m doing the final worktree/hand-off verification now; no pytest, collection, fixture, helper, or service execution will be run.
+exec
+/bin/bash -lc "git status --short --branch; git diff --check; git diff --name-only; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-return-0107/commit-msg && echo commit-msg-present; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-return-0107/DONE && echo DONE-present; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-return-0107/commit-msg; printf '\\n--- final diff ---\\n'; git diff -- astrid/sdk/timeline/commit.py" in /home/user/work/wt/agt-D86-word-return-0107
+ succeeded in 209ms:
+## tl/agt-D86-word-return-0107
+ M astrid/sdk/timeline/commit.py
+astrid/sdk/timeline/commit.py
+commit-msg-present
+DONE-present
+fix(timeline): retain verified transcript pins in bundle manifests
+
+Merge authenticated hydrated document captures into an existing copy manifest
+so Runtime can validate retained transcript dependencies without changing
+inverse removal or authorization checks.
+
+--- final diff ---
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 48480bd2bd..0ab8cb1676 100644
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -369,7 +369,7 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
+     if document_pins is None:
+         documents = copy.deepcopy(documents)
+         for capture in bundle['source_mapping'].get('pinned_documents', []):
+-            if not copy_manifest and capture['pin'] not in documents:
++            if capture['pin'] not in documents:
+                 documents.append(copy.deepcopy(capture['pin']))
+         for pin in copy_manifest.get("documents", []):
+             if pin not in documents:
+
+codex
+# F-D86 report
+
+Implemented the one-line `document_from_bundle()` repair in `astrid/sdk/timeline/commit.py`: authenticated hydrated document pins now merge even when `_copy_manifest` already exists. Inverse removal, closure validation, ordering, and Runtime authorization remain unchanged.
+
+Caller trace verified:
+
+`Runtime commit_timeline → Agent provider → _hydrate()` authenticates captures → `_copy_manifest` is set → `document_from_bundle()` builds manifest → Runtime validates captured dependencies.
+
+Original 11 selectors preserved; no new selector added. Predicate groups remain exact: six text-binding inverse/absence cases, two timing rebase/reselection cases, and three Python/CLI/sheet pin roundtrips.
+
+Checks:
+
+- In-memory compile: pass.
+- Ruff baseline comparison: pass, `current=2143 baseline=2143`.
+- Targeted Ruff: pass.
+- Targeted mypy on touched production file: pass.
+- `git diff --check`: pass.
+- No pytest, collection, fixture, helper, service, build, or function execution run.
+- Full mypy comparison is environment-blocked: shared `venv-agent` is Python 3.13 and lacks `types-PyYAML`; unrelated repository-wide diagnostics result.
+
+Hashes:
+
+- Candidate `commit.py` SHA-256: `eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7`
+- Test file unchanged, SHA-256: `058d82106471efe8d586007f78784775622d962ce551e882fb65d95a62f4b60c`
+
+Commit message written and `DONE` created. A fresh independent core/custody review and later affected-node qualification remain required before merge.
+tokens used
+121,605
+# F-D86 report
+
+Implemented the one-line `document_from_bundle()` repair in `astrid/sdk/timeline/commit.py`: authenticated hydrated document pins now merge even when `_copy_manifest` already exists. Inverse removal, closure validation, ordering, and Runtime authorization remain unchanged.
+
+Caller trace verified:
+
+`Runtime commit_timeline → Agent provider → _hydrate()` authenticates captures → `_copy_manifest` is set → `document_from_bundle()` builds manifest → Runtime validates captured dependencies.
+
+Original 11 selectors preserved; no new selector added. Predicate groups remain exact: six text-binding inverse/absence cases, two timing rebase/reselection cases, and three Python/CLI/sheet pin roundtrips.
+
+Checks:
+
+- In-memory compile: pass.
+- Ruff baseline comparison: pass, `current=2143 baseline=2143`.
+- Targeted Ruff: pass.
+- Targeted mypy on touched production file: pass.
+- `git diff --check`: pass.
+- No pytest, collection, fixture, helper, service, build, or function execution run.
+- Full mypy comparison is environment-blocked: shared `venv-agent` is Python 3.13 and lacks `types-PyYAML`; unrelated repository-wide diagnostics result.
+
+Hashes:
+
+- Candidate `commit.py` SHA-256: `eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7`
+- Test file unchanged, SHA-256: `058d82106471efe8d586007f78784775622d962ce551e882fb65d95a62f4b60c`
+
+Commit message written and `DONE` created. A fresh independent core/custody review and later affected-node qualification remain required before merge.

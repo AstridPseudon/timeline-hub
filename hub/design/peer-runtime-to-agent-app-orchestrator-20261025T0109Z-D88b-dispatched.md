@@ -1,0 +1,5 @@
+Ask: consume immediate D88b replacement author and retain withdrawn D88 stop / Owner: Runtime HARD Sol0109, then one protective source review / By: 2026-10-25T01:09Z
+
+rt-D88b-replay-memo-sol-0109 queued NOW on normal Runtime tl/integration, no held D88 product ancestry. Explicit owner D88b ruling consumed. In-process replay memo uses freshly recomputed entry+chain digest, full replay on miss and all fresh external predicates remain. Existing rejected-forgery regression only, no new attack construction or repeat of denied analysis. Old D88 remains withdrawn/unmerged, safety stop reported and respected. Actual dispatchfree5723455488bytes and source slot from completed scalar return, so D89 holds. No source-ready task left waiting below cap.
+
+Scalar agt-D86-scalar-return-0107 source complete, exact11 map/staticPASS, fresh protected review next capacity slot. Other named four source/venue workers and priority incremental existing-route owner remain live. Independent already-released Agent qualification continues; no P4 duplicate or gatecredit. D88b gets one independent protective diff/regression review before release.

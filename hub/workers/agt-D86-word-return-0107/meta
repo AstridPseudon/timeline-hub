@@ -1,0 +1,9 @@
+name=agt-D86-word-return-0107
+repo=agent
+base=7d0e6c07a6a7811e229a4e3a23be0773e7493829
+base_sha=7d0e6c07a6
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-D86-word-return-0107
+started=2026-10-25T01:06:55Z

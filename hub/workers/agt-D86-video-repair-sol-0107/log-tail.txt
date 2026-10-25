@@ -1,0 +1,400 @@
+        if entity == 'shot':
+            if path[:1] == ['payload']:
+                return shot_ref, path[1:]
+            return 'parent', ['occurrences', 'occurrence_id:' + occurrence, *path]
+    return 'timeline', []
+
+
+def _prefix(a, b):
+    return a[:len(b)] == b[:len(a)]
+
+
+exec
+/bin/bash -lc "rg -n 'submitted|step\\[.patch|claim|assertion' astrid/sdk/timeline/_commit_patch.py | tail -38 && sed -n '1050,1145p' astrid/core/timeline/authoring_bundle.py && rg -n 'ruff|mypy|shadow-file|baseline' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/*" in /home/user/work/wt/agt-D86-video-repair-sol-0107
+ succeeded in 0ms:
+68:        if not isinstance(step['patch'], list):
+71:        submitted = [change for i in indices if calls[i]['op'] == 'doc.patch' for change in calls[i]['args']['changes']]
+73:            if 'steps' in request and not equal(step['patch'], submitted):
+78:            for claim in step['patch']:
+79:                errors = list(validator.iter_errors(claim))
+82:                from ._doc_patch import validate_submitted_change
+83:                validate_submitted_change(claim)
+84:            if submitted and not all(change in step['patch'] for change in submitted):
+565:                # normalized submitted paths cannot represent.
+575:            elif step['patch'] and any({**claim, 'path': normalized_path(claim['ref'], claim['path'])}
+576:                                      not in effects for claim in step['patch']):
+577:                raise CommandError('semantic step assertion differs from execution', kind='capture_mismatch')
+578:            step['patch'] = effects
+584:                step['patch'][:] = [change for change in step['patch'] if not (
+597:                for index, effect in enumerate(step['patch']):
+757:            if start < cursor or not start <= end <= len(step['patch']):
+760:                segments.append((step, step['patch'][cursor:start]))
+761:            segments.append(({**step, '_inverse_stage': binding}, step['patch'][start:end]))
+763:        if not stages or cursor < len(step['patch']):
+764:            segments.append((step, step['patch'][cursor:]))
+810:    staged_roots = {effect['ref'] for step in plan.steps for effect in step['patch']
+816:    # a submitted ref or an equal payload is never allocation authority.
+1071:                                            for effect in step['patch'][start:end]))
+1120:                # commit.materialization claims at the outer input boundary.
+        raise AuthoringBundleError(
+            "candidate.source_mapping.shots must include every candidate shot identity"
+        )
+    if created_shots - {row.get("shot_id") for row in placements if isinstance(row, Mapping)}:
+        raise AuthoringBundleError("recorded new shots require an occurrence in the same candidate")
+
+    # Exact closures occasionally store a clip's selected registry key in the
+    # parent/shot authority while the child timeline payload omits its local
+    # registry.  Keep that source authority validation-only and never merge it
+    # into the authored publication bytes.
+    # Only the pinned parent is a shared fallback authority.  Do not union
+    # sibling shot registries: that would let one shot's local key validate a
+    # different shot, and it would resurrect a selected asset deliberately
+    # removed from its owning candidate registry.
+    source_assets = _effective_parent_assets(parent_payload)
+
+    candidate_digest = _digest(root)
+    compiled_shots: dict[str, dict[str, Any]] = {}
+    internal_revisions: list[dict[str, Any]] = []
+    shot_revisions: list[dict[str, Any]] = []
+    changed: list[dict[str, Any]] = []
+    reused: list[dict[str, Any]] = []
+    identity_mapping: dict[str, Any] = {"placements": {}, "shots": {}}
+
+    for authoring_shot_id in sorted(shots):
+        shot = _mapping(shots[authoring_shot_id], f"candidate.shots[{authoring_shot_id!r}]")
+        if shot.get("shot_id") != authoring_shot_id:
+            raise AuthoringBundleError(
+                f"candidate.shots[{authoring_shot_id!r}].shot_id must match its key"
+            )
+        source = _mapping(
+            source_shots.get(authoring_shot_id, {}),
+            f"candidate.source_mapping.shots[{authoring_shot_id!r}]",
+        )
+        created = authoring_shot_id in created_shots
+        if isinstance(shot, _CopiedShot) and not created:
+            raise AuthoringBundleError("copied shot requires a recorded creation")
+        copied_baseline = (_copied_shot_baseline(root, shot, authoring_shot_id)
+                           if isinstance(shot, _CopiedShot) else None)
+        source_shot_id = None if created else _string(source.get("shot_id"), "source shot_id")
+        base_shot = _mapping(
+            copied_baseline[0] if copied_baseline else {} if created else shot.get("base_payload"),
+            f"candidate.shots[{authoring_shot_id!r}].base_payload",
+        )
+        if "meta" in base_shot:
+            validate_meta(
+                base_shot["meta"],
+                path=f"candidate.shots[{authoring_shot_id!r}].base_payload.meta",
+            )
+        candidate_shot = _mapping(
+            shot.get("payload"), f"candidate.shots[{authoring_shot_id!r}].payload"
+        )
+        if "meta" in candidate_shot:
+            validate_meta(
+                candidate_shot["meta"],
+                path=f"candidate.shots[{authoring_shot_id!r}].payload.meta",
+            )
+        base_internal = _mapping(
+            copied_baseline[1] if copied_baseline else {} if created else shot.get("base_internal_timeline"),
+            f"candidate.shots[{authoring_shot_id!r}].base_internal_timeline",
+        )
+        _validate_timeline_payload_meta(
+            base_internal,
+            path=f"candidate.shots[{authoring_shot_id!r}].base_internal_timeline",
+        )
+        candidate_internal = _mapping(
+            shot.get("internal_timeline"),
+            f"candidate.shots[{authoring_shot_id!r}].internal_timeline",
+        )
+        _validate_timeline_payload_meta(
+            candidate_internal,
+            path=f"candidate.shots[{authoring_shot_id!r}].internal_timeline",
+        )
+        shot_media = _assert_shot_edit_supported(
+            base_shot, candidate_shot, path=f"shots[{authoring_shot_id}].payload"
+        )
+        shot_media_mutations = _shot_media_mutations(
+            base_shot,
+            candidate_shot,
+            f"shots[{authoring_shot_id}].payload",
+        )
+        internal_media = _assert_internal_edit_supported(
+            base_internal,
+            candidate_internal,
+            path=f"shots[{authoring_shot_id}].internal_timeline",
+            source_assets=source_assets,
+            preserve_legacy_missing=preserve_legacy_missing,
+        )
+        base_shot_media = _shot_media_set(base_shot, f"shots[{authoring_shot_id}].base_payload")
+        base_internal_media = _internal_media_set(
+            base_internal,
+            f"shots[{authoring_shot_id}].base_internal_timeline",
+            source_assets=source_assets,
+            preserve_legacy_missing=preserve_legacy_missing,
+        )
+        shot_additions = shot_media - base_shot_media
+12:- baseline runtime test: `8e2d51862651b801159b7449e0848090e104d0fb`
+28:- candidate and baseline Ruff pass with the existing agent venv;
+29:- candidate and baseline mypy pass with the existing agent venv;
+
+exec
+/bin/bash -lc "sed -n '510,585p' astrid/sdk/timeline/_commit_patch.py && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-review.md && ls /tmp/w-c62c9e2f9b" in /home/user/work/wt/agt-D86-video-repair-sol-0107
+ exited 1 in 0ms:
+                    item = {'kind': 'field', 'ref': binding['physical_ref'],
+                            'path': binding['path'], 'state': copy.deepcopy(change['before'])}
+                    if change['op'].startswith('list.'):
+                        item['path'] = [*item['path'], 'id:' + change['id']]
+                        shape = {'kind': 'collection', 'ref': binding['physical_ref'], 'path': binding['path'],
+                                 'members': sorted(change['order_before']), 'order': change['order_before']}
+                        if shape not in dependencies:
+                            dependencies.append(shape)
+                    if item not in dependencies:
+                        dependencies.append(item)
+                created_refs = {item['ref'] for item in record['created']}
+                for read in record['reads']:
+                    if read['ref'] in created_refs and read['state'] == ABSENT:
+                        continue  # Allocation history guards absence; this is not a closure read.
+                    ref, path = canonical_site(closure, read['ref'], read['path'])
+                    if '/collection:' in read['ref']:
+                        try:
+                            value = value_at(closure.payload(ref), ref, path)
+                            ids = identities(value.get('value'), identity_key(ref, path), ref=ref, path=path)
+                            item = {'kind': 'collection', 'ref': ref, 'path': path, 'members': sorted(ids), 'order': ids}
+                        except (CommandError, KeyError):
+                            item = {'kind': 'scope', 'ref': ref, 'path': []}
+                    elif ref == 'timeline' or not path:
+                        item = {'kind': 'scope', 'ref': ref, 'path': []}
+                    else:
+                        item = {'kind': 'field', 'ref': ref, 'path': path, 'state': copy.deepcopy(read['state'])}
+                    if item not in dependencies:
+                        dependencies.append(item)
+            effects = effect_diff(before, after)
+            segments = [(ordinal, first, second) for ordinal in step['command_ordinals']
+                        for first, second in self.inverse_stages.get(ordinal, [])]
+            if segments:
+                effects = []
+                previous = before
+                for ordinal, first, second in segments:
+                    effects.extend(effect_diff(previous, first))
+                    record = plan.records[ordinal]
+                    stages = [binding for binding in record['bindings'] if binding['key'] == 'inverse.stage']
+                    index = sum(1 for binding in stages if 'effect_range' in binding['boundary'])
+                    start_effect = len(effects)
+                    changes = effect_diff(first, second)
+                    inherited = self.inverse_effects.get(ordinal, [])
+                    if index < len(inherited) and inherited[index] is not None:
+                        captured = inherited[index]
+                        if sorted(map(_effect_key, changes)) != sorted(map(_effect_key, captured)):
+                            raise CommandError('nested inverse effects differ from execution', kind='capture_mismatch')
+                        changes = copy.deepcopy(captured)
+                    effects.extend(changes)
+                    if index < len(stages):
+                        stages[index]['boundary']['effect_range'] = [start_effect, len(effects)]
+                    previous = second
+                effects.extend(effect_diff(segments[-1][2], after))
+            # Byte-equal sequential edits still carry intent, history and exact inverse guards.
+            if all(self.calls[i]['op'] == 'doc.patch' for i in step['command_ordinals']):
+                # A whole-parent effect preserves raw mirror presence, which
+                # normalized submitted paths cannot represent.
+                mirror_effect = any(effect['ref'] == 'parent' and not effect['path'] for effect in effects)
+                if not mirror_effect and (before.document == after.document or all(
+                        change['ref'] == 'parent' for i in step['command_ordinals']
+                        for change in self.calls[i]['args']['changes'])):
+                    effects = [{**copy.deepcopy(binding['change']),
+                                'path': normalized_path(binding['physical_ref'], binding['change']['path'])}
+                               for i in step['command_ordinals']
+                               for binding in plan.records[i]['bindings']
+                               if binding.get('key', '').startswith('doc.patch:')]
+            elif step['patch'] and any({**claim, 'path': normalized_path(claim['ref'], claim['path'])}
+                                      not in effects for claim in step['patch']):
+                raise CommandError('semantic step assertion differs from execution', kind='capture_mismatch')
+            step['patch'] = effects
+            step['dependencies'] = dependencies
+        for cause, effect in self.compiler_effects:
+            destination = self.step(cause)
+            ref, path = canonical_site(self.closures[cause], effect['ref'], effect['path'])
+            for step in self.steps:
+                step['patch'][:] = [change for change in step['patch'] if not (
+                    change['ref'] == ref and normalized_path(ref, change['path']) == path)]
+cat: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-review.md: No such file or directory
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-D86-video-repair-sol-0107/tests/editing_conformance/test_commit_runtime_video_unplace.py
+diff --git a/tests/editing_conformance/test_commit_runtime_video_unplace.py b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+index bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a..4d0a0658bcfefa9f3e203017e68aca46fb03d90d
+--- a/tests/editing_conformance/test_commit_runtime_video_unplace.py
++++ b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+@@ -2,6 +2,7 @@
+ from __future__ import annotations
+ 
+ import copy
++import json
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -9,10 +10,12 @@
+ from astrid.sdk.timeline._command_state import State
+ from astrid.sdk.timeline.commit import (
+     bundle_from_document,
++    document_from_bundle,
+ )
+ from astrid.sdk.timeline.native_auto_placement import unplace_shared
+ from tests.editing_conformance.test_recipe_occurrence_media import inputs
+ from tests.helpers.runtime import use_runtime
++from tests.sdk.test_timeline_commit_provider_document import MEDIA
+ 
+ pytestmark = pytest.mark.integration
+ OWNER = 'occurrence:occ-a'
+@@ -33,7 +36,7 @@
+     from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+     from test_timeline_commit_acceptance import validate_prepared
+ 
+-    from astrid.sdk.timeline.capture import capture_track_create
++    from astrid.sdk.timeline._doc_patch import Closure, allocations, value_at
+     from astrid.sdk.timeline.commands import execute
+     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+     from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+@@ -68,21 +71,14 @@
+             'version': association['lifecycle']['version']}, authorize=authorize)
+         state.verified = service.get_project_verified_media(project, state.new, authorize=authorize)
+         document, _, _, _ = inputs(kind)
++        document = json.loads(json.dumps(document).replace(MEDIA, state.new['object_id']))
++        document['shot_revisions'][0]['payload']['text_bindings'] = []
++        for occurrence in document['parent_revision']['payload']['occurrences']:
++            occurrence['gain'] = 1
+         input_parent = document['parent_revision']['payload']
+         input_occurrences = input_parent['occurrences']
++        input_shot = document['shot_revisions'][0]['payload']
+         input_internal = document['internal_timeline_revisions'][0]['payload']
+-        old_result = service.import_media(
+-            project, b'old-' + kind.encode(),
+-            media_type='video/mp4' if kind == 'video' else 'image/png',
+-            original_name='old.' + ('mp4' if kind == 'video' else 'png'),
+-            actor_id='media-editor',
+-            **({'duration_seconds': 6} if kind == 'video' else {}),
+-            idempotency_key='old-media',
+-        )['data']
+-        old = service.get_project_media_selection(project, {
+-            'asset': old_result['variant_id'], 'generation_id': old_result['generation_id'],
+-            'variant_id': old_result['variant_id']}, authorize=authorize)
+-        old_verified = service.get_project_verified_media(project, old, authorize=authorize)
+         service.create_timeline(project, 'main', idempotency_key='timeline')
+         TimelineCommitStore(service.store, validate_prepared=validate_prepared).bootstrap(
+             project, 'main', authorize=authorize)
+@@ -91,45 +87,100 @@
+         initial = service._timeline_commits()[0].revision_closure(
+             project, 'main', head['head_revision_id'])
+         bundle = bundle_from_document(initial)
+-        commands = []
++        # Runtime verifies the original fixture's one media object before patching.
++        commands = [{'schema_version': 1, 'op': 'media.admit', 'version': '1', 'select': None,
++                     'args': {'inputs': [{'pin': {'media_id': state.new['object_id'],
++                                                'content_digest': state.new['object_id']}}]},
++                     'created': []}]
+ 
+         def append(command):
+             nonlocal bundle
+             commands.append(command)
+-            bundle = execute(bundle, [command]).bundle
++            bundle = execute(bundle, [command], verified_media=[state.verified]).bundle
+ 
+-        append(capture_track_create(bundle, 'parent', input_parent['config']['tracks'][0]))
++        def patch(ref, value, path=()):
++            closure = Closure(bundle)
++            physical = closure.resolve(ref)
++            before = closure.payload(physical)
++            created = [] if path else [row['ref'] for row in allocations(
++                closure, physical, before, value)]
++            append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
++                    'created': created, 'args': {'changes': [{
++                        'op': 'set', 'ref': ref, 'path': list(path),
++                        'before': value_at(before, physical, list(path)), 'value': value}]}})
++
++        def submit(key):
++            request = body(state, commands)
++            request['steps'] = [{'id': str(index), 'label': key, 'intent': 'Fixture setup',
++                                 'tags': ['integration', 'video-unplace'],
++                                 'command_ordinals': [index], 'reads': [],
++                                 'patch': command['args']['changes']
++                                 if command['op'] == 'doc.patch' else []}
++                                for index, command in enumerate(commands)]
++            return commit(state, request, key)
++
++        parent = copy.deepcopy(input_parent)
++        parent['occurrences'] = []
++        patch('parent', parent)
+         occurrence = input_occurrences[0]
+         append(capture_occurrence_create(
+             bundle, occurrence['occurrence_id'], occurrence['shot_id'], name='Chapter One',
+             track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
+             duration=occurrence['duration_ms'] / 1000,
+         ))
+-        for track in input_internal['tracks']:
+-            append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
+-        for row in input_internal['clips']:
+-            old_row = copy.deepcopy(row)
+-            old_row['asset'] = old['asset']
+-            append(capture_occurrence_add_media(
+-                bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
+-                verified_media=[old_verified],
+-            ))
+-        source = commit(state, body(state, commands), 'setup-source')
++        patch('internal:main', copy.deepcopy(input_internal))
++        shot = copy.deepcopy(input_shot)
++        shot.pop('internal_timeline_revision_id')
++        patch('shot:' + occurrence['shot_id'], shot)
++        current = Closure(bundle).payload('parent')['occurrences'][0]
++        patch('parent', {**copy.deepcopy(occurrence),
++                         'shot_revision_id': current['shot_revision_id']},
++              ('occurrences', 'occurrence_id:' + occurrence['occurrence_id']))
++        source = submit('setup-source')
+         bundle = bundle_from_document(source['data']['canonical_document'])
+         shared = capture_occurrence_place_shared(
+             bundle, OWNER, input_occurrences[1]['occurrence_id'],
+             on=input_occurrences[1]['placement']['start_ms'] / 1000,
+         )
+         shared_setup = commit(state, body(state, [shared]), 'setup-shared')
+-        bundle = bundle_from_document(shared_setup['data']['canonical_document'])
++        shared_document = shared_setup['data']['canonical_document']
++        shared_shot, = shared_document['shot_revisions']
++        shared_internal, = shared_document['internal_timeline_revisions']
++        expected_parent = copy.deepcopy(input_parent)
++        for row in expected_parent['occurrences']:
++            row['shot_revision_id'] = shared_shot['revision_id']
++        expected_shot = copy.deepcopy(input_shot)
++        expected_shot['internal_timeline_revision_id'] = shared_internal['revision_id']
++        assert shared_document['parent_revision']['payload'] == expected_parent
++        assert shared_shot['shot_id'] == occurrence['shot_id']
++        assert shared_shot['payload'] == expected_shot
++        assert shared_internal['timeline_id'] == 'main'
++        assert shared_internal['payload'] == input_internal
++        bundle = bundle_from_document(shared_document)
+         placed = {'id': 'placed', 'clipType': kind, 'track': 'picture', 'asset': state.new['asset'],
+                   'at': 1, 'hold': 4, 'opaque': {'clear': None},
+                   **({'from': 0, 'to': 4, 'speed': 1} if kind == 'video' else {})}
++        # The original setup edited just occ-a's opened source, retaining occ-b's image.
++        expected = copy.deepcopy(bundle)
++        expected_internal = State(expected).config(OWNER)
++        expected_internal['registry']['assets'][state.new['asset']] = {
++            'media_id': state.new['object_id'], 'type': kind,
++            'generationId': state.new['generation_id'], 'variantId': state.new['variant_id'],
++            'opaque': {'keep': [None, False]}}
++        expected_internal['clips'].insert(1, copy.deepcopy(placed))
+         placed_command = capture_occurrence_add_media(
+             bundle, OWNER, placed, state.new, verified_media=[state.verified],
+         )
+         setup = commit(state, body(state, [placed_command]), 'setup')
+-        state.baseline = setup['data']['canonical_document']
++        bundle = bundle_from_document(setup['data']['canonical_document'])
++        commands = []
++        closure = Closure(bundle)
++        internal_ref, = [ref for ref, owners in closure.owners.items()
++                         if ref.startswith('internal-revision:')
++                         and any(owner == OWNER for owner, _ in owners)]
++        patch(internal_ref, copy.deepcopy(expected_internal))
++        state.baseline = submit('setup-opaque')['data']['canonical_document']
++        assert state.baseline == document_from_bundle(expected)
+         real_selected = RequestCommitPort.selected_media
+ 
+         def selected(port, pin):
+
