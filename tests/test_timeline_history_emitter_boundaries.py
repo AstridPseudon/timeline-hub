@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -26,7 +27,8 @@ def _commit(service, project, request):
     )
 
 
-def _public_history(call, capsys, tag, message="history_unavailable", *, status=409, body=None):
+def _public_history(call, capsys, tag, message="history_unavailable", *, status=409, body=None,
+                    idempotency_key=None):
     with pytest.raises(RuntimeErrorBase) as caught:
         call()
     assert caught.value.status == status
@@ -39,7 +41,13 @@ def _public_history(call, capsys, tag, message="history_unavailable", *, status=
     assert "private-sentinel" not in stderr
     value = _diagnostic(stderr)
     assert len(stderr.encode()) <= 4096
-    assert set(value) == {"event", "request_id", "reason", "exception_class_chain", "frames"}
+    if idempotency_key is None:
+        assert set(value) == {"event", "request_id", "reason", "exception_class_chain", "frames"}
+    else:
+        assert set(value) == {"event", "request_id", "reason", "exception_class_chain", "frames",
+                              "idempotency_key_sha256"}
+        assert value["idempotency_key_sha256"] == hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()
+        assert idempotency_key not in stderr
     assert value["event"] == "timeline_commit_error"
     assert re.fullmatch("[a-f0-9]{32}", value["request_id"])
     assert value["exception_class_chain"] == []
@@ -239,7 +247,8 @@ def test_port_emitter_public_boundary(realm, capsys, case, message):
 
     service.register_timeline_commit_provider(Provider(action))
     before = counts(service)
-    _public_history(lambda: _commit(service, project, ctx), capsys, "port_" + case, message)
+    _public_history(lambda: _commit(service, project, ctx), capsys, "port_" + case, message,
+                    idempotency_key=ctx["idempotency_key"])
     assert counts(service) == before
 
 
@@ -286,7 +295,8 @@ def test_reference_prepare_real_guard_public_boundary(realm, monkeypatch, capsys
     monkeypatch.setattr(projection, "prepare_reference_projection", changed_scope)
     service.register_timeline_commit_provider(Provider(lambda bound, port: port.accept(port_prepared(bound, port))))
     before = counts(service)
-    _public_history(lambda: _commit(service, project, request), capsys, "store_reference_projection_prepare_history")
+    _public_history(lambda: _commit(service, project, request), capsys, "store_reference_projection_prepare_history",
+                    idempotency_key=request["idempotency_key"])
     assert counts(service) == before
 
 
@@ -453,5 +463,6 @@ def test_reference_apply_real_guard_public_boundary(realm, monkeypatch, capsys):
         status=503, body={"code": "not_ready",
                           "message": "Timeline commit outcome unavailable; retry the exact request",
                           "details": {"reason": "runtime_unavailable"}},
+        idempotency_key=request["idempotency_key"],
     )
     assert counts(service) == before
