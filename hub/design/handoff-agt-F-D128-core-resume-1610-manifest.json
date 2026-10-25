@@ -1,0 +1,7 @@
+{
+  "status": "not-created",
+  "reason": "D73 manifest requires a qualified child and was not made after terminal child-maker refusal",
+  "body_submitted": false,
+  "service_id": null,
+  "path": null
+}

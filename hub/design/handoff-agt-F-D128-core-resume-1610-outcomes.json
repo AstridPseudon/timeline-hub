@@ -1,0 +1,10 @@
+{
+  "status": "blocked",
+  "body_submitted": false,
+  "service_id": null,
+  "nodes": [],
+  "counts": null,
+  "classification": "not_applicable",
+  "retirement_count": 0,
+  "reason": "no agent-core-full body was submitted after terminal child-maker custody refusal"
+}

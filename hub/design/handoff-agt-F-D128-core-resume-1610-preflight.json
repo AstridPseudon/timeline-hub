@@ -1,0 +1,9 @@
+{
+  "status": "blocked-before-preflight",
+  "body_submitted": false,
+  "service_id": null,
+  "positive_control": "not-run",
+  "poison_control": "not-run",
+  "bash_n": "not-run",
+  "reason": "exact required child environment was refused by the ordinary maker; no bypass or retry permitted"
+}
