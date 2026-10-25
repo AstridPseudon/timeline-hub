@@ -368,12 +368,12 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
                  if document_pins is None else document_pins)
     if document_pins is None:
         documents = copy.deepcopy(documents)
-        for capture in bundle['source_mapping'].get('pinned_documents', []):
-            if capture['pin'] not in documents:
-                documents.append(copy.deepcopy(capture['pin']))
-        for pin in copy_manifest.get("documents", []):
-            if pin not in documents:
-                documents.append(copy.deepcopy(pin))
+        # A sealed manifest advances when a command consumes a verified source;
+        # merely hydrating request inputs must preserve its predecessor revision.
+        if '_copy_manifest' not in bundle['source_mapping']:
+            for capture in bundle['source_mapping'].get('pinned_documents', []):
+                if capture['pin'] not in documents:
+                    documents.append(copy.deepcopy(capture['pin']))
         removals = _inverse_clip_transcripts(inverse_records, bundle)
         documents = [pin for pin in documents if pin not in removals]
     # Retained inputs may include media consumed through a transcript or other

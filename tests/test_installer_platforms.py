@@ -134,6 +134,9 @@ def test_windows_task_settings_and_no_console_executable():
     arguments = field('t:Actions/t:Exec/t:Arguments')
     assert 'os.environ.update' in arguments and 'astrid_runtime.cli' in arguments
     assert 'open(' in arguments and 'encoding=' in arguments
+    xml = service.render('win32', version, data, log)
+    assert xml.startswith('<Task ')
+    assert '<?xml' not in xml
     assert 'Hidden' not in service.render('win32', version, data, log)
 
 
@@ -301,8 +304,17 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp
         monkeypatch.delenv('ASTRID_RUNTIME_DOOR_PORT', raising=False)
     def source(name, _sha, destination):
         if name == 'agent':
+            root = Path(__file__).parents[1]
+            for relative in (
+                Path('astrid/core/timeline/schema/timeline-config.schema.json'),
+                Path('runtime.lock.json'),
+                Path('remotion/package.json'),
+                Path('remotion/package-lock.json'),
+            ):
+                target = destination / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes((root / relative).read_bytes())
             (destination / 'remotion/node_modules').mkdir(parents=True)
-            (destination / 'remotion/package-lock.json').write_text('{}\n')
         return destination
     monkeypatch.setattr('astrid.installer.backend.source', source)
     monkeypatch.setattr('astrid.installer.backend.install_tools', lambda *_args: {
