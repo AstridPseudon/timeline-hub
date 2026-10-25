@@ -1,0 +1,9 @@
+{
+  "status": "PREPARED_NOT_RUN",
+  "findings": [
+    {"id": "D136A-GATE-1", "severity": "blocking", "finding": "rt-D136a-fps-final-review-2034 PASS with candidate SHA/tree/hash has not been published", "disposition": "hold import and original9"},
+    {"id": "D136A-SOURCE-1", "severity": "informational", "finding": "Reviewed candidate is available read-only and consists of exactly three approved blobs", "disposition": "prepared only"},
+    {"id": "D100-CUSTODY-1", "severity": "informational", "finding": "Held D100 product/test/projection identities are retained with full hashes", "disposition": "preserve unchanged"}
+  ],
+  "source_or_body_failures": []
+}

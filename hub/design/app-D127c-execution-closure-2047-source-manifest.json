@@ -1,0 +1,57 @@
+{
+  "manifest_kind": "D127c independent execution closure",
+  "app": {
+    "worktree": "/home/user/work/wt/app-D127c-execution-closure-2047",
+    "commit": "fd586440a626fc49a35a9dd0ac7e838d5fe55a4b",
+    "tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "status": "clean",
+    "source": {
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+      "git_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+      "size": 60923
+    },
+    "review2013_source_equal": true,
+    "outside_source_scope_changed": false
+  },
+  "runtime": {
+    "repository": "/home/user/banodoco/banodoco-workspace-runtime",
+    "commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "helper": "tests/helpers/p2_commit_phase_capture.py",
+    "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "read_only_hash_verification": true
+  },
+  "node": {
+    "path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "realpath": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "version": "v20.19.4",
+    "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"
+  },
+  "dependencies": {
+    "node_modules_realpath": "/home/user/work/app/node_modules",
+    "tsx_version": "4.21.0",
+    "tsx_cjs_api_realpath": "/home/user/work/app/node_modules/tsx/dist/cjs/api/index.cjs",
+    "tsx_cjs_api_sha256": "b396a280df2ea1de64a7fa989db0d46cf1b90fc07f12e4dc5e57d5e5a99d4feb",
+    "esbuild_version": "0.27.7",
+    "shared_installs_written": false,
+    "tsx_cache": "disabled"
+  },
+  "final_local_control": {
+    "entry": "app-D127c-Node20-loader-sol-2033/evidence/cjs-api-controls.cjs",
+    "entry_sha256": "31e82a9e0864a2d1bbf5233ce8d81066e2ddd2abd6ed9f5840afd118007163ff",
+    "reporter_sha256": "d27c16065516260f4617882136f435682a0f737e675e92cd2cc1f8a3465cf678",
+    "source_hash_checked_before_load": true,
+    "original_source_loaded": true,
+    "native_assertions_retained": true,
+    "assertion_methods_logged": ["ok", "throws"]
+  },
+  "prohibited_scope": {
+    "product_source_edits": false,
+    "test_source_edits": false,
+    "runtime_source_edits": false,
+    "bootstrap_live_browser_native_full_bodies": false,
+    "runtime_rerun": false,
+    "upstream_or_hub_writes": false
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "assertion_ast_total": 173,
+  "base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "behavior_credit": 0,
+  "disposition": "RESTORED_EXACT_ORIGINAL",
+  "findings": [
+    "F1",
+    "F2",
+    "F3"
+  ],
+  "missing_capability": "A registered semantic birth/restore that accepts an authenticated authored child closure, allocates item-1, and records its source/item mapping, media pin, opaque metadata, and managed occurrence/shot edges.",
+  "missing_records": [
+    "No current command record allocates a shot payload item identity from an empty occurrence.create shot.",
+    "No current accepted binding records item-1 authored media and opaque metadata as a newly materialized child item.",
+    "No current caller supplies an authenticated source_ref/source_occurrence_id for the original item-bearing closure."
+  ],
+  "owner": "UNKNOWN",
+  "product_defect_claim": false,
+  "restored_paths": [
+    "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+    "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+    "tests/editing_conformance/test_recipe_occurrence_media.py"
+  ],
+  "result": "UNAPPLIED_SOURCE_DEPENDENCY",
+  "review_basis": "app-D134-managed16-review-2037 plus direct caller/registration audit",
+  "schema": "timeline.agent.d134_managed16_first_return_verdict.v1",
+  "source_adoption": false,
+  "task": "app-D134-managed16-first-return-2050",
+  "tree_equals_original": true,
+  "wip": "6c5c05ac8cea7bb5c9a5507a54c6d3da89ea75d4"
+}

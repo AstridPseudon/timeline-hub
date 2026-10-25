@@ -1,0 +1,59 @@
+{
+  "behavior_credit": 0,
+  "disposition": "RESTORED_EXACT_ORIGINAL",
+  "findings": [
+    {
+      "authoritative_route": "astrid/sdk/timeline/_doc_patch.py:359-367",
+      "finding": "The WIP helper removed parent.occurrences from the authored setup before emitting commands. The original registered fixture explicitly authored occurrences=[], so absent and explicit empty managed membership are different input shapes.",
+      "id": "F1",
+      "path": "tests/editing_conformance/test_recipe_occurrence_media.py:113-120",
+      "result": "A top-level parent occurrence membership edit is provider-managed and cannot be substituted by the source-bound emitter."
+    },
+    {
+      "authoritative_route": "astrid/sdk/timeline/native_occurrence_create.py:41-45; astrid/sdk/timeline/_command_state.py:353-369,626-631",
+      "finding": "The WIP helper asked the source-bound emitter to change the semantic-born shot from items=[] to the authored item-1 payload.",
+      "id": "F2",
+      "path": "tests/editing_conformance/test_recipe_occurrence_media.py:131-140",
+      "result": "The registered closure/item guard requires the authenticated item correspondence; the emitter has no semantic item-creation operation and the write is unsupported."
+    },
+    {
+      "authoritative_route": "shared-auto GenuineTimeline caller and shot-pool GenuineTimeline caller",
+      "finding": "The changed callers route all 16 protected managed16 expansions through the same helper seam.",
+      "id": "F3",
+      "path": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py; tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "result": "The unsupported setup is cohort-wide for this partition; no independent faithful seam exists in the authorized files."
+    }
+  ],
+  "missing_capability": "A registered semantic birth/restore that accepts an authenticated authored child closure, allocates item-1, and records its source/item mapping, media pin, opaque metadata, and managed occurrence/shot edges.",
+  "missing_records": [
+    "No current command record allocates a shot payload item identity from an empty occurrence.create shot.",
+    "No current accepted binding records item-1 authored media and opaque metadata as a newly materialized child item.",
+    "No current caller supplies an authenticated source_ref/source_occurrence_id for the original item-bearing closure."
+  ],
+  "owner": "UNKNOWN",
+  "product_defect_claim": false,
+  "route_audit": {
+    "minimal_faithful_route_found": false,
+    "reason": "No registered command allocates the authored item-1 and its exact media/opaque/source mapping from an empty occurrence.create closure while preserving managed parent and shot edges.",
+    "registered_commands_inspected": [
+      "occurrence.create",
+      "shot.set",
+      "occurrence.add-media",
+      "placement.create",
+      "placement.unplace",
+      "occurrence.duplicate",
+      "occurrence.fork",
+      "occurrence.place-shared",
+      "timeline.duplicate",
+      "timeline.restructure",
+      "doc.patch"
+    ]
+  },
+  "schema": "timeline.agent.d134_managed16_findings.v1",
+  "task": "app-D134-managed16-first-return-2050",
+  "unverified": [
+    "No pytest or original integration node was run because this brief forbids pytest, provider/body execution, service, sockets, and test-service requests.",
+    "The historical targeted request stopped in conftest with ModuleNotFoundError: runtime_protocol before any intended node; it receives zero behavior credit."
+  ],
+  "verdict": "UNAPPLIED_SOURCE_DEPENDENCY"
+}

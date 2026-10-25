@@ -1,0 +1,20 @@
+{
+  "schema": "timeline.agent.d134_managed16_protected_verdict.v1",
+  "task": "app-D134-managed16-review-2037",
+  "base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "wip": "6c5c05ac8cea7bb5c9a5507a54c6d3da89ea75d4",
+  "result": "FAIL",
+  "disposition": "UNAPPLIED",
+  "source_adoption": false,
+  "behavior_credit": 0,
+  "product_defect_claim": false,
+  "summary": "The three-file source migration does not provide a faithful supported setup route. It attempts to reconstruct a semantic-born empty closure with a source-bound emitter, but the required authored shot item membership is provider-managed and cannot be created by the registered commands or doc.patch.",
+  "blocking_findings": [
+    "F1: occurrence_media.py:113-120 removes the explicit parent occurrences list used by the original setup before emitting commands, so the setup target is not the original authored input shape; a top-level parent occurrences change is a managed closure operation.",
+    "F2: occurrence_media.py:131-140 asks emit_document_commands to change the semantic-born shot from items=[] to the authored item-1 payload. The registered closure/item guard rejects that correspondence change; occurrence.create, shot.set, occurrence.add-media and placement commands do not create the original authored shot item.",
+    "F3: the changed callers in shared_auto_placement.py:17-20,44 and shot_pool.py:57,128 route their 16 protected nodes through the same unsupported helper, so the seam is cohort-wide for this partition even though the original test bodies are conserved."
+  ],
+  "unverified": [
+    "No original integration node was run. The historical targeted request ended at conftest ImportError: ModuleNotFoundError: runtime_protocol before any intended node; it receives zero behavior credit."
+  ]
+}

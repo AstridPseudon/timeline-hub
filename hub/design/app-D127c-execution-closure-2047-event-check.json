@@ -1,0 +1,30 @@
+{
+  "rule": "Count only actual non-skipped named test:pass events for the three exact controls; file-wrapper, filtered, and skipped events never count.",
+  "intended_titles": [
+    "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+    "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+    "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations"
+  ],
+  "intended": {
+    "pass": 3,
+    "fail": 0,
+    "skip": 0,
+    "missing": 0,
+    "events_verified_by": "app-D127c-Node20-loader-sol-2033/evidence/check-events.py"
+  },
+  "whole_file": {
+    "registered_tests": 7,
+    "pass": 3,
+    "fail": 0,
+    "nonmatching_skips": 4,
+    "skip_reason": "test name does not match pattern"
+  },
+  "integrity": {
+    "wrapper_passes_counted": 0,
+    "fake_events": false,
+    "monkeypatched_assertion_methods": false,
+    "transformed_predicates": false,
+    "global_zero_skips": false
+  },
+  "acceptance": "PASS for the intended exact named controls; whole-file nonmatching skips disclosed and expected"
+}

@@ -1,0 +1,45 @@
+{
+  "task": "app-D127c-execution-closure-2047",
+  "review": "Independent execution/privacy/source closure of review2013 F002",
+  "verdict": "PASS",
+  "F001": "sourceguard fixed and retained",
+  "F002": {
+    "status": "CLOSED",
+    "basis": "Sol 2033 permanent evidence uses the exact supported Node20.19.4 binary and tsx/cjs/api route to execute the original App source.",
+    "intended_named_passes": 3,
+    "intended_named_failures": 0,
+    "intended_named_skips": 0,
+    "missing_intended_nodes": 0,
+    "whole_file_nonmatching_skips": 4,
+    "literal_global_zero_skips": false,
+    "wrapper_or_filtered_passes_counted": 0
+  },
+  "app": {
+    "commit": "fd586440a626fc49a35a9dd0ac7e838d5fe55a4b",
+    "tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "source_sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+    "working_tree": "clean"
+  },
+  "runtime": {
+    "commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "prior_targeted_result": "30318: 61 passed in 3.62s; reused, not rerun"
+  },
+  "execution": {
+    "node": "v20.19.4",
+    "route": "tsx 4.21.0 documented tsx/cjs/api require(source, __filename)",
+    "duration_seconds": 1.38,
+    "exit_code": 0,
+    "available_bytes_before": 5194469376,
+    "entry_sha256": "31e82a9e0864a2d1bbf5233ce8d81066e2ddd2abd6ed9f5840afd118007163ff",
+    "reporter_sha256": "d27c16065516260f4617882136f435682a0f737e675e92cd2cc1f8a3465cf678"
+  },
+  "outside_service": {
+    "id": "app-D127c-Node20-loader-sol-2033-d127c-node20-cjs-controls-2033-1025204001-13179",
+    "result": "no credit",
+    "reason": "5GB snapshot guard stopped the entry before original source load",
+    "retries": 0
+  },
+  "holds": ["D130 SWAP", "WAL/recovery", "full-tour", "original profile/element/latency/core/ZIP"]
+}

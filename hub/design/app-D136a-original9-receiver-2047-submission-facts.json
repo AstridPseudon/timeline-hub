@@ -1,0 +1,16 @@
+{
+  "task": "D136a+D100",
+  "worker": "app-D136a-original9-receiver-2047",
+  "repo": "agent",
+  "base_commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+  "base_tree": "84e9d485a7ee8fdf2969eaf19d159e400f0ca1d4",
+  "candidate_commit": "c99214a227154df5fbaf681c2e0fc52c54500025",
+  "candidate_tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+  "runtime_gate": "rt-D136a-fps-final-review-2034 PASS not published",
+  "runtime_pin_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+  "runtime_pin_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+  "admission_free_bytes_observed": 5224796160,
+  "imported": false,
+  "original9_run": false,
+  "private_raw_artifacts_written": false
+}

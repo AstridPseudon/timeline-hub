@@ -1,0 +1,59 @@
+{
+  "assertion_ast_total_current": 173,
+  "assertion_ast_total_original": 173,
+  "authorized_paths": [
+    "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+    "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+    "tests/editing_conformance/test_recipe_occurrence_media.py"
+  ],
+  "base_original_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "files": [
+    {
+      "assertion_ast_count_current": 71,
+      "assertion_ast_count_original": 71,
+      "byte_identical_to_original": true,
+      "current_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "function_ast_equal_to_original": true,
+      "inputs_ast_equal_to_original": true,
+      "inputs_ast_sha256_current": null,
+      "inputs_ast_sha256_original": null,
+      "original_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "path": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py"
+    },
+    {
+      "assertion_ast_count_current": 59,
+      "assertion_ast_count_original": 59,
+      "byte_identical_to_original": true,
+      "current_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "function_ast_equal_to_original": true,
+      "inputs_ast_equal_to_original": true,
+      "inputs_ast_sha256_current": null,
+      "inputs_ast_sha256_original": null,
+      "original_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "path": "tests/editing_conformance/test_recipe_m2_shot_pool.py"
+    },
+    {
+      "assertion_ast_count_current": 43,
+      "assertion_ast_count_original": 43,
+      "byte_identical_to_original": true,
+      "current_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "function_ast_equal_to_original": true,
+      "inputs_ast_equal_to_original": true,
+      "inputs_ast_sha256_current": "df6c7c73a51c90a5241a9de13fd589cc5d162f1a5917566d47fdf7da8b934216",
+      "inputs_ast_sha256_original": "df6c7c73a51c90a5241a9de13fd589cc5d162f1a5917566d47fdf7da8b934216",
+      "original_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "path": "tests/editing_conformance/test_recipe_occurrence_media.py"
+    }
+  ],
+  "outside_authorized_diff_paths": [],
+  "schema": "timeline.agent.d134_managed16_source_manifest.v1",
+  "source_delta": "none_against_original",
+  "task": "app-D134-managed16-first-return-2050",
+  "wip_changed_paths": [
+    "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+    "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+    "tests/editing_conformance/test_recipe_occurrence_media.py"
+  ],
+  "wip_commit": "6c5c05ac8cea7bb5c9a5507a54c6d3da89ea75d4",
+  "working_tree_equals_original_commit": true
+}

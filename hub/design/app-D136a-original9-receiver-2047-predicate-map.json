@@ -1,0 +1,20 @@
+{
+  "status": "PREPARED_NOT_RUN",
+  "original9": {
+    "count": 9,
+    "selectors": [
+      "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "test_real_saved_entire_expansion_golden",
+      "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "test_real_candidate_matches_sdk_opener_exactly[parent]",
+      "test_real_candidate_matches_sdk_opener_exactly[child]",
+      "test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+      "test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+      "test_real_candidate_matches_sdk_opener_exactly[remove]",
+      "test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+    ],
+    "source": "retained D100 own9 XML and command record",
+    "execution": "not run"
+  },
+  "held_projection_source": {"predicates": 43, "test_bodies": 11, "fixture_statements": 54, "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436", "preserved": "not rechecked in joined tree because import is gated"}
+}

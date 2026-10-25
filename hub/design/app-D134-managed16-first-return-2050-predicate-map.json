@@ -1,0 +1,64 @@
+{
+  "schema": "timeline.agent.d134_managed16_predicate_map.v1",
+  "status": "UNAPPLIED",
+  "verdict": "FAIL",
+  "d104": {
+    "condition_1_invalid_input_and_correct_guard": {
+      "status": "yes",
+      "evidence": "The semantic-born shot has no items, while the exact authored fixture requires item-1. The guarded shot item projection requires the authenticated item correspondence and refuses changed membership/identity. Parent occurrence membership is also provider-managed."
+    },
+    "condition_2_setup_only": {
+      "status": "yes",
+      "evidence": "The WIP edits only fixture routing/setup in the three authorized test files; all test bodies and assertions are conserved. This scope fact does not make the route faithful."
+    },
+    "condition_3_exact_bounds": {
+      "status": "yes_for_source_inventory_only",
+      "evidence": "The original inputs and authored bounds are preserved in the source and hashes, including parent occurrences, item-1, internal clips, image/video windows, opaque fields, verified pins, and 16 expanded nodes. The proposed emitted setup does not reach an accepted canonical document."
+    },
+    "condition_4_shared_seed_caller_audit": {
+      "status": "yes",
+      "evidence": "The changed callers are limited to the three authorized modules. Shared `inputs()` is unchanged, and no shared fixture or product source was edited."
+    },
+    "condition_5_review_and_meaningful_proof": {
+      "status": "no",
+      "evidence": "The protected source review finds no faithful supported semantic command for authored item-1 creation. No original integration body was run; the historical targeted run stopped in conftest ImportError before any intended node."
+    }
+  },
+  "protected_predicates": {
+    "shared_auto": [
+      "image/video and four CASES values image-append, video-append, image-shift, video-overlay-anchor",
+      "exact capture/replay/inverse/redo and shared placement provider acceptance",
+      "anchor/lane/end-frame arithmetic, pool promotion, refusal and no-write predicates"
+    ],
+    "shot_pool": [
+      "add-first/add-second/remove-middle goldens and exact pool order",
+      "add/remove provider undo/redo and pooled promotion/keep round trips",
+      "absent versus empty pool, binding, ownership, legacy provenance, refusal, conflict and no-write predicates"
+    ],
+    "occurrence_media": [
+      "same-alias materialized payload and exact undo/redo",
+      "image/video add/swap provider reload, inverse, redo, idempotency and retired-alias checks",
+      "exact media selections, source windows, opaque fields, inverse inputs, refusal and no-write predicates"
+    ]
+  },
+  "input_conservation": {
+    "inputs_body_unchanged": true,
+    "assertion_counts": {
+      "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py": 71,
+      "tests/editing_conformance/test_recipe_m2_shot_pool.py": 59,
+      "tests/editing_conformance/test_recipe_occurrence_media.py": 43
+    },
+    "expanded_node_count": 16
+  },
+  "source_trace": {
+    "original_fixture_author": "tests/editing_conformance/test_commit_runtime_occurrence_media.py:21-114",
+    "new_fixture_author": "tests/editing_conformance/test_recipe_occurrence_media.py:76-171",
+    "shared_auto_caller": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py:39-48 -> test_recipe_m2_auto_placement.GenuineTimeline.create -> runtime_occurrence._create_fixture",
+    "shot_pool_caller": "tests/editing_conformance/test_recipe_m2_shot_pool.py:47-130 -> _create_managed_fixture",
+    "occurrence_media_caller": "tests/editing_conformance/test_recipe_occurrence_media.py:380-391 -> runtime_occurrence.editing.__wrapped__ -> runtime_occurrence._create_fixture",
+    "managed_parent_guard": "astrid/sdk/timeline/_doc_patch.py:359-376",
+    "managed_shot_item_guard": "astrid/sdk/timeline/_command_state.py:316-369,626-631",
+    "semantic_birth": "astrid/sdk/timeline/native_occurrence_create.py:41-50",
+    "emitter": "astrid/sdk/timeline/emitter.py:245-304"
+  }
+}

@@ -1,0 +1,11 @@
+Ask: file ONE manager-only normal remote Runtime source request now after exact final App guard execution PASS / Owner: App lead host route; Runtime normal home owner / By: 2026-10-25T21:00Z
+
+Concrete command: bin/request-merge-remote runtime app-D127c-Runtime-clean-source-2010 "D127c exact helper source PASS61; App F001 and actual Node20 F002 independently PASS2047; no body credit". This is the established host manager route; sandboxmanager does not retry the known D106 hub-write boundary, no altered env or direct hub write.
+
+Runtime cleanfb4addba95ca4bae0482c93be94e5cae2770ca09/tree8d5683702f36034f27ee7f49737665d66dbc2b75, one own source commit above normal e319, exact independently2002 reviewed and central30318 tested61PASS whole tree. ONLY helper tests/helpers/p2_commit_phase_capture.py blob2ae83f1b/SHA095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d and tests/test_p2_commit_phase_capture.py blob261b74fb/SHAee789ec10738e1d9f3a2aae92c15b6d49cc86ad4f3c6e0e7cafc5fe5c883cf88. No Runtime product/auth/schema/client/pin or donor ancestry. Previous sourceguard wait CLEARED.
+
+Independent app-D127c-execution-closure-2047 COMPLETE PASS closes2013F002: exactAppfd586/source59a4, supportedNode20.19.4 and tsx4.21 CJS API load ORIGINALsource/nativeassertions, actual3 intendedPASS0FAIL0intendedSKIP/missing. Wholefile4 unrelated nonmatchingbootstrap cases correctly excluded and disclosed. No assertionpatch/fakeevents or repeatRuntime61; outside13179 hit diskguard beforecontrol and getsnocredit. All safe source/execution/verdict files flatdesign/app-D127c-execution-closure-2047-*. Source2013F001 fixed/statics/lint/types alreadyPASS.
+
+App exactguardcarrier2017 has normalHOME b5c9eadfa1 atop independently reviewed U3sourcehome2f362; only original reviewed bootstrapblobdea8cda5/source59a4 added. Source-home receipt queue/done/merge-app-D127c-App-clean-source-2017. U3sourcehome fulltree687e4c equals cumulative reviewedeba8,127+warmup2/types/lintPASS. Final producer-first cut pins/tupleproof remain pending, no cut/ZIPclaim.
+
+This requests ONLY sourcehome; lastONE authorized D127c elementbody remains unspent and waits normal Runtime receipt and actual5.2GB admission/canonicalhelper/hash/normalpreflight. No tour/SWAP/WAL/recovery under D130, no newprofilinground. Runtime intake and ordinary remote source overlap belong homeowner.
