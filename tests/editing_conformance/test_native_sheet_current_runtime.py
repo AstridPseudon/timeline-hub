@@ -120,7 +120,7 @@ def tiny_cut_parent(service, project):
         }, authorize=lambda: None)
         verified = service.get_project_verified_media(project, selection, authorize=lambda: None)
         assert verified['selection'] == selection
-        media_ids[asset] = verified['object_id']
+        media_ids[asset] = verified['selection']['object_id']
 
     clips = copy.deepcopy(timeline['clips'])
     registry = copy.deepcopy(timeline['registry'])
@@ -337,19 +337,19 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
             verified = runtime.service().get_project_verified_media(project, selection, authorize=lambda: None)
             assert verified['selection'] == selection
             role_media[source_id][media_type] = verified
-            verified_by_object[verified['object_id']] = verified
+            verified_by_object[verified['selection']['object_id']] = verified
 
     primary_replacements = {
         source_id: (role_media[source_id].get('image/png')
                     or role_media[source_id].get('audio/wav')
-                    or role_media[source_id]['video/mp4'])['object_id']
+                    or role_media[source_id]['video/mp4'])['selection']['object_id']
         for source_id in sorted(media_ids)
     }
     _replace_media_ids(parent, primary_replacements)
     _replace_media_ids(shots, primary_replacements)
     _replace_media_ids(internals, primary_replacements)
     for entry, source_id in video_registry_sources:
-        video = role_media[source_id]['video/mp4']['object_id']
+        video = role_media[source_id]['video/mp4']['selection']['object_id']
         entry['media_id'] = video
         entry['content_sha256'] = video
 
