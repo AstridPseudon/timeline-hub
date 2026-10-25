@@ -1,0 +1,48 @@
+{
+  "schema": "timeline.agent.d100a.receiving-source-manifest.v1",
+  "task": "D100a",
+  "repo": "agent",
+  "base": {
+    "commit": "9521bed8e3174d5fe257d3b8d75828121bec4150",
+    "tree": "2e44289552b3cd52152e80f22f21d5e12d1bf52c"
+  },
+  "received": {
+    "commit": "bbeea9ddf750b1d67d08e848c20262d748e6ff03",
+    "tree": "81999820a81432c06ef7aefc4519dc84e71f56f7",
+    "parent_equals_base": true
+  },
+  "donor": {
+    "preimage_parent": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "security_review_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "final_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "final_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "agent_only": true,
+    "runtime_product_half_invented": false
+  },
+  "files": {
+    "astrid/sdk/timeline/_command_state.py": {
+      "current_preimage_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+      "donor_preimage_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+      "donor_final_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "final_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "mode_before": "100644",
+      "mode_after": "100644",
+      "approved_methods_only": ["State.shot_item_map", "State._item_ids", "State.project_shot_items"]
+    },
+    "tests/sdk/test_d100_item_birth_boundary.py": {
+      "base_state": "absent",
+      "donor_final_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "final_sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "mode_after": "100644"
+    }
+  },
+  "preserved": {
+    "outside_scope_paths": [],
+    "unrelated_ast_nodes": "exact",
+    "identity16_source_tests": "unchanged",
+    "typed_fps_source_test": "unchanged",
+    "u2_and_u4a_ancestry": "preserved",
+    "canonical15_selection": "preserved",
+    "dto_and_runtime_store": "unchanged"
+  }
+}

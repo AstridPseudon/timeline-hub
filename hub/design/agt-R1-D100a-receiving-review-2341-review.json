@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.agent.d100a.receiving-review.v1",
+  "task": "D100a",
+  "verdict": "PASS_RECEIVING_CUSTODY",
+  "scope": "Read-only receiving custody review of exact bbeea9ddf750b1d67d08e848c20262d748e6ff03 on fresh 9521bed8e3174d5fe257d3b8d75828121bec4150.",
+  "source_identity": {
+    "head": "bbeea9ddf750b1d67d08e848c20262d748e6ff03",
+    "parent": "9521bed8e3174d5fe257d3b8d75828121bec4150",
+    "parent_is_requested_base": true,
+    "own_delta_paths": [
+      "astrid/sdk/timeline/_command_state.py",
+      "tests/sdk/test_d100_item_birth_boundary.py"
+    ],
+    "donor_range": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb..42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "donor_delta_paths_exact": true,
+    "binary_delta_exact": true,
+    "held_ancestry_imported": false
+  },
+  "gates": {
+    "donor_preimage_equals_current_state": "PASS",
+    "additive_test_absent_before": "PASS",
+    "final_blobs_and_modes_exact": "PASS",
+    "outside_and_within_file_unrelated_bytes_exact": "PASS",
+    "current_source_upstream_later_preserved": "PASS",
+    "registered_callchain_uses_approved_state_methods": "PASS",
+    "c0_request_reply_dto_unchanged": "PASS"
+  },
+  "final_blobs": {
+    "astrid/sdk/timeline/_command_state.py": {
+      "git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "mode": "100644"
+    },
+    "tests/sdk/test_d100_item_birth_boundary.py": {
+      "git_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "mode": "100644"
+    }
+  },
+  "prior_release_gates_reused": {
+    "independent_27_of_27": "PASS",
+    "independent_security1803": "PASS_SOURCE_SECURITY",
+    "b022_function_path_nonintersection": "PASS"
+  },
+  "limits": {
+    "behavioral_credit_new": false,
+    "original9": "OPEN: retained exact result is 9 setup errors, 0 body outcomes, exit 1",
+    "historical_record": "Source author recorded the standalone peer path and standalone release packet absent in that sandbox; this review preserves that record and does not reconstruct proof.",
+    "new_approval_gates": false
+  }
+}
