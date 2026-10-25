@@ -56,6 +56,195 @@ function object(value: unknown, label: string): JsonObject {
   return value as JsonObject;
 }
 
+function exactKeys(value: unknown, keys: string[], label: string): JsonObject {
+  const result = object(value, label);
+  expect(Object.keys(result).sort(), `${label} keys`).toEqual([...keys].sort());
+  return result;
+}
+
+function assertAgentState(value: unknown, label: string): void {
+  const state = object(value, label);
+  if (state.state === 'absent') expect(Object.keys(state)).toEqual(['state']);
+  else {
+    expect(state.state, `${label}.state`).toBe('present');
+    expect(Object.keys(state).sort(), `${label} keys`).toEqual(['state', 'value']);
+  }
+}
+
+function assertCommitRead(value: unknown, label: string): void {
+  const read = object(value, label);
+  expect(typeof read.kind, `${label}.kind`).toBe('string');
+  if (read.kind === 'field') {
+    if (!Object.hasOwn(read, 'state')) throw new Error(`${label}.state is required`);
+    exactKeys(read, ['kind', 'path', 'ref', 'state'], label);
+    expect(Array.isArray(read.path), `${label}.path`).toBe(true);
+    assertAgentState(read.state, `${label}.state`);
+  } else if (read.kind === 'collection') {
+    exactKeys(read, ['kind', 'members', 'order', 'path', 'ref'], label);
+    expect(Array.isArray(read.members), `${label}.members`).toBe(true);
+    expect(read.order === null || Array.isArray(read.order), `${label}.order`).toBe(true);
+    expect(Array.isArray(read.path), `${label}.path`).toBe(true);
+  } else {
+    exactKeys(read, ['kind', 'path', 'ref'], label);
+    expect(read.kind, `${label}.kind`).toBe('scope');
+    expect(Array.isArray(read.path), `${label}.path`).toBe(true);
+  }
+  expect(read.ref, `${label}.ref`).not.toBe('timeline');
+}
+
+function assertPatchChange(value: unknown, label: string): void {
+  const change = object(value, label);
+  expect(['set', 'remove', 'list.insert', 'list.remove', 'list.move']).toContain(change.op);
+  if (!Object.hasOwn(change, 'ref')) throw new Error(`${label}.ref is required`);
+  expect(typeof change.ref, `${label}.ref`).toBe('string');
+  expect(change.ref, `${label}.ref`).not.toBe('timeline');
+  expect(Array.isArray(change.path), `${label}.path`).toBe(true);
+  assertAgentState(change.before, `${label}.before`);
+  if (change.op === 'set' || change.op === 'list.insert') expect(Object.hasOwn(change, 'value'), `${label}.value`).toBe(true);
+  if (change.op === 'remove' || change.op === 'list.remove' || change.op === 'list.move') expect(Object.hasOwn(change, 'value'), `${label}.value`).toBe(false);
+  const keys = change.op === 'set' ? ['before', 'op', 'path', 'ref', 'value']
+    : change.op === 'remove' ? ['before', 'op', 'path', 'ref']
+      : change.op === 'list.insert' ? ['after_id', 'before', 'id', 'op', 'order_before', 'path', 'ref', 'value']
+        : change.op === 'list.remove' ? ['before', 'id', 'op', 'order_before', 'path', 'ref']
+          : ['after_id', 'before', 'id', 'op', 'order_before', 'path', 'ref'];
+  expect(Object.keys(change).sort(), `${label} keys`).toEqual(keys.sort());
+}
+
+function assertNativeCommandShape(command: JsonObject, submitted: JsonObject, label: string): void {
+  exactKeys(command, [
+    'args', 'authorship', 'bindings', 'created', 'expect', 'intent', 'op', 'reads',
+    'resolved', 'schema_version', 'select', 'selections', 'version',
+  ], label);
+  expect(command.schema_version).toBe(1);
+  expect(command.op).toBe('timeline.inverse');
+  expect(command.version).toBe('1');
+  expect(command.select).toBeNull();
+  expect(command.args).toEqual(submitted.args);
+  expect(command.intent).toEqual({});
+  expect(command.resolved).toEqual([]);
+  expect(command.created).toEqual([]);
+  const expected = object(command.expect, `${label}.expect`);
+  const authorship = object(command.authorship, `${label}.authorship`);
+  expect(expected).not.toEqual({});
+  expect(authorship).not.toEqual({});
+  expect(Object.keys(authorship).sort(), `${label}.authorship keys`).toEqual(Object.keys(expected).sort());
+  for (const value of Object.values(authorship)) expect(value).toBe('direct');
+  expect(Array.isArray(command.reads), `${label}.reads`).toBe(true);
+  expect(command.reads).not.toEqual([]);
+  if (!Object.hasOwn((command.reads as Array<JsonObject>)[0] ?? {}, 'ref')) throw new Error(`${label}.reads[0] ref is required`);
+  for (const [index, read] of (command.reads as unknown[]).entries()) assertCommitRead(read, `${label}.reads[${index}]`);
+  expect(Array.isArray(command.selections), `${label}.selections`).toBe(true);
+  for (const [index, selection] of (command.selections as unknown[]).entries()) {
+    const item = exactKeys(selection, ['boundaries', 'key', 'members', 'order', 'owner', 'policy', 'query_version'], `${label}.selections[${index}]`);
+    expect(typeof item.key).toBe('string');
+    expect(typeof item.owner).toBe('string');
+    expect(item.query_version).toBe(1);
+    expect(Array.isArray(item.members)).toBe(true);
+    expect(Array.isArray(item.order)).toBe(true);
+    expect(Array.isArray(item.boundaries)).toBe(true);
+    expect(['guard-membership', 'include-concurrent']).toContain(item.policy);
+  }
+  const bindings = object(command.bindings, `${label}.bindings`);
+  for (const [key, value] of Object.entries(bindings)) {
+    expect(typeof key).toBe('string');
+    expect(key).not.toBe('extra');
+    expect(typeof value).toBe('string');
+    expect(value).toMatch(/^(?:parent|occurrence:[^/]+)(?:\/(?:clip|track):[^/]+)?$/);
+  }
+}
+
+function assertNativeBinding(value: unknown, label: string): void {
+  const binding = object(value, label);
+  expect(typeof binding.key, `${label}.key`).toBe('string');
+  expect(typeof binding.ref, `${label}.ref`).toBe('string');
+  expect(binding.policy).toBe('fixed');
+  expect(binding.dependencies).toEqual([]);
+  if (binding.key === 'inverse.stage') {
+    exactKeys(binding, ['boundary', 'dependencies', 'key', 'policy', 'ref'], label);
+    const boundary = exactKeys(binding.boundary, ['command_ordinals', 'effect_range', 'native_write_range', 'publication_id', 'step_id'], `${label}.boundary`);
+    expect(Array.isArray(boundary.command_ordinals)).toBe(true);
+    expect(Array.isArray(boundary.effect_range)).toBe(true);
+    expect(Array.isArray(boundary.native_write_range)).toBe(true);
+    expect(typeof boundary.publication_id).toBe('string');
+    expect(typeof boundary.step_id).toBe('string');
+    return;
+  }
+  const common = ['boundary', 'content_digest', 'dependencies', 'key', 'physical_ref', 'ref', 'revision_id'];
+  expect(typeof binding.physical_ref, `${label}.physical_ref`).toBe('string');
+  expect(typeof binding.revision_id, `${label}.revision_id`).toBe('string');
+  expect(typeof binding.content_digest, `${label}.content_digest`).toBe('string');
+  expect(object(binding.boundary, `${label}.boundary`)).toBeTruthy();
+  if (binding.key === 'commit.effect') {
+    exactKeys(binding, [...common, 'effect_ordinal', 'owners', 'path', 'step_id'].filter((key) => key !== 'owners' || Object.hasOwn(binding, key)), label);
+    expect(Array.isArray(binding.path)).toBe(true);
+    expect(typeof binding.step_id).toBe('string');
+    expect(typeof binding.effect_ordinal).toBe('number');
+    if (Object.hasOwn(binding, 'owners')) expect(Array.isArray(binding.owners)).toBe(true);
+  } else if (binding.key === 'commit.materialization') {
+    exactKeys(binding, [...common, 'edge_after', 'edge_before', 'owner', 'owners', 'step_id', 'successor'].filter((key) => Object.hasOwn(binding, key)), label);
+    expect(typeof binding.successor).toBe('string');
+    expect(typeof binding.owner).toBe('string');
+    expect(typeof binding.step_id).toBe('string');
+  } else {
+    expect(['commit.read', 'commit.input', 'commit.atomic']).toContain(binding.key);
+    const allowed = [...common, ...(binding.key === 'commit.read' ? ['dependency', 'path'] : [])];
+    exactKeys(binding, allowed, label);
+    if (binding.key === 'commit.read') {
+      expect(Array.isArray(binding.path)).toBe(true);
+      assertCommitRead(binding.dependency, `${label}.dependency`);
+    }
+  }
+}
+
+function assertNativeStepShape(step: JsonObject, submitted: JsonObject, label: string): void {
+  exactKeys(step, ['command_ordinals', 'dependencies', 'id', 'intent', 'label', 'patch', 'tags'], label);
+  expect(step.id).toBe(submitted.id);
+  expect(step.label).toBe(submitted.label);
+  expect(step.intent).toBe(submitted.intent);
+  expect(step.tags).toEqual(submitted.tags);
+  expect(step.command_ordinals).toEqual(submitted.command_ordinals);
+  expect(Array.isArray(step.patch)).toBe(true);
+  expect(step.patch).not.toEqual([]);
+  if (!Object.hasOwn((step.patch as Array<JsonObject>)[0] ?? {}, 'ref')) throw new Error(`${label}.patch[0] ref is required`);
+  for (const [index, patch] of (step.patch as unknown[]).entries()) assertPatchChange(patch, `${label}.patch[${index}]`);
+  expect(Array.isArray(step.dependencies)).toBe(true);
+  expect(step.dependencies).not.toEqual([]);
+  for (const [index, dependency] of (step.dependencies as unknown[]).entries()) assertCommitRead(dependency, `${label}.dependencies[${index}]`);
+}
+
+function assertNativeRecorder(record: JsonObject, command: JsonObject, label: string): void {
+  exactKeys(record, ['bindings', 'command', 'created', 'dependencies', 'derived_writes', 'ordinal', 'reads', 'selections', 'writes'], label);
+  expect(record.ordinal).toBe(0);
+  expect(record.command).toEqual(command);
+  expect(record.created).toEqual(command.created);
+  expect(record.reads).toEqual(command.reads);
+  expect(record.selections).toEqual(command.selections);
+  expect(record.dependencies).toEqual([]);
+  const expected = Object.values(object(command.expect, `${label}.command.expect`));
+  expect(Array.isArray(record.writes)).toBe(true);
+  expect(record.writes).toHaveLength(expected.length);
+  for (const [index, write] of (record.writes as unknown[]).entries()) {
+    const item = exactKeys(write, ['after', 'before', 'path', 'ref'], `${label}.writes[${index}]`);
+    expect(typeof item.ref).toBe('string');
+    expect(Array.isArray(item.path)).toBe(true);
+    assertAgentState(item.before, `${label}.writes[${index}].before`);
+    assertAgentState(item.after, `${label}.writes[${index}].after`);
+    expect(expected).toContainEqual(item.before);
+  }
+  expect(Array.isArray(record.derived_writes)).toBe(true);
+  expect(record.derived_writes).not.toEqual([]);
+  for (const [index, write] of (record.derived_writes as unknown[]).entries()) {
+    const item = exactKeys(write, ['after', 'before', 'cause', 'path', 'ref'], `${label}.derived_writes[${index}]`);
+    expect(item.cause).toBe(0);
+    expect(Array.isArray(item.path)).toBe(true);
+    assertAgentState(item.before, `${label}.derived_writes[${index}].before`);
+    assertAgentState(item.after, `${label}.derived_writes[${index}].after`);
+  }
+  expect(Array.isArray(record.bindings)).toBe(true);
+  expect(record.bindings).not.toEqual([]);
+  for (const [index, binding] of (record.bindings as unknown[]).entries()) assertNativeBinding(binding, `${label}.bindings[${index}]`);
+}
+
 function digest(value: unknown): string {
   const json = JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
     ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b)))
@@ -176,25 +365,23 @@ async function openTimeline(page: Page, harness: DirectHarness, seed: ThreeProdu
   expect(seed.timelineId).toBe(harness.seed.timelineId);
 }
 
-function assertRequestV2(post: CommitPost, before: HeadPin): void {
+function assertRequestV2(post: CommitPost, before: HeadPin, scope: { project_id: string; timeline_id: string }): void {
   expect(post.key).toMatch(/\S/);
   if (post.body.commands[0]?.op === 'timeline.inverse') {
     expect(Object.keys(post.body).sort()).toEqual([
       'api_version', 'base_publication_id', 'base_revision_id', 'commands', 'dry_run',
       'label', 'merge', 'project_id', 'reads', 'source', 'steps', 'timeline_id',
     ].sort());
-    expect(post.body).toEqual(expect.objectContaining({
-      api_version: 1,
-      project_id: expect.any(String),
-      timeline_id: expect.any(String),
-      base_revision_id: before.revision_id,
-      base_publication_id: before.publication_id,
-      label: 'Undo timeline',
-      merge: 'fields',
-      reads: [],
-      dry_run: false,
-      source: { via: 'app' },
-    }));
+    expect(post.body.api_version).toBe(1);
+    expect(post.body.project_id).toBe(scope.project_id);
+    expect(post.body.timeline_id).toBe(scope.timeline_id);
+    expect(post.body.base_revision_id).toBe(before.revision_id);
+    expect(post.body.base_publication_id).toBe(before.publication_id);
+    expect(post.body.label).toBe('Undo timeline');
+    expect(post.body.merge).toBe('fields');
+    expect(post.body.reads).toEqual([]);
+    expect(post.body.dry_run).toBe(false);
+    expect(post.body.source).toEqual({ via: 'app' });
     expect(post.body.commands).toHaveLength(1);
     const command = object(post.body.commands[0], 'native inverse command');
     expect(Object.keys(command).sort()).toEqual(['args', 'op', 'schema_version', 'select', 'version'].sort());
@@ -216,19 +403,17 @@ function assertRequestV2(post: CommitPost, before: HeadPin): void {
     expect(step.patch).toEqual([]);
     return;
   }
-  expect(post.body).toMatchObject({
-    api_version: 1,
-    project_id: expect.any(String),
-    timeline_id: expect.any(String),
-    base_revision_id: before.revision_id,
-    base_publication_id: before.publication_id,
-    commands: expect.any(Array),
-    label: expect.any(String),
-    steps: expect.any(Array),
-    merge: 'atomic',
-    dry_run: false,
-    source: { via: 'app' },
-  });
+  expect(post.body.api_version).toBe(1);
+  expect(post.body.project_id).toBe(scope.project_id);
+  expect(post.body.timeline_id).toBe(scope.timeline_id);
+  expect(post.body.base_revision_id).toBe(before.revision_id);
+  expect(post.body.base_publication_id).toBe(before.publication_id);
+  expect(Array.isArray(post.body.commands)).toBe(true);
+  expect(typeof post.body.label).toBe('string');
+  expect(Array.isArray(post.body.steps)).toBe(true);
+  expect(post.body.merge).toBe('atomic');
+  expect(post.body.dry_run).toBe(false);
+  expect(post.body.source).toEqual({ via: 'app' });
   expect(Object.hasOwn(post.body, 'reads')).toBe(false);
   expect(post.body.commands.length).toBeGreaterThan(0);
   for (const key of ['rationale', 'group_id'] as const) {
@@ -320,40 +505,12 @@ function assertNativeAcceptedReply(post: CommitPost, before: HeadPin): CommitAcc
 
   expect(data.commands).toHaveLength(1);
   const command = object((data.commands as Array<JsonObject>)[0], 'normalized native inverse command');
-  expect(Object.keys(command).sort()).toEqual([
-    'args', 'authorship', 'bindings', 'created', 'expect', 'intent', 'op',
-    'reads', 'resolved', 'schema_version', 'select', 'selections', 'version',
-  ].sort());
-  expect(command.schema_version).toBe(1);
-  expect(command.op).toBe('timeline.inverse');
-  expect(command.version).toBe('1');
-  expect(command.select).toBeNull();
-  expect(command.args).toEqual((post.body.commands[0] as unknown as JsonObject).args);
-  expect(command.intent).toEqual({});
-  expect(command.resolved).toEqual(expect.any(Array));
-  expect(command.expect).toEqual(expect.any(Object));
-  expect(command.authorship).toEqual(expect.any(Object));
-  expect(command.reads).toEqual(expect.any(Array));
-  expect((command.reads as unknown[]).length).toBeGreaterThan(0);
-  expect(command.selections).toEqual(expect.any(Array));
-  expect(command.bindings).toEqual(expect.any(Object));
-  expect(command.created).toEqual(expect.any(Array));
+  assertNativeCommandShape(command, object(post.body.commands[0], 'submitted native inverse command'), 'normalized native inverse command');
 
   expect(data.steps).toHaveLength(1);
   const step = object((data.steps as Array<JsonObject>)[0], 'authoritative native inverse step');
-  expect(Object.keys(step).sort()).toEqual([
-    'command_ordinals', 'dependencies', 'id', 'intent', 'label', 'patch', 'tags',
-  ].sort());
   const submittedStep = object(post.body.steps![0], 'submitted native inverse step');
-  expect(step.id).toBe(submittedStep.id);
-  expect(step.label).toBe(submittedStep.label);
-  expect(step.intent).toBe(submittedStep.intent);
-  expect(step.tags).toEqual(submittedStep.tags);
-  expect(step.command_ordinals).toEqual(submittedStep.command_ordinals);
-  expect(step.patch).toEqual(expect.any(Array));
-  expect((step.patch as unknown[]).length).toBeGreaterThan(0);
-  expect(step.dependencies).toEqual(expect.any(Array));
-  expect((step.dependencies as unknown[]).length).toBeGreaterThan(0);
+  assertNativeStepShape(step, submittedStep, 'authoritative native inverse step');
 
   const receipt = object(envelope.receipt, 'native commit receipt');
   expect(receipt.receipt_id).toEqual(expect.any(String));
@@ -444,11 +601,14 @@ function assertNativeHistoryEntry(page: HistoryPage, post: CommitPost, result: C
   expect(entry!.records!.commands).toHaveLength(1);
   expect(entry!.records!.commands.map((record) => record.command)).toEqual(result.data.commands);
   expect(entry!.records!.commands[0]!.ordinal).toBe(0);
-  expect(entry!.records!.commands[0]!.writes.length).toBeGreaterThan(0);
-  expect(entry!.records!.commands[0]!.reads.length).toBeGreaterThan(0);
-  expect(entry!.records!.commands[0]!.bindings.length).toBeGreaterThan(0);
-  expect(entry!.records!.commands[0]!.dependencies).toEqual(expect.any(Array));
-  expect(entry!.records!.commands[0]!.derived_writes).toEqual(expect.any(Array));
+  const nativeRecord = entry!.records!.commands[0] as unknown as JsonObject;
+  expect(nativeRecord.writes).not.toEqual([]);
+  expect(nativeRecord.bindings).not.toEqual([]);
+  expect(nativeRecord.derived_writes).not.toEqual([]);
+  expect(nativeRecord.dependencies).toEqual([]);
+  expect(nativeRecord.reads).toEqual((result.data.commands[0] as unknown as JsonObject).reads);
+  for (const [index, binding] of (nativeRecord.bindings as unknown[]).entries()) assertNativeBinding(binding, `native history command binding ${index}`);
+  assertNativeRecorder(nativeRecord, result.data.commands[0] as unknown as JsonObject, 'native history command record');
   expect(entry!.records!.undo_of).toEqual([]);
   expect(entry!.records!.undo_steps).toBeNull();
 }
@@ -485,11 +645,7 @@ function assertUndoHistoryEntry(page: HistoryPage, undo: CommitPost, target: Com
   expect(entry!.records?.steps).toEqual(result.data.steps);
   expect(entry!.records?.commands.map((record) => record.command)).toEqual(result.data.commands);
   expect(entry!.records?.commands[0]?.ordinal).toBe(0);
-  expect(entry!.records?.commands[0]?.writes.length).toBeGreaterThan(0);
-  expect(entry!.records?.commands[0]?.reads.length).toBeGreaterThan(0);
-  expect(entry!.records?.commands[0]?.bindings.length).toBeGreaterThan(0);
-  expect(entry!.records?.commands[0]?.dependencies).toEqual(expect.any(Array));
-  expect(entry!.records?.commands[0]?.derived_writes).toEqual(expect.any(Array));
+  assertNativeRecorder(entry!.records!.commands[0] as unknown as JsonObject, result.data.commands[0] as unknown as JsonObject, 'native undo command record');
   expect(entry!.records?.undo_of).toEqual([targetPublication]);
   expect(entry!.records?.undo_steps).toBeNull();
 }
@@ -608,7 +764,7 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
     await dialog.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(dialog.getByRole('status')).toContainText('applied');
   });
-  assertRequestV2(apply, beforeHistory.head);
+  assertRequestV2(apply, beforeHistory.head, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId });
   expect(apply.body.commands[0]!.op).toBe('doc.patch');
   expect((apply.body.commands[0]!.args.changes as Array<JsonObject>).some((change) => change.op === 'list.insert')).toBe(true);
   const applied = assertAcceptedReply(apply, beforeHistory.head);
@@ -637,7 +793,7 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
     await bob.press('Enter');
     await bob.blur();
   });
-  assertRequestV2(paramsCommit, beforeParams.head);
+  assertRequestV2(paramsCommit, beforeParams.head, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId });
   expect(paramsCommit.body.commands[0]!.op).toBe('doc.patch');
   const paramsChanges = paramsCommit.body.commands[0]!.args.changes as Array<JsonObject>;
   expect(paramsChanges).toHaveLength(1);
@@ -658,7 +814,7 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
   const undo = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
-  assertRequestV2(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsResult.receipt.receipt_id });
+  assertRequestV2(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsResult.receipt.receipt_id }, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId });
   expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [paramsResult.receipt.receipt_id] } });
   const undoneParams = assertAcceptedReply(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsResult.receipt.receipt_id });
   expect(undoneParams.data.canonical_document.parent_revision.payload).toEqual(paramsBase.parent_revision.payload);
@@ -741,7 +897,7 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
     await expect(page.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
-  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: result.receipt.receipt_id });
+  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: result.receipt.receipt_id }, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId });
   expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [result.receipt.receipt_id] } });
   const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: result.receipt.receipt_id });
   expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
@@ -823,7 +979,7 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
     await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
-  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication });
+  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication }, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId });
   expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [placementPublication] } });
   const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication });
   expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
