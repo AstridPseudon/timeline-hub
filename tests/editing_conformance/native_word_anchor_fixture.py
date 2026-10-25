@@ -27,6 +27,21 @@ TARGET = ('parent', '', 'card')
 DECLARATION = '\"again\" in line #2 +1f'
 FPS = {'numerator': 30000, 'denominator': 1001}
 
+
+def _steps(commands, label):
+    return [{
+        "id": f"{label}-{index + 1}", "label": label, "intent": "", "tags": [],
+        "command_ordinals": [index],
+        "patch": copy.deepcopy(command.get("args", {}).get("changes", []))
+        if command["op"] == "doc.patch" else [],
+        "reads": [],
+    } for index, command in enumerate(commands)]
+
+
+def _merge_mode(commands):
+    return "atomic" if any(command["op"] == "doc.patch" for command in commands) else "fields"
+
+
 def first_selection(bundle):
     """Select once from this fixture's sole verified source using main's grammar.
 
@@ -106,25 +121,14 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
 
     def submit(commands, key):
         current = head()
-        steps = [{
-            "id": f"bootstrap-{index + 1}", "label": key, "intent": "", "tags": [],
-            "command_ordinals": [index],
-            "patch": copy.deepcopy(command.get("args", {}).get("changes", []))
-            if command["op"] == "doc.patch" else [],
-            "reads": [],
-        } for index, command in enumerate(commands)]
         body = {
             "api_version": 1, "project_id": project, "timeline_id": "film",
             "base_revision_id": current["revision_id"],
             "base_publication_id": current["publication_id"],
-            "commands": commands, "label": key, "steps": steps,
-            "merge": "atomic", "reads": [], "dry_run": False,
+            "commands": commands, "label": key, "steps": _steps(commands, key),
+            "merge": _merge_mode(commands), "reads": [], "dry_run": False,
             "source": {"via": "python"}, "rationale": key, "group_id": key,
         }
-        if any(command.get("op") == "clip.anchor" for command in commands):
-            body.pop("steps")
-            body.pop("merge")
-            body.pop("reads")
         result = service.commit_timeline(
             project, "film", body, idempotency_key=key, publisher="timing-editor",
             invocation_path=route_path(project, "film"), authorize=lambda: None,
@@ -375,9 +379,13 @@ print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
                     'value': copy.deepcopy(requested_options['source_window'])})
             commands = [{"schema_version": 1, "op": "doc.patch", "version": "1",
                          "select": None, "args": {"changes": changes}}, *commands]
+        label = "Timeline conformance edit"
         return {"api_version": 1, "project_id": project, "timeline_id": "film",
                 "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
-                "commands": commands}
+                "commands": commands, "label": label, "steps": _steps(commands, label),
+                "merge": _merge_mode(commands), "reads": [], "dry_run": False,
+                "source": {"via": "python"}, "rationale": label,
+                "group_id": "timeline-conformance"}
 
     def submit(body, key, authorize=lambda: None):
         result = case.service.commit_timeline(project, "film", body, idempotency_key=key,

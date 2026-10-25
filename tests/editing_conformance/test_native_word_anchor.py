@@ -33,10 +33,6 @@ def recipe(retained, monkeypatch):
 
 def bundle(case):
     result = bundle_from_document(case.documents[case.head()["revision_id"]])
-    result["parent"]["config"].pop("clips", None)
-    astrid = result["parent"]["clips"][0].get("app", {}).get("astrid", {})
-    if astrid.get("word_anchors") == {}:
-        astrid.pop("word_anchors")
     # This is the same authorized capture observed from the real provider,
     # handed to the frontend picker, not an inline command/source authority.
     result["source_mapping"]["pinned_documents"] = copy.deepcopy(

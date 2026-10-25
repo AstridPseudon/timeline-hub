@@ -28,28 +28,12 @@ KEY = (REF, "on")
 @pytest.fixture
 def recipe(retained, monkeypatch):
     install(monkeypatch)
-    from astrid.sdk.timeline._recording import Recording
-
-    compiled = Recording.compile_inputs
-
-    def compile_with_current_mirror(ctx):
-        parent = ctx.state.bundle["parent"]
-        config = parent.get("config")
-        if isinstance(config, dict) and isinstance(parent.get("clips"), list):
-            config["clips"] = copy.deepcopy(parent["clips"])
-        return compiled(ctx)
-
-    monkeypatch.setattr(Recording, "compile_inputs", compile_with_current_mirror)
     retained.submit(retained.create("recipe-initial"), "recipe-initial")
     return retained
 
 
 def bundle(case):
     result = bundle_from_document(case.documents[case.head()["revision_id"]])
-    result["parent"]["config"].pop("clips", None)
-    astrid = result["parent"]["clips"][0].get("app", {}).get("astrid", {})
-    if astrid.get("word_anchors") == {}:
-        astrid.pop("word_anchors")
     # This is the same authorized capture observed from the real provider,
     # handed to the frontend picker, not an inline command/source authority.
     result["source_mapping"]["pinned_documents"] = copy.deepcopy(
