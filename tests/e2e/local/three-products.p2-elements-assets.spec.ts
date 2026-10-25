@@ -3,7 +3,12 @@ import { sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeP
 import { ASTRID_PYTHON } from './support/astrid.ts';
 import { dropFileOnTimeline, openEmbeddedCanonicalShot, test as appTest, timelineFileDropClientX } from './support/app.ts';
 import { assertSemanticAddMediaRequest, expectedImageDropRow } from './support/p2-semantic-oracle.ts';
-import { assertNormalizedCatalogueEntry, assertRawMediaImportEntry, mediaImportEvidence } from './support/p2-media-import-oracle.ts';
+import {
+  assertMediaImportSelectionIdentity,
+  assertNormalizedCatalogueEntry,
+  assertRawMediaImportEntry,
+  mediaImportEvidenceFromProducer,
+} from './support/p2-media-import-oracle.ts';
 import type {
   CanonicalDocument,
   CommitAcceptedMutation,
@@ -512,16 +517,13 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
   const selectionResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
   const post = await commitFromGesture(page, wire, () => dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 5));
   const imported = object((await (await importResponse).json()).data, 'registered media import');
-  const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
-  expect(selected.generation_id).toEqual(expect.any(String));
-  expect(selected.variant_id).toEqual(expect.any(String));
-  const mediaEvidence = mediaImportEvidence(file, {
+  const mediaEvidence = mediaImportEvidenceFromProducer(file, {
     objectId: harness.seed.image.objectId,
     digest: harness.seed.image.digest,
     mediaType: harness.seed.image.mediaType,
-    generationId: selected.generation_id as string,
-    variantId: selected.variant_id as string,
-  });
+  }, imported);
+  const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
+  assertMediaImportSelectionIdentity(selected, imported, mediaEvidence.source);
   const expectedRow = await expectedImageDropRow(original, 'parent', String(selected.asset), 'V1', 5);
   assertSemanticAddMediaRequest(post, before.head, original, {
     op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Add media', row: expectedRow, media: selected,
@@ -595,16 +597,13 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   const selectionResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
   const post = await commitFromGesture(page, wire, () => dropFileIn(dialog, file, seed3.occurrenceId, seed3.agentClipId, seed3.agentClearClipId, 3, 6, 4.5));
   const imported = object((await (await importResponse).json()).data, 'child media import');
-  const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
-  expect(selected.generation_id).toEqual(expect.any(String));
-  expect(selected.variant_id).toEqual(expect.any(String));
-  const mediaEvidence = mediaImportEvidence(file, {
+  const mediaEvidence = mediaImportEvidenceFromProducer(file, {
     objectId: harness.seed.image.objectId,
     digest: harness.seed.image.digest,
     mediaType: harness.seed.image.mediaType,
-    generationId: selected.generation_id as string,
-    variantId: selected.variant_id as string,
-  });
+  }, imported);
+  const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
+  assertMediaImportSelectionIdentity(selected, imported, mediaEvidence.source);
   const expectedRow = await expectedImageDropRow(original, `occurrence:${seed3.occurrenceId}`, String(selected.asset), 'V2', 4.5);
   assertSemanticAddMediaRequest(post, before.head, original, {
     op: 'occurrence.add-media', owner: `occurrence:${seed3.occurrenceId}`, select: `occurrence:${seed3.occurrenceId}`,
