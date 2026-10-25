@@ -1,0 +1,68 @@
+{
+  "task": "R2 D110",
+  "status": "implemented_pending_independent_protected_review",
+  "agent_base": {
+    "commit": "b27ff3449ec4d9b5e14ac25b8f5a18c1999c21f6",
+    "tree": "972188c76ed7a9e8f41d1baf6768673de2596efc"
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-1daca2a3",
+    "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "tree": "a522511414947e48e317a5e5c2103483b121a750",
+    "clean": true,
+    "lock_source_commit_matches": true
+  },
+  "changed_paths": [
+    "astrid/sdk/timeline/inverse.py",
+    "tests/sdk/test_inverse_removed_shot_owners_runtime.py"
+  ],
+  "fix": {
+    "boundary": "inverse.py restore/materialization boundary",
+    "behavior": "filter physical owner pairs by live occurrence and restored local-shot presence before remember()",
+    "preserves": [
+      "retained roots",
+      "sibling physical owners",
+      "existing guards and fail-closed malformed/missing-authority behavior"
+    ],
+    "no_changes": [
+      "schema",
+      "generated client",
+      "Runtime pin",
+      "auth/store/fixtures",
+      "catchall handling",
+      "source authority"
+    ]
+  },
+  "red": {
+    "result": "2 failed",
+    "cause": "KeyError 'local-shot' in _doc_patch_materialize.remember line 18 via inverse.apply_inverse line 1177; surfaced by real Runtime as catchall/503",
+    "junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-D110-removed-shot-0651/evidence/D110-red.xml",
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-D110-removed-shot-0651/evidence/D110-red.log"
+  },
+  "green": {
+    "result": "2 passed",
+    "membership": [
+      "tests/sdk/test_inverse_removed_shot_owners_runtime.py::test_occurrence_add_or_swap_then_undo_restores_the_authenticated_baseline[add]",
+      "tests/sdk/test_inverse_removed_shot_owners_runtime.py::test_occurrence_add_or_swap_then_undo_restores_the_authenticated_baseline[swap]"
+    ],
+    "junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-D110-removed-shot-0651/evidence/D110-green.xml",
+    "neighbors": {
+      "result": "42 passed",
+      "junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-D110-removed-shot-0651/evidence/D110-neighbors.xml"
+    }
+  },
+  "static": {
+    "ruff": "passed",
+    "mypy": "passed",
+    "py_compile": "passed",
+    "git_diff_check": "passed"
+  },
+  "claims_not_made": [
+    "full suite",
+    "browser/App suite",
+    "P2GO",
+    "D108",
+    "release acceptance"
+  ],
+  "review_required": "independent protected/core review after real RED/GREEN"
+}
