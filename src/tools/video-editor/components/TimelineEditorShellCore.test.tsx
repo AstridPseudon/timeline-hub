@@ -1881,7 +1881,7 @@ describe('TimelineEditorShellCore — phone layout', () => {
   it.each([
     ['the full desktop layout', false],
     ['the condensed desktop layout', true],
-  ] as const)('keeps symmetric side padding and reserves the bottom gallery band on %s', (_name, forceCondensed) => {
+  ] as const)('keeps regular padding around the collapsed pane grips on %s', (_name, forceCondensed) => {
     __deviceClass = 'desktop';
     render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed={forceCondensed} />);
     const main = document.querySelector('main') as HTMLElement;
@@ -1889,7 +1889,7 @@ describe('TimelineEditorShellCore — phone layout', () => {
     expect(main.style.paddingInlineEnd).toBe('');
     expect(main.style.paddingInlineStart).toBe('');
     // jsdom rewrites env(); the browser resolves it to the safe-area inset.
-    expect(main.style.paddingBottom).toMatch(/^calc\(56px \+ env\(/);
+    expect(main.style.paddingBottom).toMatch(/^calc\(12px \+ env\(/);
   });
 
   it.each(['phone', 'tablet'] as const)('reserves no pane-tab band on the %s touch shell: it hosts the entry points', (device) => {

@@ -150,14 +150,6 @@ export interface TimelineEditorRenderActions {
   readonly onOpenExtensionManager: () => void;
 }
 
-/**
- * Desktop reserves the bottom band for the host app's fixed gallery pill. The Tasks tab rests as a 10px
- * edge grip, which fits within the shell's regular 12px padding; its expanded hover controls overlay the editor.
- * Keeping the same padding on both sides avoids a permanent empty strip beside the Inspector.
- * The touch shell hosts gallery and chat entry points in its own thumb bar and reserves no band.
- */
-const PANE_TAB_BAND_BOTTOM_PX = 56;
-
 /** The save conflict dialog and its inline banner say the same thing with the same two buttons. */
 const TIMELINE_CONFLICT_SENTENCE = 'Keep your changes, or switch to the latest version.';
 const TIMELINE_CONFLICT_KEEP_MINE = 'Keep my changes';
@@ -655,11 +647,11 @@ function TimelineEditorShellCoreComponent({
     setCondensedRightPanel('inspector');
   }, [armedGesture, releaseArmedGesture]);
 
-  /** Desktop keeps the timeline above the fixed gallery pill; touch uses its own bottom bar. */
+  /** Desktop's 10px pane grips fit in regular padding; touch uses its own bottom bar. */
   const mainPadding: CSSProperties | undefined = touchChrome
     ? undefined
     : {
-      paddingBottom: safeAreaCalc.paddingBottom(`${PANE_TAB_BAND_BOTTOM_PX}px`),
+      paddingBottom: safeAreaCalc.paddingBottom('12px'),
     };
 
   const renderControls = (
