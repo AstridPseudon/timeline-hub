@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync, realpathSync } from 'node:fs';
+import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync, realpathSync } from 'node:fs';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -73,6 +73,11 @@ const normalHomes = {
 
 const sourceRoles = ['app', 'agent', 'runtime', 'composition'];
 const checkoutPrefixes = { app: 'app-pin', agent: 'agt-pin', runtime: 'rt-pin', composition: 'vw-pin' };
+const P2_PHASE_CAPTURE_HELPER = 'tests/helpers/p2_commit_phase_capture.py';
+export const D66_PHASE_CAPTURE_HELPER_ENV = 'D66_P2_COMMIT_PHASE_CAPTURE_HELPER';
+export const D66_PHASE_CAPTURE_HELPER_SHA256_ENV = 'D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256';
+const ASTRID_PHASE_CAPTURE_HELPER_ENV = 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER';
+const ASTRID_PHASE_CAPTURE_HELPER_SHA256_ENV = 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256';
 
 const selectedEnvironment = {
   app: ['D66_APP_CHECKOUT'],
@@ -214,6 +219,43 @@ function requireExecutable(file, label) {
   return file;
 }
 
+function helperSha256(file) {
+  return createHash('sha256').update(readFileSync(file)).digest('hex');
+}
+
+function validateDiagnosticHelper({ path: helperPath, sha256, required = true, explicit = true }) {
+  if (!helperPath) {
+    if (!required) return null;
+    throw new Error('D66 diagnostic helper path is required');
+  }
+  if (!path.isAbsolute(helperPath)) throw new Error(`D66 diagnostic helper path must be absolute: ${helperPath}`);
+  if (!existsSync(helperPath) || !lstatSync(helperPath).isFile() || lstatSync(helperPath).isSymbolicLink()) throw new Error(`D66 diagnostic helper file is unavailable: ${helperPath}`);
+  if (explicit && !/^[0-9a-f]{64}$/.test(sha256 ?? '')) {
+    throw new Error('D66 diagnostic helper SHA256 must be a 64-character lowercase hex digest');
+  }
+  const actual = helperSha256(helperPath);
+  if (sha256 && actual !== sha256) throw new Error(`D66 diagnostic helper SHA256 mismatch: ${helperPath}`);
+  return { path: helperPath, sha256: actual, source: explicit ? 'explicit' : 'runtime-checkout' };
+}
+
+function diagnosticHelperOverride(env = process.env) {
+  const helperPath = (env[D66_PHASE_CAPTURE_HELPER_ENV] ?? env[ASTRID_PHASE_CAPTURE_HELPER_ENV])?.trim();
+  const sha256 = (env[D66_PHASE_CAPTURE_HELPER_SHA256_ENV] ?? env[ASTRID_PHASE_CAPTURE_HELPER_SHA256_ENV])?.trim();
+  if (!helperPath && !sha256) return null;
+  return { path: helperPath, sha256 };
+}
+
+/** Resolve the existing pinned helper by default, or an explicitly reviewed helper with its identity. */
+export function diagnosticHelperIdentity({ runtimeCheckout, env = process.env, required = false } = {}) {
+  const override = diagnosticHelperOverride(env);
+  if (override) return validateDiagnosticHelper({ ...override, explicit: true });
+  if (!required) return null;
+  const defaultPath = path.join(runtimeCheckout, P2_PHASE_CAPTURE_HELPER);
+  // Offline D66 controls use source-only Runtime fixtures. The real harness still fails closed
+  // when it prepares the existing hook if the selected pinned helper is absent.
+  return existsSync(defaultPath) ? validateDiagnosticHelper({ path: defaultPath, explicit: false }) : null;
+}
+
 function importReadback(sources, python, pythonpath) {
   const probe = [
     'import astrid, astrid_runtime, astrid_runtime_client, runtime_protocol, json',
@@ -320,7 +362,7 @@ export function buildSubmitPlan({ name, target, paths = normalHomes, pins: fixed
   return { name, target, pins, checkouts, checkoutRequests };
 }
 
-export function serviceRecipe({ name, pins, checkouts, preflight = false }) {
+export function serviceRecipe({ name, pins, checkouts, preflight = false, diagnosticHelper = null }) {
   assert(suites[name], 'choose p1, p2, p2-element or p3');
   for (const role of sourceRoles) {
     validateObjectId(pins[role]?.head, `${role} SHA`);
@@ -332,6 +374,11 @@ export function serviceRecipe({ name, pins, checkouts, preflight = false }) {
     `D66_${role.toUpperCase()}_TREE=${shellQuote(pins[role].tree)}`,
     `D66_${role.toUpperCase()}_CHECKOUT=${shellQuote(checkouts[role])}`,
   ]);
+  if (diagnosticHelper) {
+    const reviewedHelper = validateDiagnosticHelper({ path: diagnosticHelper.path, sha256: diagnosticHelper.sha256, explicit: true });
+    env.push(`${D66_PHASE_CAPTURE_HELPER_ENV}=${shellQuote(reviewedHelper.path)}`);
+    env.push(`${D66_PHASE_CAPTURE_HELPER_SHA256_ENV}=${shellQuote(reviewedHelper.sha256)}`);
+  }
   const watchdogSeconds = name === 'p2-element' ? '2' : name === 'p2' ? '20' : '';
   env.push(`ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=${shellQuote(watchdogSeconds)}`);
   return `${env.join(' ')} ${shellQuote(node)} --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs ${shellQuote(name)}${preflight ? ' --preflight' : ''}`;
@@ -603,6 +650,9 @@ async function submitUnlocked(name, { env = process.env, homes = normalHomes, ap
   }
 
   const target = env.D66_SUBMIT_TARGET?.trim();
+  // Validate an explicit reviewed helper before requesting any source checkout or registering a recipe.
+  const requestedDiagnosticHelper = diagnosticHelperOverride(env);
+  if (requestedDiagnosticHelper) validateDiagnosticHelper({ ...requestedDiagnosticHelper, explicit: true });
   const explicit = explicitSubmitTuple(env, homes, appRoot);
   const plan = buildSubmitPlan({ name, target, paths: homes, checkoutRoot, receiptRoot,
     pins: explicit?.pins, checkouts: explicit?.checkouts });
@@ -616,9 +666,10 @@ async function submitUnlocked(name, { env = process.env, homes = normalHomes, ap
   const preflight = preflightSources(exactEnv, homes, appRoot, { receiptRoot, workerRoot });
   const serviceTarget = appCheckoutTarget(checkouts.app, plan.pins.app.head, { target: target || preflight.target, workerRoot });
   const suitesForSubmit = submitSuiteNames(name, plan.pins, env);
+  const diagnosticHelper = diagnosticHelperIdentity({ runtimeCheckout: checkouts.runtime, env });
   const recipes = {
-    preflight: serviceRecipe({ name, pins: plan.pins, checkouts, preflight: true }),
-    normal: serviceRecipe({ name, pins: plan.pins, checkouts }),
+    preflight: serviceRecipe({ name, pins: plan.pins, checkouts, diagnosticHelper, preflight: true }),
+    normal: serviceRecipe({ name, pins: plan.pins, checkouts, diagnosticHelper }),
   };
   const rows = [`app ${suitesForSubmit.preflight} ${recipes.preflight}`, `app ${suitesForSubmit.normal} ${recipes.normal}`];
   registerSubmitRecipes({ registryPath, rows, beforeCommit: beforeRegistryCommit });
@@ -658,6 +709,7 @@ export async function main(sourceOptions = {}) {
   const preflight = mode === '--collect' ? null : preflightSources(process.env, normalHomes, root, sourceOptions);
   const sources = preflight?.sources;
   if (sources) assertSourcesUnchanged(sources);
+  const diagnosticHelper = sources ? diagnosticHelperIdentity({ runtimeCheckout: sources.runtime.checkout, required: suite.retainRuntimeLogs }) : null;
   const snapshot = path.basename(root);
   const output = process.env.D66_OUTPUT_DIR ?? (snapshot.startsWith('.test-')
     ? path.join(orch, 'tests', snapshot.slice(6), 'd66')
@@ -666,7 +718,8 @@ export async function main(sourceOptions = {}) {
   configureRuntimeLogEnv({ suite, output });
   if (mode === '--preflight') {
     const manifest = { suite: name, mode, repo_heads: repoHeads(sources), repo_trees: repoTrees(sources),
-      source_checkouts: sources, service_source: preflight.service_source, service_target: preflight.target };
+      source_checkouts: sources, service_source: preflight.service_source, service_target: preflight.target,
+      diagnostic_helper: diagnosticHelper };
     writeFileSync(path.join(output, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
     console.log(`D66 source preflight PASS: ${path.join(output, 'manifest.json')}`);
     return;
@@ -692,6 +745,10 @@ export async function main(sourceOptions = {}) {
     PLAYWRIGHT_BROWSERS_PATH: process.env.PLAYWRIGHT_BROWSERS_PATH ?? '/home/user/work/pw-browsers',
     TIMELINE_BUNDLE_AGENT_HEAD: sources.agent.head, TIMELINE_BUNDLE_RUNTIME_HEAD: sources.runtime.head,
   });
+  if (diagnosticHelper) {
+    process.env[D66_PHASE_CAPTURE_HELPER_ENV] = diagnosticHelper.path;
+    process.env[D66_PHASE_CAPTURE_HELPER_SHA256_ENV] = diagnosticHelper.sha256;
+  }
   const hashes = () => Object.fromEntries([...suite.files, readiness].map((file) =>
     [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')]));
   const manifest = {
@@ -699,6 +756,7 @@ export async function main(sourceOptions = {}) {
     repo_heads: sources ? repoHeads(sources) : { app: git(root, ['rev-parse', 'HEAD']), composition: git('/home/user/work/composition', ['rev-parse', 'HEAD']) },
     repo_trees: sources ? repoTrees(sources) : { app: git(root, ['rev-parse', 'HEAD^{tree}']), composition: git('/home/user/work/composition', ['rev-parse', 'HEAD^{tree}']) },
     ...(sources ? { source_checkouts: sources, service_source: preflight.service_source, service_target: preflight.target } : {}),
+    diagnostic_helper: diagnosticHelper,
     test_sha256_before: hashes(), service_versions: importVersions ? { imports: importVersions } : {},
     junit: { readiness: path.join(output, 'readiness.xml'), original: path.join(output, `${name}.xml`) },
   };

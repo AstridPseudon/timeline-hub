@@ -51,6 +51,10 @@ export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
 export const THREE_PRODUCTS_REFERENCE_AT = 15;
 const P2_PHASE_BOOTSTRAP_DIR = path.resolve(REPO_ROOT, 'scripts/testing');
 const P2_PHASE_CAPTURE_HELPER = 'tests/helpers/p2_commit_phase_capture.py';
+const D66_PHASE_CAPTURE_HELPER_ENV = 'D66_P2_COMMIT_PHASE_CAPTURE_HELPER';
+const D66_PHASE_CAPTURE_HELPER_SHA256_ENV = 'D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256';
+const ASTRID_PHASE_CAPTURE_HELPER_ENV = 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER';
+const ASTRID_PHASE_CAPTURE_HELPER_SHA256_ENV = 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256';
 export const P2_PHASE_CAPTURE_FILE = 'p2-commit-phase.jsonl';
 const P2_PHASE_LAUNCH_ORDINAL_ENV = 'D66_RUNTIME_PHASE_LAUNCH_ORDINAL';
 
@@ -91,6 +95,27 @@ export interface P2CommitPhaseCaptureConfig {
   directory: string;
   sink: string;
   helper: string;
+  helperSha256: string;
+}
+
+function resolvePhaseCaptureHelper(): { path: string; sha256: string } {
+  const supplied = (process.env[D66_PHASE_CAPTURE_HELPER_ENV] ?? process.env[ASTRID_PHASE_CAPTURE_HELPER_ENV])?.trim();
+  const helper = supplied || path.join(RUNTIME_CHECKOUT, P2_PHASE_CAPTURE_HELPER);
+  const expected = (process.env[D66_PHASE_CAPTURE_HELPER_SHA256_ENV] ?? process.env[ASTRID_PHASE_CAPTURE_HELPER_SHA256_ENV])?.trim();
+  if (!path.isAbsolute(helper)) throw new Error(`D66 diagnostic helper path must be absolute: ${helper}`);
+  if (!supplied) {
+    if (expected) throw new Error('D66 diagnostic helper SHA256 requires an explicit helper path');
+    const info = lstatSync(helper, { throwIfNoEntry: false });
+    return { path: helper, sha256: info?.isFile() && !info.isSymbolicLink() ? createHash('sha256').update(readFileSync(helper)).digest('hex') : '' };
+  }
+  const info = lstatSync(helper, { throwIfNoEntry: false });
+  if (!info || !info.isFile() || info.isSymbolicLink()) throw new Error(`D66 diagnostic helper file is unavailable: ${helper}`);
+  if (supplied && !/^[0-9a-f]{64}$/.test(expected ?? '')) {
+    throw new Error('D66 diagnostic helper SHA256 must be a 64-character lowercase hex digest');
+  }
+  const actual = createHash('sha256').update(readFileSync(helper)).digest('hex');
+  if (expected && actual !== expected) throw new Error(`D66 diagnostic helper SHA256 mismatch: ${helper}`);
+  return { path: helper, sha256: actual };
 }
 
 /** Resolve the private, bounded observer destination selected by D66. */
@@ -104,10 +129,12 @@ export function p2CommitPhaseCaptureConfig(runtimeLogDir: string | undefined, la
   if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('D66 Runtime log directory must be a private child of TMPDIR');
   if (!Number.isInteger(launchOrdinal) || launchOrdinal < 1) throw new Error('P2 Runtime phase launch ordinal must be positive');
   const suffix = launchOrdinal === 1 ? '' : `-${launchOrdinal}`;
+  const helper = resolvePhaseCaptureHelper();
   return {
     directory,
     sink: path.join(directory, `${P2_PHASE_CAPTURE_FILE.slice(0, -'.jsonl'.length)}${suffix}.jsonl`),
-    helper: path.join(RUNTIME_CHECKOUT, P2_PHASE_CAPTURE_HELPER),
+    helper: helper.path,
+    helperSha256: helper.sha256,
   };
 }
 
@@ -699,6 +726,7 @@ export class DirectHarness {
       env.ASTRID_P2_COMMIT_PHASE_CAPTURE = '1';
       env.ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK = captureSink;
       env.ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER = config.helper;
+      if (config.helperSha256) env.ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256 = config.helperSha256;
       const watchdogSeconds = process.env.ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS?.trim();
       if (watchdogSeconds) env.ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS = watchdogSeconds;
     }
