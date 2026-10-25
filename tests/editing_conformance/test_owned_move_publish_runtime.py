@@ -13,6 +13,8 @@ import pytest
 
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.emitter import emit_document_commands
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.workspace_client import WorkspaceClientError
@@ -32,62 +34,81 @@ def attach(runtime, name='owned'):
     return Checkout.attach(runtime.session(name=name))
 
 
+def _commit_parent_variant(fixture, parent, *, key, label):
+    """Seed a variant through the current provider, retaining the source payload."""
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_port import route_path
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    service = RuntimeService(fixture.duplicate_root)
+    try:
+        service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+        head_id = service.get_project_timeline(
+            fixture.project_id, fixture.timeline_id)['head_revision_id']
+        document = service._timeline_commits()[0].revision_closure(
+            fixture.project_id, fixture.timeline_id, head_id)
+        before = bundle_from_document(document)
+        after = copy.deepcopy(before)
+        after['parent'] = copy.deepcopy(parent)
+        commands = emit_document_commands(before, after)
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)
+        changes = [change for command in commands if command['op'] == 'doc.patch'
+                   for change in command['args']['changes']]
+        request = {
+            'api_version': 1, 'project_id': fixture.project_id,
+            'timeline_id': fixture.timeline_id,
+            'base_revision_id': head['head_revision_id'],
+            'base_publication_id': head['head_publication_id'],
+            'commands': commands, 'label': label,
+            'steps': [{'id': key, 'label': label, 'intent': label,
+                       'tags': ['integration'],
+                       'command_ordinals': list(range(len(commands))),
+                       'patch': changes, 'reads': []}],
+            'merge': 'atomic', 'reads': [], 'dry_run': False,
+            'source': {'via': 'python'},
+            'rationale': 'Prepare the owned parent variant.',
+            'group_id': 'D86-owned-move8',
+        }
+        return service.commit_timeline(
+            fixture.project_id, fixture.timeline_id, request,
+            idempotency_key=key, publisher='owned-move8',
+            invocation_path=route_path(fixture.project_id, fixture.timeline_id),
+            authorize=lambda: None,
+        )
+    finally:
+        service.close()
+
+
 @pytest.fixture
 def trim_film(film):
     """Reuse the captured film/CAS and make its parent media clip trim-ready."""
-    from runtime_protocol.service import RuntimeService
-
     fixture, original, _ = film
     parent = copy.deepcopy(original)
     parent['clips'][0]['clipType'] = 'media'
     parent['clips'][0].pop('app', None)
     parent['registry']['assets']['music-bed']['duration'] = 5.5
     parent['config']['clips'] = copy.deepcopy(parent['clips'])
-    service = RuntimeService(fixture.duplicate_root)
-    try:
-        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
-        baseline = service.publish_parent_composition(
-            fixture.project_id, fixture.timeline_id,
-            {'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
-             'expected_head': head, 'parent_revision_id': 'owned-trim-baseline',
-             'parent_composition': parent},
-            idempotency_key='owned-trim-baseline',
-        )
-    finally:
-        service.close()
+    baseline = _commit_parent_variant(
+        fixture, parent, key='owned-trim-baseline', label='Owned trim baseline')
     return fixture, parent, baseline
 
 
 @pytest.fixture
 def transition_film(trim_film):
     """Reuse the trim closure with an authored parent transition."""
-    from runtime_protocol.service import RuntimeService
-
     fixture, original, _ = trim_film
     parent = copy.deepcopy(original)
     for rows in (parent['clips'], parent['config']['clips']):
         next(row for row in rows if row['id'] == 'music-bed')['transition'] = {
             'type': 'crossfade', 'duration': .25}
-    service = RuntimeService(fixture.duplicate_root)
-    try:
-        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
-        baseline = service.publish_parent_composition(
-            fixture.project_id, fixture.timeline_id,
-            {'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
-             'expected_head': head, 'parent_revision_id': 'owned-transition-baseline',
-             'parent_composition': parent},
-            idempotency_key='owned-transition-baseline',
-        )
-    finally:
-        service.close()
+    baseline = _commit_parent_variant(
+        fixture, parent, key='owned-transition-baseline', label='Owned transition baseline')
     return fixture, parent, baseline
 
 
 @pytest.fixture
 def split_film(trim_film):
     """Reuse the verified-media trim closure with an explicit source window."""
-    from runtime_protocol.service import RuntimeService
-
     fixture, original, _ = trim_film
     parent = copy.deepcopy(original)
     clip = parent['clips'][0]
@@ -95,42 +116,20 @@ def split_film(trim_film):
     clip.pop('effects', None)
     clip.update({'from': 0, 'to': 5.5, 'hold': 5.5, 'speed': 2})
     parent['config']['clips'] = copy.deepcopy(parent['clips'])
-    service = RuntimeService(fixture.duplicate_root)
-    try:
-        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
-        baseline = service.publish_parent_composition(
-            fixture.project_id, fixture.timeline_id,
-            {'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
-             'expected_head': head, 'parent_revision_id': 'owned-split-baseline',
-             'parent_composition': parent},
-            idempotency_key='owned-split-baseline',
-        )
-    finally:
-        service.close()
+    baseline = _commit_parent_variant(
+        fixture, parent, key='owned-split-baseline', label='Owned split baseline')
     return fixture, parent, baseline
 
 
 @pytest.fixture
 def delete_film(trim_film):
     """Reuse the trim harness with its occurrence dependencies removed."""
-    from runtime_protocol.service import RuntimeService
-
     fixture, original, _ = trim_film
     parent = copy.deepcopy(original)
     parent['occurrences'] = []
     parent['config']['clips'] = copy.deepcopy(parent['clips'])
-    service = RuntimeService(fixture.duplicate_root)
-    try:
-        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
-        baseline = service.publish_parent_composition(
-            fixture.project_id, fixture.timeline_id,
-            {'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
-             'expected_head': head, 'parent_revision_id': 'owned-delete-baseline',
-             'parent_composition': parent},
-            idempotency_key='owned-delete-baseline',
-        )
-    finally:
-        service.close()
+    baseline = _commit_parent_variant(
+        fixture, parent, key='owned-delete-baseline', label='Owned delete baseline')
     return fixture, parent, baseline
 
 
