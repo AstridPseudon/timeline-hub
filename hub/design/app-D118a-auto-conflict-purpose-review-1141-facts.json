@@ -1,0 +1,17 @@
+{
+  "task": "D118a-auto-conflict-purpose-review-1141",
+  "verdict": "b_stale_exact_test_reason_refusal_preserved",
+  "source_changed": false,
+  "target": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py",
+  "target_sha256": "3138f2ac264cf3a5e52bdd44677eb6f8cf9f70d362a0630e5b16490307a6b22c",
+  "target_upstream_r4": "absent",
+  "runtime_head": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+  "runtime_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+  "retained_nodes": {"count": 4, "nodes": ["image-at", "image-hold", "video-at", "video-hold"], "observed_reason": "value_conflict", "unchanged_expected_reason": "dependency_changed", "all_refused_before_acceptance": true, "no_persistence_observed": true},
+  "captured_parent_timing_fields": ["at", "at_ms", "track", "hold", "from", "to", "speed"],
+  "c0_rule": {"field_or_item_overlap": "value_conflict", "collection_shape_overlap": "selection_changed", "scope_overlap": "dependency_changed", "explicit_atomic_overlap": "atomic_scope_changed"},
+  "approved_comparison": "cb35bd4fb and 824e03f6a corrected same-path track-label field refusals to value_conflict while preserving no-write assertions",
+  "proposal": {"path": "proposal.patch", "applied": false, "change": "expected_reason = 'value_conflict'"},
+  "static_checks": {"ruff": "pass", "mypy_follow_imports_skip": "pass", "py_compile": "pass", "git_diff_check": "pass", "git_status": "clean"},
+  "not_run": "Retained four originals were not rerun per D120; no full/browser/live-socket suite requested."
+}

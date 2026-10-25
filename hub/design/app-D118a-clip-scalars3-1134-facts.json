@@ -1,0 +1,48 @@
+{
+  "worker": "app-D118a-clip-scalars3-1134",
+  "base_agent": "0ad49261ed36f043b059c07de989bd39cd3a5889",
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-42aad0e9",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "clean": true
+  },
+  "allowed_file": {
+    "path": "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py",
+    "original_sha256": "52c63fa1a59d4ac08ca9077b97e6facfe7947cc36fde2795d1538df31a14cfed",
+    "current_sha256": "e8f28d05d9a458958d1e7bbd537a662ddecba6161e147c22f4b4dac6ede834db",
+    "changed_files": ["tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py"]
+  },
+  "changes": [
+    "Registered the genuine runtime commit provider before create_timeline and fixture seeding.",
+    "Added the required current v2 caller fields to the scalar request helper: label, per-command steps, merge, reads, dry_run, source, rationale, and group_id."
+  ],
+  "retained_nodes": {
+    "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-42aad0e9 PYTHONPATH=/home/user/work/wt/app-D118a-clip-scalars3-1134:/home/user/work/wt/rt-pin-42aad0e9 /home/user/work/venv-agent/bin/python -m pytest -q -m integration --disable-warnings --tb=short tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py::test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[scalar] tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py::test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[compound] tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py::test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[separate]",
+    "result": "3 failed in 32.96s",
+    "progress": "All three nodes accept the scalar commit and reach inverse validation; the original parent-composition bootstrap failure is gone.",
+    "failures": [
+      {
+        "modes": ["scalar", "compound"],
+        "owner": "Runtime runtime_protocol/timeline_commit_auth.py:1607",
+        "message": "inverse stage source materialization is outside its physical turnover"
+      },
+      {
+        "modes": ["separate"],
+        "owner": "Runtime runtime_protocol/timeline_commit_auth.py:1755",
+        "message": "inverse stage native writes do not cover its authenticated effect image"
+      }
+    ]
+  },
+  "public_caller": {
+    "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-42aad0e9 PYTHONPATH=/home/user/work/wt/app-D118a-clip-scalars3-1134:/home/user/work/wt/rt-pin-42aad0e9 /home/user/work/venv-agent/bin/python -m pytest -q tests/sdk/test_timeline_commit_provider_runtime.py::test_public_undo_redo_persists_v2_effect_bindings[False]",
+    "result": "1 passed in 2.72s"
+  },
+  "static": {
+    "ruff": "passed",
+    "mypy_follow_imports_skip": "passed",
+    "py_compile": "passed",
+    "git_diff_check": "passed"
+  },
+  "status": "blocked_by_scoped_runtime_inverse_validation; no production change authorized"
+}

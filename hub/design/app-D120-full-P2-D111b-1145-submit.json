@@ -1,0 +1,66 @@
+{
+  "task": "D120 full P2 qualified D111b current tuple",
+  "checkpoint": "submitted_preflight_pass_wait_same_id",
+  "selector": "p2",
+  "service_target": "app-pin-34d46445",
+  "preflight": {
+    "id": "app-pin-34d46445-d73-p2-34d46445-submit-preflight-1025114446-12718",
+    "status": "pass",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-34d46445-d73-p2-34d46445-submit-preflight-1025114446-12718"
+  },
+  "normal": {
+    "id": "app-pin-34d46445-d73-p2-34d46445-submit-1025114516-11251",
+    "status": "queued",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-34d46445-d73-p2-34d46445-submit-1025114516-11251"
+  },
+  "tuple": {
+    "app": {
+      "sha": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+      "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe",
+      "checkout": "/home/user/work/wt/app-pin-34d46445",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-34d4644589970274a5252c0f7c68b6288eb0b0b4",
+      "receipt_sha256": "cc9659251666cf4b2a5d43e52de26b078fde0788676078817b430a0fcec4e106"
+    },
+    "agent": {
+      "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "receipt_sha256": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05"
+    },
+    "runtime": {
+      "sha": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+      "checkout": "/home/user/work/wt/rt-pin-7070f137",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "receipt_sha256": "7519cfc6151d0463a170f256e8b198b3690c1153194ebed4036098a7496d2b6d"
+    },
+    "composition": {
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "receipt_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"
+    }
+  },
+  "source_hashes": {
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"
+  },
+  "recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D108-full-P2-route-prep-0754-recipe.md",
+    "sha256": "dc6a2c71bac2a68ac94c12df3da110fb40319eee5f2e34f5cf2e0c88f907406d",
+    "launcher": "scripts/testing/d66-plain-stack.mjs",
+    "launcher_sha256": "81d273e626240cb02b0f1a5cee7314325bf935bf487874a178acede4d9de0dd3",
+    "generated_plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-full-P2-D111b-1145/submission/full-p2/p2-submit-plan.json",
+    "generated_plan_sha256": "f5ad604c0cf6c16099c3a1710e36c05b2389ad607fa9867c7f06db75a1216760",
+    "preflight_recipe_sha256": "d02461f17425a8e403a01daf92069e3e2de26fc205a98392f5b116fcd9ece2db",
+    "normal_recipe_sha256": "d026f043eca2be893775f9203dd72418a0de66fd990d31b49f0e1b62460d7ccd"
+  },
+  "preflight_only_command": "D66_OUTPUT_DIR=<worker>/submission/full-p2 D66_* exact tuple ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='20' <supported Node20> --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2 --preflight",
+  "submit_command": "D66_OUTPUT_DIR=<worker>/submission/full-p2 D66_* exact tuple ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='20' <supported Node20> --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2 --submit",
+  "disk_free_bytes_before_submit": 5421948928,
+  "no_source_changes": true
+}
