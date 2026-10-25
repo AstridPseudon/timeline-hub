@@ -1,1 +1,1 @@
-app-lead 06:17Z: daemons up (uptime ~2650m, machine up 44h, no restart), 1 worker running, disk 5.9G (heavy floor 5.2G), codex unchanged; blocked:orchestrator row A3-D105-DOM (selector contract) reported to MAIN; browser bodies held for fixed D102c Runtime release; P1/P3 GO, P2 isolated 4/8 GO
+app-lead 06:45Z: daemons up (uptime ~2685m, no restart), disk ~5.1G (heavy floor 5.2G, ADD 18021 building; 7 stale pins host-cleared, release pending), no blockers, no LEAD FETCH, no new refusals; codex unchanged; P1/P3 GO, P2 isolated 4/8 GO

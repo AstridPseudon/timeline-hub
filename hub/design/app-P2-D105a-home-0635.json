@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-25T06:35:30.770930+00:00",
+  "home": "398489d387e6ab4cb91d970afe77a50e11ca6902",
+  "exact_reviewed_source_and_adopted_pins": {
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": {
+      "home_blob": "00a6fc147d9cd48086aa6726a3c96ae74ab8b53c",
+      "reviewed_blob": "00a6fc147d9cd48086aa6726a3c96ae74ab8b53c",
+      "equal": true
+    },
+    "tests/e2e/local/support/p2-elements-assets-receipt.test.mjs": {
+      "home_blob": "719d6a6b9f2a153640c38c02ffadbf914ce6e652",
+      "reviewed_blob": "719d6a6b9f2a153640c38c02ffadbf914ce6e652",
+      "equal": true
+    },
+    "runtime.lock.json": {
+      "retains_adopted_blob": true
+    },
+    "public/install-manifest.json": {
+      "retains_adopted_blob": true
+    }
+  },
+  "body_proof": "placement original remains owed after ADD/element"
+}
