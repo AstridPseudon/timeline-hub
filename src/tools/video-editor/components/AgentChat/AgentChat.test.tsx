@@ -1253,6 +1253,139 @@ describe('AgentChat', () => {
     expect(screen.getByText('failed queued message')).toBeInTheDocument();
   });
 
+  it('rebinds a failed Claude first-message queue row to its recovered empty session and drains it once', async () => {
+    const state = createState();
+    const oldSessionId = 'claude-code:vanished-empty';
+    const recoveredSessionId = 'claude-code:recovered-empty';
+    state.projectChats['project-1'].selected_session_id = oldSessionId;
+    state.projectChats['project-1'].sessions = [{ id: oldSessionId, pending_first_message: true }];
+    state.activeSessionData.id = oldSessionId;
+    state.activeSessionData.status = 'processing';
+    state.sessionsData = [{ id: oldSessionId, status: 'processing' }];
+    state.timelineClips = [createTimelineClip('clip-queued-before-recovery')];
+    state.sendMessage.mutateAsync = vi.fn()
+      .mockRejectedValueOnce(new Error('The original empty chat disappeared'))
+      .mockResolvedValue(undefined);
+    mockFromState(state);
+    mocks.useLocalAgents.mockReturnValue({
+      data: { defaultAgent: 'claude-code', agents: [{ id: 'claude-code', name: 'Claude Code', state: 'ready', line: null, models: [], defaultModel: null }] },
+      isLoading: false, error: null, refetch: vi.fn(),
+    });
+    const persistedQueueSessionIds: string[][] = [];
+    mocks.useSaveProjectDraft.mockImplementation(() => ({ mutateAsync: vi.fn().mockImplementation(async (input: { text: string; queuedMessages: Array<{ id: string; text: string; session_id: string; attachments?: unknown[] }> }) => {
+      persistedQueueSessionIds.push(input.queuedMessages.map(row => row.session_id));
+      const chat = state.projectChats['project-1'];
+      chat.draft = { text: input.text, revision: chat.draft.revision + 1, queued_messages: input.queuedMessages };
+      return chat;
+    }) }));
+
+    const view = renderAgentChat();
+    const textbox = await getInput();
+    await queueMessage(textbox, 'continue the first task');
+    await waitFor(() => expect(state.projectChats['project-1'].draft.queued_messages).toHaveLength(1));
+    const savedRow = state.projectChats['project-1'].draft.queued_messages[0]!;
+    expect(savedRow.session_id).toBe(oldSessionId);
+    expect(savedRow.attachments).toEqual([expect.objectContaining({ clipId: 'clip-queued-before-recovery' })]);
+
+    state.activeSessionData.status = 'waiting_user';
+    rerenderAgentChat(view.rerender);
+    await waitFor(() => expect(state.sendMessage.mutateAsync).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText('Not sent. Delivery not confirmed: Send now checks saved history first, and may send this message again.')).toBeInTheDocument());
+
+    // The bridge has replaced the missing session with a same-agent empty session
+    // and atomically remapped the durable queue row to that ID.
+    const chat = state.projectChats['project-1'];
+    const savesBeforeRecovery = persistedQueueSessionIds.length;
+    state.projectChats['project-1'] = {
+      ...chat,
+      revision: chat.revision + 1,
+      selected_session_id: recoveredSessionId,
+      main_session_id: recoveredSessionId,
+      sessions: [{ id: recoveredSessionId, pending_first_message: true }],
+      draft: {
+        ...chat.draft,
+        revision: chat.draft.revision + 1,
+        queued_messages: chat.draft.queued_messages.map(row => ({ ...row, session_id: recoveredSessionId })),
+      },
+    };
+    state.activeSessionData.id = recoveredSessionId;
+    state.activeSessionData.status = 'waiting_user';
+    state.sessionsData = [{ id: recoveredSessionId, status: 'waiting_user' }];
+    rerenderAgentChat(view.rerender);
+
+    await waitFor(() => expect(state.sendMessage.mutateAsync).toHaveBeenCalledTimes(2));
+    expect(state.sendMessage.mutateAsync).toHaveBeenNthCalledWith(2, {
+      input: {
+        message: savedRow.text,
+        attachments: [expect.objectContaining({ clipId: 'clip-queued-before-recovery' })],
+        requestId: savedRow.id,
+      },
+      projectId: 'project-1',
+      sessionId: recoveredSessionId,
+      context: expect.objectContaining({ projectId: 'project-1' }),
+    });
+    await waitFor(() => expect(state.projectChats['project-1'].draft.queued_messages).toHaveLength(0));
+    expect(state.sendMessage.mutateAsync).toHaveBeenCalledTimes(2);
+    expect(persistedQueueSessionIds.slice(savesBeforeRecovery).flat()).not.toContain(oldSessionId);
+  });
+
+  it.each([
+    ['ordinary saved queue update', false] as const,
+    ['recovered started chat', true] as const,
+  ])('%s does not unpause or rebind a failed queued row', async (scenario, startedChat) => {
+    const state = createState();
+    const oldSessionId = 'claude-code:vanished-empty';
+    const otherSessionId = 'claude-code:other';
+    state.projectChats['project-1'].selected_session_id = oldSessionId;
+    state.projectChats['project-1'].sessions = [{ id: oldSessionId, pending_first_message: true }];
+    state.activeSessionData.id = oldSessionId;
+    state.activeSessionData.status = 'processing';
+    state.sessionsData = [{ id: oldSessionId, status: 'processing' }];
+    state.sendMessage.mutateAsync = vi.fn().mockRejectedValue(new Error('The original empty chat disappeared'));
+    mockFromState(state);
+    mocks.useLocalAgents.mockReturnValue({
+      data: { defaultAgent: 'claude-code', agents: [{ id: 'claude-code', name: 'Claude Code', state: 'ready', line: null, models: [], defaultModel: null }] },
+      isLoading: false, error: null, refetch: vi.fn(),
+    });
+
+    const view = renderAgentChat();
+    const textbox = await getInput();
+    await queueMessage(textbox, 'keep this safely queued');
+    await waitFor(() => expect(state.projectChats['project-1'].draft.queued_messages).toHaveLength(1));
+    const savedRow = state.projectChats['project-1'].draft.queued_messages[0]!;
+    state.activeSessionData.status = 'waiting_user';
+    rerenderAgentChat(view.rerender);
+    await waitFor(() => expect(state.sendMessage.mutateAsync).toHaveBeenCalledTimes(1));
+
+    const chat = state.projectChats['project-1'];
+    state.projectChats['project-1'] = {
+      ...chat,
+      revision: chat.revision + 1,
+      selected_session_id: startedChat ? otherSessionId : oldSessionId,
+      main_session_id: startedChat ? otherSessionId : chat.main_session_id,
+      sessions: startedChat
+        ? [{ id: otherSessionId, pending_first_message: false }]
+        : [{ id: oldSessionId, pending_first_message: true }],
+      draft: {
+        ...chat.draft,
+        revision: chat.draft.revision + 1,
+        queued_messages: startedChat
+          ? chat.draft.queued_messages.map(row => ({ ...row, session_id: otherSessionId }))
+          : chat.draft.queued_messages.map(row => ({ ...row, text: `${scenario}: ${row.text}` })),
+      },
+    };
+    state.activeSessionData.id = startedChat ? otherSessionId : oldSessionId;
+    state.activeSessionData.status = 'waiting_user';
+    state.sessionsData = [{ id: state.projectChats['project-1'].selected_session_id!, status: 'waiting_user' }];
+    rerenderAgentChat(view.rerender);
+
+    await new Promise(resolve => setTimeout(resolve, 450));
+    expect(state.sendMessage.mutateAsync).toHaveBeenCalledTimes(1);
+    expect(state.projectChats['project-1'].draft.queued_messages).toHaveLength(1);
+    expect(state.projectChats['project-1'].draft.queued_messages[0]?.session_id).toBe(startedChat ? otherSessionId : oldSessionId);
+    expect(state.projectChats['project-1'].draft.queued_messages[0]?.id).toBe(savedRow.id);
+  });
+
   it('reorders and deletes queued messages in the rendered stack', async () => {
     const state = createState();
     state.activeSessionData.status = 'processing';
