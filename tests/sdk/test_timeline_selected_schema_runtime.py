@@ -766,7 +766,7 @@ def test_native_rebase_after_v2_and_selection_removal_uses_original_object(multi
                                                values={'label': 'After V2'})]), 'after-v2')
     case.object_reads.clear()
     accepted = case.submit(body, 'rebase-after-v2')
-    assert accepted['data']['status'] == 'rebased'
+    assert accepted['data']['status'] == 'merged'
     assert case.object_reads == [(case.pin, case.object_id)] * 2
     case.object_reads.clear()
     undone = case.submit(case.request([inverse(accepted['receipt']['receipt_id'])]), 'undo-after-v2')
@@ -999,7 +999,7 @@ def test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_surviv
     case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
                                                values={'label': 'Peer'})]), 'authority-peer')
     accepted = case.submit(body, 'authority-retry')
-    assert accepted['data']['status'] == 'rebased'
+    assert accepted['data']['status'] == 'merged'
     manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
     test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
     packs.admit_project_pack('realm', case.project)
