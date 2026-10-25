@@ -15,7 +15,7 @@ import { AgentChatMenu } from './AgentChatMenu';
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { AgentIcon, agentNames } from './agentIdentity';
 import { AgentChatMessage, AgentChatToolGroup } from './AgentChatMessage.tsx';
-import { buildRenderedTurns } from './buildRenderedTurns';
+import { buildRenderedTurns, type RenderedTurn } from './buildRenderedTurns';
 import { buildTourTurns, tourActStartMs, type TourChatProgress } from './tourChatTurns';
 import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
 import { useChatScroll } from './useChatScroll';
@@ -135,7 +135,27 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
   const turns = useMemo(() => buildTourTurns(EDITOR_TOUR_SCRIPT, baseMs, act, beat, sent, progress), [baseMs, act, beat, sent, progress]);
   const renderedTurns = useMemo(() => buildRenderedTurns(turns), [turns]);
   const currentActStart = new Date(tourActStartMs(baseMs, act)).toISOString();
+  const turnAt = (item: RenderedTurn) => (item.kind === 'message' ? item.turn.timestamp : item.pairs[0].call.timestamp);
+  // The act's reply and actions come after its prompt; a phone's spotlight lights them alone.
+  const replyFrom = renderedTurns.findIndex((item) => turnAt(item) > currentActStart);
+  const conversation = replyFrom < 0 ? renderedTurns : renderedTurns.slice(0, replyFrom);
+  const reply = replyFrom < 0 ? [] : renderedTurns.slice(replyFrom);
   const { scrollContainerRef, scrollContentRef, onScroll } = useChatScroll(`tour:${runId}`, true, renderedTurns.length);
+<<<<<<< HEAD
+=======
+
+  const renderTurn = (item: RenderedTurn) => (
+    <div
+      key={item.key}
+      className={cn(item.kind === 'message' ? 'flex flex-col gap-2.5' : 'space-y-2', reducedMotion && turnAt(item) >= currentActStart && 'animate-in fade-in duration-300')}
+    >
+      {item.kind === 'message'
+        ? <AgentChatMessage turn={item.turn} />
+        : <AgentChatToolGroup pairs={item.pairs} defaultOpen />}
+    </div>
+  );
+
+>>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
   const composerText = beat === 'compose' && !sent ? script.prompt.slice(0, progress.typed) : '';
   const busy = beat === 'respond' && !chatReady;
   const thinking = busy && progress.replyChars === 0;
@@ -162,6 +182,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
           </div>
         )}
         <div ref={scrollContentRef} className="flex flex-col gap-2.5">
+<<<<<<< HEAD
           {renderedTurns.map((item) => {
             const at = item.kind === 'message' ? item.turn.timestamp : item.pairs[0].call.timestamp;
             return <div key={item.key} className={cn(item.kind === 'message' ? 'flex flex-col gap-2.5' : 'space-y-2', reducedMotion && at >= currentActStart && 'animate-in fade-in duration-300')}>
@@ -169,6 +190,20 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
             </div>;
           })}
           {thinking && <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Thinking...</div>}
+=======
+          {conversation.map(renderTurn)}
+          {(reply.length > 0 || thinking) && (
+            <div className="flex flex-col gap-2.5" {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.chatReply }}>
+              {reply.map(renderTurn)}
+              {thinking && (
+                <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Thinking...
+                </div>
+              )}
+            </div>
+          )}
+>>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
         </div>
       </div>
       <div className="border-t border-border/70 px-3 py-3">

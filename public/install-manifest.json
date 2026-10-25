@@ -1,14 +1,19 @@
 {
   "schema_version": 1,
   "agent": {
+<<<<<<< HEAD
     "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
   },
   "runtime": {
     "sha": "ab1e4f6141987706132916e2da16477f5a019464",
     "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+=======
+    "sha": "4be45caaa5a1919f476410f36f6034b862d08560"
   },
-  "vibecomfy": {
-    "sha": "31f90bb03d330283b76e7dbdda51197be787090d"
+  "runtime": {
+    "sha": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "schema_digest": "sha256:3605a9c517d92031d7702307e256223905784e0800bcd09c87005ce21ee53a47"
+>>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
   },
   "tools": {
     "uv": {

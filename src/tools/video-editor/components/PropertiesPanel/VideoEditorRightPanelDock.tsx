@@ -119,7 +119,7 @@ export function VideoEditorRightPanelDock({
   // The outer grid track clips while it changes width. Keep the retained
   // reading surface at its final width so reflow cannot move its scroll anchor.
   const contentWidth = inGrid && !video
-    ? 'max(0px, calc(min(420px, 32vw, calc(100vw - 24px)) - 2px))'
+    ? 'max(0px, calc(min(360px, 32vw, calc(100vw - 24px)) - 2px))'
     : undefined;
   const tabs: readonly VideoEditorRightPanelTab[] = video ? ['video', 'inspector', 'extensions'] : ['inspector', 'extensions'];
   const showTab = (next: VideoEditorRightPanelTab, displayMode: 'compact' | 'dock' = layout) => {
@@ -232,7 +232,7 @@ export function VideoEditorRightPanelDock({
       ? { gridColumn: leftPanelPresent ? 3 : 2, gridRow: '1 / -1', alignSelf: 'start', width: 'calc(100% - 12px)', marginInlineStart: 12, height: measuredHeight && measuredHeight > 0 ? measuredHeight : '100%', maxHeight: '100%', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }
       : dock
         ? { top: 12, right: rightInset, width: open ? `calc(100% - ${12 + rightInset}px)` : 0, height: 'calc(100% - 24px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }
-        : { top: 12, right: rightInset, width: open ? `calc(100vw - ${12 + rightInset}px)` : 0, maxWidth: 420, maxHeight: 'min(70dvh, 620px)', height: 'min(70dvh, 620px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }}>
+        : { top: 12, right: rightInset, width: open ? `calc(100vw - ${12 + rightInset}px)` : 0, maxWidth: 360, maxHeight: 'min(70dvh, 620px)', height: 'min(70dvh, 620px)', pointerEvents: open ? undefined : 'none', borderWidth: open ? undefined : 0 }}>
     <div className={`flex shrink-0 items-center gap-1 border-b border-border/70 ${touch ? 'h-11 px-1' : 'px-2 py-1.5'}`} style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
       <div role="tablist" aria-label="Right panel surface" className="flex min-w-0 flex-1 gap-1" style={VIDEO_EDITOR_THEME_VARS}>
         {tabs.map((value) => {

@@ -413,6 +413,37 @@ function AvailableAgentChatPanel({
     const savedQueue = restored.map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] }));
     const saved = { text: projectChat.data.draft.text, queue: savedQueue };
     if (hydratedProjectDraftRef.current) {
+      // Empty-session recovery moves durable queue rows by submission ID. Adopt
+      // only that safe replacement, preserving any unsaved local text or rows.
+      const entries = projectChat.data.sessions;
+      const recoveredIds = new Set<string>();
+      const rebind = (item: QueuedMessage) => {
+        const moved = savedQueue.find(saved => saved.id === item.id && saved.sessionId !== item.sessionId);
+        if (!moved || entries.some(session => session.id === item.sessionId)
+            || sessionAgentId(item.sessionId) === 'astrid'
+            || sessionAgentId(item.sessionId) !== sessionAgentId(moved.sessionId)
+            || !entries.some(session => session.id === moved.sessionId && session.pending_first_message === true)) return item;
+        recoveredIds.add(item.id);
+        return { ...item, sessionId: moved.sessionId };
+      };
+      const rebound = draftSnapshotRef.current.queue.map(rebind);
+      if (recoveredIds.size) {
+        const persistence = draftPersistenceRef.current;
+        if (persistence) {
+          // Older queued saves keep their old CAS token. Only the new lifetime
+          // may observe the recovery revision and save the rebound local draft.
+          persistence.mounted = false;
+          draftPersistenceRef.current = new ProjectChatDraftPersistence(persistence.revision, {
+            ...persistence.saved, queue: persistence.saved.queue.map(rebind),
+          });
+        }
+        draftSnapshotRef.current = { ...draftSnapshotRef.current, queue: rebound };
+        setQueue(rebound);
+        recoveredIds.forEach(id => pausedQueuedIdsRef.current.delete(id));
+        setPausedQueueHeadId(id => id && recoveredIds.has(id) ? null : id);
+        setOptimisticMessage(item => item && recoveredIds.has(item.id) ? null : item);
+        sendingRef.current = false;
+      }
       draftPersistenceRef.current?.observe(projectChat.data.draft.revision, saved, draftSnapshotRef.current);
       return;
     }
@@ -456,6 +487,7 @@ function AvailableAgentChatPanel({
         unsavedProjectChatDrafts.set(projectId, { ...current, dirty: false });
       }
     } catch (error) {
+      if (draftPersistenceRef.current !== persistence) return;
       setDraftSaveError(error instanceof Error ? error.message : String(error));
       throw error;
     }
@@ -856,6 +888,7 @@ function AvailableAgentChatPanel({
     }
 
     const isCurrent = () => isPanelMountedRef.current && currentSessionRef.current === item.sessionId
+      && !draftSnapshotRef.current.queue.some(row => row.id === item.id && row.sessionId !== item.sessionId)
       && currentContextRef.current?.projectId === projectId && currentContextRef.current?.timelineId === editorContext.timelineId;
     const priorTurnCount = activeSessionData?.turns.length ?? 0;
     const sentAtMs = Date.now();
@@ -977,7 +1010,7 @@ function AvailableAgentChatPanel({
       return;
     }
 
-    const next = queue.find((item) => item.sessionId === activeSessionId);
+    const next = draftSnapshotRef.current.queue.find((item) => item.sessionId === activeSessionId);
     if (!next || next.id === pausedQueueHeadId || pausedQueuedIdsRef.current.has(next.id)) {
       return;
     }

@@ -5,7 +5,7 @@ import { TasksPaneSurface, TasksPaneChatSlot } from '@/features/tasks/components
 import { usePanesStore } from '@/shared/state/panesStore';
 import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 import { useDeviceInfo } from '@/shared/hooks/mobile';
-import { useEditorTour, startEditorTour, exitEditorTour } from '@/shared/state/editorTourStore.ts';
+import { useEditorTour, startEditorTour, exitEditorTour, type EditorTourBeat } from '@/shared/state/editorTourStore.ts';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers.ts';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { ASTRID_EDITOR_EXTENSIONS } from '@astrid/packs/rendering/editor/catalog';
@@ -36,6 +36,7 @@ const EFFECTS = createVideoEditorEffectCatalog();
 const SEQUENCES = createVideoEditorSequenceComponentCatalog();
 const HEADER = tourHeaderProps();
 const noOp = () => undefined;
+const inChat = (beat: EditorTourBeat) => beat === 'compose' || beat === 'respond';
 
 const TOUR_PICKER_PROPS = {
   projects: [], timelines: [], ...HEADER,
@@ -70,6 +71,7 @@ function BrowserTourFrame() {
   const tasksPaneWidth = usePanesStore(state => state.tasksPaneWidth);
   const touchPane = usePaneControlsHosted();
   const beat = useEditorTour(state => state.beat);
+  const shownBeat = useEditorTour(state => state.shownBeat);
   // The demo editor is a picture behind the tour: the spotlight already takes every pointer, so keep focus and
   // assistive tech on the card (and the chat's Send) too.
   const touring = useEditorTour(state => state.status === 'running');
@@ -79,7 +81,9 @@ function BrowserTourFrame() {
   // narrows the editor to a sliver.
   const { orientation } = useDeviceInfo();
   const sheet = device === 'tablet' && orientation === 'portrait';
-  const chatVisible = !touchPane || beat === 'compose' || beat === 'respond';
+  // A touch chat comes in with its beat and goes once the card and spotlight have moved off it, so they never frame the
+  // editor it uncovers.
+  const chatVisible = !touchPane || inChat(beat) || inChat(shownBeat);
   const tasksPaneReserve = touchPane ? '0px' : `${tasksPaneWidth}px`;
   const contentStyle = { marginRight: tasksPaneReserve, willChange: 'margin, padding' } as CSSProperties;
   const projectControls = <ProjectHeaderControls

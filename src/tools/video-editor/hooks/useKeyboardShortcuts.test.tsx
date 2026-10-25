@@ -38,6 +38,7 @@ function makeOptions(overrides: Partial<Parameters<typeof useKeyboardShortcuts>[
     redo: vi.fn(),
     selectAllClips: vi.fn(),
     togglePlayPause: vi.fn(),
+    toggleFullscreen: vi.fn(),
     seekRelative: vi.fn(),
     toggleMute: vi.fn(),
     splitSelectedClip: vi.fn(),
@@ -165,6 +166,36 @@ describe('useKeyboardShortcuts modifier gating', () => {
     expect(options.splitSelectedClip).toHaveBeenCalledTimes(1);
     expect(options.toggleMute).toHaveBeenCalledTimes(1);
     expect(options.deleteSelectedClip).toHaveBeenCalledTimes(1);
+  });
+
+  it('toggles preview fullscreen on plain F', () => {
+    const options = makeOptions();
+    mountShortcuts({ options });
+
+    dispatchKey(window, { key: 'f' });
+
+    expect(options.toggleFullscreen).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves Space, Delete and F alone while the preview is fullscreen', () => {
+    const options = makeOptions({ hasSelectedClip: true });
+    const fullscreenPreview = document.createElement('div');
+    fullscreenPreview.setAttribute('data-preview-fullscreen', 'window');
+    document.body.append(fullscreenPreview);
+
+    try {
+      mountShortcuts({ options });
+
+      dispatchKey(window, { key: ' ', code: 'Space' });
+      dispatchKey(window, { key: 'Delete' });
+      dispatchKey(window, { key: 'f' });
+
+      expect(options.togglePlayPause).not.toHaveBeenCalled();
+      expect(options.deleteSelectedClip).not.toHaveBeenCalled();
+      expect(options.toggleFullscreen).not.toHaveBeenCalled();
+    } finally {
+      fullscreenPreview.remove();
+    }
   });
 });
 

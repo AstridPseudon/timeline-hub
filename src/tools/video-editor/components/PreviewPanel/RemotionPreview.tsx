@@ -2,7 +2,6 @@ import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/Vid
 import type { ComponentProps, ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Pause, Play, SkipBack } from 'lucide-react';
 import { Player, type PlayerRef } from '@remotion/player';
 import { PreviewAudioFailureProvider } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
 import { PreviewAudioFailureNotice } from './PreviewAudioFailureNotice.tsx';
@@ -17,17 +16,36 @@ import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts
 import { getAdmittedElementReadiness, refreshAdmittedElements, subscribeAdmittedElementReadiness } from '@/tools/video-editor/runtime/admitted-elements.ts';
 import { PreviewLoadingPlaceholder } from './PreviewLoadingPlaceholder.tsx';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
+<<<<<<< HEAD
 import { previewRevisionLabel, previewUnavailableLabel, type PreviewRevision } from './previewRevision.ts';
+=======
+import { isEditableTarget } from '@/tools/video-editor/lib/coordinate-utils.ts';
+import { isActivatableTarget } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
+import { PreviewTransport } from './PreviewTransport.tsx';
+import { PREVIEW_FULLSCREEN_ATTRIBUTE, usePreviewFullscreen } from './usePreviewFullscreen.ts';
+import {
+  getPreviewPlaybackPreferences,
+  setPreviewPlaybackPreferences,
+  togglePreviewMuted,
+  usePreviewPlaybackPreferences,
+} from './previewPlaybackPreferences.ts';
+>>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
 
 export interface PreviewHandle {
   seek: (time: number) => void;
   play: () => void;
   pause: () => void;
   togglePlayPause: () => void;
+  /** Fills the screen with the picture and its own controls, or returns it to the editor. */
+  toggleFullscreen: () => void;
   readonly isPlaying: boolean;
 }
 
-const TRANSPORT_BUTTON_CLASS = 'pointer-events-auto rounded-full border-[color:var(--video-editor-stage-control-border)] bg-[var(--video-editor-stage-control-bg)] text-[color:var(--video-editor-stage-fg)] hover:bg-[var(--video-editor-stage-control-bg-hover)]';
+/** Fullscreen controls fade after this long without a pointer move, tap or key while playing. */
+const FULLSCREEN_CHROME_IDLE_MS = 2500;
+/** Fullscreen arrow keys: seconds per seek, level per volume step (as video players do). */
+const FULLSCREEN_SEEK_SECONDS = 5;
+const FULLSCREEN_VOLUME_STEP = 0.05;
 // The editor preview flattens every shot's internal audio clip into the
 // parent composition. Remotion's shared-tag scheduler is optimized for a
 // small number of simultaneously mounted tags and can reuse a tag with the
@@ -114,6 +132,7 @@ interface RemotionPreviewProps {
   currentTime?: number;
   /** Optional host-owned outlet for transport controls (e.g. public shells). */
   transportOutlet?: HTMLElement | null;
+<<<<<<< HEAD
   /** Provenance of the config that is allowed to reach the Player. */
   previewRevision?: PreviewRevision;
 }
@@ -126,6 +145,15 @@ interface PreviewDelivery {
 
 const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>(function RemotionPreview(
   { config, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
+=======
+  /** Volume, speed, loop and fullscreen beside the transport (default). A staged shell that
+   *  sizes the transport itself leaves them out. */
+  playerControls?: boolean;
+}
+
+const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>(function RemotionPreview(
+  { config, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0, playerControls = true },
+>>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
   ref,
 ) {
   const runtime = useOptionalVideoEditorRuntime();
@@ -408,6 +436,152 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     player?.toggle();
   }, [isPlaying]);
 
+  // Listening and watching preferences belong to the viewer, not the timeline: they reach only
+  // this Player (which scales every clip's own level), never the timeline's levels or an export.
+  const playback = usePreviewPlaybackPreferences();
+  const [initialAudio] = useState(() => {
+    const { volume, muted } = getPreviewPlaybackPreferences();
+    return { volume, muted };
+  });
+  const appliedAudioRef = useRef(initialAudio);
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    const applied = appliedAudioRef.current;
+    if (applied.volume !== playback.volume) player.setVolume(playback.volume);
+    if (applied.muted !== playback.muted) {
+      if (playback.muted) player.mute();
+      else player.unmute();
+    }
+    appliedAudioRef.current = { volume: playback.volume, muted: playback.muted };
+  }, [playback.muted, playback.volume]);
+
+  const { mode: fullscreenMode, toggle: toggleFullscreen, exit: exitFullscreen } = usePreviewFullscreen(playerContainerRef);
+  const fullscreen = fullscreenMode !== 'off';
+
+  // Fullscreen chrome: shown on any pointer move, tap or key, and fades while the film plays
+  // untouched. Paused, or with the pointer resting on the controls, it stays.
+  const [chromeAwake, setChromeAwake] = useState(true);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+  }, []);
+  const wakeChrome = useCallback(() => {
+    setChromeAwake(true);
+    clearIdleTimer();
+    const settle = () => {
+      const controls = playerContainerRef.current?.querySelector('[data-preview-transport]');
+      if (controls?.matches(':hover, :focus-within')) {
+        idleTimerRef.current = setTimeout(settle, FULLSCREEN_CHROME_IDLE_MS);
+        return;
+      }
+      idleTimerRef.current = null;
+      setChromeAwake(false);
+    };
+    idleTimerRef.current = setTimeout(settle, FULLSCREEN_CHROME_IDLE_MS);
+  }, [clearIdleTimer, playerContainerRef]);
+  useEffect(() => {
+    if (fullscreen) {
+      wakeChrome();
+      return clearIdleTimer;
+    }
+    clearIdleTimer();
+    setChromeAwake(true);
+    return undefined;
+  }, [fullscreen, isPlaying, wakeChrome, clearIdleTimer]);
+  const chromeIdle = fullscreen && isPlaying && !chromeAwake;
+
+  // Fullscreen takes the keyboard: the focus moves onto the picture, and its keys are a video
+  // player's. The editor's shortcuts stand aside while the fullscreen attribute is present.
+  // Leaving gives the focus back (the browser drops it to the page when fullscreen ends), so
+  // Space and F go on working in the editor.
+  useEffect(() => {
+    if (!fullscreen) return undefined;
+    const container = playerContainerRef.current;
+    const previous = document.activeElement instanceof HTMLElement && document.activeElement !== document.body
+      ? document.activeElement
+      : null;
+    container?.focus({ preventScroll: true });
+    return () => {
+      const lost = !document.activeElement || document.activeElement === document.body || document.activeElement === container;
+      if (!lost) return;
+      const target = previous?.isConnected ? previous : container;
+      // After the browser has finished leaving fullscreen, which can move the focus itself.
+      requestAnimationFrame(() => {
+        if (!document.activeElement || document.activeElement === document.body) target?.focus({ preventScroll: true });
+      });
+      target?.focus({ preventScroll: true });
+    };
+  }, [fullscreen, playerContainerRef]);
+  useEffect(() => {
+    if (!fullscreen) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      wakeChrome();
+      // The volume and position sliders and the speed list keep their own keys.
+      if (isEditableTarget(event.target)) return;
+      if ((event.key === ' ' || event.key === 'Enter') && isActivatableTarget(event.target)) return;
+      const player = playerRef.current;
+      const { fps } = metadataRef.current;
+      const step = (seconds: number) => seek(Math.max(0, (player?.getCurrentFrame() ?? 0) / fps + seconds));
+      const nudgeVolume = (delta: number) => {
+        const { volume, muted } = getPreviewPlaybackPreferences();
+        const next = Math.min(1, Math.max(0, (muted ? 0 : volume) + delta));
+        setPreviewPlaybackPreferences({ volume: next, muted: next === 0 });
+      };
+      switch (event.key.length === 1 ? event.key.toLowerCase() : event.key) {
+        case 'Escape':
+        case 'f':
+          exitFullscreen();
+          break;
+        case ' ':
+        case 'k':
+          togglePlayPause();
+          break;
+        case 'm':
+          togglePreviewMuted();
+          break;
+        case 'ArrowLeft':
+          step(-FULLSCREEN_SEEK_SECONDS);
+          break;
+        case 'ArrowRight':
+          step(FULLSCREEN_SEEK_SECONDS);
+          break;
+        case 'ArrowUp':
+          nudgeVolume(FULLSCREEN_VOLUME_STEP);
+          break;
+        case 'ArrowDown':
+          nudgeVolume(-FULLSCREEN_VOLUME_STEP);
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [exitFullscreen, fullscreen, seek, togglePlayPause, wakeChrome]);
+
+  // Fullscreen picture: a mouse click plays or pauses (a double click leaves); a tap shows or
+  // hides the controls, as phone players do.
+  const pointerTypeRef = useRef('mouse');
+  const onFullscreenPictureClick = useCallback(() => {
+    if (pointerTypeRef.current === 'mouse') {
+      togglePlayPause();
+      wakeChrome();
+      return;
+    }
+    if (chromeIdle || !isPlaying) {
+      wakeChrome();
+      return;
+    }
+    clearIdleTimer();
+    setChromeAwake(false);
+  }, [chromeIdle, clearIdleTimer, isPlaying, togglePlayPause, wakeChrome]);
+
   useEffect(() => () => {
     if (seekFlushRafRef.current !== null) {
       cancelAnimationFrame(seekFlushRafRef.current);
@@ -445,57 +619,53 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     play,
     pause,
     togglePlayPause,
+    toggleFullscreen,
     get isPlaying() {
       return playerRef.current?.isPlaying() ?? isPlaying;
     },
-  }), [isPlaying, pause, play, seek, togglePlayPause]);
+  }), [isPlaying, pause, play, seek, toggleFullscreen, togglePlayPause]);
 
   const transportControls = (
-    <div
-      className="astrid-preview-transport pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 px-3 py-3"
-      style={{ backgroundImage: 'linear-gradient(to top, var(--video-editor-stage-gradient-start), transparent)' }}
-    >
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className={cn(TRANSPORT_BUTTON_CLASS, touchChrome ? 'h-11 w-11' : 'h-8 w-8')}
-        onClick={() => requestSeek(0)}
-        title="Jump to beginning"
-        aria-label="Jump to beginning"
-      >
-        <SkipBack className="h-4 w-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className={cn(TRANSPORT_BUTTON_CLASS, touchChrome ? 'h-12 w-12' : 'h-10 w-10')}
-        disabled={!hasPlayableOutput}
-        onClick={togglePlayPause}
-        title={isPlaying ? 'Pause' : 'Play'}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
-      >
-        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}
-      </Button>
-      {!compact && (
-        <div className="pointer-events-none rounded-full bg-background/70 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          {config.output.resolution}
-        </div>
-      )}
-    </div>
+    <PreviewTransport
+      playerRef={playerRef}
+      fps={metadata.fps}
+      durationInFrames={metadata.durationInFrames}
+      isPlaying={isPlaying}
+      canPlay={hasPlayableOutput}
+      resolution={config.output.resolution}
+      compact={compact}
+      touchChrome={touchChrome}
+      playerControls={playerControls}
+      fullscreen={fullscreen}
+      idle={chromeIdle}
+      onTogglePlay={togglePlayPause}
+      onJumpToStart={() => requestSeek(0)}
+      onSeekFrame={requestSeek}
+      onToggleFullscreen={toggleFullscreen}
+    />
   );
 
   return (
     <div
       ref={playerContainerRef}
+      // Focusable so fullscreen can take the keyboard; never a tab stop.
+      tabIndex={-1}
       // The phone sizes its preview to the film, which can be shorter than the
       // desktop floor; there the floor would push the transport out of view.
-      className={cn('relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-transparent', compact && touchChrome ? 'min-h-0' : 'min-h-[220px]')}
+      className={cn(
+        'relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-transparent outline-none',
+        compact && touchChrome ? 'min-h-0' : 'min-h-[220px]',
+        fullscreen && 'rounded-none bg-[var(--video-editor-stage-bg)]',
+        // Where the browser cannot fullscreen an element (iPhone), the picture covers the window.
+        fullscreenMode === 'window' && 'fixed inset-0 z-[100017] h-[100dvh] min-h-0 w-screen',
+        chromeIdle && 'cursor-none',
+      )}
       style={VIDEO_EDITOR_THEME_VARS}
+      onPointerMove={fullscreen ? (event) => { if (event.pointerType === 'mouse') wakeChrome(); } : undefined}
+      {...(fullscreen ? { [PREVIEW_FULLSCREEN_ATTRIBUTE]: fullscreenMode } : {})}
     >
       <PreviewAudioFailureNotice />
-      {hasSourceTracks && (
+      {hasSourceTracks && !fullscreen && (
         <div className="pointer-events-none absolute left-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-xs text-foreground">
           Output · source tracks excluded
         </div>
@@ -540,8 +710,22 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           bufferStateDelayInMilliseconds={1000}
           renderLoading={() => <PreviewLoadingPlaceholder />}
           style={{ width: '100%', height: '100%' }}
+          initialVolume={initialAudio.volume}
+          initiallyMuted={initialAudio.muted}
+          playbackRate={playback.rate}
+          loop={playback.loop}
         />
       </div>
+      {fullscreen && (
+        <div
+          aria-hidden
+          className="absolute inset-0 z-[5]"
+          data-testid="preview-fullscreen-picture"
+          onPointerDown={(event) => { pointerTypeRef.current = event.pointerType; }}
+          onClick={onFullscreenPictureClick}
+          onDoubleClick={() => { if (pointerTypeRef.current === 'mouse') exitFullscreen(); }}
+        />
+      )}
       {admissionError && (
         <div role="alert" className="absolute inset-x-4 bottom-20 z-10 rounded-md border border-destructive/40 bg-background/95 px-3 py-2 text-sm text-foreground">
           <p>Preview pack could not be loaded. {admissionError}</p>
@@ -550,7 +734,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           }}>Retry preview</Button>
         </div>
       )}
-      {transportOutlet ? createPortal(transportControls, transportOutlet) : transportControls}
+      {transportOutlet && !fullscreen ? createPortal(transportControls, transportOutlet) : transportControls}
     </div>
   );
 });
