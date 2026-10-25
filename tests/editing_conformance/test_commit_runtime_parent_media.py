@@ -159,6 +159,9 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
                 'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
             commit(editing, body(editing, [tracked]), 'visual-track')
         if historical:
+            occurrence_lane = capture_track_create(bundle_from_document(current(editing)), 'parent', {
+                'id': 'occurrence', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
+            commit(editing, body(editing, [occurrence_lane]), 'occurrence-lane')
             music_pin = service.get_project_media_selection(editing.project, {
                 'asset': 'music-bed', 'generation_id': editing.pins['old']['generation_id'],
                 'variant_id': editing.pins['old']['variant_id']}, authorize=editing.authorize)
@@ -166,7 +169,7 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
                                                   music_pin)]), 'music-bed')
             occurrence = capture_occurrence_create(
                 bundle_from_document(current(editing)), 'occurrence-2', 'shot-2',
-                name='Transition', track='visual', on=0, duration=8)
+                name='Transition', track='occurrence', on=0, duration=8)
             commit(editing, body(editing, [occurrence]), 'occurrence-2')
             child_track = capture_track_create(bundle_from_document(current(editing)),
                                                 'occurrence:occurrence-2', {
