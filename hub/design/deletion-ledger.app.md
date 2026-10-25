@@ -308,3 +308,106 @@ f099e043032c0169ff006fbfb5adcecbced9912b3049666daf708787196f29e4
 The other five protected specs are byte-identical. No browser/full/service run was performed; historical actual `8259` attribution remains unclosed.
 
 Commit message and `DONE` marker written.
+
+
+## PASS
+
+Reviewed exact author commit `0ff988aac6f0e4376c2be3ca53e8cd3979bc2302` against base `50cfedd8890ba4ac0863c6e6bd8d92605f64a42e`.
+
+- Only the two authorized files changed.
+- `reads: []` is truthful for native inverse commands: authenticated publication guards remain Runtime-derived; free-transform conservative handling is unchanged.
+- Traced mounted Undo/Redo → shared handoff → persisted outbox → `DataProvider.commitTimeline` public client.
+- Seven old producer branches were RED and new producer GREEN: accepted, merged, lost ACK, later write, ABA write, history unavailable, and invalid. Legacy-history refusal remains no-send.
+- Exact unchanged P2 full-envelope oracle retained, including 11 malformed mutations.
+
+Evidence:
+
+- Vitest: **247/247 passed**
+- P2 parent oracle: **13/13 passed**
+- App/node TypeScript checks: **passed**
+- Scoped ESLint: **passed**
+- `git diff --check`: **passed**
+- Six protected original specs: byte-identical to parent
+- No browser, full suite, build, install, or live service run.
+
+Reviewed blobs:
+
+- `timelineLocalSaveHandoff.ts`: `4bce50f28c332c6e28aa4aed635ce80e32e3de52`
+- `useTimelineSave.test.tsx`: `5ec79a429784e2492882965f3ca360c8d54869b3`
+
+Merge request submitted and completed:
+
+- Receipt: `5f4ce933ec`
+- Integrated `tl/integration` contains both exact blobs.
+
+No blockers. Browser qualification of the pinned parent/single journeys remains the next orchestrator step. `DONE` and `commit-msg` were created.
+
+
+# PASS — P2 protected selector review and submission
+
+- Reviewed author commit `8200c8bffa` against parent `0bc795f354`; no reviewer source changes.
+- Verified actual production projection emits occurrence-qualified DOM IDs while canonical fields retain raw IDs.
+- Independent controls passed: old selector RED; exact selector GREEN; wrong occurrence, sibling, and same-asset selectors refused.
+- Author neighbor suite: 3 files, 62 tests passed.
+- Independent Vitest neighbors: 3 files, 62 passed.
+- Popup oracle: 3/3 passed.
+- Node20 typechecks: `tsconfig.node.json`, `tsconfig.app.json`, `tsconfig.json` all passed.
+- ESLint (`--max-warnings=0`) and `git diff --check` passed.
+- Protected source hashes and selector/wait predicates were unchanged except the intended popup selector diff.
+
+Merged normally:
+
+- App integrated HEAD: `c9d71b651dc62be564a1ffdd3974edb455b57854`
+- Tree: `12724e8199b0b6efc775fbea1f23252633843189`
+- Immutable pins preserved:
+  - Agent `0d142f79518ba4ec20eb195657ccc7eb6e903fc3`
+  - Runtime `a3cd1a3214fa1632879c21d82d1abb9ea720b1de`
+  - Composition `635f4de06fda22a85fc2e4cfc764d0153a4c9f40`
+
+D66 submission:
+
+- Preflight: `app-pin-c9d71b65-p2-selector-add-0042-preflight-1025004929-28266` — PASS
+- Body: `app-pin-c9d71b65-p2-selector-add-0042-1025005011-6954` — QUEUED
+- Host: `vm`; target: `app-pin-c9d71b65`
+- Free space before body: `6,632,067,072` bytes
+- Plan: [p2-popup-add-submit-plan.json](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-ADD-selector-review-submit-0042/submission/p2-popup-add/p2-popup-add-submit-plan.json)
+
+The initial CLI attempt correctly hit D66’s mutable-home guard; I resumed using supported recipe/preflight/registration helpers with the existing immutable pin metadata. No duplicate body was created. Full/body result remains pending; manager should monitor the same body ID.
+
+Created the required commit message and `DONE` marker.
+
+
+## PASS
+
+Reviewed author commit `b11859b45970330bbe217b3355e9470ab8d09ecd`:
+
+- Tree: `f3e8a51c3214b29d89554c153b80f319b1d4989e`
+- Protected blobs:
+  - Spec: `f53c9924d8a95743b6b2fe4576a779d60a7e7278`
+  - Oracle: `898352551da0d6f605b88447288997310eca6a9b`
+  - Oracle tests: `0074b04da471df27eba78b01cadd531915164fec`
+
+The raw helper derives size/digest/MIME from genuine bytes and enforces the closed four-field Runtime ABI. The normalized helper requires exact original `media_id`, `content_sha256`, and `type`, while rejecting raw fields. Both parent and child placement sites use the same helpers; V2/4.5 geometry, semantic commands, closure, registry, history, reload, Undo, and waits remain unchanged.
+
+Mutation controls cover old `content_sha256` raw claims, wrong object/MIME/size/filename, extra/missing raw fields, wrong normalized ID/digest/type, missing normalized digest, and opaque media ID versus digest derivation.
+
+Tests:
+
+- Node 20 oracle + existing controls: **25 passed**
+- Vitest semantic/geometry oracle: **7 passed**
+- `tsc --noEmit -p tsconfig.json`: passed
+- `tsc --noEmit -p tsconfig.app.json`: passed
+- `tsc --noEmit -p tsconfig.node.json`: passed
+- Scoped ESLint with `--max-warnings=0`: passed
+- `git diff --check`: passed
+
+Five other protected specs were byte-identical to base.
+
+Merge requested and completed normally:
+
+- Receipt: `queue/done/merge-app-P2-assets-import-ABI-0038`
+- Refused receipt: absent
+- Integrated head: `913686448cafbb63dfba5d8053cb725e1140bb07`
+- All three integrated blobs exactly match the author blobs.
+
+No browser, service, full suite, or new live acceptance run was performed. Review worktree is clean; `DONE` and commit message were written.

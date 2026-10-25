@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T00:49:36Z | dispatcher heartbeat 12s | live 3 (sol 0, luna 3, other 0) | busy30 12 | status age 1m -->
+<!-- app | 2026-10-25T00:53:09Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 0m -->
 # app board, 2026-10-25T00:48Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -129,7 +129,7 @@
 | A3-bulk-none-display | Restore visible None label | Luna; independent | Review2355 PASS | merged | Author2347; review2355 | Independent182 controls, app/node types and lint PASS. Two reviewed blobs home. Browser proof owed. | Home2341a1de21 |
 
 | A3-12239-cause | Prove actual mounted dispatch boundary | HARD Sol | Actual12239 | merged | app-A3-mounted-12239-return-sol-2353 | Zero commit POST. Helper pointer5 becomes preview2.5, overlaps parent0–3 and changes lane. First thrown capture guard unobserved. | Evidence only |
-| P2-main-current | Qualify reviewed parent and single | Luna; main venue | Actual6629 and4151 terminal | gated:source-fix | Main0006; App Sol0033 | Both readiness PASS; first Undo355 equality fails reads[] versus absent. Initial request checks advance; later Undo tail NOTRUN. | App364f /Runtime732 |
+| P2-main-current | Qualify reviewed parent and single | Luna; main venue | Reviewed Undo home5f | ready | Runtime next main slot requested0053 | Exact producer correction merged. One parent/single wave requested after SWAP/bulk0039; old6629/4151 NO-GO retained. | App5f / Runtimea3cd |
 
 | P2-drop-geometry | Align intended file drop start | Luna; independent | Independent0014 PASS | merged | Author0004; review0014 | Independent6 real coordinator plus42 neighbors/types/lint PASS; protected six exact. Normal merge complete; browser proof owed. | Home50cfedd889 |
 | U4p-provider | Adopt full provider freshness release | Luna | Runtime a3cd released | merged | app-U4p-provider-release-adoption-0008 | Normal tools,8 strict,15 vendor and14 mappings PASS; protected six exact. Only lock/install manifest. | Home fd2f843a69 |
@@ -141,24 +141,24 @@
 | P2-asset-geometry | Qualify corrected intended drop start | Luna; service | Actual20057 terminal | gated:strict-oracle | Author0038; actual20057 | NO-GO191s; readiness PASS. Intended semantic POST and exact row checks pass; raw import lacks content_sha256 at510. No tail credit. | App50cf |
 
 | P2-placement-geometry | Prove embedded drop intended start | Luna; independent | Independent0031 PASS | merged | Author0024; review0031 | Real coordinator oldRED/newGREEN at V2/4.5;53 controls/types/lint PASS. Intended helper/import only; original body predicates exact. | Home0bc795f354 |
-| A2-Undo-reads | Declare native Undo and Redo reads | Sol; Luna review | Parent 6629 and single 4151 | review | Author0033; independent0048 | Author 247 mounted/outbox and 13 oracle controls, types/lint PASS. Seven old sending branches RED. Original specs unchanged. | Author 0ff988aac6 |
+| A2-Undo-reads | Declare native Undo and Redo reads | Sol; Luna review | Parent6629 and single4151 | merged | Author0033; independent0048 | Independent247 mounted/outbox and13 oracle controls, types/lint PASS. Seven old branches RED; specs exact. Browser proof owed. | Home5f4ce933ec |
 | P2-import-ABI | Assert raw and normalized media exactly | Luna; independent | Actual 20057 | review | Author0038; review0048 | Parent and child ABI correction: 2 mutation suites, three types and lint PASS. Independent predicate review active; no browser credit. | Author branch0038 |
-| P2-ADD-5211 | Use exact projected clip identity | Luna; independent | Actual 5211 and mounted source | merged | Author0038; review submit0042 | Independent selector review merged exact source. One next ADD reserved to same worker0042; genuine body ID pending. | Home c9d71b651d |
+| P2-ADD-5211 | Use exact projected clip identity | Luna; independent | Actual 5211 and mounted source | merged | Author0038; review submit0042 | Independent selector review merged exact source. Preflight28266 PASS; actual ADD6954 submitted00:50:11 on c9d71b/0d142/a3cd/635f. Same ID only; result pending. | Home c9d71b651d |
 
-Integration: App c9d71b651d merges exact independently reviewed popup occurrence-qualified clip selectors over embedded geometry0bc795 and provider adoptionfd2f. Import ABI and native Undo changes are in independent reviews0048; no original result is transferred.
+Integration: App913686448c now includes import merge over independently reviewed Undo5f4ce933ec and popup selectorsc9d71b. Import reviewer0048 final report pending; no browser credit. Exact reviewed Undo source blobs match home. ADD6954 stays fixedc9d71b.
 
 core open: Zero of eight isolated gestures PASS. Element8897 retains original five-second failure on a3cd. Asset20057 passes intended semantic POST and row checks before raw ABI510; ADD5211 reaches reload identity before clip860. Parent/single fail exact Undo reads shape. All source rows have owners.
 regressions: No browser closure from source controls. D69 complete at its recorded source. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Runtime source — element8897 still fails five seconds on a3cd. Complete ordinal3 frame/phase packet is published; Runtime owns next source decision. No App capture input remains owed.
-Blockers: Runtime venue — exclusive SWAP/bulk preparation0035 complete on fixed fd2f/0d142/a3cd/635f; main P4 has priority. Parent/single await reviewed App Undo correction before any rerun.
+Blockers: Runtime venue — SWAP/bulk0039 assigned fixedfd2f after terminal P4. New parent/single reviewed5f/0d142/a3cd/635f requested0053 for next main slot; source wait cleared.
 Blockers: Final cut — eight isolated P2, one full App tour, final pinned P1–P5/core and genuine installed render remain required. Runtime coordinates matrix and ZIP.
 Next ready: Existing0042 owns next App ADD body after independent PASS and normal merge. Review0048 import then asset/placement; review0048 Undo then exact App home handoff for main parent/single. No P3, D79 or E work.
 
-live 3 / cap 6; ready-undispatched 0. Three named dispatcher workers: ADD review/submit0042 plus import and Undo reviews0048. One App body reserved to ADD; no duplicate review or body.
+live 3 / cap 6; ready-undispatched 0. Dispatcher header00:49:36 confirms three workers: ADD review/submit0042 plus import and Undo reviews0048. Actual ADD6954 running on App; preflight28266 PASS. No second App body.
 Capacity: Current source authors have auto-recycled. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
 Disk: 6.805GB at00:48 with three reviews active. App critical floor5.2GB; stop4.5GB non-element first. One App service body below7.5GB; source cap6 above6.5GB.
 Safety: No new safety or permission refusal. No direct product, test or pin edits by manager. All source and review work assigned to Codex workers.
-Inbox consumed through1838862 bytes. New ORCH00:42 upstream App d11417a59 is deferred from gating under D68; fresh F-final rehearsal uses it with Agent08e6 and reports patch conflicts/full-suite result. This is a later final-cut entry, not a new upstream merge.
+Inbox consumed through1840231 bytes. Runtime0040 source continuation0039 and assigned SWAP/bulk0039 consumed. New ORCH00:42 upstream App d11417a59 is deferred from gating under D68; fresh F-final rehearsal uses it with Agent08e6 and reports patch conflicts/full-suite result. This is a later final-cut entry, not a new upstream merge.
 Later: F-final App upstream d11417a59 refresh and applied-result full suite are Runtime final coordinator-owned, gated on D59 cut. Gating App keeps frozen upstream3881.
 Evidence: [ADD review and submission](../../workers/app-P2-ADD-selector-review-submit-0042/report.md), [Undo author](../../workers/app-A2-Undo-reads-current-sol-0033/report.md), [import author](../../workers/app-P2-assets-import-ABI-0038/report.md), [element facts](../../design/app-P2-element-8897-safe-facts-0019.md).

@@ -1,0 +1,5 @@
+Ask: consume actual ADD6954 and preserve its fixed tuple and same-ID wait / Owner: App0042 producer and manager monitor / By: now
+
+ONE corrected-selector original ADD submitted00:50:11Z after genuine preflight28266 PASS: app-pin-c9d71b65-p2-selector-add-0042-1025005011-6954. Tuple Appc9d71b651dc62be564a1ffdd3974edb455b57854 / Agent0d142f79518ba4ec20eb195657ccc7eb6e903fc3 / Runtimea3cd1a3214fa1632879c21d82d1abb9ea720b1de / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Authentic persistent plan copied byte-exact to design/app-P2-ADD-selector-0042-submit-plan.json; hostvm/AppChild1. Result remains pending; no gesture/tail credit before actual terminal. Same ID on timeout/restart, no duplicate.
+
+Existing independent0042 source review merged exact8200 selector branch via normal receiptc9d71b. Concurrent import and Undo reviews0048 remain active, no current original body of their own. Asset/placement follow ADD after actual independent import PASS and normal home. Parent/single handoff follows independent Undo review/home; Runtime owns main venue. One App body rule, original waits/all fields retained, all outputs preserved.
