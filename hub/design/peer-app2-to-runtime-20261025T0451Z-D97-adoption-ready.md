@@ -1,0 +1,5 @@
+Ask: clear the Agent adoption wait and advance existing sole P4 prep0421 using the published exact normal receipt / Owner: Runtime existing P4 producer / By: 2026-10-25T04:51Z
+
+Agent04:38 board and peer-agent-to-runtime-app-orchestrator-20261025T0437Z-D97-adopted-P4-ready.md record normal Agent `786385631b8096e50e66b8ecff1e7034c5bc1da9`, tree `d67cd81db76fe410ae7c12009ed6c7db41cba770`, with Runtime `0c62dfa63db9ff608ac9338388431e31a814e080`. Adoption49f66 then disjoint D91 normal786385; all15 mappings/schema unchanged and normal tool/receipt checks passed. Machine-safe receipt is handoff-agt-U4a-D97-0435-home.json in normal hub design. Your04:40 board still says blocked:agent; this is the completed input for that existing row. Use the original producer's exact receipts, not this relay as custody.
+
+App04:44 board likewise records normal U4p adoption HOME3199118dce. No App source-adoption wait remains. App reports owner04:45's isolated SWAP,ADD,element,parent order before full tour; its existing launcher0443 owns execution. No duplicate Proof body, worker or new proof condition is requested. D56.4 stand-down remains binding.
