@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -213,3 +214,149 @@ it.each(['valid', 'dependent', 'conflict', 'missing', 'copied', 'forged', 'wrong
       view.unmount(); client.clear();
     }
   });
+
+it('mounts the retained two-clip transition clear through selection, outbox, and commit dispatch', async () => {
+  const config = {
+    ...createDefaultTimelineConfig(),
+    tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+    clips: [
+      { id: 'f2-app-clip', track: 'V1', at: 0, clipType: 'media', from: 0, to: 3, speed: 1,
+        asset: 'f2-app', transition: { type: 'crossfade', duration: 0.5 } },
+      { id: 'f2-transition-clip', track: 'V1', at: 15, clipType: 'media', from: 0, to: 3, speed: 1,
+        asset: 'f2-video', transition: { type: 'fade', duration: 0.75 } },
+    ],
+  };
+  const registry = { assets: {
+    'f2-app': { file: 'f2-app.png', type: 'image/png' },
+    'f2-video': { file: 'f2-video.mp4', type: 'video/mp4' },
+  } };
+  const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+    { children: true }).data.canonical_document;
+  document.parent_revision.payload = {
+    ...document.parent_revision.payload,
+    config,
+    clips: structuredClone(config.clips),
+    registry,
+    opaque: { keep: null },
+  };
+  document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+  const head = { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r0', headPublicationId: 'p0' };
+  const data = await buildTimelineData(config, registry, async file => file, 1, undefined, head);
+  const basis = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+
+  let acknowledge!: () => void;
+  const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' });
+  const canonical = structuredClone(document);
+  canonical.parent_revision.revision_id = 'r1';
+  for (const list of [canonical.parent_revision.payload.config.clips, canonical.parent_revision.payload.clips]) {
+    for (const clip of list) {
+      if (clip.id === 'f2-app-clip' || clip.id === 'f2-transition-clip') delete clip.transition;
+    }
+  }
+  canonical.parent_revision.content_digest = fixtureDigest(canonical.parent_revision.payload);
+  response.data.canonical_document = canonical;
+  const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>(() => new Promise(resolve => {
+    acknowledge = () => resolve({ response, accepted: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: canonical, graph: {}, receipt: response.receipt });
+  }));
+  const legacy = vi.fn(async () => { throw new Error('Legacy writer'); });
+  const provider: DataProvider = {
+    persistenceEnabled: true,
+    loadTimeline: vi.fn(async () => ({ config, configVersion: 1, head })),
+    loadAssetRegistry: vi.fn(async () => registry),
+    resolveAssetUrl: vi.fn(async file => file),
+    saveTimeline: legacy,
+    loadTimelineCommandBasis: vi.fn(async () => basis),
+    commitTimeline: send,
+    getRecoverableIdentity: vi.fn(async () => ({ actorId: scope.actorId, realmId: scope.realmId })),
+  };
+  let editor!: ReturnType<typeof useTimelineEditorData>;
+  let ops!: ReturnType<typeof useTimelineEditorOps>;
+  let chat!: ReturnType<typeof useAgentChatBridge>;
+  function Capture() {
+    editor = useTimelineEditorData();
+    ops = useTimelineEditorOps();
+    chat = useAgentChatBridge();
+    return <>
+      <button type="button" onClick={() => ops.selectClip('f2-app-clip')}>f2-app-clip</button>
+      <button type="button" onClick={(event) => ops.selectClip('f2-transition-clip', { toggle: event.shiftKey })}>f2-transition-clip</button>
+      <PropertiesPanel />
+    </>;
+  }
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const user = userEvent.setup();
+  const errors = vi.spyOn(toast, 'error');
+  const view = render(<MemoryRouter><QueryClientProvider client={client}><AgentChatProvider>
+    <VideoEditorProvider dataProvider={provider} projectId={scope.projectId} projectSlug={scope.projectId}
+      timelineId={scope.timelineId} userId={null} initialTimelineData={data}><Capture /></VideoEditorProvider>
+  </AgentChatProvider></QueryClientProvider></MemoryRouter>);
+  try {
+    await waitFor(() => expect(chat.editorContext?.elementOperationAdapter).toBeDefined());
+    fireEvent.click(screen.getByRole('button', { name: 'f2-app-clip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'f2-transition-clip' }), { shiftKey: true });
+    await waitFor(() => expect(screen.getByText('2 clips selected')).toBeInTheDocument());
+    await waitFor(async () => expect(await createCommitOutbox().list(scope)).toHaveLength(1));
+
+    const transitionLabel = screen.getByText('Transition');
+    const transitionSection = transitionLabel.closest('[class*="md:col-span-2"]') as HTMLElement;
+    const transitionSelect = within(transitionSection).getByRole('combobox');
+    await user.click(transitionSelect);
+    const transitionListId = transitionSelect.getAttribute('aria-controls');
+    const noneOption = screen.getAllByRole('option', { name: 'None', exact: true })
+      .find(option => option.closest('[role="listbox"]')?.id === transitionListId);
+    expect(noneOption).toBeDefined();
+    await user.click(noneOption!);
+    await waitFor(() => expect(transitionSelect).toHaveTextContent('None'));
+    await waitFor(() => expect(editor.data?.config.clips.find(clip => clip.id === 'f2-app-clip')?.transition).toBeUndefined());
+
+    expect(errors).not.toHaveBeenCalled();
+    await waitFor(() => expect(send).toHaveBeenCalledOnce());
+    const [request, idempotencyKey] = send.mock.calls[0];
+    const changes = [
+      { op: 'remove', ref: 'parent', path: ['clips', 'id:f2-app-clip', 'transition'],
+        before: { state: 'present', value: { type: 'crossfade', duration: 0.5 } } },
+      { op: 'remove', ref: 'parent', path: ['clips', 'id:f2-transition-clip', 'transition'],
+        before: { state: 'present', value: { type: 'fade', duration: 0.75 } } },
+    ];
+    const reads = [
+      { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:f2-app-clip', 'id'], state: { state: 'present', value: 'f2-app-clip' } },
+      { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:f2-app-clip', 'transition'], state: { state: 'present', value: { type: 'crossfade', duration: 0.5 } } },
+      { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:f2-transition-clip', 'id'], state: { state: 'present', value: 'f2-transition-clip' } },
+      { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:f2-transition-clip', 'transition'], state: { state: 'present', value: { type: 'fade', duration: 0.75 } } },
+      { kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'], state: { state: 'absent' } },
+    ];
+    const step = request.steps?.[0];
+    expect(step?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(idempotencyKey).toEqual(expect.any(String));
+    expect(request).toEqual({
+      api_version: 1,
+      project_id: scope.projectId,
+      timeline_id: scope.timelineId,
+      base_revision_id: 'r0',
+      base_publication_id: 'p0',
+      commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes } }],
+      label: 'Edit timeline',
+      steps: [{ id: step?.id, label: 'Edit timeline', intent: 'Clear transitions: f2-app-clip, f2-transition-clip', tags: [], command_ordinals: [0], patch: changes, reads }],
+      merge: 'fields',
+      reads,
+      dry_run: false,
+      source: { via: 'app' },
+    });
+    const [stored] = await createCommitOutbox().list(scope);
+    expect(stored.pending?.request.key).toBe(idempotencyKey);
+    expect(JSON.parse(stored.pending!.request.body)).toEqual(request);
+    expect(stored.intents).toHaveLength(1);
+    expect(document.parent_revision.payload.opaque).toEqual({ keep: null });
+    expect(legacy).not.toHaveBeenCalled();
+    expect(editor.data?.config.clips.find(clip => clip.id === 'f2-app-clip')?.transition).toBeUndefined();
+    await act(async () => { acknowledge(); });
+    await waitFor(() => expect(editor.data?.head?.headRevisionId).toBe('r1'));
+    expect(editor.data?.config.clips.find(clip => clip.id === 'f2-app-clip')?.transition).toBeUndefined();
+    expect(editor.data?.config.clips.find(clip => clip.id === 'f2-transition-clip')?.transition).toBeUndefined();
+    expect(document.parent_revision.payload.opaque).toEqual({ keep: null });
+    expect((await createCommitOutbox().list(scope))[0].accepted?.value).toMatchObject({ canonicalDocument: canonical });
+  } finally {
+    if (acknowledge) await act(async () => { acknowledge(); });
+    view.unmount();
+    client.clear();
+  }
+});
