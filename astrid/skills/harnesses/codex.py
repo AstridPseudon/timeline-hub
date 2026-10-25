@@ -11,6 +11,7 @@ Two FS effects per install:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Iterable, Optional
 
@@ -34,7 +35,7 @@ class CodexAdapter(HarnessAdapter):
     name = "codex"
 
     def _default_home(self) -> Path:
-        return Path.home() / ".codex"
+        return Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
 
     @property
     def skills_dir(self) -> Path:

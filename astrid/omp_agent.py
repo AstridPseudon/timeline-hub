@@ -30,7 +30,7 @@ _AGENT_PROFILE_FILE = Path(__file__).resolve().parent / "agent_profiles" / "astr
 # time; a pack does not need a second launcher allowlist entry. Reserved
 # conversational/auth words stay blocked so they cannot be claimed by a pack.
 _PRODUCT_TOOLKIT_FAMILIES = frozenset(
-    {"projects", "timelines", "media", "tasks", "runs", "documents", "preferences", "doctor", "backup"}
+    {"projects", "timelines", "media", "tasks", "runs", "documents", "preferences", "doctor", "backup", "skills"}
 )
 _PACK_ROUTE_BLOCKLIST = frozenset(
     {"agent", "auth", "help", "install", "login", "setup", "status", "logout", "revoke"}
@@ -113,8 +113,8 @@ when you want to make the agent route explicit.
 
   astrid                         interactive Astrid agent
   astrid agent [flags] [message] interactive/one-shot Astrid agent
-  astrid agent models [--json]   list OMP providers, models, and current default
-  astrid agent use PROVIDER/MODEL set the default for the next Astrid launch
+  astrid agent models [--json] [--profile NAME] list OMP providers, models, and current default
+  astrid agent use PROVIDER/MODEL [--profile NAME] set the default for the next Astrid launch
   astrid <toolkit> ...           product toolkit gateway
   astrid login                   log in for Hivemind contributions
   astrid status                  show Hivemind contributor login status
@@ -241,6 +241,7 @@ def _model_command_parser() -> argparse.ArgumentParser:
         "Usage is optional and excludes account identifiers. No credentials are returned."
     )
     models = commands.add_parser("models", help="list OMP providers and usable models", description=contract)
+    models.add_argument("--profile", help="OMP profile (defaults to Astrid's service profile)")
     models.add_argument("--json", action="store_true", help="print the stable JSON v1 contract above")
     use = commands.add_parser(
         "use", help="save OMP's default model for future App and terminal chats",
@@ -250,19 +251,23 @@ def _model_command_parser() -> argparse.ArgumentParser:
         "existing conversations may retain their session model. " + contract,
     )
     use.add_argument("selector", metavar="PROVIDER/MODEL", help="exact model selector from `astrid agent models`")
+    use.add_argument("--profile", help="OMP profile (defaults to Astrid's service profile)")
     use.add_argument("--json", action="store_true", help="print the updated JSON v1 snapshot")
     return parser
 
 
-def _omp_model_snapshot(omp_bin: str) -> dict[str, Any]:
+def _omp_model_snapshot(omp_bin: str, profile: str | None = None) -> dict[str, Any]:
     """Query OMP's registry inside OMP, without opening its credential files."""
     extension = Path(__file__).resolve().parent / "omp_extensions" / "astrid-models.ts"
     with tempfile.TemporaryDirectory(prefix="astrid-agent-models-") as directory:
         result_file = Path(directory) / "models.json"
         env = dict(os.environ)
         env["ASTRID_OMP_MODELS_RESULT"] = str(result_file)
+        command = [omp_bin, "models", "ls", "--json", "-e", str(extension)]
+        if profile:
+            command[1:1] = ["--profile", profile]
         result = subprocess.run(
-            [omp_bin, "models", "ls", "--json", "-e", str(extension)],
+            command,
             capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, check=False,
         )
         if not result_file.is_file():
@@ -295,13 +300,16 @@ def _omp_model_snapshot(omp_bin: str) -> dict[str, Any]:
     return snapshot
 
 
-def _save_default_model(omp_bin: str, selector: str) -> None:
+def _save_default_model(omp_bin: str, selector: str, profile: str | None = None) -> None:
     """Persist OMP's global default without copying project roles into it."""
     with tempfile.TemporaryDirectory(prefix="astrid-agent-config-") as directory:
         # OMP's config CLI reads effective settings for its cwd. An empty cwd
         # isolates the profile's global roles from project-specific overrides.
+        command = [omp_bin, "config", "get", "modelRoles", "--json"]
+        if profile:
+            command[1:1] = ["--profile", profile]
         result = subprocess.run(
-            [omp_bin, "config", "get", "modelRoles", "--json"], cwd=directory,
+            command, cwd=directory,
             capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         if result.returncode:
@@ -310,8 +318,11 @@ def _save_default_model(omp_bin: str, selector: str) -> None:
         roles = payload.get("value") if isinstance(payload, dict) else None
         if not isinstance(roles, dict):
             raise ValueError("OMP returned invalid modelRoles")
+        command = [omp_bin, "config", "set", "modelRoles", json.dumps({**roles, "default": selector}), "--json"]
+        if profile:
+            command[1:1] = ["--profile", profile]
         result = subprocess.run(
-            [omp_bin, "config", "set", "modelRoles", json.dumps({**roles, "default": selector}), "--json"],
+            command,
             cwd=directory, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         payload = json.loads(result.stdout) if not result.returncode else None
@@ -320,7 +331,7 @@ def _save_default_model(omp_bin: str, selector: str) -> None:
             raise ValueError("OMP could not save modelRoles.default; run `omp config get modelRoles` for details")
 
 
-def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
+def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any], profile: str | None = None) -> None:
     """Ask OMP's host for login entries, including extension-only providers."""
     catalog_model = snapshot.pop("_catalogModel", None)
     hidden = set(snapshot.pop("_hiddenProviderIds", []))
@@ -328,6 +339,8 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
     local = {"ollama", "lm-studio", "llama-cpp", "vllm"}
     command = [omp_bin, "--mode", "rpc", "--no-session", "--no-tools", "--no-lsp", "--no-pty",
                "--no-skills", "--no-rules"]
+    if profile:
+        command[1:1] = ["--profile", profile]
     if catalog_model:
         # An explicit real catalog model lets OMP answer metadata requests even
         # before sign-in. No prompt or provider inference request is submitted.
@@ -378,11 +391,14 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
     raise ValueError("OMP did not return its sign-in providers")
 
 
-def _add_model_usage(omp_bin: str, snapshot: dict[str, Any]) -> None:
+def _add_model_usage(omp_bin: str, snapshot: dict[str, Any], profile: str | None = None) -> None:
     """Attach OMP's optional quota reports, retaining only non-identity fields."""
     try:
+        command = [omp_bin, "usage", "--json", "--redact"]
+        if profile:
+            command[1:1] = ["--profile", profile]
         result = subprocess.run(
-            [omp_bin, "usage", "--json", "--redact"], capture_output=True, text=True,
+            command, capture_output=True, text=True,
             encoding="utf-8", errors="replace", check=False,
         )
         if result.returncode:
@@ -419,10 +435,11 @@ def _run_model_command(argv: list[str]) -> int:
         print("astrid: could not locate the OMP binary; set OMP_BIN or install oh-my-pi", file=sys.stderr)
         return 1
     try:
-        snapshot = _omp_model_snapshot(omp_bin)
-        _merge_login_providers(omp_bin, snapshot)
+        profile = args.profile or _service_profile()
+        snapshot = _omp_model_snapshot(omp_bin, profile)
+        _merge_login_providers(omp_bin, snapshot, profile)
         if args.command == "models":
-            _add_model_usage(omp_bin, snapshot)
+            _add_model_usage(omp_bin, snapshot, profile)
         else:
             provider_id, _, _model_id = args.selector.partition("/")
             provider = next((item for item in snapshot["providers"] if item["id"] == provider_id), None)
@@ -430,7 +447,7 @@ def _run_model_command(argv: list[str]) -> int:
                 raise ValueError(f"Sign in: run `omp`, then /login and pick {provider['name']}")
             if provider is None or not any(model["selector"] == args.selector for model in provider["models"]):
                 raise ValueError("Unknown or unavailable model selector; use `astrid agent models`")
-            _save_default_model(omp_bin, args.selector)
+            _save_default_model(omp_bin, args.selector, profile)
             snapshot["currentModel"] = args.selector
     except (OSError, ValueError) as exc:
         print(f"astrid: {exc}", file=sys.stderr)
@@ -453,6 +470,20 @@ def _run_model_command(argv: list[str]) -> int:
             elif not provider["usable"]:
                 print("  No available models in OMP")
     return 0
+
+
+def _service_profile() -> str | None:
+    """Read the chat profile retained by the installer service record."""
+    try:
+        from .installer.service import install_selection
+
+        record_path = install_selection(Path.home(), sys.platform)
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+        settings = record.get("chat_settings", {}) if isinstance(record, dict) else {}
+        value = settings.get("ASTRID_ACP_PROFILE") if isinstance(settings, dict) else None
+        return value if isinstance(value, str) and value else None
+    except (OSError, ValueError, ImportError):
+        return None
 
 
 def _omp_supports_onboard(omp_bin: str) -> bool:
@@ -656,10 +687,15 @@ def main(argv: list[str] | None = None) -> int:
         if omp_bin is None or not _omp_supports_onboard(omp_bin):
             print("astrid: this OMP build does not support native onboarding", file=sys.stderr)
             return 1
-        replace_process([omp_bin, "onboard"])
+        profile = _service_profile()
+        replace_process([omp_bin, *( ["--profile", profile] if profile else []), "onboard"])
         return 1  # pragma: no cover - hand-off exits or replaces the process
 
     flags, message = _split_flags(rest)
+    if not any(flag == "--profile" or flag.startswith("--profile=") for flag in flags):
+        profile = _service_profile()
+        if profile:
+            flags += ["--profile", profile]
     if not message and _HELP_FLAGS.intersection(flags):
         print(_USAGE, end="")
         return 0

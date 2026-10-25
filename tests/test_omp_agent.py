@@ -223,6 +223,45 @@ def test_bare_agent_subcommand_is_an_explicit_interactive_agent_route(monkeypatc
     assert "--print" not in captured["argv"]
 
 
+def test_terminal_agent_uses_service_profile_and_explicit_profile_wins(monkeypatch) -> None:
+    monkeypatch.setattr(omp_agent, "_service_profile", lambda: "app-profile")
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    calls = []
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: calls.append(argv))
+
+    assert omp_agent.main(["agent"]) == 1
+    assert omp_agent.main(["agent", "--profile", "user-profile"]) == 1
+    assert calls[0][calls[0].index("--profile") + 1] == "app-profile"
+    assert calls[1][calls[1].index("--profile") + 1] == "user-profile"
+
+
+def test_model_commands_use_service_profile(monkeypatch) -> None:
+    captured = []
+    monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/fake/omp")
+    monkeypatch.setattr(omp_agent, "_service_profile", lambda: "app-profile")
+    monkeypatch.setattr(omp_agent, "_omp_model_snapshot", lambda _omp, profile: captured.append(profile) or {"providers": []})
+    monkeypatch.setattr(omp_agent, "_merge_login_providers", lambda _omp, _snapshot, profile: captured.append(profile))
+    monkeypatch.setattr(omp_agent, "_add_model_usage", lambda _omp, _snapshot, profile: captured.append(profile))
+
+    assert omp_agent.main(["agent", "models", "--json"]) == 0
+    assert omp_agent.main(["agent", "models", "--profile", "user-profile", "--json"]) == 0
+    assert captured == [
+        "app-profile", "app-profile", "app-profile",
+        "user-profile", "user-profile", "user-profile",
+    ]
+
+
+def test_service_profile_is_read_from_install_selection(monkeypatch, tmp_path) -> None:
+    from astrid.installer import service
+
+    selection = tmp_path / "astrid-install.json"
+    selection.write_text('{"chat_settings":{"ASTRID_ACP_PROFILE":"app-profile"}}')
+    monkeypatch.setattr(service, "install_selection", lambda _home, _system: selection)
+    assert omp_agent._service_profile() == "app-profile"
+
+
 def test_toolkit_families_and_help_delegate_to_gateway(monkeypatch) -> None:
     calls: list[list[str]] = []
     monkeypatch.setattr(omp_agent, "_dispatch_toolkit", lambda argv: calls.append(argv) or 7)
@@ -230,7 +269,8 @@ def test_toolkit_families_and_help_delegate_to_gateway(monkeypatch) -> None:
     assert omp_agent.main(["projects", "list", "--json"]) == 7
     assert omp_agent.main(["help"]) == 7
     assert omp_agent.main(["install", "--help"]) == 7
-    assert calls == [["projects", "list", "--json"], ["help"], ["install", "--help"]]
+    assert omp_agent.main(["skills", "sync"]) == 7
+    assert calls == [["projects", "list", "--json"], ["help"], ["install", "--help"], ["skills", "sync"]]
 
 
 def test_setup_is_a_conversational_message(monkeypatch) -> None:

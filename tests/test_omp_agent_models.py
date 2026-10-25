@@ -48,6 +48,9 @@ import sys
 log = Path(os.environ["FAKE_OMP_LOG"])
 args = sys.argv[1:]
 record = {{"argv": args, "cwd": os.getcwd()}}
+if args[:1] == ["--profile"]:
+    record["profile"] = args[1]
+    args = args[2:]
 if args[:2] == ["--mode", "rpc"]:
     record["input"] = sys.stdin.read()
 with log.open("a", encoding="utf-8") as stream:
@@ -252,6 +255,25 @@ def test_models_only_advertises_omp_available_selectors_and_read_does_not_save(t
     assert refused.returncode != 0
     assert state_path.read_text(encoding="utf-8") == before
     assert not any(call["argv"][:2] == ["config", "set"] for call in _calls(log))
+
+
+def test_models_and_use_pass_installed_service_profile_to_fake_omp(tmp_path: Path) -> None:
+    env, log, _state = _setup(tmp_path)
+    home = Path(env["HOME"])
+    data_home = Path(env.get("XDG_DATA_HOME", home / ".local" / "share"))
+    selection = data_home / "astrid-install.json"
+    selection.parent.mkdir(parents=True, exist_ok=True)
+    selection.write_text(json.dumps({"chat_settings": {"ASTRID_ACP_PROFILE": "app-profile"}}), encoding="utf-8")
+
+    listed = _run(tmp_path, env, "agent", "models", "--json")
+    used = _run(tmp_path, env, "agent", "use", "alpha/small")
+    explicit = _run(tmp_path, env, "agent", "models", "--profile", "user-profile", "--json")
+
+    assert listed.returncode == used.returncode == explicit.returncode == 0
+    calls = _calls(log)
+    assert calls
+    assert all(call.get("profile") == "app-profile" for call in calls[:-3])
+    assert all(call.get("profile") == "user-profile" for call in calls[-3:])
 
 
 def test_login_rpc_cannot_downgrade_configured_auth_to_keyless(tmp_path: Path) -> None:

@@ -271,6 +271,10 @@ class Installer:
             self.backend.verify(candidate, self.data, realm["realm_id"])
             if transaction is not None:
                 self._save_update(transaction, "verified")
+            try:
+                self.backend.sync_skills(candidate)
+            except Exception:  # noqa: BLE001 - skill setup must never fail installation
+                self.say("Couldn't add Astrid's skill to your agents; see the log.")
             self.backend.finish(old, candidate, backup)
             if transaction is not None:
                 self._save_update(transaction, "complete")

@@ -174,6 +174,33 @@ class RegistryBlockTest(unittest.TestCase):
 
 
 class SyncGatewayTest(unittest.TestCase):
+    def test_astrid_gateway_routes_skills_to_skills_cli(self) -> None:
+        from astrid.core.gateway import dispatch
+
+        calls = []
+        with mock.patch("astrid.skills.cli.main", side_effect=lambda argv: calls.append(argv) or 0):
+            self.assertEqual(dispatch._dispatch(["skills", "sync"]), 0)
+        self.assertEqual(calls, [["sync"]])
+
+    def test_harness_config_environment_variables_select_skill_homes(self) -> None:
+        fx = _Tmp()
+        try:
+            claude_home = fx.tmp / "custom-claude"
+            codex_home = fx.tmp / "custom-codex"
+            claude_home.mkdir()
+            codex_home.mkdir()
+            with mock.patch.dict("os.environ", {
+                "CLAUDE_CONFIG_DIR": str(claude_home), "CODEX_HOME": str(codex_home),
+            }):
+                self.assertEqual(ClaudeAdapter().home, claude_home)
+                self.assertEqual(CodexAdapter().home, codex_home)
+                skills.sync(state_path=fx.state_path)
+            self.assertTrue((claude_home / "skills" / "astrid").is_symlink())
+            self.assertTrue((codex_home / "skills" / "astrid").is_symlink())
+            self.assertIn("<!-- astrid:begin -->", (codex_home / "AGENTS.md").read_text())
+        finally:
+            fx.close()
+
     def test_normal_sync_uses_writable_composed_view(self) -> None:
         fx = _Tmp()
         try:
@@ -268,6 +295,9 @@ class SyncGatewayTest(unittest.TestCase):
                 skills.sync(skill_md_path=md, state_path=fx.state_path)
                 report2 = skills.sync(skill_md_path=md, state_path=fx.state_path)
                 self.assertFalse(report2["registry"]["changed"])
+                for harness in ("claude", "codex", "hermes"):
+                    self.assertTrue((fx.home / f".{harness}" / "skills" / "astrid").is_symlink())
+                self.assertIn("<!-- astrid:begin -->", (fx.home / ".codex" / "AGENTS.md").read_text())
                 for action in report2["actions"]:
                     for step in action["steps"]:
                         self.assertFalse(step["extras"].get("changed"))

@@ -498,6 +498,26 @@ class Backend:
                 time.sleep(0.25)
         raise VerificationError(f"Astrid's browser door did not become ready: {error}")
 
+    def sync_skills(self, version: Version) -> None:
+        """Best-effort install of Astrid's skill view into detected harnesses."""
+        argv = [version.python, "-I", "-m", "astrid.skills", "sync"]
+        failed = False
+        try:
+            self.run(argv, extra_env=version.env, timeout=60)
+            outcome = "Astrid skills sync completed successfully.\n"
+        except (OSError, subprocess.SubprocessError) as exc:
+            failed = True
+            output = "" if isinstance(exc, subprocess.CalledProcessError) else (
+                getattr(exc, "output", None) or getattr(exc, "stdout", None) or ""
+            )
+            if isinstance(output, bytes):
+                output = output.decode("utf-8", errors="replace")
+            outcome = str(output) + f"\nAstrid skills sync failed ({type(exc).__name__}).\n"
+        with self.log.open("a", encoding="utf-8") as stream:
+            stream.write(outcome)
+        if failed:
+            self.say("Couldn't add Astrid's skill to your agents; see the log.")
+
     def finish(self, old: Version | None, candidate: Version, backup: dict | None) -> None:
         # Keep the immediately previous program and backup. Failures cleaning an
         # older locked version are residue, not grounds to roll back a good update.
