@@ -43,5 +43,18 @@
     "child_build": false,
     "suite_body": false,
     "request_test": false
+  },
+  "measurement": {
+    "service_id": "agent-agent-core-full-1025191128-18455",
+    "normal_launcher_preflight_exit": 0,
+    "body_exit": 1,
+    "private_runmanifest": "/tmp/w-bfe074b7cd/launcher-evidence/agent-core-full.runmanifest",
+    "private_body_log": "/tmp/w-bfe074b7cd/launcher-evidence/agent-core-full.body.log",
+    "private_xml": "/tmp/w-bfe074b7cd/launcher-evidence/agent-core-full.xml",
+    "xml_sha256": "f5759f48e82d209051611736d15ea625c84fdaebb210d9a5f23b046b84c0abf3",
+    "unexpected_guard_refusal": false,
+    "package_acquisition": false,
+    "child_build": false,
+    "environment_fallback": false
   }
 }

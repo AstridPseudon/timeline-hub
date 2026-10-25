@@ -1,0 +1,11 @@
+{
+  "schema": "timeline.agent.d134.trigger.v1",
+  "decision_receipt": "AgentINBOX2026-10-25T19:07:26Z MAIN19:24Z START NOW",
+  "recorded_utc": "2026-10-25T19:07:26Z",
+  "dispatch_recorded_utc": "2026-10-25T19:09:00Z",
+  "measurement_started_by_worker": "2026-10-25T19:11:28Z",
+  "clock_gate": "OPEN",
+  "custody_e2e_at_20z": "NOT_GREEN",
+  "dispatch": "AUTHORIZED",
+  "scope": "measurement only; no ship, custody, release, or retirement credit"
+}
