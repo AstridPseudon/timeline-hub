@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T07:03:55Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 1m -->
-# agent board, 2026-10-25T07:02:34Z
+<!-- agent | 2026-10-25T07:07:10Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 13 | status age 1m -->
+# agent board, 2026-10-25T07:06:16Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -283,12 +283,13 @@ Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 
 Families: Actual6058 14PASS7FAIL75ERROR;19214 13PASS21FAIL27ERROR;1565 3FAIL57ERROR. Actual17724 original13 remains4FAIL9ERROR; source returns never imply behavior PASS.
 D100: Runtime receiver0634 has exact dd2fc new26 with lock1daca; actual old30890 failures retained. Four reviewed blobs unchanged; originalTEN not selected, normal product held. Projection a55a remains gated on real D100 proof and normal merge.
 Restore: Exact44cf combines reviewed restore and two word-choice originals on corrected mirror and released1daca. Prior new regression and strict3 PASS retained; only ID5 and choices3/9 owed. No four-control or unchanged60 repeat.
-D107: Legacy ten scope decided; original tests unchanged. Exact baseline read79c94 independently PASS_SOURCE0647 and normalb27ff; behavior pending D108. Current-equivalent01966 FAIL_SOURCE for missing original combination predicates; same-branch first return0647 active. Ledger and MAIN follow qualified coverage.
+D107: Legacy ten scope decided; original tests unchanged. Exact baseline read79c94 independently PASS_SOURCE0647 and normalb27ff; behavior pending D108. Current-equivalent second review0653 FAIL_SOURCE; Sol0659 preserves exact original predicates and current CLI equivalents. Ledger and MAIN follow qualified coverage.
 Safety: Withdrawn D88 action stopped. D93 original credential/session/scope limits persist. D98a diagnostic spent; no new observer/body. D106 denies hub writes; all new worker outputs use exact ORCH paths.
 Disk: Free5.43GiB; D89 source/review6 above5.0GB, heavy1 above5.2GB, nothing new below4.5GB. Sweep3 removed0 and compact packed0; ended clean nonKEEP source trees auto-recycled. Only old dirty G2 remains; prior refused targets untouched.
-Blockers: Agent D107 — Protected current-equivalent coverage failed; first return0647 restores exact dependent flight/conflict/topology predicates. Archive rereview0647 precedes ledger and MAIN.
+Blockers: Agent D107 — Second protected review0653 failed exact history/outbox/inverse predicates. Sol0659 active; authentic baseline read already normalb27ff. Coverage qualification still owed before legacy ledger closure.
 Blockers: Runtime D108 — Fixed Agent070dfc normal release and full core inputs published0702. Existing sole controller0645 can capture fixed tuple and submit; no Agent source/review hold remains.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
 Next ready: Runtime0645 full core and App normal D110 adoption/P2 continuation. Agent D107 Sol0659 active. Source-qualified family bodies remain paused until D108 terminal.
 live 1 / cap 6; ready-undispatched 0 eligible local starts. D107 Sol active; D110 source released and MAIN owns full core. MAIN D108 pauses family bodies. No manager product/test/generated/pin edits or test execution.
-Inbox consumed through1455850 bytes. Updated 2026-10-25T07:02:34Z.
+Inbox consumed through1457929 bytes. Updated 2026-10-25T07:06:16Z.
+Later: U4a D111 — Runtime sole Luna rt-D111-validation-memo-0653 owns element-cost profiling and bounded successful-validation memo. Agent normal adoption waits qualified release/security/native-seed smoke; no duplicate writer or isolated P2 body.
