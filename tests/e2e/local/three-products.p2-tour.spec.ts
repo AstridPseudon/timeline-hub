@@ -144,6 +144,7 @@ async function openCommandTimeline(page: Page, harness: DirectHarness, seed: Thr
   await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
   await expect(page.getByRole('combobox', { name: 'Select project' })).toContainText(harness.seed.projectName);
   await expect(page.getByRole('textbox', { name: 'Track name' }).first()).toBeVisible();
+  await expect(page.getByTestId('runtime-not-connected')).toBeHidden();
   expect(seed.timelineId).toBe(harness.seed.timelineId);
 }
 
