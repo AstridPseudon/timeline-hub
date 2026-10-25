@@ -1,0 +1,1392 @@
+{
+  "utc": "2026-10-25T16:36:53.486450+00:00",
+  "old_finished_before": "2026-10-24T00:00:00Z",
+  "candidate_count": 197,
+  "logical_bytes_saved": 82741506,
+  "all_decompressed_hashes_equal": true,
+  "before_free_bytes": 5173362688,
+  "after_free_bytes": 5256065024,
+  "only_old_nonKEEP_nonrunning_unreferenced_nonhardlinked_worker_logs": true,
+  "sessions_testoutputs_source_pins_refused_targets_untouched": true,
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-custody-repair-sol-1913/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-custody-repair-sol-1913/log.txt.gz",
+      "uncompressed_bytes": 222999,
+      "compressed_bytes": 46127,
+      "sha256_decompressed": "b37de1e9d14419b8b669bcc47ef5a6f4a2c48825936f9f6dcd7cc7a91ab34f80"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-cli-producer-proof-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-cli-producer-proof-r1/log.txt.gz",
+      "uncompressed_bytes": 295172,
+      "compressed_bytes": 76063,
+      "sha256_decompressed": "547002ad6048da239f92fab38f05b3c0133f25dcbca2f4e3e81d699f4261ed42"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-integrated-source-proof-r5/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-integrated-source-proof-r5/log.txt.gz",
+      "uncompressed_bytes": 316652,
+      "compressed_bytes": 80851,
+      "sha256_decompressed": "c830a015647a15861cd884298f583704dfcc7810cfe84b56887bce216257c29e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-quality-quality-fonts-1054/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-quality-quality-fonts-1054/log.txt.gz",
+      "uncompressed_bytes": 333566,
+      "compressed_bytes": 70706,
+      "sha256_decompressed": "de02b4f52a549d699af87c63f6209538fa4a4484218b62d9bc45b29a30f52bc9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-integrated-proof-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-integrated-proof-r2/log.txt.gz",
+      "uncompressed_bytes": 393686,
+      "compressed_bytes": 85838,
+      "sha256_decompressed": "b5fba27fa4371a7aa93a0ad83c0fa2af4735a6279bba81f59cfe8b0ed76a03db"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-declared-read-chain-r8/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-declared-read-chain-r8/log.txt.gz",
+      "uncompressed_bytes": 651075,
+      "compressed_bytes": 149788,
+      "sha256_decompressed": "0eb370148b310a9d08b936956f1a11d5a0c5bf0aec156408200157dd659a1350"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-workerinfo-caller-ready-2251/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-workerinfo-caller-ready-2251/log.txt.gz",
+      "uncompressed_bytes": 800714,
+      "compressed_bytes": 211243,
+      "sha256_decompressed": "8836a15598edb2cd994e5b32eb3670a32c7523e954705b30029c66bd0c2dd651"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-sol-repair-r3/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-sol-repair-r3/log.txt.gz",
+      "uncompressed_bytes": 674080,
+      "compressed_bytes": 172202,
+      "sha256_decompressed": "cbc1651521fc50d22e744180cffaeeaa1414acae81f41f47097ff945bc4ef5c5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D29-env-target-2055/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D29-env-target-2055/log.txt.gz",
+      "uncompressed_bytes": 925704,
+      "compressed_bytes": 200322,
+      "sha256_decompressed": "d51d3a12675ad1a9fe794d4dfbb13005dfe22902119bdb722be952113288dea1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-mounted-compose-review-2008/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-mounted-compose-review-2008/log.txt.gz",
+      "uncompressed_bytes": 353611,
+      "compressed_bytes": 77616,
+      "sha256_decompressed": "73be5375ddb35b8d3ffbda6bcb781bf117d864c66ee5384b4f2de095514dcdd3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-renderer-theme-provenance-1112/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-renderer-theme-provenance-1112/log.txt.gz",
+      "uncompressed_bytes": 776697,
+      "compressed_bytes": 156674,
+      "sha256_decompressed": "3bd40b057a0a211227d876b3a35194ad6cfde670c9c2ac96cd4a39eb4466dbb1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-bootstrap-source-adopt-2305/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-bootstrap-source-adopt-2305/log.txt.gz",
+      "uncompressed_bytes": 432066,
+      "compressed_bytes": 104529,
+      "sha256_decompressed": "f285b381bf99cde457a366b164c949f9884b97603f8abf80e59adc6165da0fd1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-mounted-return-1954/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-mounted-return-1954/log.txt.gz",
+      "uncompressed_bytes": 767247,
+      "compressed_bytes": 142878,
+      "sha256_decompressed": "f7efbf4f402e8c08b91261eb0f389f64dde955bc72d57fed396ffc4860ada157"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-move-resume-r14/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-move-resume-r14/log.txt.gz",
+      "uncompressed_bytes": 434640,
+      "compressed_bytes": 111629,
+      "sha256_decompressed": "82672fa3be042f68b7949a7cb3ecaec0e5d3437d6ecba9e3a7c486a95ba0a7fb"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-restart-integrated-1744/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-restart-integrated-1744/log.txt.gz",
+      "uncompressed_bytes": 259792,
+      "compressed_bytes": 64014,
+      "sha256_decompressed": "92db70d79c377b88f8707a0b731257012d0c5fcd0d35449730b6f1a171b78bf1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-OPS-fresh-store-init-2145/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-OPS-fresh-store-init-2145/log.txt.gz",
+      "uncompressed_bytes": 110095,
+      "compressed_bytes": 25069,
+      "sha256_decompressed": "ce394572f6841cd538590ce41c624e3f8e93cbf06f3feae8faf395ce9118d703"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-video-caller-sol-2314/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-video-caller-sol-2314/log.txt.gz",
+      "uncompressed_bytes": 912682,
+      "compressed_bytes": 207604,
+      "sha256_decompressed": "8b75ee3e979ddf3de42eec809c23f2bfa60f5bba14772cfa41372824aa3b617d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-mounted-final-review-1958/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-mounted-final-review-1958/log.txt.gz",
+      "uncompressed_bytes": 701781,
+      "compressed_bytes": 159847,
+      "sha256_decompressed": "d5db03f92109e0f625900317577b089c8c29eff707e204d46bd72dfb8a684227"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-D24-interval-review-1635/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-D24-interval-review-1635/log.txt.gz",
+      "uncompressed_bytes": 641603,
+      "compressed_bytes": 127606,
+      "sha256_decompressed": "504cf87226e6ed4d1f24745ee43abb503bc406f98e95a5a881117a84786e4584"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-document-patch-intent/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-document-patch-intent/log.txt.gz",
+      "uncompressed_bytes": 509792,
+      "compressed_bytes": 110436,
+      "sha256_decompressed": "e2f24935ac887caa87c0b156eeb2a67510cf33651e4810cc6025b482cd08cb41"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-result-custody-1909/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-result-custody-1909/log.txt.gz",
+      "uncompressed_bytes": 567090,
+      "compressed_bytes": 101889,
+      "sha256_decompressed": "df8b924489003dc92a3e2a50fd17098e365a48ce7c487129c626e032190ceb83"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-production-handoff-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-production-handoff-review-r1/log.txt.gz",
+      "uncompressed_bytes": 826705,
+      "compressed_bytes": 194529,
+      "sha256_decompressed": "d3bf067516e091eac2dfcbdc1957d9b5d130e0d4c82eaef1ed16d2acb762aefe"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-collector-composition-review-1758/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-collector-composition-review-1758/log.txt.gz",
+      "uncompressed_bytes": 228943,
+      "compressed_bytes": 60333,
+      "sha256_decompressed": "82affeaa4d56d73be6f97ef37effe00fdc79beb1f755f363377fb3ad57281c8f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-no-test-loss-sol-1712/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-no-test-loss-sol-1712/log.txt.gz",
+      "uncompressed_bytes": 878762,
+      "compressed_bytes": 197749,
+      "sha256_decompressed": "af7cea72e7c5316bd6cdef39c773bb169a0bdc35ce6df7529f08ab37865273f9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-behaviour-cut-1735/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-behaviour-cut-1735/log.txt.gz",
+      "uncompressed_bytes": 460007,
+      "compressed_bytes": 97330,
+      "sha256_decompressed": "8606d034a0142407ea5018894f54eb0784cfdf552b280398c4a0777d160a139c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-current-join-review-r4/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-current-join-review-r4/log.txt.gz",
+      "uncompressed_bytes": 389126,
+      "compressed_bytes": 84798,
+      "sha256_decompressed": "d6a7f3f51b5c189d998710c5e9f010a466e9ded2d8f9b5ac43a60b09111f0b41"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-return-review-1605/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-return-review-1605/log.txt.gz",
+      "uncompressed_bytes": 351226,
+      "compressed_bytes": 73658,
+      "sha256_decompressed": "26db6eea30b2847793c00e7b6d5b6d8efbdcba4c964034a74602483ec62e8a7b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-reload-source-sol-2345/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-reload-source-sol-2345/log.txt.gz",
+      "uncompressed_bytes": 777654,
+      "compressed_bytes": 171705,
+      "sha256_decompressed": "86ad46f28cf83e333d226c1940d0aaa127e89b83a5f5c3d61fc35dd812ffa1e8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-pins-1810/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-pins-1810/log.txt.gz",
+      "uncompressed_bytes": 619712,
+      "compressed_bytes": 148678,
+      "sha256_decompressed": "bfd2a2208657ba06d78b7a19cb5b90fd9a4e01d2e82f80a98dc11c68ea8c1f56"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-official780-current-join-r6/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-official780-current-join-r6/log.txt.gz",
+      "uncompressed_bytes": 708161,
+      "compressed_bytes": 139956,
+      "sha256_decompressed": "8da7abea16020bef784085e113238046dd2b4d6a37ed62f0efd52fdbfa20a88b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P3-owner-cause-sol-1934/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P3-owner-cause-sol-1934/log.txt.gz",
+      "uncompressed_bytes": 333784,
+      "compressed_bytes": 88237,
+      "sha256_decompressed": "cde549cc2ad90715ecadc130b547b873b5ec905eeadc3e83e32dee88a9291e03"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-hosted-heap-caller-sol-2223/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-hosted-heap-caller-sol-2223/log.txt.gz",
+      "uncompressed_bytes": 272808,
+      "compressed_bytes": 77706,
+      "sha256_decompressed": "e97c0d43c26b7c44cb9fb8d5f1c83de6644c823046b4d666fd80247a18571980"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3c-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3c-review-r1/log.txt.gz",
+      "uncompressed_bytes": 689329,
+      "compressed_bytes": 155215,
+      "sha256_decompressed": "d44c72f56bda38a6d0772eaf7a29ceae54d961cb5034af0a82fc21f05ade8ab5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-noPOST-live-1657/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-recovery-noPOST-live-1657/log.txt.gz",
+      "uncompressed_bytes": 793029,
+      "compressed_bytes": 187975,
+      "sha256_decompressed": "07ab8c4e268666255ef600a0e042d4d1ada5d4c53aa0c046cf6a2543ace9b5ae"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-image-projection-facts-sol-2357/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-image-projection-facts-sol-2357/log.txt.gz",
+      "uncompressed_bytes": 312004,
+      "compressed_bytes": 72236,
+      "sha256_decompressed": "16758846ec7cfbdc6b5574a786b5cfc52dc7ccd9a6721b01023796e4357c4386"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-compose-review-1906/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-compose-review-1906/log.txt.gz",
+      "uncompressed_bytes": 509236,
+      "compressed_bytes": 108695,
+      "sha256_decompressed": "dd892441969dd72999fb7293b22f7d39a0251eff991f2bd7b679e1b31cb043a2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-live-final-review-2038/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-live-final-review-2038/log.txt.gz",
+      "uncompressed_bytes": 701942,
+      "compressed_bytes": 91290,
+      "sha256_decompressed": "9d2202693643b712b99d79a108077998419c2ebe06387b7cf88c99e078b08b2c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-save-funnel/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-save-funnel/log.txt.gz",
+      "uncompressed_bytes": 853040,
+      "compressed_bytes": 201404,
+      "sha256_decompressed": "3e934cb3489d7fa5deaeab1cebf1ac7f0d952db7f35ad734c27664e3d3a47a42"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-bootstrap-ready-sol-2330/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-bootstrap-ready-sol-2330/log.txt.gz",
+      "uncompressed_bytes": 236051,
+      "compressed_bytes": 67712,
+      "sha256_decompressed": "4bb6efb3d7ab9c8c804a123dc4b9225d4cfbd8890ae8da6797b52bfb31302078"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-node-service-route-1649/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-node-service-route-1649/log.txt.gz",
+      "uncompressed_bytes": 836906,
+      "compressed_bytes": 96461,
+      "sha256_decompressed": "232891a5096b46a7352f42f22771fa0453dabea9a4a88b935e2e2dd2e8b5983e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-corrected780-r3/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-corrected780-r3/log.txt.gz",
+      "uncompressed_bytes": 677240,
+      "compressed_bytes": 130979,
+      "sha256_decompressed": "b33bf4dbf526e1ec8fbec67406dcd4328b4a284638ec119e70029496e851464d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-eof-fix/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-eof-fix/log.txt.gz",
+      "uncompressed_bytes": 114983,
+      "compressed_bytes": 24626,
+      "sha256_decompressed": "d084a4987ed3a7769d1bf986f7d062ae8fb0214a42a456181c4199481754ce96"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-theme-independent-review-1122/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-theme-independent-review-1122/log.txt.gz",
+      "uncompressed_bytes": 543687,
+      "compressed_bytes": 103613,
+      "sha256_decompressed": "ccdb204606e8198f37456a50d6ffed634b804a00350298afed60b7d074a75300"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-bootstrap-bind-ready-2309/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-bootstrap-bind-ready-2309/log.txt.gz",
+      "uncompressed_bytes": 874715,
+      "compressed_bytes": 142086,
+      "sha256_decompressed": "fe9f92721f9e89733c275e37744ba6c326934458da32ec51619b3c687b588ba9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-door-isolation-sol-2339/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-door-isolation-sol-2339/log.txt.gz",
+      "uncompressed_bytes": 321473,
+      "compressed_bytes": 95570,
+      "sha256_decompressed": "e6d6628942ac65bcd729b35de0f81df6536109530922911510eb240ff2e735df"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-collector-merge-1755/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-collector-merge-1755/log.txt.gz",
+      "uncompressed_bytes": 167907,
+      "compressed_bytes": 40375,
+      "sha256_decompressed": "88f20b05dd9da09b4a2733526795630712012b877105563a08bad0967c8eef17"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-readiness-bootstrap-cause-2258/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-readiness-bootstrap-cause-2258/log.txt.gz",
+      "uncompressed_bytes": 785879,
+      "compressed_bytes": 190085,
+      "sha256_decompressed": "c667ff655cd3ee5f524111e16dbee53323ddaf754c1a0bd4e8b1648170d1f8d8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-prepared-carrier-types-2142/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-prepared-carrier-types-2142/log.txt.gz",
+      "uncompressed_bytes": 48559,
+      "compressed_bytes": 15490,
+      "sha256_decompressed": "088db7524b8814f6fe50169054e0b32365aa56bccfb62c4e33d0bdafe0da7771"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-contract-fixture-join-fix-r7/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-contract-fixture-join-fix-r7/log.txt.gz",
+      "uncompressed_bytes": 801356,
+      "compressed_bytes": 184525,
+      "sha256_decompressed": "f4a6c6d6d5b18077578540d02d9e2fe41452c6c4168348c542d303c5ca37fe6c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-reconciliation-2110/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-reconciliation-2110/log.txt.gz",
+      "uncompressed_bytes": 963331,
+      "compressed_bytes": 143679,
+      "sha256_decompressed": "4eeb615c647896ce72da5de5f84c8240c5dd5b45a8770c7d5005c59c32f6ef91"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-envelope-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-envelope-review-r1/log.txt.gz",
+      "uncompressed_bytes": 601884,
+      "compressed_bytes": 121278,
+      "sha256_decompressed": "7a47c8f6f0fa2adef0459c0a127dde32c24c0e6598f5c7be88c34bf465b2657f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-current-compose-1812/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-current-compose-1812/log.txt.gz",
+      "uncompressed_bytes": 297996,
+      "compressed_bytes": 80469,
+      "sha256_decompressed": "f1a8f63b61ce9810e56a374f4f2b5ae4908718180253068edcb6e45becdeee21"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-workerinfo-row-ready-2250/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-workerinfo-row-ready-2250/log.txt.gz",
+      "uncompressed_bytes": 629947,
+      "compressed_bytes": 108733,
+      "sha256_decompressed": "a5463a29535b6c922917458f6e8d09c0fcc30f40fb22543bf57428f8fd1436b0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D28-App18607-safe-comparator-2001/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D28-App18607-safe-comparator-2001/log.txt.gz",
+      "uncompressed_bytes": 231190,
+      "compressed_bytes": 38741,
+      "sha256_decompressed": "4f96f5aa7e8cd26c0ec143c6537fb48ead1fcda7457659edca3cf6abf001ff9d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-public-head-pair-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-public-head-pair-r1/log.txt.gz",
+      "uncompressed_bytes": 516835,
+      "compressed_bytes": 95232,
+      "sha256_decompressed": "a4969238abfb738cc4aaf2fc98a35ed6834d322343cb6089c46313f8b1205b73"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-rejected-popup-raw-return-1133/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-rejected-popup-raw-return-1133/log.txt.gz",
+      "uncompressed_bytes": 452748,
+      "compressed_bytes": 88916,
+      "sha256_decompressed": "7953ea68a85d583767b63407ff0472fab0eb98924e2d36a7be1be3dbabed9634"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-list-OPS-return-1848/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-list-OPS-return-1848/log.txt.gz",
+      "uncompressed_bytes": 589926,
+      "compressed_bytes": 97765,
+      "sha256_decompressed": "dbb3d4bc573d8e0f379c1d042679894d780c025ac0bd58cc969c48ce541cbc95"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-workerinfo-subject-adopt-2247/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-workerinfo-subject-adopt-2247/log.txt.gz",
+      "uncompressed_bytes": 491615,
+      "compressed_bytes": 84397,
+      "sha256_decompressed": "36871922b8afdbb8ecc9187ed3dcc20de8706b62d4b0095721a8f9b841a0e104"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-D24-unsettled-1626/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-D24-unsettled-1626/log.txt.gz",
+      "uncompressed_bytes": 573695,
+      "compressed_bytes": 144772,
+      "sha256_decompressed": "18c71908c3e567741410b14dfaa2abd8e850042b9976d838c72dc81f8342ad63"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-service-snapshot-sol-2227/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-service-snapshot-sol-2227/log.txt.gz",
+      "uncompressed_bytes": 181714,
+      "compressed_bytes": 51828,
+      "sha256_decompressed": "a0487ab73d7389f46b8ca84de203040bc49d7d1e0ed240d4cabf1a34686ab250"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-move-resume-r15/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-move-resume-r15/log.txt.gz",
+      "uncompressed_bytes": 377406,
+      "compressed_bytes": 96914,
+      "sha256_decompressed": "a2c6b50317fbe32d6a674e2535504a6c64123c611e6bbd2624446cbde28f9409"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-recover-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-recover-r2/log.txt.gz",
+      "uncompressed_bytes": 395620,
+      "compressed_bytes": 74612,
+      "sha256_decompressed": "3f7da8ec7e69b0f3ccf57e89378fb532b16e28deafd6f9cd11585a069a87b76c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-actual-argv-sol-2159/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-actual-argv-sol-2159/log.txt.gz",
+      "uncompressed_bytes": 201147,
+      "compressed_bytes": 57126,
+      "sha256_decompressed": "a51fffb9fbe383bd4d6db85ce27fbd0e4623f10a503051e960cf65c46f622dca"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-video-integrated-2350/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-video-integrated-2350/log.txt.gz",
+      "uncompressed_bytes": 689953,
+      "compressed_bytes": 119196,
+      "sha256_decompressed": "2a35f5b74c8886cf3962c0c4032e7568818c801836a65213f032159f4e6e8841"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-mounted-undo-resume-r3/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-mounted-undo-resume-r3/log.txt.gz",
+      "uncompressed_bytes": 434393,
+      "compressed_bytes": 103479,
+      "sha256_decompressed": "91a597572e558bcd0f4f027a583cb9c43aca2cf418bce21c2fe229f9eeb94497"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-hygiene-review-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-hygiene-review-r2/log.txt.gz",
+      "uncompressed_bytes": 644042,
+      "compressed_bytes": 91906,
+      "sha256_decompressed": "e9a532cdf33b123fdadf4c8bd91e94ed46cc60a1eacfa633cb526d3988d37fe5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-current-join-2053/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-current-join-2053/log.txt.gz",
+      "uncompressed_bytes": 874136,
+      "compressed_bytes": 121562,
+      "sha256_decompressed": "f87f93065ada366b9f191b09c11d375bb7ffa08af227689a7485dac771a0361d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-move-declared-reads-r12/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-move-declared-reads-r12/log.txt.gz",
+      "uncompressed_bytes": 896316,
+      "compressed_bytes": 180912,
+      "sha256_decompressed": "cf54d004ca80c822ec88aff59cf3f96fc58d5b4be691164f3bef5fa4f89a5e46"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-final-review-1941/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-final-review-1941/log.txt.gz",
+      "uncompressed_bytes": 571896,
+      "compressed_bytes": 133147,
+      "sha256_decompressed": "db183887e03e6105c8cc8c106238136fd17770f28e08e89c0c1e1fe3e4f6df08"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-integrated-proof-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-integrated-proof-r1/log.txt.gz",
+      "uncompressed_bytes": 421235,
+      "compressed_bytes": 85269,
+      "sha256_decompressed": "d59e3743635af1cdc0d0814e2502c613f2338711836213836e0dd66e101ae79c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-current-D13-spec-port-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-current-D13-spec-port-r2/log.txt.gz",
+      "uncompressed_bytes": 318335,
+      "compressed_bytes": 56430,
+      "sha256_decompressed": "725084c73a3113cdc2e7ba9a6ced0b936680e9f43b128535f4811ba6a991e9cf"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-caller-complete-sol-2209/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-caller-complete-sol-2209/log.txt.gz",
+      "uncompressed_bytes": 314453,
+      "compressed_bytes": 76104,
+      "sha256_decompressed": "50ca354e74a8257efd3e68b3b2b981a9766e96c6397019869492522394fcb32d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-D24-sol-1619/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-D24-sol-1619/log.txt.gz",
+      "uncompressed_bytes": 511086,
+      "compressed_bytes": 134154,
+      "sha256_decompressed": "9759060987110cf087d17f9b18bd36202dbea3c838deb476ee46342dd1ebe381"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-mounted-return-1559/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-mounted-return-1559/log.txt.gz",
+      "uncompressed_bytes": 1001152,
+      "compressed_bytes": 181551,
+      "sha256_decompressed": "65f69cb91e598508fb42e6905bc0450f34c694a78f3ad9dbb7451e331d140dcd"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-integrated-source-proof-r3/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-integrated-source-proof-r3/log.txt.gz",
+      "uncompressed_bytes": 351055,
+      "compressed_bytes": 90117,
+      "sha256_decompressed": "74ebc2cd3906d4b28d164d8f3437814490e39e7d44eb368af08dfa667c310709"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-13781-review-2335/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-13781-review-2335/log.txt.gz",
+      "uncompressed_bytes": 995518,
+      "compressed_bytes": 231763,
+      "sha256_decompressed": "3dfaa06d0ef47fd9e9c42b54edc9575993d56707b529fd6baa838c59f0ef010c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P1-17985-evidence-review-2029/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P1-17985-evidence-review-2029/log.txt.gz",
+      "uncompressed_bytes": 700961,
+      "compressed_bytes": 153548,
+      "sha256_decompressed": "6fe13e863479814face87342ac13b2bda3ddea12a22e380fb8734ea69719d3d6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P2-ready-cause-sol-1947/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P2-ready-cause-sol-1947/log.txt.gz",
+      "uncompressed_bytes": 361137,
+      "compressed_bytes": 100235,
+      "sha256_decompressed": "3ddeeab09aa5ce4a430d0c267e26b9d2c066d41448131c3671dddfd16fc4e247"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-save-independent-review-1106/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-save-independent-review-1106/log.txt.gz",
+      "uncompressed_bytes": 569135,
+      "compressed_bytes": 115541,
+      "sha256_decompressed": "5376b2d1e37bb9be64371d61e74ef8b527e4decfcdf5182826b9d54c96f5b3b7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-envelope-return-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-envelope-return-r2/log.txt.gz",
+      "uncompressed_bytes": 794640,
+      "compressed_bytes": 181729,
+      "sha256_decompressed": "5ea594f84a7112569f7adc7f74407cffeae95bbd95a77cd37ee5701ef9d29824"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-postfix-cause-sol-2255/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-postfix-cause-sol-2255/log.txt.gz",
+      "uncompressed_bytes": 799302,
+      "compressed_bytes": 119339,
+      "sha256_decompressed": "9b701cbdd8531896f987ec5b6b6c498b2476cde60c0eeb0acab44d1d05e471f6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-track-mounted-review-1932/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-track-mounted-review-1932/log.txt.gz",
+      "uncompressed_bytes": 913516,
+      "compressed_bytes": 200274,
+      "sha256_decompressed": "6a293851433d7347e0aeb9e20325ea79e4bf8c120c773bd15036ca444484e3e6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-trim-clear-review-r3/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-trim-clear-review-r3/log.txt.gz",
+      "uncompressed_bytes": 599861,
+      "compressed_bytes": 104620,
+      "sha256_decompressed": "b8b81cfc35ed7fea3c5bbb2526b017d9b8ba76a3518bb04eee36b438f525ea7e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-bootstrap-live-cause-sol-2319/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-bootstrap-live-cause-sol-2319/log.txt.gz",
+      "uncompressed_bytes": 355368,
+      "compressed_bytes": 86836,
+      "sha256_decompressed": "e5fab11306455478abe053d299fc505768257a06c3b46c095cf64db7e33bd17c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-positive-input-export-2043/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-positive-input-export-2043/log.txt.gz",
+      "uncompressed_bytes": 156240,
+      "compressed_bytes": 30967,
+      "sha256_decompressed": "52e468115a4bbfc1504a0d67559c2fc66a8ca89e2588e18bdfac1290fba2197c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-integrated-source-proof-r6/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-integrated-source-proof-r6/log.txt.gz",
+      "uncompressed_bytes": 280213,
+      "compressed_bytes": 58187,
+      "sha256_decompressed": "72c4f97fe3c05558ea13dd11ccbb415075f80d9f938459d3041c269be8621934"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-diagnostic-integrated-2010/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-diagnostic-integrated-2010/log.txt.gz",
+      "uncompressed_bytes": 703473,
+      "compressed_bytes": 126731,
+      "sha256_decompressed": "8e79c55832b90cf869232dffd054737d342f29f8407d295e26726587dd9cc9ef"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-repair-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-repair-r1/log.txt.gz",
+      "uncompressed_bytes": 594843,
+      "compressed_bytes": 130768,
+      "sha256_decompressed": "52464e311d991d7074c7bc04e55fdb9ff93a49e1c4371f609534babc5473740d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-shared-fork-popup-resume-r3/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-shared-fork-popup-resume-r3/log.txt.gz",
+      "uncompressed_bytes": 636862,
+      "compressed_bytes": 117887,
+      "sha256_decompressed": "b907fe9d4f6265fc5dc8eb92744c8fe6dec7bcf8e0cadcd5b58dc22c6952d0ad"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P1-composed-integrated-proof-r11/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P1-composed-integrated-proof-r11/log.txt.gz",
+      "uncompressed_bytes": 872497,
+      "compressed_bytes": 163434,
+      "sha256_decompressed": "976701129847cd94f0ff35793ceaad2a88cae018f76aee72a8e3c5767aacb0dc"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-operand-cause-review-2218/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-operand-cause-review-2218/log.txt.gz",
+      "uncompressed_bytes": 503182,
+      "compressed_bytes": 91313,
+      "sha256_decompressed": "bbd8eb8e25d72d41cacefefbd430fd04cce1e454b63c5952ab172bdd2ae88e7b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-spec-port-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-spec-port-review-r1/log.txt.gz",
+      "uncompressed_bytes": 160349,
+      "compressed_bytes": 43739,
+      "sha256_decompressed": "812c122816f57f1b9fd67a7c0735c23ee2757a439efac7d82d736c2f2842481b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-held-sourcein-1534/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-held-sourcein-1534/log.txt.gz",
+      "uncompressed_bytes": 369453,
+      "compressed_bytes": 103981,
+      "sha256_decompressed": "ee133314b8e0999e23ee1c96ed9147dd372b628cac6c546932c844554fa2ff78"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-gestures-gesture-guards-1054/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-gestures-gesture-guards-1054/log.txt.gz",
+      "uncompressed_bytes": 986148,
+      "compressed_bytes": 212381,
+      "sha256_decompressed": "5d5cab0262a5e61b081532d59f891cf367af39b3caf99d27efcd2735836ead73"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-export-attribution/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-export-attribution/log.txt.gz",
+      "uncompressed_bytes": 810930,
+      "compressed_bytes": 125311,
+      "sha256_decompressed": "5bb85204246c6d828e44b651e000582660070746d6ca57a13f91d98beff65870"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-list-return-review-1707/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-list-return-review-1707/log.txt.gz",
+      "uncompressed_bytes": 493927,
+      "compressed_bytes": 110291,
+      "sha256_decompressed": "c50b9da1a6ee974e94d2336f674b51b98b18482eb21ffbb47653bcdf08272032"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P2-ready-review-1954/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P2-ready-review-1954/log.txt.gz",
+      "uncompressed_bytes": 855585,
+      "compressed_bytes": 196705,
+      "sha256_decompressed": "22830580bdc23363d5753b297169057ea604bcefdd331f0d7847e798c0c9a4a4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-review-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-review-r2/log.txt.gz",
+      "uncompressed_bytes": 844511,
+      "compressed_bytes": 191831,
+      "sha256_decompressed": "05a18afc88aa044a11193d25bef48f42f78860eeb173065f8c279910361026a3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-cause-1536/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-cause-1536/log.txt.gz",
+      "uncompressed_bytes": 311282,
+      "compressed_bytes": 81188,
+      "sha256_decompressed": "2cf84b3a1ae84e07133ecd01f10be81ef6efa1ecab7ecfa950e8b758f8c177ec"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-H24-triage-sol-2201/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-H24-triage-sol-2201/log.txt.gz",
+      "uncompressed_bytes": 318553,
+      "compressed_bytes": 72701,
+      "sha256_decompressed": "54ef026bbb3aff532d5f9825a0609691a247477301e3d7cd5dbe5461b86f1f20"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-return-review-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-return-review-r2/log.txt.gz",
+      "uncompressed_bytes": 893111,
+      "compressed_bytes": 194600,
+      "sha256_decompressed": "027e0b6143ef80563a0a7f5584332ecf96651e1da09dd262ca975083f05a73d8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-private-build-caller-sol-2232/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-private-build-caller-sol-2232/log.txt.gz",
+      "uncompressed_bytes": 179196,
+      "compressed_bytes": 51053,
+      "sha256_decompressed": "6e972f72d16cf221304474eb14c0fbdbede560a5ccb249670322e344f825d78b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-adoption-output-sol-2221/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-adoption-output-sol-2221/log.txt.gz",
+      "uncompressed_bytes": 416553,
+      "compressed_bytes": 97215,
+      "sha256_decompressed": "bbf34af13b1a65bf7b4e248ffb9a1196451652714c4ddf12aabc2f2f3afb7eb8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-envelope-official34e-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-envelope-official34e-r1/log.txt.gz",
+      "uncompressed_bytes": 722381,
+      "compressed_bytes": 139335,
+      "sha256_decompressed": "3db25875e5fadefe72a250105097bbe5bbfd7ccdd8686101a490dca432d7a54e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-repair-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-repair-review-r1/log.txt.gz",
+      "uncompressed_bytes": 382298,
+      "compressed_bytes": 76609,
+      "sha256_decompressed": "212f80935d091f6239c7b94ef9909dbdfe4e9a121c640d29c4aafdce6b139e63"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-upstream-draft-1642/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-upstream-draft-1642/log.txt.gz",
+      "uncompressed_bytes": 908454,
+      "compressed_bytes": 138365,
+      "sha256_decompressed": "7cb37bab471d7a8a4abdb31667dee56e1d2537fd688ebdb3e2ba7a5b7b8cf4c5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-mounted-review-1924/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-mounted-review-1924/log.txt.gz",
+      "uncompressed_bytes": 832310,
+      "compressed_bytes": 186775,
+      "sha256_decompressed": "876a00bd6147e6c9972f7c662a0e4a0f2f432e78ec8b29b2cb7be4e041b0b2f7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-image-intent-sol-2250/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-image-intent-sol-2250/log.txt.gz",
+      "uncompressed_bytes": 357225,
+      "compressed_bytes": 84092,
+      "sha256_decompressed": "61946223da4b6b85ce28b4af013c547261a2182d8dd4fb31b844e5255a96a0f9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-prepared-carrier-review-2138/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-prepared-carrier-review-2138/log.txt.gz",
+      "uncompressed_bytes": 729340,
+      "compressed_bytes": 161865,
+      "sha256_decompressed": "6501634c4b2bcd4321ad7360f8c133db4b24cf80ad5e203a20bc5d10e9775243"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-workerinfo-artifact-fix-2238/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-workerinfo-artifact-fix-2238/log.txt.gz",
+      "uncompressed_bytes": 400897,
+      "compressed_bytes": 78028,
+      "sha256_decompressed": "61df5acd8096695510a2c80b478d8bdce47c1c31f29bdf45ae3fbc2cb8c18cd7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-placement-review-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-placement-review-r2/log.txt.gz",
+      "uncompressed_bytes": 829014,
+      "compressed_bytes": 175891,
+      "sha256_decompressed": "74f64679ff1b5cc86be9ea0e5a47b2144fbe8616040dd34e949139e9f4e256ee"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D19-full-independent-review-1248/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D19-full-independent-review-1248/log.txt.gz",
+      "uncompressed_bytes": 992099,
+      "compressed_bytes": 202277,
+      "sha256_decompressed": "99d77236b21357f5401cf2ebcfc63232407ea673834513ec3eb2fe8461255bf7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-review-1815/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-review-1815/log.txt.gz",
+      "uncompressed_bytes": 539490,
+      "compressed_bytes": 103993,
+      "sha256_decompressed": "240cb91315ed83cc43274b6abd0895ec36c5b803241b77b18afda03773c84f29"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-mounted-undo-resume-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-mounted-undo-resume-r2/log.txt.gz",
+      "uncompressed_bytes": 565099,
+      "compressed_bytes": 115388,
+      "sha256_decompressed": "3076dbd2995bd389180db8b92fa2655ae65ce9dc24a95e77ac2e432cc473d8c0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-restart-replay-sol-1728/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-restart-replay-sol-1728/log.txt.gz",
+      "uncompressed_bytes": 680807,
+      "compressed_bytes": 148523,
+      "sha256_decompressed": "f03f36fb7bdf1299e0429845fbc89bd041498caaa616b4f9a40336ca0904122b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-operand-cause-sol-2218/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-operand-cause-sol-2218/log.txt.gz",
+      "uncompressed_bytes": 503200,
+      "compressed_bytes": 85647,
+      "sha256_decompressed": "cb2e2f57233549e4b80263946ea8d65ef993171b56d34cb98008d28bce580ee7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-reconciliation-review-2114/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-transcript-reconciliation-review-2114/log.txt.gz",
+      "uncompressed_bytes": 825453,
+      "compressed_bytes": 162764,
+      "sha256_decompressed": "0779bcb70c7cac38585ae823e230799bcae306a45c4474ab538445a033991d63"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-repair-hygiene-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-repair-hygiene-r2/log.txt.gz",
+      "uncompressed_bytes": 445987,
+      "compressed_bytes": 63396,
+      "sha256_decompressed": "d74d3bed4a6a582fa401c973f7d5474d19d46366f7fd1c993ac83442bc9c8ace"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-mounted-1936/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-mounted-1936/log.txt.gz",
+      "uncompressed_bytes": 807133,
+      "compressed_bytes": 167131,
+      "sha256_decompressed": "0b10bed548208edf183b5a82cfb2655e1ac5233aa2ecebd84fccbddf4aa695fa"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-D16-caller-sol-2325/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-D16-caller-sol-2325/log.txt.gz",
+      "uncompressed_bytes": 153314,
+      "compressed_bytes": 44184,
+      "sha256_decompressed": "c0dd7f034261d79085d96b84caabefdcc017603935b2fe2ee3e42f92e2ea23a8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-instrumented-OPS-2128/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-instrumented-OPS-2128/log.txt.gz",
+      "uncompressed_bytes": 807482,
+      "compressed_bytes": 191262,
+      "sha256_decompressed": "7709d0e07ea4d50dd03ae8be090a7d57f4d3517e4256fd1d7edc2c59e52fb0b4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-P3-resolver-integrated-proof-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-P3-resolver-integrated-proof-r1/log.txt.gz",
+      "uncompressed_bytes": 367924,
+      "compressed_bytes": 83360,
+      "sha256_decompressed": "a96c98cbafede0270622d2462a47a3f7351355ef9108bc39d156a8f20f1f9421"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-valid-producer-2359/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-valid-producer-2359/log.txt.gz",
+      "uncompressed_bytes": 158971,
+      "compressed_bytes": 36613,
+      "sha256_decompressed": "98ffdc55518ff0db6823818dfe790d0481e069c1ef9ed011d1d14b3c2edf1f32"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-reload-source-review-2359/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-reload-source-review-2359/log.txt.gz",
+      "uncompressed_bytes": 421509,
+      "compressed_bytes": 99978,
+      "sha256_decompressed": "99449a955e1dc5ea6c5db80fc21096327fdbbc74ef87ec05938556a4440cde94"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-bootstrap-ready-sol-2328/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-bootstrap-ready-sol-2328/log.txt.gz",
+      "uncompressed_bytes": 530484,
+      "compressed_bytes": 78354,
+      "sha256_decompressed": "4c3e74c025040797069bf11658abb5b93dc18a59b56f4d08a976d10505ba405e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-discovery-first-return-1700/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-discovery-first-return-1700/log.txt.gz",
+      "uncompressed_bytes": 367678,
+      "compressed_bytes": 77598,
+      "sha256_decompressed": "09951f8983308a647cc6b1c34960478524f3a04e7d51c66e61d0fe54abea7361"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-caller-alias-complete-sol-2220/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-caller-alias-complete-sol-2220/log.txt.gz",
+      "uncompressed_bytes": 220846,
+      "compressed_bytes": 65887,
+      "sha256_decompressed": "598712be168c93a02ef74bf2b6bdee17e378f23fa428b8d1e8ce99d4328aa830"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-mounted-repro-1547/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-mounted-repro-1547/log.txt.gz",
+      "uncompressed_bytes": 781848,
+      "compressed_bytes": 128843,
+      "sha256_decompressed": "efb97791cf8c270dd927efa9c5e6d5cc8e6c029f767af1b6c8af37d677da4cf7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3c-quick-adapter-fix/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3c-quick-adapter-fix/log.txt.gz",
+      "uncompressed_bytes": 320895,
+      "compressed_bytes": 59048,
+      "sha256_decompressed": "2e0f628182e3e2a803b880a24baea9e9be20698226b95810a142a3edbe6d30e0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D28-comparator-final-review-2014/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D28-comparator-final-review-2014/log.txt.gz",
+      "uncompressed_bytes": 250455,
+      "compressed_bytes": 58672,
+      "sha256_decompressed": "d6f3025bfe8d81ba7541208e1f1c17c63c3686b8b47d2bb51b18ce5d5fe11e71"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-preflight-output-caller-sol-2302/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-preflight-output-caller-sol-2302/log.txt.gz",
+      "uncompressed_bytes": 581406,
+      "compressed_bytes": 85001,
+      "sha256_decompressed": "2072a8be1b2f512079094fec28c67a8dfe500c0b5781df1f6a96b49bd3c34a55"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-rejection-diagnostic-review-2042/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-rejection-diagnostic-review-2042/log.txt.gz",
+      "uncompressed_bytes": 573297,
+      "compressed_bytes": 137335,
+      "sha256_decompressed": "51318c5d20e0c017b5a1ab25ff30c61abb56342670e7f1a9bfd630efa3fb4c41"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-exports-public-graph-1054/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-exports-public-graph-1054/log.txt.gz",
+      "uncompressed_bytes": 429862,
+      "compressed_bytes": 93389,
+      "sha256_decompressed": "9ee717a46aca2d6109fc70f97a3da0a94176c3374c5ed56f549e15d340d34c8b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-session-review/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-session-review/log.txt.gz",
+      "uncompressed_bytes": 450491,
+      "compressed_bytes": 107592,
+      "sha256_decompressed": "04c276a0166577c07a977275bbefe8144123ed357e96234290ddcd07ebe16df8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3a-repair-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3a-repair-r1/log.txt.gz",
+      "uncompressed_bytes": 653322,
+      "compressed_bytes": 132088,
+      "sha256_decompressed": "0f3e1b33b97b45abce0a3ae225ecb8112b0087be0fdaa70217e50c689226da8c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-official21482-review-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-official21482-review-r2/log.txt.gz",
+      "uncompressed_bytes": 875002,
+      "compressed_bytes": 169938,
+      "sha256_decompressed": "0d0bc818558b19e35da8eb4e2d7383de8b3f557bcce1e3a55423ef046eadf786"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-prepared-independent-2153/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-prepared-independent-2153/log.txt.gz",
+      "uncompressed_bytes": 781521,
+      "compressed_bytes": 186016,
+      "sha256_decompressed": "d120e53c8276e954d2ac73618a70d9684d8163abc6d56bb76380a47e0f60fd0f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-assets-return-independent-review-1120/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-assets-return-independent-review-1120/log.txt.gz",
+      "uncompressed_bytes": 878458,
+      "compressed_bytes": 154815,
+      "sha256_decompressed": "6ac8cd7b958f6bf5b00ba033c4257aba86e136a5267943039fd726172ea1a259"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-positive-review-2033/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-positive-review-2033/log.txt.gz",
+      "uncompressed_bytes": 689408,
+      "compressed_bytes": 114651,
+      "sha256_decompressed": "aecd60e5943402ce43882bc06549f38b198af43c66394f8afd4d36e8d6d9631b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-track-final-review-1949/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-track-final-review-1949/log.txt.gz",
+      "uncompressed_bytes": 990147,
+      "compressed_bytes": 207753,
+      "sha256_decompressed": "a2bf200fe41520485100941d64ecde25010ee9b89c28b1a4b832c26d5147f204"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-mounted-reviewed-compose-2003/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-mounted-reviewed-compose-2003/log.txt.gz",
+      "uncompressed_bytes": 549361,
+      "compressed_bytes": 101153,
+      "sha256_decompressed": "77d6253fe40b9d36db5c0bddffd6530d571cabf54e2f122f246617e6501dbd55"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-publictrim-review-1734/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-publictrim-review-1734/log.txt.gz",
+      "uncompressed_bytes": 932851,
+      "compressed_bytes": 238431,
+      "sha256_decompressed": "b165ba1edd5ed9f0721a2e1b7189b2eba57328fcd0477efa459cc8db012cf85f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-D26-target-return-2000/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-D26-target-return-2000/log.txt.gz",
+      "uncompressed_bytes": 197944,
+      "compressed_bytes": 38269,
+      "sha256_decompressed": "848352ba94aa3910333a83db76a73fd311ce6bbbef7f94cb9ef52e68c44fcdab"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-publictrim-normal-profile-1728/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-publictrim-normal-profile-1728/log.txt.gz",
+      "uncompressed_bytes": 492637,
+      "compressed_bytes": 103117,
+      "sha256_decompressed": "ca9380578cbeac83b426b2bee21c06e3ec965522b156e6fe0c3ef53f2e11c267"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-native-cause-sol-2335/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-native-cause-sol-2335/log.txt.gz",
+      "uncompressed_bytes": 309620,
+      "compressed_bytes": 80545,
+      "sha256_decompressed": "170d82262462426860b5553acf7b0a1c9f61b52bc37f8e77c969a5fef299cbc3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3a-vendor-closure/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3a-vendor-closure/log.txt.gz",
+      "uncompressed_bytes": 254561,
+      "compressed_bytes": 66982,
+      "sha256_decompressed": "9149145b6027aa69fab4f88fa9dbf4b7eff811cdfabd04f8128b53a5d737fc31"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-snapshot-caller-sol-2317/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-snapshot-caller-sol-2317/log.txt.gz",
+      "uncompressed_bytes": 296743,
+      "compressed_bytes": 69943,
+      "sha256_decompressed": "3e3cb7cf1b12d741dcb25f955a0b36623bde9d1575f0a5d740e9a5d45885580e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-trim-clear-fix-r3/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-trim-clear-fix-r3/log.txt.gz",
+      "uncompressed_bytes": 520381,
+      "compressed_bytes": 135438,
+      "sha256_decompressed": "b2633c4c403aef13661cd390c686c5cbe2b032c537cdf044bb2e6d1a2421112d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-458-baseline-cause-sol-2348/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-458-baseline-cause-sol-2348/log.txt.gz",
+      "uncompressed_bytes": 377989,
+      "compressed_bytes": 87259,
+      "sha256_decompressed": "89ea29fd4837e1bdbfa6a611a64979f9fdbfa0e380d096c40bdf2adbf7169d48"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D19-current-full-1230/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D19-current-full-1230/log.txt.gz",
+      "uncompressed_bytes": 757116,
+      "compressed_bytes": 150466,
+      "sha256_decompressed": "c4288cd06648cad416375a4827f6293caba16a66b79383d2b143edc29746aba2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-bootstrap-adopt-2328/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-bootstrap-adopt-2328/log.txt.gz",
+      "uncompressed_bytes": 94454,
+      "compressed_bytes": 24534,
+      "sha256_decompressed": "859f94cd80c362307f476f1adb0ef7d550134c8acb87f486812b10477696667b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-integrated-source-proof-r4/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-integrated-source-proof-r4/log.txt.gz",
+      "uncompressed_bytes": 570247,
+      "compressed_bytes": 126350,
+      "sha256_decompressed": "8b095914dd60c96b54d4a1019ec6c53d8c122dd39c7b4cf0f34b68a191f2ec39"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-head-pair-integrated-proof-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-head-pair-integrated-proof-r1/log.txt.gz",
+      "uncompressed_bytes": 439766,
+      "compressed_bytes": 91723,
+      "sha256_decompressed": "11ab2c20bcd4cb92e22e317cae8abe4d1913302b7b0f39c9dc247435938abcc8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-producer-review-2301/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-producer-review-2301/log.txt.gz",
+      "uncompressed_bytes": 482826,
+      "compressed_bytes": 108792,
+      "sha256_decompressed": "f38542567b1d39b2eb114a94b69affe0735f690dfd4eb30bdf35a40a22e439f5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-U4p-integrated-proof-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-U4p-integrated-proof-r1/log.txt.gz",
+      "uncompressed_bytes": 961295,
+      "compressed_bytes": 180506,
+      "sha256_decompressed": "719c45be058583b38d6c583b3b1b4429cdfc521c55fe0d59a49a4d925c373b93"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-anchor-gaps-1810/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-anchor-gaps-1810/log.txt.gz",
+      "uncompressed_bytes": 524945,
+      "compressed_bytes": 102924,
+      "sha256_decompressed": "c9bc3bbbd48a1d6b7633e561c3d6e15eb3b02325b11014943e9a9c875781b591"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-13781-cause-sol-2335/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-13781-cause-sol-2335/log.txt.gz",
+      "uncompressed_bytes": 370028,
+      "compressed_bytes": 85981,
+      "sha256_decompressed": "1aeb9a99f52ddfe73ecefdab5553b864cb551ca7644beb5777c13108c25c3990"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3a-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3a-review-r1/log.txt.gz",
+      "uncompressed_bytes": 582958,
+      "compressed_bytes": 100668,
+      "sha256_decompressed": "c125158fdee4442721bdd61cb6db4323fc746e6c48c8c16f14d43a52eda0473d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-corrected780-review-r3/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-corrected780-review-r3/log.txt.gz",
+      "uncompressed_bytes": 867041,
+      "compressed_bytes": 175712,
+      "sha256_decompressed": "2a48a28e76f2d911dde4d67d0f77ab89b54aba2b15cad28b02edb24273b89ee2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P1-17985-actual-cause-sol-2017/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P1-17985-actual-cause-sol-2017/log.txt.gz",
+      "uncompressed_bytes": 411532,
+      "compressed_bytes": 100944,
+      "sha256_decompressed": "c6ee18d1b90da0c486c3834d3a773b47a2dc5783d996a87e982c2700d37b1cdd"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-integrated-batch-qualification-1129/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-integrated-batch-qualification-1129/log.txt.gz",
+      "uncompressed_bytes": 782489,
+      "compressed_bytes": 176678,
+      "sha256_decompressed": "4c5cc005c26a397f5612d892d4b08c6beb35296b00ef2799a4c5d78ff3a7b2b8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-anchor-type-completion-1740/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-after-anchor-type-completion-1740/log.txt.gz",
+      "uncompressed_bytes": 125937,
+      "compressed_bytes": 37616,
+      "sha256_decompressed": "49c495d4dedc24be588d972500e0e8c1f167cf86af3e7aebc23de5dccbfb1a7d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-current-trim-join-r4/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-v2-current-trim-join-r4/log.txt.gz",
+      "uncompressed_bytes": 283246,
+      "compressed_bytes": 77104,
+      "sha256_decompressed": "5f2ef8d9c77721c61b8d5770235793812451ace560358121edeaae4e3ac2ae67"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-canonical-suffix-review-r5/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-canonical-suffix-review-r5/log.txt.gz",
+      "uncompressed_bytes": 375909,
+      "compressed_bytes": 76833,
+      "sha256_decompressed": "6157f4b9a394e9bd0377b66568786c534d25b6167a782e68a139551f0887e151"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-gestures-type-completion-1121/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-gestures-type-completion-1121/log.txt.gz",
+      "uncompressed_bytes": 163305,
+      "compressed_bytes": 32935,
+      "sha256_decompressed": "d4ac787d949a64e2cf75c5b689c217fc6af4960bc042a960ec677adfe4c51a20"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-raw-parent-handoff-fix-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-raw-parent-handoff-fix-r2/log.txt.gz",
+      "uncompressed_bytes": 876427,
+      "compressed_bytes": 154771,
+      "sha256_decompressed": "c58b0c182f3745c2180b9553401f61bed2f4d5299255936ed1891470e23aafb5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-A3-joined-integrated-proof-0845/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-A3-joined-integrated-proof-0845/log.txt.gz",
+      "uncompressed_bytes": 33696,
+      "compressed_bytes": 12925,
+      "sha256_decompressed": "934619061855b8318cf46e3aac9557bb407d070bfc1346384b890542097def95"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D29-final-source-2107/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D29-final-source-2107/log.txt.gz",
+      "uncompressed_bytes": 270320,
+      "compressed_bytes": 53886,
+      "sha256_decompressed": "7ddaab2ad42f3fc0ecb9c9c871e37bd2f449c8f19c1a71c95b1eb2b6ea0a759e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-actual-caller-sol-2242/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-actual-caller-sol-2242/log.txt.gz",
+      "uncompressed_bytes": 302802,
+      "compressed_bytes": 68148,
+      "sha256_decompressed": "d35c7f5427d99b933c9c366bab18efa583858b24a58f0f259c65a8d3e25d0004"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-custody-review-1916/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-custody-review-1916/log.txt.gz",
+      "uncompressed_bytes": 553665,
+      "compressed_bytes": 124329,
+      "sha256_decompressed": "13eefe59ba6e2a765b58c454b85dbbc27c90cc029eb4ef246b4a73d91f484463"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P3-owner-review-1939/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-P3-owner-review-1939/log.txt.gz",
+      "uncompressed_bytes": 368950,
+      "compressed_bytes": 76343,
+      "sha256_decompressed": "0c4bd4073b5d94421ff7c63756175a3076ec3cff7832280be0b0ed754b8f8eb7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-adoption-output-review-2228/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-adoption-output-review-2228/log.txt.gz",
+      "uncompressed_bytes": 323258,
+      "compressed_bytes": 79085,
+      "sha256_decompressed": "09cc27d296aaf6ef266cbfcd84a36ffcd172f49063f86276ade50cde0315a4d8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-trim-reviewed-current-join-r4/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-trim-reviewed-current-join-r4/log.txt.gz",
+      "uncompressed_bytes": 112638,
+      "compressed_bytes": 24043,
+      "sha256_decompressed": "9f67ff3d2f3475dd5a1dbe6610c431cc4f610282997d4a7cc8aaf01fa6038ea1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3c-quick-adapter-review/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3c-quick-adapter-review/log.txt.gz",
+      "uncompressed_bytes": 331758,
+      "compressed_bytes": 73770,
+      "sha256_decompressed": "0a3055291755ecd9a1d12061e2caaccfc12abdb8d8ab52cd2d1b4d9e31433e36"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-restore-review-1725/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-restore-review-1725/log.txt.gz",
+      "uncompressed_bytes": 721479,
+      "compressed_bytes": 140455,
+      "sha256_decompressed": "a13581f0cceedf3cfb3ab42ef3346b131fbfc8efa08282192cbdea168a4d855c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3a-repair-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3a-repair-review-r1/log.txt.gz",
+      "uncompressed_bytes": 797999,
+      "compressed_bytes": 176403,
+      "sha256_decompressed": "528c7e3941e20b12c48cc983457b14685527ed756a26f5a61e5e925b8e26f8a1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-move-resume-r13/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent-move-resume-r13/log.txt.gz",
+      "uncompressed_bytes": 752179,
+      "compressed_bytes": 165629,
+      "sha256_decompressed": "7b8d095ea0dd132df1c0cb2ecd56c41215df83582652e6a3bb8873fd3d2051d2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-eof-review/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-eof-review/log.txt.gz",
+      "uncompressed_bytes": 112376,
+      "compressed_bytes": 24798,
+      "sha256_decompressed": "7f5dd2c548d7a844f8ae6e38db9034ba7bda274d59229f7dab19a664b2761e11"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-prepared-selection-carrier-2132/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-prepared-selection-carrier-2132/log.txt.gz",
+      "uncompressed_bytes": 270377,
+      "compressed_bytes": 67347,
+      "sha256_decompressed": "04f99a9c3a86f68f799e1dfbfaf318debdfdf10be34f831813e00c1cdb1e884a"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-popup-review-r1/log.txt.gz",
+      "uncompressed_bytes": 596560,
+      "compressed_bytes": 136962,
+      "sha256_decompressed": "97107f2fb92d13f5965faf0c8aa6f75564fadc9b1400e65fcda2dba80c3f873f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-local-rejection-diagnostic-sol-2031/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-local-rejection-diagnostic-sol-2031/log.txt.gz",
+      "uncompressed_bytes": 540770,
+      "compressed_bytes": 127985,
+      "sha256_decompressed": "9f91cf17e61891b2e0e8cc14fd23d0c0d580293dc97965b933b06f8f3c844827"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-local-rejection-diagnostic-sol-2031/targeted.log",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-local-rejection-diagnostic-sol-2031/targeted.log.gz",
+      "uncompressed_bytes": 10367,
+      "compressed_bytes": 1131,
+      "sha256_decompressed": "e95cca6dc8e33b184977c25120c4bba67b323b7a51f3b9325a2af9408012344e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-track-mounted-return-1938/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-track-mounted-return-1938/log.txt.gz",
+      "uncompressed_bytes": 590138,
+      "compressed_bytes": 111489,
+      "sha256_decompressed": "9fa2a5cfb08ffe8218bf0a2257da27ffe3f927b7118eed7ef0e9dc5653229806"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-mounted-review-1555/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-noPOST-mounted-review-1555/log.txt.gz",
+      "uncompressed_bytes": 306139,
+      "compressed_bytes": 73492,
+      "sha256_decompressed": "d94f57b995b20d42aa22888526c6be2952b34e8639bda7f133b8b1051c8938fa"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-raw-parent-fix-review-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-raw-parent-fix-review-r2/log.txt.gz",
+      "uncompressed_bytes": 521699,
+      "compressed_bytes": 116494,
+      "sha256_decompressed": "25b1ea8ae52ad2dfc2b048eed1a55459d840fbdc866b1b2c0a964374edae6877"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-reviewed-spec-port-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-reviewed-spec-port-r1/log.txt.gz",
+      "uncompressed_bytes": 321293,
+      "compressed_bytes": 62178,
+      "sha256_decompressed": "3a6d62c9d904ee6020b7794313ceb027bf37cec0d36fbfbba93674f20cb4574d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-occurrence-port-review-1828/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-occurrence-port-review-1828/log.txt.gz",
+      "uncompressed_bytes": 562614,
+      "compressed_bytes": 121657,
+      "sha256_decompressed": "4b3486bcf622e1d38dd630da7bf115cc8083be00d038dfe4f805d34c449ddeb5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-P3-public-export-resolver-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-P3-public-export-resolver-r1/log.txt.gz",
+      "uncompressed_bytes": 318205,
+      "compressed_bytes": 64251,
+      "sha256_decompressed": "0027dd47e5649dd41d13a3bfa581ceaeda0147864578002a9c3b24e54bb14fc1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-live-producer-2328/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-image-live-producer-2328/log.txt.gz",
+      "uncompressed_bytes": 359129,
+      "compressed_bytes": 71556,
+      "sha256_decompressed": "914eb33c61f3b9886f9e83828f117cc34821a2392579745c03bfec25ff01803d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-source-sha-caller-sol-2258/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-source-sha-caller-sol-2258/log.txt.gz",
+      "uncompressed_bytes": 209494,
+      "compressed_bytes": 60134,
+      "sha256_decompressed": "c71c54bd5b39ce3bb01f4ae9cd3695d72e9b896b55da3253003e9b28eaba7222"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-mounted-diagnostic-seam-sol-1945/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-mounted-diagnostic-seam-sol-1945/log.txt.gz",
+      "uncompressed_bytes": 845530,
+      "compressed_bytes": 188665,
+      "sha256_decompressed": "e227c47cf413b5c464a35e0aec2c21ae325cd6204162dcf62abcc9bc9c2564e8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-caller-first-return-2215/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-caller-first-return-2215/log.txt.gz",
+      "uncompressed_bytes": 918045,
+      "compressed_bytes": 183509,
+      "sha256_decompressed": "a3e087f9b7cdb6a10d0df9b096e1953c3359e2a2f1a1d84f7ddf479ca13c8b02"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-save-serialize-projection-1054/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-save-serialize-projection-1054/log.txt.gz",
+      "uncompressed_bytes": 892100,
+      "compressed_bytes": 185337,
+      "sha256_decompressed": "7d2d92e5f32372e5f2ffb8de553b9655cf5f98996e3586009f03a9a3310ce688"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-final-integrated-qualification-1140/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-final-integrated-qualification-1140/log.txt.gz",
+      "uncompressed_bytes": 944128,
+      "compressed_bytes": 202112,
+      "sha256_decompressed": "5e4f7c5f46334a791b582ca5fb9817f38d641d14ad502813a740af0232140a82"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-P3-resolver-review-r1/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-P3-resolver-review-r1/log.txt.gz",
+      "uncompressed_bytes": 401042,
+      "compressed_bytes": 69849,
+      "sha256_decompressed": "bcf81d7e0b592f74303c0e5c024c7549b3985b45695bb6006752474eef69bad4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-export-attribution-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-export-attribution-r2/log.txt.gz",
+      "uncompressed_bytes": 684587,
+      "compressed_bytes": 134117,
+      "sha256_decompressed": "7dd8416eb0d2038ed33cce5e77d2c61512e73484dfd0e1660a82907b2bb42a36"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-current-D13-spec-review-r2/log.txt",
+      "gz": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-current-D13-spec-review-r2/log.txt.gz",
+      "uncompressed_bytes": 201349,
+      "compressed_bytes": 40102,
+      "sha256_decompressed": "97c7168cb70ba0ac91ab3dc036e5b501368d617d227d88075801fcf97fdff3ea"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T16:32:41Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 5m -->
+<!-- app | 2026-10-25T16:38:00Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 14 | status age 5m -->
 # app board, 2026-10-25T16:24Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -107,15 +107,15 @@
 
 | D116-current17 | Map shared current word setup | Luna and independent | Agent peer1526; normal20177 | merged | Author1540; independent1548 | Source applicability17/17 PASS; scalar suppliedhash malformed65chars, exact64 reviewerhash published. All selector-specific topology still missing. No behavior credit. | Source unchanged |
 | D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | merged | Author1540; independent1552 | Current file byte-exact captured120d; all16 PASS in30693. Existing7d858 setupfix home; no diff, rerun or current5e9ad behavior credit. | Agent20177 unchanged |
-| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Independent1616 SOURCE PASS | doing | app-D118d-projection-clean-proof-1623 | Exact reviewed blob clean import and unspent own9 active. Source mapping/provenance,43 original assertions and goldens qualified; no behavior GO yet. | d05975c7d6 held |
+| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Independent1616 SOURCE PASS | doing | app-D118d-projection-own9-resume-1630 | Exact reviewed blob clean import and unspent own9 active. Source mapping/provenance,43 original assertions and goldens qualified; no behavior GO yet. | d05975c7d6 held |
 
-| D118d-graph9 | Preserve typed root and tamper purposes | Luna and independent | D132 exact scope approved | doing | app-D132-graph-numeric-setup-1627 | One shared authored gain:null to1 only. Verify ours and no null-gain purpose; all33 predicates exact. Independent review then own9. | 94ac9347b base |
+| D118d-graph9 | Preserve typed root and tamper purposes | Luna and independent | D132 one-line author complete | review | app-D132-graph-protected-own9-1632 | Exact approved gain1;90 shared and33 graph predicates unchanged. Finish genuine upstream absence and null-purpose census, then own9. | 134d9787c7 held |
 
 | D127-leaf-retention | Retain safe leaf and lifecycle evidence | Luna and protected review | Review1613 FAIL; source semantics PASS | doing | app-D127-leaf-first-return-1619 | Exact central28551 PASS23. Correct160-assertion custody and freeze schema/hash. App strict validator migration next; no activation. | b81c0ab26d held |
 
 | U4p-R2-diagnostic | Adopt qualified inverse redo and diagnostics | Luna | Qualified ab1e normal receipt | merged | Adopter1615; normal1624 | Entire normal tree equals tested author. Vendor17/artifact3/lint PASS; mappings14/protected8 exact. D130 recovery excluded; no gate claim. | d4e5284dfc |
 
-| D127-App-validator | Strictly validate leaf and lifecycle schema | Luna and protected review | Runtime helper schema freeze | doing | app-D127-leaf-App-validator-1623 | Exact new hash arm and invariant mutations; old schemas retained strict. Combined protected review before merge or activation. | App d4e528 base |
+| D127-App-validator | Strictly validate leaf and lifecycle schema | Luna and protected review | Frozen helper4ee and App f9fa | review | app-D127-leaf-combined-review-1630 | Mutation/D105/lint PASS. Exact bootstrap and supported typecheck still owed; combined review covers App and Runtime preservation. | f9fa634aa9 held |
 
 Integration: Appd4e5284dfcc20801977cef12253b12f9cc8798fd/tree5efca939546f30b039cb9cacba7a29d7db690f2a equals entire tested adopter1615 tree. Only runtime.lock.json/install-manifest.json changed over84857. Qualified Runtimeab1e tools adopted; vendor17/artifact3/lint PASS, mappings14/protected8 exact. [Receipt](../../design/app-U4p-R2-normal-home-1624.json). Historical10721 remains84857/070dfc/5e9ad/635f with external6c9 helper; no result retarget.
 
@@ -149,3 +149,5 @@ Pass16:19: protected1613 sourceprivacy/bounds/lifecycle PASS, exact central28551
 Pass16:24: qualified U4p merged normallyd4e528, fulltree exact testedauthorfcb8, no retarget. Cleanprojectionproof1623 and strictAppvalidator1623 dispatched atfresh5098262528; helperfirstreturn1619 remains third source worker. Graph exactscopequestion remainsownerheld; no classifier workaround.
 
 Pass16:27: D132(A) APPROVED recorded via lead. Cleared graph orchestratorwaitsamepass; claimed sharedfixtureONEline toAgentbefore1627author. Ownercondition review-before-own9 honored. Firstreturn1619 helperfrozen4ee andexact160assertionmapping published; one unnecessaryobserverrewrite restored, remaining4strictschema migrations queuedcombinedreview afterApp1623return.
+
+Pass16:32: host1628CLEAR109processes andfreshstaticguards -> ONLYoldApp84857pinKEEP/binrecycle success, zero refusal. Free5122506752 to5288267776, all10721outputs/sourcebranches/reports kept. Exactreceipt app-pin-guarded-release-1629.json. Projectionown9resume1630 andcombinedhelper/Appreview1630admitted, thenD132protectedsource-first/own9review1632. Sourcecap3at<5GB, stop4GB; noheavybody/tour. App normald4e528 remainsqualifiedtwofiletooladoption.
