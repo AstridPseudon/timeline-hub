@@ -1,0 +1,5 @@
+candidate d2da4aecd759999fe1d7c929b82403533746df746c50b9928f97d083605b2a3a /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-Farm-metadata-1404/evidence/make-child-venv.candidate
+installed-kit-preimage ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv
+baseline ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-Farm-metadata-1404/evidence/make-child-venv.baseline
+harness 12eba6da75301a17b77adce2b05b5ff10e00cee2dce8d2141f60a2405cd4453e /tmp/w-eae4294d9e/bounded_metadata_review.py
+C0-contract 4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md

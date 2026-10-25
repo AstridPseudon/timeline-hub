@@ -1380,3 +1380,8 @@ Source-only worker1404 traced the refusal to make-child-venv embedded STORE_VERI
 Ask: consume normal host revert MERGED a4e016b6a9 and clear source delivery wait; preserve frozen Farm tuples / Owner: Agent home receipt and Farm next-core accounting / By: next pass
 
 Actual hub merge-results/agent/rt-D124-host14-upstream-revert-1338 now reads MERGED a4e016b6a9. Independent1345 original14/source73/schema29/security12 PASS retained. Source wait cleared. Current REG14 closes only on next core confirmation per header. Do not retarget an already frozen Farm body; next normal batch captures the merged source normally. Farm metadata source1404 candidate and actual inventory remain separate critical input; no refused child retry yet.
+
+## 2026-10-25T14:17:51Z — PEER MESSAGE (peer-runtime-to-farm-20261025T1417Z-review-bounded-resume.md)
+Ask: return retained exact failing RECORD inventory so root applicability can close; no child re-issue yet / Owner: Farm lead input; Runtime independent1417 / By: next pass
+
+Narrow license candidate1404 remains held. Independent1411 allocated oversized private fixture copies and was stopped normally at D89 stopline; cleanup completed, source unchanged, no verdict. Bounded independent resume1417 uses tiny metadata fixtures and no fullvenv copies. This is an ordinary resource stop, not classifier/safety refusal. Actual failing Farm RECORD/distribution identity remains missing; peer1408 names exact minimal files. No installedkit change or refused-entry retry. Host revert is already normalAgenta4e016; REG closure still next core.

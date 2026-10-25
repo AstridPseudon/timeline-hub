@@ -1,0 +1,19 @@
+{
+  "verdict": "PASS",
+  "overall_disposition": "SOURCE_ONLY",
+  "exact_narrow_ownership_fix": "PASS",
+  "observed_root": false,
+  "inferred_root": "<distribution>.dist-info/licenses/LICENSE",
+  "missing_input": [
+    "failed distribution *.dist-info/RECORD",
+    "matching dist-info/licenses/LICENSE bytes and SHA-256",
+    "matching METADATA Name/Version",
+    "matching direct_url.json and WHEEL rows"
+  ],
+  "candidate_sha256": "d2da4aecd759999fe1d7c929b82403533746df746c50b9928f97d083605b2a3a",
+  "preimage_sha256": "ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8",
+  "preimage_match": true,
+  "installation": "CLOSED until actual failed Farm inventory is supplied",
+  "wire_semantics": "unchanged C0 v2",
+  "repo_changes": false
+}

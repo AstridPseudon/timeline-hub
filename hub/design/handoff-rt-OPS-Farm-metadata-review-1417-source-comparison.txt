@@ -1,0 +1,9 @@
+Runtime full source diff 1d9ddba5 -> 369ffa7c: 68 files, 8539 insertions, 502 deletions.
+Relevant generated client files changed: contract_metadata.py, generated.py, timeline_commit_types.py.
+Agent 9ea67534 and Runtime 369ffa7c generated client hashes match exactly:
+  contract_metadata.py b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b
+  generated.py 952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b
+  timeline_commit_types.py 6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417
+Agent LICENSE hashes 9cd3dbe8 / 9ea67534: d4b2605d17cc8f84c757f3698b2660ab1382adeee76e9a31b13d7b0d8b37e3a7 / same.
+Runtime LICENSE hashes 1d9ddba5 / 369ffa7c: b582eb53145e858e3c16684004fc250bb6a108a1a173cdbc2f2fea2be2f41d8d / same.
+Conclusion: relevant packaging license bytes are unchanged; generated-client parity does not prove the verifier cause because the full Runtime source diff is broad and the refusal lacks the installed RECORD.

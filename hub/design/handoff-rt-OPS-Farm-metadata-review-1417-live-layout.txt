@@ -1,0 +1,4 @@
+Read-only check 2026-10-25: /home/user/work/bench-store is absent.
+Therefore no failed child entry, installed RECORD, matching dist-info license, METADATA, direct_url.json, or WHEEL was available to inspect.
+Retained refusal log: design/farm-childvenv-h14-9ea-REFUSED-unowned-local-distribution-metadata-20261025T1337Z.txt; it contains the generic refusal only and no installed metadata inventory.
+Installation gate: CLOSED. Do not install or retry until the exact missing four-item inventory is supplied from the actual failed Farm entry.
