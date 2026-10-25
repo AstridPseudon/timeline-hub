@@ -1,0 +1,83 @@
+{
+  "task": "F-D108 protected batch review",
+  "mode": "source-only",
+  "base": {
+    "ref": "tl/integration",
+    "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "scope_a": {
+    "verdict": "PASS_SOURCE",
+    "candidate_ref": "tl/agt-F-D108-D07-coverage-0732",
+    "candidate_sha": "f45e6c732d35dc7a04cd6fc0d019f5f67bcc522b",
+    "path": "tests/editing_conformance/test_recipe_m2_clip_trim.py",
+    "parent_blob": "62384aad61494c67a614ad1a7122fee4119e0829",
+    "candidate_blob": "1b34745fca1dcc21f15267f744711eb16d4b5700",
+    "delta": {"additions": 94, "deletions": 0},
+    "selectors": [
+      {
+        "id": "D07-1",
+        "old": "tests/test_timeline_editing_helpers.py::test_ripple_is_track_scoped_and_never_moves_audio",
+        "new": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_exact_track_scoped_ripple_timing_and_audio",
+        "predicates": ["first (0,0,1) to (0,0,1.5)", "later at=1.5 source [0,1]", "audio (0,0,2)", "compiled duration 2.5"],
+        "retired_refusals": "approved interface retirement; not required as current behavior"
+      },
+      {
+        "id": "D07-2",
+        "old": "tests/test_timeline_editing_helpers.py::test_canonical_source_trim_speed_move_and_retime_intervals",
+        "new": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_speed_two_preserves_source_window_move_and_endpoint_length",
+        "predicates": ["at=4 source [2,4] speed=2", "aliases absent", "frames (120,150)", "same-property duration/window refusal", "move 10", "move 20", "endpoint 21.5 gives to=5"],
+        "translation": "current registered clip.move guard compares source-window playback duration with authored duration; no retired API restored"
+      },
+      {
+        "id": "D07-3",
+        "old": "tests/test_timeline_editing_helpers.py::test_ripple_shifts_canonical_intervals_without_touching_audio",
+        "new": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_shifted_source_window_and_audio_bytes",
+        "predicates": ["first grows to 4.5", "later at=1.5 source [8,9]", "audio row byte-equal"],
+        "retired_refusals": "none claimed"
+      }
+    ],
+    "source_preservation": "existing functions/params/markers/assertions AST-conserved; full captured core tuple unchanged",
+    "runtime_claim": "not made; post-D108 MAIN proof required",
+    "naming_correction": {
+      "authored": "handoff-agt-F-D108-D07-coverage-0732.md/.json",
+      "target": "handoff-agt-D108-D07-coverage-0732.md/.json",
+      "change": "drop only F-; preserve contents"
+    }
+  },
+  "scope_b": {
+    "verdict": "FAIL_SOURCE",
+    "census": {
+      "raw": {"count": 105, "sha256": "99a03feaf7d0343ad08837609df17bdd19b0af88ce671ef50bd4fb85b63c0714"},
+      "declared": {"count": 104, "sha256": "468170f22ffa162ad5543ff70f9c72aecb084b4f8f54cc9dbc1d5fc6bd40f912"},
+      "reconstructed": {"count": 103, "sha256": "235833c98214b57d7255cb422e1d0340d9d0b386e679cb475e86449428fcf310"},
+      "declared_minus_reconstructed": ["tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string"]
+    },
+    "d18": {
+      "disposition": "APPROVED_SCOPE_EXCLUSION_NOT_RETIREMENT",
+      "selector": "tests/core/execution/test_generic_host_child_bridge_d18.py::test_output_above_persisted_retention_budget_is_refused_before_any_read"
+    },
+    "windows": {
+      "registration_selector": "tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string",
+      "registration_present_current": false,
+      "cleanup_selector": "tests/test_installer_windows_tasks.py::test_task_cleanup_preserves_powershell_success_and_failure",
+      "cleanup_present_current": true,
+      "approved_exclusion": false,
+      "required_for_final": true,
+      "proposal": "Restore the fresh selector against current Service.register/unregister/powershell, service.TASK/TASK_QUERY/render, and Version; unique TASK/query, inert render, UTF-8 <Task XML assertion, Task Scheduler query, finally unregister. Do not execute in this source-only review."
+    },
+    "foreign_runtime_restore": {
+      "markdown_git_blob": "354c2aa0a41371568eb672d434dba9743b15d004",
+      "json_git_blob": "cd7847582b8f73f445768d3ac519de4d28f06630",
+      "restored": true,
+      "derivative_not_author_original": true
+    }
+  },
+  "checks": {
+    "ast_compile": "PASS",
+    "ruff_candidate_parent": "PASS/PASS",
+    "mypy_candidate_parent": "PASS/PASS",
+    "git_diff_check": "PASS",
+    "json_parse": "PASS",
+    "tests_imports_collection_execution": "NOT_RUN_BY_SCOPE"
+  }
+}
