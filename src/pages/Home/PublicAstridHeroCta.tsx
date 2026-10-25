@@ -1,25 +1,16 @@
-import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { APP_ENTRY_PATH, rememberAppEntryPreference } from '@/app/entryClassification.ts';
-import { PublicAstridInstallDialog } from './PublicAstridInstallDialog';
+import { isMobileDevice } from './installScenario.ts';
 
-/** The first visit starts with the browser-only welcome; installation remains optional. */
+/** The first visit starts with the browser-only welcome. */
 export function PublicAstridHeroCta({ active = true }: { active?: boolean }) {
-  const [installOpen, setInstallOpen] = useState(false);
-  useEffect(() => { if (!active) setInstallOpen(false); }, [active]);
   return (
-    <>
-      <div className="astrid-hero-cta">
-        <a className="astrid-button astrid-button-primary" href={APP_ENTRY_PATH}
-          data-active={active} aria-hidden={!active} tabIndex={active ? undefined : -1}
-          onClick={rememberAppEntryPreference}>
-          <span>Try Astrid</span><ArrowRight size={17} aria-hidden="true" />
-        </a>
-        <button className="astrid-button astrid-hero-cta-secondary" type="button" data-active={active}
-          aria-hidden={!active} aria-haspopup="dialog" tabIndex={active ? undefined : -1}
-          onClick={() => setInstallOpen(true)}>Get the app</button>
-      </div>
-      <PublicAstridInstallDialog open={installOpen && active} onClose={() => setInstallOpen(false)} />
-    </>
+    <div className="astrid-hero-cta">
+      <a className="astrid-button astrid-button-primary" href={APP_ENTRY_PATH}
+        data-active={active} aria-hidden={!active} tabIndex={active ? undefined : -1}
+        onClick={() => { if (!isMobileDevice()) rememberAppEntryPreference(); }}>
+        <span>Get Started</span><ArrowRight size={17} aria-hidden="true" />
+      </a>
+    </div>
   );
 }

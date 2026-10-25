@@ -9,7 +9,7 @@ import { AgentIcon, agentNames } from './agentIdentity.tsx';
 import { ThinkingLevelOptions } from './ThinkingLevelOptions.tsx';
 
 /** A submenu lists this many models; its search reaches the rest. */
-export const SUBMENU_LIMIT = 50;
+const SUBMENU_LIMIT = 50;
 
 export interface NewChatModelChoice { id: string; name: string; detail?: string | null; thoughtLevel?: AgentThoughtLevel | null }
 
@@ -24,7 +24,7 @@ export interface NewChatAgentModels {
   note?: string | null;
 }
 
-function ThinkingLevelSelector({ model, levels, value, open, onOpenChange, onSelect, returnFocus }: {
+function ThinkingLevelSelector({ model, levels, value, open, onOpenChange, onSelect, returnFocus, compact }: {
   model: string;
   levels: AgentThoughtLevel;
   value: string;
@@ -32,17 +32,18 @@ function ThinkingLevelSelector({ model, levels, value, open, onOpenChange, onSel
   onOpenChange: (open: boolean) => void;
   onSelect: (value: string) => void;
   returnFocus: RefObject<HTMLInputElement>;
+  compact: boolean;
 }) {
   const list = useRef<HTMLDivElement>(null);
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <button type="button" aria-label={`Choose a thinking level for ${model}`} title="Choose a thinking level (→ or Space)"
-          className="ml-auto inline-flex h-6 shrink-0 self-start items-center justify-center gap-1 rounded px-1.5 text-[11px] text-muted-foreground hover:bg-background/40 hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-[44px]"
+          className={cn(compact ? 'inline-flex h-6 shrink-0 items-center justify-center gap-1 rounded px-1' : 'ml-auto inline-flex h-6 shrink-0 self-start items-center justify-center gap-1 rounded px-1.5', 'text-[11px] text-muted-foreground hover:bg-background/40 hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-[44px]')}
           onPointerDown={event => event.stopPropagation()}
           onKeyDown={event => event.stopPropagation()}
           onClick={event => event.stopPropagation()}>
-          <span>{levels.options.find(option => option.value === value)?.name}</span>
+          <span>{compact ? '· ' : ''}{levels.options.find(option => option.value === value)?.name}</span>
           <ChevronDown className="h-3 w-3" aria-hidden="true" />
         </button>
       </PopoverTrigger>
@@ -62,7 +63,7 @@ function ThinkingLevelSelector({ model, levels, value, open, onOpenChange, onSel
 }
 
 /** The model list a New chat drills into: each model with its thinking level, and the agent's default when there is no list. */
-export function NewChatModels({ agent, submenu, models, levelSelections, openLevelSelector, onLevelSelectorOpenChange, onRememberLevel, onBack, onStart, returnFocus, footer }: {
+export function NewChatModels({ agent, submenu, models, levelSelections, openLevelSelector, onLevelSelectorOpenChange, onRememberLevel, onBack, onPick, onStartNow, selectedModel, compactSelector = false, showStartButtons = false, returnFocus, footer }: {
   agent: LocalAgentId;
   submenu: NewChatAgentModels | null;
   /** The models matching the search. */
@@ -74,7 +75,16 @@ export function NewChatModels({ agent, submenu, models, levelSelections, openLev
   onLevelSelectorOpenChange: (modelId: string, open: boolean) => void;
   onRememberLevel: (modelId: string, value: string) => void;
   onBack: () => void;
-  onStart: (model?: string, level?: string) => void;
+  /** A model (and level) is chosen for the next chat; nothing starts. */
+  onPick: (model?: string, level?: string) => void;
+  /** A model's own New chat button: choose it and start a chat at once. */
+  onStartNow: (model: string, level: string | undefined, modelName: string) => void;
+  /** The model the next chat will use, ticked in the list; the agent's default when none. */
+  selectedModel?: string;
+  /** NewChatMenu keeps the thinking control compact on the model name line. */
+  compactSelector?: boolean;
+  /** NewChatMenu exposes a per-model action; AgentChatMenu starts from row selection. */
+  showStartButtons?: boolean;
   returnFocus: RefObject<HTMLInputElement>;
   footer?: ReactNode;
 }) {
@@ -88,29 +98,39 @@ export function NewChatModels({ agent, submenu, models, levelSelections, openLev
         </CommandItem>
       </CommandGroup>
       <CommandSeparator />
-      <CommandGroup heading="Start the chat with">
+      <CommandGroup heading="Use for new chats">
         {(!submenu || submenu.loading) && models.length === 0 && (
           <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />Loading models...</div>
         )}
         {models.slice(0, SUBMENU_LIMIT).map(model => {
           const isDefault = model.id === submenu?.defaultModel;
+          const ticked = selectedModel ? model.id === selectedModel : isDefault;
           const levels = model.thoughtLevel?.options.length ? model.thoughtLevel : null;
           const remembered = levelSelections[model.id];
           const level = levels ? levels.options.find(option => option.value === remembered)?.value ?? defaultThoughtLevel(levels) : undefined;
+          const levelName = levels?.options.find(option => option.value === level)?.name;
           return (
-            <CommandItem key={model.id} value={`model:${model.id}`} aria-current={isDefault ? 'true' : undefined} className="items-center gap-2" onSelect={() => onStart(model.id, level)}>
-              <Check className={cn('h-3.5 w-3.5 shrink-0', isDefault ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
+            <CommandItem key={model.id} value={`model:${model.id}`} aria-current={isDefault ? 'true' : undefined} className="items-center gap-2" onSelect={() => onPick(model.id, level)}>
+              <Check className={cn('h-3.5 w-3.5 shrink-0', ticked ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="truncate">{model.name}</span>
+                  <span className="min-w-0 truncate">{model.name}</span>
                   {levels && level !== undefined && (
                     <ThinkingLevelSelector model={model.name} levels={levels} value={level} open={openLevelSelector === model.id} returnFocus={returnFocus}
+                      compact={compactSelector}
                       onOpenChange={next => onLevelSelectorOpenChange(model.id, next)}
                       onSelect={value => onRememberLevel(model.id, value)} />
                   )}
                 </span>
                 {model.detail && <span className="text-[11px] text-muted-foreground">{model.detail}</span>}
               </span>
+              {showStartButtons && <button type="button" tabIndex={-1} aria-label={`New chat with ${model.name}${levelName ? ` · ${levelName}` : ''}`} title="Start a new chat with this model"
+                className="ml-auto inline-flex h-6 shrink-0 self-start items-center rounded px-1.5 text-[11px] text-muted-foreground hover:bg-background/40 hover:text-foreground [[data-selected=true]>&]:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-8 [@media(pointer:coarse)]:min-w-8 [@media(pointer:coarse)]:justify-center"
+                onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }}
+                onKeyDown={event => event.stopPropagation()}
+                onClick={event => { event.preventDefault(); event.stopPropagation(); onStartNow(model.id, level, model.name); }}>
+                New chat
+              </button>}
             </CommandItem>
           );
         })}
@@ -120,7 +140,7 @@ export function NewChatModels({ agent, submenu, models, levelSelections, openLev
         {submenu && !submenu.loading && submenu.models.length === 0 && (
           <>
             <p className="px-2 py-1.5 text-[11px] text-muted-foreground">{submenu.note ?? AGENT_CHAT_COPY.noModels}</p>
-            <CommandItem value="agent-default" className="text-xs" onSelect={() => onStart()}>
+            <CommandItem value="agent-default" className="text-xs" onSelect={() => onPick()}>
               <span>{AGENT_CHAT_COPY.useAgentDefault}</span>
             </CommandItem>
           </>

@@ -124,6 +124,8 @@ const TOUCH_GRID_WITH_ACTIVITY = [
 
 export interface TimelineEditorShellCoreProps {
   timelineId: string;
+  /** Replace the app-specific timeline body while retaining the shared editor shell. */
+  renderTimeline?: (actions: TimelineEditorRenderActions) => ReactNode;
   forceCondensed?: boolean;
   isOnEditorPage?: boolean;
   isEditorPaneLocked?: boolean;
@@ -140,6 +142,12 @@ export interface TimelineEditorShellCoreProps {
   navigationControls?: ReactNode;
   navigationMode?: AppHeaderNavigationMode;
   showHeader?: boolean;
+}
+
+export interface TimelineEditorRenderActions {
+  readonly onOpenSequenceCreator: () => void;
+  readonly onOpenElementCreationPrompt: (prompt: string) => void;
+  readonly onOpenExtensionManager: () => void;
 }
 
 /**
@@ -247,6 +255,7 @@ function getInspectorTargetForSelection(
 
 function TimelineEditorShellCoreComponent({
   timelineId,
+  renderTimeline,
   forceCondensed = false,
   isOnEditorPage = false,
   isEditorPaneLocked = false,
@@ -893,11 +902,17 @@ function TimelineEditorShellCoreComponent({
         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />
       ) : (
         <TimelineErrorBoundary>
-          <TimelineEditor
-            onOpenSequenceCreator={() => openElementCreationPrompt(CREATE_ANIMATION_PROMPT)}
-            onOpenElementCreationPrompt={openElementCreationPrompt}
-            onOpenExtensionManager={openExtensionManager}
-          />
+          {renderTimeline
+            ? renderTimeline({
+              onOpenSequenceCreator: () => openElementCreationPrompt(CREATE_ANIMATION_PROMPT),
+              onOpenElementCreationPrompt: openElementCreationPrompt,
+              onOpenExtensionManager: openExtensionManager,
+            })
+            : <TimelineEditor
+              onOpenSequenceCreator={() => openElementCreationPrompt(CREATE_ANIMATION_PROMPT)}
+              onOpenElementCreationPrompt={openElementCreationPrompt}
+              onOpenExtensionManager={openExtensionManager}
+            />}
         </TimelineErrorBoundary>
       )}
     </>

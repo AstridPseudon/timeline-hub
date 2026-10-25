@@ -1212,9 +1212,7 @@ describe("VideoEditorPage", () => {
     expect(screen.getByText("Expected to see your work? It may be in another Astrid folder on this computer.")).toBeInTheDocument();
     expect(screen.getByText("Find my work")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Take the editor tour" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "New project" }),
-    ).toBeInTheDocument();
+    expect(within(screen.getByTestId("empty-workspace-project-action")).getByRole("button", { name: "New project" })).toBeInTheDocument();
     expect(
       screen.getByRole("combobox", { name: "Select project" }),
     ).toHaveTextContent("Select project");
@@ -1540,6 +1538,21 @@ describe("VideoEditorPage", () => {
     expect(
       screen.getByRole("button", { name: "Create first timeline" }),
     ).toBeEnabled();
+  });
+
+  it("offers first-timeline creation when a deleted timeline is still in the URL", async () => {
+    state.discovery.projects = [{
+      slug: "demo-project",
+      name: "Demo Project",
+      project_id: "project-canonical-id",
+    }];
+    state.discovery.timelines = [];
+
+    renderPage("/tools/video-editor?project=project-canonical-id&timeline=deleted-timeline");
+
+    expect(await screen.findByText("Timeline not found")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create first timeline" })).toBeEnabled();
+    expect(state.ensureProjectHasTimeline).not.toHaveBeenCalled();
   });
 
   it("retries additional timeline creation with the same idempotency identity", async () => {

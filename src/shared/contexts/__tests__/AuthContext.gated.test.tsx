@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+// @vitest-environment-options {"url":"https://astrid.haus"}
 /**
  * AuthContext on the hosted build: the Runtime boot gate is the session, not the bridge probe.
  */
@@ -23,7 +24,10 @@ function stubGateway(health: () => Response) {
     if (url.endsWith('/v1/realm')) return new Response(JSON.stringify({ realm_id: 'r1', display_name: 'Direct Journey' }), { status: 200 });
     throw new Error(`unexpected ${url}`);
   });
-  vi.stubGlobal('fetch', fetchMock);
+  // The refusal check (a `no-cors` follow-up to a failed read) fails like a closed port here and is not a counted request.
+  vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => init?.mode === 'no-cors'
+    ? Promise.reject(new TypeError('Failed to fetch'))
+    : fetchMock(input));
   return fetchMock;
 }
 
@@ -64,6 +68,10 @@ describe('AuthProvider on the hosted build', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/');
     window.localStorage.clear();
+    // The hosted gate probes only supported desktop Chromium browsers.
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    );
     probeBridgeSessionMock.mockReset();
   });
   afterEach(() => {
@@ -114,7 +122,8 @@ describe('AuthProvider on the hosted build', () => {
       await permissionRead;
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('isLoading')).toHaveTextContent('true');
+    // The first answer ends booting; subsequent background polls keep the panel visible.
+    expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
     await act(async () => {
       await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
     });

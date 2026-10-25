@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { EditorTourMediaSlot } from '../tourMedia';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 
@@ -19,12 +19,13 @@ export function TourMedia({ slot, kind, className, playing = false, poster }: {
 }) {
   const fill = cn('absolute inset-0 h-full w-full object-cover', className);
   if (!slot.url) return <ValleyArt faceted={kind === 'frame'} className={fill} />;
-  if (kind === 'video') return <TourVideo end={slot.previewDurationSeconds} url={slot.url} poster={poster} playing={playing} className={fill} />;
+  if (kind === 'video') return <TourVideo key={slot.url} end={slot.previewDurationSeconds} url={slot.url} poster={poster} playing={playing} className={fill} />;
   return <img className={fill} src={slot.url} alt="" draggable={false} decoding="async" />;
 }
 
 function TourVideo({ url, poster, playing, className, end }: { end?: number; url: string; poster?: string; playing: boolean; className: string }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
@@ -32,12 +33,17 @@ function TourVideo({ url, poster, playing, className, end }: { end?: number; url
     // Autoplay can be refused (a muted video rarely is); the first frame is a fine resting state.
     void video.play()?.catch(() => undefined);
   }, [playing, end]);
-  return <video ref={ref} className={className} src={url} poster={poster} muted playsInline onTimeUpdate={(event) => {
+  return <>
+    {poster && !ready && <img className={className} src={poster} alt="" decoding="async" />}
+    <video ref={ref} className={className} style={poster && !ready ? { opacity: 0 } : undefined}
+      onLoadedData={() => setReady(true)} onPlaying={() => setReady(true)} onError={() => setReady(false)}
+      src={url} poster={poster} muted playsInline onTimeUpdate={(event) => {
     if (end && event.currentTarget.currentTime >= end) {
       event.currentTarget.pause();
       if (event.currentTarget.currentTime > end) event.currentTarget.currentTime = end;
     }
-  }} preload="auto" aria-hidden="true" />;
+  }} preload="auto" aria-hidden="true" />
+  </>;
 }
 
 function ValleyArt({ faceted, className }: { faceted: boolean; className: string }) {

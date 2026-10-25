@@ -1,15 +1,33 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { EDITOR_TOUR_ANCHORS, EDITOR_TOUR_TRACK_IDS, editorTourSelector, editorTourTrackSelector } from '../anchors';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
-import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
+import { getEditorTourState, useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
 import { TourCard } from '../card/TourCard';
 import { TourSpotlight } from './TourSpotlight';
 import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
 import { placeCard } from './cardPlacement';
 import { useSettledRects } from './useSettledRects';
-import { useSpotlightRects } from './useSpotlightRects';
+import { useSpotlightRects, type SpotlightRect } from './useSpotlightRects';
 import { useTourKeys } from './useTourKeys';
+import { useEditorDeviceClass } from './useIsDesktopEditor';
+import type { TimelineDeviceClass } from '../../lib/mobile-interaction-model';
+
+/** Matches the phone card's `w-[calc(100vw-24px)]`. */
+const PHONE_EDGE = 12;
+const PHONE_GAP = 12;
+
+/**
+ * A phone's sheet rests under everything spotlit when it fits there. On a short phone it cannot fit under both the preview
+ * and the act's new row, so the row gives way (it would sit under the sheet) and the preview alone stays lit, clear of it.
+ */
+export function phoneSpotlight(rects: readonly SpotlightRect[], cardHeight: number, viewportHeight: number): readonly SpotlightRect[] {
+  if (rects.length < 2) return rects;
+  const room = (lit: readonly SpotlightRect[]) => viewportHeight - Math.max(...lit.map((r) => r.y + r.height)) - PHONE_GAP - PHONE_EDGE;
+  if (room(rects) >= cardHeight) return rects;
+  const preview = rects[rects.length - 1];
+  return [preview];
+}
 
 const ACT_TRACK: Record<EditorTourAct, string> = {
   1: EDITOR_TOUR_TRACK_IDS.scene,
@@ -17,7 +35,10 @@ const ACT_TRACK: Record<EditorTourAct, string> = {
   3: EDITOR_TOUR_TRACK_IDS.videos,
 };
 
-/** What each beat spotlights: chat composer and Send, the transcript, the act's new row with the preview, or nothing (the welcome, the finale and the feedback card, centred). */
+/**
+ * What each beat spotlights: chat composer and Send, the transcript, the act's new row with the preview, or nothing (the welcome,
+ * the finale and the feedback card).
+ */
 export function editorTourTargets(act: EditorTourAct, beat: EditorTourBeat): string[] {
   switch (beat) {
     case 'compose':
@@ -46,14 +67,18 @@ export function EditorTourRunner() {
   return createPortal(<RunningTour />, document.body);
 }
 
-/** Leaving the page mid-tour ends it. Deferred a tick so a StrictMode remount does not. */
+/** Leaving the page mid-tour ends that run. Defer to survive StrictMode replay and guard replacement runs. */
 function useEndTourOnUnmount(): void {
   const mounted = useRef(false);
   useEffect(() => {
+    const runId = getEditorTourState().runId;
     mounted.current = true;
     return () => {
       mounted.current = false;
-      setTimeout(() => { if (!mounted.current) finishEditorTour(); }, 0);
+      setTimeout(() => {
+        const current = getEditorTourState();
+        if (!mounted.current && current.runId === runId) finishEditorTour();
+      }, 0);
     };
   }, []);
 }
@@ -63,15 +88,21 @@ function RunningTour() {
   const beat = useEditorTour((s) => s.beat);
   const reducedMotion = useEditorTour((s) => s.reducedMotion);
   const runId = useEditorTour((s) => s.runId);
+  const device = useEditorDeviceClass();
   const beatKey = `${runId}:${act}:${beat}`;
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 360, height: 160 });
+  const measured = useSpotlightRects(editorTourTargets(act, beat));
+  const rects = useMemo(
+    () => (device === 'phone' && beat === 'land' ? phoneSpotlight(measured, size.height, window.innerHeight) : measured),
+    [device, beat, measured, size.height],
+  );
   // The card and spotlight show the beat whose targets have settled; it trails the store's beat by a frame or two.
-  const settled = useSettledRects(beatKey, useSpotlightRects(editorTourTargets(act, beat)));
+  const settled = useSettledRects(beatKey, rects);
   const [, shownAct, shownBeat] = settled.beatKey.split(':') as [string, `${EditorTourAct}`, EditorTourBeat];
   const pending = settled.beatKey !== beatKey;
   // The Send button is the one thing outside the card the user may press.
   const sendRects = useSpotlightRects(beat === 'compose' ? [editorTourSelector(EDITOR_TOUR_ANCHORS.chatSend)] : []);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 360, height: 160 });
 
   // The shown beat swaps the card's content and size. Read the new size before paint, so the move starts
   // toward the spot for the new card and the content changes as the card starts to move.
@@ -90,14 +121,20 @@ function RunningTour() {
     return () => observer.disconnect();
   }, []);
 
-  const position = placeCard(settled.value, size, { width: window.innerWidth, height: window.innerHeight });
+  // A phone's card spans the width and rests along the bottom, under the thumb.
+  // On touch the reply's card sits under the reply, in the chat's own space, rather than over the editor beside it.
+  const position = placeCard(settled.value, size, { width: window.innerWidth, height: window.innerHeight }, {
+    ...(device === 'phone' ? { edge: PHONE_EDGE, dock: 'bottom' } : {}),
+    preferBelow: device !== 'desktop' && shownBeat === 'respond',
+  });
   return (
     <>
       <TourSpotlight rects={settled.value} clickable={sendRects[0] ?? null} reducedMotion={reducedMotion} />
       <div
         ref={cardRef}
         data-editor-tour-card-host
-        className="fixed left-0 top-0"
+        // On a phone the bottom-docked card clears the home indicator of a full-screen web app.
+        className={device === 'phone' ? 'fixed left-0 top-0 pb-[env(safe-area-inset-bottom)]' : 'fixed left-0 top-0'}
         style={{
           zIndex: UI_Z_LAYERS.EDITOR_TOUR_CARD,
           transform: `translate3d(${position.left}px, ${position.top}px, 0)`,
@@ -107,7 +144,7 @@ function RunningTour() {
           pointerEvents: pending ? 'none' : undefined,
         }}
       >
-        <TourCard act={Number(shownAct) as EditorTourAct} beat={shownBeat} onPrimary={runEditorTourPrimary} onBack={backEditorTour} onSkip={finishEditorTour} />
+        <TourCard act={Number(shownAct) as EditorTourAct} beat={shownBeat} device={device} onPrimary={runEditorTourPrimary} onBack={backEditorTour} onSkip={finishEditorTour} />
       </div>
     </>
   );

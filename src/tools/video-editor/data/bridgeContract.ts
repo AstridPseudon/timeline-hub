@@ -645,6 +645,7 @@ export type BridgeErrorCategory = (typeof BRIDGE_ERROR_CATEGORIES)[number];
 export const bridgeErrorEnvelopeSchema = z.looseObject({
   error: z.string().optional(),
   detail: z.string().optional(),
+  next_action: z.string().optional(),
   config_version: z.number().optional(),
   limit_bytes: z.number().optional(),
   attempt: bridgeTaskAttemptSchema.optional(),

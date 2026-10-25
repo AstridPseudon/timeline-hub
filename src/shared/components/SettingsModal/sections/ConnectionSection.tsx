@@ -1,7 +1,7 @@
 import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS } from '@/integrations/runtime/contract-metadata.ts';
 import { type RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { type SetupChecks } from '@/shared/components/RuntimeConnection/SetupStatusLine.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from '@/shared/components/RuntimeConnection/copy.ts';
+import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withOrigin } from '@/shared/components/RuntimeConnection/copy.ts';
 
 interface ConnectionStatus {
   readonly title: string;
@@ -54,8 +54,14 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
       return { title: COPY.phone.title, detail: COPY.phone.sentence };
     case 'unsupported':
       return { title: COPY.unsupported.title, detail: COPY.unsupported.sentence };
+    case 'browser_update_needed':
+      return { title: withBrowser(COPY.browserUpdateNeeded.title), detail: withBrowser(COPY.browserUpdateNeeded.sentence) };
+    case 'restart':
+      return { title: COPY.restarted.title, detail: COPY.restarted.sentence, checks: LOOKING };
     case 'update_needed':
       return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: LOOKING, outOfDate: 'runtime' };
+    case 'refused':
+      return { title: COPY.refused.title, detail: withOrigin(COPY.refused.sentence, window.location.origin), checks: LOOKING };
     case 'not_running':
       return { title: COPY.notRunning.title, detail: COPY.notRunning.sentence, checks: LOOKING };
   }

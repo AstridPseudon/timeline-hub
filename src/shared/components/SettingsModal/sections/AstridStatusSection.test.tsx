@@ -213,6 +213,15 @@ describe('AstridStatusSection', () => {
     expect(mocks.readStatus).not.toHaveBeenCalled();
   });
 
+  it('names a refusal instead of claiming Astrid is not answering', () => {
+    mocks.connection.state = { status: 'refused' };
+    render(<AstridStatusSection isOpen />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Running, but refused this page');
+    expect(screen.queryByText(CONNECTION_COPY.notRunning.title)).not.toBeInTheDocument();
+    expect(mocks.readStatus).not.toHaveBeenCalled();
+  });
+
   it('does not request Runtime details while settings are closed', () => {
     render(<AstridStatusSection isOpen={false} />);
 

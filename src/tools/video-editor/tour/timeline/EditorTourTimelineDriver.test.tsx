@@ -21,7 +21,7 @@ import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts'
 import { EDITOR_TOUR_MEDIA } from '../tourMedia.ts';
 import { TOUR_CLIP_IDS } from './tourStages.ts';
 
-vi.mock('./useTourMediaWarmup.ts', () => ({ useTourMediaWarmup: vi.fn() }));
+vi.mock('./useTourMediaWarmup.ts', () => ({ useTourMediaWarmup: vi.fn(() => true) }));
 
 const fakeLiveScene = { kind: 'fake-live-scene', revision: 'sha256:tour-world' };
 const harness = vi.hoisted(() => ({
@@ -261,11 +261,11 @@ describe('EditorTourTimelineDriver', () => {
     expect(view.previewHandle.play).not.toHaveBeenCalled();
   });
 
-  it('reports ready on compose without touching the timeline or booting a scene', async () => {
-    const { apply, queryByTestId } = createHarness();
+  it('boots the opening scene during welcome without touching the timeline', async () => {
+    const { apply, findByTestId } = createHarness();
     await waitFor(() => expect(ready()).toBe(true));
     expect(apply).not.toHaveBeenCalled();
-    expect(queryByTestId('warm-scene')).toBeNull();
+    expect(await findByTestId('warm-scene')).toHaveAttribute('data-source-time', String(TOUR_SCENE_SOURCE_FROM));
   });
 
   it('warms the scene during act 1 respond and holds ready until it has booted', async () => {
@@ -334,6 +334,31 @@ describe('EditorTourTimelineDriver', () => {
     expect(previewHandle.play).toHaveBeenCalledTimes(2);
   });
 
+  it('with reduced motion keeps each landing still: the poster stays, act 2 holds its last frame, nothing plays', async () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query } as MediaQueryList));
+    act_(() => startEditorTour());
+    const { previewHandle } = createHarness();
+    goTo(1, 'land');
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(previewHandle.seek).toHaveBeenCalledWith(0);
+    expect(document.querySelector('[data-editor-tour-poster]')).toHaveAttribute('src', EDITOR_TOUR_MEDIA.frames[0].url);
+
+    const stillsRow = document.createElement('div');
+    stillsRow.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.stills);
+    document.body.append(stillsRow);
+    goTo(2, 'land');
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(previewHandle.seek).toHaveBeenLastCalledWith(13);
+
+    const videosRow = document.createElement('div');
+    videosRow.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.videos);
+    document.body.append(videosRow);
+    goTo(3, 'land');
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(document.querySelector('[data-editor-tour-poster]')).toHaveAttribute('src', EDITOR_TOUR_MEDIA.stills[0].url);
+    expect(previewHandle.play).not.toHaveBeenCalled();
+  });
+
   it('steps back a stage by removing the later rows at once, and replays the landing going forward', async () => {
     const { apply, previewHandle } = createHarness();
     addScene('ready');
@@ -369,7 +394,7 @@ describe('EditorTourTimelineDriver', () => {
     expect(apply.mock.calls[5][0].operations[0].target).toBe(TOUR_CLIP_IDS.scene);
     expect(apply.mock.calls[5][0].operations[1]).toMatchObject({ op: 'track.update', target: EDITOR_TOUR_TRACK_IDS.scene, payload: { label: 'V1' } });
     await waitFor(() => expect(ready()).toBe(true));
-    expect(harness.warmups).toHaveLength(0);
+    expect(document.querySelector('[data-testid="warm-scene"]')).toBeNull();
     rows.forEach((row) => row.remove());
   });
 
@@ -382,10 +407,12 @@ describe('EditorTourTimelineDriver', () => {
     await new Promise((resolve) => setTimeout(resolve, 150));
     expect(previewHandle.play).not.toHaveBeenCalled();
     expect(ready()).toBe(false);
+    expect(document.querySelector('[data-editor-tour-poster]')).toHaveAttribute('src', EDITOR_TOUR_MEDIA.frames[0].url);
 
     scene.setAttribute('data-phase', 'ready');
     await waitFor(() => expect(ready()).toBe(true));
     expect(previewHandle.play).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[data-editor-tour-poster]')).toBeNull();
   });
 
   it('lets skipAnimation advance the card without autoplaying an unready world', async () => {
@@ -420,6 +447,7 @@ describe('EditorTourTimelineDriver', () => {
     await waitFor(() => expect(ready()).toBe(true));
     expect(queryByRole('status')).toBeNull();
     expect(previewHandle.play).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('[data-editor-tour-poster]')).toBeNull();
   });
 
   it('ignores ready thumbnails and stale preview frames, including on an instant return', async () => {

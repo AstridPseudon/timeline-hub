@@ -10,6 +10,18 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('tour video position', () => {
+  it('keeps the still visible until a video frame arrives and restores it on failure', () => {
+    const view = render(<TourMedia kind="video" slot={slot} playing poster="/still.png" />);
+    const video = view.container.querySelector('video')!;
+    expect(view.container.querySelector('img')).toHaveAttribute('src', '/still.png');
+    expect(video).toHaveStyle({ opacity: '0' });
+    fireEvent.loadedData(video);
+    expect(view.container.querySelector('img')).toBeNull();
+    expect(video.style.opacity).toBe('');
+    fireEvent.error(video);
+    expect(view.container.querySelector('img')).toHaveAttribute('src', '/still.png');
+  });
+
   it('pauses at the preview end and holds it without looping or restarting', () => {
     const view = render(<TourMedia kind="video" slot={slot} playing />);
     const video = view.container.querySelector('video')!;

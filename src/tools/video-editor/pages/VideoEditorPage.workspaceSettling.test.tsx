@@ -1,13 +1,16 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate, useSearchParams } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RUNTIME_REQUEST_WAIT_MS } from '@/integrations/runtime/useRuntimeRequestWait.ts';
 import VideoEditorPage from './VideoEditorPage.tsx';
+import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { RUNTIME_CONNECTION_COPY as COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { assertNativeEditorConnection } from '@/integrations/astrid/nativeEditorConnection.ts';
 
 const harness = vi.hoisted(() => ({
+  origin: '',
   mode: 'projects' as 'projects' | 'timelines',
   projectsPending: true,
   projectsError: null as Error | null,
@@ -15,6 +18,7 @@ const harness = vi.hoisted(() => ({
   projects: undefined as Array<Record<string, unknown>> | undefined,
   timelines: undefined as Array<Record<string, unknown>> | undefined,
   reconnect: vi.fn(),
+  selectProject: vi.fn(async () => undefined),
   disabledIds: new Set<string>(),
 }));
 
@@ -96,30 +100,68 @@ vi.mock('@/tools/video-editor/tour/timeline/tourDataProvider.ts', () => ({ creat
 vi.mock('@/tools/video-editor/tour/timeline/tourStages.ts', () => ({ EDITOR_TOUR_PROJECT_NAME: 'Tour', EDITOR_TOUR_TIMELINE_ID: 'tour-timeline', EDITOR_TOUR_TIMELINE_NAME: 'Tour' }));
 vi.mock('@/integrations/runtime/dataProvider.ts', () => ({ RuntimeDataProvider: class { kind = 'runtime'; reconnect = vi.fn(async () => undefined); } }));
 vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', () => ({ VideoEditorProvider: ({ children }: { children: React.ReactNode }) => <div data-testid="video-editor-provider">{children}</div> }));
-vi.mock('@/tools/video-editor/components/AstridVideoEditorShell.tsx', () => ({ AstridVideoEditorShell: () => <div>Editor mounted</div> }));
+vi.mock('@/tools/video-editor/components/AstridVideoEditorShell.tsx', () => ({
+  AstridVideoEditorShell: ({ headerNavigationControls, previewNavigationControls }: {
+    headerNavigationControls?: React.ReactNode;
+    previewNavigationControls?: React.ReactNode;
+  }) => <>
+    {headerNavigationControls}
+    {previewNavigationControls}
+    <div>Editor mounted</div>
+  </>,
+}));
 vi.mock('@/shared/components/AppHeader.tsx', () => ({ AppHeader: () => <header /> }));
-vi.mock('@/shared/components/ProjectTimelineSelectors.tsx', () => ({ ProjectTimelinePicker: () => null }));
+vi.mock('@/shared/components/ProjectTimelineSelectors.tsx', () => ({
+  ProjectTimelinePicker: ({ onOpenChange, onSelectProject, onSelectTimeline }: {
+    onOpenChange?: (open: boolean) => void;
+    onSelectProject?: (id: string) => void;
+    onSelectTimeline?: (id: string) => void;
+  }) => <>
+    <button onClick={() => onOpenChange?.(true)}>Open project picker</button>
+    <button onClick={() => onSelectProject?.('project-2')}>Choose project two</button>
+    <button onClick={() => onSelectTimeline?.('timeline-2')}>Choose timeline two</button>
+  </>,
+}));
 vi.mock('@/shared/components/ProjectHeaderActions.tsx', () => ({ ProjectHeaderActions: () => null }));
 vi.mock('@/shared/components/RuntimeConnection/EmptyWorkspaceGuidance.tsx', () => ({ EmptyWorkspaceGuidance: () => <div>Empty workspace help</div> }));
 vi.mock('@/shared/components/RuntimeConnection/RuntimeConnectorRecoveryBanner.tsx', () => ({
   RuntimeConnectorRecoveryBanner: ({ onRetry }: { onRetry: () => void }) => <button onClick={onRetry}>Retry Runtime connection</button>,
 }));
-vi.mock('@/integrations/runtime/client.ts', () => ({ AstridRuntimeClient: class {}, RuntimeUnavailableError: class extends Error {}, RuntimeAuthenticationError: class extends Error {} }));
+vi.mock('@/integrations/runtime/client.ts', () => ({ AstridRuntimeClient: class { selectProject = harness.selectProject; }, RuntimeUnavailableError: class extends Error {}, RuntimeAuthenticationError: class extends Error {} }));
 vi.mock('@/integrations/runtime/createDefaultTimeline.ts', () => ({ ensureProjectHasTimeline: vi.fn(), createCanonicalTimeline: vi.fn() }));
 vi.mock('@/integrations/runtime/generated.ts', () => ({ ApiError: class extends Error {} }));
-vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => null }));
+vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => harness.origin }));
 vi.mock('@/shared/lib/taskCreation/ids.ts', () => ({ generateUUID: () => 'generated-id' }));
 vi.mock('@/shared/components/ui/toast.tsx', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 function PageHarness({ entry }: { entry: string }) {
   return <MemoryRouter initialEntries={[entry]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-    <VideoEditorPage />
+    <PageWithProjectSwitch />
   </MemoryRouter>;
+}
+
+function PageWithProjectSwitch() {
+  const [, setRenderCount] = React.useState(0);
+  const navigate = useNavigate();
+  const [searchParams, updateSearchParams] = useSearchParams();
+  return <>
+    <output data-testid="search-params">{searchParams.toString()}</output>
+    <button onClick={() => setRenderCount(value => value + 1)}>Rerender</button>
+    <button onClick={() => navigate(-1)}>Back</button>
+    <button onClick={() => updateSearchParams(current => {
+      const next = new URLSearchParams(current);
+      next.set('project', searchParams.get('project') === 'project-1' ? 'project-2' : 'project-1');
+      return next;
+    }, { replace: true })}>Switch project</button>
+    <VideoEditorPage />
+  </>;
 }
 
 describe('VideoEditorPage workspace settling', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    harness.origin = '';
+    setRecoveryCardShowing(false);
     harness.mode = 'projects';
     harness.projectsPending = true;
     harness.projectsError = null;
@@ -127,10 +169,13 @@ describe('VideoEditorPage workspace settling', () => {
     harness.projects = undefined;
     harness.timelines = undefined;
     harness.reconnect.mockClear();
+    harness.selectProject.mockReset();
+    harness.selectProject.mockResolvedValue(undefined);
     vi.mocked(assertNativeEditorConnection).mockClear();
   });
   afterEach(() => {
     cleanup();
+    setRecoveryCardShowing(false);
     vi.useRealTimers();
   });
 
@@ -170,6 +215,100 @@ describe('VideoEditorPage workspace settling', () => {
     expect(document.querySelector('[data-boot-hold]')).toBeNull();
   });
 
+  it('selects a verified editor project once with workspace scope and selects again after switching projects', async () => {
+    harness.mode = 'timelines';
+    harness.projectsPending = false;
+    harness.projects = [
+      { project_id: 'project-1', slug: 'project-1', name: 'Project One', metadata: {} },
+      { project_id: 'project-2', slug: 'project-2', name: 'Project Two', metadata: {} },
+    ];
+    harness.timelines = [{ timeline_id: 'timeline-1', name: 'Main', slug: 'main' }];
+    render(<PageHarness entry="/tools/video-editor?project=project-1&timeline=timeline-1" />);
+
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+    expect(harness.selectProject).toHaveBeenCalledOnce();
+    expect(harness.selectProject).toHaveBeenLastCalledWith('project-1', 'workspace');
+    fireEvent.click(screen.getByRole('button', { name: 'Rerender' }));
+    act(() => vi.advanceTimersByTime(500));
+    expect(harness.selectProject).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch project' }));
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+    expect(harness.selectProject).toHaveBeenCalledTimes(2);
+    expect(harness.selectProject).toHaveBeenLastCalledWith('project-2', 'workspace');
+  });
+
+  it('keeps the editor working when runtime project selection fails', async () => {
+    harness.mode = 'timelines';
+    harness.projectsPending = false;
+    harness.projects = [{ project_id: 'project-1', slug: 'project-1', name: 'Project One', metadata: {} }];
+    harness.timelines = [{ timeline_id: 'timeline-1', name: 'Main', slug: 'main' }];
+    harness.selectProject.mockRejectedValueOnce(new Error('runtime unavailable'));
+    render(<PageHarness entry="/tools/video-editor?project=project-1&timeline=timeline-1" />);
+
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+    expect(harness.selectProject).toHaveBeenCalledOnce();
+    expect(screen.getByText('Editor mounted')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('retries runtime project selection once when the picker is opened after failure', async () => {
+    harness.mode = 'timelines';
+    harness.projectsPending = false;
+    harness.projects = [{ project_id: 'project-1', slug: 'project-1', name: 'Project One', metadata: {} }];
+    harness.timelines = [{ timeline_id: 'timeline-1', name: 'Main', slug: 'main' }];
+    harness.selectProject.mockRejectedValueOnce(new Error('runtime unavailable'));
+    render(<PageHarness entry="/tools/video-editor?project=project-1&timeline=timeline-1" />);
+
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+    expect(harness.selectProject).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open project picker' })[0]);
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+    expect(harness.selectProject).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Editor mounted')).toBeInTheDocument();
+  });
+
+  it('auto-selects a project when the URL contains only a timeline', async () => {
+    harness.projectsPending = false;
+    harness.projects = [{ project_id: 'project-1', slug: 'project-1', name: 'Project One', metadata: {} }];
+    harness.timelines = [{ timeline_id: 'timeline-1', name: 'Main', slug: 'main' }];
+    render(<PageHarness entry="/tools/video-editor?timeline=timeline-1" />);
+
+    expect(screen.getByTestId('search-params')).toHaveTextContent('project=project-1');
+    expect(screen.getByTestId('search-params')).toHaveTextContent('timeline=timeline-1');
+  });
+
+  it('keeps user project and timeline switches in browser history', () => {
+    harness.mode = 'timelines';
+    harness.projectsPending = false;
+    harness.projects = [
+      { project_id: 'project-1', slug: 'project-1', name: 'Project One' },
+      { project_id: 'project-2', slug: 'project-2', name: 'Project Two' },
+    ];
+    harness.timelines = [
+      { timeline_id: 'timeline-1', name: 'Main', slug: 'main' },
+      { timeline_id: 'timeline-2', name: 'Alt', slug: 'alt' },
+    ];
+    render(<PageHarness entry="/tools/video-editor?project=project-1&timeline=timeline-1" />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Choose project two' })[0]);
+    expect(screen.getByTestId('search-params')).toHaveTextContent('project=project-2');
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByTestId('search-params')).toHaveTextContent('project=project-1');
+    expect(screen.getByTestId('search-params')).toHaveTextContent('timeline=timeline-1');
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Choose timeline two' })[1]);
+    expect(screen.getByTestId('search-params')).toHaveTextContent('timeline=timeline-2');
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByTestId('search-params')).toHaveTextContent('timeline=timeline-1');
+  });
+
   it('routes a discovery-error banner retry through cancellable discovery', async () => {
     harness.projectsPending = false;
     harness.projectsError = new Error('Workspace did not answer');
@@ -180,4 +319,30 @@ describe('VideoEditorPage workspace settling', () => {
     expect(assertNativeEditorConnection).not.toHaveBeenCalled();
     expect(screen.getByText('No projects yet')).toBeInTheDocument();
   });
+
+  it('uses loadFailed copy for hosted discovery errors before the editor mounts', () => {
+    harness.origin = 'http://127.0.0.1:17340';
+    harness.projectsPending = false;
+    harness.projectsError = new Error('raw discovery diagnostic');
+    render(<PageHarness entry="/tools/video-editor" />);
+    expect(screen.getByRole('heading', { name: COPY.loadFailed.title })).toBeInTheDocument();
+    expect(screen.getByText(COPY.loadFailed.sentence)).toBeInTheDocument();
+    expect(screen.queryByText('raw discovery diagnostic')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: COPY.loadFailed.button }));
+    expect(harness.reconnect).toHaveBeenCalledOnce();
+  });
+
+  it.each([true, false])('defers the hosted fallback to recovery while discovery is pending=%s', (pending) => {
+    harness.origin = 'http://127.0.0.1:17340';
+    harness.projectsPending = pending;
+    harness.projectsError = pending ? null : new Error('raw discovery diagnostic');
+    setRecoveryCardShowing(true);
+    render(<PageHarness entry="/tools/video-editor" />);
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(screen.queryByText('raw discovery diagnostic')).toBeNull();
+    expect(document.querySelector('[data-boot-hold]')).toBeNull();
+    act(() => setRecoveryCardShowing(false));
+    expect(screen.getByRole('heading', { name: pending ? 'Opening your workspace…' : COPY.loadFailed.title })).toBeInTheDocument();
+  });
+
 });

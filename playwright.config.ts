@@ -87,7 +87,7 @@ const extensionHarnessDependencies = ['extension-harness-setup'];
 const LOCAL_JOURNEY_SPECS = /tests[\\/]e2e[\\/]local[\\/].*\.spec\.ts$/;
 // These two specs set their own desktop viewport and drive the pointer editor, so the device projects would only
 // repeat the desktop run; chromium-desktop runs them.
-const DESKTOP_ONLY_SPECS = /(?:production-widget-scope|video-editor-instance-lifecycle)\.spec\.ts$/;
+const DESKTOP_ONLY_SPECS = /(?:production-widget-scope|video-editor-instance-lifecycle|agent-setup)\.spec\.ts$/;
 const defaultProjectIgnores = [
   TIMELINE_DEVICE_SPECS,
   EXTENSION_HARNESS_SETUP_SPEC,

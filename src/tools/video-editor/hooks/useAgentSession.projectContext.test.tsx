@@ -78,6 +78,16 @@ function snapshot(index: number) {
   return JSON.parse(block.split('<astrid_editor_context>\n')[1].split('\n</astrid_editor_context>')[0]);
 }
 
+function promptBlocksWithoutVolatileContext(index: number) {
+  return (acp.promptSession.mock.calls[index][2] as Array<{ type: string; text: string }>).map((block) => {
+    if (!block.text.startsWith('<astrid_editor_context>')) return block;
+    const value = snapshot(index);
+    delete value.captured_at;
+    delete value.context_revision;
+    return { ...block, text: `<astrid_editor_context>\n${JSON.stringify(value, null, 2)}\n</astrid_editor_context>` };
+  });
+}
+
 function assistantNotification(sessionId: string, text: string) {
   return { params: { sessionId, update: { sessionUpdate: 'agent_message_chunk', content: { type: 'text', text } } } };
 }
@@ -372,50 +382,51 @@ describe('project-only ACP prompt boundary', () => {
     expect(session.turns.at(-1)?.content).not.toContain('Scene published:');
   });
 
-  it('retries the captured scene port after selection changes with a fresh turn and read admission', async () => {
+  it('retries the captured prompt and scene scope unchanged after selection and location change', async () => {
     const sessionId = 'scene-retry-session';
     const selected = scenePort('project-retry', 'timeline-retry', 7);
     const newlySelected = scenePort('project-selected-after-failure', 'timeline-selected-after-failure', 9);
     const pending: unknown[] = [];
     const scopes: LiveSceneScope[] = [];
-    let attempt = 0;
     acp.events.mockImplementation(async () => ({ notifications: pending.splice(0), disconnected: false }));
     acp.promptSession.mockImplementation(async (_connectionId: string, promptedSession: string, blocks: Array<{ type: string; text: string }>) => {
       if (blocks.length === 3) {
         const scope = sceneScopeFromPrompt(blocks);
         scopes.push(scope);
-        pending.push(assistantNotification(promptedSession, sceneRequestText(sceneRead(scope, `read-${++attempt}`))));
-      } else {
-        pending.push(assistantNotification(promptedSession, 'Read completed.'));
+        if (scopes.length === 1) throw new Error('simulated ACP response lost');
       }
+      pending.push(assistantNotification(promptedSession, 'Read completed.'));
       return {};
     });
-    const originalEndTurn = selected.port.endTurn.bind(selected.port);
-    const finishTurn = vi.spyOn(selected.port, 'endTurn');
-    finishTurn.mockImplementationOnce((capturedScope) => {
-      originalEndTurn(capturedScope);
-      throw new Error('simulated post-read failure');
-    });
     const { Wrapper } = createTestWrapper();
+    const originalHref = window.location.href;
+    window.history.pushState({}, '', '/before-retry?timeline=original');
     const hook = renderHook(({ scope }) => useSendMessage(sessionId, scope), {
       wrapper: Wrapper,
       initialProps: { scope: agentContext('project-retry', 'timeline-retry', selected.port) },
     });
     await expect(act(async () => { await hook.result.current.mutateAsync({ message: 'read the scene' }); }))
-      .rejects.toThrow('simulated post-read failure');
-    expect(selected.handler).toHaveBeenCalledOnce();
+      .rejects.toThrow('simulated ACP response lost');
 
+    const firstSnapshot = snapshot(0);
+    window.history.pushState({}, '', '/after-retry?timeline=changed');
+    await new Promise((resolve) => setTimeout(resolve, 5));
     hook.rerender({ scope: agentContext('project-selected-after-failure', 'timeline-selected-after-failure', newlySelected.port) });
     await act(async () => { await hook.result.current.retryLastMessage(); });
 
-    expect(acp.promptSession).toHaveBeenCalledTimes(4);
-    expect(selected.handler.mock.calls.map(([request]) => request.action)).toEqual(['read', 'read']);
+    expect(acp.promptSession).toHaveBeenCalledTimes(2);
+    expect(selected.handler).not.toHaveBeenCalled();
     expect(scopes).toHaveLength(2);
-    expect(scopes[1].turnId).not.toBe(scopes[0].turnId);
+    expect(scopes[1].turnId).toBe(scopes[0].turnId);
+    expect(promptBlocksWithoutVolatileContext(1)).toEqual(promptBlocksWithoutVolatileContext(0));
+    expect(firstSnapshot.editor.deep_link).toBe(new URL('/before-retry?timeline=original', originalHref).href);
+    expect(snapshot(1).editor.deep_link).toBe(firstSnapshot.editor.deep_link);
+    expect(snapshot(1).captured_at).not.toBe(firstSnapshot.captured_at);
+    expect(snapshot(1).context_revision).toBe(firstSnapshot.context_revision);
     expect(scopes.every(({ projectId, timelineId }) => projectId === 'project-retry' && timelineId === 'timeline-retry')).toBe(true);
     expect(newlySelected.handler).not.toHaveBeenCalled();
-    expect(finishTurn).toHaveBeenCalledTimes(2);
     hook.unmount();
+    window.history.pushState({}, '', originalHref);
   });
 
   it.each([

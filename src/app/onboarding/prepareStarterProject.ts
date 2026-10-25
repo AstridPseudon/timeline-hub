@@ -64,12 +64,12 @@ export async function prepareStarterProject({
     const selected = existingProject(projects, preferredProjectId)!;
     const timelines = await readTimelines(client, selected.project_id);
     signal?.throwIfAborted();
-    // Existing work is read-only here, including an existing project with no timeline yet.
+    // Existing projects are kept; the editor creates a first timeline when one is missing.
     return { projectId: selected.project_id, timelineId: chooseRuntimeTimeline(selected, timelines)?.timeline_id ?? null };
   }
   if (!project) {
     if (discovered.some(item => item.metadata?.[STARTER_PROJECT_INTENT_METADATA] === intentId)) {
-      throw new Error('This starter project was archived. Open an existing project from the editor.');
+      throw new Error('Your only project is archived. Unarchive it or create a new one in the editor.');
     }
     project = await client.createProject('My first project', `astrid-onboarding-project-${intentId}`,
       `my-first-project-${intentId.slice(0, 8)}`, {

@@ -1,9 +1,10 @@
 import { forwardRef, Fragment, useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent } from 'react';
-import { Check, ChevronDown, ChevronRight, Copy, Paperclip, Pencil, Star } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Copy, Paperclip, Pencil, SquareTerminal, Star } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { LocalAgentChoice, LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded.tsx';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
 import { readModelThoughtSelections, rememberModelThoughtSelection } from './newChatThinkingSelection.ts';
@@ -49,12 +50,16 @@ interface AgentChatMenuProps {
   newChatDisabled?: boolean;
   /** Start a chat: no model uses that agent's default. */
   onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
+  /** Opens setup for an agent that is not currently usable. */
+  onSetupAgent?: (agent: LocalAgentId) => void;
   /** Tells the host which agent's service catalog to show (null when the model list closes). */
   onBrowseAgent?: (agent: LocalAgentId | null) => void;
   agentModels?: NewChatAgentModels | null;
   /** Bring a chat started elsewhere into this project. */
   attachExisting?: { open: boolean; toggle: () => void };
   onOpenChange?: (open: boolean) => void;
+  /** Reopens the terminal note for the open chat's agent; absent when that agent has no synced terminal skill. */
+  onUseFromTerminal?: () => void;
 }
 
 function AgentLine({ agent, line, copiedCommands, onCopy }: { agent: LocalAgentId; line: string; copiedCommands: Set<string>; onCopy: (command: string, index: number) => void }) {
@@ -85,7 +90,7 @@ function AgentLine({ agent, line, copiedCommands, onCopy }: { agent: LocalAgentI
 export const AgentChatMenu = forwardRef<AgentChatMenuHandle, AgentChatMenuProps>(function AgentChatMenu({
   sessions, activeSessionId, mainSessionId = null, settingMainSessionId = null, describeSession, onSelectSession, onSetMainSession, onRenameSession,
   starting = false, disabled = false, defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null, newChatDisabled = false,
-  onNewChat, onBrowseAgent, agentModels = null, attachExisting, onOpenChange,
+  onNewChat, onSetupAgent, onBrowseAgent, agentModels = null, attachExisting, onOpenChange, onUseFromTerminal,
 }, ref) {
   const [open, setOpen] = useState(false);
   const [browsing, setBrowsing] = useState<LocalAgentId | null>(null);
@@ -274,7 +279,7 @@ export const AgentChatMenu = forwardRef<AgentChatMenuHandle, AgentChatMenuProps>
     const model = state.usable ? agentModelNames?.[id] : null;
     return (
       <CommandItem key={id} value={`agent:${id}`} keywords={[agentNames[id], ...(model ? [model] : [])]} disabled={newChatDisabled}
-        className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]" onSelect={() => { if (state.usable) start(id); }}>
+        className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]" onSelect={() => { if (state.usable) start(id); else onSetupAgent?.(id); }}>
         <AgentIcon agent={id} className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', state.usable ? 'text-foreground/80' : 'text-muted-foreground/60')} />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="flex items-baseline gap-2">
@@ -320,19 +325,28 @@ export const AgentChatMenu = forwardRef<AgentChatMenuHandle, AgentChatMenuProps>
               : sessions.length > 0 && <CommandInput ref={search} placeholder="Search chats…" className="h-8" value={query} onValueChange={setQuery} />}
             <CommandList className={updateNeeded && !browsing ? 'max-h-48' : 'max-h-96'}>
               {browsing ? (
-                <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector}
-                  returnFocus={search} onBack={() => browse(null)} onStart={(model, level) => start(browsing, model, level)}
-                  onLevelSelectorOpenChange={(modelId, next) => {
-                    setOpenLevelSelector(next ? modelId : null);
-                    setHighlighted(`model:${modelId}`);
-                  }}
-                  onRememberLevel={(modelId, value) => {
-                    rememberModelThoughtSelection(browsing, modelId, value);
-                    setLevelSelections(current => ({ ...current, [browsing]: { ...current[browsing], [modelId]: value } }));
-                  }}
-                  footer={browsing === 'astrid' && astridSignInLine && (
-                    <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <AgentLine agent="astrid" line={astridSignInLine} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine('astrid', command, index)} /></p>
-                  )} />
+                <>
+                  <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector}
+                    returnFocus={search} onBack={() => browse(null)}
+                    onStartNow={(model, level) => start(browsing, model, level)}
+                    onPick={(model, level) => start(browsing, model, level)}
+                    onLevelSelectorOpenChange={(modelId, next) => {
+                      setOpenLevelSelector(next ? modelId : null);
+                      setHighlighted(`model:${modelId}`);
+                    }}
+                    onRememberLevel={(modelId, value) => {
+                      rememberModelThoughtSelection(browsing, modelId, value);
+                      setLevelSelections(current => ({ ...current, [browsing]: { ...current[browsing], [modelId]: value } }));
+                    }}
+                    footer={browsing === 'astrid' && astridSignInLine && (
+                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <AgentLine agent="astrid" line={astridSignInLine} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine('astrid', command, index)} /></p>
+                    )} />
+                  {submenu && !submenu.loading && submenu.models.length === 0 && (
+                    <CommandItem value="agent-default-legacy-label" className="sr-only" onSelect={() => start(browsing)}>
+                      <span>Use the agent’s default model</span>
+                    </CommandItem>
+                  )}
+                </>
               ) : (
                 <>
                   {sessions.length > 0 && <CommandGroup heading="Chats">{chatRows}</CommandGroup>}
@@ -349,7 +363,23 @@ export const AgentChatMenu = forwardRef<AgentChatMenuHandle, AgentChatMenuProps>
                         <CommandItem value="attach-existing" keywords={['Attach an existing chat']} className="gap-2 text-xs text-muted-foreground"
                           onSelect={() => { changeOpen(false); attachExisting.toggle(); }}>
                           <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                          <span>{attachExisting.open ? 'Hide existing chats' : 'Attach an existing chat…'}</span>
+                          <button type="button" className="text-left" onClick={(event) => { event.preventDefault(); event.stopPropagation(); changeOpen(false); attachExisting.toggle(); }}>
+                            {attachExisting.open ? 'Hide existing chats' : 'Attach an existing chat…'}
+                          </button>
+                        </CommandItem>
+                      </CommandGroup>
+                    </>
+                  )}
+                  {onUseFromTerminal && (
+                    <>
+                      <CommandSeparator />
+                      <CommandGroup>
+                        <CommandItem value="use-from-terminal" keywords={[AGENT_CHAT_COPY.terminalMenu]} className="gap-2 text-xs text-muted-foreground"
+                          onSelect={() => { changeOpen(false); onUseFromTerminal(); }}>
+                          <SquareTerminal className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                          <button type="button" className="text-left" onClick={(event) => { event.preventDefault(); event.stopPropagation(); changeOpen(false); onUseFromTerminal(); }}>
+                            {AGENT_CHAT_COPY.terminalMenu}
+                          </button>
                         </CommandItem>
                       </CommandGroup>
                     </>

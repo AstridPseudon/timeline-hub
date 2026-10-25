@@ -10,8 +10,10 @@ import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
  * credential now names another identity) is Astrid changed under the page. Both are sticky: once seen, the page keeps its
  * drafts and waits for Reload.
  *
- * Two readings in a row that fail are `stopped`. A failed reading is a network error (nothing is there: refused or
- * unreachable), a 503 that is not an identity change (the Runtime's door answers but the Runtime is not ready), or any
+ * Two readings in a row that fail are `stopped`, or `refused` when a `no-cors` request to the same URL still gets an answer
+ * (Astrid is up but no longer serves this page; a closed port fails both). Before a network failure is blamed on Astrid
+ * the permission is asked again (`confirmPermission`): Chrome does not always fire `onchange` on a reset, and without the
+ * permission the page learns nothing about Astrid. A failed reading is a network error (nothing is there, or it refuses us), a 503 that is not an identity change (the Runtime's door answers but the Runtime is not ready), or any
  * other answer that is not ok. A reading that times out is different: the port took the request and did not answer in
  * time, which is a loaded machine, not a missing Astrid. It never counts toward `stopped`; two in a row are `busy`, a
  * calm card that Astrid is still running. A slow reading also ends a streak of failures, and a failure ends a streak of
@@ -20,7 +22,7 @@ import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
  * port is answering again. An ok answer that names no instance is not a restart and changes nothing.
  */
 
-export type RuntimeRestartStatus = 'ok' | 'busy' | 'stopped' | 'restarted' | 'realm_changed';
+export type RuntimeRestartStatus = 'ok' | 'busy' | 'stopped' | 'refused' | 'restarted' | 'realm_changed';
 
 const RESTART_CHECK_INTERVAL_MS = 3000;
 
@@ -35,6 +37,9 @@ type HealthReading =
   | { kind: 'instance'; instanceId: string }
   | { kind: 'realm_changed' }
   | { kind: 'unreachable' }
+  /** A network failure of the CORS read: nothing listening, or an answer this page may not read. */
+  | { kind: 'network' }
+  | { kind: 'refused' }
   | { kind: 'slow' }
   | { kind: 'unknown' };
 
@@ -60,7 +65,7 @@ async function readHealth(fetchImpl: FetchLike): Promise<HealthReading> {
     response = await fetchImpl(`${runtimeApiBase()}/v1/health`, { cache: 'no-store', signal: controller.signal });
   } catch {
     // Only our own abort timer makes this slow; a rejected fetch with no timeout is a refused or unreachable port.
-    return timedOut ? { kind: 'slow' } : { kind: 'unreachable' };
+    return timedOut ? { kind: 'slow' } : { kind: 'network' };
   } finally {
     clearTimeout(timer);
   }
@@ -76,12 +81,26 @@ async function readHealth(fetchImpl: FetchLike): Promise<HealthReading> {
   return typeof instanceId === 'string' && instanceId ? { kind: 'instance', instanceId } : { kind: 'unknown' };
 }
 
+/** After a network failure: does anything answer a `no-cors` request to the same URL? Resolves opaque if so. */
+async function answersWithoutCors(fetchImpl: FetchLike): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+  try {
+    await fetchImpl(`${runtimeApiBase()}/v1/health`, { cache: 'no-store', mode: 'no-cors', signal: controller.signal });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Module-level so the effect's dependency is stable across renders; an inline default would re-run the effect every render.
 const browserFetch: FetchLike = (input, init) => fetch(input, init);
 
 export function useRuntimeRestartWatch(
   enabled: boolean,
-  { intervalMs = RESTART_CHECK_INTERVAL_MS, fetchImpl = browserFetch }: { intervalMs?: number; fetchImpl?: FetchLike } = {},
+  { intervalMs = RESTART_CHECK_INTERVAL_MS, fetchImpl = browserFetch, confirmPermission }: { intervalMs?: number; fetchImpl?: FetchLike; confirmPermission?: () => Promise<boolean> } = {},
 ): RuntimeRestartStatus {
   const [status, setStatus] = useState<RuntimeRestartStatus>('ok');
   // A ref, not an effect-local: a re-run of the effect must not forget the instance the page connected to.
@@ -98,19 +117,32 @@ export function useRuntimeRestartWatch(
       if (inFlight) return;
       inFlight = true;
       try {
-        const reading = await readHealth(fetchImpl);
+        let reading = await readHealth(fetchImpl);
         if (stopped) return;
-        if (reading.kind === 'unreachable') {
+        if (reading.kind === 'network') {
+          // The permission comes first: without it nothing here says anything about Astrid (the provider drops the
+          // connection when it sees the loss, and the page goes to the connection step).
+          if (confirmPermission && !(await confirmPermission())) {
+            failures = 0;
+            slows = 0;
+            return;
+          }
+          if (stopped) return;
+          reading = (await answersWithoutCors(fetchImpl)) ? { kind: 'refused' } : { kind: 'unreachable' };
+          if (stopped) return;
+        }
+        if (reading.kind === 'unreachable' || reading.kind === 'refused') {
           failures += 1;
           slows = 0;
-          if (failures >= FAILURES_BEFORE_STOPPED) setStatus((current) => (current === 'ok' || current === 'busy' ? 'stopped' : current));
+          const failed: RuntimeRestartStatus = reading.kind === 'refused' ? 'refused' : 'stopped';
+          if (failures >= FAILURES_BEFORE_STOPPED) setStatus((current) => (current === 'ok' || current === 'busy' || current === 'stopped' || current === 'refused' ? failed : current));
           return;
         }
         if (reading.kind === 'slow') {
           slows += 1;
           failures = 0;
           setStatus((current) => {
-            if (current === 'stopped') return 'busy';
+            if (current === 'stopped' || current === 'refused') return 'busy';
             return current === 'ok' && slows >= SLOW_BEFORE_BUSY ? 'busy' : current;
           });
           return;
@@ -122,7 +154,7 @@ export function useRuntimeRestartWatch(
         } else if (reading.kind === 'instance') {
           if (baselineRef.current === null) baselineRef.current = reading.instanceId;
           if (reading.instanceId !== baselineRef.current) setStatus('restarted');
-          else setStatus((current) => (current === 'stopped' || current === 'busy' ? 'ok' : current));
+          else setStatus((current) => (current === 'stopped' || current === 'refused' || current === 'busy' ? 'ok' : current));
         }
       } finally {
         inFlight = false;
@@ -136,7 +168,7 @@ export function useRuntimeRestartWatch(
       clearInterval(interval);
       window.removeEventListener('focus', check);
     };
-  }, [enabled, settled, intervalMs, fetchImpl]);
+  }, [enabled, settled, intervalMs, fetchImpl, confirmPermission]);
 
   return status;
 }
@@ -168,6 +200,7 @@ export function useOnAstridAnswers(
         if (disposed) return;
         // A slow reading says nothing new about whether Astrid answers: the port is there, the answer is late.
         if (reading.kind === 'slow') return;
+        // A `network` failure is not answering (nothing is known beyond that).
         const nowAnswering = reading.kind === 'instance' || reading.kind === 'unknown';
         const started = nowAnswering && answering === false;
         answering = nowAnswering;

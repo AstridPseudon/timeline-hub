@@ -17,14 +17,12 @@ describe('local setup card', () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(localSetupInstructions());
   });
 
-  it('keeps the instructions disclosure closed until opened', () => {
+  it('offers the agent instructions only as a copy, with the do-it-yourself steps visible', () => {
     render(<WelcomeLocalSetup onBack={vi.fn()} />);
-    const instructionBlock = () => Array.from(document.querySelectorAll('pre')).find(pre => pre.textContent === localSetupInstructions());
-    expect(instructionBlock()).toBeUndefined();
+    expect(Array.from(document.querySelectorAll('pre')).some(pre => pre.textContent === localSetupInstructions())).toBe(false);
+    expect(screen.queryByRole('button', { name: 'Show the instructions' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Copy agent instructions' })).toBeInTheDocument();
     expect(screen.getByText('Or do it yourself')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Show the instructions' }));
-    expect(instructionBlock()?.textContent).toBe(localSetupInstructions());
-    expect(screen.getByRole('button', { name: 'Hide the instructions' })).toBeInTheDocument();
   });
 
   it('shows five ordered macOS/Linux steps using commands from the shared setup source', () => {
@@ -95,5 +93,11 @@ describe('local setup card', () => {
     render(<WelcomeLocalSetup onBack={onBack} />);
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('offers the local editor in a new tab', () => {
+    render(<WelcomeLocalSetup onBack={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Open my local editor' })).toHaveAttribute('href', 'http://127.0.0.1:5180');
+    expect(screen.getByRole('link', { name: 'Open my local editor' })).toHaveAttribute('target', '_blank');
   });
 });

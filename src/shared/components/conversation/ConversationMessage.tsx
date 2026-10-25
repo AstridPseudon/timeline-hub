@@ -362,7 +362,7 @@ export function ConversationToolGroup({ pairs, defaultOpen = false }: Conversati
         aria-controls={detailsId}
         aria-label={label}
         aria-describedby={`${detailsId}-status`}
-        className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground [@media(pointer:coarse)]:min-h-11 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => setIsOpen(current => !current)}
       >
         <Terminal className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -375,7 +375,7 @@ export function ConversationToolGroup({ pairs, defaultOpen = false }: Conversati
         </span>
       </button>
       <button type="button" aria-label="Download logs for this action group" title="Download action logs"
-        className="mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="mr-1 flex h-7 w-7 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={event=>{event.stopPropagation();downloadActionGroupLogs(pairs);}}>
         <Download className="h-3.5 w-3.5" aria-hidden="true"/>
       </button>
@@ -498,7 +498,7 @@ export function ConversationMessage({ turn, onAttachmentClick }: ConversationMes
         {timestamp && (
           <div
             className={cn(
-              'mt-1.5 text-[10px] uppercase tracking-[0.14em]',
+              'mt-1.5 text-[10px] uppercase tracking-[0.14em] [@media(pointer:coarse)]:text-xs',
               isUser ? 'text-primary-foreground/70' : 'text-muted-foreground',
             )}
           >

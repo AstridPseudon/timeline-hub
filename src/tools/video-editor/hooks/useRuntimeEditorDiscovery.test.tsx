@@ -33,6 +33,23 @@ beforeAll(() => {
   if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = vi.fn();
 });
 describe("native Runtime discovery", () => {
+  it("refreshes a terminal rename while the timeline picker stays closed", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(AstridRuntimeClient.prototype, "listProjects").mockResolvedValue([project("a")]);
+    const read = vi.spyOn(AstridRuntimeClient.prototype, "listTimelines")
+      .mockResolvedValue([{ project_id: "a", timeline_id: "a-main", name: "Before" }]);
+    const hook = renderHook(() => useRuntimeEditorDiscovery({
+      enabled: true, projectId: "a", open: false,
+    }), { wrapper: wrapper() });
+    try {
+      await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+      expect(hook.result.current.timelinesQuery.data?.[0].name).toBe("Before");
+      read.mockResolvedValue([{ project_id: "a", timeline_id: "a-main", name: "After" }]);
+      await act(async () => { await vi.advanceTimersByTimeAsync(6_000); });
+      expect(hook.result.current.timelinesQuery.data?.[0].name).toBe("After");
+    } finally { hook.unmount(); vi.useRealTimers(); }
+  });
   it("discovers canonical projects, then scopes timeline reads to the selected real project", async () => {
     vi.spyOn(AstridRuntimeClient.prototype, "listProjects").mockResolvedValue([
       project("a"),

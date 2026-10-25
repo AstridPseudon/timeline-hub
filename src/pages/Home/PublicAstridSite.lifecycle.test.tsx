@@ -254,7 +254,7 @@ describe('public Site lifecycle and navigation ownership', () => {
     await update(transitions[0]);
     await finish(transitions[0], true);
     expect(document.querySelector('.astrid-public-site')).toHaveAttribute('data-audience', 'app');
-    expect(window.location.search).toBe('?experience=app');
+    expect(window.location.search).toBe('');
   });
 
   it('deduplicates Vision links and invalidates pending commits at disposal', async () => {
@@ -326,21 +326,18 @@ describe('public Site lifecycle and navigation ownership', () => {
     expect(frames.size).toBe(0);
   });
 
-  it('closes Home’s native dialog before moving focus to Vision and cancels replay', async () => {
+  it('moves focus to Vision and cancels the Home sky replay', async () => {
     await mountedHome();
-    fireEvent.click(screen.getByRole('button', { name: 'Get the app' }));
-    const dialog = document.querySelector('dialog')!;
-    expect(dialog.open).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Watch a day go by' }));
     expect(document.querySelector('.astrid-brand-mink-button')).toHaveAttribute('data-pose', 'facing');
     fireEvent.click(screen.getByRole('link', { name: 'Vision & Issues' }));
-    expect(dialog.open).toBe(false);
+    expect(document.querySelector('dialog')).toBeNull();
     expect(document.activeElement).toHaveClass('astrid-vision');
     expect(document.querySelector('.astrid-brand-mink-button')).toHaveAttribute('data-pose', 'profile');
     await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
     expect(frames.size).toBe(0);
     historyAt('/home');
-    expect(dialog.open).toBe(false);
+    expect(document.querySelector('dialog')).toBeNull();
   });
 
   it.each(['ctrlKey', 'metaKey', 'shiftKey', 'altKey'] as const)('preserves %s link handling', async (modifier) => {

@@ -1,11 +1,10 @@
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
-import type { RuntimeConnectionState } from '@/integrations/runtime/connection.ts';
 
 /**
  * A gate value in `state`, as `RuntimeConnectionProvider` would publish it, for the panel and pill tests. `connect`
  * is a no-op unless a test passes its own (a spy, when it asserts the click).
  */
-export function connectionFor(state: RuntimeConnectionState, overrides: Partial<RuntimeConnectionValue> = {}): RuntimeConnectionValue {
+export function connectionFor(state: RuntimeConnectionValue['state'], overrides: Partial<RuntimeConnectionValue> = {}): RuntimeConnectionValue {
   return {
     gated: true,
     state,
@@ -18,6 +17,8 @@ export function connectionFor(state: RuntimeConnectionState, overrides: Partial<
     localServiceOutOfDate: false,
     setLocalServiceOutOfDate: () => {},
     connect: () => {},
+    askUnanswered: false,
+    confirmPermission: async () => true,
     ...overrides,
   };
 }

@@ -28,7 +28,7 @@ const SAFE_SEGMENT = /^[A-Za-z0-9._~:-]+$/;
 const ID_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._~:-]{0,255}$/;
 const CONNECTION_SEGMENT = /^[A-Za-z0-9_-]{1,128}$/;
 
-const RESERVED_ACP = new Set(['health', 'connect', 'projects', 'models', 'model', 'agents']);
+const RESERVED_ACP = new Set(['health', 'connect', 'projects', 'models', 'model', 'agents', 'astrid']);
 const MAX_PATH_LENGTH = 4096;
 
 interface RouteEntry {
@@ -59,6 +59,7 @@ const workspaceRoutes: readonly RouteEntry[] = [
   entry('GET', '/v1/realm'),
   entry('GET,PUT', '/v1/app-state/user/:'),
   entry('GET,POST', '/v1/projects'),
+  entry('PUT', '/v1/projects/selection'),
   entry('GET,PATCH', '/v1/projects/:'),
   entry('GET', '/v1/projects/:/timelines'),
   entry('GET,PATCH', '/v1/projects/:/timelines/:'),
@@ -101,6 +102,7 @@ const acpRoutes: readonly RouteEntry[] = [
   entry('GET', '/acp/models'),
   entry('GET', '/acp/agents'),
   entry('POST', '/acp/connect'),
+  entry('POST', '/acp/astrid/api-key'),
   entry('GET', '/acp/:conn/models'),
   entry('POST', '/acp/:conn/rpc'),
   entry('POST', '/acp/:conn/cancel'),
@@ -117,12 +119,14 @@ const acpRoutes: readonly RouteEntry[] = [
 ];
 
 function findRoute(table: readonly RouteEntry[], method: string, segments: readonly string[]): RouteEntry | undefined {
-  return table.find((candidate) => candidate.methods.has(method)
-    && candidate.segments.length === segments.length
+  const matches = table.filter((candidate) => candidate.segments.length === segments.length
     && candidate.segments.every((expected, index) => (
       expected === ':' ? ID_SEGMENT.test(segments[index])
         : expected === ':conn' ? CONNECTION_SEGMENT.test(segments[index]) && !RESERVED_ACP.has(segments[index])
           : expected === segments[index])));
+  // A literal route (e.g. /v1/projects/selection) owns its path; an ID pattern never reaches it with another method.
+  const literal = matches.filter((candidate) => !candidate.segments.some((segment) => segment.startsWith(':')));
+  return (literal.length > 0 ? literal : matches).find((candidate) => candidate.methods.has(method));
 }
 
 interface CanonicalPath {

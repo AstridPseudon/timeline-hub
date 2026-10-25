@@ -11,17 +11,18 @@
  *   Chrome ask. Re-checking stays off until the browser reports `granted` (the permission's `onchange`).
  * - `denied`: `blocked`, nothing sent.
  *
- * Two unanswered readings with permission granted show one install/start action. A probe that reaches its own
- * timeout is slow, not a failed reading. Background probes leave the current panel in place while they run.
+ * Two unanswered readings with permission granted show install/start help, or, when a `no-cors` follow-up shows
+ * something did answer, the `refused` card (Astrid is running but won't serve this page). Slow probes count as unanswered
+ * readings, with one follow-up bounded to 60 seconds. Background probes leave the current panel in place.
  * Phones and unsupported browsers never query permission or probe. Once connected the
  * state is sticky: a Runtime that stops later shows a recovery card, keeping the editor and its unsaved work mounted.
  *
  * The first connection also marks this browser as one that chose the app (`rememberAppEntryPreference`), so the next
- * visit to the bare domain skips the landing page. The gate only exists on the hosted build, so a same-origin build
- * never sets it.
+ * visit to the bare domain skips the landing page. The default app gate is hosted-only; welcome can also opt into a
+ * same-origin reachability gate.
  *
- * Same-origin builds (no `VITE_RUNTIME_ORIGIN`: local dev, Plan B's relay) are not gated. `gated` is false, nothing
- * is probed, and the gate renders its children at once.
+ * Same-origin builds (no `VITE_RUNTIME_ORIGIN`: local dev, Plan B's relay) are not gated by default. The welcome
+ * handoff opts into a reachability gate through the same-origin server proxy, without querying local-network permission.
  *
  * The panel and pill are render props with a placeholder default each, so the real ones are plugged in here and
  * `Layout.tsx` is not edited again.
@@ -33,6 +34,7 @@ import { rememberAppEntryPreference } from '@/app/entryClassification';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 import {
   queryLocalNetworkPermission,
+  requiresLocalNetworkPermission as needsLocalNetworkPermission,
   watchLocalNetworkPermission,
   type LocalNetworkPermissionState,
   type PermissionsLike,
@@ -49,6 +51,7 @@ import { getSettingsStore } from '@/shared/settings/instance';
 
 export const POLL_INTERVAL_MS = 3000;
 export const PROBE_TIMEOUT_MS = 5000;
+export const SLOW_PROBE_TIMEOUT_MS = 60_000;
 const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
 /** The `error` codes of the Runtime door's refusals (astrid-runtime runtime_protocol/door.py): the only error bodies the page reads as the door's. */
 export type RuntimeRefusalCode = 'runtime_unavailable' | 'runtime_identity_mismatch';
@@ -64,6 +67,8 @@ export type RuntimeProbeOutcome =
   | { kind: 'restart' }
   | { kind: 'update_needed' }
   | { kind: 'down' }
+  /** Something answered the CORS-less follow-up probe, but this page may not read it: Astrid is up and refuses this origin. */
+  | { kind: 'refused' }
   | { kind: 'silent' }
   | { kind: 'slow' };
 
@@ -75,6 +80,16 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
+/** After a CORS failure: `refused` if a `no-cors` request to the same URL still gets an (opaque) answer, else `silent`. */
+async function answeredWithoutCors(url: string, fetchImpl: typeof fetch, signal?: AbortSignal): Promise<'refused' | 'silent' | 'slow'> {
+  try {
+    await fetchImpl(url, { signal, cache: 'no-store', mode: 'no-cors' });
+    return 'refused';
+  } catch {
+    return signal?.aborted && signal.reason?.name === 'TimeoutError' ? 'slow' : 'silent';
+  }
+}
+
 /**
  * Asks the Runtime who it is, the way the gateway does: health, then realm. Never throws. Only documented
  * refusals at their refusal statuses count; unrelated servers and malformed responses are `silent`. A timeout
@@ -83,14 +98,21 @@ async function readJson(response: Response): Promise<unknown> {
 export async function probeRuntime(
   signal?: AbortSignal,
   fetchImpl: typeof fetch = (input, init) => fetch(input, init),
+  /** Asked when the CORS read fails: false (the default) sends nothing more. Only true while permission is granted or not required. */
+  mayProbeRefusal: () => boolean = () => false,
 ): Promise<RuntimeProbeOutcome> {
   const base = runtimeApiBase();
-  const get = async (path: string): Promise<RuntimeProbeOutcome | { body: unknown }> => {
+  const get = async (path: string, detectRefusal = false): Promise<RuntimeProbeOutcome | { body: unknown }> => {
     let response: Response;
     try {
       response = await fetchImpl(`${base}${path}`, { signal, cache: 'no-store' });
     } catch {
-      return { kind: signal?.aborted && signal.reason?.name === 'TimeoutError' ? 'slow' : 'silent' };
+      if (signal?.aborted) return { kind: signal.reason?.name === 'TimeoutError' ? 'slow' : 'silent' };
+      // A refusal (the door's 403 for an origin it does not serve) carries no CORS headers, so it fails here exactly like
+      // a closed port. A `no-cors` request to the same URL settles it: it resolves (opaque) if anything answered, and
+      // fails only when nothing is listening. Only sent while permission is granted (or not required): a request held behind
+      // or denied by Chrome's local-network prompt says nothing about what is listening.
+      return { kind: detectRefusal && mayProbeRefusal() ? await answeredWithoutCors(`${base}${path}`, fetchImpl, signal) : 'silent' };
     }
     const body = await readJson(response);
     if (signal?.aborted && signal.reason?.name === 'TimeoutError') return { kind: 'slow' };
@@ -104,7 +126,7 @@ export async function probeRuntime(
     return { body };
   };
 
-  const health = await get('/v1/health');
+  const health = await get('/v1/health', true);
   if ('kind' in health) return health;
   if (typeof health.body !== 'object' || health.body === null || typeof (health.body as { status?: unknown }).status !== 'string') {
     return { kind: 'silent' };
@@ -137,9 +159,9 @@ function writeConnectedBefore(): void {
 }
 
 export interface RuntimeConnectionValue {
-  /** True on the hosted build (a Runtime origin is configured). False means same-origin: nothing is probed. */
+  /** True when the app waits for a confirmed Runtime connection before mounting its children. */
   gated: boolean;
-  state: RuntimeConnectionState;
+  state: RuntimeConnectionState | { status: 'restart' } | { status: 'browser_update_needed' };
   isConnected: boolean;
   /** This browser has reached Astrid before, so missing-work guidance can distinguish a return visit from first setup. */
   connectedBefore: boolean;
@@ -158,8 +180,18 @@ export interface RuntimeConnectionValue {
    */
   localServiceOutOfDate: boolean;
   setLocalServiceOutOfDate: (outOfDate: boolean) => void;
-  /** Probes now without a timeout, so Chrome's permission prompt can stay open. No-op when connected, denied or checking. */
+  /** Probes now, leaving Chrome's permission prompt untimed. No-op when connected or denied. */
   connect: () => void;
+  /**
+   * An explicit Connect finished and the permission is still not granted: Chrome was dismissed, or did not ask. The
+   * permission card then offers the site-settings steps as well, and keeps Connect.
+   */
+  askUnanswered: boolean;
+  /**
+   * Re-reads Chrome's permission now (it does not always fire `onchange` on a reset) and resolves whether the page may
+   * speak about the Runtime: true when it is granted or not required. Anything that is about to blame the Runtime asks first.
+   */
+  confirmPermission: () => Promise<boolean>;
 }
 
 const RuntimeConnectionContext = createContext<RuntimeConnectionValue | undefined>(undefined);
@@ -168,6 +200,8 @@ export interface RuntimeConnectionProviderProps {
   children: React.ReactNode;
   /** Override for tests; defaults to "a Runtime origin is configured". */
   gated?: boolean;
+  /** Whether a gated connection waits for the browser's local-network permission; inferred from page/runtime origins. */
+  requireLocalNetworkPermission?: boolean;
   /** Override for tests; defaults to `navigator.permissions`. */
   permissions?: PermissionsLike;
   /** Override for tests; defaults to `fetch`. */
@@ -180,30 +214,41 @@ export interface RuntimeConnectionProviderProps {
 export function RuntimeConnectionProvider({
   children,
   gated = runtimeOrigin() !== '',
+  requireLocalNetworkPermission = gated && needsLocalNetworkPermission(
+    runtimeOrigin(),
+    typeof window === 'undefined' ? '' : window.location.origin,
+  ),
   permissions,
   fetchImpl,
   pollIntervalMs = POLL_INTERVAL_MS,
   onConnected,
 }: RuntimeConnectionProviderProps) {
-  const [permission, setPermission] = useState<LocalNetworkPermissionState | null>(null);
+  const [permission, setPermissionState] = useState<LocalNetworkPermissionState | null>(
+    () => gated && requireLocalNetworkPermission ? null : 'granted',
+  );
   const [outcome, setOutcome] = useState<RuntimeProbeOutcome | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [localServiceOutOfDate, setLocalServiceOutOfDate] = useState(false);
   const [failedReadings, setFailedReadings] = useState(0);
+  const [askUnanswered, setAskUnanswered] = useState(false);
   const [scenario] = useState(detectInstallScenario);
-  const canConnect = scenario === 'chromium';
+  const canConnect = scenario !== 'mobile' && (!requireLocalNetworkPermission || scenario === 'chromium');
   const [connectedBeforeAtMount] = useState(() => !gated || readConnectedBefore());
 
   const mounted = useRef(true);
   const inFlight = useRef<AbortController | null>(null);
   /** The untimed probe `connect()` started while the permission was not yet granted: the one a grant must replace. */
   const promptProbe = useRef<AbortController | null>(null);
-  /** A timed probe's untimed slow follow-up: an explicit Connect takes priority over it. */
+  /** A timed probe's longer slow follow-up: an explicit Connect takes priority over it. */
   const slowProbe = useRef<AbortController | null>(null);
   /** Sticky once a probe connects (set in `runProbe`, before the render): no probe starts after it. */
   const connectedRef = useRef(false);
   const permissionRef = useRef(permission);
-  permissionRef.current = permission;
+  const setPermission = useCallback((next: LocalNetworkPermissionState) => {
+    // Browser events can beat the next render and the cleanup of its granted-permission callbacks.
+    permissionRef.current = next;
+    setPermissionState(next);
+  }, []);
   const onConnectedRef = useRef(onConnected);
   onConnectedRef.current = onConnected;
 
@@ -218,7 +263,10 @@ export function RuntimeConnectionProvider({
 
   // The permission, and every change the browser reports to it.
   useEffect(() => {
-    if (!gated || !canConnect) return undefined;
+    if (!gated || !requireLocalNetworkPermission || !canConnect) {
+      if (gated && !requireLocalNetworkPermission) setPermission('granted');
+      return undefined;
+    }
     let cancelled = false;
     let unwatch: () => void = () => {};
     void (async () => {
@@ -237,9 +285,36 @@ export function RuntimeConnectionProvider({
       cancelled = true;
       unwatch();
     };
-  }, [gated, canConnect, permissions]);
+  }, [gated, requireLocalNetworkPermission, canConnect, permissions, setPermission]);
+
+  // Site settings do not always dispatch a permission change (a reset, cleared site data, another tab), so the browser is
+  // asked again whenever the tab resumes, for as long as the gate is active: before and after a connection.
+  useEffect(() => {
+    if (!gated || !requireLocalNetworkPermission || !canConnect) return undefined;
+    let cancelled = false;
+    const check = async () => {
+      const current = await queryLocalNetworkPermission(permissions);
+      if (!cancelled) setPermission(current);
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible') void check(); };
+    window.addEventListener('focus', check);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', check);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [gated, requireLocalNetworkPermission, canConnect, permissions, setPermission]);
+
+  const confirmPermission = useCallback(async () => {
+    if (!gated || !requireLocalNetworkPermission) return true;
+    const current = await queryLocalNetworkPermission(permissions);
+    if (mounted.current) setPermission(current);
+    return current === 'granted';
+  }, [gated, requireLocalNetworkPermission, permissions, setPermission]);
 
   const runProbe = useCallback(async function runProbe(untimed: boolean, explicit = false) {
+    if (!explicit && permissionRef.current !== 'granted') return;
     if (explicit && inFlight.current && inFlight.current === slowProbe.current) {
       inFlight.current.abort();
       inFlight.current = null;
@@ -248,13 +323,15 @@ export function RuntimeConnectionProvider({
     if (inFlight.current || connectedRef.current) return;
     const controller = new AbortController();
     inFlight.current = controller;
+    if (explicit) setAskUnanswered(false);
     if (untimed && permissionRef.current !== 'granted') promptProbe.current = controller;
     if (untimed && !explicit && permissionRef.current === 'granted') slowProbe.current = controller;
     setIsChecking(untimed);
-    const timer = untimed ? undefined : setTimeout(() => controller.abort(new DOMException('Runtime probe timed out', 'TimeoutError')), PROBE_TIMEOUT_MS);
+    const timeoutMs = untimed ? permissionRef.current === 'granted' ? SLOW_PROBE_TIMEOUT_MS : undefined : PROBE_TIMEOUT_MS;
+    const timer = timeoutMs === undefined ? undefined : setTimeout(() => controller.abort(new DOMException('Runtime probe timed out', 'TimeoutError')), timeoutMs);
     let result: RuntimeProbeOutcome;
     try {
-      result = await probeRuntime(controller.signal, fetchImpl);
+      result = await probeRuntime(controller.signal, fetchImpl, () => permissionRef.current === 'granted');
     } finally {
       clearTimeout(timer);
     }
@@ -270,28 +347,41 @@ export function RuntimeConnectionProvider({
     // interval tick or focus event that lands before that render would otherwise start a second probe.
     if (result.kind === 'connected') {
       connectedRef.current = true;
+      // An answer this page could read is proof of the grant, whatever the browser's event has said so far.
+      if (requireLocalNetworkPermission && permissionRef.current !== 'granted') setPermission('granted');
     }
     if (result.kind === 'slow' && !untimed && permissionRef.current === 'granted') void runProbe(true);
     // A failed request held behind a browser question is not evidence that Astrid is absent.
-    if (permissionRef.current === 'granted' && result.kind !== 'slow') {
+    if (permissionRef.current === 'granted') {
       setFailedReadings((previous) => result.kind === 'connected' ? 0 : previous + 1);
     }
     setOutcome(result);
-    if (result.kind !== 'connected' && permissionRef.current !== 'granted') {
+    if (requireLocalNetworkPermission && result.kind !== 'connected' && permissionRef.current !== 'granted') {
       // A denied fetch looks like nothing listening, so the permission is the only way to tell them apart.
       const current = await queryLocalNetworkPermission(permissions);
       if (mounted.current) setPermission(current);
+      // The person pressed Connect and nothing changed: Chrome was dismissed or never asked. Say so, and keep Connect.
+      if (mounted.current && explicit && current === 'prompt') setAskUnanswered(true);
     }
-  }, [fetchImpl, permissions]);
+  }, [fetchImpl, permissions, requireLocalNetworkPermission, setPermission]);
 
-  const isConnected = outcome?.kind === 'connected';
+  // The permission comes first, always: once it is lost (denied, or reset to the prompt) nothing about the Runtime is known,
+  // connected or not, so the connection is not claimed until it is granted again.
+  const permissionLost = requireLocalNetworkPermission && (permission === 'denied' || permission === 'prompt');
+  const isConnected = outcome?.kind === 'connected' && !permissionLost;
 
   // Permission resets invalidate earlier failures: setup help needs probes from the current granted visit.
+  // A connection does not survive losing the permission: it is dropped so that a grant probes afresh.
   useEffect(() => {
-    if (permission === 'granted' || connectedRef.current) return;
+    if (permission === 'granted') {
+      setAskUnanswered(false);
+      return;
+    }
+    if (connectedRef.current && !permissionLost) return;
+    connectedRef.current = false;
     setFailedReadings(0);
     setOutcome(null);
-  }, [permission]);
+  }, [permission, permissionLost]);
 
   // Saved settings are read from the Runtime only once it has answered (never before the permission prompt).
   const settingsMayConnect = !gated || isConnected;
@@ -347,35 +437,42 @@ export function RuntimeConnectionProvider({
         localServiceOutOfDate,
         setLocalServiceOutOfDate,
         connect,
+        askUnanswered: false,
+        confirmPermission,
       };
     }
     const base = {
       gated: true,
       isChecking,
       connect,
+      askUnanswered,
+      confirmPermission,
       connectedBefore: connectedBeforeAtMount,
       localServiceOutOfDate,
       setLocalServiceOutOfDate,
     } as const;
-    if (outcome?.kind === 'connected') {
+    if (outcome?.kind === 'connected' && !permissionLost) {
       return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, realmName: outcome.realm.display_name, schemaDigest: outcome.schemaDigest };
     }
     const notConnected = { ...base, isConnected: false, realmName: null, schemaDigest: null };
     if (scenario === 'mobile') return { ...notConnected, state: { status: 'phone' }, isBooting: false };
-    if (scenario === 'unsupported' || permission === 'unsupported') return { ...notConnected, state: { status: 'unsupported' }, isBooting: false };
+    if (requireLocalNetworkPermission && scenario === 'unsupported') return { ...notConnected, state: { status: 'unsupported' }, isBooting: false };
+    if (requireLocalNetworkPermission && permission === 'unsupported') return { ...notConnected, state: { status: 'browser_update_needed' }, isBooting: false };
     if (permission === null) return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
     if (permission === 'denied') return { ...notConnected, state: { status: 'blocked' }, isBooting: false };
     if (permission === 'prompt') return { ...notConnected, state: { status: 'needs_permission' }, isBooting: false };
+    if (outcome?.kind === 'restart') return { ...notConnected, state: { status: 'restart' }, isBooting: false };
     if (outcome?.kind === 'update_needed') return { ...notConnected, state: { status: 'update_needed' }, isBooting: false };
     if (failedReadings >= 2) {
       return {
         ...notConnected,
-        state: { status: 'not_running' },
+        // The latest reading decides: an answer this page cannot read is a refusal, nothing at all is not running.
+        state: { status: outcome?.kind === 'refused' ? 'refused' : 'not_running' },
         isBooting: false,
       };
     }
     return { ...notConnected, state: { status: 'connecting' }, isBooting: outcome === null };
-  }, [gated, outcome, permission, isChecking, connectedBeforeAtMount, connect, failedReadings, scenario, localServiceOutOfDate]);
+  }, [gated, requireLocalNetworkPermission, outcome, permission, isChecking, connectedBeforeAtMount, connect, failedReadings, scenario, localServiceOutOfDate, permissionLost, askUnanswered, confirmPermission]);
 
   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;
 }
@@ -436,6 +533,7 @@ export function RuntimeConnectionGate({
   // The last connection the panel was drawn with. While it is set and Astrid is connected, the panel is on its way
   // out over the app; `left` clears it.
   const shownRef = useRef<RuntimeConnectionValue | null>(null);
+  const everConnectedRef = useRef(false);
   const [, panelLeft] = useReducer((count: number) => count + 1, 0);
   const exit = useMemo<RuntimeConnectionPanelExit>(() => ({
     left: () => {
@@ -450,22 +548,22 @@ export function RuntimeConnectionGate({
     const installerEntry = consumeAutoConnectQuery();
     return connectOnEntry || installerEntry || autoConnectRequested();
   });
+  const autoConnectRef = useRef(autoConnect);
   const { gated, state, isBooting, isConnected, connect } = connection;
   const needsPermission = state.status === 'needs_permission';
   useEffect(() => {
-    if (!gated || !autoConnect) return;
-    if (needsPermission) {
-      // The flag is one-shot: after it is used, a later `prompt` (a permission reset) shows the explainer again.
-      takeAutoConnectRequest();
-      connect();
-      setAutoConnect(false);
-    } else if (isConnected || !isBooting) {
-      // The permission was not `prompt` (granted or denied), so the flag has nothing to do and must not linger.
-      takeAutoConnectRequest();
-      setAutoConnect(false);
-    }
+    if (!gated || !autoConnectRef.current) return;
+    if (!needsPermission && !isConnected && isBooting) return;
+    // Consume before probing: a permission reset can commit before setAutoConnect(false) renders.
+    autoConnectRef.current = false;
+    takeAutoConnectRequest();
+    setAutoConnect(false);
+    if (needsPermission) connect();
   }, [gated, autoConnect, needsPermission, isBooting, isConnected, connect]);
   if (!gated) return <>{children}</>;
+  // Once Astrid has answered in this page load the app stays mounted for good: a later loss of the permission covers
+  // it with the panel (inert) rather than unmounting it, so unsaved work, undo history and the unload guard survive.
+  if (isConnected) everConnectedRef.current = true;
   let overlay: React.ReactNode = null;
   if (!isConnected) {
     // While the flag is waiting for its effect, the panel shows Chrome's prompt screen, not the explainer.
@@ -478,7 +576,7 @@ export function RuntimeConnectionGate({
   // Keyed, so the panel stays the same element while the app mounts beneath it; the app is inert until it has left.
   return (
     <>
-      {isConnected ? (
+      {isConnected || everConnectedRef.current ? (
         <div key="app" className="contents" {...(overlay ? { inert: '' } : {})}>
           <RuntimeGateOpenProvider open={!overlay}>
             {pill(connection)}

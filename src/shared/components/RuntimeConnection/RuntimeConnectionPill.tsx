@@ -3,8 +3,9 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { CopyInstallCommand } from './CopyInstallCommand.tsx';
+import { CopyRefusedInstructions } from './CopyRefusedInstructions.tsx';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers.ts';
-import { RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from './copy.ts';
+import { RUNTIME_CONNECTION_COPY as COPY, withCommandShell, withOrigin } from './copy.ts';
 import { useRuntimeRestartWatch } from './useRuntimeRestartWatch.ts';
 
 export interface RuntimeConnectionPillProps {
@@ -42,7 +43,7 @@ export function RuntimeConnectionPill({
   restartCheckIntervalMs,
   fetchImpl,
 }: RuntimeConnectionPillProps) {
-  const restart = useRuntimeRestartWatch(connection.isConnected, { intervalMs: restartCheckIntervalMs, fetchImpl });
+  const restart = useRuntimeRestartWatch(connection.isConnected, { intervalMs: restartCheckIntervalMs, fetchImpl, confirmPermission: connection.confirmPermission });
   const cardShowing = connection.isConnected && restart !== 'ok';
 
   // The editor's own technical messages about the same failure stay quiet while the card is the one thing to read.
@@ -75,6 +76,15 @@ export function RuntimeConnectionPill({
       <div data-testid="runtime-connection-status" data-state="stopped" role="alert" className={CARD_CLASS} style={CARD_STYLE}>
         <CardText title={COPY.stopped.title} sentence={withCommandShell(COPY.stopped.sentence)} />
         <CopyInstallCommand mode="install" />
+      </div>
+    );
+  }
+
+  if (restart === 'refused') {
+    return (
+      <div data-testid="runtime-connection-status" data-state="refused" role="alert" className={CARD_CLASS} style={CARD_STYLE}>
+        <CardText title={COPY.refused.title} sentence={withOrigin(COPY.refused.sentence, window.location.origin)} />
+        <CopyRefusedInstructions />
       </div>
     );
   }

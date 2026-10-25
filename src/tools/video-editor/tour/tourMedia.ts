@@ -4,6 +4,10 @@ import manifest from './asset-manifest.json';
 export const EDITOR_TOUR_ASSET_BASE_URL = `${import.meta.env.BASE_URL}astrid/onboarding/lantern-valley-14s-v1/`;
 export const EDITOR_TOUR_ASSET_MANIFEST = manifest;
 
+export function tourSaveData(): boolean {
+  return (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+}
+
 export interface EditorTourMediaSlot {
   url: string;
   width: number;

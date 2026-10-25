@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './ToolbarPointer.css';
 
-/** The install arrow climbs towards the toolbar; the permission arrow reaches the viewport's top-left corner. */
+/** Both arrows are a short gesture up and out of the card: they point the way to the toolbar's end, not all the way there. */
 const POINTER_RISE = 150;
 const POINTER_REACH = 96;
 /** Never closer than this to the viewport's edge, so the head and the label stay on screen. */
@@ -19,12 +19,24 @@ function pointerGeometry(card: DOMRect, corner: ToolbarPointerCorner): PointerGe
   const side = corner === 'top-right' ? 1 : -1;
   const sx = corner === 'top-right' ? card.right - 64 : card.left + 64;
   const sy = card.top - 10;
-  const ex = side === 1 ? Math.min(width - EDGE_MARGIN, sx + POINTER_REACH) : EDGE_MARGIN;
-  const ey = corner === 'top-left' ? EDGE_MARGIN : Math.max(EDGE_MARGIN, sy - POINTER_RISE);
+  let ex = Math.min(width - EDGE_MARGIN, sx + POINTER_REACH);
+  let ey = Math.max(EDGE_MARGIN, sy - POINTER_RISE);
+  let c2x = ex - (ex - sx) * 0.4;
+  let c2y = ey + (sy - ey) * 0.28;
+  if (corner === 'top-left') {
+    // The head aims along the line from the start to the window's top-left corner, where the prompt is. The arrow ends in
+    // the direction halfway between straight up and that aim, as far out as the install arrow, so it bends once, evenly.
+    const toCorner = Math.hypot(sx - EDGE_MARGIN, sy - EDGE_MARGIN) || 1;
+    const [ux, uy] = [(EDGE_MARGIN - sx) / toCorner, (EDGE_MARGIN - sy) / toCorner];
+    const reach = Math.hypot(POINTER_REACH, POINTER_RISE) / (Math.hypot(ux, uy - 1) || 1);
+    ex = Math.max(EDGE_MARGIN, sx + ux * reach);
+    ey = Math.max(EDGE_MARGIN, sy + (uy - 1) * reach);
+    const bend = Math.hypot(ex - sx, ey - sy) * 0.35;
+    c2x = ex - ux * bend;
+    c2y = ey - uy * bend;
+  }
   const c1x = sx;
   const c1y = sy - (sy - ey) * 0.55;
-  const c2x = ex - (ex - sx) * 0.4;
-  const c2y = ey + (sy - ey) * 0.28;
   const length = Math.hypot(ex - c2x, ey - c2y) || 1;
   const [dx, dy] = [(ex - c2x) / length, (ey - c2y) / length];
   const barb = (angle: number) => {

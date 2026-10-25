@@ -262,7 +262,7 @@ describe('timeline agent ACP chat', () => {
 
   it('lists saved Astrid chats without connecting to an unavailable selected default', async () => {
     const connects: Array<string | undefined> = [];
-    const chat = { project_id: 'p', revision: 1, selected_session_id: 'astrid-saved', main_session_id: 'astrid-saved', sessions: [{ id: 'astrid-saved' }], draft: { revision: 1 } };
+    const chat = { project_id: 'p', revision: 1, selected_session_id: 'astrid-saved', main_session_id: 'astrid-saved', sessions: [{ id: 'astrid-saved' }, { id: 'new-agent:saved' }], draft: { revision: 1 } };
     const acp = {
       projectChat: vi.fn(async () => chat),
       connect: vi.fn(async (agent?: string) => {
@@ -302,8 +302,8 @@ describe('timeline agent ACP chat', () => {
       connect: vi.fn(async (agent: string) => ({ connection_id: `connection-${agent}` })),
       loadSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: true, activeRequestId: 'astrid-turn' } })),
       events: vi.fn(async () => ({ notifications: [], disconnected: false })),
-      unassignedProjectSessions: vi.fn(async () => [{ id: 'codex:external', title: 'Codex external' }]),
-      listSessions: vi.fn(async () => ({ sessions: [{ id: 'codex:external' }] })),
+      unassignedProjectSessions: vi.fn(async () => [{ id: 'codex:external', title: 'Codex external' }, { id: 'new-agent:external' }]),
+      listSessions: vi.fn(async () => ({ sessions: [{ id: 'codex:external' }, { id: 'new-agent:external' }] })),
       disconnect: vi.fn(),
     };
     const store = new AstridAgentSessionStore({ acp } as never);

@@ -50,12 +50,13 @@ export function AgentChatComposer({
           readOnly={readOnly}
           rows={rows}
           placeholder={placeholder}
-          className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
+          className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 [@media(pointer:coarse)]:min-h-[3.25rem] [@media(pointer:coarse)]:pr-14 text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
           disabled={inputDisabled}
           onKeyDown={onKeyDown}
         />
 
-        <div className="absolute inset-y-4 right-2 z-10 flex w-8 flex-col gap-2">
+        {/* A finger gets a 44 px Send, resting in the corner by the thumb. */}
+        <div className="absolute inset-y-4 right-2 z-10 flex w-8 flex-col gap-2 [@media(pointer:coarse)]:inset-y-1 [@media(pointer:coarse)]:right-1 [@media(pointer:coarse)]:w-11">
           {CHAT_VOICE_ENABLED && voice && (
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             <Button
@@ -86,12 +87,12 @@ export function AgentChatComposer({
           </div>
           )}
 
-          <div className="flex min-h-0 flex-1 items-center justify-center">
+          <div className="flex min-h-0 flex-1 items-center justify-center [@media(pointer:coarse)]:items-end">
             <Button
               type="button"
               size="icon"
               variant="default"
-              className="h-full w-full rounded-xl"
+              className="h-full w-full rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:rounded-[10px]"
               onClick={onSend}
               disabled={sendDisabled}
               title="Send"

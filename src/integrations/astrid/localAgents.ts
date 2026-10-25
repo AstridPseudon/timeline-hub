@@ -32,20 +32,66 @@ const localAgentModelSchema = z.object({
   description: z.string().nullable().optional(),
   thoughtLevel: thoughtLevelSchema.optional(),
 });
+export type LocalAgentModel = z.infer<typeof localAgentModelSchema>;
 
-export const localAgentCatalogSchema = z.object({
-  agents: z.array(z.strictObject({
-    id: localAgentIdSchema,
-    name: z.string(),
-    state: z.enum(['ready', 'sign-in', 'not-installed']),
-    line: z.string().nullable(),
-    signInLine: z.string().optional(),
-    models: z.array(localAgentModelSchema),
-    defaultModel: z.string().nullable(),
-  })),
-  defaultAgent: localAgentIdSchema,
+export const localAgentSignInSchema = z.enum(['signed-in', 'signed-out', 'unknown']);
+export type LocalAgentSignIn = z.infer<typeof localAgentSignInSchema>;
+
+export const localAgentStepSchema = z.object({
+  kind: z.enum(['install', 'sign-in']),
+  command: z.string(),
+  label: z.string(),
 });
-export type LocalAgentChoice = z.infer<typeof localAgentCatalogSchema>['agents'][number];
+export type LocalAgentStep = z.infer<typeof localAgentStepSchema>;
+
+export const localAgentTerminalSchema = z.object({
+  command: z.string().min(1),
+  skillSynced: z.boolean(),
+  detail: z.string().optional(),
+});
+export type LocalAgentTerminal = z.infer<typeof localAgentTerminalSchema>;
+
+const localAgentChoiceSchema = z.object({
+  id: localAgentIdSchema,
+  name: z.string(),
+  state: z.enum(['ready', 'sign-in', 'not-installed']),
+  line: z.string().nullable(),
+  signInLine: z.string().optional(),
+  models: z.array(localAgentModelSchema),
+  defaultModel: z.string().nullable(),
+  signIn: localAgentSignInSchema.optional(),
+  steps: z.array(localAgentStepSchema).optional(),
+  creditLine: z.string().optional(),
+  creditUrl: z.string().optional(),
+  /** What the terminal nudge shows: the command that talks to this agent, and whether Astrid's skill reached it. */
+  terminal: localAgentTerminalSchema.optional(),
+});
+export type LocalAgentChoice = z.infer<typeof localAgentChoiceSchema>;
+
+const localAgentCatalogResponseSchema = z.object({ agents: z.array(z.unknown()), defaultAgent: z.string() });
+const reportedUnknownAgentIds = new Set<string>();
+
+function knownLocalAgentId(id: string): id is LocalAgentId {
+  return (LOCAL_AGENT_IDS as readonly string[]).includes(id);
+}
+
+function reportUnknownAgentId(id: string): void {
+  if (reportedUnknownAgentIds.has(id)) return;
+  reportedUnknownAgentIds.add(id);
+  console.debug(`[LocalAgents] Ignoring unknown agent "${id}" from the chat service.`);
+}
+
+export const localAgentCatalogSchema = localAgentCatalogResponseSchema.transform(({ agents, defaultAgent }) => ({
+  agents: agents.flatMap((row) => {
+    const id = typeof row === 'object' && row !== null && 'id' in row && typeof row.id === 'string' ? row.id : null;
+    if (id !== null && !knownLocalAgentId(id)) {
+      reportUnknownAgentId(id);
+      return [];
+    }
+    return [localAgentChoiceSchema.parse(row)];
+  }),
+  defaultAgent: knownLocalAgentId(defaultAgent) ? defaultAgent : (reportUnknownAgentId(defaultAgent), 'astrid' as const),
+}));
 
 export const localAgentModelsSchema = z.object({
   availableModels: z.array(localAgentModelSchema),
@@ -57,9 +103,16 @@ export const localAgentModelsSchema = z.object({
 export type LocalAgentModels = z.infer<typeof localAgentModelsSchema>;
 
 /** Astrid's existing opaque IDs remain unchanged; other agents have distinct stores. */
-export function sessionAgentId(sessionId: string): LocalAgentId {
+export function knownSessionAgentId(sessionId: string): LocalAgentId | null {
   for (const id of EXTERNAL_AGENT_IDS) if (isExternalAgentSession(sessionId, id)) return id;
+  if (sessionId.includes(':')) return null;
   return 'astrid';
+}
+
+export function sessionAgentId(sessionId: string): LocalAgentId {
+  const agent = knownSessionAgentId(sessionId);
+  if (!agent) throw new Error('This chat belongs to an agent this version of Astrid does not support.');
+  return agent;
 }
 
 export function isExternalAgentSession(sessionId: string, agent?: typeof EXTERNAL_AGENT_IDS[number]): boolean {

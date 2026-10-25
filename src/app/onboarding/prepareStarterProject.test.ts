@@ -139,7 +139,7 @@ describe('prepareStarterProject', () => {
     const { client, methods } = workspace([project('archived', {
       archived: true, metadata: { [STARTER_PROJECT_INTENT_METADATA]: 'intent-1' },
     })]);
-    await expect(prepareStarterProject({ intentId: 'intent-1', client })).rejects.toThrow('archived');
+    await expect(prepareStarterProject({ intentId: 'intent-1', client })).rejects.toThrow('Your only project is archived. Unarchive it or create a new one in the editor.');
     expect(methods.createProject).not.toHaveBeenCalled();
   });
 });

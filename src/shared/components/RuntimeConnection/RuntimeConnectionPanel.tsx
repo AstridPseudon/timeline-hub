@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Link2 } from 'lucide-react';
+import { Check, ChevronLeft, Link2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner.tsx';
@@ -10,13 +10,16 @@ import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyFallback, CopyInstallCommand, useCopyAction } from './CopyInstallCommand.tsx';
 import { CardDisclosure, EditorCard, EditorCardFoot } from './EditorCard.tsx';
 import { EditorCardLayer } from './EditorCardLayer.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from './copy.ts';
+import { CopyRefusedInstructions } from './CopyRefusedInstructions.tsx';
+import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withOrigin } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
   /** The gate's value: the screen to show (on the way out, the last one shown). */
   readonly connection: RuntimeConnectionValue;
   /** Set once Astrid has connected after this panel asked for something: it shows so, then leaves (see the gate). */
   readonly exit?: RuntimeConnectionPanelExit | null;
+  /** Shown only when the caller is an onboarding flow that can return to its previous step. */
+  readonly onBack?: () => void;
 }
 
 /** How long the mark is alone on the screen before the line under it fades in. */
@@ -87,9 +90,9 @@ const ConnectedContext = createContext(false);
  * stays mounted while the screen changes (set up, Allow, blocked), so only the card changes. On the way out, the card
  * lifts away and the layer fades, revealing the real editor that has mounted beneath it in the same places.
  */
-function GateLayer({ dataState, exit, children }: { dataState: string; exit: RuntimeConnectionPanelExit | null; children: ReactNode }) {
+function GateLayer({ dataState, exit, placement, children }: { dataState: string; exit: RuntimeConnectionPanelExit | null; placement?: 'center'; children: ReactNode }) {
   const leaving = useLeaving(exit, CONNECTED_MIN_MS);
-  return <EditorCardLayer aria-label={COPY.panelLabel} data-testid="runtime-not-connected" data-state={dataState} data-leaving={leaving ? '' : undefined} leaving={leaving} cardKey={dataState}>
+  return <EditorCardLayer aria-label={COPY.panelLabel} data-testid="runtime-not-connected" data-state={dataState} data-leaving={leaving ? '' : undefined} leaving={leaving} cardKey={dataState} placement={placement}>
     <ConnectedContext.Provider value={Boolean(exit)}>{children}</ConnectedContext.Provider>
   </EditorCardLayer>;
 }
@@ -143,16 +146,18 @@ interface CardProps {
   readonly showHelp?: boolean;
   /** The word on a hand-drawn arrow, outside the card, aimed at the top left of the window: the browser's prompt is there. */
   readonly pointer?: string;
+  readonly onBack?: () => void;
 }
 
 /**
  * The one card every not-connected screen shares, in the install dialog's style (same width, radius, header and
  * button): the app icon, a serif heading, one short sentence, at most one primary action, and the status line.
  */
-function Card({ title, sentence, action, children, status, pointer, showHelp = false }: CardProps) {
+function Card({ title, sentence, action, children, status, pointer, showHelp = false, onBack }: CardProps) {
   const connected = useContext(ConnectedContext);
+  if (connected) return <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-lg"><StatusLine text={COPY.connected.sentence} help={false} /></div>;
   return <>
-    <EditorCard title={title} sentence={sentence} foot={(status || connected) ? <StatusLine text={status ?? COPY.waiting} help={showHelp} /> : undefined}>
+    <EditorCard title={title} sentence={sentence} topLeft={onBack ? <BackButton onBack={onBack} /> : undefined} foot={(status || connected) ? <StatusLine text={status ?? COPY.waiting} help={showHelp} /> : undefined}>
       {children}
       {action}
     </EditorCard>
@@ -160,12 +165,17 @@ function Card({ title, sentence, action, children, status, pointer, showHelp = f
   </>;
 }
 
+/** On a touch screen its hit area grows to 44 px (up and out, so the card's layout does not move). */
+function BackButton({ onBack }: { readonly onBack: () => void }) {
+  return <Button type="button" variant="ghost" className="inline-flex h-auto items-center gap-0.5 rounded-md py-1 pl-1 pr-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground [@media(pointer:coarse)]:-mt-2 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:pr-3 [@media(pointer:coarse)]:text-sm" onClick={onBack}><ChevronLeft aria-hidden="true" className="h-4 w-4" />Back</Button>;
+}
+
 /**
  * The mark alone on the page background, as the boot screen shows it; the line fades in only if the wait is not short.
  * When Astrid answers it stays, as the boot screen would, until the editor beneath has settled, then fades into it:
  * nothing was asked of the person, so there is no "Connected" moment.
  */
-function ConnectingPanel({ exit }: { exit: RuntimeConnectionPanelExit | null }) {
+function ConnectingPanel({ exit, onBack }: { exit: RuntimeConnectionPanelExit | null; onBack?: () => void }) {
   const [lineShown, setLineShown] = useState(false);
   const leaving = useLeaving(exit, 0);
   useEffect(() => {
@@ -183,6 +193,7 @@ function ConnectingPanel({ exit }: { exit: RuntimeConnectionPanelExit | null }) 
         leaving && 'pointer-events-none opacity-0',
       )}
     >
+      {onBack && !exit && <div className="absolute left-4 top-4"><BackButton onBack={onBack} /></div>}
       {/* As tall as the line below, so the mark sits at the exact centre of the page: where the boot screen drew it. */}
       <div aria-hidden="true" className="min-h-5" />
       {/* The boot screen's mink, same size and place: the boot layer hands its stride over to this one (bootLayer.ts). */}
@@ -196,36 +207,40 @@ function ConnectingPanel({ exit }: { exit: RuntimeConnectionPanelExit | null }) 
 }
 
 /** A phone: Astrid runs on a computer, so the only useful thing is to send this page there. */
-function PhoneCard() {
+function PhoneCard({ onBack }: { readonly onBack?: () => void }) {
   const { phone } = COPY;
-  const { copied, send } = useSendLinkToComputer(() => window.location.href);
+  const { copied, fallback, send } = useSendLinkToComputer(() => window.location.href);
   return (
     <Card
       title={phone.title}
       sentence={phone.sentence}
-      action={(
-        <Button type="button" className="h-11 w-full justify-between rounded-xl px-4" onClick={() => void send()}>
+      onBack={onBack}
+      action={<div className="space-y-2">
+        {/* Full width under a phone's thumb; on a tablet's wider card it keeps to its content. */}
+        <Button type="button" className="h-11 w-full justify-between gap-6 rounded-xl px-4 sm:mx-auto sm:flex sm:w-auto" onClick={() => void send()}>
           <span>{copied ? phone.copied : phone.button}</span>
           {copied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Link2 aria-hidden="true" className="h-4 w-4" />}
         </Button>
-      )}
+        {fallback && <CopyFallback text={window.location.href} label={phone.button} />}
+      </div>}
     />
   );
 }
 
 /** A desktop browser without local-network access: carry this tab's link to a supported browser. */
-function UnsupportedCard() {
+function UnsupportedCard({ onBack, updateNeeded = false }: { readonly onBack?: () => void; readonly updateNeeded?: boolean }) {
   const { unsupported } = COPY;
+  const message = updateNeeded ? COPY.browserUpdateNeeded : unsupported;
   const link = window.location.href;
   const copy = useCopyAction(link);
-  return <Card title={unsupported.title} sentence={unsupported.sentence} action={<div className="space-y-2">
+  return <Card title={withBrowser(message.title)} sentence={withBrowser(message.sentence)} onBack={onBack} action={<div className="space-y-2">
     <Button type="button" className="h-11 w-full rounded-xl" onClick={() => void copy.copy()}>{copy.status === 'copied' ? unsupported.copied : unsupported.button}</Button>
     {copy.status === 'failed' && <CopyFallback text={link} label={unsupported.button} />}
   </div>} />;
 }
 
 /** The browser's local-network prompt has not been asked: nothing was sent, and Connect is what asks. */
-function PermissionCard({ connection }: { connection: RuntimeConnectionValue }) {
+function PermissionCard({ connection, onBack }: { connection: RuntimeConnectionValue; onBack?: () => void }) {
   const { permission } = COPY;
   if (connection.isChecking) {
     // The browser's prompt is open: nothing to press, only where to look.
@@ -234,6 +249,7 @@ function PermissionCard({ connection }: { connection: RuntimeConnectionValue }) 
         title={withBrowser(permission.pending.title)}
         sentence={withBrowser(permission.pending.sentence)}
         pointer={permission.pending.pointer}
+        onBack={onBack}
       />
     );
   }
@@ -241,8 +257,23 @@ function PermissionCard({ connection }: { connection: RuntimeConnectionValue }) 
     <Card
       title={withBrowser(permission.title)}
       sentence={withBrowser(permission.sentence)}
+      onBack={onBack}
+      // Connect was pressed and Chrome did not answer (dismissed, or it never asked): point at the prompt again and give
+      // the site-settings route, so the button is never the only way on.
+      pointer={connection.askUnanswered ? permission.pending.pointer : undefined}
       action={<div className="space-y-2">
         <Button type="button" className="h-11 w-full rounded-xl" onClick={() => connection.connect()}>{permission.connect}</Button>
+        {connection.askUnanswered && <div role="status" className="space-y-2 pt-1 text-left text-sm leading-6 text-foreground">
+          <p>{withBrowser(permission.unanswered.lead)}</p>
+          <ol className="space-y-2">
+            {COPY.blocked.steps.map((step, index) => (
+              <li key={step} className="flex gap-2.5">
+                <span aria-hidden="true" className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">{index + 1}</span>
+                <span className="text-pretty">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>}
         <CardDisclosure label={permission.allowTitle}>{permission.allowDetails}</CardDisclosure>
         <CardDisclosure label={permission.installTitle}><CopyInstallCommand mode="install" /></CardDisclosure>
       </div>}
@@ -251,11 +282,11 @@ function PermissionCard({ connection }: { connection: RuntimeConnectionValue }) 
 }
 
 /** Permission `denied`: the browser stopped the request, so the fix is in its site settings. */
-function BlockedCard() {
+function BlockedCard({ onBack }: { readonly onBack?: () => void }) {
   const blocked = COPY.blocked;
   return (
     // No agent button: the fix is a browser site setting, which an agent cannot change.
-    <Card title={withBrowser(blocked.title)} sentence={withBrowser(blocked.sentence)} status={blocked.footer}>
+    <Card title={withBrowser(blocked.title)} sentence={withBrowser(blocked.sentence)} status={blocked.footer} onBack={onBack}>
       {/* Numbered as the install dialog numbers its steps. */}
       <ol className="space-y-2 text-left text-sm leading-6 text-foreground">
         {blocked.steps.map((step, index) => (
@@ -270,26 +301,38 @@ function BlockedCard() {
 }
 
 /** Repeated probes went unanswered with permission granted; polling continues during install or repair. */
-function NotRunningCard() {
+function NotRunningCard({ connection, onBack }: { readonly connection: RuntimeConnectionValue; readonly onBack?: () => void }) {
   const { notRunning } = COPY;
-  return <Card title={notRunning.title} sentence={notRunning.sentence} action={<CopyInstallCommand mode="install" />} status={COPY.waiting} showHelp />;
+  return <Card title={notRunning.title} sentence={notRunning.sentence} onBack={onBack} action={<div className="space-y-2"><CopyInstallCommand mode="install" /><Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
 }
 
-function UpdateNeededCard() {
+/** Astrid answered, but not this page: no install help, because Astrid is already running. Polling continues. */
+function RefusedCard({ connection, onBack }: { readonly connection: RuntimeConnectionValue; readonly onBack?: () => void }) {
+  const { refused } = COPY;
+  return <Card title={refused.title} sentence={withOrigin(refused.sentence, window.location.origin)} onBack={onBack} status={COPY.waiting} showHelp action={<div className="space-y-2">
+    <CopyRefusedInstructions />
+    <Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{refused.retry}</Button>
+  </div>} />;
+}
+
+function UpdateNeededCard({ onBack }: { readonly onBack?: () => void }) {
   const { updateNeeded } = COPY;
-  return <Card title={updateNeeded.title} sentence={updateNeeded.sentence} action={<CopyInstallCommand mode="update" />} status={COPY.waiting} showHelp />;
+  return <Card title={updateNeeded.title} sentence={updateNeeded.sentence} onBack={onBack} action={<CopyInstallCommand mode="update" />} status={COPY.waiting} showHelp />;
 }
 
 /** The screen for a connection: its name (the journey and Layout tests read it) and its card. */
-function screenFor(connection: RuntimeConnectionValue): { name: string; card: ReactNode } | null {
+function screenFor(connection: RuntimeConnectionValue, onBack?: () => void): { name: string; card: ReactNode } | null {
   const { state } = connection;
   switch (state.status) {
-    case 'needs_permission': return { name: connection.isChecking ? 'pending' : 'permission', card: <PermissionCard connection={connection} /> };
-    case 'phone': return { name: 'phone', card: <PhoneCard /> };
-    case 'unsupported': return { name: 'unsupported', card: <UnsupportedCard /> };
-    case 'not_running': return { name: 'not_running', card: <NotRunningCard /> };
-    case 'blocked': return { name: 'blocked', card: <BlockedCard /> };
-    case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard /> };
+    case 'needs_permission': return { name: connection.isChecking ? 'pending' : 'permission', card: <PermissionCard connection={connection} onBack={onBack} /> };
+    case 'phone': return { name: 'phone', card: <PhoneCard onBack={onBack} /> };
+    case 'unsupported': return { name: 'unsupported', card: <UnsupportedCard onBack={onBack} /> };
+    case 'browser_update_needed': return { name: 'browser_update_needed', card: <UnsupportedCard updateNeeded onBack={onBack} /> };
+    case 'restart': return { name: 'restart', card: <Card title={COPY.restarted.title} sentence={COPY.restarted.sentence} onBack={onBack} action={<Button type="button" className="w-full" onClick={() => window.location.reload()}>{COPY.restarted.reload}</Button>} /> };
+    case 'not_running': return { name: 'not_running', card: <NotRunningCard connection={connection} onBack={onBack} /> };
+    case 'refused': return { name: 'refused', card: <RefusedCard connection={connection} onBack={onBack} /> };
+    case 'blocked': return { name: 'blocked', card: <BlockedCard onBack={onBack} /> };
+    case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard onBack={onBack} /> };
     default: return null;
   }
 }
@@ -298,11 +341,12 @@ function screenFor(connection: RuntimeConnectionValue): { name: string; card: Re
  * The connection panel for the hosted build, one screen per thing a person can do, over the empty editor.
  * Renders nothing once connected unless it is on its way out (`exit`). Every word comes from `copy.ts`.
  */
-export function RuntimeConnectionPanel({ connection, exit = null }: RuntimeConnectionPanelProps) {
+export function RuntimeConnectionPanel({ connection, exit = null, onBack }: RuntimeConnectionPanelProps) {
   const { state } = connection;
   if (state.status === 'connected') return null;
-  if (state.status === 'connecting') return <ConnectingPanel exit={exit} />;
-  const screen = screenFor(connection);
+  if (state.status === 'connecting') return <ConnectingPanel exit={exit} onBack={onBack} />;
+  const screen = screenFor(connection, onBack);
   if (!screen) return null;
-  return <GateLayer dataState={screen.name} exit={exit}>{screen.card}</GateLayer>;
+  // The permission prompt card points up at the browser's prompt, so on a phone it stays centred, not along the bottom.
+  return <GateLayer dataState={screen.name} exit={exit} placement={screen.name === 'pending' ? 'center' : undefined}>{screen.card}</GateLayer>;
 }

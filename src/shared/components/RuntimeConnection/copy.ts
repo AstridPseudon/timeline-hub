@@ -11,7 +11,7 @@ import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection
  * - Screen headings, body text, command lines and Copy labels live here.
  * - Routine recovery text says Astrid; first-run explanation names Runtime so people understand what they are connecting.
  * - Straight apostrophes only: the journey matches card headings exactly.
- * - Gate states name their screens: connecting, needs_permission (permission/pending), blocked, phone, unsupported, not_running,
+ * - Gate states name their screens: connecting, needs_permission (permission/pending), blocked, phone, unsupported, not_running, refused,
  *   update_needed and connected.
  *   Permission/pending share a state; device and browser capability are decided by the provider. Polling never adds a checking indicator.
  * - The setup, repair and update screens all show the command that matches the state and OS, and nothing about opening a terminal.
@@ -35,6 +35,7 @@ export const ASTRID_COMMANDS = {
   windows: 'irm https://astrid.haus/install.ps1 | iex',
   /** For an agent in Git Bash or another non-PowerShell shell on Windows. */
   windowsAgent: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astrid.haus/install.ps1 | iex"',
+  windowsAgentUpdate: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update"',
   macLinuxUpdate: 'curl -fsSL https://astrid.haus/install | sh -s -- --update',
   windowsUpdate: '& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update',
 } as const;
@@ -103,7 +104,7 @@ export function localSetupInstructions(): string {
     `2. Get the editor's code from ${L.repoUrl}. Install Git and Node.js 20.19 or newer in the Node 20 release line if needed. Clone with \`${L.cloneCommand}\`, then \`${L.changeDirectoryCommand}\` and \`${L.installDependenciesCommand}\`. If a clone already exists, preserve its changes and update it to \`main\` without discarding work; use \`git pull --ff-only origin main\` when it can fast-forward and resolve any divergence before continuing.`,
     `3. In that clone, run \`${L.startCommand}\` in a terminal that stays open. This starts the source editor on port 5180, checks the installed Runtime and selected workspace, and connects through the editor's own server. Keep the existing hosted door for https://astrid.haus; do not change its origin or turn it off. If the launcher reports a problem, diagnose it and repair through the official installer when needed. Do not delete or replace my workspace or credentials.`,
     `4. Open ${L.openUrl} in my browser. The editor opens with my project. This first-open address resumes at connection because I already completed the tour. Verify \`/api/runtime/v1/health\` and \`/api/runtime/v1/realm\` through http://127.0.0.1:5180 and confirm the editor uses my existing Runtime workspace. No browser local-network permission is needed for this route. Do not claim success if any check could not be run; tell me the actual result.`,
-    `5. Tell me the absolute path of the clone so you or I can edit it. Source edits appear through Vite's normal development workflow. To start later: \`cd\` to that clone and run \`${L.startCommand}\`, then open the local address it prints. To stop the editor: Ctrl+C in its terminal. That stops the editor and proxy, plus any Runtime it started; a Runtime it attached to keeps running for astrid.haus. To update the editor: stop it, save or commit local source changes, then run \`git pull --ff-only origin main\`, \`${L.installDependenciesCommand}\`, and \`${L.startCommand}\`. To update the Runtime and agent: use \`${ASTRID_COMMANDS.macLinuxUpdate}\` on macOS/Linux, or \`${ASTRID_COMMANDS.windowsUpdate}\` in Windows PowerShell, then restart the editor. Read the update script before running it. The local editor can open offline after its dependencies are installed; online models and providers still need internet.`,
+    `5. Tell me the absolute path of the clone so you or I can edit it. Source edits appear through Vite's normal development workflow. To start later: \`cd\` to that clone and run \`${L.startCommand}\`, then open the local address it prints. To stop the editor: Ctrl+C in its terminal. That stops the editor and proxy, plus any Runtime it started; a Runtime it attached to keeps running for astrid.haus. To update the editor: stop it, save or commit local source changes, then run \`git pull --ff-only origin main\`, \`${L.installDependenciesCommand}\`, and \`${L.startCommand}\`. To update the Runtime and agent: use \`${ASTRID_COMMANDS.macLinuxUpdate}\` on macOS/Linux, or \`${ASTRID_COMMANDS.windowsAgentUpdate}\` in Windows PowerShell, then restart the editor. Read the update script before running it. The local editor can open offline after its dependencies are installed; online models and providers still need internet.`,
   ].join('\n');
 }
 
@@ -124,7 +125,7 @@ export const UPDATE_ROUTES = {
 } as const;
 
 /** A complete handoff: retain an existing workspace and diagnose failures before retrying. */
-export function agentInstructions(mode: CommandMode, pageOrigin: string): string {
+export function agentInstructions(mode: CommandMode, pageOrigin: string, localBuild = false): string {
   const windows = detectPlatform() === 'windows';
   const command = installCommand(mode);
   return [
@@ -133,15 +134,38 @@ export function agentInstructions(mode: CommandMode, pageOrigin: string): string
     "Use the current official Astrid installer; read it before running it. The installer adopts an existing workspace itself; don't run workspace or migration commands by hand. Do not bypass ownership guards or overwrite a directory just because the installer refuses it.",
     windows && mode === 'install'
       ? `The command offered by this page, in PowerShell:\n${command}\nFrom Git Bash or another shell:\n${ASTRID_COMMANDS.windowsAgent}\nInstall from Windows, not inside WSL.`
+      : windows && mode === 'update'
+        ? `The command offered by this page, in PowerShell:\n${command}\nFrom Git Bash or another shell:\n${ASTRID_COMMANDS.windowsAgentUpdate}\nUpdate from Windows, not inside WSL.`
       : `${mode === 'update' ? 'If you installed Astrid with the installer, the command offered by this page is' : 'The command offered by this page is'}:\n${command}${windows ? '\nInstall from Windows, not inside WSL.' : ''}`,
     mode === 'update'
-      ? `${UPDATE_ROUTES.source} Before running the installer, check whether this computer runs Astrid from source checkouts (for example, a running runtime_protocol from a git checkout). If it does, update those checkouts instead of running the installer.`
+      ? localBuild ? `${UPDATE_ROUTES.source} Before running the installer, check whether this computer runs Astrid from source checkouts (for example, a running runtime_protocol from a git checkout). If it does, update those checkouts instead of running the installer.` : null
       : null,
     'If installation or startup fails, read the log path printed by the installer, diagnose the actual cause and resolve it before retrying. Keep the existing workspace selection and data root connected; do not infer that no installation exists merely because the browser cannot reach it.',
     `The installer verifies Astrid and opens astrid.haus. Tell me to choose Allow if Chrome or Edge asks, and confirm Astrid shows Connected. Setup guide: ${SETUP_GUIDE_URL}`,
     "If the installer couldn't open a browser, open https://astrid.haus/?connect=1.",
     'My astrid.haus tab connects by itself once Astrid answers; if it shows a Connect button, click it.',
   ].filter((part): part is string => part !== null).join('\n\n');
+}
+
+/**
+ * The handoff for a running Astrid that refuses this page's origin: no install, no reset, a check the agent can run,
+ * and the one fix there is (update) when the page is astrid.haus.
+ */
+export function refusedAgentInstructions(pageOrigin: string, apiBase: string): string {
+  const windows = detectPlatform() === 'windows';
+  return [
+    `Astrid is running on this computer and answering at ${apiBase}, but it refuses requests from the page at ${pageOrigin}, so that page can't connect. Do the work yourself and verify the result.`,
+    `Check it: \`curl -s -H "Origin: ${pageOrigin}" ${apiBase}/v1/health\`. A refusal answers 403 with no Access-Control-Allow-Origin header. Compare with \`curl -s -H "Origin: https://astrid.haus" ${apiBase}/v1/health\`, which should answer with health JSON.`,
+    'Astrid is installed and running: do not reinstall it, and do not reset, delete or replace my workspace, projects, media, credentials or agent instructions.',
+    `If the page is https://astrid.haus, this Astrid is probably out of date. Update it with the official installer's update command; read the script before running it. ${windows ? `In PowerShell: ${ASTRID_COMMANDS.windowsUpdate}\nFrom Git Bash or another shell: ${ASTRID_COMMANDS.windowsAgentUpdate}\nUpdate from Windows, not inside WSL.` : `The command: ${ASTRID_COMMANDS.macLinuxUpdate}`} If you run Astrid from source checkouts instead, update those checkouts to their main branches and restart Astrid; don't run the installer over them.`,
+    `If the page is not https://astrid.haus, ${pageOrigin} isn't an address this Astrid serves. Tell me to open https://astrid.haus instead; don't change Astrid's allowed origins unless I ask.`,
+    'My tab connects by itself once Astrid accepts the page; if it shows a Connect button, click it.',
+  ].join('\n\n');
+}
+
+/** `{origin}` in a card's text filled with the page's origin. */
+export function withOrigin(text: string, origin: string): string {
+  return text.split('{origin}').join(origin);
 }
 
 /** Names the shell that matches the command shown on setup, repair and recovery cards. */
@@ -169,6 +193,8 @@ export interface RuntimeConnectionCopy {
     readonly allowTitle: string;
     readonly allowDetails: string;
     readonly installTitle: string;
+    /** Connect was pressed and Chrome did not ask or was dismissed: the way on that does not depend on its prompt. */
+    readonly unanswered: { readonly lead: string };
     /** The browser's prompt is open: nothing to press, so no button. */
     readonly pending: Message & { readonly pointer: string };
   };
@@ -178,7 +204,9 @@ export interface RuntimeConnectionCopy {
     readonly footer: string;
   };
   /** Repeated probes went unanswered with permission granted. */
-  readonly notRunning: Message;
+  readonly notRunning: Message & { readonly retry: string };
+  /** Astrid answered the browser but would not let this page read the answer (it serves other origins only). */
+  readonly refused: Message & { readonly retry: string };
   readonly updateNeeded: Message;
   /** Lead-in above the update screen when a chat reply from this computer's Astrid is out of date. */
   readonly chatNeedsUpdate: string;
@@ -186,6 +214,8 @@ export interface RuntimeConnectionCopy {
   readonly phone: Message & { readonly button: string; readonly copied: string };
   /** A desktop browser that cannot request local-network access. */
   readonly unsupported: Message & { readonly button: string; readonly copied: string };
+  readonly browserUpdateNeeded: Message;
+  readonly connectorFailure: { readonly authentication: string; readonly admission: string; readonly storage: string; readonly unavailable: string };
   /** Screen-reader text of the status container while connected, and the line App settings shows then. */
   readonly connected: { readonly sentence: string };
   /** Connected, and the health check answers too slowly: Astrid is running under load. The card clears itself. */
@@ -229,6 +259,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     connect: 'Connect',
     allowTitle: 'What does this allow?',
     installTitle: "Don't have Astrid yet?",
+    unanswered: { lead: "If {browser} didn't ask, allow it here:" },
     allowDetails: "This page can talk to Astrid running on your computer, and nothing else. Astrid only lets it work with your Astrid projects, media and jobs. It can't open your other files or apps. Chat messages go to your own agent on this computer. Your work never passes through our servers.",
     pending: {
       title: 'Choose Allow in {browser}',
@@ -250,7 +281,14 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   notRunning: {
     title: "Astrid isn't answering on this computer",
+    retry: 'Try again',
     sentence: "Your coding agent can start it, or install it if it isn't there yet.",
+  },
+
+  refused: {
+    title: "Astrid is running but won't connect to this page",
+    sentence: 'Astrid on this computer answered, but refused requests from {origin}. Open astrid.haus, or update Astrid if this keeps happening.',
+    retry: 'Try again',
   },
 
   updateNeeded: {
@@ -273,6 +311,18 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     sentence: 'This browser cannot connect to Astrid on your computer.',
     button: 'Copy link for Chrome or Edge',
     copied: 'Copied. Open it in Chrome or Edge.',
+  },
+
+  browserUpdateNeeded: {
+    title: 'Update {browser} to connect',
+    sentence: "This version of {browser} can't reach Astrid on this computer. Update it, then come back.",
+  },
+
+  connectorFailure: {
+    authentication: 'Workspace Runtime authentication failed',
+    admission: 'Workspace Runtime failed its startup checks',
+    storage: 'Workspace Runtime reported a storage failure',
+    unavailable: 'Workspace Runtime is unavailable',
   },
 
   connected: {

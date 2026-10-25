@@ -8,36 +8,63 @@ export interface CardPosition {
   top: number;
 }
 
+export interface CardPlacementOptions {
+  /** Space kept between the card and the viewport's edges. */
+  edge?: number;
+  /** Where a card with nothing spotlighted goes: centred (desktop), or along the bottom within thumb reach (phones). */
+  dock?: 'center' | 'bottom';
+  /** Take the spot below the spotlit area whenever it fits, before the roomiest side (the chat's reply: the card stays in its panel). */
+  preferBelow?: boolean;
+}
+
+function overlapArea(position: CardPosition, card: { width: number; height: number }, rects: readonly SpotlightRect[]): number {
+  return rects.reduce((total, r) => {
+    const width = Math.min(position.left + card.width, r.x + r.width) - Math.max(position.left, r.x);
+    const height = Math.min(position.top + card.height, r.y + r.height) - Math.max(position.top, r.y);
+    return total + (width > 0 && height > 0 ? width * height : 0);
+  }, 0);
+}
+
 /**
  * Where the card goes: beside the spotlighted area on whichever side leaves the most room (right,
- * left, below, above), clamped to the viewport; centred when nothing is spotlighted. When no side
- * fits the card, it docks in the viewport's bottom-right corner.
+ * left, below, above), clamped to the viewport; centred (or docked at the bottom) when nothing is
+ * spotlighted. When no side of the whole area fits the card, it takes the spot beside a single target,
+ * or along an edge, that covers the least of the targets (bottom-right first).
  */
 export function placeCard(
   rects: readonly SpotlightRect[],
   card: { width: number; height: number },
   viewport: { width: number; height: number },
+  { edge = EDGE, dock = 'center', preferBelow = false }: CardPlacementOptions = {},
 ): CardPosition {
-  const clamp = (value: number, size: number, limit: number) => Math.max(EDGE, Math.min(value, limit - size - EDGE));
+  const clamp = (value: number, size: number, limit: number) => Math.max(edge, Math.min(value, limit - size - edge));
+  const at = (left: number, top: number): CardPosition => ({ left: clamp(left, card.width, viewport.width), top: clamp(top, card.height, viewport.height) });
+  const bottom = at(viewport.width, viewport.height);
   if (rects.length === 0) {
-    return { left: (viewport.width - card.width) / 2, top: (viewport.height - card.height) / 2 };
+    const left = (viewport.width - card.width) / 2;
+    return dock === 'bottom' ? { left, top: bottom.top } : { left, top: (viewport.height - card.height) / 2 };
   }
-  const left = Math.min(...rects.map((r) => r.x));
-  const top = Math.min(...rects.map((r) => r.y));
-  const right = Math.max(...rects.map((r) => r.x + r.width));
-  const bottom = Math.max(...rects.map((r) => r.y + r.height));
-  const midX = (left + right) / 2 - card.width / 2;
-  const midY = (top + bottom) / 2 - card.height / 2;
+  const sidesOf = (area: readonly SpotlightRect[]) => {
+    const left = Math.min(...area.map((r) => r.x));
+    const top = Math.min(...area.map((r) => r.y));
+    const right = Math.max(...area.map((r) => r.x + r.width));
+    const lower = Math.max(...area.map((r) => r.y + r.height));
+    const midX = (left + right) / 2 - card.width / 2;
+    const midY = (top + lower) / 2 - card.height / 2;
+    return [
+      { room: viewport.width - right - 2 * GAP, need: card.width, left: right + GAP, top: midY },
+      { room: left - 2 * GAP, need: card.width, left: left - GAP - card.width, top: midY },
+      { room: viewport.height - lower - 2 * GAP, need: card.height, left: midX, top: lower + GAP },
+      { room: top - 2 * GAP, need: card.height, left: midX, top: top - GAP - card.height },
+    ];
+  };
 
-  const sides = [
-    { room: viewport.width - right - 2 * GAP, need: card.width, left: right + GAP, top: midY },
-    { room: left - 2 * GAP, need: card.width, left: left - GAP - card.width, top: midY },
-    { room: viewport.height - bottom - 2 * GAP, need: card.height, left: midX, top: bottom + GAP },
-    { room: top - 2 * GAP, need: card.height, left: midX, top: top - GAP - card.height },
-  ];
-  const fitting = sides.filter((side) => side.room >= side.need).sort((a, b) => b.room - a.room)[0];
-  if (!fitting) {
-    return { left: viewport.width - card.width - EDGE, top: viewport.height - card.height - EDGE };
-  }
-  return { left: clamp(fitting.left, card.width, viewport.width), top: clamp(fitting.top, card.height, viewport.height) };
+  const sides = sidesOf(rects);
+  const below = sides[2];
+  const fitting = preferBelow && below.room >= below.need ? below : sides.filter((side) => side.room >= side.need).sort((a, b) => b.room - a.room)[0];
+  if (fitting) return at(fitting.left, fitting.top);
+
+  const docked = dock === 'bottom' ? { left: (viewport.width - card.width) / 2, top: bottom.top } : bottom;
+  const candidates = [docked, ...rects.flatMap((rect) => sidesOf([rect]).map((side) => at(side.left, side.top))), at(edge, viewport.height), at(viewport.width, edge), at(edge, edge)];
+  return candidates.reduce((best, candidate) => (overlapArea(candidate, card, rects) < overlapArea(best, card, rects) ? candidate : best));
 }

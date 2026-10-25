@@ -1,3 +1,5 @@
+import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { EmptyWorkspaceGuidance } from '@/shared/components/RuntimeConnection/EmptyWorkspaceGuidance.tsx';
 import { WorkspaceDiscoveryPending } from '@/shared/components/RuntimeConnection/WorkspaceDiscoveryPending.tsx';
 import { useNativeEditorRecovery } from '../hooks/useNativeEditorRecovery.ts';
@@ -52,6 +54,7 @@ import {
   ProjectTimelinePicker,
 } from "@/shared/components/ProjectTimelineSelectors.tsx";
 import { ProjectHeaderControls } from "@/shared/components/ProjectHeaderControls.tsx";
+import { ProjectHeaderActions } from "@/shared/components/ProjectHeaderActions.tsx";
 import {
   AstridRuntimeClient,
   RuntimeUnavailableError,
@@ -246,9 +249,11 @@ export default function VideoEditorPage() {
   const timelines = runtimeDiscovery.timelinesQuery.data;
   const selectedProject = runtimeDiscovery.project;
   const selectedTimeline = timelines?.find(t => t.timeline_id === timelineId) ?? null;
+  const discoveryError = runtimeDiscovery.projectsQuery.error ?? runtimeDiscovery.timelinesQuery.error;
+  const canSelectRuntimeProject = !!selectedProject && !discoveryError;
 
   useEffect(() => {
-    if (projectId || timelineId || !projects || runtimeDiscovery.projectsQuery.error) return;
+    if (projectId || !projects || runtimeDiscovery.projectsQuery.error) return;
     let previous: string | null = null;
     try { previous = window.localStorage.getItem(LAST_OPENED_PROJECT_STORAGE_KEY); } catch { /* Storage is optional. */ }
     const project = projects.find(p => p.project_id === previous)
@@ -261,7 +266,7 @@ export default function VideoEditorPage() {
       next.set("project", project.project_id!);
       return next;
     }, { replace: true });
-  }, [projectId, timelineId, projects, runtimeDiscovery.projectsQuery.error, setSearchParams]);
+  }, [projectId, projects, runtimeDiscovery.projectsQuery.error, setSearchParams]);
 
   useEffect(() => {
     if (!selectedProject) return;
@@ -271,20 +276,21 @@ export default function VideoEditorPage() {
   // Chat, the gallery and the editor all use the same canonical project,
   // including projects which have not created their first timeline yet.
   const agentChatRegistry = useOptionalAgentChatRegistry();
-  const chatProjectId = projectId;
+  const chatProjectId = selectedProject?.project_id ?? null;
   const chatProjectSlug = selectedProject?.slug ?? null;
+  const chatProjectName = selectedProject?.name ?? null;
   useEffect(() => {
     if (!agentChatRegistry) return;
     agentChatRegistry.registerProject({
       timelineId: null,
       editorContext: chatProjectId ? {
-        tool: "video-editor", projectId: chatProjectId, projectSlug: chatProjectSlug,
+        tool: "video-editor", projectId: chatProjectId, projectSlug: chatProjectSlug, projectName: chatProjectName,
         timelineId: null, timelineName: null,
         deepLink: typeof globalThis.location?.href === "string" ? globalThis.location.href : null,
       } : null,
     });
     return agentChatRegistry.unregisterProject;
-  }, [agentChatRegistry, chatProjectId, chatProjectSlug]);
+  }, [agentChatRegistry, chatProjectId, chatProjectName, chatProjectSlug]);
 
   const [mountedSaveStatus, setMountedSaveStatus] =
     useState<SaveStatus>("saved");
@@ -346,6 +352,18 @@ export default function VideoEditorPage() {
 
   const tourSelection = useEditorTourSelection();
   const tourHeader = tourSelection ? tourHeaderProps() : null;
+  const lastSelectedRuntimeProject = useRef<string | null>(null);
+  useEffect(() => {
+    if (!canSelectRuntimeProject || !projectId || tourSelection || lastSelectedRuntimeProject.current === projectId) return;
+    const timeout = window.setTimeout(() => {
+      if (lastSelectedRuntimeProject.current === projectId) return;
+      lastSelectedRuntimeProject.current = projectId;
+      void new AstridRuntimeClient().selectProject(projectId, "workspace").catch(() => {
+        if (lastSelectedRuntimeProject.current === projectId) lastSelectedRuntimeProject.current = null;
+      });
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [projectId, canSelectRuntimeProject, selectorsOpen, tourSelection]);
   // Register explicit replays; first-run welcome already finished before this editor opens.
   useEditorTourHost();
   const providerSelection = tourSelection ?? userProviderSelection;
@@ -479,7 +497,7 @@ export default function VideoEditorPage() {
       next.set("project", id);
       next.delete("timeline");
       return next;
-    }, { replace: true });
+    });
   }, [projectId, projects, confirmEditorRemount, setSearchParams]);
   const handleSelectTimeline = useCallback((id: string) => {
     if (id === timelineId || !timelines?.some(t => t.timeline_id === id) || !confirmEditorRemount()) return;
@@ -488,7 +506,7 @@ export default function VideoEditorPage() {
       const next = new URLSearchParams(current);
       next.set("timeline", id);
       return next;
-    }, { replace: true });
+    });
   }, [timelineId, timelines, projectId, confirmEditorRemount, setSearchParams]);
 
   const handleCreateFirstTimeline = useCallback(async () => {
@@ -819,7 +837,8 @@ export default function VideoEditorPage() {
     />
   ) : null;
 
-  const discoveryError = runtimeDiscovery.projectsQuery.error ?? runtimeDiscovery.timelinesQuery.error;
+  const recoveryCardShowing = useRecoveryCardShowing();
+  const hosted = runtimeOrigin() !== '';
   const recoveryError = runtimeConnectorError ?? discoveryError;
   const connectionFailed = !!(recoveryError || nativeRecoveryError);
   return (
@@ -866,22 +885,22 @@ export default function VideoEditorPage() {
       ) : (
         <>
           {selectorsHeader}
-          {workspaceSettling ? <WorkspaceDiscoveryPending onRetry={() => void runtimeDiscovery.reconnect()} /> : (
+          {hosted && recoveryCardShowing ? null : workspaceSettling ? <WorkspaceDiscoveryPending onRetry={() => void runtimeDiscovery.reconnect()} /> : (
             <>
               <div className="px-4 py-2">{timelinePreviewControls}</div>
               <div className="flex flex-1 items-center justify-center px-6">
                 <Card className="w-full max-w-md">
                   <CardHeader>
                     <CardTitle>{projectMissing ? "Project not found"
-                      : discoveryError ? selectedProject ? "Timelines unavailable" : "Workspace unavailable"
+                      : discoveryError ? hosted ? RUNTIME_CONNECTION_COPY.loadFailed.title : selectedProject ? "Timelines unavailable" : "Workspace unavailable"
                       : !projectId ? projects?.length === 0 ? "No projects yet" : "Select a project"
                       : timelineMissing ? "Timeline not found"
                       : "No timeline yet"}</CardTitle>
                     <CardDescription>{projectMissing
                       ? `“${projectId}” is not available in this workspace. Choose an existing project or create one.`
                       : timelineMissing ? "The selected timeline is not available in this project. Choose another timeline."
-                      : discoveryError ? discoveryError.message
-                      : !projectId ? "Create a project with New project above, or choose an existing project."
+                      : discoveryError ? hosted ? RUNTIME_CONNECTION_COPY.loadFailed.sentence : discoveryError.message
+                      : !projectId ? "Create a project, or choose an existing project."
                       : "Create a blank timeline for this project to open it in the editor."}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -889,14 +908,22 @@ export default function VideoEditorPage() {
                       onRefresh={() => void runtimeDiscovery.projectsQuery.refetch()}
                       confirmedEmpty={runtimeDiscovery.projectsQuery.isSuccess && !discoveryError}
                     />}
-                    {selectedProject && !timelineId && !discoveryError && <Button
+                    {!projectId && projects?.length === 0 && <div data-testid="empty-workspace-project-action">
+                      <ProjectHeaderActions
+                        selectedProject={null}
+                        onProjectCreated={() => void runtimeDiscovery.projectsQuery.refetch()}
+                        disabled={runtimeDiscovery.projectsQuery.isLoading || !!tourHeader?.disabled}
+                        confirmNavigation={() => confirmRemountRef.current()}
+                      />
+                    </div>}
+                    {selectedProject && !discoveryError && (!timelineId || (timelineMissing && timelines?.every(t => t.is_shot))) && <Button
                       onClick={() => void handleCreateFirstTimeline()}
                       disabled={creatingFirstTimeline}
                     >{creatingFirstTimeline ? "Creating timeline…" : "Create first timeline"}</Button>}
                     {firstTimelineError && <p className="mt-3 text-xs text-destructive" role="alert">
                       Timeline setup failed ({firstTimelineError}). Retry here or check the connected Astrid Runtime.
                     </p>}
-                    {discoveryError && <Button onClick={() => void runtimeDiscovery.reconnect()}>Retry workspace discovery</Button>}
+                    {discoveryError && <Button onClick={() => void runtimeDiscovery.reconnect()}>{hosted ? RUNTIME_CONNECTION_COPY.loadFailed.button : "Retry workspace discovery"}</Button>}
                   </CardContent>
                 </Card>
               </div>

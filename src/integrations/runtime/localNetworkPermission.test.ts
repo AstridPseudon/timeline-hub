@@ -2,10 +2,26 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   LOCAL_NETWORK_PERMISSION_NAME,
   queryLocalNetworkPermission,
+  requiresLocalNetworkPermission,
   watchLocalNetworkPermission,
   type LocalNetworkPermissionStatus,
   type PermissionsLike,
 } from './localNetworkPermission.ts';
+
+describe('requiresLocalNetworkPermission', () => {
+  it('requires permission for a public page reaching a separate loopback Runtime origin', () => {
+    expect(requiresLocalNetworkPermission('http://127.0.0.1:17340', 'https://astrid.haus')).toBe(true);
+  });
+
+  it.each([
+    ['identical localhost origin', 'http://localhost:5173', 'http://localhost:5173'],
+    ['different local dev ports', 'http://localhost:5174', 'http://localhost:5173'],
+    ['loopback page reaching another loopback host', 'http://127.0.0.1:17340', 'http://localhost:5173'],
+    ['non-loopback Runtime origin', 'https://runtime.example', 'https://astrid.haus'],
+  ])('does not request permission for %s', (_label, runtime, page) => {
+    expect(requiresLocalNetworkPermission(runtime, page)).toBe(false);
+  });
+});
 
 function permissionsWith(state: string) {
   const status: LocalNetworkPermissionStatus = { state, onchange: null };

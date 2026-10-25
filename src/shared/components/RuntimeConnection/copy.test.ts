@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { agentInstructions, installCommand, localSetupInstructions, localSetupSteps, LOCAL_SETUP } from './copy.ts';
+import { agentInstructions, ASTRID_COMMANDS, installCommand, localSetupInstructions, localSetupSteps, LOCAL_SETUP, refusedAgentInstructions, RUNTIME_CONNECTION_COPY, withOrigin } from './copy.ts';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -19,14 +19,23 @@ describe('install commands', () => {
 });
 
 describe('update handoff', () => {
-  it('offers the installer and the source-checkout route, and tells the agent to check first', () => {
+  it('offers the installer route on hosted builds and source-checkout guidance only on local builds', () => {
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Macintosh');
-    const text = agentInstructions('update', 'https://astrid.haus');
+    const text = agentInstructions('update', 'https://astrid.haus', true);
     expect(text).toContain('If you installed Astrid with the installer');
     expect(text).toContain("If you run Astrid from source checkouts: update those checkouts to their main branches and restart Astrid. Don't run the installer over them.");
     expect(text).toContain('running runtime_protocol from a git checkout');
     expect(agentInstructions('install', 'https://astrid.haus')).not.toContain('source checkouts');
+    expect(agentInstructions('update', 'https://astrid.haus')).not.toContain('source checkouts');
+  });
+
+  it('offers the agent-safe Windows update command in update briefs', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Windows');
+    expect(ASTRID_COMMANDS.windowsAgentUpdate).toBe('powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update"');
+    expect(agentInstructions('update', 'https://astrid.haus')).toContain(ASTRID_COMMANDS.windowsAgentUpdate);
+    expect(localSetupInstructions()).toContain(ASTRID_COMMANDS.windowsAgentUpdate);
   });
 });
 
@@ -61,5 +70,40 @@ describe('onboarding instructions', () => {
   it('local setup start command is defined', () => {
     expect(LOCAL_SETUP.startCommand).not.toMatch(/job X2/i);
     expect(LOCAL_SETUP.startCommand.trim()).not.toBe('');
+  });
+});
+
+describe('refused card', () => {
+  const BASE = 'http://127.0.0.1:17340/api/runtime';
+
+  it('says Astrid is running, names the page, and offers no install', () => {
+    const { title, sentence } = RUNTIME_CONNECTION_COPY.refused;
+    expect(title).toBe("Astrid is running but won't connect to this page");
+    expect(withOrigin(sentence, 'http://localhost:5190')).toBe('Astrid on this computer answered, but refused requests from http://localhost:5190. Open astrid.haus, or update Astrid if this keeps happening.');
+    expect(`${title} ${sentence}`).not.toMatch(/isn't|install|curl|irm /i);
+  });
+
+  it('briefs an agent on the actual state: answering, refusing this origin, check it, do not reinstall', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Macintosh');
+    const text = refusedAgentInstructions('http://localhost:5190', BASE);
+    expect(text).toContain(`Astrid is running on this computer and answering at ${BASE}, but it refuses requests from the page at http://localhost:5190`);
+    expect(text).toContain(`curl -s -H "Origin: http://localhost:5190" ${BASE}/v1/health`);
+    expect(text).toContain(`curl -s -H "Origin: https://astrid.haus" ${BASE}/v1/health`);
+    expect(text).toContain('do not reinstall it, and do not reset, delete or replace my workspace');
+    expect(text).toContain('If the page is https://astrid.haus, this Astrid is probably out of date. Update it with the official installer');
+    expect(text).toContain(ASTRID_COMMANDS.macLinuxUpdate);
+    expect(text).toContain("http://localhost:5190 isn't an address this Astrid serves");
+    // Never the first-install command.
+    expect(text).not.toContain(ASTRID_COMMANDS.macLinux + '\n');
+    expect(text).not.toMatch(/set up or restart Astrid/);
+  });
+
+  it('gives the Windows update commands on Windows', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Windows');
+    const text = refusedAgentInstructions('https://astrid.haus', BASE);
+    expect(text).toContain(ASTRID_COMMANDS.windowsUpdate);
+    expect(text).toContain(ASTRID_COMMANDS.windowsAgentUpdate);
   });
 });

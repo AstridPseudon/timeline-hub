@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { AppHeader } from '@/shared/components/AppHeader.tsx';
+import { AppMainContent } from '@/app/components/AppMainContent.tsx';
 import { useHeaderState } from '@/shared/contexts/ToolPageHeaderContext';
 import { useHomeNavigation } from '@/shared/hooks/useHomeNavigation';
 import { isHomeToolPathActive } from '@/shared/lib/tooling/homeNavigation';
@@ -60,43 +60,16 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
     willChange: 'margin, padding',
   } as CSSProperties;
 
-  return (
-    <>
-      <div
-        className="transition-[margin] duration-300 ease-smooth"
-        style={{ marginRight: tasksPaneReserve, willChange: 'margin' }}
-        data-testid="global-header-slot"
-      >
-        <AppHeader
-          navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
-          onNavigate={isEditorRoute ? undefined : navigateHome}
-          navigationControls={globalHeaderContent}
-          showProjectControls={!isEditorRoute}
-        />
-      </div>
-
-      <div
-        className={cn(
-          'relative z-10 content-container',
-          isFullEditorSurface
-            ? 'min-h-0 flex-1 overflow-hidden transition-[margin,padding] duration-300 ease-smooth'
-            : 'transition-[margin,padding] duration-300 ease-smooth',
-        )}
-        data-video-editor-route={isEditorRoute ? 'true' : 'false'}
-        data-video-editor-shell-active={isFullEditorSurface ? 'true' : 'false'}
-        style={contentStyle}
-      >
-        <main
-          className={cn(
-            isFullEditorSurface
-              ? 'h-full w-full overflow-hidden'
-              : cn('container mx-auto', containerPadding, containerSpacing),
-          )}
-        >
-          {!isFullEditorSurface && header}
-          <Outlet />
-        </main>
-      </div>
-    </>
-  );
+  return <AppMainContent
+    headerContent={globalHeaderContent}
+    toolHeader={header}
+    tasksPaneReserve={tasksPaneReserve}
+    contentStyle={contentStyle}
+    isEditorRoute={isEditorRoute}
+    isFullEditorSurface={isFullEditorSurface}
+    navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
+    onNavigate={isEditorRoute ? undefined : navigateHome}
+    showProjectControls={!isEditorRoute}
+    nonEditorMainClassName={cn('container mx-auto', containerPadding, containerSpacing)}
+  ><Outlet /></AppMainContent>;
 }
