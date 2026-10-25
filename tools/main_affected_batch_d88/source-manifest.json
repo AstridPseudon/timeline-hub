@@ -1,0 +1,164 @@
+{
+  "excluded_source_files": [
+    {
+      "path": "tests/editing_conformance/test_native_batch_ingress.py",
+      "reason": "D87 retired 24 rows; b9f remains excluded from READY and visible remainder"
+    },
+    {
+      "path": "held video12/scalar11/word11/native-frontends/parent-swap12/numeric-move9",
+      "reason": "source/qualification receipt incomplete or failed"
+    }
+  ],
+  "observed_agent": {
+    "branch": "tl/rt-D88-incremental-main-bind-0056",
+    "commit": "0ae146e1b0acc6e4a82ba6b4f905d88bad48320c",
+    "tree": "c91cfe3a28f2951584289bea31f1005222178bed"
+  },
+  "original_route": {
+    "manifest": "tools/main_affected_batch_d86/batch-manifest.json",
+    "remainder": 299,
+    "selected": 251
+  },
+  "pending_authority": [
+    "Agent manager exact incremental-already IDs and reviewed source tuple response requested at 00:44/00:46",
+    "fresh four-repo D73 SHA/tree/parent checkout receipts and path-sensitive source hashes",
+    "normal qualified profile and parsed command preflight",
+    "MAIN request id and absolute evidence directory"
+  ],
+  "proposed_ready_set": {
+    "excluded_d87_rows": 24,
+    "preserved_original_rows": 227,
+    "reviewed_additions": 50,
+    "selector_count": 277
+  },
+  "review_receipts": {
+    "current_sheet17": "2cde6002b96d6703b6c42b7c7c6e91cff3ae7e6a / finalreview0033 PASS",
+    "inverse_stage7": "3172eb778b / Runtime0010 PASS",
+    "m2_placement20": "08f5b18199 / finalreview0010 PASS",
+    "m2_pool6": "fbbae3e03d / finalreview0010 PASS"
+  },
+  "schema": "astrid.timeline.d88-incremental-main-source/v1",
+  "source_files": [
+    {
+      "observed_commit": "baaa9fd3f6946df7d5b3c80f1a1ac70b4be9373e",
+      "path": "tests/editing_conformance/test_commit_runtime_m1.py",
+      "ready_selector_count": 10,
+      "sha256": "6b7abbfe3268b5e17dc996cf8e09aa497f4a421d5d214877cfcb151890c5ccea"
+    },
+    {
+      "observed_commit": "df06987999dd34ae30346860d2ac77670e28cfa6",
+      "path": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "ready_selector_count": 48,
+      "sha256": "482d87db620fe482c3f993dfa416de93972f1a6d53d757f52595e236d790e285"
+    },
+    {
+      "observed_commit": "cf0251d0b23cf55d90858f78c48192922d316115",
+      "path": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py",
+      "ready_selector_count": 14,
+      "sha256": "27910865f3c68dd29a36c03018bed833657a40ad747f51ac97e513adcb3219bc"
+    },
+    {
+      "observed_commit": "0f6ac1324faf06015923c4f8389f3ae2fed13317",
+      "path": "tests/editing_conformance/test_commit_runtime_parent_media.py",
+      "ready_selector_count": 20,
+      "sha256": "deafe3971df238009e3108c28983480b95f6eab781b3aa62d9fef2ea5d452fb6"
+    },
+    {
+      "observed_commit": "4a16d562382c3b4235cdc66645dd1382ef01383f",
+      "path": "tests/editing_conformance/test_commit_runtime_shared_inverse.py",
+      "ready_selector_count": 10,
+      "sha256": "2657e31b53fa86ab08e793cadc006e57502d8166ca527d9e06a505d8e92ef88c"
+    },
+    {
+      "observed_commit": "debb643fa3af113aee9ef20a43cb7b62da054556",
+      "path": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+      "ready_selector_count": 7,
+      "sha256": "f8e9eec8d37ea639cbbf1ddfac9b0e3e142a362999c8d98ca4d6f425d452efda"
+    },
+    {
+      "observed_commit": "6cfb3d22c7919d07cb8e5a8951ef6ed12b7a6611",
+      "path": "tests/editing_conformance/test_native_sheet_current_runtime.py",
+      "ready_selector_count": 17,
+      "sha256": "6e8b187f8a3bcef57056462974002e7bf27f9d5c04d98e278cbbbfee9c632d8d"
+    },
+    {
+      "observed_commit": "351cc76478c0468ba37c0290da1d34ca43ea16b8",
+      "path": "tests/editing_conformance/test_native_sheet_ordinary_runtime.py",
+      "ready_selector_count": 11,
+      "sha256": "4532a5d928a417d521f91d24f85541f00d150cafd8d0b1ab4a41bd5828a8962b"
+    },
+    {
+      "observed_commit": "5292b388a271b9ba07c4344a1072963109b2c9f9",
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "ready_selector_count": 37,
+      "sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f"
+    },
+    {
+      "observed_commit": "ab90756ccf2d51f9f6c5312d4d7d238540b9afff",
+      "path": "tests/editing_conformance/test_next_command_cohort_runtime.py",
+      "ready_selector_count": 11,
+      "sha256": "d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0"
+    },
+    {
+      "observed_commit": "4a7f321704b11e81acadb3331de109b7d970e78a",
+      "path": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "ready_selector_count": 10,
+      "sha256": "2400f79c6d2c366fc47caf4a8ad6dfe219e556bf2a789ff5114f2be6b6a6e3bc"
+    },
+    {
+      "observed_commit": "4a7f321704b11e81acadb3331de109b7d970e78a",
+      "path": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "ready_selector_count": 4,
+      "sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9"
+    },
+    {
+      "observed_commit": "4a7f321704b11e81acadb3331de109b7d970e78a",
+      "path": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "ready_selector_count": 6,
+      "sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6"
+    },
+    {
+      "observed_commit": "e911171b5be72cf719194a4ed0bdf90046af8f72",
+      "path": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "ready_selector_count": 6,
+      "sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e"
+    },
+    {
+      "observed_commit": "233d76d64221a56f68ae4364546e684b2c4a553c",
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "ready_selector_count": 9,
+      "sha256": "4722227e6e347778bb491f4f660e0a8d049ee074026b23e43de939a65d47142a"
+    },
+    {
+      "observed_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "path": "tests/packs/timeline/test_cli_document_commit.py",
+      "ready_selector_count": 8,
+      "sha256": "a169b1616ed65e0865b2dd06aa962d34c618e57cc87bd0589110c6a05e9dcef4"
+    },
+    {
+      "observed_commit": "2378867874d364696391794fd47f40e1cbaaaaa1",
+      "path": "tests/sdk/test_selected_param_neutral_stage.py",
+      "ready_selector_count": 20,
+      "sha256": "eeb87d727f6b0f194fd1bbbe74f7b7023c02686520bf29d0822d67fe6a1507d9"
+    },
+    {
+      "observed_commit": "a3eff6fc82adcf5915a0fc0af53220d29c5e1812",
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "ready_selector_count": 9,
+      "sha256": "d9f79e7ea2add6229331948487da8069d0a484ae996b1016f9b1f7aef287abf6"
+    },
+    {
+      "observed_commit": "072e70c768195391519524334a5904445c6e0912",
+      "path": "tests/sdk/test_timeline_numeric_revision_runtime.py",
+      "ready_selector_count": 9,
+      "sha256": "d715740334878c67d39af14263bc9e14e67c3124fb8d71706616ddac180f41c6"
+    },
+    {
+      "observed_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "path": "tests/sdk/test_wc6_completion_capture.py",
+      "ready_selector_count": 11,
+      "sha256": "d4888723f78c2e37f5a22c7584decc57d16e81c155c429943a3eed38a5c1d0ec"
+    }
+  ],
+  "status": "SOURCE_ONLY_PROPOSED_READY_SET_PENDING_MAIN_RECEIPTS"
+}

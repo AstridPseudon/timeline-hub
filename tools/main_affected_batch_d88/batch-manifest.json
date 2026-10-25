@@ -1,0 +1,86 @@
+{
+  "base": {
+    "branch": "tl/rt-D88-incremental-main-bind-0056",
+    "commit": "0ae146e1b0acc6e4a82ba6b4f905d88bad48320c",
+    "repo": "Agent",
+    "tree": "c91cfe3a28f2951584289bea31f1005222178bed"
+  },
+  "counts": {
+    "d87_retired_excluded": 24,
+    "original_251": 251,
+    "preserved_original_ready": 227,
+    "proposed_ready": 277,
+    "remainder_preserved": 299,
+    "reviewed_additions": 50
+  },
+  "d87_retirement": {
+    "accounting": "retired-d87.tsv plus approved appendix; excluded from READY and visible remainder",
+    "retired_rows": 24,
+    "separate_checkout_rows": 1
+  },
+  "d88_capture": {
+    "activation_plan": "d88-capture-plan.json",
+    "helper_source_sha256": "812bcda5fb0eea60f4a66225e454400b16c296ce12c982963ac47f7de5d6d6fa",
+    "runtime_commit": "766fd6700c3128ea9fc833086a517de2acb535e2",
+    "status": "UNKNOWN_NEEDS_LIVE_ACTIVATION"
+  },
+  "four_repo_tuple": {
+    "agent": "<FRESH_D73_AGENT_SHA_TREE_PARENT>",
+    "app": "<FRESH_D73_APP_SHA_TREE_PARENT>",
+    "composition": "<FRESH_D73_COMPOSITION_SHA_TREE_PARENT>",
+    "must_capture_once": true,
+    "profile": "<NORMAL_MAIN_QUALIFIED_PROFILE>",
+    "runtime": "<FRESH_D73_RUNTIME_SHA_TREE_PARENT>",
+    "status": "PENDING_MANAGER_RECEIPTS"
+  },
+  "guards": {
+    "CAS_UTC0600_backup_outside_row_byte_equal": "FUTURE_MANAGER_RELEASE",
+    "original_n3_timeout45_integration": true,
+    "positive_once17_poison_zero_pending_zero": true,
+    "source_only_json_hash_membership_ast_conservation": true
+  },
+  "held_not_ready": "held-not-ready.tsv",
+  "lossless_union": {
+    "duplicate_count": 0,
+    "operation": "set union of exact canonical selector strings; no count summing",
+    "selector_file": "selector-argv.txt"
+  },
+  "original_route_preserved": {
+    "manifest": "tools/main_affected_batch_d86/batch-manifest.json",
+    "membership_hash": "6e5abdea213501c3e883c03ccc5a12f710e6f5379fad94026c92f2d8f1c0d83a",
+    "remainder": 299,
+    "remainder_hash": "91b550b3320a40b68637e5c0883659cebe50e0149e66736e010d48c3381b89c6",
+    "selected": 251
+  },
+  "recipe": {
+    "functional_credit": false,
+    "one_heavy_body": true,
+    "per_family_runs": false,
+    "pytest_args": [
+      "-m",
+      "pytest",
+      "-q",
+      "-n",
+      "3",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45",
+      "-m",
+      "integration"
+    ],
+    "release_condition": "manager supplies exact inputs and D88 local-loop resource priority",
+    "script": "main-affected-batch-recipe.sh"
+  },
+  "remainder": "remainder-299.json",
+  "reviewed_additions": {
+    "M2-placement20": 20,
+    "M2-pool6": 6,
+    "current-sheet17": 17,
+    "inverse-stage7": 7
+  },
+  "schema": "astrid.timeline.main-affected-batch-d88/v1",
+  "scope": "D88/D86 incremental main affected-node preparation",
+  "status": "SOURCE_ONLY_PENDING_MANAGER_INPUTS_REFUSE_BEFORE_BODY"
+}

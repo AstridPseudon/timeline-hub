@@ -1,0 +1,18 @@
+{
+  "files": {
+    "README.md": "54ce26162ab7fc82fcad3f3a2c3da78e1429fbfb1afb52ec7f3cffaed3ec7d7a",
+    "batch-manifest.json": "3c8c53fe39e623bb47476a96afe03f1244428dd6ddfab386ed6c81ce8942958a",
+    "d88-capture-plan.json": "6cf14ab6d5845fa526cfc914912ede72a9070078ccfc59c037f225794978f19f",
+    "held-not-ready.tsv": "f75b3b3467f55f14da3c212494338f34ecd07cb8379fc360560ff258eb5ecceb",
+    "main-affected-batch-recipe.sh": "981f747a5e44930b007f3722eafe9aecdc69ef957150bd190b1fd969dc22dca6",
+    "membership.tsv": "1149c044a329c98c62842f2732000e126a181b28d7cfa4739f4850fc14c4823a",
+    "pending-inputs.json": "330956338b1258a39739a98c8600fc021233db1d1f5e853ab3f7e611faf93f00",
+    "remainder-299.json": "91b550b3320a40b68637e5c0883659cebe50e0149e66736e010d48c3381b89c6",
+    "retired-d87.tsv": "98ca9ce87f01fa7b44717b53310d41ca5f677fecf9b5d8fb03d9c4cc3965e99c",
+    "selector-argv.txt": "26bda8c0619138b096c3bb372218b3cdd5737677373ff049f2fa66cd0fd4134b",
+    "source-manifest.json": "b416aff0a1f17444d862a39c97d8caa8d1330f719ab4281a7b0e33dfbea90524",
+    "submit-input.env": "b0c5a3fc911a777c4840257d220eefa00b248da0bd554a858e036e1ee8214eab"
+  },
+  "schema": "astrid.timeline.d88-incremental-main-hashes/v1",
+  "status": "SOURCE_ONLY"
+}

@@ -1,0 +1,56 @@
+{
+  "activation": {
+    "env": "ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=5",
+    "max_captures": 2,
+    "samples": [
+      "5s",
+      "30s absolute follow-up"
+    ],
+    "sink": "private mode 0600"
+  },
+  "blocked_tools": [
+    "py-spy unavailable",
+    "no attach/denied-route retry"
+  ],
+  "caller_boundary": {
+    "agent_pytest_bootstrap": "does not automatically load App bootstrap",
+    "app_watchdog_forwarding": "D66 App caller forwards env",
+    "required_before_claim": "trace actual batch caller and prove env reaches actual Runtime process"
+  },
+  "helper": {
+    "canonical_schema": 15,
+    "runtime_commit": "766fd6700c3128ea9fc833086a517de2acb535e2",
+    "sha256": "812bcda5fb0eea60f4a66225e454400b16c296ce12c982963ac47f7de5d6d6fa",
+    "source": "tests/helpers/p2_commit_phase_capture.py"
+  },
+  "next_step": "After manager supplies exact tuple and one producer, run one private capture and publish authentic per-request phase summaries; until then no D88 attribution credit.",
+  "producer": {
+    "duplicate_body": false,
+    "must_be": "one existing normal D66 producer or authorized incremental MAIN body",
+    "preserve": [
+      "original body",
+      "payload",
+      "key",
+      "base",
+      "waits",
+      "ownership"
+    ]
+  },
+  "sampling_checks": [
+    "global versus per-request max capture",
+    "2-capture cap seed consumption",
+    "5s/30s sampling",
+    "actual queue boundary",
+    "missing clock/lock/client receipt remain UNKNOWN"
+  ],
+  "status": "UNKNOWN_NEEDS_LIVE_ACTIVATION",
+  "trace_contract": {
+    "caller_receipt": "UNKNOWN",
+    "client_request_to_server_receive": "UNKNOWN",
+    "dispatch_queue": "RuntimeHandler._dispatch entry to timeline handler entry",
+    "execution_lock_wait": "UNKNOWN",
+    "handler": "timeline handler entry to _dispatch return",
+    "provider": "wall duration when both endpoints observed",
+    "response_write": "response-send duration when both endpoints observed"
+  }
+}

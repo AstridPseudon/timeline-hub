@@ -1,0 +1,40 @@
+{
+  "finite_gaps": [
+    "video12",
+    "scalar11",
+    "word11",
+    "nativebatch-b9f",
+    "native-frontends",
+    "parent-swap12",
+    "numeric-move9"
+  ],
+  "manager_owner": "Agent source allocator / Runtime main venue",
+  "requests": [
+    {
+      "input": "exact incremental-already canonical IDs",
+      "reason": "no normal Agent manager response at 00:44/00:46 was present in the inspected board/inbox",
+      "state": "PENDING"
+    },
+    {
+      "input": "qualified source tuple",
+      "reason": "do not derive from mutable worktrees or historical 2342 inputs",
+      "state": "PENDING"
+    },
+    {
+      "input": "four genuine MAIN checkout receipts with path-sensitive hashes",
+      "reason": "required before D73 manifest rendering",
+      "state": "PENDING"
+    },
+    {
+      "input": "normal qualified profile and parsed-command preflight",
+      "reason": "no install or preflight allowed in this preparation pass",
+      "state": "PENDING"
+    },
+    {
+      "input": "D88 live caller activation",
+      "reason": "existing helper has no actual attribution and Agent pytest does not load App bootstrap automatically",
+      "state": "PENDING"
+    }
+  ],
+  "status": "PENDING"
+}

@@ -1,0 +1,8 @@
+family	scope	reason
+video12	12 selectors	held after protected review FAIL; source 9f884cdf held; no body
+scalar11	11 selectors	held after first protected review FAIL; source f2def held; no body
+word11	11 selectors	held after first protected review FAIL; source 7d0e6c held; no body
+nativebatch-b9f	24 selectors	D87 retired and excluded; exact appendix/replacement coverage retained
+native-frontends	7 selectors	six live plus one retired mapping; held source 95fe9d2e90
+parent-swap12	12 selectors	protected review still pending on 2f935f6d4d; no functional credit
+numeric-move9	9 selectors	protected review still pending on ec76fa69e6; exploratory probe uncredited
