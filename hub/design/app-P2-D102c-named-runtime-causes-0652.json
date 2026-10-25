@@ -1,0 +1,47 @@
+{
+  "source": "App lead correction received in INBOX, exact retained artifacts",
+  "tuple": [
+    "0b6cee269f32079c5446036bbca8a484176799bc",
+    "8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+    "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  ],
+  "add": {
+    "actual": 18021,
+    "file": "runtime.stderr.log",
+    "bytes": 922,
+    "event": "runtime.timeline_commit.error",
+    "exception_class_chain": "builtins.KeyError",
+    "reason": "catchall:builtins.KeyError",
+    "frames": [
+      "_execute_timeline_commit:2524",
+      "execute:224",
+      "_execute:263/245",
+      "commit:1331",
+      "execute:268",
+      "apply_inverse:1177",
+      "remember:18"
+    ],
+    "request_correlation": "present privately, value not exported",
+    "corrects": "Prior no-bounded-line claim was wrong"
+  },
+  "element": {
+    "actual": 29218,
+    "stderr": "EMPTY",
+    "stack_file": "p2-commit-phase.stacks.txt",
+    "lines": 149,
+    "frames": [
+      "validate_commit_value:173",
+      "_capture_records:2387",
+      "validate_sequential_capture:2512",
+      "_historical_sequential:849",
+      "_verify_accepted_replay:798",
+      "_verify_accepted:612"
+    ],
+    "handler_ms_max": 18526,
+    "provider_wall_ms": 11704,
+    "execution_lock_wait_ms": null,
+    "dispatch_queue_ms_approx": 1,
+    "eventual_outcome": "UNKNOWN"
+  }
+}
