@@ -1,0 +1,55 @@
+{
+  "schema": "timeline.agent.d134.history5_return_predicate_map.v1",
+  "task": "rt-D134-history5-return-2053",
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "method": "AST comparison of each assigned node and source diff against the unchanged base",
+  "conservation": {
+    "original_case_count": 5,
+    "node_ids_conserved": true,
+    "gate1_parameter_values_before_after": ["python", "cli", "sheet"],
+    "gate1_roundtrip_assertion_helper_before_after": {"count": 15, "sha256": "632f5725d3b3b60e47f2f3674457ec2911612c6b038518dc127c6a74a1d94e2b"},
+    "prepared_assertions_before_after": {"count": 24, "sha256": "9d8f5c182cb587acb1fee4fa14cff2fe2aaeebe31282859ec393dba29c1b7c2c"},
+    "prepared_raises_before_after": {"count": 2, "sha256": "baaf547cb30e17f542477cec4f87470503ef49bc99ace21d813f1d66774b3ea5"},
+    "m1_assertions_before_after": {"count": 22, "sha256": "29ffcf4e98824c41beb3072d3b7340c39e72e8eb60060bf8f26d33adc5e0a743"},
+    "m1_raises_before_after": {"count": 0},
+    "authored_inputs_and_media_preserved": true,
+    "functional_status": "NOTRUN"
+  },
+  "cases": [
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[python]",
+      "before_after": "test body AST, parameterization, transcript/media inputs, assertions, and raises unchanged",
+      "source_delta": "fixture schema/runtime literals corrected; fresh_realm now calls use_runtime(commit=NORMAL_RUNTIME) and uses that exact pinned root for Runtime test imports",
+      "purpose": "fresh verified source/target realm and exact clip.anchor transcript roundtrip"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[cli]",
+      "before_after": "test body AST, parameterization, transcript/media inputs, assertions, and raises unchanged",
+      "source_delta": "same shared fixture-only identity correction as the python case",
+      "purpose": "fresh verified source/target realm and exact clip.anchor transcript roundtrip"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[sheet]",
+      "before_after": "test body AST, parameterization, transcript/media inputs, assertions, and raises unchanged",
+      "source_delta": "same shared fixture-only identity correction as the python case",
+      "purpose": "fresh verified source/target realm and exact clip.anchor transcript roundtrip"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+      "before_after": "24 assertion AST records, 2 raises records, request/media inputs, preview/accept/retry/invalid/conflict/inverse predicates unchanged",
+      "source_delta": "only expected Runtime source commit/tree changed to qualified current ab1e4f6141987706132916e2da16477f5a019464 / 7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "purpose": "preview no-write, accepted birth, exact retry, invalid/conflict refusal, guarded inverse"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_m1_legacy_archive_read.py::test_explicit_held_baseline_then_current_word_bound_read_is_closure_exact",
+      "before_after": "22 assertion AST records, zero raises, held-baseline/current-pair inputs, and opaque/on/anchor/readback predicates unchanged",
+      "source_delta": "none; authentic archive link is proven in derivative evidence, but the retained current source still reaches the on assertion boundary",
+      "purpose": "held baseline then current word-bound closure; behavior remains UNKNOWN"
+    }
+  ],
+  "retained_failure_boundary": {
+    "m1": "tests/editing_conformance/test_m1_legacy_archive_read.py:133",
+    "classification": "behavior UNKNOWN, not archive-missing",
+    "reason": "archive exists and hashes authentically; existence alone does not prove the retained on/opaque/anchor behavior"
+  }
+}

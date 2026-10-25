@@ -1,0 +1,45 @@
+{
+  "schema": "timeline.agent.d134.history5_return_findings.v1",
+  "task": "rt-D134-history5-return-2053",
+  "overall_result": "SOURCE_SETUP_CORRECTION_APPLIED_M1_BEHAVIOR_UNKNOWN",
+  "meaning": "The finite stale-identity setup seams were corrected against the qualified current tuple. This does not qualify live behavior or prove a product fault.",
+  "classification": {
+    "assigned_cases": 5,
+    "gate1_setup_corrected": 3,
+    "prepared_setup_corrected": 1,
+    "m1_archive_link_corrected_in_evidence_only": 1,
+    "product_fault_proved": 0,
+    "functional_status": "NOTRUN",
+    "behavior_cases_qualified": 0
+  },
+  "corrections": [
+    {
+      "id": "gate1-current-qualified-tuple",
+      "status": "APPLIED",
+      "files": ["tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py"],
+      "delta": "schema literal d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d; Runtime literal ab1e4f6141987706132916e2da16477f5a019464; use_runtime and test import path bound to that pinned Runtime",
+      "preserved": "all transcript, frontend, no-write, exact roundtrip, undo/redo, and media predicates"
+    },
+    {
+      "id": "prepared-current-qualified-tuple",
+      "status": "APPLIED",
+      "files": ["tests/editing_conformance/test_prepared_video_birth.py"],
+      "delta": "Runtime source/tree guards changed to ab1e4f6141987706132916e2da16477f5a019464 / 7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "preserved": "preview, accept, retry, invalid, conflict, inverse, no-write, request, and media assertions"
+    },
+    {
+      "id": "m1-archive-evidence-link",
+      "status": "EVIDENCE_ONLY_REPAIRED",
+      "files": [],
+      "delta": "authenticated archive path and SHA-256 recorded; no M1 test body or archive contents changed",
+      "preserved": "held baseline plus opaque/on/anchor/readback closure assertions",
+      "remaining": "UNKNOWN at test_m1_legacy_archive_read.py:133; archive existence alone does not establish the failing on-shaped source behavior"
+    }
+  ],
+  "negative_findings": [
+    "No product, Runtime, schema, generated client, pin, credential, or API change was made.",
+    "No assertion, raise, authored input, media input, or behavior predicate was removed, weakened, skipped, or xfailed.",
+    "No source-only behavior closure is claimed.",
+    "The prior FAIL_AUTHORITY_CLAIMS evidence remains preserved and is not overwritten."
+  ]
+}

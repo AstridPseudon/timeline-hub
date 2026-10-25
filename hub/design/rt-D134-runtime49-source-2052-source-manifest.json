@@ -1,0 +1,51 @@
+{
+  "task": "D134",
+  "scope": {
+    "groups": ["root-048", "root-022"],
+    "counts": {"legacy_word_anchor": 35, "selected_param": 14, "total": 49},
+    "membership_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+    "independent_review": "agt-F-D134-root-review-2029"
+  },
+  "frozen_source": {
+    "agent": {
+      "repo": "/home/user/peteromallet/astrid-agent",
+      "commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+      "first_frames": {
+        "root-048": "astrid/sdk/timeline/validation.py:650",
+        "root-022": "astrid/sdk/timeline/commit.py:1331"
+      },
+      "authority_helpers": [
+        "astrid/sdk/timeline/_commit_timing_validation.py",
+        "astrid/sdk/timeline/native_word_anchor.py",
+        "astrid/sdk/timeline/_selected_param_authority.py"
+      ]
+    },
+    "runtime": {
+      "repo": "/home/user/banodoco/banodoco-workspace-runtime",
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "first_frame": "runtime_protocol/service.py:2546",
+      "provider": "runtime_protocol/timeline_commit_provider.py",
+      "provider_id": "astrid-v1",
+      "interface_version": 1
+    },
+    "current_runtime_assessment_only": {
+      "worktree": "/home/user/work/wt/rt-D134-runtime49-source-2052",
+      "head": "e319fdbcd5",
+      "product_parent": "ab1e4f6141"
+    }
+  },
+  "retained_evidence": {
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "missing": ["raw XML", "full disk witness", "raw runner receipt", "authenticated request body", "accepted record", "complete caller trace"]
+  },
+  "classification": {
+    "fixture_setup": 27,
+    "proved_product_contract_gap": 0,
+    "unknown": 22,
+    "root_048": {"fixture_setup": 27, "proved_product_contract_gap": 0, "unknown": 8},
+    "root_022": {"fixture_setup": 0, "proved_product_contract_gap": 0, "unknown": 14}
+  },
+  "source_policy": "Frozen source was read with git show. No historical body was retargeted to a normal head; no product/test/shared-fixture files were written."
+}

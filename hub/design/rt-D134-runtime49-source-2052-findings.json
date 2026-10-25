@@ -1,0 +1,40 @@
+{
+  "task": "D134",
+  "decision": "No proved product contract gap; no implementation disposition.",
+  "preserved_predicates": [
+    {"group": "root-048", "count": 35, "error_type": "TimingCompileError", "message": "legacy word anchor is missing", "agent_first_frame": "astrid/sdk/timeline/validation.py:650", "runtime_first_frame": "runtime_protocol/service.py:2546"},
+    {"group": "root-022", "count": 14, "error_type": "CommandError", "message": "selected PARAM authority is unavailable", "agent_first_frame": "astrid/sdk/timeline/commit.py:1331", "runtime_first_frame": "runtime_protocol/service.py:2546"}
+  ],
+  "groups": [
+    {
+      "id": "root-048",
+      "case_ids": ["D134-048-01", "D134-048-02", "D134-048-03", "D134-048-04", "D134-048-05", "D134-048-06", "D134-048-07", "D134-048-08", "D134-048-09", "D134-048-10", "D134-048-11", "D134-048-12", "D134-048-13", "D134-048-14", "D134-048-15", "D134-048-16", "D134-048-17", "D134-048-18", "D134-048-19", "D134-048-20", "D134-048-21", "D134-048-22", "D134-048-23", "D134-048-24", "D134-048-25", "D134-048-26", "D134-048-27", "D134-048-28", "D134-048-29", "D134-048-30", "D134-048-31", "D134-048-32", "D134-048-33", "D134-048-34", "D134-048-35"],
+      "classification_counts": {"FIXTURE_SETUP": 27, "PROVED_PRODUCT_CONTRACT_GAP": 0, "UNKNOWN": 8},
+      "source_basis": "M1 baseline authors word:word-1 without transcript/source binding at test_commit_runtime_m1.py:72; retained-input fixture retains a transcript pin but clears the authored choice at test_timing_retained_inputs.py:129-146.",
+      "timing_disposition": "The eight retained-input rows are assessed independently as UNKNOWN. D14/D23 are not used as blanket deferrals.",
+      "finite_needed_input": "For each retained-input row: authenticated request body, hydrated source_mapping/binding state, accepted record, and exact first failing command.",
+      "source_blobs": ["a4d22ff8b838a3fe27b5012a5dc81c6befe172d1", "653f4e1010e236c09bb14069bf4be1dd5e4a7b98", "d634341dc5f2cdb136fbf669e4865c6197c557fa", "208853d9d364e33a62b9ac3bce9599ab667ac4da", "5dc375972667799648d3664fc4e82e832059232d", "1710c619742d7132743b340e24db905bae6ac556", "5bd7b8af58ea46a796800254721299c6de0be706", "6ea60c464413c25fbefb3a94c161f6f61ee32677"]
+    },
+    {
+      "id": "root-022",
+      "case_ids": ["D134-022-01", "D134-022-02", "D134-022-03", "D134-022-04", "D134-022-05", "D134-022-06", "D134-022-07", "D134-022-08", "D134-022-09", "D134-022-10", "D134-022-11", "D134-022-12", "D134-022-13", "D134-022-14"],
+      "classification_counts": {"FIXTURE_SETUP": 0, "PROVED_PRODUCT_CONTRACT_GAP": 0, "UNKNOWN": 14},
+      "source_basis": "Frozen callers contain explicit element/schema source selection (selected_schema fixture at :219-220 and caller-specific selections), but the retained evidence does not identify the failing command within the authenticated batch or prove hydrated authority state at commit.py:1331.",
+      "comparator": "Prior bounded selected-PARAM passing paths establish applicability of explicit selection only; they do not provide the missing D134 request/record witness.",
+      "finite_needed_input": "For each row: authenticated request body, hydrated selected-authority state, accepted record, and exact failing command ordinal.",
+      "source_blobs": ["a46bb9e8ab9e4065064017f674cfd848a30d6265", "e50df7c7f6a49c74a2c1aca98ffece65f4dcdcd9", "933568ae36b793ac371772dbddf09660eb3febc3", "567ce7a2f0cc233ee4c541144b8b5145abea01f3"]
+    }
+  ],
+  "membership_and_disjointness": {
+    "expected_total": 49,
+    "observed_total": 49,
+    "root_048_count": 35,
+    "root_022_count": 14,
+    "duplicate_nodeids": 0,
+    "membership_source": "agt-F-D134-root-clusters-2022 root groups root-048 and root-022",
+    "independent_review": "agt-F-D134-root-review-2029 reports exact-once membership and matching first frames"
+  },
+  "product_gap_candidates": [],
+  "limitations": ["raw XML/full disk witness missing", "raw runner receipt missing", "accepted records missing", "complete legitimate caller trace missing"],
+  "no_claims": ["no blanket retirement", "no deferred-count change", "no guard-fault inference", "no release/original9/D136a claim"]
+}

@@ -1,0 +1,79 @@
+{
+  "schema": "timeline.agent.d134_inverse7_source_manifest.v2",
+  "task": "rt-D134-inverse7-return-2053",
+  "decision": "APPLIED_D120_CURRENT_AGENT_SOURCE_MIGRATION",
+  "scope": "Only tests/editing_conformance/test_inverse_stage_runtime_regressions.py was changed.",
+  "parent": {
+    "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "worktree_status_before": "clean"
+  },
+  "current_worktree": {
+    "commit_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree_parent": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "status": "one uncommitted assigned-test change",
+    "changed_paths": [
+      {
+        "path": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+        "parent_git_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+        "current_git_blob": "55e7cec5da3463360a4f862986bc28e6a1e39345",
+        "parent_sha256": "6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1",
+        "current_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3"
+      }
+    ]
+  },
+  "chosen_provider_tuple": {
+    "agent": {
+      "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+      "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+      "origin": "/home/user/work/wt/rt-D134-inverse7-return-2053",
+      "home_binding": "normal Agent HOME/current source; no private U2 ancestor",
+      "files": {
+        "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "astrid/sdk/timeline/inverse.py": "6c794734cb763c21cec386f764bc63b94f3a74b4dd9f8464136a285c628d0423"
+      }
+    },
+    "runtime": {
+      "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+      "receipt_origin": "/home/user/banodoco/banodoco-workspace-runtime git object 6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "provider_binding": "tests.helpers.runtime.use_runtime(commit=6634a17f3ffd885567ba3c91b6c7a560df7375a4); immutable git-archive materialization, not a mutable checkout",
+      "files": {
+        "runtime_protocol/timeline_commit_auth.py": "4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb",
+        "runtime_protocol/timeline_commit_store.py": "2a68990b180326585b7f0abaf1ee54c8ff9340e83663f17cd1efff1b2bd78a5c"
+      }
+    }
+  },
+  "retained_historical_authority": {
+    "agent_commit": "bd3c95b1cebe3bf27c4a82919e5839efb37519db",
+    "agent_tree": "e928423ce87e62959b458afca1d62da172271c9c",
+    "agent_origin": "/home/user/peteromallet/astrid-agent git object; retained in original FAIL packet",
+    "agent_files": {
+      "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+      "astrid/sdk/timeline/inverse.py": "06bd41f404a40c17a1ec06b49c8443e0e755f622134822ede55fb3ca79234cee"
+    },
+    "runtime_commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "runtime_files_retained_exactly": true
+  },
+  "original_fail_packets": {
+    "protected_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D134-twelve-protected-review-2046/evidence",
+    "inverse7_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D134-inverse7-source-2045/evidence",
+    "not_overwritten": true
+  },
+  "functional_admission": {
+    "status": "NOTRUN_DISK_FLOOR",
+    "available_bytes_observed": 4497645568,
+    "functional_floor_bytes": 5000000000,
+    "source_only_stop_line_bytes": 4000000000,
+    "source_only_checks_admitted": true,
+    "pytest_nodeids_run": []
+  },
+  "changed_source_identity": {
+    "old_agent_commit": "bd3c95b1cebe3bf27c4a82919e5839efb37519db",
+    "new_agent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "runtime_commit_unchanged": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "identity_equality_relaxed": false,
+    "mutable_checkout_selected": false,
+    "synthetic_history_or_credentials": false
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "schema": "timeline.agent.d134_inverse7_findings.v2",
+  "task": "rt-D134-inverse7-return-2053",
+  "overall_result": "APPLIED_CURRENT_SOURCE_MIGRATION_FUNCTIONAL_NOTRUN",
+  "basis": "D120 permits the finite OUR-test source migration after protected review established that the historical Agent and Runtime authorities exist. The source guard remains strict equality against the selected tuple.",
+  "correction": {
+    "id": "inverse7-current-agent-tuple",
+    "action": "Bind Agent identity constants to current normal-home a30e74e901a28b39c28facba3deb00d76f186e23 commit.py/inverse.py hashes.",
+    "runtime_action": "Retain exact historical Runtime 6634a17f3ffd885567ba3c91b6c7a560df7375a4 commit and both retained file hashes.",
+    "files_changed": [
+      "tests/editing_conformance/test_inverse_stage_runtime_regressions.py"
+    ],
+    "test_bodies_changed": false,
+    "identity_guard_relaxed": false
+  },
+  "classification": {
+    "inverse7_cases": 7,
+    "source_migration_applied": 1,
+    "product_fault_proved": 0,
+    "functional_status": "NOTRUN_DISK_FLOOR",
+    "live_cases_qualified": 0
+  },
+  "cases": [
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-4-two-step-clips-before]",
+      "status": "SOURCE_MIGRATION_APPLIED_NOTRUN",
+      "parameter": {"case_id": "4", "path": ["clips"], "output_first": false},
+      "purpose": "two-step clips-before whole inverse, exact redo"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-16-two-step-clips-after]",
+      "status": "SOURCE_MIGRATION_APPLIED_NOTRUN",
+      "parameter": {"case_id": "16", "path": ["clips"], "output_first": true},
+      "purpose": "two-step clips-after whole inverse, exact redo"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-28-two-step-config-clips-before]",
+      "status": "SOURCE_MIGRATION_APPLIED_NOTRUN",
+      "parameter": {"case_id": "28", "path": ["config", "clips"], "output_first": false},
+      "purpose": "two-step config/clips-before whole inverse, exact redo"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-40-two-step-config-clips-after]",
+      "status": "SOURCE_MIGRATION_APPLIED_NOTRUN",
+      "parameter": {"case_id": "40", "path": ["config", "clips"], "output_first": true},
+      "purpose": "two-step config/clips-after whole inverse, exact redo"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-49-native-whole]",
+      "status": "SOURCE_MIGRATION_APPLIED_NOTRUN",
+      "parameter": {"case_id": "49", "path": null, "output_first": null},
+      "purpose": "native whole inverse, exact redo"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_forged_source_publication_and_step_without_writes",
+      "status": "SOURCE_MIGRATION_APPLIED_NOTRUN",
+      "parameter": null,
+      "purpose": "forged source publication and forged step refusal with durable no-write predicates"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_native_write_and_aba_without_writes",
+      "status": "SOURCE_MIGRATION_APPLIED_NOTRUN",
+      "parameter": null,
+      "purpose": "native intervening write and ABA refusal with durable no-write predicate"
+    }
+  ],
+  "conservation": {
+    "node_ids": "all 7 conserved",
+    "parameters": "all original parameter tuples conserved",
+    "authored_inputs": "all original inputs conserved",
+    "raises": "all original raises contexts conserved",
+    "assertions": "all original assertions conserved",
+    "auth_aba_no_write": "all original auth, forged-source, forged-step, ABA, and no-write predicates conserved",
+    "evidence": "predicate-map.json contains explicit AST before/after records per ID"
+  },
+  "negative_findings": [
+    "No product fault is proved.",
+    "No Runtime tuple/product/API/auth/schema/generated/pin change was made.",
+    "No identity equality relaxation, mutable checkout fallback, synthetic history, credentials, skip, or xfail was introduced.",
+    "No functional qualification is claimed because available disk was below the 5 GB admission floor."
+  ]
+}

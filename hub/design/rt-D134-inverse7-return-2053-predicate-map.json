@@ -1,0 +1,3419 @@
+{
+  "after_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3",
+  "before_sha256": "6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1",
+  "cases": {
+    "test_known_inverse_refuses_forged_source_publication_and_step_without_writes": {
+      "ast": {
+        "after": {
+          "assertions": [
+            [
+              365,
+              "getattr(error.value, 'details', {}).get('reason') in {'history_unavailable', 'invalid_edit_command'}"
+            ],
+            [
+              366,
+              "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"
+            ],
+            [
+              367,
+              "_durable_snapshot(service) == durable_before"
+            ],
+            [
+              375,
+              "getattr(error.value, 'details', {}).get('reason') == 'invalid_steps'"
+            ],
+            [
+              376,
+              "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"
+            ],
+            [
+              377,
+              "_durable_snapshot(service) == durable_before"
+            ],
+            [
+              378,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            357,
+            378
+          ],
+          "inputs": [
+            [
+              358,
+              "_accepted_case(runtime_case)"
+            ],
+            [
+              359,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              360,
+              "_durable_snapshot(service)"
+            ],
+            [
+              361,
+              "_inverse_request(service, project, 'not-the-accepted-publication', label='forged source', group_id='r2-forged-source')"
+            ],
+            [
+              363,
+              "pytest.raises(Exception)"
+            ],
+            [
+              364,
+              "_submit(service, project, forged, 'forged-source')"
+            ],
+            [
+              365,
+              "getattr(error.value, 'details', {})"
+            ],
+            [
+              365,
+              "getattr(error.value, 'details', {}).get('reason')"
+            ],
+            [
+              366,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              367,
+              "_durable_snapshot(service)"
+            ],
+            [
+              369,
+              "_inverse_request(service, project, actual, label='forged step', group_id='r2-forged-step')"
+            ],
+            [
+              371,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              372,
+              "_durable_snapshot(service)"
+            ],
+            [
+              373,
+              "pytest.raises(Exception)"
+            ],
+            [
+              374,
+              "_submit(service, project, forged_step, 'forged-step')"
+            ],
+            [
+              375,
+              "getattr(error.value, 'details', {})"
+            ],
+            [
+              375,
+              "getattr(error.value, 'details', {}).get('reason')"
+            ],
+            [
+              376,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              377,
+              "_durable_snapshot(service)"
+            ],
+            [
+              378,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": [
+            [
+              363,
+              "pytest.raises(Exception)"
+            ],
+            [
+              373,
+              "pytest.raises(Exception)"
+            ]
+          ]
+        },
+        "before": {
+          "assertions": [
+            [
+              365,
+              "getattr(error.value, 'details', {}).get('reason') in {'history_unavailable', 'invalid_edit_command'}"
+            ],
+            [
+              366,
+              "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"
+            ],
+            [
+              367,
+              "_durable_snapshot(service) == durable_before"
+            ],
+            [
+              375,
+              "getattr(error.value, 'details', {}).get('reason') == 'invalid_steps'"
+            ],
+            [
+              376,
+              "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"
+            ],
+            [
+              377,
+              "_durable_snapshot(service) == durable_before"
+            ],
+            [
+              378,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            357,
+            378
+          ],
+          "inputs": [
+            [
+              358,
+              "_accepted_case(runtime_case)"
+            ],
+            [
+              359,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              360,
+              "_durable_snapshot(service)"
+            ],
+            [
+              361,
+              "_inverse_request(service, project, 'not-the-accepted-publication', label='forged source', group_id='r2-forged-source')"
+            ],
+            [
+              363,
+              "pytest.raises(Exception)"
+            ],
+            [
+              364,
+              "_submit(service, project, forged, 'forged-source')"
+            ],
+            [
+              365,
+              "getattr(error.value, 'details', {})"
+            ],
+            [
+              365,
+              "getattr(error.value, 'details', {}).get('reason')"
+            ],
+            [
+              366,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              367,
+              "_durable_snapshot(service)"
+            ],
+            [
+              369,
+              "_inverse_request(service, project, actual, label='forged step', group_id='r2-forged-step')"
+            ],
+            [
+              371,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              372,
+              "_durable_snapshot(service)"
+            ],
+            [
+              373,
+              "pytest.raises(Exception)"
+            ],
+            [
+              374,
+              "_submit(service, project, forged_step, 'forged-step')"
+            ],
+            [
+              375,
+              "getattr(error.value, 'details', {})"
+            ],
+            [
+              375,
+              "getattr(error.value, 'details', {}).get('reason')"
+            ],
+            [
+              376,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              377,
+              "_durable_snapshot(service)"
+            ],
+            [
+              378,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": [
+            [
+              363,
+              "pytest.raises(Exception)"
+            ],
+            [
+              373,
+              "pytest.raises(Exception)"
+            ]
+          ]
+        }
+      },
+      "parameter_input": null
+    },
+    "test_known_inverse_refuses_native_write_and_aba_without_writes": {
+      "ast": {
+        "after": {
+          "assertions": [
+            [
+              410,
+              "getattr(error.value, 'details', {}).get('reason') == 'intervening_write'"
+            ],
+            [
+              411,
+              "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"
+            ],
+            [
+              412,
+              "_durable_snapshot(service) == durable_before"
+            ],
+            [
+              413,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            381,
+            413
+          ],
+          "inputs": [
+            [
+              382,
+              "_accepted_case(runtime_case)"
+            ],
+            [
+              386,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              387,
+              "service._timeline_commits()"
+            ],
+            [
+              387,
+              "service._timeline_commits()[0].revision_closure(project, 'main', head['head_revision_id'])"
+            ],
+            [
+              388,
+              "bundle_from_document(current)"
+            ],
+            [
+              388,
+              "capture_move(bundle_from_document(current), 'parent/clip:clip-right', 3)"
+            ],
+            [
+              389,
+              "_full_request(service, project, [native], steps=[step('native', 0, native)], label='R2 native guard', reads=[], key='unused', source={'via': 'python'}, rationale='Native guard counterpart', group_id='r2-native-guard')"
+            ],
+            [
+              390,
+              "step('native', 0, native)"
+            ],
+            [
+              394,
+              "_submit(service, project, native_request, 'native-intervening')"
+            ],
+            [
+              395,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              396,
+              "service._timeline_commits()"
+            ],
+            [
+              396,
+              "service._timeline_commits()[0].revision_closure(project, 'main', head['head_revision_id'])"
+            ],
+            [
+              397,
+              "bundle_from_document(current)"
+            ],
+            [
+              397,
+              "capture_move(bundle_from_document(current), 'parent/clip:clip-right', 2)"
+            ],
+            [
+              398,
+              "_full_request(service, project, [native_return], steps=[step('native-return', 0, native_return)], label='R2 native ABA', reads=[], key='unused', source={'via': 'python'}, rationale='Native ABA counterpart', group_id='r2-native-aba')"
+            ],
+            [
+              399,
+              "step('native-return', 0, native_return)"
+            ],
+            [
+              403,
+              "_submit(service, project, native_return_request, 'native-aba-return')"
+            ],
+            [
+              404,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              405,
+              "_durable_snapshot(service)"
+            ],
+            [
+              406,
+              "_inverse_request(service, project, accepted['receipt']['receipt_id'], label='native refusal', group_id='r2-native-refusal')"
+            ],
+            [
+              408,
+              "pytest.raises(Exception)"
+            ],
+            [
+              409,
+              "_submit(service, project, inverse_request, 'native-refusal')"
+            ],
+            [
+              410,
+              "getattr(error.value, 'details', {})"
+            ],
+            [
+              410,
+              "getattr(error.value, 'details', {}).get('reason')"
+            ],
+            [
+              411,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              412,
+              "_durable_snapshot(service)"
+            ],
+            [
+              413,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": [
+            [
+              408,
+              "pytest.raises(Exception)"
+            ]
+          ]
+        },
+        "before": {
+          "assertions": [
+            [
+              410,
+              "getattr(error.value, 'details', {}).get('reason') == 'intervening_write'"
+            ],
+            [
+              411,
+              "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"
+            ],
+            [
+              412,
+              "_durable_snapshot(service) == durable_before"
+            ],
+            [
+              413,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            381,
+            413
+          ],
+          "inputs": [
+            [
+              382,
+              "_accepted_case(runtime_case)"
+            ],
+            [
+              386,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              387,
+              "service._timeline_commits()"
+            ],
+            [
+              387,
+              "service._timeline_commits()[0].revision_closure(project, 'main', head['head_revision_id'])"
+            ],
+            [
+              388,
+              "bundle_from_document(current)"
+            ],
+            [
+              388,
+              "capture_move(bundle_from_document(current), 'parent/clip:clip-right', 3)"
+            ],
+            [
+              389,
+              "_full_request(service, project, [native], steps=[step('native', 0, native)], label='R2 native guard', reads=[], key='unused', source={'via': 'python'}, rationale='Native guard counterpart', group_id='r2-native-guard')"
+            ],
+            [
+              390,
+              "step('native', 0, native)"
+            ],
+            [
+              394,
+              "_submit(service, project, native_request, 'native-intervening')"
+            ],
+            [
+              395,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              396,
+              "service._timeline_commits()"
+            ],
+            [
+              396,
+              "service._timeline_commits()[0].revision_closure(project, 'main', head['head_revision_id'])"
+            ],
+            [
+              397,
+              "bundle_from_document(current)"
+            ],
+            [
+              397,
+              "capture_move(bundle_from_document(current), 'parent/clip:clip-right', 2)"
+            ],
+            [
+              398,
+              "_full_request(service, project, [native_return], steps=[step('native-return', 0, native_return)], label='R2 native ABA', reads=[], key='unused', source={'via': 'python'}, rationale='Native ABA counterpart', group_id='r2-native-aba')"
+            ],
+            [
+              399,
+              "step('native-return', 0, native_return)"
+            ],
+            [
+              403,
+              "_submit(service, project, native_return_request, 'native-aba-return')"
+            ],
+            [
+              404,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              405,
+              "_durable_snapshot(service)"
+            ],
+            [
+              406,
+              "_inverse_request(service, project, accepted['receipt']['receipt_id'], label='native refusal', group_id='r2-native-refusal')"
+            ],
+            [
+              408,
+              "pytest.raises(Exception)"
+            ],
+            [
+              409,
+              "_submit(service, project, inverse_request, 'native-refusal')"
+            ],
+            [
+              410,
+              "getattr(error.value, 'details', {})"
+            ],
+            [
+              410,
+              "getattr(error.value, 'details', {}).get('reason')"
+            ],
+            [
+              411,
+              "service.get_project_timeline(project, 'main')"
+            ],
+            [
+              412,
+              "_durable_snapshot(service)"
+            ],
+            [
+              413,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": [
+            [
+              408,
+              "pytest.raises(Exception)"
+            ]
+          ]
+        }
+      },
+      "parameter_input": null
+    },
+    "test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-16-two-step-clips-after]": {
+      "ast": {
+        "after": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        },
+        "before": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        }
+      },
+      "parameter_input": {
+        "after": {
+          "case_id": "16",
+          "output_first": true,
+          "path": [
+            "clips"
+          ]
+        },
+        "before": {
+          "case_id": "16",
+          "output_first": true,
+          "path": [
+            "clips"
+          ]
+        }
+      }
+    },
+    "test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-28-two-step-config-clips-before]": {
+      "ast": {
+        "after": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        },
+        "before": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        }
+      },
+      "parameter_input": {
+        "after": {
+          "case_id": "28",
+          "output_first": false,
+          "path": [
+            "config",
+            "clips"
+          ]
+        },
+        "before": {
+          "case_id": "28",
+          "output_first": false,
+          "path": [
+            "config",
+            "clips"
+          ]
+        }
+      }
+    },
+    "test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-4-two-step-clips-before]": {
+      "ast": {
+        "after": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        },
+        "before": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        }
+      },
+      "parameter_input": {
+        "after": {
+          "case_id": "4",
+          "output_first": false,
+          "path": [
+            "clips"
+          ]
+        },
+        "before": {
+          "case_id": "4",
+          "output_first": false,
+          "path": [
+            "clips"
+          ]
+        }
+      }
+    },
+    "test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-40-two-step-config-clips-after]": {
+      "ast": {
+        "after": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        },
+        "before": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        }
+      },
+      "parameter_input": {
+        "after": {
+          "case_id": "40",
+          "output_first": true,
+          "path": [
+            "config",
+            "clips"
+          ]
+        },
+        "before": {
+          "case_id": "40",
+          "output_first": true,
+          "path": [
+            "config",
+            "clips"
+          ]
+        }
+      }
+    },
+    "test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-49-native-whole]": {
+      "ast": {
+        "after": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        },
+        "before": {
+          "assertions": [
+            [
+              262,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              271,
+              "set(accepted) == {'data', 'receipt'}"
+            ],
+            [
+              272,
+              "accepted['receipt']['result'] == accepted['data']"
+            ],
+            [
+              273,
+              "accepted['data']['status'] == 'accepted'"
+            ],
+            [
+              274,
+              "accepted['data']['base_revision_id'] == request['base_revision_id']"
+            ],
+            [
+              275,
+              "accepted['data']['base_publication_id'] == request['base_publication_id']"
+            ],
+            [
+              279,
+              "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"
+            ],
+            [
+              282,
+              "accepted['data']['label'] == request['label']"
+            ],
+            [
+              283,
+              "accepted['data']['merge_mode'] == 'fields'"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads']) == reads"
+            ],
+            [
+              285,
+              "accepted['data']['source'] == request['source']"
+            ],
+            [
+              286,
+              "accepted['data']['rationale'] == request['rationale']"
+            ],
+            [
+              287,
+              "accepted['data']['group_id'] == request['group_id']"
+            ],
+            [
+              288,
+              "accepted['data']['publisher'] == 'r2-test-author'"
+            ],
+            [
+              289,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              294,
+              "history['publication_id'] == publication"
+            ],
+            [
+              295,
+              "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"
+            ],
+            [
+              298,
+              "history['records']['steps'] == accepted['data']['steps']"
+            ],
+            [
+              299,
+              "history['records']['label'] == request['label']"
+            ],
+            [
+              300,
+              "history['records']['merge_mode'] == 'fields'"
+            ],
+            [
+              301,
+              "history['records']['commands'][0]['reads']"
+            ],
+            [
+              302,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              303,
+              "history['records']['commands'][0]['bindings']"
+            ],
+            [
+              304,
+              "history['records']['steps'][0]['patch']"
+            ],
+            [
+              305,
+              "history['records']['steps'][0]['dependencies']"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              308,
+              "history['records']['commands'][0]['derived_writes']"
+            ],
+            [
+              311,
+              "payload['clips'] == payload['config']['clips']"
+            ],
+            [
+              312,
+              "payload['clips'][1]['id'] == 'clip-right'"
+            ],
+            [
+              313,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              320,
+              "set(undone) == {'data', 'receipt'}"
+            ],
+            [
+              321,
+              "undone['receipt']['result'] == undone['data']"
+            ],
+            [
+              322,
+              "undone['data']['status'] == 'accepted'"
+            ],
+            [
+              323,
+              "undone['data']['canonical_document'] == document"
+            ],
+            [
+              324,
+              "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"
+            ],
+            [
+              325,
+              "undone['data']['steps']"
+            ],
+            [
+              327,
+              "undo_record['undo_of'] == [publication]"
+            ],
+            [
+              328,
+              "undo_record['commands'][0]['writes']"
+            ],
+            [
+              329,
+              "undo_record['commands'][0]['derived_writes']"
+            ],
+            [
+              330,
+              "undo_record['commands'][0]['bindings']"
+            ],
+            [
+              331,
+              "origin == _origin_snapshot()"
+            ],
+            [
+              338,
+              "redone['data']['status'] == 'accepted'"
+            ],
+            [
+              339,
+              "redone['data']['canonical_document'] == forward_document"
+            ],
+            [
+              340,
+              "redone['receipt']['result'] == redone['data']"
+            ],
+            [
+              341,
+              "origin == _origin_snapshot()"
+            ]
+          ],
+          "function_span": [
+            258,
+            341
+          ],
+          "inputs": [
+            [
+              257,
+              "pytest.mark.parametrize('case_id,path,output_first', CASES)"
+            ],
+            [
+              262,
+              "_origin_snapshot()"
+            ],
+            [
+              263,
+              "_assert_source_identity(origin)"
+            ],
+            [
+              264,
+              "_forward_case(document, path, output_first)"
+            ],
+            [
+              265,
+              "_full_request(service, project, commands, steps=steps, label=f'R2 known case {case_id}', reads=reads, key='unused', source={'via': 'python'}, rationale='Durable R2 known inverse regression', group_id=f'r2-known-{case_id}')"
+            ],
+            [
+              270,
+              "_submit(service, project, request, f'forward-{case_id}')"
+            ],
+            [
+              271,
+              "set(accepted)"
+            ],
+            [
+              284,
+              "accepted['data'].get('reads', request['reads'])"
+            ],
+            [
+              289,
+              "_origin_snapshot()"
+            ],
+            [
+              292,
+              "service._timeline_commits()"
+            ],
+            [
+              293,
+              "store.history_entry(project, 'main', publication)"
+            ],
+            [
+              306,
+              "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"
+            ],
+            [
+              313,
+              "_origin_snapshot()"
+            ],
+            [
+              315,
+              "_inverse_request(service, project, publication, label=f'R2 undo known case {case_id}', group_id=f'r2-known-{case_id}-undo')"
+            ],
+            [
+              319,
+              "_submit(service, project, undo_request, f'undo-{case_id}')"
+            ],
+            [
+              320,
+              "set(undone)"
+            ],
+            [
+              326,
+              "store.history_entry(project, 'main', undone['receipt']['receipt_id'])"
+            ],
+            [
+              331,
+              "_origin_snapshot()"
+            ],
+            [
+              333,
+              "_inverse_request(service, project, undone['receipt']['receipt_id'], label=f'R2 redo known case {case_id}', group_id=f'r2-known-{case_id}-redo')"
+            ],
+            [
+              337,
+              "_submit(service, project, redo_request, f'redo-{case_id}')"
+            ],
+            [
+              341,
+              "_origin_snapshot()"
+            ]
+          ],
+          "raises": []
+        }
+      },
+      "parameter_input": {
+        "after": {
+          "case_id": "49",
+          "output_first": null,
+          "path": null
+        },
+        "before": {
+          "case_id": "49",
+          "output_first": null,
+          "path": null
+        }
+      }
+    }
+  },
+  "changed_ast_scope": "only module-level Agent source identity constants; seven test function ASTs are identical",
+  "conservation": {
+    "assertions_conserved": true,
+    "auth_aba_no_write_predicates_conserved": true,
+    "authored_inputs_conserved": true,
+    "case_count": 7,
+    "functional_status": "NOTRUN_DISK_FLOOR",
+    "node_ids_conserved": true,
+    "parameter_inputs_conserved": true,
+    "raises_conserved": true
+  },
+  "parent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "parent_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+  "schema": "timeline.agent.d134_inverse7_predicate_map.v2",
+  "source_path": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+  "task": "rt-D134-inverse7-return-2053"
+}
+
