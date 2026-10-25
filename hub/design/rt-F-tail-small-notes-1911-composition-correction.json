@@ -1,0 +1,83 @@
+{
+  "schema": "rt-f-composition-frozen-ref-correction-v1",
+  "finding": "frozen-ref-crosswalk",
+  "source_review": {
+    "path": "workers/rt-F-tail-pristine-final-review-1904/evidence/review.json",
+    "sha256": "2e5696dfba8685e6deb6168c7f32c3c866271cc85f52df8a76d4b29419d8c2e3",
+    "prior_first_return": "workers/rt-F-tail-pristine-return-1857/evidence/inputs.json and source-manifest.json"
+  },
+  "json_patch": [
+    {
+      "op": "add",
+      "path": "/named_upstream/Composition/frozen_r4_ref",
+      "value": "origin/codex/handover-timeline-r4-20261019-candidate-composition"
+    },
+    {
+      "op": "replace",
+      "path": "/named_upstream/Composition/frozen_r4_ref_resolution",
+      "from": {
+        "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+        "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120"
+      },
+      "value": {
+        "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+        "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/named_upstream/Composition/object_relationship",
+      "from": "named commit/tree equals the locally resolved frozen R4 ref; no ref was moved or retargeted",
+      "value": "named origin/main commit/tree and frozen R4 ref are distinct immutable captures; no ref was moved or retargeted"
+    },
+    {
+      "op": "add",
+      "path": "/named_upstream_objects/3/frozen_ref",
+      "value": "origin/codex/handover-timeline-r4-20261019-candidate-composition"
+    },
+    {
+      "op": "replace",
+      "path": "/named_upstream_objects/3/frozen_r4_ref_resolution",
+      "from": {
+        "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+        "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120"
+      },
+      "value": {
+        "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+        "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/named_upstream_objects/3/object_relationship",
+      "from": "named commit/tree equals the locally resolved frozen R4 ref; no ref was moved or retargeted",
+      "value": "named origin/main commit/tree and frozen R4 ref are distinct immutable captures; no ref was moved or retargeted"
+    }
+  ],
+  "local_object_crosswalk": {
+    "repository": "/home/user/peteromallet/timeline-composition",
+    "frozen_ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition",
+    "frozen_commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+    "frozen_tree": "49975e7a54fd594e1b7fc807681fe28611d57864",
+    "frozen_parent": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+    "named_upstream_ref": "origin/main",
+    "named_upstream_commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+    "named_upstream_tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+    "named_upstream_parent": "bd1011bce5fb4f172269911555568d18e6b22f3c",
+    "ref_relationship": "distinct immutable captures; no ref moved or retargeted"
+  },
+  "review_record_discrepancy": {
+    "review_json_tree_text": "49975e7a54fd594e1b7fc807681fe28611d57864e",
+    "local_git_tree_text": "49975e7a54fd594e1b7fc807681fe28611d57864",
+    "decision": "Use the locally verified 40-hex Git object ID; the review text has one extra trailing hex character and is not a valid tree object ID."
+  },
+  "preserved": [
+    "named upstream commit/tree/parent fields",
+    "current integration snapshot",
+    "route and selector order",
+    "five UNKNOWN_MISSING_UPSTREAM_SELECTOR roots plus D73 launcher",
+    "D54a selectors",
+    "historical 41 / manifest 34 / stable source-only 33 / generated caches 7 counts",
+    "all copied commands, selector-map, and validation bytes"
+  ]
+}

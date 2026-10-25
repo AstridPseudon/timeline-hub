@@ -1,0 +1,36 @@
+{
+  "schema": "timeline.ops-child-custody.portable-wholepath-source.v1",
+  "reviewed_commit": "2fffe593175338ffb8144705bb70c9542fa4459f",
+  "reviewed_tree": "516da69731401037b6845f1e14ea11b4c9135628",
+  "reviewed_parent": "674d13e26ce40ce9a158a7e50b226c247fbc9588",
+  "runner_sha256": "f02fdcca8ad7c9484866b1817bb67272212933c4576d2212c2d163a07edf1c96",
+  "fixture_manifest_sha256": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8",
+  "immutable_inputs": {
+    "parent_maker": "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv",
+    "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "candidate_maker": "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv",
+    "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "store_helper": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+    "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "parent_mode": "755",
+    "candidate_mode": "755",
+    "verifier_blocks_equal": true,
+    "bootstrap_artifact_sha256": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548"
+  },
+  "source_files_read": [
+    "ops-child-custody/tests/e2e_inventory.py",
+    "ops-child-custody/tests/test_e2e_inventory.py",
+    "ops-child-custody/e2e-fixtures/tiny/manifest.json",
+    "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv",
+    "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv",
+    "ops-child-custody/e2e-fixtures/README.md",
+    "ops-child-custody/validation.md"
+  ],
+  "prior_reports_read": [
+    "agt-OPS-inventory-E2E-portable-sol-1816",
+    "agt-OPS-inventory-E2E-final-receive-1822",
+    "agt-OPS-inventory-E2E-failure-review-1829",
+    "rt-OPS-inventory-portable-review-1847",
+    "rt-OPS-inventory-portable-final-review-1903"
+  ]
+}

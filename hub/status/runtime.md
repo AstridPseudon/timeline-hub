@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T19:12:41Z | dispatcher heartbeat 15s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 3m -->
-# runtime board, 2026-10-25T19:09:27Z
+<!-- main | 2026-10-25T19:17:35Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 0m -->
+# runtime board, 2026-10-25T19:16:49Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -443,35 +443,35 @@
 | OPS-inventory-install | Prepare guarded kit installation | Luna | Genuine E2E and independent result PASS | gated:E2E | Return1821; independent1826 PASS | F1–F7 resolved; exact private installer ready. Synthetic private gates carry no genuine acceptance. Live0857 unchanged. | [Review](../../design/rt-OPS-inventory-install-final-review-1826-review.json) | a3e707dbc held |
 
 | F-tail-upstream-census | Preview current upstream conflicts | Luna | Source census independently verified | merged | Author1844; independent1850 PASS | Read-only merge-tree: Runtime10, Agent40, App16, Composition0 conflicts. No actual clone dry run. | [Review](../../design/rt-F-tail-census-review-1850-report.md) | Evidence only |
-| F-tail-pristine-prep | Prepare pristine core comparison | Luna | Correct Composition ref mapping | ready | Review1904 FAIL; small split queued next slot | Four findings PASS; one Composition frozen-ref mapping remains. No pristine core body; no source-only gate credit. | Review1904 FAIL retained | Evidence only |
+| F-tail-pristine-prep | Prepare pristine core comparison | Luna | Final residual ref review | review | Split1911 complete; independent1916 | Composition crosswalk corrected; prior reviewer41-char tree error disclosed. Four prior findings PASS. | Independent1916 active | Evidence only |
 | F-tail-patch-dryrun | Check fresh upstream patch export | Farm runner | Farm receiving source route | blocked:farm | Peer1844 exact test-only handoff | Existing squash/export script, private clones and apply check. No live delivery, ZIP or integration mutation. Farm headroom requested. | Result review follows | No run yet |
 
 
-| D100-additive-correction | Preserve custody test purposes | Luna | Exact source disposition1858 | ready | App hosted author requested1901 | Admitted offset and separate exact cache assertions specified; no test or product edit yet. Source9486 held. | App1843 and Runtime1858 | 9486 held |
-| F-tail-Runtime-classes | Classify ten Runtime conflict files | Luna | Census1850 PASS | doing | rt-F-tail-Runtime-conflicts-1902 | Every hunk and trivial private patches; actual clone route must be named. No normal merge. | Independent review follows | Source only |
+| D100-additive-correction | Preserve custody test purposes | Luna | Exact independent purpose review | doing | rt-Agent-D100-test-return-1914 | Main sole author now changes new additive test only; product018f exact. App original27 and own9 remain unrun on corrected source. | App1843 / Runtime1858 | 9486 held |
+| F-tail-Runtime-classes | Classify ten Runtime conflict files | Luna | Independent source review | review | Author1902; remote review offer held during Agent core | All22 hunks:3 textual,2 context,17 semantic. Only CI/docs private patches; clone route unavailable. | Review next admitted slot | Source only |
 | F-tail-App-classes | Classify sixteen App conflict files | Luna | Census1850 PASS | ready | App peer1901 assignment requested | Disjoint App owner; preserve both test families and upstream behavior. No normal merge. | Pending source return | Source only |
 | F-tail-Agent-classes-A | Classify first twenty Agent conflicts | Luna | Census1850 PASS | ready | Agent peer1901 hosted allocation requested | Agent owner assigns exact disjoint half and actual worker. No normal merge. | Pending source return | Source only |
 | F-tail-Agent-classes-B | Classify second twenty Agent conflicts | Luna | Census1850 PASS | ready | Agent peer1901 hosted allocation requested | Second disjoint half; no competing semantic author. No normal merge. | Pending source return | Source only |
 
-| F-final-D133-notes | Include deferred Gate3 paragraph | Luna | Existing exact App1853 paragraph | ready | Next admitted source slot | Copy approved worker prose to existing final notes with actual renderer and prior bytes preserved. No ZIP/build. | Author prose validation owed | Installed notes pending |
+| F-final-D133-notes | Include deferred Gate3 paragraph | Luna | Actual installed renderer proof | merged | rt-F-tail-small-notes-1911 | Exact App1853 paragraph installed in both real docs. CAS backups, mode0644, outside bytes and real renderer PASS. No build/ZIP. | D56 author proof | Installed prose |
 
 Runtime producer: Normal e319 adds qualified leaf helper/tests only; product remains ab1e step and inverse/redo plus safe diagnostics. Genuine3/native2 PASS on recorded home1550. Held SWAP1537 excluded.
 core open:425 and REG14 from immutable30693. No newer core body or bounded-proof deduction. Frozen a4e016/5e9ad/d8a1/635f unchanged.
 Gates: P1/P3 recorded GO; P4 independent GO28.101seconds. Full P2 NO-GO for element/SWAP. No cut, build or ZIP.
 Blockers: Agent core — portable1903 second FAIL; HARD Sol1908 corrects total census/lint; independent wholepath1909 parallel. Installer1826/maker1744 PASS held for genuine Agent E2E/result review.
 Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
-Blockers: Element — actual32016 independent1847 qualified FAIL. Runtime21.741s/provider13.781s; descendant inclusive context EXACTMISSING1851. App source-only continuation requested1906; no cost author.
+Blockers: Element — actual32016 FAIL with21.741s Runtime/13.781s provider. SameJSON1851 and retainedraw1858 lack descendant chains/counters; App quick1902 checks. Conditional helper source held; no cost author.
 Blockers: Final render — Farm717e layout EXACTMISSING. Qualified changed kit and actual receiving receipt precede any D77 retry; Farm core remains dropped.
 Blockers: D69 and cut — current core, REG0, full P2, installed render90, final tuple P1–P5, wheel, Windows and final build/ZIP remain owed.
 Blockers: ZIP patch dryrun — Farm test-only receiving requested1844, exact source/tips supplied. No final-cut/build/ZIP credit; no duplicate Main run.
-Next ready: Sol1908 plus reader1909 then exact independent review. Composition ref split and D133 installed prose next slots. App/Agent conflict, D100 additive and element source owners requested; no duplicate bodies.
+Next ready: Sol1908 final source then exact independent review. Reader1909 complete, five finite findings. D1001914 active; D133 installed; ref1916 review. Runtime conflict review next; remote classes pending.
 Kit: Candidate c3226b/source09ed independent1744 PASS; installer a3e707 independent1826 PASS. No production install/request before genuine E2E and independent result. CHILD5905580032, other8GiB, stop4GB unchanged.
 Delivery: Census1850 PASS is read-only merge-tree evidence: Runtime10/Agent40/App16 conflicts, Composition0; clone dry run remains unperformed. Pristine1857 returned and independent1904 checks counts/refs. Private100Python/TS final cut remains gated.
 Source receipts: U4a HOME d4ba; D107 HOME9350. Transcriptpin317 two FAIL; private records EXACTMISSING and owner UNKNOWN. D100 firstbirth improves;1858 identifies new additive setup issues. Exact custody/cache assertions and default offset specified; App hosted first return requested1901.
 Safety: D130 and prior D88/D111/retirement refusals held. ORCH-only outputs; no manager product/test/pin writes, Git mutations, credentials, upstream push, M5 or permission-file changes.
 Venues: Agent sole genuine E2E venue. No Main heavy or production child. Historical tuples/results never retargeted. Cancelled control-binding request not dispatched.
-Later: D13420:00Z conditional interim count only if custody E2E not GREEN; no early run/acquisition/bypass/ship credit. Agent owns trigger and recovered exact bindings.
+Measurement: Header records actual D134 started19:09 on Agent frozena4e016/5e9ad, no ship credit; exact ID requested1916. No duplicate body. Future E2E respects active heavy job and unchanged reserve.
 Later: OriginalTrue redo birth and graph initial child alias remain failed/unknown with missing authentic physical records. No unchanged retry or speculative guard author. Scalar/compound and Gate3 remain visible; D133 final B deferred.
 Disk: Fresh4.74GB after three admitted source starts. Sweep3 removed0; compact packed0 and losslessly gzipped5 old logs. Finished1844/reviews autorecycled; no protected or refused target retried.
-live 3 / cap 3; ready-undispatched 2 capacity-gated local. Sol1908, independent1909 and Runtime1902. Small Composition ref correction and D133 prose next; remote conflict/D100 owners requested1901.
-INBOX consumed through1434828bytes. Updated 2026-10-25T18:56:28Z.
+live 3 / cap 3; ready-undispatched 1 local at capacity. Sol1908, D1001914, residual ref review1916. Runtime conflict review next; remote App/Agent conflict allocations pending actual IDs.
+INBOX consumed through1449957bytes. Updated 2026-10-25T18:56:28Z.

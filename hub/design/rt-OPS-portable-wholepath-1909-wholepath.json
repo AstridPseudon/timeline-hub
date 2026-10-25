@@ -1,0 +1,104 @@
+{
+  "schema": "timeline.ops-child-custody.portable-wholepath.v1",
+  "mode": "READ_ONLY",
+  "verdict": "FAIL_FINITE_FINDINGS",
+  "source": {
+    "commit": "2fffe593175338ffb8144705bb70c9542fa4459f",
+    "tree": "516da69731401037b6845f1e14ea11b4c9135628",
+    "parent": "674d13e26ce40ce9a158a7e50b226c247fbc9588"
+  },
+  "path_trace": [
+    {"order": 1, "stage": "CLI main -> --check-only -> check_only", "callsite": "ops-child-custody/tests/e2e_inventory.py:648-662", "state": "SOURCE_CONFIRMED"},
+    {"order": 2, "stage": "manifest JSON/schema/roles/sources/makers census", "callsite": "ops-child-custody/tests/e2e_inventory.py:186-230", "state": "SOURCE_CONFIRMED"},
+    {"order": 3, "stage": "helper/wheel/artifact/interpreter/command/df/path census", "callsite": "ops-child-custody/tests/e2e_inventory.py:232-298", "state": "SOURCE_CONFIRMED"},
+    {"order": 4, "stage": "carrier Git clean tree/mode/committed blob census", "callsite": "ops-child-custody/tests/e2e_inventory.py:300-326", "state": "SOURCE_CONFIRMED"},
+    {"order": 5, "stage": "helper/verifier/result census and result emission", "callsite": "ops-child-custody/tests/e2e_inventory.py:328-357", "state": "SOURCE_CONFIRMED"},
+    {"order": 6, "stage": "normal prepare venue: fixture sources, wheelhouse, private roots, suites.conf, helper copy", "callsite": "ops-child-custody/tests/e2e_inventory.py:441-480", "state": "SOURCE_CONFIRMED"},
+    {"order": 7, "stage": "unchanged Store.initialize twice after suites.conf", "callsite": "ops-child-custody/tests/e2e_inventory.py:481-485", "state": "SOURCE_CONFIRMED_FIX_1829"},
+    {"order": 8, "stage": "normal run: source recheck, parent/candidate maker loop", "callsite": "ops-child-custody/tests/e2e_inventory.py:508-584", "state": "SOURCE_CONFIRMED_NOT_RUN"},
+    {"order": 9, "stage": "whole maker embedded Store and Store.ensure", "callsite": "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv:318,566", "state": "SOURCE_CONFIRMED_NOT_RUN"}
+  ],
+  "retained_results": {
+    "valid_private_comparator": {
+      "state": "ACTUAL_RETAINED_RESULT",
+      "evidence": "agt-OPS-inventory-E2E-portable-sol-1816 recorded portable census exit 0 after source/mode/import/wheel checks; 1847/1903 retained exact helper/maker/source controls",
+      "current_rerun": "NOT_RUN",
+      "reason": "current df available 4692132 KiB, below unchanged 5905580032-byte admission reserve"
+    },
+    "absent_manifest_probe": {
+      "state": "ACTUAL_RETAINED_RESULT",
+      "exit_code": 2,
+      "result_emitted": true,
+      "setup_started": false,
+      "git_mutated": false,
+      "finding": "none: missing manifest accumulated normal missing-prerequisite census"
+    },
+    "previous_parent_exit_2": {
+      "state": "ACTUAL_RETAINED_RESULT",
+      "evidence": "1829 retained parent exit 2 before maker stages because Store._verify_projection read missing tests/suites.conf",
+      "current_source": "fixed: prepare_venue writes empty private suites.conf at line 477 before Store.initialize at lines 484-485"
+    }
+  },
+  "findings": [
+    {
+      "id": "uncaught-wheel-role-shape",
+      "state": "ACTUAL_RETAINED_RESULT",
+      "severity": "blocking",
+      "producer": "fixture manifest roles.dependency-dot/dependency-underscore entry",
+      "consumer": "fixture_wheel_pins",
+      "callsite": "ops-child-custody/tests/e2e_inventory.py:101-110, especially line 105",
+      "failure": "a JSON list role entry reaches .get('wheel') and raises AttributeError; check_only catches TypeError/KeyError/ValueError/RuntimeError at lines 249-253, not AttributeError",
+      "probe": "private malformed dependency-dot role with wheelhouse: exit 1 traceback, no result JSON, no setup/Git/Store/maker",
+      "minimal_unapplied_finding": "normalize or reject non-dict dependency role entries before fixture_wheel_pins dereferences them, recording the role as missing in the complete census"
+    },
+    {
+      "id": "uncaught-maker-path-type",
+      "state": "ACTUAL_RETAINED_RESULT",
+      "severity": "blocking",
+      "producer": "fixture manifest makers.<role>.path",
+      "consumer": "check_only maker loop",
+      "callsite": "ops-child-custody/tests/e2e_inventory.py:216-228, especially line 221",
+      "failure": "path construction occurs before the try; a JSON null path raises TypeError and aborts instead of appending packaged-maker failure",
+      "probe": "private makers.parent.path=null manifest: exit 1 traceback, no result JSON, no setup/Git/Store/maker",
+      "minimal_unapplied_finding": "type-check maker path and construct it inside the guarded branch so malformed entries become one census miss"
+    },
+    {
+      "id": "missing-required-source-roles",
+      "state": "SOURCE_INFERENCE",
+      "severity": "blocking",
+      "producer": "fixture source manifest roles map",
+      "consumer": "source_hashes_from_manifest then prepare_venue",
+      "callsite": "ops-child-custody/tests/e2e_inventory.py:64-82, 300-305, 452-454",
+      "failure": "check_only never requires agent and runtime role keys; .get(role,{}) can authenticate empty clean carrier trees, then prepare_venue indexes fixture_sources()['agent'] and ['runtime'] and raises KeyError",
+      "minimal_unapplied_finding": "require the exact agent/runtime role keys before allowing a passing census"
+    },
+    {
+      "id": "ambient-python3-not-censused",
+      "state": "SOURCE_INFERENCE",
+      "severity": "blocking",
+      "producer": "maker runtime command environment",
+      "consumer": "whole maker",
+      "callsite": "maker line 219 (python3 -I embedded Store body), line 827 (python3 relocation); check_only REQUIRED_COMMANDS at e2e_inventory.py:40-43,283-284",
+      "failure": "check_only validates explicit runner/build/child paths but does not validate ambient python3; a PATH without python3 can pass census and fail before/inside maker setup",
+      "minimal_unapplied_finding": "census the exact ambient python3 dependency or bind those maker invocations to the already-censused interpreter"
+    },
+    {
+      "id": "tmpdir-writability-not-censused",
+      "state": "SOURCE_INFERENCE",
+      "severity": "bounded",
+      "producer": "TMPDIR filesystem permissions",
+      "consumer": "prepare_venue",
+      "callsite": "check_only lines 182-185; prepare_venue lines 470-480",
+      "failure": "check_only tests physical existence only; prepare immediately mkdirs orch and writes suites.conf/copies helper, so an existing non-writable TMPDIR can pass census then fail setup",
+      "minimal_unapplied_finding": "census writable TMPDIR/parent creation capability before authorizing prepare"
+    }
+  ],
+  "unchanged_controls": {
+    "maker_parent_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "maker_candidate_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verifier_blocks_equal": true,
+    "raw_full_diff_check": "expected exit 2: two frozen maker blank-lines-at-EOF diagnostics only",
+    "scoped_authored_diff_check": "PASS"
+  }
+}

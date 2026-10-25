@@ -1,0 +1,53 @@
+{
+  "schema": "rt-f-delivery-prose-install-receipt-v1",
+  "worker": "rt-F-tail-small-notes-1911",
+  "installed_utc": "2026-10-25T19:12:13Z",
+  "source": {
+    "paragraph": "design/app-D133-Gate3-deferred-ZIP-note-1853-zip-note.md",
+    "paragraph_sha256": "579b0810d7268aa7be51c784b1aa1e4da94fe36d813de929affbdf280c39c9a0",
+    "report": "design/app-D133-Gate3-deferred-ZIP-note-1853-report.md",
+    "report_sha256": "c876297817f2f7c56fc28d5141395d76029ec3178d3fa4a3cc8af5b1a007f246",
+    "citations": "design/app-D133-Gate3-deferred-ZIP-note-1853-source-citations.json",
+    "citations_sha256": "c9028f40ff7af5a75e8eecdd8de8c43d723d6c8864ba56bc0d7ed67eb9497f86",
+    "source_mode": "local source present; readonly-hub fallback not used"
+  },
+  "builder": {
+    "path": "bin/delivery-build",
+    "sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "active_process_at_cas": false,
+    "render_check": "bin/delivery-build.render_readme controlled four-repository stub; PASS; two exact paragraphs; zero unresolved placeholders"
+  },
+  "targets": {
+    "README.template.md": {
+      "path": "delivery/README.template.md",
+      "predecessor_sha256": "1b223bdb9a98a43ce0b4ce55ef0dd3adae0078e142cdcf7a7876417f6a2dee74",
+      "candidate_sha256": "a5ba95670b7e897bf5f1002cf7e68250a6498713317da34d14f2bc90caa6b331",
+      "installed_sha256": "a5ba95670b7e897bf5f1002cf7e68250a6498713317da34d14f2bc90caa6b331",
+      "predecessor_backup": "delivery/README.template.md.predecessor.20261025T191213Z",
+      "predecessor_backup_sha256": "1b223bdb9a98a43ce0b4ce55ef0dd3adae0078e142cdcf7a7876417f6a2dee74",
+      "mode": "0644",
+      "paragraph_count": 1,
+      "outside_bytes_equal": true
+    },
+    "gate-results.md": {
+      "path": "delivery/gate-results.md",
+      "predecessor_sha256": "6e140b4f93d8525857de7da9e67cac29a962e0a304e897e0100caa2d4dfd3941",
+      "candidate_sha256": "2b1af9924445e5f991937f06bcc34451d9168d118ad5f269485862f06daac01e",
+      "installed_sha256": "2b1af9924445e5f991937f06bcc34451d9168d118ad5f269485862f06daac01e",
+      "predecessor_backup": "delivery/gate-results.md.predecessor.20261025T191213Z",
+      "predecessor_backup_sha256": "6e140b4f93d8525857de7da9e67cac29a962e0a304e897e0100caa2d4dfd3941",
+      "mode": "0644",
+      "paragraph_count": 1,
+      "outside_bytes_equal": true
+    }
+  },
+  "installation": {
+    "method": "predecessor hash/mode/type/process guard; same-directory temporary candidate; atomic rename",
+    "cas_predecessor_match": true,
+    "original_modes_preserved": true,
+    "no_builder_or_source_drift": true,
+    "no_product_or_test_changes": true,
+    "gate_status_changed": false,
+    "gate3_remains_visible_deferred_failure": true
+  }
+}

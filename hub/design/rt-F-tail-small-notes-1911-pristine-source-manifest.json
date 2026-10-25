@@ -1,0 +1,289 @@
+{
+  "manifest_version": 1,
+  "purpose": "source/object/tree/command provenance for a future pristine-upstream core comparison",
+  "capture": {
+    "read_only": true,
+    "worker": "rt-F-tail-pristine-return-1857",
+    "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "upstream_census": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-census-review-1850-review.json",
+      "sha256": "9079685af5809474fe9e2655a93fd25e2b339ecebea65eef3cfdd540ba1b9f72",
+      "status": "PASS read-only source census; no clone/execution credit"
+    },
+    "final_D59_tuple": "pending"
+  },
+  "bench_provenance": {
+    "route_id": "agent-core-full",
+    "command_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-core-full-command.md",
+    "environment": "env -i; PYTHONNOUSERSITE=1; MAIN-bound D73 manifest/profile/schema/node",
+    "timeout_seconds": 45,
+    "output": "$P4_D73_EVIDENCE/agent-core-full.xml",
+    "execution_status": "not run by this worker",
+    "historical_30693_status": "classification provenance only",
+    "final_D59_status": "pending"
+  },
+  "named_upstream_objects": [
+    {
+      "role": "Agent",
+      "repository": "/home/user/peteromallet/astrid-agent",
+      "selector": "codex/candidate-sdk",
+      "selector_role": "historical candidate label; immutable named object is recorded separately",
+      "frozen_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "named_object_ref_at_capture": "refs/remotes/origin/main",
+      "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+      "parent": "b565ea8dd8252e41bb802140ed2df3a1a4efd68b",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "frozen_r4_ref_resolution": {
+        "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+        "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"
+      },
+      "object_relationship": "named commit/tree and frozen R4 ref are distinct immutable captures; no ref was moved or retargeted",
+      "exact_source_checks": {
+        "tools/p4-d73-pinned-launch.sh": "missing",
+        "tests/core/test_timeline_element_orphan_cleanup.py": "missing",
+        "tests/core/test_timeline_element_publication_runtime.py": "missing",
+        "tests/core/rendering/test_local_schema.py": "missing",
+        "tests/packs/rendering/test_composition_package.py": "missing",
+        "tests/test_installer_bootstrap_schema.py": "missing",
+        "tests/packs/video_editing/test_runtime_publication_chain.py": "present; requested D54a node absent"
+      }
+    },
+    {
+      "role": "Runtime",
+      "repository": "/home/user/banodoco/banodoco-workspace-runtime",
+      "selector": "codex/candidate-runtime",
+      "selector_role": "historical candidate label; immutable named object is recorded separately",
+      "frozen_ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+      "named_object_ref_at_capture": "refs/remotes/origin/main",
+      "commit": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+      "tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210",
+      "parent": "2b632c68e3547db073e21c6adaa8bc5db4c0360a",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "frozen_r4_ref_resolution": {
+        "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+        "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"
+      },
+      "object_relationship": "named commit/tree and frozen R4 ref are distinct immutable captures; no ref was moved or retargeted"
+    },
+    {
+      "role": "App",
+      "repository": "/home/user/banodoco/reigh-app",
+      "selector": "codex/candidate-app-qualified",
+      "selector_role": "historical candidate label; immutable named object is recorded separately",
+      "frozen_ref": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+      "named_object_ref_at_capture": "refs/remotes/origin/main",
+      "commit": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+      "tree": "591327d499ea162dd2ccb4620e577480aa305fae",
+      "parent": "c27957dcfd429c0e585bfa73ec53d961d0b6743b",
+      "origin": "https://github.com/banodoco/reigh-app",
+      "frozen_r4_ref_resolution": {
+        "commit": "8f0c2484463e9b666d184a744d52e252984e551a",
+        "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"
+      },
+      "object_relationship": "named commit/tree and frozen R4 ref are distinct immutable captures; no ref was moved or retargeted"
+    },
+    {
+      "role": "Composition",
+      "repository": "/home/user/peteromallet/timeline-composition",
+      "selector": "origin/main",
+      "authentic_local_origin": true,
+      "frozen_ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition",
+      "named_object_ref_at_capture": "refs/remotes/origin/main",
+      "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "parent": "bd1011bce5fb4f172269911555568d18e6b22f3c",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "frozen_r4_ref_resolution": {
+        "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+        "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"
+      },
+      "object_relationship": "named origin/main commit/tree and frozen R4 ref are distinct immutable captures; no ref was moved or retargeted"
+    }
+  ],
+  "current_integration_objects": [
+    {
+      "role": "Agent",
+      "repository": "/home/user/work/agent",
+      "branch": "tl/integration",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+      "parents": [
+        "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+        "39b9587c0801c23ccb7b8a93a438e1dbb564b710"
+      ],
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "status": "clean"
+    },
+    {
+      "role": "Runtime",
+      "repository": "/home/user/work/runtime",
+      "branch": "tl/integration",
+      "commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+      "parents": [
+        "ab1e4f6141987706132916e2da16477f5a019464",
+        "8faff00d412521ba4b004858e1290250dcdfe0dc"
+      ],
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "status": "clean"
+    },
+    {
+      "role": "App",
+      "repository": "/home/user/work/app",
+      "branch": "tl/integration",
+      "commit": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+      "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+      "parents": [
+        "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+        "9bf465285ccf57be31570c800d4a1f86855ebc4e"
+      ],
+      "origin": "https://github.com/banodoco/reigh-app",
+      "status": "clean"
+    },
+    {
+      "role": "Composition",
+      "repository": "/home/user/work/composition",
+      "branch": "tl/integration",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": [
+        "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+        "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+      ],
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "status": "clean"
+    }
+  ],
+  "current_agent_source_blobs": {
+    "tools/p4-d73-pinned-launch.sh": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "tests/editing_conformance/test_provider_occurrence_fork.py": "601101d7cf0074514fa3bca4ade5ec1133380b01",
+    "tests/editing_conformance/test_recipe_occurrence_fork.py": "1ad7b6c1b1b1190152270b7f106d449ac8aa4479",
+    "tests/packs/video_editing/test_runtime_publication_chain.py": "38884ae901955ce59a949daaf788936812c4dd45"
+  },
+  "named_upstream_comparable_source_blobs": {
+    "tests/packs/video_editing/test_runtime_publication_chain.py": "b17c8d1b622a84eda1a076c00ffd17697f1260a9",
+    "tests/editing_conformance/test_provider_occurrence_fork.py": "missing",
+    "tests/editing_conformance/test_recipe_occurrence_fork.py": "missing"
+  },
+  "retained_source_records": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-core-full-command.md",
+      "sha256": "8cd8300a4d1e4f43dc7895907f858f6f2989e964ba38cc017a6a5fbe4cfd2637",
+      "role": "published normal route and exact 22-root argv"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D118-core-D89a-1024-manifest.json",
+      "sha256": "cedead2abfba280fa9bd190f277b094d0a5f704d6f6fd02ad182502a1c5f9f25",
+      "role": "historical 30693 classification provenance"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D54-core-classify-1230.md",
+      "sha256": "bdb1e3eb8d7d7cdc52c18360c9dd2b4fb64087f72c5a70765d53ba70524e9f67",
+      "role": "original D54a classification"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D54-current-rollup-1254.json",
+      "sha256": "ac14855e5d8337194960d424726352c6343ca3b2f705654e9f4fc498e574a43a",
+      "role": "retained current rollup"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D60-1452-d54a-comparison-summary.json",
+      "sha256": "32629d74606a8cfb30cae48c306110219713fcd16080371fc6c58a2b6010c531",
+      "role": "historical D60 comparison"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-7070-inventory-1144.json",
+      "sha256": "3edb8afd7d56a78ddda3311360b0f51e4bd4406c237388cf76caa6a7baca035b",
+      "role": "private 100 Python plus TypeScript matrix provenance"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-7070-inventory-1144/evidence/candidate/core-inventory.json",
+      "sha256": "1bf6b9ab77c72c644cf6d8f9cafdaff31ce8dd2f9e0ec04693567641f30c9d0d",
+      "role": "private selector and source_hashes authority"
+    }
+  ],
+  "d59_matrix_reconciliation": {
+    "advertised_directory_count": 41,
+    "manifest_entry_count": 34,
+    "manifest_self_count": 1,
+    "generated_cache_count": 7,
+    "manifested_cache_count": 1,
+    "unlisted_cache_count": 6,
+    "stable_source_only_count": 33,
+    "source_only_sha256": {
+      "README.md": "3fe3aa4bede266e29232a6b54eb65edab973175763e4f2d29290b5cfbb3e7970",
+      "agent2236/handoff-agt-F-matrix-2236-current-live-five-row.txt": "db3ee5aac42aa0be7e98a5bd7b8a0bf2cd87c228db3806aaf53d187b92ea7f59",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-pending-input.env": "a700903f5274c674ecd5ee31d8e0fff0c02f41b538e30afebb2398c3c831c974",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-three-selector.command.sh": "08ce890cc876acf3686b164f7a02dc7064f16fa8fea98914cfbcc25b0169c748",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-three-selector.membership.tsv": "66ba84d59cf704e567db8afa63ae72f1b5563f296d6ebb40b35a74d7492e0c8e",
+      "agent2236/handoff-agt-F-matrix-2236-matrix-handoff.md": "3f7b5f6b638f5392f802196e00f1e41a3dd44e35a0489ee313c712af1de14348",
+      "agent2236/handoff-agt-F-matrix-2236-missing-files.txt": "6470a66c616f388031428c8a56e39b57e8a1c6a08415bf96324bf8d6cbbf7708",
+      "agent2236/handoff-agt-F-matrix-2236-normalmerge-applicability.txt": "d752299fe0e24d6085ce4d6771a9169ee514e9b946798c71e3b16b88ba06a947",
+      "agent2236/handoff-agt-F-matrix-2236-sha256manifest": "c1663840d1411fb2c80edcee0cac0c3af9d5706e0a3f0a10537647d67455ec88",
+      "agent2236/handoff-agt-F-matrix-2236-source-identity.json": "83d48108e5dabcba0e76d98910eedb2f2e8a2eeb9c4a023030299c274fc22f52",
+      "agent2236/prepared-1755/final-core-collection.json": "3314895c1995e61d3235424728690888aeff0adb94cec82cef15c03e34ac0388",
+      "agent2236/prepared-1755/final-core-pending-input.env": "ca125d7e5b2018cf61e2d488a081ad664ba1c976c84d25890cd141f01a407abe",
+      "agent2236/prepared-1755/final-core-prep-dry-2.command": "e3b6f064af23004effe139af86af2768b669a8fa7cc19566737b744d3d26489b",
+      "agent2236/prepared-1755/final-core-prep-dry-2.manifest": "be8760dfdf3574b3079e53e8b65998ef02c1175e1af02d2054898cba40c101ca",
+      "agent2236/prepared-1755/final-core-prep-dry-2.result": "b99bea235107702c2bb978c401257fdafc1c94e2821c2f0778f18aab43aa7926",
+      "agent2236/prepared-1755/final-core-prep-poison.result": "3b13b4b44a419372f46e5cf3e4d9433a109399999ef519ffd2b6f6c54af2b11d",
+      "agent2236/prepared-1755/final-core-row-1755.txt": "d5c595d6afe776ab7e8f94b5675ec4e48df9a8f3c483b43bac13085803e7cfb2",
+      "agent2236/prepared-1755/source-collection.sha256": "5c9fc7390634b3ce66334a55a449da01979d4f77684f7267a30ac10e9e106e5e",
+      "agent2236/prepared-1755/worker-report.md": "0220ea6c2421eaeed5f4167212ad70723afde39228f0f748e51b6ba254503c25",
+      "agent2236/source/install_p4_launcher.py": "46595ea2b6e0738736ebf181f731930144737ac8d39902e4903b94e23c2c94f2",
+      "agent2236/source/p4-d73-pinned-launch.sh": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+      "commands.sh": "ff23c02659a163a63c8e84a5909a5858948c0297ab5080e6e20775e7fc1e50bf",
+      "final-source-tuple.template.json": "f2e5ee57ffaed096c1a984e26fa0f63df1a6b385b588dadd6fb1c557e688106e",
+      "inherited-d84/acceptance-d73.py": "08d69d10a58c8b65ded99165054e6f11e42fcaf9c9c9471b57cdaa2d2d81d8f8",
+      "inherited-d84/core-inventory.json": "9705979776ebb9182d986e9364a29911fafd04227e817f5f19346e8fd116bb97",
+      "inherited-d84/install-final-services.py": "6e7eafca3f31c559e07d85a69ef9ac1f785679f727dad831b005a9cb9c6e01f1",
+      "inherited-d84/run-final-delivery.py": "cf714b7d6105ddf1bd752f311bb2982896e5b67e4988b4096417e6b30f8237f8",
+      "inherited-d84/run-final-services.py": "05c5662aa14c3bb288f672421d448335a0b10df659fd58439e6abd296c4c3a97",
+      "inherited-d84/runtime-final-service-rows.txt": "be2572c2b4ea888237a8696c15e68505010da4453df93aba9ff876b724e2553a",
+      "inherited-d84/submit-final.py": "345c8663dde1379264f913e0b72657dbe0d326aac13571dd5cc1e0700087bcca",
+      "inherited-d84/submit-packet.md": "450f67c20acbf5dee1ec229a150ca35e1ea438e432145f66a1c6e9958cd7ca93",
+      "run-final-matrix.py": "3e9c15cb535fc567768d920d2f9c4fddbdbe51800a44334486dc400e14c47f44",
+      "stubcontrols.py": "fd8f0434b78e3daae85850aa21762004a5b3f7c545b49324d5164398cfaad138"
+    },
+    "generated_caches": [
+      {
+        "path": "__pycache__/run-final-matrix.cpython-313.pyc",
+        "observed_sha256": "d7aaec0e36f7a2315a4048c1b84f107bddeb2fc6d1e911b2d99195f35ed28d3f",
+        "status": "manifest recorded c7ad0d1a35be84b4a02818e66971caa8bc17e760cee9eb547887d9b3069f2b9b; mismatch; unqualified"
+      },
+      {
+        "path": "__pycache__/stubcontrols.cpython-313.pyc",
+        "observed_sha256": "e35e84d809e9ed05ca3ac514a2d924f782936ccb7e16f95f6f04a5979133b838",
+        "status": "unlisted generated cache; unqualified"
+      },
+      {
+        "path": "inherited-d84/__pycache__/acceptance-d73.cpython-313.pyc",
+        "observed_sha256": "2d6b1e682fb20c1c71d16dc42cc30e8a87e9e4e4dc1c15978b7915fe97664395",
+        "status": "unlisted generated cache; unqualified"
+      },
+      {
+        "path": "inherited-d84/__pycache__/install-final-services.cpython-313.pyc",
+        "observed_sha256": "69c865b26d36375f083e5e4ac7d07ddbb48c28632ae9ef759b135b1d79d9b154",
+        "status": "unlisted generated cache; unqualified"
+      },
+      {
+        "path": "inherited-d84/__pycache__/run-final-delivery.cpython-313.pyc",
+        "observed_sha256": "c3d1995aafba95b2440afaa35d1eb6cf6583f5bd16c830a572b3b119c7178f7a",
+        "status": "unlisted generated cache; unqualified"
+      },
+      {
+        "path": "inherited-d84/__pycache__/run-final-services.cpython-313.pyc",
+        "observed_sha256": "d538e1ba5f89eb20e8ae26dde478e3d2194f9b21552242e470f9cc636ea9e08e",
+        "status": "unlisted generated cache; unqualified"
+      },
+      {
+        "path": "inherited-d84/__pycache__/submit-final.cpython-313.pyc",
+        "observed_sha256": "3e7008f069bca23b5e1b955cee241e57d041ca479b7f3f59bd5073900775abae",
+        "status": "unlisted generated cache; unqualified"
+      }
+    ],
+    "qualification": "Only the 33 source-only entries above are stable matrix evidence. The manifest itself and all generated caches are excluded; cache hashes are observed diagnostics only and do not qualify the matrix. The historical advertised 41 is not a source-file count."
+  }
+}
+
