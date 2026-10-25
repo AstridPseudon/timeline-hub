@@ -134,6 +134,9 @@ def test_windows_task_settings_and_no_console_executable():
     arguments = field('t:Actions/t:Exec/t:Arguments')
     assert 'os.environ.update' in arguments and 'astrid_runtime.cli' in arguments
     assert 'open(' in arguments and 'encoding=' in arguments
+    xml = service.render('win32', version, data, log)
+    assert xml.startswith('<Task ')
+    assert '<?xml' not in xml
     assert 'Hidden' not in service.render('win32', version, data, log)
 
 

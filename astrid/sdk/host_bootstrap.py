@@ -778,6 +778,7 @@ _JOB_ENV_TAGS = ("OTTO_HEAVY_LEASE", "OTTO_HEAVY_DIR", "OTTO_HEAVY_CAPACITY")
 def _host_render_environment(source_path: Path) -> dict[str, str]:
     environment = dict(os.environ)
     environment.pop('ASTRID_PACKS_PATH', None)
+    environment.pop("PYTHONNOUSERSITE", None)
     # The host outlives the command (and any capacity job) that happened to start it.
     # Lease tags and private capacity state belong to that job, not the durable host.
     for tag in _JOB_ENV_TAGS:
@@ -814,9 +815,11 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
         return None  # No provisioned Remotion: existing unavailable capability.
     # The launched host needs no dynamic-loader overrides of the launching shell (setup-python and CUDA images
     # export LD_*), and the validator refuses them: drop them from the host env. Interpreter overrides such as
-    # NODE_OPTIONS and PYTHONHOME stay, so the validator keeps refusing those.
+    # NODE_OPTIONS and PYTHONHOME stay, so the validator keeps refusing those. PYTHONNOUSERSITE is the one
+    # inherited Python startup setting retained by the supported Agent launch and must not leak into the child.
     for name in [key for key in env if key.startswith(('LD_', 'DYLD_'))]:
         del env[name]
+    env.pop("PYTHONNOUSERSITE", None)
     launch_id = secrets.token_hex(16)
     installed_source = None
     if _execution_profile() == 'installed':
