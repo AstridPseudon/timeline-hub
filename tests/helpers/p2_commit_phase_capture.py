@@ -8,8 +8,9 @@ counts.  The event snapshot is a bounded last-N ring, with a request-local
 bounded buffer for the final failed or still-pending dispatch so setup traffic
 cannot consume its evidence.  For timeline commits, the dispatch boundary is
 ``RuntimeHandler._dispatch`` entry and the handler boundary is
-``RuntimeHandler._timeline_commit`` entry; socket/client arrival and caller
-receipt are outside this process and remain UNKNOWN.
+``RuntimeHandler._timeline_commit`` entry.  Socket/client arrival and body
+receipt have no earlier hook here and remain explicitly unsupported; caller
+receipt is outside this process and remains UNKNOWN.
 request bodies, headers, credentials, URLs, identifiers and exception text
 never cross the observation boundary.
 
@@ -60,7 +61,7 @@ DEFAULT_MAX_WATCHDOG_CAPTURES = 2
 CAPTURE_FORMAT_VERSION = 2
 RETENTION_MODE = "rolling_plus_final_request"
 SAMPLING_INTERVAL_SECONDS = 0.02
-WITNESS_PHASES = frozenset(("arrival", "dispatch_queue", "coordinator_lock", "handler_entry"))
+WITNESS_PHASES = frozenset(("dispatch_queue", "coordinator_lock", "handler_entry"))
 _CAPTURE_NAMESPACE = 0
 
 
@@ -353,10 +354,12 @@ class P2CommitPhaseCapture:
                 frame = frame.f_back
 
     @staticmethod
-    def _sample_rows(request: dict[str, Any], request_wall_ms: float | None,
+    def _sample_rows(request: dict[str, Any], dispatch_wall_ms: float | None,
                      *, interval: float) -> list[dict[str, Any]]:
         total = request["sample_total"]
-        denominator = request_wall_ms if isinstance(request_wall_ms, (int, float)) and request_wall_ms > 0 else None
+        denominator = (dispatch_wall_ms
+                       if isinstance(dispatch_wall_ms, (int, float)) and dispatch_wall_ms > 0
+                       else None)
         rows = []
         for (file, function, line), count in sorted(
                 request["stack_counts"].items(), key=lambda item: (-item[1], item[0]))[:10]:
@@ -367,21 +370,25 @@ class P2CommitPhaseCapture:
                 "sample_count": count,
                 "sample_total": total,
                 "sample_share": count / total if total else 0.0,
-                "request_wall_share": (count * interval * 1000 / denominator
-                                        if denominator else None),
+                "dispatch_wall_share": (count * interval * 1000 / denominator
+                                         if denominator else None),
             })
         return rows
 
-    def _sampling_summary(self, request: dict[str, Any], request_wall_ms: float | None) -> dict[str, Any]:
+    def _sampling_summary(self, request: dict[str, Any], dispatch_wall_ms: float | None) -> dict[str, Any]:
         return {
             "sampling_interval_ms": round(self.sampling_interval * 1000, 3),
             "sample_total": request["sample_total"],
             "lost_samples": request["lost_samples"],
             "observer_cpu_ms": round(self._sampler_cpu_ns / 1_000_000, 3),
+            "observer_cpu_scope": "capture-wide",
+            "observer_cpu_attribution": (
+                "sampler CPU covers the whole capture and is not attributed to this request"
+            ),
             "top_inclusive_frames": self._sample_rows(
-                request, request_wall_ms, interval=self.sampling_interval),
+                request, dispatch_wall_ms, interval=self.sampling_interval),
             "sample_membership": "each safe frame identity is counted at most once per sample",
-            "request_wall_denominator_ms": request_wall_ms,
+            "dispatch_wall_denominator_ms": dispatch_wall_ms,
             "counter_limits": {
                 "max_requests": self.max_requests,
                 "max_events": self.max_events,
@@ -542,7 +549,7 @@ class P2CommitPhaseCapture:
                 "method": method if method in {"GET", "POST", "PUT", "PATCH", "DELETE"} else None,
                 "route_template": _safe_route_template(getattr(handler, "path", None)),
                 "idempotency_key_sha256": _safe_key_hash(key),
-                "arrival_start_ns": None,
+                "dispatch_start_ms": None,
                 "dispatch_end_ms": None,
                 "dispatch_finished": False,
                 "watchdog_timer": None,
@@ -596,22 +603,24 @@ class P2CommitPhaseCapture:
         request = self._requests.get(ordinal)
         if request is None or phase not in PHASES:
             return
+        if phase == "arrival":
+            # No earlier socket/server-accept hook is available in this
+            # helper.  Never turn the dispatch hook into a false arrival.
+            return
         state = request["phases"][phase]
         state["count"] = min(state["count"] + 1, 32)
         now = self._at_ms()
         state["start_ms"] = now if state["start_ms"] is None else state["start_ms"]
+        if phase == "dispatch_queue" and request["dispatch_start_ms"] is None:
+            request["dispatch_start_ms"] = now
         if phase == "http_response" and type(fields.get("status")) is int:
             state["status"] = fields["status"]
         request["last_phase"] = phase
-        if phase == "arrival" and request["arrival_start_ns"] is None:
-            request["arrival_start_ns"] = time.perf_counter_ns()
         safe_fields = {"status": fields["status"]} if phase == "http_response" and type(fields.get("status")) is int else {}
         event = {"schema_version": 1, "request": ordinal, "phase": phase,
                  "state": "start", "at_ms": now, "count": state["count"], **safe_fields}
         if phase in WITNESS_PHASES:
             event.update(self._witness(request, phase=phase))
-            if phase == "arrival":
-                event["boundary"] = "observed_http_boundary"
         else:
             event.update({"utc": self._utc_text(), "capture_namespace": self.namespace})
         self._write(event)
@@ -619,6 +628,8 @@ class P2CommitPhaseCapture:
     def _end(self, ordinal: int, phase: str, *, error: bool = False, **fields: Any) -> None:
         request = self._requests.get(ordinal)
         if request is None or phase not in PHASES:
+            return
+        if phase == "arrival":
             return
         state = request["phases"][phase]
         state["end_ms"] = self._at_ms()
@@ -631,8 +642,6 @@ class P2CommitPhaseCapture:
                  "count": state["count"], **safe_fields}
         if phase in WITNESS_PHASES:
             event.update(self._witness(request, phase=phase))
-            if phase == "arrival":
-                event["boundary"] = "observed_http_boundary"
         else:
             event.update({"utc": self._utc_text(), "capture_namespace": self.namespace})
         self._write(event)
@@ -642,11 +651,14 @@ class P2CommitPhaseCapture:
         for phase in PHASES:
             state = request["phases"][phase]
             phases[phase] = {
-                "status": "UNKNOWN" if state["count"] == 0 else "observed",
+                "status": ("unsupported" if phase == "arrival" and state["count"] == 0
+                            else "UNKNOWN" if state["count"] == 0 else "observed"),
                 "count": state["count"],
                 "start_ms": state["start_ms"],
                 "end_ms": state["end_ms"],
             }
+            if phase == "arrival" and state["count"] == 0:
+                phases[phase]["reason"] = "no earlier socket/server-accept hook"
             if state["error"]:
                 phases[phase]["status"] = "raised"
         dispatch_start = phases["dispatch_queue"]["start_ms"]
@@ -660,23 +672,18 @@ class P2CommitPhaseCapture:
             return round(end - start, 3)
 
         durations = {
-            # This boundary is RuntimeHandler._dispatch entry, after the
-            # BaseHTTPRequestHandler has accepted the request.  Socket/client
-            # arrival and server accept time are outside this process and stay
-            # UNKNOWN rather than being inferred from the handler span.
+            # This boundary is RuntimeHandler._dispatch entry.  It is not a
+            # socket/client-arrival or body-read boundary.
             "dispatch_queue_ms": duration(dispatch_start, handler_start),
             "handler_ms": duration(handler_start, dispatch_end),
             "dispatch_total_ms": duration(dispatch_start, dispatch_end),
+            "dispatch_to_completion_wall_ms": duration(dispatch_start, dispatch_end),
             "provider_wall_ms": duration(provider["start_ms"], provider["end_ms"]),
             "response_write_wall_ms": duration(
                 phases["http_response"]["start_ms"], phases["http_response"]["end_ms"]),
             "execution_lock_wait_ms": None,
             "caller_receipt_ms": None,
         }
-        request_wall_ms = duration(
-            (request["arrival_start_ns"] / 1_000_000 if request["arrival_start_ns"] is not None else None),
-            (request.get("arrival_end_ns", 0) / 1_000_000 if request.get("arrival_end_ns") is not None else None),
-        )
         summary = {"schema_version": 1, "request": request["ordinal"], "phase": "summary",
                    "last_phase": request["last_phase"] or "UNKNOWN", "phases": phases,
                    "durations_ms": durations,
@@ -686,15 +693,20 @@ class P2CommitPhaseCapture:
                    "birth_ticks": self.birth_ticks,
                    "method": request["method"], "route_template": request["route_template"],
                    "idempotency_key_sha256": request["idempotency_key_sha256"],
-                   "request_wall_ms": request_wall_ms,
-                   "sampling": self._sampling_summary(request, request_wall_ms),
+                   "dispatch_start_ms": request["dispatch_start_ms"],
+                   "sampling": self._sampling_summary(
+                       request, durations["dispatch_to_completion_wall_ms"]),
                    "unknown_boundaries": {
-                       "client_request_to_server_receive": "outside Runtime process",
+                       "client_request_to_server_receive": (
+                           "unsupported: no earlier socket/server-accept hook"),
+                       "request_body_receive": (
+                           "unsupported: no body-read hook; body time is not separately measured"),
                        "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
                        "caller_receipt": "outside Runtime process",
                    },
                    "unsupported_boundaries": {
                        "network_arrival_ms": None,
+                       "request_body_receive_ms": None,
                        "execution_lock_wait_ms": None,
                        "caller_receipt_ms": None,
                    },
@@ -874,7 +886,6 @@ class P2CommitPhaseCapture:
                 if ordinal is None:
                     return None
                 self._begin(ordinal, "dispatch_queue")
-                self._begin(ordinal, "arrival")
                 self._arm_watchdog(ordinal)
                 self._frames[id(frame)] = {"phase": "request_scope", "ordinal": ordinal}
                 return self._trace
@@ -924,9 +935,6 @@ class P2CommitPhaseCapture:
             if event == "return":
                 request = self._requests[ordinal]
                 request["dispatch_end_ms"] = self._at_ms()
-                request["arrival_end_ns"] = time.perf_counter_ns()
-                if request["phases"]["arrival"]["end_ms"] is None:
-                    self._end(ordinal, "arrival", error=state.get("error", False))
                 if request["phases"]["dispatch_queue"]["end_ms"] is None:
                     self._end(ordinal, "dispatch_queue", error=state.get("error", False))
                 with self._lock:

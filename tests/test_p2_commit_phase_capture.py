@@ -146,7 +146,7 @@ def test_capture_allowlist_redacts_by_not_retaining_transport_values(tmp_path):
     assert all(set(event) <= {"schema_version", "request", "phase", "state", "at_ms", "count",
                               "status", "last_phase", "phases", "durations_ms", "utc", "namespace",
                               "capture_namespace", "pid", "birth_ticks", "method", "route_template",
-                              "idempotency_key_sha256", "boundary", "request_wall_ms", "sampling",
+                              "idempotency_key_sha256", "dispatch_start_ms", "sampling",
                               "capture_anchor", "unknown_boundaries", "unsupported_boundaries",
                               "truncated", "retention"}
                for event in capture.events)
@@ -351,7 +351,9 @@ def test_mounted_http_commit_route_and_provider_are_observed(service, tmp_path):
     summaries = _summary(capture)
     assert len(summaries) == 1
     phases = summaries[0]["phases"]
-    assert phases["arrival"]["status"] == "observed"
+    assert phases["arrival"]["status"] == "unsupported"
+    assert phases["arrival"]["start_ms"] is None
+    assert phases["arrival"]["end_ms"] is None
     assert phases["dispatch_queue"]["status"] == "observed"
     assert phases["dispatch_queue"]["end_ms"] is not None
     for phase in ("handler_entry", "authorization", "coordinator_admission", "coordinator_lock",
@@ -365,6 +367,7 @@ def test_mounted_http_commit_route_and_provider_are_observed(service, tmp_path):
     assert durations["dispatch_queue_ms"] is not None
     assert durations["handler_ms"] is not None
     assert durations["dispatch_total_ms"] is not None
+    assert durations["dispatch_to_completion_wall_ms"] == durations["dispatch_total_ms"]
     assert durations["provider_wall_ms"] == pytest.approx(
         phases["provider"]["end_ms"] - phases["provider"]["start_ms"], abs=0.001)
     assert durations["execution_lock_wait_ms"] is None
@@ -372,18 +375,73 @@ def test_mounted_http_commit_route_and_provider_are_observed(service, tmp_path):
     assert summaries[0]["method"] == "POST"
     assert summaries[0]["route_template"] == "/v1/projects/{project_id}/timelines/{timeline_id}/commit"
     assert summaries[0]["idempotency_key_sha256"] == hashlib.sha256(b"mounted-phase").hexdigest()
-    assert summaries[0]["request_wall_ms"] is not None
-    assert summaries[0]["request_wall_ms"] > 0
+    assert summaries[0]["dispatch_start_ms"] == phases["dispatch_queue"]["start_ms"]
+    assert summaries[0]["sampling"]["dispatch_wall_denominator_ms"] == durations[
+        "dispatch_to_completion_wall_ms"]
     assert summaries[0]["sampling"]["sampling_interval_ms"] == 20
     assert summaries[0]["sampling"]["counter_limits"]["top_frames"] == 10
     assert all(body["project_id"] not in json.dumps(event) for event in capture.events)
     assert all("/timelines/main/" not in json.dumps(event) for event in capture.events)
-    assert summaries[0]["unknown_boundaries"]["client_request_to_server_receive"] == "outside Runtime process"
+    assert summaries[0]["unknown_boundaries"]["client_request_to_server_receive"] == (
+        "unsupported: no earlier socket/server-accept hook")
+    assert summaries[0]["unknown_boundaries"]["request_body_receive"] == (
+        "unsupported: no body-read hook; body time is not separately measured")
+    assert summaries[0]["unsupported_boundaries"]["network_arrival_ms"] is None
+    assert summaries[0]["unsupported_boundaries"]["request_body_receive_ms"] is None
+    assert all(event["phase"] != "arrival" for event in capture.events)
     serialized = (tmp_path / "mounted-phase.jsonl").read_text()
     assert body["project_id"] not in serialized
     assert "mounted-phase" not in serialized
     assert "phase-token" not in serialized
     assert capture.failures == 0
+
+
+def test_overlapping_requests_do_not_receive_duplicate_per_request_sampler_cpu(tmp_path):
+    entered = {"one": threading.Event(), "two": threading.Event()}
+    release = threading.Event()
+
+    class Runtime:
+        def commit_timeline(self, project, *_args, **_kwargs):
+            name = project.rsplit("-", 1)[-1]
+            entered[name].set()
+            assert release.wait(2)
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    bodies = [
+        {"api_version": 1, "project_id": f"project-{name}",
+         "timeline_id": "timeline-overhead", "base_revision_id": "revision-1",
+         "base_publication_id": "publication-1", "commands": []}
+        for name in ("one", "two")
+    ]
+    handlers = [_handler(Runtime(), body, key=f"overhead-{name}")
+                for name, body in zip(("one", "two"), bodies)]
+    capture = P2CommitPhaseCapture(tmp_path / "overhead.jsonl", enabled=True,
+                                   sampling_interval=0.001)
+    threads = [threading.Thread(target=handler._dispatch) for handler in handlers]
+    capture.start()
+    try:
+        threads[0].start()
+        assert entered["one"].wait(2)
+        threads[1].start()
+        assert entered["two"].wait(2)
+        time.sleep(0.03)
+        release.set()
+        for thread in threads:
+            thread.join(timeout=2)
+    finally:
+        release.set()
+        for thread in threads:
+            thread.join(timeout=2)
+        capture.stop()
+
+    summaries = _summary(capture)
+    assert len(summaries) == 2
+    samplings = [summary["sampling"] for summary in summaries]
+    assert {sampling["observer_cpu_scope"] for sampling in samplings} == {"capture-wide"}
+    assert len({sampling["observer_cpu_ms"] for sampling in samplings}) == 1
+    assert all("request_cpu_ms" not in sampling for sampling in samplings)
+    assert all("not attributed to this request" in sampling["observer_cpu_attribution"]
+               for sampling in samplings)
 
 
 def test_dispatch_scope_expires_after_deferred_response_before_handler_reuse(service):
@@ -758,7 +816,8 @@ def test_live_watchdog_uses_real_handler_and_private_faulthandler_output(tmp_pat
     summary = _summary(capture)[0]
     sampling = summary["sampling"]
     assert sampling["sample_total"] > 0
-    assert sampling["request_wall_denominator_ms"] == summary["request_wall_ms"]
+    assert sampling["dispatch_wall_denominator_ms"] == summary["durations_ms"][
+        "dispatch_to_completion_wall_ms"]
     assert len(sampling["top_inclusive_frames"]) <= 10
     assert sampling["sampler_errors"] == []
 
