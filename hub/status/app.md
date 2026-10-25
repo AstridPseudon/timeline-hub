@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T14:49:03Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
-# app board, 2026-10-25T14:48Z
+<!-- app | 2026-10-25T14:54:00Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
+# app board, 2026-10-25T14:52Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -95,6 +95,8 @@
 | D74-fe3309-pin | Release completed tagged tuple pin | Manager and host audit | Host1446 and fresh static guards | merged | Guarded recycle1448 | Only oldfe3309 recycled; zero refusal. Current84857 tuple and all3250 outputs, branches and reports kept. [Receipt](../../design/app-pin-guarded-release-1448.json). | No source edits |
 | D127-Runtime-inputs | Hand retained tagged tour source facts | Existing producer and review | Runtime1426 peer ask | merged | Controller1407; independent D125 verdict | Safe facts and source sequence published. No standalone native package or lower private binding in handback; UNKNOWN stays explicit. | Source unchanged |
 
+| D127-SWAP-recipe | Hand exact source fixture sequence | Luna read only | Runtime1441 finite source ask | gated:source-floor | Prepared app-D127-SWAP-source-recipe-1452 | Current heavy10721 runs at4.785GB; source needs5.0. Exact frozen spec pointer already sent. Read-only constructor handback starts on floor or body terminal. | Source unchanged |
+
 | D125-local-prep | Prepare exact local fallback | Luna read only | Exact four local receipts | merged | app-D125-local-fallback-prep-1356 | Source/API/Node and source hashes PASS; no body. Dependency omission is explicit and assigned to D127 controller. | Frozen fe3309 tuple |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
@@ -113,9 +115,9 @@ Blockers: App element — Sole App owner. Strict bounds normal84857; startup roo
 Blockers: Farm host14 and batch — Agent upstream fallback is normal a4e016 and original14 independently PASS. REG closure awaits core; Farm child metadata refusal remains stopped with Runtime1404 correction owner.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Sole sampled actual10721 is RUNNING after normal preflight30400 PASS. Wait SAME ID, then one independent actual timing and passing-tail verdict. No ready body waits; Runtime semantic source remains disjoint.
+Next ready: Sole sampled actual10721 is RUNNING after normal preflight30400 PASS. Wait SAME ID, then one independent actual timing and passing-tail verdict. Source recipe1452 prepared for Runtime1441 ask, gated by5.0GB while heavy runs. No ready body waits; Runtime semantic source remains disjoint.
 live 1 / cap 1 at current floor; ready-undispatched 0; core open: 2. Luna controller1440 owns sole heavy10721. No new source starts below5.0 while it runs.
 Capacity: Free4.771GB after guarded oldfe3309 recycle. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
-INBOX consumed through2258823 bytes. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled actual10721 same-ID running; no source/adoption wait.
+INBOX consumed through2262744 bytes. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled actual10721 same-ID running; no source/adoption wait.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 
