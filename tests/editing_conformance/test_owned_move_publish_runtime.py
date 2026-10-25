@@ -45,24 +45,24 @@ def _commit_parent_variant(fixture, parent, *, key, label):
     service = RuntimeService(fixture.duplicate_root)
     try:
         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
-        head_id = service.get_project_timeline(
-            fixture.project_id, fixture.timeline_id)['head_revision_id']
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)
         document = service._timeline_commits()[0].revision_closure(
-            fixture.project_id, fixture.timeline_id, head_id)
+            fixture.project_id, fixture.timeline_id, head['head_revision_id'])
         before = bundle_from_document(document)
         semantic = []
         working = before
+        # Canonical rows retain physical shot pins; placements use authoring IDs.
         original_occurrences = {row['occurrence_id']: row
-                                for row in before['parent']['occurrences']}
+                                for row in document['parent_revision']['payload']['occurrences']}
         requested = {row['occurrence_id']: row for row in parent['occurrences']}
         requested_order = [row['occurrence_id'] for row in parent['occurrences']]
-        original_order = [row['occurrence_id'] for row in before['parent']['occurrences']]
+        original_order = [row['occurrence_id'] for row in before['placements']]
         if [identity for identity in original_order if identity in requested] != requested_order:
             raise ValueError('owned baseline changes managed occurrence membership/order')
         for identity, occurrence in requested.items():
             if identity not in original_occurrences or occurrence != original_occurrences[identity]:
                 raise ValueError('owned baseline changes a managed occurrence edge')
-        removed = [occurrence for occurrence in before['parent']['occurrences']
+        removed = [occurrence for occurrence in before['placements']
                    if occurrence['occurrence_id'] not in requested]
         for occurrence in removed:
             owner = 'occurrence:' + occurrence['occurrence_id']
@@ -71,13 +71,10 @@ def _commit_parent_variant(fixture, parent, *, key, label):
             semantic.append(command)
         after = copy.deepcopy(working)
         after['parent'] = copy.deepcopy(parent)
-        # The registered delete command owns closure membership. Keep that
-        # edge out of the generic patch baseline while retaining every authored
-        # parent field for the guarded emitter below.
-        after['parent']['occurrences'] = copy.deepcopy(working['parent']['occurrences'])
+        # Occurrences live in placements, already updated by semantic deletes.
+        after['parent'].pop('occurrences')
         patches = emit_document_commands(working, after)
         commands = [*semantic, *patches]
-        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)
         changes = [change for command in commands if command['op'] == 'doc.patch'
                    for change in command['args']['changes']]
         request = {
