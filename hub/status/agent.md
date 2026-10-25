@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T02:17:06Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 0m -->
-# agent board, 2026-10-25T02:14:26Z
+<!-- agent | 2026-10-25T02:20:06Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
+# agent board, 2026-10-25T02:19:26Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -11,7 +11,7 @@
 | G2 / G3 | Public commit, emitter, CLI and sheet | Sol / Luna | R1, R2 | merged | G234 integrated0549 | Joined131 and live Runtime controls passed. P4 retains actual HTTP scope. | ea302e0f5 |
 | G4 | Remaining production writers | Sol / Luna | G2 | merged | G234; video; media admission0832 | Writer migration qualified; media admission20 passed on0ff3. Managed duck original remains held. | ea302e0f5; 0ff3d103fb |
 | G5 | Retire superseded writers | Luna / Sol | H24 criteria | merged | Custody review2155 | 350 cases, four SDK and c271 passed. Historical raw packet loss remains disclosed. | c36ca8c94 |
-| P4 owner | Qualify unchanged ten-note original | Main Luna | Existing MAIN single-original service | doing | rt-P4-D88b-tennote-0206 | Fixed normald407/Runtime6634; sole unchanged unprofiled45s original requested. D90 prep checkpointed with zero body, resumes afterward. | d407 /6634 |
+| P4 owner | Qualify unchanged ten-note original | Runtime HARD Sol | Meaningful reviewed cost successor | blocked:runtime | MAIN 0206; service 14151 NO-GO | Exact d407/6634 original FAIL 45.448 s versus 45 s. Runtime cost and whole-path owners next; no unchanged repeat or four R2 repeat. | d407 /6634 |
 | F original census | Keep exact historical267 records | Sol / Luna | Independent accounting | merged | Count0818; review0827 | 263 closed,4 open;123 exact mappings. Current full9758 remains a separate failed checkpoint. | Census e13d65ba |
 | F checkpoint9758 | Retain failed full checkpoint | Service / Luna | Exact census complete | merged | 9758; census 1052 and 1058 | Historical FAIL: 17673 passed, 231 failed, 45 errors. All 276 bad IDs exact. This is retained evidence, never full PASS. | ba55 / tree c13 |
 | F checkpoint setup | Correct profile setup | Luna / Luna | Source1052; review1105 | merged | Install1118; review1124 | All45 errors classified:3 loops and42 artifact mismatches. Actual registry18de/row0bdf verified; no full retry. | Candidate4a2a3472d1 |
@@ -201,21 +201,22 @@
 
 | F successor inputs | Publish exact eligible node delta | Luna | Existing MAIN runner and venue | merging | agt-F-successor-inputs-0200 PASS | Exact161 selectors,15 family keys;84 priorERROR+4no-case+73new. Prose16 typo disclosed. Flat packet ready; actualbody pending. | Captured5dc9 |
 
-| F later source delta | Publish exact later setup corrections | Luna | Existing MAIN targeted runner | merging | agt-F-successor-delta-0209 PASS | Exact69 extra:sheet13,M1ten,word46; combined230. Root and preserved originals flat-published; no unchanged268 retry. | Captured3b8f |
-| R2 net-zero oracle | Bind exact native recorder expectation | Luna | Protected oracle review then MAIN proof | review | Author0210; review0215 | Complete sequential inverse writes and restoration fact asserted; only net-zero oracle changed. All other inputs/guards retained; no body. | tl/agt-F-netzero-oracle-0210 |
+| F later source delta | Publish later setup corrections | Luna | Existing MAIN targeted runner | merging | Inputs 0209 PASS | Exact 69 extra: sheet 13, M1 10, word 46; combined 230. Flat packet published; all original dispositions kept. | Captured 3b8f |
+| R2 net-zero oracle | Bind exact native recorder expectation | Luna | MAIN exact net-zero proof | merging | Author 0210; review 0215 PASS | Seven-line test-only correction now home cef8. All original predicates preserved. Matching NumPy mypy limit; functional proof still owed. | cef8a5be53 |
 
 | D91 inverse window | Make five original-third hosts valid | Main Luna requested | Approved D91 setup-only scope | ready | Existing MAIN sharedinverse owner | Exacthost2.0s permitted; authored move/clip/timings/asserts unchanged. One protectedreview, exact MAINproof and D72log entry owed. | No new source yet |
 
-Integration: Normal3b8f341cf6 now includes reviewed M2/projection/opaque, M1 semantic steps, script, word rationalfps, ordinarysheet and current-sheet setup sources. D88b normal adoptiond407 binds released Runtime6634; P4 remains FIXED d407/6634 despite newer home. R2 candidate8964 remains unmerged pending MAIN proof.
-core open: P4 MAIN3362 retains FAIL45.244s versus45s on a3cd. MAIN sole successor ten-note requested0153 on d407/6634. Four R2 passing originals stay unrepeated until final matrix. Source joins are not functional closure.
-Gates: P1/P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine installed render still owed. No full PASS, core0, final tuple or ZIP credit. D87 exact24 plus separate1 ledgered; six frontend cases live. E2/D79 after ZIP.
-Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed. All identities and scope limits retained.
-Families: Current-sheet and ordinarysheet protected PASS sources merged. Exact successor161 packet0200 published; later delta0209 and separate net-zero oracle0210 live. MAIN owns M1/inverse/word source corrections and script/core/frontend reservations. M2/projection/opaque source joined; behavior MAIN owed. Actual10077 exact268selected/245observed/23no-case stays historical NO-GO.
-Admission: Withdrawn D88 prototype and denied security analysis stay stopped. Distinct D88b protective review passed and normal6634 adopted; no denied action retry, competing diagnosis or old-source original.
-Disk: D89 source/review cap6 above5.5GB, heavy1 above5.2GB, nothing new below4.5GB. Latest5578928128 bytes before packet request. Sweep3 and compact running; compact reports packed0. No ended clean nonKEEP worktree exists; dirty/KEEP/refused targets untouched.
-Blockers: MAIN proof — Sole P4 owner0206 runs exactd407/6634; D90 exact8964/a3cd prep retained and resumes afterward. Source corrections and successor mapping precede meaningful affected-node body; no unchanged268 retry.
-Blockers: Orchestrator — Compound unused-pin current source-admission scope decision0216; legacy accepted evidence lacks current history pair.
+Integration: Home cef8a5be53 includes all exact reviewed fixture joins through current sheet, D87 live frontends, restored inverse host and net-zero oracle. D90 product candidate 8964 remains UNMERGED pending MAIN proof. P4 d407/6634 remains its fixed failed checkpoint.
+core open: P4 service14151 FAIL 45.448 s versus 45 s on D88b. Runtime owns next measured cost source and independent whole-path comparison. No Agent diagnosis or unchanged repeat. Four R2 originals retain their prior qualified scopes until final matrix.
+Gates: P1 and P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine installed render still owed. No full PASS, core0, final tuple or ZIP claim. D87 exact24 plus separate1 ledgered; six live frontend cases source joined and need proof. E2/D79 after ZIP.
+Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed; every identity and scope limit retained.
+Families: Exact161 ready packet0200 plus69 additional0209 yields230 corrected selectors,18 family keys. All23 no-case outcomes remain visible; actual marker facts0155 permit their first targeted bodies without unintended runner filter. MAIN receiving worker binds genuine source, tuple and proof. No unchanged268 repeat.
+Admission: Old D88 prototype and denied security analysis remain stopped. Distinct D88b protective review passed and source adopted; actual P4 performance remains failed. Compound legacy unused-pin evidence exists but no qualified current history pair; scope decision0216 owed.
+Disk: D89 source/review cap6 above5.5GB, heavy1 above5.2GB, nothing new below4.5GB. Latest5666447360 bytes after completed review recycling. Sweep3 removed0; compact packed0/gzipped0. No ended clean nonKEEP tree; dirty/KEEP/refused targets untouched.
+Blockers: Runtime cost — P4 actual14151 FAIL45.448s; next measured strict source and read-only whole-path comparison remain Runtime owned. No unchanged original.
+Blockers: MAIN proof — Resume D90 same retained prep after P4; product8964 unmerged until actual proof. Ready230 corrected nodes, exact23 first bodies, livefrontend6 and netzero1 need meaningful existing-runner qualification.
+Blockers: Orchestrator — Compound unused-pin current source-admission decision0216; genuine legacy evidence lacks current history pair.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
-Next ready: MAIN ready161 corrected-node qualification and sole P4, then D90 candidate proof serially. Finish exact later delta and net-zero bounded source facts. No unchanged268 retry.
-live 1 / cap 6; ready-undispatched 0 eligible local starts. Net-zero review0215 live; exact69delta completed. MAIN D91 nextsource requested under existing reservation; ready230 and P4/D90 body requests unique.
-Inbox consumed through1290033 bytes. Updated 2026-10-25T02:00:08Z: normal M2/projection/opaque joins verified, ordinary-sheet reviewer and exact successor input worker assigned. All behavior proof limits retained; no manager product/test/pin edits or bodies.
+Next ready: MAIN D90 exact8964 candidate proof, ready230 corrected-node qualification and approved D91 source continuation. Net-zero exact original joins meaningful next batch. No Agent local duplicate.
+live 0 / cap 6; ready-undispatched 0 eligible local work. All local source/reviews completed. MAIN D91 and body requests retain named external ownership; all source branches merge only after protected PASS and required actual proof.
+Inbox consumed through1291803 bytes. Updated 2026-10-25T02:19:26Z: P4 actual14151 NO-GO consumed, net-zero independent PASS and normal cef8 verified, ready230 packet published. No manager product/test/pin edits or bodies.
