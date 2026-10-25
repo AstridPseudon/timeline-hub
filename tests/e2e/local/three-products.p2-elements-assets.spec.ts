@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page, type Request, type Response } from '@playwright/test';
 import { sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { ASTRID_PYTHON } from './support/astrid.ts';
-import { dropFileOnTimeline, openEmbeddedCanonicalShot, test as appTest } from './support/app.ts';
+import { dropFileOnTimeline, openEmbeddedCanonicalShot, test as appTest, timelineFileDropClientX } from './support/app.ts';
 import { assertSemanticAddMediaRequest, expectedImageDropRow } from './support/p2-semantic-oracle.ts';
 import type {
   CanonicalDocument,
@@ -360,7 +360,7 @@ async function dropFileIn(scope: Locator, file: { name: string; type: string; by
   const [clipBox, referenceBox, wrapperBox] = await Promise.all([clipLocator.boundingBox(), referenceLocator.boundingBox(), wrapper.boundingBox()]);
   if (!clipBox || !referenceBox || !wrapperBox) throw new Error('child timeline is not measurable');
   const pixelsPerSecond = (referenceBox.x - clipBox.x) / (referenceAt - from);
-  const clientX = clipBox.x + (time - from) * pixelsPerSecond;
+  const clientX = timelineFileDropClientX({ clipLeft: clipBox.x, from, time, pixelsPerSecond });
   const clientY = clipBox.y + clipBox.height / 2;
   expect(clientX).toBeGreaterThanOrEqual(wrapperBox.x);
   expect(clientX).toBeLessThanOrEqual(wrapperBox.x + wrapperBox.width);
