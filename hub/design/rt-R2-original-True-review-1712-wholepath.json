@@ -1,0 +1,55 @@
+{
+  "schema": "timeline.r2.original-true.whole-path.v1",
+  "verdict": "FAIL_EVIDENCE",
+  "owner": "UNKNOWN",
+  "bounded_seam": "Agent inverse/recording/materialization -> Runtime timeline_commit_auth.validate_step/native_site/site",
+  "path": [
+    {
+      "phase": "client_request",
+      "fact": "The unchanged conformance subprocess submits the real registered provider through RuntimeService for birth, grouped undo, then redo; no synthetic record enters the path.",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_create.py:120-134,222-231"
+    },
+    {
+      "phase": "agent_inverse_selection",
+      "fact": "Agent loads authenticated target history/boundaries, selects inverse records, and passes inverse_sources/inverse_records into execute; redo is a fresh inverse of the accepted undo receipt.",
+      "source": "astrid/sdk/timeline/commit.py:1251-1310"
+    },
+    {
+      "phase": "agent_inverse_execution",
+      "fact": "Agent apply_inverse replays selected records in reverse order, records reads/writes, builds inverse_stages, and retains native_write_range; physical owner filtering is applied after each stage before materialization projection.",
+      "source": "astrid/sdk/timeline/inverse.py:1033-1188"
+    },
+    {
+      "phase": "agent_recording_materialization",
+      "fact": "CommitPatch.after projects each inverse stage against its prior stage, while finish emits ordered effects, effect ranges, commit.effect bindings and authenticated commit.materialization successor/edge bindings.",
+      "source": "astrid/sdk/timeline/_commit_patch.py:459-550,514-718"
+    },
+    {
+      "phase": "runtime_acceptance",
+      "fact": "Runtime store validates the prepared provider record against the source/base closure, command inputs, continuations, history and sequential capture before publication.",
+      "source": "runtime_protocol/timeline_commit_store.py:1510-1545; runtime_protocol/timeline_commit_auth.py:2880-2955"
+    },
+    {
+      "phase": "actual_failure",
+      "fact": "At redo-birth, validate_step iterates a recorded native read and native_site delegates the occurrence collection alias to site; site finds a non-singleton occurrence match in that boundary and rejects.",
+      "source": "runtime_protocol/timeline_commit_auth.py:100-172,213-218,388-426; evidence/original.xml"
+    },
+    {
+      "phase": "not_proved",
+      "fact": "The guard identifies the validation seam only. Without the exact redo records/bindings/stage closures, the evidence cannot distinguish an Agent-emitted wrong read or stage boundary from a Runtime boundary/projection mismatch, nor verify final effect/closure conservation.",
+      "source": "EXACTMISSING in review.json"
+    }
+  ],
+  "boundary_analysis": {
+    "earlier_or_later_image": "UNKNOWN: Runtime resolves the failing native read against command_boundary; the retained public receipt does not expose whether that boundary is the intended pre-restore, intermediate, or landing image.",
+    "grouping": "UNKNOWN: Agent statically retains inverse.stage ranges, but the exact redo stage partition and range are absent.",
+    "provenance_alias_physical_root": "UNKNOWN: Runtime requires one occurrence row plus authenticated shot/internal roots; exact rows, physical refs and successor edges are absent.",
+    "effects_final_closure": "UNKNOWN: source code projects and validates these facts, but the failing run has no safe public effect/closure record to compare."
+  },
+  "controls": {
+    "runtime_r2_home": "PASS, separate genuine3 and native2 controls only",
+    "runtime_r2_security": "PASS, scoped security review only",
+    "original_true": "FAIL_EVIDENCE, exact lower redo-birth result",
+    "credit_rule": "Do not relabel genuine3/native2 or original10 as original [True] closure."
+  }
+}

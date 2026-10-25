@@ -1,0 +1,62 @@
+{
+  "schema": "timeline.r2.original-true.source-map.v1",
+  "pins": {
+    "agent": {
+      "commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+      "tree": "6abf383217363d08fe0cf00558b010f5a9dd506f",
+      "files": {
+        "astrid/sdk/timeline/commit.py": {"sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3", "bytes": 89284},
+        "astrid/sdk/timeline/_commit_patch.py": {"sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f", "bytes": 77587},
+        "astrid/sdk/timeline/_recording.py": {"sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4", "bytes": 15945},
+        "astrid/sdk/timeline/inverse.py": {"sha256": "6c794734cb763c21cec386f764bc63b94f3a74b4dd9f8464136a285c628d0423", "bytes": 69633},
+        "astrid/sdk/timeline/native_occurrence_create.py": {"sha256": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22", "bytes": 3033},
+        "tests/editing_conformance/test_commit_runtime_occurrence_create.py": {"sha256": "f1d86c7a95140a3f69a60e3ac348511eedf2eca52d75da135eb04450f9935ca1", "bytes": 14397}
+      }
+    },
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "files": {
+        "runtime_protocol/timeline_commit_auth.py": {"sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47", "bytes": 185041},
+        "runtime_protocol/timeline_commit_store.py": {"sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4", "bytes": 142549},
+        "runtime_protocol/service.py": {"sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b", "bytes": 520340}
+      }
+    }
+  },
+  "module_origins": {
+    "before_after": "Worker receipt reports unchanged origins: Agent modules from /home/user/work/wt/agt-pin-d4ba9916; Runtime modules from /home/user/work/wt/rt-pin-ab1e4f61.",
+    "unchanged": true
+  },
+  "source_comparison": {
+    "agent_d4ba_vs_released_a0d839_relevant_timeline_files": "IDENTICAL",
+    "runtime_ab1e_vs_released_a5fc_auth_store_files": "IDENTICAL",
+    "meaning": "Released security/home controls do not supply an original-[True] closure result or change the exact reviewed source pair."
+  },
+  "ast": {
+    "selector_source": {
+      "sha256": "5e50f752afe0fb6b8edb34fd6f710ba51252dea38281c475df361fdea72b8d25",
+      "members": [
+        {"name": "generated_runtime", "kind": "FunctionDef", "lineno": 32, "end_lineno": 47},
+        {"name": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry", "kind": "FunctionDef", "lineno": 51, "end_lineno": 70},
+        {"name": "_prove_birth", "kind": "FunctionDef", "lineno": 73, "end_lineno": 262}
+      ],
+      "decorator": "pytest.mark.parametrize('grouped', [False, True])",
+      "selected_case": "grouped=True"
+    },
+    "reviewed_functions": [
+      "astrid/sdk/timeline/_commit_patch.py:canonical_site,CommitPatch.before,CommitPatch.after,CommitPatch.finish,CommitPatch.materializations",
+      "astrid/sdk/timeline/inverse.py:apply_inverse,_validate_inputs",
+      "astrid/sdk/timeline/native_occurrence_create.py:occurrence_create",
+      "runtime_protocol/timeline_commit_auth.py:site,native_site,validate_step,validate_bindings,validate",
+      "runtime_protocol/timeline_commit_store.py:_validate,accept,_publish",
+      "runtime_protocol/service.py:register_timeline_commit_provider,commit_timeline"
+    ]
+  },
+  "checks": {
+    "json_parse": "PASS",
+    "xml_parse": "PASS",
+    "source_ast_parse": "PASS",
+    "selector_inventory": "PASS",
+    "git_diff_check": "PASS"
+  }
+}

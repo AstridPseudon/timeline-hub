@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T17:14:27Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
-# runtime board, 2026-10-25T17:09:45Z
+<!-- main | 2026-10-25T17:19:11Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
+# runtime board, 2026-10-25T17:17:49Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -427,7 +427,7 @@
 | D107-transcript-wholepath | Trace persisted transcript authority | Luna read only | Genuine private records absent | later | Reader 1634; final review 1646 PASS | Source map verified. Owner UNKNOWN; persisted record EXACTMISSING; both behavior failures stay open. No rerun or guard author. | Independent 1646 evidence PASS | Source unchanged |
 | D77-portable-handoff | Correct source refs and lock hash | Luna independent | Exact captured source trees | merged | rt-D77-source-review-handoff-1624 | Source review and corrected handoff PASS; safe exact bytes published 1635. Stage and render remain unrun. | Independent 1624 PASS | 86c306ed6 |
 
-| R2-original-True | Qualify original grouped inverse and redo | Luna | Independent result and source verdict | review | Author1713; rt-R2-original-True-review-1712 | Exact d4ba/ab1e original FAIL8.188s at redo birth alias boundary. Owner UNKNOWN; one body, no repeat. | Read-only review active | Source unchanged |
+| R2-original-True | Qualify original grouped inverse and redo | Luna | Authentic redo records or proved correction | later | Author1713; independent1712 complete | Exact d4ba/ab1e FAIL8.188s at redo birth. Custody PASS; owner UNKNOWN. [Review](../../design/rt-R2-original-True-review-1712-review.json) | Independent source and custody checked | Source unchanged |
 
 
 Runtime producer: Normal ab1e includes qualified step, inverse/redo and safe diagnostic source. Home1550 genuine3/native2 PASS. Held SWAP WAL1537 excluded; broader original-four behavior remains unqualified.
@@ -440,13 +440,14 @@ Blockers: Agent roots — scalar/compound still UNKNOWN; transcriptpin317 two ca
 Blockers: Element — exact request3 binding, pending352samples/3lost; no provider leaf or wall denominator. App sole existing-helper/lifecycle correction; no cost author or fresh body.
 Blockers: Final render — exact portable refs published91398/1daca, captured trees523893/a522 conserved and lock18d verified1624. Farm receives exact sources and qualified kit through normal routes; applied child/stage/render still owed.
 Blockers: D69 and cut — normal XML applicability/full core, installed render90, REG0, fullP2, final tupleP1-P5, wheel, Windows and final build/ZIP remain.
-Next ready: Agent receives exact0857 then ONE changed normal child/core. Independent originalTrue1712 review active; actual FAIL retained. U4a HOME d4ba and Farm exact checkouts clear prior intake waits.
+Next ready: Agent receives exact0857 then ONE changed normal child/core. All current Runtime source work complete; originalTrue reviewed FAIL stays later with missing authenticated redo records. Farm D77 inputs complete.
 Source receipts: D128 independent reader1637 source generator finding PASS, actual layout EXACTMISSING. D107 reader1634/source review1640 plus derivative correction1644/final1646 PASS_EVIDENCE_ONLY; no behavior closure. Exact safe outputs flat design under each worker prefix; handbacks1642/1649 sent.
 Host actions: U4a cec01 filed1657. D107 b4b380 source already normal9350; intake cleared. D77 portable refs confirmed on normal hub1657; no integration merge wanted. Farm verified both exact checkouts at16:52; child/stage/render pending.
 Kit: Installed maker0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39 regular0755; old1243cb backed up. Source1651 and install1656 PASS29; independent installed1659 PASS. Store123bb and dependency116b unchanged. Normal child5905580032; runtime/profile/diagnostic8589934592 retained. Actual Agent receiving hash and changed-child receipt pending; notice sent this pass.
 Venues: No Main heavy body; Farm core dropped, D77 only. Agent sole local current core awaits actual child, no ID yet. Historical tuples and failures never retargeted.
 Delivery: Private100Python+TS/41matrix and D123 current patch source qualified; final cut remains gated. D126 App owns migration prose/ZIP line. R2c81b/D116 source-only seeds held; no D79 or competing small-file writers.
 Safety: All D130 and prior D88/D111/retirement refusals stay held. D106 ORCH-only output; no hub writes, Git mutations, credentials, upstream push, M5 or permission-file changes by manager.
-Disk: Guarded sweep3 removed0; compact packed0scratch/0testdirs and gzipped12oldlogs losslessly, about250MB recovery. Zero eligible finished clean nonKEEP trees. Five dirty historical trees and four previously refused retirement targets remain held; no retries.
-live 1 / cap 6; ready-undispatched 0. OriginalTrue1713 ended; independent result and whole-path reviewer1712 active. No new Runtime semantic writer justified. Main source floor and 4GB stop retained.
-INBOX consumed through1355834bytes. Updated 2026-10-25T17:13:56Z.
+Disk: Sweep3 removed0; compact packed0 scratch/test directories and gzipped0 logs this pass. Finished1713 and1712 auto-recycled; reports and XML retained. Five historical dirty trees and refused targets held.
+live 0 / cap 6; ready-undispatched 0. Independent1712 complete; safe exact output publication sent to Agent. No proved Runtime source correction ready. Main free5.106GB, 4GB stop retained.
+INBOX consumed through1355834bytes. Updated 2026-10-25T17:17:49Z.
+Later: OriginalTrue redo-birth still fails on d4ba/ab1e. Independent1712 verified custody and traced full path; exact authenticated redo records and stage pairs absent, owner UNKNOWN. No unchanged retry or guard author.

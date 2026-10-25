@@ -1,0 +1,21 @@
+{
+  "task": "rt-Agent-R2-original-True-after-ab1e-1713",
+  "kind": "bounded-light-original-body",
+  "captured_at_utc": "2026-10-25T17:10:36Z",
+  "free_bytes": 5130645504,
+  "light_floor_bytes": 5000000000,
+  "source_only_floor_bytes": 4600000000,
+  "stop_bytes": 4000000000,
+  "light_floor_pass": true,
+  "source_only_floor_pass": true,
+  "stop_line_clear": true,
+  "concurrent_heavy_body": false,
+  "admission": "ADMITTED",
+  "body_budget": "one exact original selector only",
+  "selector": "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+  "controls": {
+    "no_new_registry_route_profile_venv_or_package": true,
+    "no_native_smoke_or_old_controls": true,
+    "d130_swap_wal_path_read": false
+  }
+}

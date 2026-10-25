@@ -1,0 +1,61 @@
+{
+  "schema": "timeline.r2.original-true.evidence-review.v1",
+  "verdict": "FAIL_EVIDENCE",
+  "evidence_custody": "PASS",
+  "product_pass": false,
+  "owner": "UNKNOWN",
+  "seam": "Agent inverse/recording/materialization -> Runtime authenticated inverse-boundary alias validation",
+  "exact_missing": [
+    "redo-birth records.commands and records.steps, including the failing read ref/path/state",
+    "inverse.stage native_write_range/effect_range and per-stage before/after closure image pins",
+    "commit.effect and commit.materialization bindings with physical refs, owners, edge refs, ordinals and phases",
+    "redo source/landing closure images, parent occurrence rows, shot/internal images and authenticated continuations",
+    "the accepted undo/redo history entries and receipts needed to pair the stages"
+  ],
+  "tuple": {
+    "agent_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "agent_tree": "6abf383217363d08fe0cf00558b010f5a9dd506f",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+  },
+  "selector": "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+  "result": {
+    "raw_exit": 1,
+    "tests": 1,
+    "passed": 0,
+    "failed": 1,
+    "errors": 0,
+    "skipped": 0,
+    "duration_seconds": 8.188,
+    "first_unmet_phase": "redo-birth",
+    "first_unmet_operation": "inverse(undone, 'redo-birth')",
+    "exception_class": "runtime_protocol.errors.RuntimeErrorBase",
+    "message": "provider occurrence alias is outside its boundary",
+    "runtime_frame": "runtime_protocol/timeline_commit_auth.py:156",
+    "validation_frame": "runtime_protocol/timeline_commit_auth.py:426",
+    "outer_assertion": "tests/editing_conformance/test_commit_runtime_occurrence_create.py:70"
+  },
+  "comparison": {
+    "original1357": "Same safe error class/message was retained in original10, where the first unmet operation was grouped undo-birth; it is not closure credit for this [True] redo-birth result.",
+    "independent1405": "Review preserved original10 as 6 passed/4 failed and occurrence [True] failure; it did not prove the current lower redo-birth stage or an owner.",
+    "genuine3": "PASS is a separate three-case control and is not original [True] closure credit.",
+    "native2": "PASS is a separate provider smoke and is not original [True] closure credit."
+  },
+  "admission": {
+    "before_free_bytes": 5130645504,
+    "after_free_bytes": 5108240384,
+    "no_concurrent_heavy_body": true,
+    "body_runs": 1,
+    "same_source_case_repeated": false
+  },
+  "scope": {
+    "source_only_review": true,
+    "body_rerun": false,
+    "native_smoke": false,
+    "old_controls": false,
+    "full_or_family_suite": false,
+    "d130_held_wal_swap_review": false,
+    "product_edits": false,
+    "new_security_pass": false
+  }
+}

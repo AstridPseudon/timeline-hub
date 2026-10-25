@@ -1,0 +1,36 @@
+{
+  "status": "FAIL_RETAINED",
+  "classification": "exact next retained failure",
+  "source_attribution": "UNKNOWN",
+  "selector": "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+  "pytest": {
+    "exit": 1,
+    "tests": 1,
+    "passed": 0,
+    "failed": 1,
+    "errors": 0,
+    "skipped": 0,
+    "duration_seconds": 8.188
+  },
+  "failure": {
+    "phase": "redo-birth",
+    "exception": "runtime_protocol.errors.RuntimeErrorBase",
+    "message": "provider occurrence alias is outside its boundary",
+    "runtime_guard": "runtime_protocol/timeline_commit_auth.py:156",
+    "agent_assertion": "tests/editing_conformance/test_commit_runtime_occurrence_create.py:70",
+    "detail": "The provider's redo inverse is refused while validating an occurrence alias against its boundary. The trace alone does not prove whether the remaining cause belongs to Agent or Runtime."
+  },
+  "credit": {
+    "original_pass": false,
+    "synthetic_three_credit": false,
+    "source_only_credit": false,
+    "scalar_compound_separate_credit": false,
+    "release_or_adoption_gate": false
+  },
+  "body_runs": 1,
+  "same_source_case_repeated": false,
+  "xml": {
+    "path": "evidence/original.xml",
+    "sha256": "9464f762b8606e04a3680a42791f038c142ce1ab02e271ec78b93c8183f3bdfb"
+  }
+}
