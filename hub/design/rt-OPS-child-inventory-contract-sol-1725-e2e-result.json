@@ -1,0 +1,11 @@
+{
+  "whole_make_e2e": "NOTRUN",
+  "parent_red": false,
+  "candidate_green": false,
+  "adversarial_checks": 0,
+  "commands": [],
+  "verifier_mocked": false,
+  "store_initialized_by_worker": false,
+  "admission_changed": false,
+  "blocker": "EXACTMISSING: approved private fixture venue manifest, Store custody, committed tiny sources and local wheels"
+}

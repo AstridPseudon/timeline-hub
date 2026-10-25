@@ -1,0 +1,39 @@
+{
+  "task": "rt-OPS-child-inventory-review-1744",
+  "base_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+  "candidate_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+  "verdict": "PASS_SOURCE_SECURITY",
+  "release_qualification": "NOT_RELEASE_QUALIFIED_E2E_NOTRUN",
+  "findings": [],
+  "scope": {
+    "plan": "F; C0 sections 1 and 4",
+    "reviewed": [
+      "author report and all parent/wholepath evidence",
+      "full make-child-venv shell caller",
+      "installed-site distribution inventory producer",
+      "immutable STORE_PY and STORE_VERIFY",
+      "ownership, archive hash, RECORD, source, registration, retention, default-off, and reserve guards",
+      "report sorting, duplicate preservation, provenance, section grammar, and size limits",
+      "prepared whole-make E2E runner and minimum legitimate fixture inputs"
+    ],
+    "excluded": ["D130 SWAP/WAL path", "body/core/provider/full/browser", "live installation/request/Store initialization/package acquisition"]
+  },
+  "source_review": {
+    "producer_mapping": "PASS: DIST_METADATA_SCRIPT enumerates the same single installed lib/python*/site-packages scope as STORE_VERIFY, validates local distribution identity/provenance, and renders both metadata and pip_freeze sections from that inventory.",
+    "sort_and_duplicates": "PASS: canonical name is used only as the tuple sort key; the full rendered row is the tie-breaker and every installed distribution remains represented, including canonical-name duplicates.",
+    "provenance": "PASS: local direct_url source paths and archive SHA-256 values are taken from installed metadata and remain checked by the unchanged verifier; dependency rows do not grant ownership.",
+    "limits": "PASS: producer caps metadata/report at 1 MiB and writes both private files 0600; unchanged STORE_VERIFY and Store limits remain active.",
+    "immutable_blocks": "PASS: STORE_PY, STORE_VERIFY, STAGING_INVENTORY, and RELOCATE match the parent source hashes.",
+    "caller": "PASS: the normal shell path authenticates clean source commits, invokes the unchanged embedded verifier, calls Store.ensure, seals before registration, and projects the verified report; diagnostic retention is explicit opt-in and leaves register/adopt/reuse/publish/ready/body false.",
+    "reserves": "PASS: D131 reserve policy is unchanged: normal child Store reserve 5905580032 bytes, diagnostic Store reserve 8589934592 bytes, with the existing 4GB stop and source/no-heavy admission constraints preserved.",
+    "production_exact_rows": "EXACTMISSING: retained Farm production report/inventory was not supplied; no differing row or culprit was reconstructed."
+  },
+  "e2e": {
+    "status": "NOTRUN",
+    "reason": "No manager-admitted private fixture venue, preinitialized fixture Stores, clean committed tiny sources, or local wheelhouse was supplied; current free space is below the unchanged normal reserve.",
+    "runner_review": "PASS_PREPARED_ONLY: tests/e2e_inventory.py invokes the whole parent and candidate make paths and the unchanged verifier, but its fixture admission is absent.",
+    "verifier_mocked": false,
+    "store_initialized_by_reviewer": false,
+    "admission_changed": false
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task": "rt-D127-leaf-retention-ready-1741",
+  "current_base": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+  },
+  "reviewed_source": {
+    "commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "tree": "834b6c71e5030976b121d527f36066461166c13a",
+    "parent": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+    "parent_parent": "453b3e6f92045980219ec4948419ee5ad25c817d",
+    "refs": [
+      "hub/tl/app-D127-leaf-first-return-1619",
+      "hub/timeline/runtime/tl/app-D127-leaf-first-return-1619"
+    ]
+  },
+  "authorized_files": {
+    "tests/helpers/p2_commit_phase_capture.py": {
+      "worktree_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "reviewed_tree_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "author_1606_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "mode": "100644"
+    },
+    "tests/test_p2_commit_phase_capture.py": {
+      "worktree_sha256": "d6b5703492b4b4d399ee1d5d7350faae615a01448df70229efc3cc03a1ecff18",
+      "reviewed_tree_sha256": "d6b5703492b4b4d399ee1d5d7350faae615a01448df70229efc3cc03a1ecff18",
+      "author_1606_sha256": "fe3842291d1271e8291ce121e57343d35f84bc70a8bbb12b5464fe81d0a6f9ef",
+      "mode": "100644"
+    }
+  },
+  "source_identity": {
+    "full_two_file_byte_identity": true,
+    "candidate_commit_contains_helper_and_assertion_custody_test": true,
+    "candidate_commit_delta_from_parent": [
+      "tests/test_p2_commit_phase_capture.py"
+    ],
+    "candidate_commit_mode_changes": [],
+    "current_worktree_non_allowed_tree_differences": 0,
+    "current_worktree_changed_files": [
+      "tests/helpers/p2_commit_phase_capture.py",
+      "tests/test_p2_commit_phase_capture.py"
+    ],
+    "current_worktree_non_allowed_files_or_modes_changed": false
+  },
+  "custody_inputs": {
+    "author_report": "app-D127-leaf-retention-author-1606",
+    "combined_review": "app-D127-leaf-combined-review-1630",
+    "combined_review_verdict": "FAIL",
+    "combined_review_failure_owner": "App validator",
+    "historical_request": 3,
+    "historical_missing_counter_recovery": false
+  }
+}

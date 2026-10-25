@@ -1,0 +1,38 @@
+{
+  "task": "rt-OPS-child-inventory-contract-sol-1725",
+  "source_preimage_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+  "audit_completed_before_edit": true,
+  "production_fact": "Farm supplied log reached original line1192 and refused exact report equality. Earlier stages through readonly-source completed.",
+  "proved_contract_faults": [
+    "pip freeze uses direct references for dependencies carrying direct_url; verifier requires raw installed METADATA Name==Version for every non-local distribution",
+    "pip freeze sorts raw name.lower(); verifier sorts canonical name then rendered line",
+    "pip freeze deduplicates canonical distribution names; verifier preserves each installed distribution"
+  ],
+  "fix": "One importlib.metadata.distributions(path=[installed-site]) inventory supplies both metadata and report; local exact Name/Version are validated against committed project metadata. Every nonlocal row preserves installed Name/Version, canonicalization applies only to lookup/order. Local URLs/hashes come from validated installed direct_url.",
+  "actual_Farm_differing_rows": "EXACTMISSING pending retained717e53d7 safe read-only census; structural mismatch is proved, exact production row cause is not asserted.",
+  "safe_private_reproduction": {
+    "pip_exit_code": 0,
+    "pip_row_count": 4,
+    "installed_inventory_row_count": 4,
+    "differing_rows": [
+      {
+        "ordinal": 0,
+        "producer_shape": "name-version",
+        "installed_inventory_shape": "name-version",
+        "producer_row_sha256": "7676f1c238bae199492ed97dc378d5f6d77629e2cfb05ef5f0ff3b078387eb8d",
+        "installed_inventory_row_sha256": "db7e488e6c45053db2e70059b1dcc570900ae6dd62be7dc63f7c2eaebf23cda5"
+      },
+      {
+        "ordinal": 1,
+        "producer_shape": "direct-reference",
+        "installed_inventory_shape": "name-version",
+        "producer_row_sha256": "46bffda47784af1b8f6241cb1e37a5a6960585990341e3aa01533b5231529f44",
+        "installed_inventory_row_sha256": "7676f1c238bae199492ed97dc378d5f6d77629e2cfb05ef5f0ff3b078387eb8d"
+      }
+    ],
+    "actual_url_or_private_body_exported": false,
+    "producer_to_unchanged_verifier": "PASS (synthetic layout with real pip freeze; no whole-make E2E credit)"
+  },
+  "whole_make_e2e": "NOTRUN: approved fixture venue/custody/local-wheel inputs missing; unchanged disk reserve not met.",
+  "invariants": "No verifier/STORE_PY/Store/helper/admission/registration/retention/ownership/RECORD/source guard change; all inherited29 controls unchanged."
+}

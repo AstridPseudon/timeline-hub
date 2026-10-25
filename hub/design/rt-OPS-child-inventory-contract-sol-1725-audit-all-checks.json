@@ -1,0 +1,139 @@
+{
+  "phase": "completed-before-producer-edit",
+  "observed_utc": "2026-10-25T17:27:55.714797+00:00",
+  "source_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+  "verifier_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+  "scope": "Every explicit and implicit condition from original line1154 through verifier end, plus immediately preceding ancestry/mode prerequisites",
+  "rows": [
+    {
+      "line": 1142,
+      "condition": "Retained root and snapshot physical ownership, hardlinks, symlinks, types and sealed mode",
+      "producer": "Archive builds, venv --copies and seal; only lib64 -> lib exception",
+      "disposition": "Inherited controls; all remain unchanged"
+    },
+    {
+      "line": 1146,
+      "condition": "Every retained source directory is an ancestor of an authenticated committed file",
+      "producer": "git archive extraction only, installations from separate .source-inputs archives",
+      "disposition": "Inherited ten-path model; no packaging inside snapshots"
+    },
+    {
+      "line": 1154,
+      "condition": "Every retained source file belongs to exact requested Git archive inventory",
+      "producer": "git archive extraction and exact original archive carrier",
+      "disposition": "Inherited foreign-file and committed-byte controls"
+    },
+    {
+      "line": 1156,
+      "condition": "Three markers equal exact Agent SHA, Runtime SHA and client string, each with one newline",
+      "producer": "printf source tuple and client identity",
+      "disposition": "Inherited each-marker mutation"
+    },
+    {
+      "line": 1167,
+      "condition": "Metadata distribution order is astrid, astrid-runtime, optional banodoco-timeline-schema",
+      "producer": "DIST_METADATA_SCRIPT roots insertion order",
+      "disposition": "Add full order and optional-schema report checks"
+    },
+    {
+      "line": 1168,
+      "condition": "Distribution discovery canonicalizes only lookup; previously authenticated single local distribution exists",
+      "producer": "Installed dist metadata Name/Version already compared to committed project",
+      "disposition": "Name/version ambiguity remains refused; no identity normalization grant"
+    },
+    {
+      "line": 1171,
+      "condition": "Each metadata row is exact name/version/direct_url/provenance with trailing newline",
+      "producer": "DIST_METADATA_SCRIPT reads installed METADATA and direct_url and validates source/hash",
+      "disposition": "Add every field plus ordering/extra/missing checks"
+    },
+    {
+      "line": 1174,
+      "condition": "Metadata file must exist, decode UTF-8 and be readable",
+      "producer": "distribution-provenance writes file",
+      "disposition": "Missing/malformed inputs refuse with ordinary I/O/decode error"
+    },
+    {
+      "line": 1178,
+      "condition": "Requested Agent archive still available; archive is parseable, regular entries only, pyproject and lock present",
+      "producer": "source_state pre/post plus git archive, fixed requirements/proof.lock",
+      "disposition": "No alternate lock accepted; missing source/lock remains refusal"
+    },
+    {
+      "line": 1180,
+      "condition": "Report header exact status and tuple, exact client string SHA256, fixed requirements path and committed lock bytes SHA256",
+      "producer": "freeze header uses S/RUNTIME_SHA/CLIENT_IDENTITY/REQUIREMENTS_PATH/LOCK_SHA",
+      "disposition": "Add all six header mutations"
+    },
+    {
+      "line": 1183,
+      "condition": "Report origins exact marker contents, including order and one newline",
+      "producer": "PROVENANCE_SCRIPT then origin-relocation",
+      "disposition": "Add differing order and missing/extra section checks"
+    },
+    {
+      "line": 1184,
+      "condition": "Report distribution metadata section exact marker bytes and exact section labels",
+      "producer": "producer concatenates marker",
+      "disposition": "Add every section grammar mutation"
+    },
+    {
+      "line": 1186,
+      "condition": "Inventory includes every installed distribution without pip filtering or canonical-name deduplication",
+      "producer": "BUG: pip freeze instead uses own filtered/deduplicated distribution iterator",
+      "disposition": "Replace producer pip inventory rendering with importlib.metadata installed site inventory"
+    },
+    {
+      "line": 1188,
+      "condition": "Local source rows canonical name + exact authenticated file URL and sha256 for archive; directory URL otherwise",
+      "producer": "pip direct reference uses raw METADATA Name and PEP610; local exact names normally agree",
+      "disposition": "Use installed direct_url validated by distribution-provenance, not invented URL"
+    },
+    {
+      "line": 1189,
+      "condition": "Every non-local distribution rendered raw METADATA Name==Version even with direct_url",
+      "producer": "BUG: pip freeze renders dependencies with direct_url as direct references, editables/comments possible",
+      "disposition": "Reproduce with real pip freeze over private installed wheel metadata; dependency provenance grants no ownership"
+    },
+    {
+      "line": 1190,
+      "condition": "Sort by canonical name then whole rendered row for ties; retain duplicates, append newline",
+      "producer": "BUG: pip freeze sorts raw name.lower and deduplicates canonical names",
+      "disposition": "Punctuation/case ordering and duplicate controls required"
+    },
+    {
+      "line": 1191,
+      "condition": "Entire report exact bytes-as-UTF8-text incl content, ordering, paths, hashes, sections and final newline",
+      "producer": "Producer writes staging paths; relocation updates report, metadata, direct_url and launcher RECORD hashes",
+      "disposition": "Add report path/content/hash/order adversarial mutations; relocation unchanged"
+    },
+    {
+      "line": 1193,
+      "condition": "Both maker files at most 1048576 bytes and no executable bits; missing files/stat errors refuse",
+      "producer": "Redirection creates nonexecutable files under normal umask; no size guard currently in producer",
+      "disposition": "Producer must bound output and set 0600; no verifier relaxation"
+    },
+    {
+      "line": 1196,
+      "condition": "Only authenticated report/metadata file names added to root ownership, never report-mentioned paths",
+      "producer": "Unchanged verifier fixed additions and sorted root list",
+      "disposition": "Check returned inventory grants no foreign ownership"
+    },
+    {
+      "line": 1198,
+      "condition": "JSON serialization and stdout succeed; errors remain terminal",
+      "producer": "Unchanged verifier emits lists of authenticated RECORD and root paths",
+      "disposition": "Whole caller consumes JSON, rechecks markers/freeze identity, then registration"
+    }
+  ],
+  "earlier_verifier_guards": "All inherited import/source/RECORD/metadata/license/console/bytecode/canonical-client/no-overlap guards unchanged; no producer report grants new ownership.",
+  "production_observation": "Farm supplied stage log proves failure at report equality; actual report and installed inventory not yet supplied. Exact differing production rows are EXACTMISSING.",
+  "post_edit": {
+    "candidate_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "verifier_unchanged": true,
+    "all_inherited29_controls_passed": true,
+    "new_controls_passed": 11,
+    "whole_make_e2e": "NOTRUN; no model control is counted as E2E",
+    "coverage": "Existing source ancestry/file/marker/ownership controls plus every report line and metadata field/order/newline, optional schema, source strict identity, installed-scope ambiguity guard, dependency direct reference/order/duplicates, executable metadata and producer 1MiB cap. Missing/unreadable/malformed inputs remain terminal I/O/decode/parse errors; they are not excused."
+  }
+}

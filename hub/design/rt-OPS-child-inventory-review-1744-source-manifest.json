@@ -1,0 +1,58 @@
+{
+  "task": "rt-OPS-child-inventory-review-1744",
+  "repository": "composition",
+  "base_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+  "candidate_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+  "candidate_tree": "32dbfb3e6ec08b032db2c9f75c6fae29e5e4abcc",
+  "candidate_source": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "bytes": 69516,
+    "mode": "0755"
+  },
+  "parent_source": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755"
+  },
+  "protected_sources_read_only": {
+    "bench_store.py": {"sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2", "bytes": 43403, "mode": "0755"},
+    "verify_dependency_seed.py": {"sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2", "bytes": 52731, "mode": "0755"}
+  },
+  "embedded_blocks": {
+    "STORE_PY": {"sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c", "parent_equal": true},
+    "STORE_VERIFY": {"sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209", "parent_equal": true},
+    "STAGING_INVENTORY": {"sha256": "4c98ffcf6de7bd0314cc0e4790d4ffaeb206c03fb905f143e013cc57f631c6f1", "parent_equal": true},
+    "RELOCATE": {"sha256": "cf189024a79d12481c0629d3815c794c805dcd3fb4de6e9c3640ec242693cd98", "parent_equal": true},
+    "DIST_METADATA_SCRIPT": {"sha256": "b78b24f8d2aef8fb3ca112e00de3a25e846280b194be88f27f1945b798e75123", "parent_equal": false},
+    "IDENTITY_SCRIPT": {"sha256": "05f8c82c7ea9b28f6f12ac8cad3557a08b0885e455ee22719c9e3ddebc3ccf77", "parent_equal": true}
+  },
+  "tests": {
+    "test_count": 40,
+    "embedded_blocks_compiled_in_memory": 7,
+    "test_modules_compiled_in_memory": 4,
+    "ruff": "PASS",
+    "typecheck": "N/A: no configured Python mypy/pyright/typecheck baseline in Composition"
+  },
+  "admission_observed": {
+    "normal_child_reserve_bytes": 5905580032,
+    "diagnostic_reserve_bytes": 8589934592,
+    "ordinary_body_floor_bytes": 5000000000,
+    "source_floor_bytes": 4600000000,
+    "stop_line_bytes": 4000000000,
+    "free_bytes_at_review": 5044289536,
+    "heavy_body_started": false,
+    "production_tuple_changed": false
+  },
+  "live_actions": {
+    "install": false,
+    "request": false,
+    "register": false,
+    "reuse": false,
+    "adopt": false,
+    "store_init": false,
+    "package_acquisition": false,
+    "git_mutation": false
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task": "rt-D127-leaf-retention-ready-1741",
+  "adoption": "source_only_two_file_import",
+  "base_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+  "reviewed_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+  "files": {
+    "tests/helpers/p2_commit_phase_capture.py": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "tests/test_p2_commit_phase_capture.py": "d6b5703492b4b4d399ee1d5d7350faae615a01448df70229efc3cc03a1ecff18"
+  },
+  "behavior": {
+    "projection": "bounded nearest safe leaf in top_leaf_frames, with top_inclusive_frames retained",
+    "lifecycle": [
+      "completed",
+      "raised",
+      "returned_without_response",
+      "pending_at_stop"
+    ],
+    "buffer_complete": "separate from lifecycle and retained alongside legacy complete",
+    "historical_request_3": "no missing-counter recovery; unknowns remain unknown"
+  },
+  "budgets": {
+    "max_requests": 8,
+    "max_events": 128,
+    "max_bytes": 65536,
+    "sampling_interval_ms": 20,
+    "top_frame_rows": 10
+  },
+  "privacy": {
+    "sink_mode": "0600",
+    "raw_payloads": false,
+    "raw_keys": false,
+    "credentials": false,
+    "private_urls": false,
+    "raw_stack_in_json": false
+  },
+  "queue_guards": {
+    "app_combined_review": "FAIL remains App-owned",
+    "central_runtime_evidence": "23 passed in 3.46s reused",
+    "no_app_validator_or_bootstrap_import": true,
+    "no_product_or_wire_changes": true,
+    "no_competing_sampler": true,
+    "normal_runtime_queue": "manager-only after final App D127 review PASS"
+  }
+}

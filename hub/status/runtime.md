@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T17:43:17Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 11m -->
-# runtime board, 2026-10-25T17:31:30Z
+<!-- main | 2026-10-25T17:48:19Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-25T17:47:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -430,19 +430,23 @@
 | R2-original-True | Qualify original grouped inverse and redo | Luna | Authentic redo records or proved correction | later | Author1713; independent1712 complete | Exact d4ba/ab1e FAIL8.188s at redo birth. Custody PASS; owner UNKNOWN. [Review](../../design/rt-R2-original-True-review-1712-review.json) | Independent source and custody checked | Source unchanged |
 
 | D100-projection-applicability | Compare held item-birth product | Luna read only | Agent provider source qualification | later | Author1713; independent1727 PASS | Held d3b5 applies to Agent item identity seam. Product unqualified; own9 still nine setup errors. Exact source packet handed back. | Independent1727 PASS source assessment | No source change |
-| OPS-child-report-contract | Unify provision report and installed inventory | HARD Sol / Luna | Candidate and real end-to-end proof | doing | Sol1725; wholepath1726 complete | Independent source cause: raw pip freeze versus canonical inventory. All checks audited; tiny-package full verifier proof still required. | Exact candidate review next | No candidate yet |
+| OPS-child-report-contract | Unify report and installed inventory | Sol / Luna | Real whole-make E2E before install | review | Author1725; reader1726; review1744 | Forty controls PASS. Candidate c3226b, unchanged verifier. E2E NOTRUN: fixture inputs and admitted venue needed. | Independent1744 active | Candidate source only |
+
+| R2-graph-boundary | Assess current graph child inverse | Luna | Existing source evidence | doing | rt-R2-graph-boundary-applicability-1744 | Source only. Compare eight PASS/one FAIL on5e9ad with ab1e; no new body or auth author. | Source assessment pending | Source unchanged |
+| D127-leaf-current | Preserve exact helper import evidence | Luna | App1734 is first intake owner | gated:duplicate | rt-D127-leaf-retention-ready-1741 | Exact231ddb import completed. Offline21PASS and prior23 reused; three parent E402 diagnostics retained. No duplicate merge; App1734 owns intake. | Prior helper review reused | Duplicate source only |
+| OPS-inventory-E2E | Prepare real tiny-package make inputs | Luna | Receiving venue above child reserve | doing | rt-OPS-inventory-E2E-inputs-1747 | Complete portable fixtures and supported Store setup now. Main below5.906GB; lead1745 receives actual E2E, no production retry. | Source review1744 | E2E NOTRUN |
 
 Runtime producer: Normal ab1e includes qualified step, inverse/redo and safe diagnostic source. Home1550 genuine3/native2 PASS. Held SWAP WAL1537 excluded; broader original-four behavior remains unqualified.
 core open:425 and REG14 from immutable30693. Agent child1610 passed D131 reserve then refused source ownership, zero core body. No bounded-proof deduction. Agent a4e016/5e9ad/d8a1/635f capture stays exact.
 Gates: P1/P3 recorded GO; P4 independent GO28.101seconds. FullP2 NO-GO for element/SWAP; no cut, build or ZIP.
-Blockers: Agent core — changed0857 child refused17:12:34 at report versus installed inventory; no service ID/body. Same root as Farm17:22. Sol1725 and independent1726 own correction; no unchanged request.
+Blockers: Agent core — report mismatch source fixed1725, source review1744 active. Real whole-make tiny fixture proof NOTRUN; lead1745 owns admitted fixture inputs. No child reissue before proof/install.
 Blockers: Main reproduction — missing Store and unchanged8GiB diagnostic gate; free about5.2GB. No real diagnostic or actual-path census. Fixture10paths versus0 remains explicitly modeled.
 Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after automatic classifier refusal1537. No retry/rephrase/transfer/review/alternate test/rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
 Blockers: Agent roots — scalar/compound still UNKNOWN; transcriptpin317 two cases FAIL, owner UNKNOWN and persisted private records EXACTMISSING. No guard writer inferred.
-Blockers: Element — exact request3 binding, pending352samples/3lost; no provider leaf or wall denominator. App sole existing-helper/lifecycle correction; no cost author or fresh body.
-Blockers: Final render — Farm actual child717e refused17:22 at provision report versus authenticated installed inventory. Runtime Sol1725 owns full remaining verifier audit and producer fix; independent1726 wholepath active. No retry.
+Blockers: Element — App1734 earlier helper import plus App1731 coupled bootstrap active; duplicate Runtime1741 finished, no merge. Original request3 outer-only. No measured cost author/body.
+Blockers: Final render — Farm717e layout EXACTMISSING after cleanup. Same maker source1725/review1744 and real E2E prerequisite. No reconstruction or request retry.
 Blockers: D69 and cut — normal XML applicability/full core, installed render90, REG0, fullP2, final tupleP1-P5, wheel, Windows and final build/ZIP remain.
-Next ready: Sol1725 finalcandidate plus realE2E prerequisite; exact independent review then kitinstall/receipts before each ONE changed request. Farm retains717e for safe census. D100 source handed Agent; D126 done.
+Next ready: review1744 and E2Einputs1747 active; actual proof belongs admitted receiver. App1734/1731 owns helper source/remaining bootstrap; Runtime files after actual PASS. Graph1744 source active.
 Source receipts: D128 independent reader1637 source generator finding PASS, actual layout EXACTMISSING. D107 reader1634/source review1640 plus derivative correction1644/final1646 PASS_EVIDENCE_ONLY; no behavior closure. Exact safe outputs flat design under each worker prefix; handbacks1642/1649 sent.
 Host actions: U4a HOME Agentd4ba; filing wait cleared. D107 already HOME9350. Farm verified portable91398/1daca checkouts16:52, no integration merge wanted. No Main Git mutation.
 Kit: Installed maker0857a5e0 regular0755/68351bytes matches hub; source1651/install1656/independent1659 PASS. Agent actual receiving17:10 PASS; changed child refused17:12 report comparison. New producer correction1725 active. Store123bb/dependency116b exact.
@@ -450,7 +454,7 @@ Venues: No Main heavy body; Farm core dropped, D77 only. Agent sole local core s
 Delivery: Private100Python+TS/41matrix and D123 current patch source qualified; final cut remains gated. D126 App owns migration prose/ZIP line. R2c81b/D116 source-only seeds held; no D79 or competing small-file writers.
 Safety: All D130 and prior D88/D111/retirement refusals stay held. D106 ORCH-only output; no hub writes, Git mutations, credentials, upstream push, M5 or permission-file changes by manager.
 Disk: Sweep3 removed0; compact packed0 scratch/test directories and gzipped0 logs this pass. Finished1713 and1712 auto-recycled; reports and XML retained. Five historical dirty trees and refused targets held.
-live 1 / cap 6 at5.083GB; ready-undispatched 0. Sol1725 owns critical producer correction. Independent wholepath1726 and D1001727 finished; sources handed back. No Mainheavy; sourcefloor4.6/stop4GB retained.
-INBOX consumed through1371668bytes. Updated 2026-10-25T17:31:30Z.
+live 3 / cap 3; ready-undispatched 0. Dispatcher review1744, graph1744 and E2Einputs1747. Main source-only; no heavy. Duplicate leaf1741 finished; App first intake1734 retained.
+INBOX consumed through1380522bytes. Updated 2026-10-25T17:45:40Z.
 Later: OriginalTrue redo-birth still fails on d4ba/ab1e. Independent1712 verified custody and traced full path; exact authenticated redo records and stage pairs absent, owner UNKNOWN. No unchanged retry or guard author.
 Later: App graph1705 owns finite command-binding source trace after nine invalid-record failures; no Runtime auth writer requested. D126 approved text/source normal1437 consumed; bounded existing-note installation now1722.

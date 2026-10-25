@@ -1,0 +1,127 @@
+{
+  "task": "rt-OPS-child-inventory-contract-sol-1725",
+  "base_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+  "observed_utc": "2026-10-25T17:39:26.697926+00:00",
+  "live_sources_read_only": {
+    "make-child-venv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+      "bytes": 68351,
+      "mode": "0o755"
+    },
+    "bench_store.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "bytes": 43403,
+      "mode": "0o755"
+    },
+    "verify_dependency_seed.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "bytes": 52731,
+      "mode": "0o755"
+    }
+  },
+  "candidate": {
+    "path": "/home/user/work/wt/rt-OPS-child-inventory-contract-sol-1725/ops-child-custody/make-child-venv",
+    "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "bytes": 69516,
+    "mode": "0o755"
+  },
+  "blocks": {
+    "STORE_PY": {
+      "preimage_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+      "postimage_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+      "unchanged": true
+    },
+    "STORE_BUILD": {
+      "preimage_sha256": "a3d9b63f5b99ce4e3ae5b72be93e5140000f99dc4e50e954a00777e420d09409",
+      "postimage_sha256": "729036a7bca12cba36b87e39c556a82859d2e5fe76fba102cc6c7b5f86c253c3",
+      "unchanged": false
+    },
+    "STORE_VERIFY": {
+      "preimage_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+      "postimage_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+      "unchanged": true
+    },
+    "STAGING_INVENTORY": {
+      "sha256": "4c98ffcf6de7bd0314cc0e4790d4ffaeb206c03fb905f143e013cc57f631c6f1",
+      "unchanged": true
+    },
+    "RELOCATE": {
+      "sha256": "cf189024a79d12481c0629d3815c794c805dcd3fb4de6e9c3640ec242693cd98",
+      "unchanged": true
+    },
+    "PROVENANCE_SCRIPT": {
+      "preimage_sha256": "6ab4e64766e6df6996035fdf984b3c50efa169ffa982c5f4df6633964a0781cf",
+      "postimage_sha256": "6ab4e64766e6df6996035fdf984b3c50efa169ffa982c5f4df6633964a0781cf",
+      "unchanged": true
+    },
+    "DIST_METADATA_SCRIPT": {
+      "preimage_sha256": "54ea91773be42a9f5a513cb10cc1706ab89d2c061a0d0a4c3ba2c392153b8d67",
+      "postimage_sha256": "b78b24f8d2aef8fb3ca112e00de3a25e846280b194be88f27f1945b798e75123",
+      "unchanged": false
+    },
+    "IDENTITY_SCRIPT": {
+      "preimage_sha256": "05f8c82c7ea9b28f6f12ac8cad3557a08b0885e455ee22719c9e3ddebc3ccf77",
+      "postimage_sha256": "05f8c82c7ea9b28f6f12ac8cad3557a08b0885e455ee22719c9e3ddebc3ccf77",
+      "unchanged": true
+    }
+  },
+  "test_sources": [
+    {
+      "path": "ops-child-custody/tests/e2e_inventory.py",
+      "sha256": "1ed0a4a90a7b37072dd9340a1f046a4785b6fbe147dac36ecc08679b30dbf230",
+      "bytes": 13032,
+      "mode": "0o644"
+    },
+    {
+      "path": "ops-child-custody/tests/support.py",
+      "sha256": "8e61d99631e417e39e95b845f5433525ec25a26f190cd433380ebc75f830ec42",
+      "bytes": 12409,
+      "mode": "0o644"
+    },
+    {
+      "path": "ops-child-custody/tests/test_custody.py",
+      "sha256": "d6be27f90288a00880eefbe1873200e4bb688d26aa1a493aeb0692685a2a5a55",
+      "bytes": 23845,
+      "mode": "0o644"
+    },
+    {
+      "path": "ops-child-custody/tests/test_inventory.py",
+      "sha256": "016469c6ac1e5baddc1c60f7b8ff7cbff6d3c9e43b3ba1d3c317ac9e4f1c5534",
+      "bytes": 10774,
+      "mode": "0o644"
+    }
+  ],
+  "inherited_29_test_source_and_support_unchanged": true,
+  "new_controls": 11,
+  "total_unittest_tests": 40,
+  "embedded_python_blocks_compiled_in_memory": 7,
+  "admission": {
+    "free_bytes": 5027573760,
+    "normal_child_reserve_bytes": 5905580032,
+    "diagnostic_reserve_bytes": 8589934592,
+    "normal_gap_bytes": 878006272,
+    "diagnostic_gap_bytes": 3562360832,
+    "ordinary_body_floor_bytes": 5000000000,
+    "source_floor_bytes": 4600000000,
+    "stop_line_bytes": 4000000000,
+    "default_Main_Store_exists": false,
+    "whole_make_or_heavy_body_started": false
+  },
+  "typecheck": "N/A: no configured Python mypy/pyright baseline in Composition; no TypeScript product changes.",
+  "live_actions": {
+    "install": false,
+    "request": false,
+    "register": false,
+    "reuse": false,
+    "adopt": false,
+    "core_body": false,
+    "git_mutation": false,
+    "network_acquisition": false,
+    "new_fixture_Store_initialized": false
+  },
+  "e2e_result": "NOTRUN / BLOCKED on supplied fixture venue and preserved admission",
+  "prior_candidate_preserved": "All source archive installation and diagnostic lifecycle fixes remain; only report producer and its private tests/docs differ."
+}
