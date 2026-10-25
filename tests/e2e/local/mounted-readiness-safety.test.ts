@@ -9,7 +9,7 @@ import { createFakeIndexedDB } from '../../../vendor/fake-indexeddb/index.js';
 import { createCommitOutbox } from '../../../src/tools/video-editor/commands/commitOutbox.ts';
 import { emitTimelineSaveDiagnostic, markTimelineSaveRejection } from '../../../src/tools/video-editor/lib/timeline-diagnostics.ts';
 import { TimelineVersionConflictError } from '../../../src/sdk/video/timeline/errors.ts';
-import { bootstrapMountedBaseline, installMountedBootstrapDiagnostics } from './support/app.ts';
+import { bootstrapMountedBaseline, installMountedBootstrapDiagnostics, installMountedBootstrapPageDiagnostics } from './support/app.ts';
 import type { DirectHarness } from './support/harness.ts';
 import { mountedDiagnosticInitScript, projectMountedDiagnosticDetail } from './p1-diagnostic-safety.ts';
 import { clearMountedBootstrapFailure, hasFreshSettledOwner, isFreshlyConnected, MountedBootstrapError, readExistingReadonly, readMountedBootstrapFailure, recordMountedBootstrapFailure, retainMountedBootstrapDiagnostics } from './mounted-readiness-safety.ts';
@@ -60,6 +60,69 @@ test('mounted bootstrap failures expose only a finite safe projection', () => {
   assert.deepEqual(readMountedBootstrapFailure(), { stage: 'selection', code: 'mounted-bootstrap', class: 'mounted-bootstrap' });
   clearMountedBootstrapFailure();
   assert.equal(readMountedBootstrapFailure(), undefined);
+});
+
+test('mounted bootstrap connection diagnostics use the existing producer and detach on success or failure', async () => {
+  type TestListener = (...args: unknown[]) => unknown;
+  const handlers = new Map<string, Set<TestListener>>();
+  const details: unknown[] = [];
+  const diagnosticWindow = {
+    dispatchEvent(event: { detail: unknown }) { details.push(event.detail); return true; },
+  };
+  const page = {
+    on(name: string, listener: TestListener) {
+      const listeners = handlers.get(name) ?? new Set<TestListener>();
+      listeners.add(listener);
+      handlers.set(name, listeners);
+    },
+    off(name: string, listener: TestListener) { handlers.get(name)?.delete(listener); },
+    async evaluate<T, A>(fn: (arg: A) => T, arg: A) {
+      const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+      const previousCustomEvent = Object.getOwnPropertyDescriptor(globalThis, 'CustomEvent');
+      class TestCustomEvent { constructor(readonly type: string, readonly init: { detail: unknown }) {} get detail() { return this.init.detail; } }
+      Object.defineProperty(globalThis, 'window', { configurable: true, value: diagnosticWindow });
+      Object.defineProperty(globalThis, 'CustomEvent', { configurable: true, value: TestCustomEvent });
+      try { return await fn(arg); }
+      finally {
+        if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow);
+        else Reflect.deleteProperty(globalThis, 'window');
+        if (previousCustomEvent) Object.defineProperty(globalThis, 'CustomEvent', previousCustomEvent);
+        else Reflect.deleteProperty(globalThis, 'CustomEvent');
+      }
+    },
+  } as unknown as Page;
+  const detach = installMountedBootstrapPageDiagnostics(page);
+  assert.deepEqual([...handlers.keys()].sort(), ['pageerror', 'requestfailed', 'response']);
+  for (const listener of handlers.get('response') ?? []) await listener({ url: () => 'https://runtime.invalid/v1/handshake?token=private', status: () => 503 });
+  for (const listener of handlers.get('requestfailed') ?? []) await listener({ url: () => 'https://runtime.invalid/v1/realm?token=private' });
+  for (const listener of handlers.get('pageerror') ?? []) await listener(new TypeError('private stack and message'));
+  for (const listener of handlers.get('response') ?? []) await listener({ url: () => 'https://runtime.invalid/v1/private', status: () => 200 });
+  await assert.doesNotReject(detach);
+  await assert.doesNotReject(detach);
+  assert.deepEqual([...handlers.values()].map((listeners) => listeners.size), [0, 0, 0]);
+  assert.equal(details.length, 3);
+  const routeRecord = projectMountedDiagnosticDetail(details[0]);
+  assert.equal(routeRecord.accepted, true);
+  if (!routeRecord.accepted) throw new Error('route diagnostic was rejected');
+  assert.deepEqual({
+    phase: routeRecord.record.phase,
+    connectionRoute: routeRecord.record.connectionRoute,
+    connectionStatus: routeRecord.record.connectionStatus,
+    connectionOutcome: routeRecord.record.connectionOutcome,
+    pageErrorClass: routeRecord.record.pageErrorClass,
+    pageErrorCategory: routeRecord.record.pageErrorCategory,
+  }, { phase: 'connection-route', connectionRoute: 'handshake', connectionStatus: 503, connectionOutcome: 'http-error', pageErrorClass: 'UNKNOWN', pageErrorCategory: 'UNKNOWN' });
+  const errorRecord = projectMountedDiagnosticDetail(details[2]);
+  assert.equal(errorRecord.accepted, true);
+  assert.deepEqual({
+    phase: errorRecord.record.pageErrorClass && errorRecord.record.phase,
+    pageErrorClass: errorRecord.record.pageErrorClass,
+    pageErrorCategory: errorRecord.record.pageErrorCategory,
+    connectionRoute: errorRecord.record.connectionRoute,
+    connectionStatus: errorRecord.record.connectionStatus,
+    connectionOutcome: errorRecord.record.connectionOutcome,
+  }, { phase: 'page-error', pageErrorClass: 'TypeError', pageErrorCategory: 'runtime', connectionRoute: 'UNKNOWN', connectionStatus: 'UNKNOWN', connectionOutcome: 'UNKNOWN' });
+  assert.doesNotMatch(JSON.stringify(details), /runtime\.invalid|private|stack|message|token/);
 });
 
 test('mounted bootstrap retention uses the authentic producer through the real bootstrap finally', async () => {

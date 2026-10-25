@@ -2,7 +2,7 @@
  * Shared support for the direct journey (Plan A): the Chromium resolution, the worker-scoped fixtures, and the App
  * helpers that drive the hosted page. Moved out of direct-journey.spec.ts without changes (card F2-A).
  */
-import { chromium, expect, test as base, type Browser, type BrowserContext, type Page, type Request } from '@playwright/test';
+import { chromium, expect, test as base, type Browser, type BrowserContext, type Page, type Request, type Response } from '@playwright/test';
 import type { ChildProcess } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -34,6 +34,86 @@ const mountedBootstrapDiagnosticTargets = new WeakMap<BrowserContext, MountedBoo
 export async function installMountedBootstrapDiagnostics(context: BrowserContext, testInfo: MountedBootstrapDiagnosticTestInfo): Promise<void> {
   mountedBootstrapDiagnosticTargets.set(context, testInfo);
   await context.addInitScript({ content: mountedDiagnosticInitScript({ buffer: 'mounted-bootstrap', maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS }) });
+}
+
+type MountedBootstrapConnectionRoute = 'health' | 'handshake' | 'realm';
+type MountedBootstrapDiagnosticDetail =
+  | { phase: 'connection-route'; connectionRoute: MountedBootstrapConnectionRoute; connectionStatus?: number; connectionOutcome: 'ok' | 'redirect' | 'http-error' | 'transport-failure' | 'unknown' }
+  | { phase: 'page-error'; pageErrorClass: string; pageErrorCategory: 'runtime' };
+
+function mountedBootstrapConnectionRoute(url: string): MountedBootstrapConnectionRoute | undefined {
+  try {
+    const pathname = new URL(url).pathname;
+    if (pathname.endsWith('/v1/health')) return 'health';
+    if (pathname.endsWith('/v1/handshake')) return 'handshake';
+    if (pathname.endsWith('/v1/realm')) return 'realm';
+  } catch { /* Diagnostic route classification is disposable. */ }
+  return undefined;
+}
+
+function mountedBootstrapConnectionOutcome(status: number): 'ok' | 'redirect' | 'http-error' | 'transport-failure' | 'unknown' {
+  if (!Number.isInteger(status) || status < 100 || status > 599) return 'unknown';
+  if (status >= 200 && status < 300) return 'ok';
+  if (status >= 300 && status < 400) return 'redirect';
+  return 'http-error';
+}
+
+function mountedBootstrapPageErrorClass(error: Error): string {
+  try {
+    return typeof error.name === 'string' && error.name.length > 0 ? error.name : 'Error';
+  } catch {
+    return 'UNKNOWN';
+  }
+}
+
+/** Add bounded connection/page-error observations to the already-installed mounted producer. */
+export function installMountedBootstrapPageDiagnostics(page: Page): () => Promise<void> {
+  const pending = new Set<Promise<void>>();
+  const emit = (detail: MountedBootstrapDiagnosticDetail): Promise<void> | undefined => {
+    try {
+      const operation = page.evaluate((eventDetail) => {
+        try { window.dispatchEvent(new CustomEvent('timeline:save-diagnostic', { detail: { version: 1, ...eventDetail } })); }
+        catch { /* Diagnostic collection is disposable. */ }
+      }, detail).catch(() => {});
+      pending.add(operation);
+      void operation.finally(() => pending.delete(operation));
+      return operation;
+    } catch { /* Diagnostic collection is disposable. */ return undefined; }
+  };
+  const onResponse = (response: Response) => {
+    try {
+      const connectionRoute = mountedBootstrapConnectionRoute(response.url());
+      if (!connectionRoute) return;
+      const status = response.status();
+      const outcome = mountedBootstrapConnectionOutcome(status);
+      return emit({ phase: 'connection-route', connectionRoute, connectionStatus: Number.isInteger(status) ? status : undefined,
+        connectionOutcome: outcome });
+    } catch { /* Diagnostic collection is disposable. */ }
+  };
+  const onRequestFailed = (request: Request) => {
+    try {
+      const connectionRoute = mountedBootstrapConnectionRoute(request.url());
+      if (!connectionRoute) return;
+      return emit({ phase: 'connection-route', connectionRoute, connectionOutcome: 'transport-failure' });
+    } catch { /* Diagnostic collection is disposable. */ }
+  };
+  const onPageError = (error: Error) => {
+    try { return emit({ phase: 'page-error', pageErrorClass: mountedBootstrapPageErrorClass(error), pageErrorCategory: 'runtime' }); }
+    catch { /* Diagnostic collection is disposable. */ }
+  };
+  try {
+    page.on('response', onResponse);
+    page.on('requestfailed', onRequestFailed);
+    page.on('pageerror', onPageError);
+  } catch {
+    try { page.off('response', onResponse); page.off('requestfailed', onRequestFailed); page.off('pageerror', onPageError); } catch { /* Diagnostic cleanup is disposable. */ }
+    return async () => {};
+  }
+  return async () => {
+    try { page.off('response', onResponse); page.off('requestfailed', onRequestFailed); page.off('pageerror', onPageError); }
+    catch { /* Diagnostic cleanup is disposable. */ }
+    await Promise.all([...pending]);
+  };
 }
 
 /** QUICK shares the F1 browser/runtime boundary, so teardown verifies the Playwright server group is gone. */
@@ -120,6 +200,7 @@ export async function openApp(page: Page, harness: DirectHarness) {
 export async function bootstrapMountedBaseline(context: BrowserContext, harness: DirectHarness): Promise<OutboxRecord[]> {
   clearMountedBootstrapFailure();
   let page: Page | undefined;
+  let detachPageDiagnostics: (() => Promise<void>) | undefined;
   let outcome: 'completed' | 'failed' = 'failed';
   const run = async <T>(stage: MountedBootstrapStage, operation: () => Promise<T>): Promise<T> => {
     try {
@@ -130,6 +211,7 @@ export async function bootstrapMountedBaseline(context: BrowserContext, harness:
   };
   try {
     page = await run('context', () => context.newPage());
+    detachPageDiagnostics = installMountedBootstrapPageDiagnostics(page);
     await run('navigation', () => openApp(page!, harness).then(() => undefined));
     await run('connection', () => expectConnected(page!));
     await run('selection', () => openSeededTimeline(page!, harness));
@@ -150,6 +232,9 @@ export async function bootstrapMountedBaseline(context: BrowserContext, harness:
     recordMountedBootstrapFailure(error);
     throw error;
   } finally {
+    if (detachPageDiagnostics) {
+      try { await detachPageDiagnostics(); } catch { /* Diagnostic cleanup is disposable. */ }
+    }
     const testInfo = mountedBootstrapDiagnosticTargets.get(context);
     if (testInfo) {
       try { await retainMountedBootstrapDiagnostics(testInfo, page, outcome); } catch { /* Diagnostic retention is disposable. */ }
