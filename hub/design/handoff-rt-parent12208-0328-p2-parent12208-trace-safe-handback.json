@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "task_id": "rt-P2-parent12208-trace-0328",
+  "scope": "bounded existing-artifact export only",
+  "run": {
+    "request_id": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-parent-1025022203-12208",
+    "classification": "terminal_no_go",
+    "readiness": "pass",
+    "original": "no_go",
+    "source_tuple": {
+      "app": "24865fa212148e9bc149a1285936372656037e55",
+      "agent": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+      "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    }
+  },
+  "retained_artifacts": {
+    "browser_trace": {
+      "sha256": "1e69066591f18bdc4163e9fd59e024656b68ad7fd2e7532f37b63744aaa2f7ed",
+      "trace_records": 245,
+      "post_records": 22,
+      "matching_commit_post_records": 0
+    },
+    "service_manifest_sha256": "a0cb6b2c87f268dbb0ea0fb189cbf005ab83191ebf23c636cc70f298518806ab",
+    "original_junit_sha256": "1740913b9c9466de0addec1df10cfd149c1f0f02849434bb9abb187e482677e1",
+    "readiness_junit_sha256": "20b5ff07f8ca32bcb4fd5705ff3300ac4095003fff9214bbe1f80e09fd8a5af2",
+    "runtime_phase_jsonl_sha256": "65936e06a366da94234047b2bbbe53433d6a3553819c1ad842612ffc36f05b80"
+  },
+  "trace_local_observations": {
+    "pointer": {
+      "recorded_sequence": [
+        {"event": "move", "x": 181, "y": 494.484375},
+        {"event": "down", "x": 181, "y": 494.484375},
+        {"event": "move", "x": 341, "y": 494.484375},
+        {"event": "up", "x": 341, "y": 494.484375}
+      ],
+      "interpretation": "trace-local drag coordinates only; no product outcome inferred"
+    },
+    "dom_targets": {
+      "source_lookup": "clip-action:f2-app-clip",
+      "destination_lookup": "clip-action:f2-transition-clip",
+      "bounding_box_geometry": "unknown; retained calls expose an element handle, not geometry"
+    },
+    "clips": [
+      {
+        "clip_id": "f2-app-clip",
+        "asset_id": "f2-app",
+        "track": "V1",
+        "at": 0,
+        "from": 0,
+        "to": 3,
+        "duration_units": 3,
+        "speed": 1
+      },
+      {
+        "clip_id": "f2-transition-clip",
+        "asset_id": "f2-video",
+        "track": "V1",
+        "at": 15,
+        "from": 0,
+        "to": 3,
+        "duration_units": 3,
+        "speed": 1
+      }
+    ],
+    "source_identity": {
+      "asset_id": "f2-app",
+      "file": "f2-app.png",
+      "type": "image/png",
+      "media_id": "sha256:371fa835ba9c64b94118593bec78b7ae6295c44f578c1373f7efdbd06857f9c0"
+    },
+    "console": {
+      "retained_console_entries": 45,
+      "severity_counts": {"error": 36, "warning": 5, "group": 4},
+      "retained_log_entries": 22,
+      "safe_marker_matches": {
+        "capture": 0,
+        "handoff": 0,
+        "applyEdit": 0,
+        "localCommit": 0,
+        "scheduling": 0,
+        "reservation": 0
+      },
+      "message_text_exported": false
+    },
+    "network": {
+      "retained_records": 245,
+      "post_records": 22,
+      "post_categories": {
+        "handshake": 6,
+        "inspect": 16,
+        "commit": 0
+      },
+      "matching_commit_post": "absent",
+      "commit_get_records": 1,
+      "request_values_exported": false
+    }
+  },
+  "retained_runtime_facts": {
+    "ordinal_1": {
+      "attribution": "unattributed; not assigned to intended parent gesture",
+      "phase_sequence": ["dispatch_queue", "handler_entry", "authorization", "coordinator_admission", "coordinator_lock", "provider", "accept", "receipt", "http_response"],
+      "http_status": 200,
+      "provider_ms": [2093.717, 3427.728],
+      "accept_ms": [3031.407, 3427.570],
+      "receipt_ms": [3045.154, 3427.266],
+      "response_ms": [[3771.058, 3771.263], [3771.575, 3772.190]]
+    },
+    "ordinal_2": {
+      "attribution": "unattributed; not assigned to intended parent gesture",
+      "phase_sequence": ["dispatch_queue", "handler_entry", "authorization", "coordinator_admission", "coordinator_lock", "provider", "accept", "receipt", "http_response"],
+      "http_status": 200,
+      "provider_ms": [9434.211, 17759.338],
+      "accept_ms": [13491.302, 17758.465],
+      "receipt_ms": [13594.041, 17755.980],
+      "response_ms": [[22491.819, 22492.285], [22493.080, 22496.275]]
+    }
+  },
+  "limits": {
+    "intended_commit_status": "UNKNOWN; no matching commit POST",
+    "intended_commit_error_code": "UNKNOWN",
+    "intended_commit_request_duration": "UNKNOWN; 90000 ms was the response-wait ceiling, not a request duration",
+    "applyEdit": "UNKNOWN; not directly observed",
+    "localCommit": "UNKNOWN; not directly observed",
+    "scheduling": "UNKNOWN; not directly observed",
+    "capture": "UNKNOWN; not directly observed",
+    "reservation": "UNKNOWN; not directly observed",
+    "accepted_reply": "UNKNOWN; response wait timed out before reply inspection",
+    "field_delta": "UNKNOWN; assertion unreached",
+    "reload": "UNKNOWN; assertion unreached",
+    "guarded_undo": "UNKNOWN; assertion unreached",
+    "cause": "UNKNOWN; timeout alone is not a Runtime cause",
+    "unrelated_single_5678": "not reviewed; no inference",
+    "historical_0511": "not used for cause inference; actual source is tuple App24865"
+  },
+  "redaction": {
+    "raw_request_body_exported": false,
+    "raw_auth_exported": false,
+    "raw_idempotency_key_exported": false,
+    "raw_url_exported": false,
+    "private_trace_dump_exported": false,
+    "only_fixture_safe_identifiers_retained": true
+  }
+}

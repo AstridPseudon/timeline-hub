@@ -1,0 +1,13 @@
+JSON validation: PASS (Python json.load; schema_version=1; source tuple and pointer/clip identity assertions passed)
+TSV validation: PASS (Python csv.DictReader; 30 rows; four required columns; no embedded tabs/newlines)
+Source identity validation: PASS (tuple heads/trees match retained preflight and finite packet)
+Input hash validation: PASS (browser trace, service manifest, original/readiness JUnit, runtime phase JSONL match retained hashes)
+Safety scan: PASS (no bearer/basic credential, authorization header, cookie, API-key value, PEM material, URL, or long encoded secret detected)
+Redaction assertions: PASS (request/body/auth/idempotency-key/URL/private trace values are not exported)
+git diff --check: PASS (runtime worktree unchanged)
+Evidence size: PASS (20K; below 50MB)
+
+Output SHA-256
+p2-parent12208-trace-safe-handback.json f0ea87995a23187dc065605fdb769d1252571b817759862ce8583a0caf3c3ea3
+p2-parent12208-trace-facts.tsv 88a3de93b85fe0536002c6bfb79bcf6a180a434241b33eef79c0e26a0feecfec
+source-hashes.txt 6851dfa9fcaf2afd4fdbb244baea920f8daa83025ea44f06d6561cb7979907a4

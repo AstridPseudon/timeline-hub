@@ -187,20 +187,3 @@ Rule: a milestone exits only when every row tagged with it is DELETED (except or
 | # | Canonical retained ID (exact source node) | Decision | Current test and real assertion covering the promised behavior |
 | `getClipSourceDuration` / `getClipTimelineDuration` and `getClipDurationInFrames` in App config utilities | **KEEP — CLOSED by the 2026-10-21 11:53 UTC ruling: legitimate domain/frame-policy adapter**. It admits malformed trim/hold-kind/speed and applies App minimum-frame policy; public 0.0.13 only has canonical whole-timeline duration and cannot replace this contract. | `src/tools/video-editor/lib/config-utils.test.ts` and `src/tools/video-editor/compositions/playerEvaluation.test.ts` (64-control authority run); source comparison and smallest prerequisite are `handoff-vw-m3-d08-retained-domain-duration-REPORT.md`. |
 | `playerEvaluation` / `VisualClip` host transition, custom-owner identity, missing-transition diagnostic, and host-timing paths | **KEEP — CLOSED by the 2026-10-21 11:53 UTC ruling: legitimate host adapters**, not duplicate evaluator math. Public plans are used where semantics match; host-owned/unsupported declarations stay on the host path. | `src/tools/video-editor/compositions/VisualClip.test.tsx`, `VisualClip.evaluation.test.tsx`, `playerEvaluation.test.ts`, and `TimelineRenderer.sequence.test.tsx`; exact call-map disposition is `handoff-vw-m3-d08-qualified-current-cut-REPORT.md`. |
-
-
-# Proposed behavior-log entry
-
-**F-D86 / ID8 — C0 invalid-envelope oracle correction**
-
-Scope: `tests/editing_conformance/test_word_binding_recipe.py::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance`.
-
-The current C0 commit failure mapper emits `status: "invalid"` for the
-`invalid_anchor` validation failure (HTTP 422 / `validation_error`), so this
-expectation changes only the stale literal `"refused"` → `"invalid"`. The
-half-open source-window input and error match, `reason == "invalid_anchor"`,
-unchanged head, and accepted-window undo assertions are unchanged. ID9's stale
-window oracle remains `status == "refused"` until its source path is repaired.
-
-This is a contract-matching correction under D83/D69: no input, predicate,
-refusal/no-write guard, retry, inverse, or ABA behavior is removed or weakened.

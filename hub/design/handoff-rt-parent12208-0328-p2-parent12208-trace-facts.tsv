@@ -1,0 +1,31 @@
+fact_group	fact	value	status
+run	classification	terminal_no_go	observed
+run	readiness	pass	observed
+run	original	no_go	observed
+trace	trace_records	245	observed
+trace	post_records	22	observed
+trace	matching_commit_post_records	0	observed
+pointer	start_coordinates	181,494.484375	recorded
+pointer	end_coordinates	341,494.484375	recorded
+dom_target	source_lookup	clip-action:f2-app-clip	recorded
+dom_target	destination_lookup	clip-action:f2-transition-clip	recorded
+dom_target	bounding_box_geometry	unknown;element handle only	unavailable
+clip	f2-app-clip	asset=f2-app;track=V1;at=0;from=0;to=3;duration_units=3	recorded
+clip	f2-transition-clip	asset=f2-video;track=V1;at=15;from=0;to=3;duration_units=3	recorded
+source_identity	asset	f2-app;file=f2-app.png;type=image/png	recorded
+console	retained_entries	45;errors=36;warnings=5;groups=4	observed
+console	retained_logs	22	observed
+console	capture_handoff_markers	capture=0;handoff=0	no_safe_marker_recorded
+network	post_categories	handshake=6;inspect=16;commit=0	observed
+runtime	ordinal_1	unattributed;http=200;provider=2093.717-3427.728ms;accept=3031.407-3427.570ms;receipt=3045.154-3427.266ms	observed
+runtime	ordinal_2	unattributed;http=200;provider=9434.211-17759.338ms;accept=13491.302-17758.465ms;receipt=13594.041-17755.980ms	observed
+limit	applyEdit	UNKNOWN;not directly observed	unavailable
+limit	localCommit	UNKNOWN;not directly observed	unavailable
+limit	scheduling	UNKNOWN;not directly observed	unavailable
+limit	capture	UNKNOWN;not directly observed	unavailable
+limit	reservation	UNKNOWN;not directly observed	unavailable
+limit	intended_commit_status	UNKNOWN;matching commit POST absent	unavailable
+limit	intended_commit_duration	UNKNOWN;90000ms was wait ceiling	unavailable
+limit	accepted_reply	UNKNOWN;response wait timed out	unavailable
+limit	field_delta_reload_undo	UNKNOWN;tail unreached	unavailable
+limit	cause	UNKNOWN;timeout alone is not a Runtime cause	unavailable

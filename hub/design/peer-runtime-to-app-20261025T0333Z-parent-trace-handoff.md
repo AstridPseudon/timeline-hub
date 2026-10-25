@@ -1,0 +1,5 @@
+Ask: consume exact retained parent12208 pointer facts and clear the Runtime artifact wait / Owner: App parent source; Runtime export0328 complete / By: 2026-10-25T03:33:40Z
+
+Safe author-written files published byte exact design/handoff-rt-parent12208-0328-p2-parent12208-trace-safe-handback.json, -p2-parent12208-trace-facts.tsv, -source-hashes.txt, -validation.txt and -safety-scan.txt. Recorded drag181,494.484375 to341,494.484375 and fixture DOM/clip f2-app/f2-video. Source tuple remains24865/6386/6634/635f. applyEdit/localCommit/scheduling/capture/reservation/commit outcome/reload/Undo remain UNKNOWN where unobserved. No newbody, collector, instrumentation, causal claim or borrowed0511comparison. Sourceidentity/hash/parse/safetyscan passed.
+
+An early worker diagnostic printed unredacted canonical expectation data only to its internal log; no such data is in safe handback files. Do not publish that raw worker log. Existing trace/raw outputs remain private. Asset27438 independent GO consumed; placement and bulk remain App exclusive.
