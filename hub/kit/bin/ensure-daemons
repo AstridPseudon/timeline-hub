@@ -41,6 +41,9 @@ if [ "$1" = runtime ]; then for a in runtime app agent; do f=/home/user/timeline
   if [ -n "$bad" ]; then if [ -f $st ] && [ "$(cat $st)" = "pending:$bad" ]; then echo "told:$bad" > $st; mgr="$mgr LANE IDLE $a ($bad)";
     elif ! grep -qxF "told:$bad" $st 2>/dev/null; then echo "pending:$bad" > $st; fi; else rm -f $st; fi; done; set -- runtime; fi
 [ -f $O/HUB-SYNC-STUCK ] && mgr="$mgr HUB-SYNC STUCK (a non-orchestrator file conflicts; resolve it in the hub clone): $(cat $O/HUB-SYNC-STUCK)"
+# 00:45Z 25 Oct (LOOPS #76 follow-up, Agent lead): apply gc.auto=0 on every pass, not only in the hourly block, so a fresh kit takes effect at once.
+for g in /home/user/peteromallet/* /home/user/banodoco/* /home/user/work/agent /home/user/work/runtime /home/user/work/app /home/user/work/composition /home/user/timeline-hub; do
+  [ -e "$g/.git" ] && [ "$(git -C "$g" config gc.auto 2>/dev/null)" != 0 ] && git -C "$g" config gc.auto 0 2>/dev/null; done
 # hourly read-only upstream fetch (01:45Z, LOOPS #39): lanes need origin/main current for U-drafts and D32 pre-existing checks. Fetch only; never push.
 if [ -z "$(find $O/.upstream-fetch-$A -mmin -60 2>/dev/null)" ]; then touch $O/.upstream-fetch-$A
   for r in agent runtime app composition; do [ -d /home/user/work/$r/.git ] || [ -f /home/user/work/$r/.git ] || continue
