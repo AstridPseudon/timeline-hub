@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T03:29:05Z | dispatcher heartbeat 7s | live 5 (sol 1, luna 4, other 0) | busy30 18 | status age 0m -->
+<!-- main | 2026-10-25T03:32:22Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 17 | status age 1m -->
 # runtime board, 2026-10-25T03:29:08Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -210,9 +210,9 @@
 | D86-sheet17-review | Preserve current sheet originals | Luna | Meaningful corrected subset proof | review | Agent0157; review0203; home3b8f | Exact64166 correction is normal3b8f. Seventeen originals retained; thirteen init/emitter cases eligible later, inverse1 and CLI3 findings stay held. | Agent3b8f341cf6 |
 | P2-main-SWAP-bulk | Retain safe SWAP and bulk facts | Luna source only | App current source and sole9674 | review | Safe0218 consumed; App0235 body9674 | Old29224 503 bounded; bulk21061 intended POST absent. Both packets consumed. App owns meaningful9674; no main SWAP duplicate. | Olda3cd scope |
 | D86-manifest-inverse8 | Preserve manifest inverse scenarios | Luna | Later functional qualification | review | rt-D86-three-families-review-0129 | SOURCEFACTS PASS; source exact. Detached popup guard outside allowed seam remains unqualified. Eight live originals retained. | Agent219b unchanged |
-| D86-occurrence-opaque9 | Preserve occurrence opaque items | Luna / independent | Protected source review | review | Author0315; reviewer0323 | Opaque fixture candidate returned; create two and fork coverage one remain outside actual delta. No functional PASS. | Author0315 held |
+| D86-occurrence-opaque9 | Preserve occurrence opaque items | Luna / independent | Normal Agent merge then meaningful proof | merging | Author0315; review0323 PASS | Remote merge requested0331. Six emitter source cases conserved; two create and one fork coverage finding remain open. | 9f88f8cd08 |
 | D86-parent-track3 | Preserve track inverse and labels | Luna | M1 correction then qualification | review | rt-D86-three-families-review-0129 | SOURCEFACTS PASS; source exact. Genuine session caller; transitive M1 fixture currently failing. Three originals remain live. | Agent219b unchanged |
-| D86-ordinary-script4 | Preserve ordinary script callers | Luna / independent | Protected source review | review | Author0315; reviewer0323 | Four original scenarios preserved by candidate capture/claim and binding setup. Separate protected verdict pending. | Author0315 held |
+| D86-ordinary-script4 | Preserve ordinary script callers | Luna / independent | Normal Agent merge then meaningful proof | merging | Author0315; review0323 PASS | Remote merge requested0331. Four originals and exact setup identities conserved; no functional PASS. | a2c71eeceb |
 | R-P4-current-cost | Reduce measured cross-process cost | HARD Sol | D94 final candidate and security PASS | doing | rt-D94-history-state-sol-0320 | Corrected25257 sample complete; source0301/0310 retained no fix. D94 now owns verified history reuse. No original rerun yet. | 6634 baseline |
 | F-final-upstream-App | Preserve fresh App packaging tests | Luna | Packaging checklist installed | merged | rt-F-final-D87-docs-0107 | Packaging checklist keeps Appd11417 and WelcomeConnection.test.tsx overlap, plus Agent08e6 installer tests. No gating merge or build. | Upstreamd11417 |
 | D88-digest-chain | Preserve withdrawn digest-chain source | HARD Sol | Owner withdrew D88 | gated:withdrawn | rt-D88-digest-chain-sol-0044 stopped | Unsafe prototype held; automatic safety review stopped reviewer for possible cybersecurity risk. No retry or alternate route. [Report](../../design/rt-D88-digest-chain-sol-0044.md) | Held; do not merge |
@@ -235,7 +235,7 @@
 
 | P4-D88b-main | Qualify remaining ten-note original | Luna / main service | Meaningful current cost correction | review | rt-P4-D88b-tennote-0206; actual14151 | Original FAIL45.448s versus45; exactd407/6634 with preflight and four receipts PASS. No unchanged repeat or independent NO-GO review. | Agentd407 / Runtime6634 |
 
-| D86-inverse-original-third | Prove approved finite host window | Luna / service | Actual first body failed; source follow-through | review | rt-D91-next10-immutable20-0313 | Actual18575: all ten ERROR. Two earlier preflight failures spent no test body. No unchanged rerun; exact fixture error awaits correction. | Agent562ee / Runtime6634 |
+| D86-inverse-original-third | Prove approved finite host window | Luna / service | Exact fixture source correction | doing | rt-D91-actual20-setup-return-0331 | Actual18575: all ten ERROR. Two earlier preflight failures spent no test body. No unchanged rerun; exact fixture error awaits correction. | Agent562ee / Runtime6634 |
 
 | D86-successor161 | Qualify meaningful affected delta | Luna / main service | Actual failure family source followthrough | review | rt-D86-successor161-exact-home-0254 | Actual9211 preflight0/body1;161XML=6PASS43FAIL112ERROR. Genuine exact homes and source hashes; old no-body failures preserved. | cef8/6634/c101/635f |
 | R-P4-wholepath | Compare failing and passing request paths | Luna read only | Measured sample owns next fix | merged | rt-P4-D88b-wholepath-0229 complete | Same service retains memo; original restarts before Undo. Remaining fresh inputs scale. Source lifetime facts do not prove dominant cost. | Runtime6634 unchanged |
@@ -270,6 +270,6 @@ Delivery: D65/D67/D72/D87 exact prose installed with renderer PASS. Fresh upstre
 Source ownership: Manager changed only briefs, peer messages and board. D94 owns Runtime store; Agent owns R1 guard, word choice/oracles and sheet CLI setup. Opaque/script0323 and video0328 are read-only protected reviewers.
 Later: D94 exact review after final source; corrected D91ten/D92three proof after owners return; lostACK/replace-existing/word9/current-sheet boundaries remain visible. E1/E2/E3/D79 afterZIP; D42/D34 held; D56 Farm/schema stopped; V4cut; D14/D23 deferred.
 Disk: 5.348 GB now; approved sweep3/compact running. Audit only ended clean nonKEEP trees; existing dirty/refused targets untouched. All exact run outputs/branches/receipts retained.
-live 2 plus queued4 / cap 6; ready-undispatched 0 eligible source starts. Source/reviews above5.0GB, one heavy above5.2GB; nothing new below4.5GB.
+live 5 plus queued1 / cap 6; ready-undispatched 0 eligible source starts. Source/reviews above5.0GB, one heavy above5.2GB; nothing new below4.5GB.
 Dispatcher: Existing D94 author0320 and protected opaque/script review0323; four requested0328 workers pending actual receipts.
-INBOX consumed through831844 bytes. Updated 2026-10-25T03:29:08Z. Read PLAN, common rules, current header and Agent/App boards. Initial stale board corrected from actual worker reports; no duplicate D94 author or initial review.
+INBOX consumed through833641 bytes. Updated 2026-10-25T03:29:08Z. Read PLAN, common rules, current header and Agent/App boards. 0331 remote opaque/script merges requested after independent PASS; D91 source return dispatched. Initial stale board corrected from actual worker reports; no duplicate D94 author or initial review.
