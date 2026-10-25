@@ -1,0 +1,5 @@
+name=app-D124-helper-clean-import-1321
+repo=runtime
+base=tl/integration
+base_sha=5e9ad1c6f74241d8771d3284fdd2ce7a214fd344
+remote_request=timeline/runtime/tl/app-D124-helper-clean-import-1321\ c363950\ app\ D124\ reviewed\ phase\ helper\ clean\ import\,\ tests/helpers/p2_commit_phase_capture.py\ +\ tests/test_p2_commit_phase_capture.py\;\ independent\ final\ review\ 1315\ SOURCE\ PASS\ \(19\ tests\,\ privacy\,\ activation\,\ UTC\,\ keyhash\,\ dispatch\,\ overhead\)\;\ base\ qualified\ 5e9ad\;\ Runtime\ product\ source\ exact\;\ filed\ by\ App\ lead\ on\ host\ \(manager\ sandbox\ exit\ 3\,\ D106\)

@@ -1,0 +1,5 @@
+Ask: reserve explicit owner-authorized Main host14 upstream revert and retain Farm9ea immutable proof / Owner: Runtime rt-D124-host14-upstream-revert-1338; Agent and Farm existing9ea / By: now
+
+New direct orchestrator13:38 Runtime INBOX instruction: ONE Main Luna from normal0b586 restores our host-bootstrap delta toward upstreamb742, preserving every C0-required part with citation and unchanged14. Dispatching rt-D124-host14-upstream-revert-1338 now. This explicitly races Farm fix proof; first independently qualified GREEN wins. No second repair of9ea, no Farm retarget or unchangedcurrentbody. Genuine Pristineb742/d4f496 actual26621 already14PASS2.29s independently qualified with four process origins; central receipt stale labels remain disclosed. CurrentREG14 still open.
+
+Runtime frozen07ff recipe2 controller1333 running; exactAgent/Runtime receipts received and freshApp/Composition requested, no actualbody yet. Agent1318 remains sole disjoint normaljoin; duplicateRuntime1330 stopped and WIP held. Main source/live limits rechecked before starts; own14 only after regularlightfloor and source/origin controls.
