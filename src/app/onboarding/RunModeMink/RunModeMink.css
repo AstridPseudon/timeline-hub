@@ -19,29 +19,30 @@
 }
 .run-mode-mink[data-scene="beach"] { background-image: url('./runmode-mink-beach.png'); background-size: calc(9 * var(--frame-w)) 100%; }
 .run-mode-mink[data-scene="desk"] { background-image: url('./runmode-mink-desk.png'); background-size: calc(16 * var(--frame-w)) 100%; }
-.run-mode-mink[data-motion="play"][data-scene="beach"] { animation: run-mode-mink-beach 4.8s steps(1, end) infinite; }
+.run-mode-mink[data-motion="play"][data-scene="beach"] { animation: run-mode-mink-beach 8.9s steps(1, end) infinite; }
 .run-mode-mink[data-motion="play"][data-scene="desk"] { animation: run-mode-mink-desk 6.4s steps(1, end) infinite; }
 /* Hovering an option (its label is the .group) plays that option's mink too, for fine pointers only. */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .group:hover .run-mode-mink[data-scene="beach"] { animation: run-mode-mink-beach 4.8s steps(1, end) infinite; }
+  .group:hover .run-mode-mink[data-scene="beach"] { animation: run-mode-mink-beach 8.9s steps(1, end) infinite; }
   .group:hover .run-mode-mink[data-scene="desk"] { animation: run-mode-mink-desk 6.4s steps(1, end) infinite; }
 }
 
-/* Straight into a sip through the straw, eyes closed (the still frame is the idle pose, so a hover starts her
-   drinking at once); done, a quick tail wiggle (up, curled over, up, out the other way, up), a rest, a blink. */
+/* A slow, lazy loop, about 9 s: straight into a long sip through the straw, eyes closed (the still frame is the
+   idle pose, so a hover starts her drinking at once); then an unhurried tail wag (up, curled over, up, out the
+   other way, up), a long rest, a slow blink. */
 @keyframes run-mode-mink-beach {
   0% { background-position-x: calc(-1 * var(--frame-w)); }
-  3.75% { background-position-x: calc(-2 * var(--frame-w)); }
-  7.5% { background-position-x: calc(-3 * var(--frame-w)); }
-  34.58% { background-position-x: calc(-4 * var(--frame-w)); }
-  41.25% { background-position-x: calc(-6 * var(--frame-w)); }
-  43.33% { background-position-x: calc(-7 * var(--frame-w)); }
-  46.25% { background-position-x: calc(-6 * var(--frame-w)); }
-  47.92% { background-position-x: calc(-8 * var(--frame-w)); }
-  50.83% { background-position-x: calc(-6 * var(--frame-w)); }
-  52.5% { background-position-x: calc(-4 * var(--frame-w)); }
-  83.75% { background-position-x: calc(-5 * var(--frame-w)); }
-  86.67%, 100% { background-position-x: calc(-4 * var(--frame-w)); }
+  3.37% { background-position-x: calc(-2 * var(--frame-w)); }
+  6.74% { background-position-x: calc(-3 * var(--frame-w)); }
+  31.46% { background-position-x: calc(-4 * var(--frame-w)); }
+  39.33% { background-position-x: calc(-6 * var(--frame-w)); }
+  43.6% { background-position-x: calc(-7 * var(--frame-w)); }
+  49.44% { background-position-x: calc(-6 * var(--frame-w)); }
+  53.26% { background-position-x: calc(-8 * var(--frame-w)); }
+  59.1% { background-position-x: calc(-6 * var(--frame-w)); }
+  63.37% { background-position-x: calc(-4 * var(--frame-w)); }
+  88.09% { background-position-x: calc(-5 * var(--frame-w)); }
+  89.89%, 100% { background-position-x: calc(-4 * var(--frame-w)); }
 }
 /* One character a frame, paws alternating, a pause at each line's end; the code scrolls up, and the
    glasses catch the light once. */
