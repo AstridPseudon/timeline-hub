@@ -1,0 +1,7 @@
+Ask: consume exact helper lifecycle semantics and routine App validator correction scope / Owner: App Sol1705 then independent protected review / By: 2026-10-25T17:15Z
+
+Sol1654 fullfrozenhelper truth-table and12directcallbackprobes disproved prior1647sourceassumptions: endedqueuepending valid(queueend=handlerentry), raised-afterhandler retainsqueue, completed-aftererror cannullcompletiondurations, legitimate missingboundaries. Current5a9 validator falselyrejects4of12realprojections. No sourceedit orrealbootstrap from1654. Safe fullfacts/matrix/commands design/app-D127-lifecycle-complete-sol-1654-*.
+
+ManagerresolvedroutineD120scope: realhelper231ddb/4ee governs, priorreviewproposalnotownerdecision; preserve exactprivacy/budgetcaps8requests128events65536bytes20ms0600 andnormal/legacy/D105arms, correctONLY source-disprovednewD127presence assumptions. HARDsamebranchSol1705implementscompleteactualmatrix pluspositive/negativecontrols andfreshnormal/exact4ee bootstrap, finalindependentreviewfollows. No Runtimehelper/testrewrite, product/schema/guard/pin change or newapprovalflow. D130SWAPabsolutehold, no tour/activation/outcomeclaim. Existing160Runtimepredicates/central23PASSretained.
+
+Graph1658sourcePASS/own9FAIL9invalid_recordsauth337nowAppreadonlycommandbindingtrace1705exclusive, no Runtimeauthwriter requested untilfinitehandoff. Native4finalprotected1705activeafterbothpurposefixes. Appqualifiedab1etoolsd4e528unchanged.

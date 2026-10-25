@@ -1,0 +1,78 @@
+{
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "checks": {
+    "all_33_graph_assertions_unchanged": true,
+    "all_90_fixture_assertions_unchanged": true,
+    "caller_and_registered_provider_unchanged": true,
+    "changed_slot_not_asserted": true,
+    "no_gain_assertion_purpose": true,
+    "no_non_slot_metadata_purpose": true
+  },
+  "diff_scope": [
+    "tests/editing_conformance/test_recorded_graph_roots.py",
+    "tests/sdk/test_timeline_commit_graph_roots.py"
+  ],
+  "fixture": {
+    "assertions": 90,
+    "assertions_ast_equal": true,
+    "assertions_sha256": "9852d5d33566f5f0b74b8fb009edb18c85b48a4e2ee89351a7acb4dde230797a",
+    "base_assertions": 90,
+    "base_assertions_sha256": "9852d5d33566f5f0b74b8fb009edb18c85b48a4e2ee89351a7acb4dde230797a",
+    "base_parametrize_decorators": 0,
+    "base_parametrize_sha256": "ad2e13b69c4fc1fda46413f740f426fc1793cfc6d6da8d226ba619f1aef48be7",
+    "base_test_bodies": 22,
+    "base_test_bodies_sha256": "76d28c34155fdddf7f3f0222e12e56f1701ef665c4c1553a0666b749a50df308",
+    "current_sha256": "3fbfa95179561a95ac4930cb745f16f2ac636b8755372963730e5cda7466a895",
+    "parametrize_ast_equal": true,
+    "parametrize_decorators": 0,
+    "parametrize_sha256": "ad2e13b69c4fc1fda46413f740f426fc1793cfc6d6da8d226ba619f1aef48be7",
+    "path": "tests/editing_conformance/test_recorded_graph_roots.py",
+    "test_bodies": 22,
+    "test_bodies_ast_equal": true,
+    "test_bodies_sha256": "76d28c34155fdddf7f3f0222e12e56f1701ef665c4c1553a0666b749a50df308"
+  },
+  "graph_consumer": {
+    "assertions": 33,
+    "assertions_ast_equal": true,
+    "assertions_sha256": "f8fb4e82742c742e21a7c2372241de396112a53477b6102e4e1c348936c7d28d",
+    "base_assertions": 33,
+    "base_assertions_sha256": "f8fb4e82742c742e21a7c2372241de396112a53477b6102e4e1c348936c7d28d",
+    "base_parametrize_decorators": 0,
+    "base_parametrize_sha256": "ad2e13b69c4fc1fda46413f740f426fc1793cfc6d6da8d226ba619f1aef48be7",
+    "base_test_bodies": 11,
+    "base_test_bodies_sha256": "59fc8f5e09ce48a91173340660addb2ca60c3179ae35f4de9c361331368f160c",
+    "current_sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+    "parametrize_ast_equal": true,
+    "parametrize_decorators": 0,
+    "parametrize_sha256": "ad2e13b69c4fc1fda46413f740f426fc1793cfc6d6da8d226ba619f1aef48be7",
+    "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+    "test_bodies": 11,
+    "test_bodies_ast_equal": true,
+    "test_bodies_sha256": "59fc8f5e09ce48a91173340660addb2ca60c3179ae35f4de9c361331368f160c"
+  },
+  "graph_metadata_diff": "diff --git a/tests/sdk/test_timeline_commit_graph_roots.py b/tests/sdk/test_timeline_commit_graph_roots.py\nindex 6cb631d97..303d076e1 100644\n--- a/tests/sdk/test_timeline_commit_graph_roots.py\n+++ b/tests/sdk/test_timeline_commit_graph_roots.py\n@@ -119,0 +120,6 @@ class RuntimeRealm:\n+            'label': 'Graph roots',\n+            'steps': [{\n+                'id': 'graph-roots', 'label': 'Graph roots', 'intent': 'test intent',\n+                'tags': [], 'command_ordinals': list(range(len(calls))), 'patch': [],\n+            }],\n+            'merge': 'fields', 'reads': [],\n",
+  "head": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+  "other_consumers": {
+    "tests/sdk/test_timeline_commit_graph_roots.py": {
+      "baseline_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "byteexact": false,
+      "current_sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21"
+    },
+    "tests/sdk/test_timeline_created_root_stage_redo.py": {
+      "baseline_sha256": "2cb071c3b51207433649fff5ca04fe5e470272057b30bceb8657718ae91f3305",
+      "byteexact": true,
+      "current_sha256": "2cb071c3b51207433649fff5ca04fe5e470272057b30bceb8657718ae91f3305"
+    },
+    "tests/sdk/test_timeline_semantic_reservations.py": {
+      "baseline_sha256": "6112aa1743b0958da91eaec8354a2861a7189b43b3c5bfab2f91c5a82c13e6f0",
+      "byteexact": true,
+      "current_sha256": "6112aa1743b0958da91eaec8354a2861a7189b43b3c5bfab2f91c5a82c13e6f0"
+    }
+  },
+  "relevant_purpose_hits": {
+    "tests/sdk/test_timeline_commit_graph_roots.py": [],
+    "tests/sdk/test_timeline_created_root_stage_redo.py": [],
+    "tests/sdk/test_timeline_semantic_reservations.py": []
+  },
+  "task": "D132a"
+}

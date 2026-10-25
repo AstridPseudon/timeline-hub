@@ -1,0 +1,20 @@
+{
+  "schema": "app-d116-native-topology-first-return-1700-facts-v1",
+  "base_requested": "b24d99bd3c286336c09d4d0661e9691d3b160559",
+  "base_parent": "9350a674a85b9328e7ac1e8192e66dcc65cfbf77",
+  "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "allowed_files": [
+    "tests/editing_conformance/native_checkout_current_fixture.py",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+  ],
+  "changed_files": [
+    "tests/editing_conformance/native_checkout_current_fixture.py",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+  ],
+  "source_status": "PASS_SOURCE_FIX",
+  "functional_status": "NOTRUN_PENDING_INDEPENDENT_SOURCEPASS",
+  "collected_new_cases": 4,
+  "originals_read_only": true,
+  "product_runtime_generated_pins_cli_changed": false
+}

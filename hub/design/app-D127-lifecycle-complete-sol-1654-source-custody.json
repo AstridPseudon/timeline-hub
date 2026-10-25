@@ -1,0 +1,44 @@
+{
+  "task": "app-D127-lifecycle-complete-sol-1654",
+  "app_head": "5a9e0eb523353a95af45563a4f3e80bd8772222e",
+  "expected_base_matches": true,
+  "app_file": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+  "app_file_sha256_before_and_after": "1855a9c9b68818f27bbfb420a9c6c1b97312bd30a52f21fbab76c2b4e5a177de",
+  "app_git_blob_sha256": "1855a9c9b68818f27bbfb420a9c6c1b97312bd30a52f21fbab76c2b4e5a177de",
+  "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "tracked_diff_empty": true,
+  "git_status_porcelain": "",
+  "frozen_runtime_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+  "frozen_helper_sha256_before_and_after": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+  "frozen_helper_blob": "6984ac1da77f1b499703cfac45d27149eddcbdae",
+  "frozen_runtime_test_sha256_before_and_after": "d6b5703492b4b4d399ee1d5d7350faae615a01448df70229efc3cc03a1ecff18",
+  "frozen_test_blob": "dea47f4753a471efdbde7bbbd1dc8fb19f6fb3e4",
+  "qualified_runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "head": "ab1e4f6141987706132916e2da16477f5a019464",
+    "executed": false
+  },
+  "qualified_agent": {
+    "path": "/home/user/work/wt/agt-pin-070dfc5e",
+    "head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "executed": false
+  },
+  "normal_and_6c9_and_4ee_arms": "byte-identical to task base; no changes",
+  "no_shared_dependency_changes": true,
+  "no_product_schema_pin_guard_or_normalizer_changes": true,
+  "no_runtime_or_helper_or_test_changes": true,
+  "no_external_helper_copy": true,
+  "probe_method": "Frozen helper source compiled in memory; enabled=False and no start() call. Existing _trace_inner callbacks exercised directly with synthetic frame metadata; _summary/_finalize_snapshot emitted only in-memory events. Bootstrap UTC anchor initialized exactly as start would. Actual App validator transpiled unchanged in memory; test registration callbacks suppressed only in inspection wrapper, then original focused node:test suite run separately.",
+  "probe_limit": "Not a real Runtime request, tour, socket, bootstrap or independent review; no positive-control qualification claimed.",
+  "probe_scripts": [
+    {
+      "path": "/tmp/w-d05999a6ac/probe-helper.py",
+      "sha256": "b83dc09dc2e1592952d4df2fc3fd7896a36cc621136743ee9cb6815b88250133"
+    },
+    {
+      "path": "/tmp/w-d05999a6ac/probe-validator.mjs",
+      "sha256": "eab4253c882b88dc165c61665dc317ed1211067e7c5db394af2b6d3b16cd83b8"
+    }
+  ],
+  "initial_probe_setup_failure": "The first in-memory helper fixture omitted _utc_anchor normally set by start(); validator correctly rejected null anchor. Corrected scratch initialization and reran; no App/helper source changed. Final validator-projections.json uses initialized anchor."
+}

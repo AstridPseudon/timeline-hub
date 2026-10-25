@@ -1,0 +1,82 @@
+{
+  "source_changes": [],
+  "preserved": [
+    "normal arm exact hash/keysets",
+    "6c9 historical arm exact hash/keysets",
+    "4ee reviewed-new exact hash/keysets",
+    "counts and budgets",
+    "privacy and byte caps",
+    "original exception behavior",
+    "all original inputs/assertions",
+    "watchdog and test budgets",
+    "no-write protections"
+  ],
+  "existing_rejected_valid_helper_cases": [
+    {
+      "name": "raised_after_handler_entry",
+      "lifecycle": "raised",
+      "dispatch": {
+        "status": "observed",
+        "count": 1,
+        "start_ms": 0,
+        "end_ms": 2
+      },
+      "accepted": false,
+      "error": "raised requires a raised dispatch phase\n+ actual - expected\n\n+ 'observed'\n- 'raised'"
+    },
+    {
+      "name": "completed_after_caught_error_before_handler",
+      "lifecycle": "completed",
+      "dispatch": {
+        "status": "raised",
+        "count": 1,
+        "start_ms": 0,
+        "end_ms": 4
+      },
+      "accepted": false,
+      "error": "completed requires an ended dispatch"
+    },
+    {
+      "name": "completed_after_caught_error_inside_handler",
+      "lifecycle": "completed",
+      "dispatch": {
+        "status": "observed",
+        "count": 1,
+        "start_ms": 0,
+        "end_ms": 2
+      },
+      "accepted": false,
+      "error": "completed requires an ended dispatch"
+    },
+    {
+      "name": "pending_missing_dispatch_boundary",
+      "lifecycle": "pending_at_stop",
+      "dispatch": {
+        "status": "UNKNOWN",
+        "count": 0,
+        "start_ms": null,
+        "end_ms": null
+      },
+      "accepted": false,
+      "error": "dispatch_queue.count"
+    }
+  ],
+  "review_1647_correction": {
+    "id": "D127-LIFECYCLE-001",
+    "ended_pending_is_valid": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:906-917",
+    "raised_after_handler_queue_observed_is_valid": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:948-961",
+    "completed_error_duration_null_is_valid": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+  },
+  "true_negative_requirements_pending_revised_brief": [
+    "returned_without_response with raised queue contradicts finished no-response trace",
+    "completed without any response contradicts outcome",
+    "raised with observed response contradicts outcome",
+    "same-request final outcome contradicting summary",
+    "completed selected as final target",
+    "older final target than a retained non-completed summary",
+    "phase-derived duration contradicting exact endpoint availability"
+  ],
+  "no_test_rewrites_or_expected_failure_markers": true,
+  "prior_Runtime_custody": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-leaf-combined-review-1630/evidence/assertion-custody.json",
+  "next_step": "Orchestrator corrects review-derived assumptions and explicitly resolves missing-boundary scope; then author adds exact source-derived crosschecks and positive/negative controls in the single permitted file. Independent review must follow any changed source."
+}

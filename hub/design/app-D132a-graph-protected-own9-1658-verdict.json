@@ -1,0 +1,51 @@
+{
+  "base": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+  "comparison_baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "overall_verdict": "SOURCE_PASS_OWN9_FAIL",
+  "own9": {
+    "all_nodes_same_safe_class": true,
+    "first_failure": {
+      "error_class": "invalid_records / CommitRejected",
+      "frame": "runtime_protocol/timeline_commit_auth.py:337",
+      "message": "provider executed a different command",
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved",
+      "reason": "invalid_records"
+    },
+    "nodes_failed": 9,
+    "nodes_requested": 9,
+    "provider_route": "RuntimeService.commit_timeline",
+    "raw_evidence": [
+      "own9.xml",
+      "own9.log"
+    ],
+    "registered_provider": "astrid",
+    "retry_or_alternate_route": false,
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "source_fix_after_pass": false,
+    "status": "FAIL"
+  },
+  "predicate_audit": {
+    "fixture_assertions": 90,
+    "fixture_parametrize_decorators": 6,
+    "fixture_test_bodies": 22,
+    "graph_assertions": 33,
+    "graph_parametrize_decorators": 7,
+    "graph_test_bodies": 11,
+    "other_consumers": 3,
+    "purpose_null_assertions": 0
+  },
+  "schema_census": {
+    "after": 0,
+    "before": 1,
+    "invalid_paths": [
+      "$.canonical_document.shot_revisions[1].payload.metadata"
+    ]
+  },
+  "source_changes": {
+    "fixture": "one approved metadata null -> {} setup input",
+    "graph": "six approved request metadata lines"
+  },
+  "source_verdict": "PASS",
+  "task": "D132a"
+}

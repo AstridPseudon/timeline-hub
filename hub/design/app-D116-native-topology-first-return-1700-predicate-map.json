@@ -1,0 +1,30 @@
+{
+  "schema": "app-d116-native-checkout4-predicate-map-v2",
+  "overall": "PASS_SOURCE_MAPPING",
+  "entries": [
+    {
+      "ordinal": 1143,
+      "preserved": ["move on=1", "trim (1,4) -> hold 3", "lost ACK and exact retry body/key", "disjoint music-other on=2", "accepted suffix uses distinct key", "reload", "undo/redo/guard"],
+      "status": "PASS_MAPPING"
+    },
+    {
+      "ordinal": 1147,
+      "preserved": ["same move/trim/restart", "touching music-bed trim (0,5)", "conflict/no-write pending suffix", "original basis state"],
+      "status": "PASS_MAPPING"
+    },
+    {
+      "ordinal": 1152,
+      "preserved": ["commands-file CLI and base flags", "opaque [null,false,0]", "unchanged authored write", "clear", "undo", "guarded conflict"],
+      "status": "PASS_MAPPING"
+    },
+    {
+      "ordinal": 1159,
+      "preserved": ["occurrences=[]", "Gate3 text-card fields", "renderer process tripwire", "move/reload/undo", "exact unavailable visualize reply"],
+      "status": "PASS_MAPPING"
+    }
+  ],
+  "topology": {
+    "music-bed": {"track": "music", "asset": "music-bed", "at": 0, "hold": 5.5, "opaque": [null, {"keep": true}]},
+    "music-other": {"track": "music-other", "asset": "music-bed", "at": 0, "hold": 5.5, "opaque": [null, {"keep": true}]}
+  }
+}

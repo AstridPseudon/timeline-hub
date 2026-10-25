@@ -1,0 +1,69 @@
+{
+  "conservation": {
+    "actual_d60_absence_proof": {
+      "absence_interpretation": "tree-path absence is meaningful because the commit object is present",
+      "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "fixture_path_absent": true,
+      "graph_consumer_path_absent": true,
+      "object_present": true,
+      "tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"
+    },
+    "all_other_inputs_byteexact": false,
+    "consumer_null_purpose_assertions": 0,
+    "fixture_assertions": 90,
+    "fixture_test_bodies": 90,
+    "frozen_r4_absence_proof": {
+      "fixture_path_absent": true,
+      "graph_consumer_path_absent": true,
+      "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "resolved_commit": "11caf1d9de291d76f491cf69f7942606b7471d7a"
+    },
+    "graph_assertions": 33,
+    "graph_predicates": 33,
+    "no_hidden_normalizer_or_fabricated_authority": true,
+    "open_object_nulls_preserved": true
+  },
+  "schema_census": {
+    "after_error_count": 0,
+    "after_valid": true,
+    "before_error_count": 1,
+    "before_invalid_values": [
+      {
+        "instance_type": "NoneType",
+        "json_path": "$.canonical_document.shot_revisions[1].payload.metadata",
+        "keyword": "type",
+        "message": "None is not of type 'object'",
+        "schema_ref": "#/properties/canonical_document/properties/shot_revisions/items/properties/payload/properties/metadata/type"
+      }
+    ],
+    "changed_slot": "$.canonical_document.shot_revisions[1].payload.metadata"
+  },
+  "source": {
+    "approved_changes": [
+      "six v2 request metadata lines in graph caller",
+      "one authored setup slot metadata null -> {}"
+    ],
+    "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "files": {
+      "tests/editing_conformance/test_recorded_graph_roots.py": "3fbfa95179561a95ac4930cb745f16f2ac636b8755372963730e5cda7466a895",
+      "tests/sdk/test_timeline_commit_graph_roots.py": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21"
+    },
+    "head": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+    "pure_construction": "complete document_fixture -> bundle -> existing create command -> document_from_bundle -> PreparedCommit schema wrapper",
+    "worktree": "/home/user/work/wt/app-D132a-graph-protected-own9-1658"
+  },
+  "static_checks": {
+    "git_diff_check": "PASS",
+    "mypy": "PASS",
+    "python_3_11_compile": "PASS",
+    "ruff": "PASS"
+  },
+  "static_checks_pending": [
+    "ruff",
+    "mypy",
+    "python_3_11_compile",
+    "git_diff_check"
+  ],
+  "status": "PASS",
+  "task": "D132a"
+}

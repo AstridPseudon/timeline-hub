@@ -1,0 +1,44 @@
+{
+  "actual_agent_d60": {
+    "absence_interpretation": "tree-path absence is meaningful because the commit object is present",
+    "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "fixture_path_absent": true,
+    "graph_consumer_path_absent": true,
+    "object_present": true,
+    "tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"
+  },
+  "comparison_baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "current_commit": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+  "fixture_history": {
+    "introduction_commit": "84db8bde88f695fede81f32a2fddb30622c6781f",
+    "introduction_parent": "3bf9e5368a956ef562c77e1beb0a745addf23daf",
+    "introduction_path_present": true,
+    "parent_path_absent": true
+  },
+  "frozen_r4_candidate": {
+    "fixture_path_absent": true,
+    "graph_consumer_path_absent": true,
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "resolved_commit": "11caf1d9de291d76f491cf69f7942606b7471d7a"
+  },
+  "repo_mapping": {
+    "actual_d60_repo": "/home/user/peteromallet/astrid-agent",
+    "frozen_r4_sdk_repo": "/home/user/peteromallet/astrid-agent",
+    "review_repo": "Agent/Astrid",
+    "review_repo_root": "/home/user/work/wt/app-D132a-graph-protected-own9-1658"
+  },
+  "reviewer_worktree": "/home/user/work/wt/app-D132a-graph-protected-own9-1658",
+  "source_change_custody": {
+    "all_graph_predicates_equal": true,
+    "all_other_authored_inputs_equal": false,
+    "fixture_gain_lines": 1,
+    "graph_metadata_lines": 6,
+    "runtime_agent_product_schema_changed": false
+  },
+  "task": "D132a",
+  "unavailable_reference": {
+    "object": "d11417a59",
+    "object_present": false,
+    "used_as_absence_proof": false
+  }
+}

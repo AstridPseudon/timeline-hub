@@ -1,0 +1,42 @@
+{
+  "schema": "app-d116-native-checkout4-current-companion-source-map-v2",
+  "original_base": "b24d99bd3c286336c09d4d0661e9691d3b160559",
+  "current_route": {
+    "producer": "tests/editing_conformance/native_word_anchor_fixture.py::seed(current_form=True)",
+    "provider": "registered Runtime provider via agent.create_runtime_commit_service()",
+    "document_emitter": "astrid.sdk.timeline.emitter.emit_document_commands",
+    "pin": "case.pin from Runtime-created transcript",
+    "media": "case.source.content.media_id",
+    "word_binding": "current_picker(case, 1, text=DECLARATION) -> clip.anchor -> retain-and-clear"
+  },
+  "companions": [
+    {
+      "ordinal": 1143,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]",
+      "new": "test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[disjoint-peer]",
+      "input_topology": "music-bed on parent track music; music-other on distinct parent track music-other; same media, hold 5.5, opaque [null,{keep:true}], current pinned word seam",
+      "predicate_status": "PASS"
+    },
+    {
+      "ordinal": 1147,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]",
+      "new": "test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[touching-peer-conflict]",
+      "input_topology": "same target topology with touching music-bed peer trim (0,5) and conflict/no-write path",
+      "predicate_status": "PASS"
+    },
+    {
+      "ordinal": 1152,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history",
+      "new": "test_native_checkout_current_equivalent.py::test_current_checkout_commands_file_preserves_opaque_unchanged_write_and_undo",
+      "input_topology": "same current authenticated parent target; opaque [null,false,0]; commands-file CLI ingress",
+      "predicate_status": "PASS"
+    },
+    {
+      "ordinal": 1159,
+      "original": "test_commit_runtime_native_checkout.py::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable",
+      "new": "test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+      "input_topology": "current pinned baseline plus occurrence-free Gate3 text-card topology; renderer-off and unavailable capability assertions retained",
+      "predicate_status": "PASS"
+    }
+  ]
+}

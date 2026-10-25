@@ -1,0 +1,3396 @@
+{
+  "task": "app-D127-lifecycle-complete-sol-1654",
+  "created_before_any_source_edit": true,
+  "source_citations": {
+    "outcome": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504",
+    "request_initialization": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:541-591",
+    "final_selection": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:590-593",
+    "phase_begin_end": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:613-666",
+    "phase_projection": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:660-674",
+    "durations": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:675-697",
+    "handler_entry_closes_queue": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:906-917",
+    "dispatch_return": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:948-961",
+    "stop": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:238-261",
+    "retention": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:755-811",
+    "missing_boundary_test": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/test_p2_commit_phase_capture.py:315-333"
+  },
+  "scope": "Exact helper formulas plus normal trace transitions, with missing-boundary and in-flight callback cases separated. Projection compatibility does not claim every response nesting occurs in the synchronous HTTP caller. Concrete callbacks were exercised in memory, not with Runtime requests.",
+  "decision_conflicts": [
+    {
+      "decision": "1647: pending_at_stop must reject ended dispatch_queue",
+      "actual": "Queue closes at handler entry, independently of dispatch_finished. Ordinary pending handler has observed_ended dispatch phase.",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:906-917"
+    },
+    {
+      "decision": "1647: dispatch_queue ends only at dispatch return",
+      "actual": "Queue ends at handler entry and is only conditionally ended at dispatch return.",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:948-961"
+    },
+    {
+      "decision": "Current validator: raised requires dispatch.status raised",
+      "actual": "Raised-after-handler preserves observed queue status because queue already ended.",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:948-961"
+    },
+    {
+      "decision": "Current validator: completed requires numeric completion durations",
+      "actual": "Returned+response wins over dispatch_raised; error flag leaves dispatch_end_ms null. Caught errors also set the error flag.",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "decision": "No relaxed phase counts while accepting precisely all helper output including missing boundaries",
+      "actual": "Helper can allocate a request at handler entry after dispatch boundary was missed; dispatch count remains zero. Current validator requires >=1.",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:906-917"
+    }
+  ],
+  "internal_flag_matrix": [
+    {
+      "dispatch_finished": false,
+      "dispatch_returned": false,
+      "dispatch_raised": false,
+      "http_response_count_positive": false,
+      "lifecycle": "pending_at_stop",
+      "trace_reachability": "ordinary partial capture; response count does not establish dispatch completion",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": false,
+      "dispatch_returned": false,
+      "dispatch_raised": false,
+      "http_response_count_positive": true,
+      "lifecycle": "pending_at_stop",
+      "trace_reachability": "ordinary partial capture; response count does not establish dispatch completion",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": false,
+      "dispatch_returned": false,
+      "dispatch_raised": true,
+      "http_response_count_positive": false,
+      "lifecycle": "pending_at_stop",
+      "trace_reachability": "impossible through unmodified dispatch trace; request fields may be set manually by helper unit tests",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": false,
+      "dispatch_returned": false,
+      "dispatch_raised": true,
+      "http_response_count_positive": true,
+      "lifecycle": "pending_at_stop",
+      "trace_reachability": "impossible through unmodified dispatch trace; request fields may be set manually by helper unit tests",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": false,
+      "dispatch_returned": true,
+      "dispatch_raised": false,
+      "http_response_count_positive": false,
+      "lifecycle": "pending_at_stop",
+      "trace_reachability": "in-flight dispatch-return callback before dispatch_finished assignment; snapshot race, not a stable completed dispatch",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": false,
+      "dispatch_returned": true,
+      "dispatch_raised": false,
+      "http_response_count_positive": true,
+      "lifecycle": "pending_at_stop",
+      "trace_reachability": "in-flight dispatch-return callback before dispatch_finished assignment; snapshot race, not a stable completed dispatch",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": false,
+      "dispatch_returned": true,
+      "dispatch_raised": true,
+      "http_response_count_positive": false,
+      "lifecycle": "pending_at_stop",
+      "trace_reachability": "in-flight dispatch-return callback before dispatch_finished assignment; snapshot race, not a stable completed dispatch",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": false,
+      "dispatch_returned": true,
+      "dispatch_raised": true,
+      "http_response_count_positive": true,
+      "lifecycle": "pending_at_stop",
+      "trace_reachability": "in-flight dispatch-return callback before dispatch_finished assignment; snapshot race, not a stable completed dispatch",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": true,
+      "dispatch_returned": false,
+      "dispatch_raised": false,
+      "http_response_count_positive": false,
+      "lifecycle": "returned_without_response",
+      "trace_reachability": "impossible through unmodified dispatch trace; request fields may be set manually by helper unit tests",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": true,
+      "dispatch_returned": false,
+      "dispatch_raised": false,
+      "http_response_count_positive": true,
+      "lifecycle": "returned_without_response",
+      "trace_reachability": "impossible through unmodified dispatch trace; request fields may be set manually by helper unit tests",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": true,
+      "dispatch_returned": false,
+      "dispatch_raised": true,
+      "http_response_count_positive": false,
+      "lifecycle": "raised",
+      "trace_reachability": "impossible through unmodified dispatch trace; request fields may be set manually by helper unit tests",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": true,
+      "dispatch_returned": false,
+      "dispatch_raised": true,
+      "http_response_count_positive": true,
+      "lifecycle": "raised",
+      "trace_reachability": "impossible through unmodified dispatch trace; request fields may be set manually by helper unit tests",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": true,
+      "dispatch_returned": true,
+      "dispatch_raised": false,
+      "http_response_count_positive": false,
+      "lifecycle": "returned_without_response",
+      "trace_reachability": "finished trace output",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": true,
+      "dispatch_returned": true,
+      "dispatch_raised": false,
+      "http_response_count_positive": true,
+      "lifecycle": "completed",
+      "trace_reachability": "finished trace output",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": true,
+      "dispatch_returned": true,
+      "dispatch_raised": true,
+      "http_response_count_positive": false,
+      "lifecycle": "raised",
+      "trace_reachability": "finished trace output",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    },
+    {
+      "dispatch_finished": true,
+      "dispatch_returned": true,
+      "dispatch_raised": true,
+      "http_response_count_positive": true,
+      "lifecycle": "completed",
+      "trace_reachability": "finished trace output",
+      "citation": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:496-504"
+    }
+  ],
+  "observable_projection_matrix": [
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Completed requires returned dispatch and response count > 0.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Completed requires returned dispatch and response count > 0.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Completed requires returned dispatch and response count > 0.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Finished dispatch callback closes an open queue before setting finished=true.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Finished dispatch callback closes an open queue before setting finished=true.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Finished dispatch callback closes an open queue before setting finished=true.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Completed requires returned dispatch and response count > 0.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=numeric; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=numeric; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=numeric; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Completed requires returned dispatch and response count > 0.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=numeric; handler=numeric iff handler start known",
+        "total=null; handler=null if dispatch_raised=true after queue already closed"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=numeric; handler=numeric iff handler start known",
+        "total=null; handler=null if dispatch_raised=true after queue already closed"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=numeric; handler=numeric iff handler start known",
+        "total=null; handler=null if dispatch_raised=true after queue already closed"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Completed requires returned dispatch and response count > 0.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=null; handler=null"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=null; handler=null"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "valid_helper_derivation",
+      "reason": "Returned plus response count > 0; response state is not consulted. Raised flag can be true even for a caught error and normal return.",
+      "durations": [
+        "total=null; handler=null"
+      ]
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "completed",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Finished dispatch callback closes an open queue before setting finished=true.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "valid_helper_derivation",
+      "reason": "Finished returned dispatch with no response and no dispatch error.",
+      "durations": [
+        "total=numeric; handler=numeric iff handler start known; queue=numeric iff handler start known"
+      ]
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "valid_helper_derivation",
+      "reason": "Finished returned dispatch with no response and no dispatch error.",
+      "durations": [
+        "total=numeric; handler=numeric iff handler start known; queue=numeric iff handler start known"
+      ]
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Without response, a dispatch error selects raised, not returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "returned_without_response",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Normal request-scope return belongs to an observed _dispatch. Frozen low-level tests can nevertheless manually set lifecycle flags on missing-dispatch requests; see missing_boundary_test.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Finished dispatch callback closes an open queue before setting finished=true.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Error return on a queue not ended at handler entry marks the queue raised.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "valid_helper_derivation",
+      "reason": "No response and error flag; queue is observed if already closed at handler entry, otherwise raised.",
+      "durations": [
+        "total=null; handler=null; queue=numeric iff handler start known"
+      ]
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "valid_helper_derivation",
+      "reason": "No response and error flag; queue is observed if already closed at handler entry, otherwise raised.",
+      "durations": [
+        "total=null; handler=null; queue=numeric iff handler start known"
+      ]
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "For a returned dispatch, observed response takes precedence over raised/returned_without_response.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "raised",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "valid_missing_boundary",
+      "reason": "Late handler/coordinator observation can allocate a request without observing _dispatch; finished stays false.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "valid_missing_boundary",
+      "reason": "Late handler/coordinator observation can allocate a request without observing _dispatch; finished stays false.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "valid_missing_boundary",
+      "reason": "Late handler/coordinator observation can allocate a request without observing _dispatch; finished stays false.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "valid_missing_boundary",
+      "reason": "Late handler/coordinator observation can allocate a request without observing _dispatch; finished stays false.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "valid_missing_boundary",
+      "reason": "Late handler/coordinator observation can allocate a request without observing _dispatch; finished stays false.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "valid_missing_boundary",
+      "reason": "Late handler/coordinator observation can allocate a request without observing _dispatch; finished stays false.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "valid_missing_boundary",
+      "reason": "Late handler/coordinator observation can allocate a request without observing _dispatch; finished stays false.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "missing",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "valid_missing_boundary",
+      "reason": "Late handler/coordinator observation can allocate a request without observing _dispatch; finished stays false.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "valid_partial",
+      "reason": "Dispatch has begun; handler boundary and dispatch return are unobserved. Response count does not change pending outcome.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "valid_partial",
+      "reason": "Dispatch has begun; handler boundary and dispatch return are unobserved. Response count does not change pending outcome.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "valid_partial",
+      "reason": "Dispatch has begun; handler boundary and dispatch return are unobserved. Response count does not change pending outcome.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "valid_partial",
+      "reason": "Dispatch has begun; handler boundary and dispatch return are unobserved. Response count does not change pending outcome.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_open",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "return_or_handler_callback_interleaving",
+      "reason": "Queue _end and dispatch_finished assignment are distinct operations; handler queue-end also precedes handler _begin. No atomic snapshot guarantee joins them.",
+      "durations": [
+        "total=null for error return or before completion end assignment",
+        "numeric total possible during non-error return callback before finished=true"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "return_or_handler_callback_interleaving",
+      "reason": "Queue _end and dispatch_finished assignment are distinct operations; handler queue-end also precedes handler _begin. No atomic snapshot guarantee joins them.",
+      "durations": [
+        "total=null for error return or before completion end assignment",
+        "numeric total possible during non-error return callback before finished=true"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "return_or_handler_callback_interleaving",
+      "reason": "Queue _end and dispatch_finished assignment are distinct operations; handler queue-end also precedes handler _begin. No atomic snapshot guarantee joins them.",
+      "durations": [
+        "total=null for error return or before completion end assignment",
+        "numeric total possible during non-error return callback before finished=true"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "return_or_handler_callback_interleaving",
+      "reason": "Queue _end and dispatch_finished assignment are distinct operations; handler queue-end also precedes handler _begin. No atomic snapshot guarantee joins them.",
+      "durations": [
+        "total=null for error return or before completion end assignment",
+        "numeric total possible during non-error return callback before finished=true"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "valid_partial",
+      "reason": "Queue ends at handler entry, before request completion; response may be missing, open, ended or raised.",
+      "durations": [
+        "total=null; handler=null; queue=handler.start-dispatch.start",
+        "during return-callback interleaving only: total and handler may already be numeric before finished=true"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "valid_partial",
+      "reason": "Queue ends at handler entry, before request completion; response may be missing, open, ended or raised.",
+      "durations": [
+        "total=null; handler=null; queue=handler.start-dispatch.start",
+        "during return-callback interleaving only: total and handler may already be numeric before finished=true"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "valid_partial",
+      "reason": "Queue ends at handler entry, before request completion; response may be missing, open, ended or raised.",
+      "durations": [
+        "total=null; handler=null; queue=handler.start-dispatch.start",
+        "during return-callback interleaving only: total and handler may already be numeric before finished=true"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "observed_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "valid_partial",
+      "reason": "Queue ends at handler entry, before request completion; response may be missing, open, ended or raised.",
+      "durations": [
+        "total=null; handler=null; queue=handler.start-dispatch.start",
+        "during return-callback interleaving only: total and handler may already be numeric before finished=true"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "missing",
+      "classification": "return_or_handler_callback_interleaving",
+      "reason": "Queue _end and dispatch_finished assignment are distinct operations; handler queue-end also precedes handler _begin. No atomic snapshot guarantee joins them.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_open",
+      "classification": "return_or_handler_callback_interleaving",
+      "reason": "Queue _end and dispatch_finished assignment are distinct operations; handler queue-end also precedes handler _begin. No atomic snapshot guarantee joins them.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "observed_ended",
+      "classification": "return_or_handler_callback_interleaving",
+      "reason": "Queue _end and dispatch_finished assignment are distinct operations; handler queue-end also precedes handler _begin. No atomic snapshot guarantee joins them.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": false,
+      "http_response_phase": "raised_ended",
+      "classification": "return_or_handler_callback_interleaving",
+      "reason": "Queue _end and dispatch_finished assignment are distinct operations; handler queue-end also precedes handler _begin. No atomic snapshot guarantee joins them.",
+      "durations": [
+        "total=null; handler=null; queue=null"
+      ]
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "missing",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_open",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "observed_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    },
+    {
+      "lifecycle": "pending_at_stop",
+      "dispatch_phase": "raised_ended",
+      "handler_boundary_observed": true,
+      "http_response_phase": "raised_ended",
+      "classification": "impossible",
+      "reason": "Handler entry closes a previously observed queue without error; dispatch return does not overwrite that closed queue.",
+      "durations": []
+    }
+  ],
+  "duration_rules": {
+    "source": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:675-697",
+    "duration_boundary_truth_table": [
+      {
+        "start_known": false,
+        "end_known": false,
+        "duration": null
+      },
+      {
+        "start_known": false,
+        "end_known": true,
+        "duration": null
+      },
+      {
+        "start_known": true,
+        "end_known": false,
+        "duration": null
+      },
+      {
+        "start_known": true,
+        "end_known": true,
+        "duration": "round(end-start, 3)"
+      }
+    ],
+    "dispatch_queue_ms": "duration(dispatch_queue.start_ms, handler_entry.start_ms), never dispatch_queue.end_ms-dispatch_queue.start_ms",
+    "completion_end": "request.dispatch_end_ms if dispatch_returned else null; assigned only on non-error dispatch return",
+    "handler_ms": "duration(handler_entry.start_ms, completion_end)",
+    "dispatch_total_ms_and_dispatch_to_completion_wall_ms": "duration(dispatch_queue.start_ms, completion_end); identical",
+    "provider_wall_ms": "duration(provider.start_ms, provider.end_ms)",
+    "response_write_wall_ms": "duration(http_response.start_ms, http_response.end_ms)",
+    "execution_lock_wait_ms_and_caller_receipt_ms": "always null",
+    "sampling_dispatch_wall_denominator_ms": "same completion wall duration (null if unavailable; frame shares null without positive wall denominator)",
+    "capture_stop_interleaving": "stop disables new trace entries but does not make already executing _trace_inner callbacks atomic; dispatch phase/end/flags are assigned before the lock-protected finished bit. Thus enum alone cannot determine completion-duration nullness for every in-flight callback snapshot."
+  },
+  "retention_matrix": [
+    {
+      "summary_lifecycle": "completed",
+      "final_request_relation": "null",
+      "valid": true,
+      "condition": "All requests must be completed."
+    },
+    {
+      "summary_lifecycle": "completed",
+      "final_request_relation": "same_request",
+      "valid": false,
+      "condition": "Final selection excludes completed requests."
+    },
+    {
+      "summary_lifecycle": "completed",
+      "final_request_relation": "earlier_request",
+      "valid": true,
+      "condition": "Target is the greatest non-completed ordinal; summary may be a later completed request."
+    },
+    {
+      "summary_lifecycle": "completed",
+      "final_request_relation": "later_request",
+      "valid": true,
+      "condition": "Target is a later non-completed ordinal; summary may be completed or an earlier non-completed request."
+    },
+    {
+      "summary_lifecycle": "returned_without_response",
+      "final_request_relation": "null",
+      "valid": false,
+      "condition": "Any non-completed request requires a final target."
+    },
+    {
+      "summary_lifecycle": "returned_without_response",
+      "final_request_relation": "same_request",
+      "valid": true,
+      "condition": "Outcome equals lifecycle; this request is the greatest non-completed ordinal."
+    },
+    {
+      "summary_lifecycle": "returned_without_response",
+      "final_request_relation": "earlier_request",
+      "valid": false,
+      "condition": "A later non-completed summary disproves the selected greatest ordinal."
+    },
+    {
+      "summary_lifecycle": "returned_without_response",
+      "final_request_relation": "later_request",
+      "valid": true,
+      "condition": "Target is a later non-completed ordinal; summary may be completed or an earlier non-completed request."
+    },
+    {
+      "summary_lifecycle": "raised",
+      "final_request_relation": "null",
+      "valid": false,
+      "condition": "Any non-completed request requires a final target."
+    },
+    {
+      "summary_lifecycle": "raised",
+      "final_request_relation": "same_request",
+      "valid": true,
+      "condition": "Outcome equals lifecycle; this request is the greatest non-completed ordinal."
+    },
+    {
+      "summary_lifecycle": "raised",
+      "final_request_relation": "earlier_request",
+      "valid": false,
+      "condition": "A later non-completed summary disproves the selected greatest ordinal."
+    },
+    {
+      "summary_lifecycle": "raised",
+      "final_request_relation": "later_request",
+      "valid": true,
+      "condition": "Target is a later non-completed ordinal; summary may be completed or an earlier non-completed request."
+    },
+    {
+      "summary_lifecycle": "pending_at_stop",
+      "final_request_relation": "null",
+      "valid": false,
+      "condition": "Any non-completed request requires a final target."
+    },
+    {
+      "summary_lifecycle": "pending_at_stop",
+      "final_request_relation": "same_request",
+      "valid": true,
+      "condition": "Outcome equals lifecycle; this request is the greatest non-completed ordinal."
+    },
+    {
+      "summary_lifecycle": "pending_at_stop",
+      "final_request_relation": "earlier_request",
+      "valid": false,
+      "condition": "A later non-completed summary disproves the selected greatest ordinal."
+    },
+    {
+      "summary_lifecycle": "pending_at_stop",
+      "final_request_relation": "later_request",
+      "valid": true,
+      "condition": "Target is a later non-completed ordinal; summary may be completed or an earlier non-completed request."
+    }
+  ],
+  "retention_rules": {
+    "source": "Runtime@231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py:590-593",
+    "target": "greatest ordinal whose _request_outcome is not completed, or null",
+    "outcome": "same _request_outcome formula as summary",
+    "buffer_complete": "equals complete; both describe retained events, independent of lifecycle completion",
+    "missing_summary": "Byte retention can omit a summary; never require a final-target summary to be present in retained output."
+  },
+  "shape_impossibilities": [
+    "count=0 with observed/raised status or known start/end",
+    "observed positive count with missing start",
+    "raised positive count with missing end",
+    "end earlier than start",
+    "completion wall differs from total",
+    "known unsupported boundary duration"
+  ],
+  "concrete_original_helper_callbacks": [
+    {
+      "name": "pending_before_handler",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "dispatch_queue",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": null
+          },
+          "handler_entry": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          }
+        },
+        "lifecycle": "pending_at_stop",
+        "durations_ms": {
+          "dispatch_queue_ms": null,
+          "handler_ms": null,
+          "dispatch_total_ms": null,
+          "dispatch_to_completion_wall_ms": null,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.973Z",
+        "at_ms": 2.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.973Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-1",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": null,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 2,
+            "events_retained": 2,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": {
+            "request": 1,
+            "outcome": "pending_at_stop",
+            "events_seen": 1,
+            "events_retained": 1,
+            "buffer_complete": true,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 3401,
+            "events": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "pending_inside_handler",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "handler_entry",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 2.0
+          },
+          "handler_entry": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 4.0,
+            "end_ms": null
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          }
+        },
+        "lifecycle": "pending_at_stop",
+        "durations_ms": {
+          "dispatch_queue_ms": 4.0,
+          "handler_ms": null,
+          "dispatch_total_ms": null,
+          "dispatch_to_completion_wall_ms": null,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.974Z",
+        "at_ms": 6.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.973Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-2",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": null,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 4,
+            "events_retained": 4,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": {
+            "request": 1,
+            "outcome": "pending_at_stop",
+            "events_seen": 3,
+            "events_retained": 3,
+            "buffer_complete": true,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 4246,
+            "events": 4
+          }
+        }
+      }
+    },
+    {
+      "name": "pending_after_response",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "http_response",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 2.0
+          },
+          "handler_entry": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 4.0,
+            "end_ms": null
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 6.0,
+            "end_ms": 7.0
+          }
+        },
+        "lifecycle": "pending_at_stop",
+        "durations_ms": {
+          "dispatch_queue_ms": 4.0,
+          "handler_ms": null,
+          "dispatch_total_ms": null,
+          "dispatch_to_completion_wall_ms": null,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": 1.0,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.974Z",
+        "at_ms": 8.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.974Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-3",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": null,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 6,
+            "events_retained": 6,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": {
+            "request": 1,
+            "outcome": "pending_at_stop",
+            "events_seen": 5,
+            "events_retained": 5,
+            "buffer_complete": true,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 4630,
+            "events": 6
+          }
+        }
+      }
+    },
+    {
+      "name": "raised_after_handler_entry",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "handler_entry",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 2.0
+          },
+          "handler_entry": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 4.0,
+            "end_ms": 6.0
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          }
+        },
+        "lifecycle": "raised",
+        "durations_ms": {
+          "dispatch_queue_ms": 4.0,
+          "handler_ms": null,
+          "dispatch_total_ms": null,
+          "dispatch_to_completion_wall_ms": null,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.975Z",
+        "at_ms": 8.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.975Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-4",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": null,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 5,
+            "events_retained": 5,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": {
+            "request": 1,
+            "outcome": "raised",
+            "events_seen": 4,
+            "events_retained": 4,
+            "buffer_complete": true,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 4649,
+            "events": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "raised_before_handler_entry",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "dispatch_queue",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "raised",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 2.0
+          },
+          "handler_entry": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          }
+        },
+        "lifecycle": "raised",
+        "durations_ms": {
+          "dispatch_queue_ms": null,
+          "handler_ms": null,
+          "dispatch_total_ms": null,
+          "dispatch_to_completion_wall_ms": null,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.975Z",
+        "at_ms": 4.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.975Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-5",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": null,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 3,
+            "events_retained": 3,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": {
+            "request": 1,
+            "outcome": "raised",
+            "events_seen": 2,
+            "events_retained": 2,
+            "buffer_complete": true,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 3807,
+            "events": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "completed_after_caught_error_before_handler",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "http_response",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "raised",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 4.0
+          },
+          "handler_entry": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 2.0,
+            "end_ms": 3.0
+          }
+        },
+        "lifecycle": "completed",
+        "durations_ms": {
+          "dispatch_queue_ms": null,
+          "handler_ms": null,
+          "dispatch_total_ms": null,
+          "dispatch_to_completion_wall_ms": null,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": 1.0,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.976Z",
+        "at_ms": 6.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.975Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-6",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": null,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 5,
+            "events_retained": 5,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": null,
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 4066,
+            "events": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "completed_after_caught_error_inside_handler",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "http_response",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 2.0
+          },
+          "handler_entry": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 4.0,
+            "end_ms": 8.0
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 6.0,
+            "end_ms": 7.0
+          }
+        },
+        "lifecycle": "completed",
+        "durations_ms": {
+          "dispatch_queue_ms": 4.0,
+          "handler_ms": null,
+          "dispatch_total_ms": null,
+          "dispatch_to_completion_wall_ms": null,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": 1.0,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.976Z",
+        "at_ms": 10.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.976Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-7",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": null,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 7,
+            "events_retained": 7,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": null,
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 4910,
+            "events": 7
+          }
+        }
+      }
+    },
+    {
+      "name": "completed_without_handler_boundary",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "http_response",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 5.0
+          },
+          "handler_entry": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 2.0,
+            "end_ms": 3.0
+          }
+        },
+        "lifecycle": "completed",
+        "durations_ms": {
+          "dispatch_queue_ms": null,
+          "handler_ms": null,
+          "dispatch_total_ms": 4.0,
+          "dispatch_to_completion_wall_ms": 4.0,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": 1.0,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.977Z",
+        "at_ms": 7.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.976Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-8",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": 4.0,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 5,
+            "events_retained": 5,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": null,
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 4062,
+            "events": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "completed_normal",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "http_response",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 2.0
+          },
+          "handler_entry": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 4.0,
+            "end_ms": 8.0
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 6.0,
+            "end_ms": 7.0
+          }
+        },
+        "lifecycle": "completed",
+        "durations_ms": {
+          "dispatch_queue_ms": 4.0,
+          "handler_ms": 6.0,
+          "dispatch_total_ms": 10.0,
+          "dispatch_to_completion_wall_ms": 10.0,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": 1.0,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.977Z",
+        "at_ms": 11.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.977Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-9",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": 10.0,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 7,
+            "events_retained": 7,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": null,
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 4909,
+            "events": 7
+          }
+        }
+      }
+    },
+    {
+      "name": "returned_without_handler_boundary",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "dispatch_queue",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 3.0
+          },
+          "handler_entry": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          }
+        },
+        "lifecycle": "returned_without_response",
+        "durations_ms": {
+          "dispatch_queue_ms": null,
+          "handler_ms": null,
+          "dispatch_total_ms": 2.0,
+          "dispatch_to_completion_wall_ms": 2.0,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.978Z",
+        "at_ms": 5.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.977Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-10",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": 2.0,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 3,
+            "events_retained": 3,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": {
+            "request": 1,
+            "outcome": "returned_without_response",
+            "events_seen": 2,
+            "events_retained": 2,
+            "buffer_complete": true,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 3844,
+            "events": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "returned_normal",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "handler_entry",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 0.0,
+            "end_ms": 2.0
+          },
+          "handler_entry": {
+            "status": "observed",
+            "count": 1,
+            "start_ms": 4.0,
+            "end_ms": 6.0
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          }
+        },
+        "lifecycle": "returned_without_response",
+        "durations_ms": {
+          "dispatch_queue_ms": 4.0,
+          "handler_ms": 4.0,
+          "dispatch_total_ms": 8.0,
+          "dispatch_to_completion_wall_ms": 8.0,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.978Z",
+        "at_ms": 9.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.978Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-11",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": 0.0,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": 8.0,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 5,
+            "events_retained": 5,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": {
+            "request": 1,
+            "outcome": "returned_without_response",
+            "events_seen": 4,
+            "events_retained": 4,
+            "buffer_complete": true,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 4688,
+            "events": 5
+          }
+        }
+      }
+    },
+    {
+      "name": "pending_missing_dispatch_boundary",
+      "summary": {
+        "schema_version": 1,
+        "request": 1,
+        "phase": "summary",
+        "last_phase": "handler_entry",
+        "phases": {
+          "arrival": {
+            "status": "unsupported",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null,
+            "reason": "no earlier socket/server-accept hook"
+          },
+          "dispatch_queue": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "handler_entry": {
+            "status": "observed",
+            "count": 2,
+            "start_ms": 0.0,
+            "end_ms": null
+          },
+          "authorization": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_admission": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "coordinator_lock": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "provider": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "accept": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "receipt": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          },
+          "http_response": {
+            "status": "UNKNOWN",
+            "count": 0,
+            "start_ms": null,
+            "end_ms": null
+          }
+        },
+        "lifecycle": "pending_at_stop",
+        "durations_ms": {
+          "dispatch_queue_ms": null,
+          "handler_ms": null,
+          "dispatch_total_ms": null,
+          "dispatch_to_completion_wall_ms": null,
+          "provider_wall_ms": null,
+          "response_write_wall_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "utc": "2026-10-25T16:57:33.979Z",
+        "at_ms": 4.0,
+        "capture_anchor": {
+          "utc": "2026-10-25T16:57:33.978Z",
+          "at_ms": 0.0
+        },
+        "capture_namespace": "pid-9-birth-19787942-capture-12",
+        "pid": 9,
+        "birth_ticks": 19787942,
+        "method": "POST",
+        "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+        "idempotency_key_sha256": "b3cc0475bb78a5026098858e9889acf666d31062d513d303314eca31d36e72f2",
+        "dispatch_start_ms": null,
+        "sampling": {
+          "sampling_interval_ms": 20.0,
+          "sample_total": 0,
+          "lost_samples": 0,
+          "observer_cpu_ms": 0.0,
+          "observer_cpu_scope": "capture-wide",
+          "observer_cpu_attribution": "sampler CPU covers the whole capture and is not attributed to this request",
+          "top_inclusive_frames": [],
+          "top_leaf_frames": [],
+          "sample_membership": "each safe frame identity is counted at most once per sample",
+          "dispatch_wall_denominator_ms": null,
+          "counter_limits": {
+            "max_requests": 8,
+            "max_events": 128,
+            "max_bytes": 65536,
+            "top_frames": 10
+          },
+          "sampler_errors": []
+        },
+        "unknown_boundaries": {
+          "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+          "request_body_receive": "unsupported: no body-read hook; body time is not separately measured",
+          "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+          "caller_receipt": "outside Runtime process"
+        },
+        "unsupported_boundaries": {
+          "network_arrival_ms": null,
+          "request_body_receive_ms": null,
+          "execution_lock_wait_ms": null,
+          "caller_receipt_ms": null
+        },
+        "truncated": false,
+        "retention": {
+          "format_version": 2,
+          "mode": "rolling_plus_final_request",
+          "rolling": {
+            "capacity_events": 128,
+            "events_seen": 3,
+            "events_retained": 3,
+            "capacity_dropped_events": 0,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "final_request": {
+            "request": 1,
+            "outcome": "pending_at_stop",
+            "events_seen": 2,
+            "events_retained": 2,
+            "buffer_complete": true,
+            "complete": true,
+            "incomplete_limit": null
+          },
+          "output": {
+            "max_bytes": 65536,
+            "bytes": 3826,
+            "events": 3
+          }
+        }
+      }
+    }
+  ],
+  "mutation_controls": "No repository mutation controls added: the review decision conflicts with real helper output. Original validator evaluated against concrete unmodified-helper projections; see private/validator-projections.json. Source changes are gated pending orchestrator judgment, per task instruction."
+}

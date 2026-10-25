@@ -1,0 +1,51 @@
+{
+  "task": "app-D127-lifecycle-complete-sol-1654",
+  "status": "BLOCKED_CONTRADICTORY_SOURCE_REQUIREMENTS",
+  "implementation_complete": false,
+  "source_edit_performed": false,
+  "judgment_required": "Revise the ended-pending rejection and raised/completed assumptions before implementing a validator that accepts frozen helper semantics. Clarify missing-dispatch scope under no relaxed phase counts.",
+  "plan_read": true,
+  "C0_sections_read": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "7"
+  ],
+  "focused_D127_D105": {
+    "result": "PASS_BASELINE_ONLY",
+    "node": "20.20.0",
+    "pass": 2,
+    "selector_excluded": 2
+  },
+  "eslint": "PASS_BASELINE_ONLY",
+  "tsc_app_serialized": "PASS_BASELINE_ONLY",
+  "tsc_node": "PASS_BASELINE_ONLY",
+  "git_diff_check": "PASS_CLEAN_TREE",
+  "source_causal_helper_cases": 12,
+  "source_causal_validator_projection": {
+    "accepted": 8,
+    "rejected_real_helper_cases": 4
+  },
+  "bootstrap_positive_controls": {
+    "normal": "NOTRUN",
+    "exact_4ee": "NOTRUN",
+    "reason": "Unresolved source requirements conflict; no source-causal edits made, so post-change positive qualification was not reached. Initial free disk was below 5 GB; latest measurement is above decimal 5 GB but below 5 GiB. No disk-based PASS or false decimal shortfall claimed.",
+    "disk_gate_bytes_decimal": 5000000000,
+    "fresh_available_bytes": 5026189312,
+    "exact_shortfall_bytes_decimal": 0,
+    "gate_bytes_if_5GiB": 5368709120,
+    "shortfall_if_5GiB": 342519808,
+    "initial_available_bytes": 4907585536,
+    "initial_shortfall_to_5GB_bytes": 92414464
+  },
+  "central_service_requested": false,
+  "full_family_browser_native_tour_recovery_tests": false,
+  "reused_evidence": {
+    "runtime_central": "23 passed in 3.46s, reused from 1647 commands-results.md; not rerun",
+    "original_predicate_custody": "160 parent assertions retained; reuse 1630 assertion-custody.json",
+    "strict_islands": "Known baseline; not rerun per brief"
+  },
+  "permission_or_classifier_refusal": false
+}
