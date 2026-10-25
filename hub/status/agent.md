@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T18:36:33Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
-# agent board, 2026-10-25T18:35Z
+<!-- agent | 2026-10-25T18:40:53Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
+# agent board, 2026-10-25T18:41Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -113,9 +113,12 @@ H6 checked Runtime18:22, App18:26 and Farm18:08 actual boards. App D100 proof182
 D129: Farm permission refusals remain historical NOTRUN; expressly authorized normal review1549 completed Ruff, compile and AST PASS. D129a permission-file refusal stays stopped. D131 actual123bb93c regular0755 is installed; child reserve5905580032 bytes, Runtime/profile8GiB unchanged. No local guard edit or near-match reuse.
 Later: current17 selector topology and transcript authority remain incomplete. D23/D14 deferred anchors exact. Graph initial child birth and originalTrue redo have unknown causal owner and missing physical records; no speculative guard author or unchanged repeat. E2/D79 wait ZIP; D13 installed environment gap remains explicit.
 
-INBOX consumed through1787356 bytes, including D57 critical-path direction and D133 hard-stop approval. Manager changes only board, briefs, peers and exact worker handoffs.
+INBOX consumed through1789306 bytes, including D57 critical-path direction and D133 hard-stop approval. Manager changes only board, briefs, peers and exact worker handoffs.
 Current pass18:30Z: final1822 binding PASS led to one fixture service27653, exit2 in3s after two real Git fixture commits and two private Stores. Parent never reached report equality; candidate, sealed verification and adversarial controls unreached. No safety/permission denial. Exact safe packet published. Independent Luna1829 dispatched immediately read only, and Runtime peer1829 reserves source1747 correction without a duplicate reader. No installation, production child, core body, service coreID or count change.
 
 Pass18:33Z: independent1829 FAIL is source-bound: prepare_venue omits private tests/suites.conf, read unconditionally by Store.ensure projection before build. Original maker stderr EXACTMISSING; source finding is not a recovered log. Report and five immutable evidence files published byte-exact. Runtime peer1833 requests immediate Luna first return and protected source review; Agent sole receiving service resumes after exact source receipt. App peer1831 clears circular normal-home wait for D100 proof. No ready local author, duplicate reader or body.
 
 Pass18:35Z: recorded D133 optionA with hard stop applied immediately: App peer1835 requests only Gate3 picker omission with independent full predicate/input mapping, then one own1 if PASS. Any binding dependency converts to visible deferred optionB, no adaptation. App current board confirms D100 Luna1826 and element Sol1824 live; stale allocation waits clear. D128 sole critical source1747 correction still Runtime-owned, no unchanged fixture repeat.
+
+Blockers: Critical source publication — lead peer1841 requests ordinary sync of pending source1747 correction note1833 and exact1829 evidence. At18:40 the hub export remains untracked with heartbeat18:36; no permission or safety denial observed. No duplicate author/body.
+Pass18:41Z: same critical blocker remains corrected fixture source, not disk. Actual free6.679GB and zero heavy bodies. Lead asked to check pending ordinary publication so Runtime can dispatch source1747 first return; managers do not run lead-only sync. Latest published Runtime18:25/App18:26/Farm18:08 dependencies checked.
