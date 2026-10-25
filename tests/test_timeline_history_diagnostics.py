@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import ast
 import copy
+import hashlib
 import json
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -14,9 +16,13 @@ from test_timeline_commit_port import prepared as port_prepared
 
 from runtime_protocol.contract_metadata import SCHEMA_DIGEST
 from runtime_protocol.errors import RuntimeErrorBase
+from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_execution import (
     _HISTORY_SOURCE_TAGS,
+    _emit_redacted_diagnostic,
     _history_diagnostic_reason,
+    current_public_request_id,
+    public_request_id_scope,
 )
 from runtime_protocol.timeline_commit_port import digest
 from runtime_protocol.timeline_commit_store import request_identity
@@ -34,7 +40,7 @@ class Provider:
         return self.action(commit_context, port)
 
 
-def _commit(service, project, request):
+def _commit(service, project, request, *, public_request_id=None):
     return service.commit_timeline(
         project,
         "main",
@@ -43,6 +49,7 @@ def _commit(service, project, request):
         publisher=request["publisher"],
         invocation_path=request["invocation"]["path"],
         authorize=lambda: None,
+        public_request_id=public_request_id,
     )
 
 
@@ -123,6 +130,39 @@ def test_real_store_history_refusal_emits_source_tag_without_public_change(realm
     assert diagnostic["frames"] == []
 
 
+def test_provider_history_refusal_has_distinct_tag_and_one_way_public_correlation(realm, capsys):
+    service, _, project, head, _ = realm
+    request = context(service, project, head, "history-diagnostic-provider")
+    public_request_id = "61c84a4e"
+
+    def refuse(_, __):
+        raise CommitRejected({
+            "http_status": 409,
+            "code": "conflict",
+            "message": "history_unavailable",
+            "details": {
+                "status": "refused",
+                "reason": "history_unavailable",
+                "base": None,
+                "current": None,
+                "conflicts": [],
+            },
+        })
+
+    service.register_timeline_commit_provider(Provider(refuse))
+    with pytest.raises(RuntimeErrorBase) as caught, public_request_id_scope(public_request_id):
+        _commit(service, project, request)
+
+    _assert_history_refusal(caught)
+    diagnostic = _diagnostic(capsys.readouterr().err)
+    assert diagnostic["reason"] == "provider_history_guard"
+    assert diagnostic["request_id"] != public_request_id
+    assert diagnostic["public_request_id_hash"] == "sha256:" + hashlib.sha256(public_request_id.encode()).hexdigest()
+    assert public_request_id not in json.dumps(diagnostic)
+    assert diagnostic["exception_class_chain"] == []
+    assert diagnostic["frames"] == []
+
+
 def test_real_port_history_refusal_emits_source_tag_without_public_change(realm, capsys):
     service, _, project, head, _ = realm
     request = context(service, project, head, "history-diagnostic-port")
@@ -199,3 +239,29 @@ def test_history_mapper_rejects_non_history_and_untrusted_source_tags():
         "message": "history bounds disagree",
         "details": {"reason": "history_unavailable"},
     }) == "port_history_bounds_mismatch"
+
+
+def test_public_request_id_scope_is_nested_and_thread_local(capsys):
+    assert current_public_request_id() is None
+    with public_request_id_scope("outer-request"):
+        assert current_public_request_id() == "outer-request"
+        with public_request_id_scope("inner-request"):
+            assert current_public_request_id() == "inner-request"
+        assert current_public_request_id() == "outer-request"
+    assert current_public_request_id() is None
+
+    public_ids = [f"thread-{index}" for index in range(8)]
+
+    def emit(public_request_id):
+        with public_request_id_scope(public_request_id):
+            _emit_redacted_diagnostic("f" * 32, reason="provider_none")
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        list(executor.map(emit, public_ids))
+
+    diagnostics = [_diagnostic(line) for line in capsys.readouterr().err.splitlines()]
+    assert {item["public_request_id_hash"] for item in diagnostics} == {
+        "sha256:" + hashlib.sha256(value.encode()).hexdigest() for value in public_ids
+    }
+    assert all(item["request_id"] == "f" * 32 for item in diagnostics)
+    assert all(value not in json.dumps(diagnostics) for value in public_ids)
