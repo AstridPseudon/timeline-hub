@@ -1,0 +1,12 @@
+{
+  "verdict": "PASS",
+  "gate": "source-first",
+  "scope": [
+    "tests/editing_conformance/test_native_word_anchor.py",
+    "tests/editing_conformance/test_word_binding_recipe.py"
+  ],
+  "base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "head": "ff88764f0d3d3b3efcb03e8dec4feb735810be78",
+  "live_behavior": "NOTRUN",
+  "finding": "The cumulative source retains the real change-echo commit/restart/recapture path; the current diff adds the required pre-anchor restart and removes recipe-wide aliasing while retaining targeted mirror setup."
+}

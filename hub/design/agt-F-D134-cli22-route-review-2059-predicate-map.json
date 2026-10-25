@@ -1,0 +1,192 @@
+{
+  "schema": "timeline.agent.f_d134_cli22_predicate_map.v2",
+  "cluster": "root-045",
+  "member_count": 22,
+  "common_source_seam": {
+    "status": "missing_supported_exact_cli_ingress",
+    "first_boundary": "argparse rejects edit commands-file before handler/Runtime",
+    "source": "astrid/packs/timeline/cli.py:3624-3650,3958-3972; astrid/packs/timeline/cli_parser.py:39-65",
+    "replacement": null,
+    "not_credited": ["commit --file", "apply sheet", "Python commit_many/queue_many"],
+    "owner": "current Agent CLI/G3-G5 owner"
+  },
+  "cases": [
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-False]",
+      "status": "UNKNOWN",
+      "purpose": ["raw uncaptured EditCommands JSON list", "one publication", "reload", "guarded inverse/redo", "history grouping", "file unchanged", "CLI source attribution"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI accepts the raw command-list file; commit --file requires a detached document and emits a different diff request."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-True]",
+      "status": "UNKNOWN",
+      "purpose": ["captured EditCommands JSON list", "one publication", "reload", "guarded inverse/redo", "history grouping", "file unchanged", "CLI source attribution"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI accepts captured command records with their original guards; document diff and sheet reconstruction cannot preserve the authored envelope."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_captured_file_retry_refuses_boolean_to_number_claim[expect]",
+      "status": "UNKNOWN",
+      "purpose": ["lost ACK", "restart retry", "exact captured expect claim", "boolean versus numeric mismatch refusal", "no write/no read"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Current CLI has no file route that parses and replays the captured expect claim; commit --file derives guards from a document instead."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_captured_file_retry_refuses_boolean_to_number_claim[reads]",
+      "status": "UNKNOWN",
+      "purpose": ["lost ACK", "restart retry", "exact captured reads claim", "boolean versus numeric mismatch refusal", "no write/no read"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Current CLI has no file route that parses and replays the captured reads claim; document diff and sheet routes do not preserve it."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-False]",
+      "status": "UNKNOWN",
+      "purpose": ["uncaptured batch", "lost ACK", "restart", "ABA peer", "exact original retry before suffix", "idempotency", "no recapture", "file retention"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Python outbox retry exists, but no current CLI command-list file adapter creates the original flight or preserves its raw bytes."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-True]",
+      "status": "UNKNOWN",
+      "purpose": ["captured batch", "lost ACK", "restart", "ABA peer", "exact original retry before suffix", "idempotency", "no recapture", "file retention"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI route admits the captured records, so the durable Python retry seam cannot conserve this CLI case."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-False]",
+      "status": "UNKNOWN",
+      "purpose": ["uncaptured batch", "lost ACK", "restart", "delete-recreate peer", "exact retry", "guarded identity/no recapture", "file retention"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI command-list ingress preserves the original command identities and retry body across the delete-recreate history."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-True]",
+      "status": "UNKNOWN",
+      "purpose": ["captured batch", "lost ACK", "restart", "delete-recreate peer", "exact retry", "guarded identity/no recapture", "file retention"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI command-list ingress admits the captured command and its guards; document/sheet transforms are not exact retries."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-False]",
+      "status": "UNKNOWN",
+      "purpose": ["uncaptured batch", "lost ACK", "restart", "disjoint peer", "exact retry", "rebased landing", "file retention"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Current commit --file can rebase a detached document but cannot accept the original command-list envelope or prove the same rebased request."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-True]",
+      "status": "UNKNOWN",
+      "purpose": ["captured batch", "lost ACK", "restart", "disjoint peer", "exact retry", "rebased landing", "file retention"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Captured command records are not accepted by any current CLI file route; no exact retry body can be formed without migration."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-False]",
+      "status": "UNKNOWN",
+      "purpose": ["uncaptured batch", "lost ACK", "restart", "relevant peer", "conflict", "pending suffix retained", "file retention"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI route both admits the original command file and retains its pending conflict/suffix state; apply sheet has a different outbox contract."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-True]",
+      "status": "UNKNOWN",
+      "purpose": ["captured batch", "lost ACK", "restart", "relevant peer", "conflict", "pending suffix retained", "file retention"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "The current CLI has no captured-file admission path, so the exact conflict and suffix preservation cannot be sourced."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_preview_keeps_batch_for_one_real_publication",
+      "status": "UNKNOWN",
+      "purpose": ["preview", "null receipt", "no history write", "same batch command envelope on acceptance", "one real publication"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Current commit --dry-run previews a detached-document diff, not the authored command list; apply preview reconstructs sheet commands. Neither proves same raw batch envelope."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[claims]",
+      "status": "UNKNOWN",
+      "purpose": ["stale expect claim", "atomic refusal", "no Runtime call", "file unchanged", "empty outbox"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "The authored stale command-list claim is not parsed by any current CLI route; document validation would reject a different file shape or derive a different claim."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[empty]",
+      "status": "UNKNOWN",
+      "purpose": ["empty JSON list", "atomic refusal", "no Runtime call", "file unchanged", "empty outbox"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI command-list parser owns the empty-list admission/refusal; commit --file requires a detached document, not an empty command array."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[envelope]",
+      "status": "UNKNOWN",
+      "purpose": ["JSON envelope instead of list", "atomic refusal", "no Runtime call", "file unchanged", "empty outbox"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI route validates the old command-list envelope; detached-document shape errors are not the same authored admission contract."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[late-invalid]",
+      "status": "UNKNOWN",
+      "purpose": ["late invalid selector", "whole-batch refusal", "no Runtime call", "file unchanged", "empty outbox"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Current document and sheet routes do not admit the authored late-invalid command array; no exact preflight/no-write path is available for this file."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[media]",
+      "status": "UNKNOWN",
+      "purpose": ["late occurrence.add-media command", "policy refusal", "atomic no-write", "file unchanged", "empty outbox"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "The current CLI has no raw command-list path to reach the registered policy/classifier refusal; sheet/document conversion would alter or reject the input earlier."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[disjoint-False]",
+      "status": "UNKNOWN",
+      "purpose": ["uncaptured original pair", "peer advances disjoint head", "preserve explicit base pins", "rebase", "file unchanged"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Current commit --file reads the base pair from a detached document and does not accept the authored explicit command-file pair; no exact route preserves both inputs."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[disjoint-True]",
+      "status": "UNKNOWN",
+      "purpose": ["captured original pair", "peer advances disjoint head", "preserve explicit base pins", "rebase", "file unchanged"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI file route accepts the captured list and explicit CLI pins together; generated document patches are not the same request."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[relevant-False]",
+      "status": "UNKNOWN",
+      "purpose": ["uncaptured original pair", "peer advances relevant head", "conflict", "pending original intent", "file unchanged"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "No current CLI command-list ingress preserves the explicit original pair and pending raw intent through a relevant conflict."
+    },
+    {
+      "id": "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[relevant-True]",
+      "status": "UNKNOWN",
+      "purpose": ["captured original pair", "peer advances relevant head", "conflict", "pending original intent", "file unchanged"],
+      "exact_input_preserved": false,
+      "faithful_cli_invocation": null,
+      "seam": "Captured commands and their original pair have no supported current CLI admission; a detached-document or sheet migration would violate exact-input constraints."
+    }
+  ],
+  "mapping_note": "Canonical root-045 membership is exactly the 22 IDs listed above. All are retained behavioral cases; no test was changed or reclassified as retired."
+}

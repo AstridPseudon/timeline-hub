@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.agent.d134.managed105.outcomes.v1",
+  "status": "UNAPPLIED_SOURCE_DEPENDENCY",
+  "source_delta": false,
+  "representative": {
+    "node": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_exact_capture_acceptance_inverse_redo_restart_and_retry[image-add]",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "result": "setup_refused",
+    "first_meaningful_boundary": "SDK shot item correspondence guard",
+    "missing": "authenticated accepted source shot/closure with exact item-1 identity, media pin, and item mapping"
+  },
+  "counts": {"root_019": 105, "setup_proved": 102, "unknown": 3, "product_fault_proved": 0},
+  "remaining_applicability": "all 105 consumers remain unapplied; no propagation was attempted",
+  "next_step": "Obtain and independently review the minimum authenticated source closure, then rerun one representative after protected handback."
+}

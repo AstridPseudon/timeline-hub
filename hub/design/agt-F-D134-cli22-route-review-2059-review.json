@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.agent.f_d134_cli22_review.v1",
+  "task": "D134 CLI22 route review",
+  "cluster": "root-045",
+  "verdict": "FAIL_SOURCE_ASSESSMENT",
+  "source_assessment": "The exact authored edit commands-file CLI ingress is absent after approved G5 retirement. No current supported CLI invocation was proved to preserve the raw JSON command-list envelope and every root-045 predicate. Current commit --file and apply sheet are different ingress contracts; Python commit_many/queue_many are supported batch callers but are not CLI invocations and do not preserve the file-route admission/refusal semantics.",
+  "source_only": true,
+  "product_or_test_changes": [],
+  "unchanged_reproduction": "Not repeated or credited; shared return2055 recorded the common argparse boundary without a source delta.",
+  "g5_decision": "respected",
+  "missing_product_seam": "A genuine supported CLI batch/file caller that accepts the authored registered EditCommands JSON list, explicit original base pair, optional idempotency/dry-run flags, and durable exact retry/refusal behavior is missing. Restoring the retired commands-file spelling would conflict with approved G5; the seam owner is the current Agent CLI/G3-G5 owner.",
+  "existing_supported_replacements_proved": [],
+  "member_count": 22,
+  "all_members": "UNKNOWN at behavioral qualification; source map below establishes the same finite missing admission seam for each case."
+}

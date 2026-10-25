@@ -1,0 +1,32 @@
+{
+  "source": "PASS_SOURCE_ONLY",
+  "disposition": "SOURCE_ONLY_CORRECTION",
+  "http_previous_value_plumbing": "PASS_WHOLE_COMMAND_SOURCE_PROBE",
+  "original_final_parent_shape": "EXACT",
+  "authored_behavioral_requests_and_inputs": "BYTE_AND_AST_EXACT_TO_INHERITED",
+  "predicates": "ALL_99_AST_EXACT_TO_INHERITED",
+  "seven_unknown_cases": "BYTE_AND_AST_EXACT_TO_ORIGINAL_FIRST_RETURN_INHERITED",
+  "existing_status_correction": "PRESERVED_SOURCE_SUPPORTED",
+  "historical_rebased_retry": "UNCHANGED_SOURCE_ONLY",
+  "review2053_finding": "INCOMPLETE_APPLY_CHANGE_ONLY_PROBE; ROOT_PROJECTION_MISMATCH_IS_FIRST_FAILURE; ORIGINAL_SECOND_ABSENT_GUARD_IS_CORRECT_AFTER_CLOSURE_INSTALL",
+  "own3": {
+    "status": "NOTRUN",
+    "selectors": [
+      "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+      "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
+      "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]"
+    ],
+    "reason": "Awaiting protected corrected-source review and supported Runtime2053 central immutable-ab1e own-node route"
+  },
+  "http": {
+    "status": "NOTRUN",
+    "selector": "tests/sdk/test_timeline_selected_schema_runtime.py::test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart",
+    "reason": "Same prerequisite; no launch or retry"
+  },
+  "central_requests": 0,
+  "pytest_runs": 0,
+  "behavior_credit": false,
+  "full_suite": "NOT_REQUESTED_OR_AUTHORIZED",
+  "mypy": "KNOWN_BASELINE_ONLY; identical missing types-PyYAML in inherited and corrected source",
+  "next_owner": "Agent protected-source reviewer, then Runtime2053 operational route owner"
+}

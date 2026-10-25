@@ -1,0 +1,37 @@
+{
+  "schema": "timeline.agent.d134.managed105.predicate-map.v1",
+  "root": "root-019",
+  "classification": {"TEST_SETUP_OR_EXPECTATION_PROVED": 102, "UNKNOWN": 3},
+  "file_membership": {
+    "tests/editing_conformance/test_commit_runtime_occurrence_media.py": 48,
+    "tests/editing_conformance/test_commit_runtime_parent_media_swap.py": 24,
+    "tests/editing_conformance/test_commit_runtime_video_unplace.py": 4,
+    "tests/editing_conformance/test_recipe_m2_auto_placement.py": 6,
+    "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py": 4,
+    "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py": 6,
+    "tests/editing_conformance/test_recipe_m2_shot_pool.py": 7,
+    "tests/editing_conformance/test_recipe_occurrence_media.py": 3,
+    "tests/timeline/test_authoring_media.py": 3
+  },
+  "unknown_members_untouched": [
+    "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original",
+    "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]",
+    "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]"
+  ],
+  "shared_seam": {
+    "first_boundary": "astrid/sdk/timeline/commands.py:223 via doc.patch validation",
+    "guard": "replacement changes provider-managed edges",
+    "affected_setup": "whole-parent replacement removes/replaces occurrence closure edges",
+    "supported_commands_available": ["media.admit", "track.create", "clip.add-media", "occurrence.create", "occurrence.place-shared"],
+    "representative_wiring": "not retained: exact authored shot item map was unavailable"
+  },
+  "untouched_consumers": [
+    "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+    "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+    "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+    "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+    "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+    "tests/editing_conformance/test_recipe_occurrence_media.py",
+    "tests/timeline/test_authoring_media.py"
+  ]
+}

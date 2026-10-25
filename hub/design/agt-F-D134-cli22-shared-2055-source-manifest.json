@@ -1,0 +1,44 @@
+{
+  "schema": "timeline.agent.f_d134_cli22_source_manifest.v1",
+  "task": "D134 root-045 shared argparse SystemExit22",
+  "repo": "agent",
+  "assigned_file": "tests/editing_conformance/test_native_batch_ingress.py",
+  "base_instructions_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "observed_head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "observed_tree_status": "clean",
+  "base_to_observed_target_file": "unchanged",
+  "source_delta": false,
+  "files_read": {
+    "tests/editing_conformance/test_native_batch_ingress.py": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669",
+    "astrid/packs/timeline/cli.py": "48f19bb420447d8f60773f36ce4d3319e99c9b9d7ad41eb335031bdcfadf6ce0",
+    "astrid/packs/timeline/cli_native.py": "f53472cca88dcf4d00ac3936117eb332c9ce73aa1901d2b83e61cc6421da861c",
+    "astrid/packs/timeline/cli_parser.py": "8e6d163b965d1a93f42f46757188db5a844bb9eddc4cb5e01df6a15f5c2c9a64"
+  },
+  "current_registered_timeline_commands": [
+    "checkout", "commit", "edit", "assets", "find", "apply", "undo", "redo",
+    "check", "status", "discard", "duplicate", "rename", "restructure", "lines",
+    "words", "create", "list", "show", "script", "elements", "update-element",
+    "replace-parent-media", "archive", "recover", "history", "log", "diff",
+    "visualize", "lint", "inspect", "render"
+  ],
+  "retired_route_proof": {
+    "retirement_commit": "dba6e4e7a80f5d7b88b2f8718644ac72dcbe9de6",
+    "retired_route": "edit commands-file",
+    "current_registration": "absent",
+    "current_native_adapter": "configure_edit_options has no commands-file parser"
+  },
+  "supported_batch_like_routes": {
+    "commit": {
+      "source": "astrid/packs/timeline/cli.py:3596-3608",
+      "required_caller_plumbing": ["ref", "--file", "--message", "--idempotency-key"],
+      "input": "detached timeline JSON document",
+      "merge": "atomic"
+    },
+    "apply": {
+      "source": "astrid/packs/timeline/cli.py:3808-3815",
+      "required_caller_plumbing": ["ref", "sheet_file"],
+      "input": "edited cut sheet"
+    }
+  },
+  "decision": "No faithful test-only plumbing exists while preserving the authored commands-file ingress; product seam reported."
+}

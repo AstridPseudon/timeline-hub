@@ -1,0 +1,16 @@
+{
+  "task": "D136a-source-intake-2059",
+  "reviewed_donor": "c99214a227154df5fbaf681c2e0fc52c54500025",
+  "reviewed_tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+  "files": {
+    "astrid/sdk/timeline/validation.py": "74c14ade6dd564eadaf26f27ff6dc64d5168175f3320029768a3684754e5a0d8",
+    "astrid/sdk/timeline/_timing_evaluators.py": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268",
+    "tests/sdk/test_d136_fps_upstream_compat.py": "570dc2040dd7f8c1eca887c2a22827d5963e67599f3d69df834f854bde34dfc3"
+  },
+  "changed_paths": [
+    "astrid/sdk/timeline/validation.py",
+    "astrid/sdk/timeline/_timing_evaluators.py",
+    "tests/sdk/test_d136_fps_upstream_compat.py"
+  ],
+  "source_conservation": "each working-tree blob compares byte-for-byte equal to the donor blob"
+}

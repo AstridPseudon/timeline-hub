@@ -1,0 +1,32 @@
+{
+  "task": "D136a-source-intake-2059",
+  "repository": "Agent",
+  "base": {
+    "head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+    "integration": "96a6b2deea46eb33ba5184203a10e966cc5e9179"
+  },
+  "donor": {
+    "ref": "refs/remotes/hub/tl/rt-D136a-fps-return-2026",
+    "commit": "c99214a227154df5fbaf681c2e0fc52c54500025",
+    "tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+    "based_on": "a30e74e901a28b39c28facba3deb00d76f186e23"
+  },
+  "preimage": {
+    "astrid/sdk/timeline/validation.py": {
+      "current_sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c",
+      "a30e_sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c",
+      "match": true
+    },
+    "astrid/sdk/timeline/_timing_evaluators.py": {
+      "current_sha256": "a3f6247434b2bb5258ce044fa7e0391d9405ad36d33749e49365eb7c5db79749",
+      "a30e_sha256": "a3f6247434b2bb5258ce044fa7e0391d9405ad36d33749e49365eb7c5db79749",
+      "match": true
+    },
+    "tests/sdk/test_d136_fps_upstream_compat.py": {
+      "current": "absent",
+      "a30e": "absent",
+      "match": true
+    }
+  },
+  "result": "clean exact three-blob intake"
+}

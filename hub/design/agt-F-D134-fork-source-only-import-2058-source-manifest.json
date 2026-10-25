@@ -1,0 +1,34 @@
+{
+  "task": "D134",
+  "repo": "agent",
+  "base": {
+    "branch": "tl/integration",
+    "commit": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+    "tree": "6522ff87b592170069fc05d7cc9ee028a8983cdb",
+    "clean_before_intake": true
+  },
+  "target": {
+    "path": "tests/editing_conformance/test_occurrence_fork_source_baseline.py",
+    "current_preimage_blob": "dad27a538885ab45dd03242ee1670e00ff615dd3",
+    "donor_commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+    "donor_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "donor_parent_file_blob": "dad27a538885ab45dd03242ee1670e00ff615dd3",
+    "donor_file_blob": "512c806487049c1b86a9d47bcafeb3dcb0ade60c",
+    "result_sha256": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+    "full_file_byte_exact": true,
+    "ast_exact": true
+  },
+  "scope": {
+    "allowed_product_paths": [
+      "tests/editing_conformance/test_occurrence_fork_source_baseline.py"
+    ],
+    "worktree_diff_names": [
+      "tests/editing_conformance/test_occurrence_fork_source_baseline.py"
+    ],
+    "outside_files_unchanged": true,
+    "foreign_ancestry_imported": false,
+    "evidence_or_review_artifacts_imported": false
+  },
+  "review": "source-reviewed2042 already PASS; no new source review or body imported",
+  "behavioral_tests": "NOTRUN per D134 brief; central Runtime route is unsupported/blocked"
+}

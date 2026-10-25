@@ -1,0 +1,18 @@
+{
+  "format": "D73-source-intake-v1",
+  "donor_commit": "375c773449b1c6b477f10c1daff1d9f4704208a",
+  "donor_tree": "11e5430502ff313f298522b1781811abd11ecd50",
+  "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+  "files": {
+    "tools/p4-d73-pinned-launch.sh": {
+      "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+      "mode": "100755"
+    },
+    "tests/sdk/test_p4_d73_pinned_launcher.py": {
+      "sha256": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600",
+      "mode": "100644",
+      "ast_sha256": "3cfc0ba7d48ec5f2488d42e2603d2d3dee1a0f5660463290e31be13c960629f9"
+    }
+  },
+  "intake_policy": "exact two-file source import; no adaptation or foreign ancestry"
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "timeline.agent.d134.managed105.source-manifest.v1",
+  "worker": "agt-F-D134-managed105-shared-2055",
+  "agent_head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "agent_tree": "6522ff87b592170069fc05d7cc9ee028a8983cdb",
+  "worktree_status": "clean_after_reverting_unapplied_kernel",
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "status": "clean"
+  },
+  "root_019": {
+    "members": 105,
+    "setup_proved": 102,
+    "unknown": 3,
+    "retained_log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e"
+  },
+  "source_files": {
+    "tests/editing_conformance/test_commit_runtime_occurrence_media.py": "sha256:cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+    "tests/editing_conformance/test_commit_runtime_parent_media_swap.py": "sha256:e733226964bb5df253d3a3b4bb887e6fe573eda9090623c91725aa3f2c6f1ec9",
+    "tests/editing_conformance/test_commit_runtime_video_unplace.py": "sha256:fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2"
+  },
+  "result": "UNAPPLIED_SOURCE_DEPENDENCY",
+  "reason": "No authenticated source shot/item map exists for the empty semantic occurrence birth; no source or guard change was retained."
+}

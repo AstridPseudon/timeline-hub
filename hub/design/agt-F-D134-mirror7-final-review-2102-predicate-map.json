@@ -1,0 +1,26 @@
+{
+  "cohort": "D134 mirror7 source review",
+  "preserved": [
+    "real Runtime anchor commit",
+    "real change-echo commit for non-null echoes",
+    "restart and current recapture after each persisted write",
+    "stable word IDs and exact transcript pins",
+    "reference authority without text search",
+    "legacy unique lookup remains non-persisting",
+    "invalid reference finite refusal behavior",
+    "opaque/authored field preservation",
+    "history, undo, restore, reload, and no-write purposes in unchanged cases"
+  ],
+  "mirror_setup": {
+    "pre_alias": "equal complete clip dictionaries and equal IDs are asserted",
+    "alias_target": "parent.config.clips is assigned the current parent.clips list",
+    "post_alias": "both references are reacquired from the assigned list",
+    "mutations": "targeted mirrored app mutations use the reacquired references"
+  },
+  "excluded": [
+    "behavior execution",
+    "generic producer tests",
+    "mutable producer tests",
+    "production/runtime/source changes"
+  ]
+}

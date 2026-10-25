@@ -1,0 +1,18 @@
+{
+  "task": "D134",
+  "status": "PASS_SOURCE_INTAKE",
+  "operation": "fresh current tl/integration plus one protected donor file",
+  "base_commit": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "donor_commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+  "donor_blob": "512c806487049c1b86a9d47bcafeb3dcb0ade60c",
+  "preimage_blob": "dad27a538885ab45dd03242ee1670e00ff615dd3",
+  "source_sha256": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+  "changed_paths": [
+    "tests/editing_conformance/test_occurrence_fork_source_baseline.py"
+  ],
+  "unchanged_outside_target": true,
+  "no_product_evidence_or_review_files": true,
+  "no_commit_created_by_worker": true,
+  "functional_status": "NOTRUN",
+  "functional_reason": "D134 explicitly blocks behavioral tests; exact source intake does not clear the unsupported central Runtime route"
+}

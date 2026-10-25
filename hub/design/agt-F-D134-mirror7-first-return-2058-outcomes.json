@@ -1,0 +1,15 @@
+{
+  "source": "PASS",
+  "live_exact7": "BLOCKED_UNVERIFIED",
+  "disposition": "SOURCE_CORRECTED_LIVE_QUALIFICATION_BLOCKED",
+  "runtime_required": "ab1e4f6141987706132916e2da16477f5a019464",
+  "runtime_used_for_live": null,
+  "exact7_pass_count": null,
+  "reason": "No admissible central exact-selector route is configured for the required immutable Runtime; the generic targeted route uses mutable /home/user/work/runtime.",
+  "forbidden_fallbacks_not_used": [
+    "mutable Runtime",
+    "local unqualified integration run",
+    "overlay or acquisition",
+    "near-match named suite"
+  ]
+}

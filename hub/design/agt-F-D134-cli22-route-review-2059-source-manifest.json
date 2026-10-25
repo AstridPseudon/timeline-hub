@@ -1,0 +1,64 @@
+{
+  "schema": "timeline.agent.f_d134_cli22_source_manifest.v2",
+  "task": "D134 CLI22 source return2055",
+  "repo": "agent",
+  "observed_head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "worktree_status": "clean",
+  "base_instructions_head": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "cluster_file": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+    "sha256": "789f644fa3d0ab3aaf009073657c4437505024b3898162e1cbb5d304c6b18e7e",
+    "member_count": 22
+  },
+  "g5_retirement": {
+    "commit": "dba6e4e7a80f5d7b88b2f8718644ac72dcbe9de6",
+    "subject": "feat(timeline): refresh G5 current-only retirement delta",
+    "removed": ["edit commands-file parser", "commit_many branch in CLI native adapter", "native edit parser registration"],
+    "current_registration": "absent"
+  },
+  "control_docs": [
+    {
+      "path": "/home/user/work/runtime/contract/commit-v2.md",
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+      "sections_used": ["1", "2", "3", "4"]
+    }
+  ],
+  "files_read": {
+    "tests/editing_conformance/test_native_batch_ingress.py": {
+      "sha256": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669",
+      "anchors": ["28-118 fixture/transport", "121-151 command helper and retired CLI invocation", "154-197 batch/publication/inverse", "199-258 lost ACK/restart peers", "276-309 original pair after peer", "311-345 captured retry", "347-375 refusal/no-write", "450-460 preview"]
+    },
+    "astrid/packs/timeline/cli.py": {
+      "sha256": "48f19bb420447d8f60773f36ce4d3319e99c9b9d7ad41eb335031bdcfadf6ce0",
+      "anchors": ["2239-2243 commit handler", "3510-3529 apply", "3596-3608 commit parser", "3624-3650 edit parser", "3808-3815 apply parser", "3831-3860 command inventory", "3958-3972 parser registration"]
+    },
+    "astrid/packs/timeline/cli_native.py": {
+      "sha256": "f53472cca88dcf4d00ac3936117eb332c9ce73aa1901d2b83e61cc6421da861c",
+      "anchors": ["55-85 detached document loader", "109-161 document diff/commit route", "176-323 ordinary move/trim", "382-445 commit/sheet/inverse adapter", "446-464 edit/apply options"]
+    },
+    "astrid/packs/timeline/cli_parser.py": {
+      "sha256": "8e6d163b965d1a93f42f46757188db5a844bb9eddc4cb5e01df6a15f5c2c9a64",
+      "anchors": ["39-65 loose positional/error handling and project resolution"]
+    },
+    "astrid/sdk/timeline/sync.py": {
+      "sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254",
+      "anchors": ["302-369 queue/commit_many", "490-601 flush and exact flight retry"]
+    },
+    "astrid/sdk/timeline/commit_session.py": {
+      "sha256": "69b3468956cadc9549a495ac8a7aae6cf98ced0db0bcb0b33e63175addbd3503",
+      "anchors": ["12-20 emitter import", "87-127 free-edit to emitter/steps", "163-254 commit, conservative reads, conflict rerun"]
+    },
+    "astrid/sdk/timeline/emitter.py": {
+      "sha256": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a",
+      "anchors": ["245-304 bundle-to-doc.patch emitter and refusal boundaries"]
+    },
+    "astrid/sdk/timeline_sheet.py": {
+      "sha256": "092d87302a53db46677ea6a139e970af9828acd7e6273695d9b27a5237ed44fe",
+      "anchors": ["587-606 NativeSheet contract", "674-699 retained export", "720-848 preview/reconstructed commands", "849-881 atomic commit_many sheet route"]
+    }
+  },
+  "current_cli_commands": ["checkout", "commit", "edit", "assets", "find", "apply", "undo", "redo", "check", "status", "discard", "duplicate", "rename", "restructure", "lines", "words", "create", "list", "show", "script", "elements", "update-element", "replace-parent-media", "archive", "recover", "history", "log", "diff", "visualize", "lint", "inspect", "render"],
+  "source_delta": false,
+  "tests_changed": [],
+  "writes": []
+}

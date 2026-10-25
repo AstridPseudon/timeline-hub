@@ -1,0 +1,46 @@
+{
+  "schema": "timeline.agent.f_d134_cli22_predicate_map.v1",
+  "cluster": "root-045",
+  "membership_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+  "member_count": 22,
+  "member_ids": [
+    "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-False]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-True]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_captured_file_retry_refuses_boolean_to_number_claim[expect]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_captured_file_retry_refuses_boolean_to_number_claim[reads]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-False]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-True]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-False]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-True]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-False]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-True]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-False]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-True]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_preview_keeps_batch_for_one_real_publication",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[claims]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[empty]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[envelope]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[late-invalid]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[media]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[disjoint-False]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[disjoint-True]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[relevant-False]",
+    "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[relevant-True]"
+  ],
+  "original_predicates_and_inputs": {
+    "valid_file_batches": "JSON list of authored EditCommands; captured variants are execute(...) output",
+    "base": "explicit --base-revision-id and --base-publication-id passed to the retired route",
+    "idempotency": "optional --idempotency-key values batch-A, boolean, numeric, claims",
+    "preview": "--dry-run expects preview status and null receipt",
+    "refusals": "claims, late-invalid, media, empty, envelope; no Runtime call and file unchanged",
+    "concurrency": "disjoint/relevant/ABA/delete-recreate peer histories with lost ACK and restart",
+    "reload_inverse": "accepted publication reload, guarded inverse, redo, and exact history grouping",
+    "media": "occurrence.add-media remains an authored late-invalid command in the refusal case"
+  },
+  "before_after": {
+    "before": "target file unchanged at current source; all predicates authored as above",
+    "after": "no source delta; all predicates and authored inputs remain byte-for-byte unchanged",
+    "admission": "retired route exits SystemExit(2) before parsed.handler; Runtime calls remain empty",
+    "classification": "UNKNOWN; no product fault proved and no setup migration applied"
+  }
+}

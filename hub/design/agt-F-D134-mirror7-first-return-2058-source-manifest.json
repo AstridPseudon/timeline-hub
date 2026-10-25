@@ -1,0 +1,24 @@
+{
+  "task": "D134 mirror7 first return",
+  "base_commit": "ab05311ac730b2e53ce2fd71bb4ef176db78bac8",
+  "base_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "candidate_head_tree": "067c6e69cc7a3edddc94f183e626b7fee7caabe8",
+  "uncommitted_source_changes": true,
+  "changed_files": [
+    {
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "sha256": "5838bd959d4d53a400f87809d4551bf769f23c46202c9b936411f466f4cda8e8"
+    },
+    {
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "sha256": "7f644c38f179fc37868b87a588da833947d16b1896210cfaf0fa016941fe8963"
+    }
+  ],
+  "scope_check": "Only the two assigned test files are modified.",
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "status": "clean"
+  }
+}

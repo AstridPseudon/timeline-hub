@@ -1,0 +1,31 @@
+{
+  "verdict": "PASS_SOURCE_CONSERVATION",
+  "agent_root": "/home/user/work/wt/agt-F-D134-selected-http-return-sol-2058",
+  "head": "150597e860d386b6d504df63c1a99e7896c33fb7",
+  "first_return": "4073fb0f84a9d0afbcba61b9406748a09d9c3c62",
+  "original_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "file": "tests/sdk/test_timeline_selected_schema_runtime.py",
+  "source_sha256": {
+    "original": "6d7ba7623cb59931d76d3eeefc564200f4a0336199cc64331fea0fc976939b9a",
+    "first_return": "d48c63f0dd8799f058fb8aa1c9abf0729a1d938465b793788fc0936f06d9fca4",
+    "inherited": "b4ddc4b539884e8720199c188aad33240496ab606160a241ae9bd253c69a8b18",
+    "current": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86"
+  },
+  "only_changed_path": [
+    "tests/sdk/test_timeline_selected_schema_runtime.py"
+  ],
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "head": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+    "clean": true,
+    "file_sha256": {
+      "runtime_protocol/timeline_commit_baseline.py": "36076f4a0ffa26e6544ec9704000a22a6bd46370cacb6577ea9f5dadac346e31",
+      "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+      "runtime_protocol/service.py": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+      "tests/test_timeline_commit_acceptance.py": "210363497fcdcac96bd734080a69de1f642aeaeca0e944ad133e67012eadcc3a"
+    }
+  },
+  "python": "Python 3.11.17"
+}

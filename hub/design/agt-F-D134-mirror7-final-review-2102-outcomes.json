@@ -1,0 +1,10 @@
+{
+  "source_gate": "PASS",
+  "ast_pycompile": "PASS",
+  "ruff": "PASS",
+  "diff_check": "PASS",
+  "mypy": "BLOCKED_KNOWN_ENVIRONMENT_BASELINE",
+  "live_exact7": "NOTRUN_BY_INSTRUCTION",
+  "full_suite": "NOTRUN_BY_INSTRUCTION",
+  "runtime_route": "not exercised"
+}

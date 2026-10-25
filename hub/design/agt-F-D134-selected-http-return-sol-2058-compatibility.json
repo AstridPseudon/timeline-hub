@@ -1,0 +1,62 @@
+{
+  "verdict": "PASS_SOURCE_ONLY",
+  "wire_versions": {
+    "api_version": 1,
+    "schema_version": 1,
+    "interpretation": "Current C0 wire versions; neither value proves an authentic historical receipt"
+  },
+  "fresh_cases": [
+    {
+      "node": "test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+      "key": "rebase-after-v2",
+      "classification": "First submission of original case.request body after intervening track edit",
+      "expected_status": "merged"
+    },
+    {
+      "node": "test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
+      "key": "authority-retry",
+      "classification": "First submission of original case.request body after authority-peer; later exact retry preserves this newly accepted envelope",
+      "expected_status": "merged"
+    },
+    {
+      "node": "test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]",
+      "key": "authority-retry",
+      "classification": "First submission of original case.request body after authority-peer; later exact retry preserves this newly accepted envelope",
+      "expected_status": "merged"
+    }
+  ],
+  "normalization_path": [
+    "retained_pack.request creates original api_version/project/timeline/base pair/commands; no authored label/steps/merge/reads controls added",
+    "astrid/sdk/timeline/_commit_patch.py:42 normalize_steps defaults omitted label and steps internally",
+    "astrid/sdk/timeline/_commit_patch.py:277 CommitPatch applies normal current request semantics",
+    "astrid/sdk/timeline/_commit_patch.py:695 carries authoritative plan steps/label/merge_mode",
+    "astrid/sdk/timeline/_commit_preview.py:7 prepared_records preserves those facts",
+    "astrid/sdk/timeline/commit.py:1423 passes prepared_records to Runtime acceptance",
+    "runtime_protocol/timeline_commit_store.py:81 _is_v2_request considers authoritative records.steps",
+    "runtime_protocol/timeline_commit_store.py:1879 uses merged for a modern stale-base landing"
+  ],
+  "historical_retry": {
+    "classification": "Existing exact idempotency key and request hash with authenticated durable receipt, not merely ABI-1 input",
+    "status": "Historical rebased envelope remains unchanged",
+    "source_path": [
+      "runtime_protocol/timeline_commit_execution.py:373 coordinator performs authenticated durable lookup before provider execution",
+      "runtime_protocol/timeline_commit_store.py:599 _lookup verifies hash and accepted history then returns stored envelope",
+      "runtime_protocol/timeline_commit_store.py:735 verification supports historical rebased status",
+      "tests/test_timeline_commit_acceptance.py:287 test_legacy_rebased_receipt_and_history_keep_v2_metadata_absent_after_restart retains exact rebased and metadata-absence expectations"
+    ],
+    "selected_archive_control": "test_pre_enforcement_alias_history_reopens_with_current_authority unchanged byte/AST exactly, including full historical envelope equality and retained bytes",
+    "live_validation": "NOTRUN; source inspection of existing historical control only"
+  },
+  "http_setup": {
+    "only_new_delta": "Root previous-value source is physical revision_closure parent_revision.payload instead of the authoring bundle parent projection",
+    "root_guard_matches_physical_occurrences": true,
+    "second_guard": {"state": "absent"},
+    "second_guard_reason": "Closure.install synchronizes removal of config.clips by clearing top-level clips during the root config assignment",
+    "final_parent": {"config": {"tracks": []}, "registry": {}, "clips": [], "occurrences": []},
+    "config_clips": "absent",
+    "purpose": "Registered commitTimeline/provider bootstrap, exact original parent; HTTP/capture/pin/receipt/history/lost-ACK/restart/refusal/undo body unchanged",
+    "review2053_correction": "apply_change alone omits Closure.install effects and overlooks the earlier root projection mismatch. Making the second guard present is wrong on the full engine path."
+  },
+  "contract_or_product_change": false,
+  "behavior_credit": false
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "timeline.agent.f_d134_cli22_outcomes.v1",
+  "cluster": "root-045",
+  "members": 22,
+  "source_delta": false,
+  "tests_changed": [],
+  "product_fault_proved": 0,
+  "setup_or_expectation_proved": 0,
+  "unknown": 22,
+  "source_control": {
+    "node": "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-False]",
+    "status": "failed",
+    "failure": "SystemExit(2) from argparse before handler",
+    "runtime_calls": 0
+  },
+  "remaining_nodes": "not run; same unmodified retired ingress and no meaningful source delta",
+  "status": "blocked_on_product_seam",
+  "owner": "Agent G5/current timeline CLI owner",
+  "recommended_next_step": "The owner must either restore and qualify a real commands-file batch CLI ingress, or explicitly retire/re-specify this behavioral family. Do not synthesize a detached document or replace the parser route in this task."
+}
