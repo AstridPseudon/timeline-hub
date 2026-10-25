@@ -168,10 +168,10 @@ def test_every_asset_read_mutation_conflicts_or_refuses(editing, mirror, mutatio
         commit(editing, body(editing, [patch(editing, prefix, original)]), "restore")
         request = inverse(editing, result)
     before = native._native_rows(editing.service)
-    with pytest.raises(RuntimeErrorBase) as error:
+    with pytest.raises(RuntimeErrorBase) as guarded_error:
         commit(editing, request, "guard")
     record_property("protection", "history-conflict")
-    record_property("reason", str(error.value))
+    record_property("reason", str(guarded_error.value))
     assert native._native_rows(editing.service) == before
 
 
