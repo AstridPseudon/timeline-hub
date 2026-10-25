@@ -1,0 +1,9 @@
+name=agt-D87-live-frontends-return-0148
+repo=agent
+base=remotes/hub/timeline/agent/tl/agt-F-native-frontends-2355
+base_sha=95fe9d2e90
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-D87-live-frontends-return-0148
+started=2026-10-25T01:55:08Z

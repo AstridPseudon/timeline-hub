@@ -1,0 +1,400 @@
+index 0593bef363cf2aaf0ed7ba120d444533bafb422c..653f4e1010e236c09bb14069bf4be1dd5e4a7b98
+--- a/tests/editing_conformance/test_commit_runtime_native_checkout.py
++++ b/tests/editing_conformance/test_commit_runtime_native_checkout.py
+@@ -224,29 +224,10 @@
+     captured = json.loads(path.read_bytes())
+     commands_file = tmp_path / 'params.json'
+     commands_file.write_text(json.dumps(captured['pending']))
+-    # G5 retired ``edit commands-file``.  Keep the exact captured command input,
+-    # then use the supported detached-document commit CLI for the same Runtime
+-    # commitTimeline ingress and provenance.
+-    from astrid.packs.timeline.cli import build_parser
+-    from astrid.sdk.timeline.commands import execute
+-
+-    original = client.timelines.open_bundle(
+-        fixture.project_id, fixture.timeline_id, revision_id=captured['base']['revision_id'])
+-    plan = execute(original.data['bundle'], captured['pending'])
+-    detached = commands_file.with_name(commands_file.name + '.detached.json')
+-    candidate = Checkout(plan.bundle).document()
+-    candidate['base_parent'] = {**candidate['base_parent'], **captured['base']}
+-    detached.write_text(json.dumps(candidate))
+-    parsed = build_parser(client).parse_args([
+-        'commit', fixture.timeline_id, '--project', fixture.project_id,
+-        '--file', str(detached), '--message', 'Timeline edit',
+-        '--idempotency-key', 'params-cli', '--json',
+-    ])
+-    code = parsed.handler(parsed)
+-    output = capsys.readouterr()
+-    accepted = json.loads(output.out)
+-    assert code == 0 and accepted['ok'] and accepted['data']['commands'] == captured['pending'], (
+-        code, accepted, output.err)
++    accepted = m1.cli(client, fixture, capsys, 'edit', 'commands-file', fixture.timeline_id,
++                      str(commands_file), '--base-revision-id', captured['base']['revision_id'],
++                      '--base-publication-id', captured['base']['publication_id'])
++    assert accepted['data']['commands'] == captured['pending']
+     # Reopen on a separate empty outbox: an unchanged public setter is still an
+     # authored write, so it prevents undoing the earlier publication.
+     other = Checkout.attach(TimelineSession.open(fixture.project_id, fixture.timeline_id,
+
+exec
+/bin/bash -lc "git diff -- tests/editing_conformance/test_commit_runtime_native_checkout.py tests/editing_conformance/test_commit_runtime_native_frontends.py && printf '%s\\n' '--- diff check ---' && git diff --check && printf '%s\\n' '--- status ---' && git status --short" in /home/user/work/wt/agt-D87-live-frontends-return-0148
+ succeeded in 316ms:
+diff --git a/tests/editing_conformance/test_commit_runtime_native_checkout.py b/tests/editing_conformance/test_commit_runtime_native_checkout.py
+index 0593bef363..653f4e1010 100644
+--- a/tests/editing_conformance/test_commit_runtime_native_checkout.py
++++ b/tests/editing_conformance/test_commit_runtime_native_checkout.py
+@@ -224,29 +224,10 @@ def test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_hist
+     captured = json.loads(path.read_bytes())
+     commands_file = tmp_path / 'params.json'
+     commands_file.write_text(json.dumps(captured['pending']))
+-    # G5 retired ``edit commands-file``.  Keep the exact captured command input,
+-    # then use the supported detached-document commit CLI for the same Runtime
+-    # commitTimeline ingress and provenance.
+-    from astrid.packs.timeline.cli import build_parser
+-    from astrid.sdk.timeline.commands import execute
+-
+-    original = client.timelines.open_bundle(
+-        fixture.project_id, fixture.timeline_id, revision_id=captured['base']['revision_id'])
+-    plan = execute(original.data['bundle'], captured['pending'])
+-    detached = commands_file.with_name(commands_file.name + '.detached.json')
+-    candidate = Checkout(plan.bundle).document()
+-    candidate['base_parent'] = {**candidate['base_parent'], **captured['base']}
+-    detached.write_text(json.dumps(candidate))
+-    parsed = build_parser(client).parse_args([
+-        'commit', fixture.timeline_id, '--project', fixture.project_id,
+-        '--file', str(detached), '--message', 'Timeline edit',
+-        '--idempotency-key', 'params-cli', '--json',
+-    ])
+-    code = parsed.handler(parsed)
+-    output = capsys.readouterr()
+-    accepted = json.loads(output.out)
+-    assert code == 0 and accepted['ok'] and accepted['data']['commands'] == captured['pending'], (
+-        code, accepted, output.err)
++    accepted = m1.cli(client, fixture, capsys, 'edit', 'commands-file', fixture.timeline_id,
++                      str(commands_file), '--base-revision-id', captured['base']['revision_id'],
++                      '--base-publication-id', captured['base']['publication_id'])
++    assert accepted['data']['commands'] == captured['pending']
+     # Reopen on a separate empty outbox: an unchanged public setter is still an
+     # authored write, so it prevents undoing the earlier publication.
+     other = Checkout.attach(TimelineSession.open(fixture.project_id, fixture.timeline_id,
+--- diff check ---
+--- status ---
+ M tests/editing_conformance/test_commit_runtime_native_checkout.py
+
+codex
+The diff is now one bounded restoration: it returns only the parameter case to the exact original `edit commands-file` ingress and preserves its original assertions and undo/history guards. The provider-based `film` and `gate3_film` bootstrap, all six named live test bodies, and the frontends file are untouched. I’m running the required parse/compile, baseline-vs-candidate static checks, and scope/hash audits now.
+exec
+/bin/bash -lc "set -o pipefail
+AGENT_PY=/home/user/work/venv-agent/bin/python
+CHECKOUT=tests/editing_conformance/test_commit_runtime_native_checkout.py
+FRONTENDS=tests/editing_conformance/test_commit_runtime_native_frontends.py
+printf '%s\\n' '--- in-memory AST/compile and conservation audit ---'
+"'$AGENT_PY - <<'"'PY'
+import ast
+import hashlib
+import subprocess
+from pathlib import Path
+
+paths = [
+    Path('tests/editing_conformance/test_commit_runtime_native_checkout.py'),
+    Path('tests/editing_conformance/test_commit_runtime_native_frontends.py'),
+]
+for path in paths:
+    source = path.read_text()
+    ast.parse(source, filename=str(path))
+    compile(source, str(path), 'exec')
+    baseline = subprocess.check_output(['git', 'show', f'HEAD:{path}'])
+    ast.parse(baseline, filename=f'HEAD:{path}')
+    compile(baseline, f'HEAD:{path}', 'exec')
+    print(f'{path}: candidate+HEAD AST/compile PASS')
+    print(f'  candidate sha256={hashlib.sha256(source.encode()).hexdigest()}')
+    print(f'  HEAD      sha256={hashlib.sha256(baseline).hexdigest()}')
+
+checkout = paths[0]
+current_tree = ast.parse(checkout.read_text())
+parent = subprocess.check_output([
+    'git', 'show', '95fe9d2e90"'^:tests/editing_conformance/test_commit_runtime_native_checkout.py'"'
+])
+parent_tree = ast.parse(parent)
+def get_function(tree, name):
+    return next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == name)
+name = 'test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history'
+current_fn = get_function(current_tree, name)
+parent_fn = get_function(parent_tree, name)
+current_lines = checkout.read_text().splitlines(keepends=True)
+parent_lines = parent.decode().splitlines(keepends=True)
+current_src = ''.join(current_lines[current_fn.lineno - 1:current_fn.end_lineno])
+parent_src = ''.join(parent_lines[parent_fn.lineno - 1:parent_fn.end_lineno])
+assert current_src == parent_src, 'parameter function is not exact parent source'
+print(f'{name}: exact parent source PASS')
+
+expected = {
+    'test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo',
+    'test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history',
+    'test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable',
+}
+actual = {node.name for node in current_tree.body if isinstance(node, ast.FunctionDef)}
+assert expected <= actual
+front_tree = ast.parse(paths[1].read_text())
+expected_front = {
+    'test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards',
+    'test_checkout_first_refuses_sheet_suffix_keeps_draft_and_pending_intent',
+}
+actual_front = {node.name for node in front_tree.body if isinstance(node, ast.FunctionDef)}
+assert expected_front <= actual_front
+print('named checkout/frontends definitions retained PASS')
+PY
+printf '%s\\n' '--- scoped Ruff candidate ---'
+PYTHONDONTWRITEBYTECODE=1 "'$AGENT_PY -m ruff check --no-cache "$CHECKOUT" "$FRONTENDS"
+printf '"'%s\\n' '--- scoped Ruff HEAD baseline via stdin ---'
+git show \"HEAD:"'$CHECKOUT" | PYTHONDONTWRITEBYTECODE=1 $AGENT_PY -m ruff check --no-cache --stdin-filename "$CHECKOUT" -
+git show "HEAD:$FRONTENDS" | PYTHONDONTWRITEBYTECODE=1 $AGENT_PY -m ruff check --no-cache --stdin-filename "$FRONTENDS" -
+printf '"'%s\\n' '--- scoped mypy candidate ---'
+PYTHONDONTWRITEBYTECODE=1 "'$AGENT_PY -m mypy --cache-dir /tmp/w-87285b364b/d87-mypy --follow-imports=skip --ignore-missing-imports "$CHECKOUT" "$FRONTENDS"
+printf '"'%s\\n' '--- diff check ---'
+git diff --check
+printf '%s\\n' '--- scope ---'
+git diff --name-only
+" in /home/user/work/wt/agt-D87-live-frontends-return-0148
+ succeeded in 1712ms:
+--- in-memory AST/compile and conservation audit ---
+tests/editing_conformance/test_commit_runtime_native_checkout.py: candidate+HEAD AST/compile PASS
+  candidate sha256=cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461
+  HEAD      sha256=105838a31e0a29f9ca969e3f0bdffcfeec117529fe384e0643d934533241bb73
+tests/editing_conformance/test_commit_runtime_native_frontends.py: candidate+HEAD AST/compile PASS
+  candidate sha256=06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2
+  HEAD      sha256=06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2
+test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history: exact parent source PASS
+named checkout/frontends definitions retained PASS
+--- scoped Ruff candidate ---
+All checks passed!
+--- scoped Ruff HEAD baseline via stdin ---
+All checks passed!
+All checks passed!
+--- scoped mypy candidate ---
+Success: no issues found in 2 source files
+--- diff check ---
+--- scope ---
+tests/editing_conformance/test_commit_runtime_native_checkout.py
+
+codex
+Static checks are clean so far: both candidate and `HEAD` compile; Ruff passes for both; candidate mypy passes; `git diff --check` passes; and the frontends file is byte-identical. The restored parameter function is byte-for-byte identical to its real original parent source. I’m doing the final live-selector conservation audit and an independent baseline mypy run from scratch copies kept only in the worker temp directory.
+exec
+/bin/bash -lc 'set -o pipefail
+ORCH_TMP=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir
+mkdir -p "$ORCH_TMP/d87-baseline"
+git show HEAD:tests/editing_conformance/test_commit_runtime_native_checkout.py > "$ORCH_TMP/d87-baseline/test_commit_runtime_native_checkout.py"
+git show HEAD:tests/editing_conformance/test_commit_runtime_native_frontends.py > "$ORCH_TMP/d87-baseline/test_commit_runtime_native_frontends.py"
+printf '"'%s\\n' '--- live selector AST conservation ---'
+/home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+
+files = {
+    'tests/editing_conformance/test_commit_runtime_native_checkout.py': {
+        'test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo',
+        'test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable',
+    },
+    'tests/editing_conformance/test_commit_runtime_native_frontends.py': {
+        'test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards',
+        'test_checkout_first_refuses_sheet_suffix_keeps_draft_and_pending_intent',
+    },
+}
+def function_sources(source, names):
+    tree = ast.parse(source)
+    lines = source.splitlines(keepends=True)
+    return {
+        node.name: ''.join(lines[node.lineno - 1:node.end_lineno])
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name in names
+    }
+for name, expected in files.items():
+    current = Path(name).read_text()
+    baseline = subprocess.check_output(['git', 'show', f'HEAD:{name}']).decode()
+    assert function_sources(current, expected) == function_sources(baseline, expected), name
+    print(f'{name}: live function source exact vs HEAD ({len(expected)} definitions)')
+PY
+printf '%s\\n' '--- scoped mypy HEAD baseline from worker scratch copies ---'
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m mypy --cache-dir \""'$ORCH_TMP/d87-mypy-baseline" --follow-imports=skip --ignore-missing-imports "$ORCH_TMP/d87-baseline/test_commit_runtime_native_checkout.py" "$ORCH_TMP/d87-baseline/test_commit_runtime_native_frontends.py"
+printf '"'%s\\n' '--- scoped mypy candidate from worker scratch cache ---'
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m mypy --cache-dir \""'$ORCH_TMP/d87-mypy-candidate" --follow-imports=skip --ignore-missing-imports tests/editing_conformance/test_commit_runtime_native_checkout.py tests/editing_conformance/test_commit_runtime_native_frontends.py
+printf '"'%s\\n' '--- final status and diff stat ---'
+git diff --check
+git diff --stat
+git status --short" in /home/user/work/wt/agt-D87-live-frontends-return-0148
+ succeeded in 1830ms:
+mkdir: cannot create directory ‘/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir’: Not a directory
+/bin/bash: line 4: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir/d87-baseline/test_commit_runtime_native_checkout.py: Not a directory
+/bin/bash: line 5: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir/d87-baseline/test_commit_runtime_native_frontends.py: Not a directory
+--- live selector AST conservation ---
+tests/editing_conformance/test_commit_runtime_native_checkout.py: live function source exact vs HEAD (2 definitions)
+tests/editing_conformance/test_commit_runtime_native_frontends.py: live function source exact vs HEAD (2 definitions)
+--- scoped mypy HEAD baseline from worker scratch copies ---
+mypy: can't read file '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir/d87-baseline/test_commit_runtime_native_checkout.py': Not a directory
+--- scoped mypy candidate from worker scratch cache ---
+Success: no issues found in 2 source files
+--- final status and diff stat ---
+ .../test_commit_runtime_native_checkout.py         | 27 ++++------------------
+ 1 file changed, 4 insertions(+), 23 deletions(-)
+ M tests/editing_conformance/test_commit_runtime_native_checkout.py
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- worker temp path ---'; ls -ld /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir 2>&1; printf '%s\\n' '--- worker dir entries ---'; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148 -maxdepth 2 -printf '%y %p\\n' | sort | head -100; printf '%s\\n' '--- environment temp ---'; printf 'TMPDIR=%s\\n' \""'${TMPDIR-}"' in /home/user/work/wt/agt-D87-live-frontends-return-0148
+ succeeded in 0ms:
+--- worker temp path ---
+drwxr-xr-x 2 root root 4096 Oct 25 01:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148
+-rw-r--r-- 1 root root   18 Oct 25 01:55 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir
+--- worker dir entries ---
+d /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148
+f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/brief.md
+f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/log.txt
+f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/meta
+f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/running
+f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir
+f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/wrapper.log
+--- environment temp ---
+TMPDIR=/tmp/w-87285b364b
+
+exec
+/bin/bash -lc "sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/tmpdir; printf '%s\\n' '--- harness temp ---'; ls -ld /tmp/w-87285b364b" in /home/user/work/wt/agt-D87-live-frontends-return-0148
+ succeeded in 0ms:
+/tmp/w-87285b364b
+--- harness temp ---
+drwxr-xr-x 8 root root 4096 Oct 25 01:56 /tmp/w-87285b364b
+
+codex
+The live-source audit passed, but the harness’s `tmpdir` marker is a file pointing to the actual private scratch directory `/tmp/w-87285b364b`; my first baseline-copy command targeted the marker itself and therefore did not run. No worktree files were affected. I’m rerunning that baseline check at the resolved private path, then I’ll record the commit message and completion marker.
+exec
+/bin/bash -lc 'set -o pipefail
+ORCH_TMP=/tmp/w-87285b364b
+git show HEAD:tests/editing_conformance/test_commit_runtime_native_checkout.py > "$ORCH_TMP/d87-baseline-checkout.py"
+git show HEAD:tests/editing_conformance/test_commit_runtime_native_frontends.py > "$ORCH_TMP/d87-baseline-frontends.py"
+printf '"'%s\\n' '--- scoped mypy HEAD baseline from private scratch copies ---'
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m mypy --cache-dir \""'$ORCH_TMP/d87-mypy-baseline" --follow-imports=skip --ignore-missing-imports "$ORCH_TMP/d87-baseline-checkout.py" "$ORCH_TMP/d87-baseline-frontends.py"
+printf '"'%s\\n' '--- scoped mypy candidate from private scratch cache ---'
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m mypy --cache-dir \""'$ORCH_TMP/d87-mypy-candidate-final" --follow-imports=skip --ignore-missing-imports tests/editing_conformance/test_commit_runtime_native_checkout.py tests/editing_conformance/test_commit_runtime_native_frontends.py
+printf '"'%s\\n' '--- final diff checks ---'
+git diff --check
+git diff --name-only
+git status --short" in /home/user/work/wt/agt-D87-live-frontends-return-0148
+ succeeded in 3332ms:
+--- scoped mypy HEAD baseline from private scratch copies ---
+Success: no issues found in 2 source files
+--- scoped mypy candidate from private scratch cache ---
+Success: no issues found in 2 source files
+--- final diff checks ---
+tests/editing_conformance/test_commit_runtime_native_checkout.py
+ M tests/editing_conformance/test_commit_runtime_native_checkout.py
+
+codex
+Both baseline and candidate scoped mypy now pass (`2 source files` each), and the final diff remains limited to the one permitted checkout test file. I’m recording the conventional commit message and the required `DONE` marker; no runtime, pytest, collection, service, browser, or build execution has been performed.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cd23b20ebfa9308f843a1733a324c5003afa0ecb
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): restore native parameter CLI ingress coverage
++
++Restore the separately retired parameter checkout case to its original
++commands-file ingress while retaining the current provider-backed fixtures and
++the six live frontend assertions.
+diff --git a/tests/editing_conformance/test_commit_runtime_native_checkout.py b/tests/editing_conformance/test_commit_runtime_native_checkout.py
+index 0593bef363cf2aaf0ed7ba120d444533bafb422c..653f4e1010e236c09bb14069bf4be1dd5e4a7b98
+--- a/tests/editing_conformance/test_commit_runtime_native_checkout.py
++++ b/tests/editing_conformance/test_commit_runtime_native_checkout.py
+@@ -224,29 +224,10 @@
+     captured = json.loads(path.read_bytes())
+     commands_file = tmp_path / 'params.json'
+     commands_file.write_text(json.dumps(captured['pending']))
+-    # G5 retired ``edit commands-file``.  Keep the exact captured command input,
+-    # then use the supported detached-document commit CLI for the same Runtime
+-    # commitTimeline ingress and provenance.
+-    from astrid.packs.timeline.cli import build_parser
+-    from astrid.sdk.timeline.commands import execute
+-
+-    original = client.timelines.open_bundle(
+-        fixture.project_id, fixture.timeline_id, revision_id=captured['base']['revision_id'])
+-    plan = execute(original.data['bundle'], captured['pending'])
+-    detached = commands_file.with_name(commands_file.name + '.detached.json')
+-    candidate = Checkout(plan.bundle).document()
+-    candidate['base_parent'] = {**candidate['base_parent'], **captured['base']}
+-    detached.write_text(json.dumps(candidate))
+-    parsed = build_parser(client).parse_args([
+-        'commit', fixture.timeline_id, '--project', fixture.project_id,
+-        '--file', str(detached), '--message', 'Timeline edit',
+-        '--idempotency-key', 'params-cli', '--json',
+-    ])
+-    code = parsed.handler(parsed)
+-    output = capsys.readouterr()
+-    accepted = json.loads(output.out)
+-    assert code == 0 and accepted['ok'] and accepted['data']['commands'] == captured['pending'], (
+-        code, accepted, output.err)
++    accepted = m1.cli(client, fixture, capsys, 'edit', 'commands-file', fixture.timeline_id,
++                      str(commands_file), '--base-revision-id', captured['base']['revision_id'],
++                      '--base-publication-id', captured['base']['publication_id'])
++    assert accepted['data']['commands'] == captured['pending']
+     # Reopen on a separate empty outbox: an unchanged public setter is still an
+     # authored write, so it prevents undoing the earlier publication.
+     other = Checkout.attach(TimelineSession.open(fixture.project_id, fixture.timeline_id,
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..cd23b20ebfa9308f843a1733a324c5003afa0ecb
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): restore native parameter CLI ingress coverage
++
++Restore the separately retired parameter checkout case to its original
++commands-file ingress while retaining the current provider-backed fixtures and
++the six live frontend assertions.
+diff --git a/tests/editing_conformance/test_commit_runtime_native_checkout.py b/tests/editing_conformance/test_commit_runtime_native_checkout.py
+index 0593bef363cf2aaf0ed7ba120d444533bafb422c..653f4e1010e236c09bb14069bf4be1dd5e4a7b98
+--- a/tests/editing_conformance/test_commit_runtime_native_checkout.py
++++ b/tests/editing_conformance/test_commit_runtime_native_checkout.py
+@@ -224,29 +224,10 @@
+     captured = json.loads(path.read_bytes())
+     commands_file = tmp_path / 'params.json'
+     commands_file.write_text(json.dumps(captured['pending']))
+-    # G5 retired ``edit commands-file``.  Keep the exact captured command input,
+-    # then use the supported detached-document commit CLI for the same Runtime
+-    # commitTimeline ingress and provenance.
+-    from astrid.packs.timeline.cli import build_parser
+-    from astrid.sdk.timeline.commands import execute
+-
+-    original = client.timelines.open_bundle(
+-        fixture.project_id, fixture.timeline_id, revision_id=captured['base']['revision_id'])
+-    plan = execute(original.data['bundle'], captured['pending'])
+-    detached = commands_file.with_name(commands_file.name + '.detached.json')
+-    candidate = Checkout(plan.bundle).document()
+-    candidate['base_parent'] = {**candidate['base_parent'], **captured['base']}
+-    detached.write_text(json.dumps(candidate))
+-    parsed = build_parser(client).parse_args([
+-        'commit', fixture.timeline_id, '--project', fixture.project_id,
+-        '--file', str(detached), '--message', 'Timeline edit',
+-        '--idempotency-key', 'params-cli', '--json',
+-    ])
+-    code = parsed.handler(parsed)
+-    output = capsys.readouterr()
+-    accepted = json.loads(output.out)
+-    assert code == 0 and accepted['ok'] and accepted['data']['commands'] == captured['pending'], (
+-        code, accepted, output.err)
++    accepted = m1.cli(client, fixture, capsys, 'edit', 'commands-file', fixture.timeline_id,
++                      str(commands_file), '--base-revision-id', captured['base']['revision_id'],
++                      '--base-publication-id', captured['base']['publication_id'])
++    assert accepted['data']['commands'] == captured['pending']
+     # Reopen on a separate empty outbox: an unchanged public setter is still an
+     # authored write, so it prevents undoing the earlier publication.
+     other = Checkout.attach(TimelineSession.open(fixture.project_id, fixture.timeline_id,
+
