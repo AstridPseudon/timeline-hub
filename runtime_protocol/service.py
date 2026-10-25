@@ -2495,6 +2495,7 @@ class RuntimeService:
             detached,
             public_failure,
         )
+        from .timeline_commit_reference_projection import ReferenceProjectionError
         if not isinstance(publisher, str) or not publisher:
             raise AuthorizationError("authenticated publisher is required")
         idempotency_key = require_idempotency_key(idempotency_key)
@@ -2568,6 +2569,12 @@ class RuntimeService:
                 if reason is not None:
                     _emit_redacted_diagnostic(request_id, reason=reason)
             raise
+        except ReferenceProjectionError as exc:
+            if exc.reason == "history_unavailable":
+                _emit_redacted_diagnostic(request_id, reason="store_reference_projection_apply_history")
+            else:
+                _emit_redacted_diagnostic(request_id, exc)
+            raise CommitUnavailable() from exc
         except RuntimeErrorBase:
             raise
         except Exception as exc:

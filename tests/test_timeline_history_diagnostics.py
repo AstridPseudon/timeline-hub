@@ -178,7 +178,12 @@ def test_reference_projection_apply_history_refusal_keeps_public_conflict(realm,
     with pytest.raises(RuntimeErrorBase) as caught:
         _commit(service, project, request)
 
-    _assert_history_refusal(caught)
+    assert caught.value.status == 503
+    assert caught.value.as_dict() == {
+        "code": "not_ready",
+        "message": "Timeline commit outcome unavailable; retry the exact request",
+        "details": {"reason": "runtime_unavailable"},
+    }
     diagnostic = _diagnostic(capsys.readouterr().err)
     assert diagnostic["reason"] == "store_reference_projection_apply_history"
     assert diagnostic["exception_class_chain"] == []

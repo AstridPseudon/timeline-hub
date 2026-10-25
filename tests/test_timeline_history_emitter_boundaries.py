@@ -26,15 +26,15 @@ def _commit(service, project, request):
     )
 
 
-def _public_history(call, capsys, tag, message="history_unavailable"):
+def _public_history(call, capsys, tag, message="history_unavailable", *, status=409, body=None):
     with pytest.raises(RuntimeErrorBase) as caught:
         call()
-    assert caught.value.status == 409
-    assert caught.value.as_dict() == {
+    assert caught.value.status == status
+    assert caught.value.as_dict() == (body if body is not None else {
         "code": "conflict", "message": message,
         "details": {"status": "refused", "reason": "history_unavailable",
                     "base": None, "current": None, "conflicts": []},
-    }
+    })
     stderr = capsys.readouterr().err
     assert "private-sentinel" not in stderr
     value = _diagnostic(stderr)
@@ -448,5 +448,10 @@ def test_reference_apply_real_guard_public_boundary(realm, monkeypatch, capsys):
     monkeypatch.setattr(projection, "prepare_reference_projection", changed_version)
     service.register_timeline_commit_provider(Provider(action))
     before = counts(service)
-    _public_history(lambda: _commit(service, project, request), capsys, "store_reference_projection_apply_history")
+    _public_history(
+        lambda: _commit(service, project, request), capsys, "store_reference_projection_apply_history",
+        status=503, body={"code": "not_ready",
+                          "message": "Timeline commit outcome unavailable; retry the exact request",
+                          "details": {"reason": "runtime_unavailable"}},
+    )
     assert counts(service) == before

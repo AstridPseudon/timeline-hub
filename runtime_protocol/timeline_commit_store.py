@@ -1901,6 +1901,8 @@ class TimelineCommitStore:
                     try:
                         apply_reference_projection(self.conn, reference_projection)
                     except ReferenceProjectionError as exc:
+                        if exc.reason == "history_unavailable":
+                            raise
                         reject(exc.reason, exc.message, status=exc.status,
                                diagnostic_reason=(
                                    "store_reference_projection_apply_history"
