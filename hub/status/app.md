@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T23:59:26Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 3m -->
-# app board, 2026-10-24T23:56Z
+<!-- app | 2026-10-25T00:02:45Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-25T00:02Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -110,7 +110,7 @@
 
 | P2-popup-7872 | Exact parent canonical expectation | Luna independent | Independent2309 PASS | merged | app-P2-popup-parent-oracle-review-2309 | Normal merge32036; exact raw-before parent wrappers. Whole document/reload/undo strict; 2 Node, 3 types/lint PASS; ledger logged. | Home32036b3cc0 |
 
-| P2-asset-current | Qualify mounted drop repair | Luna; service | Actual12239 terminal | gated:source-fix | App2344; actual12239 | NO-GO269s. Readiness1 PASS; original1 ERROR107.563s at response90s. Intended POST disposition still unknown; Sol2353 owns retained evidence. | App def3fb17ae |
+| P2-asset-current | Qualify mounted drop repair | Luna; service | Actual12239 terminal | gated:source-fix | App2344; actual12239 | NO-GO269s. Readiness1 PASS; original1 ERROR107.563s at response90s. Retained browser network has zero commit POST; Sol2353 owns actual dispatch repair. | App def3fb17ae |
 
 | P2-parent-8232 | Strict full request envelope | Luna; independent | Independent2344 PASS13/types/lint | merged | Author2338; review2344 | Parent initial/Undo envelope and exact clear intents are strict. Existing ledger has reviewed hashes/predicate map. Bulk None assertion unchanged. | Home364f124b5c |
 
@@ -122,28 +122,28 @@
 
 | P2-popup-path | Bind parent hash helper to pinned Python source | Luna harness | Actual5217 import failure | merged | app-P2-popup-python-path-return-2327 | Real extracted helper old import RED/new GREEN with PYTHONPATH unset; 3 controls/types/lint PASS. Assertions unchanged. | Home bcb6536fab |
 
-| A3-SWAP-claim | Declare newly created occurrence asset | Luna; Runtime venue | App exclusive handoff2334 | doing | rt-A3-SWAP-created-2343 | Actual Runtime board names exclusive source author. Conditional new-alias claim; reused alias no overclaim. One core review then remote App merge. | Base32036 |
+| A3-SWAP-claim | Declare newly created occurrence asset | Luna; independent Runtime venue | Review2349 PASS37/zero new types | merged | Author2343; review2349 | Reviewed source53550b81/testa7942c exact at home. Conditional new-alias claim, reused alias empty; protected6 exact. Original browser proof owed. | Homea3174ca39a |
 | P2-main-bulk | Attribute None display and sentinel | Luna | Main actual2773 terminal | doing | Tour batch2338 | Source and retained selection attribution first. Product display defects cannot be waived by expectation change. | Saved2323 branch |
 
-| P2-popup-22240-traffic | Qualify precise inspect read classification | Luna; independent | Author2347 PASS3/types/lint | review | app-P2-popup-traffic-review-2354 | Seven extras are exact inspect POST reads, all200. Exact film commit equality and old/unknown write refusals retained; independent review active. | Candidate2347 |
-| A3-bulk-none-display | Restore visible None label | Luna | Author2347 PASS182/types/lint | ready | Independent brief2355 at cap | Product renders None for underlying __none__; clear callback and named labels unchanged. Original protected assertion exact. | Candidate2347 |
+| P2-popup-22240-traffic | Qualify precise inspect read classification | Luna; independent | Review2354 PASS3/types/lint | merged | Author2347; review2354 | Exact inspect POST reads all200. Sole film commit equality/old/unknown write refusals and every tail predicate preserved. Logged exact reviewed hashes. | Homec07edabd26 |
+| A3-bulk-none-display | Restore visible None label | Luna; independent | Author2347 PASS182/types/lint | review | app-A3-bulk-none-review-2355 | Product renders None for underlying __none__; callback/named labels unchanged. Original protected assertion exact; one core review active. | Candidate2347 |
 
 | A3-12239-cause | Prove actual mounted dispatch boundary | HARD Sol | Repeated actual12239 response90s | doing | app-A3-mounted-12239-return-sol-2353 | Retained same-ID trace first proves intended POST sent or absent; minimum proved repair only. No new service or guessed Runtime cause. | Saved2319 branch |
 | P2-main-current | Qualify reviewed parent and single | Luna; main venue | Tour364f reviewed and home | blocked:runtime | Existing main venue requested2353 | Same supported2250 profile, new App364f with immutable039f/732/635f. Exclusive parent/single request; no bulk until source repair. | App364f |
 
-Integration: App364f124b5c merges independently reviewed tour d3ec over mounted repairdef3, importbcb and strict parent oracle32036. Actual12239 retained fixed revieweddef3 tuple; newer integration does not invalidate it. Runtime release remains732; candidate7627 is not released.
+Integration: Appa3174ca39a merges independently reviewed SWAP80a604 over inspectc07, tour364f, mounteddef3, importbcb and parent32036. Exact provider53550/testa7942c match review; no new type diagnostics claimed beyond baseline. Actual12239 retained fixed revieweddef3 tuple; newer integration does not invalidate it. Runtime release remains732; candidate7627 is not released.
 
 core open: All eight P2 isolated gestures remain unqualified. Element7131 eventual outcome unknown. ADD22240 passed rawcanonical/whole document/initial history then first wire333 failed; reload/undo NOTRUN. Attribution ready. New shared mounted repair is home def3 and registerAsset2344 launch active. Tour envelope/intents independently2344 PASS and HOME364f; bulk None source author2347 active. SWAP source exclusively offered to Runtime; reminder2347 requests actual worker or returned reservation.
 
 regressions: No browser closure claimed for source-only drop controls. D69 restoration is complete at its recorded source. P1 actual31083 and P3 actual15493 remain GO only on their recorded tuples.
 
 Blockers: Final cut — all8 isolated P2 plus one App full tour, final pinned P1–P5/core, D69 and genuine installed render. Runtime coordinates matrix and ZIP.
-Next ready: Bulk independent review2355 at next source slot. Popup2354 PASS merges then meaningful ADD; Runtime next release sequencing uses Sol2353 actual POST disposition. Placement follows genuine dispatch finding. Main parent/single requested2353; no local duplicates. No P3, D79 or E work.
+Next ready: One meaningful ADD0002 ready on a317 after confirmed zero12239 browsercommitPOST; next free worker slot. Bulk2355 PASS merges normally. Sol2353 dispatch finding owns next asset/placement. Main parent/single requested2353; no local duplicates. No P3, D79 or E work.
 
-live 2 / cap 2; ready-undispatched 1 (bulk independent review, cap full). Popup2354 review and assetSol2353 active. No App body running. D85 cap6 requires above6.5GB. One App body at a time. SWAP reservation is Runtime exclusive; no duplicate App writer.
+live 2 / cap 2; ready-undispatched 1 (ADD0002 launcher, cap full). Bulk2355 review and assetSol2353 active. No App body running; sequencing fact cleared, ADD next. D85 cap6 requires above6.5GB. One App body at a time. SWAP reservation is Runtime exclusive; no duplicate App writer.
 Capacity: Seven newly stale unused KEEP pins released through full D74a head/test/queue/lease/process checks and normal bin/recycle. Receipt design/app-D74a-new-stale-pins-2341.md. Current tuple and all run outputs retained. No old refused target retry. Capacity help need cleared.
 Disk: 6.118GB at23:55 after asset terminal and source dispatch. App critical source/gate floor5.2GB, stop4.5GB non-element first; one heavy body at a time below7.5GB. Noncritical work keeps7.5GB floor.
 
 Safety: No new safety or permission refusal. First2337 dispatch had ordinary missing relative brief path; corrected to absolute path through same normal request, no worker/body started on rejected command.
-Inbox consumed through1809954 bytes. Read PLAN/common, C0 relevant request/reply/undo/history sections, current headerD85/D86 and actual Runtime board. Runtime board confirms exclusive rt-A3-SWAP-created-2343; blocked source wait cleared. Main parent/single supported-venue ask2353 is now its own row, not an escalation. Final review/security source release still owed by Runtime; no duplicate service bodies.
+Inbox consumed through1813245 bytes; remote SWAP request and exact hub review consumed immediately. Read PLAN/common, C0 relevant request/reply/undo/history sections, current headerD85/D86 and actual Runtime board. Runtime board confirms exclusive rt-A3-SWAP-created-2343; blocked source wait cleared. Main parent/single supported-venue ask2353 is now its own row, not an escalation. Final review/security source release still owed by Runtime; no duplicate service bodies.
 Evidence: [Import return2327](../../workers/app-P2-popup-python-path-return-2327/report.md), [mounted author2319](../../workers/app-A3-mounted-drop-return-sol-2319/report.md), [tour author2323](../../workers/app-P2-parent-8232-envelope-2323/report.md), [main four findings](../../design/runtime-P2-main-four-report-2250.md).
