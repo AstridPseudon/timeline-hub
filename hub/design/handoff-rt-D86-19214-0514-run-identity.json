@@ -1,0 +1,79 @@
+{
+  "packet": "handoff-rt-D86-19214-0514",
+  "format": "safe-flat-export-v1",
+  "plan": "PLAN3F",
+  "base_revision": "tl/rt-D86-next61-main-0505",
+  "central_request_id": "rt-D86-next61-main-0505-rt-D86-next61-main-0505-1025050954-19214",
+  "central_request_status": "fail",
+  "route_request_id": "rt-D86-next61-main-0505",
+  "preflight_exit": 0,
+  "body_exit": 1,
+  "selected": 61,
+  "selector_sha256": "0f002557be3905bcd50030c247804b80d3b6ff631549dde16913fd1c4a834330",
+  "outcomes": {
+    "PASS": 13,
+    "FAIL": 21,
+    "ERROR": 27,
+    "SKIPPED": 0
+  },
+  "xml_sha256": "ebcccc9b772f78eade0a1d219b42a98f163322a684f6049c86931bfb2f06b78",
+  "body_log_sha256": "8c59f00c589070b012405491a721ed8903e4e188f2d495f174fa1b18f3304dad",
+  "argv_sha256": "304bd3f4f7b57a13df67da1a6c419f6e6d60cd09a86dc25f478ccacacad0a50e",
+  "meaningful_body_receipt": "rt-D86-next61-main-0505-rt-D86-next61-main-0505-1025050954-19214",
+  "first_preflight": "private preflight-only parent-receipt typo retained; not used as body receipt",
+  "immutable_tuple": {
+    "agent_full_sha": "ef6db3be0fc767c32c389702f268c5b9f23b8ec2",
+    "agent_tree": "aeaad1a03db772ad1ad1b62c4e7fd07948bcf4a2",
+    "runtime_full_sha": "0c62dfa63db9ff608ac9338388431e31a814e080",
+    "runtime_tree": "e22cdd54b668acea9fe593e6724b34d1a56f7530",
+    "app_full_sha": "9cb56c2a3f408b21a7610823b6c3b02a5b2e4f07",
+    "app_tree": "4f2babc3f26b4a09a023cc7bf72e8a1000e7bb96",
+    "composition_full_sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "source_receipts": {
+    "agent": {
+      "commit": "ef6db3be0fc767c32c389702f268c5b9f23b8ec2",
+      "tree": "aeaad1a03db772ad1ad1b62c4e7fd07948bcf4a2",
+      "state": "clean detached KEEP"
+    },
+    "runtime": {
+      "commit": "0c62dfa63db9ff608ac9338388431e31a814e080",
+      "tree": "e22cdd54b668acea9fe593e6724b34d1a56f7530",
+      "state": "clean detached KEEP"
+    },
+    "app": {
+      "commit": "9cb56c2a3f408b21a7610823b6c3b02a5b2e4f07",
+      "tree": "4f2babc3f26b4a09a023cc7bf72e8a1000e7bb96",
+      "state": "clean detached KEEP"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "state": "clean detached KEEP"
+    }
+  },
+  "profile": {
+    "path": "/home/user/work/runtimes/agent-remotion-0013",
+    "lock_sha256": "c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24",
+    "archive_sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "registry_sha256": "b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d"
+  },
+  "source_origins": {
+    "packet": "evidence/fd86-next-m1-cli-bind-0419",
+    "parent_media": "handoff-agt-F-next32-0314-flat-ready-source-selector-manifest.tsv",
+    "d95": "handoff-agt-F-D99-D95-next-inputs-0443-d95-new2-selectors.tsv",
+    "supplemental": "handoff-agt-F-successor-0209-combined-membership.tsv"
+  },
+  "controls": {
+    "positive": "exit17 with one 7-byte marker",
+    "poison": "exit1 with zero marker bytes",
+    "disposition": "bounded NO-GO control only; no semantic verdict"
+  },
+  "private_artifacts": "raw XML/log/argv/request/body/media/auth/key/URL artifacts remain private and are not exported",
+  "missing_limits": [
+    "parent-media source commit is supplied by the durable source manifest as abbreviated 2a04d92fca",
+    "prepared-video and graph source hashes were not present in the sole durable source bindings and remain UNKNOWN",
+    "durable XML/body log contain no traceback frames, so exception file/function/line remain UNKNOWN"
+  ]
+}
