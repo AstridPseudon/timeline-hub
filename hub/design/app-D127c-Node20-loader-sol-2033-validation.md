@@ -1,0 +1,21 @@
+# D127c validation
+
+**Diagnosis proven; strict acceptance remains unqualified.** Repository source is unchanged.
+
+The failure is Node20 assertion-message generation, rather than a demonstrated sandbox or loader/child-registration failure. The second reviewed-new negative mutation reaches the original line425 `assert.ok()` with no message. TSX whitespace minification gives V8 raw line1/column21178 coordinates while Node20's diagnostic reader opens the multiline TypeScript source. At column21177 the bundled parser fails on a 23677-character window. The exact Node20 `findColumn()` stop condition uses `>2500`, leaving the equal boundary to request zero bytes and recurse through the same expensive parse. bounded-parser-result.json proves the nonprogressing boundary without running an original test body. The VM reproducer runs only synthetic `assert.ok(false)` and reproduces timeout using that filename/coordinate, without TSX, node:test, or a fork.
+
+Source-to-runner route: CLI --test spawns process.execPath with NODE_TEST_CONTEXT=child-v8 and inherited allowlisted environment. Node20 registers seven original titles; its name filter skips nonmatches. Plain fork, TSX preload, TS/ESM child registration, imports and the combined support graph all complete. Two original controls pass individually; reviewed-new alone stalls. The old service parent reported NODE_TEST_CONTEXT=null, so recursive inherited test context is not supported as its cause. Custom reporting preserves the stall; TAP is not its cause.
+
+The smallest proved supported route is the documented tsx/cjs/api require() API in cjs-api-controls.cjs, loaded by the exact Node20 binary under --test. This changes loader mode and generated callsite layout; it does not rewrite source, assert methods, node:test, title registration, or guards. The final entry checks version, source hash and the 5GB floor before loading the original file. Native assertions remain installed. Final result: **three actual exact named passes, zero intended fails/skips**, 1.38 seconds. Whole-file output remains **3 passed, 0 failed, 4 nonmatching skipped**. Those four are never counted as passes. Node20's implementation reports nonmatching registered tests as skipped; the literal global 0-skips requirement is not met. Do not silently reinterpret that requirement or suppress those events.
+
+One outside-service run was requested through the ordinary documented mutex/CAS append route. All existing registry bytes were preserved. The source snapshot tree is exact, but its available space fell below 5GB; the entry refused before loading the original source. Service exit1 is not a pass, loader failure, or classifier rejection. It was not retried. The source-independent prerequisite for outside execution is 5GB genuinely free **inside** the admitted snapshot, with additional room for snapshot overhead. No guard was lowered or bypassed.
+
+Independent check-events.py verifies the actual named events and final entry/reporter hashes. Review2013 F001/static findings and prior Runtime61/service30318 remain reused; no semantic re-review, Runtime rerun, or Node22 original-control rerun. The worker does not close strict F002, D130 SWAP, WAL/recovery or full-tour holds. Meeting literal global zero-skips also requires an authorized way to register only the intended controls; this task forbids source edits or a filtering framework, so none was added.
+
+Only worker-owned evidence and one authorized suite row were written. Shared installs and caches stayed read-only. No bootstrap, live, browser, native, original-helper, profile, full suite, lint/typecheck, Git write, upstream operation or product edit occurred. The final manifest compares all mounted path hashes with review2013 and confirms clean tracked source.
+
+Primary references inspected:
+- [Node20.19.4 assertion implementation](https://raw.githubusercontent.com/nodejs/node/v20.19.4/lib/internal/assert/utils.js)
+- [TSX4.21 transform options](https://raw.githubusercontent.com/privatenumber/tsx/v4.21.0/src/utils/transform/get-esbuild-options.ts)
+- [Supported TSX require API](https://raw.githubusercontent.com/privatenumber/tsx/v4.21.0/docs/dev-api/tsx-require.md)
+- [Node20.19.4 test runner](https://nodejs.org/download/release/v20.19.4/docs/api/test.html)

@@ -1,0 +1,57 @@
+{
+  "task": "app-U3-D135-cumulative-review-2040",
+  "reviewed_tip": "eba8b345c1389402b11412eff52d2ac4e130b4a7",
+  "ancestry": {
+    "normal_ours": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "first_merge": "002a82339c934d75894467032d788606257315fa",
+    "actual_upstream": "36e1ef39c03c2c91a36fd964e3a2385a410bc06c",
+    "current_tip_return": "e9041a262186747548c6a74c1e6fa6cf6313f1f4",
+    "final_return": "eba8b345c1389402b11412eff52d2ac4e130b4a7"
+  },
+  "merge_parents": {
+    "e9041a2621": ["002a82339c934d75894467032d788606257315fa", "36e1ef39c03c2c91a36fd964e3a2385a410bc06c"],
+    "eba8b345c1": ["e9041a262186747548c6a74c1e6fa6cf6313f1f4"]
+  },
+  "resolved_conflicts": [
+    "public/install-manifest.json",
+    "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.test.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx"
+  ],
+  "final_sources": [
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatModels.tsx"
+  ],
+  "source_sha256": {
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx": "84bb5d6b272c722618d2b912a131d287a859ad7ee3cc1cb83968b152db6a39b3",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx": "c48952fe24c75dbb454440bc61e6b883bb6c0c1f45dc41ca7f7f739b814f4683",
+    "src/tools/video-editor/components/AgentChat/NewChatModels.tsx": "1fa3fa1a296548a42e562a664fec7c656227047a5a897d4b154f9832b1a55365"
+  },
+  "test_sha256": {
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.test.tsx": "e8e853479154e1a7dbfb2e1329789486a03c21a219352459b46f0c50130f5667",
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.test.tsx": "ee11b40fefe0847d9ba38e142d0ec0b2401109c9774a3c1f650a3608173a9eac"
+  },
+  "actual_upstream_exact_files": [
+    "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.test.tsx",
+    "src/shared/components/ToolbarPointer/ToolbarPointer.tsx"
+  ],
+  "automatic_blob_audit": {
+    "merge_tree": "55af6818d129b633b3a36cbd5c5510a50e178d66",
+    "paths_differing_from_e904": 7,
+    "final_return_paths": 3,
+    "unmerged_index_entries": 0,
+    "conflict_markers": 0
+  },
+  "manifest_pins": {
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "vibecomfy": "31f90bb03d330283b76e7dbdda51197be787090d",
+    "omp": "78f0e0960f471c2c62b943272a48c33366f239fe",
+    "producer_cut": "PENDING_PRODUCER_FIRST"
+  }
+}

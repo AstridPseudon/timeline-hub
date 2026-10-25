@@ -1,0 +1,136 @@
+{
+  "app": {
+    "worktree": "/home/user/work/wt/app-D127c-Node20-loader-sol-2033",
+    "commit": "fd586440a626fc49a35a9dd0ac7e838d5fe55a4b",
+    "tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "status_after": "clean",
+    "source": {
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+      "blob": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+      "size": 60923
+    },
+    "mounted_path_hashes": {
+      "src/tools/video-editor/components/ElementsLibraryPanel.tsx": "2f0c716bd77a5efb7fe18436bfdc1e46b8a85f16d0f562b3986cf67bb30e3f4c",
+      "src/tools/video-editor/hooks/useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+      "src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+      "src/integrations/runtime/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+      "src/tools/video-editor/commands/documentPatchIntent.ts": "732473c05b7709b8a4bb95160df3f40679caca9e7fe26384fe0a2ec4d80d08b6",
+      "src/tools/video-editor/commands/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230"
+    },
+    "review2013_mounted_hashes_equal": true,
+    "all_tracked_source_unchanged": true,
+    "outside_source_scope_unchanged": true
+  },
+  "runtime": {
+    "repository_read_only": "/home/user/banodoco/banodoco-workspace-runtime",
+    "commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "helper_blob": "2ae83f1bb8420f1b409165382711aaaeb485fb1f",
+    "execution": "committed object hashed only; prior Runtime61 reused"
+  },
+  "node20": {
+    "path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "realpath": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "version": "v20.19.4",
+    "provenance": "final-local.stdout.txt logs actual child version/path and six allowlisted env keys"
+  },
+  "dependencies": {
+    "node_modules_realpath": "/home/user/work/app/node_modules",
+    "tsx": {
+      "version": "4.21.0",
+      "loader_sha256": "0b1c5b86192772fe9257710e739959cee5947c11ae1f93b61abfaa9b80c6def1",
+      "cjs_api_sha256": "b396a280df2ea1de64a7fa989db0d46cf1b90fc07f12e4dc5e57d5e5a99d4feb"
+    },
+    "esbuild": "0.27.7",
+    "lock_sha256": "59cd66da9a223eb1ff3cf60fd06dfa5b4b376533786366bd94b74ae3d95140ba",
+    "shared_installs_written": false,
+    "caches": "TSX_DISABLE_CACHE=1; no Vitest/Vite runs"
+  },
+  "final_local_execution": {
+    "argv": [
+      "env",
+      "TSX_DISABLE_CACHE=1",
+      "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime",
+      "timeout",
+      "-k",
+      "2s",
+      "10s",
+      "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+      "--test",
+      "--test-concurrency=1",
+      "--test-name-pattern=^(D127c source guard accepts every reviewed arm and rejects wrong hash or source|D127c reviewed-profiler validator enforces the exact safe cProfile projection|D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations)$",
+      "--test-reporter=tap",
+      "--test-reporter=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/events.mjs",
+      "--test-reporter-destination=stdout",
+      "--test-reporter-destination=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/final-local-events.jsonl",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/cjs-api-controls.cjs"
+    ],
+    "command": "env TSX_DISABLE_CACHE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime timeout -k 2s 10s /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --test --test-concurrency=1 '--test-name-pattern=^(D127c source guard accepts every reviewed arm and rejects wrong hash or source|D127c reviewed-profiler validator enforces the exact safe cProfile projection|D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations)$' --test-reporter=tap --test-reporter=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/events.mjs --test-reporter-destination=stdout --test-reporter-destination=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/final-local-events.jsonl /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/cjs-api-controls.cjs",
+    "exit_code": 0,
+    "seconds": 1.38,
+    "available_bytes_before": 5194469376,
+    "available_bytes_after": 5194461184,
+    "entry_sha256": "31e82a9e0864a2d1bbf5233ce8d81066e2ddd2abd6ed9f5840afd118007163ff",
+    "reporter_sha256": "d27c16065516260f4617882136f435682a0f737e675e92cd2cc1f8a3465cf678"
+  },
+  "event_counts": {
+    "intended_named_passes": [
+      "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations",
+      "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+      "D127c source guard accepts every reviewed arm and rejects wrong hash or source"
+    ],
+    "intended": {
+      "pass": 3,
+      "fail": 0,
+      "skipped": 0
+    },
+    "whole_file": {
+      "pass": 3,
+      "fail": 0,
+      "skipped_nonmatching": 4
+    },
+    "wrapper_passes_counted": 0,
+    "literal_global_zero_skips_met": false,
+    "review2013_execution_closure": "intended events independently verified; strict whole-file acceptance remains unqualified"
+  },
+  "service": {
+    "id": "app-D127c-Node20-loader-sol-2033-d127c-node20-cjs-controls-2033-1025204001-13179",
+    "status": "fail",
+    "exit": 1,
+    "snapshot": "tree=6d2744e271f016206854ab33f57b3cfc737ad54d\nkey=7401f787f8bbd6cf1d75f47092127201\nworktree=/home/user/work/wt/app-D127c-Node20-loader-sol-2033\n",
+    "result": "entry disk floor stopped execution before original source load; zero intended events; not a pass",
+    "resubmissions": 0
+  },
+  "prior_evidence": {
+    "node22_3_passes": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-proof-sol-2021/evidence/node22-supplemental.stdout.txt",
+    "runtime61": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-D127c-mounted-selection-sol-1935-targeted-1025194027-30318/summary",
+    "old_outside_timeout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-proof-sol-2021/evidence/service-summary"
+  },
+  "scope": {
+    "product_or_test_source_edits": false,
+    "git_writes": false,
+    "bootstrap_live_browser_profile_original_helper_native_full_bodies_run": false,
+    "node22_original_controls_rerun": false,
+    "runtime61_rerun": false,
+    "lint_tsc_rerun": false,
+    "service_registration": {
+      "suite": "d127c-node20-cjs-controls-2033",
+      "method": "documented Store.mutex plus full-byte CAS and same-directory atomic append",
+      "before_sha256": "e934b46aa9c6bc1d5d727d7f39c33adbd3b836f1b9ba4532939e7a09fb54d80a",
+      "after_sha256": "7042ddb4329f372678350fd15dc4fb91fd0acd04b9129ba57bb3b70a89ec5e82",
+      "existing_bytes_preserved": true,
+      "appended_bytes": 1085,
+      "command": "env TSX_DISABLE_CACHE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime timeout -k 2s 10s /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --test --test-concurrency=1 '--test-name-pattern=^(D127c source guard accepts every reviewed arm and rejects wrong hash or source|D127c reviewed-profiler validator enforces the exact safe cProfile projection|D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations)$' --test-reporter=tap --test-reporter=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/events.mjs --test-reporter-destination=stdout --test-reporter-destination=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/service-events.jsonl /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-loader-sol-2033/evidence/cjs-api-controls.cjs"
+    }
+  },
+  "disk": {
+    "final_available_bytes": 5355036672,
+    "guarded_local_control_start_bytes": 5194469376,
+    "guarded_local_control_child_bytes": 5194465280,
+    "outside_snapshot_exact_available_bytes": "not logged; explicit 5GB guard failed",
+    "initial_observation": "df -BG reported 5G available; not an exact-byte measurement"
+  }
+}

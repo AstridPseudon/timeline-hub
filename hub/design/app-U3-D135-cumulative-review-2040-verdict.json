@@ -1,0 +1,14 @@
+{
+  "verdict": "PASS_SOURCE",
+  "task": "app-U3-D135-cumulative-review-2040",
+  "branch": "tl/app-U3-D135-cumulative-review-2040",
+  "reviewed_tip": "eba8b345c1389402b11412eff52d2ac4e130b4a7",
+  "source_only": true,
+  "findings": [],
+  "final_cut_acceptance": "PENDING_PRODUCER_FIRST",
+  "notes": [
+    "Cumulative source join, not only the final three-file return, was reviewed.",
+    "No tests were skipped, weakened, rewritten, xfailed, or retired by this review.",
+    "No product source, tests, pins, branches, refs, or hub artifacts were modified."
+  ]
+}

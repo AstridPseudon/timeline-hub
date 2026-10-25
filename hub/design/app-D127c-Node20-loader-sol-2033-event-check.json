@@ -1,0 +1,20 @@
+{
+  "intended_named_passes": [
+    "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations",
+    "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+    "D127c source guard accepts every reviewed arm and rejects wrong hash or source"
+  ],
+  "intended": {
+    "pass": 3,
+    "fail": 0,
+    "skipped": 0
+  },
+  "whole_file": {
+    "pass": 3,
+    "fail": 0,
+    "skipped_nonmatching": 4
+  },
+  "wrapper_passes_counted": 0,
+  "literal_global_zero_skips_met": false,
+  "review2013_execution_closure": "intended events independently verified; strict whole-file acceptance remains unqualified"
+}
