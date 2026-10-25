@@ -33,7 +33,7 @@ export interface EditorTourScript {
   readonly hints: { readonly compose: string; readonly composeTouch: string; readonly respond: string };
   /** `send` is a touch card's own Send, the same press as the chat's. */
   readonly controls: { readonly next: string; readonly send: string; readonly back: string; readonly skip: string };
-  /** Three.js frame → still → video: the card's strip, one step per act. */
+  /** Agent → open models → output: the card's strip, one step per act. */
   readonly strip: readonly [string, string, string];
   readonly finale: { readonly title: string; readonly action: string; readonly recap: readonly [string, string, string] };
   /** The last card, after the finale: Astrid asks for feedback and points to the Discord. */
@@ -94,7 +94,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
   welcome: { title: 'Welcome to Astrid', body: 'Explore a completed project in this quick guided demo. The prompts replay its steps; no new generation runs.', action: 'OK' },
   hints: { compose: 'Press Send to ask Astrid', composeTouch: 'Tap Send to ask Astrid', respond: 'Your agent uses tools built by the community to deliver this request' },
   controls: { next: 'Next', send: 'Send', back: 'Back', skip: 'Skip tour' },
-  strip: ['Three.js', 'Frames', 'Video'],
+  strip: ['Agent', 'Open models', 'Output'],
   finale: { title: 'Do you get it?', action: 'I got it', recap: ['Agent + extensions', 'Open models', 'Finished shot'] },
   feedback: {
     title: 'We actually need your feedback',

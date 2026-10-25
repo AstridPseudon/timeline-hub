@@ -29,7 +29,7 @@ const drawAt = (index: number) => lightAt(index) + 50 - DRAW_MS;
 export const TOUR_FINALE_ENTRANCE_MS = lightAt(NODES.length - 1) + LIGHT_MS;
 
 /**
- * Three.js frame → realistic frames → video. Steps up to `filled` show their media; the newest one arrives with the
+ * Agent → open models → output. Steps up to `filled` show their media; the newest one arrives with the
  * card (its connector draws in, then the thumbnail fades up); later steps wait as empty frames (`medium` is the same at the large strip's size, for a tablet's card). The large strip
  * (the finale) is the whole chain lit in the accent, played in by the card's entrance and at rest once it settles.
  */

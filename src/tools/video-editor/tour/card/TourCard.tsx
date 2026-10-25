@@ -42,7 +42,7 @@ const ACT_COUNT = 3;
 /**
  * The tour's card, for whatever beat the store is on. It opens with Astrid's welcome; while the chat has
  * the spotlight it is a quiet line (and the Next for the reply); on each `land` it explains the act with a
- * visual and the Three.js → frames → video strip; at the end it asks "Do you get it?". Presentational: the runner positions it and owns the
+ * visual and the Agent → open models → output strip; at the end it asks "Do you get it?". Presentational: the runner positions it and owns the
  * actions. It marks itself ready once its entrance has played (at once on reduced motion or a skip).
  */
 export function TourCard({ act, beat, onPrimary, onBack, onSkip, device = 'desktop' }: TourCardProps) {
