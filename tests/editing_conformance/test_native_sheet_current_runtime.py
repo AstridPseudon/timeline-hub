@@ -170,6 +170,7 @@ def _publish_current_candidate(runtime, timeline, payload, shots, internals, *, 
         'content_digest': current['parent_revision']['content_digest'],
     }
     candidate['base_parent_payload'] = copy.deepcopy(current['parent_revision']['payload'])
+    candidate['base_parent_payload'].pop('occurrences', None)
     writer = runtime.client().timelines._client
     publication = publish_authoring_candidate(candidate, writer, idempotency_key=key)['publication']
     assert publication['accepted_revision_id'] == publication['canonical_document']['parent_revision']['revision_id']
@@ -300,7 +301,13 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     source_payload = parent['payload']
     append_source(capture_initialize(
         source_bundle, name='Shared source', slug='shared-source',
-        output=copy.deepcopy(source_payload['config']['output']),
+        # Native initialization accepts only the current App bootstrap output.
+        # The source publication below restores the fixture's exact authored
+        # output, including its original representation and fps.
+        output={
+            'resolution': '1280x720', 'fps': 30, 'file': 'output.mp4',
+            'background': None, 'background_scale': None,
+        },
     ))
     for track in source_payload['config']['tracks']:
         append_source(capture_track_create(source_bundle, 'parent', track))
