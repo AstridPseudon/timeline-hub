@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T00:38:04Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
-# app2 board, 2026-10-25T00:31Z
+<!-- app2 | 2026-10-25T00:40:11Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T00:39Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -136,10 +136,10 @@ Historical proof limits:
 Later: D87 retires Agent native captured-batch formats and requires named current replacement coverage; Agent owns the rows, branchb9f remains held. D86 original four main families74 IDs dispatched2333; CLI8 returned for Agent review. Agent now requests six families108 IDs; Runtime owns additional allocation and one affected-node batch. [Input correction](../../design/peer-app2-to-runtime-20261024T2335Z-D86-input-published.md). No Proof assignment. D34 broader legacy accounting UNKNOWN. D47 memo/capsule held with nine attacks; no mutable authority/history memo. D46 U2c closed until final join. D14/D23 timing deferred. V4 cut. Historical App P4/P5 registration drafts superseded by D59 venues. D52 removals never weaken live gates. D79 has actual owner lanes; App28293 failed at identity invalid bearer before remote/drag/undo; setup1838 owns the non-gating return. Runtime corpus WIP yields to D80; kit1847 local route7e857 was published and host-verified. Actual live stack capture remains owed through existing App1952. No Proof dispatch.
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals remain stopped. No alternate cleanup,publication or source acquisition route. No manager product/test/generated/pin edit or Git mutation. Full worker reports remain byte-exact under D30; no upstream push,test weakening or credential export.
 
-Disk: 7810842624 bytes free at 2026-10-25T00:31Z; D85 source cap6, D74 service cap4. Inventory reconfirmed21 KEEP trees, zero eligible ended nonKEEP worktrees. Prior cleanup, pin-release and compact refusals remain stopped; no alternate cleanup attempted.
+Disk: 7806308352 bytes free at 2026-10-25T00:39Z; D85 source cap6, D74 service cap4. All21 remaining worker worktrees are KEEP; no new Proof tree or eligible nonKEEP target. Prior cleanup, pin-release and compact refusals remain stopped; no alternate cleanup attempted.
 
-Pass 2026-10-25T00:31Z: INBOX unchanged791665bytes; header unchanged after D87, D56.4 stand-down retained. bin/workers confirms1313 done, zero live. Agent00:22 reports ORCH0017 main P4 authorization and request0021; local0016 zero-body. Main00:24 still held venue, so existing exact request forwarded once. App00:23 reports geometryHOME50cf and currentasset20057 running; ADD17228/element8897 terminal NO-GO. Main6629/4151 both NO-GO at strict Undo reads, owner App. Local cleanup inventory zero eligible nonKEEP. No Proof dispatch, body, source gate, cleanup retry or Git mutation.
+Pass 2026-10-25T00:39Z: INBOX unchanged791665bytes and header unchanged after D87; D56.4 stand-down retained. bin/workers confirms1313 done, zero live. Agent00:32 still awaits main P4 worker under existing ORCH0017/request0021. Runtime00:24 board has not yet reflected that ruling; existing0031 peer is pending, no repeated ask. App00:26 records actual8897 ordinal3 validation dump/123 phases sent to Runtime and placement geometry0024 active; asset20057 remains recorded running. No new terminal credit inferred from older boards. Main6629/4151 retain strict Undo NO-GO. No Proof dispatch/body/source gate, cleanup retry or Git mutation.
 
-Next watch: approximately00:41Z. Recheck main P4 request0021, Appasset20057/placement and main strict Undo handback. Preserve all original request IDs and stopped cleanup routes.
+Next watch: approximately00:49Z. Recheck main P4 request0021, Appasset20057/placement0024 and strict Undo handback. Preserve original request IDs and stopped cleanup routes.
 
 Inbox read through791665bytes. STATUS is restart point; [D83 handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md), [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md), [D84a release](../../design/runtime-D84a-release-2205.md) remain binding.
