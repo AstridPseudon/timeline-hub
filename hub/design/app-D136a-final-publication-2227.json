@@ -1,0 +1,31 @@
+{
+  "time": "2026-10-25T22:27:29.241765+00:00",
+  "scope": "Byte-exact SAFE independent final PASS; static identity only, dynamic original9 NO_GO",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-inventory-final-check-2220/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-report.md",
+      "sha256": "ea5d05fe0392d808dc814f68784ae77552ac42b19f45a149d31f8083b8f8ce16"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-inventory-final-check-2220/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-review.json",
+      "sha256": "9b65ad3997a8a0b2fcb5c5db9848e25604c3fa4ae9d443e07ee0537724f3b009"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-inventory-final-check-2220/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-findings.md",
+      "sha256": "38ae25709b5435aff190dfb9ba5adab44a5fd3a194d03a1ffce4634240e9190e"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-inventory-final-check-2220/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-validation.md",
+      "sha256": "fc0f494377667f73ce8bac55e28f8194bb765cce961ae8dc71df9c29eba969c3"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-inventory-final-check-2220/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-handoff.md",
+      "sha256": "dc139b520971e0c75b4d8ccc29ba7123ad1fb4e5440559a489ef55f6b5315f2e"
+    }
+  ]
+}

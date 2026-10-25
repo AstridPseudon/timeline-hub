@@ -1,0 +1,67 @@
+{
+  "schema": "timeline.app.d136a.inventory-review.v1",
+  "task": "app-D136a-inventory-final-check-2220",
+  "verdict": "PASS",
+  "scope": "Independent static-only inventory and evidence-identity review; no product, test, fixture, schema, pin, source, runtime, or evidence-lineage edits.",
+  "source_identity": {
+    "agent_final20db": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "agent_d10042040": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "agent_projection_f53b": "f53b016900c99e46998268e36c7c431ac0eec61e",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "review_tree": "897c318f237fbb78bebb3185c133f43ffc4fa38e"
+  },
+  "counts": {
+    "source_files": 16,
+    "groups": 6,
+    "boundaries": 45,
+    "condition_maps": 30,
+    "ast_blocks": 31,
+    "function_definition_records": 75,
+    "group_helper_call_records": 307,
+    "final_predicates": 9,
+    "final_parameter_values": 6
+  },
+  "checks": {
+    "json_parse": "PASS",
+    "source_ast_parse": "PASS",
+    "source_hashes_and_line_counts": "PASS",
+    "group_and_boundary_range_bounds": "PASS",
+    "function_and_call_ast_identity": "PASS",
+    "condition_map_containment": "PASS",
+    "helper_group_containment": "PASS",
+    "final_predicate_body_and_parameter_map": "PASS",
+    "source_only_diff_empty": "PASS",
+    "prior_safe_packet_hashes": "PASS",
+    "git_diff_check": "PASS",
+    "working_tree_status": "PASS_CLEAN"
+  },
+  "corrected_identity_checks": {
+    "mgc01_string": "astrid/core/timeline/authoring_bundle.py:231-234",
+    "mgc01_verify_digest": "astrid/core/timeline/authoring_bundle.py:237-244",
+    "mgc01_clip_selected_media": "astrid/core/timeline/authoring_bundle.py:552-574",
+    "mgc04_reconciliation": "runtime_protocol/timeline_commit_auth.py:778-795",
+    "mgc04_command_output": "runtime_protocol/timeline_commit_auth.py:2189-2335",
+    "mgc04_b022": "runtime_protocol/timeline_commit_auth.py:2209",
+    "mgc06_materializations": "runtime_protocol/timeline_commit_store.py:1567-1574",
+    "mgc06_next_helper": "runtime_protocol/timeline_commit_store.py:1577-1597",
+    "mgc06_accept_tail": "runtime_protocol/timeline_commit_store.py:1832-1915",
+    "mgc02_eof": "astrid/sdk/timeline/authoring_commit.py:325",
+    "mgc03_caller_definition": "astrid/sdk/timeline/commit.py:1160-1469"
+  },
+  "b022": {
+    "status": "observed current Runtime fail-closed refusal",
+    "regression": "UNKNOWN",
+    "causal_owner": "UNKNOWN",
+    "setup_failure": "NOT_PROVED",
+    "d54a_reg": "NOT_PROVED",
+    "downstream": "B023-B036 and all nine final predicates remain UNKNOWN/unreached"
+  },
+  "retained_results": {
+    "original2136": "nine setup errors, exit 1, zero failures, zero passes, zero skips",
+    "independent2144": "source custody PASS retained; overall NO_GO retained",
+    "private_artifacts": "raw XML/log/payload/key/URL/identifier/stack material not copied or exported"
+  },
+  "source_change": "none",
+  "dynamic_qualification": "none granted"
+}
