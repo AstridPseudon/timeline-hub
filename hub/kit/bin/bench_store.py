@@ -657,7 +657,8 @@ class Store:
             for policy_component in ('child', 'runtime'):
                 before = self._evict(before, policy_component, policy_component == component and eid not in before['entries'], eid)
             self._checkpoint('before-build')
-            check(shutil.disk_usage(self.root).free >= self.RESERVE_BYTES, 'free-space reserve unavailable')
+            reserve = 5905580032 if component == 'child' else self.RESERVE_BYTES
+            check(shutil.disk_usage(self.root).free >= reserve, 'free-space reserve unavailable')
             reused = eid in before['entries']
             journal = {'version': 1, 'owner': self.owner['id'], 'kind': 'creation', 'before': before, 'after': before,
                        'projections': {}, 'victims': [], 'new': None}

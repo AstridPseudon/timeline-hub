@@ -1,0 +1,43 @@
+{
+  "outcome": "PASS",
+  "commands": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python ops-d131/test_reserve.py",
+      "result": "PASS",
+      "summary": "Ran 5 tests in 0.116s; OK"
+    },
+    {
+      "command": "/home/user/work/venv-agent/bin/ruff check --no-cache ops-d131/bench_store.py ops-d131/test_reserve.py",
+      "result": "PASS",
+      "summary": "All checks passed!"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -c 'compile both candidate files in memory'",
+      "result": "PASS",
+      "summary": "in-memory compile: OK"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS",
+      "summary": "No whitespace errors"
+    }
+  ],
+  "typechecker": {
+    "result": "NOT_APPLICABLE",
+    "reason": "Private stdlib-only Python kit; no qualified mypy/pyright gate applies to this composition task."
+  },
+  "hash_validation": {
+    "live_preimage_before": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "live_preimage_after": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "candidate_source": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "candidate_tests": "2ef195185e61684cad446e93931aba06678e1b4613c9484f5c38b0bba238ef08"
+  },
+  "scope_controls": {
+    "full_suite": "NOT RUN per task",
+    "browser_live_socket_network": "NOT RUN",
+    "install_build_store_init_registration_reissue": "NOT RUN",
+    "swap_recovery_tests": "NOT RUN",
+    "permission_changes": "NONE",
+    "worktree_status": "clean; no review edits"
+  }
+}

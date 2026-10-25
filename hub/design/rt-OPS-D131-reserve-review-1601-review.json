@@ -1,0 +1,67 @@
+{
+  "task": "OPS D131 independent review",
+  "outcome": "PASS",
+  "candidate": {
+    "branch": "tl/rt-OPS-D131-kind-reserve-1558",
+    "commit": "4ec5b05960af6008542037f74e757b02ca548bcf",
+    "review_base": "tl/rt-OPS-D131-kind-reserve-1558",
+    "review_worktree_branch": "tl/rt-OPS-D131-reserve-review-1601",
+    "files": [
+      {
+        "path": "ops-d131/bench_store.py",
+        "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2"
+      },
+      {
+        "path": "ops-d131/test_reserve.py",
+        "sha256": "2ef195185e61684cad446e93931aba06678e1b4613c9484f5c38b0bba238ef08"
+      }
+    ]
+  },
+  "live_preimage": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+    "expected_sha256": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "sha256_before": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "sha256_after": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "candidate_equivalence": "Exact installed bytes except one reserve-selection expression in Store.ensure at live line 660 / candidate line 660; no other diff hunks."
+  },
+  "change_review": {
+    "child_reserve_bytes": 5905580032,
+    "child_reserve": "5.5 GiB",
+    "runtime_reserve_bytes": 8589934592,
+    "runtime_reserve": "8 GiB",
+    "measured_lower_bound_formula": "4,000,000,000 + 2 * 740,000,000 = 5,480,000,000 bytes",
+    "arithmetic_note": "5905580032 is a conservative 5.5 GiB threshold and is greater than the lower measured formula 5,480,000,000; it is not arithmetically equal to that formula.",
+    "trust_ownership_hash_registration_retention": "unchanged by exact source comparison",
+    "component_acceptance": "unchanged; key_for validation remains exact and unknown kinds remain refused",
+    "reuse": "unchanged; existing entry reuse path remains intact",
+    "wire_or_contract": "unchanged; no C0/API/wire files touched"
+  },
+  "production_callers": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "lines": "215-226, 566-568",
+      "proof": "imports the helper and calls store.ensure('child', identity, registration, build, verify, seal=seal, ...)",
+      "sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime",
+      "lines": "359-372, 396",
+      "proof": "imports the helper and calls store.ensure('runtime', {'remotion_tree': tree}, registration, build, verify, seal=seal)",
+      "sha256": "873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149"
+    }
+  ],
+  "tests_reviewed": {
+    "all_new_tests_read": true,
+    "real_store_ensure": true,
+    "child_boundary_below_equal_above": true,
+    "runtime_boundary_below_equal_8_gib": true,
+    "six_point_one_gb_child_admits": true,
+    "six_point_one_gb_runtime_refuses": true,
+    "rejected_admission_skips_builder_and_registration": true,
+    "reuse_unchanged": true,
+    "unknown_kind_refused": true,
+    "tiny_owned_private_store": true
+  },
+  "findings": [],
+  "install_readiness": "ready for normal publication of the exact candidate source; no live install, build, store initialization, registration, reissue, recovery, permission change, or production run performed"
+}

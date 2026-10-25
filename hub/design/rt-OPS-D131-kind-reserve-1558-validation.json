@@ -1,0 +1,44 @@
+{
+  "task": "OPS D131",
+  "result": "pass",
+  "commands": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python ops-d131/test_reserve.py",
+      "result": "PASS: 5 tests, 0 failures, 0 errors"
+    },
+    {
+      "command": "/home/user/work/venv-agent/bin/ruff check --no-cache ops-d131/bench_store.py ops-d131/test_reserve.py",
+      "result": "PASS: All checks passed"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -c compile both candidate files in memory",
+      "result": "PASS: no syntax or compile errors"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS: no output"
+    },
+    {
+      "command": "unified diff against required live preimage",
+      "result": "PASS: only Store.ensure reserve selection differs"
+    }
+  ],
+  "coverage": [
+    "child below, equal, and above 5905580032 bytes",
+    "runtime below and equal 8589934592 bytes",
+    "6100000000 bytes admits child and refuses runtime",
+    "rejected admission invokes neither builder nor registration and leaves index empty",
+    "same-key reuse retains reused=True and does not rebuild",
+    "unknown component remains Refused before admission"
+  ],
+  "typing": {
+    "mypy": "not applicable: composition candidate is stdlib Python with no qualified mypy lane",
+    "pyright": "not applicable: composition candidate is stdlib Python with no qualified pyright lane",
+    "baseline_comparison": "not run because no qualified checker applies"
+  },
+  "not_run_by_instruction": [
+    "full/browser/live-socket/originals/network/server tests",
+    "real build, store initialization outside private test stores, provisioning, install, cleanup, registration, reissue",
+    "SWAP/WAL/recovery tests and host-tool invocation"
+  ]
+}

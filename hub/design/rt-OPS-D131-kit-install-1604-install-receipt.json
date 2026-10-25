@@ -1,0 +1,48 @@
+{
+  "task": "OPS D131 exact reviewed kit installation",
+  "result": "PASS",
+  "review": {
+    "worker": "rt-OPS-D131-reserve-review-1601",
+    "outcome": "PASS",
+    "author_commit": "4ec5b05960af6008542037f74e757b02ca548bcf"
+  },
+  "candidate": {
+    "source": "ops-d131/bench_store.py",
+    "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "tests": "ops-d131/test_reserve.py",
+    "tests_sha256": "2ef195185e61684cad446e93931aba06678e1b4613c9484f5c38b0bba238ef08"
+  },
+  "live": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+    "cas_preimage_sha256": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "installed_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "original_mode": "0755",
+    "installed_mode": "0755",
+    "backup": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/bench_store.py.20261025T160549Z.bak",
+    "backup_sha256": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495"
+  },
+  "replacement": {
+    "method": "CAS-guarded backup followed by same-directory atomic replacement",
+    "source_equal_candidate": true,
+    "installed_equal_candidate": true,
+    "semantic_edits": false,
+    "permission_changes": false
+  },
+  "checks": {
+    "candidate_tests": "PASS: 5 tests",
+    "installed_live_tests": "PASS: 5 tests via importlib injection; reviewed test body unmodified",
+    "ruff": "PASS: /home/user/work/venv-agent/bin/ruff check --no-cache candidate, tests, installed module",
+    "in_memory_compile": "PASS: candidate, tests, and installed module",
+    "git_diff_check": "PASS",
+    "caller_bytes": "PASS: make-child-venv and make-runtime unchanged",
+    "full_browser_live_socket_network_build_recovery_permission_tests": "NOT RUN per task"
+  },
+  "untouched": [
+    "make-child-venv",
+    "make-runtime",
+    "claude-perms",
+    "D130 WAL/SWAP work",
+    "C0 wire contract",
+    "ownership, hash, registration, retention, and reuse logic"
+  ]
+}

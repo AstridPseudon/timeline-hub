@@ -1,0 +1,43 @@
+{
+  "task": "OPS D131",
+  "base": "composition tl/integration",
+  "allowed_files": [
+    "ops-d131/bench_store.py",
+    "ops-d131/test_reserve.py"
+  ],
+  "live_preimage": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+    "sha256_before": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "sha256_after": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495"
+  },
+  "candidate": {
+    "path": "ops-d131/bench_store.py",
+    "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2"
+  },
+  "source_delta": {
+    "location": "Store.ensure reserve gate, candidate line 661",
+    "change": "child selects 5905580032 bytes; all other validated components retain self.RESERVE_BYTES",
+    "live_to_candidate": "one added reserve assignment and the existing check now compares against reserve",
+    "ownership_hash_registration": "unchanged"
+  },
+  "thresholds": {
+    "child_bytes": 5905580032,
+    "child_units": "5.5 GiB = 5.5 * 1024^3 bytes",
+    "child_policy": "at least 4.0 GB plus twice measured largest 740 MB",
+    "runtime_bytes": 8589934592,
+    "runtime_units": "8 GiB = 8 * 1024^3 bytes",
+    "cross_kind_probe": "6.1 GB decimal = 6100000000 bytes"
+  },
+  "production_callers": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "line": 566,
+      "call": "store.ensure('child', identity, registration, build, verify, seal=seal, ...)"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime",
+      "line": 396,
+      "call": "store.ensure('runtime', {'remotion_tree': tree}, registration, build, verify, seal=seal)"
+    }
+  ]
+}
