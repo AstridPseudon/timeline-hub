@@ -1,0 +1,45 @@
+{
+  "task": "D115 PARAM independent READONLY wholepath",
+  "result": "unproved_limit_product_producer_verifier_seam",
+  "candidate": {
+    "commit": "3352791b974dfb9da11eb4399f4f7071b63798b2",
+    "test_sha256": "6ee366ee0e0631b9b9708da6cb6a21b4042eb1ed5f8933139dd6914b5598f72c",
+    "isolated_param": "32/32",
+    "accepted_staged_cluster": "16/16",
+    "module": "92/95",
+    "neighbors": "40/43",
+    "qualification": "rejected_only_staged_record_and_command_equality"
+  },
+  "old_current": {
+    "old_test_sha256": "eeb87d727f6b0f194fd1bbbe74f7b7023c02686520bf29d0822d67fe6a1507d9",
+    "current_test_sha256": "eeb87d727f6b0f194fd1bbbe74f7b7023c02686520bf29d0822d67fe6a1507d9",
+    "d108_exact_failures": 16,
+    "failure_location": "tests/sdk/test_selected_param_neutral_stage.py:219",
+    "failure_message": "selected PARAM authority is unavailable",
+    "failure_before_damage": true
+  },
+  "correct_authority": {
+    "accepted": "durable authenticated accepted entry record, through accepted head, staged empty, input boundary from entry.previous",
+    "staged": "plan.records[0] against predecessor input head",
+    "d82": "if active, validate both exact staged and durable recorded forms; do not substitute one for the other",
+    "mutations": 16
+  },
+  "product_seam": {
+    "agent_caller": "astrid/sdk/timeline/commit.py:1423-1444",
+    "prepared_records": "astrid/sdk/timeline/_commit_preview.py:7-22",
+    "authority_boundary": "astrid/sdk/timeline/_selected_param_authority.py:106-143,219",
+    "runtime_capture": "runtime_protocol/timeline_commit_auth.py:2385-2547",
+    "runtime_accept": "runtime_protocol/timeline_commit_store.py:1797-1880",
+    "runtime_replay": "runtime_protocol/timeline_commit_store.py:805-835",
+    "transition": "input binding uses predecessor closure and phase=input; durable output is canonical accepted revision"
+  },
+  "verification": {
+    "json_parse": "passed",
+    "xml_parse": "passed for retained D115 XML evidence",
+    "in_memory_ast_compile": "passed for six reviewed Agent/Runtime files",
+    "diff_check": "passed candidate diff and clean Composition worktree",
+    "tests_type_lint": "not run; readonly task explicitly forbids product/test changes and requests N/A"
+  },
+  "artifact_limit": "No complete raw accepted-record blob was retained; exact binding values and absent hash are not fabricated.",
+  "next_step": "Owner-side authenticated accepted-record producer/verifier trace and repair, then D82 two-form test assertion."
+}
