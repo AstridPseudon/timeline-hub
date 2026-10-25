@@ -378,6 +378,9 @@ test('D73 --submit queues one preflight, waits it, then one normal request with 
   const artifactPath = path.join(f.base, 'submit-plan.json');
   const original = Buffer.from('app existing-suite existing-command\n# preserve this comment\n');
   writeFileSync(registryPath, original);
+  writeFileSync(path.join(f.homes.agent, 'agent.txt'), 'normal home advanced before submit\n');
+  runGit(f.homes.agent, 'add', '.');
+  runGit(f.homes.agent, 'commit', '-qm', 'advance mutable normal home');
   const io = submitIo(f);
   const order = [];
   const env = { ...f.env, D66_SUBMIT_SUITE: 'd73-submit-fixture', D66_OUTPUT_DIR: f.base };
@@ -387,6 +390,9 @@ test('D73 --submit queues one preflight, waits it, then one normal request with 
       return io.runCommand(file, args);
     }, runWait: async (args) => { order.push(['wait', ...args]); return io.runWait(args); }, readStatus: io.readStatus };
   const result = await submit('p1', options);
+  assert.deepEqual(result.pins, f.pins, 'an explicit tuple must survive mutable normal-home movement');
+  assert.deepEqual(io.calls.filter((call) => call.type === 'request-checkout').map((call) => call.args.slice(0, 2)),
+    f.roles.map((role) => [role, f.pins[role].head]));
   assert.equal(result.preflight.id, 'd73-submit-fixture-preflight-1');
   assert.equal(result.normal.id, 'd73-submit-fixture-2');
   assert.deepEqual(order.slice(0, 6).map((entry) => entry[0]), ['command', 'command', 'command', 'command', 'command', 'wait']);
@@ -400,6 +406,52 @@ test('D73 --submit queues one preflight, waits it, then one normal request with 
   const beforeRetry = order.length;
   await submit('p1', options);
   assert.equal(order.length, beforeRetry, 'a completed plan must not queue another original');
+});
+
+test('D73 default --submit captures moving normal homes once when no explicit tuple is supplied', async () => {
+  const f = serviceFixture();
+  const registryPath = path.join(f.base, 'suites.conf');
+  writeFileSync(registryPath, 'app existing-suite existing-command\n');
+  const env = { ...f.env, D66_SUBMIT_SUITE: 'd73-submit-default', D66_OUTPUT_DIR: f.base };
+  for (const role of f.roles) {
+    delete env[`D66_${role.toUpperCase()}_SHA`];
+    delete env[`D66_${role.toUpperCase()}_TREE`];
+    delete env[`D66_${role.toUpperCase()}_CHECKOUT`];
+  }
+  const io = submitIo(f);
+  let advanced = false;
+  const runCommand = async (file, args) => {
+    const result = await io.runCommand(file, args);
+    if (!advanced && path.basename(file) === 'request-checkout' && args[0] === 'agent') {
+      advanced = true;
+      writeFileSync(path.join(f.homes.agent, 'agent.txt'), 'normal home advanced during submit\n');
+      runGit(f.homes.agent, 'add', '.');
+      runGit(f.homes.agent, 'commit', '-qm', 'advance mutable normal home during submit');
+    }
+    return result;
+  };
+  const result = await submit('p1', { env, homes: f.homes, appRoot: f.snapshot, receiptRoot: f.receiptRoot,
+    workerRoot: f.workerRoot, checkoutRoot: f.base, registryPath, runCommand, runWait: io.runWait, readStatus: io.readStatus });
+  assert.deepEqual(result.pins, f.pins);
+});
+
+test('D73 incomplete or wrong explicit tuples refuse before any checkout request', async () => {
+  const f = serviceFixture();
+  const registryPath = path.join(f.base, 'suites.conf');
+  writeFileSync(registryPath, 'app existing-suite existing-command\n');
+  const calls = [];
+  const runCommand = async (...args) => { calls.push(args); return { status: 0, stdout: '', stderr: '' }; };
+  const options = { homes: f.homes, appRoot: f.snapshot, receiptRoot: f.receiptRoot, workerRoot: f.workerRoot,
+    checkoutRoot: f.base, registryPath, runCommand, runWait: async () => ({ status: 0, stdout: '', stderr: '' }),
+    readStatus: () => 'pass' };
+
+  const partial = { ...f.env, D66_AGENT_TREE: undefined, D66_OUTPUT_DIR: f.base, D66_SUBMIT_SUITE: 'd73-submit-partial' };
+  await assert.rejects(() => submit('p1', { ...options, env: partial }), /agent tree must be a full 40-character SHA/);
+  assert.equal(calls.length, 0);
+
+  const wrongPin = { ...f.env, D66_RUNTIME_TREE: 'e'.repeat(40), D66_OUTPUT_DIR: f.base, D66_SUBMIT_SUITE: 'd73-submit-wrong-pin' };
+  await assert.rejects(() => submit('p1', { ...options, env: wrongPin }), /does not match its submit-time pin/);
+  assert.equal(calls.length, 0);
 });
 
 test('D73 --submit stops after a refused preflight and never queues the normal body', async () => {
