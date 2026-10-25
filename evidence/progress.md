@@ -1,12 +1,15 @@
 # Progress
 
-- Read PLAN and the required D134 review packet.
-- Read the exact 18455 retained request, summary, status, exit, snapshot, and
-  log; RawXML remains absent/EXACTMISSING as instructed.
-- Read the operator 1909 service/source packet and immutable source controls.
-- Compared Agent `a4e016b6` to bounded `96df3f5b` Git objects without checkout,
-  fetch, merge, or writes outside this worktree.
-- Traced the current launcher exports, host caller, schema binding, registry
-  context, and first shared exception.
-- Preserved REG14, the extra host-bootstrap node, and remaining UNKNOWN scope
-  separately.
+- Read PLAN v2.1 and the exact 1948 subject evidence.
+- Read the retained 1937 classification packet and independently recomputed
+  the 370-ID finite equation and 344/14/12 partition.
+- Parsed the private retained 18455 log without copying raw payloads; checked
+  all 14 REG14 IDs, their failure type, common stack, and phase diagnostics.
+- Compared immutable Agent source objects for current `a4e016b6` and bounded
+  `96df3f5b`; relevant blobs are equal.
+- Traced the actual D73 recipe exports through host bootstrap into the strict
+  Remotion probe and preserved the missing 1345 environment limitation.
+- Confirmed bounded 1345 and pristine 26621 PASS records remain retained only;
+  neither is used to close current REG14 or final custody.
+- No product, test, collection, source, pin, generated, provider, or hub files
+  were changed. No rerun was performed.
