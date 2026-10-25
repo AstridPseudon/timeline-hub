@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import time
 
-WORKER_EVIDENCE = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111a-element-sample-0811/evidence")
+WORKER_EVIDENCE = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111a-scope-return-0827/evidence")
 RUNTIME = Path("/home/user/work/wt/rt-pin-1daca2a3")
 AGENT = Path("/home/user/work/wt/agt-pin-070dfc5e")
 NODE = "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node"
@@ -30,14 +30,15 @@ def test_d111a_whole_request_native_element_sample() -> None:
     WORKER_EVIDENCE.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="d111a-", dir=os.environ.get("TMPDIR")) as temp:
         temp_root = Path(temp)
+        run_id = f"{time.time_ns()}-{os.getpid()}"
+        output = WORKER_EVIDENCE / f"run-{run_id}"
+        output.mkdir(mode=0o700)
         overlay = temp_root / "runtime-overlay"
         overlay.mkdir(mode=0o700)
         (overlay / ".venv").symlink_to(RUNTIME / ".venv", target_is_directory=True)
         (overlay / "runtime_protocol").symlink_to(RUNTIME / "runtime_protocol", target_is_directory=True)
         (overlay / "astrid_runtime_client").symlink_to(RUNTIME / "astrid_runtime_client", target_is_directory=True)
         (overlay / "sitecustomize.py").symlink_to(Path(__file__).with_name("sitecustomize_d111a.py"))
-        output = WORKER_EVIDENCE
-        output.mkdir(mode=0o700, exist_ok=True)
         app_dist = temp_root / "app-dist"
         app_dist.mkdir(mode=0o700)
         (app_dist / "index.html").write_text("<!doctype html><title>D111a direct harness</title>\n", encoding="utf-8")
@@ -53,6 +54,8 @@ def test_d111a_whole_request_native_element_sample() -> None:
             "D111_LOG_DIR": str(output),
             "D111A_PROFILE_ROOT": str(output),
             "D111A_REQUEST_MARKER": str(marker),
+            "D111A_RUN_ID": run_id,
+            "D111A_SOURCE": "tl/rt-D111a-scope-return-0827",
             "D111A_PROFILE_ENABLED": "1",
             "D111A_SAMPLING_INTERVAL": "0.02",
             "ASTRID_RUNTIME_CHECKOUT": str(overlay),
@@ -67,25 +70,47 @@ def test_d111a_whole_request_native_element_sample() -> None:
         started = time.monotonic()
         completed = subprocess.run(command, cwd="/home/user/work/app", env=env, capture_output=True, text=True, timeout=480)
         wall_ms = (time.monotonic() - started) * 1000
-        (WORKER_EVIDENCE / "d111a-launcher.stdout.log").write_text(completed.stdout, encoding="utf-8")
-        (WORKER_EVIDENCE / "d111a-launcher.stderr.log").write_text(completed.stderr, encoding="utf-8")
-        for path in (WORKER_EVIDENCE / "d111a-launcher.stdout.log", WORKER_EVIDENCE / "d111a-launcher.stderr.log"):
+        (output / "d111a-launcher.stdout.log").write_text(completed.stdout, encoding="utf-8")
+        (output / "d111a-launcher.stderr.log").write_text(completed.stderr, encoding="utf-8")
+        for path in (output / "d111a-launcher.stdout.log", output / "d111a-launcher.stderr.log"):
             os.chmod(path, 0o600)
         result_path = output / "result-d111a-native-element.json"
-        assert completed.returncode == 0, f"launcher failed; see {WORKER_EVIDENCE / 'd111a-launcher.stderr.log'}"
+        assert completed.returncode == 0, f"launcher failed; see {output / 'd111a-launcher.stderr.log'}"
         assert result_path.exists(), "native launcher did not produce a result"
         result = json.loads(result_path.read_text(encoding="utf-8"))
+        assert result["run_id"] == run_id
         assert result["positive_control"]["status"] == 401
+        assert result["positive_control"]["tag"] == f"d111a-refusal-{run_id}"
+        assert result["runtime_stderr_capture"] == "direct"
+        assert result["sizes"]["history_items"] >= 1
+        assert result["sizes"]["canonical_document_bytes"] > 0
         assert result["reply"]["status"] == 200
         assert result["reply"]["receipt_present"] is True
         assert result["request"]["pid"] == result["runtime_pid"]
         assert result["request"]["elapsed_ms"] > 0
         assert result["profiles"], "runtime profiler did not write a profile"
         assert all(item["sampler_errors"] == [] for item in result["profiles"])
-        sampled_profile = next((item for item in result["profiles"] if item["sample_total"] > 0), None)
-        assert sampled_profile is not None
-        assert sampled_profile["top_inclusive_frames"]
-        assert sampled_profile["lost_samples"] >= 0
+        sampled_profile = next((item for item in result["profiles"] if any(request["sample_total"] > 0 for request in item["requests"])), None)
+        assert sampled_profile is not None, "runtime profiler did not sample the native request"
+        assert sampled_profile["run_id"] == run_id
+        assert sampled_profile["request_count"] == 1
+        assert len(sampled_profile["requests"]) == 1
+        measured = sampled_profile["requests"][0]
+        assert measured["complete"] is True
+        assert measured["boundary"] == "server._dispatch"
+        assert measured["pid"] == result["runtime_pid"]
+        assert measured["runtime_end_ns"] > measured["runtime_start_ns"]
+        assert measured["runtime_elapsed_ms"] > 0
+        assert measured["sample_total"] == len(measured["sample_offsets_ms"])
+        assert measured["sample_total"] > 0
+        assert measured["sample_wall_share"] <= 1.0
+        assert measured["lost_samples"] >= 0
+        assert measured["observer_cpu_ms"] >= 0
+        assert measured["top_inclusive_frames"]
+        assert "self timings exclude only other named diagnostic functions" in sampled_profile["timing_definition"]
+        assert "timeline_commit_port.py:_read" in measured["timing"]
+        assert "timeline_commit_validation.py:finite_json" in measured["timing"]
+        assert "<stdlib>/copy.py:deepcopy" in measured["timing"]
         checksums = {
             "runtime_head": git_value(RUNTIME, "rev-parse", "HEAD"),
             "runtime_tree": git_value(RUNTIME, "rev-parse", "HEAD^{tree}"),
@@ -99,8 +124,10 @@ def test_d111a_whole_request_native_element_sample() -> None:
             "profiler_sha256": digest(Path(__file__).with_name("sitecustomize_d111a.py")),
             "launcher_wall_ms": wall_ms,
         }
-        (WORKER_EVIDENCE / "d111a-source-hashes.json").write_text(json.dumps(checksums, indent=2) + "\n", encoding="utf-8")
-        os.chmod(WORKER_EVIDENCE / "d111a-source-hashes.json", 0o600)
+        checksums["run_id"] = run_id
+        checksums["evidence_dir"] = str(output)
+        (output / "d111a-source-hashes.json").write_text(json.dumps(checksums, indent=2) + "\n", encoding="utf-8")
+        os.chmod(output / "d111a-source-hashes.json", 0o600)
         junit = f'''<?xml version="1.0" encoding="utf-8"?>\n<testsuite name="D111a native element" tests="1" failures="0" time="{wall_ms / 1000:.6f}"><testcase classname="diagnostics.test_d111a_native_sample" name="whole_request_native_element" time="{wall_ms / 1000:.6f}" /></testsuite>\n'''
-        (WORKER_EVIDENCE / "d111a-native-sample.junit.xml").write_text(junit, encoding="utf-8")
-        os.chmod(WORKER_EVIDENCE / "d111a-native-sample.junit.xml", 0o600)
+        (output / "d111a-native-sample.junit.xml").write_text(junit, encoding="utf-8")
+        os.chmod(output / "d111a-native-sample.junit.xml", 0o600)

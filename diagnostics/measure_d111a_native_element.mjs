@@ -6,7 +6,8 @@ const runtime = process.env.D111_REAL_RUNTIME;
 const profile = process.env.D111_PROFILE;
 const logDir = process.env.D111_LOG_DIR;
 const marker = process.env.D111A_REQUEST_MARKER;
-if (!runtime || !profile || !logDir || !marker) throw new Error('D111A launcher inputs are required');
+const runId = process.env.D111A_RUN_ID;
+if (!runtime || !profile || !logDir || !marker || !runId) throw new Error('D111A launcher inputs are required');
 
 const fail = (message, extra = {}) => { throw new Error(`${message}: ${JSON.stringify(extra)}`); };
 const object = (value, label) => {
@@ -93,13 +94,14 @@ function elementRequest(harness, seed, document, head) {
 }
 
 const harness = await startDirectHarness({ deferTimelineInitialization: true });
-const result = { profile, runtime, source: { app_harness: 'e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3', runtime, agent: process.env.ASTRID_CHECKOUT }, phases: [] };
+const result = { run_id: runId, profile, runtime, source: { diagnostic: 'tl/rt-D111a-scope-return-0827', app_harness: 'e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3', runtime, agent: process.env.ASTRID_CHECKOUT }, phases: [] };
 try {
   result.phases.push('startup-ready');
   harness.withdrawProductCredential();
   try {
-    const response = await fetch(`${harness.runtimeUrl}/v1/projects/unknown`);
-    result.positive_control = { kind: 'product-credential-withdrawal', status: response.status };
+    const refusalTag = `d111a-refusal-${runId}`;
+    const response = await fetch(`${harness.runtimeUrl}/v1/projects/unknown`, { headers: { 'X-D111A-Refusal-Tag': refusalTag } });
+    result.positive_control = { kind: 'product-credential-withdrawal', tag: refusalTag, status: response.status, request_id: response.headers.get('X-Request-ID') };
   } finally { harness.restoreProductCredential(); }
   result.phases.push('tagged-refusal-control');
   const seed = await harness.seedThreeProducts(15, 'native-none');
@@ -109,6 +111,16 @@ try {
   const history = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
   if (history.status !== 200) fail('history read failed', { status: history.status });
   const document = await canonicalAt(harness, seed, history.body.head.revision_id);
+  const { rows } = sourceClips(document);
+  result.sizes = {
+    history_items: Array.isArray(history.body.items) ? history.body.items.length : null,
+    history_bytes: Buffer.byteLength(JSON.stringify(history.body)),
+    canonical_document_bytes: Buffer.byteLength(JSON.stringify(document)),
+    parent_payload_bytes: Buffer.byteLength(JSON.stringify(document.parent_revision.payload)),
+    parent_clip_count: rows.length,
+    shot_revision_count: Array.isArray(document.shot_revisions) ? document.shot_revisions.length : null,
+    internal_timeline_revision_count: Array.isArray(document.internal_timeline_revisions) ? document.internal_timeline_revisions.length : null,
+  };
   const request = elementRequest(harness, seed, document, history.body.head);
   const requestText = JSON.stringify(request.body);
   const requestHash = createHash('sha256').update(requestText).digest('hex');
@@ -145,15 +157,18 @@ try {
 }
 result.lifecycle = harness.lifecycleObservation;
 result.runtime_logs = { stdout: `${logDir}/runtime.stdout.log`, stderr: `${logDir}/runtime.stderr.log` };
-try { result.runtime_stderr_sha256 = createHash('sha256').update(readFileSync(`${logDir}/runtime.stderr.log`)).digest('hex'); } catch { result.runtime_stderr_sha256 = null; }
+try {
+  const stderr = readFileSync(`${logDir}/runtime.stderr.log`);
+  result.runtime_stderr_sha256 = createHash('sha256').update(stderr).digest('hex');
+  result.runtime_stderr_bytes = stderr.byteLength;
+  result.runtime_stderr_capture = 'direct';
+} catch { result.runtime_stderr_sha256 = null; result.runtime_stderr_bytes = null; result.runtime_stderr_capture = 'missing'; }
 const profiles = [];
 for (const name of readdirSync(logDir).filter((item) => item.startsWith('profile-') && item.endsWith('.json'))) {
   const item = JSON.parse(readFileSync(`${logDir}/${name}`, 'utf8'));
-  profiles.push({ file: name, pid: item.pid, process_identity: item.process_identity, sampling_interval_ms: item.sampling_interval_ms,
-    lost_samples: item.lost_samples, observer_cpu_ms: item.observer_cpu_ms, sample_total: item.sample_total,
-    top_inclusive_frames: item.top_inclusive_frames, function_counts: item.function_counts,
-    function_inclusive_cpu_ns: item.function_inclusive_cpu_ns, requests: item.requests,
-    inclusive_overlap: item.inclusive_overlap, sampler_errors: item.sampler_errors });
+  profiles.push({ file: name, run_id: item.run_id, source: item.source, pid: item.pid, process_identity: item.process_identity,
+    sampling_interval_ms: item.sampling_interval_ms, request_count: item.request_count, requests: item.requests,
+    inclusive_overlap: item.inclusive_overlap, timing_definition: item.timing_definition, observer_scope: item.observer_scope, sampler_errors: item.sampler_errors });
 }
 result.profiles = profiles;
 mkdirSync(logDir, { recursive: true });
