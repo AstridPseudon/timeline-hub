@@ -171,7 +171,7 @@ def test_http_original_sdk_move_publish_disjoint_rebase_reload_undo(runtime):
     assert body['base_publication_id'] == base['publication_id']
     assert body['commands'] == captured == data['commands']
     assert body['rationale'] == data['rationale'] == accepted['message'] == 'Make room for the opening'
-    assert data['status'] == 'rebased'
+    assert data['status'] == 'merged'
     runtime.restart()
     loaded = attach(runtime)
     assert loaded.clip(REF).start == tl.clip(REF).start

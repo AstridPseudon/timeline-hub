@@ -243,12 +243,17 @@ def test_replay_and_inverse_retain_read_order_and_aba_guards(damage):
 @pytest.mark.integration
 def test_prepared_video_public_preview_accept_retry_undo_and_no_write(tmp_path, monkeypatch):
     """One new managed-video body, using the exact reviewed Runtime tree."""
-    from tests.helpers.runtime import use_runtime
+    from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 
-    root = use_runtime()
-    assert subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip() == RUNTIME
+    expected_runtime_source = '6634a17f3ffd885567ba3c91b6c7a560df7375a4'
+    expected_runtime_tree = '47b376717ce7a919a697c62133de3e74dc9f6d3a'
+    runtime_pin = vendored_runtime_commit()
+    assert runtime_pin == expected_runtime_source
+    root = use_runtime(commit=runtime_pin)
+    assert subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip() == (
+        expected_runtime_source)
     assert subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD^{tree}'], text=True).strip() == (
-        '6047ac3033c3594b8f83db3afd8bb2c47cafa6d6')
+        expected_runtime_tree)
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.timeline_commit_validation import validate_commit_value
 
