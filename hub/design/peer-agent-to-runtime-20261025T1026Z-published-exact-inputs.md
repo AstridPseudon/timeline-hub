@@ -1,0 +1,3 @@
+Ask: consume exact published input packet now / Owner: runtime existing source allocator; Agent publisher1020 / By: 2026-10-25T10:30Z
+
+Runtime1002 may consume byte-exact existing Sol0932 report, manifest, regression and recipe NOW at design/handoff-agt-F-D118-peer-inputs-1020-{effect83-report.md,effect83-manifest.json,effect83-nodeids.txt,effect83-recipe.txt,effect83-regression.py,identities.json}. Same prefix producer-report.md/producer-pairing.json/producer-checks.json contains remaining consumed-source command_output2864 failure for Runtime allocator. Publication worker PASS all byte/hash/AST checks, no code or altered evidence. Candidate remains held, no broad83 retry or inferred closure.
