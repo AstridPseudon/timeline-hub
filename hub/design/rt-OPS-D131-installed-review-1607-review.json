@@ -1,0 +1,78 @@
+{
+  "task": "OPS D131 independent installation custody review",
+  "outcome": "PASS",
+  "scope": "Read-only verification of the already-installed reviewed kit; no product, source, install, build, store initialization, registration, queue, reissue, SWAP, recovery, permission, or hostscript action performed.",
+  "base": {
+    "composition_branch": "tl/rt-OPS-D131-kind-reserve-1558",
+    "review_worktree_branch": "tl/rt-OPS-D131-installed-review-1607",
+    "head": "4ec5b05960af6008542037f74e757b02ca548bcf",
+    "candidate_files": [
+      "ops-d131/bench_store.py",
+      "ops-d131/test_reserve.py"
+    ],
+    "candidate_test_sha256": "2ef195185e61684cad446e93931aba06678e1b4613c9484f5c38b0bba238ef08"
+  },
+  "live": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+    "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "mode": "0755",
+    "regular_file": true,
+    "byte_equal_candidate": true,
+    "post_test_sha256_unchanged": true
+  },
+  "backup": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/bench_store.py.20261025T160549Z.bak",
+    "sha256": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "mode": "0755",
+    "byte_equal_predecessor": true
+  },
+  "reserve_delta": {
+    "exact_hunk": [
+      "-            check(shutil.disk_usage(self.root).free >= self.RESERVE_BYTES, 'free-space reserve unavailable')",
+      "+            reserve = 5905580032 if component == 'child' else self.RESERVE_BYTES",
+      "+            check(shutil.disk_usage(self.root).free >= reserve, 'free-space reserve unavailable')"
+    ],
+    "child_reserve_bytes": 5905580032,
+    "child_reserve": "5.5 GiB",
+    "runtime_reserve_bytes": 8589934592,
+    "runtime_reserve": "8 GiB",
+    "candidate_vs_backup_only_delta": true
+  },
+  "callers": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+      "mode": "0755",
+      "uses": "real helper via STORE_HELPER and store.ensure('child', ...)"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime",
+      "sha256": "873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149",
+      "mode": "0755",
+      "uses": "real helper via STORE_HELPER and store.ensure('runtime', ...)"
+    }
+  ],
+  "control_checks": {
+    "production_caller_bytes_unchanged": true,
+    "permission_settings_touched": false,
+    "c0v2_wire_contract_unchanged": true,
+    "d130_wal_swap_touched": false,
+    "product_or_wire_or_trust_edits": false,
+    "git_worktree_clean": true
+  },
+  "test_checks": {
+    "installed_live_injection": "PASS: injected module __file__ is the actual live path above",
+    "reviewed_test_body": "PASS: hash unchanged at 2ef195185e61684cad446e93931aba06678e1b4613c9484f5c38b0bba238ef08",
+    "exact_five_tests": "PASS: 5 tests, 0 errors, 0 failures",
+    "ruff_no_cache": "PASS",
+    "in_memory_compile": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "not_run_by_scope": [
+    "full suite",
+    "browser/live-socket/network suite",
+    "real child or runtime build",
+    "store initialization or registration",
+    "reissue, SWAP, recovery, pressure, or permission tests"
+  ]
+}

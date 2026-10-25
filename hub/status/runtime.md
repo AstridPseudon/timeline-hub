@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T16:07:56Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 14 | status age 3m -->
-# runtime board, 2026-10-25T16:02:14Z
+<!-- main | 2026-10-25T16:12:37Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
+# runtime board, 2026-10-25T16:10:17Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -417,7 +417,7 @@
 | D107-current-two | Preserve current replacement journeys | Luna / Luna | Protected purpose and source seam | review | Author1530; reviewer1550 | Protected purpose PASS131assert/5raises. Exacttwo still transcriptpinFAIL; ownershipUNKNOWN. Normal source intake requested, behavior open. | Independent1550 purposePASS | b4b380 held |
 | OPS-census-layout | Preserve reviewed retention option | Luna / Luna | Owner drops Farm core | gated:D128-dropped | Author1535; review1540; install1544 | Installed1243cb6c with controls PASS. Retained as ordinary kit improvement; no diagnostic build or further cycle. | Independent1540 PASS | Installed1243cb6c |
 
-| OPS-D131 | Size reserve by build kind | Luna | Recorded D131 | doing | Author1558; review1601; install1604 | Independent PASS five tests and exact one-hunk source. Exact CAS installation requested; no child build or core body. | Independent1601 PASS | 4ec5b0596 held kit |
+| OPS-D131 | Size reserve by build kind | Luna | Recorded D131 | merged | Author1558; review1601; install1604 | Installed 123bb93c mode0755. Actual live five tests PASS; caller hashes exact. Agent normal receipt requested. | Independent1601 and1607 PASS | 4ec5b0596 / installed123bb |
 
 Runtime producer: RELEASED5e9ad. Normalab1e includes independently qualified step, inverse and redo source plus reviewed safe diagnostic correlation. Home1550 exact genuine3/native2 PASS, all1501Agent package blobs exact. Qualified bounded release; no broader original-four closure.
 core open:425 on immutable30693;450 bad and REG14 retained. Latest recorded owner16:00 DROPS Farm core; Agent runs local agent-core-full with restored6.1GB. No historical tuple retarget.
@@ -430,16 +430,17 @@ Blockers: Final render — Farm owns soleD77 genuine ordinary installer stage an
 Blockers: D69 — normalXML107 applicability/full-core and genuine installed render90 remain. No whole-auditPASS.
 Blockers: Final cut — current core, REG0, fullP2, D69, finaltupleP1–P5 and genuine installed render remain. No build or ZIP.
 
-Next ready: D131 exact kit installation1604 then normal publication and Agent receipt. IntegratedR2 receipt1550 PASS and published. ProtectedD107 purposePASS; Agent source intake requested, actual behavior remains failed. SWAP recovery and related acceptance held on actual safety refusal. No ready critical source author remains unassigned.
+Next ready: Agent receives installed D131 through normal kit sync, then ordinary exact child/core. Installed custody1607 PASS; Agent receiving hash pending. IntegratedR2 receipt1550 PASS and published. ProtectedD107 purposePASS; Agent source intake requested, actual behavior remains failed. SWAP recovery and related acceptance held on actual safety refusal. No ready critical source author remains unassigned.
 Ready for host filing: Agent tl/rt-D107-current-baseline-1530 b4b3805da5, source-only purpose PASS1550 over recorded20177; actual home owns freshness/import. Two behaviors remain failed. Priora1 donor superseded by16bb.
 Venues: No Main heavy body. Agent local core authorized; Farm keepsD77 only. All prior Farm0b586/42aad,9ea/369,a4e016/5e9ad captures immutable and zero corebody.
 Delivery: Private100Python+TS/41matrix qualified; D1235bd01/b0ffSOURCE_PASS. Final upstream refresh onlyD59. Wheel,matrix,Windows,installedrender pending.
 Later: R2c81b/D1160643 exactseedSOURCE_PASS. D126 App owns approved paragraph/ZIPline. No small-file Agent writers or D79 until critical gates clear.
 Safety: NewD1271537 refusal held and reported. PriorD88/D111 and retirement denials remain stopped. D106ORCHonly. Four historical retirement targets held; no retry.
-Disk: About5.48GB before D131. No ended clean nonKEEP worktree eligible; five dirty historical trees stay held. Guarded sweep3 removed0; compact packed0 scratch/test directories and gzipped5 old logs; no new target retirement. Prior host-CLEARed pins already recycled; all branch/report/proof evidence retained.
-live1 / cap6; queued0; ready-undispatched0. D131 exact installer1604 requested. Source>=4.6GB/noheavy; ordinaryprovider>=5GB, ongoingstop4GB. Both1550 workers ended successfully; no ready critical row unassigned. SWAP heldD130; element awaits operation evidence.
-INBOX consumed through1310252 bytes. Updated 2026-10-25T15:55:28Z.
+Disk: About5.47GB after D131. No ended clean nonKEEP worktree eligible; five dirty historical trees stay held. This pass guarded sweep3 removed0; compact packed0 scratch/test directories and gzipped1 old log; no new target retirement. Prior host-CLEARed pins already recycled; all branch/report/proof evidence retained.
+live0 / cap6; queued0; ready-undispatched0. D131 installation and independent readback PASS; Agent exact receipt pending. Source>=4.6GB/noheavy; ordinaryprovider>=5GB, ongoingstop4GB. Both1550 workers ended successfully; no ready critical row unassigned. SWAP heldD130; element awaits operation evidence.
+INBOX consumed through1312067 bytes. Updated 2026-10-25T16:08:32Z.
 
-D131: Recorded owner decision dispatched to Luna1558. Child-only threshold is conservative5.5GiB; runtime8GiB and every ownership/hash/registration check stay exact. No Farm census or SWAP hold work resumed. Updated 2026-10-25T15:58:57Z.
 
 D77 follow-up1601: Farm has exact flat recipe, patches, guard PASS18 and custody PASS1300. Requested named ordinary preparation or first concrete missing prerequisite; no main phase or Farm core resumed. 2026-10-25T16:02:14Z.
+D131 installed: Exact reviewed123bb93c is canonical bin0755; backup7d587 retained. Five live ensure tests PASS, no caller/trust deltas. Flat source/tests/reviews/receipt and ready note1607 published; Agent has no Runtime source wait. 2026-10-25T16:08:32Z.
+D131 publication: Independent installed custody1607 PASS, five live tests. Main canonical kit and hub/kit copy both exact123bb93c0755. Agent receiving actual local hash is pending; no further Runtime author or install owed. 2026-10-25T16:10:17Z.
