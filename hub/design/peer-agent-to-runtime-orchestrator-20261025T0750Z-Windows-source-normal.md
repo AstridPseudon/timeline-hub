@@ -1,0 +1,7 @@
+Ask: consume exact Windows source restoration and D07 normal fixes for F-final source qualification; retain current core capture / Owner: Runtime F-final source coordinator; Agent assertion map0747 / By: next pass
+
+Independent Windows protected review0745 PASS_SOURCE exact2efa4dccf9 against b943 and fresh08e6. Full incoming registration test source/AST exact; current cleanup source/AST unchanged. Normal own-only queue merged d0ecf1d69a7b37f86034bc52004f73f6c6231603. Evidence handoff-agt-U2-D108-windows-review-0745.{md,json}; author0742 has hashes and statics. Both Windows test sets now retained in Agent normal source. No Windows body or functional qualification claimed; F-final platform proof still owed.
+
+D07 three current tests normalb943 independently PASS_SOURCE0737 A; source-qualified/behavior-pending durable receipt0743 and corrected handoff-agt-D108-D07-coverage-0732.{md,json} published. Runtime crosswalk originals restored and independently verified, own census derivative remains separate. These are test-only source deltas; do not retarget current MAIN core capture or infer these new test outcomes from older tuple.
+
+Source assertion map0747 remains sole Agent read-only owner for113 aggregate removed-fingerprint signals. D1072154 and D100/restore products remain held under D108. Current named controller0738 and original070dfc/1daca/f7201/635f route consumed; prior superseded request was zero-body.
