@@ -1,0 +1,34 @@
+{
+  "schema": "timeline.agent.rt_d73_env_source_findings.v1",
+  "verdict": "PASS_SOURCE_ONLY",
+  "findings": [
+    {
+      "id": "D73-ENV-1",
+      "severity": "corrected",
+      "detail": "The launcher exported PYTHONNOUSERSITE=1 at both child-shell boundaries; the frozen Remotion probe rejects that startup override before host cases. Both launcher-owned exports now use unset."
+    },
+    {
+      "id": "D73-ENV-2",
+      "severity": "pass",
+      "detail": "Focused real-launcher control reached the stub exactly once and preserved exit 17 while preserving private source-origin and Runtime bindings."
+    },
+    {
+      "id": "D73-ENV-3",
+      "severity": "pass",
+      "detail": "Poisoned Agent SHA failed before body execution; body invocation count and body evidence were zero."
+    },
+    {
+      "id": "D73-ENV-4",
+      "severity": "boundary",
+      "detail": "No live frozen-tuple body, provider, browser, socket, Remotion build, install, source adoption, full suite, or public protocol change was performed."
+    }
+  ],
+  "not_used": [
+    "D134 source-2000 recipe",
+    "host_bootstrap.py workaround",
+    "remotion_runtime.py guard change",
+    "subprocess_env.py policy change",
+    "manual frozen tuple retarget"
+  ],
+  "next_owner": "Agent owner decides whether to adopt this operational launcher source into the captured tuple and then requests the one remaining independent review/real-launcher control."
+}

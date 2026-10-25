@@ -1,0 +1,28 @@
+{
+  "task": "rt-OPS-D137-CAS-install-2031",
+  "findings": [
+    {
+      "id": "D137-001",
+      "status": "resolved",
+      "disposition": "Installed reviewed stderr-retention candidate after independent source-security PASS."
+    },
+    {
+      "id": "D137-E2E",
+      "status": "WITHDRAWN",
+      "disposition": "Genuine fixture E2E gate was withdrawn by the D137 decision; result remains NOTRUN and e2e_pass is false."
+    },
+    {
+      "id": "D137-INSTALL",
+      "status": "PASS_INSTALL",
+      "disposition": "One guarded CAS replacement installed the exact candidate, retained the exact preimage backup, and passed target/helper readback."
+    }
+  ],
+  "claims_not_made": [
+    "No production child request was issued.",
+    "No Store was initialized or reused.",
+    "No fixture E2E PASS was claimed.",
+    "No production acceptance was claimed.",
+    "No publication was performed."
+  ],
+  "decision_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D137-CAS-install-2031/evidence/d137-decision.json"
+}

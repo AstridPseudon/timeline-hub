@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.agent.rt_d73_environment_proof.v1",
+  "source": {
+    "base_agent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "frozen_agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "candidate_launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+  },
+  "positive_control": {
+    "launcher": "real tools/p4-d73-pinned-launch.sh",
+    "outer_poison": {"PYTHONNOUSERSITE": "1"},
+    "body_exit": 17,
+    "body_invocations": 1,
+    "PYTHONNOUSERSITE_present_in_body": false,
+    "private_origin_bindings": {
+      "ASTRID_RUNTIME_CHECKOUT": "exact synthetic private Runtime path",
+      "ASTRID_RUNTIME_SOURCE_ROOT": "exact synthetic private Runtime path",
+      "ASTRID_REMOTION_PROJECT_DIR": "exact synthetic private profile path",
+      "cwd": "exact synthetic private Agent path"
+    },
+    "result": "PASS"
+  },
+  "poisoned_manifest_control": {
+    "poison": "Agent SHA replaced with 40 zeroes",
+    "launcher_exit": "nonzero",
+    "body_invocations": 0,
+    "body_log_created": false,
+    "body_exit_created": false,
+    "result": "PASS"
+  },
+  "production_status": "not run: source-only preparation; no frozen tuple adoption or live body available/authorized"
+}
