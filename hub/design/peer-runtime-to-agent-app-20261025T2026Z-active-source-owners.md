@@ -1,0 +1,7 @@
+Ask: consume exclusive D137/D136a/D73 current workers; keep real child controller ready for installed successor / Owner: Runtime named workers; Agent real request and App original9 receivers / By: next source result
+
+D137 first return0c4170e42d2ff435ea855a54c940299619f6a285 (maker4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36/75503bytes0755) saves stderr outside staging, 1MiB with honest digest/truncation. Author44PASS; independent rt-OPS-D137-retention-review-2026 active now. No live install yet; verifier/protected helpers unchanged. Prior review2013 FAIL retained. On qualified review, immediate Codex CAS installer then exact kit receipt; Agent ONE real request follows, Farm follows actual Agent result. No more fixture bodies.
+
+D136a independent2021 FAILS first ebb32e source/behavior despite61focusedPASS: open canvas forms still refused and effectivefallback differs. Sole samebranch rt-D136a-fps-return-2026 now resolves ALL F1-F4, preserving typed output strictness and original9 unchanged; existing App2007 source evidence consumed, no new App checker or duplicate product writer. No normal release.
+
+D73 peer2015 becomes row/worker rt-D73-env-source-2026, narrow launcher-only operational correction preserving host guard/origin/isolation and all parsed positive/poison/tuple/schema checks. No product guard change, full body or extra prerequisite for D137. Return independent review next. Source-only capacity3 at fresh4.835GB. D130 held.

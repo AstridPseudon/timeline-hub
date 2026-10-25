@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T20:25:54Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 3m -->
+<!-- main | 2026-10-25T20:30:33Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 4m -->
 # runtime board, 2026-10-25T20:22:52Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -468,18 +468,20 @@
 | OPS-stale-pins-1948 | Release two unused proof checkouts | Manager route | Host CLEAR and fresh route checks | merged | bin/recycle f7201 and8d2d | Both clean and unused; observed net292MB. Four other referenced targets retained. All source/evidence preserved. | Host1946 CLEAR | No source change |
 
 
-| OPS-D137-stderr | Retain stderr after ordinary rollback | Luna | D137-001 first return | doing | rt-OPS-D137-retention-return-2018 | Review2013 FAIL: Store cleanup deletes staging logs. Exact verifier and42 controls PASS. No install yet. | Independent2013 finding retained | 4932c base |
+| OPS-D137-stderr | Preserve private stderr after rollback | Luna | Focused independent review | review | Return2018; review2026 | Candidate4435d44;44 author controls PASS. External private logs survive cleanup; verifier unchanged. | Prior2013 FAIL retained | 0c4170e held |
 | OPS-D137-install | Install qualified maker through CAS | Luna | Stderr source and independent review | gated:source-review | Reviewed installer1826 | D137 replaces fixture acceptance gate. Preserve CAS, backups and verifier. | Independent review next | Live0857 unchanged |
 | OPS-D137-real-child | Build one genuine Agent child | Agent Luna | Installed received kit | gated:installed-kit | Agent sole receiving venue | ONE a4e016/5e9ad request, then ship-grade core if built. Farm D77 follows Agent result. | Actual result owed | No real request yet |
 | U1-D135-union-review | Review private upstream source union | Luna | Finished1952 two-parent candidate | review | rt-U1-D135-union-review-2006 | Actual0bb3 includes e319 and dbc. Author tests NOTRUN; union proof still owed. | Independent pending | 0bb3bc45c |
 | F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
-| D136a-fps-regression | Restore upstream fps input acceptance | Luna | Exact upstream equivalence review | review | Author2014; independent2021 | BlameAgent6f4baa. Author5+56PASS; fallback30 equivalence and all open forms under review. Original9 unchanged. | Independent pending | ebb32e held |
+| D136a-fps-regression | Preserve every open canvas input | Luna | First return after review FAIL | doing | rt-D136a-fps-return-2026 | Review2021 source/behavior FAIL;61 focusedPASS limited. Full open namespace and fallback30 correction now owned. | Independent next | ebb32e base |
+
+| D73-env | Preserve supported launcher environment | Luna | Agent independent1954/2010 source facts | doing | rt-D73-env-source-2026 | Launcher-only correction; original host guard/origins and D73 controls unchanged. No full body or D137 dependency. | Independent next | Agent a30e base |
 
 Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and fresh dbc, not merged to integration.
 Core: D13418455 measurement8926PASS190FAIL180ERROR173subtests;1937 custody FAIL, XML/disk witness missing. Host14 prelaunch environment cause independently proved1954; current REG UNVERIFIED. 344 partition Agent2003; no ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element/SWAP. No D59 cut, final build or ZIP.
-Blockers: KIT CHANGE make-child-venv — return2018 fixes stderr deletion before rollback; independent review then D137 CAS installation; Agent real request follows received hash/mode. Fixture gate explicitly withdrawn by owner; branches retained.
+Blockers: KIT CHANGE make-child-venv — review2026 checks corrected retention4435d44; then D137 CAS installation; Agent real request follows received hash/mode. Fixture gate explicitly withdrawn by owner; branches retained.
 Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
 Blockers: Element — App sole D127c final helper368f and App binder1950 await coupled protected review. No cost author or new body before PASS.
 Blockers: D69 and cut — current ship-grade core, REG0, fullP2, installed render90, final tupleP1-P5, wheel, Windows and build/ZIP remain owed.
@@ -489,6 +491,6 @@ D100: App actual corrected27PASS; original9 nine setup errors at finite-number f
 D77: Farm changed child request follows Agent actual D137 result; no Farm fixture bodies/core. Exact applied source and lock handoffs remain qualified.
 Delivery: Current cut integration tuple only, no stale547e proof pin. App16 final1941PASS:14 true conflicts,13semantic/1textual. Old Agent halves reference stale proof pin; new actuala30e census1947 qualified.
 Safety: D130 and prior refusals held. Managers write ORCH boards/briefs/peers only; no direct product/test/pin/Git writes or credentials.
-Disk: Fresh4.603GB; source cap3/stop4GB. Sweep3 removed0; compact packed0 andgzipped3 logs. No eligible ended clean unguarded Runtime trees; target5.2GB unmet. Open raw KEEP retained.
-live 2 / cap 3; queued 0; ready-undispatched 0. D137 return2018 and D136a review2021 active. D135 installed independentPASS; no unassigned ready source row.
-INBOX consumed through1509079bytes including explicit20:13 D137. Updated20:23Z.
+Disk: Fresh4.835GB; source cap3/stop4GB. Sweep3 removed0; compact packed0 andgzipped3 logs. No eligible ended clean unguarded Runtime trees; target5.2GB unmet. Open raw KEEP retained.
+live 0 / cap 3; queued 3; ready-undispatched 0. D137 review2026, D136a return2026 and D73 author2026 queued. D135 installed independentPASS; no unassigned ready source row.
+INBOX consumed through1512370bytes including explicit20:13 D137. Updated20:26Z.
