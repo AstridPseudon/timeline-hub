@@ -1,0 +1,123 @@
+{
+  "task": "rt-D77-input-review-1616",
+  "review_verdict": "PASS_WITH_CORRECTION",
+  "scope": "Independent finite read-only evidence review; no product, test, pin, shared-source, design, installer, queue, build, store, stage, render, recovery, SWAP, or permission action.",
+  "base": {
+    "composition": "tl/rt-D77-input-reconcile-1612",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "source_object_review": {
+    "repositories": [
+      "/home/user/work/agent",
+      "/home/user/work/runtime",
+      "/home/user/peteromallet/astrid-agent",
+      "/home/user/banodoco/banodoco-workspace-runtime"
+    ],
+    "agent": {
+      "commit": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+      "tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+      "commit_status": "ABSENT_IN_ALL_FOUR",
+      "tree_status": "ABSENT_IN_ALL_FOUR",
+      "remotion_package_lock_blob": "UNVERIFIED_NO_EXACT_AGENT_TREE",
+      "verdict": "PASS_EXACT_AGENT_COMMIT_AND_TREE_ABSENCE"
+    },
+    "runtime": {
+      "commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "commit_status": "ABSENT_IN_ALL_FOUR",
+      "tree_status": {
+        "/home/user/work/runtime": "PRESENT",
+        "/home/user/banodoco/banodoco-workspace-runtime": "PRESENT",
+        "/home/user/work/agent": "ABSENT",
+        "/home/user/peteromallet/astrid-agent": "ABSENT"
+      },
+      "reachable_tree_holders": [
+        "1daca2a33f6d7b10053e07c539a54843e3984e19",
+        "ab7ebb4244a40d27ccf9faf56a7916f72fa8765f"
+      ],
+      "interpretation": "Exact expected Runtime tree object is available, but no exact applied Runtime commit object is available; this is not an exact applied checkout/commit receipt.",
+      "verdict": "PASS_COMMIT_ABSENCE_WITH_TREE_AVAILABILITY_CORRECTION"
+    },
+    "author_claim_correction": {
+      "claim": "all requested Agent and Runtime commits/trees were absent",
+      "status": "FAIL_AS_WRITTEN",
+      "correction": "Agent commit/tree are absent; Runtime commit is absent but Runtime tree a5225114... is present and reachable as recorded above."
+    }
+  },
+  "lock_review": {
+    "handoff_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18e",
+    "earlier_near_match_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "status": "UNVERIFIED_EXACTMISSING",
+    "reason": "The exact Agent tree and remotion/package-lock.json blob are unavailable; the available Runtime tree does not establish the Agent lock blob. No correction made."
+  },
+  "prior_evidence": {
+    "pass_1257": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D77-guard-review-1257.md",
+      "sha256": "cdbb9fd919edf832e2da6f09e591f9aa9366cefd51d3f87ab44c8acf0211e57e",
+      "helper_sha256": "5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386",
+      "verdict": "PASS",
+      "controls": 18,
+      "failures": 0,
+      "errors": 0
+    },
+    "pass_1300_A": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D124-handoff-custody-review-1300.md",
+      "sha256": "8b29293a95628463bf567b82b852e23d679685af9b7a11d527b554ee58b8f588",
+      "verdict": "PASS",
+      "scope": "A_farm_stage_render source/route custody review only"
+    }
+  },
+  "route_and_contract": {
+    "ordinary_route": "astrid/run-astrid -> Installer.run -> Backend.stage -> service declaration -> generic_host --service -> run_pack_host_foreground -> ensure_pack_host",
+    "installer_source_anchors": [
+      "astrid/installer/cli.py:111",
+      "astrid/installer/core.py:245-246",
+      "astrid/installer/backend.py:386-430",
+      "astrid/services.py:pack-host",
+      "astrid/sdk/host_bootstrap.py:1382,1812"
+    ],
+    "original_render_selectors": [
+      "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+      "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render"
+    ],
+    "c0": {
+      "status": "PASS_STATIC_SCOPE",
+      "required_marker_check": "PASS for api_version/project_id/timeline_id/base pair/commands/label/steps/reads/merge/idempotency/dry_run/source/rationale/group_id; accepted/merged/canonical_document/receipt/head/records/effects/bindings/dependencies/history/undo_steps; conflict reason/head; invalid code/path/hint/suggested command; preview status/null receipt.",
+      "candidate_delta": "D131 candidate changes only ops-d131/bench_store.py and ops-d131/test_reserve.py; no contract, wire, trust, permission, or product caller file."
+    }
+  },
+  "child_and_d131": {
+    "child_qualification": "UNKNOWN",
+    "reason": "No qualified child receipt for the applied tuple; prior a4e016 refusal for unowned retained source directory remains unresolved/dropped.",
+    "d131": {
+      "status": "PASS_RESERVE_ONLY",
+      "candidate": "4ec5b05960af6008542037f74e757b02ca548bcf",
+      "changed_paths": ["ops-d131/bench_store.py", "ops-d131/test_reserve.py"],
+      "child_reserve_bytes": 5905580032,
+      "runtime_reserve_bytes": 8589934592,
+      "live_bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "make_child_venv_sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+      "make_runtime_sha256": "873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149",
+      "d130": "UNTOUCHED",
+      "qualification_effect": "D131 changes reserve selection only; it does not prove child ownership, registration, source applicability, or child qualification."
+    }
+  },
+  "checks": {
+    "exact_git_object_and_tree_reads": "PASS",
+    "sha256sum": "PASS",
+    "json_parse": "PASS diagnostics-d77-inputs/*.json and reviewed evidence JSON",
+    "bash_n": "PASS handoff-rt-D124-Farm-render-handoff-1253/evidence/farm-stage-render-recipe.sh",
+    "in_memory_compile": "PASS D131 candidate bench_store.py and live bench_store.py",
+    "git_diff_check": "PASS composition worktree before evidence output",
+    "new_product_or_provider_tests": "NOT RUN BY SCOPE",
+    "installer_stage_render_or_full_browser_suite": "NOT RUN BY SCOPE"
+  },
+  "blocked_or_unverified": [
+    "Exact applied Agent commit/tree/blob unavailable.",
+    "Exact applied Runtime commit unavailable despite exact expected Runtime tree availability.",
+    "Remotion lock 18e versus 18d remains unverified.",
+    "Applied child qualification remains UNKNOWN.",
+    "No stage/render/install or production qualification is claimed."
+  ]
+}
