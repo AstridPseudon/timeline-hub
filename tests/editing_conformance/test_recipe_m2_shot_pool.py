@@ -172,18 +172,20 @@ class GenuineTimeline:
         self.document = result['data']['canonical_document']
         return result
 
-    def seed_pooled(self, *, full=False):
+    def seed_pooled(self, *, full=False, order=None, set_duration=True):
         from astrid.sdk.timeline._command_state import present
 
         bundle = bundle_from_document(self.document)
-        occurrence = State(bundle).occurrence(OWNER)
-        duration = occurrence['duration_ms']
-        duration_command = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
-                            'args': {'changes': [{'op': 'set', 'ref': OWNER,
-                                                  'path': ['duration_ms'],
-                                                  'before': present(duration), 'value': 20000}]}}
-        self.call([duration_command], 'pool-duration')
-        order = (1, 0, 2) if full else ()
+        if set_duration:
+            occurrence = State(bundle).occurrence(OWNER)
+            duration = occurrence['duration_ms']
+            duration_command = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                                'args': {'changes': [{'op': 'set', 'ref': OWNER,
+                                                      'path': ['duration_ms'],
+                                                      'before': present(duration), 'value': 20000}]}}
+            self.call([duration_command], 'pool-duration')
+        if order is None:
+            order = (1, 0, 2) if full else ()
         for index in order:
             pin = self.pins[index]
             bundle = bundle_from_document(self.document)
@@ -252,14 +254,19 @@ def build(name, context=None):
     if context is None:
         document, _, [a, b, c], verified = pins()
     else:
+        if name == 'add-second':
+            context.seed_pooled(order=(0,), set_duration=False)
+        elif name == 'remove-middle':
+            context.seed_pooled(order=(0, 1, 2), set_duration=False)
         document = copy.deepcopy(context.document)
         a, b, c = copy.deepcopy(context.pins)
         verified = copy.deepcopy(context.verified)
     bundle = bundle_from_document(document)
     if name == 'add-first':
         return document, bundle, 'add', a, verified
-    for pin in (a, b, c)[:3 if name == 'remove-middle' else 1]:
-        bundle = step(bundle, 'add', pin, verified)[1].bundle
+    if context is None:
+        for pin in (a, b, c)[:3 if name == 'remove-middle' else 1]:
+            bundle = step(bundle, 'add', pin, verified)[1].bundle
     if name == 'add-second':
         return document, bundle, 'add', b, verified
     return document, bundle, 'remove', b, verified
