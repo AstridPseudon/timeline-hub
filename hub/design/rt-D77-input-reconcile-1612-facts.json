@@ -1,0 +1,75 @@
+{
+  "task": "rt-D77-input-reconcile-1612",
+  "composition_base": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "source_objects": {
+    "agent": {
+      "commit": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+      "expected_tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+      "blob": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4:remotion/package-lock.json",
+      "commit_status": "EXACTMISSING",
+      "blob_sha256": "EXACTMISSING"
+    },
+    "runtime": {
+      "commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+      "expected_tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "commit_status": "EXACTMISSING"
+    },
+    "repositories_checked": [
+      "/home/user/work/agent",
+      "/home/user/work/runtime",
+      "/home/user/peteromallet/astrid-agent",
+      "/home/user/banodoco/banodoco-workspace-runtime"
+    ]
+  },
+  "lock_comparison": {
+    "handoff_1253": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18e",
+    "earlier_near_match": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "result": "UNVERIFIED_EXACTMISSING",
+    "typo_identified": false,
+    "corrected_private_copy": false
+  },
+  "child_status": {
+    "applied_tuple": "UNKNOWN",
+    "qualified_receipt": "EXACTMISSING",
+    "make_child_venv_sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "d131_effect": "reserve selection only",
+    "prior_refusal": "unowned retained source directory",
+    "prior_refusal_status": "unresolved_and_dropped",
+    "source_route_applicability": "UNKNOWN"
+  },
+  "guard": {
+    "author": "Sol1243",
+    "candidate_commit": "7cb353858c5cf9f3eee484ca0748b61ae01d2ba3",
+    "helper": {
+      "path": "design/handoff-rt-D77-guard-1243-d77_phase_guard.py",
+      "sha256": "5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386"
+    },
+    "review": {
+      "author": "Luna1257",
+      "path": "design/handoff-rt-D77-guard-review-1257.md",
+      "sha256": "cdbb9fd919edf832e2da6f09e591f9aa9366cefd51d3f87ab44c8acf0211e57e",
+      "verdict": "PASS",
+      "controls": 18,
+      "scope": "private diagnostics wrapper only"
+    },
+    "custody": {
+      "path": "design/rt-D124-handoff-custody-review-1300.md",
+      "sha256": "8b29293a95628463bf567b82b852e23d679685af9b7a11d527b554ee58b8f588",
+      "verdict_A": "PASS",
+      "scope": "Farm stage/render source-only handoff custody and route/selector correctness"
+    }
+  },
+  "normal_route": {
+    "launcher": "/home/user/work/agent/astrid/installer/launcher.py",
+    "route": "astrid/run-astrid -> Installer.run -> Backend.stage -> declaration -> generic_host --service -> run_pack_host_foreground -> ensure_pack_host",
+    "selectors": [
+      "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+      "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render"
+    ],
+    "execution": "not run"
+  }
+}

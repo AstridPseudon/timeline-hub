@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T16:12:37Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
-# runtime board, 2026-10-25T16:10:17Z
+<!-- main | 2026-10-25T16:17:17Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
+# runtime board, 2026-10-25T16:12:57Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -419,6 +419,9 @@
 
 | OPS-D131 | Size reserve by build kind | Luna | Recorded D131 | merged | Author1558; review1601; install1604 | Installed 123bb93c mode0755. Actual live five tests PASS; caller hashes exact. Agent normal receipt requested. | Independent1601 and1607 PASS | 4ec5b0596 / installed123bb |
 
+| D77-inputs | Reconcile exact Farm inputs | Luna | Farm questions1606 | review | Author1612; review1616 | Applied commit objects absent on Main; lock and child status UNKNOWN. Exact guard PASS receipt returned to Farm; lead publication requested. | rt-D77-input-review-1616 | Evidence only |
+| D127-leaf-retention | Trace retained sampler leaf omission | App Luna read only | Exact retained helper | doing | app-D127-leaf-retention-trace-1600 | App owns finite existing-helper trace; no new collector, body or speculative product author. | App owner | Source unchanged |
+
 Runtime producer: RELEASED5e9ad. Normalab1e includes independently qualified step, inverse and redo source plus reviewed safe diagnostic correlation. Home1550 exact genuine3/native2 PASS, all1501Agent package blobs exact. Qualified bounded release; no broader original-four closure.
 core open:425 on immutable30693;450 bad and REG14 retained. Latest recorded owner16:00 DROPS Farm core; Agent runs local agent-core-full with restored6.1GB. No historical tuple retarget.
 regressions: NormalAgenta4e016 has reviewed96df upstream host fallback and original14 PASS; REG14 remains until current full core.
@@ -426,19 +429,19 @@ Gates: P1/P3 recordedGO; P4 independentGO28.101s. P2 six of eight case GOs on re
 Blockers: SWAP safety — automatic classifier refused worker1537 scoped recovery tests; source held and related1545 stopped. [Escalation](../../escalations/runtime-20261025T1553Z-D127-safety-refusal.md). No retry or alternate route.
 Blockers: Agent roots — scalar and compound roots remain UNKNOWN. Normalab1e grouped inverse/redo exact genuine3/native2 PASS1550; no original-four closure.
 Blockers: Element profile — exact request3 matched, but only outer top10 frames retained, pending with no wall denominator or provider leaf. No specific dominant operation proved; no speculative author or new body.
-Blockers: Final render — Farm owns soleD77 genuine ordinary installer stage and installed render. Farm child/core work stopped by latest owner; render no longer waits core.
+Blockers: Final render — Farm requested exact applied checkouts. Source objects absent on Main; lead normal publication requested. Guard receipt returned; exact lock and child status unverified; no stage/render PASS yet.
 Blockers: D69 — normalXML107 applicability/full-core and genuine installed render90 remain. No whole-auditPASS.
 Blockers: Final cut — current core, REG0, fullP2, D69, finaltupleP1–P5 and genuine installed render remain. No build or ZIP.
 
-Next ready: Agent receives installed D131 through normal kit sync, then ordinary exact child/core. Installed custody1607 PASS; Agent receiving hash pending. IntegratedR2 receipt1550 PASS and published. ProtectedD107 purposePASS; Agent source intake requested, actual behavior remains failed. SWAP recovery and related acceptance held on actual safety refusal. No ready critical source author remains unassigned.
+Next ready: D77 exact source publication from Main lead; independent finite input review1616. Agent receives installed D131 through normal kit sync, then ordinary exact child/core; no Runtime install wait. IntegratedR2 receipt1550 PASS and published. ProtectedD107 purposePASS; Agent source intake requested, actual behavior remains failed. SWAP recovery and related acceptance held on actual safety refusal. No ready critical source author remains unassigned.
 Ready for host filing: Agent tl/rt-D107-current-baseline-1530 b4b3805da5, source-only purpose PASS1550 over recorded20177; actual home owns freshness/import. Two behaviors remain failed. Priora1 donor superseded by16bb.
 Venues: No Main heavy body. Agent local core authorized; Farm keepsD77 only. All prior Farm0b586/42aad,9ea/369,a4e016/5e9ad captures immutable and zero corebody.
 Delivery: Private100Python+TS/41matrix qualified; D1235bd01/b0ffSOURCE_PASS. Final upstream refresh onlyD59. Wheel,matrix,Windows,installedrender pending.
 Later: R2c81b/D1160643 exactseedSOURCE_PASS. D126 App owns approved paragraph/ZIPline. No small-file Agent writers or D79 until critical gates clear.
 Safety: NewD1271537 refusal held and reported. PriorD88/D111 and retirement denials remain stopped. D106ORCHonly. Four historical retirement targets held; no retry.
 Disk: About5.47GB after D131. No ended clean nonKEEP worktree eligible; five dirty historical trees stay held. This pass guarded sweep3 removed0; compact packed0 scratch/test directories and gzipped1 old log; no new target retirement. Prior host-CLEARed pins already recycled; all branch/report/proof evidence retained.
-live0 / cap6; queued0; ready-undispatched0. D131 installation and independent readback PASS; Agent exact receipt pending. Source>=4.6GB/noheavy; ordinaryprovider>=5GB, ongoingstop4GB. Both1550 workers ended successfully; no ready critical row unassigned. SWAP heldD130; element awaits operation evidence.
-INBOX consumed through1312067 bytes. Updated 2026-10-25T16:08:32Z.
+live1 / cap6; queued0; ready-undispatched0. D77 evidence review1616 active; D131 installed and published, Agent exact receipt pending. Source>=4.6GB/noheavy; ordinaryprovider>=5GB, ongoingstop4GB. Both1550 workers ended successfully; no ready critical row unassigned. SWAP heldD130; element awaits operation evidence.
+INBOX consumed through1316655 bytes. Updated 2026-10-25T16:08:32Z.
 
 
 D77 follow-up1601: Farm has exact flat recipe, patches, guard PASS18 and custody PASS1300. Requested named ordinary preparation or first concrete missing prerequisite; no main phase or Farm core resumed. 2026-10-25T16:02:14Z.

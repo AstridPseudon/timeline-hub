@@ -1,0 +1,27 @@
+{
+  "bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-Farm-render-1253-recipe.sh": "PASS",
+  "json_parse": {
+    "rt-D124-Farm-render-handoff-1253.json": "PASS",
+    "handoff-rt-D124-Farm-render-1253-publication.json": "PASS",
+    "handoff-rt-D77-guard-1243-controls.json": "PASS",
+    "handoff-rt-D77-guard-1243-frozen-source.json": "PASS"
+  },
+  "source_object_checks": "EXACTMISSING in /home/user/work/agent, /home/user/work/runtime, /home/user/peteromallet/astrid-agent, and /home/user/banodoco/banodoco-workspace-runtime; no fetch",
+  "route_selector_c0_check": "PASS",
+  "guard_receipt_hashes": {
+    "design/handoff-rt-D77-guard-1243-d77_phase_guard.py": "5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386",
+    "design/handoff-rt-D77-guard-review-1257.md": "cdbb9fd919edf832e2da6f09e591f9aa9366cefd51d3f87ab44c8acf0211e57e",
+    "design/rt-D124-handoff-custody-review-1300.md": "8b29293a95628463bf567b82b852e23d679685af9b7a11d527b554ee58b8f588"
+  },
+  "kit_hashes": {
+    "make-child-venv": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2"
+  },
+  "tests_not_run": [
+    "full suite",
+    "provider/browser/live socket tests",
+    "installer",
+    "checkout/runtime/child provisioning",
+    "stage/render"
+  ]
+}
