@@ -41,6 +41,9 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
     class RuntimeRealm:
         def __init__(self):
             self.project, self.timeline = project, "film"
+            self.calls = []
+            self.history_limits = []
+            self.requests = []
 
         @property
         def head(self):
@@ -88,6 +91,7 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
             timeline_id = args[0] if args else "film"
             try:
                 if operation == "list_timeline_commits":
+                    realm.history_limits.append(kwargs.get("limit", 50))
                     result = service.list_timeline_commits(
                         requested_project, timeline_id,
                         cursor=kwargs.get("cursor"), limit=kwargs.get("limit", 50),
@@ -96,7 +100,9 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
                     return DomainResult.success(result)
                 if operation == "commit_timeline":
                     body = copy.deepcopy(args[1])
-                    sent.append(body)
+                    realm.calls.append(kwargs["idempotency_key"])
+                    realm.requests.append(copy.deepcopy(body))
+                    before = realm.head
                     result = service.commit_timeline(
                         requested_project, timeline_id, body,
                         idempotency_key=kwargs["idempotency_key"],
@@ -104,6 +110,8 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
                         invocation_path=f"/v1/projects/{requested_project}/timelines/{timeline_id}/commit",
                         authorize=lambda: None,
                     )
+                    if body.get("dry_run") or realm.head != before:
+                        sent.append(body)
                     from astrid.core.receipts.contract import CommandReceipt
 
                     receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
@@ -164,46 +172,6 @@ def _run(client, path, *, message="Rename film", key="document-1", dry_run=False
     return parsed.handler(parsed)
 
 
-def _runtime_idempotency(client, monkeypatch, *, history_limits=None):
-    """Model Runtime's exact-key replay at the existing authenticated port."""
-    original = client.timelines._typed
-    calls = []
-    accepted = {}
-
-    def typed(operation, project, *args, **kwargs):
-        if operation != "commit_timeline":
-            result = original(operation, project, *args, **kwargs)
-            if operation == "list_timeline_commits" and history_limits is not None:
-                history_limits.append(kwargs.get("limit"))
-                if result.ok and isinstance(result.data, dict):
-                    rows = result.data.get("items")
-                    if isinstance(rows, list) and rows:
-                        result.data["items"] = [copy.deepcopy(rows[0]) for _ in range(201)]
-            return result
-        key = kwargs["idempotency_key"]
-        body = copy.deepcopy(args[1])
-        fingerprint = json.dumps(body, sort_keys=True, separators=(",", ":"))
-        calls.append(key)
-        prior = accepted.get(key)
-        if prior is not None:
-            old_fingerprint, result = prior
-            if old_fingerprint != fingerprint:
-                return DomainResult.failure(
-                    ErrorObject("idempotency_conflict", "idempotency key was reused for a different request", {
-                        "status": "refused", "path": "/idempotency_key",
-                    }),
-                    idempotency_key=key,
-                )
-            return copy.deepcopy(result)
-        result = original(operation, project, *args, **kwargs)
-        if result.ok:
-            accepted[key] = (fingerprint, copy.deepcopy(result))
-        return result
-
-    monkeypatch.setattr(client.timelines, "_typed", typed)
-    return calls
-
-
 def test_document_commit_uses_the_authenticated_commit_door(public_session, tmp_path, capsys):
     _opened, realm, sent, client, _outbox = public_session
     path = _document_file(tmp_path, realm)
@@ -227,7 +195,7 @@ def test_document_commit_retry_uses_runtime_idempotency_without_history_scan(
     public_session, tmp_path, capsys, monkeypatch,
 ):
     _opened, realm, sent, client, _outbox = public_session
-    calls = _runtime_idempotency(client, monkeypatch)
+    calls = realm.calls
     path = _document_file(tmp_path, realm)
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Retryable Film"
@@ -247,8 +215,8 @@ def test_document_commit_retry_does_not_scan_a_long_history_page(
     public_session, tmp_path, capsys, monkeypatch,
 ):
     _opened, realm, sent, client, _outbox = public_session
-    history_limits = []
-    calls = _runtime_idempotency(client, monkeypatch, history_limits=history_limits)
+    history_limits = realm.history_limits
+    calls = realm.calls
     path = _document_file(tmp_path, realm)
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Long history retry"
@@ -327,7 +295,7 @@ def test_document_commit_changed_body_with_same_key_is_runtime_refusal(
     public_session, tmp_path, capsys, monkeypatch,
 ):
     _opened, realm, sent, client, _outbox = public_session
-    calls = _runtime_idempotency(client, monkeypatch)
+    calls = realm.calls
     path = _document_file(tmp_path, realm)
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "First body"
@@ -339,7 +307,7 @@ def test_document_commit_changed_body_with_same_key_is_runtime_refusal(
     path.write_text(json.dumps(candidate), encoding="utf-8")
     assert _run(client, path, key="same-key") == 1
     output = json.loads(capsys.readouterr().out)
-    assert output["error"]["code"] == "idempotency_conflict"
+    assert output["error"]["details"]["reason"] == "idempotency_mismatch"
     assert len(realm.entries) == 2 and len(sent) == 1
     assert calls == ["same-key", "same-key"]
 
