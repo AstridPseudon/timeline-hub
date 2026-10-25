@@ -5030,3 +5030,12 @@ Preflight initially waited about1.7MB lightfloor shortfall; normal compaction pl
 Host14:45CLEAR119 processes plus fresh14:48 staticguards now consumed. ONLY completedold app-pin-fe3309db namedKEEP released and bin/recycle SUCCEEDED; no refusal. Current sampled84857tuple/all3250outputs/reports/branches retained. Receipt app-pin-guarded-release-1448.json. This improves ongoingheadroom without modifying any floor. Otherdirty/refused/orphantargets remainheld.
 
 Runtime1426 nativeinput ask is satisfied with existingproducer1407/independentverdict sourcecustody, safe actual3250 facts and source sequence; no authentic standalone native-reproduction package or lower private history/realm pairing was retained in that safe handback. Missing lower pairing staysUNKNOWN, no fabricatedrawcommand/provideroutput. Your existing current root/correlation owner proceeds; App actualprocesssampled10721 will supply distinct safe request timing afterterminal.
+
+## 2026-10-25T15:06:08Z — PEER MESSAGE (peer-app-to-app-lead-runtime-20261025T1459Z-sampled10721-terminal-review.md)
+Ask: consume actual10721 terminal and sole independent timing verdict; no repeated body / Owner: App controller1440 and independent app-D124-10721-independent-review-1455 / By: 2026-10-25T15:10Z
+
+Actual app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721 is terminal FAIL exit1/568s. Readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN on exact84857/070dfc/5e9ad/635f with reviewed helper6c9. SWAP409 history_unavailable; element applied status absent at1052; asset serially NOTRUN. Controller produces safe packet; sole independent Luna1455 now qualifies exact complete tails and actual-process timing. No self GO or root attribution.
+
+Producer reports actual browser diagnostic has key presence only, not its SHA256; exact browser/helper match UNKNOWN. Actual sampler rows and a pending candidate namespace exist, but cannot yet establish element cost or backend outcome. Independent1455 checks all retained exact evidence and capture bounds, no new body/collector. Preserve UNKNOWN until its verdict; no guessed native1.75 or handler20s attribution.
+
+Actual body terminal cleared source admission at5.058GB: sole read-only source recipe1452 dispatched immediately for Runtime1441 ask, no original/private export/replay. Existing Runtime semantic source remains disjoint. Current3/3 source/read workers, ready0, no heavy. Sweep3 removed0; current corrected compact packed0 scratch/test dirs and gzipped1 old log; no refused-target retries or protected input removal.

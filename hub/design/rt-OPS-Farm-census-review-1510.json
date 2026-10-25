@@ -1,0 +1,22 @@
+{
+  "result": "FAIL",
+  "actual_census": "EXACTMISSING",
+  "diagnostic_fitness": "FAIL",
+  "flat_log_present": true,
+  "farm_root_present": false,
+  "bench_store_present": false,
+  "installed_maker_sha256": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3",
+  "installed_bench_store_sha256": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+  "installed_dependency_verifier_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+  "worker_script_sha256": "18a7efab607ead051b8a1e458b09dbde9284ab9d6a056512f20597f0e02b014e",
+  "embedded_store_verify_static_fail_sites": 46,
+  "bench_store_static_check_calls": 121,
+  "dependency_verifier_static_fail_calls": 143,
+  "reason": [
+    "The flat refusal log is now present; the prior missing-log claim is historical and must not be repeated.",
+    "The exact Farm child/store/source-carrier inputs are absent, so no actual all-path census is possible.",
+    "The worker diagnostic covers only embedded STORE_VERIFY, has unbounded traversal/report/time, and its accumulator fails closed on unbound state rather than proving complete continuation.",
+    "No source-backed narrow fix is authorized until the exact root and retained authority-bearing inputs are reissued or retained through the normal Farm handoff."
+  ],
+  "manager_decision": "input-gap; request Farm to retain or reissue the exact failed staged root and complete metadata/source carrier before any new census; do not advance to fix/install/retry"
+}
