@@ -13,8 +13,10 @@ import pytest
 
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.emitter import emit_document_commands
+from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.workspace_client import WorkspaceClientError
@@ -48,9 +50,33 @@ def _commit_parent_variant(fixture, parent, *, key, label):
         document = service._timeline_commits()[0].revision_closure(
             fixture.project_id, fixture.timeline_id, head_id)
         before = bundle_from_document(document)
-        after = copy.deepcopy(before)
+        semantic = []
+        working = before
+        original_occurrences = {row['occurrence_id']: row
+                                for row in before['parent']['occurrences']}
+        requested = {row['occurrence_id']: row for row in parent['occurrences']}
+        requested_order = [row['occurrence_id'] for row in parent['occurrences']]
+        original_order = [row['occurrence_id'] for row in before['parent']['occurrences']]
+        if [identity for identity in original_order if identity in requested] != requested_order:
+            raise ValueError('owned baseline changes managed occurrence membership/order')
+        for identity, occurrence in requested.items():
+            if identity not in original_occurrences or occurrence != original_occurrences[identity]:
+                raise ValueError('owned baseline changes a managed occurrence edge')
+        removed = [occurrence for occurrence in before['parent']['occurrences']
+                   if occurrence['occurrence_id'] not in requested]
+        for occurrence in removed:
+            owner = 'occurrence:' + occurrence['occurrence_id']
+            command = capture_occurrence_delete(working, owner)
+            working = execute(working, [command]).bundle
+            semantic.append(command)
+        after = copy.deepcopy(working)
         after['parent'] = copy.deepcopy(parent)
-        commands = emit_document_commands(before, after)
+        # The registered delete command owns closure membership. Keep that
+        # edge out of the generic patch baseline while retaining every authored
+        # parent field for the guarded emitter below.
+        after['parent']['occurrences'] = copy.deepcopy(working['parent']['occurrences'])
+        patches = emit_document_commands(working, after)
+        commands = [*semantic, *patches]
         head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)
         changes = [change for command in commands if command['op'] == 'doc.patch'
                    for change in command['args']['changes']]
