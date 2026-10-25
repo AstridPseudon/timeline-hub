@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T01:13:56Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 12 | status age 1m -->
+<!-- main | 2026-10-25T01:17:41Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 3m -->
 # runtime board, 2026-10-25T01:13:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -203,8 +203,8 @@
 | F-final-D87 | Install reviewed CLI migration notes | Luna | Installed byte and renderer checks PASS | merged | rt-F-final-D87-docs-0107 | Exact reviewed text installed; real renderer and preservation checks PASS. [Proof](../../design/rt-F-final-D87-docs-0107.md) | README06aa; notes7576 |
 | D86-CLI8-review | Review real CLI retries | Luna | Functional qualification | review | rt-D86-CLI-review-0022 PASS | Normal source homea0b8; protected source review complete. Behavioral batch pending. | 27dc8f04cd |
 | D86-inverse10-review | Review shared allocation | Luna | Functional qualification | review | rt-D86-inverse10-review-0022 PASS | Normal source home6c8b; original physical identity and ten scenarios retained. Behavioral batch pending. | 4a16d56238 |
-| D86-scalar11-review | Correct scalar setup API call | Luna | Fresh protected review | review | rt-D86-scalar-word-review-0110 | First return on exactf2def: derive true closure/ref/path for value_at; all eleven scenarios retained. Source only. | f2def held |
-| D86-word11-review | Preserve verified transcript pins | Luna | Fresh independent review | review | rt-D86-scalar-word-review-0110 | First product return on exact7d0: retain newly hydrated transcript dependency with media manifest; Runtime guard stays strict. | 7d0 held |
+| D86-scalar11-review | Correct genuine scalar media setup | Luna / next HARD | Agent local scalar0100 owns return | blocked:agent | Review0110 FAIL; local author0100 | Arity fixed, then media.patch lacks verified_media/media.admit. Exact second finding returned to current local owner; eleven scenarios retained. | f2def held |
+| D86-word11-review | Preserve verified transcript pins | Luna | Normal Agent merge then qualification | merging | Review0110 PASS; remote request sent | Exact32619 reviewed PASS; hydrated verified transcript pins preserved with media manifest. Full original eleven retained; functional qualification pending. | 7d0 held |
 | P4-main-tennote | Run remaining original on main | Luna / service | Complete retained NO-GO | merged | rt-P4-main-tennote-0033; actual3362 | Original FAIL45.244s; controls and receipts PASS. Recorded main profile differs from historical path. [Result](../../design/rt-P4-main-tennote-0033.md) | fbbae/a3cd/fd2f/635f |
 | R-internal-GET-sample | Measure genuine internal revision read | HARD Sol | Source facts complete | merged | rt-R-internal-GET-sample-sol-0027 | One real GET200 in5.254ms; handler4ms and zero history calls. Profile ranking invalid; original cause unknown. [Facts](../../design/runtime-internal-GET-sample-0027.md) | a3cd unchanged |
 | D86-sheet17-review | Review sheet physical edges | Luna | Main affected-node qualification | review | Review0033 PASS; Agent home2cde | Exact reviewed hash6e8b is home. Seventeen originals plus requested neighbors retained; functional batch pending. | Agent2cde6002b9 |
@@ -244,3 +244,5 @@ Inbox consumed through709879 bytes. Current pass applies D89 and all peer receip
 Pass 2026-10-25T01:09Z: Owner withdraws D88 and authorizes replacement D88b. Safety hold unchanged. Scalar return finished; released slot immediately assigned D88b at5.723GB. All six slots busy; scalar protected review next.
 
 Pass 2026-10-25T01:13:00Z: D87 installed06aa/7576 and renderer PASS; scalar plus word source corrections share one fresh independent reviewer0110. Audited newly stale Appfd2f clean/unused with terminal-only tests; released namedKEEP and bin/recycle succeeded. No refusal, raw deletion or output loss. Disk5.383GB; source starts held at D89 threshold.
+
+Pass 2026-10-25T01:14Z: Fresh review0110 WORD PASS and immediate remoteAgent queue; SCALAR FAIL on genuine media admission, delegated existing local0100, no duplicate author. Exact incremental298 packet received. Parent24629 queued; guard current5.185GB heavyfloor while freshpin assessment runs.

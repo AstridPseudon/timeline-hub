@@ -1,3 +1,196 @@
+print('Durable evidence bytes:', sum(path.stat().st_size for path in ev.rglob('*') if path.is_file()))
+PY" in /home/user/work/wt/agt-D86-video-repair-sol-0107
+ succeeded in 586ms:
+PASS: protected source bytes match recorded Agent and Runtime commits.
+Durable evidence bytes: 72728
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/commit-msg
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/source-review.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..b57894fd842a525e5385742a949e20afcd4726e1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/commit-msg
+@@ -0,0 +1,10 @@
++test(timeline): preserve F-D86 video opaque topology
++
++Restore the complete original parent, shot, occurrence and internal payloads
++through supported bootstrap, registered semantic commands and guarded patches.
++Retain genuine shared placement, exact source data, registry opaque values and
++the original clip order, with complete canonical baseline equality checks.
++
++Keep the recipe byte-identical and all twelve scenarios unchanged. Validate
++source conservation, compilation, scoped baseline/candidate Ruff and mypy, and
++diff whitespace only; functional qualification awaits the existing MAIN route.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/check_source.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/check_source.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..417fd4295b0f46a40ecfadfde41a817c3d62f5e9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/check_source.py
+@@ -0,0 +1,66 @@
++"""Static checks only. Never import or execute the repository's code."""
++import ast
++import hashlib
++import json
++import subprocess
++from pathlib import Path
++
++ROOT = Path('/home/user/work/wt/agt-D86-video-repair-sol-0107')
++EVIDENCE = Path(__file__).parent
++MANIFEST = json.loads((EVIDENCE / 'source-manifest.json').read_text())
++
++for path, versions in MANIFEST['files'].items():
++    candidate = (ROOT / path).read_bytes()
++    for revision, identity in versions.items():
++        source = candidate if revision == 'candidate' else subprocess.check_output(
++            ['git', 'show', revision + ':' + path], cwd=ROOT)
++        assert hashlib.sha256(source).hexdigest() == identity['sha256']
++        tree = ast.parse(source, filename=path)
++        compile(tree, path, 'exec')
++    original = ast.parse(subprocess.check_output(
++        ['git', 'show', MANIFEST['original'] + ':' + path], cwd=ROOT))
++    baseline = ast.parse(subprocess.check_output(
++        ['git', 'show', MANIFEST['base'] + ':' + path], cwd=ROOT))
++    current = ast.parse(candidate)
++    functions = {n.name: n for n in current.body if isinstance(n, ast.FunctionDef)}
++    for previous in (original, baseline):
++        for node in previous.body:
++            if not isinstance(node, ast.FunctionDef) or node.name == 'editing':
++                continue
++            if previous is original and node.name == 'body':
++                continue  # The reviewed migration already supplied the complete v2 body.
++            assert ast.dump(node) == ast.dump(functions[node.name]), (path, node.name)
++    if path.endswith('test_recipe_m2_video_unplace.py'):
++        assert candidate == subprocess.check_output(
++            ['git', 'show', MANIFEST['original'] + ':' + path], cwd=ROOT)
++        assert len(functions) == 11
++    print('PASS original/base/candidate parse, in-memory compile and AST conservation:', path)
++
++sources = json.loads((EVIDENCE / 'original-fixture-source.json').read_text())
++for selector, saved in sources.items():
++    path, name = selector.split('::')
++    source = subprocess.check_output(
++        ['git', 'show', saved['original_commit'] + ':' + path], cwd=ROOT, text=True)
++    node = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == name)
++    assert ast.get_source_segment(source, node) == saved['source']
++    assert ast.dump(node) == saved['ast']
++    if name != 'editing':
++        assert (ROOT / path).read_text() == source
++print('PASS complete original fixture source snapshots; fixture providers unchanged')
++
++selectors = (EVIDENCE / 'selectors.txt').read_text().splitlines()
++mapping = json.loads((EVIDENCE / 'selector-map.json').read_text())
++assert len(selectors) == len(set(selectors)) == 12
++assert selectors == [s for entry in mapping for s in entry['selectors']]
++for entry in mapping:
++    tree = ast.parse((ROOT / entry['file']).read_bytes())
++    node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == entry['function'])
++    assert hashlib.sha256(ast.dump(node).encode()).hexdigest() == entry['ast_sha256']
++print('PASS 12 original selector mappings; original decorators, parameters, predicates and branches')
++
++changed = subprocess.check_output(['git', 'diff', '--name-only'], cwd=ROOT, text=True).splitlines()
++assert changed == MANIFEST['changed_files']
++assert not subprocess.check_output(
++    ['git', 'ls-files', '--others', '--exclude-standard'], cwd=ROOT, text=True).strip()
++subprocess.run(['git', 'diff', '--check'], cwd=ROOT, check=True)
++print('PASS allowed scope and git diff --check; no repository code executed')
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/source-review.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/source-review.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..4b235e1477b3e3371315337f4be17929309bf560
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/source-review.md
+@@ -0,0 +1,62 @@
++# F-D86 video12 second-return author source review
++
++Author static checks: PASS_SOURCE. Functional qualification and a fresh independent protected-source review remain pending. This document is not an independent review or a functional receipt.
++
++## Exact source
++
++- Assigned base: `9f884cdf518843d9ae4c3f0316e79f642f8642ce`, tree `3247cf7045f0bed82772255784623f24164a3f46`.
++- Original pre-migration commit: `bc498acf582a0d1542482edbe2e2d3c9eb023a36` (`d2f8c02c6d^`), Runtime test blob `b4372939fc4aa0036171e3f0455d815648860605`.
++- Base Runtime test blob: `bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a`.
++- Candidate Runtime test blob: `4d0a0658bcfefa9f3e203017e68aca46fb03d90d`, SHA-256 `3a59a67cd47c94c169255e1cea64d3be4ead8ccbb1b324af7f00233deb8618e1`.
++- Recipe blob remains `feecedd16dbd09aa09de0e5b651f8efec3e4e18c`, SHA-256 `11a68fba0142e044f6550456c51126e4d14e41021cc8f7d6f1fd55d34d23b70b`.
++- Runtime source inspected at `766fd6700c3128ea9fc833086a517de2acb535e2`. Every inspected product/helper/config file matches its recorded commit; exact hashes are in `protected-source-manifest.json`.
++- The harness will create the candidate commit; no Git mutation was performed.
++
++## Complete fixture conservation
++
++`original-fixture-source.json` contains the full original `document_fixture`, `inputs`, and pre-migration `editing` function sources and ASTs. The two underlying fixture-provider files are byte-identical to the original commit. The source map is:
++
++| Original data | Candidate transport and exact comparison |
++| --- | --- |
++| Full parent config, both clip mirrors, registry, name and unknown fields | Deep-copy the whole parent payload, temporarily retaining empty managed occurrence membership. Guarded root patch declares track/clip/asset allocations. After shared placement, compare the entire parent payload with the original template, substituting only the actual accepted shot revision pin. |
++| Config rational FPS, opaque timestamp and `[null, false, 0]`, both clip rows and `app.org.example` data | Transport the full config and full internal payload without filtering keys. Full-payload comparisons include these fields. |
++| Shot name, items, item metadata `opaque_literal`, metadata.chapter and unknown.keep=null | Guarded whole shot payload patch from the original template. Only its managed internal link is omitted from authored input. Compare the entire accepted shared shot payload with the template plus the authoritative generated link. |
++| Occurrence fields, exact 8000/10000 starts, duration, source_offset, speed, track and unknown.literal | Semantic creation establishes the managed edges. A guarded complete occ-a row patch restores the original authored row while retaining the exact current managed revision link. Genuine shared placement copies it to occ-b at the original second start. Full parent equality checks both rows, their order and their common physical shot identity. |
++| Internal tracks, registry, both clip rows, output, opaque and unknown=[1,2] | Guarded whole internal payload patch; compare the entire accepted shared payload with the original input. |
++| Original source media, aliases and mirrors | Restore the original pre-migration MEDIA substitution to the genuinely settled new object throughout the original document. Remove the first-return-only imported old object and alias substitution. `media.admit` sends the actual selected object's exact digest pair to Runtime's existing raw-media verifier. It creates no manifest or authority override. |
++| New registry binding's media/type/generation/variant and opaque.keep=[null,false] | Genuine occurrence.add-media captures the real selection; a guarded patch restores the complete original owner payload including the opaque binding. |
++| Placement clip fields, null opaque value and insertion at index 1 | Preserve the original placed-row literal and video branch. The final guarded owner-payload replacement restores the original order, including the surviving clip-a/clip-b rows. |
++| Occ-b unchanged source image and occurrence-local materialization | Keep the real capture_occurrence_place_shared call. Assert a sole shared shot/internal image before the local edit. Reproduce the original raw occurrence-local edit on a copy solely as an equality oracle; never submit this oracle. Compare the complete real final canonical closure to document_from_bundle(expected), without stripping fields or relaxing equality. |
++
++The original normalizations are retained: cleared text_bindings, occurrence gain=1, removal of source_window in inputs, and the image/video inputs branch. Original immutable fixture IDs such as shot-1 are not forged into accepted pins: the supported semantic path generates revisions, and comparisons use only the actual canonical links. Their physical sharing relationship is checked exactly before materializing occ-a. The final complete equality includes every image, manifest, order and field; it does not normalize the real candidate to itself.
++
++## Genuine caller, authority and history
++
++The fixture retains Runtime's create_timeline and TimelineCommitStore.bootstrap (`timeline_commit_store.py:1767`, empty payload at `timeline_commit_baseline.py:416`). It registers load_timeline_commit_provider('astrid') (`timeline_commit_provider.py:70`), whose fixed factory is the genuine Agent RuntimeCommitService.
++
++The unchanged commit helper calls service.commit_timeline with current base IDs, project/timeline scope, idempotency key, authenticated publisher, canonical invocation path and live authorize callback (`service.py:2435`). Runtime dispatches through CommitExecutionCoordinator.execute (`timeline_commit_execution.py:69`) and RequestCommitPort to `commit.py:1160`. Registry admission is captured from the real port by native_media_admission.capture_media_admissions; occurrence.create, occurrence.place-shared, occurrence.add-media and doc.patch are registered production operations in commands.py.
++
++Nested setup-only submit supplies one step per command so each patch has its exact sequential submitted changes and guarded previous values. The ordinary body, commit, inverse, rows and test functions are unchanged from the assigned base. Every full v2 request field already supplied by body is retained: API/scope/base pair, ordered commands, label, steps/intent/tags/ordinals/patch/reads, merge, request reads, source/rationale/group, dry_run, plus the helper's Runtime idempotency argument.
++
++Patch before states come from Closure.payload/value_at at each sequential boundary; created claims come from the existing allocations helper. Managed membership uses semantic operations. The final explicit internal ref is selected from the real accepted closure's owner mapping, not guessed or authored. No revision ID, digest, manifest, accepted row, receipt or history is written by the test setup.
++
++The unchanged inverse helper uses the genuine receipt_id. Agent commit.py:1251-1299 loads authenticated target history and previous/current closures, selects inverse records with the physical-address resolver, and scans later steps. Runtime port history/closure reads remain scoped (`timeline_commit_port.py:246-257`); preview/accept remain genuine port/store operations (`:640-651`). No inverse mappings or accepted history were fabricated. The original retry, no-write preview, no-reexecution retry, changed-request refusal, source equality, undo/redo and integrity predicates are AST-identical. All recipe ABA/refusal/no-write predicates and branches remain byte-identical. The original 45-second later-qualification budget was not changed.
++
++## Static validation
++
++Exact commands, stdin paths, outputs and exit codes are recorded in validation.json and individual logs. All exited zero:
++
++- `python3 <this evidence directory>/check_source.py`: original/base/candidate in-memory parse/compile, original protected ASTs and all base non-fixture functions conserved, 11 recipe functions and recipe bytes conserved, complete original fixture source snapshots checked, 12 original selectors mapped without collection, assigned scope and whitespace checked.
++- `/home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_commit_runtime_video_unplace.py tests/editing_conformance/test_recipe_m2_video_unplace.py`: all checks passed.
++- Baseline Ruff on both exact-base source files through `--stdin-filename <original path> -`: both passed.
++- `/home/user/work/venv-agent/bin/mypy --cache-dir=/tmp/w-c62c9e2f9b/mypy-candidate tests/editing_conformance/test_commit_runtime_video_unplace.py tests/editing_conformance/test_recipe_m2_video_unplace.py`: no issues in 2 source files.
++- Baseline mypy uses `/tmp/w-c62c9e2f9b/mypy-baseline` and `--shadow-file tests/editing_conformance/test_commit_runtime_video_unplace.py /tmp/w-c62c9e2f9b/video12-source/test_commit_runtime_video_unplace.py` with the same two-file scope: no issues in 2 source files. The recipe is already byte-identical.
++- `git diff --check`: passed.
++
++No pytest, collection, repository fixture/helper/function execution, service, body execution, build, browser or full suite ran. Static mypy uses the existing repository configuration; untyped runtime behavior remains unqualified. No product, schema, pin, generated, shared dependency, ledger or unrelated file changed; no deletions or Git mutations. Existing outside-seam findings remain unapplied. No new source-external fix is proposed.
++
++## Proposed existing F-D86/video12 incremental log entry
++
++`F-D86 video12 second return | author PASS_SOURCE | base 9f884cdf518843d9ae4c3f0316e79f642f8642ce | candidate blob 4d0a0658bcfefa9f3e203017e68aca46fb03d90d | original parent/shot/occurrence/internal opaque topology and source/order restored through Runtime semantic commits + guarded doc.patch | 12 selectors conserved; recipe byte-identical | AST/compile, baseline+candidate Ruff/mypy, diff check PASS | NOT functional proof; outside-seam product finding unapplied | fresh independent protected-source review required before remote Agent queue; later qualification only through existing MAIN incremental route at unchanged 45s budget.`
++
++This is proposed text only; no shared rollup/log was edited. The exact selector map is selectors.txt / selector-map.json. The existing MAIN incremental packet, selector dispositions and held unrelated work are not changed. The orchestrator should arrange the independent review against the harness commit before queueing this source; functional proof follows the already-authorized existing MAIN incremental route.
+diff --git a/tests/editing_conformance/test_commit_runtime_video_unplace.py b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+index bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a..4d0a0658bcfefa9f3e203017e68aca46fb03d90d
+--- a/tests/editing_conformance/test_commit_runtime_video_unplace.py
++++ b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+@@ -2,6 +2,7 @@
+ from __future__ import annotations
+ 
+ import copy
++import json
+ from types import SimpleNamespace
+ 
+ import pytest
+@@ -9,10 +10,12 @@
+ from astrid.sdk.timeline._command_state import State
+ from astrid.sdk.timeline.commit import (
+     bundle_from_document,
++    document_from_bundle,
+ )
+ from astrid.sdk.timeline.native_auto_placement import unplace_shared
+ from tests.editing_conformance.test_recipe_occurrence_media import inputs
+ from tests.helpers.runtime import use_runtime
++from tests.sdk.test_timeline_commit_provider_document import MEDIA
+ 
+ pytestmark = pytest.mark.integration
+ OWNER = 'occurrence:occ-a'
+@@ -33,7 +36,7 @@
+     from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
      from test_timeline_commit_acceptance import validate_prepared
  
 -    from astrid.sdk.timeline.capture import capture_track_create
@@ -152,249 +345,56 @@
 exec
 /bin/bash -lc "python3 - <<'PY'
 from pathlib import Path
-import ast
+import hashlib
 import json
-import os
-import shlex
 import subprocess
 
 worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107')
 ev = worker / 'evidence'
 manifest = json.loads((ev / 'source-manifest.json').read_text())
-path = manifest['changed_files'][0]
-source = subprocess.check_output(['git', 'show', manifest['original'] + ':' + path], text=True)
-node = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name.startswith('test_capture_commit'))
-manifest['runtime_original_raises'] = sum(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
-    and isinstance(n.func.value, ast.Name) and n.func.value.id == 'pytest' and n.func.attr == 'raises'
-    for n in ast.walk(node))
-(ev / 'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\\n')
-files = list(manifest['files'])
-baseline = Path(os.environ['TMPDIR']) / 'video12-source'
-commands = [
-    ('compile-ast', ['python3', str(ev / 'check_source.py')], None),
-    ('ruff-candidate', ['/home/user/work/venv-agent/bin/ruff', 'check', '--no-cache', *files], None),
-    *[('ruff-baseline-' + str(i), ['/home/user/work/venv-agent/bin/ruff', 'check', '--no-cache',
-        '--stdin-filename', name, '-'], (baseline / Path(name).name).read_bytes()) for i, name in enumerate(files)],
-    ('mypy-candidate', ['/home/user/work/venv-agent/bin/mypy', '--cache-dir=' + os.environ['TMPDIR'] + '/mypy-candidate', *files], None),
-    ('mypy-baseline', ['/home/user/work/venv-agent/bin/mypy', '--cache-dir=' + os.environ['TMPDIR'] + '/mypy-baseline',
-        '--shadow-file', files[0], str(baseline / Path(files[0]).name), *files], None),
-    ('diff-check', ['git', 'diff', '--check'], None),
-]
-results = []
-for name, command, data in commands:
-    result = subprocess.run(command, input=data, capture_output=True)
-    output = result.stdout.decode() + result.stderr.decode()
-    exact = shlex.join(command)
-    (ev / (name + '.log')).write_text('"'$ '"' + exact + '\\n' + output + '\\nexit=' + str(result.returncode) + '\\n')
-    results.append({'check': name, 'command': exact, 'exit_code': result.returncode,
-                    'stdin': str(baseline / Path(files[int(name[-1])]).name) if name.startswith('ruff-baseline') else None,
-                    'output': output})
-    print(name + ': exit=' + str(result.returncode) + '; ' + output.strip())
-(ev / 'validation.json').write_text(json.dumps(results, indent=2) + '\\n')
-assert all(result['exit_code'] == 0 for result in results)
+for path, records in manifest['files'].items():
+    assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == records['candidate']['sha256']
+assert all(row['exit_code'] == 0 for row in json.loads((ev / 'validation.json').read_text()))
+subprocess.run(['git', 'diff', '--check'], check=True)
+changed = subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines()
+assert changed == manifest['changed_files']
+size = sum(p.stat().st_size for p in worker.rglob('*') if p.is_file())
+assert size < 50_000_000
+assert (worker / 'commit-msg').read_text().startswith('test(timeline): preserve F-D86 video opaque topology\\n')
+print('PASS final artifact hashes, validation results, scope, diff check; durable worker bytes:', size)
+(worker / 'DONE').touch()
+print('DONE written; harness commit pending. Independent review and MAIN functional qualification remain next steps.')
 PY" in /home/user/work/wt/agt-D86-video-repair-sol-0107
- succeeded in 3468ms:
-compile-ast: exit=0; PASS original/base/candidate parse, in-memory compile and AST conservation: tests/editing_conformance/test_commit_runtime_video_unplace.py
-PASS original/base/candidate parse, in-memory compile and AST conservation: tests/editing_conformance/test_recipe_m2_video_unplace.py
-PASS complete original fixture source snapshots; fixture providers unchanged
-PASS 12 original selector mappings; original decorators, parameters, predicates and branches
-PASS allowed scope and git diff --check; no repository code executed
-ruff-candidate: exit=0; All checks passed!
-ruff-baseline-0: exit=0; All checks passed!
-ruff-baseline-1: exit=0; All checks passed!
-mypy-candidate: exit=0; Success: no issues found in 2 source files
-mypy-baseline: exit=0; Success: no issues found in 2 source files
-diff-check: exit=0; 
-
-exec
-/bin/bash -lc "sed -n '28,105p' /home/user/work/runtime/runtime_protocol/timeline_commit_execution.py && sed -n '230,270p' /home/user/work/runtime/runtime_protocol/timeline_commit_port.py && sed -n '1250,1300p' astrid/sdk/timeline/commit.py && rg -n '"'^def (inputs|document_fixture|capture_occurrence_create|capture_occurrence_place_shared|capture_occurrence_add_media|unplace_shared|patch|allocations|value_at)|''^    def commit'"' tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_commit_provider_document.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/native_occurrence_create.py astrid/sdk/timeline/native_occurrence_shared.py astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/native_auto_placement.py astrid/sdk/timeline/_doc_patch.py" in /home/user/work/wt/agt-D86-video-repair-sol-0107
- succeeded in 0ms:
-class CommitExecutionCoordinator:
-    def __init__(self, commit_store):
-        self.commit_store = commit_store
-        self._guard = threading.Lock()
-        self._entries = {}
-
-    @contextmanager
-    def _execution(self, context):
-        key = (scope(context), context["idempotency_key"])
-        with self._guard:
-            entry = self._entries.get(key)
-            if entry is None:
-                entry = self._entries[key] = _Entry(context["request_hash"])
-            mismatch = entry.request_hash != context["request_hash"]
-            if not mismatch:
-                entry.users += 1
-        if mismatch:
-            # A changed request may have entered after the original accepted.
-            # The durable winner takes precedence over this transient hash.
-            yield False
-            return
-        try:
-            with entry.lock:
-                yield True
-        finally:
-            with self._guard:
-                entry.users -= 1
-                if entry.users == 0:
-                    del self._entries[key]
-
-    def _lookup(self, context, authorize):
-        from .timeline_commit import CommitRejected
-        from .errors import AuthorizationError, ForbiddenError
-
-        try:
-            return self.commit_store.lookup(context, authorize=authorize)
-        except (CommitRejected, AuthorizationError, ForbiddenError):
-            raise
-        except Exception as exc:
-            raise CommitOutcomeUnknown() from exc
-
-    def execute(self, context, provider, port_factory, *, authorize):
-        with self.commit_store.verification_scope():
-            return self._execute(context, provider, port_factory, authorize=authorize)
-
-    def _execute(self, context, provider, port_factory, *, authorize):
-        context = detached(context)
-        if request_identity(context) != context["request_hash"]:
-            reject("invocation_mismatch", status=422)
-        # There is intentionally no optimistic dependency/head read here. Even
-        # callers with an earlier cache miss repeat this lookup after waiting.
-        with self._execution(context) as acquired:
-            replay = self._lookup(context, authorize)
-            if replay is not None:
-                return replay
-            if not acquired:
-                reject("idempotency_mismatch")
-            outcome = error = port = None
-            try:
-                port = port_factory(detached(context))
-                provider_context = detached(port._provider_context()) if hasattr(port, "_provider_context") else detached(context)
-                if any(provider_context[k] != context[k] for k in ("invocation", "idempotency_key", "request_hash", "realm_id", "publisher")):
-                    raise ProtocolError("request port changed invocation identity")
-                outcome = detached(provider.commit(provider_context, port))
-                if hasattr(port, "verify_outcome"):
-                    port.verify_outcome(outcome)
-            except BaseException as exc:
-                error = exc
-            finally:
-                if port is not None:
-                    try:
-                        port.close()
-                    except BaseException as exc:
-                        if error is None:
-                            error = exc
-            # No provider completion, including a close/hook exception, can
-            # supersede a committed winner. A failed read is an unknown outcome.
-            replay = self._lookup(context, authorize)
-        for root in roots:
-            current, seen = root, set()
-            while current and current["publication_id"] not in seen:
-                seen.add(current["publication_id"])
-                entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
-                if entry["revision_id"] != current["revision_id"]:
-                    raise refused("history_unavailable", "publication/revision pins disagree")
-                if current["publication_id"] == publication_id:
-                    from .timeline_commit_inputs import reachable_document_input_pins
-                    pins = reachable_document_input_pins(self.__store.conn, self.__project, self.__timeline,
-                                                         publication_ids=[publication_id])
-                    self.__history_pins.extend(pin for pin in pins if pin not in self.__history_pins)
-                    return entry
-                current = entry["previous"]
-        raise refused("history_unavailable", "publication is outside request ancestry")
-
-    def history_entry(self, publication_id):
-        return self._read(lambda: self._ancestor(publication_id))
-
-    def history(self, through, after_publication_id=None, cursor=None, limit=100):
-        def read():
-            if self._ancestor(through["publication_id"])["revision_id"] != through["revision_id"]:
-                raise refused("history_unavailable", "history bounds disagree")
-            return self.__store.history(self.__project, self.__timeline, through,
-                                        after_publication_id=after_publication_id, cursor=cursor, limit=limit)
-        return self._read(read)
-
-    def revision_closure(self, revision_id):
-        if isinstance(revision_id, dict):
-            return self.source_revision_closure(revision_id)
-
-        def read():
-            if revision_id in self.__closures:
-                return self.__closures[revision_id]
-            allowed = {self.__request["base_revision_id"]}
-            allowed.update(pin["revision_id"] for pin in self.__observed.values())
-            allowed.update(item["revision_id"] for item in self.__declared
-                           if "revision_id" in item and "content_digest" in item)
-            if revision_id not in allowed:
-                current = self.head()
-                cursor = current
-                            undo_of.append(publication)
-            inverse_records, inverse_intervening, inverse_sources = [], [], []
-            if undo_of:
-                targets = [port.history_entry(publication) for publication in undo_of]
-                segments = []
-                for target in targets:
-                    pin = {"revision_id": target["revision_id"],
-                           "publication_id": target["publication_id"]}
-                    # Loading the exact target also verifies source scope; no
-                    # client-provided inverse writes enter the core engine.
-                    _load(port, context, target["revision_id"])
-                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
-                    segments.append(segment)
-                # The longest segment begins at the earliest targeted edge.
-                ordered = max(segments, key=len)
-                if undo_of != [entry["publication_id"] for entry in ordered
-                               if entry["publication_id"] in undo_of]:
-                    raise CommitRejected(_failure("invalid_inverse_order",
-                                                  "inverse publications must be oldest to newest",
-                                                  base, current))
-                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
-
-                def load_boundary(entry):
-                    previous = entry.get('previous')
-                    if not previous:
-                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
-                    prior = port.history_entry(previous['publication_id'])
-                    if prior['revision_id'] != previous['revision_id']:
-                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
-                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
-                    _history(port, pin, previous, CommitRejected, base)
-                    return (_load(port, context, previous['revision_id']),
-                            _load(port, context, entry['revision_id']))
-
-                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
-                _records(ordered, CommitRejected, base, current)
-                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
-                    for record in entry['records']['commands']], load_boundary)
-                inverse_history = ordered
-
-                def select_at(head_bundle, history):
-                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary,
-                                                        load_history=port.history_entry)
-                        if any('physical_ref' in binding for record in accepted_records
-                               for binding in record['bindings']) else None)
-                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
-                    check_later_steps(selected, history, state=State(head_bundle))
-                    return selected
-
-                inverse_records = select_at(bundle, inverse_history)
-            closures, restored_from = {}, None
-astrid/sdk/timeline/native_occurrence_create.py:53:def capture_occurrence_create(bundle, occurrence_id, shot_id, *, name, track, on, duration):
-astrid/sdk/timeline/_doc_patch.py:79:def value_at(root, ref, path):
-astrid/sdk/timeline/_doc_patch.py:303:def allocations(closure, physical, before, after):
-astrid/sdk/timeline/_doc_patch.py:478:def patch(ctx, command):
-astrid/sdk/timeline/native_auto_placement.py:282:def unplace_shared(bundle, owner, clip_id, *, ownership, keep_as_pooled=False, media=None,
-astrid/sdk/timeline/commit.py:1160:    def commit(self, context, port):
-astrid/sdk/timeline/native_occurrence_shared.py:328:def capture_occurrence_place_shared(bundle, owner, occurrence_id, *, on):
-tests/editing_conformance/test_recipe_occurrence_media.py:40:def inputs(kind='image'):
-tests/sdk/test_timeline_commit_provider_document.py:22:def document_fixture(*, shared=True):
-astrid/sdk/timeline/native_occurrence_media_commands.py:277:def capture_occurrence_add_media(bundle, owner, row, media, *, verified_media, consumed=()):
+ succeeded in 771ms:
+PASS final artifact hashes, validation results, scope, diff check; durable worker bytes: 1878903
+DONE written; harness commit pending. Independent review and MAIN functional qualification remain next steps.
 
 codex
-Static checks passed for both baseline and candidate: Ruff, scoped mypy, in-memory compilation, AST conservation, and `git diff --check`. All 12 selectors remain, and the recipe file is byte-identical. I’m recording the source hashes and fixture mapping for the required independent review before the remote Agent queue.
+Implemented the F-D86 video12 correction in the allowed Runtime test fixture. Guarded patches preserve the complete original payloads, registry opaque values and clip order while retaining genuine shared placement. The recipe remains byte-identical; all 12 selectors and original test predicates are conserved.
 
-exec
-/bin/bash -lc "ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-inputs-0055/evidence && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-incremental-0055-README.md && git diff --check && git status --short" in /home/user/work/wt/agt-D86-video-repair-sol-0107
- exited 2 in 0ms:
-ls: cannot access '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-inputs-0055/evidence': No such file or directory
+Source checks passed:
 
+- Original/base/candidate AST conservation and in-memory compilation.
+- Baseline/candidate scoped Ruff and mypy.
+- `git diff --check`.
+
+[Exact commands and results](< /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/validation.json >) and [fixture/source mapping](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/source-review.md>) are recorded.
+
+No pytest, collection, fixture/helper execution, service, build or browser checks ran. Functional behavior remains unverified, and the existing outside-seam finding remains unapplied.
+
+Commit message and `DONE` are written. Next: fresh independent protected-source review **before the remote Agent queue**, followed by qualification through the existing MAIN incremental route at the unchanged 45-second budget.
+tokens used
+145,681
+Implemented the F-D86 video12 correction in the allowed Runtime test fixture. Guarded patches preserve the complete original payloads, registry opaque values and clip order while retaining genuine shared placement. The recipe remains byte-identical; all 12 selectors and original test predicates are conserved.
+
+Source checks passed:
+
+- Original/base/candidate AST conservation and in-memory compilation.
+- Baseline/candidate scoped Ruff and mypy.
+- `git diff --check`.
+
+[Exact commands and results](< /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/validation.json >) and [fixture/source mapping](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107/evidence/source-review.md>) are recorded.
+
+No pytest, collection, fixture/helper execution, service, build or browser checks ran. Functional behavior remains unverified, and the existing outside-seam finding remains unapplied.
+
+Commit message and `DONE` are written. Next: fresh independent protected-source review **before the remote Agent queue**, followed by qualification through the existing MAIN incremental route at the unchanged 45-second budget.

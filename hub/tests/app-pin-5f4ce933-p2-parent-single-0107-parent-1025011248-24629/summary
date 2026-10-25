@@ -1,0 +1,64 @@
+test app-pin-5f4ce933-p2-parent-single-0107-parent-1025011248-24629: fail exit=1 in 208s — p2-parent-single-0107-parent on app-pin-5f4ce933 (app tree 43dfdaac047f468d1dada5c1965e474003f497d5)
+cmd: D66_APP_SHA='5f4ce933ec4ad883787e4730d92c0bca8caf0814' D66_APP_TREE='43dfdaac047f468d1dada5c1965e474003f497d5' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-5f4ce933' D66_AGENT_SHA='0d142f79518ba4ec20eb195657ccc7eb6e903fc3' D66_AGENT_TREE='f490451a3fa92f847a9ff2d26daac9e1157925e3' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-0d142f79' D66_RUNTIME_SHA='a3cd1a3214fa1632879c21d82d1abb9ea720b1de' D66_RUNTIME_TREE='64bb0caf0b7b950e02c4075077868a3dcd12ee06' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-a3cd1a32' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_EXECUTION_ROOT='/home/user/work/wt/rt-P2-parent-single-0107' D66_VITE_CONFIG='/home/user/work/wt/rt-P2-parent-single-0107/scripts/testing/d66-vite-profile.config.ts' D66_APP_NODE_MODULES='/home/user/work/app/node_modules' D66_REMOTION_PROJECT_DIR='/home/user/work/runtimes/agent-remotion-0013' ASTRID_PYTHON='/home/user/work/venv-agent/bin/python' ASTRID_RUNTIME_PYTHON='/home/user/work/venv-runtime/bin/python' D66_OUTPUT_DIR='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service' '/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx '/home/user/work/wt/rt-P2-parent-single-0107/scripts/testing/d66-plain-stack-profile.mjs' 'p2-parent-move'
+counts:   1 passed (21.0s)   1 failed 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-5f4ce933-p2-parent-single-0107-parent-1025011248-24629/log.txt ---
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/dist/assets/vendor-react-D2L5FdBO.js                             554.38 kB │ gzip: 179.44 kB │ map:  2,289.06 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/dist/assets/sample-BOVUGsH5.js                                   635.43 kB │ gzip: 165.24 kB │ map:    670.86 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/dist/assets/metadata-C6Le5_zC.js                                 707.70 kB │ gzip: 201.53 kB │ map:  2,794.61 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/dist/assets/mediabunny-aac-encoder-CvK8HrGr.js                   991.69 kB │ gzip: 256.70 kB │ map:  1,922.29 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/dist/assets/bootstrap-BbX27F1U.js                              1,631.56 kB │ gzip: 460.14 kB │ map:  6,577.13 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/dist/assets/overhang-Bh3x8xXt.js                               2,836.24 kB │ gzip: 804.28 kB │ map: 12,115.37 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1m 10s
+D66 normal launch, native seed, Agent identity and authoritative history PASS
+
+Running 1 test using 1 worker
+
+  ✓  1 tests/e2e/local/three-products.mounted-readiness.spec.ts:268:1 › D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture (7.9s)
+
+  1 passed (21.0s)
+
+Running 1 test using 1 worker
+
+  ✘  1 tests/e2e/local/three-products.p2-tour.spec.ts:739:1 › P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo (57.9s)
+
+
+  1) tests/e2e/local/three-products.p2-tour.spec.ts:739:1 › P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"[7mT[27mimeline[7m edit[27m"[39m
+    Received: [31m"[7mUndo t[27mimeline"[39m
+
+      268 |   expect(data.document_digest).toEqual(expect.any(String));
+      269 |   assertNormalizedCommands(data.commands as EditCommand[], post.body.commands);
+    > 270 |   expect(data.label).toBe(modern ? post.body.label : 'Timeline edit');
+          |                      ^
+      271 |   expect(data.id_map).toEqual(expect.any(Object));
+      272 |   expect(data.provider_version).toEqual(expect.any(String));
+      273 |   expect(data.compiler_version).toEqual(expect.any(String));
+        at assertReplyShape (/home/user/work/wt/rt-P2-parent-single-0107/tests/e2e/local/three-products.p2-tour.spec.ts:270:22)
+        at proveGestureAndUndo (/home/user/work/wt/rt-P2-parent-single-0107/tests/e2e/local/three-products.p2-tour.spec.ts:719:25)
+        at /home/user/work/wt/rt-P2-parent-single-0107/tests/e2e/local/three-products.p2-tour.spec.ts:745:3
+
+    Error Context: ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/p2-parent-move/three-products.p2-tour-P2--c8084-lta-reload-and-guarded-Undo/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/p2-parent-move/three-products.p2-tour-P2--c8084-lta-reload-and-guarded-Undo/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/p2-parent-move/three-products.p2-tour-P2--c8084-lta-reload-and-guarded-Undo/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/local/three-products.p2-tour.spec.ts:739:1 › P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo 
+
+No test passed in this run: a run where everything was skipped or failed is not a green run.
+
+Declare each skip in config/testing/skipRegistry.mjs and use tests/e2e/support/declaredSkip.ts; fix the earlier failure for NOT RUN tests.
+D66 manifest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107/evidence/p2-parent-move/service/manifest.json
