@@ -43,9 +43,23 @@ class Store:
         self.final_error = final_error
         self.winner: Any = None
         self.lookups = 0
+        self.replay_memo: set[Any] = set()
+        self.history_state: dict[str, dict[Any, Any]] = {}
+        self.replay_generation = 0
+
+    def clear_replay_memo(self) -> None:
+        self.replay_memo.clear()
+        self.history_state = {key: {} for key in (
+            "records", "entries", "closures", "heads", "chains", "chain_tails", "events", "objects",
+        )}
+        self.replay_generation += 1
 
     @contextmanager
     def verification_scope(self) -> Any:
+        yield
+
+    @contextmanager
+    def history_read_scope(self) -> Any:
         yield
 
     def lookup(self, ctx: Any, *, authorize: Any) -> Any:
@@ -239,12 +253,13 @@ def test_preserved_original_and_mounted_source_attachment() -> None:
     # Observe these existing code objects; the plugin neither installs a provider
     # nor substitutes service, session, port, authorization or coordinator methods.
     for method, name in [(TimelineSession.undo, "TimelineSession.undo"),
-                         (RuntimeService._execute_timeline_commit, "RuntimeService._execute_timeline_commit"),
+                         (RuntimeService._execute_timeline_commit, "_clear_replay_on_refusal.<locals>.wrapped"),
                          (RuntimeCommitService.commit, "RuntimeCommitService.commit"),
                          (RequestCommitPort.close, "RequestCommitPort.close")]:
         assert method.__code__.co_qualname == name
     source = Path(RuntimeService._execute_timeline_commit.__code__.co_filename).read_text()
-    assert "coordinator.execute(context, provider, port_factory, authorize=check)" in source
+    assert "coordinator.execute(context, provider, port_factory, authorize=check," in source
+    assert "diagnostic_request_id=request_id)" in source
     assert "return RequestCommitPort(self, commits, bound_context, require_active)" in source
     assert "undo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-undo')" in content.decode()
 
@@ -261,6 +276,10 @@ def test_session_calls_mounted_service_real_provider_and_port_offline(
     primary = RuntimeError("offline boundary; no source closure or live store")
 
     class OfflineStore(Store):
+        def revision_closure(self, *args: Any) -> Any:
+            calls.append("revision_closure")
+            raise primary
+
         def history_entry(self, *args: Any) -> Any:
             calls.append("history_entry")
             raise primary
@@ -301,7 +320,7 @@ def test_session_calls_mounted_service_real_provider_and_port_offline(
     try:
         with pytest.raises(WorkspaceClientError) as caught:
             session.undo(["pub1"], idempotency_key="wc6-undo")
-        assert caught.value.code == "transport_error"
+        assert caught.value.code == "not_ready"
         assert service_errors[0].__cause__ is primary
     finally:
         capture.stop()
