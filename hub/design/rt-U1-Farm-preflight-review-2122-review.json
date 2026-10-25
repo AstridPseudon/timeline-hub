@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "task": "rt-U1-D135-farm-preflight-2116",
+  "review_task": "rt-U1-Farm-preflight-review-2122",
+  "venue": "Farm",
+  "verdict": "FAIL",
+  "candidate": {
+    "commit": "a736572e68b35485b327198240d5e55730eb4341",
+    "tree": "248f59e6078aee03d38fd352fbde95eea219c480a"
+  },
+  "farm_actual_preflight": "NOTRUN",
+  "farm_six_file_body": "NOTRUN",
+  "source_tuple": {
+    "runtime_commit": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+    "runtime_tree": "73d92563277d2ba5e49b788924c07426a2fdec4a",
+    "agent_commit": "32dde0c035f59029064fe782d5147d4e68e75835",
+    "agent_tree": "81ad4d2d674df3bd096943eb542c949ff011469c",
+    "frozen_object_audit": "PASS",
+    "preflight_enforcement": "FAIL"
+  },
+  "coverage": {
+    "actual_modules": 7,
+    "ast_import_manifests": "7/7 PASS",
+    "frozen_source_files": "21/21 PASS",
+    "negative_import_attempts": 7,
+    "negative_import_failures": 4,
+    "negative_exit": 1,
+    "body_run": false
+  },
+  "findings": [
+    "source_tuple_not_enforced",
+    "interpreter_version_not_enforced",
+    "minimum_distribution_versions_not_enforced",
+    "all_missing_omits_package_failures",
+    "local_helper_origins_not_guarded",
+    "testsuites_xml_counts_not_aggregated"
+  ]
+}

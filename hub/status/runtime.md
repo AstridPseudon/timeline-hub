@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T21:25:51Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 13 | status age 1m -->
-# runtime board, 2026-10-25T21:24:27Z
+<!-- main | 2026-10-25T21:30:37Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 12 | status age 2m -->
+# runtime board, 2026-10-25T21:28:07Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -488,9 +488,9 @@
 
 | D127c-normal-source | Carry reviewed final profiler helper | Luna | Exact reviewed and integrated tree | merged | App clean2010; normal cf0b82dd | Full tree8d568 equals reviewedfb4add. Central61 and Node20three controls retained; no original element result. | Runtime2002 and App2047 PASS | cf0b82dd47 |
 
-| D73-exact-node-route | Bind immutable own-node route | Luna | Review then receipt and installation | review | Author2104; independent2120 active | Private68343 prepared; five receipt or install needs remain. Later Agent2111 duplicate reconciled; no body. | Pending2120 | 68343fb8e |
+| D73-exact-node-route | Bind immutable own-node route | Luna | First-return executable correction | doing | Author2104; review2120 FAIL; return2127 | Fix pytest argv, unique evidence and exact reviewed launcher. Original4+1 and immutableab1e preserved; no body or live installation. | Independent2120 retained | 68343fb8e held |
 
-| U1-Farm-portable-preflight | Supply Farm interpreter and imports | Luna | Actual Farm imports then six files | review | Author2116; independent2122 | Exacta736 provides seven-module import census and portable venv-agent recipe. Actual Farm preflight and body NOTRUN. | Review2122 active | a736572e6 |
+| U1-Farm-portable-preflight | Supply Farm interpreter and imports | Luna | First-return executable correction | doing | Author2116; review2122 FAIL; return2127 | Fix identity, dependency and exhaustive missing-input census, helper origins and XML counts. Farm existing venv-agent selected conditionally. | Independent2122 retained | a736572e6 held |
 | OPS-D137-installed-shell | Verify exact installed shell fix | Luna independent | Installed f07b | merged | rt-OPS-D137-installed-shell-review-2116 | Installed-byte failure17 and timeout124, private stderr0600 and cleanup PASS. Exact backup and protected source verified. | Independent2116 PASS | f07b8093 |
 
 | D127d-element-cost | Reduce measured element commit cost | HARD Sol | Offline reproduction before source fix | doing | rt-D127d-element-cost-sol-2123 | OwnerD127d: reproduce lifecycle-size cost offline; one behavior-preserving fix and independent review, then App verifies once. | Review after source | Pending |
@@ -502,12 +502,12 @@ Blockers: Agent real child — exact f07b installed21:11 and current normal hub 
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after automatic classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
 Blockers: Element — D127d stops profiling. Sole HARD Sol2123 reproduces cost offline and makes one measured fix. App actual15200 remains recorded; next element body verifies qualified fix only.
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tupleP1-P5, wheel, Windows and ZIP remain owed.
-Blockers: Runtime union — Farm source guards PASS, interpreter absent. Author2116 produces exhaustive imports and venv-agent conditional recipe. No Runtime venv acquisition or six-file body before Farm preflight PASS.
-Next ready: completed D73 and Farm source reviews decide their narrow returns or receiving work; App sole original9 now source-ready. Current source cap3 full, no ready row waiting below cap.
+Blockers: Runtime union — Farm source guards PASS; optionA existing venv-agent selected only after actual import census. First review2122 found source-gate defects; return2127 fixes all. No Runtime venv acquisition.
+Next ready: final reviews on D73 and Farm source returns; independent element source review after Sol2123. App original9 source-ready; Agent new real request follows exact received f07b.
 D100: Corrected27 PASS. Final FPS20db independent2119 PASS sent App for sole unchanged9. Historical nine setup errors retained; release held until actual proof, no fixture rewrite.
 D77: Farm changed child follows Agent actual new D137 result. No Farm fixture body or core. Exact applied source and lock handoffs remain qualified.
 Delivery: D59 integration tuple only. Private Agent32dde independent1959 PASS; Runtime0bb3 source PASS and Farm functional proof owed. App private upstream join stays App-owned.
 Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and copies authored handbacks only. No product, test, generated, pin, Git internals or credentials mutation.
 Disk: Fresh4.84 GB before Sol2123. Source cap3/floor4.6 GB, stop4 GB. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped6 logs. Three old Runtime trees dirty; protected raw KEEP retained. No local heavy body.
-live 3 / cap 3; ready-undispatched 0. D73 review2120, Farm review2122 and HARD Sol cost2123 active. All independent ready Runtime rows dispatched; actual proof receiving stays with App, Agent and Farm.
-INBOX consumed through1562932 bytes. D127d assigned2123 after maker/FPS source completion; D138 CLI decision recorded. Agent receives f07b then one request; Farm conditional venv-agent route in review. Updated 2026-10-25T21:24:27Z.
+live 3 / cap 3; ready-undispatched 0. D73 first return2127, Farm first return2127 and HARD Sol cost2123 active. All independent ready Runtime source work dispatched.
+INBOX consumed through1564917 bytes. D136a second-seam order already satisfied by20db/final2119; App sole9 source-ready. Element15200 terminalFAIL under independent App review; D127d offline source owns next fix. Updated 2026-10-25T21:28:07Z.

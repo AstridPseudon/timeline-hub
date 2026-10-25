@@ -1,0 +1,75 @@
+{
+  "schema": "timeline.rt.d73.exact_node_review_source_manifest.v1",
+  "candidate": {
+    "repo": "composition",
+    "path": "ops-d73-exact-nodes/README.md",
+    "commit": "68343fb8e72bcdf52eddf132d2010506da9c0018",
+    "tree": "59cb1533b9334e5247e9b55f1ba831d9aa007fc7",
+    "sha256": "de7938a31f01d1c3b62b49b46b816477a51bc373b70aa68254025c9fa4d6cd94"
+  },
+  "plan": ["PLAN §3 F/R2/G3", "C0 §§1-7"],
+  "prior_source_reviews": {
+    "route_author": "rt-D73-exact-node-route-2104",
+    "selected4": "agt-F-D134-selected-status-sol-2041-source-manifest.json",
+    "fork": "agt-F-D134-preflight5-review-2042-review.json",
+    "launcher": "rt-D73-control-protected-review-2036-source-manifest.json"
+  },
+  "central_readonly_inputs": {
+    "request_test": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874"
+    },
+    "test_run": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+      "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe"
+    },
+    "suites_conf": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+      "sha256": "fecaa66d22ed4e90401455eceb8983b48178a2037c3ccfc0bbc716428239156f"
+    }
+  },
+  "runtime_receipt": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464",
+    "clean": true
+  },
+  "agent_origins": {
+    "selected4": {
+      "commit": "4073fb0f84a9d0afbcba61b9406748a09d9c3c62",
+      "tree": "8c3a6c64b2ed467e185e6c3fef366e9063525653",
+      "path": "tests/sdk/test_timeline_selected_schema_runtime.py",
+      "sha256": "d48c63f0dd8799f058fb8aa1c9abf0729a1d938465b793788fc0936f06d9fca4",
+      "receipt": null
+    },
+    "fork": {
+      "commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+      "tree": "b3638fbf9edb2b2104a89a7e7e4400cac707e471",
+      "path": "tests/editing_conformance/test_occurrence_fork_source_baseline.py",
+      "sha256": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+      "receipt": null
+    }
+  },
+  "launcher": {
+    "path": "tools/p4-d73-pinned-launch.sh",
+    "author_commit": "d70bb370f396f137933d3b8ae3b194588e96e2b1",
+    "review_commit": "375c773449b1c6b477f10c1daff1d9f4704208a2",
+    "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "exact_agent_origin_launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "exact_agent_origin_launcher_matches_review": false,
+    "required_manifest_keys": ["format", "agent_sha", "agent_tree", "agent_parents", "agent_path", "runtime_sha", "runtime_tree", "runtime_path", "app_sha", "app_tree", "app_path", "composition_sha", "composition_tree", "composition_path", "python", "node", "profile", "schema", "node_version", "profile_lock_sha", "profile_archive_sha", "profile_registry_sha", "composition_version", "original_p4_test_hash", "service_versions", "junit_paths"]
+  },
+  "candidate_rows": {
+    "selected4": {
+      "suite": "d73-ab1e-selected4-exact-nodes",
+      "selectors": 4,
+      "body_prefix_after_launcher": ["-o", "addopts=", "-m", "integration", "-p", "no:cacheprovider", "--timeout=45"]
+    },
+    "fork": {
+      "suite": "d73-ab1e-fork-exact-nodes",
+      "selectors": 1,
+      "body_prefix_after_launcher": ["-o", "addopts=", "-m", "integration", "-p", "no:cacheprovider", "--timeout=45"]
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "schema": "timeline.rt.d73.exact_node_review.v1",
+  "task": "rt-D73-exact-node-review-2120",
+  "candidate_commit": "68343fb8e72bcdf52eddf132d2010506da9c0018",
+  "candidate_tree": "59cb1533b9334e5247e9b55f1ba831d9aa007fc7",
+  "verdict": "FAIL_SOURCE_ONLY",
+  "readiness": "NOT_READY",
+  "functional_claim": "NONE",
+  "functional_status": "NOTRUN",
+  "scope": "Bounded review of ops-d73-exact-nodes/README.md against the immutable launcher, request-test, test-run, suites.conf, receipts, and prior protected source reviews.",
+  "immutable_tuple": {
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464",
+      "clean": true
+    },
+    "agent_origins": {
+      "selected4": {
+        "commit": "4073fb0f84a9d0afbcba61b9406748a09d9c3c62",
+        "tree": "8c3a6c64b2ed467e185e6c3fef366e9063525653",
+        "test_sha256": "d48c63f0dd8799f058fb8aa1c9abf0729a1d938465b793788fc0936f06d9fca4",
+        "checkout_receipt": null,
+        "body_status": "NOTRUN"
+      },
+      "fork": {
+        "commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+        "tree": "b3638fbf9edb2b2104a89a7e7e4400cac707e471",
+        "test_sha256": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+        "checkout_receipt": null,
+        "body_status": "NOTRUN"
+      }
+    }
+  },
+  "launcher": {
+    "source_commit": "d70bb370f396f137933d3b8ae3b194588e96e2b1",
+    "review_commit": "375c773449b1c6b477f10c1daff1d9f4704208a2",
+    "path": "tools/p4-d73-pinned-launch.sh",
+    "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "source_review": "PASS_SOURCE_ONLY",
+    "exact_agent_origin_launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "exact_agent_origin_launcher_matches_review": false
+  },
+  "central_inputs": {
+    "request_test_sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+    "test_run_sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "suites_conf_sha256": "fecaa66d22ed4e90401455eceb8983b48178a2037c3ccfc0bbc716428239156f",
+    "candidate_rows_installed": false
+  },
+  "findings": [
+    {
+      "id": "D73-EXACT-001",
+      "severity": "BLOCKING",
+      "status": "FAIL",
+      "summary": "Both suite rows omit the Python pytest module invocation.",
+      "evidence": "README.md:28-29 pass '-o addopts=' as the first argument after 'run --'. The reviewed launcher line 160 executes '<manifest python> -P \\\"$@\\\"' for run mode. The private probe 'python3 -P -o addopts= ...' exits 2 with 'Unknown option: -o'.",
+      "required_fix": "The installed row body must begin '-m pytest -q -o addopts= -m integration -p no:cacheprovider --timeout=45 ...'; retain the exact --files selectors as runner-appended arguments."
+    },
+    {
+      "id": "D73-EXACT-002",
+      "severity": "BLOCKING",
+      "status": "FAIL",
+      "summary": "Evidence identity is static per suite row, not bound to request-test's generated test ID.",
+      "evidence": "README.md:28-29 hard-code P4_D73_REQUEST_ID and the XML path. request-test line 13 generates a unique central ID, while test-run lines 44-45/117-119 pass only D66_OUTPUT_DIR to the command and do not export the central ID or rewrite the row. Repeated requests therefore reuse the same launcher evidence names and XML path.",
+      "required_fix": "Bind P4_D73_EVIDENCE and P4_D73_REQUEST_ID to the per-run output/ID supplied by the supported runner (or add an explicitly reviewed runner adapter); do not claim per-ID retention from fixed row literals."
+    },
+    {
+      "id": "D73-EXACT-003",
+      "severity": "BLOCKING",
+      "status": "FAIL",
+      "summary": "Exact Agent origins do not contain the reviewed launcher source.",
+      "evidence": "Both exact Agent commits contain tools/p4-d73-pinned-launch.sh with SHA-256 cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1, while reviewed source 375c773... is 9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd. The exact-origin launcher exports PYTHONNOUSERSITE=1 in both child shells; the reviewed source changes those lines to unset PYTHONNOUSERSITE.",
+      "required_fix": "Obtain an orchestrator-approved new receipt-backed source/manifest revision that carries the exact selected/fork test origins plus the reviewed launcher, or explicitly revise the tuple. No supported checkout currently satisfies both frozen commits and the reviewed launcher; do not copy or silently substitute the launcher."
+    },
+    {
+      "id": "D73-EXACT-004",
+      "severity": "BLOCKING_ADMISSION",
+      "status": "UNAPPLIED",
+      "summary": "The five declared admission/evidence needs remain missing.",
+      "missing": [
+        "selected4 normal Agent checkout receipt",
+        "fork normal Agent checkout receipt",
+        "receipt-rendered D73 four-repository manifest",
+        "both candidate suite rows installed in central suites.conf",
+        "fresh per-ID body/result receipts"
+      ],
+      "evidence": "The Runtime ab1e receipt exists and is clean; no matching Agent checkout receipts or candidate suite rows were found, and no D73 body was run."
+    }
+  ],
+  "controls": {
+    "exact_files_parser": "PASS_SOURCE_ONLY",
+    "selected4_count": 4,
+    "fork_count": 1,
+    "parameterized_selectors_accepted_by_test_run_regex": true,
+    "whole_file_or_family": false,
+    "fallback_or_retarget": false,
+    "positive_exit_17_once": "RETAINED_ONLY_NOT_RERUN",
+    "poison_zero_calls": "RETAINED_ONLY_NOT_RERUN",
+    "original_predicates": "SOURCE_REVIEWS_REPORT_PRESERVED; BODIES_NOTRUN",
+    "v2_wire_contract": "NOT_FUNCTIONALLY_VERIFIED"
+  }
+}
