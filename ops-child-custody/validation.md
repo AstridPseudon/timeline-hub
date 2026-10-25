@@ -106,13 +106,15 @@ The candidate is not release-qualified while genuine E2E remains NOTRUN.
 
 The fixture E2E gate is withdrawn by owner authorization; its result remains
 `NOTRUN`. No fixture body, Store, child request, acquisition, or install was
-run here. The maker now retains each `run_stage` command's original stderr at
-`.provision-stderr/<stage>.stderr`, mode `0600`, in the maker-owned staging
-root. The public failure marker and summary retain only stage, exit status,
-timing, source identities, lock identity, and the fixed diagnostic string.
+run here. The maker now hands each failed `run_stage` command's stderr to the
+private maker-owned `tests/provision-stderr/<request>.<stage>.stderr` route
+before Store cleanup. The payload is mode `0600`, single-link, bounded to 1 MiB
+with truthful original-size, retained-size, truncation, and SHA-256 metadata.
+The public failure marker and summary retain only stage, exit status, timing,
+source identities, lock identity, and the fixed diagnostic string.
 
-The final maker source in this worktree is 70,119 bytes, mode `0755`,
-SHA-256 `7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8`.
+The final maker source in this worktree is 75,503 bytes, mode `0755`,
+SHA-256 `4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36`.
 The reviewed embedded `STORE_PY` and `STORE_VERIFY` blocks remain byte-exact
 at `0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c` and
 `f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209`.
@@ -120,13 +122,13 @@ at `0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c` and
 The imported installer-prep route is based only on installer1826 source
 `a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4`. Its D137 gate accepts an exact
 owner decision input binding the final 40-hex source commit, this maker hash
-and 70,119-byte candidate, with `WITHDRAWN`/`NOTRUN` E2E and
+and 75,503-byte candidate, with `WITHDRAWN`/`NOTRUN` E2E and
 `CAS_MANAGER_ONLY`; it does not fabricate E2E PASS. The route retains the
 descriptor-bound lock, no-follow/no-clobber backup, target identity CAS,
 atomic rename, protected-helper hashes, and source/RECORD checks. The actual
 install remains UNVERIFIED and was not attempted.
 
-Targeted evidence: bash syntax, 42 unittest controls, private CAS dry-run,
+Targeted evidence: bash syntax, 44 unittest controls, private CAS dry-run,
 Ruff, Python compile, verifier-block comparison, and diff check all pass as
 reported in the worker handoff. No full suite or live socket/browser run was
 requested.

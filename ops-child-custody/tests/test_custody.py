@@ -5,9 +5,11 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import stat
 import subprocess
+import sys
 import tarfile
 import unittest
 from unittest.mock import Mock, patch
@@ -34,10 +36,12 @@ from support import (
 class SourceCallerTests(unittest.TestCase):
     def test_failing_stage_retains_exact_private_stderr_and_exit_status(self):
         fixture = scratch()
+        (fixture / 'tests').mkdir()
         text = MAKER.read_text()
         functions = (text[text.index('progress() {'):text.index('\nN=${1:-}')]
                      + text[text.index('failure() {'):text.index('\nmissing=()')])
         env = {**os.environ, 'T': str(fixture), 'N': 'venv-agent-child-stderr',
+               'O': str(fixture), 'PYTHON': sys.executable,
                'S': AGENT, 'RUNTIME_SHA': RUNTIME, 'REQUIREMENTS_PATH': 'requirements/proof.lock',
                'LOCK_SHA': 'a' * 64, 'TIMEOUT_BIN': 'timeout', 'KILL_AFTER_SECONDS': '1'}
         result = subprocess.run(
@@ -53,13 +57,19 @@ class SourceCallerTests(unittest.TestCase):
         self.assertIn('rc=17\n', marker)
         self.assertIn('private first error', log.read_text())
         self.assertNotIn('private first error', result.stderr)
+        evidence = fixture / 'tests/provision-stderr/venv-agent-child-stderr.install-agent.stderr'
+        self.assertEqual(evidence.read_bytes(), b'private first error\n')
+        self.assertEqual(evidence.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(json.loads(evidence.with_suffix('.json').read_text())['truncated'], False)
 
     def test_timed_out_stage_keeps_first_stderr_and_timeout_status(self):
         fixture = scratch()
+        (fixture / 'tests').mkdir()
         text = MAKER.read_text()
         functions = (text[text.index('progress() {'):text.index('\nN=${1:-}')]
                      + text[text.index('failure() {'):text.index('\nmissing=()')])
         env = {**os.environ, 'T': str(fixture), 'N': 'venv-agent-child-timeout',
+               'O': str(fixture), 'PYTHON': sys.executable,
                'S': AGENT, 'RUNTIME_SHA': RUNTIME, 'REQUIREMENTS_PATH': 'requirements/proof.lock',
                'LOCK_SHA': 'b' * 64, 'TIMEOUT_BIN': 'timeout', 'KILL_AFTER_SECONDS': '1'}
         result = subprocess.run(
@@ -71,6 +81,121 @@ class SourceCallerTests(unittest.TestCase):
         self.assertEqual(log.read_bytes(), b'timeout first error\n')
         self.assertEqual(log.stat().st_mode & 0o777, 0o600)
         self.assertIn('stage=pinned-requirements\n', (fixture / '.provision-failure').read_text())
+        evidence = fixture / 'tests/provision-stderr/venv-agent-child-timeout.pinned-requirements.stderr'
+        self.assertEqual(evidence.read_bytes(), b'timeout first error\n')
+        self.assertEqual(evidence.stat().st_mode & 0o777, 0o600)
+
+    def test_store_cleanup_boundary_keeps_nonzero_and_timeout_evidence(self):
+        for stage, command, expected in (
+            ('install-agent', "printf '%s\\n' 'store private first error' >&2; exit 17", 17),
+            ('pinned-requirements', "printf '%s\\n' 'store timeout first error' >&2; sleep 5", 124),
+        ):
+            with self.subTest(stage=stage):
+                fixture = scratch()
+                tests = fixture / 'tests'
+                tests.mkdir()
+                (tests / 'suites.conf').write_text('')
+                store_root = fixture / 'store'
+                module = store_module()
+                store = module.Store.initialize(store_root, tests)
+                name = 'venv-agent-child-cleanup-' + stage
+                identity = {'agent_sha': AGENT, 'backend_sha': RUNTIME,
+                            'client_tuple': {'client.py': 'f' * 64}}
+                text = MAKER.read_text()
+                shell_functions = (text[text.index('progress() {'):text.index('\nN=${1:-}')]
+                                    + text[text.index('failure() {'):text.index('\nmissing=()')])
+
+                def build(stage_path, _final):
+                    env = {**os.environ, 'T': str(stage_path), 'O': str(fixture),
+                           'N': name, 'PYTHON': sys.executable, 'S': AGENT,
+                           'RUNTIME_SHA': RUNTIME, 'REQUIREMENTS_PATH': 'requirements/proof.lock',
+                           'LOCK_SHA': 'c' * 64, 'TIMEOUT_BIN': 'timeout',
+                           'KILL_AFTER_SECONDS': '1'}
+                    budget = '1' if expected == 124 else '20'
+                    result = subprocess.run(
+                        ['bash', '-u', '-o', 'pipefail', '-c',
+                         shell_functions + f"\nrun_stage {stage} {budget} bash -c {shlex.quote(command)}\n"],
+                        env=env, capture_output=True, text=True, timeout=10)
+                    self.assertEqual(result.returncode, expected, result.stderr)
+                    lock_sha = 'c' * 64
+                    build.failure_evidence = (
+                        f'status=failed\nstage={stage}\nrc={expected}\n'
+                        f'elapsed_seconds=0\nagent_sha={AGENT}\nruntime_sha={RUNTIME}\n'
+                        f'requirements_path=requirements/proof.lock\nlock_sha256={lock_sha}\n'
+                        'diagnostic=stage-command-failed\n')
+                    raise subprocess.CalledProcessError(result.returncode, result.args)
+
+                build.failure_evidence = None
+                with patch.object(module.shutil, 'disk_usage',
+                                  return_value=Mock(free=module.Store.RESERVE_BYTES)):
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        store.ensure('child', identity, {'name': name, 'env': '', 'suite': ''},
+                                     build, Mock(), failure_name=name)
+                private = tests / 'provision-stderr' / (name + '.' + stage + '.stderr')
+                self.assertEqual(private.read_text(),
+                                 'store private first error\n' if expected == 17
+                                 else 'store timeout first error\n')
+                self.assertEqual(private.stat().st_mode & 0o777, 0o600)
+                self.assertEqual(list((store_root / 'staging').iterdir()), [])
+                self.assertNotIn('store ', (tests / 'provision-failures' / (name + '.txt')).read_text())
+
+    def test_stderr_handoff_rejects_forged_paths_and_never_clobbers(self):
+        fixture = scratch()
+        (fixture / 'tests').mkdir()
+        text = MAKER.read_text()
+        shell_functions = (text[text.index('progress() {'):text.index('\nN=${1:-}')]
+                           + text[text.index('failure() {'):text.index('\nmissing=()')])
+        source = fixture / 'stage.stderr'
+        source.write_bytes(b'first private payload\n')
+        source.chmod(0o600)
+        env = {**os.environ, 'O': str(fixture), 'N': 'venv-agent-child-guards',
+               'PYTHON': sys.executable, 'T': str(fixture), 'S': AGENT,
+               'RUNTIME_SHA': RUNTIME, 'REQUIREMENTS_PATH': 'requirements/proof.lock',
+               'LOCK_SHA': 'd' * 64}
+        command = shell_functions + '\nretain_stage_stderr "$SOURCE" install-agent\n'
+        result = subprocess.run(['bash', '-u', '-o', 'pipefail', '-c', command],
+                                env={**env, 'SOURCE': str(source)}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        evidence = fixture / 'tests/provision-stderr/venv-agent-child-guards.install-agent.stderr'
+        source.write_bytes(b'foreign replacement\n')
+        result = subprocess.run(['bash', '-u', '-o', 'pipefail', '-c', command],
+                                env={**env, 'SOURCE': str(source)}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(evidence.read_bytes(), b'first private payload\n')
+
+        source.write_bytes(b'x' * (1024 * 1024 + 17))
+        result = subprocess.run(['bash', '-u', '-o', 'pipefail', '-c',
+                                 command.replace('install-agent', 'large-stage')],
+                                env={**env, 'SOURCE': str(source)}, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        large = evidence.with_name('venv-agent-child-guards.large-stage.stderr')
+        metadata = json.loads(large.with_suffix('.json').read_text())
+        self.assertEqual(large.stat().st_size, 1024 * 1024)
+        self.assertEqual(metadata['original_bytes'], 1024 * 1024 + 17)
+        self.assertEqual(metadata['retained_bytes'], 1024 * 1024)
+        self.assertTrue(metadata['truncated'])
+        self.assertEqual(metadata['sha256'], hashlib.sha256(source.read_bytes()).hexdigest())
+
+        forged = fixture / 'forged'
+        forged.write_bytes(b'outside\n')
+        target = evidence.with_name('venv-agent-child-guards.forged.stderr')
+        target.symlink_to(forged)
+        result = subprocess.run(['bash', '-u', '-o', 'pipefail', '-c', command.replace('install-agent', 'forged')],
+                                env={**env, 'SOURCE': str(source)}, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(forged.read_bytes(), b'outside\n')
+
+        hardlink_target = evidence.with_name('venv-agent-child-guards.hardlink.stderr')
+        hardlink_target.hardlink_to(forged)
+        result = subprocess.run(['bash', '-u', '-o', 'pipefail', '-c',
+                                 command.replace('install-agent', 'hardlink')],
+                                env={**env, 'SOURCE': str(source)}, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(forged.read_bytes(), b'outside\n')
+        result = subprocess.run(['bash', '-u', '-o', 'pipefail', '-c',
+                                 command.replace('install-agent', 'bad_stage')],
+                                env={**env, 'SOURCE': str(source)}, capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
 
     def test_real_source_state_requires_exact_clean_checkout(self):
         text = MAKER.read_text()

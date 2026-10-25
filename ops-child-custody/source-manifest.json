@@ -1,6 +1,6 @@
 {
-  "task": "rt-OPS-D137-stderr-retention-2006",
-  "base_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+  "task": "rt-OPS-D137-retention-return-2018",
+  "base_commit": "4932c0f8e2e02ce6a203bf41fe014f9c3a7db5fa",
   "observed_utc": "2026-10-25T20:06:00Z",
   "live_sources_read_only": {
     "make-child-venv": {
@@ -23,16 +23,18 @@
     }
   },
   "candidate": {
-    "path": "/home/user/work/wt/rt-OPS-D137-stderr-retention-2006/ops-child-custody/make-child-venv",
-    "sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
-    "bytes": 70119,
+    "path": "/home/user/work/wt/rt-OPS-D137-retention-return-2018/ops-child-custody/make-child-venv",
+    "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bytes": 75503,
     "mode": "0o755"
   },
   "blocks": {
     "STAGE_STDERR_CAPTURE": {
       "sha256": "642c89d470faa8068ca639c27df2f7c9a453824f71f04b9d877c261d922eb47d",
       "private_log_mode": "0600",
-      "path": ".provision-stderr/<stage>.stderr",
+      "path": "tests/provision-stderr/<request>.<stage>.stderr",
+      "limit_bytes": 1048576,
+      "metadata": "tests/provision-stderr/<request>.<stage>.json",
       "exit_status_preserved": true
     },
     "STORE_PY": {
@@ -89,8 +91,8 @@
     },
     {
       "path": "ops-child-custody/tests/test_custody.py",
-      "sha256": "b1fab206271f9c9e47d9c12d9136747244b0578f01da5b04b0d2099ee4c036f6",
-      "bytes": 26403,
+      "sha256": "2114d2e9fe573e1a29280f4e82f9b5c57870948e638e67c3bb531dfd56ce3a7e",
+      "bytes": 34393,
       "mode": "0o644"
     },
     {
@@ -101,8 +103,8 @@
     }
   ],
   "existing_controls_preserved": true,
-  "new_controls": 2,
-  "total_unittest_tests": 42,
+  "new_controls": 4,
+  "total_unittest_tests": 44,
   "embedded_python_blocks_compiled_in_memory": 7,
   "admission": {
     "free_bytes": 5027573760,
@@ -133,8 +135,8 @@
     "reviewed_reference": "a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4",
     "gate": "D137 decision input; no E2E PASS fabricated",
     "cas": "descriptor-bound lock, no-follow/no-clobber backup, identity CAS, atomic rename",
-    "candidate_sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
-    "candidate_bytes": 70119,
+    "candidate_sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "candidate_bytes": 75503,
     "source_commit": "bound exactly by the later D137 decision input"
   },
   "protected_unchanged": {

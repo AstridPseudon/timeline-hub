@@ -121,6 +121,19 @@ failure() {
   rc=$1
   stage=$2
   elapsed_seconds=$((SECONDS - STAGE_STARTED))
+  # Store.ensure rolls the owned staging tree back before it records the
+  # bounded public failure marker. Preserve private stderr first, on the
+  # maker's existing request-evidence route; never put the payload in the
+  # public marker.
+  if [ -n "${STAGE_STDERR:-}" ] && [ -f "$STAGE_STDERR" ]; then
+    if retain_stage_stderr "$STAGE_STDERR" "$stage"; then
+      STDERR_RETENTION_STATUS=retained
+    else
+      STDERR_RETENTION_STATUS=refused
+    fi
+  else
+    STDERR_RETENTION_STATUS=unavailable
+  fi
   if [ -d "$T" ]; then
     printf 'status=failed\nstage=%s\nrc=%s\nelapsed_seconds=%s\nagent_sha=%s\nruntime_sha=%s\nrequirements_path=%s\nlock_sha256=%s\ndiagnostic=stage-command-failed\n' \
       "$stage" "$rc" "$elapsed_seconds" "$S" "${RUNTIME_SHA:-unknown}" "$REQUIREMENTS_PATH" "$LOCK_SHA" > "$T/.provision-failure"
@@ -128,7 +141,146 @@ failure() {
   fi
   printf '%s child-venv FAILED stage=%s rc=%s name=%s agent=%s runtime=%s elapsed_seconds=%s\n' \
     "$(date -u +%FT%TZ)" "$stage" "$rc" "$N" "$S" "${RUNTIME_SHA:-unknown}" "$elapsed_seconds" >&2
+  if [ "$STDERR_RETENTION_STATUS" != retained ]; then
+    printf '%s child-venv stderr-retention=%s name=%s stage=%s\n' \
+      "$(date -u +%FT%TZ)" "$STDERR_RETENTION_STATUS" "$N" "$stage" >&2
+  fi
   exit "$rc"
+}
+
+retain_stage_stderr() {
+  local source=$1 stage=$2
+  case "$N:$stage" in
+    venv-agent-child-[a-z0-9-]*:[a-z0-9-]*) ;;
+    *) return 1 ;;
+  esac
+  "$PYTHON" -I - "$source" "$O/tests/provision-stderr" "$N" "$stage" <<'RETAIN_STAGE_STDERR' >/dev/null 2>&1
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import stat
+import sys
+
+source_text, root_text, request, stage = sys.argv[1:]
+source = Path(source_text)
+root = Path(root_text)
+LIMIT = 1024 * 1024
+uid = os.getuid()
+
+def owned_directory(path, mode):
+    info = path.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != uid or info.st_mode & 0o077:
+        raise RuntimeError('unsafe evidence directory')
+    if stat.S_IMODE(info.st_mode) != mode:
+        raise RuntimeError('evidence directory mode')
+
+def owned_directory_fd(fd, mode=None):
+    info = os.fstat(fd)
+    if (not stat.S_ISDIR(info.st_mode) or info.st_uid not in {0, uid}
+            or info.st_mode & 0o022):
+        raise RuntimeError('unsafe evidence directory')
+    if mode is not None and stat.S_IMODE(info.st_mode) != mode:
+        raise RuntimeError('evidence directory mode')
+
+def ensure_directory(path, mode):
+    parent = path.parent
+    parent_fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    owned_directory_fd(parent_fd)
+    try:
+        try:
+            os.mkdir(path.name, mode, dir_fd=parent_fd)
+        except FileExistsError:
+            pass
+    finally:
+        os.close(parent_fd)
+    owned_directory(path, mode)
+
+def owned_file(fd, mode):
+    info = os.fstat(fd)
+    if not stat.S_ISREG(info.st_mode) or info.st_uid != uid or info.st_nlink != 1:
+        raise RuntimeError('unsafe evidence file')
+    if stat.S_IMODE(info.st_mode) != mode:
+        raise RuntimeError('evidence file mode')
+
+def write_all(fd, data):
+    offset = 0
+    while offset < len(data):
+        offset += os.write(fd, data[offset:])
+
+if not re.fullmatch(r'venv-agent-child-[a-z0-9-]+', request):
+    raise RuntimeError('unsafe request name')
+if not re.fullmatch(r'[a-z0-9-]{1,64}', stage):
+    raise RuntimeError('unsafe stage name')
+source_fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW)
+try:
+    owned_file(source_fd, 0o600)
+    ensure_directory(root, 0o700)
+    folder_fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    owned_directory_fd(folder_fd, 0o700)
+    try:
+        target_name = request + '.' + stage + '.stderr'
+        metadata_name = request + '.' + stage + '.json'
+        for existing_name in (target_name, metadata_name):
+            try:
+                existing_fd = os.open(existing_name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=folder_fd)
+            except FileNotFoundError:
+                continue
+            try:
+                owned_file(existing_fd, 0o600)
+            finally:
+                os.close(existing_fd)
+            raise SystemExit(0)
+        try:
+            target_fd = os.open(target_name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                0o600, dir_fd=folder_fd)
+        except FileExistsError:
+            raise SystemExit(0)
+        digest = hashlib.sha256()
+        total = retained = 0
+        try:
+            while True:
+                data = os.read(source_fd, 1024 * 1024)
+                if not data:
+                    break
+                digest.update(data)
+                total += len(data)
+                if retained < LIMIT:
+                    kept = data[:LIMIT - retained]
+                    write_all(target_fd, kept)
+                    retained += len(kept)
+            os.fchmod(target_fd, 0o600)
+            os.fsync(target_fd)
+            owned_file(target_fd, 0o600)
+        finally:
+            os.close(target_fd)
+        metadata = json.dumps({
+            'schema': 'timeline.ops.child-failure-stderr/v1',
+            'request': request,
+            'stage': stage,
+            'stderr_file': target_name,
+            'original_bytes': total,
+            'retained_bytes': retained,
+            'limit_bytes': LIMIT,
+            'truncated': total > retained,
+            'sha256': digest.hexdigest(),
+        }, sort_keys=True, separators=(',', ':')) + '\n'
+        metadata_fd = os.open(metadata_name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                              0o600, dir_fd=folder_fd)
+        try:
+            write_all(metadata_fd, metadata.encode())
+            os.fchmod(metadata_fd, 0o600)
+            os.fsync(metadata_fd)
+            owned_file(metadata_fd, 0o600)
+        finally:
+            os.close(metadata_fd)
+        os.fsync(folder_fd)
+    finally:
+        os.close(folder_fd)
+finally:
+    os.close(source_fd)
+RETAIN_STAGE_STDERR
 }
 
 stage_stderr_path() {
