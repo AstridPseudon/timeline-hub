@@ -129,14 +129,15 @@ def test_two_different_parent_clip_lists_are_refused():
 
 
 def test_an_edit_of_the_app_shape_keeps_both_lists_equal_through_save_and_merge(tmp_path):
-    from astrid.sdk.timeline import store
-
     base = app_shape()
     path = _file(tmp_path, copy.deepcopy(base))
     assert _run("edit", "--file", str(path), "--clip", "clip-3", "--set", 'text="Bye"') == 0
     candidate = _reload(path).bundle
     assert _mirrors_equal(candidate) and candidate["parent"]["clips"][2]["params"]["text"] == "Bye"
-    merged, conflicts = store.three_way(base, copy.deepcopy(base), candidate)
+    local = Checkout.load(path)
+    local.bundle = candidate
+    local.save(quiet=True)
+    merged, conflicts = Checkout.load(path).bundle, local.merged
     assert not conflicts and _mirrors_equal(merged) and merged["parent"]["clips"][2]["params"]["text"] == "Bye"
 
 

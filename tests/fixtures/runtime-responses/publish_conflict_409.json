@@ -2,93 +2,53 @@
   "body": {
     "code": "conflict",
     "details": {
-      "actual_head": "parent-1",
-      "expected_head": null,
-      "reason": "stale_head"
+      "base": {
+        "publication_id": "<base_publication_id>",
+        "revision_id": "<base_revision_id>"
+      },
+      "code": "stale_head",
+      "conflicts": [],
+      "current": {
+        "publication_id": "<current_publication_id>",
+        "revision_id": "<current_revision_id>"
+      },
+      "hint": "Read the current timeline head before retrying",
+      "path": [],
+      "reason": "stale_head",
+      "status": "refused",
+      "suggested_command": "timeline show"
     },
-    "message": "parent composition head is stale",
+    "message": "restore requires the exact head pair",
     "request_id": "<request_id>"
   },
-  "case": "publish_conflict_409",
+  "case": "commit_conflict_409",
   "headers": {
     "content-type": "application/json"
   },
   "request": {
     "body": {
-      "expected_head": null,
-      "internal_timeline_revisions": [
+      "api_version": 1,
+      "base_publication_id": "<base_publication_id>",
+      "base_revision_id": "<base_revision_id>",
+      "commands": [
         {
-          "payload": {
-            "assets": [],
-            "audio": [],
-            "clips": [
-              {
-                "at": 0,
-                "clipType": "media",
-                "hold": 1,
-                "id": "picture",
-                "track": "video-1"
-              }
-            ],
-            "effects": [],
-            "layout": {},
-            "registry": {},
-            "tracks": []
+          "args": {
+            "content_digest": "<digest>",
+            "revision_id": "<base_revision_id>"
           },
-          "revision_id": "parent-2-timeline",
-          "timeline_id": "main"
+          "op": "timeline.restore",
+          "schema_version": 1,
+          "select": null,
+          "version": "1"
         }
       ],
-      "parent_composition": {
-        "clips": [],
-        "config": {
-          "changed": true
-        },
-        "occurrences": [
-          {
-            "duration_ms": 1000,
-            "gain": 1,
-            "mute": false,
-            "occurrence_id": "occurrence-1",
-            "placement": {
-              "start_ms": 0
-            },
-            "provenance": {},
-            "shot_id": "shot-1",
-            "shot_revision_id": "parent-2-shot",
-            "source_offset": 0,
-            "speed": 1,
-            "track": "video-1",
-            "transform": {}
-          }
-        ],
-        "registry": {}
-      },
-      "parent_revision_id": "parent-2",
+      "label": "Recorded title",
+      "merge": "fields",
       "project_id": "<project_id>",
-      "shot_revisions": [
-        {
-          "internal_timeline_revision_id": "parent-2-timeline",
-          "payload": {
-            "audio_bindings": [],
-            "generation_inputs": {},
-            "items": [],
-            "metadata": {
-              "title": "opening"
-            },
-            "pools": [],
-            "provenance": {},
-            "selected_variants": {},
-            "text_bindings": []
-          },
-          "revision_id": "parent-2-shot",
-          "shot_id": "shot-1"
-        }
-      ],
       "timeline_id": "main"
     },
     "method": "POST",
-    "path": "/v1/projects/<project_id>/timelines/main/composition-revisions"
+    "path": "/v1/projects/<project_id>/timelines/main/commit"
   },
   "status": 409
 }

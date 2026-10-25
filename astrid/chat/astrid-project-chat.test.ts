@@ -260,3 +260,4 @@ test('parallel identical drafts survive project version retries without advancin
   assert.deepEqual(first, second);
   assert.equal(writes, 1);
 });
+

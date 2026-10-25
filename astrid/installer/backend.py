@@ -169,6 +169,23 @@ class Backend:
         write_json(services_path, declaration)
         return services_path
 
+    @staticmethod
+    def _verify_local_timeline_schema(agent: Path) -> None:
+        """Verify the Agent's vendored schema against its Runtime source pin."""
+        relative = Path("astrid/core/timeline/schema/timeline-config.schema.json")
+        schema = agent / relative
+        if not schema.is_file() or schema.is_symlink():
+            raise ValueError("staged Agent is missing the local canonical timeline schema")
+        lock = read_json(agent / "runtime.lock.json")
+        files = lock.get("files") if isinstance(lock, dict) else None
+        pin = files.get(str(relative)) if isinstance(files, dict) else None
+        if not isinstance(pin, dict) or pin.get("from") != "contract/schemas/timeline-config.schema.json":
+            raise ValueError("staged Agent has no approved Runtime source pin for the local timeline schema")
+        expected = pin.get("sha256")
+        actual = "sha256:" + hashlib.sha256(schema.read_bytes()).hexdigest()
+        if expected != actual:
+            raise ValueError("staged Agent local timeline schema does not match its Runtime source pin")
+
     def workspace(self, version: Version | None, data: Path) -> dict:
         interpreter = version if version is not None and version.python.is_file() else None
         value = self.runtime(interpreter, data, "workspace", "inspect")
@@ -380,6 +397,7 @@ class Backend:
                          **({"repo": manifest["runtime"]["repo"]} if "repo" in manifest["runtime"] else {}))
         vibecomfy = source("vibecomfy", manifest["vibecomfy"]["sha"], folder / "v",
                           **({"repo": manifest["vibecomfy"]["repo"]} if "repo" in manifest["vibecomfy"] else {}))
+        self._verify_local_timeline_schema(agent)
         environment = folder / "py"
         self.run([self.uv, "venv", "--python", manifest["tools"]["python"]["version"], environment])
         python = venv_python(environment)
@@ -396,12 +414,6 @@ class Backend:
                     "PATH": str(python.parent) + os.pathsep + env["PATH"]})
         npm = binary(folder / "tools" / "node", "npm-cli.js")
         self.install_remotion_dependencies(agent, env, npm)
-        # The lockfile's transitive @banodoco/timeline-schema package is the
-        # source used by host_bootstrap. Install its Python subtree from this
-        # candidate's npm tree so the environment follows the same pinned
-        # package as the Remotion bundle.
-        schema_python = agent / "remotion" / "node_modules" / "@banodoco" / "timeline-schema" / "python"
-        self.run([self.uv, "pip", "install", "--python", python, "--no-deps", schema_python])
         services_path = self._declare_services(
             folder=folder, agent=agent, data=data, python=python,
             bun=env["ASTRID_BUN_EXECUTABLE"], env=env, old=prior,
@@ -632,3 +644,4 @@ class Backend:
             webbrowser.open("https://astrid.haus/?connect=1")
         except OSError:
             pass  # The printed URL remains usable on headless computers.
+

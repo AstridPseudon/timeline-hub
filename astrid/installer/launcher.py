@@ -61,3 +61,4 @@ def install(root: Path) -> tuple[Path, ...]:
     )
     launcher.chmod(0o755)
     return launcher, runner
+

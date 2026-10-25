@@ -383,3 +383,4 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo
     assert env["NODE_OPTIONS"] == "--require=evil"
     assert not outside.exists()
     assert (user_config.read_bytes(), user_config.stat().st_mtime_ns) == before
+

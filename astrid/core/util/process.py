@@ -28,3 +28,4 @@ def replace_process(argv: list[str], env: Mapping[str, str] | None = None) -> No
     if returncode > 0x7FFFFFFF:
         returncode -= 0x100000000
     raise SystemExit(returncode)
+

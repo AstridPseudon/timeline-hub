@@ -73,7 +73,6 @@ def test_registry_generator_nonzero_keeps_failure_and_safe_phase(monkeypatch, tm
     monkeypatch.setattr(lock, 'remotion_render_lock_held', lambda: True)
     monkeypatch.setattr(lock, '_resolved_lock_path', lambda: lock_path)
     monkeypatch.setattr(lock, 'remotion_render_lock_child_env', lambda: {'TOKEN': SENTINEL})
-    monkeypatch.setattr(run, '_timeline_composition_src', lambda _: tmp_path / 'composition')
     monkeypatch.setattr(run, '_registry_output_paths', lambda _: ())
     monkeypatch.setattr(run, 'gen_effect_registry', object())
     monkeypatch.setattr(run, '_read_registry_state', lambda _: None)

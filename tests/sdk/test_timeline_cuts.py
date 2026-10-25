@@ -181,8 +181,12 @@ class _Timelines:
     def open_bundle(self, project, ref, *, revision_id=None):
         self.calls.append((project, ref, revision_id))
         revision = revision_id or "head-2"
+        bundle = copy.deepcopy(self.bundles[revision])
+        # The immutable closure carries the identity of the exact parent
+        # revision it contains; envelope head metadata is not readback proof.
+        bundle.setdefault("base_parent", {})["revision_id"] = revision
         return DomainResult.success({
-            "bundle": self.bundles[revision], "project_id": "p-1", "timeline_id": "T1",
+            "bundle": bundle, "project_id": "p-1", "timeline_id": "T1",
             "revision_id": revision, "head_revision_id": "head-2", "is_current_head": revision == "head-2",
         })
 

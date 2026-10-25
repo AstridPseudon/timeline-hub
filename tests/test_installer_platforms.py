@@ -597,3 +597,4 @@ def test_chat_declaration_failure_can_retry_without_claiming_fresh_workspace(tmp
     monkeypatch.setattr(backend, 'workspace', lambda *_args: {'realm_id': 'selected', 'realm_root': str(data / 'realm')})
     backend.register(version, data)
     assert read_json(backend.service.selection)['chat_settings']['ASTRID_ACP_CWD'] == str(data / 'chat')
+

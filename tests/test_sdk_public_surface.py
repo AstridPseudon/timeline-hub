@@ -1335,7 +1335,7 @@ def test_invoke_maps_orchestrator_result_errors_into_public_taxonomy(
 
     observed = []
 
-    def failed_execution(request, definition):
+    def failed_execution(request, definition, *, _captured_source=None):
         # Registry lookup, request resolution, the real runner result DTO,
         # and the public SDK error projection remain live; only execution is fake.
         assert definition.id == orchestrator_id

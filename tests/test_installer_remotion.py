@@ -45,3 +45,4 @@ def test_remotion_failed_install_never_publishes_marker(tmp_path):
     with pytest.raises(subprocess.CalledProcessError):
         backend.install_remotion_dependencies(agent, {"ASTRID_NODE_EXECUTABLE": "node"}, Path("npm-cli.js"))
     assert not (remotion / "node_modules/.astrid-package-lock.sha256").exists()
+

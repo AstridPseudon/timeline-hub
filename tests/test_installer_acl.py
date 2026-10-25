@@ -215,3 +215,4 @@ def test_unix_installer_retains_original_per_user_lock(tmp_path, monkeypatch, sy
     original = default_program_root(Path.home(), system).parent / "astrid-install.lock"
     assert original.is_file()
     assert not (tmp_path / "logs" / "installer").exists()
+

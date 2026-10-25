@@ -647,3 +647,4 @@ These are known. Report what you see, but don't stop testing for them.
   sign-in. The line is the restart.
 - With a systemd user session, Astrid restarts after a crash or an ordinary process kill. Stopping the unit with
   `systemctl --user stop astrid.service` keeps it stopped until the install line runs again.
+

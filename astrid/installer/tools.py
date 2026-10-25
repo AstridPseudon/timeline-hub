@@ -515,3 +515,4 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str
     if any(not launcher.resolve().is_relative_to(omp.resolve()) for launcher in launchers):
         raise ValueError("The OMP launcher escapes its owned installation prefix.")
     return env
+

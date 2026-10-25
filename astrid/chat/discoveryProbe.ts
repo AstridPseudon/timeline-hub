@@ -56,3 +56,4 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil
     child.once('close', code => finish(code));
   });
 }
+

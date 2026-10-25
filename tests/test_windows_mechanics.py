@@ -121,3 +121,4 @@ def test_non_macos_provider_guard_does_not_add_os_sandbox(monkeypatch, tmp_path)
     monkeypatch.setattr(generic_host.sys, "platform", "linux")
     argv = ["python", "-m", "astrid.core.execution.generic_host_worker"]
     assert generic_host._network_sandbox_argv(argv, tmp_path, "http://127.0.0.1:4321") == argv
+

@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.packs.timeline import cli
+from astrid.packs.timeline import cli, cli_visualize
 from astrid.sdk.contracts import DomainResult
 
 
@@ -96,6 +96,38 @@ def _render(argv, client):
     parsed = parser.parse_args(["render", "tl", "--project", "demo", *argv])
     parsed.client = client
     return cli._cmd_render(parsed)
+
+
+def _summary(outputs, *, requested_revision='requested-revision'):
+    return cli_visualize._visualization_summary(
+        outputs,
+        parsed=SimpleNamespace(project='demo', beats=None),
+        inputs={'view': 'filmstrip', 'timeline_slug': 'main', 'revision_id': requested_revision},
+    )
+
+
+def test_visualize_summary_uses_native_actual_revision_and_separate_head():
+    summary = _summary({'inspection': {
+        'revision_id': 'native-actual', 'head_revision_id': 'native-head',
+    }})
+
+    lines = summary.splitlines()
+    assert '  committed revision native-actual' in lines
+    assert '  known head native-head' in lines
+    assert not any('requested-revision' in line for line in lines if line.startswith('  committed revision'))
+
+
+def test_visualize_summary_uses_rendered_snapshot_label_for_candidate_and_unavailable():
+    candidate = _summary({'snapshot_label': {
+        'status': 'candidate',
+        'label': 'unsaved candidate based on committed revision accepted-base',
+    }})
+    unavailable = _summary({'snapshot_label': {'status': 'unavailable', 'label': 'revision unavailable'}})
+
+    candidate_lines = candidate.splitlines()
+    assert '  unsaved candidate based on committed revision accepted-base' in candidate_lines
+    assert not any('requested-revision' in line for line in candidate_lines if line.startswith('  unsaved candidate'))
+    assert '  revision unavailable' in unavailable.splitlines()
 
 
 def test_visualize_reads_the_working_copy_with_banner_and_changed_cuts(draft, capsys, monkeypatch):

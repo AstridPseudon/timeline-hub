@@ -100,3 +100,4 @@ def test_boundary_accepts_runtime_primitives():
         "platform.signal_tree(child, platform.KILL); platform.current_user(); "
         "platform.pidfd_open(42); platform.pidfd_send_signal(3, 15)"
     )
+

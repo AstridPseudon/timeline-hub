@@ -343,3 +343,4 @@ test('queued validation receives metadata accepted by the previous setter', asyn
   assert.equal(((registry.snapshot(writer, id) as Json).configOptions as Json[])[0].currentValue, 'high');
   registry.close();
 });
+

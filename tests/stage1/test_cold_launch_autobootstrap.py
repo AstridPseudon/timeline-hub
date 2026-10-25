@@ -71,16 +71,15 @@ def _persisted_profile(home: Path, runtime: Path, source: Path) -> Path:
 def test_source_profile_provisions_explicit_render_runtime(monkeypatch, tmp_path):
     source = tmp_path / "source"
     remotion = source / "remotion"
-    schema = (
-        remotion
-        / "node_modules"
-        / "@banodoco"
-        / "timeline-schema"
-        / "python"
-        / "banodoco_timeline_schema"
-    )
-    schema.mkdir(parents=True)
-    (schema / "__init__.py").write_text("", encoding="utf-8")
+    from astrid.core.foundation.paths import REPO_ROOT
+    from astrid.core.rendering._local_schema import READER_INPUTS, SCHEMA_RELATIVE_PATH
+
+    for relative in (SCHEMA_RELATIVE_PATH, Path("runtime.lock.json"), *READER_INPUTS):
+        target = source / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((REPO_ROOT / relative).read_bytes())
+    schema = source / SCHEMA_RELATIVE_PATH
+    (remotion / "node_modules").mkdir(parents=True)
     (remotion / "package.json").write_text("{}", encoding="utf-8")
     # The resolver probes each candidate with ``--version``; an unpinned
     # project (no engines.node) takes the first working Node on PATH.
@@ -95,7 +94,7 @@ def test_source_profile_provisions_explicit_render_runtime(monkeypatch, tmp_path
 
     assert child_env["ASTRID_REMOTION_PROJECT_DIR"] == str(remotion.resolve())
     assert child_env["ASTRID_NODE_EXECUTABLE"] == str(node.resolve())
-    assert child_env["ASTRID_TIMELINE_SCHEMA_PYTHONPATH"] == str(schema.parent.resolve())
+    assert child_env["ASTRID_TIMELINE_SCHEMA_PYTHONPATH"] == str(schema.resolve())
 
 
 def test_neutral_launcher_is_invoked_with_ephemeral_profile(monkeypatch, tmp_path):

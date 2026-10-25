@@ -64,3 +64,4 @@ sha256sum bun.lock
 The latest run passed **67 tests, 0 failed, 316 assertions across two files in 12.58s**. Both lock checks must retain the hash above. `QUALIFICATION.json` and `native-acp-session-tests.log` contain the run metadata and focused output. This qualification covers the stated native ACP/session tests; it does not claim the unrelated full-fork type/conformance gates, which have documented pre-existing optional-dependency/branding failures.
 
 The live installer qualification also used this exact producer commit locally. It does not certify GitHub availability or the deployed app manifest; see the lead-agent installer report and its per-action evidence for reproduction details.
+

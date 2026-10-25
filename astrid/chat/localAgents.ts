@@ -112,3 +112,4 @@ export function isExternalAgentSession(sessionId: string, agent?: typeof EXTERNA
   return agent ? sessionId.startsWith(`${agent}:`) : EXTERNAL_AGENT_IDS.some(id => sessionId.startsWith(`${id}:`));
 }
 
+

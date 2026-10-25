@@ -69,3 +69,4 @@ smoke is `bun run astrid/chat/astrid-local-agent-adapters-smoke.ts`; it sends
 ACP `initialize` to each pinned adapter through `bun x --bun`. App development
 uses `npm run dev:local` and reads the service registration on every request.
 The app launcher no longer owns a chat process or its credential.
+

@@ -321,3 +321,4 @@ export class ProjectChatRegistry {
     return { ...completed, operation_session_id: sessionId };
   }
 }
+
