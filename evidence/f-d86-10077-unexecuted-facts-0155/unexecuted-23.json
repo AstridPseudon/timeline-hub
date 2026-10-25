@@ -1,0 +1,132 @@
+{
+  "schema": "F-D86-unexecuted-facts-v1",
+  "task": "F-D86 actual10077 bounded mechanical23 outcome disposition",
+  "scope": {
+    "selected": 268,
+    "observed": 245,
+    "observed_status_counts": {"PASS": 30, "FAIL": 39, "ERROR": 176},
+    "unqualified_no_junit_case": 23,
+    "qualification_claim": "none; the 268-node incremental batch is not a 298-node qualification"
+  },
+  "disposition": {
+    "status": "NO_JUNIT_CASE",
+    "reason": "argv-selected but deselected by -m integration marker filter",
+    "junit_case_present": false,
+    "confidence": "high",
+    "unavailable_limit": "No retained collection/deselection-hook record; no execution result is inferred. A missing XML entry is not treated as PASS, FAIL, ERROR, unselected, dropped from membership, or absent function."
+  },
+  "evidence": {
+    "selector_argv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/main_affected_batch_d86_incremental/selector-argv.txt",
+      "line_basis": "record.selector_argv_line; exact 268-line selector file",
+      "sha256": "1996c1778b9212fee602186a33be4e36082a546dd07d6cbb5575ec11334dc367"
+    },
+    "command": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/rt-D86-incremental-submit-0107/d86-incremental-main-0107-body.command",
+      "line": 1,
+      "sha256": "15195d9019a98e58d380360fd4713f1d06b602d21c01ec179bf7f335a170fb57",
+      "relevant_args": ["-m", "integration", "--junitxml=.../d86-incremental-main-0107-body.xml"]
+    },
+    "outcomes_map": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/rt-D86-incremental-submit-0107/outcomes.tsv",
+      "line_basis": "record.outcomes_tsv_line",
+      "sha256": "57b417b61029fd3934b696d9200b5f51cd88c05d166f9e29558d5c934dc9d98f"
+    },
+    "retained_junit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/rt-D86-incremental-submit-0107/d86-incremental-main-0107-body.xml",
+      "line_basis": "absence query over parsed testcase names; 245 testcase elements, no matching record for any of these 23 canonical nodes",
+      "sha256": "7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0"
+    },
+    "service_stdout": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d86-incremental-main-1025011156-10077/log.txt",
+      "line_basis": "service stdout; exact terminal output",
+      "sha256": "b77401f2661b65fd1dcd46d47d95b5c9c2592ae59675666b11e7d095423a04c6"
+    },
+    "service_summary": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d86-incremental-main-1025011156-10077/summary",
+      "line": "2-3",
+      "sha256": "e3735b97c3ac9bd89c3519b089e16614569158bc4a4d3015d9f03b3676d56138"
+    },
+    "source_markers": {
+      "wc6": {
+        "path": "tests/sdk/test_wc6_completion_capture.py",
+        "sha256": "d4888723f78c2e37f5a22c7584decc57d16e81c155c429943a3eed38a5c1d0ec",
+        "finding": "The cited exact test declarations have pytest parametrization or no marker, and no pytest.mark.integration annotation."
+      },
+      "cli": {
+        "path": "tests/packs/timeline/test_cli_document_commit.py",
+        "sha256": "a169b1616ed65e0865b2dd06aa962d34c618e57cc87bd0589110c6a05e9dcef4",
+        "finding": "The cited exact test declarations have no pytest.mark.integration annotation."
+      },
+      "m2": {
+        "path": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+        "sha256": "2400f79c6d2c366fc47caf4a8ad6dfe219e556bf2a789ff5114f2be6b6a6e3bc",
+        "finding": "test_portable_goldens has pytest.mark.parametrize only; pytest.mark.integration is on the separate test_exact_capture_replay_inverse_and_redo declaration."
+      }
+    }
+  },
+  "preserved_accounting": {
+    "selection_strings": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/main_affected_batch_d86_incremental/selector-argv.txt",
+      "count": 268,
+      "sha256": "1996c1778b9212fee602186a33be4e36082a546dd07d6cbb5575ec11334dc367"
+    },
+    "xml_outcomes": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/rt-D86-incremental-submit-0107/d86-incremental-main-0107-body.xml",
+      "testcase_count": 245,
+      "sha256": "7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0"
+    },
+    "original_identity_map": {
+      "selected_original_ids": 251,
+      "remainder_original_ids": 299,
+      "total_original_ids": 550,
+      "selected_file": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/main_affected_batch_d86_incremental/membership.tsv",
+        "lines": 269,
+        "sha256": "3e619a70f781328f02b93b9ecc6f1464cf3ff50a8f2022e8b68dd0039fe77f8b"
+      },
+      "remainder_file": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/main_affected_batch_d86_incremental/remainder-308.json",
+        "lines": 4025,
+        "sha256": "2f39109ccd0c61ebdf28e814cba09d90e9cb58f5e89a04347b567533cfd59085"
+      },
+      "validation_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-membership-validation.txt",
+      "validation_sha256": "977430b1772c1d5cb19c82d49b3be76d15771c89b928e2c5761f0cfedfe18fae"
+    },
+    "error_clusters": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-10077-error-clusters-0143.md",
+      "distinct_cluster_count": 9,
+      "error_count": 176,
+      "sha256": "bd01af2578e14f61706750d57bf63d9ab98fce5113a5656e2bfadec06622c29b"
+    },
+    "family_routing": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-video-review-export-0117/evidence/rt-D86-incremental-submit-0107/family-routing.tsv",
+      "sha256": "e68873a46e18eab7fb61bf128df0c3362d621520cebc3fea9501059807badd98"
+    }
+  },
+  "records": [
+    {"record_index":1,"original_id":"264","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[success]","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome","param_id_spelling":"success","source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":49,"outcomes_tsv_line":50,"marker_evidence_line":"93-95","marker_source":"wc6"},
+    {"record_index":2,"original_id":"265","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[provider-error]","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome","param_id_spelling":"provider-error","source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":50,"outcomes_tsv_line":51,"marker_evidence_line":"93-95","marker_source":"wc6"},
+    {"record_index":3,"original_id":"266","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[port-construction-error]","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome","param_id_spelling":"port-construction-error","source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":51,"outcomes_tsv_line":52,"marker_evidence_line":"93-95","marker_source":"wc6"},
+    {"record_index":4,"original_id":"267","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[close-error]","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome","param_id_spelling":"close-error","source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":52,"outcomes_tsv_line":53,"marker_evidence_line":"93-95","marker_source":"wc6"},
+    {"record_index":5,"original_id":"268","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[lookup-masks-error]","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome","param_id_spelling":"lookup-masks-error","source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":53,"outcomes_tsv_line":54,"marker_evidence_line":"93-95","marker_source":"wc6"},
+    {"record_index":6,"original_id":"269","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_sink_failure_preserves_original_exception","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_sink_failure_preserves_original_exception","param_id_spelling":null,"source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":54,"outcomes_tsv_line":55,"marker_evidence_line":"163","marker_source":"wc6"},
+    {"record_index":7,"original_id":"270","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_absent_selected_key_is_explicit[None]","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_absent_selected_key_is_explicit","param_id_spelling":"None","source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":55,"outcomes_tsv_line":56,"marker_evidence_line":"182-183","marker_source":"wc6"},
+    {"record_index":8,"original_id":"271","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_absent_selected_key_is_explicit[other]","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_absent_selected_key_is_explicit","param_id_spelling":"other","source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":56,"outcomes_tsv_line":57,"marker_evidence_line":"182-183","marker_source":"wc6"},
+    {"record_index":9,"original_id":"272","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_credentials_excluded_and_second_invocation_not_observed","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_credentials_excluded_and_second_invocation_not_observed","param_id_spelling":null,"source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":57,"outcomes_tsv_line":58,"marker_evidence_line":"199","marker_source":"wc6"},
+    {"record_index":10,"original_id":"273","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_preserved_original_and_mounted_source_attachment","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_preserved_original_and_mounted_source_attachment","param_id_spelling":null,"source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":58,"outcomes_tsv_line":59,"marker_evidence_line":"223","marker_source":"wc6"},
+    {"record_index":11,"original_id":"274","family":"wc6-completion-capture","canonical_node":"tests/sdk/test_wc6_completion_capture.py::test_session_calls_mounted_service_real_provider_and_port_offline","raw_canonical_function":"tests/sdk/test_wc6_completion_capture.py::test_session_calls_mounted_service_real_provider_and_port_offline","param_id_spelling":null,"source_file":"tests/sdk/test_wc6_completion_capture.py","selector_argv_line":59,"outcomes_tsv_line":60,"marker_evidence_line":"252-254","marker_source":"wc6"},
+    {"record_index":12,"original_id":"289","family":"cli-document-commit","canonical_node":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_uses_the_authenticated_commit_door","raw_canonical_function":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_uses_the_authenticated_commit_door","param_id_spelling":null,"source_file":"tests/packs/timeline/test_cli_document_commit.py","selector_argv_line":146,"outcomes_tsv_line":147,"marker_evidence_line":"175","marker_source":"cli"},
+    {"record_index":13,"original_id":"290","family":"cli-document-commit","canonical_node":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_uses_runtime_idempotency_without_history_scan","raw_canonical_function":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_uses_runtime_idempotency_without_history_scan","param_id_spelling":null,"source_file":"tests/packs/timeline/test_cli_document_commit.py","selector_argv_line":147,"outcomes_tsv_line":148,"marker_evidence_line":"194-196","marker_source":"cli"},
+    {"record_index":14,"original_id":"291","family":"cli-document-commit","canonical_node":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_does_not_scan_a_long_history_page","raw_canonical_function":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_does_not_scan_a_long_history_page","param_id_spelling":null,"source_file":"tests/packs/timeline/test_cli_document_commit.py","selector_argv_line":148,"outcomes_tsv_line":149,"marker_evidence_line":"214-216","marker_source":"cli"},
+    {"record_index":15,"original_id":"292","family":"cli-document-commit","canonical_node":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_clean_raw_empty_app_is_a_noop","raw_canonical_function":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_clean_raw_empty_app_is_a_noop","param_id_spelling":null,"source_file":"tests/packs/timeline/test_cli_document_commit.py","selector_argv_line":149,"outcomes_tsv_line":150,"marker_evidence_line":"245","marker_source":"cli"},
+    {"record_index":16,"original_id":"293","family":"cli-document-commit","canonical_node":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preserves_unknown_parent_app_data","raw_canonical_function":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preserves_unknown_parent_app_data","param_id_spelling":null,"source_file":"tests/packs/timeline/test_cli_document_commit.py","selector_argv_line":150,"outcomes_tsv_line":151,"marker_evidence_line":"259-260","marker_source":"cli"},
+    {"record_index":17,"original_id":"294","family":"cli-document-commit","canonical_node":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_human_output_keeps_label_and_receipt","raw_canonical_function":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_human_output_keeps_label_and_receipt","param_id_spelling":null,"source_file":"tests/packs/timeline/test_cli_document_commit.py","selector_argv_line":151,"outcomes_tsv_line":152,"marker_evidence_line":"275","marker_source":"cli"},
+    {"record_index":18,"original_id":"295","family":"cli-document-commit","canonical_node":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_changed_body_with_same_key_is_runtime_refusal","raw_canonical_function":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_changed_body_with_same_key_is_runtime_refusal","param_id_spelling":null,"source_file":"tests/packs/timeline/test_cli_document_commit.py","selector_argv_line":152,"outcomes_tsv_line":153,"marker_evidence_line":"294-296","marker_source":"cli"},
+    {"record_index":19,"original_id":"296","family":"cli-document-commit","canonical_node":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preview_has_no_accepted_receipt","raw_canonical_function":"tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preview_has_no_accepted_receipt","param_id_spelling":null,"source_file":"tests/packs/timeline/test_cli_document_commit.py","selector_argv_line":153,"outcomes_tsv_line":154,"marker_evidence_line":"315","marker_source":"cli"},
+    {"record_index":20,"original_id":null,"family":"F-M2-placement","canonical_node":"tests/editing_conformance/test_recipe_m2_auto_placement.py::test_portable_goldens[image-anchor]","raw_canonical_function":"tests/editing_conformance/test_recipe_m2_auto_placement.py::test_portable_goldens","param_id_spelling":"image-anchor","source_file":"tests/editing_conformance/test_recipe_m2_auto_placement.py","selector_argv_line":236,"outcomes_tsv_line":237,"marker_evidence_line":"248-249","marker_source":"m2"},
+    {"record_index":21,"original_id":null,"family":"F-M2-placement","canonical_node":"tests/editing_conformance/test_recipe_m2_auto_placement.py::test_portable_goldens[image-absent]","raw_canonical_function":"tests/editing_conformance/test_recipe_m2_auto_placement.py::test_portable_goldens","param_id_spelling":"image-absent","source_file":"tests/editing_conformance/test_recipe_m2_auto_placement.py","selector_argv_line":237,"outcomes_tsv_line":238,"marker_evidence_line":"248-249","marker_source":"m2"},
+    {"record_index":22,"original_id":null,"family":"F-M2-placement","canonical_node":"tests/editing_conformance/test_recipe_m2_auto_placement.py::test_portable_goldens[video-anchor]","raw_canonical_function":"tests/editing_conformance/test_recipe_m2_auto_placement.py::test_portable_goldens","param_id_spelling":"video-anchor","source_file":"tests/editing_conformance/test_recipe_m2_auto_placement.py","selector_argv_line":238,"outcomes_tsv_line":239,"marker_evidence_line":"248-249","marker_source":"m2"},
+    {"record_index":23,"original_id":null,"family":"F-M2-placement","canonical_node":"tests/editing_conformance/test_recipe_m2_auto_placement.py::test_portable_goldens[video-absent]","raw_canonical_function":"tests/editing_conformance/test_recipe_m2_auto_placement.py::test_portable_goldens","param_id_spelling":"video-absent","source_file":"tests/editing_conformance/test_recipe_m2_auto_placement.py","selector_argv_line":239,"outcomes_tsv_line":240,"marker_evidence_line":"248-249","marker_source":"m2"}
+  ]
+}
