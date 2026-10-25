@@ -109,12 +109,35 @@ f103 acceptance shape), `base_revision_id`, `base_publication_id`,
 `previous_revision_id`, `previous_publication_id`, `accepted_revision_id`,
 `rebased_onto`, `canonical_document`, `document_digest`, `commands`,
 `id_map`, `provider_version`, `compiler_version`, `merge_mode`, `steps`, and
-`publisher`. Durable acceptance nests the existing `receipt` in each history
-record; record details use the `records`/`Recorder` shape. Conflict/refusal
+`publisher` (plus optional `source`, `label`, `rationale`, `group_id`). The
+mutation envelope is `{data: CommitAccepted, receipt: MutationReceipt}`;
+history entries separately include `receipt` and nested `records`/`Recorder`.
+Conflict/refusal
 details use `base`, `current`, and `conflicts`; the current head is a
 `HeadPin` with `revision_id` and `publication_id`. `canonical_document` is
 not a synonym for a generic canonical/base/landing field, and history is a
 separate `HistoryPage` shape.
+
+`merge` is `fields` or `atomic`; omitted request `reads` with `doc.patch`
+requires conservative atomic scope guards. Steps partition command ordinals
+in execution order; submitted patches assert effects and accepted patches
+contain the provider's complete effects and dependencies. The base remains
+the revision/publication pair. Runtime owns authorization, idempotency,
+CAS, rebase, attribution and guarded whole/per-step undo. Exact-key retries
+return the original authenticated reply; historical `rebased` replies retain
+their spelling, while new v2 disjoint-head acceptance uses `merged`.
+
+The preview envelope is `{data: CommitPreview, receipt: null}`. Its data has
+`status: preview`, `would_status: accepted|merged`, both base IDs,
+`evaluated_head`, `canonical_document`, `document_digest`, `commands`, `id_map`,
+`provider_version`, `compiler_version`, and optional `merge_mode`/`steps`.
+Preview writes no history or publication. Failure uses `http_status`, `code`,
+`message`, and `details`; details have `status: conflict|refused|invalid`,
+`reason`, nullable `base`/`current`, and `conflicts`, with structured
+`code`, `path`, `hint`, `suggested_command` where applicable. Each conflict
+has `kind`, `ref`, `path`, `base`, `theirs`, `ours`, `choices`. These shapes
+remain exactly C0 and the f103 schema; Farm receipt custody changes no wire
+field or authority rule.
 
 ## 3. D73 dry controls — positive then poison
 

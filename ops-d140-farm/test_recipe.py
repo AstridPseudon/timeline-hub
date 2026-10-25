@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import ast
+import hashlib
 import os
 import re
 import subprocess
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).parent
@@ -14,6 +18,9 @@ RECEIVER = (ROOT / "receive-farm.sh").read_text()
 
 def run_receiver(tmp_path: Path, phase: str, **bindings: str) -> dict:
     env = os.environ.copy()
+    for name in list(env):
+        if name.startswith("FARM_") or name.endswith("_SHA256") or name == "KIT_SOURCE_CHECKOUT":
+            env.pop(name)
     for name in (
         "AGENT_CHECKOUT", "RUNTIME_CHECKOUT", "APP_CHECKOUT", "COMPOSITION_CHECKOUT",
         "MAKER_PATH", "WRAPPER_PATH", "CHECKER_PATH", "RECEIVED_MAKER",
@@ -132,7 +139,8 @@ def test_phase_census_does_not_admit_future_inputs_or_start_routes(tmp_path: Pat
 def test_wrong_receipt_and_poison_content_are_not_presence_passes(tmp_path: Path) -> None:
     wrong_receipt = tmp_path / "wrong-receipt.json"
     wrong_receipt.write_text('{"status":"passed","commit":"wrong"}\n', encoding="utf-8")
-    result = run_receiver(tmp_path, "pre-child", FARM_CURRENT_AGENT_RECEIPT=str(wrong_receipt))
+    result = run_receiver(tmp_path, "pre-child", FARM_CURRENT_AGENT_RECEIPT=str(wrong_receipt),
+                          FARM_CURRENT_AGENT_RECEIPT_SHA256=sha(wrong_receipt.read_bytes()), FARM_ORCH_ROOT=str(tmp_path))
     receipt_check = next(check for check in result["checks"] if check["id"] == "receipt.FARM_CURRENT_AGENT_RECEIPT")
     assert receipt_check["status"] == "MISMATCH"
 
@@ -187,7 +195,324 @@ def test_poison_and_d124_controls_are_not_weakened() -> None:
     assert 'only agent_sha replaced by forty zeroes' in RECEIVER
     assert 'check_source_receipt' in RECEIVER
     assert 'check_d73_receipt' in RECEIVER
-    assert '"git", "-C", repo' in RECEIVER
+    assert '"git", "-C", str(repo)' in (ROOT / "receipts.py").read_text()
     assert COMMANDS.count("tests/") >= 22
     assert "-k " not in COMMANDS
     assert "--collect-only" not in COMMANDS
+
+
+def sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def receipt_status(result: dict, name: str) -> str:
+    return next(row["status"] for row in result["checks"] if row["id"] == "receipt." + name)
+
+
+@pytest.fixture
+def custody(tmp_path: Path) -> dict:
+    """Small producer artifacts only; no venv, Store, request, or body executes."""
+    constants = dict(re.findall(r"^readonly ([A-Z_]+)=([^\n]+)$", RECEIVER, re.M))
+    orch = tmp_path / "orch"
+    (orch / "queue/done").mkdir(parents=True)
+    (orch / "bin").mkdir()
+    bindings = {"FARM_ORCH_ROOT": str(orch)}
+    live = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin")
+    # These are tiny reviewed operational sources, never shared dependencies.
+    for name in ("make-checkout", "dispatcher-daemon", "bench_store.py", "verify_dependency_seed.py"):
+        path = orch / "bin" / name
+        path.write_bytes((live / name).read_bytes())
+        path.chmod(0o755)
+    for name in ("make-child-venv", "request-child-venv", "check-child-imports"):
+        path = orch / "bin" / name
+        path.write_bytes((ROOT.parent / "ops-child-custody" / name).read_bytes())
+        path.chmod(0o755)
+    for kind in ("agent", "runtime", "app", "composition"):
+        commit = constants[kind.upper() + "_SHA"]
+        repo = tmp_path / kind
+        repo.mkdir()
+        bindings[kind.upper() + "_CHECKOUT"] = str(repo)
+        name = "FARM_CURRENT_" + kind.upper() + "_RECEIPT"
+        path = orch / "queue/done" / f"checkout-{kind}-{commit}"
+        path.write_text(f"created {repo} (detached at {commit}, KEEP)\n")
+        bindings[name] = str(path)
+        bindings[name + "_SHA256"] = sha(path.read_bytes())
+        prefix = {"agent": "agt", "runtime": "rt", "app": "app", "composition": "vw"}[kind]
+        worker = prefix + "-pin-" + commit[:8]
+        record = orch / "workers" / worker
+        record.mkdir(parents=True)
+        (record / "KEEP").touch()
+        (record / "meta").write_text(
+            f"name={worker}\nrepo={kind}\nbase={commit[:8]}\nbase_sha={commit[:8]}\n"
+            f"model=none\neffort=none\nheavy=0\nworktree={repo}\nstarted=2026-10-25T00:00:00Z\n"
+        )
+    launcher = Path(bindings["AGENT_CHECKOUT"]) / "tools/p4-d73-pinned-launch.sh"
+    launcher.parent.mkdir()
+    launcher.write_bytes(subprocess.check_output([
+        "git", "-C", "/home/user/work/agent", "show",
+        constants["AGENT_SHA"] + ":tools/p4-d73-pinned-launch.sh",
+    ]))
+    launcher.chmod(0o755)
+    bindings["D73_LAUNCHER"] = str(launcher)
+    kit_source = tmp_path / "kit-source"
+    kit_source.mkdir()
+    bindings["KIT_SOURCE_CHECKOUT"] = str(kit_source)
+    bindings["RECEIVED_MAKER"] = str(orch / "bin/make-child-venv")
+    client = b"CLIENT = 1\n"
+    client_rel = "packages/python/astrid_runtime_client/__init__.py"
+    fake_git = tmp_path / "git"
+    states = {bindings[k.upper() + "_CHECKOUT"]: [constants[k.upper() + "_SHA"], constants[k.upper() + "_TREE"]]
+              for k in ("agent", "runtime", "app", "composition")}
+    states[str(kit_source)] = ["a" * 40, "b" * 40]
+    # The git shim deliberately supplies perfect supporting checkout evidence,
+    # including in the final2332 attack. It never authenticates a receipt.
+    fake_git.write_text(
+        "#!/usr/bin/python3\nimport sys\nfrom pathlib import Path\n"
+        f"states={states!r}\nroot={str(ROOT.parent)!r}\n"
+        "repo=sys.argv[2]; args=sys.argv[3:]\ncommit,tree=states[repo]\n"
+        "if args[0]=='rev-parse': print(tree if 'tree' in args[-1] else commit)\n"
+        "elif args[0]=='status': pass\n"
+        "elif args[0]=='rev-list': print(commit)\n"
+        f"elif args[0]=='ls-tree': print({client_rel!r})\n"
+        "elif args[0]=='show':\n"
+        " rel=args[1].split(':',1)[1]\n"
+        f" sys.stdout.buffer.write({client!r} if rel=={client_rel!r} else (Path(root)/rel).read_bytes())\n"
+        "elif args[0]=='cat-file': pass\nelse: sys.exit(1)\n"
+    )
+    fake_git.chmod(0o755)
+    bindings["PATH"] = str(tmp_path) + os.pathsep + os.environ["PATH"]
+    return {"bindings": bindings, "constants": constants, "orch": orch,
+            "client_identity": f"{client_rel}={sha(client)}", "tmp": tmp_path}
+
+
+def bind_artifact(custody: dict, name: str, path: Path, data: bytes) -> None:
+    path.write_bytes(data)
+    custody["bindings"].update({name: str(path), name + "_SHA256": sha(data)})
+
+
+@pytest.mark.parametrize("kind", ["agent", "runtime", "app", "composition"])
+@pytest.mark.parametrize("fault", [None, "producer", "digest", "tree", "format", "path", "meta", "missing-digest"])
+def test_checkout_receipts_use_normal_producer_custody(custody: dict, kind: str, fault: str | None) -> None:
+    bindings = custody["bindings"].copy()
+    name = "FARM_CURRENT_" + kind.upper() + "_RECEIPT"
+    path = Path(bindings[name])
+    if fault == "producer":
+        (custody["orch"] / "bin/make-checkout").write_text("#!/bin/sh\nexit 0\n")
+    elif fault == "digest":
+        bindings[name + "_SHA256"] = "0" * 64
+    elif fault == "missing-digest":
+        bindings.pop(name + "_SHA256")
+    elif fault == "tree":
+        script = custody["tmp"] / "git"
+        script.write_text(script.read_text().replace(custody["constants"][kind.upper() + "_TREE"], "0" * 40))
+    elif fault == "format":
+        path.write_text(json.dumps({"schema": "timeline.synthetic-forged/v1", "status": "passed"}))
+        bindings[name + "_SHA256"] = sha(path.read_bytes())
+    elif fault == "path":
+        detached = custody["tmp"] / "detached"
+        detached.write_bytes(path.read_bytes())
+        bindings[name] = str(detached)
+    elif fault == "meta":
+        prefix = {"agent": "agt", "runtime": "rt", "app": "app", "composition": "vw"}[kind]
+        meta = custody["orch"] / "workers" / (prefix + "-pin-" + custody["constants"][kind.upper() + "_SHA"][:8]) / "meta"
+        meta.write_text(meta.read_text().replace("repo=" + kind, "repo=untrusted"))
+    result = run_receiver(custody["tmp"], "pre-child", **bindings)
+    assert result["status"] == "NOT_READY"
+    assert receipt_status(result, name) == ("PASS" if fault is None else "MISSING" if fault == "missing-digest" else "MISMATCH")
+
+
+def test_final2332_synthetic_attack_cannot_use_perfect_checkout_as_authority(custody: dict) -> None:
+    bindings, constants = custody["bindings"], custody["constants"]
+    name = "FARM_CURRENT_AGENT_RECEIPT"
+    forged = {"schema": "timeline.synthetic-forged/v1", "status": "passed", "producer": "untrusted",
+              "commit": constants["AGENT_SHA"], "tree": constants["AGENT_TREE"], "repo": bindings["AGENT_CHECKOUT"]}
+    bind_artifact(custody, name, Path(bindings[name]), json.dumps(forged).encode())
+    result = run_receiver(custody["tmp"], "pre-child", **bindings)
+    assert next(row for row in result["checks"] if row["id"] == "source.agent.checkout")["status"] == "PASS"
+    assert receipt_status(result, name) == "MISMATCH"
+
+
+def kit_artifacts(custody: dict) -> None:
+    orch, bindings = custody["orch"], custody["bindings"]
+    installer = {"path": str(orch / "bin/make-child-venv"), "sha256": custody["constants"]["MAKER_SHA"],
+                 "bytes": 111171, "mode": "0755", "regular_nonsymlink": True}
+    helpers = {name: sha((orch / "bin" / name).read_bytes()) for name in ("bench_store.py", "verify_dependency_seed.py")}
+    installation = {"result": "PASS_INSTALL", "installer": "ops-child-custody/install-prep/apply-reviewed-maker.sh",
+                    "installer_review": "installer1826", "source_commit": "a" * 40, "source_tree": "b" * 40,
+                    "candidate": {key: installer[key] for key in ("sha256", "bytes", "mode")},
+                    "target": {"path": installer["path"], "sha256": installer["sha256"], "bytes": 111171,
+                               "mode": "0755", "regular_single_link": True, "matches_candidate": True},
+                    "protected_helpers": helpers}
+    path = custody["tmp"] / "installation.json"
+    bind_artifact(custody, "FARM_KIT_INSTALLATION", path, json.dumps(installation).encode())
+    value = {"schema": "timeline.ops.d137.installed-kit/v1", "status": "qualified_for_one_request", "installer": installer,
+             "source": {"commit": "a" * 40, "tree": "b" * 40, "review": "PASS_SOURCE_SECURITY", "reviewed_installer": "installer1826"},
+             "protected_helpers": helpers, "receipts": {"installation": str(path)}}
+    bind_artifact(custody, "FARM_D139A_KIT_RECEIPT", custody["tmp"] / "kit.json", json.dumps(value).encode())
+    assert bindings["KIT_SOURCE_CHECKOUT"]
+
+
+@pytest.mark.parametrize("fault", [None, "producer", "schema", "digest", "tree", "source", "installation", "child-fallback"])
+def test_installed_kit_authenticates_composition_source_and_installation(custody: dict, fault: str | None) -> None:
+    kit_artifacts(custody)
+    bindings = custody["bindings"]
+    name = "FARM_D139A_KIT_RECEIPT"
+    path = Path(bindings[name])
+    value = json.loads(path.read_bytes())
+    if fault == "producer":
+        (custody["orch"] / "bin/make-child-venv").write_text("#!/bin/sh\nexit 0\n")
+    elif fault == "schema":
+        value["schema"] = "timeline.ops.synthetic-installed-kit/v1"
+    elif fault == "digest":
+        bindings[name + "_SHA256"] = "0" * 64
+    elif fault == "tree":
+        value["source"]["tree"] = "0" * 40
+    elif fault == "source":
+        value["source"]["commit"] = custody["constants"]["AGENT_SHA"]
+    elif fault == "installation":
+        Path(bindings["FARM_KIT_INSTALLATION"]).write_text("{}")
+    elif fault == "child-fallback":
+        bind_artifact(custody, name, path, b"status=verified\nreuse=verified\n")
+    if fault in {"schema", "tree", "source"}:
+        bind_artifact(custody, name, path, json.dumps(value).encode())
+    result = run_receiver(custody["tmp"], "pre-child", **bindings)
+    assert receipt_status(result, name) == ("PASS" if fault is None else "MISMATCH")
+
+
+def child_artifacts(custody: dict, reused: bool = False) -> None:
+    constants, bindings, orch = custody["constants"], custody["bindings"], custody["orch"]
+    child = custody["tmp"] / ("child-" + "c" * 64)
+    (child / "bin").mkdir(parents=True)
+    (child / "bin/python").write_text("#!/bin/sh\nexit 1\n")
+    (child / "bin/python").chmod(0o755)
+    bindings["P4_PYTHON"] = bindings["CHILD_PYTHON"] = str(child / "bin/python")
+    imports = ""
+    for name in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client"):
+        origin = child / "lib/python3.13/site-packages" / name / "__init__.py"
+        origin.parent.mkdir(parents=True)
+        origin.write_text("")
+        imports += f"{name}={origin}\n"
+    for name in ("SCHEMA_RECORD_CLOSURE", "SCHEMA_SOURCE_MANIFEST", "SCHEMA_DIRECT_URL"):
+        path = custody["tmp"] / name
+        path.write_text("{}\n")
+        bindings[name] = str(path)
+    schema = {"origin": "https://github.com/banodoco/ArtAgents.git",
+              "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+              "subdirectory": "packages/timeline-schema/python", "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+              "input_kind": "installed_distribution", "package": "banodoco-timeline-schema", "version": "0.0.2",
+              "record_rows": 18, "record_hashed_rows": 12, "tree_tie": "UNAVAILABLE", "record_sha256": sha(b"{}\n"),
+              "manifest_sha256": sha(b"{}\n"), "direct_url_sha256": sha(b"{}\n")}
+    schema_text = json.dumps(schema, sort_keys=True, separators=(",", ":"))
+    metadata = "schema_source_identity=" + schema_text + "\nastrid_name=astrid\n"
+    for name, data in ((".schema-source-identity", schema_text + "\n"), (".astrid-import-origins", imports),
+                       (".astrid-distribution-metadata", metadata), (".astrid-source-commit", constants["AGENT_SHA"] + "\n"),
+                       (".astrid-runtime-source-commit", constants["RUNTIME_SHA"] + "\n"),
+                       (".astrid-runtime-client-identity", custody["client_identity"] + "\n")):
+        (child / name).write_text(data)
+    report = (f"status=passed\nagent_sha={constants['AGENT_SHA']}\nruntime_sha={constants['RUNTIME_SHA']}\n"
+              f"runtime_client_identity_sha256={sha(custody['client_identity'].encode())}\n"
+              f"schema_source_identity_sha256={sha(schema_text.encode())}\nrequirements_path=requirements/proof.lock\n"
+              f"requirements_lock_sha256={constants['PROOF_LOCK_SHA']}\ninstalled_import_origins:\n{imports}"
+              f"installed_distribution_metadata:\n{metadata}pip_freeze:\nastrid==0.1.0\n")
+    (child / ".provision-report").write_text(report)
+    (orch / "tests/provision").mkdir(parents=True)
+    (orch / "tests/provision/venv-agent-child-d140.txt").write_text(report)
+    # Execute the actual maker's pure success formatter, not a copy of its
+    # protocol. report_bytes is already exercised by the custody maker suite.
+    maker = (ROOT.parent / "ops-child-custody/make-child-venv").read_text()
+    formatter = maker.split("def success_receipt(entry, report):", 1)[1].split("\nidentity =", 1)[0]
+    namespace = {"pathlib": __import__("pathlib"), "hashlib": hashlib,
+                 "report_bytes": lambda path: (path / ".provision-report").read_bytes(),
+                 "tests": str(orch / "tests"), "name": "venv-agent-child-d140", "agent": constants["AGENT_SHA"],
+                 "backend": constants["RUNTIME_SHA"], "remotion": "", "schema_required": "1", "schema_identity_json": schema_text}
+    exec(compile(ast.parse("def success_receipt(entry, report):" + formatter), "maker formatter", "exec"), namespace)
+    receipt = namespace["success_receipt"]({"path": str(child), "key": "c" * 64, "reused": reused}, report.encode())
+    path = orch / "queue/done/childvenv-venv-agent-child-d140"
+    bind_artifact(custody, "CHILD_RECEIPT", path, (receipt + "\n").encode())
+    custody["child"] = child
+
+
+@pytest.mark.parametrize("fault", [None, "reused", "producer", "schema", "digest", "tree", "report", "client", "path", "json-fallback"])
+def test_registered_child_closes_real_success_and_provision_formats(custody: dict, fault: str | None) -> None:
+    child_artifacts(custody, reused=fault == "reused")
+    bindings, child = custody["bindings"], custody["child"]
+    path = Path(bindings["CHILD_RECEIPT"])
+    if fault == "producer":
+        (custody["orch"] / "bin/request-child-venv").write_text("#!/bin/sh\nexit 0\n")
+    elif fault == "schema":
+        schema_path = child / ".schema-source-identity"
+        old_schema = schema_path.read_text().strip()
+        new_schema = old_schema.replace('"input_kind":"installed_distribution"', '"input_kind":"source_tree"')
+        old_report = (child / ".provision-report").read_bytes()
+        for artifact in (schema_path, child / ".astrid-distribution-metadata", child / ".provision-report",
+                         custody["orch"] / "tests/provision/venv-agent-child-d140.txt"):
+            artifact.write_text(artifact.read_text().replace(old_schema, new_schema).replace(sha(old_schema.encode()), sha(new_schema.encode())))
+        new_report = (child / ".provision-report").read_bytes()
+        data = path.read_bytes().replace(sha(old_report).encode(), sha(new_report).encode())
+        data = data.replace(sha(old_schema.encode()).encode(), sha(new_schema.encode()).encode())
+        bind_artifact(custody, "CHILD_RECEIPT", path, data)
+    elif fault == "digest":
+        bindings["CHILD_RECEIPT_SHA256"] = "0" * 64
+    elif fault == "tree":
+        script = custody["tmp"] / "git"
+        script.write_text(script.read_text().replace(custody["constants"]["RUNTIME_TREE"], "0" * 40))
+    elif fault == "report":
+        (child / ".provision-report").write_text("status=passed\n")
+    elif fault == "client":
+        (child / ".astrid-runtime-client-identity").write_text("wrong\n")
+    elif fault == "path":
+        bindings["CHILD_PYTHON"] = "/detached/bin/python"
+    elif fault == "json-fallback":
+        value = {"status": "passed", "agent_sha": custody["constants"]["AGENT_SHA"],
+                 "runtime_sha": custody["constants"]["RUNTIME_SHA"], "lock_sha256": custody["constants"]["PROOF_LOCK_SHA"],
+                 "installed_import_origins": True}
+        bind_artifact(custody, "CHILD_RECEIPT", path, json.dumps(value).encode())
+    result = run_receiver(custody["tmp"], "post-child", **bindings)
+    assert receipt_status(result, "CHILD_RECEIPT") == ("PASS" if fault in {None, "reused"} else "MISMATCH")
+
+
+def d73_artifacts(custody: dict) -> None:
+    bindings, constants = custody["bindings"], custody["constants"]
+    values = {"format": "p4-d73-v1", "agent_parents": constants["AGENT_SHA"],
+              "python": "/private/child/bin/python", "node": "/private/node", "profile": "/private/profile",
+              "schema": "/private/schema", "node_version": "v20.19.4", "profile_lock_sha": "1" * 64,
+              "profile_archive_sha": "2" * 64, "profile_registry_sha": "3" * 64,
+              "composition_version": "0.0.14", "original_p4_test_hash": "4" * 64,
+              "service_versions": "reviewed", "junit_paths": "/private/junit.xml"}
+    bindings.update({"P4_PYTHON": values["python"], "NODE_BIN": values["node"], "PROFILE": values["profile"]})
+    for kind in ("agent", "runtime", "app", "composition"):
+        values[kind + "_sha"] = constants[kind.upper() + "_SHA"]
+        values[kind + "_tree"] = constants[kind.upper() + "_TREE"]
+        values[kind + "_path"] = bindings[kind.upper() + "_CHECKOUT"]
+    data = "".join(f"{key}={value}\n" for key, value in values.items()).encode()
+    bind_artifact(custody, "P4_D73_MANIFEST", custody["tmp"] / "positive.manifest", data)
+    bind_artifact(custody, "FARM_D73_RECEIPT", custody["tmp"] / "retained.manifest", data)
+
+
+@pytest.mark.parametrize("fault", [None, "producer", "schema", "digest", "tree", "copy", "missing-field", "parents", "input"])
+def test_d73_receipt_authenticates_manager_digest_and_all_sources(custody: dict, fault: str | None) -> None:
+    d73_artifacts(custody)
+    bindings = custody["bindings"]
+    if fault == "producer":
+        Path(bindings["D73_LAUNCHER"]).write_text("#!/bin/sh\nexit 0\n")
+    elif fault == "digest":
+        bindings["FARM_D73_RECEIPT_SHA256"] = "0" * 64
+    elif fault == "copy":
+        path = Path(bindings["FARM_D73_RECEIPT"])
+        bind_artifact(custody, "FARM_D73_RECEIPT", path, path.read_bytes() + b"# changed\n")
+    elif fault in {"schema", "tree", "missing-field", "parents", "input"}:
+        data = Path(bindings["P4_D73_MANIFEST"]).read_bytes()
+        if fault == "schema":
+            data = data.replace(b"format=p4-d73-v1", b"format=timeline.synthetic/v1")
+        elif fault == "tree":
+            data = data.replace(custody["constants"]["APP_TREE"].encode(), b"0" * 40)
+        elif fault == "missing-field":
+            data = data.replace(b"service_versions=reviewed\n", b"")
+        elif fault == "parents":
+            data = data.replace(b"agent_parents=", b"agent_parents=wrong-")
+        else:
+            data = data.replace(b"python=/private/child/bin/python", b"python=/other/bin/python")
+        for name in ("P4_D73_MANIFEST", "FARM_D73_RECEIPT"):
+            bind_artifact(custody, name, Path(bindings[name]), data)
+    result = run_receiver(custody["tmp"], "post-child", **bindings)
+    assert receipt_status(result, "FARM_D73_RECEIPT") == ("PASS" if fault is None else "MISMATCH")

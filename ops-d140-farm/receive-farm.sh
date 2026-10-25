@@ -235,242 +235,49 @@ PY
     fi
 }
 
-check_source_receipt() {
-    local id=$1 name=$2 repo=$3 commit=$4 tree=$5 owner='Farm receipt owner' path=
-    if [[ -v $name ]]; then path=${!name}; fi
-    if ! physical_path "$path" file; then
-        add_check "$id" MISSING "$owner" "$name must bind a current authenticated source receipt"
-        return
-    fi
-    local receipt_sha
-    receipt_sha=$(sha256sum "$path" | awk '{print $1}')
-    if python3 - "$path" "$repo" "$commit" "$tree" <<'PY'
-import json
-import subprocess
-import sys
+# Constants come from this reviewed receiver, never the caller's environment.
+export AGENT_SHA AGENT_TREE RUNTIME_SHA RUNTIME_TREE APP_SHA APP_TREE COMPOSITION_SHA COMPOSITION_TREE
+export MAKER_SHA WRAPPER_SHA CHECKER_SHA LAUNCHER_SHA PROOF_LOCK_SHA
+readonly RECEIPT_CHECKER="$(dirname "$(readlink -e -- "$0")")/receipts.py"
 
-path, repo, commit, tree = sys.argv[1:]
-try:
-    value = json.loads(open(path, encoding="utf-8").read())
-except (OSError, ValueError):
-    raise SystemExit(1)
-if not isinstance(value, dict):
-    raise SystemExit(1)
-if value.get("status") not in {
-    "passed", "PASS", "ready", "READY",
-    "SOURCE_STATIC_READY_DRY_MANIFEST_GENERATED",
-    "FINITE_SOURCE_FACTS_PRESERVED",
-}:
-    raise SystemExit(1)
-if not isinstance(value.get("schema"), str) or not value["schema"].startswith("timeline."):
-    raise SystemExit(1)
-def strings(node):
-    if isinstance(node, dict):
-        for key, item in node.items():
-            yield key, item
-            yield from strings(item)
-    elif isinstance(node, list):
-        for item in node:
-            yield from strings(item)
-items = list(strings(value))
-def has(key, wanted):
-    return any(name == key and item == wanted for name, item in items)
-if not (has("commit", commit) or has("sha", commit) or has("agent_sha", commit) or has("runtime_sha", commit)):
-    raise SystemExit(1)
-if not (has("tree", tree) or has("source_tree", tree) or has("agent_tree", tree) or has("runtime_tree", tree)):
-    raise SystemExit(1)
-if not any(item == repo for _, item in items):
-    raise SystemExit(1)
-actual = subprocess.check_output(["git", "-C", repo, "rev-parse", "HEAD"], text=True).strip()
-actual_tree = subprocess.check_output(["git", "-C", repo, "rev-parse", "HEAD^{tree}"], text=True).strip()
-if actual != commit or actual_tree != tree:
-    raise SystemExit(1)
-PY
-    then
-        add_check "$id" PASS "$owner" "$name sha256=$receipt_sha authenticates local $repo at $commit/$tree"
+check_producer_receipt() {
+    local id=$1 name=$2 kind=$3
+    shift 3
+    local path=${!name-} digest_name=${name}_SHA256 receipt_sha
+    if ! physical_path "$path" file; then
+        add_check "$id" MISSING 'Farm receipt owner' "$name must bind the original producer artifact"
+    elif [ -z "${!digest_name-}" ] || [ -z "${FARM_ORCH_ROOT-}" ]; then
+        add_check "$id" MISSING 'Farm receipt owner' "$digest_name and FARM_ORCH_ROOT require independent trusted receiving bindings"
     else
-        add_check "$id" MISMATCH "$owner" "$name sha256=$receipt_sha does not authenticate local $repo at $commit/$tree"
+        receipt_sha=$(sha256sum "$path" | awk '{print $1}')
+        if python3 -B "$RECEIPT_CHECKER" "$kind" "$name" "$@"; then
+            add_check "$id" PASS 'Farm receipt owner' "$name sha256=$receipt_sha matches the trusted digest, normal producer format, and source closure"
+        else
+            add_check "$id" MISMATCH 'Farm receipt owner' "$name failed producer/digest/format/source closure (sha256=$receipt_sha)"
+        fi
     fi
+}
+
+check_source_receipt() {
+    local id=$1 name=$2
+    shift 2
+    check_producer_receipt "$id" "$name" source "$@"
 }
 
 check_child_receipt() {
-    local id=$1 name=$2 path=
-    if [[ -v $name ]]; then path=${!name}; fi
-    if ! physical_path "$path" file; then
-        add_check "$id" MISSING 'normal child route owner' "$name must bind the registered child receipt"
-        return
-    fi
-    local receipt_sha
-    receipt_sha=$(sha256sum "$path" | awk '{print $1}')
-    if python3 - "$path" "$AGENT_SHA" "$RUNTIME_SHA" "$PROOF_LOCK_SHA" <<'PY'
-import json
-import pathlib
-import sys
-
-path, agent, runtime, lock = sys.argv[1:]
-raw = pathlib.Path(path).read_text()
-try:
-    parsed = json.loads(raw)
-except json.JSONDecodeError:
-    values = {}
-    for line in raw.splitlines():
-        if not line or line.startswith('#'):
-            continue
-        if line == 'installed_import_origins:':
-            values['installed_import_origins'] = line
-            continue
-        if '=' not in line:
-            continue
-        key, value = line.split('=', 1)
-        if key in values:
-            raise SystemExit(1)
-        values[key] = value
-else:
-    if not isinstance(parsed, dict):
-        raise SystemExit(1)
-    values = parsed.get('allowlisted_fields', parsed)
-    if not isinstance(values, dict):
-        raise SystemExit(1)
-if values.get('status') not in {'created', 'reused', 'verified'}:
-    if values.get('status') != 'passed':
-        raise SystemExit(1)
-if values.get('reuse') not in {None, 'verified'}:
-    raise SystemExit(1)
-if values.get('requested_agent_sha', values.get('agent_sha')) != agent:
-    raise SystemExit(1)
-if values.get('requested_runtime_sha', values.get('runtime_sha')) != runtime:
-    raise SystemExit(1)
-if values.get('lock_sha256', values.get('requirements_lock_sha256')) != lock:
-    raise SystemExit(1)
-if not (values.get('runtime_client_identity_sha256') or values.get('installed_import_origins')):
-    raise SystemExit(1)
-PY
-    then
-        add_check "$id" PASS 'normal child route owner' "$name sha256=$receipt_sha authenticates the registered child tuple and lock"
-    else
-        add_check "$id" MISMATCH 'normal child route owner' "$name sha256=$receipt_sha is not the existing key/value child receipt for the bound tuple"
-    fi
+    check_producer_receipt "$1" "$2" child
 }
 
 check_farm_kit_receipt() {
-    local id=$1 name=$2 path=
-    if [[ -v $name ]]; then path=${!name}; fi
-    if ! physical_path "$path" file; then
-        add_check "$id" MISSING 'Farm distribution-input owner' "$name must bind a current authenticated kit receipt"
-        return
-    fi
-    local receipt_sha
-    receipt_sha=$(sha256sum "$path" | awk '{print $1}')
-    if python3 - "$path" "$AGENT_SHA" "$AGENT_TREE" "$RUNTIME_SHA" "$MAKER_SHA" "$PROOF_LOCK_SHA" <<'PY'
-import json
-import pathlib
-import sys
-
-path, agent, agent_tree, runtime, maker, lock = sys.argv[1:]
-raw = pathlib.Path(path).read_text()
-try:
-    parsed = json.loads(raw)
-except json.JSONDecodeError:
-    parsed = None
-if isinstance(parsed, dict):
-    source = parsed.get('source', {})
-    installer = parsed.get('installer', {})
-    if not isinstance(source, dict) or not isinstance(installer, dict):
-        raise SystemExit(1)
-    if not str(parsed.get('schema', '')).startswith('timeline.ops.') or 'installed-kit' not in parsed.get('schema', ''):
-        raise SystemExit(1)
-    if parsed.get('status') not in {'qualified_for_one_request', 'PASS_SOURCE_ONLY_INSTALL', 'PASS'}:
-        raise SystemExit(1)
-    if source.get('commit') != agent or source.get('tree') != agent_tree:
-        raise SystemExit(1)
-    if installer.get('sha256') != maker or installer.get('mode') != '0755' or installer.get('regular_nonsymlink') is False:
-        raise SystemExit(1)
-    raise SystemExit(0)
-values = {}
-for line in raw.splitlines():
-    if not line or line.startswith('#'):
-        continue
-    if '=' not in line:
-        raise SystemExit(1)
-    key, value = line.split('=', 1)
-    if key in values:
-        raise SystemExit(1)
-    values[key] = value
-if values.get('status') not in {'created', 'reused', 'verified'} or values.get('reuse') != 'verified':
-    raise SystemExit(1)
-if values.get('build_origin_agent_sha') != agent:
-    raise SystemExit(1)
-if values.get('requested_runtime_sha', values.get('runtime_sha')) != runtime:
-    raise SystemExit(1)
-if values.get('lock_sha256') != lock:
-    raise SystemExit(1)
-for key in ('component_identity', 'key'):
-    value = values.get(key, '')
-    if len(value) != 64 or any(char not in '0123456789abcdef' for char in value):
-        raise SystemExit(1)
-PY
-    then
-        add_check "$id" PASS 'Farm distribution-input owner' "$name sha256=$receipt_sha authenticates the existing kit receipt format and merged tuple"
-    else
-        add_check "$id" MISMATCH 'Farm distribution-input owner' "$name sha256=$receipt_sha is not an authenticated existing kit receipt for the bound tuple"
-    fi
+    check_producer_receipt "$1" "$2" kit
 }
 
 check_d73_receipt() {
-    local id=$1 name=$2 path=
-    if [[ -v $name ]]; then path=${!name}; fi
-    if ! physical_path "$path" file; then
-        add_check "$id" MISSING 'D73 launcher owner' "$name must bind the retained positive manifest receipt"
-    elif cmp -s "$path" "$P4_D73_MANIFEST"; then
-        add_check "$id" PASS 'D73 launcher owner' "$name is byte-identical to the authenticated positive manifest"
-    else
-        add_check "$id" MISMATCH 'D73 launcher owner' "$name is not byte-identical to the authenticated positive manifest"
-    fi
+    check_producer_receipt "$1" "$2" d73
 }
 
 check_d73_manifest() {
-    local path=${P4_D73_MANIFEST-}
-    if ! physical_path "$path" file; then
-        return
-    fi
-    if python3 - "$path" "${AGENT_CHECKOUT-}" "${RUNTIME_CHECKOUT-}" "${APP_CHECKOUT-}" "${COMPOSITION_CHECKOUT-}" "$AGENT_SHA" "$AGENT_TREE" "$RUNTIME_SHA" "$RUNTIME_TREE" "$APP_SHA" "$APP_TREE" "$COMPOSITION_SHA" "$COMPOSITION_TREE" <<'PY'
-import pathlib
-import subprocess
-import sys
-
-path, *args = sys.argv[1:]
-agent, runtime, app, composition, *wanted = args
-names = ("agent", "runtime", "app", "composition")
-values = {}
-for line in pathlib.Path(path).read_text().splitlines():
-    if not line or line.startswith("#"):
-        continue
-    if "=" not in line:
-        raise SystemExit(1)
-    key, value = line.split("=", 1)
-    if not key or key in values:
-        raise SystemExit(1)
-    values[key] = value
-if values.get("format") != "p4-d73-v1":
-    raise SystemExit(1)
-for name, checkout, commit, tree in zip(names, (agent, runtime, app, composition), wanted[::2], wanted[1::2]):
-    if values.get(name + "_sha") != commit or values.get(name + "_tree") != tree:
-        raise SystemExit(1)
-    if values.get(name + "_path") != checkout or pathlib.Path(checkout).resolve() != pathlib.Path(checkout):
-        raise SystemExit(1)
-    if subprocess.check_output(["git", "-C", checkout, "rev-parse", "HEAD"], text=True).strip() != commit:
-        raise SystemExit(1)
-    if subprocess.check_output(["git", "-C", checkout, "rev-parse", "HEAD^{tree}"], text=True).strip() != tree:
-        raise SystemExit(1)
-for key in ("python", "node", "profile", "schema", "profile_lock_sha", "profile_archive_sha", "profile_registry_sha", "junit_paths"):
-    if not values.get(key):
-        raise SystemExit(1)
-PY
-    then
-        add_check manifest.d73-content PASS 'D73 launcher owner' 'key=value manifest authenticates all four local source checkouts and required launcher inputs'
-    else
-        add_check manifest.d73-content MISMATCH 'D73 launcher owner' 'manifest is not the existing p4-d73-v1 key=value manifest for the bound tuple'
-    fi
+    check_producer_receipt manifest.d73-content P4_D73_MANIFEST d73
 }
 
 check_poison_manifest() {
