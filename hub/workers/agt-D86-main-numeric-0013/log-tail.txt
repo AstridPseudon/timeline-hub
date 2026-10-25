@@ -1,0 +1,400 @@
+-        shots, internals = [shot], [internal]
+-    target['at'] = start
+-    target['app'] = {'astrid': {'fixed_start': True, 'for': target['hold']},
+-                     'org.example/opaque': [None, False, 1, 1.0]}
+-    case.service.publish_parent_composition(case.film.project_id, case.film.timeline_id, {
+-        'project_id': case.film.project_id, 'timeline_id': case.film.timeline_id,
+-        'expected_head': case.head()['revision_id'], 'parent_revision_id': 'numeric-baseline',
+-        'parent_composition': parent, 'shot_revisions': shots, 'internal_timeline_revisions': internals,
+-    }, idempotency_key='numeric-baseline')
++
++    bundle = commit.bundle_from_document(case.document())
++    hold = 0.25 if scope == 'occurrence' else State(bundle).entity(ref)['hold']
++    values = {'at': start,
++              'app': {'astrid': {'fixed_start': True, 'for': hold},
++                      'org.example/opaque': [None, False, 1, 1.0]}}
++    if scope == 'occurrence':
++        values['hold'] = 0.25
++    baseline = capture_clip_set(bundle, ref, values=values)
++    case.submit([baseline], 'numeric-baseline')
+     case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+     original, base = case.document(), case.head()
+     bundle = commit.bundle_from_document(original)
+
+exec
+/bin/bash -lc "set -o pipefail
+printf '%s\\n' '--- source map preservation ---'
+/home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+files = [
+    'tests/editing_conformance/test_commit_runtime_numeric_move.py',
+    'tests/editing_conformance/test_commit_runtime_numeric_params.py',
+]
+for name in files:
+    current = ast.parse(Path(name).read_text(encoding='utf-8'))
+    original = ast.parse(subprocess.check_output(['git', 'show', 'HEAD:' + name], text=True))
+    def funcs(tree):
+        return [node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    current_f, original_f = funcs(current), funcs(original)
+    assert [node.name for node in current_f] == [node.name for node in original_f]
+    for now, before in zip(current_f, original_f):
+        assert ast.dump(now.args, include_attributes=False) == ast.dump(before.args, include_attributes=False), now.name
+        assert ast.dump(now.decorator_list, include_attributes=False) == ast.dump(before.decorator_list, include_attributes=False), now.name
+        now_asserts = [node for node in ast.walk(now) if isinstance(node, ast.Assert)]
+        before_asserts = [node for node in ast.walk(before) if isinstance(node, ast.Assert)]
+        assert [ast.dump(node, include_attributes=False) for node in now_asserts] == [ast.dump(node, include_attributes=False) for node in before_asserts], now.name
+        now_raises = [node for node in ast.walk(now) if isinstance(node, ast.Raise)]
+        before_raises = [node for node in ast.walk(before) if isinstance(node, ast.Raise)]
+        assert [ast.dump(node, include_attributes=False) for node in now_raises] == [ast.dump(node, include_attributes=False) for node in before_raises], now.name
+    print(name, 'functions/asserts/raises/decorators/parameters preserved')
+print('assigned node list:')
+for name in ('tests/editing_conformance/test_commit_runtime_numeric_move.py', 'tests/editing_conformance/test_commit_runtime_numeric_params.py'):
+    tree = ast.parse(Path(name).read_text(encoding='utf-8'))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+            print(' ', name, node.name)
+PY
+printf '%s\\n' '--- in-memory compile ---'
+/home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+for name in ('tests/editing_conformance/test_commit_runtime_numeric_move.py',
+             'tests/editing_conformance/test_commit_runtime_numeric_params.py'):
+    compile(Path(name).read_text(encoding='utf-8'), name, 'exec')
+print('ok')
+PY
+printf '%s\\n' '--- diff check ---'
+git diff --check
+printf '%s\\n' '--- ruff current ---'
+/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py
+printf '%s\\n' '--- mypy current ---'
+/home/user/work/venv-agent/bin/mypy tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py" in /home/user/work/wt/agt-D86-main-numeric-0013
+ succeeded in 1260ms:
+--- source map preservation ---
+Traceback (most recent call last):
+  File "<stdin>", line 17, in <module>
+  File "/usr/lib/python3.13/ast.py", line 191, in dump
+    raise TypeError('expected AST, got %r' % node.__class__.__name__)
+TypeError: expected AST, got 'list'
+--- in-memory compile ---
+ok
+--- diff check ---
+--- ruff current ---
+All checks passed!
+--- mypy current ---
+Success: no issues found in 2 source files
+
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+files = [
+    'tests/editing_conformance/test_commit_runtime_numeric_move.py',
+    'tests/editing_conformance/test_commit_runtime_numeric_params.py',
+]
+for name in files:
+    current = ast.parse(Path(name).read_text(encoding='utf-8'))
+    original = ast.parse(subprocess.check_output(['git', 'show', 'HEAD:' + name], text=True))
+    funcs = lambda tree: [node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    current_f, original_f = funcs(current), funcs(original)
+    assert [node.name for node in current_f] == [node.name for node in original_f]
+    for now, before in zip(current_f, original_f):
+        assert ast.dump(now.args, include_attributes=False) == ast.dump(before.args, include_attributes=False), now.name
+        assert ast.dump(now.decorator_list, include_attributes=False) == ast.dump(before.decorator_list, include_attributes=False), now.name
+        for kind, label in ((ast.Assert, 'assert'), (ast.Raise, 'raises')):
+            now_nodes = [node for node in ast.walk(now) if isinstance(node, kind)]
+            before_nodes = [node for node in ast.walk(before) if isinstance(node, kind)]
+            assert [ast.dump(node, include_attributes=False) for node in now_nodes] == [ast.dump(node, include_attributes=False) for node in before_nodes], (now.name, label)
+    print(name, 'functions/asserts/raises/decorators/parameters preserved')
+print('assigned node list:')
+for name in files:
+    tree = ast.parse(Path(name).read_text(encoding='utf-8'))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+            print(' ', name, node.name)
+PY" in /home/user/work/wt/agt-D86-main-numeric-0013
+ exited 1 in 147ms:
+Traceback (most recent call last):
+  File "<stdin>", line 16, in <module>
+  File "/usr/lib/python3.13/ast.py", line 191, in dump
+    raise TypeError('expected AST, got %r' % node.__class__.__name__)
+TypeError: expected AST, got 'list'
+
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+files = [
+    'tests/editing_conformance/test_commit_runtime_numeric_move.py',
+    'tests/editing_conformance/test_commit_runtime_numeric_params.py',
+]
+def dump(value):
+    if isinstance(value, list):
+        return [dump(item) for item in value]
+    return ast.dump(value, include_attributes=False)
+for name in files:
+    current = ast.parse(Path(name).read_text(encoding='utf-8'))
+    original = ast.parse(subprocess.check_output(['git', 'show', 'HEAD:' + name], text=True))
+    funcs = lambda tree: [node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    current_f, original_f = funcs(current), funcs(original)
+    assert [node.name for node in current_f] == [node.name for node in original_f]
+    for now, before in zip(current_f, original_f):
+        assert dump(now.args) == dump(before.args), now.name
+        assert dump(now.decorator_list) == dump(before.decorator_list), now.name
+        for kind, label in ((ast.Assert, 'assert'), (ast.Raise, 'raises')):
+            now_nodes = [node for node in ast.walk(now) if isinstance(node, kind)]
+            before_nodes = [node for node in ast.walk(before) if isinstance(node, kind)]
+            assert [dump(node) for node in now_nodes] == [dump(node) for node in before_nodes], (now.name, label)
+    print(name, 'functions/asserts/raises/decorators/parameters preserved')
+print('assigned node list:')
+for name in files:
+    tree = ast.parse(Path(name).read_text(encoding='utf-8'))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
+            print(' ', name, node.name)
+PY" in /home/user/work/wt/agt-D86-main-numeric-0013
+ succeeded in 55ms:
+tests/editing_conformance/test_commit_runtime_numeric_move.py functions/asserts/raises/decorators/parameters preserved
+tests/editing_conformance/test_commit_runtime_numeric_params.py functions/asserts/raises/decorators/parameters preserved
+assigned node list:
+  tests/editing_conformance/test_commit_runtime_numeric_move.py test_native_move_keeps_exact_numeric_image_and_unchanged_history
+  tests/editing_conformance/test_commit_runtime_numeric_params.py test_native_film_param_edit_preserves_exact_image_and_inverse
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/mypy --help | rg -n "shadow|files|package" | head -30
+/home/user/work/venv-agent/bin/ruff check --help | rg -n "stdin|select|output" | head -30' in /home/user/work/wt/agt-D86-main-numeric-0013
+ succeeded in 273ms:
+2:            [-m MODULE] [-p PACKAGE] [-c PROGRAM_TEXT] [files ...]
+6:Pass in any files or folders you want to type check. Mypy will
+7:recursively traverse any provided folders to find .py files:
+51:  --no-namespace-packages   Disable support for namespace packages (PEP 420,
+52:                            __init__.py-less) (inverse: --namespace-packages)
+59:                            compliant installed packages and stubs
+60:  --no-site-packages        Do not search for installed PEP 561 compliant
+61:                            packages
+62:  --no-silence-site-packages
+64:                            installed packages
+112:                            functions/methods coming from specific package,
+159:                            coming from specific package, module, or class
+214:  --show-absolute-path      Show absolute paths to files (inverse: --hide-
+250:  --shadow-file SOURCE_FILE SHADOW_FILE
+274:  --install-types           Install detected missing library stub packages
+284:  --explicit-package-bases  Use current directory and MYPYPATH to determine
+285:                            module names of files passed (inverse: --no-
+286:                            explicit-package-bases)
+289:                            recursively discovering files to check, e.g.
+292:  --exclude-gitignore       Use .gitignore file(s) to exclude files from
+296:  -p, --package PACKAGE     Type-check package recursively; can be repeated
+299:  files                     Type-check given files or directories
+18:          Avoid writing any fixed files back; instead, output a diff for each changed file to
+28:      --output-format <OUTPUT_FORMAT>
+32:  -o, --output-file <OUTPUT_FILE>
+33:          Specify file to write the linter output to (default: stdout) [env: RUFF_OUTPUT_FILE=]
+54:Rule selection:
+55:      --select <RULE_CODE>
+59:      --extend-select <RULE_CODE>
+60:          Like --select, but adds additional rule codes on top of those already specified
+74:File selection:
+89:      --stdin-filename <STDIN_FILENAME>
+90:          The name of the file when passing it through stdin
+
+exec
+/bin/bash -lc "set -o pipefail
+printf '%s\\n' '--- baseline ruff via stdin ---'
+for f in tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py; do git show HEAD:\""'$f" | /home/user/work/venv-agent/bin/ruff check --stdin-filename "$f" -; done
+printf '"'%s\\n' '--- baseline mypy via shadow files ---'
+/home/user/work/venv-agent/bin/mypy \\
+  --shadow-file tests/editing_conformance/test_commit_runtime_numeric_move.py <(git show HEAD:tests/editing_conformance/test_commit_runtime_numeric_move.py) \\
+  --shadow-file tests/editing_conformance/test_commit_runtime_numeric_params.py <(git show HEAD:tests/editing_conformance/test_commit_runtime_numeric_params.py) \\
+  tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py" in /home/user/work/wt/agt-D86-main-numeric-0013
+ succeeded in 386ms:
+--- baseline ruff via stdin ---
+All checks passed!
+All checks passed!
+--- baseline mypy via shadow files ---
+Success: no issues found in 2 source files
+
+exec
+/bin/bash -lc "sed -n '1,55p' astrid/sdk/timeline/commit.py && git diff --stat && git status --short" in /home/user/work/wt/agt-D86-main-numeric-0013
+ succeeded in 0ms:
+"""Renderer-independent semantics for Runtime's fixed timeline commit port.
+
+Runtime owns authority, persistence and completion reconciliation. This provider
+only converts exact immutable closures and executes the recorded Agent plan.
+"""
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+import re
+from collections.abc import Mapping
+
+from astrid.core.timeline.authoring_bundle import (
+    AuthoringBundleError,
+    _collect_media,
+    _timeline_media_view,
+    _without_meta,
+    compile_authoring_candidate,
+    open_authoring_bundle,
+    preview_authoring_candidate,
+)
+
+PROVIDER_VERSION = "astrid-v1"
+COMPILER_VERSION = "authoring-bundle-1"
+_DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
+PARENT_IMAGE_FIELDS = frozenset({"revision_id", "content_digest", "payload"})
+SHOT_IMAGE_FIELDS = PARENT_IMAGE_FIELDS | {"shot_id", "internal_timeline_revision_id"}
+INTERNAL_IMAGE_FIELDS = PARENT_IMAGE_FIELDS | {"timeline_id"}
+
+
+def _json(value):
+    try:
+        return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                          ensure_ascii=False, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise AuthoringBundleError("canonical document must be finite JSON") from exc
+
+
+def _digest(value):
+    return "sha256:" + hashlib.sha256(_json(value).encode("utf-8")).hexdigest()
+
+
+def _require(condition, message):
+    if not condition:
+        raise AuthoringBundleError(message)
+
+
+def _id(value):
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _document_pin(pin):
+    _require(isinstance(pin, Mapping) and set(pin) == {
+        "document_id", "version", "content_digest"}, "invalid document pin")
+ .../test_commit_runtime_numeric_move.py            | 51 +++++++++-------------
+ 1 file changed, 21 insertions(+), 30 deletions(-)
+ M tests/editing_conformance/test_commit_runtime_numeric_move.py
+
+codex
+The migration is now limited to the shared numeric fixture: the two test functions’ original parameter/decorator/assert/raise ASTs are unchanged, and the nine assigned parametrized nodes remain present. Static checks pass for the edited files; I’m doing the final baseline comparison and repository-scope checks now, then I’ll record the conventional commit message and completion marker.
+exec
+/bin/bash -lc "printf '%s\\n' '--- changed paths ---'; git diff --name-only; printf '%s\\n' '--- diff check ---'; git diff --check; printf '%s\\n' '--- exact source checks (final) ---'; /home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py && /home/user/work/venv-agent/bin/mypy tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_commit_runtime_numeric_params.py && /home/user/work/venv-agent/bin/python - <<'PY'
+from pathlib import Path
+for name in ('tests/editing_conformance/test_commit_runtime_numeric_move.py', 'tests/editing_conformance/test_commit_runtime_numeric_params.py'):
+    compile(Path(name).read_text(encoding='utf-8'), name, 'exec')
+print('in-memory compile: ok')
+PY
+printf '%s\\n' '--- final diff ---'; git diff -- tests/editing_conformance/test_commit_runtime_numeric_move.py" in /home/user/work/wt/agt-D86-main-numeric-0013
+ succeeded in 425ms:
+--- changed paths ---
+tests/editing_conformance/test_commit_runtime_numeric_move.py
+--- diff check ---
+--- exact source checks (final) ---
+All checks passed!
+Success: no issues found in 2 source files
+in-memory compile: ok
+--- final diff ---
+diff --git a/tests/editing_conformance/test_commit_runtime_numeric_move.py b/tests/editing_conformance/test_commit_runtime_numeric_move.py
+index 65f96adc76..01319dc102 100644
+--- a/tests/editing_conformance/test_commit_runtime_numeric_move.py
++++ b/tests/editing_conformance/test_commit_runtime_numeric_move.py
+@@ -1,28 +1,30 @@
+ """Native numeric moves on API-built films, including the M1 command surface."""
+ from __future__ import annotations
+ 
+-import copy
+ from types import SimpleNamespace
+ 
+ import pytest
+ 
+ from astrid.sdk.timeline import commit
++from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+ from astrid.sdk.timeline._command_state import State
+ from astrid.sdk.timeline.capture import capture_move
+-from tests.helpers.runtime import use_runtime
++from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+ 
+ pytestmark = pytest.mark.integration
+ 
+ 
+ @pytest.fixture
+ def numeric_film(tmp_path, monkeypatch):
+-    runtime = use_runtime()
++    runtime = use_runtime(commit=vendored_runtime_commit())
+     monkeypatch.syspath_prepend(str(runtime / 'tests'))
+     from runtime_protocol.service import RuntimeService
++    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+     from timeline_commit_film_fixture import build_film_fixture
+ 
+     film = build_film_fixture(tmp_path)
+     service = RuntimeService(film.duplicate_root)
++    service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+     case = SimpleNamespace(service=service, film=film)
+ 
+     def head():
+@@ -37,7 +39,12 @@ def numeric_film(tmp_path, monkeypatch):
+         base = head()
+         body = {'api_version': 1, 'project_id': film.project_id, 'timeline_id': film.timeline_id,
+                 'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id'],
+-                'commands': calls}
++                'commands': calls, 'label': key, 'merge': 'atomic', 'reads': [],
++                'steps': [{'id': key, 'label': key, 'intent': 'Numeric conformance edit',
++                           'tags': ['numeric'], 'command_ordinals': list(range(len(calls))),
++                           'patch': [], 'reads': []}],
++                'dry_run': False, 'source': {'via': 'python'},
++                'rationale': 'Preserve exact numeric authored values', 'group_id': key}
+         return case.service.commit_timeline(
+             film.project_id, film.timeline_id, body, idempotency_key=key, publisher='author',
+             invocation_path=f'/v1/projects/{film.project_id}/timelines/{film.timeline_id}/commit',
+@@ -58,36 +65,20 @@ def exact(actual, expected):
+ @pytest.mark.parametrize('start,on', [(0, 0), (0.0, 0), (0, 1)])
+ def test_native_move_keeps_exact_numeric_image_and_unchanged_history(numeric_film, scope, start, on):
+     case = numeric_film
+-    source = case.document()
+-    parent = copy.deepcopy(source['parent_revision']['payload'])
+-    shots, internals = [], []
+     if scope == 'parent':
+         ref = 'parent/clip:music-bed'
+-        target = parent['clips'][0]
+     else:
+         ref = 'occurrence:occurrence-1/clip:clip-1'
+-        internal = copy.deepcopy(source['internal_timeline_revisions'][0])
+-        shot = next(copy.deepcopy(row) for row in source['shot_revisions']
+-                    if row['internal_timeline_revision_id'] == internal['revision_id'])
+-        internal.update(revision_id='numeric-internal')
+-        shot.update(revision_id='numeric-shot', internal_timeline_revision_id='numeric-internal')
+-        shot['payload']['internal_timeline_revision_id'] = 'numeric-internal'
+-        for occurrence in parent['occurrences']:
+-            if occurrence['shot_id'] == shot['shot_id']:
+-                occurrence['shot_revision_id'] = 'numeric-shot'
+-        target = internal['payload']['clips'][0]
+-        target['hold'] = 0.25
+-        for row in (internal, shot):
+-            row.pop('content_digest')
+-        shots, internals = [shot], [internal]
+-    target['at'] = start
+-    target['app'] = {'astrid': {'fixed_start': True, 'for': target['hold']},
+-                     'org.example/opaque': [None, False, 1, 1.0]}
+-    case.service.publish_parent_composition(case.film.project_id, case.film.timeline_id, {
+-        'project_id': case.film.project_id, 'timeline_id': case.film.timeline_id,
+-        'expected_head': case.head()['revision_id'], 'parent_revision_id': 'numeric-baseline',
+-        'parent_composition': parent, 'shot_revisions': shots, 'internal_timeline_revisions': internals,
+-    }, idempotency_key='numeric-baseline')
++
++    bundle = commit.bundle_from_document(case.document())
++    hold = 0.25 if scope == 'occurrence' else State(bundle).entity(ref)['hold']
++    values = {'at': start,
++              'app': {'astrid': {'fixed_start': True, 'for': hold},
++                      'org.example/opaque': [None, False, 1, 1.0]}}
++    if scope == 'occurrence':
++        values['hold'] = 0.25
++    baseline = capture_clip_set(bundle, ref, values=values)
++    case.submit([baseline], 'numeric-baseline')
+     case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+     original, base = case.document(), case.head()
+     bundle = commit.bundle_from_document(original)
+
