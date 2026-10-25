@@ -1,0 +1,14 @@
+{
+  "base": "7d35b32343d32fa94091b9e9f1fa160c2868e0cb",
+  "candidate_sha256": "52b0f6836af7d2ee68b7d0a9b43dde2ba3c0c6d4d9f7b3360e8c95174290bd9d",
+  "ast_parse_in_memory_compile": "PASS; code object never executed",
+  "literal_source_inverse_contract": "PASS; two complete ordered effects with reversed op/ref/path/before/value",
+  "track_schema_static_keys_required_kind_app_predicates": "PASS",
+  "untouched_control_file_sha256": {
+    "tests/editing_conformance/test_word_binding_recipe.py": "f23e227bce165d3c7ada70d9742c1e6f36159823c845df9903903f71575228bd",
+    "tests/sdk/test_timeline_commit_provider.py": "cde797633e42e21fc7219c2b5288ce8238cdacf92e094450e02e4e746c871434"
+  },
+  "assert_count_parent": 21,
+  "assert_count_candidate": 61,
+  "no_handlers_skips_xfails_expected_refusals_authorization_bypass_or_production_inverse_oracle": "PASS"
+}

@@ -1,0 +1,18 @@
+$ /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/sdk/test_timeline_restore_effect_order_runtime.py
+All checks passed!
+exit=0
+
+$ /home/user/work/venv-agent/bin/python -m ruff check --no-cache --stdin-filename tests/sdk/test_timeline_restore_effect_order_runtime.py - < HEAD:file
+All checks passed!
+exit=0
+
+$ /home/user/work/venv-agent/bin/python -m mypy --cache-dir /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-restore-control-sol-0435/evidence/mypy-candidate tests/sdk/test_timeline_restore_effect_order_runtime.py
+Success: no issues found in 1 source file
+exit=0
+
+$ /home/user/work/venv-agent/bin/python -m mypy --cache-dir /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-restore-control-sol-0435/evidence/mypy-parent --shadow-file tests/sdk/test_timeline_restore_effect_order_runtime.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-restore-control-sol-0435/evidence/parent.py tests/sdk/test_timeline_restore_effect_order_runtime.py
+Success: no issues found in 1 source file
+exit=0
+
+$ git diff --check
+exit=0
