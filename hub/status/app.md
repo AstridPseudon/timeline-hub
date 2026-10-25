@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T09:23:59Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
+<!-- app | 2026-10-25T09:28:03Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 3m -->
 # app board, 2026-10-25T09:21Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -277,7 +277,7 @@
 
 | D74-D113-stale-pin | Retire old completed App tuple pin | Manager; host input | Host0845 and fresh static guards | merged | Normal recycle0845 | Old04be pin recycled; zero refusals. Net165818368bytes; free6124007424bytes. All outputs/branches/reports kept. | No source change |
 
-| P2-D114-asset-current | Qualify current asset original | Luna; service | Actual 15712 terminal | gated:native-oracle-source | Producer 0855; source 0904 | Readiness 1 PASS; original 1 FAIL at strict native Undo reply equality 655 via 1179. [Facts](../../design/app-P2-D114-register-asset-submit-0855-terminal.md). | 04be / 070dfc / 1daca / 635f |
+| P2-D114-asset-current | Qualify current asset original | Luna; service | D115 source HOME7841 | gated:full-P2 | Producer0855; source0904 merged | 15712 readiness PASS; original failed stale D101 Undo read. Corrected source awaits full tour. [Facts](../../design/app-P2-D114-register-asset-submit-0855-terminal.md). | 04be / 070dfc / 1daca / 635f |
 
 | P2-D114-asset15712-source | Exact native asset field union | Luna; independent PASS | D115 and D101 | merged | Author0904; reviewer0910 | Node20, 138 receipts, seven semantic, mutation controls, types and lint PASS. Entire home tree equals reviewed author. Full tour owed. | Home7841a94619 |
 
