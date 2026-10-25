@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T07:22:49Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# app2 board, 2026-10-25T07:19Z
+<!-- app2 | 2026-10-25T07:25:12Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T07:23Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -121,6 +121,7 @@
 
 | P2-D110-inverse | Fix removed-shot owner in native Undo | Agent Luna; protected review | Independent0658 PASS; normal home | merged | Author0651; review0658; release0702 | Normal070dfc tree equals reviewedccf831. GenuineRED2/GREEN2, independent44/types/lint PASS; no stale images or weakened guards. App fullP2 still owed. | Agent070dfc5ef4 |
 | P2-D111-history | Measure and fix schema replay validation cost | Runtime Luna; independent review | Required finite curve; source held | blocked:runtime | rt-D111-validation-memo-0653; return0706 | Candidate79 tests and seed2 PASS, but nativeN1 wall2754/2755ms shows no gain. First return supplies missing finiteN gate; no source release or P2 credit. | 1171212ce held |
+| P2-phase-sink-current | Preserve capture across all tour starts | App Luna; independent review | First review0703 FAIL | doing | app-P2-phase-sink-return-0710 | First candidate held: repeated ordinal2 start collides and HEAD-sensitive control fails after commit. Return0710 owns full-tour-safe namespace and portable proof. | Candidate4ec66d0d held |
 
 | P1-D108-current | Qualify current mixed chain | App service; independent Luna | Actual15075 and independent0657 GO | merged | App15075; app-D108-P1-15075-GO-review-0657 | Original2 and readiness1 PASS, zero failures/errors/skips. Manifest, tuple/source and captured checkouts qualified; final-cut matrix remains. | f7201 / d629 / c916 / 635f |
 
@@ -130,15 +131,15 @@ D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-
 
 live 0 / cap 6 source; ready-undispatched 0 for Proof under D56.4. bin/workers confirms all1313 records done. D89 allows6 source above5.0GB, one service above5.2GB; nothing new below4.5GB.
 
-core open: 4 transferred App-owned P2 gestures: SWAP, ADD, element and placement. Four isolated GO retained. D110 normalAgent070dfc source tree equals independently reviewedccf831 and clears Agent source/review/release wait; receivers already have normal0702release peers, fullP2 behavior remains owed. D111 Runtime positive validation memo remains held for missing finiteN curve/no demonstrated gain. Placement phase-sink source0653 has author27PASS/types/lint and independent0703 review. Current P115075 and P331792 independently GO on f7201/d629/c916/635f, final-cut matrix separate. Proof stays stood down.
+core open: 4 transferred App-owned P2 gestures: SWAP, ADD, element and placement. Four isolated GO retained. D110 normalAgent070dfc source tree equals independently reviewedccf831 and clears Agent source/review/release wait; receivers already have normal0702release peers, fullP2 behavior remains owed. D111 Runtime positive validation memo remains held for missing finiteN curve/no demonstrated gain. Placement phase-sink independent0703 FAIL; App first return0710 owns full-tour-safe namespace and portable controls. Current P115075 and P331792 independently GO on f7201/d629/c916/635f, final-cut matrix separate. Proof stays stood down.
 
 regressions: 0 newly open after qualified Runtime1daca release. D102 strict-context regression is fixed at source and genuine native-seed scope; historical failed diagnostic results and original popup Undo root remain separate. D77a consumer source/security receipts remain qualified; genuine installed render and D67 environment limits remain final-cut obligations.
 
 Blockers: Runtime history — D111 source candidate1171212 held: N1 shows no gain and finiteN gate incomplete. Return0706 active; measured proof/review/release precede fullP2 adoption.
-Blockers: App setup — Placement31962 setup failure remains. Author0653 passes27/types/lint; independent0703 challenges repeated test-stage starts before normal merge/fulltour.
+Blockers: App setup — Review0703 FAIL: repeated ordinal2 startup collides and baseline control depends on HEAD. App first return0710 owns repair; normal merge/fullP2 remain owed.
 Blockers: Final cut — CurrentP115075 andP331792 independently GO. FullP2 waits qualifiedD111 and App setup; D108 currentAgentcore/rehearsal,D59 final matrix/core,D69 and installed render remain owed.
 
-Next ready: None for Proof under D56.4. D110 source released and peers already delivered; Runtime0645 owns current fullcore. RuntimeD111 return0706 and App phase review0703 remain assigned. P1/P3 independentlyGO; family bodies pause.
+Next ready: None for Proof under D56.4. D110 source released; Runtime full-core0711 now dispatched. D111 finite-curve return0706 and App phase-sink first return0710 assigned. P1/P3 independentlyGO; family bodies pause.
 
 Current gate evidence:
 - P3 current31792: independentApp0706 GO, readiness1/original1 PASS with zero failures/errors/skips. Exact93c2 spec, helper/manifests and four-repo tuple f7201/d629/c916/635f match captured receipts. Both mounts, exact observed5/forwarded3, full v2 commands/steps/reads/merge, merged history/canonical, restart, guardedUndo and zero legacy qualify. Ephemeral service source cleaned; retained clean one-parent same-tree manifest and pinned checkout qualify at the reported limit. [App current P3 GO](/home/user/timeline-hub/hub/design/app-D108-P3-31792-GO-review-0706.md). Final-cut matrix remains owed.
@@ -210,10 +211,10 @@ Safety: D88 automatic safety review stopped its reviewer for possible cybersecur
 
 Disk: 7458930688 bytes free at 2026-10-25T07:19Z. Lead06:33 remains binding: no pause or reclaim, no retire-venv or delete. Prior refused targets stay stopped.
 
-Pass 2026-10-25T07:19Z: PLAN, MANAGER-COMMON, current header and owner boards consumed. Inbox unchanged at793776 bytes; D56.4 stand-down remains binding. All1313 Proof worker records are done; no running or newly finished Proof work. D110 source/review/release is complete at normal Agent070dfc; Agent board confirms exact reviewed tree and existing Runtime0645 handoff. Runtime board still holds D111 candidate1171212: N1wall2754/2755ms demonstrates no gain; finiteN return0706 remains assigned. App board still assigns phase-sink independent0703 and fullP2 after both qualified releases/adoption. Recorded current P115075 and P331792 independentGO retained; older owner-board timestamps do not overwrite those actual verdicts. No new Proof dispatch, body, merge, peer or product edit. No Git mutation or reclaim/delete/retire action under lead06:33.
+Pass 2026-10-25T07:23Z: Inbox unchanged793776; current header D108-111 and owner boards consumed; D56.4 unchanged. All1313 Proof records done. D110 released normal070dfc exact reviewedtree; Runtime board07:16 clears source block and dispatches full-core controller0711, with private route review0715. No Agent source hold remains. App board07:11 records phase-sink independent0703 FAIL: repeat ordinal2 start collides and HEAD-sensitive baseline fails after commit. New App first-return0710 now owns full-tour-safe namespace/portable proof; Proof board updated this pass. Runtime D111 candidate1171212 remains held for finiteN/gain qualification; return0706 assigned. Current P115075/P331792 independentGO retained; final-cut matrix separate. No duplicate Proof dispatch, body, merge, peer, product or Git edit. No reclaim/delete/retire action under lead06:33.
 
 Evidence: [Ready Runtime release peer](../../design/peer-app2-to-app-20261025T0621Z-D102c-release-ready.md), [Published input and D106 peer](../../design/peer-app2-to-agent-20261025T0603Z-published-inputs-and-D106.md), [Asset27438 independent GO](/home/user/timeline-hub/hub/design/app-P2-asset27438-GO-review-0315.md), [Single5678 independent GO](../../design/app-P2-single5678-GO-resume-0255.md), [corrected P4 sample](../../design/agt-P4-crossprocess-sample-0242-report.md), [App current owners](/home/user/timeline-hub/hub/status/app.md), [Runtime current owners](/home/user/timeline-hub/hub/status/runtime.md), [Agent current owners](/home/user/timeline-hub/hub/status/agent.md).
 
-Next watch: approximately ten minutes after this pass. RuntimeD111 finite-curve return0706, App phase-sink review0703, normal releasedD110 receiver uptake, D108 fullcore/rehearsal. P1/P3 recordedcurrentGO; no unchangedProof run or reclaim/delete/retire action; D56.4 binding.
+Next watch: approximately ten minutes after this pass. RuntimeD111 finite-curve return0706, App phase-sink first return0710, normal releasedD110 receiver uptake, D108 full-core0711/rehearsal. P1/P3 recordedcurrentGO; no unchangedProof run or reclaim/delete/retire action; D56.4 binding.
 
 Inbox read through793776 bytes. STATUS is restart point; [D83 handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md), [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md), [D84a release](../../design/runtime-D84a-release-2205.md) remain binding.
