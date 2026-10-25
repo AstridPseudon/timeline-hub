@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "task": "D127 existing-helper safe leaf retention trace",
+  "decision": "READ_ONLY_TRACE_NO_PRODUCT_CHANGE",
+  "actual": {
+    "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+    "element_join": "EXACT_JOIN",
+    "element_key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+    "capture_namespace": "pid-12960-birth-19014785-capture-1",
+    "request": 3,
+    "sample_total": 352,
+    "lost_samples": 3,
+    "last_observed_phase": "authorization",
+    "outcome": "PENDING",
+    "handler_end": "UNKNOWN",
+    "response": "UNKNOWN",
+    "request_wall_denominator": "UNKNOWN",
+    "provider_dominant_leaf": "NOT_RETAINED",
+    "final_duration": "UNKNOWN",
+    "swap_join": "UNKNOWN",
+    "dominant_cost": "NOT_ASSERTED",
+    "native_1_75_comparison": "NOT_ASSERTED"
+  },
+  "retention_observed": {
+    "helper_mode": "rolling_plus_final_request",
+    "helper_format_version": 2,
+    "max_requests": 8,
+    "max_events": 128,
+    "max_bytes": 65536,
+    "sampling_interval_ms": 20,
+    "exact_request_events_seen": 22,
+    "exact_request_events_retained": 22,
+    "exact_request_buffer_byte_complete": true,
+    "output_events": 128,
+    "output_bytes": 40763,
+    "rolling_events_seen": 135,
+    "rolling_capacity_dropped_events": 7,
+    "top_projection": "10 inclusive safe frames; shared routing/dispatch frames occupy the projection",
+    "raw_payloads_retained": false,
+    "raw_keys_retained": false,
+    "auth_or_credentials_retained": false,
+    "private_urls_retained": false,
+    "raw_stack_blobs_published": false
+  },
+  "source_custody": {
+    "runtime_base_commit": "453b3e6f92045980219ec4948419ee5ad25c817d",
+    "runtime_tree": "d4b7756ea3ba3b27344ef7339102b1e0188488b9",
+    "app_commit": "84857c45347539c7820bb054b69e2e5ad4079081",
+    "helper_path": "tests/helpers/p2_commit_phase_capture.py",
+    "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "helper_import_commit": "c36395000dac7a55e7ec3ff29262c47ce2f329cc",
+    "helper_retention_commit": "e1bb5140aeac65911e6b97b91473c6d35a4801a1",
+    "app_harness_sha256": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e",
+    "sitecustomize_sha256": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e",
+    "test_sha256": "1a1b475e8095a8a70cd5d7f5c884b6d68a37d19d62807d70d982f5224025aff9"
+  },
+  "source_hashes": {
+    "runtime_protocol/server.py": "5188ad162296d7abd121d79abd2f6d1c89ef655fc30b9e24ae3c80628c974832",
+    "runtime_protocol/service.py": "7277fc12e502a419ccd9eea9dfd2b3693bc8b2c8963e9fdf7224402d8a03a529",
+    "runtime_protocol/timeline_commit_execution.py": "75b8c8a214e4c54482046a59e7d051646bce22ed3ebcc2b62726e53f5a59d744",
+    "app/src/tools/video-editor/commands/commitOutbox.ts": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21",
+    "app/src/tools/video-editor/commands/commitSession.ts": "7bddb9c4adc28ff7d7079c4011ae965e65952570abe248f3d0247789a3532648",
+    "app/src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+    "app/src/integrations/runtime/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4"
+  },
+  "caller_trace": {
+    "browser_persistence": "IndexedDB astrid.command-outbox; pending request is written before transmit and preserved on retry",
+    "app_session": "commitSession transmit -> existing outbox dispatch -> RuntimeDataProvider.commitTimeline",
+    "generated_client": "POST canonical /v1/projects/{project_id}/timelines/{timeline_id}/commit with Idempotency-Key",
+    "mounted_runtime": "App harness D66_RUNTIME_LOG_DIR -> private phase sink -> PYTHONPATH sitecustomize -> existing helper",
+    "runtime_path": "Door admission -> RuntimeHandler._dispatch/_timeline_commit -> authorization -> coordinator/provider -> accept/receipt -> response"
+  },
+  "input_artifact_sha256": {
+    "facts": "76103f7c4521e7bfebe62abcc903a1ff16e06606f6626b4bdb137704938f734f",
+    "request_binding": "2fc585e2ce174d67b6b7b36270e467417bc7d29b6e8767e0e7ecb3a5d07d2877",
+    "stack_index": "900f27b9e7a9d709ca08a24f9d8d75f5e87f29f3b2a5043e05acd7c98bf1ff6f",
+    "privacy_check": "9747d3494e262a3138800805fbc8e74129104d8d8c3cd0932540279c8d0c429a",
+    "durable_custody": "73898e53e285b66c43735f4c293f51bbc778f6ea296b0945b17c25eba0a0980f"
+  }
+}

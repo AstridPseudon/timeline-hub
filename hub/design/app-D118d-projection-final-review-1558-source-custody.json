@@ -1,0 +1,61 @@
+{
+  "base_commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "base_tree": "68433c5f77be90063b1f43d3e8f1407346a50675",
+  "candidate_commit": "a92c6afe0ccd2359e952fc534788d1fce2169049",
+  "candidate_tree": "4902fa8b7cb96d379a2feb276ac76896f59c1967",
+  "final_commit": "e02180cedafa581bc8105d77341456b8b1c50b5b",
+  "final_tree": "b83fcf6cbb2b9bd8620a8b203ba8d0419fa8c354",
+  "changed_paths": ["tests/sdk/test_timeline_capture_projection.py"],
+  "file_hashes": {
+    "base_sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+    "candidate_sha256": "4c85d15814c2b1b8128be5af5bac447cded17a72babd2d3450efdd6147fffb48",
+    "final_sha256": "8747fa62ef628a9c25455fe30876a008ebf54b3b22d575c697c2f6893ca276da"
+  },
+  "lineage": {
+    "candidate_parent_is_base": true,
+    "final_parent_is_candidate": true,
+    "same_author": "Claude <noreply@anthropic.com>",
+    "candidate_exactly_matches_historical_2808": true
+  },
+  "conservation": {
+    "test_function_ast_base_candidate_final_equal": true,
+    "test_assert_count": {"base": 43, "candidate": 43, "final": 43},
+    "module_assert_count": {"base": 43, "candidate": 44, "final": 44},
+    "saved_closure_candidate_final_equal": true,
+    "saved_closure_original_tail_equal": true,
+    "only_fixture_setup_changed_in_final": true,
+    "unauthorized_product_or_guard_change": false
+  },
+  "canonical_boundary": {
+    "validator": "astrid/sdk/timeline/commit.py:_verify_document",
+    "bundle_converter": "astrid/sdk/timeline/commit.py:bundle_from_document",
+    "genuine_reader": "tests/sdk/test_capture_source_runtime.py:open_source_runtime.<locals>.read_document",
+    "shot_fields": ["shot_id", "revision_id", "internal_timeline_revision_id", "content_digest", "payload"],
+    "internal_fields": ["timeline_id", "revision_id", "content_digest", "payload"],
+    "top_level_scope": ["project_id", "timeline_id"],
+    "field_sets_match": true,
+    "authoring_shot_has_revision_id": false,
+    "source_mapping_shot_has_revision_id": true
+  },
+  "provider_route": {
+    "fixture_registration": "tests/sdk/test_capture_source_runtime.py:service.register_timeline_commit_provider(load_timeline_commit_provider(\"astrid\"))",
+    "fixture_setup_call": "tests/sdk/test_timeline_capture_projection.py:_RuntimeAuthoringWriter.commit_timeline / runtime.service.commit_timeline",
+    "runtime_acceptance": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py:accept",
+    "canonical_persistence": "accept persists candidate canonical_document before publishing receipt",
+    "observed_in_current_run": false,
+    "reason": "KeyError at setup line 303 precedes the commit call"
+  },
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true
+  },
+  "upstream": {
+    "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "target_path": "tests/sdk/test_timeline_capture_projection.py",
+    "target_present": false,
+    "cat_file_status": 128
+  },
+  "review_verdict": "FAIL exact-unapplied-setup-seam; second FAIL escalates to HARDSol"
+}

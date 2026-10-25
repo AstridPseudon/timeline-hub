@@ -1,0 +1,56 @@
+{
+  "task": "D118d",
+  "review": "independent protected graph-root review",
+  "source_semantics": "PASS",
+  "own9_functional_proof": "FAIL",
+  "full_core": "PENDING",
+  "head": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+  "allowed_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+  "source_sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+  "parent_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+  "upstream_924437_file": "absent",
+  "diff_summary": "six added lines: label, one step, merge fields, request reads empty",
+  "ast": {
+    "test_functions_current": 11,
+    "test_functions_parent": 11,
+    "assert_nodes_current": 33,
+    "assert_nodes_parent": 33,
+    "parametrize_calls_current": 7,
+    "parametrize_calls_parent": 7,
+    "test_bodies_equal": true,
+    "test_decorators_equal": true,
+    "assert_ast_equal": true,
+    "inputs_cases_patches_conserved": true
+  },
+  "static_checks": {
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "runtime_custody": {
+    "checkout": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean_at_admission": true,
+    "registered_provider": true,
+    "canonical_commit_route": true,
+    "offline_fake_or_forged_acceptance": false
+  },
+  "own9": {
+    "status": "FAIL",
+    "executed_once": true,
+    "tests": 9,
+    "passed": 0,
+    "failed": 9,
+    "duration_seconds": 14.18,
+    "admission_free_bytes": 5017751552,
+    "safe_failure_class": "runtime_protocol.errors.ValidationError",
+    "safe_failure_frame": "invalid PreparedCommit: None is not of type 'number'",
+    "safe_failure_path": "canonical_document.parent_revision.payload.occurrences[2].gain",
+    "safe_failure_value_class": "null",
+    "safe_failure_expected": "number"
+  },
+  "source_edits_by_review": false,
+  "full_suite_run": false
+}

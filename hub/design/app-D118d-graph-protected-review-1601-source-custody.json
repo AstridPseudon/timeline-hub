@@ -1,0 +1,29 @@
+{
+  "repository": "agent",
+  "worktree": "/home/user/work/wt/app-D118d-graph-protected-review-1601",
+  "branch": "tl/app-D118d-graph-protected-review-1601",
+  "head": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+  "parent": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "allowed_product_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+  "current_file_sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+  "parent_file_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+  "author_diff": {
+    "files_changed": 1,
+    "insertions": 6,
+    "deletions": 0,
+    "diff_check": "PASS"
+  },
+  "upstream_reference": {
+    "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "target_file": "absent"
+  },
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "realpath": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "status": "clean"
+  },
+  "review_worktree_status": "clean",
+  "review_source_edits": false
+}

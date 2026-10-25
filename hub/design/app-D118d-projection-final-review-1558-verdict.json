@@ -1,0 +1,79 @@
+{
+  "verdict": "FAIL",
+  "classification": "exact-unapplied-setup-seam",
+  "task": "D118d",
+  "repo": "Agent",
+  "candidate": {
+    "branch": "tl/app-D118d-projection-first-return-1551",
+    "commit": "e02180cedafa581bc8105d77341456b8b1c50b5b",
+    "parent": "a92c6afe0ccd2359e952fc534788d1fce2169049",
+    "base": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "changed_path": "tests/sdk/test_timeline_capture_projection.py",
+    "diff": {"added": 61, "removed": 3}
+  },
+  "causal_findings": [
+    {
+      "kind": "own9",
+      "result": "9 setup errors; 0 test failures",
+      "first_failure": {
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "line": 303,
+        "call": "source_shot[\"revision_id\"]",
+        "exception": "KeyError: revision_id"
+      },
+      "cause": "bundle_from_document returns authoring shot fields without revision_id; the exact revision identity is under source_mapping.shots[authoring_shot_id].revision_id",
+      "consequence": "The registered Runtime doc.patch is never called; source-item admission and every downstream saved projection/opener assertion remain unobserved."
+    },
+    {
+      "kind": "canonical_projection",
+      "result": "PASS by source review",
+      "details": "The final _saved_document projection matches the genuine current reader: shot_id, revision_id, internal_timeline_revision_id, content_digest, payload for shots; timeline_id, revision_id, content_digest, payload for internals; project_id/timeline_id remain top-level."
+    },
+    {
+      "kind": "source_conservation",
+      "result": "PASS",
+      "details": "Only the assigned test file changed. All 43 original test assertions and test-function ASTs, decorators, inputs, golden bodies, pins, ordering, opaque fields, and original fixture tail are unchanged."
+    },
+    {
+      "kind": "historical_review",
+      "result": "insufficient to override FAIL",
+      "details": "Candidate a92c6afe exactly matches 28081580dc95f02470d82ad81b826335d8e4bd09, but the corrected final source still has an unapplied setup identity lookup."
+    }
+  ],
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true
+  },
+  "upstream_d120": {
+    "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "target_present": false,
+    "verification": "git cat-file -e returned status 128"
+  },
+  "own9": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/wt/rt-pin-5e9ad1c6 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-5e9ad1c6 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --junitxml=<evidence>/own9.xml <the exact nine author nodeids>",
+    "dispatch_free_bytes": 5055291392,
+    "post_run_free_bytes": 5023059968,
+    "exit_code": 1,
+    "tests": 9,
+    "errors": 9,
+    "failures": 0,
+    "first_failure": "tests/sdk/test_timeline_capture_projection.py:303 KeyError: revision_id",
+    "provider_reached": false
+  },
+  "static_checks": {
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS",
+    "test_ast_conservation": "PASS",
+    "canonical_field_projection_match": "PASS"
+  },
+  "escalation": "second FAIL -> HARDSol; no further Luna author",
+  "evidence": {
+    "verdict_md": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-final-review-1558/evidence/verdict.md",
+    "own9_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-final-review-1558/evidence/own9.xml",
+    "own9_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-final-review-1558/evidence/own9.log"
+  }
+}
