@@ -1,0 +1,29 @@
+Corrected P2 native-reply successor source hashes
+Captured: 2026-10-25 UTC
+
+Four-repository tuple (head / tree)
+App:         24865fa212148e9bc149a1285936372656037e55 / 741333cebfb2b6505a080507bb6c9789df494d43
+Agent:       6386c700ee56264aebe12da4558ac74dda0d60ca / 4f157f4445968ca625017a7e20bd7ca317fa0d5d
+Runtime:     6634a17f3ffd885567ba3c91b6c7a560df7375a4 / 47b376717ce7a919a697c62133de3e74dc9f6d3a
+Composition: 635f4de06fda22a85fc2e4cfc764d0153a4c9f40 / 5ab5191a296980a0a6bcd1178ab6902d6478a148
+
+App source files (sha256 / git blob)
+tests/e2e/local/three-products.p2-tour.spec.ts  54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7 / 62d799a92fca8b98399b6ca5bbd3a06127cd9d86
+tests/e2e/local/support/p2-parent-oracle.test.mjs  a7777c1dd29e6cea0d0f869a2351705ee29fd23688facb5ed78d1a8341335cf9 / c24f9b3dde68e8328cf0ce5571b450bca17099f3
+tests/e2e/local/support/p2-transition-oracle.test.mjs  53050d627d2dd3613555ba8f47d4721c84edff6ccbbcf4f7daf7da0e2d503692 / 9ae7c34d599d7490a258375580efe27ec7f18d03
+tsconfig.json  a9833ec01d12bfd2db2abe69c5f2e931ed26ccfba0bf934c11420d8165e06fd2 / 9cb30a9d5275abb7780e24d937a10912919bb191
+tsconfig.app.json  61f9b16cd7f141d23ce4520d7c5412728df8906dde981f6e5b33c8bc5b100516 / a13307865da30ec4a5e59c73b33e79bd8bf96fc9
+tsconfig.node.json  3271939e0cbd9e53e049445906e1c90482b27c7138b32e8efd0ac42692f36e86 / 6c304aa64301b97051a927e0a68b5a059eee40a3
+
+Private qualified profile files in this worktree
+scripts/testing/d66-plain-stack-profile.mjs  f512921c9d86c7da24d70912bd323fbb26fb6470c3abbd5db972dd19ddc9fd67
+scripts/testing/d66-vite-profile.config.ts  a7c2256f2296e223b710f86a8b8197f628f360f749b68c3534259f2e1136e8f9
+
+Composition profile
+archive sha256: 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234
+package sha256: 6bbab9766c13dd450c08f3975e8f690bb718e2ba73f6d929ebd13ee4acb767cf
+generated animations sha256: 578b89e8afbe37994949b02a64295f044fd439d3d1c4ec805e3a24b33b0f9043
+
+Test source before/after both central requests
+three-products.p2-tour.spec.ts: 54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7
+three-products.mounted-readiness.spec.ts: 2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593

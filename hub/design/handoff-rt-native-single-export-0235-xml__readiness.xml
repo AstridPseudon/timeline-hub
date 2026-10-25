@@ -1,0 +1,23 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="18.878219">
+<testsuite name="three-products.mounted-readiness.spec.ts" timestamp="2026-10-25T02:28:17.889Z" hostname="" tests="1" failures="0" skipped="0" time="7.296" errors="0">
+<testcase name="D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture" classname="three-products.mounted-readiness.spec.ts" time="7.296">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|readiness/three-products.mounted-rea-54c87-ed-owner-before-any-gesture/attachments/d21-environment-json-9efa2a42f4cd2b23ed0a459223833b626533a867.json]]
+
+[[ATTACHMENT|readiness/three-products.mounted-rea-54c87-ed-owner-before-any-gesture/attachments/d21-environment-json-9efa2a42f4cd2b23ed0a459223833b626533a867.json]]
+
+[[ATTACHMENT|readiness/three-products.mounted-rea-54c87-ed-owner-before-any-gesture/attachments/mounted-bootstrap-lifecycle-json-84b4198baac230e15281c9dd5464a85d3c3debbc.json]]
+
+[[ATTACHMENT|readiness/three-products.mounted-rea-54c87-ed-owner-before-any-gesture/attachments/d21-environment-json-9efa2a42f4cd2b23ed0a459223833b626533a867.json]]
+
+[[ATTACHMENT|readiness/three-products.mounted-rea-54c87-ed-owner-before-any-gesture/attachments/d21-environment-json-9efa2a42f4cd2b23ed0a459223833b626533a867.json]]
+
+[[ATTACHMENT|readiness/three-products.mounted-rea-54c87-ed-owner-before-any-gesture/attachments/d21-environment-json-9efa2a42f4cd2b23ed0a459223833b626533a867.json]]
+
+[[ATTACHMENT|readiness/three-products.mounted-rea-54c87-ed-owner-before-any-gesture/attachments/d21-environment-json-9efa2a42f4cd2b23ed0a459223833b626533a867.json]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

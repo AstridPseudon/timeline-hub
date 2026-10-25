@@ -1,0 +1,149 @@
+{
+  "packet_kind": "P2 single5678 mechanical safe handback",
+  "producer": "rt-P2-native-reply-resume-0217",
+  "consumer": "App sole independent GO reviewer (peerRuntime0233)",
+  "review_boundary": "Producer evidence only. No independent semantic GO review, verdict-chain review, diagnosis, or new proof claim was performed.",
+  "source_result": {
+    "central_result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678",
+    "producer_evidence_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217/evidence",
+    "request_id": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678",
+    "request_sha256": "60e0003a94fac8798b37d201ed5301b76d87acd33536479d6734fe6d0caedaea",
+    "request_bytes": 138,
+    "status": "pass",
+    "exit_code": 0,
+    "requested_at": "2026-10-25T02:26:44Z",
+    "central_artifacts": {
+      "exit": {"path": "central/exit", "bytes": 2, "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"},
+      "status": {"path": "central/status", "bytes": 5, "sha256": "9f56e761d79bfdb34304a012586cb04d16b435ef6130091a97702e559260a2f2"},
+      "ext": {"path": "central/ext", "bytes": 159, "sha256": "92ea4cc69389bf6e1c2d30e81c7deb24131b96b00ee3393666bf34582d747ee7"},
+      "snap": {"path": "central/snap", "bytes": 142, "sha256": "0cb552cdd459d49cd49d63b0d6c338985bbfd50e29446d34ba938cc88568ac2a"},
+      "summary": {"path": "central/summary", "bytes": 14974, "sha256": "c0fb66e5e68ca2de8662996fcf6f536583a4c7a40b8bc73cc70d031fc1f5d975"},
+      "runner_log": {"path": "central/runner.log", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "log": {"source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/log.txt", "bytes": 30245, "sha256": "74d008f3a134349d36678e7df9b7a9dd22b1a0195dbf7403eafee45a07dc7d779", "access": "Source retained privately; not copied into the portable packet because it contains private execution detail."}
+    }
+  },
+  "tuple": {
+    "app": {"sha": "24865fa212148e9bc149a1285936372656037e55", "tree": "741333cebfb2b6505a080507bb6c9789df494d43", "checkout": "/home/user/work/wt/app-pin-24865fa2"},
+    "agent": {"sha": "6386c700ee56264aebe12da4558ac74dda0d60ca", "tree": "4f157f4445968ca625017a7e20bd7ca317fa0d5d", "checkout": "/home/user/work/wt/agt-pin-6386c700"},
+    "runtime": {"sha": "6634a17f3ffd885567ba3c91b6c7a560df7375a4", "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a", "checkout": "/home/user/work/wt/rt-pin-6634a17f"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"},
+    "exact_producer_record": "producer/tuple.txt"
+  },
+  "checkout_receipts": {
+    "exact_source": "producer/service-manifest.json and producer/source-preflight-manifest.json",
+    "states": {
+      "app": {"root": "/home/user/work/wt/app-pin-24865fa2", "head": "24865fa212148e9bc149a1285936372656037e55", "tree": "741333cebfb2b6505a080507bb6c9789df494d43", "parents": ["4b98436552bf30f5fb28bbb958b1817430b12e34", "c8e689fd5d7725c6d2fd3ed7e6cac83d2ab7326e"], "branch": null, "dirty": false},
+      "agent": {"root": "/home/user/work/wt/agt-pin-6386c700", "head": "6386c700ee56264aebe12da4558ac74dda0d60ca", "tree": "4f157f4445968ca625017a7e20bd7ca317fa0d5d", "parents": ["1793b8e900b5c84a405fb93d44f1cd252fdb8080", "73998ac446ea2e4bceed1e0df2c5e2c68c558e82"], "branch": null, "dirty": false},
+      "runtime": {"root": "/home/user/work/wt/rt-pin-6634a17f", "head": "6634a17f3ffd885567ba3c91b6c7a560df7375a4", "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a", "parents": ["766fd6700c3128ea9fc833086a517de2acb535e2", "b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0"], "branch": null, "dirty": false},
+      "composition": {"root": "/home/user/work/wt/vw-pin-635f4de0", "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "parents": ["7a95a40b07ea0d273e17afb69dbc3456b603f2bc", "c05fdb171fe37c1d5817a060ecb716a329ee821a"], "branch": null, "dirty": false}
+    }
+  },
+  "protected_file_hashes": {
+    "exact_record": "producer/source-hashes.txt",
+    "tests": {
+      "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+      "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "tests/e2e/local/support/p2-parent-oracle.test.mjs": "a7777c1dd29e6cea0d0f869a2351705ee29fd23688facb5ed78d1a8341335cf9",
+      "tests/e2e/local/support/p2-transition-oracle.test.mjs": "53050d627d2dd3613555ba8f47d4721c84edff6ccbbcf4f7daf7da0e2d503692",
+      "tsconfig.json": "a9833ec01d12bfd2db2abe69c5f2e931ed26ccfba0bf934c11420d8165e06fd2",
+      "tsconfig.app.json": "61f9b16cd7f141d23ce4520d7c5412728df8906dde981f6e5b33c8bc5b100516",
+      "tsconfig.node.json": "3271939e0cbd9e53e049445906e1c90482b27c7138b32e8efd0ac42692f36e86"
+    },
+    "private_profile": {
+      "scripts/testing/d66-plain-stack-profile.mjs": "f512921c9d86c7da24d70912bd323fbb26fb6470c3abbd5db972dd19ddc9fd67",
+      "scripts/testing/d66-vite-profile.config.ts": "a7c2256f2296e223b710f86a8b8197f628f360f749b68c3534259f2e1136e8f9"
+    },
+    "composition": {
+      "archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+      "package_sha256": "6bbab9766c13dd450c08f3975e8f690bb718e2ba73f6d929ebd13ee4acb767cf",
+      "generated_animations_sha256": "578b89e8afbe37994949b02a64295f044fd439d3d1c4ec805e3a24b33b0f9043"
+    }
+  },
+  "reported_service_versions": {
+    "exact_record": "producer/service-manifest.json",
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "agent_head": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+    "agent_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1",
+    "imports": {
+      "runtime": {
+        "astrid": {"file": "/home/user/work/wt/agt-pin-6386c700/astrid/__init__.py", "version": "0.1.0"},
+        "astrid_runtime": {"file": "/home/user/work/wt/rt-pin-6634a17f/astrid_runtime/__init__.py", "version": "0.1.0"},
+        "astrid_runtime_client": {"file": "/home/user/work/wt/agt-pin-6386c700/astrid_runtime_client/__init__.py", "version": null},
+        "runtime_protocol": {"file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/__init__.py", "version": null}
+      },
+      "agent": {
+        "astrid": {"file": "/home/user/work/wt/agt-pin-6386c700/astrid/__init__.py", "version": "0.1.0"},
+        "astrid_runtime": {"file": "/home/user/work/wt/rt-pin-6634a17f/astrid_runtime/__init__.py", "version": "0.1.0"},
+        "astrid_runtime_client": {"file": "/home/user/work/wt/agt-pin-6386c700/astrid_runtime_client/__init__.py", "version": null},
+        "runtime_protocol": {"file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/__init__.py", "version": null}
+      }
+    }
+  },
+  "service_command": {
+    "exact_record": "central/command.txt",
+    "command": "D66_APP_SHA='24865fa212148e9bc149a1285936372656037e55' D66_APP_TREE='741333cebfb2b6505a080507bb6c9789df494d43' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-24865fa2' D66_AGENT_SHA='6386c700ee56264aebe12da4558ac74dda0d60ca' D66_AGENT_TREE='4f157f4445968ca625017a7e20bd7ca317fa0d5d' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-6386c700' D66_RUNTIME_SHA='6634a17f3ffd885567ba3c91b6c7a560df7375a4' D66_RUNTIME_TREE='47b376717ce7a919a697c62133de3e74dc9f6d3a' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-6634a17f' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' D66_EXECUTION_ROOT='/home/user/work/wt/rt-P2-native-reply-resume-0217' D66_VITE_CONFIG='/home/user/work/wt/rt-P2-native-reply-resume-0217/scripts/testing/d66-vite-profile.config.ts' D66_APP_NODE_MODULES='/home/user/work/app/node_modules' D66_REMOTION_PROJECT_DIR='/home/user/work/runtimes/agent-remotion-current' ASTRID_PYTHON='/home/user/work/venv-agent/bin/python' ASTRID_RUNTIME_PYTHON='/home/user/work/venv-runtime/bin/python' D66_OUTPUT_DIR='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/service' NODE_PATH='/home/user/work/app/node_modules' '/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx /home/user/work/wt/rt-P2-native-reply-resume-0217/scripts/testing/d66-plain-stack-profile.mjs 'p2-transition-none-single'",
+    "safety": "Safe local path/hash/command record only; no credentials, tokens, raw auth, request bodies, keys, or URLs copied."
+  },
+  "private_profile_identity": {
+    "source_ref": "tl/rt-P2-main-dependency-2250",
+    "source_commit": "5671cd8dbef709fb9068d6db11eef28313b4b102",
+    "execution_root": "/home/user/work/wt/rt-P2-native-reply-resume-0217",
+    "profile_script": "/home/user/work/wt/rt-P2-native-reply-resume-0217/scripts/testing/d66-plain-stack-profile.mjs",
+    "vite_config": "/home/user/work/wt/rt-P2-native-reply-resume-0217/scripts/testing/d66-vite-profile.config.ts",
+    "node_executable": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_invocation": "--max-old-space-size=6144 --import tsx",
+    "app_dependencies": "/home/user/work/app/node_modules",
+    "agent_python": "/home/user/work/venv-agent/bin/python",
+    "runtime_python": "/home/user/work/venv-runtime/bin/python",
+    "remotion_project": "/home/user/work/runtimes/agent-remotion-current",
+    "exact_record": "producer/origins.txt"
+  },
+  "original_test_membership": {
+    "request_suite": "p2-native-reply-resume-0217-single",
+    "request_files": "",
+    "readiness": {"file": "tests/e2e/local/three-products.mounted-readiness.spec.ts", "line": 268, "name": "D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture", "xml": "xml/readiness.xml", "exit": 0},
+    "original": {"file": "tests/e2e/local/three-products.p2-tour.spec.ts", "line": 777, "name": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo", "xml": "xml/original.xml", "exit": 0},
+    "source_hashes_before_after": "Identical hashes are recorded in producer/source-hashes.txt and producer/service-manifest.json."
+  },
+  "parent_first_failure_bounded": {
+    "request_id": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-parent-1025022203-12208",
+    "producer_record": "producer/parent-firstfailure-unreached.txt",
+    "summary": "Producer records terminal NO-GO: readiness passed; original timed out after 90 seconds waiting for the commit POST response; no response was observed; accepted-reply inspection, exact field-delta assertion, reload, guarded Undo, and final closure assertions were unreached. No diagnosis or retry was performed.",
+    "boundary": "Bounded owner handback only; not a new collector result or diagnosis."
+  },
+  "redaction_and_access": {
+    "policy": "No credentials, tokens, raw auth, request/response bodies, keys, or URLs are copied into this packet.",
+    "excluded_private_artifact": "The central service log remains at its original source path and is represented only by sha256 in source_result.central_artifacts.log.",
+    "attachments": "Readiness XML is preserved; referenced attachment bodies and endpoint diagnostics are not copied.",
+    "unknowns": "No redacted field was reconstructed; fields absent from named producer artifacts remain unknown."
+  },
+  "verification_scope": {
+    "performed": ["Finite named-file hash and tuple/tree consistency checks", "Byte-preserving copy of original and readiness XML", "Safe manifest assembly from named producer and central result files"],
+    "not_performed": ["pytest", "test collection", "test helper/function execution", "browser/service/build execution", "semantic verdict review", "new collector or countermeasure"],
+    "producer_evidence": "Central result reports exit 0 and pass; this packet does not rerun or reclassify it."
+  },
+  "packet_files": {
+    "xml/original.xml": {"bytes": 451, "sha256": "43e81d9ba94b729b7770d02ebc4a4fd66e097a6fd06c88f53b0a0ff558b3869b"},
+    "xml/readiness.xml": {"bytes": 1681, "sha256": "273b9b26dac69b0d1737d91d70dc8ad8c530ffbbcc73a4dfbfff7cebf32a6018"},
+    "producer/tuple.txt": {"source": "rt-P2-native-reply-resume-0217/evidence/tuple.txt"},
+    "producer/source-hashes.txt": {"source": "rt-P2-native-reply-resume-0217/evidence/source-hashes.txt"},
+    "producer/origins.txt": {"source": "rt-P2-native-reply-resume-0217/evidence/origins.txt"},
+    "producer/parent-firstfailure-unreached.txt": {"source": "rt-P2-native-reply-resume-0217/evidence/firstfailure-unreached.txt"},
+    "producer/service-manifest.json": {"source": "rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/service/manifest.json"},
+    "producer/source-preflight-manifest.json": {"source": "rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/source-preflight/manifest.json"},
+    "central/exit": {"source": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/exit"},
+    "central/ext": {"source": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/ext"},
+    "central/request": {"source": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/request"},
+    "central/snap": {"source": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/snap"},
+    "central/status": {"source": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/status"},
+    "central/command.txt": {"source": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/summary (cmd line only; original summary retained privately)"},
+    "central/runner.log": {"source": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/runner.log"}
+  }
+}
+

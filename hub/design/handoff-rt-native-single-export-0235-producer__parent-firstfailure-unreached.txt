@@ -1,0 +1,20 @@
+Corrected P2 native-reply first-failure and unreached-tail record
+Captured: 2026-10-25 UTC
+
+Parent move
+Request: rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-parent-1025022203-12208
+Readiness: PASS (1 test, exit 0)
+Original: NO-GO (1 test, exit 1)
+First failure: tests/e2e/local/three-products.p2-tour.spec.ts:745, test "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo". At line 125, page.waitForResponse timed out after 90000ms waiting for a POST to the commits endpoint.
+Observed: no commit response was received; the body did not advance beyond the gesture response wait.
+Unreached tail: accepted reply inspection, exact field-delta assertion, reload, guarded Undo, and final acceptance/closure assertions were not reached.
+Action: no diagnosis and no retry, per the settled plan.
+
+Transition-none single
+Request: rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678
+Readiness: PASS (1 test, exit 0)
+Original: GO (1 test, exit 0)
+Result: raw transition None clear preserved opaque data/order and guarded Undo passed.
+
+Cross-request guards
+Both service manifests report exact corrected heads/trees and unchanged test hashes before/after. No duplicate body, retarget, extra source-preflight, or D90 request was made. The parent failure is terminal for this worker; the single result is independent and remains GO.
