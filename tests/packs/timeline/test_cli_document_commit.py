@@ -2,14 +2,155 @@ from __future__ import annotations
 
 import copy
 import json
+import sys
+from types import SimpleNamespace
 
 import pytest
 
 from astrid.packs.timeline import cli as timeline_cli
+from astrid.sdk import timeline
 from astrid.sdk.contracts import DomainResult, ErrorObject
-from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.remote import RemoteTimelines
+from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
+from tests.helpers.runtime import use_runtime
 from tests.sdk.test_timeline_commit_provider import runtime_abi  # noqa: F401
-from tests.sdk.test_timeline_public_command import public_session  # noqa: F401
+
+
+@pytest.fixture
+def public_session(tmp_path, runtime_abi):  # noqa: F811
+    """Use the real Runtime bootstrap and authenticated commit provider path."""
+    use_runtime()
+    for name in ("runtime_protocol", "runtime_protocol.contract_metadata",
+                 "runtime_protocol.timeline_commit"):
+        sys.modules.pop(name, None)
+
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+
+    root = tmp_path / "realm"
+    RealmStore.initialize(root, realm_id="realm-1").close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
+    project = service.create_project(
+        {"slug": "project-1", "name": "Project 1"}, idempotency_key="project-1",
+    )["id"]
+    service.create_timeline(project, "film", idempotency_key="film")
+    sent = []
+
+    class RuntimeRealm:
+        def __init__(self):
+            self.project, self.timeline = project, "film"
+            self.calls = []
+            self.history_limits = []
+            self.requests = []
+
+        @property
+        def head(self):
+            return service.list_timeline_commits(
+                self.project, self.timeline, authorize=lambda: None,
+            )["head"]
+
+        @property
+        def entries(self):
+            return service.list_timeline_commits(
+                self.project, self.timeline, authorize=lambda: None,
+            )["items"]
+
+        @property
+        def documents(self):
+            commits, _ = service._timeline_commits()
+            return {
+                entry["revision_id"]: commits.revision_closure(
+                    self.project, self.timeline, entry["revision_id"],
+                )
+                for entry in self.entries
+            }
+
+    realm = RuntimeRealm()
+
+    class Reader(RemoteTimelines):
+        def _resolve_timeline(self, *_args):
+            return DomainResult.success({
+                "project_id": project, "timeline_id": "film",
+            })
+
+        def open_composition(self, *_args, revision_id=None, **_kwargs):
+            head = realm.head["revision_id"]
+            return DomainResult.success({
+                "native_inspection": {
+                    "project_id": project, "timeline_id": "film",
+                },
+                "summary": {
+                    "head_revision_id": head,
+                    "revision_id": revision_id or head,
+                },
+            })
+
+        def _typed(self, operation, requested_project, *args, **kwargs):
+            timeline_id = args[0] if args else "film"
+            try:
+                if operation == "list_timeline_commits":
+                    realm.history_limits.append(kwargs.get("limit", 50))
+                    result = service.list_timeline_commits(
+                        requested_project, timeline_id,
+                        cursor=kwargs.get("cursor"), limit=kwargs.get("limit", 50),
+                        authorize=lambda: None,
+                    )
+                    return DomainResult.success(result)
+                if operation == "commit_timeline":
+                    body = copy.deepcopy(args[1])
+                    realm.calls.append(kwargs["idempotency_key"])
+                    realm.requests.append(copy.deepcopy(body))
+                    before = realm.head
+                    result = service.commit_timeline(
+                        requested_project, timeline_id, body,
+                        idempotency_key=kwargs["idempotency_key"],
+                        publisher="actor-1",
+                        invocation_path=f"/v1/projects/{requested_project}/timelines/{timeline_id}/commit",
+                        authorize=lambda: None,
+                    )
+                    if body.get("dry_run") or realm.head != before:
+                        sent.append(body)
+                    from astrid.core.receipts.contract import CommandReceipt
+
+                    receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
+                    return DomainResult.success(result["data"], receipt=receipt)
+                if operation == "get_project_parent_composition_revision":
+                    result = service.get_project_parent_composition_revision(
+                        requested_project, args[0], args[-1],
+                    )
+                    return DomainResult.success(result)
+                if operation == "get_project_shot_revision":
+                    result = service.get_project_shot_revision(
+                        requested_project, args[0], args[-1],
+                    )
+                    return DomainResult.success(result)
+                if operation == "get_project_timeline_revision":
+                    result = service.get_project_timeline_revision(
+                        requested_project, args[0], args[-1],
+                    )
+                    return DomainResult.success(result)
+                raise AssertionError(f"unexpected Runtime operation {operation!r}")
+            except RuntimeErrorBase as exc:
+                return DomainResult.failure(ErrorObject(
+                    exc.code, exc.message, exc.details or {},
+                ))
+
+    reader = Reader(object())
+    client = SimpleNamespace(
+        timelines=reader,
+        _remote=SimpleNamespace(_transport=SimpleNamespace(
+            _last_handshake={"realm_id": "realm-1", "actor_id": "actor-1"},
+        )),
+    )
+    path = tmp_path / "outbox.json"
+    opened = timeline.open(project, "film", client=client, outbox_path=path)
+    assert "_runtime_document" not in opened.bundle["source_mapping"]
+    try:
+        yield opened, realm, sent, client, path
+    finally:
+        service.close()
 
 
 def _document_file(tmp_path, realm):
@@ -29,46 +170,6 @@ def _run(client, path, *, message="Rename film", key="document-1", dry_run=False
         args.append("--dry-run")
     parsed = timeline_cli.build_parser(client).parse_args(args)
     return parsed.handler(parsed)
-
-
-def _runtime_idempotency(client, monkeypatch, *, history_limits=None):
-    """Model Runtime's exact-key replay at the existing authenticated port."""
-    original = client.timelines._typed
-    calls = []
-    accepted = {}
-
-    def typed(operation, project, *args, **kwargs):
-        if operation != "commit_timeline":
-            result = original(operation, project, *args, **kwargs)
-            if operation == "list_timeline_commits" and history_limits is not None:
-                history_limits.append(kwargs.get("limit"))
-                if result.ok and isinstance(result.data, dict):
-                    rows = result.data.get("items")
-                    if isinstance(rows, list) and rows:
-                        result.data["items"] = [copy.deepcopy(rows[0]) for _ in range(201)]
-            return result
-        key = kwargs["idempotency_key"]
-        body = copy.deepcopy(args[1])
-        fingerprint = json.dumps(body, sort_keys=True, separators=(",", ":"))
-        calls.append(key)
-        prior = accepted.get(key)
-        if prior is not None:
-            old_fingerprint, result = prior
-            if old_fingerprint != fingerprint:
-                return DomainResult.failure(
-                    ErrorObject("idempotency_conflict", "idempotency key was reused for a different request", {
-                        "status": "refused", "path": "/idempotency_key",
-                    }),
-                    idempotency_key=key,
-                )
-            return copy.deepcopy(result)
-        result = original(operation, project, *args, **kwargs)
-        if result.ok:
-            accepted[key] = (fingerprint, copy.deepcopy(result))
-        return result
-
-    monkeypatch.setattr(client.timelines, "_typed", typed)
-    return calls
 
 
 def test_document_commit_uses_the_authenticated_commit_door(public_session, tmp_path, capsys):
@@ -94,7 +195,7 @@ def test_document_commit_retry_uses_runtime_idempotency_without_history_scan(
     public_session, tmp_path, capsys, monkeypatch,
 ):
     _opened, realm, sent, client, _outbox = public_session
-    calls = _runtime_idempotency(client, monkeypatch)
+    calls = realm.calls
     path = _document_file(tmp_path, realm)
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Retryable Film"
@@ -114,8 +215,8 @@ def test_document_commit_retry_does_not_scan_a_long_history_page(
     public_session, tmp_path, capsys, monkeypatch,
 ):
     _opened, realm, sent, client, _outbox = public_session
-    history_limits = []
-    calls = _runtime_idempotency(client, monkeypatch, history_limits=history_limits)
+    history_limits = realm.history_limits
+    calls = realm.calls
     path = _document_file(tmp_path, realm)
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Long history retry"
@@ -194,7 +295,7 @@ def test_document_commit_changed_body_with_same_key_is_runtime_refusal(
     public_session, tmp_path, capsys, monkeypatch,
 ):
     _opened, realm, sent, client, _outbox = public_session
-    calls = _runtime_idempotency(client, monkeypatch)
+    calls = realm.calls
     path = _document_file(tmp_path, realm)
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "First body"
@@ -206,7 +307,7 @@ def test_document_commit_changed_body_with_same_key_is_runtime_refusal(
     path.write_text(json.dumps(candidate), encoding="utf-8")
     assert _run(client, path, key="same-key") == 1
     output = json.loads(capsys.readouterr().out)
-    assert output["error"]["code"] == "idempotency_conflict"
+    assert output["error"]["details"]["reason"] == "idempotency_mismatch"
     assert len(realm.entries) == 2 and len(sent) == 1
     assert calls == ["same-key", "same-key"]
 
