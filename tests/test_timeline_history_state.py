@@ -8,6 +8,8 @@ import sqlite3
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing, contextmanager
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import test_timeline_commit_integration as real
@@ -16,6 +18,7 @@ import test_timeline_request_verification as verification_cases
 from test_timeline_commit_authentication import body, provider
 from test_timeline_commit_port import commit, rows
 
+from runtime_protocol import timeline_commit_store as store_module
 from runtime_protocol.errors import AuthorizationError, ProtocolError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit_store import TimelineCommitStore
@@ -423,3 +426,152 @@ def test_cached_legacy_closure_still_checks_physical_cas_bytes(film):
         assert not any(commits._history_state.values())
     finally:
         runtime.close()
+
+
+def protection_path(service, component):
+    database = service.store.db_path
+    return {"DB": database, "WAL": Path(str(database) + "-wal"),
+            "SHM": Path(str(database) + "-shm"), "store directory": database.parent}[component]
+
+
+def stat_owner(monkeypatch, path, uid):
+    original = os.stat
+
+    def changed(target, *args, **kwargs):
+        value = original(target, *args, **kwargs)
+        if target == path:
+            fields = {name: getattr(value, name) for name in dir(value) if name.startswith("st_")}
+            return SimpleNamespace(**{**fields, "st_uid": uid})
+        return value
+
+    monkeypatch.setattr(os, "stat", changed)
+
+
+@pytest.mark.parametrize("component", ["DB", "WAL", "SHM", "store directory"])
+@pytest.mark.parametrize("write_bit", [0o020, 0o002], ids=["group", "world"])
+def test_writable_store_fully_verifies_every_request(service, monkeypatch, caplog, component, write_bit):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    path = protection_path(service, component)
+    path.chmod(path.stat().st_mode | write_bit)
+    for count in range(2, 5):
+        caplog.clear()
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls == {publication: count}
+        assert [record.getMessage() for record in caplog.records] == [
+            f"timeline history memo disabled; full verification for this request: {component} is group/world-writable"]
+
+
+@pytest.mark.parametrize("component", ["DB", "WAL", "SHM", "store directory"])
+def test_different_owner_fully_verifies_every_request(service, monkeypatch, caplog, component):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    package = Path(store_module.__file__).resolve().parent
+    package_uid = package.stat().st_uid
+    other_uid = package_uid + 1
+    path = protection_path(service, component)
+    before = commits._store_version()
+    # Controlled stat witness makes this protection test portable without
+    # requiring chown privileges; SQLite still reads the real fixture bytes.
+    stat_owner(monkeypatch, path if component in ("DB", "store directory") else str(path), other_uid)
+    assert commits._store_version() != before
+    for count in range(2, 5):
+        caplog.clear()
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls == {publication: count}
+        assert [record.getMessage() for record in caplog.records] == [
+            ("timeline history memo disabled; full verification for this request: "
+             f"{component} owner uid {other_uid} differs from root and installed runtime package owner uid {package_uid}")]
+
+
+@pytest.mark.parametrize("component", ["DB", "WAL", "SHM", "store directory"])
+def test_protected_chmod_invalidates_then_reuses_verified_state(service, monkeypatch, caplog, component):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    path = protection_path(service, component)
+    before = commits._store_version()
+    path.chmod(path.stat().st_mode ^ 0o040)
+    assert commits._store_version() != before
+    for _ in range(3):
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls == {publication: 2}
+    assert not caplog.records
+
+
+@pytest.mark.parametrize("owner", ["root", "package"])
+def test_package_owner_comes_from_loaded_module_and_allowed_owners_are_eligible(service, monkeypatch, caplog, owner):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    package = os.path.dirname(os.path.realpath(store_module.__file__))
+    package_uid = os.stat(package).st_uid
+    store_uid = 0 if owner == "root" else package_uid + 1
+    for component in ("DB", "WAL", "SHM", "store directory"):
+        path = protection_path(service, component)
+        stat_owner(monkeypatch, path if component in ("DB", "store directory") else str(path), store_uid)
+    stat_owner(monkeypatch, package, package_uid + 1)
+    assert commits._store_version()[4] == package_uid + 1
+    for _ in range(3):
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls == {publication: 2}
+    assert not caplog.records
+
+
+def test_missing_shm_is_optional_but_missing_database_requires_reopen(service, monkeypatch, caplog):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    original = os.stat
+    missing = {str(service.store.db_path) + "-shm"}
+
+    def absent(path, *args, **kwargs):
+        if path in missing:
+            raise FileNotFoundError(path)
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "stat", absent)
+    for _ in range(3):
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls == {publication: 2}
+    assert not caplog.records
+    missing.add(service.store.db_path)
+    with pytest.raises(ProtocolError, match="database was replaced; reopen required"):
+        commits.history_entry(service.test_project, "main", publication)
+    assert not any(commits._history_state.values())
+
+
+def test_absent_wal_in_delete_journal_mode_is_normal_sqlite_state(service, monkeypatch, caplog):
+    commits, publication, expected, _ = warm(service, monkeypatch)
+    assert service.store.conn.execute("PRAGMA journal_mode=DELETE").fetchone()[0] == "delete"
+    fresh = TimelineCommitStore(service.store, validate_prepared=commits.validate_prepared,
+                                validate_event=commits.validate_event)
+    calls = []
+    verify = fresh._verify_accepted_record
+
+    def counted(*args, **kwargs):
+        calls.append(True)
+        return verify(*args, **kwargs)
+
+    monkeypatch.setattr(fresh, "_verify_accepted_record", counted)
+    assert fresh._store_version()[3][1:3] == (None, None)
+    for _ in range(3):
+        assert fresh.history_entry(service.test_project, "main", publication) == expected
+        assert calls == [True]
+    assert not caplog.records
+
+
+def test_protected_chmod_after_own_commit_is_not_absorbed(service, monkeypatch):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    next_body = body(service)
+    change = next_body["commands"][0]["args"]["changes"][0]
+    change["before"] = {"state": "present", "value": copy.deepcopy(change["value"])}
+    next_body["steps"][0]["patch"] = [copy.deepcopy(change)]
+    original = commits._store_version
+    changes = []
+
+    def changed():
+        current = commits._verification.current
+        if current is not None and current["accepting"] and not service.store.conn.in_transaction and not changes:
+            path = service.store.db_path
+            path.chmod(path.stat().st_mode ^ 0o040)
+            changes.append(True)
+        return original()
+
+    monkeypatch.setattr(commits, "_store_version", changed)
+    assert commit(service, next_body, key="post-commit-chmod")["data"]["status"] == "accepted"
+    assert changes == [True]
+    assert commits.history_entry(service.test_project, "main", publication) == expected
+    assert calls[publication] == 2

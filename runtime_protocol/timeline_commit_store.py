@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import logging
 import os
 import re
 import threading
@@ -26,6 +27,7 @@ _METADATA = ("source", "label", "rationale", "group_id")
 _PRIVATE_EXECUTION = "_sequential_execution"
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)(?::([a-z][a-z0-9-]{0,63}))?\Z")
+_LOGGER = logging.getLogger(__name__)
 
 
 def reject(reason, message=None, *, status=409):
@@ -262,10 +264,14 @@ class TimelineCommitStore:
         if self.store.conn is not self._connection:
             raise ProtocolError("accepted commit connection was replaced; reopen required")
         files = []
-        for path in (self.store.db_path, str(self.store.db_path) + "-wal"):
+        for index, path in enumerate((self.store.db_path, str(self.store.db_path) + "-wal",
+                                      str(self.store.db_path) + "-shm", self.store.db_path.parent)):
             try:
                 value = os.stat(path)
-                files.append((value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns))
+                # SQLite updates SHM during ordinary reads. Only its identity
+                # and protection, and the directory's, affect retained trust.
+                content = (value.st_size, value.st_mtime_ns, value.st_ctime_ns) if index < 2 else (None, None, None)
+                files.append((value.st_dev, value.st_ino, *content, value.st_uid, value.st_mode))
             except FileNotFoundError:
                 files.append(None)
         if files[0] is None or files[0][:2] != self._database_identity:
@@ -276,8 +282,26 @@ class TimelineCommitStore:
             self._wal_identity = files[1][:2]
         if self._wal_identity is not None and (files[1] is None or files[1][:2] != self._wal_identity):
             raise ProtocolError("accepted commit WAL was replaced; reopen required")
+        try:
+            package_owner = os.stat(os.path.dirname(os.path.realpath(__file__))).st_uid
+        except OSError:
+            package_owner = None
         return (id(self._connection), self._connection.total_changes,
-                self._connection.execute("PRAGMA data_version").fetchone()[0], tuple(files))
+                self._connection.execute("PRAGMA data_version").fetchone()[0], tuple(files), package_owner)
+
+    def _memo_failure(self, version):
+        if version[4] is None:
+            return "installed runtime package directory owner is unavailable"
+        for name, value in zip(("DB", "WAL", "SHM", "store directory"), version[3]):
+            if value is None:
+                if name in ("WAL", "SHM"):
+                    continue
+                return f"{name} is missing"
+            if value[-1] & 0o022:
+                return f"{name} is group/world-writable"
+            if value[-2] not in (0, version[4]):
+                return f"{name} owner uid {value[-2]} differs from root and installed runtime package owner uid {version[4]}"
+        return None
 
     @contextmanager
     def _read_transaction(self):
@@ -324,11 +348,18 @@ class TimelineCommitStore:
     def _sync_replay_memo(self):
         version = self._store_version()
         current = self._verification.current
+        failure = self._memo_failure(version)
+        if failure is not None and not current["memo_fallback"]:
+            # Keep request-local verification, but never inherit proofs from a
+            # previous request when the approved data/code premise fails.
+            self.clear_replay_memo()
+            current["memo_fallback"] = True
+            _LOGGER.warning("timeline history memo disabled; full verification for this request: %s", failure)
         if version != self._replay_store_version:
             previous = self._replay_store_version
             if (current["accepting"] and self.store.conn.in_transaction and previous is not None
-                    and version[0] == previous[0] and version[2] == previous[2]
-                    and all(old is None or (new is not None and old[:2] == new[:2])
+                    and version[0] == previous[0] and version[2] == previous[2] and version[4] == previous[4]
+                    and all(old is None or (new is not None and old[:2] == new[:2] and old[-2:] == new[-2:])
                             for old, new in zip(previous[3], version[3]))):
                 # Only the validated acceptance's write phase may retain old
                 # immutable proofs while its own projections/links are added.
@@ -369,6 +400,12 @@ class TimelineCommitStore:
         else:
             # Only the successful acceptance transaction may extend history
             # without discarding earlier full replay proofs.
+            if self._memo_failure(committed) is not None or before[4] != committed[4] or any(
+                    old is not None and new is not None and old[-2:] != new[-2:]
+                    for old, new in zip(before[3], committed[3])):
+                # Our SQLite write cannot account for chmod/chown. Do not
+                # absorb those changes into the post-commit baseline either.
+                self.clear_replay_memo()
             self._replay_store_version = committed
             self._history_state["heads"].clear()
         finally:
@@ -380,7 +417,7 @@ class TimelineCommitStore:
         """Start an independent evaluation, including when another is nested."""
         previous = getattr(self._verification, "current", None)
         current = {"verified": set(), "active": set(), "traversal": None, "inputs": None,
-                   "generation": self._replay_generation, "accepting": False}
+                   "generation": self._replay_generation, "accepting": False, "memo_fallback": False}
         self._verification.current = current
         try:
             yield
