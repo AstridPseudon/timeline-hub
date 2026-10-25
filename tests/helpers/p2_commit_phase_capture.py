@@ -8,8 +8,9 @@ counts.  The event snapshot is a bounded last-N ring, with a request-local
 bounded buffer for the final failed or still-pending dispatch so setup traffic
 cannot consume its evidence.  For timeline commits, the dispatch boundary is
 ``RuntimeHandler._dispatch`` entry and the handler boundary is
-``RuntimeHandler._timeline_commit`` entry; socket/client arrival and caller
-receipt are outside this process and remain UNKNOWN.
+``RuntimeHandler._timeline_commit`` entry.  Socket/client arrival and body
+receipt have no earlier hook here and remain explicitly unsupported; caller
+receipt is outside this process and remains UNKNOWN.
 request bodies, headers, credentials, URLs, identifiers and exception text
 never cross the observation boundary.
 
@@ -29,17 +30,21 @@ enabled.
 from __future__ import annotations
 
 import faulthandler
+import hashlib
 import json
 import os
+import re
 import sys
 import threading
 import time
 from collections import deque
+from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Self
 
 PHASES = (
+    "arrival",
     "dispatch_queue",
     "handler_entry",
     "authorization",
@@ -55,6 +60,49 @@ DEFAULT_WATCHDOG_SECONDS = 20.0
 DEFAULT_MAX_WATCHDOG_CAPTURES = 2
 CAPTURE_FORMAT_VERSION = 2
 RETENTION_MODE = "rolling_plus_final_request"
+SAMPLING_INTERVAL_SECONDS = 0.02
+WITNESS_PHASES = frozenset(("dispatch_queue", "coordinator_lock", "handler_entry"))
+_CAPTURE_NAMESPACE = 0
+
+
+def _process_birth_ticks() -> int | None:
+    """Return the Linux process start tick used to bind a capture to its PID."""
+    try:
+        stat = Path(f"/proc/{os.getpid()}/stat").read_text(encoding="utf-8")
+        return int(stat.rsplit(")", 1)[1].split()[19])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _safe_route_template(path: Any) -> str | None:
+    """Map the commit route to a static template without retaining route IDs."""
+    if not isinstance(path, str):
+        return None
+    route = path.split("?", 1)[0]
+    if re.fullmatch(r"/v1/projects/[^/]+/timelines/[^/]+/commit", route):
+        return "/v1/projects/{project_id}/timelines/{timeline_id}/commit"
+    return None
+
+
+def _safe_key_hash(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _safe_frame(frame: Any) -> tuple[str, str, int] | None:
+    """Return a bounded, checkout-independent frame identity for samples."""
+    code = frame.f_code
+    filename = code.co_filename.replace("\\", "/")
+    if "/runtime_protocol/" in filename:
+        filename = "<runtime>/" + filename.rsplit("/runtime_protocol/", 1)[1]
+    elif "/astrid/" in filename:
+        filename = "<agent>/" + filename.rsplit("/astrid/", 1)[1]
+    elif "/lib/python" in filename:
+        filename = "<stdlib>/" + filename.rsplit("/", 1)[-1]
+    else:
+        return None
+    return filename, code.co_name, frame.f_lineno
 
 
 class P2CommitPhaseCapture:
@@ -79,10 +127,15 @@ class P2CommitPhaseCapture:
         timer_factory: Any = None,
         clock_ns: Any = None,
         dump_traceback: Any = None,
+        utc_now: Any = None,
+        sampling_interval: float = SAMPLING_INTERVAL_SECONDS,
     ) -> None:
         if (max_requests < 1 or max_events < 1 or max_bytes < 256
-                or watchdog_seconds <= 0 or max_watchdog_captures < 1):
+                or watchdog_seconds <= 0 or max_watchdog_captures < 1
+                or sampling_interval <= 0):
             raise ValueError("capture bounds must be positive")
+        global _CAPTURE_NAMESPACE
+        _CAPTURE_NAMESPACE += 1
         self.enabled = enabled
         self.max_requests = max_requests
         self.max_events = max_events
@@ -96,6 +149,12 @@ class P2CommitPhaseCapture:
         self._timer_factory = timer_factory or threading.Timer
         self._clock_ns = clock_ns or time.monotonic_ns
         self._dump_traceback = dump_traceback or faulthandler.dump_traceback
+        self._utc_now = utc_now or (lambda: datetime.now(UTC))
+        self.sampling_interval = sampling_interval
+        self.pid = os.getpid()
+        self.birth_ticks = _process_birth_ticks()
+        self.namespace = (f"pid-{self.pid}-birth-{self.birth_ticks or 'unknown'}-"
+                          f"capture-{_CAPTURE_NAMESPACE}")
         self.sink = Path(sink).absolute() if sink is not None else None
         self.watchdog_sink = (self.sink.with_name(f"{self.sink.stem}.stacks.txt")
                               if self.sink is not None else None)
@@ -108,6 +167,15 @@ class P2CommitPhaseCapture:
         self._watchdog_stream: Any = None
         self._watchdog_lock = threading.Lock()
         self._start_ns = 0
+        self._utc_anchor: str | None = None
+        self._sampler_stop = threading.Event()
+        self._sampler_thread: threading.Thread | None = None
+        self._sampler_previous = 0.0
+        self._sample_total = 0
+        self._lost_samples = 0
+        self._sampler_cpu_ns = 0
+        self._sampler_errors: list[str] = []
+        self._stack_counts: dict[tuple[str, str, int], int] = {}
         self._previous_trace: Any = None
         self._previous_thread_trace: Any = None
         self._frames: dict[int, dict[str, Any]] = {}
@@ -147,11 +215,24 @@ class P2CommitPhaseCapture:
                 "w",
             )
         self._start_ns = self._clock_ns()
+        self._utc_anchor = self._utc_text()
+        self._sampler_stop.clear()
+        self._sampler_previous = time.perf_counter()
         self._previous_trace = sys.gettrace()
         self._previous_thread_trace = threading.gettrace()
         self.active = True
         threading.settrace(self._trace)
         sys.settrace(self._trace)
+        try:
+            self._sampler_thread = threading.Thread(
+                target=self._sample_stack,
+                name="p2-commit-passive-sampler",
+                daemon=True,
+            )
+            self._sampler_thread.start()
+        except Exception as exc:  # noqa: BLE001 - observer failure cannot affect operation
+            self._sampler_thread = None
+            self._sampler_errors.append(type(exc).__name__)
         return self
 
     def stop(self) -> None:
@@ -159,12 +240,16 @@ class P2CommitPhaseCapture:
             return
         with self._lock:
             self.active = False
+            self._sampler_stop.set()
             for request in list(self._requests.values()):
                 self._cancel_watchdog(request)
         if sys.gettrace() == self._trace:
             sys.settrace(self._previous_trace)
         if threading.gettrace() == self._trace:
             threading.settrace(self._previous_thread_trace)
+        if self._sampler_thread is not None:
+            self._sampler_thread.join(timeout=max(0.1, self.sampling_interval * 4))
+            self._sampler_thread = None
         with self._lock:
             for request in list(self._requests.values()):
                 self._summary(request)
@@ -190,6 +275,128 @@ class P2CommitPhaseCapture:
 
     def _at_ms(self) -> float:
         return round((self._clock_ns() - self._start_ns) / 1_000_000, 3)
+
+    def _utc_text(self) -> str:
+        value = self._utc_now()
+        if not isinstance(value, datetime):
+            raise TypeError("utc_now must return a datetime")
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=UTC)
+        return value.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+    def _witness(self, request: dict[str, Any], *, phase: str) -> dict[str, Any]:
+        witness = {
+            "namespace": phase,
+            "capture_namespace": self.namespace,
+            "pid": self.pid,
+            "birth_ticks": self.birth_ticks,
+            "utc": self._utc_text(),
+            "at_ms": self._at_ms(),
+        }
+        if phase in WITNESS_PHASES:
+            witness.update({
+                "method": request["method"],
+                "route_template": request["route_template"],
+                "idempotency_key_sha256": request["idempotency_key_sha256"],
+            })
+        return witness
+
+    def _sample_stack(self) -> None:
+        """Passively sample active Runtime request threads every 20 ms.
+
+        This is the bounded D111a method: current frames are inspected from a
+        daemon sampler, and each safe frame identity is counted at most once
+        per sample.  It never changes the request or Runtime execution path.
+        """
+        previous = time.perf_counter()
+        try:
+            while not self._sampler_stop.is_set():
+                started_cpu = time.thread_time_ns()
+                now = time.perf_counter()
+                elapsed = now - previous
+                previous = now
+                if elapsed > self.sampling_interval * 1.5:
+                    lost = max(0, int(elapsed / self.sampling_interval) - 1)
+                    with self._lock:
+                        self._lost_samples += lost
+                        for request in self._requests.values():
+                            if not request["dispatch_finished"]:
+                                request["lost_samples"] += lost
+                self._sample_once()
+                self._sampler_stop.wait(self.sampling_interval)
+                self._sampler_cpu_ns += time.thread_time_ns() - started_cpu
+        except Exception as exc:  # noqa: BLE001 - observer failure cannot affect operation
+            self._sampler_errors.append(type(exc).__name__)
+
+    def _sample_once(self) -> None:
+        frames = sys._current_frames()
+        with self._lock:
+            active = {
+                request["thread"]: request
+                for request in self._requests.values()
+                if not request["dispatch_finished"]
+            }
+        for thread_id, request in active.items():
+            frame = frames.get(thread_id)
+            if frame is None:
+                continue
+            with self._lock:
+                request["sample_total"] += 1
+                self._sample_total += 1
+            seen: set[tuple[str, str, int]] = set()
+            while frame is not None:
+                item = _safe_frame(frame)
+                if item is not None and item not in seen:
+                    seen.add(item)
+                    with self._lock:
+                        request["stack_counts"][item] = request["stack_counts"].get(item, 0) + 1
+                        self._stack_counts[item] = self._stack_counts.get(item, 0) + 1
+                frame = frame.f_back
+
+    @staticmethod
+    def _sample_rows(request: dict[str, Any], dispatch_wall_ms: float | None,
+                     *, interval: float) -> list[dict[str, Any]]:
+        total = request["sample_total"]
+        denominator = (dispatch_wall_ms
+                       if isinstance(dispatch_wall_ms, (int, float)) and dispatch_wall_ms > 0
+                       else None)
+        rows = []
+        for (file, function, line), count in sorted(
+                request["stack_counts"].items(), key=lambda item: (-item[1], item[0]))[:10]:
+            rows.append({
+                "file": file,
+                "function": function,
+                "line": line,
+                "sample_count": count,
+                "sample_total": total,
+                "sample_share": count / total if total else 0.0,
+                "dispatch_wall_share": (count * interval * 1000 / denominator
+                                         if denominator else None),
+            })
+        return rows
+
+    def _sampling_summary(self, request: dict[str, Any], dispatch_wall_ms: float | None) -> dict[str, Any]:
+        return {
+            "sampling_interval_ms": round(self.sampling_interval * 1000, 3),
+            "sample_total": request["sample_total"],
+            "lost_samples": request["lost_samples"],
+            "observer_cpu_ms": round(self._sampler_cpu_ns / 1_000_000, 3),
+            "observer_cpu_scope": "capture-wide",
+            "observer_cpu_attribution": (
+                "sampler CPU covers the whole capture and is not attributed to this request"
+            ),
+            "top_inclusive_frames": self._sample_rows(
+                request, dispatch_wall_ms, interval=self.sampling_interval),
+            "sample_membership": "each safe frame identity is counted at most once per sample",
+            "dispatch_wall_denominator_ms": dispatch_wall_ms,
+            "counter_limits": {
+                "max_requests": self.max_requests,
+                "max_events": self.max_events,
+                "max_bytes": self.max_bytes,
+                "top_frames": 10,
+            },
+            "sampler_errors": list(self._sampler_errors),
+        }
 
     def _cancel_watchdog(self, request: dict[str, Any]) -> None:
         timer = request.get("watchdog_timer")
@@ -328,6 +535,10 @@ class P2CommitPhaseCapture:
                 return None
             self._next_request += 1
             ordinal = self._next_request
+            method = getattr(handler, "command", None) if handler is not None else None
+            headers = getattr(handler, "headers", None) if handler is not None else None
+            get_header = getattr(headers, "get", None)
+            key = get_header("Idempotency-Key") if callable(get_header) else None
             self._requests[ordinal] = {
                 "ordinal": ordinal,
                 "phases": {phase: {"count": 0, "start_ms": None, "end_ms": None, "error": False}
@@ -335,6 +546,10 @@ class P2CommitPhaseCapture:
                 "last_phase": None,
                 "handler": id(handler) if handler is not None else None,
                 "thread": threading.get_ident(),
+                "method": method if method in {"GET", "POST", "PUT", "PATCH", "DELETE"} else None,
+                "route_template": _safe_route_template(getattr(handler, "path", None)),
+                "idempotency_key_sha256": _safe_key_hash(key),
+                "dispatch_start_ms": None,
                 "dispatch_end_ms": None,
                 "dispatch_finished": False,
                 "watchdog_timer": None,
@@ -347,6 +562,9 @@ class P2CommitPhaseCapture:
                 "events_required_bytes": 0,
                 "events_dropped": 0,
                 "events_dropped_bytes": 0,
+                "sample_total": 0,
+                "lost_samples": 0,
+                "stack_counts": {},
             }
             if handler is not None:
                 self._handler_requests[id(handler)] = ordinal
@@ -385,20 +603,33 @@ class P2CommitPhaseCapture:
         request = self._requests.get(ordinal)
         if request is None or phase not in PHASES:
             return
+        if phase == "arrival":
+            # No earlier socket/server-accept hook is available in this
+            # helper.  Never turn the dispatch hook into a false arrival.
+            return
         state = request["phases"][phase]
         state["count"] = min(state["count"] + 1, 32)
         now = self._at_ms()
         state["start_ms"] = now if state["start_ms"] is None else state["start_ms"]
+        if phase == "dispatch_queue" and request["dispatch_start_ms"] is None:
+            request["dispatch_start_ms"] = now
         if phase == "http_response" and type(fields.get("status")) is int:
             state["status"] = fields["status"]
         request["last_phase"] = phase
         safe_fields = {"status": fields["status"]} if phase == "http_response" and type(fields.get("status")) is int else {}
-        self._write({"schema_version": 1, "request": ordinal, "phase": phase,
-                     "state": "start", "at_ms": now, "count": state["count"], **safe_fields})
+        event = {"schema_version": 1, "request": ordinal, "phase": phase,
+                 "state": "start", "at_ms": now, "count": state["count"], **safe_fields}
+        if phase in WITNESS_PHASES:
+            event.update(self._witness(request, phase=phase))
+        else:
+            event.update({"utc": self._utc_text(), "capture_namespace": self.namespace})
+        self._write(event)
 
     def _end(self, ordinal: int, phase: str, *, error: bool = False, **fields: Any) -> None:
         request = self._requests.get(ordinal)
         if request is None or phase not in PHASES:
+            return
+        if phase == "arrival":
             return
         state = request["phases"][phase]
         state["end_ms"] = self._at_ms()
@@ -406,20 +637,28 @@ class P2CommitPhaseCapture:
         if phase == "http_response" and type(fields.get("status")) is int:
             state["status"] = fields["status"]
         safe_fields = {"status": fields["status"]} if phase == "http_response" and type(fields.get("status")) is int else {}
-        self._write({"schema_version": 1, "request": ordinal, "phase": phase,
-                     "state": "raised" if error else "end", "at_ms": state["end_ms"],
-                     "count": state["count"], **safe_fields})
+        event = {"schema_version": 1, "request": ordinal, "phase": phase,
+                 "state": "raised" if error else "end", "at_ms": state["end_ms"],
+                 "count": state["count"], **safe_fields}
+        if phase in WITNESS_PHASES:
+            event.update(self._witness(request, phase=phase))
+        else:
+            event.update({"utc": self._utc_text(), "capture_namespace": self.namespace})
+        self._write(event)
 
     def _summary(self, request: dict[str, Any]) -> None:
         phases = {}
         for phase in PHASES:
             state = request["phases"][phase]
             phases[phase] = {
-                "status": "UNKNOWN" if state["count"] == 0 else "observed",
+                "status": ("unsupported" if phase == "arrival" and state["count"] == 0
+                            else "UNKNOWN" if state["count"] == 0 else "observed"),
                 "count": state["count"],
                 "start_ms": state["start_ms"],
                 "end_ms": state["end_ms"],
             }
+            if phase == "arrival" and state["count"] == 0:
+                phases[phase]["reason"] = "no earlier socket/server-accept hook"
             if state["error"]:
                 phases[phase]["status"] = "raised"
         dispatch_start = phases["dispatch_queue"]["start_ms"]
@@ -433,13 +672,12 @@ class P2CommitPhaseCapture:
             return round(end - start, 3)
 
         durations = {
-            # This boundary is RuntimeHandler._dispatch entry, after the
-            # BaseHTTPRequestHandler has accepted the request.  Socket/client
-            # arrival and server accept time are outside this process and stay
-            # UNKNOWN rather than being inferred from the handler span.
+            # This boundary is RuntimeHandler._dispatch entry.  It is not a
+            # socket/client-arrival or body-read boundary.
             "dispatch_queue_ms": duration(dispatch_start, handler_start),
             "handler_ms": duration(handler_start, dispatch_end),
             "dispatch_total_ms": duration(dispatch_start, dispatch_end),
+            "dispatch_to_completion_wall_ms": duration(dispatch_start, dispatch_end),
             "provider_wall_ms": duration(provider["start_ms"], provider["end_ms"]),
             "response_write_wall_ms": duration(
                 phases["http_response"]["start_ms"], phases["http_response"]["end_ms"]),
@@ -449,10 +687,28 @@ class P2CommitPhaseCapture:
         summary = {"schema_version": 1, "request": request["ordinal"], "phase": "summary",
                    "last_phase": request["last_phase"] or "UNKNOWN", "phases": phases,
                    "durations_ms": durations,
+                   "utc": self._utc_text(), "at_ms": self._at_ms(),
+                   "capture_anchor": {"utc": self._utc_anchor, "at_ms": 0.0},
+                   "capture_namespace": self.namespace, "pid": self.pid,
+                   "birth_ticks": self.birth_ticks,
+                   "method": request["method"], "route_template": request["route_template"],
+                   "idempotency_key_sha256": request["idempotency_key_sha256"],
+                   "dispatch_start_ms": request["dispatch_start_ms"],
+                   "sampling": self._sampling_summary(
+                       request, durations["dispatch_to_completion_wall_ms"]),
                    "unknown_boundaries": {
-                       "client_request_to_server_receive": "outside Runtime process",
+                       "client_request_to_server_receive": (
+                           "unsupported: no earlier socket/server-accept hook"),
+                       "request_body_receive": (
+                           "unsupported: no body-read hook; body time is not separately measured"),
                        "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
                        "caller_receipt": "outside Runtime process",
+                   },
+                   "unsupported_boundaries": {
+                       "network_arrival_ms": None,
+                       "request_body_receive_ms": None,
+                       "execution_lock_wait_ms": None,
+                       "caller_receipt_ms": None,
                    },
                    "truncated": self.truncated}
         self._summary_events.append(summary)
