@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T02:06:37Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 1m -->
-# app board, 2026-10-25T02:06Z
+<!-- app | 2026-10-25T02:11:41Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 3m -->
+# app board, 2026-10-25T02:08Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -133,7 +133,7 @@
 
 | P2-drop-geometry | Align intended file drop start | Luna; independent | Independent0014 PASS | merged | Author0004; review0014 | Independent6 real coordinator plus42 neighbors/types/lint PASS; protected six exact. Normal merge complete; browser proof owed. | Home50cfedd889 |
 | U4p-provider | Adopt full provider freshness release | Luna | Runtime a3cd released | merged | app-U4p-provider-release-adoption-0008 | Normal tools,8 strict,15 vendor and14 mappings PASS; protected six exact. Only lock/install manifest. | Home fd2f843a69 |
-| P2-element-provider | Original element on replay release | Luna; service | Normal App adoption home | doing | app-P2-D88b-element-resume-0205 | Exact App24865 and Runtime6634; source preflight then one original. Prior8897 remains NO-GO. | App24865fa212 |
+| P2-element-provider | Original element on replay release | Luna; service | Normal App adoption home | doing | app-P2-D88b-element-resume-0205 | Preflight31113 PASS; original3111 submitted02:06:49 on24865/6386/6634/635f. Same-ID only; no result yet. | App24865fa212 |
 
 | P2-ADD-17228 | Attribute missing group after reload | Luna | Actual17228 terminal | merged | app-P2-ADD-17228-reload-cause-0015 | Initial canonical and history PASS. Two internal revision GETs pending 10.1s after reload; later undo NOTREACHED. No App fix justified. | Evidence only |
 
@@ -153,7 +153,7 @@
 
 | P2-placement-16952 | Prove actual embedded drop geometry | HARD Sol; Luna applies | Retained16952 and source | merged | Sol0112 complete; application0127 | Real generic coordinator resolves V3/4.5; asset planner expects V2/9. Old5FAIL93PASS versus proposal98PASS. Source unchanged; proposal artifacts ephemeral. | Evidence only |
 | P2-SWAP-11089 | Assert exact conditional created claim | Luna; independent | Independent0115 DiffB PASS | merged | Author0112; review0115 | Four oracle and37 producer controls; three types/lint PASS. Exact two reviewed blobs home. Original browser proof owed. | Home3a2d6067b4 |
-| P2-bulk-21061 | Attribute bulk no-dispatch boundary | Luna; independent | Source0150 bounded report | review | app-P2-bulk-path-review-0204 | No POST proved; first App boundary unknown. Reviewer checks actual mounted path and control coverage. | Source unchanged |
+| P2-bulk-21061 | Prove exact mounted bulk dispatch | Luna; independent next | Review0204 coverage finding | doing | app-A3-bulk-mounted-control-0207 | Independent119 controls omit actual two-clip mounted action. Faithful selection/capture/outbox/transport control now owned. | Source pending |
 
 | P2-ADD-selection-current | Qualify mounted selection | Luna; service | Actual28616 terminal | gated:new-runtime-proof | App0147; next meaningful D88b cycle | NO-GO286s; readiness PASS. Shared group356 missing after reload. Later selection/history/Undo unqualified. | App4b984/a3cd |
 
@@ -173,7 +173,7 @@
 | U4p-D88b | Adopt qualified replay memo release | Luna normal tools | Security0125 PASS; normal6634 | merged | app-U4p-D88b-adoption-0150 | Eight strict,15 vendor,14 mappings PASS; protected six exact. Normal queue receipt24865. | Home24865fa212 |
 
 | P2-asset-native-return | Repair failed strict Undo oracle | Luna | Independent0149 findings | doing | app-P2-asset-native-return-0158 | One source return on saved bbba branch; complete reply/history structures and malformed metadata controls required. | Source pending |
-| P2-D88b-element | Qualify element on replay memo | Luna; service | Normal adoption24865; ADD terminal | doing | app-P2-D88b-element-resume-0205 | Existing one-command pinned source preflight then ONE original. Actual ID pending durable plan. | App24865 / Runtime6634 |
+| P2-D88b-element | Qualify element on replay memo | Luna; service | Normal adoption24865; ADD terminal | doing | app-P2-D88b-element-resume-0205 | Actual3111 running after preflight31113 PASS. Genuine four receipts and durable plan published; launcher ended. | App24865 / Runtime6634 |
 
 Integration: App24865fa212 normally merges qualified D88b adoption over reviewed4b984. Only normal lock and installer manifest changed; exact canonical client and schema unchanged. Native asset oracle bbba remains unmerged after independent FAIL. Placement a90 remains unmerged until corrected hover/save path passes fresh review.
 
@@ -182,8 +182,8 @@ regressions: No new proven regression from this pass. P1 actual31083 and P3 actu
 
 Blockers: Runtime — Existing SWAP29224 safe response/phase packet requested0205; meaningful reviewed native parent/single main venue requested0206.
 Blockers: Final cut — Runtime coordinates eight isolated P2 plus full App tour, final pinned P1–P5/core and genuine installed render before ZIP.
-Next ready: Fresh placement review when0145 completes; asset return0158 then independent protected re-review. Element0205 submits after actual one-body and disk checks. Bulk0150 returns finite source facts. Main SWAP0145 remains exclusive.
-live 4 requested / cap 6; ready-undispatched 0 eligible local starts. Placement review0209, bulk review0204, asset return0158 and element0205 assigned; no duplicate body. D89 source above5.5GB; one heavy body above5.2GB; nothing new below4.5GB; stop newest nongate4.0GB.
+Next ready: Fresh placement review when0145 completes; asset return0158 then independent protected re-review. Element3111 same-ID terminal next; bulk0207 mounted control follows independent gap0204. Main SWAP0145 remains exclusive.
+live 3 source / cap 6; ready-undispatched 0 eligible local starts. Placement review0209, bulk control0207 and asset return0158 active; sole element body3111 running. Source floor governs new starts. D89 source above5.5GB; one heavy body above5.2GB; nothing new below4.5GB; stop newest nongate4.0GB.
 Capacity: Free5.511GB at02:06. Newly stale4b984 andfd2f pins passed full current-head/queue/lease/local-test/process checks; named KEEP release and recycle succeeded. All outputs retained. Every ended clean nonKEEP local App worker tree scanned; none eligible. Prior dirty U3 and other cleanup refusals stay untouched. All actual run output preserved; old D88 prototype/review stays held. Distinct owner-authorized D88b protectivePASS6634 is adopted normally.
 Inbox consumed through1865114 bytes. Main SWAP29224 terminal NO-GO503 consumed; bounded facts asked0205. New reviewed parent/single pair asked0206. Prior0200 no-body input block resolved with exact checkout receipts and local-only body audit; resumed0205.
 Later: D79 and E paused until ZIP; F-final fresh Appd11417a59 and Agent08e6 applied-result full suite belong to Runtime final coordinator. Gating App stays frozen upstream3881. D74 refused dirty targets remain stopped; no new cleanup route or raw deletion.
