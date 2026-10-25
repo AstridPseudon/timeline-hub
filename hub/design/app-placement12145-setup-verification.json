@@ -1,0 +1,281 @@
+{
+  "verdict": "REVIEW_ONLY_SETUP_PROPOSAL; no product defect proved; not applied",
+  "base": "043631dbabfed566cfe037709c7fe861d6435b52",
+  "actual_tuple": {
+    "app": "5337b439b9dfa937dd987f372763582614bdd465",
+    "agent": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+    "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "setup_scope": "Shared seedThreeProducts helper: occurrence and full-length plate 12s to 14s; all callers inherit changed setup. Orchestrator approval required.",
+  "patch_sha256": "6378b5b448b28584705cf82d7683f3c55110c86f747687276dbeea3dd89e4e4a",
+  "source": "tests/e2e/local/support/harness.ts",
+  "before_sha256": "92f1261bc3213824f8323202e6a7f3d117892dda5ef6a847f0fd571a6cf81956",
+  "proposed_after_sha256": "84563009f0dc4ebce783b32499d3bce66e8cd54920929576fd6a5d7b8acc6809",
+  "changed_code_constants": [
+    {
+      "script_line": 109,
+      "before": 12000,
+      "after": 14000
+    },
+    {
+      "script_line": 52,
+      "before": 12,
+      "after": 14
+    },
+    {
+      "script_line": 56,
+      "before": 12,
+      "after": 14
+    },
+    {
+      "script_line": 98,
+      "before": 12,
+      "after": 14
+    }
+  ],
+  "native_seed_assertions_preserved": 21,
+  "all_other_source_bytes_preserved": true,
+  "all_original_harness_wait_timeout_lines_preserved": 8,
+  "protected_files": {
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": {
+      "pinned_sha256": "bf9a511625d9d1ad944af5f0b8e320f2525e6b74ae9ea7d50be5032af7580361",
+      "current_sha256": "bf9a511625d9d1ad944af5f0b8e320f2525e6b74ae9ea7d50be5032af7580361",
+      "proposed_sha256": "bf9a511625d9d1ad944af5f0b8e320f2525e6b74ae9ea7d50be5032af7580361",
+      "byte_identical": true
+    },
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": {
+      "pinned_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "current_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "proposed_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "byte_identical": true
+    },
+    "tests/e2e/local/support/p2-semantic-oracle.ts": {
+      "pinned_sha256": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+      "current_sha256": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+      "proposed_sha256": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+      "byte_identical": true
+    },
+    "tests/e2e/local/support/p2-media-import-oracle.ts": {
+      "pinned_sha256": "a4c8d874114fc57725ea414403d7e8ac25451a00498a7df1ed578eecaca70579",
+      "current_sha256": "a4c8d874114fc57725ea414403d7e8ac25451a00498a7df1ed578eecaca70579",
+      "proposed_sha256": "a4c8d874114fc57725ea414403d7e8ac25451a00498a7df1ed578eecaca70579",
+      "byte_identical": true
+    },
+    "tests/e2e/local/support/app.ts": {
+      "pinned_sha256": "238f7b5422dadf0ec7e1df361f7c74d8310c8064a056e4e22bfa53a779d6845f",
+      "current_sha256": "238f7b5422dadf0ec7e1df361f7c74d8310c8064a056e4e22bfa53a779d6845f",
+      "proposed_sha256": "238f7b5422dadf0ec7e1df361f7c74d8310c8064a056e4e22bfa53a779d6845f",
+      "byte_identical": true
+    }
+  },
+  "placement_entire_registration_body_before_after_sha256": "17e89268b158f8e0be01ca625b11e96189b8a1d60565d6f38f505c6bba64aa0a",
+  "placement_original_wait_timeout_lines_preserved": 2,
+  "actual_safe_trace_projection": [
+    {
+      "status": 409,
+      "code": "occurrence_boundary",
+      "op": "occurrence.add-media",
+      "row": {
+        "at": 9,
+        "hold": 5,
+        "track": "V2",
+        "clipType": "hold"
+      }
+    }
+  ],
+  "actual_internal_clips": [
+    {
+      "id": "f2-plate",
+      "at": 0,
+      "track": "plate",
+      "hold": 12,
+      "clipType": "media"
+    },
+    {
+      "id": "f2-agent-clip",
+      "at": 3,
+      "track": "V2",
+      "hold": 3,
+      "clipType": "media"
+    },
+    {
+      "id": "f2-agent-clear-clip",
+      "at": 6,
+      "track": "V2",
+      "hold": 3,
+      "clipType": "media"
+    }
+  ],
+  "timing_seconds": {
+    "host_before": [
+      0,
+      12
+    ],
+    "host_proposed": [
+      0,
+      14
+    ],
+    "pointer": 4.5,
+    "hold": 5,
+    "raw_child": [
+      4.5,
+      9.5
+    ],
+    "snapped_child": [
+      9,
+      14
+    ],
+    "snap_candidates": [
+      6,
+      -2,
+      9,
+      1
+    ],
+    "valid_candidates": [
+      9
+    ],
+    "snap_distance": 4.5,
+    "snap_threshold": 5,
+    "film_end_before_after": 18
+  },
+  "timing_frames_at_30fps": {
+    "host_before": [
+      0,
+      360
+    ],
+    "host_proposed": [
+      0,
+      420
+    ],
+    "raw_child": [
+      135,
+      285
+    ],
+    "snapped_child": [
+      270,
+      420
+    ]
+  },
+  "nested_window_checks": {
+    "exact_occurrence_shot_internal_edges_match": true,
+    "shot_timing_duration_source_window_absent": true,
+    "internal_source_window_map_duration_absent": true,
+    "image_registry_intrinsic_duration_absent": true,
+    "child_fps_default_matches_parent_30": true,
+    "parent_video_intrinsic_12s_and_clip_from_0_to_3_unchanged": true
+  },
+  "native_provider_pinned_source_sha256": {
+    "astrid/sdk/timeline/native_occurrence_create.py": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22",
+    "astrid/sdk/timeline/native_occurrence_media_commands.py": "419149d2092e271e8a2f82754843f381e1e70b5a892b9f8fe13820f04effac4c",
+    "astrid/sdk/timeline/validation.py": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c",
+    "astrid/sdk/timeline/capture.py": "d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7",
+    "astrid/sdk/timeline/_timing_evaluators.py": "a3f6247434b2bb5258ce044fa7e0391d9405ad36d33749e49365eb7c5db79749"
+  },
+  "predicate_input_map": [
+    {
+      "source": "tests/e2e/local/support/harness.ts:886",
+      "predicate": "native occurrence birth",
+      "before": "on=0, duration=12",
+      "proposed": "on=0, duration=14"
+    },
+    {
+      "source": "tests/e2e/local/support/harness.ts:890",
+      "predicate": "authored full-length plate",
+      "before": "[0,12)",
+      "proposed": "[0,14); identical image identity; no intrinsic duration"
+    },
+    {
+      "source": "tests/e2e/local/support/harness.ts:932",
+      "predicate": "expected internal exact equality",
+      "before": "plate.hold=12",
+      "proposed": "plate.hold=14; every other field unchanged"
+    },
+    {
+      "source": "tests/e2e/local/support/harness.ts:943",
+      "predicate": "expected occurrence exact equality",
+      "before": "duration_ms=12000",
+      "proposed": "duration_ms=14000; every other field unchanged"
+    },
+    {
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1024",
+      "predicate": "authored physical gesture",
+      "unchanged": "f2-occurrence; f2-agent-clip/reference f2-agent-clear-clip; from=3/referenceAt=6; time=4.5"
+    },
+    {
+      "source": "src/tools/video-editor/lib/coordinate-utils.ts:172",
+      "predicate": "ordinary collision snap",
+      "unchanged": "V2 siblings [3,6)/[6,9); five-second hold; candidate9; distance4.5 <= threshold5"
+    },
+    {
+      "source": "tests/e2e/local/support/p2-semantic-oracle.ts:71",
+      "predicate": "strict semantic request and row",
+      "unchanged": "expectedImageDropRow(..., V2,4.5), hold5, snap9; exact request keys/scope/base/command/media/created/step"
+    },
+    {
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:581",
+      "predicate": "accepted canonical response authority",
+      "unchanged": "HTTP acceptance, receipt/result/digest/pairs/versions/dependencies/effects/id_map"
+    },
+    {
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1055",
+      "predicate": "only intended field changes",
+      "unchanged": "one appended child; all old rows unchanged/order preserved; parent/shot unchanged; one exact registry binding"
+    },
+    {
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:456",
+      "predicate": "closure and media identity",
+      "unchanged": "exact pins/digests and media manifest; raw/normalized import identity"
+    },
+    {
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:681",
+      "predicate": "history and no legacy traffic",
+      "unchanged": "history entry matches request/receipt; zero legacy writes before/after Undo"
+    },
+    {
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:819",
+      "predicate": "both reloads",
+      "unchanged": "committed revision label/head and exact canonical reread; child present then absent"
+    },
+    {
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:272",
+      "predicate": "native guarded Undo and history",
+      "unchanged": "original native provider, exact closure/history context, timeline.inverse accepted publication, full internal restoration"
+    },
+    {
+      "source": "tests/e2e/local/support/harness.ts:1011",
+      "predicate": "native seed assertions and all waits",
+      "unchanged": "21 seed asserts; whole spec/oracles/app helper byte identical; harness wait/timeout lines identical"
+    }
+  ],
+  "asset27438_bounded_source_comparison": {
+    "tuple": {
+      "app": "5337b439b9dfa937dd987f372763582614bdd465",
+      "agent": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+      "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:934",
+    "original": "registerAsset GO recorded by independent0315; not rerun",
+    "owner": "parent",
+    "track": "V1",
+    "pointer": 5,
+    "hold": 5,
+    "siblings": [
+      [
+        0,
+        3
+      ],
+      [
+        15,
+        18
+      ]
+    ],
+    "expected_row_interval": [
+      5,
+      10
+    ],
+    "reason_not_equivalent": "clip.add-media on parent has no child occurrence-duration limit; same managed image/import/strict semantic and Undo guards do not authorize raw child overlap"
+  },
+  "limits": "Static source/arithmetic/AST/hash verification only. No candidate fixture/provider/browser/service execution; no new request body; no acceptance claim."
+}
