@@ -92,7 +92,7 @@ def refused(reason, message, *, current=None, diagnostic_reason=None):
                             "details": {"status": "refused", "reason": reason,
                                         "base": None, "current": current, "conflicts": []}})
     if diagnostic_reason is not None:
-        setattr(error, "_diagnostic_reason", diagnostic_reason)
+        error.__dict__["_diagnostic_reason"] = diagnostic_reason
     return error
 
 

@@ -43,7 +43,7 @@ def reject(reason, message=None, *, status=409, diagnostic_reason=None):
     })
     error = CommitRejected(failure)
     if diagnostic_reason is not None:
-        setattr(error, "_diagnostic_reason", diagnostic_reason)
+        error.__dict__["_diagnostic_reason"] = diagnostic_reason
     raise error
 
 
