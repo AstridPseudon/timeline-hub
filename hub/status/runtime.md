@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T20:58:13Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 0m -->
+<!-- main | 2026-10-25T21:02:50Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 14 | status age 2m -->
 # runtime board, 2026-10-25T20:57:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -486,12 +486,14 @@
 
 | OPS-D137-shell-closure | Carry all maker shell dependencies | Luna | Actual2044 refusal | doing | Source2058; wholepath2058 | Critical source return plus independent full-path dependency census. Verifier and guards unchanged; no install or request. | Independent reader active | 0c417 baseline |
 
-Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and dbc. No integration merge before D59.
+| D127c-normal-source | Carry reviewed final profiler helper | Luna | Exact reviewed and integrated tree | merged | App clean2010; normal cf0b82dd | Full tree8d568 equals reviewedfb4add. Central61 and Node20three controls retained; no original element result. | Runtime2002 and App2047 PASS | cf0b82dd47 |
+
+Runtime producer: Normal cf0b82dd helper/tests, entire reviewed8d568 tree exact; product ab1e unchanged. Private upstream0bb3 uses earlier e319 helper, so D59 join must conserve new helper too. No U1 merge before D59.
 Core: D13418455 measurement8926 PASS190 FAIL180 ERROR173 subtests; raw XML and full disk witness missing. Reviewed own344 split132 setup,0 proved product,212 unknown. Current REG unverified, no ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element/SWAP. No D59 cut, final build or ZIP.
 Blockers: Child/core — actual2044 refused at venv-log-setup, missing stage_stderr_path. Source2058 and independent wholepath2058 active. No child/core or stage log; Agent request and Farm remain held.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
-Blockers: Element — App sole final helper368f and App binder1950 require coupled protected and real Node20 proof. No cost author or body before PASS.
+Blockers: Element — Runtime helper normalcf0b82dd exact reviewedtree; AppF001 and actualNode20F0022047 PASS. App sole later element receiver needs genuine admission and original proof; no cost author yet.
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tuple P1-P5, wheel, Windows and ZIP remain owed.
 Blockers: Agent source intake — D136a c992 final2034 PASS and D73 375c protected2036 PASS; remote helpers exit3 D106. Host filing requested in peer2043; no direct hub writes or retry.
 Blockers: Runtime union — Farm sole six-file receiving proof now has flat recipe and exact32dde Agent binding in peer2041. Functional result owed; private source review PASS only.
@@ -502,4 +504,4 @@ Delivery: D59 integration tuple only; stale547e proof pin excluded. Private Agen
 Safety: All prior refusals held. Managers write ORCH boards/briefs/peers and copy authored handbacks only. No product/test/pin/Git mutation or credentials.
 Disk: Fresh4.758 GB after completed-source auto-recycle and before reviewer2100; cap3 below5GB, source floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and gzipped3 logs; no eligible unguarded Runtime trees identified. Protected raw KEEP retained.
 live 3 / cap 3; ready-undispatched 0. Critical maker2058, independent shell wholepath2058 and combined D134 protected2100 active. Fresh4.758GB before final reviewer; no local heavy body.
-INBOX consumed through1528871 bytes; real-refusal2047 read directly from hub/design before local relay. Owner20:52 Runtime49 source returned and under review2100. D134 twelve assigned; App helper Node20 bound proof and private menu source remain App-owned. Updated 2026-10-25T20:43:37Z.
+INBOX consumed through1534215 bytes including actual2047 refusal, sourcePASS receivers and Runtime helper merge request. Owner20:52 Runtime49 source returned and under review2100. D134 twelve assigned; App helper Node20 bound proof and private menu source remain App-owned. Updated 2026-10-25T20:43:37Z.
