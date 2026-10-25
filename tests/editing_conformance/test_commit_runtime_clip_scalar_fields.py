@@ -6,12 +6,17 @@ import copy
 import pytest
 
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+from astrid.sdk.timeline._doc_patch import Closure, value_at
+from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import (
     _digest,
     _manifest,
     bundle_from_document,
     create_runtime_commit_service,
 )
+from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
 from tests.editing_conformance.test_recipe_clip_scalar_fields import (
     CHILD,
     CLEAR,
@@ -24,6 +29,96 @@ from tests.sdk.test_timeline_clip_scalar_provider import app_document
 from tests.timeline.test_authoring_bundle import AUDIO, OLD, _replace_values
 
 pytestmark = pytest.mark.integration
+
+
+def _patch(bundle, ref, path, value):
+    physical = Closure(bundle).resolve(ref)
+    before = value_at(Closure(bundle).payload(physical), physical, path)
+    return execute(bundle, [{
+        'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+        'args': {'changes': [{'op': 'set', 'ref': ref, 'path': list(path),
+                              'before': before, 'value': copy.deepcopy(value)}]},
+    }]).commands[0]
+
+
+def _seed_current_app_document(service, project, document):
+    """Author the App closure through current Runtime semantic commands."""
+    from runtime_protocol.timeline_commit_port import route_path
+
+    timeline = 'film'
+    service.create_timeline(project, timeline, idempotency_key='create-film')
+    head = service.get_project_timeline(project, timeline)
+    bootstrap = service.get_project_parent_composition_revision(
+        project, timeline, head['head_revision_id'])
+    empty = {'schema_version': 1, 'project_id': project, 'timeline_id': timeline,
+             'parent_revision': {key: bootstrap[key] for key in
+                                 ('revision_id', 'content_digest', 'payload')},
+             'shot_revisions': [], 'internal_timeline_revisions': [],
+             'dependency_manifest': bootstrap['dependency_manifest']}
+    bundle = bundle_from_document(empty)
+    target_parent = document['parent_revision']['payload']
+    commands = []
+
+    def append(command):
+        nonlocal bundle
+        commands.append(command)
+        bundle = execute(bundle, [command]).bundle
+
+    append(_patch(bundle, 'parent', ['config'], target_parent['config']))
+    append(_patch(bundle, 'parent', ['registry'], target_parent['registry']))
+    append(_patch(bundle, 'parent', ['clips'], target_parent['clips']))
+    append(_patch(bundle, 'parent', ['opaque_parent'], target_parent['opaque_parent']))
+
+    first, second = target_parent['occurrences']
+    append(capture_occurrence_create(
+        bundle, first['occurrence_id'], first['shot_id'], name='F2 agent shot',
+        track=first['track'], on=first['placement']['start_ms'] / 1000,
+        duration=first['duration_ms'] / 1000))
+    append(capture_occurrence_place_shared(
+        bundle, 'occurrence:' + first['occurrence_id'], second['occurrence_id'],
+        on=second['placement']['start_ms'] / 1000))
+
+    internal = document['internal_timeline_revisions'][0]
+    for row in internal['payload']['tracks']:
+        append(capture_track_create(bundle, 'occurrence:' + first['occurrence_id'], row))
+    internal_ref = next(ref for ref in Closure(bundle).images if ref.startswith('internal-revision:'))
+    append(_patch(bundle, internal_ref, [], internal['payload']))
+
+    shot = document['shot_revisions'][0]
+    shot_payload = copy.deepcopy(shot['payload'])
+    shot_payload.pop('internal_timeline_revision_id', None)
+    shot_ref = next(ref for ref in Closure(bundle).images if ref.startswith('shot-revision:'))
+    append(_patch(bundle, shot_ref, [], shot_payload))
+
+    actual_occurrences = bundle['placements']
+    occurrences = copy.deepcopy(target_parent['occurrences'])
+    for row in occurrences:
+        actual = next(item for item in actual_occurrences
+                      if item['occurrence_id'] == row['occurrence_id'])
+        row['shot_revision_id'] = actual['shot_revision_id']
+    append(_patch(bundle, 'parent', ['occurrences'], occurrences))
+
+    head = service.get_project_timeline(project, timeline)
+    request = {
+        'api_version': 1, 'project_id': project, 'timeline_id': timeline,
+        'base_revision_id': head['head_revision_id'],
+        'base_publication_id': head['head_publication_id'], 'commands': commands,
+        'label': 'App scalar fixture',
+        'steps': [{'id': str(index), 'label': 'App scalar fixture',
+                   'intent': 'Prepare current scalar fixture', 'tags': ['fixture'],
+                   'command_ordinals': [index],
+                   'patch': (copy.deepcopy(command['args']['changes'])
+                             if command['op'] == 'doc.patch' else []),
+                   'reads': []}
+                  for index, command in enumerate(commands)],
+        'merge': 'atomic', 'reads': [], 'dry_run': False,
+        'source': {'via': 'python'}, 'rationale': 'Current scalar fixture',
+        'group_id': 'app-scalar-fixture',
+    }
+    return service.commit_timeline(
+        project, timeline, request, idempotency_key='seed-app-scalars',
+        publisher='scalar-author', invocation_path=route_path(project, timeline),
+        authorize=lambda: None)
 
 
 @pytest.mark.parametrize('mode', ['scalar', 'compound', 'separate'])
@@ -54,13 +149,13 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, 
     for row in [parent, *shots, *internals]:
         row['content_digest'] = _digest(row['payload'])
     document['dependency_manifest'] = _manifest(shots, internals, [{'media_id': media, 'content_digest': media}], [])
-    resource = service.get_project_timeline(project, 'film')
-    service.publish_parent_composition(project, 'film', {
-        'project_id': project, 'timeline_id': 'film', 'expected_head': resource['head_revision_id'],
-        'parent_revision_id': 'app-scalar-baseline', 'parent_composition': parent['payload'],
-        'shot_revisions': shots, 'internal_timeline_revisions': internals,
-    }, idempotency_key='seed-app-scalars')
     service.register_timeline_commit_provider(create_runtime_commit_service())
+    _seed_current_app_document(service, project, {
+        'schema_version': 1, 'project_id': project, 'timeline_id': 'film',
+        'parent_revision': parent, 'shot_revisions': shots,
+        'internal_timeline_revisions': internals,
+        'dependency_manifest': document['dependency_manifest'],
+    })
 
     def head():
         row = service.get_project_timeline(project, 'film')
