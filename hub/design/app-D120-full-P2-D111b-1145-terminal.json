@@ -1,0 +1,69 @@
+{
+  "task": "D120 full P2 qualified D111b current tuple",
+  "service_id": "app-pin-34d46445-d73-p2-34d46445-submit-1025114516-11251",
+  "service_target": "app-pin-34d46445",
+  "status": "FAIL",
+  "exit": 1,
+  "central_duration_seconds": 643,
+  "d66_duration_seconds": 637.532,
+  "d66_started_at": "2026-10-25T11:45:31.865Z",
+  "d66_finished_at": "2026-10-25T11:56:09.397Z",
+  "tuple": {
+    "app": {"sha":"34d4644589970274a5252c0f7c68b6288eb0b0b4","tree":"48d71e1a0c18a13668e1d1e086def9dd6210affe","checkout":"/home/user/work/wt/app-pin-34d46445"},
+    "agent": {"sha":"070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2","tree":"6056414359ae9fce08d999d54cbecf719fda33c3","checkout":"/home/user/work/wt/agt-pin-070dfc5e"},
+    "runtime": {"sha":"7070f1378d1917fcce69857ebd33cd2b3015568b","tree":"cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1","checkout":"/home/user/work/wt/rt-pin-7070f137"},
+    "composition": {"sha":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148","checkout":"/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "readiness": {"status":"PASS","pass":1,"fail":0,"error":0,"notrun":0,"xml":"d66/readiness.xml","xml_sha256":"aee8a153c0f5dd86b21aa6b4a40125d3636642a975e29e9dcf1a81ff3dd5560c"},
+  "original": {"status":"FAIL","pass":5,"fail":2,"error":0,"notrun":1,"xml":"d66/p2.xml","xml_sha256":"b349d93a672f3b5d8996eea63824035b06605dee0169190f86405efc0b0f8b8c"},
+  "gestures": [
+    {"name":"P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit","status":"PASS","first_unmet":null,"tail":"all assertions including reload and guarded Undo reached"},
+    {"name":"P2 popup mounted SWAP on selected child uses authenticated old/new media selections","status":"FAIL","first_unmet":{"predicate":"accepted commit response status is 200","file":"tests/e2e/local/three-products.p2-popup.spec.ts","line":495,"observed":"HTTP 409 refusal; public reason history_unavailable"},"tail":"stopped in accepted() before canonical/reload/guarded-Undo assertions"},
+    {"name":"P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo","status":"PASS","first_unmet":null,"tail":"all assertions including reload and guarded Undo reached"},
+    {"name":"P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo","status":"PASS","first_unmet":null,"tail":"all assertions including reload and guarded Undo reached"},
+    {"name":"P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo","status":"PASS","first_unmet":null,"tail":"all assertions including reload and guarded Undo reached"},
+    {"name":"P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo","status":"FAIL","first_unmet":{"predicate":"element apply completion/status did not reach applied; response wait then reported target page/context/browser closed","file":"tests/e2e/local/three-products.p2-elements-assets.spec.ts","line":1052,"helper_line":521,"observed":"UNKNOWN response/backend outcome"},"tail":"stopped before request/reply field assertions, canonical readback, reload, or guarded Undo"},
+    {"name":"P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo","status":"NOTRUN","first_unmet":{"predicate":"serial test was not entered after earlier element failure","file":"tests/e2e/local/three-products.p2-elements-assets.spec.ts","line":1133,"observed":"NOTRUN"},"tail":"no gesture reachability"},
+    {"name":"P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo","status":"PASS","first_unmet":null,"tail":"all assertions including closure, reload and guarded Undo reached"}
+  ],
+  "source_hashes": {
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts":"2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-popup.spec.ts":"09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts":"83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts":"7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"
+  },
+  "outputs": {
+    "result_dir":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-34d46445-d73-p2-34d46445-submit-1025114516-11251",
+    "manifest":"d66/manifest.json",
+    "manifest_sha256":"892c089c4a03c04c7ca12f487766116e39595be7970bd1a733418e65356588ca",
+    "manifest_test_hashes_unchanged":true,
+    "profile":{"node":"v20.19.4","npm":"10.8.2","schema_digest":"sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b","protocol":"workspace.v1","runtime_server":"AstridRuntime/0.1 Python/3.13.16"}
+  },
+  "diagnostics": {
+    "phase_files_searched":[
+      "d66/runtime-private/p2-commit-phase.jsonl",
+      "d66/runtime-private/launch-06a9f642-36e6-4dd9-b8d0-fc1d7074e3b2/p2-commit-phase-2.jsonl",
+      "d66/runtime-private/launch-39168a71-8f94-4e7e-bb47-b79c4ced6970/p2-commit-phase-2.jsonl",
+      "d66/runtime-private/launch-707d109e-d1c1-4224-ae8c-a661151355a6/p2-commit-phase-2.jsonl",
+      "d66/runtime-private/launch-946710c3-0a32-432f-a5bf-df148497bc32/p2-commit-phase-2.jsonl",
+      "d66/runtime-private/launch-bf73ab11-33b4-4328-8db3-113990f92e71/p2-commit-phase-2.jsonl"
+    ],
+    "stderr_files_searched":[
+      "d66/runtime-private/runtime.stderr.log",
+      "d66/runtime-private/launch-06a9f642-36e6-4dd9-b8d0-fc1d7074e3b2/runtime.stderr-2.log",
+      "d66/runtime-private/launch-39168a71-8f94-4e7e-bb47-b79c4ced6970/runtime.stderr-2.log",
+      "d66/runtime-private/launch-707d109e-d1c1-4224-ae8c-a661151355a6/runtime.stderr-2.log",
+      "d66/runtime-private/launch-946710c3-0a32-432f-a5bf-df148497bc32/runtime.stderr-2.log",
+      "d66/runtime-private/launch-bf73ab11-33b4-4328-8db3-113990f92e71/runtime.stderr-2.log"
+    ],
+    "phase_summary":"Four populated phase files reached http_response. The 06a9 namespace reached coordinator/handler but had redacted authorization/provider raised states and http_response UNKNOWN. The 707d namespace was empty. No reason tag, class chain, or redacted frame file-line-function was present in these phase records; stderr files were empty.",
+    "element_diagnostic_files_searched":[
+      "d66/p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/p2-element-apply-diagnostic.json",
+      "d66/p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/attachments/p2-element-apply-diagnostic-json-e5eef2825b7ff7ae730a11a6107c3e7229b5637f.json"
+    ],
+    "element_diagnostic_sha256":"3ebfb19267ac21080a387bd2a0464d503be26152bb254c075932ee544d402821",
+    "element_safe_facts":{"status":"observed","test_outcome":"failed","before_page_close":true,"page_closed":true,"terminal":"pending","correlation":"apply-1","reason":"UNKNOWN","class_chain":"UNKNOWN","frame_file_line_function":"UNKNOWN"},
+    "no_raw_diagnostics_exported":true
+  },
+  "no_retry_or_second_body":true
+}

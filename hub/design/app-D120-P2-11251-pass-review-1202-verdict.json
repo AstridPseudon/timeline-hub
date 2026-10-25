@@ -1,0 +1,160 @@
+{
+  "task": "D120/P2 independent partial-GO review",
+  "verdict": "PARTIAL-GO",
+  "overall_tuple_verdict": "NO-GO",
+  "scope": {
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "plan_section": "§3 P2; C0 §§1-7",
+    "reviewed_cases": 5,
+    "gate_credit": "Five authentic original PASS cases only; element and SWAP remain zero credit; registerAsset remains zero credit because NOTRUN; no final-cut or element credit."
+  },
+  "run": {
+    "selector": "p2",
+    "service_target": "app-pin-34d46445",
+    "service_id": "app-pin-34d46445-d73-p2-34d46445-submit-1025114516-11251",
+    "preflight": {
+      "id": "app-pin-34d46445-d73-p2-34d46445-submit-preflight-1025114446-12718",
+      "status": "PASS",
+      "exit": 0,
+      "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-34d46445-d73-p2-34d46445-submit-preflight-1025114446-12718",
+      "manifest_sha256": "c120f04e621d4cd0624e2588dc0b6e8180debc490f849ad78a158364c43058c8"
+    },
+    "normal": {
+      "status": "FAIL",
+      "exit": 1,
+      "duration_seconds": 643,
+      "d66_duration_seconds": 637.532,
+      "started_at": "2026-10-25T11:45:31.865Z",
+      "finished_at": "2026-10-25T11:56:09.397Z",
+      "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-34d46445-d73-p2-34d46445-submit-1025114516-11251",
+      "manifest_sha256": "892c089c4a03c04c7ca12f487766116e39595be7970bd1a733418e65356588ca",
+      "readiness_xml": {
+        "path": "d66/readiness.xml",
+        "sha256": "aee8a153c0f5dd86b21aa6b4a40125d3636642a975e29e9dcf1a81ff3dd5560c",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "errors": 0
+      },
+      "original_xml": {
+        "path": "d66/p2.xml",
+        "sha256": "b349d93a672f3b5d8996eea63824035b06605dee0169190f86405efc0b0f8b8c",
+        "tests": 8,
+        "passed": 5,
+        "failed": 2,
+        "skipped": 1,
+        "errors": 0
+      }
+    },
+    "commands": {
+      "preflight": "D66_APP_SHA='34d4644589970274a5252c0f7c68b6288eb0b0b4' D66_APP_TREE='48d71e1a0c18a13668e1d1e086def9dd6210affe' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-34d46445' D66_AGENT_SHA='070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2' D66_AGENT_TREE='6056414359ae9fce08d999d54cbecf719fda33c3' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-070dfc5e' D66_RUNTIME_SHA='7070f1378d1917fcce69857ebd33cd2b3015568b' D66_RUNTIME_TREE='cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-7070f137' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='20' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2' --preflight",
+      "normal": "D66_APP_SHA='34d4644589970274a5252c0f7c68b6288eb0b0b4' D66_APP_TREE='48d71e1a0c18a13668e1d1e086def9dd6210affe' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-34d46445' D66_AGENT_SHA='070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2' D66_AGENT_TREE='6056414359ae9fce08d999d54cbecf719fda33c3' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-070dfc5e' D66_RUNTIME_SHA='7070f1378d1917fcce69857ebd33cd2b3015568b' D66_RUNTIME_TREE='cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-7070f137' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='20' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2'"
+    }
+  },
+  "custody": {
+    "tuple": {
+      "app": {"sha": "34d4644589970274a5252c0f7c68b6288eb0b0b4", "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe", "checkout": "/home/user/work/wt/app-pin-34d46445", "receipt_sha256": "cc9659251666cf4b2a5d43e52de26b078fde0788676078817b430a0fcec4e106"},
+      "agent": {"sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3", "checkout": "/home/user/work/wt/agt-pin-070dfc5e", "receipt_sha256": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05"},
+      "runtime": {"sha": "7070f1378d1917fcce69857ebd33cd2b3015568b", "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1", "checkout": "/home/user/work/wt/rt-pin-7070f137", "receipt_sha256": "7519cfc6151d0463a170f256e8b198b3690c1153194ebed4036098a7496d2b6d"},
+      "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0", "receipt_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"}
+    },
+    "source_hashes_before_after_equal": true,
+    "source_hashes": {
+      "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+      "tests/e2e/local/three-products.p2-tour.spec.ts": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4"
+    },
+    "support_hashes": {
+      "tests/e2e/local/support/harness.ts": "e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3",
+      "tests/e2e/local/support/p2-semantic-oracle.ts": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+      "tests/e2e/local/support/p2-document-oracle.ts": "1d622a43f77b05e8196783efa625fca0498e22f409426c1853097e320ecf83ca",
+      "tests/e2e/local/support/fixtures/native-parent-transition-clear.json": "483e1495418b8eeaefefe2dfbe1dc80ca1823a3bf0d7a101de204e11c61d0cca",
+      "tests/e2e/local/support/p2-placement-receipt.test.mjs": "2172aa3ea6cc09fa804ea6f5611b03d25ad80b99e6c6ff6b2eb090e462e6c05c"
+    },
+    "imports": {
+      "astrid": {"root": "/home/user/work/wt/agt-pin-070dfc5e/astrid/__init__.py", "version": "0.1.0", "sha256": "f5fc47afc0afbd81507fecbb41a6d7405f14596bf09400c287bf1e4624fed578"},
+      "astrid_runtime": {"root": "/home/user/work/wt/rt-pin-7070f137/astrid_runtime/__init__.py", "version": "0.1.0", "sha256": "b0d1a06374c421bd85ef6bfc308e6b2ef3b2c0472266a2a85e4894138a9bcbe3"},
+      "astrid_runtime_client": {"root": "/home/user/work/wt/agt-pin-070dfc5e/astrid_runtime_client/__init__.py", "version": null, "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"},
+      "runtime_protocol": {"root": "/home/user/work/wt/rt-pin-7070f137/runtime_protocol/__init__.py", "version": null, "sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2"}
+    },
+    "versions": {"provider": "astrid-v1", "compiler": "authoring-bundle-1", "node": "v20.19.4", "npm": "10.8.2", "python": "3.13.16", "runtime_server": "AstridRuntime/0.1 Python/3.13.16", "protocol": "workspace.v1", "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"},
+    "worktree": {"assigned_clean": true, "diff_check": "PASS", "no_product_or_test_edits": true}
+  },
+  "artifacts": {
+    "submission_json": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-full-P2-D111b-1145/notes/submission.json", "sha256": "6ca5081c66fe75d9a3ee32c2ea4e0857338e045435294fe3c21f047abe5bbdb1"},
+    "terminal_json": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-full-P2-D111b-1145/notes/terminal.json", "sha256": "440419b0d5c7e09d845a68fef9d48f2cb6983251f1b4293ddd09ba4882394274"},
+    "persistent_plan": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-full-P2-D111b-1145/submission/full-p2/p2-submit-plan.json", "sha256": "f5ad604c0cf6c16099c3a1710e36c05b2389ad607fa9867c7f06db75a1216760"},
+    "recipe": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D108-full-P2-route-prep-0754-recipe.md", "sha256": "dc6a2c71bac2a68ac94c12df3da110fb40319eee5f2e34f5cf2e0c88f907406d"},
+    "d66_launcher": {"path": "scripts/testing/d66-plain-stack.mjs", "sha256": "81d273e626240cb02b0f1a5cee7314325bf935bf487874a178acede4d9de0dd3"},
+    "c0_control": {"path": "/home/user/work/wt/rt-pin-7070f137/contract/commit-v2.md", "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"}
+  },
+  "xml_membership": {
+    "readiness": {"test": "D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture", "source": "tests/e2e/local/three-products.mounted-readiness.spec.ts:268", "xml": "readiness.xml:1-3"},
+    "original": [
+      {"test": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit", "source": "tests/e2e/local/three-products.p2-popup.spec.ts:941", "xml": "p2.xml:74-76", "status": "PASS"},
+      {"test": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo", "source": "tests/e2e/local/three-products.p2-tour.spec.ts:746", "xml": "p2.xml:119-121", "status": "PASS"},
+      {"test": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo", "source": "tests/e2e/local/three-products.p2-tour.spec.ts:778", "xml": "p2.xml:119-123", "status": "PASS"},
+      {"test": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo", "source": "tests/e2e/local/three-products.p2-tour.spec.ts:798", "xml": "p2.xml:119-125", "status": "PASS"},
+      {"test": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo", "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1214", "xml": "p2.xml:71-72", "status": "PASS"},
+      {"test": "P2 popup mounted SWAP on selected child uses authenticated old/new media selections", "source": "tests/e2e/local/three-products.p2-popup.spec.ts:949", "xml": "p2.xml:77-117", "status": "FAIL", "credit": 0},
+      {"test": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo", "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1038", "xml": "p2.xml:3-66", "status": "FAIL", "credit": 0},
+      {"test": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo", "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1133", "xml": "p2.xml:67-70", "status": "NOTRUN", "credit": 0}
+    ]
+  },
+  "cases": [
+    {
+      "id": "add",
+      "name": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+      "verdict": "GO",
+      "evidence": {"source": "tests/e2e/local/three-products.p2-popup.spec.ts:920-947, 423-578, 854-918", "xml": "d66/p2.xml:74-76", "source_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9"},
+      "predicates": ["full v2 base/scope/label/step/merge/source request shape", "occurrence.fork followed by occurrence.add-media with occurrence ownership, created claims, imported/authenticated selection identity", "accepted reply and receipt authority", "whole canonical document equality including ordered/opaque/absent/null preservation", "authoritative history command/step/dependency/binding records", "reload head/document/occurrence-qualified rendering and clip count/tracks/assets", "native timeline.inverse targets the authoritative publication, restores original closure/history, and emits no legacy write"],
+      "tail_limit": "Original test reached every assertion through reload, dialog close/dialog-gone, guarded native Undo, final canonical/history equality, and no-legacy oracle."
+    },
+    {
+      "id": "parent_move",
+      "name": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo",
+      "verdict": "GO",
+      "evidence": {"source": "tests/e2e/local/three-products.p2-tour.spec.ts:338-744, 746-776", "xml": "d66/p2.xml:119-121", "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4"},
+      "predicates": ["exact doc.patch set of parent clip at with before present/value and created=[]", "exact declared reads for selected clip, fps, asset, track, pinnedShotGroups, sibling timing and collection membership/order", "fields merge mode and source via app", "accepted reply canonical closure/digest matches independent authoritative reread", "only selected clip at changes; shot/internal/manifest remain unchanged", "history preserves label/steps/reads/records, bindings, writes, reads and dependencies", "reload preserves head and complete history", "timeline.inverse publication guard restores complete original closure and records no legacy route"],
+      "tail_limit": "Original proveGestureAndUndo helper reached its complete commit, reload, inverse, repeated-history, guarded-Undo and no-legacy tail."
+    },
+    {
+      "id": "clear_single",
+      "name": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo",
+      "verdict": "GO",
+      "evidence": {"source": "tests/e2e/local/three-products.p2-tour.spec.ts:477-531, 680-744, 778-796", "xml": "d66/p2.xml:119-123", "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4"},
+      "predicates": ["exact doc.patch remove of one parent transition with before present/value", "exact id/transition/pinnedShotGroups reads and fields merge/source shape", "raw absence after clear, all non-target payload values preserved, clip list membership/order preserved in both parent lists", "authoritative canonical closure/digest/history and no legacy write", "reload and complete-history preservation", "guarded timeline.inverse restores the exact original transition value and full closure/history"],
+      "tail_limit": "Original test reached the complete strict raw-clear oracle, reload, native Undo and repeated-history/no-legacy tail."
+    },
+    {
+      "id": "clear_bulk",
+      "name": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo",
+      "verdict": "GO",
+      "evidence": {"source": "tests/e2e/local/three-products.p2-tour.spec.ts:477-531, 680-744, 798-817", "xml": "d66/p2.xml:119-125", "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4"},
+      "predicates": ["exact two ordered doc.patch removes with each transition before state", "exact selected id/transition/pinnedShotGroups reads and request/step patch equality", "both transitions become raw absent while opaque fields, all unrelated payload data, and both clip list orders remain unchanged", "authoritative closure/digest/history records and zero old-route writes", "reload and guarded native Undo restore both original transitions and the full closure/history"],
+      "tail_limit": "Original test reached the complete two-target strict raw-clear, reload, native Undo and repeated-history/no-legacy tail."
+    },
+    {
+      "id": "placement",
+      "name": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo",
+      "verdict": "GO",
+      "evidence": {"source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1018-1036, 1205-1295", "xml": "d66/p2.xml:71-72", "source_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"},
+      "predicates": ["real mounted child file import and authenticated media selection identity", "occurrence.add-media semantic request with occurrence ownership and exact expected row", "accepted receipt and canonical closure/digest", "one new internal child row appended; existing rows preserved; occurrence parent projection, child registry, catalogue and media manifest identities exact", "authoritative history and no legacy write", "reload uses occurrence-qualified projection and explicitly clicks real Close, then asserts dialog-gone before native Undo", "guarded timeline.inverse restores parent, shot and internal closures and final reload has zero scoped placement residue"],
+      "tail_limit": "Original test reached the full D113 Close/dialog-gone-before-nativeUndo tail and the strict scoped inverse-residue oracle."
+    }
+  ],
+  "excluded_outcomes": {
+    "swap": "FAIL, HTTP 409 refusal with public reason history_unavailable at three-products.p2-popup.spec.ts:495; no gate credit and no diagnostic investigation performed.",
+    "element": "FAIL, original apply status predicate failed at three-products.p2-elements-assets.spec.ts:1052; backend outcome remains UNKNOWN; no gate credit and no diagnostic investigation performed.",
+    "registerAsset": "NOTRUN after serial element failure at three-products.p2-elements-assets.spec.ts:1133; no gate credit."
+  },
+  "contract_crosscheck": {
+    "control": "C0 commit-v2.md §§1-7",
+    "checks": ["full v2 request base, commands, label, steps, merge, reads, source and Idempotency-Key shape is asserted by the original passing tests", "accepted/merged-style canonical closure, digest, normalized commands, id_map, versions, publisher, steps and receipt authority are asserted", "history labels, steps, recorder captures, dependencies and authoritative publication are asserted", "timeline.inverse is an ordinary guarded commit and later history is preserved", "closure and raw absent-vs-present semantics are asserted for clears and placement"],
+    "control_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "not_run_by_instruction": ["tests", "tsc", "lint", "full suite", "browser rerun", "backend rerun", "HTTP rerun", "provisioning", "package rerun", "second D66 body", "diagnostic or first-failure investigation"],
+  "decision": "Current tuple supports a five-case P2 partial GO only. The original service remains overall NO-GO with exactly the two failures and one NOTRUN above visible and at zero credit."
+}
