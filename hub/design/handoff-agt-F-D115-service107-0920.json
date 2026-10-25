@@ -1,0 +1,35 @@
+{
+  "schema": "D115-service107-split-v1",
+  "authority": {
+    "outcomes_json": "workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.xml + design/handoff-agt-F-D108b-core-local-0811-outcomes.json",
+    "selector": "failure_location contains service.py:2524",
+    "exact_nodes": 107,
+    "failed": 27,
+    "error": 80,
+    "unique_nodeids": 107,
+    "unique_source_sha256": 19,
+    "unique_failure_text_sha256": 107,
+    "body_service_marker_count": 219,
+    "body_nodeids_present": 107,
+    "d102_discriminating_bytes_absent_ordinals": [3934],
+    "group_sum": 107,
+    "hash_inventory": "workers/agt-F-D115-service107-0920/evidence/hash-inventory.txt"
+  },
+  "groups": [
+    {"category":"effect-image","count":83,"guard":"runtime_protocol/timeline_commit_auth.py:838","owner":"agent:astrid/sdk/timeline/commit.py:1419-1437","ordinals":[1297,1298,1301,1303,1305,1307,1310,1313,1317,1320,1322,1326,1330,1334,1357,1373,1411,1427,1442,1455,1468,1472,1476,1482,1488,1492,1497,1501,1506,1512,1520,1527,1529,1532,1535,1538,1541,1543,1547,1550,1555,1564,1584,1601,1618,1637,1653,1669,2370,2373,2375,2395,2399,2403,2404,2747,2756,2761,3625,3627,3943,3946,3952,3980,4309,4369,4394,4397,4585,4630,5216,5219,5257,5347,5429,5432,5436,5439,5509,5516,7527,7598,7611]},
+    {"category":"inverse-native-coverage","count":5,"guard":"runtime_protocol/timeline_commit_auth.py:1755","owner":"agent:astrid/sdk/timeline/_step_undo.py + astrid/sdk/timeline/commit.py","ordinals":[1211,1221,1234,1293,5667]},
+    {"category":"binding-input-image","count":3,"guard":"runtime_protocol/timeline_commit_auth.py:535","owner":"agent:astrid/sdk/timeline/commit.py","ordinals":[1266,1270,1274]},
+    {"category":"inverse-materialization-turnover","count":3,"guard":"runtime_protocol/timeline_commit_auth.py:1607","owner":"agent:astrid/sdk/timeline/_step_undo.py","ordinals":[3655,3691,3817]},
+    {"category":"inverse-provenance-noninverse","count":3,"guard":"runtime_protocol/timeline_commit_auth.py:1338","owner":"agent:astrid/sdk/timeline/_step_undo.py","ordinals":[7051,7053,7055]},
+    {"category":"inverse-source-image","count":3,"guard":"runtime_protocol/timeline_commit_auth.py:1646","owner":"agent:astrid/sdk/timeline/_step_undo.py + astrid/sdk/timeline/commit.py","ordinals":[3908,3913,3916]},
+    {"category":"physical-promotion-image","count":2,"guard":"runtime_protocol/timeline_commit_auth.py:2243","owner":"agent:astrid/sdk/timeline/commit.py","ordinals":[2436,2438]},
+    {"category":"inverse-materialization-owner","count":1,"guard":"runtime_protocol/timeline_commit_auth.py:1610","owner":"agent:astrid/sdk/timeline/_step_undo.py","ordinals":[3714]},
+    {"category":"inverse-provenance-absent","count":1,"guard":"runtime_protocol/timeline_commit_auth.py:1329","owner":"agent:astrid/sdk/timeline/_step_undo.py","ordinals":[6978]},
+    {"category":"sequential-command-metadata","count":1,"guard":"runtime_protocol/timeline_commit_auth.py:2431","owner":"agent:astrid/sdk/timeline/_commit_preview.py + astrid/sdk/timeline/commit.py","ordinals":[8710]},
+    {"category":"sequential-head-input","count":1,"guard":"runtime_protocol/timeline_commit_auth.py:2539","owner":"agent:astrid/sdk/timeline/_commit_preview.py","ordinals":[3887]},
+    {"category":"unresolved-d102-message-absent","count":1,"boundary":"runtime_protocol/timeline_commit_store.py:1434 after agent commit.py:1444","owner":"unassigned","ordinals":[3934]}
+  ],
+  "source_boundary_rule": "Use the first retained strict guard/message boundary after the unchanged registered provider; do not classify from service.py:2524 or wrapper status alone.",
+  "runtime_guard_disposition": "preserve; passing comparators establish strict authority",
+  "tests": "N/A initial read-only; no rerun"
+}

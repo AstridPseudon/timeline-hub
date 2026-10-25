@@ -1,0 +1,13 @@
+category	count	guard_source	owner	sample_red	ordinal_set	d102_absent
+effect-image	83	runtime_protocol/timeline_commit_auth.py:838	astrid/sdk/timeline/commit.py:1419-1437	1297	1297,1298,1301,1303,1305,1307,1310,1313,1317,1320,1322,1326,1330,1334,1357,1373,1411,1427,1442,1455,1468,1472,1476,1482,1488,1492,1497,1501,1506,1512,1520,1527,1529,1532,1535,1538,1541,1543,1547,1550,1555,1564,1584,1601,1618,1637,1653,1669,2370,2373,2375,2395,2399,2403,2404,2747,2756,2761,3625,3627,3943,3946,3952,3980,4309,4369,4394,4397,4585,4630,5216,5219,5257,5347,5429,5432,5436,5439,5509,5516,7527,7598,7611	
+inverse-native-coverage	5	runtime_protocol/timeline_commit_auth.py:1755	astrid/sdk/timeline/_step_undo.py + astrid/sdk/timeline/commit.py	1211	1211,1221,1234,1293,5667	
+binding-input-image	3	runtime_protocol/timeline_commit_auth.py:535	astrid/sdk/timeline/commit.py	1266	1266,1270,1274	
+inverse-materialization-turnover	3	runtime_protocol/timeline_commit_auth.py:1607	astrid/sdk/timeline/_step_undo.py	3655	3655,3691,3817	
+inverse-provenance-noninverse	3	runtime_protocol/timeline_commit_auth.py:1338	astrid/sdk/timeline/_step_undo.py	7051	7051,7053,7055	
+inverse-source-image	3	runtime_protocol/timeline_commit_auth.py:1646	astrid/sdk/timeline/_step_undo.py + astrid/sdk/timeline/commit.py	3908	3908,3913,3916	
+physical-promotion-image	2	runtime_protocol/timeline_commit_auth.py:2243	astrid/sdk/timeline/commit.py	2436	2436,2438	
+inverse-materialization-owner	1	runtime_protocol/timeline_commit_auth.py:1610	astrid/sdk/timeline/_step_undo.py	3714	3714	
+inverse-provenance-absent	1	runtime_protocol/timeline_commit_auth.py:1329	astrid/sdk/timeline/_step_undo.py	6978	6978	
+sequential-command-metadata	1	runtime_protocol/timeline_commit_auth.py:2431	astrid/sdk/timeline/_commit_preview.py + astrid/sdk/timeline/commit.py	8710	8710	
+sequential-head-input	1	runtime_protocol/timeline_commit_auth.py:2539	astrid/sdk/timeline/_commit_preview.py	3887	3887	
+unresolved-d102-message-absent	1	runtime_protocol/timeline_commit_store.py:1434 after agent commit.py:1444	unassigned	3934	3934	3934

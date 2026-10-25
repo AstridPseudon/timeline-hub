@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T09:13:31Z | dispatcher heartbeat 15s | live 4 (sol 0, luna 4, other 0) | busy30 23 | status age 0m -->
+<!-- agent | 2026-10-25T09:17:06Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 24 | status age 1m -->
 # agent board, 2026-10-25T09:13:30Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -302,12 +302,12 @@
 | D115 service107 | Split actual catch-all exceptions | Luna | Retained actual2016 | doing | Service107-0920 | Exact107 source grouping from captured D102 and current caller. No wrapper-to-cause inference, rerun or new collector. | Source pending |
 | D115 commit78 | Trace actual provider refusals | Luna | Retained actual2016 | doing | Commit78-0924 | Exact78 are split by underlying C0 boundary. Native shared fixture has its own owner; no competing writer. | Source pending |
 | D115 native54 | Correct genuine word fixture | Luna | Exact retained root cause | doing | Native54-0924 | Shared native_word_anchor_fixture source only. Preserve all original authored inputs and assertions; sample then whole cluster after GREEN. | Source pending |
-| D115 legacy27 | Correct legacy archive caller | Luna | Worker slot | ready | Brief legacy27-0926 | Exact27 retained errors; real archive and authority required. No synthetic history, pins or newly approved retirement. | Source pending |
-| D115 validation27 | Trace historical binding validation | Luna | Worker slot | ready | Brief validation27-0926 | Exact27 current errors. Strict validator remains; root cause comes from retained input and a passing C0 path. | Source pending |
-| D115 current pair16 | Correct authenticated pair reader | Luna | Worker slot | ready | Brief pair16-0926 | Exact16 current errors. Legacy archive worker owns separate file; all pins and predicates retained. | Source pending |
+| D115 legacy27 | Correct legacy archive caller | Luna | Exact retained source | doing | Legacy27-0926 | Exact27 retained errors; real archive and authority required. No synthetic history, pins or newly approved retirement. | Source pending |
+| D115 validation27 | Trace historical binding validation | Luna | Exact retained source | doing | Validation27-0926 | Exact27 current errors. Strict validator remains; root cause comes from retained input and a passing C0 path. | Source pending |
+| D115 current pair16 | Correct authenticated pair reader | Luna | Exact retained source | doing | Pair16-0926 | Exact16 current errors. Legacy archive worker owns separate file; all pins and predicates retained. | Source pending |
 | D115 PARAM16 | Preserve neutral stage parameters | Luna | Worker slot | ready | Brief param16-0926 | Exact16 retained failures; boolean and numeric distinctions, inverse and effect guards remain exact. | Source pending |
 | D115 next full core | Measure after cluster fixes | Luna / service | Reviewed cluster fixes and disk | gated:cluster-fixes | No body submitted | One unfiltered full rerun after meaningful cluster repairs. Heavy floor5.2GB; no duplicate or P4 repeat. | Current count437 |
-| D69 narrow source review | Review actual predicate equivalence | Luna independent | Exact original400 assertions | doing | Core/stage/writers0918 | Three disjoint five-function groups compare exact old/new purposes and current caller. No aggregate clearance or new retirements. | Read only |
+| D69 narrow source review | Review actual predicate equivalence | Luna independent | Exact original400 assertions | merged | Core/stage/writers0918 | Core72 PASS1 gap; stage65 PASS1 gap2 unresolved; writers71 PASS. Exact purposes mapped; faithful repairs remain, no full audit PASS. | Read only |
 
 Integration: Actual normald0ecf1d69a contains reviewed D07 and Windows test-only additions; production remains released070dfc5ef4 and adopts released Runtime1daca; all15 mappings unchanged. Includes normal mirror5554, D10101d516, media1a977, sheetCLI b948 and graph8c88. D103d588/S3badfe/legacy read79c94 and critical D110 normally merged. Historical D110 home tree605641 equals its independent review; later D07 and Windows changes tests only.
 core open: 437 current; actual2016 had438 on070dfc/1daca/04beed/635f. One D110 setup node now resolves to2 actual add/swap PASS on exact home treef3c0.  Exact506bad=438 NEWcore+59 ENV+8non-core+1D23deferred; PRE0/REG0 proven. All506 have per-node924 comparison; Runtime baseline isolation UNCERTAIN.
@@ -323,8 +323,8 @@ Blockers: Agent core437 — D115 cluster workers own the top locations; current 
 Blockers: Agent D69 — Exact129/113/287 membership mapped in two0902 partitions. Predicate purpose and approved replacement receipts remain uncleared; two manifest blob mismatches remain explicit.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
 Next ready: D115 legacy27, validation27, current pair16 and PARAM16 as slots open; own-only swap import. Normal protected reviews follow each correction.
-live 6 / cap 6; ready-undispatched 5. Three D69 groups and D115 service107/commit78/native54 active. Remaining cluster briefs and swap import wait for the cap, never a new approval.
-Inbox consumed through1498985 bytes. Updated 2026-10-25T09:13:30Z.
+live 6 / cap 6; ready-undispatched 4. D115 service107,commit78,native54,legacy27,validation27,pair16 active. PARAM16, swap import and two faithful D69 source repairs are next.
+Inbox consumed through1501034 bytes. Updated 2026-10-25T09:13:30Z.
 Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
 Later: MAIN profile input — Resolved by D108b local venue. Runtime confirms MAIN0759 unsubmitted and retained; no duplicate body. Local0811 uses genuine819acf/lockf4fc/registryd609.
 Later: Runtime snapshot coverage e6b669 is test-only; no adoption or running-tuple retarget. Final source application must include new reviewed snapshot assertions. D112 remains unreleased pending security/native proof.
