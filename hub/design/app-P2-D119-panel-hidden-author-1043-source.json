@@ -1,0 +1,28 @@
+{
+  "task": "app-P2-D119-panel-hidden-author-1043",
+  "decision": "Wait for the connection panel to be hidden before the parent gesture.",
+  "authorized_source_candidate": "await expect(page.getByTestId('runtime-not-connected')).toBeHidden();",
+  "source": {
+    "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+    "function": "openCommandTimeline",
+    "insertion": "after connected, project, and visible-track checks",
+    "base_commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "blob_before": "62d799a92fca8b98399b6ca5bbd3a06127cd9d86",
+    "blob_after": "63dd04ef1055dbb380642f27f24d47e1fd104625",
+    "diff": "1 insertion, 0 deletions"
+  },
+  "protected_scope": {
+    "changed_files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+    "all_other_files_unchanged": true,
+    "callers_audited": 3,
+    "frozen_upstream_commit": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "file_in_frozen_upstream": false
+  },
+  "verification": {
+    "tsc_app": "pass",
+    "tsc_node": "pass",
+    "eslint_target_max_warnings_0": "pass",
+    "git_diff_check": "pass",
+    "browser_proof": "remaining; not run here"
+  }
+}
