@@ -1,0 +1,109 @@
+{
+  "task": "P2 D102c fixed-source diagnostics",
+  "selector": "p2-element",
+  "suite": "p2-d102c-element-0628",
+  "host": "app-pin-0b6cee26",
+  "terminal": "FAIL",
+  "exit": 1,
+  "duration_seconds": 175,
+  "preflight": {
+    "id": "app-pin-0b6cee26-p2-d102c-element-0628-preflight-1025063703-3729",
+    "status": "PASS",
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-0b6cee26-p2-d102c-element-0628-preflight-1025063703-3729/d66/manifest.json",
+    "manifest_sha256": "0c89f2b101ff3050b91d940f9da71ffda53f869c8781f33342fd375a872a7896"
+  },
+  "body": {
+    "id": "app-pin-0b6cee26-p2-d102c-element-0628-1025063733-29218",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-0b6cee26-p2-d102c-element-0628-1025063733-29218",
+    "status": "FAIL",
+    "manifest": "d66/manifest.json",
+    "manifest_sha256": "37fe10f29ba142d300c6ee5c0a04b17601b4bf44aa748edf83bef711f5d2fae4",
+    "started_at": "2026-10-25T06:37:43.685Z",
+    "finished_at": "2026-10-25T06:40:33.434Z",
+    "xml_duration_seconds": 47.539491999999996,
+    "readiness_xml_duration_seconds": 23.079850999999998
+  },
+  "counts": {
+    "readiness": {"pass": 1, "fail": 0, "not_run": 0},
+    "original": {"pass": 0, "fail": 1, "not_run": 0}
+  },
+  "first_exact_unmet_predicate": {
+    "predicate": "element apply must expose status text containing applied",
+    "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:993",
+    "caller": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:505",
+    "test": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:979",
+    "intended_post": "PRESENT",
+    "observed_http": "UNKNOWN",
+    "public_code": "UNKNOWN",
+    "public_reason": "UNKNOWN"
+  },
+  "secondary_observation": {
+    "predicate": "bounded response wait ended with page close",
+    "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:505",
+    "observed": "page/context closed"
+  },
+  "diagnostics": {
+    "kind": "p2-element-apply-lifecycle",
+    "status": "observed",
+    "lifecycle": {"before_page_close": true, "page_closed": true, "test_outcome": "failed"},
+    "events": [
+      {"stage": "apply-click", "elapsed_ms": 25206, "idempotency": "unknown", "response_status": "UNKNOWN", "terminal": "unknown"},
+      {"stage": "request-start", "elapsed_ms": 25769, "idempotency": "present", "response_status": "UNKNOWN", "terminal": "pending"},
+      {"stage": "test-outcome", "elapsed_ms": 30438, "idempotency": "present", "response_status": "UNKNOWN", "terminal": "pending"},
+      {"stage": "retained", "elapsed_ms": 30474, "idempotency": "present", "response_status": "UNKNOWN", "terminal": "pending", "ui": "connected/dialog-present/applying"},
+      {"stage": "teardown-start", "elapsed_ms": 30475, "idempotency": "present", "response_status": "UNKNOWN", "terminal": "pending"},
+      {"stage": "page-close", "elapsed_ms": 30489, "idempotency": "present", "response_status": "UNKNOWN", "terminal": "pending"}
+    ]
+  },
+  "diagnostic_status": {
+    "redacted_runtime_line": "UNKNOWN: no bounded D102 diagnostic line retained",
+    "reason_tags": [],
+    "opaque_correlation": "PRESENT_REDACTED; values not exported",
+    "class_chain": "UNKNOWN",
+    "sanitized_file_line_function": "UNKNOWN",
+    "ring_request_correlation": "PRESENT_REDACTED in bounded lifecycle record; Runtime outcome UNKNOWN",
+    "ring_limits": "Reviewed bounded last-N/final-request retention applies; response and terminal outcome were not retained"
+  },
+  "tuple": {
+    "app": {"commit": "0b6cee269f32079c5446036bbca8a484176799bc", "tree": "9456c9edf3229ddcfd824b0f626516f2c602ccfa"},
+    "agent": {"commit": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f", "tree": "cd2a51721f07b447215f4084980d385de3842fd9"},
+    "runtime": {"commit": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "checkouts": {
+    "app": "/home/user/work/wt/app-pin-0b6cee26",
+    "agent": "/home/user/work/wt/agt-pin-8c88ea8f",
+    "runtime": "/home/user/work/wt/rt-pin-1daca2a3",
+    "composition": "/home/user/work/wt/vw-pin-635f4de0"
+  },
+  "checkout_receipts": {
+    "app": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-0b6cee269f32079c5446036bbca8a484176799bc",
+    "agent": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+    "runtime": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "composition": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "submit_plan": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102c-ADD-element-diagnostics-0628/submission/p2-element/p2-element-submit-plan.json",
+    "sha256": "e6158b8a7ea6bd37b7b3c7fae2345fca0bbe5e425a0af19e257b6b295d7228e4"
+  },
+  "artifact_hashes": {
+    "original_xml": "4c9b2c6f65581399d37804cfaba018d497ad6aa042f75ec7ed6cdb3b7f4a70ce",
+    "readiness_xml": "dd9b8039f0b6914bdf9871f9066d76663b6221d778c0c534445063bd9bce5b00",
+    "lifecycle_diagnostic": "UNPUBLISHED_SOURCE_REDACTED; retained centrally",
+    "runtime_stderr_log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runtime_stdout_log": "0bae7c157eb2b6e819abb3ac72cc40633db0dd094cf24398afbb41833058aa6a"
+  },
+  "source_hashes": {
+    "scripts/testing/d66-plain-stack.mjs": "5d4f29fc6af03b505398328040b3e4103dba9232d59b06c53cb0ec8bf5ad2b2c",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "c75baf23fa743c19c9f4bfa5822aa69c8776188436f82a9c27bbf82431c21845",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "runtime/tests/helpers/p2_commit_phase_capture.py": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4",
+    "runtime/tests/test_p2_commit_phase_capture.py": "a6767ea56b3899871fac75bf6bfcb8bc65a9acac76ed8e12eb6438fd2ff9a8e4"
+  },
+  "limits": [
+    "No raw stderr, request/response body, auth, private URL, locals, messages, raw stack, or opaque identifier value exported.",
+    "UNKNOWN HTTP/outcome and missing Runtime line remain UNKNOWN; no causal inference from absent retention.",
+    "This is a diagnostic FAIL, not a final independent App GO/NO-GO verdict."
+  ],
+  "next": "Finite diagnostic packet complete; no extra collector, body, or reconstruction is authorized."
+}
