@@ -8401,9 +8401,11 @@ class RuntimeService:
                         self._verify_file_at(
                             prefix_fd, destination_name, digest, item["size"], label="CAS object",
                         )
+                # The output's filename (defaulted to its name), not the port
+                # name: "vibecomfy_run" is a port, "0000-SaveVideo.mp4" a file.
                 self.store.conn.execute(
                     "INSERT OR IGNORE INTO objects(digest, size, media_type, original_name, created_at) VALUES (?, ?, ?, ?, ?)",
-                    (digest, item["size"], item["media_type"], item["name"], now()),
+                    (digest, item["size"], item["media_type"], item["filename"], now()),
                 )
                 if project_id:
                     self.store.conn.execute(

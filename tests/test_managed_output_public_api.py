@@ -161,3 +161,19 @@ def test_temporary_lifecycle_expiry_reclaim_and_promotion_are_runtime_only(tmp_p
         assert service.store.conn.execute("SELECT 1 FROM objects WHERE digest=?", (temporary["digest"].removeprefix("sha256:"),)).fetchone()
     finally:
         service.close()
+
+
+def test_inline_settled_object_keeps_the_output_filename_not_the_port_name(tmp_path):
+    # Astrid's vibecomfy.run settles every result under the port name
+    # "vibecomfy_run"; the object (and so the project media list) must carry
+    # the file's own name.
+    service, task, attempt = _service(tmp_path, project=True, key="filename")
+    try:
+        clip = _output(b"mp4-bytes", name="vibecomfy_run", filename="0000-SaveVideo.mp4", output_port="vibecomfy_run")
+        bare = _output(b"other-bytes", name="bare_port")
+        _settle(service, attempt, [clip, bare], key="filename-settle")
+        names = dict(service.store.conn.execute("SELECT digest, original_name FROM objects").fetchall())
+        assert names[clip["digest"].removeprefix("sha256:")] == "0000-SaveVideo.mp4"
+        assert names[bare["digest"].removeprefix("sha256:")] == "bare_port"
+    finally:
+        service.close()
