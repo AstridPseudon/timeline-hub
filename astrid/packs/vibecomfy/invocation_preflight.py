@@ -360,6 +360,7 @@ def preflight_invocation(
     workflow_path: str | Path,
     *,
     run_inputs: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
     expected_prompt: str | None = None,
     source_video_path: str | Path | None = None,
     expected_source_digest: str | None = None,
@@ -376,7 +377,7 @@ def preflight_invocation(
     from astrid.packs.vibecomfy.production_engine import load_workflow_path
 
     with tempfile.TemporaryDirectory(prefix="astrid-invocation-preflight-") as raw_scratch:
-        loaded = load_workflow_path(source, Path(raw_scratch))
+        loaded = load_workflow_path(source, Path(raw_scratch), comfy_url=comfy_url)
     bundle = loaded.resolved
     workflow = bundle.workflow
     public_inputs = getattr(workflow, "inputs", {})

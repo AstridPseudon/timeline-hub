@@ -12,7 +12,7 @@ import hashlib
 import json
 import mimetypes
 import os
-import re
+import re  # noqa: E402 - imports follow the canonical entrypoint guard
 import shutil
 import subprocess
 import sys
@@ -582,6 +582,7 @@ def _run_and_settle(
         preflight_invocation(
             workflow_path,
             run_inputs=workflow_input_bindings,
+            comfy_url=comfy_url,
             source_video_path=staged_input,
             expected_source_node=source_video_node,
             expected_source_field=source_video_widget,

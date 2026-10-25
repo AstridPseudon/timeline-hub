@@ -138,6 +138,14 @@ def test_real_server_url_writes_managed_result_and_records_fresh_seed(comfy, tmp
         )
         managed = manifest["managed_generation_result"]
         assert managed["task_id"] == f"task-{number}"
+        expected_schema_digest = "sha256:" + hashlib.sha256(
+            json.dumps(comfy.schema, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest()
+        assert (
+            managed["evidence"]["producer"]["runtime"]["schema_provenance"]
+            ["workflow_conversion_object_info_sha256"]
+            == expected_schema_digest
+        )
         seeds.append(managed["inputs"]["seed"])
         assert (out / manifest["managed_generation_result_path"]).is_file()
         result = next(row for row in manifest["outputs"] if row["role"] == "result")

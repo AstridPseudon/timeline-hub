@@ -59,6 +59,7 @@ class LoadedWorkflow:
     workflow_identity: str
     workflow_revision: str
     workflow_content_digest: str
+    workflow_conversion_object_info_sha256: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -262,7 +263,7 @@ def _canonicalize_ui_workflow(
     scratch: Path,
     *,
     schema_url: str = "",
-) -> Any:
+) -> tuple[Any, str | None]:
     """Convert UI JSON through VibeComfy's canonical import service.
 
     With ``schema_url`` (the run's own ComfyUI), widget values map to input names
@@ -274,10 +275,16 @@ def _canonicalize_ui_workflow(
         from vibecomfy.porting.import_service import import_workflow_bytes
 
         schema_provider = None
+        schema_digest = None
         if schema_url:
             from vibecomfy.schema.provider import get_target_schema_provider
 
             schema_provider = get_target_schema_provider(schema_url, cache_dir=scratch / ".vibecomfy-schema")
+            object_info = schema_provider.object_info()
+            canonical_object_info = json.dumps(
+                object_info, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+            ).encode("utf-8")
+            schema_digest = "sha256:" + hashlib.sha256(canonical_object_info).hexdigest()
         artifacts = import_workflow_bytes(
             source_bytes,
             workflow_id=_ui_workflow_identity(raw_workflow, source_bytes),
@@ -316,7 +323,7 @@ def _canonicalize_ui_workflow(
         from vibecomfy.security.provenance import Provenance
         from vibecomfy.workflow_bundle import load_bundle
 
-        return load_bundle(python_path, trust=Provenance.USER_CONFIRMED)
+        return load_bundle(python_path, trust=Provenance.USER_CONFIRMED), schema_digest
     except Exception as exc:
         raise ProductionEngineError(
             f"VibeComfy canonical UI workflow bundle could not be loaded: {exc}"
@@ -356,6 +363,7 @@ def load_workflow_path(
             raise ProductionEngineError(
                 f"canonical workflow bundle could not be loaded: {exc}"
             ) from exc
+        workflow_conversion_object_info_sha256 = None
     else:
         if not isinstance(raw_workflow, Mapping):
             raise ProductionEngineError("workflow must be a JSON object")
@@ -363,8 +371,9 @@ def load_workflow_path(
             raw_workflow.get("bindings"), Mapping
         ):
             resolved = _load_workflow(raw_workflow, {}, scratch_path)
+            workflow_conversion_object_info_sha256 = None
         else:
-            resolved = _canonicalize_ui_workflow(
+            resolved, workflow_conversion_object_info_sha256 = _canonicalize_ui_workflow(
                 source,
                 raw_workflow,
                 scratch_path,
@@ -391,6 +400,7 @@ def load_workflow_path(
         workflow_identity=workflow_identity,
         workflow_revision=workflow_revision,
         workflow_content_digest=_workflow_content_digest(source),
+        workflow_conversion_object_info_sha256=workflow_conversion_object_info_sha256,
     )
 
 
@@ -755,6 +765,7 @@ def _run_profile_result(
     run_inputs: Mapping[str, Any] | None = None,
     comfy_url: str = "",
     comfy_output_dir: str = "",
+    workflow_conversion_object_info_sha256: str | None = None,
 ) -> ProductionRunResult:
     if comfy_url and profile_id != "local_server":
         raise ProductionEngineError("comfy_url requires the local_server profile")
@@ -766,6 +777,7 @@ def _run_profile_result(
         return run_local_server(
             resolved, destination, comfy_url=comfy_url, comfy_output_dir=comfy_output_dir,
             task_identity=task_identity, attempt_identity=attempt_identity, run_inputs=run_inputs,
+            workflow_conversion_object_info_sha256=workflow_conversion_object_info_sha256,
         )
     if profile_id == "pip_embedded":
         comfy_root = _bootstrap_embedded_comfy_client()
@@ -893,6 +905,7 @@ def _run_profile(
     run_inputs: Mapping[str, Any] | None = None,
     comfy_url: str = "",
     comfy_output_dir: str = "",
+    workflow_conversion_object_info_sha256: str | None = None,
 ) -> tuple[Path, ...]:
     """Compatibility projection for callers that only need output paths."""
     global _LAST_PRODUCTION_RESULT
@@ -901,6 +914,10 @@ def _run_profile(
         local_kwargs["comfy_url"] = comfy_url
     if comfy_output_dir:
         local_kwargs["comfy_output_dir"] = comfy_output_dir
+    if workflow_conversion_object_info_sha256 is not None:
+        local_kwargs["workflow_conversion_object_info_sha256"] = (
+            workflow_conversion_object_info_sha256
+        )
     _LAST_PRODUCTION_RESULT = _run_profile_result(
         resolved,
         profile_id,
@@ -973,6 +990,10 @@ def run_workflow_path(
         profile_kwargs["comfy_url"] = comfy_url
     if comfy_output_dir:
         profile_kwargs["comfy_output_dir"] = comfy_output_dir
+    if loaded.workflow_conversion_object_info_sha256 is not None:
+        profile_kwargs["workflow_conversion_object_info_sha256"] = (
+            loaded.workflow_conversion_object_info_sha256
+        )
     outputs = _run_profile(
         resolved,
         profile_id,
