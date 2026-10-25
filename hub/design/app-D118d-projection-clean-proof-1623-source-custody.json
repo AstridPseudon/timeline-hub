@@ -1,0 +1,37 @@
+{
+  "task": "D118d",
+  "base_commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "reviewed_commit": "d05975c7d6a0ab9eeea2db0f1c6e97ccbe136b6b",
+  "reviewed_tree": "6b7bc811f07abb169dcf8858f316af3fea589b4f",
+  "changed_path": "tests/sdk/test_timeline_capture_projection.py",
+  "base_blob_sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+  "reviewed_blob_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+  "reviewed_git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+  "worktree_blob_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+  "worktree_matches_reviewed": true,
+  "worktree_diff_paths": [
+    "tests/sdk/test_timeline_capture_projection.py"
+  ],
+  "reviewed_change_only": true,
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true,
+    "provider_origin": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_provider.py",
+    "store_origin": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py"
+  },
+  "current_registration": {
+    "source": "tests/sdk/test_capture_source_runtime.py:216",
+    "expression": "service.register_timeline_commit_provider(load_timeline_commit_provider(\"astrid\"))"
+  },
+  "own9": {
+    "status": "NOTRUN",
+    "admission_floor_bytes": 5000000000,
+    "manager_dispatch_free_bytes": 4833353728,
+    "manager_dispatch_shortfall_bytes": 166646272,
+    "fresh_body_free_bytes": 4824379392,
+    "fresh_body_shortfall_bytes": 175620608,
+    "ongoing_stop_bytes": 4000000000
+  }
+}

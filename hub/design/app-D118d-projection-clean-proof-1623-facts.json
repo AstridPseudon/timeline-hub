@@ -1,0 +1,71 @@
+{
+  "task": "D118d exact reviewed clean import plus own9",
+  "repo": "Agent",
+  "worktree": "/home/user/work/wt/app-D118d-projection-clean-proof-1623",
+  "base_commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "reviewed_commit": "d05975c7d6a0ab9eeea2db0f1c6e97ccbe136b6b",
+  "changed_paths": [
+    "tests/sdk/test_timeline_capture_projection.py"
+  ],
+  "reviewed_blob": {
+    "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+    "byte_exact_worktree_match": true,
+    "git_diff_against_reviewed": "empty"
+  },
+  "conservation": {
+    "source": "exact reviewed blob only",
+    "authored_inputs_changed": false,
+    "original_assertions_changed": false,
+    "goldens_changed": false,
+    "test_function_count": 11,
+    "original_assertions": 43,
+    "current_assertions": 44,
+    "reviewed_delta_from_base": {
+      "added_lines": 77,
+      "removed_lines": 3
+    }
+  },
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true
+  },
+  "provider_registration": {
+    "registration_source": "tests/sdk/test_capture_source_runtime.py:216",
+    "registration": "service.register_timeline_commit_provider(load_timeline_commit_provider(\"astrid\"))",
+    "provider_origin": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_provider.py",
+    "store_origin": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py",
+    "agent_commit_origin": "/home/user/work/wt/app-D118d-projection-clean-proof-1623/astrid/sdk/timeline/commit.py",
+    "runtime_protocol_origin": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/__init__.py"
+  },
+  "own9": {
+    "outcome": "NOTRUN",
+    "reason": "free space below mandatory 5000000000-byte admission floor; no substitute or cache deletion",
+    "nodes": [
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+    ],
+    "required_free_bytes": 5000000000,
+    "manager_dispatch_free_bytes": 4833353728,
+    "manager_dispatch_shortfall_bytes": 166646272,
+    "fresh_body_free_bytes": 4824379392,
+    "fresh_body_shortfall_bytes": 175620608,
+    "ongoing_stop_bytes": 4000000000,
+    "pytest_started": false
+  },
+  "static_checks": {
+    "ruff": "PASS",
+    "python3.11_compile": "PASS",
+    "mypy": "PASS",
+    "git_diff_check": "PASS"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-25T16:29:37.138242+00:00",
+  "pin": "app-pin-84857c45",
+  "path": "/home/user/work/wt/app-pin-84857c45",
+  "pin_head": "84857c45347539c7820bb054b69e2e5ad4079081",
+  "normal_app": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+  "host_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-pin-host-process-use-1628.md",
+  "host_verdict": "CLEAR 109 processes at16:27Z",
+  "clean": true,
+  "active_static_references": [],
+  "KEEP_released_only_named": true,
+  "command": "bin/recycle app-pin-84857c45",
+  "exit": 0,
+  "stdout": "recycled app-pin-84857c45",
+  "worktree_absent_after": true,
+  "before_free_bytes": 5122506752,
+  "after_free_bytes": 5288267776,
+  "all_10721_outputs_kept": true,
+  "source_branches_reports_kept": true,
+  "no_classifier_refusal": true
+}

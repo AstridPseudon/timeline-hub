@@ -1,0 +1,33 @@
+{
+  "task": "D132",
+  "source_worktree": "/home/user/work/wt/app-D132-graph-numeric-setup-1627",
+  "base_commit": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+  "base_branch": "tl/app-D118d-graph-roots9-1549",
+  "owner_decision": "App D132 approved exactly one authored gain null to numeric 1 migration",
+  "read_records": [
+    "scratchpad/orch/escalations/app-20261025T1617Z-graph-authored-null-setup.md",
+    "scratchpad/orch/design/app-D118d-graph-null-wholepath-1610-facts.json",
+    "scratchpad/orch/design/app-D118d-graph-null-wholepath-1610-source-custody.json",
+    "scratchpad/orch/design/peer-app-to-agent-20261025T1627Z-D132-graph-fixture-claim.md"
+  ],
+  "agent_refs": {
+    "actual_d60_tip": {
+      "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "verified_in": "/home/user/peteromallet/astrid-agent",
+      "result": "present; merge origin/main into merge/local-generation"
+    },
+    "owner_named_frozen_agent_d11417a59": {
+      "verified_in": "/home/user/peteromallet/astrid-agent",
+      "result": "object unavailable in this object database; not used as proof of absence"
+    },
+    "frozen_r4_candidate_sdk": {
+      "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "result": "fixture path unavailable at this ref; not used as proof of absence"
+    }
+  },
+  "history": {
+    "fixture_introduction": "84db8bde88f695fede81f32a2fddb30622c6781f",
+    "blame": "gain:null was present in the original authored fixture commit"
+  },
+  "scope": "No product, compiler, schema, generated file, metadata, or shared dependency changes"
+}

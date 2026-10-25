@@ -1,0 +1,19 @@
+{
+  "legacy_arms": {
+    "normal": "Existing exact normal keysets, bounds, privacy predicates and historical behaviors retained.",
+    "reviewed_legacy": "Existing exact reviewed keysets, old complete/failed/pending retention outcomes and 6c9 helper hash retained."
+  },
+  "reviewed_new_arm": {
+    "hash_and_version": "Selected only by exact helper SHA256 4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e; event schema_version=1 and retention format_version=2 are exact.",
+    "summary_lifecycle": "Exact summary keyset admits lifecycle; enum is completed|raised|returned_without_response|pending_at_stop.",
+    "durations": "raised and pending_at_stop require handler_ms, dispatch_total_ms and dispatch_to_completion_wall_ms null; dispatch_to_completion_wall_ms always equals dispatch_total_ms; unknown nulls are preserved.",
+    "sampling_keyset": "Exact sampling keyset adds top_leaf_frames only; existing sampling interval, counters, CPU scope, allowlist, limits and sampler errors remain strict.",
+    "inclusive_rows": "Exact row keyset adds lost_samples; safe file/function identity, positive bounded count, sample_total equality, sample_share formula, uniqueness and denominator formula remain strict; lost_samples equals sampling.lost_samples.",
+    "leaf_rows": "top_leaf_frames uses the same exact safe-row predicates, maximum ten rows and deduplicated identities.",
+    "denominator": "dispatch_wall_denominator_ms is positive or null; every non-null new row dispatch_wall_share has a non-null denominator and exact count*20/denominator formula; null denominator requires null row share.",
+    "retention": "Exact final_request keyset adds buffer_complete; new lifecycle enum replaces old outcomes; buffer_complete equals complete; incomplete buffers require the existing exact drop-limit shape.",
+    "phase_lifecycle": "Existing exact phase keysets and arrival unsupported contradiction checks remain active in the new arm.",
+    "privacy": "Existing recursive private-key rejection, route template, hash, safe-frame allowlist and output string checks remain active.",
+    "negative_mutations": "Focused offline test covers missing new fields, invalid enums, count/loss/share/denominator contradictions, pending duration contradiction, arrival phase contradiction, incomplete-buffer contradiction and unsafe leaf identity."
+  }
+}

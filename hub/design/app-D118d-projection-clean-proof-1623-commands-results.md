@@ -1,0 +1,13 @@
+# D118d commands and results
+
+- Reviewed blob check: 'sha256sum tests/sdk/test_timeline_capture_projection.py' — PASS, '6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436'.
+- Exact reviewed comparison: 'git diff --exit-code d05975c7d6a0ab9eeea2db0f1c6e97ccbe136b6b -- tests/sdk/test_timeline_capture_projection.py' — PASS (empty diff).
+- Runtime custody: '/home/user/work/wt/rt-pin-5e9ad1c6' — PASS, commit '5e9ad1c6f74241d8771d3284fdd2ce7a214fd344', tree 'de2954a0ceadb4455903d9abdfec3b773318a50f', clean.
+- Current provider registration — PASS by source inspection at 'tests/sdk/test_capture_source_runtime.py:216'; provider and store origins resolve inside the pinned Runtime checkout.
+- '/home/user/work/venv-agent/bin/ruff check tests/sdk/test_timeline_capture_projection.py' — PASS ('All checks passed!').
+- 'python3.11 -m py_compile tests/sdk/test_timeline_capture_projection.py' — PASS ('Python 3.11.17'; private cache prefix).
+- '/home/user/work/venv-agent/bin/mypy --cache-dir=/tmp/w-05b1247615/app-D118d-projection-clean-proof-1623/mypy --follow-imports=skip tests/sdk/test_timeline_capture_projection.py' — PASS ('Success: no issues found in 1 source file').
+- 'git diff --check' — PASS.
+- Exact own9 command was NOTRUN: manager-dispatch free space was '4,833,353,728' bytes, shortfall '166,646,272' bytes from the required '5,000,000,000'; fresh-body check was '4,824,379,392' bytes, shortfall '175,620,608'. No substitute, cache deletion, or pytest start.
+- Required own9 command, retained verbatim for custody:
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/wt/rt-pin-5e9ad1c6 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-5e9ad1c6 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --junitxml=<own evidence>/own9.xml tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows 'tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]' 'tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]' 'tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener exactly[new_shot]' 'tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener exactly[duplicate]' 'tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener exactly[remove]' 'tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener exactly[sdk_bundle]'

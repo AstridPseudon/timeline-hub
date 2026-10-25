@@ -1,0 +1,36 @@
+{
+  "task": "D127 bounded strict App validator adoption",
+  "app_base_head": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+  "runtime_candidate": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+  "runtime_helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+  "changed_worktree_files": [
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "validator_arms": {
+    "normal": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4",
+    "reviewed_legacy": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "reviewed_new": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e"
+  },
+  "new_fields": [
+    "summary.lifecycle",
+    "sampling.top_leaf_frames",
+    "sampling.top_inclusive_frames[].lost_samples",
+    "sampling.top_leaf_frames[].lost_samples",
+    "retention.final_request.buffer_complete"
+  ],
+  "new_lifecycle_values": [
+    "completed",
+    "raised",
+    "returned_without_response",
+    "pending_at_stop"
+  ],
+  "budgets_preserved": {
+    "max_requests": 8,
+    "max_events": 128,
+    "max_bytes": 65536,
+    "sampling_interval_ms": 20,
+    "top_frames": 10,
+    "phase_count_cap": 32
+  },
+  "activation": "NOT RUN; candidate helper is not present in the selected Runtime checkout"
+}

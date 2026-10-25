@@ -1,0 +1,48 @@
+{
+  "task": "D132",
+  "base": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+  "working_change": {
+    "file": "tests/editing_conformance/test_recorded_graph_roots.py",
+    "location": "root_values occurrence:new-occ value gain",
+    "before": null,
+    "after": 1,
+    "working_diff": "one line, one file; no other files changed"
+  },
+  "diff_against_20177": {
+    "files": [
+      "tests/editing_conformance/test_recorded_graph_roots.py",
+      "tests/sdk/test_timeline_commit_graph_roots.py"
+    ],
+    "insertions": 7,
+    "deletions": 1
+  },
+  "ast_and_assertions": {
+    "fixture": {
+      "test_functions": 22,
+      "assertions_before": 90,
+      "assertions_after": 90,
+      "parametrize_decorators_before": 6,
+      "parametrize_decorators_after": 6,
+      "assertion_ast_sha256": "29f227e1808837a1853b7ae9428f3557a99acfaf8bfd19556f4222c10ac4063b"
+    },
+    "graph_consumer": {
+      "test_functions": 11,
+      "assertions": 33,
+      "parametrize_decorators": 7,
+      "ast_sha256": "4ab89fec5879cdfe361dc071ce821e9830795815f736236000c1d0ae24b61795",
+      "assertion_ast_sha256": "ef1df758a5c8bfd8c759962ade5335448fdc74b12df032c9e7805a3ab93fbcf8"
+    }
+  },
+  "input_hashes": {
+    "shot_root_unchanged_sha256": "f7f2c0201a9396bf8a46cdd2cfd4bb2cb229e6cf41bc6eec2bcddfbca5816b4e",
+    "occurrence_without_gain_unchanged_sha256": "8234cce6109a6cdf9963c3f97fba2cd4542c8e5c251237c932a4c61688c1191f",
+    "full_roots_before_sha256": "401b62f355a3636830f9eacaf02b65b97544c3d38925d10dbb43f75412a4045a",
+    "full_roots_after_sha256": "d432cd4379816659fe7f130987ba3781ad4bb00ad9a43c19fcfc095299dcd2d5",
+    "all_non_gain_inputs_equal": true
+  },
+  "consumers": [
+    "tests/sdk/test_timeline_commit_graph_roots.py",
+    "tests/sdk/test_timeline_semantic_reservations.py",
+    "tests/sdk/test_timeline_created_root_stage_redo.py"
+  ]
+}

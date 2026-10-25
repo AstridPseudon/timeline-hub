@@ -1,0 +1,22 @@
+{
+  "app_base_head": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+  "runtime_candidate_commit": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+  "runtime_candidate_helper_sha256_verified": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+  "runtime_helper_verification": "git show b81c0ab26df66c7e6f4656104a02e001224b3ffd:tests/helpers/p2_commit_phase_capture.py | sha256sum",
+  "app_target_before_blob": "6f21c0c53517f24da5551bee09382f2f37d5f392",
+  "app_target_after_uncommitted": true,
+  "scope": {
+    "product_files_changed": false,
+    "runtime_files_changed": false,
+    "agent_files_changed": false,
+    "schema_or_pin_files_changed": false,
+    "worktree_files_changed": [
+      "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+    ]
+  },
+  "source_prep": {
+    "selected_runtime_checkout": "/home/user/banodoco/banodoco-workspace-runtime",
+    "candidate_helper_path_present": false,
+    "candidate_activation": "not run"
+  }
+}
