@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { classifyBrowserEntry } from '@/app/entryClassification.ts';
 import { RUNTIME_CLIENT_SCOPES } from '@/integrations/runtime/client.ts';
 import { setRuntimeOrigin } from '@/integrations/runtime/connection.ts';
+import { SLOW_PROBE_TIMEOUT_MS } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { RUNTIME_SCHEMA_DIGEST, RUNTIME_TARGETED_EXECUTION_CAPABILITY } from '@/integrations/runtime/contract-metadata.ts';
 import type { Health, Handshake, MutationReceipt, Project, Realm } from '@/integrations/runtime/generated.ts';
 import { WelcomeFlow } from './WelcomeFlow.tsx';
@@ -138,6 +139,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   writeWelcomePhase(null);
@@ -157,6 +159,7 @@ function destination() {
 }
 
 it('recovers from hosted permission denial, creates a real canonical starter timeline, and hands its selection to normal editor entry', async () => {
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
   const door = runtimeDoor();
   chooseHosted();
   expect(await screen.findByRole('heading', { name: 'Allow Astrid in Chrome' })).toBeInTheDocument();
@@ -168,6 +171,10 @@ it('recovers from hosted permission denial, creates a real canonical starter tim
 
   door.acceptNextPrompt();
   act(() => changePermission('prompt'));
+  await act(async () => { await vi.advanceTimersByTimeAsync(SLOW_PROBE_TIMEOUT_MS); });
+  fireEvent.focus(window);
+  expect(door.requests.map(request => request.path)).toEqual(['/v1/health']);
+  expect(screen.queryByRole('main', { name: 'Opening your project' })).not.toBeInTheDocument();
   fireEvent.click(await screen.findByRole('button', { name: 'Connect' }));
   await waitFor(() => expect(replaceNavigate).toHaveBeenCalledOnce());
 

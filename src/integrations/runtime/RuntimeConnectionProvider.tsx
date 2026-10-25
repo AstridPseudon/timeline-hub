@@ -193,7 +193,7 @@ export function RuntimeConnectionProvider({
   pollIntervalMs = POLL_INTERVAL_MS,
   onConnected,
 }: RuntimeConnectionProviderProps) {
-  const [permission, setPermission] = useState<LocalNetworkPermissionState | null>(
+  const [permission, setPermissionState] = useState<LocalNetworkPermissionState | null>(
     () => gated && requireLocalNetworkPermission ? null : 'granted',
   );
   const [outcome, setOutcome] = useState<RuntimeProbeOutcome | null>(null);
@@ -213,7 +213,11 @@ export function RuntimeConnectionProvider({
   /** Sticky once a probe connects (set in `runProbe`, before the render): no probe starts after it. */
   const connectedRef = useRef(false);
   const permissionRef = useRef(permission);
-  permissionRef.current = permission;
+  const setPermission = useCallback((next: LocalNetworkPermissionState) => {
+    // Browser events can beat the next render and the cleanup of its granted-permission callbacks.
+    permissionRef.current = next;
+    setPermissionState(next);
+  }, []);
   const onConnectedRef = useRef(onConnected);
   onConnectedRef.current = onConnected;
 
@@ -250,7 +254,7 @@ export function RuntimeConnectionProvider({
       cancelled = true;
       unwatch();
     };
-  }, [gated, requireLocalNetworkPermission, canConnect, permissions]);
+  }, [gated, requireLocalNetworkPermission, canConnect, permissions, setPermission]);
 
   // Site settings do not always dispatch a permission change before this tab resumes.
   useEffect(() => {
@@ -268,9 +272,10 @@ export function RuntimeConnectionProvider({
       window.removeEventListener('focus', check);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [gated, requireLocalNetworkPermission, canConnect, permission, permissions]);
+  }, [gated, requireLocalNetworkPermission, canConnect, permission, permissions, setPermission]);
 
   const runProbe = useCallback(async function runProbe(untimed: boolean, explicit = false) {
+    if (!explicit && permissionRef.current !== 'granted') return;
     if (explicit && inFlight.current && inFlight.current === slowProbe.current) {
       inFlight.current.abort();
       inFlight.current = null;
@@ -314,7 +319,7 @@ export function RuntimeConnectionProvider({
       const current = await queryLocalNetworkPermission(permissions);
       if (mounted.current) setPermission(current);
     }
-  }, [fetchImpl, permissions, requireLocalNetworkPermission]);
+  }, [fetchImpl, permissions, requireLocalNetworkPermission, setPermission]);
 
   const isConnected = outcome?.kind === 'connected';
 
@@ -484,20 +489,17 @@ export function RuntimeConnectionGate({
     const installerEntry = consumeAutoConnectQuery();
     return connectOnEntry || installerEntry || autoConnectRequested();
   });
+  const autoConnectRef = useRef(autoConnect);
   const { gated, state, isBooting, isConnected, connect } = connection;
   const needsPermission = state.status === 'needs_permission';
   useEffect(() => {
-    if (!gated || !autoConnect) return;
-    if (needsPermission) {
-      // The flag is one-shot: after it is used, a later `prompt` (a permission reset) shows the explainer again.
-      takeAutoConnectRequest();
-      connect();
-      setAutoConnect(false);
-    } else if (isConnected || !isBooting) {
-      // The permission was not `prompt` (granted or denied), so the flag has nothing to do and must not linger.
-      takeAutoConnectRequest();
-      setAutoConnect(false);
-    }
+    if (!gated || !autoConnectRef.current) return;
+    if (!needsPermission && !isConnected && isBooting) return;
+    // Consume before probing: a permission reset can commit before setAutoConnect(false) renders.
+    autoConnectRef.current = false;
+    takeAutoConnectRequest();
+    setAutoConnect(false);
+    if (needsPermission) connect();
   }, [gated, autoConnect, needsPermission, isBooting, isConnected, connect]);
   if (!gated) return <>{children}</>;
   let overlay: React.ReactNode = null;
