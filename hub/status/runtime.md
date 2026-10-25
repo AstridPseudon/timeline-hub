@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T00:21:44Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
-# runtime board, 2026-10-25T00:19:37Z
+<!-- main | 2026-10-25T00:24:54Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-25T00:24:23Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -181,7 +181,7 @@
 | D83-schema-churn | Preserve stopped setup experiment | Sol | Structural fix supersedes experiment | gated:superseded | Worker2141 stopped | Checkpoint retained. No released source or original credit; no further micro-gain task. | Held |
 
 | D84-structural-history | Reuse replay proof within one request | Sol / Luna | Normal apply complete | merged | Author2145; release2202 | Security243+13 pass; author1038 pass. Ten new attacks pass on candidate. [Release](../../design/runtime-D84a-release-2205.md) | beb1dafbd /732c48c6f |
-| R-P2-parent-runtime | Qualify corrected parent on main | Luna / main service | Serial single original still running | doing | Parent6629 NO-GO; single4151 | Parent reaches strict Undo envelope355 then fails equality. Same fixed364f/039f/732/635f; single has preflight/readiness PASS. | App364f /Runtime732 |
+| R-P2-parent-runtime | Preserve new parent and single findings | Luna / App source | Strict Undo discrepancy correction | blocked:app | Main0006; parent6629/single4151 | Both exact364f originals reach Undo355 equality; expected reads[] but actual omits reads. Source cause unassigned to product. No retry. | App364f /Runtime732 |
 
 | D84-lock-placement | Test head-only CAS authority limit | Sol / Luna | Exact candidate tests passed | merged | Author2147; release2202 | Ten tests pass on memo candidate. No product lock change; head-only CAS insufficient. [Proof](../../design/runtime-D84-lock-placement-2147.md) | 746d745478 /61a16a221 |
 
@@ -226,22 +226,26 @@
 | D86-parent-swap12 | Preserve selected parent swap scenarios | Luna / Agent review | Protected source review | review | agt-D86-main-parent-swap-0013 | Twelve selectors and six bodies conserved. Compile/mypy PASS; Ruff parent-equivalent. Normal remote review requested; no body. | 2f935f6d4d held |
 | D86-numeric9 | Preserve exact numeric move and params | Luna / Agent review | Protected source review | review | agt-D86-main-numeric-0013 | Exact original types/ASTs retained, statics PASS. Fixture-builder probe outside brief disclosed and uncredited; no family qualification. | ec76fa69e6 held |
 | F-final-D87 | Preserve retired CLI migration notes | Luna / Agent text | Exact reviewed Agent0007 handback | blocked:agent | Agent ledger0007; existing Runtime docs owner | D87 forbids new native envelope. Approved24 IDs need named current replacements; same exact map drives final docs and main live membership. | Text and map pending |
+| D86-CLI8-review | Review actual CLI retries and refusals | Luna | Exact corrected27dc source | review | rt-D86-CLI-review-0022 | Fresh independent review after first failure; real store behavior and strict mismatch reason, all original12 bodies/8 cases. No body. | 27dc8f04cd held |
+| D86-inverse10-review | Review genuine shared allocation | Luna | Exact corrected4a16 source | review | rt-D86-inverse10-review-0022 | Native shared placement must preserve original physical identity, inverse and ABA cases. All10 original predicates, no body. | 4a16d56238 held |
+| D86-scalar11-review | Review scalar setup conservation | Luna | Exact Agent f2def source | review | rt-D86-scalar11-review-0022 | One-file source delta; genuine scalar before state/provider and11 original predicates. Exact original brief export requested. No body. | f2def38890 held |
+| D86-word11-review | Review retained word input capture | Luna | Exact Agent7d0 source | review | rt-D86-word11-review-0022 | Genuine audio/transcript capture/clear, exact11 original predicates and D23 scope. Original brief export requested. No body. | 7d0e6c07a6 held |
 Runtime producer: RELEASED a3cd1a3214fa1632879c21d82d1abb9ea720b1de, tree64bb0caf0b7b950e02c4075077868a3dcd12ee06. Canonical15/schema867f unchanged. [Security and release](../../design/runtime-R2-provider-security-2346.md).
 
 core open: P4 ten-note remains45.314s. Bad9/7627 security failures stay held. Full-provider6a9 passed independent final security and is released in normal a3cd; Agent normal adoption and one remaining original are ready. Four R2 originals retain actual7c48/732 qualification. Element7131 remains failed5s; App current adoption and original are ready. Source release alone closes no original timing failure.
 regressions: No newly established Runtime regression. D77 genuine installed render remains cut-blocking. Known gaps and original historical failures remain visible at their recorded scopes.
 Gates: P1 GO31083 and P3 GO15493/independent2024 retain recorded tuples. All eight P2 remain unqualified; final P1–P5 and core matrix on one tuple still required. No cut, final build or ZIP.
 
-Blockers: Agent P4 — qualified Runtime a3cd consumed; normal Agent adoption0010 active. One unchanged45s ten-note original follows actual home. Four R2 stay closed at prior exact scope. No Runtime source input owed.
+Blockers: Agent P4 — normal Agentfbbae adopts qualified a3cd; remaining ten-note original ready. Agent free4.49GB below6GB submission floor. Agent cleanup active; no duplicate main P4 body or final venue change authorized.
 Blockers: App P2 — element7131 fails5s. Mounted drops source is home def3; actual asset12239 pending. ADD22240 reached canonical/history then wire333 failure; App2347 owns traffic. Tour home364f; bulk display2347 active. SWAP remote merge requested after PASS.
 Main profile: CLEARED by2250 private exact635f package resolution and four actual preflights PASS. Parent8232 terminal at exact request envelope; shared dependencies unchanged. Historical setup failures retained. [Prior report](../../design/runtime-main-profile-2238.md).
 Blockers: Final cut — D59 requires all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Private final candidates remain uninstalled. Rehearsal retry waits heavy8.5GB threshold and critical priority.
-Next ready: Agent and App adopt released a3cd now and run existing remaining originals. App consumes reviewed SWAP80a remote merge. Main CLI first return2358 and batch union2356 active; other five families await Agent protected review.
+Next ready: Four main protected reviews0022 return to Agent for normal merges/corrections. App owns new shared Undo reads discrepancy before parent/single retry; authentic new tuple needed for SWAP/bulk. Agent P4 source ready, venue disk held.
 
 Venues: App P1/P2/P3 and final P2 tour; Agent P4; main P5/Composition. Spare main four diagnostics use fixedbceb/039f/732/635f only. D73 captures tuple once, genuine checkout receipts and preflight precede body. Newer heads do not invalidate an in-flight run.
 Delivery: Runtime merge, Agent merge, authentic App manifest command with schema digest equality, App merge. D65/D67/D72 docs installed. D77 render and D62 submit-completeness known gap remain explicit.
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7521595392 available bytes at23:31; sourcecap6 underD85, service tiers retained. Sweep3 removed0; compact packed0 and gzipped10old logs. No ended clean nonKEEP Runtime tree eligible; no refused-target retry.
 
-live 1 / cap 6 source; ready-undispatched 0. Main producer0006 finishing serial single4151 and same-ID packet. All eight Agent authors returned; protected reviews/home joins pending. No main family body or live batch install. Heavy cap1 below7.5GB.
-Current pass 2026-10-25T00:19:37Z: INBOX through647565 bytes. Main parent6629 progressed to strict Undo355 NO-GO; single4151 remains same-ID. Extra21 reports exported verbatim and remote requests issued. Numeric fixture probe remains explicitly outside accepted proof. No new source tasks unassigned.
+live 4 / cap 6 source; ready-undispatched 0. CLI8/inverse10/scalar11/word11 protected reviews0022 active. Parent/single complete NO-GO; no main body. Main free6484406272 bytes means no further source dispatch below6.5GB; existing reviews continue.
+Current pass 2026-10-25T00:24:23Z: INBOX through652460 bytes. Four new exclusive reviews assigned immediately. Both main original packets complete; exact shared Undo reads mismatch returned to App. Normal Agenta3cd adoption accepted; P4 venue below6GB. No ready main source ignored.
