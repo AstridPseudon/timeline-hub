@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T10:36:23Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 24 | status age 8m -->
-# agent board, 2026-10-25T10:28Z
+<!-- agent | 2026-10-25T10:39:43Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 21 | status age 1m -->
+# agent board, 2026-10-25T10:38Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -309,7 +309,7 @@
 | D115 next full core | Measure after cluster fixes | Luna / service | Reviewed cluster fixes and disk | gated:cluster-fixes | No body submitted | One unfiltered full rerun after meaningful cluster repairs. Heavy floor5.2GB; no duplicate or P4 repeat. | Current count437 |
 | D69 narrow source review | Review actual predicate equivalence | Luna independent | Exact original400 assertions | merged | Core/stage/writers0918 | Core72 PASS1 gap; stage65 PASS1 gap2 unresolved; writers71 PASS. Exact purposes mapped; faithful repairs remain, no full audit PASS. | Read only |
 
-| D115 effect image83 | Authenticate ordinal boundary images | Runtime Luna / security | Qualified Runtime source release | blocked:runtime | rt-D115-intermediate-image-1002 | Confirmed unchanged intermediate parent compared with finalcandidate. Exact AgentRED regression and manifest now flatpublished1020; guard remains strict. | Runtime candidate held |
+| D115 effect image83 | Authenticate ordinal boundary images | Runtime Luna / security | Normal Agent adoption then current proof | ready | Runtime369 release1025; peer1046 | Exact reviewed Runtime369 RELEASED; strict321/native2 PASS. Local30693 tuple stays1daca;83 closure requires next authorized source batch proof. | Runtime369ffa7c00 |
 | D115 fixture reviews | Review three disjoint corrections | Luna independent | Source PASS for each diff | merged | Batch0932 PASS A/B/C | Pair16, legacy27 and native54 each conserve input and predicates. Former ENV42 PASS; one metadata failure and native legacy scope remain open. | Source reviews only |
 | D115 native seed scope | Apply current-contract seed ruling | Orchestrator / Luna | D11609:35 | merged | HeaderD116; word-seed0947 | Scope answered; no decision wait. Seed and first-use outcomes adapt under C0; short-negative intervals remain exact. | Decision only |
 | D69 faithful restore | Restore closure and render predicates | Luna / independent Luna | Next meaningful integrated proof | merging | Author0936; review0944 PASS | Core1 PASS; all original predicates retained. Renderer source PASS, behavior blocked by missing provisioned dependencies. Normal mergee9e3. | f480342d4f |
@@ -330,9 +330,9 @@
 | D118 next full core | Measure reviewed current batch | Luna / service | Terminal actual30693 | doing | CoreD89a1024; service30693 | Genuine tests RUNNING on120d/1daca/96d475/635f. Prior15065 zero-test same-file setup failure retained. Named4.7GB controls passed. | Fixed120d71202a |
 | D115 producer input | Preserve sealed predecessor manifest | HARD Sol / Luna | Runtime output projection then full core | review | Sol1002; review1020 | Original32 PASS; producer112 PASS1 FAIL. Remaining Runtime2864 preserves stale output revision when consumed manifest changes. Candidate held. | 82b6d00d7f held |
 | D118 validation17 | Preserve exact remaining word purposes | Luna read only | Genuine D116 baseline | merged | Source1005 PASS evidence | Exact17 mapped separately from approvedten; named current companion proposed after genuine seed. Original17 remain live. | Evidence only |
-| D118 App audio2 | Preserve exact prepared audio source | App Luna requested | Actual App author receipt | blocked:app | App allocator; peer0956 | Compile-contracts file reserved; two exact audio negative purposes kept. Source-only author, normal protected remote merge. | Source pending |
-| D118 App sheet15 | Preserve current HTTP sheet behavior | App Luna requested | Actual App author receipt | blocked:app | App allocator; peer0956 | Current-sheet file reserved;15 exact original outcomes, all rational/opaque/undo assertions kept. No local duplicate. | Source pending |
-| D118 App WC6three | Preserve mounted provider capture | App Luna requested | Actual App author receipt | blocked:app | App allocator; peer0956 | Two WC6 files reserved; current fixture159e applicability checked before correction. Three exact retained IDs. | Source pending |
+| D118 App audio2 | Preserve exact prepared audio source | App Luna / independent | Actual future core on corrected source | merging | Author1015; review1017; homee8b1 | Source-only correction keeps52 original AST assertions, genuine managed WAV and strictprobe. Current30693 predates it; functionalproof owed. | e8b1a517f6 |
+| D118 App sheet15 | Preserve current HTTP sheet behavior | App Luna / Agent input | Proved current verified-media caller shape | blocked:app | Author1015; inputs1040; peer1040 | Exact15 classes/frames recovered. Thirteen KeyErrors at verified object_id fixture; all248 assertions unchanged. Completepreparedrecords EXACTMISSING. | Source unchanged |
+| D118 App WC6three | Preserve mounted provider capture | App Luna / independent | Exact source successor and actual proof | merging | Author1015; review1021; normal7b96 | Two-line SOURCEPASS, offline12 PASS3 FAIL. Existing Appowner1042 asked exactmockcleanup/mountedwrapper/helper-hash follow-through. | 7b96e1effa |
 
 | D115 safe peer inputs | Publish existing exact source packets | Luna | Existing immutable artifacts | merged | agt-F-D118-peer-inputs-1020 PASS | Exact effect83 and producer packets published with full hashes; App reserved20 tail IDs and commands handed back1026. No body or source claim. | Evidence only |
 | D118 host bootstrap14 | Repair pristine-upstream regressions | Luna read only | Full run ends then narrow source author | gated:full-core | Diagnosis1022 complete | Fourteen exact REG at Remotion startup override guard before launch assertions. Productionhost environment is next writer; tests unchanged. | Source unchanged |
@@ -351,8 +351,8 @@ Blockers: Agent D107 — Current equivalent remains held on2154. Source review07
 Blockers: Agent core437 and14 bounded regressions — D115 cluster workers own the top locations; current count is measured438 minus one independently qualified D110 setup fix. No whole-cluster closure from source alone.
 Blockers: Agent D69 — Exact129/113/287 membership mapped in two0902 partitions. Predicate purpose and approved replacement receipts remain uncleared; two manifest blob mismatches remain explicit.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
-Next ready: full30693 terminal classification. Then D116 first return, host bootstrap14 correction, D69 XML predicates and D100 duplicate seed. Product source batches need full core before adoption.
-live 6 / cap 6; ready-undispatched 0 eligible starts. Sole core1024 plus five D69 readonly review batches1032. New source starts gated during fullrun; existing App tails and Runtime authors remain independent.
+Next ready: Runtime peer1046 tool-only369adoption onMAIN, Appsheet/WC6 source follow-through, full30693 classification. Afterfull: D116return, host14, D69XML and D100fixture. Productsource batches needfullbeforeadoption.
+live 2 / cap 6; ready-undispatched 0 eligible local starts. Sole core1024 and D69 join1042. Available4.99GB is below5.0 source/review floor; full continues byD89a. New localsource waitsfullterminal.
 Inbox consumed through1528270 bytes. Updated 2026-10-25T10:28Z. D89a core floor4.7GB consumed; no ready full body waits for5.2GB.
 Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
 Later: MAIN profile input — Resolved by D108b local venue. Runtime confirms MAIN0759 unsubmitted and retained; no duplicate body. Local0811 uses genuine819acf/lockf4fc/registryd609.
@@ -371,3 +371,9 @@ D118 accounting overlay1022: Exact506 now PRE0 / deferred1 / ENV45 / REG14 / NEW
 D69 five1032: Readonly odd groups5,11,13,29,31;37,39,47,57,59;69,75,81,85,89;101,105,113,125; even0,4,6,12,14. Each scope gets its own semantic verdict; no new body during core.
 Blockers: Runtime output projection — Agent producer82b6 independent1020 PASS_SOURCE/HOLD; original32 PASS, unchanged mounted regression fails auth2864 when consumed manifest changes without payload change. Exact safe packet1020 supplied.
 Blockers: Full current count — actual30693 running; no source-only packet or historical row implies a current full PASS. Source authors wait terminal perD108b.
+
+| U4a D115 adoption | Adopt released ordinal-boundary producer | Runtime-hosted Luna requested | Runtime allocator and normal tool receipt | blocked:runtime | Peer1046 sent | Only provenance lock changes;15canonical mappings stayexact. Localfull source-start hold respected; remote toolworker can proceed independently. | Released369ffa7c00 |
+
+D69 review progress1032/1042: all19 residualodd and20 residueeven functions reviewed. Independentjoin checks machinecounts and explicit approvals; index107 two XMLpredicates requirefaithful addition. No globalauditPASS.
+
+Source holds1046: D116first-return1040 brief ready; host14 narrow author, D69twoXMLassertionauthor and D100duplicatefixture correction wait current30693terminal. No readylocal author left idle against source-start hold.

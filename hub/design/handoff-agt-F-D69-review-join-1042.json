@@ -1,0 +1,13 @@
+{
+  "task": "agt-F-D69-review-join-1042",
+  "status": "NOT_WHOLE_AUDIT_PASS",
+  "report": "workers/agt-F-D69-review-join-1042/report.md",
+  "evidence": "workers/agt-F-D69-review-join-1042/evidence/d69-join.json",
+  "membership": {"changed_bodies":129,"removed_assertion_fingerprints":113,"added_assertion_fingerprints":287},
+  "current_normal": {"commit":"7b96e1effa550635fa795a17839d47116e4d2906","tree":"a6a3be5ec030c78850022a7a11f46987d73645ba","ast_mismatch_indexes":[9,90]},
+  "joined_function_indexes_disjoint": true,
+  "joined_function_index_count": 64,
+  "unresolved_indexes": {"odd_b":[57,59],"odd_five":[107],"behavior_pending":[90]},
+  "odd_b_machine_correction": {"function_count":5,"indexes":[37,39,47,57,59],"removed_units":5,"added_units":8},
+  "tests": "N/A by task instruction"
+}
