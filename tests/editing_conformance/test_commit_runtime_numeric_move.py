@@ -79,7 +79,6 @@ def test_native_move_keeps_exact_numeric_image_and_unchanged_history(numeric_fil
         values['hold'] = 0.25
     baseline = capture_clip_set(bundle, ref, values=values)
     case.submit([baseline], 'numeric-baseline')
-    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
     original, base = case.document(), case.head()
     bundle = commit.bundle_from_document(original)
     command = capture_move(bundle, ref, on)

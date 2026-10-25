@@ -23,7 +23,6 @@ pytestmark = pytest.mark.integration
 def test_native_film_param_edit_preserves_exact_image_and_inverse(
         numeric_film, ref, before, after):  # noqa: F811 - imported pytest fixture
     case = numeric_film
-    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
 
     def set_x(value, key):
         command = capture_clip_set_params(commit.bundle_from_document(case.document()), ref,
