@@ -36,10 +36,12 @@ def test_exact_captured_redo_reaches_prepared_with_original_ids_without_writes(c
     from runtime_protocol.util import canonical_json
 
     before, request = captured['before'], captured['request']
-    connection = sqlite3.connect(':memory:', isolation_level=None)
+    database_path = tmp_path / 'realm.sqlite3'
+    connection = sqlite3.connect(database_path, isolation_level=None)
     connection.row_factory = sqlite3.Row
     connection.executescript('\n'.join(before['database']))
-    store = SimpleNamespace(conn=connection, _mutex=threading.RLock(), cas_root=tmp_path / 'cas')
+    store = SimpleNamespace(
+        conn=connection, db_path=database_path, _mutex=threading.RLock(), cas_root=tmp_path / 'cas')
     # Exact bytes from the original seed_shared_occurrence_parent, verified
     # against the retained pins; no new source or accepted history is created.
     pins = {pin['media_id'] for pin in before['document']['dependency_manifest']['media']}
