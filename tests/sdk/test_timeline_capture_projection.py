@@ -222,15 +222,21 @@ def _saved_document(runtime):
         if shot_key not in seen_shots:
             seen_shots.add(shot_key)
             shot = runtime.get_project_shot_revision(runtime.project_id, *shot_key)
-            shots.append(shot)
+            shots.append({key: shot[key] for key in (
+                "shot_id", "revision_id", "internal_timeline_revision_id",
+                "content_digest", "payload",
+            )})
         internal_id = next(row for row in shots if (row["shot_id"], row["revision_id"]) == shot_key)[
             "internal_timeline_revision_id"
         ]
         if internal_id not in seen_internals:
             seen_internals.add(internal_id)
-            internals.append(runtime.get_project_timeline_revision(
+            internal = runtime.get_project_timeline_revision(
                 runtime.project_id, runtime.timeline_id, internal_id,
-            ))
+            )
+            internals.append({key: internal[key] for key in (
+                "timeline_id", "revision_id", "content_digest", "payload",
+            )})
     return {
         "schema_version": 1,
         "project_id": runtime.project_id,
@@ -276,6 +282,59 @@ def saved_closure(saved_runtime):
     from astrid.sdk.timeline_editing import duplicate_authoring_shot, remove_authoring_shot
 
     runtime = saved_runtime
+    document = _saved_document(runtime)
+    # D100's reviewed physical-membership path (Agent d3b5cfef76b4b3abef5db5f8288abc214a61354f)
+    # admits the empty published item list directly on its original physical
+    # source through a guarded doc.patch, then reloads the accepted canonical
+    # closure before the opaque source graph is authored below.
+    source_bundle = bundle_from_document(document)
+    source_placement = source_bundle["placements"][0]
+    source_shot = source_bundle["shots"][source_placement["shot_id"]]
+    source_pin = source_bundle["source_mapping"]["shots"][source_placement["shot_id"]]
+    source_media_id = source_shot["internal_timeline"]["registry"]["assets"][
+        source_shot["internal_timeline"]["clips"][0]["asset"]
+    ]["media_id"]
+    source_item = {
+        "item_id": "item-1", "media_id": source_media_id,
+        "source_frame": None, "metadata": {"opaque_literal": "item-1"},
+    }
+    item_patch = {
+        "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+        "args": {"changes": [{
+            "op": "set", "ref": "shot-revision:" + source_pin["revision_id"],
+            "path": ["items"], "before": {"state": "present", "value": []},
+            "value": [copy.deepcopy(source_item)],
+        }]},
+    }
+    head = runtime.service.get_project_timeline(runtime.project_id, runtime.timeline_id)
+    item_change = copy.deepcopy(item_patch["args"]["changes"][0])
+    admitted = runtime.service.commit_timeline(
+        runtime.project_id, runtime.timeline_id,
+        {
+            "api_version": 1, "project_id": runtime.project_id,
+            "timeline_id": runtime.timeline_id,
+            "base_revision_id": head["head_revision_id"],
+            "base_publication_id": head["head_publication_id"],
+            "commands": [item_patch],
+            "label": "Original source items",
+            "steps": [
+                {"id": "0", "label": item_patch["op"],
+                 "intent": "Original physical edit", "tags": ["integration"],
+                 "command_ordinals": [0], "patch": [item_change]},
+            ],
+            "merge": "fields",
+            "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
+            "dry_run": False, "source": {"via": "python"},
+            "rationale": "Sequential source provenance",
+        },
+        idempotency_key="capture-projection-source-items",
+        publisher="capture-projection-fixture",
+        invocation_path=f"/v1/projects/{runtime.project_id}/timelines/{runtime.timeline_id}/commit",
+        authorize=lambda: None,
+    )
+    assert admitted["data"]["status"] == "accepted"
+    canonical = admitted["data"]["canonical_document"]
+    runtime.parent_revision_id = canonical["parent_revision"]["revision_id"]
     document = _saved_document(runtime)
     parent = document["parent_revision"]
     bundle = open_authoring_bundle(
@@ -329,6 +388,21 @@ def saved_closure(saved_runtime):
     source_internal["registry"]["opaque_registry"] = {"keep": [1, 2, 3]}
     source_internal["tracks"][0]["opaque_track"] = {"future": True}
     source_internal["clips"][0]["opaque_clip"] = {"literal": "item-1"}
+
+    # Duplication verifies its source against Runtime history. Persist the
+    # authored source through the registered provider, then read its exact
+    # accepted closure so the duplicate baselines have genuine provenance.
+    source_publication = publish_authoring_candidate(
+        bundle, _RuntimeAuthoringWriter(runtime.service),
+        idempotency_key="capture-projection-authored-source",
+    )
+    runtime.parent_revision_id = source_publication["publication"]["parent_revision_id"]
+    document = _saved_document(runtime)
+    bundle = bundle_from_document(document)
+    source_shot = bundle["placements"][0]["shot_id"]
+    source = bundle["shots"][source_shot]
+    source_payload = source["payload"]
+    source_internal = source["internal_timeline"]
 
     # The current duplicate API copies the explicit authoring baselines.  The
     # source is removed below, so author its complete current image before the
