@@ -1,0 +1,69 @@
+{
+  "custody_version": 1,
+  "task": "D132a/G3/R2",
+  "method": "read-only in-place inspection; git commit/tree/blob identities recorded; no source acquisition",
+  "agent": {
+    "path": "/home/user/work/wt/app-D132a-child-boundary-applicability-1744",
+    "commit": "224de4697c36b8958d94c0b85626e0fedaf007cb",
+    "tree": "3db8babbbdaf9a011d2eab9e27884c6c195cd76c",
+    "clean_at_end": true,
+    "files": {
+      "astrid/sdk/timeline/_recording.py": "523a1280ab916734cefae836adb7c89b6ead2f2f",
+      "astrid/sdk/timeline/commands.py": "10a6c7f0548f04af4820443a0b01cc38bbacbc43",
+      "astrid/sdk/timeline/_commit_preview.py": "daeed358b72e852abe9ee4bad367dc454bd91ba1",
+      "astrid/sdk/timeline/_commit_patch.py": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+      "tests/editing_conformance/test_recorded_graph_roots.py": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81",
+      "tests/sdk/test_timeline_commit_graph_roots.py": "303d076e108132d02133171aa77059b565e93e23"
+    }
+  },
+  "runtime": {
+    "frozen5e9ad": {
+      "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "files": {
+        "runtime_protocol/timeline_commit_auth.py": "66d899edaac201a1700e7ddf9f62091753201bc9",
+        "runtime_protocol/service.py": "d5e3ab4fd4f4c3b8243f2f6141d1eeb718c93fc4",
+        "runtime_protocol/timeline_commit_port.py": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+        "runtime_protocol/timeline_commit_store.py": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+        "contract/commit-v2.md": "257024df6fa93be767f0c74ee10014a6770c4fcb"
+      }
+    },
+    "qualifiednormalab1e": {
+      "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "files": {
+        "runtime_protocol/timeline_commit_auth.py": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+        "runtime_protocol/service.py": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144",
+        "runtime_protocol/timeline_commit_port.py": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+        "runtime_protocol/timeline_commit_store.py": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+        "contract/commit-v2.md": "257024df6fa93be767f0c74ee10014a6770c4fcb"
+      }
+    }
+  },
+  "comparison": {
+    "runtime_auth_only_changed_among_cited_auth_files": true,
+    "auth_diff_stat": "58 insertions, 15 deletions",
+    "qualified_hunks": [
+      "validate_step inverse-only restored occurrence absence handling",
+      "materialization binding complete-step input boundary",
+      "inherited inverse shot-root retirement recognition",
+      "inverse-stage native-site turnover/pin replay",
+      "deferred validate_step until inverse effect boundaries"
+    ],
+    "native_site_hunk_changed": false,
+    "contract_changed": false,
+    "service_route_changed": false
+  },
+  "source_citations": [
+    "Agent tests/editing_conformance/test_recorded_graph_roots.py:112-123",
+    "Agent astrid/sdk/timeline/_recording.py:89-115,249-283",
+    "Agent astrid/sdk/timeline/commands.py:231-304",
+    "Runtime frozen5e9ad runtime_protocol/timeline_commit_auth.py:100-172,213-218,382-419",
+    "Runtime frozen5e9ad runtime_protocol/service.py:2468-2547",
+    "Runtime frozen5e9ad runtime_protocol/timeline_commit_store.py:1491-1536",
+    "Runtime qualifiednormalab1e runtime_protocol/timeline_commit_auth.py diff hunks only"
+  ],
+  "private_material": "raw requests, records, XML/logs, URLs, credentials, keys, and private authority material excluded"
+}

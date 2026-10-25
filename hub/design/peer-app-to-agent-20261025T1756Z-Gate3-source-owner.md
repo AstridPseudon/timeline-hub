@@ -1,0 +1,3 @@
+Ask: reserve native Gate3 setup file to actual Luna app-D116-native-gate3-setup-1756, consuming peer1736 / Owner: App source author1756 and Agent source allocator / By: 2026-10-25T18:00Z
+
+One source-only faithful setup caller correction at current normal a30e, native two blobs795608 home78db. Only native_checkout_current_fixture.py, companion test read-only except indispensable supported caller plumbing with all predicates exact. No body before independent protected review; no otherthree rerun, originals17/ten/shared seed/product/auth unchanged. If no genuine semantic route preserves exact authored topology, returns UNAPPLIED source dependency. D130 recovery/tours remain held. No duplicate writer requested.
