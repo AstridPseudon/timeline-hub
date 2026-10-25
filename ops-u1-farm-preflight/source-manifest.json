@@ -1,0 +1,193 @@
+{
+  "schema_version": 2,
+  "task": "rt-U1-D135-farm-preflight-2116",
+  "venue": "Farm",
+  "source_tuple": {
+    "runtime_commit": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+    "runtime_tree": "73d92563277d2ba5e49b788924c07426a2fdec4a",
+    "agent_commit": "32dde0c035f59029064fe782d5147d4e68e75835",
+    "agent_tree": "81ad4d2d674df3bd096943eb542c949ff011469c"
+  },
+  "pythonpath_order": [
+    "$RUNTIME_CHECKOUT",
+    "$RUNTIME_CHECKOUT/packages/python",
+    "$RUNTIME_CHECKOUT/tests",
+    "$ASTRID_CHECKOUT"
+  ],
+  "required_distributions": [
+    {"distribution": "pytest", "import": "pytest", "minimum": ">=8"},
+    {"distribution": "pytest-timeout", "import": "pytest_timeout", "minimum": ">=2.4"},
+    {"distribution": "PyYAML", "import": "yaml", "minimum": ">=6"},
+    {"distribution": "jsonschema", "import": "jsonschema", "minimum": ">=4"},
+    {"distribution": "referencing", "import": "referencing", "minimum": ">=0.30"}
+  ],
+  "actual_modules": [
+    {
+      "module": "tests.conftest",
+      "path": "tests/conftest.py",
+      "sha256": "50917ded0ac0dc214d24c60894bf62f3b574eaa3f81740bc91eb5dc4739cd476",
+      "top_level_imports": [
+        {"module":"__future__","names":["annotations"],"line":1,"guarded":false,"platform_optional":false},
+        {"module":"shutil","names":["shutil"],"line":3,"guarded":false,"platform_optional":false},
+        {"module":"os","names":["os"],"line":4,"guarded":false,"platform_optional":false},
+        {"module":"signal","names":["signal"],"line":5,"guarded":false,"platform_optional":false},
+        {"module":"subprocess","names":["subprocess"],"line":6,"guarded":false,"platform_optional":false},
+        {"module":"sys","names":["sys"],"line":7,"guarded":false,"platform_optional":false},
+        {"module":"time","names":["time"],"line":8,"guarded":false,"platform_optional":false},
+        {"module":"pathlib","names":["Path"],"line":9,"guarded":false,"platform_optional":false},
+        {"module":"pytest","names":["pytest"],"line":11,"guarded":false,"platform_optional":false},
+        {"module":"tests.astrid_checkout","names":["astrid_importable"],"line":13,"guarded":false,"platform_optional":false},
+        {"module":"tests.lanes","names":["pytest_collection_modifyitems","pytest_configure"],"line":14,"guarded":false,"platform_optional":false},
+        {"module":"tests.process_groups","names":["ProcessGroups"],"line":15,"guarded":false,"platform_optional":false}
+      ]
+    },
+    {
+      "module": "tests.test_process_control",
+      "path": "tests/test_process_control.py",
+      "sha256": "260ea8f64aaf3f9e919d4086688cc5bed2aa427c0a963fb6a9e01ef0c6d8a696",
+      "top_level_imports": [
+        {"module":"__future__","names":["annotations"],"line":3,"guarded":false,"platform_optional":false},
+        {"module":"errno","names":["errno"],"line":5,"guarded":false,"platform_optional":false},
+        {"module":"json","names":["json"],"line":6,"guarded":false,"platform_optional":false},
+        {"module":"os","names":["os"],"line":7,"guarded":false,"platform_optional":false},
+        {"module":"signal","names":["signal"],"line":8,"guarded":false,"platform_optional":false},
+        {"module":"subprocess","names":["subprocess"],"line":9,"guarded":false,"platform_optional":false},
+        {"module":"sys","names":["sys"],"line":10,"guarded":false,"platform_optional":false},
+        {"module":"time","names":["time"],"line":11,"guarded":false,"platform_optional":false},
+        {"module":"pathlib","names":["Path"],"line":12,"guarded":false,"platform_optional":false},
+        {"module":"pytest","names":["pytest"],"line":14,"guarded":false,"platform_optional":false},
+        {"module":"astrid_runtime.bootstrap","names":["BootstrapConfig","SourceProfile"],"line":16,"guarded":false,"platform_optional":false},
+        {"module":"astrid_runtime.paths","names":["RuntimePaths"],"line":17,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol","names":["platform","process_control"],"line":18,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.errors","names":["ConflictError"],"line":19,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.store","names":["RealmStore"],"line":20,"guarded":false,"platform_optional":false},
+        {"module":"tests.lanes","names":["linux_only"],"line":21,"guarded":false,"platform_optional":false}
+      ]
+    },
+    {
+      "module": "tests.test_platform_signaling",
+      "path": "tests/test_platform_signaling.py",
+      "sha256": "520dccc3cab41d9c8eded56b101c48bc960e1294d77246281880371bae2d10ec",
+      "top_level_imports": [
+        {"module":"__future__","names":["annotations"],"line":1,"guarded":false,"platform_optional":false},
+        {"module":"ctypes","names":["ctypes"],"line":3,"guarded":false,"platform_optional":false},
+        {"module":"errno","names":["errno"],"line":4,"guarded":false,"platform_optional":false},
+        {"module":"os","names":["os"],"line":5,"guarded":false,"platform_optional":false},
+        {"module":"signal","names":["signal"],"line":6,"guarded":false,"platform_optional":false},
+        {"module":"subprocess","names":["subprocess"],"line":7,"guarded":false,"platform_optional":false},
+        {"module":"sys","names":["sys"],"line":8,"guarded":false,"platform_optional":false},
+        {"module":"types","names":["SimpleNamespace"],"line":9,"guarded":false,"platform_optional":false},
+        {"module":"unittest.mock","names":["Mock"],"line":10,"guarded":false,"platform_optional":false},
+        {"module":"pytest","names":["pytest"],"line":12,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol","names":["platform"],"line":14,"guarded":false,"platform_optional":false},
+        {"module":"tests.lanes","names":["requires_linux_tree_custody"],"line":15,"guarded":false,"platform_optional":false}
+      ]
+    },
+    {
+      "module": "tests.test_door_routes",
+      "path": "tests/test_door_routes.py",
+      "sha256": "9b757d2c7d1125a76db1ad188672429e2b2e9ea2007cc0f248eda96331c8b67d",
+      "top_level_imports": [
+        {"module":"__future__","names":["annotations"],"line":10,"guarded":false,"platform_optional":false},
+        {"module":"pytest","names":["pytest"],"line":12,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.door","names":["classify","object_cache_control"],"line":14,"guarded":false,"platform_optional":false}
+      ]
+    },
+    {
+      "module": "tests.test_managed_output_public_api",
+      "path": "tests/test_managed_output_public_api.py",
+      "sha256": "89c4b3f0aa7998c334d4635524ebb22b75f2f4930f5a028ca8e390c260c82a90",
+      "top_level_imports": [
+        {"module":"__future__","names":["annotations"],"line":1,"guarded":false,"platform_optional":false},
+        {"module":"base64","names":["base64"],"line":3,"guarded":false,"platform_optional":false},
+        {"module":"hashlib","names":["hashlib"],"line":4,"guarded":false,"platform_optional":false},
+        {"module":"pytest","names":["pytest"],"line":6,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.errors","names":["ConflictError","ValidationError"],"line":8,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.service","names":["RuntimeService"],"line":9,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.store","names":["RealmStore"],"line":10,"guarded":false,"platform_optional":false}
+      ]
+    },
+    {
+      "module": "tests.test_timeline_commit_contract",
+      "path": "tests/test_timeline_commit_contract.py",
+      "sha256": "59693de6b54c7b2660469a771e6d705cdcb4fd512c5700b9089ddb232838404b",
+      "top_level_imports": [
+        {"module":"__future__","names":["annotations"],"line":1,"guarded":false,"platform_optional":false},
+        {"module":"copy","names":["copy"],"line":3,"guarded":false,"platform_optional":false},
+        {"module":"json","names":["json"],"line":4,"guarded":false,"platform_optional":false},
+        {"module":"os","names":["os"],"line":5,"guarded":false,"platform_optional":false},
+        {"module":"subprocess","names":["subprocess"],"line":6,"guarded":false,"platform_optional":false},
+        {"module":"sys","names":["sys"],"line":7,"guarded":false,"platform_optional":false},
+        {"module":"pathlib","names":["Path"],"line":8,"guarded":false,"platform_optional":false},
+        {"module":"typing","names":["Any","get_type_hints"],"line":9,"guarded":false,"platform_optional":false},
+        {"module":"pytest","names":["pytest"],"line":11,"guarded":false,"platform_optional":false},
+        {"module":"yaml","names":["yaml"],"line":12,"guarded":false,"platform_optional":false},
+        {"module":"astrid_runtime_client","names":["ApiError","WorkspaceClient"],"line":13,"guarded":false,"platform_optional":false},
+        {"module":"jsonschema","names":["Draft202012Validator"],"line":14,"guarded":false,"platform_optional":false},
+        {"module":"referencing","names":["Registry","Resource"],"line":15,"guarded":false,"platform_optional":false},
+        {"module":"referencing.jsonschema","names":["DRAFT202012"],"line":16,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.timeline_commit","names":["CommitRejected","CommitRequest","RuntimeCommitPort","StaleHead"],"line":18,"guarded":false,"platform_optional":false}
+      ]
+    },
+    {
+      "module": "tests.test_timeline_legacy_authority",
+      "path": "tests/test_timeline_legacy_authority.py",
+      "sha256": "55194d035225111dd8989f8885899428b2ef60c86a4f927914eabca810f84305",
+      "top_level_imports": [
+        {"module":"__future__","names":["annotations"],"line":6,"guarded":false,"platform_optional":false},
+        {"module":"hashlib","names":["hashlib"],"line":8,"guarded":false,"platform_optional":false},
+        {"module":"json","names":["json"],"line":9,"guarded":false,"platform_optional":false},
+        {"module":"types","names":["SimpleNamespace"],"line":10,"guarded":false,"platform_optional":false},
+        {"module":"pytest","names":["pytest"],"line":12,"guarded":false,"platform_optional":false},
+        {"module":"astrid_runtime_client","names":["ApiError","WorkspaceClient"],"line":14,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.daemon","names":["RuntimeDaemon"],"line":15,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.errors","names":["NotFoundError","RetiredRouteError","RuntimeErrorBase"],"line":16,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.service","names":["RuntimeService"],"line":17,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.store","names":["RealmStore"],"line":18,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.timeline_commit_port","names":["route_path"],"line":19,"guarded":false,"platform_optional":false},
+        {"module":"runtime_protocol.util","names":["canonical_json"],"line":20,"guarded":false,"platform_optional":false},
+        {"module":"test_shot_composition_runtime","names":["actual_provider"],"line":21,"guarded":false,"platform_optional":false}
+      ]
+    }
+  ],
+  "deferred_imports": [
+    {"module":"runtime_protocol.platform","owner":"runtime","when":"conftest fixture --process-control=sandbox","platform_optional":false},
+    {"module":"runtime_protocol.process_control","owner":"runtime","when":"conftest fixture --process-control=sandbox","platform_optional":false},
+    {"module":"astrid.sdk.timeline.capture","owner":"agent","when":"legacy test body","platform_optional":false},
+    {"module":"astrid.sdk.timeline.commit","owner":"agent","when":"legacy/test_shot fixture body","platform_optional":false},
+    {"module":"runtime_protocol.timeline_commit_provider","owner":"runtime","when":"restore_provider fixture","platform_optional":false},
+    {"module":"astrid_runtime.workspace","owner":"runtime","when":"process-control test body","platform_optional":false},
+    {"module":"astrid_runtime.cli","owner":"runtime","when":"process-control test body","platform_optional":false}
+  ],
+  "source_files": [
+    {"owner":"runtime","path":"tests/__init__.py","sha256":"d01646b00aea1348940e5f78b882d59fc3951d55b6da0877e0021d0469204cf6"},
+    {"owner":"runtime","path":"tests/astrid_checkout.py","sha256":"68a9352f2b3bb101459aee6b996135e05f758e8bd12c6da8fb4e498cdf0485e7"},
+    {"owner":"runtime","path":"tests/lanes.py","sha256":"84507f925b866e4730e2c3b9ac8f67aeac6ff43b1ce3858800b6da38f1ae2cae"},
+    {"owner":"runtime","path":"tests/process_groups.py","sha256":"4f9d99861069c62a1c3cb9e76dd8d80f01fa828eabcf1e2efda8dc162dc9cc51"},
+    {"owner":"runtime","path":"tests/test_shot_composition_runtime.py","sha256":"e5eb114b2daa5d34236d3a3cf7b4acca4f15b46be0775e2ea6134e90321b5897"},
+    {"owner":"runtime","path":"tests/baseline_fixture.py","sha256":"c4bade1a3d5c4f3396068538a36296aa6ddacfbf5df056f60917c0450d0e3e47"},
+    {"owner":"runtime","path":"tests/restore_history_fixture.py","sha256":"3c777161fa2305ed6196872d1eb07e80bb9c499d51c8643b5eebb5ec6e7d693f"},
+    {"owner":"runtime","path":"tests/precut_realm_fixture.py","sha256":"c7fed3953a0de5147260a6e4fd1cb4a3d28b4fb87b04f8bacba928bf1397fff1"},
+    {"owner":"runtime","path":"tests/test_timeline_projection_occupancy.py","sha256":"a6a5badd65df6d045f0513bba07703176a3b368bbf2b76fd0750437478f72ebe"},
+    {"owner":"runtime","path":"tests/test_timeline_commit_acceptance.py","sha256":"210363497fcdcac96bd734080a69de1f642aeaeca0e944ad133e67012eadcc3a"},
+    {"owner":"runtime","path":"tests/test_timeline_commit_integration.py","sha256":"867a33c5c1cda39e1cb540d1fb378b3987eaacc8ceb89d67c3f23711ec400534"},
+    {"owner":"runtime","path":"tests/timeline_commit_film_fixture.py","sha256":"7fa6dd0212dae2a8c5157a297c30c3369ec3d68f123bab43ca3552978a123398"},
+    {"owner":"runtime","path":"pyproject.toml","sha256":"f56e14a32f1edf4693a1365d094cf2322a1c106ac61f4e5154719fbae62ff283"},
+    {"owner":"runtime","path":"packages/python/pyproject.toml","sha256":"6c15723214b1d240f1e9fbea6692019da4893acc486dabcb74ab28e2efaf879f"},
+    {"owner":"runtime","path":"packages/python/astrid_runtime_client/__init__.py","sha256":"d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"},
+    {"owner":"agent","path":"pyproject.toml","sha256":"3b1d9057b5bba99acf07fe5f591fd84e48de6857a9844e4347b3ddb4e821b8ad"},
+    {"owner":"agent","path":"astrid/__init__.py","sha256":"f5fc47afc0afbd81507fecbb41a6d7405f14596bf09400c287bf1e4624fed578"},
+    {"owner":"agent","path":"astrid/sdk/__init__.py","sha256":"a1539c7cd38993528887eaa7d0f37d11e5605fba3a246169cbfa0fd4e9dc2b89"},
+    {"owner":"agent","path":"astrid/sdk/timeline/__init__.py","sha256":"6c249c62db888e4d01de16ea893f859bba07221733202d286437d5d2b39d6a0a"},
+    {"owner":"agent","path":"astrid/sdk/timeline/capture.py","sha256":"d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7"},
+    {"owner":"agent","path":"astrid/sdk/timeline/commit.py","sha256":"2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"}
+  ],
+  "test_argv": [
+    "-m", "pytest", "-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45",
+    "--junitxml=$DURABLE_EVIDENCE/targeted.xml",
+    "tests/test_process_control.py", "tests/test_platform_signaling.py", "tests/test_door_routes.py",
+    "tests/test_managed_output_public_api.py", "tests/test_timeline_commit_contract.py",
+    "tests/test_timeline_legacy_authority.py"
+  ],
+  "historical_count_note": "The earlier 1491 passed + 80 setup errors = 1571 outcomes is historical filtered-run evidence only. The Farm receiver must record its actual six-file collection count and must not invent 1571."
+}
