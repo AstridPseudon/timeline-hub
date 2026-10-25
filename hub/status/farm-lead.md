@@ -1,1 +1,1 @@
-2026-10-25T15:40:56Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 14G free; D124 core route HELD (child-venv refused 14:52Z), time-boxed to 16:30Z per D128; awaiting Runtime census build command; D77 render awaiting Runtime inputs
+2026-10-25T15:43:15Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 14G free; farm agent-core-full route DROPPED (MAIN 16:00Z, Agent hosts it); only D77 installed render remains, awaiting Runtime inputs
