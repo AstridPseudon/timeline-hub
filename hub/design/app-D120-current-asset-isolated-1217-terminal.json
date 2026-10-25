@@ -1,0 +1,90 @@
+{
+  "task": "D120 current isolated registerAsset",
+  "checkpoint": "terminal_pass_same_id",
+  "service_id": "app-pin-34d46445-d73-p2-register-asset-34d46445-submit-1025122001-8974",
+  "service_target": "app-pin-34d46445",
+  "status": "PASS",
+  "exit": 0,
+  "central_duration_seconds": 204,
+  "d66_duration_seconds": 199.166,
+  "d66_started_at": "2026-10-25T12:20:17.587Z",
+  "d66_finished_at": "2026-10-25T12:23:36.753Z",
+  "readiness": {
+    "status": "PASS",
+    "pass": 1,
+    "fail": 0,
+    "error": 0,
+    "notrun": 0,
+    "file": "d66/readiness.xml",
+    "sha256": "06739d2d28de7ff3e67cfba3b01e0b25ce5861d41a39c368173436f9a3243e86",
+    "test": "D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture",
+    "line": 268,
+    "time_seconds": 8.229
+  },
+  "registerAsset": {
+    "status": "PASS",
+    "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "line": 1133,
+    "test": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo",
+    "first_unmet": null,
+    "tail_reachability": "all original registerAsset assertions, reload, history, and guarded native Undo reached",
+    "xml": "d66/p2-register-asset.xml",
+    "xml_sha256": "48d8e860da172814af1ed95cf3c6acd33fb9e00eb773b95b9197368060705813",
+    "time_seconds": 32.443
+  },
+  "outputs": {
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-34d46445-d73-p2-register-asset-34d46445-submit-1025122001-8974",
+    "manifest": "d66/manifest.json",
+    "manifest_sha256": "babaaa8eda80f24e1b40dd5dfbb4758728b65042c430d9437322b53bb8c8edb2",
+    "test_hashes_unchanged": true,
+    "profile": {
+      "node": "v20.19.4",
+      "npm": "10.8.2",
+      "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+      "protocol": "workspace.v1",
+      "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+      "provider": "astrid-v1",
+      "compiler": "authoring-bundle-1"
+    },
+    "source_preflight": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-current-asset-isolated-1217/submission/p2-register-asset/manifest.json"
+  },
+  "source": {
+    "heads": {
+      "app": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+      "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "runtime": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "trees": {
+      "app": "48d71e1a0c18a13668e1d1e086def9dd6210affe",
+      "agent": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "runtime": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+      "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "service_source_tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe",
+    "service_source_dirty": false
+  },
+  "diagnostics": {
+    "phase_files_searched": [
+      "d66/runtime-private/p2-commit-phase.jsonl",
+      "d66/runtime-private/launch-2bcea480-bcb1-4e77-b116-3c5303dc2672/p2-commit-phase-2.jsonl"
+    ],
+    "repeated_start_namespaces": ["launch-2bcea480-bcb1-4e77-b116-3c5303dc2672"],
+    "stderr_files_searched": [
+      "d66/runtime-private/runtime.stderr.log",
+      "d66/runtime-private/launch-2bcea480-bcb1-4e77-b116-3c5303dc2672/runtime.stderr-2.log"
+    ],
+    "stdout_files_searched": [
+      "d66/runtime-private/runtime.stdout.log",
+      "d66/runtime-private/launch-2bcea480-bcb1-4e77-b116-3c5303dc2672/runtime.stdout-2.log"
+    ],
+    "phase_summary": [
+      {"file": "d66/runtime-private/p2-commit-phase.jsonl", "records": 57, "requests": [1], "explicit_reason": false, "explicit_class_chain": false, "explicit_frame_file_line_function": false, "explicit_correlation": false},
+      {"file": "d66/runtime-private/launch-2bcea480-bcb1-4e77-b116-3c5303dc2672/p2-commit-phase-2.jsonl", "records": 128, "requests": [1, 2, 3, 4], "explicit_reason": false, "explicit_class_chain": false, "explicit_frame_file_line_function": false, "explicit_correlation": false}
+    ],
+    "safe_diagnostics": "No reason, class chain, redacted frame file-line-function, or correlation fields were present in either retained phase file; stderr files were searched by filename only and no raw diagnostics were exported.",
+    "no_raw_diagnostics_exported": true
+  },
+  "no_duplicate_submission": true,
+  "no_second_review_or_collector": true
+}
