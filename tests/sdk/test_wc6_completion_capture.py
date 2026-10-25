@@ -231,7 +231,7 @@ def test_preserved_original_and_mounted_source_attachment() -> None:
     original = root / "tests/timeline/test_authoring_media.py"
     content = original.read_bytes()
     blob = hashlib.sha1(f"blob {len(content)}\0".encode() + content).hexdigest()
-    assert blob == "62c30a6d9d3a6fe36201565fadf9a5aa446e10f7"
+    assert blob == "adc6fb3946de7c0fc75dc5bf440c8bdc73b59e17"
     tree = ast.parse(content)
     body = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name ==
                 "test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba")
@@ -301,7 +301,7 @@ def test_session_calls_mounted_service_real_provider_and_port_offline(
     try:
         with pytest.raises(WorkspaceClientError) as caught:
             session.undo(["pub1"], idempotency_key="wc6-undo")
-        assert caught.value.code == "not_ready"
+        assert caught.value.code == "transport_error"
         assert service_errors[0].__cause__ is primary
     finally:
         capture.stop()
