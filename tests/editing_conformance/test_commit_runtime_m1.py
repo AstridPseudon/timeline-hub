@@ -83,10 +83,14 @@ def film(tmp_path, monkeypatch):
             "commands": [duplicate, *patches], "label": "M1 journey baseline", "merge": "atomic",
             "reads": [], "dry_run": False, "source": {"via": "python"},
             "rationale": "M1 real provider baseline", "group_id": "m1-journey",
-            "steps": [{"id": "baseline", "label": "M1 journey baseline", "intent": "Prepare M1 fixture",
-                        "tags": ["integration"], "command_ordinals": list(range(1 + len(patches))),
-                        "patch": [change for command in patches for change in command["args"]["changes"]],
-                        "reads": []}],
+            "steps": [
+                {"id": "copy", "label": "M1 journey source copy", "intent": "Copy source closure",
+                 "tags": ["integration"], "command_ordinals": [0], "patch": [], "reads": []},
+                {"id": "baseline", "label": "M1 journey baseline", "intent": "Prepare M1 fixture",
+                 "tags": ["integration"], "command_ordinals": list(range(1, 1 + len(patches))),
+                 "patch": [change for command in patches for change in command["args"]["changes"]],
+                 "reads": []},
+            ],
         }
         publication = service.commit_timeline(
             source_fixture.project_id, target_timeline, body,
