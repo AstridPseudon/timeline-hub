@@ -1,0 +1,79 @@
+{
+  "schema": "timeline.agent.d134_protected_review_predicate_map.v1",
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+  "method": "read-only AST/source comparison against the unchanged base plus original predicate maps",
+  "conservation": {
+    "original_case_count": 12,
+    "reviewed_case_count": 12,
+    "node_ids_conserved": true,
+    "parameter_inputs_conserved": true,
+    "authored_inputs_conserved": true,
+    "raises_conserved": true,
+    "assertions_conserved": true,
+    "identity_privacy_no_write_predicates_conserved": true,
+    "archive_opaque_on_anchor_purpose_conserved": true,
+    "source_test_changes": 0,
+    "functional_status": "NOTRUN"
+  },
+  "cases": {
+    "inverse7": {
+      "source": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+      "source_sha256": "6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1",
+      "count": 7,
+      "node_ids": [
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-4-two-step-clips-before]",
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-16-two-step-clips-after]",
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-28-two-step-config-clips-before]",
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-40-two-step-config-clips-after]",
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-49-native-whole]",
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_forged_source_publication_and_step_without_writes",
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_native_write_and_aba_without_writes"
+      ],
+      "predicate_check": {
+        "forward_parameter_tuples": [
+          ["4", ["clips"], false],
+          ["16", ["clips"], true],
+          ["28", ["config", "clips"], false],
+          ["40", ["config", "clips"], true],
+          ["49", null, null]
+        ],
+        "forward_assertion_records_each": 45,
+        "forward_raises_each": 0,
+        "forged_raises": 2,
+        "forged_assertions": 6,
+        "native_aba_raises": 1,
+        "native_aba_assertions": 4,
+        "boundary": "_assert_source_identity at lines 78, 90, 230",
+        "preserved": "exact forward history/redo, forged publication/step refusal, native ABA refusal, durable no-write and origin snapshots"
+      }
+    },
+    "history5": {
+      "count": 5,
+      "node_ids": [
+        "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[cli]",
+        "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[python]",
+        "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[sheet]",
+        "tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+        "tests/editing_conformance/test_m1_legacy_archive_read.py::test_explicit_held_baseline_then_current_word_bound_read_is_closure_exact"
+      ],
+      "predicate_check": {
+        "gate1_source_sha256": "4475d1ac60f18ffaafc8bbc93b6b057c6cce2745277dca72dea3eeed159c69c4",
+        "gate1_parameter_values": ["python", "cli", "sheet"],
+        "gate1_shared_setup_assertions": [67, 69, 70],
+        "gate1_purpose": "fresh verified source/target realm and exact clip.anchor transcript roundtrip through three frontends",
+        "prepared_source_sha256": "ba4acbcdee2a42c85ab7070a26983a59915ddcdfc395214761feb727c8e44476",
+        "prepared_assertion_count": 23,
+        "prepared_raises": 2,
+        "prepared_boundary": "tests/editing_conformance/test_prepared_video_birth.py:251",
+        "prepared_purpose": "preview no-write, accepted birth, exact retry, invalid/conflict refusal, guarded inverse",
+        "m1_source_sha256": "838c77332683358877059f1357267a49cd130a985be4e4755a9655ec3f930d01",
+        "m1_assertion_count": 22,
+        "m1_raises": 0,
+        "m1_boundary": "tests/editing_conformance/test_m1_legacy_archive_read.py:133",
+        "m1_purpose": "held baseline then current word-bound closure with opaque/on/anchor/readback fields"
+      }
+    }
+  },
+  "review_conclusion": "All 12 IDs and their authored behavioral predicates remain exact. The reviewed failures are authority/setup classifications only; no assertion was weakened or reclassified as a product pass."
+}

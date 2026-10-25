@@ -1,0 +1,33 @@
+{
+  "task": "D134",
+  "result": "UNAPPLIED_EXACTMISSING",
+  "classification": {
+    "TEST_SETUP_OR_EXPECTATION_PROVED": 7,
+    "PRODUCT_FAULT_PROVED": 0,
+    "UNKNOWN": 0,
+    "functional_node_run": "NOTRUN_DISK_FLOOR"
+  },
+  "exact_node_ids": [
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-4-two-step-clips-before]",
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-16-two-step-clips-after]",
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-28-two-step-config-clips-before]",
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-40-two-step-config-clips-after]",
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-49-native-whole]",
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_forged_source_publication_and_step_without_writes",
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_native_write_and_aba_without_writes"
+  ],
+  "first_boundary": {
+    "file": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+    "lines": [78, 90, 230],
+    "predicate": "strict source identity: historical Agent file hashes and pinned Runtime file hashes",
+    "observed": "current normal-home Agent commit.py and inverse.py hashes differ from the retained Agent hashes; the retained Runtime hashes are independently present at the pinned Runtime object",
+    "not_claimed": ["product fault", "inverse behavior result", "Runtime caller defect"]
+  },
+  "why_no_test_repair": [
+    "Refreshing AGENT_COMMIT or AGENT_COMMIT_FILE_HASHES would silently replace historical authority.",
+    "Changing the identity predicate, adding a fallback, or xfail/skip would not be a faithful setup/caller correction and would weaken custody.",
+    "The current source delta is real and intentional-looking (two source files, eight changed lines), but no qualified packet authorizes selecting it as the historical test tuple.",
+    "The functional provider/body run is below the mandated 5 GB floor, so no new accepted history, caller trace, or behavior claim may be manufactured."
+  ],
+  "finite_missing_authority": "A qualified immutable Agent source checkout matching bd3c95b1cebe3bf27c4a82919e5839efb37519db, or an independently reviewed decision to migrate these seven historical tests while retaining all predicates and inputs, is required before functional execution or any source/test delta."
+}

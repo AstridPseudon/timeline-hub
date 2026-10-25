@@ -1,0 +1,109 @@
+{
+  "schema": "timeline.agent.d134_predicate_map.v1",
+  "method": "AST snapshots of base-file source versus unchanged worktree source; every listed assertion, pytest.raises context, parameter declaration, and authored-input range has equal before/after AST.",
+  "all_cases_preserved": true,
+  "before_after_equal": true,
+  "nodeids": [
+    "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[cli]",
+    "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[python]",
+    "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[sheet]",
+    "tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+    "tests/editing_conformance/test_m1_legacy_archive_read.py::test_explicit_held_baseline_then_current_word_bound_read_is_closure_exact"
+  ],
+  "scope_snapshots": [
+    {
+      "file": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "scope": "fresh_realm",
+      "before_ast_sha256": "976d4bf25b9f0b6b3d8bd3bb610c470e39bd09e921e997404023559ccc847abc",
+      "after_ast_sha256": "976d4bf25b9f0b6b3d8bd3bb610c470e39bd09e921e997404023559ccc847abc",
+      "assertion_lines": [67, 69, 70],
+      "raises_lines": [],
+      "parametrize_lines": [],
+      "input_ranges": [76, 83, 86, 90, 96, 101, 108, 113, 114, 120, 121, 122]
+    },
+    {
+      "file": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "scope": "_choice",
+      "before_ast_sha256": "f13582df7cbaeebc4605d85ac6e072b2d8bccbd09c07d88eb7296d296f667b21",
+      "after_ast_sha256": "f13582df7cbaeebc4605d85ac6e072b2d8bccbd09c07d88eb7296d296f667b21",
+      "assertion_lines": [],
+      "raises_lines": [],
+      "parametrize_lines": [],
+      "input_ranges": [205, 206, 207]
+    },
+    {
+      "file": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "scope": "_carrier",
+      "before_ast_sha256": "f5f6f211ae6666043c36c7940336f0dc2a165ad7b94dcedb30ffe63215912138",
+      "after_ast_sha256": "f5f6f211ae6666043c36c7940336f0dc2a165ad7b94dcedb30ffe63215912138",
+      "assertion_lines": [],
+      "raises_lines": [],
+      "parametrize_lines": [],
+      "input_ranges": [211]
+    },
+    {
+      "file": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "scope": "_assert_roundtrip",
+      "before_ast_sha256": "7ba36c6c5b5b46f35a2c76fc5fefcf2fcc3704ce29e40e631c7d37f6d41a7af7",
+      "after_ast_sha256": "7ba36c6c5b5b46f35a2c76fc5fefcf2fcc3704ce29e40e631c7d37f6d41a7af7",
+      "assertion_lines": [243, 245, 246, 247, 248, 249, 250, 251, 257, 258, 259, 265, 266, 268, 270],
+      "raises_lines": [],
+      "parametrize_lines": [],
+      "input_ranges": [240, 241, 242, 244, 252, 255, 256, 261, 263, 267, 269]
+    },
+    {
+      "file": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "scope": "test_fresh_word_transcript_frontends_exact_pin_roundtrip",
+      "before_ast_sha256": "1daf4a12bcc76ea811d095de075902415bb529560aa32032cd4511ec9cce4555",
+      "after_ast_sha256": "1daf4a12bcc76ea811d095de075902415bb529560aa32032cd4511ec9cce4555",
+      "assertion_lines": [],
+      "raises_lines": [],
+      "parametrize_lines": [273],
+      "parametrize_values": ["python", "cli", "sheet"],
+      "input_ranges": [275, 277, 278, 279, 280, 281, 282, 283, 285, 288, 290, 293, 295, 296, 298, 299, 300, 302]
+    },
+    {
+      "file": "tests/editing_conformance/test_prepared_video_birth.py",
+      "scope": "test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+      "before_ast_sha256": "f33418869a23cb18e3a0c8e138769d6c2bcbd72728710cea800663dc3e2b2176",
+      "after_ast_sha256": "f33418869a23cb18e3a0c8e138769d6c2bcbd72728710cea800663dc3e2b2176",
+      "assertion_lines": [251, 253, 255, 304, 305, 309, 310, 312, 313, 316, 317, 324, 325, 328, 329, 330, 331, 332, 339, 340, 344, 345, 355, 356],
+      "raises_lines": [336, 341],
+      "parametrize_lines": [],
+      "input_ranges": [248, 249, 250, 260, 263, 264, 267, 269, 270, 272, 273, 274, 275, 276, 277, 279, 282, 283, 284, 285, 286, 287, 288, 289, 290, 301, 302, 306, 311, 313, 314, 315, 317, 318, 319, 323, 324, 326, 327, 328, 333, 334, 335, 337, 342, 346, 347, 348, 349, 350, 351, 353]
+    },
+    {
+      "file": "tests/editing_conformance/test_m1_legacy_archive_read.py",
+      "scope": "test_explicit_held_baseline_then_current_word_bound_read_is_closure_exact",
+      "before_ast_sha256": "bd1ca29b22be950308801452bb280c4de0fae6ec6cfffad8d498bb7916f47a4f",
+      "after_ast_sha256": "bd1ca29b22be950308801452bb280c4de0fae6ec6cfffad8d498bb7916f47a4f",
+      "assertion_lines": [45, 46, 47, 48, 49, 51, 54, 68, 76, 88, 89, 93, 96, 101, 126, 127, 128, 132, 133, 134, 135, 143],
+      "raises_lines": [],
+      "parametrize_lines": [],
+      "input_ranges": [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 37, 38, 39, 40, 41, 42, 43, 53, 54, 68, 76, 95, 96, 101, 118, 119, 120, 121, 122, 123, 124, 130, 131, 132, 133, 134, 135, 143]
+    }
+  ],
+  "case_specific_inputs": {
+    "gate1": {
+      "historical_pin_literals": {
+        "NORMAL_RUNTIME": "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c",
+        "ORDINARY_SCHEMA": "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
+      },
+      "purpose_preserved": "fresh verified source/target realm through python, cli, and sheet frontends with exact transcript anchor roundtrip"
+    },
+    "prepared_video": {
+      "historical_pin_literals": {
+        "expected_runtime_source": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+        "expected_runtime_tree": "9bf331d68df8c966e8927a3f083ba03687803c99"
+      },
+      "purpose_preserved": "preview without write, accepted managed birth, exact retry, invalid/conflict refusal, and guarded inverse"
+    },
+    "legacy_archive": {
+      "historical_pairs": {
+        "baseline": ["film-parent-v1", "txn-55c0651b2cd64255ae06e73f9708220a"],
+        "advanced": ["a3e671256f1c42b8837d3e118c97b21b", "txn-11c90075be6c4c8bb9e2627366f0fe4f"]
+      },
+      "purpose_preserved": "explicit held baseline read followed by authenticated current word-bound closure read, including opaque/readback/anchor fields"
+    }
+  }
+}

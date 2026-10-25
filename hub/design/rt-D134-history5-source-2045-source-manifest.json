@@ -1,0 +1,52 @@
+{
+  "schema": "timeline.agent.d134_source_manifest.v1",
+  "task": "D134-history5-source-2045",
+  "decision": "UNAPPLIED_EXACT_MISSING_AUTHORITY",
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+  "head_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "head_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+  "working_tree_status": "clean",
+  "changed_paths": [],
+  "changed_path_hashes": {},
+  "assigned_paths": {
+    "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py": {
+      "base_git_blob": "3c4b03b966cc5986c9e1fdf50c3140f0b1efc199",
+      "head_git_blob": "3c4b03b966cc5986c9e1fdf50c3140f0b1efc199",
+      "sha256": "4475d1ac60f18ffaafc8bbc93b6b057c6cce2745277dca72dea3eeed159c69c4"
+    },
+    "tests/editing_conformance/test_prepared_video_birth.py": {
+      "base_git_blob": "9b3cd7f6f72a30f961bb20cad543fc042244799b",
+      "head_git_blob": "9b3cd7f6f72a30f961bb20cad543fc042244799b",
+      "sha256": "ba4acbcdee2a42c85ab7070a26983a59915ddcdfc395214761feb727c8e44476"
+    },
+    "tests/editing_conformance/test_m1_legacy_archive_read.py": {
+      "base_git_blob": "fd0e3771e6bc26962f4dff3e6d68de9099d0ac18",
+      "head_git_blob": "fd0e3771e6bc26962f4dff3e6d68de9099d0ac18",
+      "sha256": "838c77332683358877059f1357267a49cd130a985be4e4755a9655ec3f930d01"
+    }
+  },
+  "qualified_packet_hashes": {
+    "1937_per_id": "b1fc1bab86fa570917adf7d2bbcb6ddca94cec4c27fd9bdf38b86d7a2e2f646d",
+    "2003_per_id": "f98a97e4f9dd9773acd18f85d7ae649c95f1c970a213680d9324c573c9d2b97a",
+    "2011_review": "88e1cb3bd5f2bea8c15da777bd23e23c1dd97c0e90550117cf516d4e377d0d21",
+    "2016_per_id": "7f21622bc47a04f5a1259cafdcf7541f7a4fbbf4571d10b35aefaa986e4d802a",
+    "2020_review": "6bac33b0a2a9294195087afd7791b1b5424341f1e25dc77dbe11465117ab62a8"
+  },
+  "current_source_observations": {
+    "edit_command_schema_sha256": "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d",
+    "edit_command_schema_expected_literal": "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d",
+    "runtime_lock_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "gate_expected_runtime_literal": "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c",
+    "prepared_expected_runtime_source": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "prepared_expected_runtime_tree": "9bf331d68df8c966e8927a3f083ba03687803c99",
+    "prepared_retained_first_boundary": "tests/editing_conformance/test_prepared_video_birth.py:251",
+    "legacy_retained_first_boundary": "tests/editing_conformance/test_m1_legacy_archive_read.py:133"
+  },
+  "functional_admission": {
+    "available_1024_block_kb_at_check": 4417792,
+    "floor_1024_block_kb": 5242880,
+    "status": "NOTRUN_BELOW_5GB_FLOOR",
+    "originals_xml": null
+  }
+}

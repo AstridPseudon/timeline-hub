@@ -1,0 +1,145 @@
+{
+  "schema": "timeline.agent.d134_protected_review_findings.v1",
+  "task": "rt-D134-twelve-protected-review-2046",
+  "overall_result": "FAIL_AUTHORITY_CLAIMS",
+  "meaning": "Each author's missing-authority finding fails under independent review. This does not prove a product fault or qualify live behavior.",
+  "classification": {
+    "authority_claims_failed": 12,
+    "inverse7": 7,
+    "history5": 5,
+    "product_fault_proved": 0,
+    "functional_status": "NOTRUN",
+    "live_cases_remaining_unqualified": 12
+  },
+  "findings": [
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-4-two-step-clips-before]",
+      "author_result": "UNAPPLIED_EXACTMISSING",
+      "review_verdict": "FAIL",
+      "review_classification": "authority_present_stale_identity_guard",
+      "reason": "bd3c95b1cebe3bf27c4a82919e5839efb37519db and both historical Agent source blobs are available; the current a30 source tuple is also available. This is a finite D120 migration seam, not an absent immutable record.",
+      "correction_id": "inverse7-current-agent-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-16-two-step-clips-after]",
+      "author_result": "UNAPPLIED_EXACTMISSING",
+      "review_verdict": "FAIL",
+      "review_classification": "authority_present_stale_identity_guard",
+      "reason": "The historical Agent source receipt and exact pinned Runtime source receipt are present. The differing current Agent hashes do not establish source unavailability or a product fault.",
+      "correction_id": "inverse7-current-agent-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-28-two-step-config-clips-before]",
+      "author_result": "UNAPPLIED_EXACTMISSING",
+      "review_verdict": "FAIL",
+      "review_classification": "authority_present_stale_identity_guard",
+      "reason": "The requested exact identity can be preserved by the approved current-source migration seam; no owner approval gate is invented.",
+      "correction_id": "inverse7-current-agent-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-40-two-step-config-clips-after]",
+      "author_result": "UNAPPLIED_EXACTMISSING",
+      "review_verdict": "FAIL",
+      "review_classification": "authority_present_stale_identity_guard",
+      "reason": "The historical and current qualified source objects are both available; a hash mismatch alone is not evidence of missing authority.",
+      "correction_id": "inverse7-current-agent-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-49-native-whole]",
+      "author_result": "UNAPPLIED_EXACTMISSING",
+      "review_verdict": "FAIL",
+      "review_classification": "authority_present_stale_identity_guard",
+      "reason": "The source receipt exists and the test's native whole case remains intact. Only the identity binding is a finite migration question.",
+      "correction_id": "inverse7-current-agent-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_forged_source_publication_and_step_without_writes",
+      "author_result": "UNAPPLIED_EXACTMISSING",
+      "review_verdict": "FAIL",
+      "review_classification": "authority_present_stale_identity_guard",
+      "reason": "Both source authorities are present; the forged publication/step raises and no-write predicates remain exact and must be retained.",
+      "correction_id": "inverse7-current-agent-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_native_write_and_aba_without_writes",
+      "author_result": "UNAPPLIED_EXACTMISSING",
+      "review_verdict": "FAIL",
+      "review_classification": "authority_present_stale_identity_guard",
+      "reason": "The historical Agent and Runtime objects are available. The native ABA no-write purpose is not retired by the source hash difference.",
+      "correction_id": "inverse7-current-agent-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[cli]",
+      "author_result": "UNAPPLIED_EXACT_MISSING_AUTHORITY",
+      "review_verdict": "FAIL",
+      "review_classification": "stale_our_test_literals",
+      "reason": "The current schema hash and runtime.lock source commit are present. The old literals are OUR setup guards, so D120 permits a faithful tuple migration after binding use_runtime to the same qualified provider.",
+      "correction_id": "gate1-current-qualified-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[python]",
+      "author_result": "UNAPPLIED_EXACT_MISSING_AUTHORITY",
+      "review_verdict": "FAIL",
+      "review_classification": "stale_our_test_literals",
+      "reason": "The shared fresh_realm assertions compare stale schema/runtime literals; no source record is missing and the three frontend cases retain their exact purpose.",
+      "correction_id": "gate1-current-qualified-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[sheet]",
+      "author_result": "UNAPPLIED_EXACT_MISSING_AUTHORITY",
+      "review_verdict": "FAIL",
+      "review_classification": "stale_our_test_literals",
+      "reason": "Current schema/runtime authority is available; only the shared identity literals are stale. No behavior conclusion is made without the later live run.",
+      "correction_id": "gate1-current-qualified-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+      "author_result": "UNAPPLIED_EXACT_MISSING_AUTHORITY",
+      "review_verdict": "FAIL",
+      "review_classification": "stale_our_test_literals",
+      "reason": "The historical 369ffa7c00bd3d45c610fac7651ff79e7a283a1a object/tree and the current runtime.lock tuple ab1e4f6141987706132916e2da16477f5a019464/7d8e77b2f5a4af79305c9212ce5174d3ea9fd657 are available. This is not exact-missing authority.",
+      "correction_id": "prepared-current-qualified-tuple"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_m1_legacy_archive_read.py::test_explicit_held_baseline_then_current_word_bound_read_is_closure_exact",
+      "author_result": "UNAPPLIED_EXACT_MISSING_AUTHORITY",
+      "review_verdict": "FAIL",
+      "review_classification": "malformed_evidence_link",
+      "reason": "The exact default AUTHENTIC_ARCHIVE exists at the recorded path with SHA256 2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3 and is consumed by the current reader. The original originals_xml:null field is an evidence omission, not an absent archive.",
+      "correction_id": "m1-archive-evidence-link"
+    }
+  ],
+  "corrections_once": [
+    {
+      "id": "inverse7-current-agent-tuple",
+      "scope": "seven inverse cases",
+      "action": "Using D120, bind the source identity guard to the current a30 Agent commit.py/inverse.py hashes, or explicitly retain the available historical bd3 receipt as the selected tuple; retain the exact Runtime 6634 receipt and every case predicate. Do not silently refresh pins or alter test bodies.",
+      "not_done_by_reviewer": true
+    },
+    {
+      "id": "gate1-current-qualified-tuple",
+      "scope": "three Gate1 frontend cases",
+      "action": "Bind the existing fresh_realm provider to one approved current tuple, then update only the stale schema/runtime identity literals to that tuple; retain all transcript anchor, frontend, no-write, and exact roundtrip predicates.",
+      "not_done_by_reviewer": true
+    },
+    {
+      "id": "prepared-current-qualified-tuple",
+      "scope": "prepared video case",
+      "action": "Select the existing qualified historical 369ffa tuple or current runtime.lock tuple through the approved migration seam, then update only the source/tree guard; retain preview, accept, retry, invalid, conflict, and inverse assertions.",
+      "not_done_by_reviewer": true
+    },
+    {
+      "id": "m1-archive-evidence-link",
+      "scope": "M1 legacy archive case",
+      "action": "Repair the evidence manifest/link to the existing authenticated archive and its hash. Keep the archive's held baseline, opaque/on/anchor, until, readback, and closure purpose unchanged; do not normalize or retire it.",
+      "not_done_by_reviewer": true
+    }
+  ],
+  "negative_findings": [
+    "No source or test repair was applied.",
+    "No product fault was proved.",
+    "No owner approval gate was invented.",
+    "No API shape, authority model, or Runtime writer behavior was changed.",
+    "No live behavior or twelve-case qualification is claimed."
+  ]
+}

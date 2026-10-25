@@ -1,0 +1,58 @@
+{
+  "schema": "timeline.agent.d134_findings.v1",
+  "task": "D134-history5-source-2045",
+  "result": "UNAPPLIED_EXACT_MISSING_AUTHORITY",
+  "source_changes": 0,
+  "product_fault_proved": 0,
+  "migration_credit": false,
+  "cases": [
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[cli]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "retained_outcome": "error",
+      "first_boundary": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py:67",
+      "reason": "The source retains exact schema/runtime pin assertions. Current schema and runtime.lock values differ from the historical literals, and no qualified authority permits refreshing either pin.",
+      "action": "UNAPPLIED_EXACTMISSING"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[python]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "retained_outcome": "error",
+      "first_boundary": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py:67",
+      "reason": "Same shared fresh_realm setup and exact historical pin predicates as the cli case; no pin refresh authority is present.",
+      "action": "UNAPPLIED_EXACTMISSING"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[sheet]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "retained_outcome": "error",
+      "first_boundary": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py:67",
+      "reason": "Same shared fresh_realm setup and exact historical pin predicates as the cli case; no pin refresh authority is present.",
+      "action": "UNAPPLIED_EXACTMISSING"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "retained_outcome": "failed",
+      "first_boundary": "tests/editing_conformance/test_prepared_video_birth.py:251",
+      "reason": "The test explicitly authenticates the reviewed Runtime source/tree before exercising preview, accept, retry, invalid, conflict, and inverse behavior. The expected source/tree are historical and no qualified replacement authority is available.",
+      "action": "UNAPPLIED_EXACTMISSING"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_m1_legacy_archive_read.py::test_explicit_held_baseline_then_current_word_bound_read_is_closure_exact",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "retained_outcome": "failed",
+      "first_boundary": "tests/editing_conformance/test_m1_legacy_archive_read.py:133",
+      "reason": "The retained legacy archive test intentionally reads the authenticated advanced closure and asserts the opaque/readback/word-anchor shape. Removing or normalizing the on field would erase the original purpose; no authentic archive replacement is available.",
+      "action": "UNAPPLIED_EXACTMISSING"
+    }
+  ],
+  "guard_decisions": [
+    "Do not silently refresh historical pins.",
+    "Do not remove authored assertions, inputs, parameters, or raises.",
+    "Do not normalize or retire the legacy archive field.",
+    "Do not infer a product fault from a guard/setup boundary.",
+    "Do not claim behavior closure from source-only evidence."
+  ],
+  "functional_status": "NOTRUN_BELOW_5GB_FLOOR"
+}

@@ -1,0 +1,59 @@
+{
+  "task": "D134",
+  "source_path": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+  "source_sha256": "6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1",
+  "ast_method": "Python ast.parse; line numbers and unparsed assertion/raises expressions retained",
+  "before_after": "identical",
+  "cases": {
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-4-two-step-clips-before]": {
+      "parameter_input": {"case_id": "4", "path": ["clips"], "output_first": false},
+      "function_span": [258, 341],
+      "inputs": ["_forward_case(document, path, output_first)", "_full_request(...)", "_submit(..., 'forward-4')", "_inverse_request(... publication ...)", "_submit(..., 'undo-4')", "_inverse_request(... undone receipt ...)", "_submit(..., 'redo-4')"],
+      "raises": [],
+      "assertions": [
+        [262, "origin == _origin_snapshot()"], [271, "set(accepted) == {'data', 'receipt'}"], [272, "accepted['receipt']['result'] == accepted['data']"], [273, "accepted['data']['status'] == 'accepted'"], [274, "accepted['data']['base_revision_id'] == request['base_revision_id']"], [275, "accepted['data']['base_publication_id'] == request['base_publication_id']"], [279, "[command['op'] for command in accepted['data']['commands']] == [command['op'] for command in commands]"], [282, "accepted['data']['label'] == request['label']"], [283, "accepted['data']['merge_mode'] == 'fields'"], [284, "accepted['data'].get('reads', request['reads']) == reads"], [285, "accepted['data']['source'] == request['source']"], [286, "accepted['data']['rationale'] == request['rationale']"], [287, "accepted['data']['group_id'] == request['group_id']"], [288, "accepted['data']['publisher'] == 'r2-test-author'"], [289, "origin == _origin_snapshot()"], [294, "history['publication_id'] == publication"], [295, "accepted['data']['commands'] == [record['command'] for record in history['records']['commands']]"], [298, "history['records']['steps'] == accepted['data']['steps']"], [299, "history['records']['label'] == request['label']"], [300, "history['records']['merge_mode'] == 'fields'"], [301, "history['records']['commands'][0]['reads']"], [302, "history['records']['commands'][0]['derived_writes']"], [303, "history['records']['commands'][0]['bindings']"], [304, "history['records']['steps'][0]['patch']"], [305, "history['records']['steps'][0]['dependencies']"], [306, "any(('write_range' in binding or 'boundary' in binding for binding in history['records']['commands'][0]['bindings']))"], [308, "history['records']['commands'][0]['derived_writes']"], [311, "payload['clips'] == payload['config']['clips']"], [312, "payload['clips'][1]['id'] == 'clip-right'"], [313, "origin == _origin_snapshot()"], [320, "set(undone) == {'data', 'receipt'}"], [321, "undone['receipt']['result'] == undone['data']"], [322, "undone['data']['status'] == 'accepted'"], [323, "undone['data']['canonical_document'] == document"], [324, "undone['data']['commands'][0]['op'] == undo_request['commands'][0]['op']"], [325, "undone['data']['steps']"], [327, "undo_record['undo_of'] == [publication]"], [328, "undo_record['commands'][0]['writes']"], [329, "undo_record['commands'][0]['derived_writes']"], [330, "undo_record['commands'][0]['bindings']"], [331, "origin == _origin_snapshot()"], [338, "redone['data']['status'] == 'accepted'"], [339, "redone['data']['canonical_document'] == forward_document"], [340, "redone['receipt']['result'] == redone['data']"], [341, "origin == _origin_snapshot()"]
+      ]
+    },
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-16-two-step-clips-after]": {
+      "parameter_input": {"case_id": "16", "path": ["clips"], "output_first": true},
+      "function_span": [258, 341],
+      "inputs": "same AST input sequence as case-4; only parameter tuple differs",
+      "raises": [],
+      "assertions": "same 45 assertion records as case-4; unchanged"
+    },
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-28-two-step-config-clips-before]": {
+      "parameter_input": {"case_id": "28", "path": ["config", "clips"], "output_first": false},
+      "function_span": [258, 341],
+      "inputs": "same AST input sequence as case-4; only parameter tuple differs",
+      "raises": [],
+      "assertions": "same 45 assertion records as case-4; unchanged"
+    },
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-40-two-step-config-clips-after]": {
+      "parameter_input": {"case_id": "40", "path": ["config", "clips"], "output_first": true},
+      "function_span": [258, 341],
+      "inputs": "same AST input sequence as case-4; only parameter tuple differs",
+      "raises": [],
+      "assertions": "same 45 assertion records as case-4; unchanged"
+    },
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-49-native-whole]": {
+      "parameter_input": {"case_id": "49", "path": null, "output_first": null},
+      "function_span": [258, 341],
+      "inputs": "same AST input sequence as case-4; _forward_case selects native split/move branch",
+      "raises": [],
+      "assertions": "same 45 assertion records as case-4; unchanged"
+    },
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_forged_source_publication_and_step_without_writes": {
+      "function_span": [357, 378],
+      "inputs": [[358, "_accepted_case(runtime_case)"], [361, "_inverse_request(... 'not-the-accepted-publication' ...)"], [364, "_submit(... 'forged-source')"], [369, "_inverse_request(... actual publication ...)"], [374, "_submit(... 'forged-step')"]],
+      "raises": [[363, "pytest.raises(Exception)"], [373, "pytest.raises(Exception)"]],
+      "assertions": [[365, "getattr(error.value, 'details', {}).get('reason') in {'history_unavailable', 'invalid_edit_command'}"], [366, "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"], [367, "_durable_snapshot(service) == durable_before"], [375, "getattr(error.value, 'details', {}).get('reason') == 'invalid_steps'"], [376, "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"], [377, "_durable_snapshot(service) == durable_before"], [378, "origin == _origin_snapshot()"]]
+    },
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_native_write_and_aba_without_writes": {
+      "function_span": [381, 413],
+      "inputs": [[382, "_accepted_case(runtime_case)"], [388, "capture_move(... 'parent/clip:clip-right', 3)"], [389, "_full_request(... native ...)"], [394, "_submit(... 'native-intervening')"], [397, "capture_move(... 'parent/clip:clip-right', 2)"], [398, "_full_request(... native_return ...)"], [403, "_submit(... 'native-aba-return')"], [406, "_inverse_request(... accepted publication ...)"], [409, "_submit(... 'native-refusal')"]],
+      "raises": [[408, "pytest.raises(Exception)" ]],
+      "assertions": [[410, "getattr(error.value, 'details', {}).get('reason') == 'intervening_write'"], [411, "service.get_project_timeline(project, 'main')['head_publication_id'] == before['head_publication_id']"], [412, "_durable_snapshot(service) == durable_before"], [413, "origin == _origin_snapshot()"]]
+    }
+  },
+  "preservation_result": "all seven node IDs, parameter tuples, authored inputs, raises contexts, and assertion expressions remain exact; no xfail/skip/removal/relaxation was applied"
+}
