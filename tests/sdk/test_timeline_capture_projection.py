@@ -285,6 +285,58 @@ def saved_closure(saved_runtime):
                                      for row in document["internal_timeline_revisions"]],
     )
     source_shot = next(iter(bundle["shots"]))
+    source = bundle["shots"][source_shot]
+    source_payload = source["payload"]
+    source_internal = source["internal_timeline"]
+    source_media_id = source_internal["registry"]["assets"][
+        source_internal["clips"][0]["asset"]
+    ]["media_id"]
+
+    # Keep the original capture baseline's opaque and authored extension fields
+    # in the candidate.  The publication below persists them through the
+    # registered current commit provider, so this remains a real source graph,
+    # not a fixture-only default or a repaired direct lookup.
+    bundle["parent"]["config"]["opaque_parent_config"] = {"keep": True}
+    bundle["parent"]["opaque_parent"] = {"keep": ["all", "fields"]}
+    bundle["parent"].setdefault("registry", {})["opaque_registry"] = {"keep": [1, 2, 3]}
+    occurrence = bundle["placements"][0]
+    occurrence["placement"]["opaque_geometry"] = "keep"
+    occurrence["transform"] = {"scale": 1, "opaque_transform": [4, 5]}
+    occurrence["muted"] = False
+    occurrence["provenance"] = {"placement": "first"}
+    occurrence["future_occurrence"] = {"round_trip": True}
+
+    source_payload["metadata"] = {"settings": {"look": "warm"}, "opaque": ["keep"]}
+    source_payload["opaque_shot"] = {"future_schema": 9}
+    source_payload["pools"] = [{"id": "pool-1", "opaque": "keep"}]
+    source_payload["selected_variants"] = {"pool-1": "variant-1"}
+    source_payload["provenance"] = {"source": "fixture", "shot_id_literal": source_shot}
+    source_payload["generation_inputs"] = {"visual": {"object_id": source_media_id}}
+    source_payload["text_bindings"] = [{"slot": "voiceover", "text": "hello"}]
+    if not source_payload["items"]:
+        source_payload["items"] = [{
+            "item_id": source_internal["clips"][0]["id"],
+            "media_id": source_media_id,
+            "source_frame": None,
+            "metadata": {},
+        }]
+    item = source_payload["items"][0]
+    item["source_frame"] = None
+    item["metadata"].update({
+        "role": "primary_visual",
+        "source_item_id": item["item_id"],
+        "opaque_literal": "item-1",
+    })
+
+    source_internal["effects"] = [{"type": "opacity", "value": 0.75}]
+    source_internal["audio"] = [{"track_id": "voice", "gain": 0.8}]
+    source_internal["layout"] = {"width": 1920, "height": 1080}
+    source_internal["assets"] = []
+    source_internal["opaque_timeline"] = {"future_schema": 7}
+    source_internal["registry"]["opaque_registry"] = {"keep": [1, 2, 3]}
+    source_internal["tracks"][0]["opaque_track"] = {"future": True}
+    source_internal["clips"][0]["opaque_clip"] = {"literal": "item-1"}
+
     duplicate_authoring_shot(bundle, source_shot, new_shot_id="shot-z", occurrence_id="occ-z", start_ms=0)
     duplicate_authoring_shot(bundle, source_shot, new_shot_id="shot-a", occurrence_id="occ-a", start_ms=1000)
     remove_authoring_shot(bundle, source_shot)
