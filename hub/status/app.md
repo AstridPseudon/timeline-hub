@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T03:13:46Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 17 | status age 4m -->
-# app board, 2026-10-25T03:10Z
+<!-- app | 2026-10-25T03:17:21Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 1m -->
+# app board, 2026-10-25T03:16Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -185,24 +185,26 @@
 | P2-SWAP9674-facts | Return retained inverse phase boundary | Luna producer return | Exact original9674 terminal | merged | app-P2-SWAP9674-retained-return-0255 | InitialSWAP200; Undo POST503/no receipt. Schema1 cap128, ordinals1–3; action correlation and eventual Undo outcome UNKNOWN. | Evidence only |
 | D74-current-pins | Retire every truly unused pin | Manager; lead host input | Full host audit0255 clear | merged | Guarded release0252 | All35 recycled normally, zero refusals. Net2.727GB freed;8.313GB free. All run outputs/branches/reports and protected tuple retained. | No source change |
 
-| P2-native-next | Qualify strict native asset oracle | Luna; App service | Native5337 reviewed home | doing | app-P2-native-asset-submit-0305 | Wrong Agent20348 cancelled, no proof. Existing fixed API continuation active on5337/6386/6634/635f. Placement follows asset terminal. | App5337 |
+| P2-native-next | Qualify strict native asset original | Luna; App service | Actual27438 terminal PASS | review | app-P2-asset27438-GO-review-0315 | Exit0/230s; readiness1 and original1 PASS including reload and guarded Undo. Sole independent GO review active; no repeat. | 5337/6386/6634/635f |
 
 | P2-ADD27885-source | Repair actual reloaded ADD selection | HARD Sol | Two reviewed fixes did not clear gate | doing | app-A3-ADD27885-selection-sol-0305 | Compare exact failed27885 with SWAP9674 passing selection; real pointer and owner path required. No new body. | Base2d25 |
-| P2-ADD27885-path | Challenge complete ADD selection path | Luna read only | Retained27885 and9674 | doing | app-P2-ADD27885-wholepath-0305 | Independent complete path comparison; sole product author Sol0305. No new collector or gate verdict. | Read only |
-| P2-parent12208-path | Attribute missing parent dispatch | Luna read only | Runtime finite packet published | doing | app-P2-parent12208-mounted-path-0309 | Intended POST absent. Exact mounted move to capture/outbox investigation; same-tuple single5678 bounded comparator. | Base2d25 |
-| P2-bulk-current-plan | Prepare repaired bulk original | Luna source only | Review0255 and types0302 PASS | doing | app-P2-bulk-fixed-plan-prep-0309 | Prepare exact2d25/6386/6634/635f using existing API only. No central request before body slot release. | App2d25 |
+| P2-ADD27885-path | Attribute reloaded ADD selection | Luna read only | Exact retained27885/9674 | merged | app-P2-ADD27885-wholepath-0305 | ADD click selects hold clip. Label incorrectly follows canSwap; SWAP media clip passes. No owner or pointer failure proved. | Read only |
+| P2-parent12208-path | Bound missing parent dispatch cause | Luna read only | Corrected first return0313 | blocked:runtime | app-P2-parent12208-current-return-0313 | Cause UNKNOWN. Historical5e already in actual24865; exact12208 pointer/DOM/capture facts requested from retained main trace only. | No source change |
+| P2-bulk-current-plan | Qualify repaired bulk materialization | Luna source only | Review0255 and types0302 PASS | gated:body-order | app-P2-bulk-fixed-plan-prep-0309 | Fixed2d25/6386/6634/635f plan ready with null execution IDs. Wait current placement body; no mutable recapture. | App2d25 |
 | P2-native-prep-scope | Hold unrequested harness changes | Luna | Prep0257 exceeded readonly scope | gated:out-of-scope | app-P2-native-asset-placement-prep-0257 | D66 helper and test patch remain unmerged. Plans only data; original normal API required for actual submissions. | Branch held |
+
+| P2-native-placement-current | Qualify current managed placement | Luna; App service | Asset27438 terminal PASS | doing | app-P2-native-placement-submit-0315 | Sole next body on5337/6386/6634/635f using normal fixed-input API. Actual request ID follows authentic plan. | App5337 |
 
 Integration: App2d25dc460c includes reviewed native5337, Core06014 and opaque-preserving bulk materializer. Exact reviewed blobs home. Explicit App/Node project types0302 PASS; bulk source acceptance complete, browser proof owed.
 
-core open: Single-clear5678 independently GO0255 on24865/6386/6634/635f. Seven isolated gestures remain open, followed by one full App tour. Element3111 applied433 still fails5s. ADD27885 selected label892 still fails after two reviewed owner repairs. Asset/placement next meaningful native5337 originals are source-ready. Parent12208 and bulk21061 intended POST absent; source rows active.
+core open: Single-clear5678 independently GO0255 on24865/6386/6634/635f. Seven isolated gestures remain open, followed by one full App tour. Element3111 applied433 still fails5s. ADD27885 selected label892 still fails after two reviewed owner repairs. Asset27438 service PASS, independent GO review active; placement0315 assigned on same5337 tuple. Parent12208 cause UNKNOWN, finite retained main facts requested; bulk21061 materializer source repaired and plan ready.
 regressions: No newly proven regression. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Final cut — Runtime coordinates remaining isolated P2, full App tour, final pinned P1–P5/core and genuine installed render before ZIP.
-Next ready: Asset0305 fixed-input continuation, then placement on5337; bulk fixed plan0309 after required project types PASS. Parent source0309 and ADD author/path0305 proceed independently. No unchanged original repeats.
-live 5 / cap 6; ready-undispatched 0. ADD Sol0305, path0305, asset launcher0305, parent0309 and bulk prep0309 assigned. One App body slot reserved to asset; wrongtuple20348 cancelled. D89 source above5.0GB, heavy one above5.2GB; nothing new below4.5GB.
-Capacity: Guarded release0252 recycled35 stale pins, net2.727GB freed. Current free about7.5GB. All outputs, reports, branches and protected tuples retained; old dirty/prior-refused targets untouched.
-Inbox consumed through1884697 bytes. Runtime source and custody waits clear. Parent finite packet became row/worker this pass. Runtime cost0215 refusal remains stopped and orchestrator-owned; no alternate route.
+Next ready: Placement0315 sole next body, then bulk fixed2d25 plan. ADD source0305 finishes acceptance then one independent review. Asset27438 sole independent GO review0315 active; no extra body.
+live 4 / cap 6; ready-undispatched 0. ADD Sol0305, assetGO0315 and placement launcher0315 active; parent0313 completes bounded return. Heavy one above5.2GB; source above5.0GB.
+Capacity: Guarded release0252 recycled35 stale pins, net2.727GB freed. Current free about7.2GB. All outputs, reports, branches and protected tuples retained; old dirty/prior-refused targets untouched.
+Inbox consumed through1888162 bytes. Runtime source and custody waits clear. Parent finite packet became row/worker this pass. Runtime cost0215 refusal remains stopped and orchestrator-owned; no alternate route.
 
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59 and Agent08e6 applied-result suites belong to Runtime final coordinator. Gating stays frozen upstream3881. Withdrawn D88/denied actions stay held; protective D88b6634 adopted normally.
 Evidence: [Bulk types](../../design/app-A3-bulk-required-types-0302.md), [Single GO](../../design/app-P2-single5678-GO-resume-0255.md), [SWAP facts](../../design/app-P2-SWAP9674-retained-return-0255.md), [Pin release](../../design/app-pin-guarded-release-0252.md).
