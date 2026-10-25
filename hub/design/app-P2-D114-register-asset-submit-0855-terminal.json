@@ -1,0 +1,164 @@
+{
+  "service_id": "app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712",
+  "target": "app-pin-04beedcd",
+  "status": "FAIL",
+  "service_exit": 1,
+  "service_duration_seconds": 236,
+  "started_at": "2026-10-25T08:57:52.109Z",
+  "finished_at": "2026-10-25T09:01:43.673Z",
+  "source_preflight": {
+    "id": "app-pin-04beedcd-p2-d114-asset-0855-preflight-1025085706-9872",
+    "status": "PASS",
+    "exit": 0,
+    "duration_seconds": 3,
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-preflight-1025085706-9872/d66/manifest.json"
+  },
+  "readiness": {
+    "status": "PASS",
+    "count": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "duration_seconds": 31.472397,
+    "case_duration_seconds": 12.926,
+    "xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/readiness.xml",
+    "xml_sha256": "c470c6e49c69056bf14533d7f0c04807b7c1024b06f428a5745b079848a90a2b"
+  },
+  "original": {
+    "status": "FAIL",
+    "count": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "suite_duration_seconds": 84.387451,
+    "case_duration_seconds": 47.433,
+    "xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/p2-register-asset.xml",
+    "xml_sha256": "52b6e9ce6befb3a0c0c4c3648d94c5f7995b3fab080ca45309c73ebd4408108f",
+    "collection": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/collection.txt",
+      "listed": 1,
+      "files": 1
+    }
+  },
+  "first_unmet_predicate": {
+    "test_declaration": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1118:1",
+    "assertion": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:655",
+    "assertion_text": "expect(envelope.data).toEqual(expected.data)",
+    "helper": "assertNativeAcceptedReply",
+    "call_site": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1179:18",
+    "stage": "guarded native Undo reply oracle",
+    "bounded_mismatch": "received canonical data differed from the expected native-Undo data; the retained diff includes registry/config.registry field entries"
+  },
+  "manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/manifest.json",
+    "sha256": "6e33b356616420d606dca46f3797535cd91e2d2c1b431c13971c35e2c7ae483f",
+    "repo_heads": {
+      "app": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+      "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "runtime": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "repo_trees": {
+      "app": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d",
+      "agent": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "runtime": "a522511414947e48e317a5e5c2103483b121a750",
+      "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1",
+    "readiness_exit": 0,
+    "original_exit": 1,
+    "test_sha256_before_after_equal": true,
+    "source_hashes": {
+      "mounted_readiness": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "p2_elements_assets": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7"
+    }
+  },
+  "retained_runtime_private": {
+    "searched_filenames": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/p2-commit-phase.jsonl",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/p2-commit-phase.stacks.txt",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/runtime.stderr.log",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/runtime.stdout.log",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/launch-73d028e5-b3ed-4797-9540-2cfd40bd7c4d/p2-commit-phase-2.jsonl",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/launch-73d028e5-b3ed-4797-9540-2cfd40bd7c4d/p2-commit-phase-2.stacks.txt",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/launch-73d028e5-b3ed-4797-9540-2cfd40bd7c4d/runtime.stderr-2.log",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/launch-73d028e5-b3ed-4797-9540-2cfd40bd7c4d/runtime.stdout-2.log"
+    ],
+    "phase_one": {
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/p2-commit-phase.jsonl",
+      "events": 57,
+      "retained": 57,
+      "dropped": 0,
+      "truncated": false,
+      "request_summaries": 1,
+      "last_phase": "http_response",
+      "http_response_statuses": [
+        200,
+        200
+      ],
+      "durations_ms": {
+        "dispatch_queue": 0.884,
+        "dispatch_total": 20264.722,
+        "handler": 20263.838,
+        "provider_wall": 12479.354,
+        "response_write_wall": 5.668
+      },
+      "unknown_boundaries": [
+        "caller_receipt",
+        "client_request_to_server_receive",
+        "execution_lock_wait"
+      ]
+    },
+    "repeated_start_namespace": {
+      "directory": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/launch-73d028e5-b3ed-4797-9540-2cfd40bd7c4d",
+      "phase_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/launch-73d028e5-b3ed-4797-9540-2cfd40bd7c4d/p2-commit-phase-2.jsonl",
+      "request_summaries": 4,
+      "requests_observed": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "last_phase": "http_response",
+      "http_response_statuses": [
+        200,
+        200
+      ],
+      "rolling_events_seen": 346,
+      "rolling_events_retained": 128,
+      "rolling_capacity_dropped_events": 218,
+      "truncated": true,
+      "final_request_4_durations_ms": {
+        "dispatch_queue": 0.828,
+        "dispatch_total": 14492.837,
+        "handler": 14492.009,
+        "provider_wall": 14013.711,
+        "response_write_wall": 0.895
+      },
+      "unknown_boundaries": [
+        "caller_receipt",
+        "client_request_to_server_receive",
+        "execution_lock_wait"
+      ]
+    },
+    "bounded_stack_facts": {
+      "phase_one": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/p2-commit-phase.stacks.txt:2-29 includes watchdog fire and Runtime authorization/lookup/execute/service/server frames",
+      "repeated_start": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712/d66/runtime-private/launch-73d028e5-b3ed-4797-9540-2cfd40bd7c4d/p2-commit-phase-2.stacks.txt:2-48 includes watchdog/trace, Runtime history/head/accept and Agent commit.py:1444 frames",
+      "stderr_stdout": "The four searched stderr/stdout files contained no bounded D102/reason/correlation marker found by the prescribed search.",
+      "backend_outcome": "UNKNOWN; only retained HTTP 200 response-phase observations are reported."
+    }
+  },
+  "plan": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D114-register-asset-submit-0855/submission/p2-register-asset/p2-register-asset-submit-plan.json",
+    "checkpoint": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D114-register-asset-submit-0855/submission-checkpoint.json"
+  },
+  "no_retry": true,
+  "no_duplicate_or_retarget": true,
+  "outputs_preserved": true
+}
