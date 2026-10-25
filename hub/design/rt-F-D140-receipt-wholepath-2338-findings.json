@@ -1,0 +1,95 @@
+{
+  "schema": "timeline.d140.wholepath-investigation/v1",
+  "verdict": "FAIL_SOURCE",
+  "readiness": "NOT_READY",
+  "scope": "independent read-only whole-path source investigation",
+  "reviewed_composition": {
+    "path": "/home/user/work/wt/rt-F-D140-receipt-wholepath-2338",
+    "commit": "d7727b99fb9cb063d4c0ee73fdfa54d752666135",
+    "tree": "222476a7f8eea57f46402ab4fefabce4e2b8a703"
+  },
+  "findings": [
+    {
+      "id": "D140-WHOLEPATH-001",
+      "status": "open",
+      "title": "Current integration checkouts do not form the required source tuple",
+      "evidence": "Agent is 547e10456250c1b5bcf63b44a50c90ff0563ce1e/tree 68df11fad2b082fa12d99ca20404e1e40e350cd7; Runtime is 0ca306dfd3cf4e21976271cc4b2e779b10e025b0/tree 37cfcd4f6108c1fdda401e563e3674503bc328ef; App and Composition match the required tuple.",
+      "citation": "ops-d140-farm/receive-farm.sh:15-50,609-620"
+    },
+    {
+      "id": "D140-WHOLEPATH-002",
+      "status": "open",
+      "title": "Source receipt admission is producer-free and recursively searchable",
+      "evidence": "The checker accepts broad status/schema values, recursively searches arbitrary values for expected commit/tree/path strings, and independently validates local Git.",
+      "citation": "ops-d140-farm/receive-farm.sh:238-294",
+      "attack_comparison": "final2332 private control passed a producer-free synthetic JSON object with timeline.synthetic-forged/v1, status passed, producer untrusted, and expected receipt/path strings."
+    },
+    {
+      "id": "D140-WHOLEPATH-003",
+      "status": "open",
+      "title": "Child receiver is not closed over the genuine provisioning result",
+      "evidence": "Maker emits a fixed provision report and flat success line with registered path/key, source markers, report path, and report SHA; receiver only checks loose alternate fields and presence of selected fields and does not bind child paths or report bytes.",
+      "producer_citation": "ops-child-custody/make-child-venv:419-466,1022-1033,1176-1282",
+      "receiver_citation": "ops-d140-farm/receive-farm.sh:296-353"
+    },
+    {
+      "id": "D140-WHOLEPATH-004",
+      "status": "open",
+      "title": "Kit receiver expects a different format from the current Farm producer",
+      "evidence": "Current Farm producer emits canonical timeline.farm-distribution-inputs.v1 JSON with roles/lock/distributions/ownership/component_identity and retains exact .farm-receipt.json bytes; receiver expects timeline.ops.* installed-kit JSON or a flat fallback.",
+      "producer_citation": "/home/user/timeline-hub/hub/kit/bin/verify_farm_distribution_inputs.py:330-399,727-837; /home/user/timeline-hub/hub/kit/bin/verify_dependency_seed.py:389-406,480-526",
+      "receiver_citation": "ops-d140-farm/receive-farm.sh:355-417"
+    },
+    {
+      "id": "D140-WHOLEPATH-005",
+      "status": "open",
+      "title": "D73 parser is close to the producer shape but lacks retained-evidence closure",
+      "evidence": "Pinned launcher produces p4-d73-v1 key/value manifest, evidence copy, and runmanifest after exact tuple/path/Git checks; receiver byte-compares only the selected manifest and does not bind the evidence copy/runmanifest digest/path.",
+      "producer_citation": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh:2-73",
+      "receiver_citation": "ops-d140-farm/receive-farm.sh:419-474"
+    },
+    {
+      "id": "D140-WHOLEPATH-006",
+      "status": "open",
+      "title": "Installed scripts are not live Farm receipts",
+      "evidence": "Kit scripts match the Composition source hashes and modes, but bench-store is absent and no current Farm receipt/registered child/evidence copy was bound. The shared Main venv schema distribution is not Farm admission evidence.",
+      "citation": "ops-child-custody/source-manifest.json; ops-d140-farm/receive-farm.sh:238-620"
+    },
+    {
+      "id": "D140-WHOLEPATH-007",
+      "status": "closed",
+      "title": "C0 request/reply contract remains unchanged",
+      "evidence": "CommitRequest, accepted mutation, preview, and conflict shapes were read from the f103 schema and commit-v2 design; no product or wire files were changed.",
+      "citation": "/home/user/timeline-hub/hub/design/commit-v2.md:60-80,703-715,1265-1274,1423-1434; /home/user/work/runtime/contract/schemas/timeline-commit.json:310-369,965-1171,1217-1277"
+    },
+    {
+      "id": "D140-WHOLEPATH-008",
+      "status": "open",
+      "title": "Required live Farm inputs remain missing",
+      "evidence": "No current four-checkout receipts, authenticated D139a/Farm receipt and schema carrier, registered child result, fresh D73 manifest/evidence, fresh poison copy, durable output roots, or normal service result were available or created.",
+      "citation": "prior return2322 evidence/missing-inputs.json; prior return2322 evidence/prerequisites.json"
+    },
+    {
+      "id": "D140-WHOLEPATH-009",
+      "status": "bounded-seam",
+      "title": "Smallest source seam is the existing D140 receiver admission boundary",
+      "evidence": "Use exact existing producer formats and their path/byte/digest/source/registration closure; fail closed for unknown producer/schema/status/path/digest. Do not add a protocol, recursive keys, synthetic receipt, ledger, or wire change.",
+      "citation": "ops-d140-farm/receive-farm.sh:238-504"
+    }
+  ],
+  "missing_live_inputs": [
+    "current clean Agent/Runtime/App/Composition tuple and four pre-child receipts",
+    "authenticated current D139a/Farm distribution receipt and exact schema-source carrier",
+    "registered child terminal result, child interpreter/bootstrap, owner/markers/import origins, provision report and digest",
+    "fresh positive D73 p4-d73-v1 manifest, retained evidence copy, runmanifest and exit evidence",
+    "fresh merged-tuple manifest and exact positive poison copy",
+    "durable Farm output roots and normal service result/receipt path"
+  ],
+  "prohibited_actions_not_taken": [
+    "Farm admission/body execution",
+    "child/core/request/queue/Store execution",
+    "package installation or credential use",
+    "D130 or live-input access",
+    "product/wire/test/fixture/pin/config changes"
+  ]
+}

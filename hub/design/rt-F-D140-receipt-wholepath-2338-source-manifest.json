@@ -1,0 +1,57 @@
+{
+  "schema": "timeline.d140.wholepath-source-manifest/v1",
+  "reviewed_head": {
+    "repo": "composition",
+    "path": "/home/user/work/wt/rt-F-D140-receipt-wholepath-2338",
+    "commit": "d7727b99fb9cb063d4c0ee73fdfa54d752666135",
+    "tree": "222476a7f8eea57f46402ab4fefabce4e2b8a703",
+    "clean": true
+  },
+  "required_source_tuple": {
+    "agent": {"commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa", "origin": "https://github.com/peteromallet/astrid-agent"},
+    "runtime": {"commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883", "origin": "https://github.com/banodoco/banodoco-workspace-runtime"},
+    "app": {"commit": "5696769dfca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a", "origin": "https://github.com/banodoco/reigh-app"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "https://github.com/peteromallet/timeline-composition"}
+  },
+  "observed_work_checkouts": {
+    "agent": {"path": "/home/user/work/agent", "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e", "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7", "origin": "https://github.com/peteromallet/astrid-agent", "clean": true},
+    "runtime": {"path": "/home/user/work/runtime", "commit": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0", "tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef", "origin": "https://github.com/banodoco/banodoco-workspace-runtime", "clean": true},
+    "app": {"path": "/home/user/work/app", "commit": "5696769dfca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a", "origin": "https://github.com/banodoco/reigh-app", "clean": true},
+    "composition": {"path": "/home/user/work/composition", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "https://github.com/peteromallet/timeline-composition", "clean": true}
+  },
+  "frozen_r4_refs_inspected": {
+    "agent": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "runtime": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+    "app": "8f0c2484463e9b666d184a744d52e252984e551a",
+    "composition": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a"
+  },
+  "source_files": [
+    {"path": "ops-d140-farm/receive-farm.sh", "sha256": "0243e7052e0f6fd988a4b6db15483bff8fc41fdfbda57b2a818da849a15327cd", "mode": "0755", "purpose": "D140 receiver and receipt gates"},
+    {"path": "ops-d140-farm/commands.md", "sha256": "93963bd451c04448687a43a956e5bc4e079070a476ef2c0f668b607b6ffbac6d", "mode": "0644", "purpose": "normal Farm route and C0/D73 controls"},
+    {"path": "ops-d140-farm/test_recipe.py", "sha256": "dd2896ba57f12cf6d6a41f1e43234ec988ebc22f8304e86bc0ffa9f04df8d64b", "mode": "0644", "purpose": "source/private controls"},
+    {"path": "ops-child-custody/make-child-venv", "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "mode": "0755", "purpose": "child producer/registration"},
+    {"path": "ops-child-custody/request-child-venv", "sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504", "mode": "0755", "purpose": "child request producer"},
+    {"path": "ops-child-custody/check-child-imports", "sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c", "mode": "0755", "purpose": "child import closure checker"}
+  ],
+  "external_source_files": [
+    {"path": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh", "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1", "mode": "0755", "purpose": "D73 manifest producer at current stale Agent checkout"}
+  ],
+  "source_blobs_verified": [
+    {"repo": "agent", "commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "path": "runtime.lock.json", "blob": "01559de71798c40ba6da1e12c7fba0643902d3e2", "sha256": "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a"},
+    {"repo": "agent", "commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "path": "astrid_runtime_client/generated.py", "blob": "b8dd84cf35db2420ba23bb560abcbd5d6115a77b", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
+    {"repo": "runtime", "commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "path": "contract/schemas/timeline-commit.json", "blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815"}
+  ],
+  "producer_formats": {
+    "d73": {"format": "p4-d73-v1 key/value manifest", "evidence_path": "$P4_D73_EVIDENCE/$P4_D73_REQUEST_ID.manifest", "producer": "agent/tools/p4-d73-pinned-launch.sh"},
+    "farm_distribution": {"format": "timeline.farm-distribution-inputs.v1 canonical JSON", "retained_path": "<child-root>/.farm-receipt.json", "producer": "hub/kit/bin/verify_farm_distribution_inputs.py + verify_dependency_seed.py"},
+    "child": {"format": "fixed provision report plus flat success line", "paths": ["queue/done/childvenv-$N", "tests/provision/<name>.txt", "bench-store/entries/child-<key>"], "producer": "ops-child-custody/make-child-venv"}
+  },
+  "live_input_status": {
+    "current_source_receipts": "missing",
+    "farm_distribution_receipt": "missing_or_unbound",
+    "registered_child": "missing",
+    "d73_manifest_and_evidence": "missing",
+    "poison_copy": "missing",
+    "farm_output_and_service_result": "missing"
+  }
+}
