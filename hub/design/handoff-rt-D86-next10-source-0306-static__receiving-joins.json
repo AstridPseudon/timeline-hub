@@ -1,0 +1,13 @@
+{
+  "schema": "astrid.timeline.fd86-exact-new10-receiving-joins/v1",
+  "agent": {"commit": "562ee30b6ed567a90a114f5029a96da2ece9789e", "tree": "b4a181a97fd07406ccf5f3c3fd675175f77a2ccf", "source_files": 2},
+  "runtime": {"commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4", "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a", "production_sources_unchanged": true},
+  "app": {"commit": "2d25dc460c1741c80b60bc8022cd30321fcbfd91", "tree": "7a9b472f34b337fa459c787541fac157a82929dd"},
+  "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+  "normal_ancestry": {"inverse7": true, "d92_compound3": true},
+  "fresh_fourtuple": "PENDING",
+  "path_sensitive_preflight": "PENDING",
+  "body": "PENDING",
+  "inverse7_original_behavior": "OPEN",
+  "compound3_original_behavior": "OPEN"
+}

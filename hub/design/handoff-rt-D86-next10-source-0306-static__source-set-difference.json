@@ -1,0 +1,14 @@
+{
+  "method": "exact selector set comparison; membership governs",
+  "new_packet": {"count": 10, "sha256": "a9d68dfbc0028b7e9a247378ab0aefc628823c541d567e70c478266bf3d341bc"},
+  "excluded_boundaries": {
+    "executed161": {"count": 161, "selector_file_sha256": "786d8720f90e300ebeebfdf604d22ee696d89e0e4bf86b458bae8bf1942400d2"},
+    "later102": {"count": 102, "selector_file_sha256": "b2265a32c2c931616a8430d774fbb8ad71a38d5d590dd528079d9e9a9627a5f9"},
+    "scheduled_D91": {"count": 10, "source": "inputs/scheduled-elsewhere.tsv", "actual_result": "NONE"}
+  },
+  "overlap": {"executed161": 0, "later102": 0, "scheduled_D91": 0},
+  "families": {"inverse7-stage7": 7, "D92-docpatch5-compound3": 3},
+  "preserved": ["original550", "NO_JUNIT_CASE-23", "D87-ledger", "held-predicates"],
+  "excluded_live": ["D92-atomic", "D92-ABA"],
+  "status": "PASS_STATIC_ONLY"
+}
