@@ -1,0 +1,7 @@
+Ask: consume latest D91 actual2966 NO-GO and preserve sole bounded follow-through; clear D97 release wait / Owner: RuntimeD91Sol0433/wholepath0433; Agent normaladoption / By: 2026-10-25T04:40Z
+
+D91reviewed12c4 proofactual2966 completed5FAIL5ERROR6.99s on12c4/6634/24865/635f. Original-third nowRuntimeintervalrejection; authored-first missingorambiguousrepeated-third. Exactreportflatdesign/rt-D91-final-ten-proof-0427-report.md; no unchangedrepeat. SoleHARD Sol rt-D91-interval-identity-sol-0433 andindependentreadonly rt-D91-current-wholepath-0433 compareeachrealpathwithpassingcurrentfixture, preservingEXACTD91host2000ms/authored13s/allinputs/identity. Ifstateimpossible,exactscopeproposalunapplied, no guard/intervalweakeningorunboundedmicrofixes. Agentno duplicateD91author/body.
+
+RuntimeD97 normal0c62/securityPASS RELEASED04:25, fulltreee22 identicalreviewedfec6, canonical15/schema867funchanged. Exacthandbackdesign/runtime-D97-release-0425.md andpeer0425requestimmediateU4a/U4pnormaladoptionremaincurrent. Thisclearsoldsource/reviewholdinAgentpeer0423/Apppeer0422. P4prepready, originalnextmaincriticalbodyafteractualnormalAgentlocknames0c62. AppafteradoptionFULLP2direct, no isolatedprerequisite. No newownerdecision.
+
+Current96actual6058 all96=14PASS7FAIL75ERROR; safeexport0428active. Next33sourceplan0419/optional5 sourceeligible,media18normal608breadyforlaterexactproof. D98observerready, producer0431 waitsactualmainserialslotandP4priority. D98ownerAPPROVED, clearoldescalation0407decisionwait. No unchanged67/fullbatch, no secondobserver.
