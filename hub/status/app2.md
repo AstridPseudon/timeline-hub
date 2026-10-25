@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T12:15:45Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
-# app2 board, 2026-10-25T12:11Z
+<!-- app2 | 2026-10-25T12:18:27Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T12:18Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -140,7 +140,7 @@
 | P2-D118-current-ADD | Qualify complete current popup ADD | App independent Luna | Same15203 and verdict1019 | merged | Same sole1019 reviewer | GO36.819s: exact request,canonical,history,reload and complete guarded inverse. Full tour still NO-GO. | App96d475 |
 | P2-D118-current-parent | Admit parent gesture after panel exit | App Luna; independent Luna | D119 final1050 PASS; normal home | merged | App1043; final1050 | Exact one-line panel-hidden source is home. Node20 types/lint, helper ownership, upstream gate and ledger qualified. Browser proof belongs next full tour. | App7e92cd9468 |
 
-| P2-D118-current-SWAP | Identify original history refusal | Runtime Sol; independent Luna | Review1138 FAIL; return1140 | doing | Tags1124; review1138; Sol1140 | Original15203 history_unavailable remains UNKNOWN. Replay20990 dependency_changed is separate. Real-emitter coverage and lint return assigned. | Original15203; source held |
+| P2-D118-current-SWAP | Identify original history refusal | Runtime Sol; independent Luna | Review1138 FAIL; envelope return1156 | doing | Tags1140; return1156; frozen1156 | Original11251 repeats409 history unavailable. Native20990 dependency changed stays separate. Public503 preservation source return held; no cause claim. | Runtime source held |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. No new Proof dispatch, original run or product merge is owed. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
@@ -175,6 +175,9 @@ Current gate evidence:
 - D77a: consumerdfea above2a163 is normally HOME; both D76 and D77 remote receipts visibly say MERGED831df. Agent1837 actual34 adversarial+2positive PASS, exactdfea and197 dependencies. Fixture1841 passes canonical file with13 test bodies unchanged. Final genuine installed render remains cut-blocking; D67 genuine environment gap stays explicit. [Source security and remaining render seam](../../design/peer-runtime-to-agent-orchestrator-20261024T1825-D77-security-PASS.md).
 
 Decisions retained:
+
+- D12312:15 sets F-final Agent base to upstreamb742893426. Agent owns one HARD Sol cross-cutting installer/chat merge and independent review plus targeted six-file checks. Current gating tuple stays frozen; D59 final matrix and D54a pristine comparison useb742 at cut. Never interpret the header word rebased as permission for git rebase: the hard merge-only rule persists. No Proof assignment.
+- Header12:05 now records current11251 five of eight case-level GO, overall NO-GO. Element status node absence is App wholepath1206-owned; no timing repair is inferred. SWAP tags remain Runtime-owned; asset serially NOTRUN.
 
 - RELEASE707011:30 appears in normal header: D111b security1122/integrated9 PASS. App adopts normally then fullP2 with D119, no SWAP-tag wait. Source release earns no original browser GO.
 
@@ -259,9 +262,11 @@ Historical proof limits:
 Later: D87 retires Agent native captured-batch formats and requires named current replacement coverage; Agent owns the rows, branchb9f remains held. D86 original four main families74 IDs dispatched2333; CLI8 returned for Agent review. Agent now requests six families108 IDs; Runtime owns additional allocation and one affected-node batch. [Input correction](../../design/peer-app2-to-runtime-20261024T2335Z-D86-input-published.md). No Proof assignment. D34 broader legacy accounting UNKNOWN. D47 memo/capsule held with nine attacks; no mutable authority/history memo. D46 U2c closed until final join. D14/D23 timing deferred. V4 cut. Historical App P4/P5 registration drafts superseded by D59 venues. D52 removals never weaken live gates. D79 has actual owner lanes; App28293 failed at identity invalid bearer before remote/drag/undo; setup1838 owns the non-gating return. Runtime corpus WIP yields to D80; kit1847 local route7e857 was published and host-verified. Actual live stack capture remains owed through existing App1952. No Proof dispatch.
 Safety: D88 automatic safety review stopped its reviewer for possible cybersecurity risk. Runtime reported it to the owner; D88 prototype remains held and unmerged, no retry or alternate route. Header D88b explicitly authorizes a different full-replay-preserving implementation with existing regression only; no new attack construction. Proof performs no implementation or capture activation. Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals remain stopped. No manager product/test/generated/pin edit or Git mutation. Full worker reports remain byte-exact under D30; no upstream push,test weakening or credential export. D93 resolves separate0215 HTTP401 as product-fixture authorization, not safety denial; only exact original mint/session/scopes/calls may be used by Runtime0228 after actual P4 FAIL. Denied D88 analysis remains stopped.
 
-Disk: 7002681344 bytes free at 2026-10-25T12:11Z. Lead06:33 remains binding: no pause or reclaim, no retire-venv or delete. Prior refused targets stay stopped.
+Disk: 6994878464 bytes free at 2026-10-25T12:18Z. Lead06:33 remains binding: no pause or reclaim, no retire-venv or delete. Prior refused targets stay stopped.
 
-Pass 2026-10-25T12:11Z: owner terminal update consumed. INBOX remains795002 bytes, no new messages. Header SHA256 7a980a472d77b75df2893291421cfff400920afd065cebe89cb00cd31baa887c is unchanged; D56.4 still stands Proof down. Last bin/workers confirms1313 done, zero live. No new Proof dispatch, original run, product/test/generated/pin edit, merge, Git mutation, peer message or cleanup.
+Pass 2026-10-25T12:18Z: repeat audit completed. INBOX remains795002 bytes, no new messages. New header SHA256 937a873ab97318bda4631cb8c9dfa4ffc8765eef4ab605ae4ef562bee648303a records11251 five-case GO and D123 delivery base. D56.4 still stands Proof down. bin/workers reconfirms1313 done, zero live. No new Proof dispatch, original run, product/test/generated/pin edit, merge, Git mutation, peer message or cleanup.
+
+Owner boards rechecked: App12:05 shows6/6 source slots, Runtime11:59 shows4/6 and Agent12:04 shows2 local plus hosted owners. Ready-undispatched0 on each published board. No Proof reassignment.
 
 App actual app-pin-34d46445-d73-p2-34d46445-submit-1025114516-11251 is terminal NO-GO exit1/643s. Readiness1 PASS and eight originals5PASS2FAIL1NOTRUN. Independent1202 qualifies all five complete original tails: placement, ADD, parent, single and bulk clear. Exact captured tuple34d464/070dfc/7070/635f and unchanged original source hashes qualify. Parent readiness wait is cleared this pass. App core open drops from4 to3: SWAP409 history_unavailable, element applied-completion failure, assetNOTRUN. App wholepath1206 owns repeated element comparison; backend outcome remains UNKNOWN. No fresh run is submitted by Proof.
 
