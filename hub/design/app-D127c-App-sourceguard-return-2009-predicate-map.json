@@ -1,0 +1,17 @@
+{
+  "app_predicates": {
+    "final_profiler_hash": "PASS: 095c252b... has an explicit reviewed-profiler source-pin branch",
+    "legacy_hash_arms": "PASS: normal a17a..., reviewed 6c9..., and reviewed-new 4ee... arms remain",
+    "canonical_basename": "PASS: every reviewed arm requires p2_commit_phase_capture.py",
+    "wrong_hash": "PASS: mutated final digest is rejected by the fail-closed fallback",
+    "unknown_source": "PASS: unknown helper basename is rejected",
+    "read_capture_allowlist": "PASS: existing strict readCapture allowlist and arm selection unchanged",
+    "schema_and_mutation_guards": "PASS: reviewed-profiler and reviewed-new validators passed",
+    "scope": "PASS: only tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts changed"
+  },
+  "runtime_predicates": {
+    "source": "PASS: final helper hash independently verified from Runtime 368f53f4454d5908c86de53d174f0bedcf23781c",
+    "central_result": "PASS: reused 61-test result from request 30318; no Runtime rerun"
+  },
+  "qualification_boundary": "No live bootstrap, activation, product path, browser, full suite, or D130 credit."
+}

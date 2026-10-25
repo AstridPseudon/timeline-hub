@@ -1,0 +1,47 @@
+{
+  "task": "app-U3-D135-upstream-merge-1958",
+  "source_review": "PASS_CORRECTED_ARTIFACTS",
+  "candidate_state": "INDEX_MERGE_FORWARD_WITH_REVIEWED_CONFLICT_RESOLUTIONS",
+  "base": "3881e9440688f774878e18806da2dc5c993a9b00",
+  "ours": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+  "upstream_draft_tuple": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+  "reviewed_counts": {
+    "files": 16,
+    "preview_headers": 81,
+    "true_conflict_hunks": 14,
+    "clean_nonconflicting_hunks": 67,
+    "semantic_true_conflicts": 13,
+    "mechanical_import_conflicts": 1
+  },
+  "reviewed_preview_sha256": "6c7cf7073a554a81ddbfe9aca90da2a192e73bed90245e137e030998c4439535",
+  "reviewed_artifacts": [
+    "app-F-App16-classification-return-1932-conflicts.md",
+    "app-F-App16-classification-return-1932-findings.json",
+    "app-F-App16-classification-return-1932-hunk-map.json",
+    "app-F-App16-classification-return-1932-source-manifest.json",
+    "app-F-App16-final-artifact-review-1941-verdict.json"
+  ],
+  "manager_merge_forward": {
+    "mode": "index-only",
+    "head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "upstream_parent_tuple": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+    "merge_parent_file": "merge-parent",
+    "merge_head_present": false,
+    "merge_message_present": false
+  },
+  "manifest_resolution": {
+    "preserved_agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "preserved_runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+    "preserved_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "preserved_upstream_vibecomfy": "31f90bb03d330283b76e7dbdda51197be787090d",
+    "preserved_existing_omp": "78f0e0960f471c2c62b943272a48c33366f239fe",
+    "selected_cut_heads": "PENDING",
+    "source_tool_plan": "REFUSED_RUNTIME_HEAD_MISMATCH"
+  },
+  "limitations": [
+    "The captured upstream hash is a draft tuple only; no live-tip claim is made.",
+    "The harness still owns the merge commit and exact two-parent ancestry.",
+    "The source tool refused final pin planning because runtime HEAD e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9 does not match the qualified manifest runtime pin ab1e4f6141987706132916e2da16477f5a019464.",
+    "Targeted project-contract warm-up cases remain failing while the existing bridge model-read retry completes; no unrelated transport edit was made."
+  ]
+}

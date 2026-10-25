@@ -1,0 +1,56 @@
+{
+  "task": "D136",
+  "verdict": "PASS_REGRESSION_SOURCE",
+  "disposition": "SOURCE_FINDING_ONLY",
+  "receiving": {
+    "commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+    "tree": "84e9d485a7ee8fdf2969eaf19d159e400f0ca1d4",
+    "worktree_clean": true,
+    "changed_paths_from_parent": ["tests/sdk/test_timeline_capture_projection.py"]
+  },
+  "gates": {
+    "G1": {
+      "status": "QUALIFIED_BY_SUPPLIED_LEAD_READBACK",
+      "supplied_at": "20:22",
+      "supplied_published_tip": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "supplied_provenance": "lead readback reported upstream Agent origin/main and actual git ls-remote at the same tip",
+      "worker_fetch": false,
+      "local_object": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "local_origin_main_matches": true,
+      "local_origin_head_matches": true,
+      "projection_path_absent_at_object": true,
+      "freshness_method": "supplied lead evidence; no live freshness check claimed"
+    },
+    "G2": {
+      "status": "CONFIRMED_D54A_REGRESSION",
+      "authored_path": "parent.config.theme_overrides.visual.canvas.fps",
+      "authored_shape": "array of two integers",
+      "authored_value_summary": "[30000, 1001]",
+      "pristine_schema_errors": 0,
+      "pristine_schema_rule": "ThemeOverrides.visual is an object with additionalProperties {}",
+      "pristine_validator_result_for_list": "_timeline_fps returns 30.0",
+      "receiving_provider_result_for_list": "_fps rejects the array as not a finite number",
+      "path_is_consumed": true,
+      "classification": "known typed FPS parameter, not opaque open-field decoration"
+    }
+  },
+  "conservation": {
+    "original_predicates": 43,
+    "test_bodies": 11,
+    "fixture_statements": 54,
+    "current_module_assertions": 44,
+    "setup_assertion_excluded": 1,
+    "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "protected_ast_record_says_preserved": true,
+    "original_27_pass_and_9_setup_error_separation_preserved": true
+  },
+  "caller_audit": {
+    "production_publication": "publish_authoring_candidate builds the v2 request and calls writer.commit_timeline",
+    "registered_route": "independent D100 evidence identifies RuntimeService.commit_timeline through the registered provider",
+    "request_controls": "base pair, commands, label, steps, merge, source, rationale and Idempotency-Key are retained; optional reads/default dry_run semantics remain C0-defined",
+    "reply_controls": "accepted/merged are accepted only with canonical_document and accepted_revision_id; no bypass route found"
+  },
+  "owner": "Runtime/Agent under D136",
+  "holds": ["original 9 setup errors remain visible", "D130 hold", "no functional nine-selector credit"],
+  "forbidden_actions_taken": ["no fixture edit", "no numeric conversion", "no guard widening", "no retry", "no product or test edit", "no fetch or Git mutation"]
+}

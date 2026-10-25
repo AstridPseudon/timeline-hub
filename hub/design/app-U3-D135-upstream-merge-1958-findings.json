@@ -1,0 +1,43 @@
+{
+  "task": "app-U3-D135-upstream-merge-1958",
+  "source_review": "PASS",
+  "candidate": "INDEX_MERGE_FORWARD_CONFLICTS_RESOLVED",
+  "merge_state": {
+    "head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "status_clean": false,
+    "merge_head_present": false,
+    "merge_message_present": false,
+    "note": "Manager merge-forward is represented by staged automatic merge state; harness owns final merge metadata and commit."
+  },
+  "approved_conflict_paths": [
+    "public/install-manifest.json",
+    "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx"
+  ],
+  "reviewed_source_limits": [
+    "Preserve both AgentChat test families and exact mocks/refusal predicates.",
+    "Preserve mounted App outbox to Runtime commitTimeline and C0 v2 guards/replies.",
+    "Do not fabricate Agent/Runtime cut pins or resolve before the actual merge exists."
+  ],
+  "resolved_conflict_paths": [
+    "public/install-manifest.json",
+    "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx"
+  ],
+  "targeted_result": {
+    "test_files": 4,
+    "passed_files": 3,
+    "failed_files": 1,
+    "passed_tests": 159,
+    "failed_tests": 2,
+    "failures": [
+      "generic warm-up failure does not reach Try again before the existing bridge retry settles",
+      "setup warm-up failure does not reach codex login before the existing bridge retry settles"
+    ]
+  },
+  "next_route": "Independent review must decide whether the two cross-family warm-up failures are an existing retry-contract issue or require an approved-scope AppChat adjustment; no transport or non-approved source edit was made."
+}

@@ -1,0 +1,29 @@
+{
+  "task": "app-U3-D135-upstream-merge-1958",
+  "status": "PARTIAL_TARGETED_VALIDATION",
+  "reviewed_source_predicates": {
+    "upstream_setup_error_catalog_terminal": "required_preserve",
+    "voice_session_availability_queue": "required_preserve",
+    "focus_handoff_model_agent_callbacks": "required_preserve",
+    "static_tour_no_session_anchors_coarse_pointer": "required_preserve",
+    "mounted_outbox_to_commitTimeline": "required_preserve",
+    "c0_v2_request_reply_guards_privacy": "required_preserve"
+  },
+  "before_after": {
+    "agentchat_test_families": "159 passed, 2 failed in projectContract warm-up recovery; AgentChat family otherwise passed",
+    "menu_and_tour_tests": "PASS in requested targeted run; AgentChatMenu/TerminalNudge coverage included",
+    "mounted_outbox_commitTimeline_invariant": "NOTRUN directly; no non-approved caller or Runtime source changed",
+    "manifest_source_and_pin_validation": "PASS JSON/diff-check; final pin plan REFUSED on runtime HEAD mismatch",
+    "lint": "PASS scoped ESLint",
+    "typecheck": "BLOCKED by automatic-merge NewChatMenu DU path; approved AgentChat missing chatModelId was fixed"
+  },
+  "before_after_predicates": {
+    "upstream_setup_error_catalog_terminal": "implemented; warm-up recovery observations fail before retry settles",
+    "voice_session_availability_queue": "preserved in AgentChat merge; no direct failure observed in requested targeted run",
+    "focus_handoff_model_agent_callbacks": "preserved; menu/model tests passed",
+    "static_tour_no_session_anchors_coarse_pointer": "preserved; TourChatPanel has no markers and scoped lint passed",
+    "mounted_outbox_to_commitTimeline": "preserved by no caller edits; direct invariant test not run",
+    "c0_v2_request_reply_guards_privacy": "preserved by no Runtime/outbox edits; direct invariant test not run"
+  },
+  "reason": "Candidate source is present in manager index-only merge state, but final harness ancestry and two warm-up recovery observations remain unverified."
+}

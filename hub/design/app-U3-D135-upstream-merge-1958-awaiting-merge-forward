@@ -1,0 +1,1 @@
+Manager bin/merge-forward was initially absent at inspection, then established the automatic merge in the index/worktree. The manager route is index-only here: HEAD remains d5a1d1ab6550187e377fd7387d300102b8b82ece and .git/MERGE_HEAD/.git/MERGE_MSG remain absent. No alternate merge, fetch, checkout, rebase, reset, or commit was performed.

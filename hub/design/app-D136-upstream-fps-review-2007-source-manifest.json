@@ -1,0 +1,56 @@
+{
+  "task": "D136",
+  "receiving": {
+    "commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+    "tree": "84e9d485a7ee8fdf2969eaf19d159e400f0ca1d4",
+    "parent": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "worktree_clean": true,
+    "projection": {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436"
+    },
+    "agent_sources": [
+      {"path": "astrid/sdk/timeline/validation.py", "sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c"},
+      {"path": "astrid/sdk/timeline/authoring_commit.py", "sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac"},
+      {"path": "astrid/sdk/timeline/commit.py", "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"},
+      {"path": "astrid/core/timeline/authoring_bundle.py", "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d"},
+      {"path": "astrid/core/timeline/schema/timeline-config.schema.json", "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"}
+    ]
+  },
+  "supplied_upstream": {
+    "ref": "origin/main",
+    "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+    "freshness": "supplied lead readback at 20:22; worker did not fetch",
+    "local_origin_head_and_main_match": true,
+    "projection_path_absent_at_exact_object": true,
+    "sources": [
+      {"path": "astrid/core/timeline/schema/timeline-config.schema.json", "sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"},
+      {"path": "astrid/core/timeline/validators/timeline.py", "sha256": "0b4839537aa72013812a4f5a4676468343e22fa35da9a592a8501f9b42953fc5"},
+      {"path": "astrid/core/timeline/banodoco_schema.py", "sha256": "23d6166963a710f927e1b2b3a66526f822fe13d5a251e404a47a0b0dd97d3ff2"},
+      {"path": "astrid/core/timeline/banodoco_composer.py", "sha256": "c18ae06fc3ae7bd660dd3001a388b89a886e1680f6f6c14fa6182c2dd74c4461"}
+    ]
+  },
+  "authored_input": {
+    "path": "parent.config.theme_overrides.visual.canvas.fps",
+    "shape": "array of two integers",
+    "summary": "[30000, 1001]",
+    "exact_rational_alternative": "{numerator: 30000, denominator: 1001}",
+    "conversion_applied": false
+  },
+  "protected_census": {
+    "original_predicates": 43,
+    "test_bodies": 11,
+    "fixture_statements": 54,
+    "current_module_assertions": 44,
+    "setup_assertion_excluded": 1,
+    "predicate_ast_multiset_preserved": true,
+    "fixture_statement_subsequence_preserved": true
+  },
+  "frozen_references": {
+    "sdk_candidate": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "runtime_candidate": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+    "projection_path_absent_in_sdk_candidate": true
+  }
+}

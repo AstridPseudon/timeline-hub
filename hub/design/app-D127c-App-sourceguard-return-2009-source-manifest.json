@@ -1,0 +1,29 @@
+{
+  "manifest_kind": "D127c independent App sourceguard repair",
+  "app": {
+    "base_commit": "6c0329334797b42565918114f2e760a606b026b6",
+    "base_tree": "8b9a12d2d77708d260db8a9bd6b9fadff611bf44",
+    "changed_files": [
+      "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+    ],
+    "working_tree_file_sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+    "working_tree_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+    "base_file_sha256": "558963ebdb25c22713b18d8b32600da6e4af79fd81759925181bae68ca8e19ff",
+    "scope_result": "only the permitted support test changed"
+  },
+  "runtime": {
+    "commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "test_sha256": "ee789ec10738e1d9f3a2aae92c15b6d49cc86ad4f3c6e0e7cafc5fe5c883cf88",
+    "central_targeted_result": "61 passed in 3.62s, request 30318 reused; not rerun"
+  },
+  "repair": {
+    "finding": "D127c-F001",
+    "final_helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "guard_change": "explicit reviewed-profiler source-pin arm; normal, reviewed, and reviewed-new arms retained",
+    "unknown_hashes": "rejected by the existing fail-closed fallback",
+    "unknown_sources": "rejected by the canonical helper basename assertion"
+  },
+  "qualification_boundary": "No live bootstrap, browser, activation, product, Runtime, full, or tour qualification claimed."
+}

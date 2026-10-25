@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "id": "D127c-F001",
+      "severity": "blocker",
+      "status": "resolved_in_worktree",
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "before": "The final helper hash entered the fallback branch and was asserted as REVIEWED_NEW_HELPER_SHA256.",
+      "after": "The final 095c252b... helper has an explicit reviewed-profiler branch with the canonical basename guard.",
+      "controls": [
+        "final profiler positive",
+        "normal/reviewed/reviewed-new positives",
+        "mutated hash negative",
+        "unknown basename negative"
+      ],
+      "remaining_disposition": "Sourceguard repair is targeted and tested; live bootstrap and activation remain intentionally unqualified."
+    }
+  ],
+  "remaining_findings": []
+}
