@@ -1,0 +1,122 @@
+{
+  "schema": "timeline.app.d136a.final-coverage-audit.v1",
+  "task": "D136a-boundary-final-review-2205",
+  "status": "FAIL_REMAINING_COVERAGE_GAPS",
+  "input_coverage": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-review-2155/evidence/coverage.json",
+  "corrected_table": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/table.json",
+  "inventory": {
+    "rows": 45,
+    "final_predicates": 9,
+    "groups": 6,
+    "condition_maps": 30,
+    "ast_inventory_entries": 31,
+    "group_map_counts": {
+      "MGC-01": 6,
+      "MGC-02": 4,
+      "MGC-03": 4,
+      "MGC-04": 5,
+      "MGC-05": 5,
+      "MGC-06": 6
+    },
+    "group_ast_counts": {
+      "MGC-01": 5,
+      "MGC-02": 2,
+      "MGC-03": 4,
+      "MGC-04": 8,
+      "MGC-05": 6,
+      "MGC-06": 6
+    }
+  },
+  "prior_findings_reconciled": {
+    "MGC-01": {
+      "rows": ["B005", "B006", "B007"],
+      "condition_scope": "mapping/string/meta/timeline payload validation; shot item identity/media; internal clip identity/media and registry; placement capability; copied-shot source scope, owner and binding checks",
+      "declared_ranges": ["astrid/core/timeline/authoring_bundle.py:185-233", "astrid/core/timeline/authoring_bundle.py:679-772", "astrid/core/timeline/authoring_bundle.py:775-820", "astrid/core/timeline/authoring_bundle.py:837-888", "astrid/core/timeline/authoring_bundle.py:948-997"],
+      "caller_path": ["compile_authoring_candidate:1000-1404", "publish_authoring_candidate:1833-1914"],
+      "reachability": "B005/B007 progressed before refusal; B006 branch outcome UNKNOWN; no dynamic exhaustiveness claimed",
+      "source_hash": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d"
+    },
+    "MGC-02": {
+      "rows": ["B008"],
+      "condition_scope": "duplicate reservation shape/command/source/baseline/placement/parent checks and shared-alias fork provenance checks",
+      "declared_ranges": ["astrid/sdk/timeline/authoring_commit.py:190-261", "astrid/sdk/timeline/authoring_commit.py:264-335"],
+      "caller_path": ["authoring_commit_request:84-187", "publish_authoring_candidate:1877-1889"],
+      "reachability": "No duplicate/fork refusal observed; branch outcome UNKNOWN",
+      "source_hash": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac"
+    },
+    "MGC-03": {
+      "rows": ["B014", "B015"],
+      "condition_scope": "media selection refusal; restore/history/undo ordering; closure capture; head/rebase/replay selection; stale-head retries; plan and inverse checks",
+      "declared_ranges": ["astrid/sdk/timeline/commit.py:1206-1398"],
+      "caller_path": ["RuntimeCommitService.commit:1160-1450", "publish_authoring_candidate:1883-1889"],
+      "reachability": "Static only; exact Agent branch result UNKNOWN",
+      "source_hash": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+    },
+    "MGC-04": {
+      "rows": ["B021", "B022", "B023", "B024", "B025", "B029", "B032"],
+      "condition_scope": "require primitive; text-binding aliases; site/native_site alias resolution; location/stored paths; read membership/order; observation projection; child creation; command manifest and owner/read observation",
+      "declared_ranges": ["runtime_protocol/timeline_commit_auth.py:18-264", "runtime_protocol/timeline_commit_auth.py:608-778", "runtime_protocol/timeline_commit_auth.py:1833-2186"],
+      "caller_path": ["command_output:2189-2215", "auth observation/read path", "sequential auth path"],
+      "reachability": "B021 auth preparation entered; B022 refusal observed; all later helper outcomes UNKNOWN",
+      "source_hash": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47"
+    },
+    "MGC-05": {
+      "rows": ["B020", "B026", "B027", "B028"],
+      "condition_scope": "document-image shape/digest; projection equality; binding identity; replay source chain; capture head/records; binding image/owners; step lookup",
+      "declared_ranges": ["runtime_protocol/timeline_commit_auth.py:2338-2560"],
+      "caller_path": ["validate_sequential_capture:2563-2629", "Runtime port sequential validator"],
+      "reachability": "Definitions are downstream of the refusal; all branch outcomes UNKNOWN",
+      "source_hash": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47"
+    },
+    "MGC-06": {
+      "rows": ["B018", "B019", "B034"],
+      "condition_scope": "closure/schema/head/history/event/materialization/destination/reference-projection checks",
+      "declared_ranges": ["runtime_protocol/timeline_commit_store.py:1491-1565", "runtime_protocol/timeline_commit_store.py:1576-1788", "runtime_protocol/timeline_commit_store.py:1810-1905"],
+      "caller_path": ["TimelineCommitStore.preview:1790-1808", "TimelineCommitStore.accept:1832-1915"],
+      "reachability": "Store helpers downstream of provider auth; no branch observed for refusal",
+      "source_hash": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+    }
+  },
+  "remaining_findings": [
+    {
+      "id": "F-D136A-FINAL-001",
+      "group": "MGC-01",
+      "rows": ["B005", "B006", "B007"],
+      "condition": "Typed/digest/meta validation and internal media authority, including selector resolution, legacy-missing handling, source fallback authority, and canonical media identity.",
+      "citation": "astrid/core/timeline/authoring_bundle.py:237-244 (_verify_digest), :541-549 (_media_identity), :552-575 (_clip_selected_media), :577-620 (_missing_registry_asset, _same_media_declaration, _clip_selected_media_for_edit), :646-676 (_effective_parent_assets, _with_source_asset_authority).",
+      "declared_claim": "The packet claims condition map lines 185-244 and 552-620, but source_ranges stop at 185-233 and 679-772; the AST entry labels _clip_selected_media and _clip_selected_media_for_edit as 679-772 although their definitions are 552-575 and 595-620. The called helper branches and _string/_verify_digest tail are therefore not source-span matched.",
+      "classification": "evidence citation/inventory defect only; no dynamic result inferred"
+    },
+    {
+      "id": "F-D136A-FINAL-002",
+      "group": "MGC-04",
+      "rows": ["B021", "B022", "B023", "B024", "B025", "B029", "B032"],
+      "condition": "Authenticated command-output projection: native_site/stored_path resolution, physical observation lookup, owner/materialization reconciliation, and the fail-closed require at line 2209.",
+      "citation": "runtime_protocol/timeline_commit_auth.py:729-795 (_align_materialized_images, _parent_materialization_reconciles, _reconcile_materialized_owner_images) and :2189-2215 (command_output; refusal at :2209).",
+      "declared_claim": "The AST entry spans 608-795, but source_ranges stop at 608-778; the source range 1833-2186 stops before command_output 2189-2215. The packet therefore omits a claimed helper tail and the actual caller/refusal branch from the shared group.",
+      "classification": "evidence citation/inventory defect only; B022 remains an observed current refusal"
+    },
+    {
+      "id": "F-D136A-FINAL-003",
+      "group": "MGC-06",
+      "rows": ["B018", "B019", "B034"],
+      "condition": "Store materialization, preview/accept, transaction/replay, persistence, and history checks.",
+      "citation": "runtime_protocol/timeline_commit_store.py:1567-1574 (_materializations) and :1832-1915 (accept, including :1906-1915 rejection/application/persist/history tail).",
+      "declared_claim": "The AST entry claims 1567-1597 and 1832-1905, while source_ranges are 1576-1788 and 1810-1905. _materializations and the final accept tail are outside the declared ranges, so the shared grouping does not cover all claimed conditions.",
+      "classification": "evidence citation/inventory defect only; downstream outcome remains UNKNOWN"
+    }
+  ],
+  "b022_classification": {
+    "status": "PASS_CORRECTED",
+    "source": "runtime_protocol/timeline_commit_auth.py:2209",
+    "message": "provider intermediate command lacks an authenticated physical observation",
+    "observed": "current Runtime fail-closed refusal",
+    "regression": "UNKNOWN",
+    "causal_owner": "UNKNOWN",
+    "setup_failure": "NOT_PROVED",
+    "d54a_reg": "NOT_PROVED",
+    "required_missing_record": "exact physical record/ref/path/ordinal or valid pristine behavior/source-equivalence comparison",
+    "authorization": "No guard relaxation, source-fault attribution, or product fix is authorized."
+  },
+  "no_new_scope": "No new generic whole-path stage or product footprint was added; the remaining findings are exact mismatches within prior MGC-01..06 coverage claims."
+}

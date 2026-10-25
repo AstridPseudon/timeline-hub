@@ -1,0 +1,67 @@
+{
+  "schema": "timeline.app.d136a.final-boundary-review.v1",
+  "task": "D136a-boundary-final-review-2205",
+  "verdict": "FAIL_REMAINING_EVIDENCE_COVERAGE_GAPS",
+  "qualification": "STATIC_FINITE_INVENTORY_NOT_COMPLETE; DYNAMIC_NO_GO",
+  "source_change": "none",
+  "scope": "Independent protected static review of SAME2159 against immutable prior2150/2155 evidence; no source, test, fixture, pin, product, runtime, or execution action.",
+  "counts": {
+    "rows": 45,
+    "final_predicates": 9,
+    "helper_groups": 6,
+    "condition_maps": 30,
+    "ast_inventory_entries": 31
+  },
+  "findings": [
+    {
+      "id": "F-D136A-001",
+      "status": "PASS",
+      "result": "The supplied table retains 45 unique rows across P1-P4 and maps exactly nine final predicates: three standalone plus parent, child, new_shot, duplicate, remove, and sdk_bundle."
+    },
+    {
+      "id": "F-D136A-002",
+      "status": "FAIL",
+      "result": "The six MGC groups and 30 condition maps are present, but three groups still have source/helper span mismatches or omitted caller/helper branches. See coverage.json remaining_findings."
+    },
+    {
+      "id": "F-D136A-003",
+      "status": "PASS_CORRECTED",
+      "result": "B022 is only an observed current Runtime fail-closed refusal at timeline_commit_auth.py:2209; regression, causal owner, setup failure, and D54a REG remain UNKNOWN/NOT_PROVED."
+    },
+    {
+      "id": "F-D136A-004",
+      "status": "PASS_WITH_UNKNOWN",
+      "result": "B023-B036 and B-FINAL-001..009 remain unreached/UNKNOWN; no downstream outcome is promoted to failure or setup classification."
+    },
+    {
+      "id": "F-D136A-005",
+      "status": "PASS",
+      "result": "Agent/Runtime source hashes match the supplied custody manifest; 886a file absence is treated as source absence, not behavior."
+    }
+  ],
+  "dynamic_evidence": {
+    "result": "9 collected; 9 setup errors; 0 failures, 0 passes, 0 skips; exit 1",
+    "run": "final20db original9 exact harness run, reused from immutable prior evidence",
+    "first_seam": "runtime_protocol/timeline_commit_auth.py:2209",
+    "first_message": "provider intermediate command lacks an authenticated physical observation",
+    "classification": "current refusal only; no regression or causal owner inferred",
+    "raw_artifacts": "not read or republished; only prior safe hashes and paths retained"
+  },
+  "release": {
+    "held": true,
+    "no_product_action_authorized": [
+      "guard relaxation",
+      "product fix",
+      "fixture conversion",
+      "retry or alternate qualification",
+      "release",
+      "source execution"
+    ]
+  },
+  "inputs": {
+    "current_table": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/table.json",
+    "current_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/review.json",
+    "prior_coverage": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-review-2155/evidence/coverage.json",
+    "prior_table": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/table.json"
+  }
+}
