@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T13:29:32Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# app2 board, 2026-10-25T13:22Z
+<!-- app2 | 2026-10-25T13:32:12Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T13:31Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,7 +143,7 @@
 
 | P2-D118-current-SWAP | Qualify history refusal tags | Runtime Sol; independent Luna | Normal release1221; App adoption1230 | merged | Independent1206; home1221 | Source GO: normal56 controls and provider2 PASS, public503 retained. App adopted5e9ad atd8a1. Original11251 lower guard UNKNOWN; browser proof owed. | Runtime5e9ad / Appd8a1 |
 
-| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Exact App handoff and preflight | blocked:app | Await exact packet; App owns verdict | Node20.20.0 present; disk above 6GB. No request submitted. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
+| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Exact App handoff and preflight | blocked:app | App Luna1322; App owns verdict | Node20.20.0 present; disk above 6GB. No request submitted. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. D125 lifts stand-down for ONE hosting job only; exact App handoff precedes preflight and one full P2 request. App owns the independent verdict. All other Proof dispatch and product merge remain stood down. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
@@ -272,15 +272,19 @@ Historical proof limits:
 Later: D87 retires Agent native captured-batch formats and requires named current replacement coverage; Agent owns the rows, branchb9f remains held. D86 original four main families74 IDs dispatched2333; CLI8 returned for Agent review. Agent now requests six families108 IDs; Runtime owns additional allocation and one affected-node batch. [Input correction](../../design/peer-app2-to-runtime-20261024T2335Z-D86-input-published.md). No Proof assignment. D34 broader legacy accounting UNKNOWN. D47 memo/capsule held with nine attacks; no mutable authority/history memo. D46 U2c closed until final join. D14/D23 timing deferred. V4 cut. Historical App P4/P5 registration drafts superseded by D59 venues. D52 removals never weaken live gates. D79 has actual owner lanes; App28293 failed at identity invalid bearer before remote/drag/undo; setup1838 owns the non-gating return. Runtime corpus WIP yields to D80; kit1847 local route7e857 was published and host-verified. Actual live stack capture remains owed through existing App1952. No Proof dispatch.
 Safety: D88 automatic safety review stopped its reviewer for possible cybersecurity risk. Runtime reported it to the owner; D88 prototype remains held and unmerged, no retry or alternate route. Header D88b explicitly authorizes a different full-replay-preserving implementation with existing regression only; no new attack construction. Proof performs no implementation or capture activation. Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals remain stopped. No manager product/test/generated/pin edit or Git mutation. Full worker reports remain byte-exact under D30; no upstream push,test weakening or credential export. D93 resolves separate0215 HTTP401 as product-fixture authorization, not safety denial; only exact original mint/session/scopes/calls may be used by Runtime0228 after actual P4 FAIL. Denied D88 analysis remains stopped.
 
-Disk: 6855839744 bytes free at 2026-10-25T13:22Z; above D125 gate floor 6.0GB. No Proof reclaim, retire-venv or deletion. Prior refused paths stay stopped.
+Disk: 6819549184 bytes free at 2026-10-25T13:31Z; above D125 gate floor 6.0GB. No Proof reclaim, retire-venv or deletion. Prior refused paths stay stopped.
 
-Pass 2026-10-25T13:22Z: PLAN and MANAGER-COMMON read; new inbox bytes 795002 through 796671 consumed. D125 one-job hosting exception is active. Exact App packet is absent from both local design and the normal hub. No tuple guessed, checkout requested, worker dispatched, original run submitted, source edited, pin changed, merge or cleanup performed.
+Pass 2026-10-25T13:22Z: PLAN and MANAGER-COMMON read; new inbox bytes 795002 through 796671 consumed. D125 one-job hosting exception is active. Exact App packet is absent; normal hub peer1323 confirms Luna app-D125-Proof-full-P2-handoff-1322 owns it and will publish the required flat path within minutes. No tuple guessed, checkout requested, worker dispatched, original run submitted, source edited, pin changed, merge or cleanup performed.
 
 Node 20.20.0 and npm10.8.2 are installed at /opt/node20/bin; default Node is22.22.0, so the handoff run must explicitly use Node20 PATH. Free disk is 6855839744 bytes. bin/workers confirms1313 done records, zero live. Normal header still records D124; the direct D125 relay is the explicit hosting authorization.
 
 Blockers: App D125 handoff — exact checkout receipts, generated plan/hash, preflight and submit commands, environment and output paths are owed. App retains verdict ownership. This is an ordinary peer dependency, no orchestrator decision is requested.
 
 Current P2 remains NO-GO on11251; five complete tails plus isolated asset qualify six of eight across recorded current-tuple runs. SWAP and element remain open. P1/P3 and P4 recorded GO retain their tuple limits; final-cut gates, core and installed-render obligations remain with owner lanes.
+
+D125 host readiness: dispatcher heartbeat is current and normal hub contains Proof readiness peer1322. App peer1323 confirms locked fe3309/070dfc/5e9ad/635f, plain launcher and no181952/480392 helper or new4c56 hook. Local Node20.20.0/npm10.8.2 is present; use the exact supported toolchain specified by the handoff. No source or environment setup is inferred from the heads-up.
+
+Audit 2026-10-25T13:31Z: all1313 prior records done; live0. Header SHA256948a77be7dd7a62dc848f64a20ca060a35833d71fcd3a9392c118446acc90b9f. Exact handoff is still awaited; no run submitted.
 
 Next watch: exact design/peer-app-to-app2-lead-*-D125-full-P2-tuple.md. Preflight the supplied tuple through normal routes, then ONE full P2 request only if genuine inputs and Node20 qualify. Publish ID/artifacts to design and App INBOX; App independent reviewer owns verdict. If hosting cannot run or is refused, report immediately to STATUS and lead and stop. After one run return to D56.4 stand-down.
 
