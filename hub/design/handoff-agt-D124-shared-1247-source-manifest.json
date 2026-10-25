@@ -1,0 +1,79 @@
+{
+  "base": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+  "imports": [
+    {
+      "commit": "82b6d00d7fcca643c6eaf3246028d9a20f96252a",
+      "path": "astrid/sdk/timeline/commit.py",
+      "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "role": "reviewed producer baseline",
+      "current_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "normal_join_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "matches_normal_join": true,
+      "normal_join_unchanged_since_base": false
+    },
+    {
+      "commit": "0643b073a2b101f484ac3836dbbb796d86505fe8",
+      "path": "tests/editing_conformance/native_word_anchor_fixture.py",
+      "sha256": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+      "role": "exact D116 seed prerequisite",
+      "current_sha256": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+      "normal_join_sha256": "e0b170149fa08cd2bd5655af505b4b96cc0faccc5dceba51c50ee2cbdcb1c91a",
+      "matches_normal_join": false,
+      "normal_join_unchanged_since_base": true
+    },
+    {
+      "commit": "0643b073a2b101f484ac3836dbbb796d86505fe8",
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "sha256": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8",
+      "role": "exact D116 seed prerequisite",
+      "current_sha256": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8",
+      "normal_join_sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f",
+      "matches_normal_join": false,
+      "normal_join_unchanged_since_base": true
+    },
+    {
+      "commit": "0643b073a2b101f484ac3836dbbb796d86505fe8",
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04",
+      "role": "exact D116 seed prerequisite",
+      "current_sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04",
+      "normal_join_sha256": "f23e227bce165d3c7ada70d9742c1e6f36159823c845df9903903f71575228bd",
+      "matches_normal_join": false,
+      "normal_join_unchanged_since_base": true
+    }
+  ],
+  "verified_normal_join": "b545b616a41388e24d6f2a59b7b45c26cb057d2c",
+  "own_delta": [
+    {
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+      "base_sha256": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50",
+      "normal_join_has_same_baseline": true
+    },
+    {
+      "path": "astrid/sdk/timeline/_doc_patch_materialize.py",
+      "sha256": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252",
+      "base_sha256": "68b7494031f739344826d21d690fcf22836c5bcfe5295f736432552fcd86ad2f",
+      "normal_join_has_same_baseline": true
+    },
+    {
+      "path": "astrid/sdk/timeline/_recording.py",
+      "sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+      "base_sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43",
+      "normal_join_has_same_baseline": true
+    },
+    {
+      "path": "tests/sdk/test_d124_shared_custody.py",
+      "sha256": "2efc1d01807dbe7a312a7b7ccf5f13a4e1c9a42c5ab4cbcd61e1829561e7ced1",
+      "base_sha256": null,
+      "normal_join_has_same_baseline": true
+    }
+  ],
+  "integration": "Apply own_delta atop verified normal join; commit.py donor prerequisite is already exact there. Exact D116 seed3 prerequisites are still needed; all three normal files are unchanged from base, so this prerequisite import overwrites no 1232-authored delta. Preserve every other independently reviewed normal blob; no whole-branch merge.",
+  "runtime": {
+    "qualified_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "qualified_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "actual_acceptance": "UNVERIFIED: disk floor and missing named immutable checkout; no retarget"
+  },
+  "review": "One independent core/security review complete; initial shared-root finding corrected and rechecked. No remaining blocking source finding."
+}

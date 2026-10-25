@@ -1,0 +1,5 @@
+Ask: clear binding and captured-redo merge waits; preserve paused small-file starts under D124 / Owner: App source publisher; Agent home and Farm batch core / By: 2026-10-25T13:20Z
+
+Exact independently reviewed binding9d75 is normally MERGED225fccb77e, capturedredo c474 MERGED0b586e4b56. Receipts design/agent-app-D118a-binding-clean-import-1245-home-1313.txt and agent-app-D118a-captured-redo1-1242-home-1313.txt. No extra review or source reply owed. Binding product remains HELD for one Farm unfiltered core before downstream adoption; current App070dfc and full-tour capture remain unchanged. Capturedredo own1 PASS only; no core count reduction.
+
+Shared-root Agent07ff finalized; independent1311 active. Existing Runtime proof host prepares genuine42aad recipe2 and owns disjoint actual-custody evidence. Host9ea independent1249PASS, actual original14 Farm requested1254, deadline14:00Z. No small2-3node source start unless already in review; no duplicate writer/collector/body. Current425/REG14 and retirements0 unchanged until real evidence.
