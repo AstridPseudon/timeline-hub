@@ -44,7 +44,7 @@ describe('run-mode choice', () => {
   it('selects the hosted tile by default and explains the install-as-app choice in Chrome', () => {
     install.prompt = { prompt: vi.fn(), userChoice: Promise.resolve({ outcome: 'accepted' }) };
     mount();
-    expect(screen.getByRole('radio', { name: 'Use it at astrid.haus' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'Use the hosted version' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('radiogroup', { name: 'How to open Astrid' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Install as app' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('radio', { name: 'Stay in browser' })).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('run-mode choice', () => {
     mount(() => undefined, 'local');
 
     const localLabel = screen.getByRole('radio', { name: 'Run app on your computer' }).closest('label');
-    expect(localLabel?.textContent).toContain('The editor runs on your machine too: no browser permission, works offline, and you can change Astrid itself. GitHub here.');
+    expect(localLabel?.textContent).toContain('•App runs on your machine too•No permissions and works offline. GitHub here.');
 
     const link = screen.getByRole('link', { name: 'here' });
     expect(link).toHaveAttribute('href', 'https://github.com/banodoco/astrid-app');
@@ -89,7 +89,7 @@ describe('run-mode choice', () => {
     const beach = () => container.querySelector('[data-scene="beach"]');
     const desk = () => container.querySelector('[data-scene="desk"]');
 
-    expect(screen.getByRole('radio', { name: 'Use it at astrid.haus' }).closest('label')).toContainElement(beach() as HTMLElement);
+    expect(screen.getByRole('radio', { name: 'Use the hosted version' }).closest('label')).toContainElement(beach() as HTMLElement);
     expect(screen.getByRole('radio', { name: 'Run app on your computer' }).closest('label')).toContainElement(desk() as HTMLElement);
     expect(beach()).toHaveAttribute('aria-hidden', 'true');
     expect(desk()).toHaveAttribute('aria-hidden', 'true');

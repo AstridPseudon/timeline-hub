@@ -147,7 +147,7 @@ afterEach(() => {
 
 function chooseHosted() {
   render(<WelcomeFlow entry="choose" />);
-  expect(screen.getByRole('radio', { name: 'Use it at astrid.haus' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'Use the hosted version' })).toBeChecked();
   expect(fetch).not.toHaveBeenCalled();
   expect(permissions.query).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: 'Continue in this tab' }));
@@ -214,7 +214,7 @@ it('keeps an absent Runtime in setup, and Back returns to the real chooser so lo
 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(await screen.findByRole('heading', { name: 'How do you want to run the app?' })).toBeInTheDocument();
-  expect(screen.getByRole('radio', { name: 'Use it at astrid.haus' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'Use the hosted version' })).toBeChecked();
   expect(readWelcomePhase()).toBe('choose');
   expect(permission.onchange).toBeNull();
   const readsBeforeLocalSetup = door.requests.length;

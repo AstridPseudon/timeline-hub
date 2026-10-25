@@ -92,11 +92,11 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
               <label htmlFor="welcome-run-hosted" onClick={() => setRunMode('hosted')} className={OPTION_LABEL}>
                 <RadioGroupItem id="welcome-run-hosted" value="hosted" aria-labelledby="welcome-title-hosted" className={OPTION_RADIO} />
                 <span className={OPTION_HEADING}>
-                  <span id="welcome-title-hosted" className="text-[15px] font-medium text-foreground">Use it at astrid.haus</span>
+                  <span id="welcome-title-hosted" className="text-[15px] font-medium text-foreground">Use the hosted version</span>
                   <span className="rounded-full bg-muted px-2 py-px text-[11px] text-muted-foreground">Most convenient</span>
                 </span>
                 <RunModeMink scene="beach" active={runMode === 'hosted'} className={OPTION_MINK} />
-                <span className={OPTION_DESCRIPTION}>The editor stays up to date and connects to Astrid on your computer, where your files, models and agent run.</span>
+                <span className={OPTION_DESCRIPTION}><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>Your files, models and agents run on your computer</span><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>Editor stays up to date automatically</span></span>
               </label>
               {runMode === 'hosted' && canInstall && <div className="space-y-2 px-3.5 pb-3.5 pl-[43px]">
                 <SegmentedControl value={windowMode} onValueChange={value => setWindowMode(value as WindowMode)} size="sm" aria-label="How to open Astrid">
@@ -116,7 +116,7 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
                   <span className="rounded-full bg-muted px-2 py-px text-[11px] text-muted-foreground">Most control</span>
                 </span>
                 <RunModeMink scene="desk" active={runMode === 'local'} className={OPTION_MINK} />
-                <span className={OPTION_DESCRIPTION}>The editor runs on your machine too: no browser permission, works offline, and you can change Astrid itself. GitHub <a className="underline underline-offset-4 hover:text-foreground" href={LOCAL_SETUP.repoUrl} target="_blank" rel="noreferrer">here</a>.</span>
+                <span className={OPTION_DESCRIPTION}><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>App runs on your machine too</span><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>No permissions and works offline. GitHub <a className="underline underline-offset-4 hover:text-foreground" href={LOCAL_SETUP.repoUrl} target="_blank" rel="noreferrer">here</a>.</span></span>
               </label>
             </div>
           </RadioGroup>
