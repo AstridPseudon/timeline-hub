@@ -1,0 +1,65 @@
+{
+  "task": "D118d",
+  "source_tuple": {
+    "agent_head": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "agent_tree": "68433c5f77be90063b1f43d3e8f1407346a50675",
+    "assigned_file": "tests/editing_conformance/test_current_pair_reader.py",
+    "current_file_sha256": "6a0787475f0b032500e769379a2e3f556a4ba5cabc07fa3996350200083a1284",
+    "retained_pre_setup_fix_sha256": "37a57c0de8bb9e2a5911fa0f833dae4dccd4adb479f886848548695cdc3382d0",
+    "released_runtime_pin": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "released_runtime_path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "frozen_candidate_sdk": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "frozen_upstream924_tip": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "frozen_upstream924_file_present": false,
+    "requested_baseline_object_d11417a59": "unavailable"
+  },
+  "causal_finding": {
+    "existing_setup_fix_commit": "7d85895ba18637231adc12fc0130f51f8be96608",
+    "old_setup": "Path(os.environ[\"ASTRID_AUTHENTIC_LEGACY_ARCHIVE\"])",
+    "current_setup": "os.environ.get(\"ASTRID_AUTHENTIC_LEGACY_ARCHIVE\", exact shared archive path)",
+    "archive_sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+    "registered_caller": "RuntimeService.register_timeline_commit_provider(create_runtime_commit_service())",
+    "decision": "no additional source delta; the causal setup-only fix is already in the assigned baseline"
+  },
+  "ast_conservation": {
+    "test_functions_equal_to_retained_pre_setup_source": true,
+    "reader_fixture_equal_to_retained_pre_setup_source": false,
+    "reader_difference_scope": "archive locator only",
+    "authored_inputs_or_assertions_changed": false
+  },
+  "own_nodes": {
+    "status": "ownnodeNOTRUN",
+    "reason": "free space was 4832747520 bytes, below the mandated 5000000000-byte floor",
+    "node_count": 16,
+    "nodeids": [
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_retains_authenticated_pair_and_canonical_source",
+      "tests/editing_conformance/test_current_pair_reader.py::test_explicit_historical_read_does_not_acquire_current_publication",
+      "tests/editing_conformance/test_current_pair_reader.py::test_explicit_wrong_publication_refuses",
+      "tests/editing_conformance/test_current_pair_reader.py::test_reset_reads_reused_revision_under_new_publication",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_requires_exact_publication_history_entry[missing-entry]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_requires_exact_publication_history_entry[wrong-revision]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_requires_exact_publication_history_entry[wrong-receipt]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_fails_closed_without_head_proof[missing-head]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_fails_closed_without_head_proof[missing-publication]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_fails_closed_without_head_proof[changed-head]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_fails_closed_without_head_proof[history-error]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_preserves_exact_scope_digest_and_owner_guards[project_id]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_preserves_exact_scope_digest_and_owner_guards[timeline_id]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_preserves_exact_scope_digest_and_owner_guards[revision_id]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_preserves_exact_scope_digest_and_owner_guards[content_digest]",
+      "tests/editing_conformance/test_current_pair_reader.py::test_current_fetch_preserves_exact_scope_digest_and_owner_guards[internal-owner]"
+    ]
+  },
+  "changed_file": {
+    "path": "tests/editing_conformance/test_current_pair_reader.py",
+    "before_sha256": "6a0787475f0b032500e769379a2e3f556a4ba5cabc07fa3996350200083a1284",
+    "after_sha256": "6a0787475f0b032500e769379a2e3f556a4ba5cabc07fa3996350200083a1284",
+    "worktree_delta": false
+  },
+  "static_checks": {
+    "py_compile": "pass",
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "git_diff_check": "pass"
+  }
+}

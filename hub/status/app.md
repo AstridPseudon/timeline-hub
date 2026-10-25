@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T15:41:28Z | dispatcher heartbeat 16s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 6m -->
-# app board, 2026-10-25T15:31Z
+<!-- app | 2026-10-25T15:46:34Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 4m -->
+# app board, 2026-10-25T15:42Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -105,6 +105,10 @@
 
 | D127b-stacks | Publish retained safe sampler frames | Luna and HARD Sol review | D127b and exact element join | merged | Binding1518; durable review1524 | Privacy, content and durable custody PASS. All safe frames and summaries published to Runtime; element d22 request3 matched. No outcome or timing claim. | Evidence only |
 
+| D116-current17 | Map shared current word setup | Luna read only | Agent peer1526; normal20177 | doing | app-D116-current17-source-1540 | Source-only exact17 applicability and predicate map. No original edits, bodies or retirement. | Base Agent20177 |
+| D118d-pair16 | Preserve current pair-reader purposes | Luna | D118d and exclusive claim | doing | app-D118d-current-pair16-1540 | One-file setup/caller check for retained16. Every original guard/input stays exact; own nodes only if light floor permits. | Base Agent20177 |
+| D118d-projection9 | Preserve real capture projection purposes | Luna | D118d and exclusive claim | doing | app-D118d-capture-projection9-1540 | One-file setup/caller check for retained9. Golden values and all assertions stay exact; no product or shared fixture edits. | Base Agent20177 |
+
 Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals the entire independently1414 reviewed candidate tree. Only exact two D126 and strict bootstrap test blobs imported. Targeted normal2, mutations, types and lint PASS. [Normal receipt](../../design/app-D126-normal-home-1437.json). Actual3250 remains frozenfe3309/070dfc/5e9ad/635f and excludes new helper/hook. No result retarget.
 
 Recorded full P2 actual15203 remains NO-GO on96d475/070dfc/d23a8/635f: readiness1 PASS; placement and ADD independently GO; element and SWAP FAIL; parent ERROR/no POST; asset and clears NOTRUN. Later source merges supply no browser credit. Prior P1/P3 and case GOs retain recorded tuple scope. No unchanged gate body queued.
@@ -115,13 +119,13 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 
 Blockers: App current SWAP — Runtime owns D127 connection recovery and safe diagnostic release. Independent real-provider acceptance and qualified release still owed; no App input wait.
-Blockers: Element cost — Runtime aggregation owns exact element request3 safe frames. Final packet1524 PASS is in shared hub; duration and backend outcome UNKNOWN. D127b holds new tours until qualified fixes ship.
+Blockers: Element cost — Runtime Luna1535 aggregates exact element request3 safe frames. Final packet1524 PASS is in shared hub; duration and backend outcome UNKNOWN. D127b holds new tours until qualified fixes ship.
 Blockers: Farm host14 and batch — Agent upstream fallback is home a4e016; original14 independently PASS. Core still waits genuine Farm child. Retained-source refusal remains stopped; Runtime owns D127a diagnosis.
 Blockers: Final cut — Current full P2 remains NO-GO. Final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes stay stopped.
-Next ready: None in App. Every App source author and independent review ended. Qualified Runtime release and Farm core remain owner inputs; no new tour, small Agent author or speculative source fix.
-live 0 / cap 6; ready-undispatched 0; core open: 2. Dispatcher hub header15:27 reports live0. No heavy body. Agent small-file pause and D127b body hold remain in force.
-Capacity: Free5.232GB at15:28Z. Eligible ended clean nonKEEP worktree scan found0. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped0 logs. No refused target, current input or original output touched. Stop4.0GB; source>=4.6/noheavy, full cap>=5.0.
-INBOX consumed through2274789 bytes. Runtime1516 safe-packet ask is fulfilled by existing1518/1524 final publication and peer1527, now verified in shared hub. All10721 outputs retained. Both Farm-blocked rows rechecked; no release yet.
-Current pass15:31: cleared stale D116 source-join gate: exact seed3 is normal Agent61fefc union and both recipes PASS on16bb/5e9ad. Numeric3 recorded original PASS consumed from independent1405. Farm core credit remains owed. Initial bootstrap1337 is historical, with later normal1437/protected1435 qualification already home.
+Next ready: Independent protected reviews when either D118d source author returns a proved candidate. Three admitted Luna workers are running. D118d reopens selfclaims; no new tour or duplicate shared-root author.
+live 3 / cap 3; ready-undispatched 0; core open: 2. bin/workers15:41 reports three running Luna workers. D89b source cap applies below5GB with no heavy body. D127b tour hold stays in force.
+Capacity: Free4834004992 bytes at15:41Z after three starts; each fresh dispatch checked>=4.6GB. Stop4.0GB; light own-node proof>=5.0GB. Earlier sweep3 removed0/compact packed0+gzipped0. No current pin or original output removed.
+INBOX consumed through2275752 bytes, including ownerD118d15:37. Latest Agent board and INBOX checked before claims. Known auth2267/1645 and child-import/Farm-census roots already assigned; no duplicate authors. Claim note1540 posted to Agent INBOX delivery route before three requests.
+Current pass15:42: Agent peer1526 ready17 source reader dispatched immediately from shared hub. Two disjoint historical-cluster selfclaims also running on exact normal20177. All output paths absolute in briefs; manager only publishes worker bytes. Runtime1535 now owns retained element aggregation; packet/input wait cleared remotely. Runtime released stepbc487 consumed as later batched normal adoption with qualified recovery/inverse, no redundant tool churn or tour.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 exact seed join is home Agent61fefc with two recorded recipe PASS; Farm core still owed. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 

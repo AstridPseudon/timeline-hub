@@ -1,0 +1,52 @@
+{
+  "task": "D118d",
+  "repo": "Agent",
+  "base": {
+    "commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "tree": "68433c5f77be90063b1f43d3e8f1407346a50675",
+    "branch": "tl/app-D118d-capture-projection9-1540"
+  },
+  "frozen_upstream": {
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "tip": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "target_path_present": false,
+    "upstream_exact_match": false,
+    "note": "Frozen candidate-sdk tip does not contain tests/sdk/test_timeline_capture_projection.py."
+  },
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true
+  },
+  "changed_file": {
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "before_sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+    "after_sha256": "4c85d15814c2b1b8128be5af5bac447cded17a72babd2d3450efdd6147fffb48",
+    "diff": "+52 lines, -0 lines",
+    "historical_setup_match": "exact match to 28081580dc95f02470d82ad81b826335d8e4bd09"
+  },
+  "ast_conservation": {
+    "non_fixture_function_ast_equal": true,
+    "saved_closure_original_tail_ast_equal": true,
+    "original_assert_ast_preserved": true,
+    "assert_count_before_after": [43, 44],
+    "test_decorators_and_parameters_preserved": true,
+    "new_assertion": "registered source-item commit status is accepted"
+  },
+  "nodes": [
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden", "outcome": "ownnodeNOTRUN", "ast_conserved": true},
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden", "outcome": "ownnodeNOTRUN", "ast_conserved": true},
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows", "outcome": "ownnodeNOTRUN", "ast_conserved": true},
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]", "outcome": "ownnodeNOTRUN", "ast_conserved": true},
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]", "outcome": "ownnodeNOTRUN", "ast_conserved": true},
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]", "outcome": "ownnodeNOTRUN", "ast_conserved": true},
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]", "outcome": "ownnodeNOTRUN", "ast_conserved": true},
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]", "outcome": "ownnodeNOTRUN", "ast_conserved": true},
+    {"nodeid": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]", "outcome": "ownnodeNOTRUN", "ast_conserved": true}
+  ],
+  "own_node_run": {
+    "status": "NOTRUN",
+    "reason": "Available space was 4821417984 bytes, below the mandated 5000000000-byte floor."
+  }
+}
