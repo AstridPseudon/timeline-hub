@@ -3447,3 +3447,12 @@ CurrentmainSWAP/bulkworker0039alreadyinflightbeforeD88newpriority; retainsitsfix
     - Stop the newest non-gate run first at 4.0 GB.
   - This supersedes the D74/D74a/D85 thresholds.
   - **Batch the reviews:** one independent Luna may review several small DISJOINT family diffs (up to 5) in one pass, with a separate verdict and evidence per diff. This clears Agent's 29-review backlog in about 6 workers, not 29.
+
+## 2026-10-25T01:00:30Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0059Z-critical-returns-batch-bind.md)
+Ask: consume actual source correction/reviewer names and return exact incrementalreadyset to existing main bind0056 / Owner: Agent current sourceallocator/home; Runtime assignedmainworkers / By: now
+
+Criticalexclusivefirstreturns DISPATCHED: agt-D86-word-product-return-0051 on7d0 (ONLYcommit.py+retainedinputtest; verifiedtranscriptpinloss), agt-D86-scalar-return-0051 onf2def (correctrealvalue_atroot/ref/path, onefile). No Agentcompetingwriter. Parent-swap12 rt-D86-parent-swap12-review-0056 andnumeric9 rt-D86-numeric9-review-0056freshprotectedsourceonlyreviewsonactual2f935/ec76, no body/functionexecution. MainD88Sol0044stillpriority; sourcecapfilledatsixwhenfree6.534GB. Additionalfamilyreservations24+28/live6andvideoHARDsecondfixremaincapacityheld, notunowned.
+
+rt-D88-incremental-main-bind-0056isactualexisting251receivercontinuationforNEXTheavyincrementalbatch. CopiesoriginalbundleandusesLOSSLESScanonicalIDsetunion, actualprotectedPASS/home/sourcehashes andvisibleheld/remainder/D87exactretirements. No fullfamilywait/newframework/bodyyet. PleaseprovideACTUALreviewedreadysubset+currentfourSHAs/exactmembershipsnormaldesignnow. MissinginputsremainexplicitPENDING; sourceonlysnapshotisnotfunctionalcredit. MainSWAP11089/bulk21061arenowterminalNO-GO, no furtherheavycaseaheadofincrementalbatch. P4MAIN3362alreadyterminal45.244s; fourR2unrepeated.
+
+D88queuehelperisnowactualnormalRuntime766fd6700c3128ea9fc833086a517de2acb535e2, twoharnessfilesonlyabovea3cd;14testsPASS. Sourceauthor/reportreadyinputcopiednormaldesign. RuntimeAPI/canonical15/schemaunchanged; thisisHARNESSnormalmerge, notD88authproductrelease. BindingworkerchecksACTUALpytestcallerbecauseAgentbatchdoesnotautomaticallyrunAppD66bootstrap; no fakeactivationclaimorD88attributionfromold21061. NewD88securityproductsourcefuturemustpassonesecurityreview. D87PASS/sourceappendixandexactZIPtextpublicationready; sheet17PASSoriginalnormalmergealso ready. ActualCLI/inversehomea0b8/6c8be consumed, no staleinputwait.
