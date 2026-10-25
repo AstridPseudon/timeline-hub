@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T13:32:41Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 0m -->
+<!-- app | 2026-10-25T13:36:59Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 3m -->
 # app board, 2026-10-25T13:32Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -40,7 +40,7 @@
 | D79 | Live edit robustness smoke | Luna and service | ZIP owner release | gated:ZIP | Prior source and reports retained | Earlier setup failure and held extension proposal remain scoped; no browser credit. | Branches retained |
 | E4 | Dropped history and undo design | Luna | D81 cut | gated:dropped | Author2005 stopped | WIP retained; no integration merge or new task. | No product edits |
 | F-final | Final pinned gates and core suites | Runtime coordinator and services | D59 cut and current core zero | gated:D59-cut | Existing final coordinator | Current full P2, final P1-P5, core, D69 and genuine installed render still owed. No ZIP claim. | Cut pending |
-| D77-D117a | Genuine installed render | Runtime and owner | Authorized exact Git source | blocked:runtime | Existing Runtime stage1158 | D117a authorizes exact Git and supported installer input. Historical archive route stopped; stage peak and genuine render still owed. | Evidence retained |
+| D77-D117a | Genuine installed render | Farm and Runtime support | Exact authorized installer inputs | blocked:farm | Farm stage/render underD124 | Runtime recipe and custody PASS delivered; Farm owns keyed profiles and actual stage/render. Historical denied archive route remains stopped. | Evidence retained |
 | D118a-script-pin1 | Preserve pinned script after rebind | Luna and independent Luna | Normal remote home receipt | merged | Author1124; independent1132; Agentb850 | Exact original1 PASS on42aad;7 predicates/49call ASTs preserved. Reviewed setup home; native binding field gap remains separate. | b8507e946a |
 | D118a-atomic-scope1 | Preserve authenticated atomic scope | Luna and core review | Farm core before release | merged | App1137 and Runtime1232 | Agent board confirms exact reviewed private capture line home in b545. Donor original1 and private4 PASS; Farm core still owed. | b545 / 8a4103 |
 
@@ -55,12 +55,12 @@
 | D120-element-path | Find current element first failed seam | Luna read only | Actual11251 retained | merged | app-D120-element11251-wholepath-1206 | Applied5s wait ends before teardown; commitPOST unresolved, outcome UNKNOWN. No repair proved. Finite peer1207 sent. | Source unchanged |
 | D122-D116-join | Prepare reviewed genuine seed join | Luna and independent | Exact join1205 SOURCEPASS | gated:Agent-product-batch | Join1204; review1205 | Three donor-byte-exact files, statics and containment PASS. Prior6PASS2FAIL historical only. No normal merge yet. | 0643b073a2 |
 
-| D118a-numeric3 | Preserve numeric parameter callers | Luna | Exact own3 current check | blocked:runtime | app-D118a-numeric-params3-1204 | No diff; original3 FAIL at redo auth1755 after save/reload/first inverse pass. Existing product batch asked1211. | Source unchanged |
+| D118a-numeric3 | Preserve numeric parameter callers | Luna | Exact own3 current check | blocked:agent | app-D118a-numeric-params3-1204 | No diff; original3 FAIL at redo auth1755 after save/reload/first inverse pass. Existing product batch asked1211. | Source unchanged |
 
 | D118a-parent-label2 | Preserve parent track labels | Luna | Exact own2 current check | blocked:agent | app-D118a-parent-label2-1206 | No diff; two setupERROR at shared m1.film missing legacy word anchor. Existing genuine seed owner asked1211. | Source unchanged |
-| D118a-document-input3 | Preserve document input capture | Luna | Exact own3 current check | blocked:runtime | app-D118a-document-input3-1206 | No diff; original3 FAIL before commands. commit.py369 hydration changes manifest/pair; existing Agent batch owner asked1214. | Source unchanged |
+| D118a-document-input3 | Preserve document input capture | Luna | Exact own3 current check | blocked:agent | app-D118a-document-input3-1206 | No diff; original3 FAIL before commands. commit.py369 hydration changes manifest/pair; existing Agent batch owner asked1214. | Source unchanged |
 
-| D118a-native-binding | Preserve Runtime binding authority | Luna and core Luna | Final1250 PASS | merging | Clean1245; final1250; host route1256 | Exact reviewed production bytes; genuine1, authority4 and privacy qualified. Lint import fixed. Agent batch/full before adoption. | 9d75ec260 held |
+| D118a-native-binding | Preserve Runtime binding authority | Luna and core Luna | Farm core before downstream adoption | merged | Clean1245; final1250; Agent home1313 | Exact reviewed clean9d75 now normal Agent225fcc. Genuine rebind, authority and privacy PASS at donor; Farm batch/core still owed. | 225fccb77e |
 
 | D118a-inverse-packet | Pair existing inverse guard evidence | Luna read only | Agent1155 and Runtime1208 | merged | app-D118a-inverse-boundary-packet-1212 | Safe source and observed guards paired; actual stage/promotion/digests EXACTMISSING. Handback1225 clears App input wait. | Evidence only |
 
@@ -74,7 +74,7 @@
 | D121-element-timestamps | Join retained browser App Runtime clocks | Luna read only | Retained11251 | merged | app-D121-element11251-timestamps-1230 | FINITE MISSING SEAM: browser send known; App receive, shared correlation and Runtime UTC anchor absent. No delay attribution. | Evidence only |
 | U4p-D121-tags | Adopt qualified history reason tags | Luna | Released5e9ad | merged | Adopter1230; normal receipt1237 | Entire normal tree equals tested author331a583. Node20 vendor17/artifact3/lint PASS; protected8 and mapped14 exact. | d8a1cd40b8 |
 
-| D118a-captured-redo1 | Preserve exact captured redo closure | Luna and protected review | Independent1251 PASS1 | merging | Author1242; review1251; host route1256 | File-backed SQLite and matchingdb_path only; predicates/inputs exact. Original1 PASS2.38s and statics. Agent normal requested. | c474325862 |
+| D118a-captured-redo1 | Preserve exact captured redo closure | Luna and protected Luna | Agent normal home1313 | merged | Author1242; review1251 | Exact SQLite and db_path setup home0b586. Original1 PASS2.38s at donor; seven assertions exact. No full core credit. | 0b586e4b56 |
 
 | D124-sampler-prep | Reuse sampler for actual element process | Luna | Source inventory complete | merged | app-D124-actual-element-sampler-prep-1245 | Exact seam: D66 overwrites PYTHONPATH; existing phase helper needs sampler wiring. Source and safe recipe inventoried; no body. | Evidence only |
 | D124-full-P2 | Later tagged tour with actual sampling | Luna and service | D125 first tour and hook PASS | gated:D125-first | Prepared1306 | No local original. D125 first goes to Proof without new helper; sampled element tour follows corrected hook qualification. | fe3309 tuple retained |
@@ -97,7 +97,7 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 Blockers: Runtime current SWAP — Actual11251 returned409 history_unavailable. Tags5e9ad adopted normally at Appd8a1; source wait cleared. Lower guard remains UNKNOWN until a meaningful tagged tour.
 Blockers: App element — Sole owner. Helper final1315 SOURCE PASS; App normal path/hash hook1320 in protected review. D125 first unprofiled tagged tour must proceed on Proof without this source wait.
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
-Blockers: Agent batch — Atomic8a joins held product batch; full core required before adoption. Scalar and auto normal receipt consumed; source waits cleared. Bindingf3a6 held after real rebind FAIL.
+Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
 Next ready: Sol1332 publishes corrected complete D125 handoff now. Lead can forward verified pin/Node facts for Proof preparation immediately. Runtime helper remote result pending; next sampled tour follows D125 without retarget.
 live 2 / cap 6; ready-undispatched 0; core open: 2. D125 source-only Sol handoff and Luna publication return finishing own separate output paths. No local heavy body; ready source hook already merged.
