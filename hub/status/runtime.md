@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T20:44:30Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 0m -->
+<!-- main | 2026-10-25T20:48:56Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 2m -->
 # runtime board, 2026-10-25T20:43:37Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -478,8 +478,8 @@
 
 | D73-env | Preserve supported launcher environment | Luna | Host filing and Agent intake | merging | Author2026; protected2036 PASS | Two child shells unset inherited variable; actual launcher positive and poison controls PASS. No live body claim. | Independent2036 PASS | 375c773449 |
 
-| D134-inverse7 | Preserve historical inverse purposes | Luna | Authentic current source and records | doing | rt-D134-inverse7-source-2045 | Seven exact cases; source only below 5 GB. No silent pin refresh or weakened custody. | Protected review next | Pending |
-| D134-history5 | Preserve word video and archive purposes | Luna | Authentic current source and records | doing | rt-D134-history5-source-2045 | Five exact cases in three exclusive files; source first. Missing authority remains explicit. | Protected review next | Pending |
+| D134-inverse7 | Preserve historical inverse purposes | Luna | Authentic current source and records | review | Authors2045; review2046 | Seven cases unchanged; author reports missing historical authority. Reviewer challenges source availability and current-purpose migration. | Independent2046 active | No source delta |
+| D134-history5 | Preserve word video and archive purposes | Luna | Authentic current source and records | review | Authors2045; review2046 | Five cases unchanged; reviewer checks exact historical purpose and D120 authority before accepting missing-source disposition. | Independent2046 active | No source delta |
 | OPS-D137-installed-custody | Verify exact live maker and backup | Luna | Installed2031 | merged | rt-OPS-D137-installed-review-2036 | Source and installed custody PASS. Real child and core acceptance remain unverified. | Independent2036 PASS | Installed4435d44 |
 
 Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and dbc. No integration merge before D59.
@@ -496,6 +496,6 @@ D100: App corrected27 PASS; original9 nine setup errors. D136a product correctio
 D77: Farm changed child follows Agent actual D137 result; no Farm fixture bodies/core. Exact applied source and lock handoffs remain qualified.
 Delivery: D59 integration tuple only; stale547e proof pin excluded. Private Agent32dde review1959 PASS; Runtime0bb3 source PASS, Farm targeted result owed. App private upstream join remains App-owned.
 Safety: All prior refusals held. Managers write ORCH boards/briefs/peers and copy authored handbacks only. No product/test/pin/Git mutation or credentials.
-Disk: Fresh4.547 GB after two source trees; cap3 below5GB, source floor4.6GB, stop4GB. Further dispatch gated on headroom. Sweep3 removed0; compact packed0 and gzipped3 logs; no eligible unguarded Runtime trees identified. Protected raw KEEP retained.
-live 2 / cap 3; ready-undispatched 0. D134 twelve split into two exclusive Luna authors. Other ready tasks have Agent/App/Farm receiving owners. No local heavy body.
+Disk: Fresh4.799 GB after author auto-recycle, before single review2046; cap3 below5GB, source floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and gzipped3 logs; no eligible unguarded Runtime trees identified. Protected raw KEEP retained.
+live 1 / cap 3; ready-undispatched 0. Both D134 authors finished with unchanged source; combined independent review2046 active. Further actions retain receiving owners, no local heavy body.
 INBOX consumed through1522859 bytes including Agent2032 and App2033. D134 twelve assigned; App helper Node20 bound proof and private menu source remain App-owned. Updated 2026-10-25T20:43:37Z.
