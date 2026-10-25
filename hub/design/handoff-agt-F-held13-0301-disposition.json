@@ -1,0 +1,54 @@
+{
+  "schema": "astrid.timeline.f-d86-held13-disposition/v1",
+  "task": "F-D86",
+  "base_revision": "562ee30b6ed567a90a114f5029a96da2ece9789e",
+  "base_tree": "b4a181a97fd07406ccf5f3c3fd675175f77a2ccf",
+  "scope": {
+    "selector_count": 13,
+    "meaningful_eligibility": [],
+    "decision_counts": {"a": 0, "b": 10, "c": 3},
+    "word9_bootstrap_applicability": "The corrected shared fixture is on the true read path for all nine word rows and changes a genuine bootstrap boundary: timeline.init now uses integer FPS 30 and a guarded patch restores the exact authored rational FPS. The final authored rational output/source closure and the first failing calls in all nine actual FAIL traces remain unchanged, so 9e88f5ba09 does not authorize an unchanged retry or make any row eligible.",
+    "current_sheet_source_applicability": "The reviewed 64166f7/3b8f341c init/emitter correction is on the current read path, but the held inverse failure occurs later in TimelineSession.undo authenticated effect-image validation; the three CLI failures occur at retired parser routes.",
+    "retirement_boundary": "D87 retires exactly 24 native-batch records plus one separate checkout case. No broader retirement is inferred. IDs 11-13 are retired-route findings whose original behavior remains live through current replacements."
+  },
+  "authentic_10077": {
+    "request_id": "d86-incremental-main-0107-body",
+    "service_id": "agent-d86-incremental-main-1025011156-10077",
+    "selector_count": 268,
+    "xml_testcase_count": 245,
+    "counts": {"ERROR": 176, "FAIL": 39, "PASS": 30, "NO_JUNIT_CASE": 23},
+    "xml_sha256": "7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0",
+    "outcomes_sha256": "57b417b61029fd3934b696d9200b5f51cd88c05d166f9e29558d5c934dc9d98f",
+    "selector_input_sha256": "b8fc11ed48d2c4721a65ff3a036275fcc267b6dac4afe0e2bfa21d32ff6bec12",
+    "held_table_sha256": "cb5d50c3eda5dd2c3f52c4a1b66ba4261b8a2418b1340b84835b6d6e63286ba1",
+    "original550_dispositions_sha256": "abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2"
+  },
+  "c0_sections_1_5": {
+    "status": "retained_unchanged",
+    "sha256": "deae11337adb2e1a50044e6878cf51ab8d2352fcc86647ba64671be7f7a3ce3e"
+  },
+  "current_sources": {
+    "tests/editing_conformance/native_word_anchor_fixture.py": {"sha256": "3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db", "blob": "e10a3b2c82d20d5f415d05f09e130e16e12ee9cb"},
+    "tests/editing_conformance/test_native_word_anchor.py": {"sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f", "blob": "5db819f485da679f613ef04455ec19708d316d6a"},
+    "tests/editing_conformance/test_word_binding_recipe.py": {"sha256": "4722227e6e347778bb491f4f660e0a8d049ee074026b23e43de939a65d47142a", "blob": "510e2b691f6c47b36cfef9fcae01342f430e2a46"},
+    "tests/editing_conformance/test_native_sheet_current_runtime.py": {"sha256": "f8b994ff51c972e1fad821f61713ad9010866505e237c07357f71e8daea5e6fc", "blob": "a16bd811cd6e059dc1cab67e565237f4a4afbddb"},
+    "astrid/sdk/timeline/commands.py": {"blob": "10a6c7f0548f04af4820443a0b01cc38bbacbc43"},
+    "astrid/sdk/timeline/native_word_anchor.py": {"blob": "4c8dec68dcd42008158193df195d44b6838335b0"},
+    "astrid/sdk/timeline/sync.py": {"blob": "2b3418e521bd45913322bc220e94387f8335e7c4"},
+    "astrid/packs/timeline/cli.py": {"blob": "822eb2783abda2c5946d579dc202e6a0eaab7ada"}
+  },
+  "review_receipts": {
+    "word_fixture": {"source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507", "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9", "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-successor-0209-review-word-0152.md"},
+    "sheet_fixture": {"source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867", "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8", "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-successor-0209-review-current-sheet-0203.md"},
+    "d87": {"review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D87-coverage-review-0033.md", "ledger_appendix": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D87-0007-appendix.md"}
+  },
+  "d87_mappings_used": [
+    {"entry": 1, "canonical": "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-False]", "replacement": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_uses_the_authenticated_commit_door"},
+    {"entry": 2, "canonical": "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-True]", "replacement": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_human_output_keeps_label_and_receipt"},
+    {"entry": 7, "canonical": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-False]", "replacement": "tests/packs/timeline/test_cli_native_sheet.py::test_lost_ack_immutable_retry_and_pending_export_refusal"},
+    {"entry": 8, "canonical": "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-True]", "replacement": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_changed_body_with_same_key_is_runtime_refusal"},
+    {"entry": 24, "canonical": "tests/editing_conformance/test_native_batch_ingress.py::test_batch_capture_never_refreshes_after_concurrent_ack", "replacement": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_does_not_scan_a_long_history_page"}
+  ],
+  "author_brief": "Update only tests/editing_conformance/test_native_sheet_current_runtime.py so the two semantic-batch CLI parameters use the current ordinary commit --file/NativeSheet.apply route and the lost-ack parameter uses the current persisted outbox retry plus TimelineSession.undo, preserving every original assertion and refusal predicate. Allowed file: tests/editing_conformance/test_native_sheet_current_runtime.py; predicate map: [cli] and [sheet-cli] retain one commit, reload, inverse, redo, and exact pin/base assertions via current commit routes, while test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba retains exact request/key replay, immutable changed-key refusal, draft preservation, ABA/intervening-write refusal, and no-recapture.",
+  "selectors_tsv": "f-d86-selectors.tsv"
+}
