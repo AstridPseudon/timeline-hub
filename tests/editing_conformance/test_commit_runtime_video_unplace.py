@@ -128,6 +128,10 @@ def editing(request, tmp_path, monkeypatch):
             track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
             duration=occurrence['duration_ms'] / 1000,
         ))
+        # Item guards resolve the new occurrence through its accepted source mapping.
+        birth = submit('setup-birth')
+        bundle = bundle_from_document(birth['data']['canonical_document'])
+        commands = []
         patch('internal:main', copy.deepcopy(input_internal))
         shot = copy.deepcopy(input_shot)
         shot.pop('internal_timeline_revision_id')
