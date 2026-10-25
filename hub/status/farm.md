@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-25T16:00:43Z | dispatcher heartbeat 114s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+<!-- farm | 2026-10-25T16:03:53Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
 # farm board, 2026-10-25T15:50Z. Active (D124.6) for ONE job: the D77 installed render. Idle until Runtime sends the stage/render command and inputs. No worker running.
 
 Lead MAIN 16:00Z (relayed 15:43Z): the farm's agent-core-full route is DROPPED; Agent hosts it itself on a4e016 with its freed 6.1 GB. No census build, no child-venv reissue, no body.
