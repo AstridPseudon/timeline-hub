@@ -1,0 +1,105 @@
+{
+  "task": "app-P2-19078-failed-paths-0810",
+  "mode": "independent_read_only_whole_path_investigation",
+  "service": {
+    "id": "app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+    "target": "app-pin-04beedcd",
+    "status": "FAIL",
+    "duration_seconds": 716,
+    "readiness": {"status": "PASS", "count": 1},
+    "original": {"status": "FAIL", "pass": 4, "fail": 2, "error": 1, "notrun": 1, "exit": 1}
+  },
+  "authorized_tuple": {
+    "app": {"sha": "04beedcd18b8abb49502f65cd3facaafbe93db4e", "tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d"},
+    "agent": {"sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"sha": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "source_hashes": {
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f3bee9bf0511824e652a85f7",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+  },
+  "retained_artifacts": {
+    "result_dir": "tests/app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+    "manifest": {"path": "d66/manifest.json", "sha256": "7f5add37d722111d9b9ce83e4d7b0d4bd0bada636e94e469946e1ad832578f04"},
+    "original_xml": {"path": "d66/p2.xml", "sha256": "5b0f6377b0ca81d77962e8cd750cd9e1472090f0c40d52cb982a7f1d94d3f1da"},
+    "readiness_xml": {"path": "d66/readiness.xml", "sha256": "c81c0c66189c855dded26685cf8a723c2526e16720dc0f880b326b1a8486005c"},
+    "trace_zips": [
+      {"path": "d66/p2/three-products.p2-popup-P2-12bf5-ed-old-new-media-selections/trace.zip", "sha256": "9dd1d7183e7075cad08edf2ba3e8215426ac242dcc3d1dea14e8f0409472473e"},
+      {"path": "d66/p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/trace.zip", "sha256": "4f450e27d535ede05f8f1d5b50b3e82725fd3674419535d99273e66b46b8a784"},
+      {"path": "d66/p2/three-products.p2-elements-1bf41-nd-closure-and-guarded-Undo/trace.zip", "sha256": "b50c9f504ca314a8443736b79a7b1457a9fa7c72d3bb46aba4fe9e1995f78a87"},
+      {"path": "d66/p2/three-products.p2-elements-1bf41-nd-closure-and-guarded-Undo-retry1/trace.zip", "sha256": "313d771cdd5aba9e35c5e4de276d2ae01780b9b951433339a830c617ae5500fe"}
+    ]
+  },
+  "failed_paths": [
+    {
+      "gesture": "SWAP",
+      "source_operation": "occurrence.swap-media",
+      "first_missing_seam": {"file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 495, "predicate": "accepted commit response status is 200"},
+      "observed": {"request": "POST exists in retained popup trace; one POST completed with status 409", "status": 409, "reason": "history_unavailable", "outcome": "refused; no accepted receipt, canonical reload, or Undo request"},
+      "runtime_phase": {"namespace": "runtime-private/launch-a1e9461c-df87-4e56-8038-2075628eef2d", "ordinals": {"provider_raised": 114, "coordinator_lock_raised": 117, "handler_raised": 119, "http_response_409": [120, 121]}, "correlation": "UNKNOWN"}
+    },
+    {
+      "gesture": "element apply",
+      "source_operation": "intended doc.patch element apply; completed request body operation UNOBSERVED",
+      "first_missing_seam": {"file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1037, "predicate": "dialog status contains applied"},
+      "observed": {"request": "retained element trace contains POST activity, including incomplete status -1 entries; no lack-of-POST conclusion", "status": "no completed commit response observed", "timing": "existing 5000ms UI assertion", "outcome": "UNKNOWN; no accepted receipt, canonical reload, or Undo request"},
+      "runtime_phase": {"namespace": "runtime-private/launch-c9f5714d-30d1-4ba7-a034-a774079a9119", "ordinals": {"pending_handler_start": 106, "pending_coordinator_admission_start": 109, "pending_coordinator_lock_start": 110, "pending_provider_start": 117}, "correlation": "UNKNOWN"}
+    },
+    {
+      "gesture": "automatic child placement",
+      "source_operation": "intended occurrence.add-media from embedded shot file drop; completed request body operation UNOBSERVED",
+      "first_missing_seam": {"file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1263, "predicate": "page.waitForResponse observed the commit response"},
+      "observed": {"request": "placement trace archives retained POST activity; the commit response was not observed by the test", "timing": "90s response wait", "outcome": "UNKNOWN; later page-close is teardown evidence only; no accepted receipt, canonical reload, or Undo request"},
+      "runtime_phase": {"namespace": "runtime-private/launch-c9f5714d-30d1-4ba7-a034-a774079a9119", "ordinals": {"pending_handler_start": 106, "pending_coordinator_admission_start": 109, "pending_coordinator_lock_start": 110, "pending_provider_start": 117}, "correlation": "UNKNOWN"}
+    }
+  ],
+  "runtime_diagnostics": {
+    "searched_phase_files": [
+      "runtime-private/p2-commit-phase.jsonl",
+      "runtime-private/launch-26c5157c-c8a3-408c-ab80-b395b45416ff/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-86c8abe4-0bac-4614-a74a-4151da11f29f/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-915c8e28-fd8e-4998-ae6c-d78d93a2d627/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-a1e9461c-df87-4e56-8038-2075628eef2d/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-c9f5714d-30d1-4ba7-a034-a774079a9119/p2-commit-phase-2.jsonl"
+    ],
+    "searched_stderr_files": [
+      "runtime-private/runtime.stderr.log",
+      "runtime-private/launch-26c5157c-c8a3-408c-ab80-b395b45416ff/runtime.stderr-2.log",
+      "runtime-private/launch-86c8abe4-0bac-4614-a74a-4151da11f29f/runtime.stderr-2.log",
+      "runtime-private/launch-915c8e28-fd8e-4998-ae6c-d78d93a2d627/runtime.stderr-2.log",
+      "runtime-private/launch-a1e9461c-df87-4e56-8038-2075628eef2d/runtime.stderr-2.log",
+      "runtime-private/launch-c9f5714d-30d1-4ba7-a034-a774079a9119/runtime.stderr-2.log"
+    ],
+    "safe_summary": "The retained phase set records completed HTTP 200 requests, one raised/HTTP 409 request, and one incomplete pending request. The final listed stderr is a catchall runtime_protocol.errors.ProtocolError with redacted frames _lookup:215, evaluate:168, __enter__:141, _read_transaction:310, _store_version:265.",
+    "final_stderr_sha256": "453c35c62e9c803b554a61d0e0c1f214f459f01a9238e5495bbd8fb965aa8d5d",
+    "phase_409_sha256": "2c12f24cb4182fdb5b70d607f2a5b5b187001b5208d1f34d3c0fa1fab2493498",
+    "pending_phase_sha256": "ebaf2b91c233fbd7ced0403e9548aa7ca67d738b1da48eff88ef216d5d36a97c",
+    "gesture_correlations": {"swap": "UNKNOWN", "element": "UNKNOWN", "placement": "UNKNOWN"}
+  },
+  "placement_path_source_map": {
+    "gesture_capture": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1202-1207",
+    "prepare_and_reserve": "src/tools/video-editor/commands/editorImagePlacement.ts:30-145",
+    "persisted_capture_and_dispatch": "src/tools/video-editor/commands/commitOutbox.ts:374-505",
+    "task_poll_selection_capture": "src/tools/video-editor/commands/placementRequester.ts:197-280",
+    "session_transport_and_reply": "src/tools/video-editor/commands/commitSession.ts:238-408",
+    "runtime_commit_and_inverse": "src/integrations/runtime/dataProvider.ts:751-803",
+    "reload_and_guarded_undo_assertions": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1255-1276",
+    "first_missing_seam": "response wait at line 1263; transport/server/reload/inverse outcome UNKNOWN"
+  },
+  "bounded_comparisons": {
+    "current_four_passing_cases": "Only credited on this exact 19078 tuple; no generalization beyond ADD, parent move, transition single, transition bulk.",
+    "prior_asset27438": "Only the registerAsset PASS on its own tuple: App 5337b439, Agent 6386c700, Runtime 6634a17f, Composition 635f4de0; not causal evidence for 19078.",
+    "control_docs": "Requested /home/user/peteromallet/astrid-agent/docs/projects/timeline-r4 was absent; no substitute control path used."
+  },
+  "verification": {
+    "artifact_parse": "PASS: manifest JSON, p2/readiness XML, and all four retained trace.zip archives parsed/tested in place.",
+    "static_source_comparison": "PASS: current worktree is exact base App 04beedcd; four protected test hashes match retained manifest; no source diff.",
+    "git_diff_check": "PASS",
+    "worktree": "CLEAN",
+    "tests_rerun": false,
+    "runtime_code_changed": false
+  }
+}
