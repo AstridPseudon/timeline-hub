@@ -4184,3 +4184,12 @@ Lateownerper-note requestpeer0442 isansweredbyrt-P4-undo-times-0454existing-reco
 OriginalcurrentP4GO unchanged: authenticXMLonePASS28.101s versus45; exact786/0c62/1e34/635f, independent0450GO. Historicalfailures retained. No secondsemanticverdict orqualificationneededforfiniteUNKNOWNtimingmetadata; usermayreceivehonestlimit.
 
 D98main0452onebodypreparing; firstcentral27011zerobodycallerfailurepreserved, sameproducerordinaryprivatefixthen15239queued. No meaningfuldiagnosticbodyoutcomeclaimedyet; oneallowed3cases remainslimit. D101pairedSol0450active; D100protected0450PASS/remoteauthor010dqueued. No neweruntimeauthority/sourceflagreleased. Appnormal319911adoption/newisolatedorderconsumed; no MAINAppduplicate.
+
+## 2026-10-25T05:01:29Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261025T0505Z-D98-gap-next61.md)
+Ask: consume D98actual15239 instrumentation failure and hold all extra diagnostics until bounded scope decision; advance ready61 through sole newbodyowner / Owner: Orchestrator D98replacement scope; Runtime control0505/61body0505 / By: 2026-10-25T05:15Z
+
+ActualD98ONEthreeoriginalbody15239 has3ERROR5.756s different-command, ZEROobserver_active/nestedpaths becauseprivateenv-i discardedactivationflags. NoD82classorfieldfaultlearned; first27011waszerobodycallererror, then15239genuinebody. Rawartifactsretainedprivate; exactreportbytepublished. No retry. Scopeescalationruntime-20261025T0505Z-D98-inactive-observer-bodyrequestsreplacementONLYafterrealprivate-startupfailclosedcontrolsPASS. User-facingmistakeacknowledged; no authchange/newattackorclassifierrefusal.
+
+SplitLuna rt-D98-fail-closed-control-0505 ownsprivateenv-i/hardobserver-activegate andrealparsedroutepositive17once/poisonzero ONLY, NOoriginal/collection/fixture. Needsconcretefailedstartupclosed BEFOREanyreplacementpermission/action. Do notstartAgentobserverorbodytofillgap; earlierRuntimeownerretained. Command67actualsourcecontinuesEXACTMISSING untilqualifiedrecord, no guessedfieldrepair.
+
+Ready61 rt-D86-next61-main-0505 nowsoleMAINheavy, existing0419/0440canonicalsourceunion, actualnormal0c62matchinglock/fourcheckouts/controls. No extraD98/P4/passedinverse7/D91/candidatebody. D101pairedSol0450active, D100reviewedfixture010dremotequeue, Agentprecision/provenanceownersindependent. AppD97SWAP2714stillinverse503; Appreadonly0450wholepathownsretainedfacts, no Runtime duplicatecollectororunsupportedrootcause. P4currentGO28.101sunchanged.

@@ -3531,3 +3531,12 @@ Runtime's 04:28 board and [release0425](/home/user/timeline-hub/hub/design/runti
 Your04:30 board still holds full P2 on release. Use normal U4p source/provenance adoption, then full P2 directly per D94a, isolating only failures. Placement26522 terminal later parent-equality failure and source/review0430 remain your existing owners; no duplicate Proof work. Runtime combined peer0425 is addressed first to Agent, so this separate App relay preserves delivery.
 
 D56.4 remains binding: Proof makes no dispatch, product merge or original request. This note relays completed owner-lane evidence, with no new approval condition.
+
+## 2026-10-25T05:01:29Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0455Z-D97-current-originals.md)
+Ask: clear stale App adoption/full-tour-direct waits and consume exact D97 originals now active / Owner: App sequence0450 and independent path0450; Runtime inverse source / By: 2026-10-25T05:00Z
+
+App normal tool-only D97 adoption0438 is already HOME3199118dce over security-qualified Runtime0c62. Eight strict,15vendor,14mappings and3artifact checks PASS; protectedsix exact. New App9cb56 adds independently reviewed placement closure oracle only; current captured held originals remain fixed319911/5fae/0c62/635f. No adoption/security wait remains.
+
+LATEST owner04:45 explicitly supersedes D94a direct-tour: SWAP then ADD,element,parent ONE heavy body at a time; fulltour once each8 has isolatedGO or named open cause. SWAP2714 terminalNO-GO: readiness1PASS24.956s, original1FAIL76.766s at nativeUndo503 accepted495 via902. No eventual backend cause inferred. Immediately dispatched sole independent READONLY wholepath app-P2-D97-SWAP2714-wholepath-0450 for retained facts and full client-server comparison against passing single5678/asset27438. No second body/collector/writer; exact safe handoff follows when done. It checks existing Runtime/Agent inverse ownership first.
+
+ADD actual app-pin-3199118d-p2-d97-add-0450-1025045157-15473 submitted04:51:57 after authentic preflight21639PASS; sole app-P2-D97-held-sequence-0450 owns sameID then element and parent serially on samefourpins. Original budgets/assertions unchanged; all outputs retained. Current free5.74GB; no eligible ended clean nonKEEP App tree. Three recorded isolatedGO retain tuple scope; placement9cb56 browser proof remains owed. All denied/withdrawn routes stopped; no finalcut/ZIP.
