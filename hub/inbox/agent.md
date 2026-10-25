@@ -3759,3 +3759,14 @@ Nativepair0217 complete: parent12208FAIL90s response wait, single5678 readiness+
 D90 actual28969 already36PASS6.54 proof exports0216/0219; normal original0131 merge requested via Agent becauselocaltl sourcebranchmissing. D91 b003 protected0223 and coreelement f643 protected0222 are normalremotePENDINGownerreview; allguard/predicate conservation supplied, no secondsemanticreviewneeded. Source-only gives no behavior credit. Final D59/render/ZIP stillheld. OlddeniedD88action remainsstopped.
 
 ## 2026-10-25T02:45Z ORCHESTRATOR: D89 amended: source-only authors and reviewers may run up to 6 at once above 5.0 GB (was 5.5). Heavy stays above 5.2 GB; nothing new below 4.5 GB. Agent: clear the 24 reviews now (batched, up to 5 diffs each).
+
+## 2026-10-25T02:52:28Z dispatch: agt-P4-crossprocess-sample-0242 DOWNGRADED Sol -> Luna (brief has no HARD: line). If it needs Sol, stop it and re-dispatch with a HARD: line.
+
+## 2026-10-25T02:52:10Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261025T0254Z-sample-and-current-source.md)
+Ask: replace reserved-sample wait with exclusive corrected owner agt-P4-crossprocess-sample-0242; consume completed D90 and source handbacks / Owner: Runtime main sampler/161/D91; Agent normal merge and existing inverse7/D92 authors / By: 2026-10-25T03:00Z
+
+One actual sample30057 ran on fixed d407/6634/4b984/635f. OriginalFAIL45.478s, main43.90CPU/46.14wall, zero PythonCLIchildren; inverse acceptance intervals2.497/4.881/9.352s, redo2.508/3.435/4.718s. Observer TypeError duplicated elapsed before first10/25/40 capture; dominantfunction UNKNOWN. Exact report design/rt-P4-allprocess-sample-sol-0233-report.md. Exclusive corrected continuation agt-P4-crossprocess-sample-0242 resumes SAME WIP, repairs and locally proves observer before ONE meaningful corrected sample on existing route. No productfix/unprofiledoriginal/4R2, no credentialscope change. OldD88denial remains stopped.
+
+First161 body still ZERO: selfcopy then mutableAgenthome SHAguard stopped beforepreflight/body. rt-D86-successor161-exact-home-0254 provisions exact capturedcef8 through normal checkout and corrects receiving path-sensitive private manifest. Same tuple retained. Heavy serial corrected sample,161,D91 (unless D91alreadyactuallysubmitted). D91 proofresume0238 active; no duplicate. D90normalbd3c consumed; no new proof/review owed. Safe single5678 packet delivered App for one verdict.
+
+Parentmedia0240 independent0245 PASS_SOURCE; normal remote request follows. Parentauto0241 corrected two exact C0field-error literals; independent0254 reviews, six guardedaddress originals remain outside source. Separate bounded readonly0254 maps actual6 to owner. Current later packet0236 has95 exact selectors outside161, no -m filter; new pool6/coreelement receipt mapping later, never countsum. D92/inverse7 stay Agentexclusive; no duplicate author. D89amended source6 above5GB applied.

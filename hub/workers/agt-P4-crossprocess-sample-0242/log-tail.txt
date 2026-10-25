@@ -1,0 +1,400 @@
+        ticks = iter((9.9, 10.0, 25.0, 40.0))
+
+        class Stop:
+            def wait(self, interval):
+                if not ready.wait(2):
+                    raise AssertionError('fake workload did not start')
+                value = next(ticks, None)
+                if value is None:
+                    finished.set()
+                    return True
+                clock[0] = value
+                return False
+
+            def set(self):
+                ready.set()
+
+        with tempfile.TemporaryDirectory(dir=os.environ.get('TMPDIR')) as folder:
+            def fake_main(args, plugins):
+                plugins[0].pytest_runtest_logstart('fake-workload', None)
+                child = subprocess.Popen([sys.executable, '-c', 'pass'])
+                self.assertEqual(child.wait(), 0)
+                ready.set()
+                self.assertTrue(finished.wait(3), 'sampler failed or stopped before callbacks')
+                # Read while the observer still has the files open.
+                rows = [json.loads(line) for line in (Path(folder) / 'events.jsonl').read_text().splitlines()]
+                self.assertEqual([row['target'] for row in rows if row['kind'] == 'checkpoint'], [10, 25, 40])
+                self.assertEqual(len([row for row in rows if row['kind'] == 'sample']), 4)
+                self.assertTrue(any(row['kind'] == 'child_exit_observed' for row in rows))
+                plugins[0].pytest_runtest_logreport(types.SimpleNamespace(when='call', outcome='passed', duration=40))
+                return 0
+
+            with patch.dict(os.environ, P4_SAMPLE_OUTPUT=folder), patch.dict(sys.modules, pytest=types.SimpleNamespace(main=fake_main)), patch.object(module, 'STOP', Stop()), patch.object(module.time, 'monotonic', lambda: clock[0]):
+                self.assertEqual(module.main(), 0)
+            rows = [json.loads(line) for line in (Path(folder) / 'events.jsonl').read_text().splitlines()]
+            self.assertEqual(rows[-1]['sampler_errors'], [])
+            self.assertEqual(rows[-1]['samples'], 4)
+            self.assertEqual([row['test_elapsed'] for row in rows if row['kind'] == 'checkpoint'], [10, 25, 40])
+            dumps = (Path(folder) / 'faulthandler.txt').read_text()
+            for target in (10, 25, 40):
+                self.assertIn(f'TARGET {target} ACTUAL', dumps)
+            for name in ('events.jsonl', 'faulthandler.txt', 'loaded-origins.json'):
+                self.assertEqual((Path(folder) / name).stat().st_mode & 0o777, 0o600)
+            self.assertEqual(subprocess.Popen.__init__, module.ORIGINAL_INIT)
+
+    def test_scheduler_fault_is_explicit_and_durable(self):
+        module = observer()
+        with tempfile.TemporaryFile(mode='w+', dir=os.environ.get('TMPDIR')) as stream:
+            module.EVENTS = stream
+            with patch.object(module, 'collect_samples', side_effect=TypeError('injected')):
+                module.sample_loop()
+            self.assertEqual(module.ERRORS, ['TypeError'])
+            stream.seek(0)
+            self.assertEqual(json.loads(stream.readline())['kind'], 'sampler_error')
+
+    def test_sample_timestamp_survives_event_serialization(self):
+        module = observer()
+        with tempfile.TemporaryFile(mode='w+', dir=os.environ.get('TMPDIR')) as stream:
+            module.EVENTS = stream
+            module.event('sample', elapsed=10.0, test_elapsed=10.0)
+            stream.seek(0)
+            self.assertEqual(json.loads(stream.readline())['elapsed'], 10.0)
+
+
+if __name__ == '__main__':
+    unittest.main()
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python diagnostics/test_p4_observer.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache diagnostics/p4_sample_0233.py diagnostics/test_p4_observer.py" in /home/user/work/wt/agt-P4-crossprocess-sample-0242
+ succeeded in 124ms:
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.046s
+
+OK
+All checks passed!
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, os, pathlib, subprocess
+O=pathlib.Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+W=O/'workers/agt-P4-crossprocess-sample-0242'
+os.umask(0o077)
+E=W/'evidence'; E.mkdir(exist_ok=True)
+prior=subprocess.check_output(['git','show','HEAD:diagnostics/p4_sample_0233.py'],text=True)
+current=pathlib.Path('diagnostics/p4_sample_0233.py').read_text()
+old_event=prior[prior.index('def event('):prior.index('\\n\\ndef stat(')]
+mutant=current[:current.index('def event(')]+old_event+current[current.index('\\n\\ndef stat('):]
+mutant_path=pathlib.Path(os.environ['TMPDIR'])/'prior-event-observer.py'; mutant_path.write_text(mutant)
+runner='''import importlib.util, pathlib, unittest
+spec=importlib.util.spec_from_file_location('controls', 'diagnostics/test_p4_observer.py')
+m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+m.SOURCE=pathlib.Path(__import__('os').environ['PRIOR_OBSERVER'])
+r=unittest.TextTestRunner().run(unittest.TestSuite([m.ObserverControls('test_sample_timestamp_survives_event_serialization')]))
+raise SystemExit(not r.wasSuccessful())
+'''
+env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1', PRIOR_OBSERVER=str(mutant_path))
+r=subprocess.run(['/home/user/work/venv-agent/bin/python','-c',runner],env=env,text=True,capture_output=True)
+(E/'prior-regression.log').write_text(r.stdout+r.stderr)
+assert r.returncode==1 and 'TypeError' in r.stderr and 'elapsed' in r.stderr
+print('prior event-writer regression: fails as required (TypeError duplicated elapsed)')
+PY
+sed -n '1,130p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run; sed -n '1,100p' /home/user/work/wt/agt-pin-d407b877/tests/editing_conformance/test_native_batch_ingress.py; git diff --stat; df -B1 /tmp" in /home/user/work/wt/agt-P4-crossprocess-sample-0242
+ succeeded in 143ms:
+prior event-writer regression: fails as required (TypeError duplicated elapsed)
+#!/bin/bash
+# test-run ID — called by dispatcher-daemon (outside the sandbox) for queue/pending/test-ID. Exit 0 = started in background or served
+# from cache, 3 = wait (slot busy / identical run in flight / low disk), 1 = bad request. "test-run --run ID" is the background job.
+# Caps: one heavy ("full*") suite at a time, plus up to 2 other runs. Cache key: repo + tree of the worktree (incl. uncommitted
+# changes) + suite + files + command. Result: tests/ID/{status,exit,summary,log.txt}; status = queued|running|pass|fail|timeout|error.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+LEASED=; [ "$1" = --lease-body ] && { LEASED=1; RUN=1; shift; }; [ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
+bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; exit 1; }
+alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
+. $D/request 2>/dev/null && { [ -z "$RUN" ] || . $D/snap; } || { echo "no request for $ID"; exit 1; }
+case $target in integration:*) W=/home/user/work/$repo;; *) W=$(sed -n 's/^worktree=//p' $O/workers/$target/meta);; esac
+if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled worker: recreate a detached worktree from its branch
+  git -C /home/user/work/$repo worktree add -q --detach "$W" "tl/$target" 2>/dev/null || git -C /home/user/work/$repo worktree add -q --detach "$W" "hub/tl/$target" 2>/dev/null; fi
+[ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
+CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
+BASE_CMD=$CMD
+OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
+HV=light; case $suite in full*) HV=heavy;; esac
+if [ -z "$RUN" ]; then
+  IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null
+  TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
+  # cross-product suites (e2e, journeys, commit-integration, or a command naming another repo) also depend on the
+  # other repos' integration code: add their tl/integration heads to the key so a stale pass is never reused
+  EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
+  for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
+  [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
+  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+  if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
+    cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
+    basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
+  [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
+  [ $HV = light ] && [ $(alive light) -ge 3 ] && { echo "3 targeted/named runs already running" | tee $D/why; exit 3; }
+  FLOOR=5; [ $HV = heavy ] && FLOOR=8; [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt $FLOOR ] && { echo "low disk (<${FLOOR}G free; heavy runs need 8G so Runtime storage preflight does not cause false reds)" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
+  setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+fi
+# BENCH-LEASE-BEGIN: acquire before snapshot setup; cache hits return above.
+if [ -z "$LEASED" ] && { [ -e /home/user/work/bench-store ] || [ -L /home/user/work/bench-store ]; }; then
+  echo $$ > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
+  BENCH_RUNNER_PID=$$ python3 -I - "$O" /home/user/work/bench-store "$repo" "$suite" "$BASE_CMD" "$$" "$D/CANCELLED" bash "$0" --lease-body "$ID" <<'BENCH_LEASE_PY'
+import ctypes
+from contextlib import contextmanager
+import importlib.util
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+
+
+@contextmanager
+def suite_lease(store, repo, suite, command, tests_dir):
+    def current_command():
+        for row in (Path(tests_dir) / 'suites.conf').read_text().splitlines():
+            fields = row.split(None, 2)
+            if fields[:2] == [repo, suite]:
+                return fields[2] if len(fields) == 3 else ''
+        return None
+
+    # The existing shell awk rebuilds fields; core binds the original row bytes.
+    raw = current_command()
+    if raw is None or ' '.join(raw.split()) != command:
+        raise ValueError('suite registration disappeared or changed before lease')
+    names = store.names_for_suite(repo, suite, raw)
+    if not names and current_command() != raw:
+        # An evicted managed row must not fall through as an unmanaged suite.
+        raise ValueError('suite registration disappeared before lease')
+    with store.acquire(names) as entries:
+        if current_command() != raw:
+            raise ValueError('suite registration disappeared or changed during lease acquisition')
+        yield entries, [entry['lease_fd'] for entry in entries]
+
+
+def supervise(store, repo, suite, command, argv, cancelled, parent, tests_dir):
+    # Subreaping keeps the lease until orphaned grandchildren finish as well.
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
+        raise OSError(ctypes.get_errno(), "cannot enable child subreaper")
+    stopping = False
+
+    def stop(signum, frame):
+        nonlocal stopping
+        stopping = True
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    if libc.prctl(1, signal.SIGTERM, 0, 0, 0) != 0:  # PR_SET_PDEATHSIG
+        raise OSError(ctypes.get_errno(), "cannot watch runner death")
+    if os.getppid() != parent:
+        return 130
+
+    with suite_lease(store, repo, suite, command, tests_dir) as (entries, fds):
+        if stopping or cancelled.exists() or os.getppid() != parent:
+            return 130
+        if not entries:
+            # Existing unregistered suites retain their direct-child semantics.
+            result = subprocess.call(argv)
+            return result if result >= 0 else 128 - result
+        read_fd, write_fd = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
+        env = dict(os.environ, BENCH_CONTROL_FD=str(write_fd))
+        child = subprocess.Popen(argv, env=env, pass_fds=tuple(fds) + (write_fd,), process_group=0)
+        os.close(write_fd)
+        groups = {child.pid}
+        pending = b""
+        result = None
+        sent = None
+        killed = False
+        deadline = None
+        timed_out = False
+        try:
+            while True:
+                try:
+                    pending += os.read(read_fd, 4096)
+                except BlockingIOError:
+                    pass
+                while b"\n" in pending:
+                    item, pending = pending.split(b"\n", 1)
+                    pid = int(item)
+                    if pid <= 1:
+                        raise ValueError("bad suite process group")
+                    groups.add(pid)
+                    deadline = time.monotonic() + 90 * 60
+                no_children = False
+                while True:
+                    try:
+                        pid, status = os.waitpid(-1, os.WNOHANG)
+                    except ChildProcessError:
+                        no_children = True
+"""Pinned CLI/SDK batches through the official pair and real Runtime HTTP handlers.
+
+The generated client's injected transport replaces sockets only. The profile,
+provider, schemas, credentials, routing and durable Runtime are unmodified.
+"""
+from __future__ import annotations
+
+import copy
+import io
+import json
+from http.client import HTTPResponse
+from types import SimpleNamespace
+from urllib.error import URLError
+
+import pytest
+
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.helpers.runtime import new_runtime_daemon, use_runtime, vendored_runtime_commit
+
+pytestmark = pytest.mark.integration
+
+
+class MemorySocket:
+    def __init__(self, data):
+        self.input = io.BytesIO(data)
+        self.output = bytearray()
+
+    def makefile(self, *args):
+        return self.input
+
+    def sendall(self, data):
+        self.output.extend(data)
+
+    def settimeout(self, timeout):
+        pass
+
+
+@pytest.fixture
+def runtime(tmp_path, monkeypatch, request):
+    use_runtime(vendored_runtime_commit())
+    from runtime_protocol.server import RuntimeHandler
+
+    from astrid.sdk import workspace_client
+    from astrid.sdk.client import AstridClient
+    from astrid_runtime_client.generated import WorkspaceClient
+
+    film = None
+    root = tmp_path / 'realm'
+    if getattr(request, 'param', None) == 'historical':
+        root, film = request.getfixturevalue('historical_sheet_film')
+    world = SimpleNamespace(calls=[], lost=set(), reads=[])
+    support = tmp_path / 'support'
+    daemon = new_runtime_daemon(root, commit=vendored_runtime_commit(),
+                                support_root=support, authoring_profile='astrid').start()
+    server = daemon.httpd
+    token = daemon.token
+
+    def restart():
+        nonlocal daemon, server
+        daemon.stop()
+        daemon = new_runtime_daemon(root, commit=vendored_runtime_commit(),
+                                    support_root=support, authoring_profile='astrid').start()
+        server = daemon.httpd
+
+    def transport(method, path, headers, body):
+        body = body or b''
+        request = (f'{method} {path} HTTP/1.0\r\nHost: 127.0.0.1\r\n'
+                   f'Content-Length: {len(body)}\r\n' +
+                   ''.join(f'{key}: {value}\r\n' for key, value in headers.items()) + '\r\n').encode() + body
+        sock = MemorySocket(request)
+        RuntimeHandler(sock, ('127.0.0.1', 1), server)
+        response = HTTPResponse(MemorySocket(bytes(sock.output)))
+        response.begin()
+        data = response.read()
+        if path.endswith('/commit'):
+            key = headers['Idempotency-Key']
+            world.calls.append((body, key, response.status, json.loads(data)))
+            if response.status == 200 and key in world.lost:
+                world.lost.remove(key)
+                raise URLError('lost ACK after Runtime acceptance')
+        if '/composition-revisions/' in path and method == 'GET':
+            world.reads.append(path)
+        return response.status, dict(response.headers), data
+
+    monkeypatch.setattr(workspace_client, 'GeneratedWorkspaceClient',
+                        lambda endpoint, credential: WorkspaceClient(endpoint, credential, transport=transport))
+    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client'))
+    restart()
+    world.project = film if film else server.runtime.create_project({'slug': 'batch', 'name': 'Batch'})['id']
+    if film is None:
+        server.runtime.create_timeline(world.project, 'film', idempotency_key='bootstrap')
+
+    def client():
+        return AstridClient.open(endpoint='http://127.0.0.1:1', credential=token,
+                                 realm_id=server.runtime.realm['id'], actor_id='owner',
+ diagnostics/p4_sample_0233.py | 128 +++++++++++++++++++++++++++++++-----------
+ 1 file changed, 96 insertions(+), 32 deletions(-)
+Filesystem        1B-blocks        Used  Available Use% Mounted on
+/dev/vda       270553174016 35905961984 5917896704  86% /tmp
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+p=Path('diagnostics/p4_sample_0233.py'); s=p.read_text().replace('import os\\n','import os\\nimport selectors\\n')
+s=s.replace('ERRORS = []','ERRORS = []\\nORIGINAL_POLLS = {}')
+s=s.replace('def child_snapshot():', '''def observed_poll(original):
+    def poll(self, timeout=None):
+        before = time.monotonic()
+        caller = sys._getframe(1)
+        try:
+            return original(self, timeout)
+        finally:
+            event('poll', timeout=timeout, wall=time.monotonic() - before,
+                  caller=[caller.f_code.co_filename, caller.f_code.co_name, caller.f_lineno],
+                  tid=threading.get_native_id())
+    return poll
+
+
+def child_snapshot():''')
+s=s.replace('            module._run_cli = inline_cli', '''            module._run_cli = inline_cli
+        sync = sys.modules.get('astrid.sdk.timeline.sync')
+        if sync is not None:
+            original_undo = sync.TimelineSession.undo
+
+            def inverse(*args, **kwargs):
+                before = time.monotonic()
+                cpu = time.thread_time()
+                position = phase(sys._getframe(1))
+                event('inverse_start', **position)
+                try:
+                    return original_undo(*args, **kwargs)
+                finally:
+                    event('inverse_end', wall=time.monotonic() - before,
+                          cpu=time.thread_time() - cpu, **position)
+
+            sync.TimelineSession.undo = inverse''')
+s=s.replace('    time.sleep = observed_sleep\\n', '''    time.sleep = observed_sleep
+    for cls in {selectors.SelectSelector, selectors.PollSelector, selectors.EpollSelector}:
+        ORIGINAL_POLLS[cls] = cls.select
+        cls.select = observed_poll(cls.select)
+''')
+s=s.replace('        time.sleep = ORIGINAL_SLEEP\\n', '''        time.sleep = ORIGINAL_SLEEP
+        for cls, original in ORIGINAL_POLLS.items():
+            cls.select = original
+''')
+p.write_text(s)
+p=Path('diagnostics/test_p4_observer.py');s=p.read_text().replace('import os\\n','import os\\nimport selectors\\n');s=s.replace(\"                ready.set()\\n                self.assertTrue\", \"                with selectors.DefaultSelector() as selector:\\n                    self.assertEqual(selector.select(0), [])\\n                ready.set()\\n                self.assertTrue\")
+s=s.replace(\"                self.assertTrue(any(row['kind'] == 'child_exit_observed' for row in rows))\", \"                self.assertTrue(any(row['kind'] == 'child_exit_observed' for row in rows))\\n                self.assertTrue(any(row['kind'] == 'poll' and row['timeout'] == 0 for row in rows))\")
+p.write_text(s)
+PY
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python diagnostics/test_p4_observer.py
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache diagnostics/p4_sample_0233.py diagnostics/test_p4_observer.py
+git diff --check" in /home/user/work/wt/agt-P4-crossprocess-sample-0242
+ succeeded in 303ms:
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.072s
+
+OK
+All checks passed!
+

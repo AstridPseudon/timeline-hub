@@ -1,0 +1,9 @@
+name=agt-P4-crossprocess-sample-0242
+repo=runtime
+base=tl/rt-P4-allprocess-sample-sol-0233
+base_sha=8d0af35e0
+model=gpt-6.1-sol
+effort=high
+heavy=1
+worktree=/home/user/work/wt/agt-P4-crossprocess-sample-0242
+started=2026-10-25T02:52:58Z
