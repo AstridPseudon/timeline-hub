@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T07:36:08Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 3m -->
-# app board, 2026-10-25T07:32Z
+<!-- app | 2026-10-25T07:40:08Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
+# app board, 2026-10-25T07:36Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -244,7 +244,7 @@
 | U4p-D108-current | Adopt current provenance for reruns | Luna normal tools | Author0646 PASS | merged | app-U4p-D108-current-tuple-0646 | Normal tools:8strict/15vendor/17skew/3artifacts/14mappings PASS. Only lock/manifest; product/schema/protected bytes exact. | Homef7201e02dc |
 | D108-P1-P3 | Reprove current chain and Gate5 | Luna; service; independent | Actual15075 and31792 GO | merged | Producer0655; P1review0657; P3review0706 | Current P1 readiness1/original2 PASS177s; P3 readiness1/original1 PASS217s. Independent GO on exact recorded tuple; final cut still separate. | f7201/d629/c916/635f |
 | P2-D102c-retained-cause | Verify and correct retained cause packet | Luna read only | Exact new instrumented artifacts | merged | app-P2-D102c-retained-cause-0650 | Confirms ADD KeyError/provider3057ms and active ring. Element end absent; lead retained-stack facts stay distinct. Existing report published byte-exact. | Actual0b6cee tuple |
-| P2-phase-sink | Preserve capture across every valid startup | HARD Sol; Luna review | Second Luna review 0719 FAIL | doing | app-P2-phase-sink-portable-sol-0726 | Repeated starts PASS; D105 still depends on old Git objects. Sol owns clean portable correction; independent full-path challenge runs in parallel. | f09c held |
+| P2-phase-sink | Preserve capture across every valid startup | HARD Sol; Luna review | Sol clean correction complete | review | app-P2-phase-sink-portable-review-0736 | Author 27 controls and same source snapshot 27 PASS; types/lint PASS. Normal tests no longer require old Git objects. One independent review active. | Candidate 33fce4fa |
 | D108-P1-current-GO | Qualify current chain original | Luna independent | Actual15075 GO | merged | app-D108-P1-15075-GO-review-0657 | Readiness1/original2 PASS,zero failures/errors/skips. Exact tuple/source50960dd2/manifest/XML/receipts/importroots qualified; ephemeral source limit disclosed. | f7201/d629/c916/635f |
 | D108-full-P2 | Qualify all eight gestures together | Luna; service | Runtime D111 and phase repair | blocked:runtime | Agent adopted; Runtime author 0653 | Agent released; Runtime D111 and reviewed capture repair still owed. Then one full P2 on current heads. | Runtime release pending |
 | D74-four-next-pins | Recycle completed diagnostic tuple pins | Manager | Host0702 and fresh static guards | merged | Guarded release0700 | All four recycled normally; zero refusals. Net481MB,free5.78GB at receipt. Current tuple and all outputs/branches/reports kept. | No source change |
@@ -261,8 +261,8 @@ regressions: Runtime689 request_id regression fixed in1daca. Inverse KeyError so
 
 Blockers: Runtime D111 — Qualified release and adoption before full P2. D110 is adopted; capture portability Sol 0726 is the independent App prerequisite. No singles.
 Blockers: Final cut — Four recorded isolated GO; current full P2 and final pinned P1–P5/core plus genuine installed render required before ZIP.
-Next ready: Sol portable capture repair -> one independent review and normal merge. D111 release -> normal tool adoption -> one full P2. D108 two finite audit mappings returned to Runtime reviewer.
-live 1 / cap 6; ready-undispatched 0; core open: 4. Sol capture author active; both finite predicate mappings and independent portability finding returned; no App heavy body. Current P1/P3 GO retain exact tuple scope.
+Next ready: Independent capture review 0736 -> normal merge. D111 release -> normal tool adoption -> one full P2. D108 two finite audit mappings returned to Runtime reviewer.
+live 1 / cap 6; ready-undispatched 0; core open: 4. Independent capture review 0736 active; both finite predicate mappings and portability finding returned; no App heavy body. Current P1/P3 GO retain exact tuple scope.
 Capacity: Seven host-cleared stale pins recycled after fresh static guards, zero refusals; net867MB, free6.30GB at receipt0642. Four additional host-cleared pins recycled0700,zero refusals/net481MB; free5.78GB at receipt,6.14 GB at 07:14Z; fresh ended clean non-KEEP scan found no eligible trees. All outputs/branches/reports/current pins retained; prior dirty/refused targets untouched. Source cap6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB.
 Inbox consumed through2013921 bytes. D110 normal release 070dfc and independent 0658 consumed; adoption 0717 merged 6e21b74ff9. D111 author 79 controls and smoke 2 PASS, first finite N-curve returned once after no measured gain; source remains held. P1/P3 current independent GO are complete. Latest 07:24 directive to adopt D110 is already fulfilled; full P2 awaits D111 and portable capture review. No safety or permission refusal.
 
