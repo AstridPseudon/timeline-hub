@@ -156,10 +156,14 @@ def timeline_scope_is_empty(conn, timeline_id, *, project_id=None):
 def _evaluation(method):
     @wraps(method)
     def evaluate(self, *args, **kwargs):
-        if getattr(self._verification, "current", None) is not None:
-            return method(self, *args, **kwargs)
-        with self.verification_scope():
-            return method(self, *args, **kwargs)
+        try:
+            if getattr(self._verification, "current", None) is not None:
+                return method(self, *args, **kwargs)
+            with self.verification_scope():
+                return method(self, *args, **kwargs)
+        except BaseException:
+            self.clear_replay_memo()
+            raise
     return evaluate
 
 
@@ -219,15 +223,56 @@ class TimelineCommitStore:
         self.validate_prepared = validate_prepared
         self.validate_event = validate_event
         self._verification = threading.local()
+        self._replay_memo = set()
+        self._replay_generation = 0
+        self._replay_store_version = None
+
+    def clear_replay_memo(self):
+        with self.store._mutex:
+            self._replay_memo.clear()
+            self._replay_generation += 1
+
+    def _store_version(self):
+        # These counters only invalidate proofs. They never establish one;
+        # every hit also requires fresh content and live input verification.
+        return (self.store.conn.total_changes,
+                self.store.conn.execute("PRAGMA data_version").fetchone()[0])
+
+    def _sync_replay_memo(self):
+        version = self._store_version()
+        if version != self._replay_store_version:
+            self.clear_replay_memo()
+            self._replay_store_version = version
+        current = self._verification.current
+        if current["generation"] != self._replay_generation:
+            current["verified"].clear()
+            current["generation"] = self._replay_generation
+
+    @contextmanager
+    def _accepting(self):
+        self._sync_replay_memo()
+        try:
+            yield
+        except BaseException:
+            self.clear_replay_memo()
+            raise
+        else:
+            # Only the successful acceptance transaction may extend history
+            # without discarding earlier full replay proofs.
+            self._replay_store_version = self._store_version()
 
     @contextmanager
     def verification_scope(self):
         """Start an independent evaluation, including when another is nested."""
         previous = getattr(self._verification, "current", None)
-        current = {"verified": set(), "active": set(), "traversal": None, "inputs": None}
+        current = {"verified": set(), "active": set(), "traversal": None, "inputs": None,
+                   "generation": self._replay_generation}
         self._verification.current = current
         try:
             yield
+        except BaseException:
+            self.clear_replay_memo()
+            raise
         finally:
             current["verified"].clear()
             current["active"].clear()
@@ -247,6 +292,9 @@ class TimelineCommitStore:
         try:
             yield
             inputs.check()
+        except BaseException:
+            self.clear_replay_memo()
+            raise
         finally:
             current["inputs"] = previous
 
@@ -319,6 +367,7 @@ class TimelineCommitStore:
     def _verify_accepted(self, row, edge, *, allow_archived=False):
         from .timeline_commit import CommitRejected
 
+        self._sync_replay_memo()
         current = self._verification.current
         active = current["active"]
         identity = (edge["project_id"], edge["timeline_id"], edge["publication_id"])
@@ -342,6 +391,7 @@ class TimelineCommitStore:
         traversal = {"nodes": {identity: (row, edge, allow_archived)},
                      "dependencies": {identity: set()}, "pending": deque([identity]),
                      "replays": {}, "current": identity,
+                     "chains": {},
                      "inputs": current["inputs"] if current["inputs"] is not None else
                                _HistoryReadInputs(self.store.conn, self.store.cas_root)}
         current["traversal"] = traversal
@@ -383,17 +433,22 @@ class TimelineCommitStore:
             # results and physical object bytes, before using queued proofs.
             traversal["inputs"].check()
             proofs = set()
+            generation = self._replay_generation
             for node in ordered:
                 replay = traversal["replays"].get(node)
                 if replay is not None:
                     key, arguments = replay
-                    if key not in current["verified"]:
+                    self._sync_replay_memo()
+                    if key not in current["verified"] and key not in self._replay_memo:
                         self._verify_accepted_replay(*arguments)
                         proofs.add(key)
             # Replay/capture validation can also call back into the runtime.
             # Publish no proofs or history until all inputs still match.
             traversal["inputs"].check()
-            current["verified"].update(proofs)
+            self._sync_replay_memo()
+            if generation == self._replay_generation:
+                current["verified"].update(proofs)
+                self._replay_memo.update(proofs)
         except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
             raise ProtocolError("accepted commit record is corrupt") from exc
         finally:
@@ -513,19 +568,39 @@ class TimelineCommitStore:
         realm = self.conn.execute("SELECT realm_id FROM projects WHERE id=?", (edge["project_id"],)).fetchone()
         # Entry bytes alone do not cover mutable source rows or event prefixes.
         # Resolve those afresh before reusing the pure recorder/capture checks.
+        traversal = self._verification.current["traversal"]
         key = (edge["project_seq"], digest({"ledger": dict(row), "edge": dict(edge),
                "source": source, "base": original, "continuations": {key: sorted(value) for key, value in continuations.items()}, "history": history,
-               "events": [dict(event) for event in events], "realm": list(realm) if realm else None}))
+               "events": [dict(event) for event in events], "realm": list(realm) if realm else None}),
+               self._history_chain(edge, traversal["chains"] if traversal is not None else {}))
         verified = self._verification.current["verified"]
-        traversal = self._verification.current["traversal"]
         arguments = (row, edge, data, metadata, replay_request, prepared,
                      original, source, continuations, history)
         if traversal is not None:
             traversal["replays"][traversal["current"]] = (key, arguments)
-        elif key not in verified:
+        elif key not in verified and key not in self._replay_memo:
             self._verify_accepted_replay(row, edge, data, metadata, replay_request, prepared,
                                          original, source, continuations, history)
             verified.add(key)
+
+    def _history_chain(self, edge, chains):
+        scope = (edge["project_id"], edge["timeline_id"])
+        ordinal = edge["project_seq"]
+        if (*scope, ordinal) not in chains:
+            rows = self.conn.execute(
+                "SELECT * FROM timeline_commit_history WHERE project_id=? AND timeline_id=? "
+                "AND project_seq<=? ORDER BY project_seq", (*scope, ordinal)).fetchall()
+            ledgers = {row["txn_id"]: dict(row) for row in self.conn.execute(
+                "SELECT * FROM command_idempotency WHERE txn_id IN (SELECT publication_id "
+                "FROM timeline_commit_history WHERE project_id=? AND timeline_id=? AND project_seq<=?)",
+                (*scope, ordinal)).fetchall()}
+            previous = ""
+            for row in rows:
+                chains[(*scope, row["project_seq"])] = previous
+                # Hash the actual stored JSON strings, including legacy rows;
+                # no persisted digest or verification claim is authoritative.
+                previous = digest([previous, dict(row), ledgers.get(row["publication_id"])])
+        return chains[(*scope, ordinal)]
 
     def _verify_accepted_replay(self, row, edge, data, metadata, replay_request, prepared,
                                 original, source, continuations, history):
@@ -1449,7 +1524,7 @@ class TimelineCommitStore:
         with self.store._mutex:
             if self.conn.in_transaction:
                 raise ProtocolError("commit acceptance requires the outer transaction")
-            with self.store._transaction():
+            with self._accepting(), self.store._transaction():
                 authorize()
                 replay = self._lookup(context)
                 if replay is not None:

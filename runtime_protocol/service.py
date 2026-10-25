@@ -431,6 +431,18 @@ def _page_rows(rows, *, scope, cursor, limit, key_fn, resource_fn, skip_after=No
     return {"items": [resource for _, resource in selected], "next_cursor": _page_cursor(scope, selected[-1][0]) if has_more else None}
 
 
+def _clear_replay_on_refusal(function):
+    @wraps(function)
+    def wrapped(self, *args, **kwargs):
+        try:
+            return function(self, *args, **kwargs)
+        except BaseException:
+            if self._timeline_commit_store is not None:
+                self._timeline_commit_store.clear_replay_memo()
+            raise
+    return wrapped
+
+
 def _verified_mutation(function):
     """Fence the complete mutation against a concurrent admission loss."""
     @wraps(function)
@@ -2432,6 +2444,7 @@ class RuntimeService:
             check()
         return check
 
+    @_clear_replay_on_refusal
     def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key,
                         publisher, invocation_path, authorize):
         from .timeline_commit_port import detached, route_path, validate_request
@@ -2447,6 +2460,7 @@ class RuntimeService:
             invocation_path=invocation_path, authorize=authorize,
         )
 
+    @_clear_replay_on_refusal
     def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
                                  operation, idempotency_key, publisher, invocation_path, authorize):
         from .timeline_commit import CommitRejected
@@ -2519,6 +2533,7 @@ class RuntimeService:
             if row is None or row["publication_id"] is None:
                 commits.head(project_id, timeline_id)
 
+    @_clear_replay_on_refusal
     def list_timeline_commits(self, project_id, timeline_id, *, cursor=None,
                               limit=PAGE_DEFAULT_LIMIT, authorize):
         from .timeline_commit import CommitRejected
@@ -2538,6 +2553,7 @@ class RuntimeService:
         except CommitRejected as exc:
             raise public_failure(exc.failure) from exc
 
+    @_clear_replay_on_refusal
     def _verified_read(self, project_id, authorize, read):
         from .timeline_commit import CommitRejected
         from .timeline_commit_port import public_failure
