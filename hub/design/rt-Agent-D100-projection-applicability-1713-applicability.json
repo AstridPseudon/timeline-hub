@@ -1,0 +1,56 @@
+{
+  "task": "D100 source applicability",
+  "repo": "Agent",
+  "base": {
+    "commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "tree": "6abf383217363d08fe0cf00558b010f5a9dd506f"
+  },
+  "result": "APPLICABLE_MISSING_SOURCE_SEAM_PRODUCT_UNQUALIFIED",
+  "question": "Does held D100 source address App projection item birth on the current C0 production path?",
+  "answer": {
+    "source_delta_applicable": true,
+    "current_product_qualified": false,
+    "source_owner": "Agent provider",
+    "runtime_owner": false,
+    "minimum_source_seam": [
+      "astrid/sdk/timeline/_command_state.py:State.shot_item_map",
+      "astrid/sdk/timeline/_command_state.py:State._item_ids",
+      "astrid/sdk/timeline/_command_state.py:State.project_shot_items"
+    ],
+    "reason": "The current provider rejects the authenticated empty-to-one physical item membership replacement before Runtime acceptance. Held D100 explicitly authenticates the physical source image, keeps item_id_map as custody, permits the new physical item membership, and preserves alias correspondence for copied placements."
+  },
+  "current_path": {
+    "fixture": "tests/sdk/test_timeline_capture_projection.py",
+    "production_caller": "registered Runtime commit_timeline provider",
+    "operation": "doc.patch",
+    "first_boundary": "astrid/sdk/timeline/_command_state.py:369",
+    "retained_outcome": {
+      "tests": 9,
+      "setup_errors": 9,
+      "failures": 0,
+      "skipped": 0,
+      "phase": "provider execution before Runtime acceptance/persistence/reread/duplication",
+      "error_class": "identity_conflict"
+    },
+    "custody_fact": "source_mapping item_id_map is custody and is empty for the un-copied source; it is not allocation authority"
+  },
+  "preservation": {
+    "original_assertions": 43,
+    "current_assertions": 44,
+    "original_test_functions": 11,
+    "fixture_statements": 54,
+    "goldens_inputs_pins": "retained exact by independent App packets"
+  },
+  "remaining_acceptance": {
+    "required_nodes": "the retained nine own9 selectors after the reviewed source seam is adopted",
+    "behavioral_status": "UNVERIFIED",
+    "product_pass_claim": false,
+    "next_owner": "Agent provider owner, then App exact own9 rerun",
+    "runtime_fix_required": false
+  },
+  "limitations": [
+    "No source, product, test, schema, generated, pin, Runtime, or Git ref was changed.",
+    "No pytest, service, browser, full suite, or held SWAP work was run.",
+    "The retained six-fixture controls are not treated as a product PASS."
+  ]
+}

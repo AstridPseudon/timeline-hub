@@ -1,0 +1,42 @@
+{
+  "task": "rt-OPS-child-inventory-wholepath-1726",
+  "checks": {
+    "bash_n_canonical_maker": "PASS",
+    "embedded_python_ast": {
+      "STORE_PY": "PASS",
+      "STORE_VERIFY": "PASS",
+      "STAGING_INVENTORY": "PASS",
+      "RELOCATE": "PASS",
+      "PROVENANCE_SCRIPT": "PASS",
+      "DIST_METADATA_SCRIPT": "PASS",
+      "IDENTITY_SCRIPT": "PASS"
+    },
+    "production_caller_static_assertions": "PASS",
+    "protected_source_hashes": "PASS",
+    "embedded_block_hashes": "PASS",
+    "json_artifacts": "PASS",
+    "git_diff_check": "PASS",
+    "product_tests": "NOTRUN_PER_BRIEF",
+    "typecheck": "NOTRUN_PER_BRIEF",
+    "lint": "NOTRUN_PER_BRIEF",
+    "real_source_install": "NOTRUN_PER_BRIEF",
+    "real_child_verifier": "NOTRUN_PER_BRIEF",
+    "new_source_test": "NOTRUN_PER_BRIEF"
+  },
+  "static_assertions": [
+    "STORE_PY imports the protected bench Store module",
+    "STORE_PY extracts the embedded STORE_VERIFY block from the maker source",
+    "STORE_PY calls report_bytes and passes the embedded verifier to subprocess input",
+    "normal path calls Store.ensure for child with build, verify, and seal",
+    "registration is supplied only through the Store.ensure callback after verify",
+    "diagnostic receipt keeps register/adopt/reuse/publish/ready/body barriers false",
+    "STORE_PY and STORE_VERIFY are byte-identical to the installed preimage",
+    "only STORE_BUILD differs from the installed preimage"
+  ],
+  "observed_facts": [
+    "Farm log reaches readonly-source and then refuses at line 1192",
+    "retained Farm child is absent from this worker environment",
+    "bench-store root is absent from this worker environment",
+    "no source census or reconstruction was performed"
+  ]
+}

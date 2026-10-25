@@ -1,0 +1,97 @@
+{
+  "task": "rt-OPS-child-inventory-wholepath-1726",
+  "verdict": "SOURCE_CONFIRMED_PRODUCER_SEAM; ACTUAL_LAYOUT_EXACTMISSING",
+  "failure": {
+    "class": "ordinary_product_verifier",
+    "verifier_line": 1192,
+    "message": "maker provision report differs from authenticated installed inventory",
+    "classifier": false,
+    "retained_farm_log": "farm-childvenv-d77-applied-REFUSED-provision-report-differs-from-installed-inventory-20261025T1722Z.txt"
+  },
+  "smallest_exact_producer_seam": {
+    "block": "STORE_BUILD",
+    "lines": "702-704",
+    "operation": "report pip_freeze section captures raw pip freeze --all output",
+    "contract_boundary": "producer report serialization must equal STORE_VERIFY canonical inventory serialization",
+    "do_not_change": [
+      "STORE_VERIFY refusal predicates",
+      "source ownership and committed-file ancestry",
+      "archive/direct provenance and hashes",
+      "RECORD, marker, mode, owner, symlink, hardlink, and registration guards"
+    ]
+  },
+  "source_derived_pipeline": [
+    {
+      "stage": "source-carrier",
+      "maker_lines": "616-641",
+      "paths": [
+        "root/.child-venv-source-*/agent",
+        "root/.child-venv-source-*/runtime",
+        "root/.source-inputs/agent.tar",
+        "root/.source-inputs/runtime.tar"
+      ],
+      "facts": "Git archives are used as install inputs for both distributions; retained source snapshots are not install targets."
+    },
+    {
+      "stage": "distribution-provenance",
+      "maker_lines": "665-700",
+      "fields": ["distribution name", "version", "direct provenance", "provenance kind"],
+      "facts": "The producer reads installed metadata and validates archive carrier location and SHA-256 before writing distribution metadata."
+    },
+    {
+      "stage": "report-producer",
+      "maker_lines": "702-704",
+      "paths": ["root/.provision-report", "root/.astrid-import-origins", "root/.astrid-distribution-metadata"],
+      "fields": ["status", "agent_sha", "runtime_sha", "runtime_client_identity_sha256", "requirements_path", "requirements_lock_sha256", "installed_import_origins", "installed_distribution_metadata", "pip_freeze"],
+      "facts": "Identity and provenance sections are assembled from authenticated inputs; pip_freeze is captured from pip rather than the verifier's inventory walk."
+    },
+    {
+      "stage": "relocation",
+      "maker_lines": "820-887",
+      "facts": "Import-origin paths are relocated first; direct provenance paths and their RECORD rows are updated; report and distribution metadata staging paths are replaced; readonly-source follows."
+    },
+    {
+      "stage": "verifier",
+      "maker_lines": "1142-1198",
+      "facts": "The verifier checks the final relocated tree and reconstructs the expected report from importlib.metadata, authenticated source files, direct provenance, and canonicalized distribution rows."
+    },
+    {
+      "stage": "store-registration",
+      "caller_lines": "379-433, 543-577",
+      "bench_store_lines": "650-717",
+      "facts": "Normal Store.ensure builds, publishes/seals, verifies the final entry, then invokes registration. Registration persists the verified report only after exact equality checks."
+    }
+  ],
+  "remaining_verifier_predicates": [
+    {"lines": "1154-1155", "predicate": "every retained source file is in authenticated root inventory"},
+    {"lines": "1156-1161", "predicate": "exact source/client marker bytes match requested identities"},
+    {"lines": "1162-1163", "predicate": "markers and import-origins become root inventory entries"},
+    {"lines": "1164-1176", "predicate": "closed distribution metadata grammar and exact authenticated values"},
+    {"lines": "1177-1184", "predicate": "report identity, lock digest, import origins, and distribution metadata prefix"},
+    {"lines": "1185-1190", "predicate": "canonical distribution inventory rows; normalized names; source rows include authenticated archive digest; rows sorted"},
+    {"lines": "1191-1192", "predicate": "byte-exact provision report equality"},
+    {"lines": "1193-1198", "predicate": "metadata/report size and mode safety; final root inventory returned"}
+  ],
+  "comparisons": {
+    "source_review_1651": "PASS_SOURCE only; actual layout EXACTMISSING; STORE_VERIFY and STORE_PY byte-exact with preimage",
+    "source_candidate_1643": "private modeled archive route passed; actual layout EXACTMISSING",
+    "historical_passing_route": "older real child receipt used an older maker and directory provenance; it does not qualify the current 0857 archive route",
+    "current_farm_child": "retained by lead per directive but absent from this read-only environment; no census or reconstruction"
+  },
+  "remaining_risks": [
+    "The actual differing report line is unavailable because the retained tree was not supplied here.",
+    "Raw pip freeze output can differ from verifier serialization in package-name normalization, display spelling, ordering, source hash suffix, or a package/version row.",
+    "Report and direct provenance are generated before relocation and rewritten afterward; any path encoding not covered by the exact replacement remains a possible mismatch.",
+    "The source-only candidate did not prove a real current Farm build or registration.",
+    "Current free space observed at about 4.99 GB is below the unchanged 5.905 GB normal child reserve and 8 GiB diagnostic reserve; no heavy rerun was attempted."
+  ],
+  "scope": {
+    "read_only": true,
+    "actual_build": "NOTRUN",
+    "actual_install": "NOTRUN",
+    "package_acquisition": "NOTRUN",
+    "registration": "NOTRUN",
+    "provider_or_body": "NOTRUN",
+    "D130_SWAP_WAL": "OUT_OF_SCOPE"
+  }
+}

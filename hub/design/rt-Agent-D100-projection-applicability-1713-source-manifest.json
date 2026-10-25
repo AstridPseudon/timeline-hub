@@ -1,0 +1,95 @@
+{
+  "task": "D100 source applicability",
+  "status": "SOURCE_COMPARISON_COMPLETE",
+  "current": {
+    "commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "tree": "6abf383217363d08fe0cf00558b010f5a9dd506f",
+    "paths": {
+      "astrid/sdk/timeline/_command_state.py": {
+        "sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+        "git_blob": "4bbb4615d276ecae57965993e38080c77a93f757"
+      },
+      "astrid/sdk/timeline/capture.py": {
+        "sha256": "d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7",
+        "git_blob": "aaea8424fa6bbacf01df708aed4f53ede658fbee"
+      },
+      "tests/sdk/test_timeline_capture_projection.py": {
+        "sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+        "git_blob": "337379f6d9cc9732664b8423dfe537b6cd71fa09"
+      }
+    }
+  },
+  "held_d100_source": {
+    "commit": "d3b5cfef76b4b3abef5db5f8288abc214a61354f",
+    "tree": "abe592ddd56aa1a376370e8ab9f5c0507d2587ec",
+    "ref_status": "LOCAL_BRANCH_REF_PRESENT",
+    "paths": {
+      "astrid/sdk/timeline/_command_state.py": {
+        "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+        "git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+        "changed_functions": ["shot_item_map", "_item_ids", "project_shot_items"]
+      },
+      "astrid/sdk/timeline/capture.py": {
+        "sha256": "f2b683dbb7118bc4f4a0b007f7b1110d5207ca418638aeccc07160279b5bd8d7",
+        "git_blob": "59e2a6808cab24127ea796ac9e4917e7e7279eac",
+        "applicability": "UNRELATED_TO_PROJECTION_ITEM_BIRTH",
+        "changed_functions": ["occurrence_start", "_duration", "move"]
+      },
+      "tests/sdk/test_capture_move_exact_time.py": {
+        "sha256": "2653bc441cc5e6ddf16414dbfc071f177e98332e3867294e73567de03d0deba6",
+        "git_blob": "5cfd53d3ca1b65166150262074158cce0a8f3157",
+        "classification": "source-only test evidence, not product qualification"
+      },
+      "tests/sdk/test_sequential_shared_item_provenance.py": {
+        "sha256": "c48581f635d38fc545bf17f6693c4138c08af786964a62693aa2fa7eb9fefe51",
+        "git_blob": "aae5fe20368407b25b5cb822e5c0e3edc7ecbc4a",
+        "classification": "source-only test evidence, not product qualification"
+      }
+    },
+    "diff_from_common_base": {
+      "base": "6aefd11766c019f8deff0ca5a1bfe18e9e730822",
+      "files": 4,
+      "insertions": 368,
+      "deletions": 20,
+      "product_source_files": 2
+    }
+  },
+  "held_test_repair": {
+    "commit": "fb9a47c2fc873e9ef388bfccec54de650ce2d308",
+    "tree": "91ca31b055ab6de5c8acae7eb879a886fa6f2af8",
+    "ref_status": "UNPUBLISHED_OBJECT_EXACTMISSING_FOR_SOURCE_ATTRIBUTION",
+    "classification": "test-only repair; not needed to identify the product seam",
+    "action": "no fetch or alternate route"
+  },
+  "captured_core": {
+    "commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+    "comparison": "current d4ba and captured core have identical relevant production blobs"
+  },
+  "frozen_candidate_sdk": {
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "status": "EXACTMISSING",
+    "reason": "path absent from frozen candidate-sdk tip; no alternate source route used"
+  },
+  "source_diff": {
+    "current_to_held_product_files": {
+      "bytes": 11751,
+      "sha256": "5bee510dd349f1a2f1fc22931cddbf8b791f0de64b6cd80deb8ad9936f411202",
+      "stat": {"insertions": 67, "deletions": 20}
+    },
+    "current_vs_captured_core_relevant_files": "no diff",
+    "git_diff_check": "PASS"
+  },
+  "ast_function_sha256": {
+    "current_command_state": {
+      "shot_item_map": "88b78f30bda97f5587ed2117a318ff04bfd34174cd4ee3d416b2d1841de5da3f",
+      "_item_ids": "2ec4493650fa394b2e0c4946e0c410fd8985fd704811f0f1b8114c2137141102",
+      "project_shot_items": "67d04d03370918ff5cc1d549e3cc4a29c1848e2b3d550bbc18f7c91b8e475382"
+    },
+    "held_command_state": {
+      "shot_item_map": "56d9d80d870d19726074f927788d4e1ad815371d3cb8e1154bc43753f0fea894",
+      "_item_ids": "1162544d72e19dc6905176eccefc84960ef77f2c746d9dd2807667b0d4560238",
+      "project_shot_items": "8f39cd245af7301f86f7e6d2773267018e1db59e97467267d0270ad52b12db8c"
+    }
+  }
+}

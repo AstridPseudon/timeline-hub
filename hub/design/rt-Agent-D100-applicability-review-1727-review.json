@@ -1,0 +1,91 @@
+{
+  "task": "D100 applicability source review",
+  "repo": "Agent",
+  "base": {
+    "commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "tree": "6abf383217363d08fe0cf00558b010f5a9dd506f"
+  },
+  "result": "PASS_SOURCE_ASSESSMENT",
+  "scope": "PLAN §3 R1/R2/G2 and C0 §§1–5/7; source, test, pin, Runtime-record and callgraph review only",
+  "finding": {
+    "source_delta_applicable": true,
+    "held_source": "d3b5cfef76b4b3abef5db5f8288abc214a61354f",
+    "current_product_qualified": false,
+    "owner": "Agent provider",
+    "runtime_guard_owner": false,
+    "minimum_source_seam": [
+      "astrid/sdk/timeline/_command_state.py:State.shot_item_map",
+      "astrid/sdk/timeline/_command_state.py:State._item_ids",
+      "astrid/sdk/timeline/_command_state.py:State.project_shot_items"
+    ],
+    "reason": "Current d4ba rejects the exact first-item doc.patch because the authenticated source item_id_map is empty. Held d3b5 authenticates the same physical shot/internal image and empty map, permits only unique physical item membership for that un-copied source, and leaves copied-placement alias correspondence strict."
+  },
+  "independent_source_facts": {
+    "current_first_boundary": "astrid/sdk/timeline/_command_state.py:369",
+    "production_callgraph": [
+      "tests/sdk/test_timeline_capture_projection.py:_RuntimeAuthoringWriter.commit_timeline",
+      "RuntimeCommitService.commit_timeline",
+      "registered astrid provider",
+      "commands.execute",
+      "_doc_patch.patch",
+      "State.set",
+      "State.project_shot_items",
+      "State.shot_item_map / State._item_ids"
+    ],
+    "source_custody": [
+      "occurrence.place-shared installs a Runtime-authenticated exact physical shot/internal source",
+      "source_mapping.shots carries revision/digest custody and item_id_map, not item allocation authority",
+      "the held branch requires source shot/revision/internal IDs and content digests to match and requires an empty map",
+      "copied or remapped placements continue through the original exact correspondence checks"
+    ],
+    "guard_conservation": [
+      "no Runtime route, request shape, schema, receipt, or managed closure edge changes",
+      "no source alias map is extended for a newly admitted physical item",
+      "new IDs must be nonempty and unique; existing copied-placement IDs remain exact",
+      "capture.py held changes are timing-only and unrelated to this projection seam"
+    ]
+  },
+  "prior_app_evidence": {
+    "source": "App packet f53b016900c99e46998268e36c7c431ac0eec61e",
+    "fixture": "tests/sdk/test_timeline_capture_projection.py",
+    "exact_own9": {
+      "tests": 9,
+      "setup_errors": 9,
+      "failures": 0,
+      "skipped": 0,
+      "first_error": "identity_conflict: shot item correspondence changed",
+      "phase": "registered provider execution before Runtime acceptance, persistence, canonical reread, or duplication",
+      "nodes": [
+        "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "test_real_saved_entire_expansion_golden",
+        "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "test_real_candidate_matches_sdk_opener_exactly[child]",
+        "test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    "preservation": {
+      "original_assertions": 43,
+      "current_assertions": 44,
+      "original_test_functions": 11,
+      "fixture_statements": 54
+    },
+    "candidate_sdk_fixture": "EXACTMISSING; no fetch or reconstruction",
+    "fb9a_test_repair_object": "EXACTMISSING for this review; no fetch or reconstruction"
+  },
+  "remaining_acceptance": {
+    "status": "UNVERIFIED",
+    "required": "Normally adopt/review the Agent seam, then rerun the exact retained nine own9 selectors against the resulting Agent plus pinned Runtime tuple",
+    "runtime_fix_required": false,
+    "merge_authorized": false,
+    "product_pass_claim": false
+  },
+  "limitations": [
+    "No product, pytest, service, browser, socket, full, family, P4, native, provider, body, or SWAP run was performed.",
+    "No source, test, pin, schema, generated, Runtime, or Git ref was changed.",
+    "Downstream post-acceptance projection, reread, and duplication behavior remains UNKNOWN until the genuine own9 rerun passes."
+  ]
+}

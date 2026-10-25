@@ -1,0 +1,71 @@
+{
+  "task": "D100 applicability source review",
+  "status": "SOURCE_COMPARISON_COMPLETE",
+  "base": {
+    "commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "tree": "6abf383217363d08fe0cf00558b010f5a9dd506f"
+  },
+  "held": {
+    "commit": "d3b5cfef76b4b3abef5db5f8288abc214a61354f",
+    "tree": "abe592ddd56aa1a376370e8ab9f5c0507d2587ec",
+    "status": "local Git object used read-only for source comparison"
+  },
+  "common_base": "6aefd11766c019f8deff0ca5a1bfe18e9e730822",
+  "production_paths": {
+    "astrid/sdk/timeline/_command_state.py": {
+      "current_sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+      "current_git_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+      "held_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "held_git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "held_changed_functions": ["shot_item_map", "_item_ids", "project_shot_items"],
+      "ast_function_sha256": {
+        "current": {
+          "shot_item_map": "88b78f30bda97f5587ed2117a318ff04bfd34174cd4ee3d416b2d1841de5da3f",
+          "_item_ids": "2ec4493650fa394b2e0c4946e0c410fd8985fd704811f0f1b8114c2137141102",
+          "project_shot_items": "67d04d03370918ff5cc1d549e3cc4a29c1848e2b3d550bbc18f7c91b8e475382"
+        },
+        "held": {
+          "shot_item_map": "56d9d80d870d19726074f927788d4e1ad815371d3cb8e1154bc43753f0fea894",
+          "_item_ids": "1162544d72e19dc6905176eccefc84960ef77f2c746d9dd2807667b0d4560238",
+          "project_shot_items": "8f39cd245af7301f86f7e6d2773267018e1db59e97467267d0270ad52b12db8c"
+        }
+      }
+    },
+    "astrid/sdk/timeline/capture.py": {
+      "current_sha256": "d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7",
+      "current_git_blob": "aaea8424fa6bbacf01df708aed4f53ede658fbee",
+      "held_sha256": "f2b683dbb7118bc4f4a0b007f7b1110d5207ca418638aeccc07160279b5bd8d7",
+      "held_git_blob": "59e2a6808cab24127ea796ac9e4917e7e7279eac",
+      "classification": "held delta is exact-time capture behavior, unrelated to projection item birth"
+    }
+  },
+  "diff": {
+    "current_to_held": {
+      "astrid/sdk/timeline/_command_state.py": {"insertions": 31, "deletions": 4},
+      "astrid/sdk/timeline/capture.py": {"insertions": 36, "deletions": 16}
+    },
+    "held_commit_total": {"files": 4, "insertions": 368, "deletions": 20},
+    "git_diff_check_current_worktree": "PASS",
+    "git_diff_check_current_to_held": "PASS"
+  },
+  "current_callers": {
+    "registered_provider": "tests/sdk/test_capture_source_runtime.py:216",
+    "fixture_writer": "tests/sdk/test_timeline_capture_projection.py:245-270",
+    "first_source_item_patch": "tests/sdk/test_timeline_capture_projection.py:311",
+    "provider_boundary": "astrid/sdk/timeline/commit.py:RuntimeCommitService.commit_timeline"
+  },
+  "source_only_records": {
+    "prior_app_own9": "9 setup errors at _command_state.py:369; not treated as product PASS",
+    "held_source_review": "prior R1 source review confirms strict copied-placement correspondence; independently rechecked here",
+    "fb9a_test_repair": "EXACTMISSING for this review; no fetch or reconstruction",
+    "frozen_candidate_sdk_fixture": "EXACTMISSING; no alternate source route"
+  },
+  "unmodified_scope": {
+    "source": true,
+    "tests": true,
+    "pins": true,
+    "runtime": true,
+    "generated": true,
+    "git_refs": true
+  }
+}

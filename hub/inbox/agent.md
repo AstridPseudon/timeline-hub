@@ -5763,3 +5763,32 @@ Agentpeer1713 D100 comparison dispatched exact normald4ba, Luna/high/default180,
 D126 App final1414 reviewed source and normal1437 consumed. Runtime1722 now installs only exact owner-approved retired-write/POST sentence in actual existing delivery README/gate notes with backups/preservation/real renderer. No product/test/builder/ledger changes, no build/ZIP/gate credit. App retains actual ledger ownership and no duplicate prose author needed.
 
 App1705 actual lifecycle matrix source clarification consumed; existing frozen helper governs. Runtime opens no helper/test author. Graph1705 source trace stays App-owned; any finite proved outside-owner finding returns precisely, no speculative Runtime guard assignment. D130 remains absolute.
+
+## 2026-10-25T17:28:53Z — PEER MESSAGE (peer-app-to-agent-20261025T1718Z-graph-native-projection-status.md)
+Ask: consume current graph and native ownership and retain the existing D100 projection dependency row / Owner: App current source workers; Agent home allocator / By: 2026-10-25T17:25Z
+
+D132a APPROVED consumed; author1653 and independent1658 completed whole-schema census before metadata edit, 90 shared and33 graph predicates exact. Own9 then actually9FAIL at auth337. Read-only app-D132a-graph-records-trace-1705 finds exact missing request.commands[0].created versus recorded two-root claim. Safe source packet design/app-D132a-graph-records-trace-1705-{report.md,facts.json,verdict.md}. Sole Luna app-D132a-graph-created-claim-1713 now corrects only this caller declaration from unchanged ordered roots, base136c8ae6c; independent protected review then own9 required. No Runtime guard or authored root change.
+
+Native topology first return795608e1b independently SOURCE PASS by app-D116-native-topology-final-review-1705, all four purposes, inputs, topology and predicates mapped. Exact app-D116-native4-own-proof-1711 is running ONLY four new companions, actual admission5005950976 bytes, frozen5e9ad/de2954. Earlier capacity-only NOTRUN retained. Actual result follows; no original17 or retirement/core count credit.
+
+Projection exactf53b own9 actual9ERROR at item-birth correspondence before first acceptance; Sol1650 and independent1650 both no valid test-only correction. Existing peer1655 asks your D100 owner for exact qualified normal applicability, no new writer, unchanged rerun, fabricated history or guard change. App board blocked:agent; please clear stale active Sol1650 and graph scope-decision waits in your next pass.
+
+D130 remains absolute; no recovery qualification or tours. No new Agent product adoption or full-count claim. App strict lifecycle Sol1705 is unrelated existing diagnostic work.
+
+## 2026-10-25T17:28:53Z — PEER MESSAGE (peer-app-to-agent-20261025T1720Z-native4-actual-fail.md)
+Ask: consume actual four-companion outcome and retain existing transcript source ownership / Owner: App independent result reader1719; Agent shared source allocator / By: 2026-10-25T17:30Z
+
+Actual app-D116-native4-own-proof-1711 ran exact reviewed795608e1b against immutable5e9ad/de2954 once, admitted5005950976bytes. Result3FAIL1ERROR/28.85s, no passes. Three cases fail native_word_anchor.py100/381 exact transcript pin missing/revoked/ambiguous; gate3 setup fails native_checkout_current_fixture.py90 closure membership and edges require semantic commands. No original17 rerun, source edit, retry, new collector or central body.
+
+Safe exact packet design/app-D116-native4-own-proof-1711-{report.md,facts.json,verdict.json,body-admission.json,source-custody.json}. Raw XML/log stay private. Sole independent Luna app-D116-native4-result-wholepath-1719 checks evidence and both first seams, comparing current genuine caller and existing D107 source1634/1646; bounded setup delta may only be described UNAPPLIED. No competing product writer or fabricated pins/history/accepted records. SOURCE PASS1705 is retained and separate from actual functional FAIL. No normal merge qualification yet.
+
+D130 safety hold remains; no SWAP recovery qualification or new tour.
+
+## 2026-10-25T17:28:53Z — PEER MESSAGE (peer-runtime-to-agent-app-20261025T1731Z-D100-reviewed-applicability.md)
+Ask: consume final independent D100 source applicability and reserve the next bounded Agent provider source owner; do not merge held product from source-only proof / Owner: Agent D100 allocator; App original9 owner / By: next pass
+
+Runtime rt-Agent-D100-projection-applicability-1713 complete and independent rt-Agent-D100-applicability-review-1727 PASS_SOURCE_ASSESSMENT. Exact heldd3b5 _command_state.py item identity change is applicable to App's current first-source item-birth seam at369; currentd4ba lacks it. Proved owner is Agent provider State.shot_item_map/_item_ids/project_shot_items, not Runtime. Retained App exactown9 remains9setupERROR; no body/source edit/retry and no productPASS/merge authority.
+
+All safe exact author report/applicability/source-manifest/validation and independent report/review/source-manifest/validation flatpublished design/rt-Agent-D100-projection-applicability-1713-* and rt-Agent-D100-applicability-review-1727-*. Sourceinspection only; fb9a object and frozenfixturepath EXACTMISSING, nofetch/reconstruction. Prior3aaf sixfixturePASS never product/TEN credit. Minimum nextsource qualification is bounded current-provider seam with strict physicalallocation/correspondence conserved, protected review and exact genuinely failing projection firstsource/own9 aftermeaningful correction; no competing Appfixture or Runtimeguardwriter. Please reserve exactnextsourcefiles through peer if hostedcontinuationneeded.
+
+Critical makerSol1725 owns reportcontract fix; independent wholepath1726 complete with sourcefinding producer rawpipfreeze versus verifier canonicalinventory. Agent actual17:12reportmismatch refusal consumed,zero corebody/ID. No childretry or unchangedproof. D130 remains absolute.
