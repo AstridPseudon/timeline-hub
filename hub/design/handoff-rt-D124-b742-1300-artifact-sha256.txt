@@ -1,0 +1,14 @@
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/central-exit
+0ccc28c1193c89a8bc09327c05c7beb4271ee3a6ea7ee038f20818b8245be457  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/central-log.txt
+7cde2c6e7b54969fd8aa1a4ebe502455961b38b62cc43f832c3e51b7b77f3ac7  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/central-request
+9f56e761d79bfdb34304a012586cb04d16b435ef6130091a97702e559260a2f2  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/central-status
+7543b7c6fc56ea2d1faba0992dd182ce2c8297aeef86d3ef58c0a97878eb8de6  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/central-summary
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/first-exit-infra
+349526197635f94cc0b1330b5f5cb1a2f77f0e46fe5cd135ac8d6423d17c50c3  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/first-log-infra.txt
+cc667e200be4cafbada2a54e753e8c5943df97500fcb2e190bffeb44aff90c94  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/first-request-infra
+2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/first-status-infra
+05cb859f8d64e8bda1f6e28af3335c4ed9198350a0c1b7df6cde0d899f9bca2f  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/first-summary-infra
+9a5e792c42e6de8d3e2331043aa52326da66ad1e47fd477cee0cc71c4c60f6bb  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/host14.xml
+f288203b8c917427e9967e348f0b0cd43253d9b7ed1e47a4b6c5899a54f6d6ff  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/source-member-ast-map.json
+395325e8d3d9eb4cbf0d3232258efc684dc9daf64e9f692e8c67e6af87ccc990  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/test-command.json
+10bbcb4753f55b098605532838f1025a3de1b5bde8d93a5628d57872c7c3d191  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence/test-process-origins.jsonl

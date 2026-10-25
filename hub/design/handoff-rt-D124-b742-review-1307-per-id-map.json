@@ -1,0 +1,173 @@
+{
+  "schema": "d124.b742.result-review.v1",
+  "review": "PASS_WITH_EXPLICIT_RECEIPT_CAVEAT",
+  "scope": {
+    "agent_head": "b742893426a46a99a2f30583a54faeebe2bd98b7",
+    "agent_tree": "ccb2f286eae9419b95a3f54b11208f68c57b27cf",
+    "runtime_head": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "runtime_tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+    "central_test_id": "runtime-d118-upstream23-targeted-1025130322-26621",
+    "central_status": "pass",
+    "central_exit": 0,
+    "central_counts": "14 passed, 0 failed in 2.29s",
+    "junit": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "unique_exact_reg14": true
+    },
+    "test_body_rerun_by_reviewer": false,
+    "current_reg14_closure": false,
+    "full_suite_qualification": false,
+    "receipt_source_congruence": "FAIL_STALE_RENDERED_PATHS",
+    "receipt_source_congruence_detail": "central-summary renders Agent 08e6b905 and integration Runtime tree de2954a0; process-origin evidence independently resolves b742/d4f496"
+  },
+  "validation": {
+    "authenticated_selector_set_and_hash": "PASS",
+    "source_file_hash_and_targeted_ast_hashes": "PASS",
+    "b742_vs_08e6_target_source_diff": "PASS_EMPTY",
+    "pinned_checkout_heads_trees_clean": "PASS",
+    "command_env_budget": "PASS_PYTHONNOUSERSITE_1_N3_TIMEOUT45",
+    "four_process_origins": "PASS_ALL_PRISTINE",
+    "json_xml_hash_compile_bash_diff_checks": "PASS",
+    "prior_zero_body_infrastructure_attempt": "FAIL_SEPARATE_NOTADIRECTORYERROR"
+  },
+  "nodes": [
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "caa9ecdf6ce41fbb524aa2b4d45053b79f6986c62f3eb039bcadc00ef076e800",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]",
+      "outcome": "PASS",
+      "prior_d54a_current": "failed",
+      "prior_d54a_upstream": "PASS",
+      "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "body_hash_equal_authenticated_counterpart": true,
+      "source_purpose_unchanged": true
+    }
+  ],
+  "evidence_refs": {
+    "author_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-b742-host14-1300/evidence",
+    "source_map": "source-member-ast-map.json",
+    "test_command": "test-command.json",
+    "origins": "test-process-origins.jsonl",
+    "junit": "host14.xml",
+    "central_receipt": "central-request, central-status, central-exit, central-summary, central-log.txt",
+    "prior_infra_failure": "first-summary-infra, first-status-infra, first-exit-infra"
+  }
+}
