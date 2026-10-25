@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T17:04:48Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 0m -->
+<!-- main | 2026-10-25T17:09:35Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 4m -->
 # runtime board, 2026-10-25T17:04:08Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -418,7 +418,7 @@
 | OPS-census-layout | Preserve reviewed retention option | Luna / Luna | Owner drops Farm core | gated:D128-dropped | Author1535; review1540; install1544 | Installed1243cb6c with controls PASS. Retained as ordinary kit improvement; no diagnostic build or further cycle. | Independent1540 PASS | Installed1243cb6c |
 | OPS-D131 | Size reserve by build kind | Luna | Actual Agent receipt complete | merged | Author 1558; review 1601; install 1604 | Agent received exact 123bb regular 0755. Five live tests PASS. Next child passes reserve then refuses source ownership. | Independent 1607 PASS | Installed 123bb93c |
 | D77-inputs | Reconcile exact Farm inputs | Luna | Corrected portable handoff complete | merged | Author 1620; review 1624 | Later1624 resolves source trees and actual lock18d. Child and installed render remain unqualified; guard1257 receipt exact. | Independent 1624 PASS | Evidence only |
-| D127-leaf-retention | Retain safe sampler leaves | App Luna / independent | App lifecycle first return | review | App1606; combined1630; return1643 | Helper source/privacy and160predicates qualified; App lifecycle validator failed review. App sole return; no new tour. | App next independent review | Helper231ddb held |
+| D127-leaf-retention | Retain safe sampler leaves | App Luna / independent | App lifecycle first return | review | App1606; independent1647 FAIL; Sol1654 | Helper source/privacy and160predicates qualified; App lifecycle validator failed review. App sole return; no new tour. | App next independent review | Helper231ddb held |
 | D77-Agent-source | Restore original applied Agent tree | Luna | Exact code publication verified | merged | Author 1620; independent 1624 | Hub ref91398 equals captured tree523893 with all3560paths/modes exact. Farm receives portable source; stage unrun. | Independent 1624 PASS | 91398e9de |
 | D77-Runtime-source | Publish captured Runtime tree | Luna | Exact code publication verified | merged | Author 1620; independent 1624 | Hub ref1daca equals captured treea522 with all528paths/modes exact. Farm receives portable source; stage unrun. | Independent 1624 PASS | 1daca2a33 |
 | U4a-inverse-batch | Adopt released Runtime provenance | Luna | Agent receiving and home queue | merging | Author1614; review1634; host filed1657 | Only lock provenance to ab1e. Fifteen mappings exact; author and independent24PASS. Captured core unchanged. | Independent1634 PASS | cec01ed66 |
