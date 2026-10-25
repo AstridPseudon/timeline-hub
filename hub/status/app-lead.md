@@ -1,1 +1,1 @@
-app-lead 08:13Z: daemons up (uptime ~2775m, machine up 46h, no restart), 2 workers running, disk 5.6G (15 wt dirs), codex sizes unchanged since 17:12Z; no blockers for lead, no LEAD FETCH, no new refusals; P1 15075 GO, P3 31792 GO, early full P2 19078: 4 service PASS (ADD, parent, trans single/bulk), SWAP/element FAIL, placement ERROR, asset NOTRUN
+08:29Z app-lead: daemons up (uptime 2789m), 1 worker, disk ~5.5-6.0G, core open 3 (SWAP/element/placement); blocked:orchestrator 1 (placement modal dismissal, reported); no refusals, no restart

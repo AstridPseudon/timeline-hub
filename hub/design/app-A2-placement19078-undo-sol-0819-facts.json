@@ -1,0 +1,335 @@
+{
+  "task": "app-A2-placement19078-undo-sol-0819",
+  "disposition": "READONLY finding; authored original modal setup prevents Undo locator resolution; no justified product repair",
+  "authorized_tuple": {
+    "app": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "source_tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d",
+  "manifest_sha256": "7f5add37d722111d9b9ce83e4d7b0d4bd0bada636e94e469946e1ad832578f04",
+  "original_xml_sha256": "5b0f6377b0ca81d77962e8cd750cd9e1472090f0c40d52cb982a7f1d94d3f1da",
+  "original_counts": {
+    "FAIL": 2,
+    "NOTRUN": 1,
+    "ERROR": 1,
+    "PASS": 4
+  },
+  "protected_sources": {
+    "tests/e2e/local/three-products.p2-popup.spec.ts": {
+      "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+      "matches_manifest_before_after": true
+    },
+    "tests/e2e/local/three-products.p2-tour.spec.ts": {
+      "sha256": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+      "matches_manifest_before_after": true
+    },
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": {
+      "sha256": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7",
+      "matches_manifest_before_after": true
+    },
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": {
+      "sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "matches_manifest_before_after": true
+    }
+  },
+  "product_sources_unchanged_sha256": {
+    "src/tools/video-editor/components/TimelineEditorShellToolbar.tsx": "46d629c0f4b3cb9fd8860cdc6ede1e866b50ce13e7452118fa7db06f27b6b906",
+    "src/tools/video-editor/components/AstridTimelineEditor.tsx": "bea86bb573dd76dad202e373c151bf95cb3821b077a6356b66c85f24c4ec869b",
+    "src/tools/video-editor/hooks/useTimelineHistory.ts": "fffeaf412e10e54bdc91c0932f521ba38e49bff4936e5f7914da1b9dd12214ac",
+    "src/tools/video-editor/hooks/useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+    "src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c",
+    "src/tools/video-editor/commands/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230",
+    "src/tools/video-editor/commands/commitOutbox.ts": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21",
+    "src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+    "src/shared/components/ui/overlay/dialog.tsx": "78eb0cfe3e3c511279d4d0ce7f0435037dd530b94f2163ac337ab4856c79fa60",
+    "src/tools/travel-between-images/components/ShotTimelinePreview.tsx": "43795fd4c36b6f7e903229e5c171f9e2f6f62b5442584a64fbec67caf79b4cae"
+  },
+  "support_app_sha256": "238f7b5422dadf0ec7e1df361f7c74d8310c8064a056e4e22bfa53a779d6845f",
+  "contract": {
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "sections_reviewed": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "guards_changed": false,
+    "wire_fields_preserved": {
+      "request_fields": [
+        "api_version",
+        "project_id",
+        "timeline_id",
+        "base_revision_id",
+        "base_publication_id",
+        "commands[schema_version,op,version,select,args,created]",
+        "label",
+        "steps[id,label,intent,tags,command_ordinals,patch,reads]",
+        "merge(fields|atomic)",
+        "reads",
+        "source",
+        "rationale",
+        "group_id",
+        "dry_run",
+        "Idempotency-Key"
+      ],
+      "reply_variants": [
+        "accepted",
+        "merged{data,receipt}",
+        "canonical_document/digest",
+        "id_map",
+        "commands/steps/dependencies/effects",
+        "base/previous/acceptedpairs",
+        "versions",
+        "publisher",
+        "history",
+        "guardedundo",
+        "receipt_id",
+        "historicalrebased",
+        "preview/would_status",
+        "conflictreason/head",
+        "invalidcode/path/hint/suggested_command"
+      ]
+    }
+  },
+  "cases": [
+    {
+      "case": "placement original",
+      "trace_zip": "p2/three-products.p2-elements-1bf41-nd-closure-and-guarded-Undo/trace.zip",
+      "sha256": "b50c9f504ca314a8443736b79a7b1457a9fa7c72d3bb46aba4fe9e1995f78a87",
+      "event_stream_sha256": "c2943ce2274392d92f6f7df87c90a28386310084ea89ee3a92382c16106ee268",
+      "test_event_stream_sha256": "fa085051ff5b82ec195b918d72488ef286e26f3a1ca7157d80e4bfab731d1d35",
+      "network_stream_sha256": "44f3025fdd2057a97c53350c1694dd00663fa76875863a8c1c6347cae9a4e532",
+      "network_records": 495,
+      "commit_post_count": 1,
+      "initial_command_ops_from_hash_matched_0815": [
+        "occurrence.add-media"
+      ],
+      "initial_commit_http_status": 200,
+      "initial_commit_duration_ms": 11381.015,
+      "undo_call": {
+        "id": "call@85",
+        "start_ms": 101063.48,
+        "end_ms": 191082.958,
+        "duration_ms": 90019.478,
+        "timeout_error": false,
+        "log_count": 1,
+        "waiting_role_undo": true,
+        "target_resolved_log": false,
+        "pointer_interception_log": false,
+        "input_event_count": 0,
+        "error_name": "TargetClosedError",
+        "ended_after_response_wait_ms": 21.8,
+        "ending": "TargetClosedError during teardown after response wait timeout; no click dispatch"
+      },
+      "snapshots": [
+        {
+          "snapshot": "after@call@81",
+          "timestamp_ms": 101050.749,
+          "dialog_count": 1,
+          "undo_buttons": [
+            {
+              "disabled": false,
+              "inside_dialog": false,
+              "aria_hidden_ancestor": true,
+              "hidden_ancestor_tags": [
+                "DIV"
+              ]
+            }
+          ],
+          "dialog_close_button_count": 1
+        },
+        {
+          "snapshot": "before@call@85",
+          "timestamp_ms": 101085.836,
+          "dialog_count": 1,
+          "undo_buttons": [
+            {
+              "disabled": false,
+              "inside_dialog": false,
+              "aria_hidden_ancestor": true,
+              "hidden_ancestor_tags": [
+                "DIV"
+              ]
+            }
+          ],
+          "dialog_close_button_count": 1
+        },
+        {
+          "snapshot": "after@call@83",
+          "timestamp_ms": 191071.467,
+          "dialog_count": 1,
+          "undo_buttons": [
+            {
+              "disabled": false,
+              "inside_dialog": false,
+              "aria_hidden_ancestor": true,
+              "hidden_ancestor_tags": [
+                "DIV"
+              ]
+            }
+          ],
+          "dialog_close_button_count": 1
+        }
+      ],
+      "source_assertion_tail": [
+        {
+          "source_line": 1260,
+          "error": false
+        },
+        {
+          "source_line": 1261,
+          "error": false
+        },
+        {
+          "source_line": 1263,
+          "error": true
+        }
+      ],
+      "response_wait": {
+        "id": "call@83",
+        "error_name": "Error",
+        "timeout": true,
+        "start_ms": 101062.272,
+        "end_ms": 191061.158
+      }
+    },
+    {
+      "case": "placement retry1",
+      "trace_zip": "p2/three-products.p2-elements-1bf41-nd-closure-and-guarded-Undo-retry1/trace.zip",
+      "sha256": "313d771cdd5aba9e35c5e4de276d2ae01780b9b951433339a830c617ae5500fe",
+      "event_stream_sha256": "985bfe0ab82150bfb610087b8fa07898b287f32eafb853ddc5445baa7ff1f171",
+      "test_event_stream_sha256": "061601f1af69f8b4a2195fbb766167b314799d72d09ca8dc04e1e7cc7600acc5",
+      "network_stream_sha256": "08ce8fa9b83834203be069ed885069a8ec0f391be606dee6fd548bd5bdc86b39",
+      "network_records": 495,
+      "commit_post_count": 1,
+      "initial_command_ops_from_hash_matched_0815": [
+        "occurrence.add-media"
+      ],
+      "initial_commit_http_status": 200,
+      "initial_commit_duration_ms": 11224.977,
+      "undo_call": {
+        "id": "call@85",
+        "start_ms": 244747.415,
+        "end_ms": 334770.93,
+        "duration_ms": 90023.515,
+        "timeout_error": false,
+        "log_count": 1,
+        "waiting_role_undo": true,
+        "target_resolved_log": false,
+        "pointer_interception_log": false,
+        "input_event_count": 0,
+        "error_name": "TargetClosedError",
+        "ended_after_response_wait_ms": 19.035,
+        "ending": "TargetClosedError during teardown after response wait timeout; no click dispatch"
+      },
+      "snapshots": [
+        {
+          "snapshot": "after@call@81",
+          "timestamp_ms": 244741.356,
+          "dialog_count": 1,
+          "undo_buttons": [
+            {
+              "disabled": false,
+              "inside_dialog": false,
+              "aria_hidden_ancestor": true,
+              "hidden_ancestor_tags": [
+                "DIV"
+              ]
+            }
+          ],
+          "dialog_close_button_count": 1
+        },
+        {
+          "snapshot": "before@call@85",
+          "timestamp_ms": 244759.557,
+          "dialog_count": 1,
+          "undo_buttons": [
+            {
+              "disabled": false,
+              "inside_dialog": false,
+              "aria_hidden_ancestor": true,
+              "hidden_ancestor_tags": [
+                "DIV"
+              ]
+            }
+          ],
+          "dialog_close_button_count": 1
+        },
+        {
+          "snapshot": "after@call@83",
+          "timestamp_ms": 334760.015,
+          "dialog_count": 1,
+          "undo_buttons": [
+            {
+              "disabled": false,
+              "inside_dialog": false,
+              "aria_hidden_ancestor": true,
+              "hidden_ancestor_tags": [
+                "DIV"
+              ]
+            }
+          ],
+          "dialog_close_button_count": 1
+        }
+      ],
+      "source_assertion_tail": [
+        {
+          "source_line": 1260,
+          "error": false
+        },
+        {
+          "source_line": 1261,
+          "error": false
+        },
+        {
+          "source_line": 1263,
+          "error": true
+        }
+      ],
+      "response_wait": {
+        "id": "call@83",
+        "error_name": "Error",
+        "timeout": true,
+        "start_ms": 244746.852,
+        "end_ms": 334751.895
+      }
+    }
+  ],
+  "cause": {
+    "failure_boundary": "Playwright role-locator resolution before toolbar onClick; source elements-assets:1263",
+    "observed": "One enabled parent Undo beneath aria-hidden=true ancestor while dialog remains open; no Undo input event or second commit POST in either trace",
+    "inference": "Default getByRole excludes the hidden parent toolbar, so production Undo/capture/guarded-inverse path is never invoked by this test gesture",
+    "not_proven": "Outcome after closing the dialog; remaining production guards and authoritative inverse acceptance/restoration need an owner-authorized run"
+  },
+  "comparison": {
+    "ADD19078": "Same tuple; popup:896 closes dialog before :898 parent Undo. Independent four-pass review credits completed native inverse. No passing trace replayed.",
+    "parent19078": "Same tuple; tour:711 reloads parent and :716 clicks parent Undo, with no embedded dialog opened in between. Independent four-pass review only.",
+    "asset27438": "Prior registerAsset PASS only on 5337b439/6386c700/6634a17f/635f4de0; no embedded dialog at Undo; no placement credit or same-tuple inference."
+  },
+  "proposal": {
+    "file": "review-only.patch",
+    "scope": "Owner-approved one-line change inside protected placement reload callback; close reloadedDialog after both existing clip assertions. No existing body/locator/wait/assertion changed here.",
+    "applied": false,
+    "validation": "Patch applicability only, no browser or test run; no newGREEN claimed."
+  },
+  "verification": {
+    "git_diff_check": "PASS",
+    "worktree_clean": true,
+    "trace_zip_crc": "PASS both",
+    "jsonl_parsed_to_eof": "PASS both event/network/test streams",
+    "snapshot_references": "Resolved using Playwright postorder non-reference node indexing; one frame per archive",
+    "tests": "NOT RUN: read-only finding per brief",
+    "tsc": "NOT RUN: no source changes",
+    "eslint": "NOT RUN: no source changes",
+    "full_browser_http_runtime": "NOT RUN",
+    "new_body_export": false,
+    "independent_Luna_review": "Not applicable: no core source change; owner proposal still requires review",
+    "review_only_patch_applicability": "PASS: git apply --check; proposal not applied",
+    "protected_and_product_diff": "PASS: git diff --exit-code 04beedcd18b8abb49502f65cd3facaafbe93db4e -- tests/e2e/local src"
+  }
+}
