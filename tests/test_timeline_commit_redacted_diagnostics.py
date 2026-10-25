@@ -75,6 +75,7 @@ def test_provider_exception_keeps_public_503_and_emits_one_redacted_line(realm, 
     }
     stderr = capsys.readouterr().err
     diagnostic = _diagnostic(stderr)
+    assert diagnostic["reason"] == "catchall:builtins.RuntimeError"
     assert re.fullmatch(r"[a-f0-9]{32}", diagnostic["request_id"])
     assert diagnostic["exception_class_chain"][:2] == [
         "builtins.RuntimeError",
@@ -127,6 +128,7 @@ def test_lookup_exception_maps_to_unknown_once_without_public_detail_change(real
     }
     stderr = capsys.readouterr().err
     diagnostic = _diagnostic(stderr)
+    assert diagnostic["reason"] == "catchall:builtins.OSError"
     assert diagnostic["exception_class_chain"] == ["builtins.OSError"]
     assert secret not in json.dumps(diagnostic)
 
@@ -175,9 +177,11 @@ def test_malicious_exception_metadata_is_bounded_and_public_reply_is_unchanged(r
     assert set(diagnostic) == {
         "event",
         "request_id",
+        "reason",
         "exception_class_chain",
         "frames",
     }
+    assert diagnostic["reason"].startswith("catchall:sha256:")
     assert re.fullmatch(r"[a-f0-9]{32}", diagnostic["request_id"])
     assert len(diagnostic["exception_class_chain"]) <= 8
     assert len(diagnostic["frames"]) <= 32
