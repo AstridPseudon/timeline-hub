@@ -1,0 +1,73 @@
+{
+  "task": "P2 D105a",
+  "selector": "p2-automatic-child-placement",
+  "suite": "p2-d105a-placement-0644",
+  "host": "app-pin-51239c79",
+  "preflight": {
+    "id": "app-pin-51239c79-p2-d105a-placement-0644-preflight-1025064319-2816",
+    "status": "PASS",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-51239c79-p2-d105a-placement-0644-preflight-1025064319-2816"
+  },
+  "original": {
+    "id": "app-pin-51239c79-p2-d105a-placement-0644-1025064349-31962",
+    "status": "FAIL",
+    "exit": 1,
+    "duration_seconds": 144,
+    "counts": {
+      "readiness": {"passed": 1, "failed": 0, "skipped": 0, "errors": 0},
+      "original": {"tests": 1, "passed": 0, "failed": 0, "skipped": 0, "errors": 1}
+    },
+    "first_predicate": {
+      "summary": "P2 Runtime phase sink already exists",
+      "source": "tests/e2e/local/support/harness.ts:122",
+      "function": "prepareP2CommitPhaseCapture",
+      "caller": "tests/e2e/local/support/harness.ts:631 DirectHarness.start",
+      "test": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1199"
+    },
+    "intended_post": {"status": "NOT_REACHED", "http": "UNKNOWN", "correlation": "UNKNOWN"},
+    "placement_result": "NOTRUN_BY_SETUP_ERROR"
+  },
+  "tuple": {
+    "app": {"sha": "51239c79e26ff743623218b9c09fdce1629ec90c", "tree": "8469ab6218ea7e45247043d658d271fbe7d77283"},
+    "agent": {"sha": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f", "tree": "cd2a51721f07b447215f4084980d385de3842fd9"},
+    "runtime": {"sha": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "receipts": {
+    "app": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-51239c79e26ff743623218b9c09fdce1629ec90c",
+    "agent": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+    "runtime": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "composition": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "hashes": {
+    "placement_spec_sha256": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7",
+    "readiness_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "receipt_helper_sha256": "8247e9a60d4c46c8ada16dbbf330fd93d8f01d7c59421a11e4e5d7347b7c2f8f",
+    "d66_launcher_blob": "1f7c196a1f2beca17475bf9aa03442b29f3a69cc",
+    "harness_blob": "9fccbff7ca874d5c86fa71daf85587a036d5f0ba",
+    "submit_plan_sha256": "eb81b941e4924e477669cba44bcb0c58ebfb49b2a4fa18c96055f54cbe9b8a4b",
+    "actual_manifest_sha256": "868f0bf1ef0f76b894fdaadf2d22f5eaa211ba8a348a8669f1ce6d3fc67248ae"
+  },
+  "versions": {
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1"
+  },
+  "d102_existing_bounded": {
+    "add_public": {"http": 503, "code": "not_ready", "reason": "runtime_unavailable"},
+    "internal_reason_class_filelinefunction": "UNKNOWN",
+    "ring_correlation": "UNKNOWN",
+    "note": "The old request_id/strict CommitContext regression was separately fixed in Runtime 1daca2a33; it is not inferred for this setup error."
+  },
+  "artifacts": {
+    "actual_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D105a-placement-original-0644/submission/p2-placement/actual-manifest.json",
+    "source_preflight_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D105a-placement-original-0644/submission/p2-placement/source-preflight-manifest.json",
+    "original_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-51239c79-p2-d105a-placement-0644-1025064349-31962/d66/p2-automatic-child-placement.xml"
+  },
+  "gate": "NO_GO; independent App reviewer required",
+  "raw_exports": false
+}

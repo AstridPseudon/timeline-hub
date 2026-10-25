@@ -1,0 +1,56 @@
+{
+  "task": "U4p D108",
+  "status": "PASS",
+  "app_base": {
+    "commit": "51239c79e26ff743623218b9c09fdce1629ec90c"
+  },
+  "tuple": {
+    "runtime": {
+      "commit": "c91626f5e905f9336b51aae0486a071d83f0bac7",
+      "tree": "16264479ae18fbb05ec5356ce5b5ab6f69dea9aa"
+    },
+    "agent": {
+      "commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+      "tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6"
+    },
+    "runtime_product_parent": {
+      "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750"
+    }
+  },
+  "provenance": {
+    "runtime_contract_version": "0.2.14",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "artifact_mapping_count": 14,
+    "changed_files": ["runtime.lock.json", "public/install-manifest.json"]
+  },
+  "source_inventory": {
+    "runtime_first_parent_paths": [
+      "README.md",
+      "scripts/check-before-push",
+      "tests/test_release_native_smoke.py"
+    ],
+    "agent_first_parent_paths": ["runtime.lock.json"],
+    "review_evidence": [
+      "runtime-D102c-release-0615.json",
+      "rt-R-release-smoke-home-0630-report.md"
+    ]
+  },
+  "verification": {
+    "node": "/opt/node20/bin/node",
+    "node_version": "v20.20.0",
+    "strict_controls": 8,
+    "vendor_lock_tests": 15,
+    "schema_skew_tests": 2,
+    "artifact_tests": 3,
+    "exact_mappings": "14/14",
+    "protected_canonical_bytes": "14/14",
+    "eslint": "0 warnings/errors",
+    "diff_check": "passed"
+  },
+  "limits": [
+    "No full suite, browser, service, build, package installation, or P1/P2/P3 body was run.",
+    "Known stale generator baseline was preserved and not repaired."
+  ]
+}

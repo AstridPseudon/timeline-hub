@@ -1,0 +1,7 @@
+# P2 D105a placement original report
+
+The required exact source preflight passed on App `51239c79e26ff743623218b9c09fdce1629ec90c`, Agent `8c88ea8f06b65f9b79fb7810af04720845c5cc6f`, Runtime `1daca2a33f6d7b10053e07c539a54843e3984e19`, and Composition `635f4de06fda22a85fc2e4cfc764d0153a4c9f40`. One and only one original body ran: `app-pin-51239c79-p2-d105a-placement-0644-1025064349-31962`.
+
+Readiness passed. The placement original terminated with exit 1 after 144 seconds during harness setup because the P2 Runtime phase sink already existed at `tests/e2e/local/support/harness.ts:122`, called by `DirectHarness.start()` at line 631. The placement test at `tests/e2e/local/three-products.p2-elements-assets.spec.ts:1199` therefore did not reach the embedded file drop, `occurrence.add-media`, POST, receipt, canonical/history/reload, or native Undo. Intended POST/status and correlation are UNKNOWN/NOT REACHED.
+
+The durable submit plan, actual/preflight manifests, safe handoff JSON/Markdown, source hashes, and checkout receipts are retained at the named worker/design paths. No retry, alternate route, source/product/test/harness/pin/generated/manifest edit, waiver, or gate GO was performed. Existing D102 public diagnostics are reported only as the bounded prior packet: ADD Undo HTTP 503, `not_ready/runtime_unavailable`; internal reason/class/location and ring correlation remain UNKNOWN. No inference is made from absent retention.
