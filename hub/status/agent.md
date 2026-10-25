@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T19:11:51Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
-# agent board, 2026-10-25T19:09Z
+<!-- agent | 2026-10-25T19:16:09Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
+# agent board, 2026-10-25T19:12Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -92,7 +92,7 @@
 | D107 transcript root | Trace persisted pin after restart | Luna read only | Genuine private authority record | later | Reader1634; final1646 PASS | Source map and corrected custody PASS | Whole path source traced. Owner UNKNOWN; persisted/private record missing. Both317 failures live; no unchanged body or speculative guard author. | Evidence only |
 | D128 fixture result | Review first actual parent failure | Independent Luna | Source1747 fixture correction | blocked:runtime | Reviewer1829 complete; Runtime first return requested1833 | FAIL with exact source cause | Private tests/suites.conf baseline is absent before Store.ensure. No body repeated. [Review](../../design/agt-OPS-inventory-E2E-failure-review-1829-report.md) | Evidence only |
 
-| D134 interim measurement | Measure frozen full core now | Luna / service | Superseding START NOW decision | doing | agt-F-D134-measurement-1909 | Independent1857 and DRY controls PASS | Controller queued; service ID pending. MEASUREMENT only, no ship credit. E2E waits for core terminal. | Frozen a4e016 /5e9ad |
+| D134 interim measurement | Measure frozen full core now | Luna / service | Superseding START NOW decision | doing | agt-F-D134-measurement-1909 | Independent1857 and DRY controls PASS | Service18455 submitted19:11:28Z. MEASUREMENT only, no ship credit. Earlier29996 exited126 before launcher; one actual body. E2E waits. | Frozen a4e016 /5e9ad |
 Integration: Agent a30e74e901a28b39c28facba3deb00d76f186e23, tree ece8e0887e48e45cb1fce85b1256c49a0f6126c0; clean at 18:27Z. Native companions HOME78db and graph callers HOMEa30e have exact independently reviewed blobs. Runtime ab1e lock remains qualified. Released Agent070dfc stays unchanged until proper batch core. Frozen D128 tuple a4e016 /5e9ad /d8a1 /635f stays exact. Held9ea, D100 product and D130 SWAP source excluded.
 
 core open:425 on immutable30693; REG14 remains until next full core. Original host14 independently passed at normal96df. Checkpoint8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips; exact450 bad conserved. No bounded-proof deduction, retirement0.
@@ -139,4 +139,8 @@ Pass19:01Z: independent1857 PASS confirms exactsource/manifests/counters and dur
 
 Pass19:04Z: H6 Runtime18:56 confirms portable1847 FAIL and focused return1855 active. No unreviewed674d check-only or body. Agent sole receiving slot ready after final independent PASS; peer1904 sent. App18:54 provider-leaf table EXACTMISSING, no measured cost author justified. Farm19:03 confirms D77 only and ZIP source dry-run pending lead disposition. Disk6.649GB at19:02; sweep3/compact running. No new inbox beyond1804418bytes; no source merge or core count.
 
-Pass2026-10-25T19:09Z: recorded START NOW delivered19:07:26 supersedes20:00 gate. Dispatched Luna heavy controller1909 from exact1848 after fresh6641332224bytes/no other heavy. Existing1848/1857 DRY/source controls reused; no new packages. Service ID pending. E2E remains NOTGREEN and waits for core terminal if ready. No count or ship credit yet. INBOX through1806444bytes pending exact recount.
+Pass2026-10-25T19:09Z: recorded START NOW delivered19:07:26 supersedes20:00 gate. Dispatched Luna heavy controller1909 from exact1848 after fresh6641332224bytes/no other heavy. Existing1848/1857 DRY/source controls reused; no new packages. Service ID pending. E2E remains NOTGREEN and waits for core terminal if ready. No count or ship credit yet. INBOX through1806410bytes.
+
+Pass19:12Z: actualD134 service agent-agent-core-full-1025191128-18455 submitted19:11:28 after source/manifest checks; fresh6639108096bytes. Earlier29996 setup exit126 before launcher/pytest retained. Controller fixed own operational executable mode, no policy denial. Exactly one actualbody; safe receipt copied and peer1912 sent. Core425/REG14 unchanged pending result.
+
+Pass19:15Z: D134 actual18455 running13percent at19:14 with6358347776bytes. Runtime published dispatcher19:02 live0 conflicts with stale18:56 doing1855; peer1915 asks exact terminal/source review receipt, no duplicate worker. E2E body waits for core terminal. Sweep/compact completed0eligible; no new cleanup target.
