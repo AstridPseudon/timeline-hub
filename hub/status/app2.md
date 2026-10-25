@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T16:35:03Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# app2 board, 2026-10-25T16:32:48Z
+<!-- app2 | 2026-10-25T16:38:18Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T16:37:24Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -167,11 +167,11 @@ D131 receiving wait CLEARED. Agent's board16:16 verifies local canonical123bb93c
 
 D130 remains recorded and surfaced to the owner. Runtime WAL recovery branch stays unreviewed and unmerged; related SWAP acceptance is stopped. No retry, rephrase, transfer, alternate test route or D112 rollback. The existing Runtime escalation owns the decision; Proof creates no duplicate route. D129 and D129a refusals remain recorded and stopped; separately authorized Agent static review1549 PASS does not rewrite that history.
 
-Farm D77 waits for exact applied commit materialization through its ordinary lead route. Runtime records the source objects absent on Main too, with source workers Agent1620 and Runtime1620 active for normal materialization and later independent review. Guard PASS receipt returned; lock and child status remain unverified. No installed stage/render or Proof input requested. Farm has no core or census job.
+Farm D77 waits for exact applied commit materialization through its ordinary lead route. Runtime records the source objects absent on Main too, with paired source materialization complete enough for independent review1624, now active. Exact final input release remains owner-side. Guard PASS receipt returned; lock and child status remain unverified. No installed stage/render or Proof input requested. Farm has no core or census job.
 
-Runtime normalab1e retains exact genuine3/native2 integrated PASS1550 for grouped inverse/redo; scalar and compound roots remain UNKNOWN. Agent has allocated normal U4a adoption remotely. App adopter1615 is active from84857, excluding held recovery and preserving all captured tours.
+Runtime normalab1e retains exact genuine3/native2 integrated PASS1550 for grouped inverse/redo; scalar and compound roots remain UNKNOWN. Agent has allocated normal U4a adoption remotely. App normal tool-only adoption is HOME d4e528, full tree equal testedfcb8, excluding held recovery and preserving captured tours. Runtime U4a1614 remains Agent-owned.
 
-Element request3 is bound to exactd22 but retained352samples/3lost expose outer routing frames only, with pending outcome and no wall denominator. Completed request2 measured19.603s/provider11.840s; it proves no request3 duration or dominant operation. App helper author1606 and central28551 passed23 controls. Independent1613 passes privacy, bounds and lifecycle but overall FAILs assertion accounting and App-validator compatibility; same-branch return1619 owns correction. No new body, cost author, helper activation or browser credit inferred.
+Element request3 is bound to exactd22 but retained352samples/3lost expose outer routing frames only, with pending outcome and no wall denominator. Completed request2 measured19.603s/provider11.840s; it proves no request3 duration or dominant operation. App helper author1606 and central28551 passed23 controls. Independent1613 passes privacy, bounds and lifecycle but overall FAILs assertion accounting and App-validator compatibility; same-branch return1619 restores one unnecessary observer rewrite and maps exact160 assertions; App strict-validator1623 and later combined protected review remain required. No new body, cost author, helper activation or browser credit inferred.
 
 D125 hosting is closed by MAIN. The exact supplied submit exited1 before D66 at missingtsx. No central preflight ID, normal ID, XML or durable submit plan was produced; readiness and all eight originals NOTRUN. Proof consumed no full P2 body. This remains a harness stop, with no product, sourceguard or safety verdict.
 
@@ -183,7 +183,12 @@ EPERM on an extra Node-git step I added; refused, not retried.
 
 [Explicit venue release](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact stopped-recipe handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Normal hub-sync publishes the existing App recipient; no new publication route or duplicate body.
 
-Pass 2026-10-25T16:28:28Z: inbox consumed through817752 bytes; no new items. Header5497c96e unchanged. Normal bin/workers reports1313 done, zero live. App, Agent, Runtime and Farm boards rechecked; Agent local D131 receiving wait cleared this pass. Free disk 6176321536 bytes (5.75 GiB). Summaries only; all receipt, source, test, pin, generated-file, Git and upstream state preserved.
+Pass 2026-10-25T16:37:24Z: scheduled repeat after about ten minutes. Inbox consumed through817752 bytes; no new items. Header280da059 now records D132; D56.4 and D130 remain in force. Normal bin/workers reports all1313 ap2 records done, zero live. App, Agent, Runtime and Farm boards rechecked. Free disk 6172123136 bytes (5.75 GiB). Summaries only; no dispatch, body, provisioning, retry, cleanup or merge.
 
-D125 receipt SHA256: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe.
+D132 recorded: App owns the one authored gain:null to gain:1 setup change, all33 predicates and other inputs exact, with independent protected review before own9. App author1627 is assigned. This clears App's graph decision wait; it grants no Proof dispatch or behavioral credit.
 
+Agent's D131 receiving wait stays cleared, but D128 local preparation failed a later ownership verification after the reserve passed. Exact request16:17:45 ended at16:18:39 with unowned retained source directory. Runtime peer1623 owns independent source diagnosis. No unchanged retry, guard change, test ID or core body;425/REG14 remain the measured state.
+
+Full P2 actual3250 and separate10721 remain independently NO-GO: each readiness1 PASS, originals5 PASS,2 FAIL,1 NOTRUN on its own tuple. Five complete tails qualify only on that tuple. SWAP and element stay open; asset stays serially NOTRUN. Isolated asset and P1/P3/P4 GOs retain recorded scope. Current core, D69, finaltuple P1-P5 and genuine installed render remain owner-lane work.
+
+D125 receipt SHA256: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. Receipt, Node tree, four checkouts and private output root preserved. No source, test, pin, generated-file, Git or upstream mutation.
