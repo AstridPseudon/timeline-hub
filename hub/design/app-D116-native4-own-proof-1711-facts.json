@@ -1,0 +1,71 @@
+{
+  "schema": "app-d116-native4-own-proof-v1",
+  "task": "D116 exact NEW4 current checkout companion proof",
+  "source": {
+    "worktree": "/home/user/work/wt/app-D116-native4-own-proof-1711",
+    "head": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+    "status_clean_after_run": true,
+    "allowed_files": [
+      "tests/editing_conformance/native_checkout_current_fixture.py",
+      "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+    ],
+    "source_review": "PASS from reviewer1705; no source edits by this worker"
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "status_clean_after_run": true
+  },
+  "exact_nodes": [
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[disjoint-peer]",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[touching-peer-conflict]",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_commands_file_preserves_opaque_unchanged_write_and_undo",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable"
+  ],
+  "functional": {
+    "status": "FAIL",
+    "counts": {"tests": 4, "passed": 0, "failed": 3, "errors": 1, "skipped": 0},
+    "duration_seconds": 28.85,
+    "first_safe_errors": [
+      {
+        "node": "...test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[disjoint-peer]",
+        "frame": "astrid/sdk/timeline/native_word_anchor.py:100",
+        "error": "TimingCompileError: exact transcript pin is missing or revoked or ambiguous",
+        "wrapper": "astrid/sdk/timeline/native_word_anchor.py:381; CommandError kind=invalid_anchor",
+        "possible_transcript_pin317_owner": "unknown; this run produced no owner attribution"
+      },
+      {
+        "node": "...test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[touching-peer-conflict]",
+        "frame": "astrid/sdk/timeline/native_word_anchor.py:100",
+        "error": "TimingCompileError: exact transcript pin is missing or revoked or ambiguous",
+        "wrapper": "astrid/sdk/timeline/native_word_anchor.py:381; CommandError kind=invalid_anchor"
+      },
+      {
+        "node": "...test_current_checkout_commands_file_preserves_opaque_unchanged_write_and_undo",
+        "frame": "astrid/sdk/timeline/native_word_anchor.py:100",
+        "error": "TimingCompileError: exact transcript pin is missing or revoked or ambiguous",
+        "wrapper": "astrid/sdk/timeline/native_word_anchor.py:381; CommandError kind=invalid_anchor"
+      },
+      {
+        "node": "...test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+        "frame": "tests/editing_conformance/native_checkout_current_fixture.py:90",
+        "error": "RuntimeErrorBase: closure membership and edges require semantic commands",
+        "wrapper": "runtime_protocol.timeline_commit.CommitRejected during fixture setup"
+      }
+    ]
+  },
+  "policy": {
+    "launches": 1,
+    "retries": 0,
+    "source_fix": false,
+    "broader_tests": false,
+    "central_request": false
+  },
+  "raw_evidence": {
+    "xml": "own4.xml",
+    "log": "own4.log",
+    "xml_sha256": "373b641a79231cc6ee0ee89088545857914e9493b7bc257aaf138ae9ccbc281d",
+    "log_sha256": "586bd0a66488db7e0701148b249ba2f3a13317cd208521d86b63ea03710d3f09"
+  }
+}

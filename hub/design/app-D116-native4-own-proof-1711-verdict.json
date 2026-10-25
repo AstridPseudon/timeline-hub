@@ -1,0 +1,10 @@
+{
+  "schema": "app-d116-native4-verdict-v1",
+  "source_verdict": "PASS",
+  "functional_verdict": "FAIL",
+  "overall": "FAIL_FUNCTIONAL_NO_SOURCE_FIX",
+  "reason": "The single exact four-node launch did not produce four green tests: three failed on an exact transcript pin admission error and the renderer-off case errored during fixture setup on closure membership requiring semantic commands.",
+  "no_retry": true,
+  "no_source_fix": true,
+  "next_step": "Runtime/Agent owner diagnosis of the pinned transcript admission and semantic topology fixture failures; this worker must not retry or route around them."
+}

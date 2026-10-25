@@ -1,0 +1,34 @@
+{
+  "schema": "app-d116-native4-source-custody-v1",
+  "worker_head": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "base": "tl/app-D116-native-topology-first-return-1700",
+  "source_review_head": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "source_verdict": "PASS",
+  "worktree_clean": true,
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "worktree_clean": true
+  },
+  "registered_provider": {
+    "factory": "astrid.sdk.timeline.commit.create_runtime_commit_service",
+    "provider_type": "astrid.sdk.timeline.commit.RuntimeCommitService",
+    "commit_method": "astrid.sdk.timeline.commit.RuntimeCommitService.commit",
+    "registration_seam": "case.service.register_timeline_commit_provider(agent.create_runtime_commit_service())"
+  },
+  "module_origins": {
+    "astrid.sdk.timeline.commit": "/home/user/work/wt/app-D116-native4-own-proof-1711/astrid/sdk/timeline/commit.py",
+    "astrid.sdk.timeline.emitter": "/home/user/work/wt/app-D116-native4-own-proof-1711/astrid/sdk/timeline/emitter.py",
+    "astrid.sdk.timeline.native_word_anchor": "/home/user/work/wt/app-D116-native4-own-proof-1711/astrid/sdk/timeline/native_word_anchor.py",
+    "runtime_protocol.timeline_commit_provider": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_provider.py",
+    "runtime_protocol.service": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/service.py"
+  },
+  "authorized_changed_files": [
+    "tests/editing_conformance/native_checkout_current_fixture.py",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+  ],
+  "originals_read_only": true,
+  "product_runtime_generated_pins_cli_changed": false,
+  "worker_source_edits": false
+}

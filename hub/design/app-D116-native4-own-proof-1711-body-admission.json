@@ -1,0 +1,19 @@
+{
+  "schema": "app-d116-native4-body-admission-v1",
+  "observed_at": "2026-10-25T17:13:45Z",
+  "available_bytes_decimal": 5005950976,
+  "floor_bytes_decimal": 5000000000,
+  "floor_pass": true,
+  "source": {
+    "worktree": "/home/user/work/wt/app-D116-native4-own-proof-1711",
+    "head": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+    "status_clean": true
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "status_clean": true
+  },
+  "launch_policy": "immediately launch exact four collected NEW4 nodes once; no retry"
+}
