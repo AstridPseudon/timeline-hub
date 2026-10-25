@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T13:45:20Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
-# app board, 2026-10-25T13:38Z
+<!-- app | 2026-10-25T13:49:27Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
+# app board, 2026-10-25T13:47Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -55,17 +55,17 @@
 | D120-element-path | Find current element first failed seam | Luna read only | Actual11251 retained | merged | app-D120-element11251-wholepath-1206 | Applied5s wait ends before teardown; commitPOST unresolved, outcome UNKNOWN. No repair proved. Finite peer1207 sent. | Source unchanged |
 | D122-D116-join | Prepare reviewed genuine seed join | Luna and independent | Exact join1205 SOURCEPASS | gated:Agent-product-batch | Join1204; review1205 | Three donor-byte-exact files, statics and containment PASS. Prior6PASS2FAIL historical only. No normal merge yet. | 0643b073a2 |
 
-| D118a-numeric3 | Preserve numeric parameter callers | Luna | Exact own3 current check | blocked:agent | app-D118a-numeric-params3-1204 | No diff; original3 FAIL at redo auth1755 after save/reload/first inverse pass. Existing product batch asked1211. | Source unchanged |
+| D118a-numeric3 | Preserve numeric parameter callers | Luna | Exact own3 current check | gated:shared-root | app-D118a-numeric-params3-1204 | No diff; original3 FAIL at redo auth1755 after save/reload/first inverse pass. Existing product batch asked1211. | Source unchanged |
 
-| D118a-parent-label2 | Preserve parent track labels | Luna | Exact own2 current check | blocked:agent | app-D118a-parent-label2-1206 | No diff; two setupERROR at shared m1.film missing legacy word anchor. Existing genuine seed owner asked1211. | Source unchanged |
-| D118a-document-input3 | Preserve document input capture | Luna | Exact own3 current check | blocked:agent | app-D118a-document-input3-1206 | No diff; original3 FAIL before commands. commit.py369 hydration changes manifest/pair; existing Agent batch owner asked1214. | Source unchanged |
+| D118a-parent-label2 | Preserve parent track labels | Luna | Exact own2 current check | gated:word-source | app-D118a-parent-label2-1206 | No diff; two setupERROR at shared m1.film missing legacy word anchor. Existing genuine seed owner asked1211. | Source unchanged |
+| D118a-document-input3 | Preserve document input capture | Luna | Exact own3 current check | gated:shared-root | app-D118a-document-input3-1206 | No diff; original3 FAIL before commands. commit.py369 hydration changes manifest/pair; existing Agent batch owner asked1214. | Source unchanged |
 
 | D118a-native-binding | Preserve Runtime binding authority | Luna and core Luna | Farm core before downstream adoption | merged | Clean1245; final1250; Agent home1313 | Exact reviewed clean9d75 now normal Agent225fcc. Genuine rebind, authority and privacy PASS at donor; Farm batch/core still owed. | 225fccb77e |
 
 | D118a-inverse-packet | Pair existing inverse guard evidence | Luna read only | Agent1155 and Runtime1208 | merged | app-D118a-inverse-boundary-packet-1212 | Safe source and observed guards paired; actual stage/promotion/digests EXACTMISSING. Handback1225 clears App input wait. | Evidence only |
 
-| D118a-native-checkout4 | Preserve native checkout behavior | Luna | Exact own4 current check | blocked:agent | app-D118a-native-checkout4-1215 | No diff; four setupERROR at same shared m1.film missing legacy word anchor. Actual checkout behavior unverified. | Source unchanged |
-| D118a-track-batch1 | Preserve parent track batch inverse | Luna | Exact own1 current check | blocked:agent | app-D118a-track-batch1-1215 | No diff; one setupERROR at shared m1.film missing legacy word anchor. Grouping and all original predicates exact. | Source unchanged |
+| D118a-native-checkout4 | Preserve native checkout behavior | Luna | Exact own4 current check | gated:word-source | app-D118a-native-checkout4-1215 | No diff; four setupERROR at same shared m1.film missing legacy word anchor. Actual checkout behavior unverified. | Source unchanged |
+| D118a-track-batch1 | Preserve parent track batch inverse | Luna | Exact own1 current check | gated:word-source | app-D118a-track-batch1-1215 | No diff; one setupERROR at shared m1.film missing legacy word anchor. Grouping and all original predicates exact. | Source unchanged |
 
 | A2-current-element | Prove outcome reaches actual panel | HARD Sol and Luna | Independent1239 PASS | merged | Author1222; reviewer1239; normal1248 | Exact reviewed test blob home;105 controls/types/lint PASS. No product defect or original backend outcome proved. | fe3309dba4 |
 | D118a-binding-review | Challenge native binding repair | Luna independent core | Sourcef3a6 | merged | app-D118a-native-binding-core-review-1221 | FAIL genuine rebind at native69 dependency_changed; parent PASS. Four additive and52 unit controls PASS; no candidate release. | Evidence only |
@@ -79,10 +79,11 @@
 | D124-sampler-prep | Reuse sampler for actual element process | Luna | Source inventory complete | merged | app-D124-actual-element-sampler-prep-1245 | Exact seam: D66 overwrites PYTHONPATH; existing phase helper needs sampler wiring. Source and safe recipe inventoried; no body. | Evidence only |
 | D124-full-P2 | Later tagged tour with actual sampling | Luna and service | D125 first tour and hook PASS | gated:D125-first | Prepared1306 | No local original. D125 first goes to Proof without new helper; sampled element tour follows corrected hook qualification. | fe3309 tuple retained |
 
-| D124-capture | Truthful dispatch and sampler capture | Luna and protected Luna | Final1315 SOURCE PASS | merging | Clean1321; host filed13:27 | Exact two reviewed helper blobs in one own commit.19 controls and statics PASS; ordinary Runtime result pending. No browser credit. | c36395000d |
+| D124-capture | Truthful dispatch and sampler capture | Luna and protected Luna | Final1315 SOURCE PASS | merged | Clean1321; Runtime normal453b | Exact helperSHA and normal remote receipt verified;19 controls/statics PASS at donor. Browser qualification still owed. | Runtime453b3e6f92 |
 | D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1320 SOURCE PASS | merged | Author1312; review1320 | Whole normal tree equals reviewed4c56.29 D66 and2 route, types/lint PASS; actual sampler attachment qualified only in later tour. | af5fe0a274 |
-| D124-bootstrap | Qualify existing normal bootstrap controls | Luna read only | Hook1320 source PASS | doing | app-D124-normal-bootstrap-controls-1337 | Only three prior environment-failed controls; genuine Runtime Python and exact helper identity. No product/spec/body changes. | af5fe0 source |
-| D125-full-P2 | Proof hosts tagged full tour now | HARD Sol and Proof | Venue Node prerequisite | blocked:app2 | Exact handoff1332 published | Complete flat tuple and exact recipe delivered. Proof needs hardcoded Node20 path; normal provision or explicit decline opens local fallback. | fe3309 /070dfc /5e9ad /635f |
+| D124-bootstrap | Qualify existing normal bootstrap controls | Luna read only | Own three existing controls | review | app-D124-normal-bootstrap-controls-1337 | D78 PASS; throw-fixture500 and event-key schema FAIL. D66 exact helper identity2 PASS. [Report](../../design/app-D124-normal-bootstrap-controls-1337-report.md). | af5fe0 source |
+| D125-full-P2 | Proof hosts tagged full tour now | Proof producer; App Luna verdict | D125a and D125b accepted Node | doing | Proof sole controller; App verdict reserved | Owner accepted exact Node20.19.4 tree; Proof owns ordinary preflight and one submit. No App original or local fallback. | fe3309 /070dfc /5e9ad /635f |
+| D124-bootstrap-return | Repair two current harness contracts | Luna | Retained1337 two FAIL | doing | app-D124-bootstrap-contract-return-1350 | Keep genuine500 throw purpose and exact safe event schemas. Targeted controls/types/lint then one protected review. No original body. | Baseaf5fe0 |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
 
@@ -96,12 +97,12 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 
 Blockers: Runtime current SWAP — Actual11251 returned409 history_unavailable. Tags5e9ad adopted normally at Appd8a1; source wait cleared. Lower guard remains UNKNOWN until a meaningful tagged tour.
-Blockers: App element — Sole owner. Helper final1315 SOURCE PASS; App normal path/hash hook1320 in protected review. D125 first unprofiled tagged tour must proceed on Proof without this source wait.
+Blockers: App element — Sole App owner. Helper is normal Runtime453b and App hookaf5. Two existing harness contracts are with Luna1350 before the later sampled tour; D125 Proof first tour proceeds separately.
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Proof resolves normal Node prerequisite or explicitly returns cannot host; local D125 fallback brief prepared and source pins ready. App1337 closes only three prior bootstrap controls. No racing venue or extra original.
-live 1 / cap 6; ready-undispatched 0; core open: 2. Read-only normal bootstrap qualification1337 active. First D125 tour venue is pending Proof, with explicit fallback prepared. No local heavy body.
-Capacity: Corrected compact ran within current scope:0 scratch dirs,17 old logs gzipped,4 finished test dirs packed losslessly. Free5.364GB at13:14. Ended clean nonKEEP scan0. Heavy5.2GB and stop4.0GB; prior refused and dirty targets untouched.
-INBOX consumed through2220387 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
+Next ready: Proof preflight then sole D125 submit under D125a/D125b. App1350 closes two targeted harness controls; one protected reviewer follows. Terminal D125 gets reserved App independent verdict.
+live 1 / cap 6; ready-undispatched 0; core open: 2. One App source author1350. Proof owns D125 heavy body; no local original. Small Agent file authors remain paused under D124.
+Capacity: Sweep3 removed0; corrected compact packed0 scratch/test dirs and gzipped6 old logs. Free about5.33GB at13:49. Ended nonKEEP unrecycled tree scan0. Heavy5.2GB and stop4.0GB; protected targets untouched.
+INBOX consumed through2223511 bytes, including D125a/D125b accepted Node custody and sole Proof venue. Retained11251/8974/15203/15712 outputs and all prior refused/dirty targets remain protected.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
