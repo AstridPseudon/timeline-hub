@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task": "D127 admitted full P2 same-ID resume",
+  "result": "FAIL",
+  "source_prep_plan_sha256": "cda9106c30404449f41940c04a27abdd1a926a05c1cb625193273d21b8efa5b8",
+  "admission": {
+    "original_bytes": 5311045632,
+    "recheck_bytes": 5133033472,
+    "stop_floor_bytes": 4000000000,
+    "same_body_override": true
+  },
+  "submission": {
+    "preflight_id": "app-pin-fe3309db-d73-p2-fe3309db-submit-preflight-1025140913-15235",
+    "normal_id": "app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250",
+    "preflight_status": "pass",
+    "normal_status": "fail",
+    "original_body_count": 1,
+    "duplicate_body_count": 0
+  },
+  "tuple": {
+    "app": ["fe3309dba4520835a685f925468bff1acdc0506f", "e55f0d65dca0c9f2ba3013df4cab999f314308b9"],
+    "agent": ["070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "6056414359ae9fce08d999d54cbecf719fda33c3"],
+    "runtime": ["5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "de2954a0ceadb4455903d9abdfec3b773318a50f"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+  },
+  "integrity": {
+    "app_detached_clean": true,
+    "source_hashes_unchanged": true,
+    "node_version": "v20.19.4",
+    "node_sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "tsx_resolved": "file:///home/user/work/app/node_modules/tsx/dist/loader.mjs",
+    "shared_dependency_write": false,
+    "product_edits": false
+  },
+  "terminal_counts": {
+    "readiness": {"pass": 1, "fail": 0, "error": 0, "not_run": 0},
+    "original": {"pass": 5, "fail": 2, "error": 0, "not_run": 1}
+  },
+  "first_unmet": [
+    {"case": "element edit", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1052, "predicate": "dialog status contains applied"},
+    {"case": "SWAP", "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 495, "predicate": "accepted response status equals 200", "safe_reason": "history_unavailable"},
+    {"case": "registerAsset", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1133, "predicate": "not reached because prior serial case failed"}
+  ],
+  "runtime_private": {
+    "searched": true,
+    "exact_swap_binding": "UNKNOWN",
+    "raw_private_data_published": false
+  },
+  "independent_verdict": "not claimed"
+}
