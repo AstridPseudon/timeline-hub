@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T12:18:09Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 5m -->
-# agent board, 2026-10-25T12:13Z
+<!-- agent | 2026-10-25T12:21:58Z | dispatcher heartbeat 8s | live 2 (sol 2, luna 0, other 0) | busy30 8 | status age 3m -->
+# agent board, 2026-10-25T12:18Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -14,12 +14,12 @@
 | P4 | Keep exact ten-note qualification | Luna / Service | Recorded tuple | merged | Runtime22560 and independent0450 | PASS28.101s versus45s; all per-note durations UNKNOWN. No repeat; final tuple gates still owed. | 786 /0c62 |
 | D108 core2016 | Retain original full checkpoint | Service / Luna | Exact original evidence | merged | Core0811 and classification0846 | 8763 PASS159 FAIL347 ERROR.506bad; source categories and corrected23-node comparison retained. | 070dfc /1daca |
 | D118 core30693 | Retain latest full checkpoint | Service / Luna | Independent1104 | merged | Core1024; classify1055; review1104 | 8823 PASS159 FAIL291 ERROR;450bad, core425, REG14. Summary ambienttree discrepancy resolved1111. | 120d /1daca |
-| D122 host14 | Qualify corrected bootstrap regressions | Luna / protected Luna | Cumulative1206 SOURCEPASS | doing | agt-D122-host14-proof-resume-1212 | Retained88 all14 RED; ef4c successor fixes missing Runtime child import. Independent4 env PASS; original14 proof resumes above5GB. | ef4c held |
-| D122 host whole path | Compare bootstrap to passing path | Luna read only | First fix failed gate | merged | agt-D122-host14-wholepath-1201 | Exact all14 root is child ModuleNotFoundError runtime_protocol; terminal Remotion validation is a wrapper. | Evidence only |
+| D122 host14 | Repair genuine bootstrap regressions | HARD Sol / protected Luna | Second actual original14 RED | doing | agt-D122-host14-sol-1217 | Actual13117 all14 FAIL117.11s on ef4c/369/819acf. No behavior closure; exact new child cause and bounded successor underway. | ef4c held |
+| D122 host whole path | Compare second failure to passing path | Luna read only | Second fix failed gate | doing | wholepath-return-1217 | First88 child import cause established; new13117 exact root now independently compared, no duplicate body. | Evidence only |
 | D122 product batch | Join reviewed product sources | Runtime Luna | Normal30caca and held donors | doing | rt-D122-Agent-batch-1148 | 14c7 independent1152 PASS; mounted6,input11,host/XML4 PASS. Join reviewed ef4c and atomic8a4103; core before adoption. | Held reviewed donors |
 | D122 XML fixtures | Repair four installer setup failures | Runtime Luna / protected Luna | Independent1152 B PASS | review | XML1148 and clean1156 | Exact four own nodes PASS;108 assertions and authored inputs conserved. Exact clean join onto14c7 source qualified. | 04b7 held |
 | D122 R2 seed join | Bind reviewed seed to held restore | Runtime Luna | D116 exact source | doing | rt-D122-R2-seed-1150 | Actual owner named; queued next slot. Three originals unqualified; prior44cf zero PASS and three setup ERROR retained. | 44cf held |
-| D116 current seed | Join genuine word baseline and full envelopes | App Luna requested | Protected1104 PASS_SOURCE | ready | App hosting requested1136 | 7c717 sample6PASS2recipeFAIL; raw/config seam remains genuine. No masks, normalizer or95 repeat. | 7c717 held |
+| D116 current seed | Join genuine word baseline and full envelopes | App Luna | Protected1104 PASS_SOURCE | doing | app-D122-D116-seed-join-1204 | 7c717 sample6PASS2recipeFAIL; raw/config seam remains genuine. No masks, normalizer or95 repeat. | 7c717 held |
 | D115 effect83 | Consume released ordinal-boundary verifier | Runtime / Agent | Normal tool adoption complete | review | Runtime369 release; Agent30caca | Strict321/native2 PASS at Runtime scope. Actual affected originals and next full count still owed. | Runtime369 /42aad |
 | D115 producer | Preserve sealed predecessor inputs | Sol / independent Luna | Qualified42aad output | ready | Batch hosting requested1136 | 82b6 independent1020 SOURCEPASS; real mounted GREEN at Runtime release. Original32 qualified at donor scope. | 82b6 held |
 | D69 XML source | Restore exact Windows XML predicates | Luna / independent Luna | Review1111 | review | XML author1104; review1111 | Pristine AST equivalent service; protected1 PASS. Four fixture failures have separate source row. | adcb /e2da held |
@@ -32,8 +32,8 @@
 | D118a Scene summary | Preserve real public Scene summary | App Luna / protected Luna | Review1123 SOURCEPASS | merged | App1118 normalfc808 | Exact test-scoped env cleanup; assertions conserved. Genuine functional summary still owed. | 528ec /fc808 |
 | D118a script pin | Preserve pinned script after live rebind | App Luna / protected Luna | Review1132 PASS1 | merged | App1124 normal b8507 | Independent exact original PASS2.41s on42aad;7 assertions and49 calls conserved. Final tuple separate. | 706e83559 |
 | D118a atomic scope | Restore private document capture | App Luna / core Luna | Independent1144 PASS | review | App1137; Runtime batch1148 | Original1 and private wrong-pair/no-write4 PASS on42aad. Exact one-line private capture repair; batch core before adoption. | 8a4103 held |
-| D118a helper cut | Preserve cut and restart merge | App Luna | Selfclaim1130 | doing | app-D118a-helper-cut1-1130 | Exclusive test_timeline_helper_capture.py; original second-cut node only. Source/result pending. | Source pending |
-| D118a scalar3 | Preserve scalar and compound media behavior | App Luna | Selfclaim1134 | doing | app-D118a-clip-scalars3-1134 | Exclusive clip_scalar_fields.py; three original own nodes and exact assertions. | Source pending |
+| D118a helper cut | Preserve deferred cut purpose | App Luna | Existing owner D23 scope | gated:D23 | app-D118a-helper-cut1-1130 | No source delta; exact second word-anchor case remains owner-deferred and unchanged. No new closure or retirement. | Original exact |
+| D118a scalar3 | Preserve scalar and compound media behavior | App Luna / protected Luna | First review1148 FAIL | review | Final App reviewer1209 | Correct unsupported metadata while preserving causal provider order and grouping. Actual inverse auth failures remain open. | 04eb held |
 | D118a auto4 | Preserve stale-read no-write refusals | App Luna / protected Luna | Independent1152 PASS | merged | App exact1148 normalf90e | Exact value_conflict reason, unchanged authored inputs/assertions/no-write. Independent original4 PASS5.05s; batch core pending. | 4319 /f90e |
 | D118a text binding | Preserve Runtime-derived binding identity | App Luna requested | Next hosted slot after D116 | ready | App next slot requested1155 | native_text_binding.py drops binding_id/head; live producer seam, separate from passed script workaround. | No candidate |
 | D100 candidate | Preserve sequential shared-item provenance | Sol / protected Luna | Exact current source applicability | review | Author1100; protected1104 | Six corrected formerly duplicate-seed controls PASS4.00s; prior20 conserved, TEN unchanged. Product held. | 3aaf held |
@@ -52,10 +52,10 @@ Blockers: Agent D69 — index90 genuine installed render and index107 held norma
 Blockers: Runtime D117a — exact authorized git source and installer integrity handoff; historical refusal retained. Genuine installed render NOTRUN.
 Blockers: Final cut — final tuple P1–P5, full core, D69 and render remain owed.
 
-Next ready: host14 source successor and independent whole path; Runtime batch/XML/R2 hosted owners named. App D116/text-binding requests remain assigned to next hosted slots; no competing local authors.
-live 1 / cap 6; ready-undispatched 0 local. Runtime hosted3 owners1148/1150, App current claims exclusive. Source-only local starts use D89b floor4.6GB, max3 with no heavy; next full core waits qualified batch and no source collision.
+Next ready: HARD host14 successor and independent return; Runtime ready producer/XML/atomic source requested separately from held host deltas. App D116/text-binding requests remain assigned to next hosted slots; no competing local authors.
+live 2 / cap 6; ready-undispatched 0 local. Runtime hosted3 owners1148/1150, App current claims exclusive. Source-only local starts use D89b floor4.6GB, max3 with no heavy; next full core waits qualified batch and no source collision.
 
-Disk: 5006381056 bytes before proof dispatch; only one light proof controller. Hash-verified compression freed about130MB from unreferenced finished outputs. Exact receipt design/agent-disk-compact-20261025T1210Z.json. Pins, KEEP and refused paths untouched; no eligible finished non-KEEP trees. No heavy body.
+Disk: 5006381056 bytes before proof dispatch; host proof13117 terminal; two source-only follow-ups use D89b floor. Hash-verified compression freed about130MB from unreferenced finished outputs. Exact receipt design/agent-disk-compact-20261025T1210Z.json. Pins, KEEP and refused paths untouched; no eligible finished non-KEEP trees. No heavy body.
 
 D120: check each fix with its own failing nodes; one unfiltered agent-core-full per batch at60–90min or3+ landed fixes, before downstream adoption of product heads. D89a start>=4.7GB and stop4.0GB; sole heavy. D122 source-only up to3 at>=4.6GB with noheavy; regular light body floor5.0GB remains.
 
