@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T23:14:56Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# app2 board, 2026-10-25T23:11:45Z
+<!-- app2 | 2026-10-25T23:17:53Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-25T23:15:32Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -166,7 +166,7 @@
 
 | P2-D127d-cost | Preserve offline cost and D127e hold | Runtime HARD Sol; Luna | D127e disposition and qualified changed source | gated:D127e | Runtime2123 UNAPPLIED; waiter2153 | Helper123ms and synthetic267ms failed to reproduce live cost. Full-path return stopped by D127e. Waiter link UNPROVED; no fix or body credit. | Benchmark only |
 
-| F-D137-core | Preserve D140 Farm core handoff scope | Runtime Luna; Farm service | D139a kit and complete D140 handoff | blocked:runtime | Checker2244; schema2250; join2300; review2305 | Source components PASS; joined63 reported. D140 moves child/core to Farm. Review, install, complete peer recipe and in-child check-only owed. Zero core body. | Checker3d7a; schemafd83 |
+| F-D137-core | Preserve D140 Farm core handoff scope | Runtime Luna; Farm service | Carrier review, installed kit and D140 handoff | blocked:runtime | Join2300; review2305 PASS; carrier2305; recipe2307 | Joined63 independently PASS. Carrier review and Farm handoff active; no installation, check-only or core body. D136c source gate cleared; diagnostics author active. | f304bfc97 / makerfd83 |
 
 | F-D139-runtime-union | Qualify merged Runtime targeted union | Runtime service; independent Luna | Independent2219 PASS | merged | Runtime9082; independent2219 | 1571 PASS, zero fail/error/skip in70.6s. Exact source, six bodies and durable XML independently qualified. No Agent full-core or final-gate credit. | Runtimef103 / Agent4c4ee |
 
@@ -179,10 +179,10 @@ regressions: 1 confirmed open FPS regression; final count UNKNOWN. Runtime typed
 
 Blockers: SWAP — owner decision under D130 after automatic safety classifier refusal. Recovery and related acceptance held; no retry, alternate route, transfer or rollback.
 Blockers: Element — App15200 independently NO-GO; cProfile and edges EXACTMISSING. D127d stops profiling bodies; Runtime2123 applied no fix. D127e waiter link to held WAL path is UNPROVED; related recovery and acceptance stay under D130 pending owner decision.
-Blockers: Final cut — D140 defers Store retirement and assigns merged child/core to Farm. Runtime complete tuple/command/controls/import/check-only handoff owed, with D139a joined review, carrier and installed kit. D136c waits qualified source. Ship core unrun; D77 inputs NOT_READY and peak unbounded.
+Blockers: Final cut — D140 defers Store retirement and assigns merged child/core to Farm. Runtime joined recipe independently PASS63; carrier review2305, installation and Farm recipe2307 remain. D136c source gate cleared: diagnostics2305 active, privacy review then App original9 owed. Ship core unrun; D77 inputs NOT_READY and peak unbounded.
 Next ready: None for Proof; MAIN closed D125 and Proof remains folded into App.
 
-Pass 2026-10-25T23:11:45Z: inbox817752 unchanged. New header D140 at23:10 consumed: Store retirement deferred; Farm hosts merged child/core, Agent stays source lane. Runtime complete handoff remains owed. Header SHA256 ce31b4d2d9a321e0a6a039f9c5349652eeb4f8cf7fa4df8cf01a42627a9c785f. bin/workers ap2- confirms1313 done, zero live. H6 App22:58, Runtime23:03, Agent22:59 and Farm22:45 checked. Checker2244/schema2250 source PASS; join2300 reports63 PASS, review2305/carrier2305 active. No received installed recipe, in-child check-only, core or render proof. D136c explicitly gated on D139a source; App receiver owned. D127e/D130 unchanged. Free disk5820088320 bytes. No Proof dispatch, body, provisioning, retry, cleanup or merge; D125 receipt unchanged.
+Pass 2026-10-25T23:15:32Z: inbox817752 unchanged; headerce31b4d2d9a321e0a6a039f9c5349652eeb4f8cf7fa4df8cf01a42627a9c785f includes D140. Runtime23:07 publishes independent joined63 PASS at f304bfc97, clearing D136c source gate; diagnostics2305 doing, carrier2305 review and Farm recipe2307 doing. No installed kit, in-child check-only, core body or render result. D140 defers Store retirement; Agent stays source lane. H6 Farm23:06 and Agent23:05 checked; no newly ready Proof row. D127e/D130 unchanged. Free disk5816135680 bytes. All1313 Proof records done at last bin/workers check. No Proof dispatch, body, provisioning, retry, cleanup or merge; D125 receipt unchanged.
 
 D137 supersedes the failed fixture gate. Maker4435 was independently installed and received as regular0755. Agent controller2044 spent ONE frozen a4e016/5e9ad request: REFUSED venv-log-setup exit2, stage_stderr_path command missing at environment60. Stage stderr EXACTMISSING; no registration or core run. Agent peer2047 handed the exact refusal to Runtime. Header20:47 now records owner disposition: one minimal fix, actual smoke, independent execution review and CAS install, then ONE new Agent request. Runtime2058 successor f07b is installed and independently qualified. Agent2122 received exact regular0755, built and registered genuine child PASS. Positive preflight then failed on missing schema import; zero core body. Header21:52 corrects the earlier core-start claim; D139 requires complete imports and check-only before core on the merged tuple. Custody2132 independently PASS; Agent2136 now traces existing explicit schema setting. Runtime2104 own-node route is separate. Header21:32 confirms Farm real child registered on91398/1daca; input inventory2140 is latest recorded stage. No install, stage or render yet. No core or render GO follows from provisioning. Earlier fixture23349 and rollback-stderr failures remain historical.
 
