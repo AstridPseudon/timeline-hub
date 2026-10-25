@@ -139,7 +139,7 @@ _SAFE_SEGMENT = re.compile(r"[A-Za-z0-9._~:-]+")
 _ID_SEGMENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._~:-]{0,255}")
 _CONNECTION_SEGMENT = re.compile(r"[A-Za-z0-9_-]{1,128}")
 _ENCODED_SEGMENT = re.compile(r"(?:[^%]|%[0-9A-Fa-f]{2})*")
-_RESERVED_ACP = frozenset({"health", "connect", "projects", "models", "model", "agents"})
+_RESERVED_ACP = frozenset({"health", "connect", "projects", "models", "model", "agents", "astrid"})
 _MAX_PATH_LENGTH = 4096
 
 
@@ -193,6 +193,8 @@ ACP_ROUTES = (
     _entry("GET", "/acp/models"),
     _entry("GET", "/acp/agents"),
     _entry("POST", "/acp/connect"),
+    # Astrid's own agent: the app pastes an OpenRouter key here; only the local chat service sees it.
+    _entry("POST", "/acp/astrid/api-key"),
     _entry("GET", "/acp/:conn/models"),
     _entry("POST", "/acp/:conn/rpc"),
     _entry("POST", "/acp/:conn/cancel"),
