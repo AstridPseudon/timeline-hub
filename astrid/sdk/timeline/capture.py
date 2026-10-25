@@ -5,9 +5,10 @@ import copy
 import math
 from fractions import Fraction
 
-from astrid.core.timeline.duration import clip_start_frame, clip_timeline_duration
+from astrid.core.timeline.duration import clip_timeline_duration
 
 from ._command_state import CommandError
+from .units import quantize_time
 
 MOVE_INTENT = {"ripple": "none", "anchor": "fixed", "position": "absolute"}
 CLIP_FIELDS = ('id', 'at', 'at_ms', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
@@ -48,6 +49,11 @@ def rate(value):
     return Fraction(str(number(value, 'fps', positive=True)))
 
 
+def _exact_seconds(value, label):
+    """Keep authored decimal seconds exact until the document write boundary."""
+    return Fraction(str(number(value, label)))
+
+
 def _output_rate(ctx):
     """Read either current output-rate spelling without defaulting a rational away."""
     value = ctx.read('parent', ['config', 'output', 'fps'])
@@ -68,8 +74,21 @@ def occurrence_start(row):
     if start is not None and fallback is not None and not math.isclose(
             number(start, 'placement.start_ms'), number(fallback, 'at_ms'), abs_tol=1e-9):
         raise CommandError('contradictory occurrence start codecs', kind='unsupported_timing')
-    return number(start if start is not None else (fallback if fallback is not None else 0),
-                  'occurrence start') / 1000
+    value = start if start is not None else (fallback if fallback is not None else 0)
+    return _exact_seconds(value, 'occurrence start') / 1000
+
+
+def _exact_clip_timeline_duration(clip):
+    """Return the authored timeline duration without binary floating-point drift."""
+    clip_timeline_duration(clip)  # Preserve the compositor's validation contract.
+    speed = _exact_seconds(clip['speed'], 'clip.speed') if clip.get('speed') is not None else Fraction(1)
+    hold = clip.get('hold')
+    if isinstance(hold, (int, float)) and not isinstance(hold, bool):
+        source_duration = _exact_seconds(hold, 'clip.hold')
+    else:
+        source_duration = _exact_seconds(clip.get('to', 0), 'clip.to') - _exact_seconds(
+            clip.get('from', 0), 'clip.from')
+    return source_duration / speed
 
 
 def _duration(clip):
@@ -80,21 +99,27 @@ def _duration(clip):
             number(clip['at'], 'clip.at'), number(clip['at_ms'], 'clip.at_ms') / 1000,
             abs_tol=1e-9):
         raise CommandError("contradictory at/at_ms timing codecs", kind='unsupported_timing')
-    value = dict(clip, at=clip.get('at', number(clip.get('at_ms', 0), 'at_ms') / 1000))
+    if 'at' in clip:
+        value = dict(clip)
+        start = number(clip['at'], 'clip start')
+    else:
+        exact_at = _exact_seconds(clip.get('at_ms', 0), 'at_ms') / 1000
+        value = dict(clip, at=exact_at)
+        # The synthesized seconds are internal exact time, not authored input.
+        start = float(exact_at)
     if 'at' not in clip and 'at_ms' not in clip:
         raise CommandError('move requires an explicit authored start', kind='unsupported_timing')
-    start = number(value['at'], 'clip start')
     if start < 0:
         raise CommandError('clip.move v1 does not support a clipped negative start', kind='unsupported_timing')
     lengths = []
     if isinstance(clip.get('hold'), (int, float)) and not isinstance(clip.get('hold'), bool):
-        lengths.append(clip_timeline_duration(value))
+        lengths.append(_exact_clip_timeline_duration(value))
     elif clip.get('from') is not None and clip.get('to') is not None:
-        lengths.append(clip_timeline_duration(value))
+        lengths.append(_exact_clip_timeline_duration(value))
     for field, scale in (('duration', 1), ('duration_ms', 1000)):
         if clip.get(field) is not None:
             projected = dict(value, hold=number(clip[field], field) / scale)
-            lengths.append(clip_timeline_duration(projected))
+            lengths.append(_exact_clip_timeline_duration(projected))
     if not lengths or lengths[0] <= 0 or any(not math.isclose(x, lengths[0], abs_tol=1e-9)
                                             for x in lengths):
         raise CommandError("move needs an unambiguous positive authored duration/window",
@@ -172,7 +197,7 @@ def move(ctx, command):
     if on < 0:
         raise CommandError("on must not be negative")
     try:
-        frame = clip_start_frame({'at': on, 'hold': 1}, float(fps))
+        frame = quantize_time(on, fps, policy='nearest')
     except (ValueError, OverflowError) as exc:
         raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
     quantized = Fraction(frame, 1) / fps
@@ -182,7 +207,7 @@ def move(ctx, command):
         if isinstance(exc, CommandError):
             raise
         raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
-    origin = 0.0
+    origin = Fraction(0)
     if owner != 'parent':
         ctx.read(owner, ['occurrence_id'])
         ctx.read(owner + '/shot', ['shot_id'])
@@ -203,7 +228,7 @@ def move(ctx, command):
             for field in ('id', 'kind', 'role', 'enabled', 'active', 'disabled', 'hidden', 'deleted'):
                 ctx.read('parent/track:' + lane, [field])
         blockers = ctx.select('move.blockers', owner)
-        next_start = math.inf
+        next_start = None
         for other in blockers:
             for path in (('placement', 'start_ms'), ('at_ms',), ('track',), ('placement', 'track'),
                          ('enabled',), ('active',), ('disabled',), ('hidden',), ('deleted',)):
@@ -211,25 +236,26 @@ def move(ctx, command):
             other_row = ctx.state.occurrence(other)
             start = occurrence_start(other_row)
             if other != owner and start > origin:
-                next_start = min(next_start, start)
-        if float(quantized) + duration > next_start + 1e-9:
+                next_start = start if next_start is None else min(next_start, start)
+        if next_start is not None and quantized + duration > next_start:
             raise CommandError("moved interval crosses the next occurrence", kind='occurrence_boundary', ref=owner)
-    local = float(quantized) - origin
+    local = quantized - origin
     if local < 0:
         raise CommandError("moved interval precedes its occurrence", kind='occurrence_boundary', ref=owner)
     _provenance(ctx, owner)
     ctx.bind('move.target', ref, dependencies=['move.images', 'move.quantization', *source_dependencies])
+    local_value = float(local)
     ctx.write(ref, ['at_ms'] if 'at_ms' in clip and 'at' not in clip else ['at'],
-              local * 1000 if 'at_ms' in clip and 'at' not in clip else local)
+              local_value * 1000 if 'at_ms' in clip and 'at' not in clip else local_value)
     if 'at' in clip and 'at_ms' in clip:
-        ctx.write(ref, ['at_ms'], local * 1000)
+        ctx.write(ref, ['at_ms'], local_value * 1000)
     ctx.object(ref, ['app'])
     ctx.object(ref, ['app', 'astrid'])
     for prefix in (['app'], ['app', 'astrid']):
         for key in ('on', 'until', 'until_film_end'):
             ctx.clear(ref, prefix + [key])
     ctx.write(ref, ['app', 'astrid', 'fixed_start'], True)
-    ctx.write(ref, ['app', 'astrid', 'for'], duration)
+    ctx.write(ref, ['app', 'astrid', 'for'], float(duration))
 
 
 def track_create(ctx, command):
