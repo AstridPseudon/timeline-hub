@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T08:08:27Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 0m -->
-# app board, 2026-10-25T08:08Z
+<!-- app | 2026-10-25T08:12:56Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 0m -->
+# app board, 2026-10-25T08:11Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -10,12 +10,12 @@
 | P2-metadata-element | Qualify applied status on metadata fix | Luna; Service | Recorded older tuple | gated:superseded-tuple | App2136; actual11589 | Readiness1PASS; original1FAIL same applied-status assertion412 after5s. Finite producer returns safe phases; remaining bodies held. | App245742; Runtimebc04 |
 | U4p-current | Current popup provenance | Luna | Runtime2c1 | merged | Author1711; return1714 | Normal tools, eight strict controls and 14 mappings PASS. | 92414037c7 |
 | A2 | Production dependent save funnel | HARD Sol; Luna | C0 and U3 | merged | Source authors and reviews | Mounted save/outbox and authoritative replies integrated; original gates below. | Current home |
-| A3 | Popup placement element asset saves | Luna; core Sol | A2 | merged | Source authors and reviews | Mounted routes integrated. Single5678,asset27438,bulk21852,parent20481 independently GO on recorded tuples. SWAP,ADD,element,placement and full tour remain open. | Current home |
+| A3 | Popup placement element asset saves | Luna; core Sol | A2 | merged | Source authors and reviews | Five gestures qualified across recorded tuples, including ADD19078 independent GO. SWAP,element,placement and complete current full tour remain open. | Current home |
 | A4 | Retire reachable legacy executor | Luna; review | Historical P1 GO | merged | Census0438; review0444 | Zero reachable legacy writers; behavioral tests retained. | Current home |
 | A4-D52 | Proven dormant deletion | Luna; review | Caller census | merged | Authors1118/1210; reviews1121/1232 | Parent/track and exclusive transcript pairs removed; live session retained. | 2e3c8f/cca3deb |
 | D69 | Restore and audit upstream behavior | Luna; placement Sol | Frozen upstream3881 | merged | Final1704; reviews1633/1636/1657 | 1403 cleared, 67 cited, four restored, zero remaining. 41 placement plus113 controls/types PASS. | c3d79ef88a |
 | P1 | Current plain original control | Service; Luna | App1540 tuple | merged | Actual26312; verdict1616 | Exit0/237s, readiness1 and original2 PASS. Recorded tuple only. | App1540b3f12e |
-| P2 | Eight original core gestures | Service; Luna | Reviewed current source corrections | doing | App and Runtime service owners | Four isolated GO: single,asset,bulk,parent. D97 sequence complete; SWAP/ADD nativeUndo503 and element appliedFAIL. D102 diagnostics release/adoption precedes ONE ADD. | Recorded tuples |
+| P2 | Eight original core gestures | Service; Luna | Qualified current source | doing | Early19078; independent0807; path0810 | Early full tour: four case GO on one tuple. Prior asset GO retained. SWAP409,element status and placement response wait remain; Runtime source disposition active. | Recorded tuples |
 | P2-parent-reads | Exact declared history reads | Luna; review | Contract C0 | merged | Author1625; review1636; integrated1643 | 13 Node and7 semantic controls, four types/lint PASS. | a2a6e4abbd |
 | P2-popup-runtime | Fork-created physical observation | Runtime Luna; security | Actual422 | merged | Author1643; security1658; home1704 | b318 tree equals reviewed88b9; 228 auth,18 Agent,13 RequestPort PASS. | Runtime b318a8ec4 |
 | P2-element-observer | Actual CLI safe phase capture | Luna | Runtime helper2c1 | merged | Author1715; return1722 | Real normal CLI accepted HTTP commit proves provider,receipt,response; focused controls/types/lint PASS. | 255f9f1218 |
@@ -259,20 +259,23 @@
 
 | D108-P2-route-prep | Prepare existing full tour recipe | Luna read only | Current App source | merged | app-D108-full-P2-route-prep-0754 | Existing p2 API and eight cases mapped; no tests or source changes. [Recipe](../../design/app-D108-full-P2-route-prep-0754-recipe.md) | Source unchanged |
 
-| D108-P2-early | Find other failures before D111 | Luna; service | Actual19078 terminal | review | Controller0753; review0807 | Exit1. Readiness1 PASS; originals4 PASS,2 FAIL,1 ERROR,1 NOTRUN. ADD/parent/single/bulk pass service only; exact first predicates pending producer. | 04beed/070dfc/1daca/635f |
+| D108-P2-early | Find other failures before D111 | Luna; service | Actual19078 terminal | review | Producer0753; independent0807 GO4 | Readiness1 PASS; four independent case GO, SWAP/element FAIL, placement ERROR, asset NOTRUN. [Report](../../design/app-D108-full-P2-early-0753.md) | 04beed/070dfc/1daca/635f |
 
 | P2-D111-retained-lifecycle | Return retained process and cache facts | Luna read only | Runtime peer0744 | merged | app-P2-element29218-lifecycle-0755 | Ordinal3 has provider start without outcome. Process/store/fallback/cache-clear UNKNOWN. [Facts](../../design/app-P2-element29218-lifecycle-0755-facts.md) | Evidence only |
 
-| D108-P2-19078-verdict | Qualify four passing original gestures | Luna independent | Actual19078 XML and source | review | app-D108-P2-19078-pass-review-0807 | ADD,parent,single,bulk servicePASS; exact source/tuple/XML/full tail qualification underway. Other four cases retain failure or not-run status. | 04beed/070dfc/1daca/635f |
+| D108-P2-19078-verdict | Qualify four passing original gestures | Luna independent | Actual19078 XML and source | merged | app-D108-P2-19078-pass-review-0807 | Independent GO: ADD,parent,single,bulk with full strict tails. [Verdict](../../design/app-D108-P2-19078-pass-review-0807-verdict.md) | 04beed/070dfc/1daca/635f |
 
-Integration: Normal App04beedcd18 includes independently reviewed portable phase-capture repair33fce, with home tree equal to the reviewed author. D110 adoption6e21 targets released Agent070dfc; Runtime remainsc916. It includes D105a scoped oracle398489, reviewed seed-log retention51239, and normal provenance to Runtimec916/Agent070dfc. c916 production bytes equal released1daca; Agent070dfc is the reviewed inverse correction plus already integrated source. Captured diagnostics/placement stay immutable older tuples.
-core open: 4 — SWAP, ADD, element and placement lack current GO. Four isolated GO retained on recorded tuples. CORRECTION: ADD18021 has retained KeyError in apply_inverse to remember. Element29218 stack shows schema validation in accepted-history replay. Agent D110 owns inverse; Runtime D111 owns validation cost. Full P2 after BOTH qualified releases/adoption; P1/P3 continue meanwhile. Placement31962 hit setup phase-sink collision; reviewed portable harness repair is now HOME04beed. Placement joins full P2 after D111.
+| P2-19078-failed-paths | Attribute three original failures | Luna read only | Actual19078 terminal | doing | app-P2-19078-failed-paths-0810 | Full client/server paths and exact phase correlation. New ProtocolError line handed to Runtime. Separate corrected count summary; no body or source edits. | Source unchanged |
+
+Integration: Normal App04beedcd18 includes independently reviewed portable capture repair33fce and D110 adoption6e21 targeting Agent070dfc; Runtime lock remainsc916, production-equivalent to released1daca. Exact early19078 used authorized04beed/070dfc/1daca/635f and independently qualifies four original cases. D105a scoped oracle398489 and seed-log retention51239 are home. No D111 candidate is adopted.
+core open: 3 — SWAP, element and placement lack GO. Early19078 independently qualifies ADD,parent,single,bulk on04beed/070dfc/1daca/635f. Prior asset27438 GO retains its older tuple. Five gestures qualified across recorded tuples; full current tour remains NO-GO. New SWAP409 history_unavailable and uncorrelated ProtocolError need exact Runtime/source disposition. Final D111 tour still owed.
 regressions: Runtime689 request_id regression fixed in1daca. Inverse KeyError source correction is released and adopted, with full-tour proof owed; Runtime history cost remains open. Early log retention is kept; its repeated-start phase-sink interaction is repaired at04beed without changing protected tests.
 
 Blockers: Runtime D111 — Qualified release and normal adoption gate the final tour only. Independent0729 FAIL and measured-return Sol0744 are active; owner07:53 explicitly permits the early current-source full tour.
-Blockers: Final cut — Four recorded isolated GO; current full P2 and final pinned P1–P5/core plus genuine installed render required before ZIP.
-Next ready: Early19078 terminal; producer0753 extracts exact first predicates and redacted logs. One independent review of four passing cases next; assign source causes immediately. Final D111 adoption/tour remains separate.
-live 1 / cap 6; ready-undispatched 0; core open: 4. Published dispatcher08:04Z count; review0807 newly dispatched and producer0753 finishing. Actual19078 terminal; no App heavy body.
+Blockers: Runtime19078 — SWAP409 history_unavailable and retained ProtocolError need exact source disposition. Peer0810 sent; App failed-path0810 maps gesture/request correlation.
+Blockers: Final cut — Five gesture GO across recorded tuples; complete current P2 and final pinned P1–P5/core plus genuine installed render required before ZIP.
+Next ready: Four19078 case GO are independently qualified0807. Failed-path0810 active; exact Runtime409/ProtocolError already peer-owned. Qualified fixes and adoption then final full P2; no unchanged or isolated retry.
+live 2 / cap 6; ready-undispatched 0; core open: 3. Published dispatcher08:08Z count; independent0807 now complete and failed-path0810 active. No App heavy body.
 Capacity: Seven host-cleared stale pins recycled after fresh static guards, zero refusals; net867MB, free6.30GB at receipt0642. Four additional host-cleared pins recycled0700,zero refusals/net481MB; free5.78GB at receipt,6.53 GB after two host-cleared old pins recycled at07:47Z, net294MB and zero refusals. All finished clean non-KEEP worker trees already retired. All outputs/branches/reports/current pins retained; prior dirty/refused targets untouched. Source cap6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB.
 Inbox consumed through2020526 bytes. Late self peers0745/0748 confirm already-completed two-pin release; no repeated cleanup. Early19078 exit1: four service passes, two failures, placement error, asset not run. Controller handback and sole independent review next. No safety or permission refusal.
 

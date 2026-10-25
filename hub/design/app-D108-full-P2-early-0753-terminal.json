@@ -1,0 +1,64 @@
+{
+  "service_id": "app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+  "service_target": "app-pin-04beedcd",
+  "status": "fail",
+  "central_duration_seconds": 716,
+  "d66_started_at": "2026-10-25T07:54:53.491Z",
+  "d66_finished_at": "2026-10-25T08:06:44.738Z",
+  "d66_duration_seconds": 711.247,
+  "readiness": { "status": "PASS", "count": 1, "exit": 0 },
+  "original": { "status": "FAIL", "pass": 4, "fail": 2, "error": 1, "notrun": 1, "exit": 1 },
+  "gestures": [
+    { "name": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit", "status": "PASS" },
+    { "name": "P2 popup mounted SWAP on selected child uses authenticated old/new media selections", "status": "FAIL", "first_unmet": { "predicate": "accepted commit response status is 200", "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 495, "observed": "409 refusal; response reason tag history_unavailable" } },
+    { "name": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo", "status": "PASS" },
+    { "name": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo", "status": "PASS" },
+    { "name": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo", "status": "PASS" },
+    { "name": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo", "status": "FAIL", "first_unmet": { "predicate": "dialog status contains applied", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1037, "observed": "status element not found after the existing 5000ms assertion timeout" } },
+    { "name": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo", "status": "NOTRUN", "first_unmet": { "predicate": "original test was serially not run after an earlier failure", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1118 } },
+    { "name": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo", "status": "ERROR", "first_unmet": { "predicate": "page.waitForResponse observed the commit response", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1263, "observed": "90s response wait timed out; subsequent page-close error is retained teardown evidence" } }
+  ],
+  "source_tuple": {
+    "app": { "sha": "04beedcd18b8abb49502f65cd3facaafbe93db4e", "tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d" },
+    "agent": { "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3" },
+    "runtime": { "sha": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750" },
+    "composition": { "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148" }
+  },
+  "source_hashes": {
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+  },
+  "retained_outputs": {
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+    "manifest": { "path": "d66/manifest.json", "sha256": "7f5add37d722111d9b9ce83e4d7b0d4bd0bada636e94e469946e1ad832578f04" },
+    "original_xml": { "path": "d66/p2.xml", "sha256": "5b0f6377b0ca81d77962e8cd750cd9e1472090f0c40d52cb982a7f1d94d3f1da" },
+    "readiness_xml": { "path": "d66/readiness.xml", "sha256": "c81c0c66189c855dded26685cf8a723c2526e16720dc0f880b326b1a8486005c" }
+  },
+  "retained_diagnostics": {
+    "searched_phase_files": [
+      "runtime-private/p2-commit-phase.jsonl",
+      "runtime-private/launch-26c5157c-c8a3-408c-ab80-b395b45416ff/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-86c8abe4-0bac-4614-a74a-4151da11f29f/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-915c8e28-fd8e-4998-ae6c-d78d93a2d627/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-a1e9461c-df87-4e56-8038-2075628eef2d/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-c9f5714d-30d1-4ba7-a034-a774079a9119/p2-commit-phase-2.jsonl"
+    ],
+    "searched_stderr_files": [
+      "runtime-private/runtime.stderr.log",
+      "runtime-private/launch-26c5157c-c8a3-408c-ab80-b395b45416ff/runtime.stderr-2.log",
+      "runtime-private/launch-86c8abe4-0bac-4614-a74a-4151da11f29f/runtime.stderr-2.log",
+      "runtime-private/launch-915c8e28-fd8e-4998-ae6c-d78d93a2d627/runtime.stderr-2.log",
+      "runtime-private/launch-a1e9461c-df87-4e56-8038-2075628eef2d/runtime.stderr-2.log",
+      "runtime-private/launch-c9f5714d-30d1-4ba7-a034-a774079a9119/runtime.stderr-2.log"
+    ],
+    "phase_summary": "All six retained phase files reached http_response for their recorded requests; one namespace recorded a raised state and HTTP 409, one namespace recorded an authorization-only pending request, and the other recorded HTTP 200 responses. The retained stderr search found empty files except the final listed launch stderr.",
+    "stderr_reason_tag": "catchall:runtime_protocol.errors.ProtocolError",
+    "stderr_class_chain": ["runtime_protocol.errors.ProtocolError"],
+    "stderr_frames_redacted": ["[REDACTED]:215:_lookup", "[REDACTED]:168:evaluate", "[REDACTED]:141:__enter__", "[REDACTED]:310:_read_transaction", "[REDACTED]:265:_store_version"],
+    "correlations": { "element": "apply-1", "placement": "UNKNOWN", "swap": "UNKNOWN" },
+    "cause": "UNKNOWN; no cause inferred from waits or page-close events"
+  },
+  "no_second_run": true
+}

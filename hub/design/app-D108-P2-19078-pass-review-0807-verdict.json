@@ -1,0 +1,109 @@
+{
+  "review": "D108/P2 independent early tuple review",
+  "scope": "Only the four authentic original PASS cases; failed, errored, and not-run cases receive zero gate credit.",
+  "overall_verdict": "NO-GO",
+  "case_verdicts": [
+    {
+      "name": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+      "verdict": "GO",
+      "source": "tests/e2e/local/three-products.p2-popup.spec.ts:941-947",
+      "predicates": "Connected seeded popup; selected occurrence-qualified child; real PNG import; occurrence.fork plus occurrence.add-media; authenticated import/media-selection checks; whole canonical closure; authoritative history/receipt/head; reload; native inverse; restored canonical; no legacy writes.",
+      "evidence": "normal original XML PASS; source helper assertions at p2-popup.spec.ts:423-444, 494-570, 854-918",
+      "limit": "Case-level GO only; no credit for the overall run or for SWAP/element/placement/registerAsset cases."
+    },
+    {
+      "name": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo",
+      "verdict": "GO",
+      "source": "tests/e2e/local/three-products.p2-tour.spec.ts:745-775",
+      "predicates": "Measured mounted drag to at=5; exact doc.patch before/value; complete timing/track/registry/order/pinned-group reads; authoritative canonical closure; only parent clip at changed; history/receipt/dependencies; reload; timeline.inverse; complete restoration; no legacy writes.",
+      "evidence": "normal original XML PASS; source helper assertions at p2-tour.spec.ts:257-313, 337-474, 532-620, 679-743",
+      "limit": "Case-level GO only; not D111 final-tour/final-cut credit."
+    },
+    {
+      "name": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo",
+      "verdict": "GO",
+      "source": "tests/e2e/local/three-products.p2-tour.spec.ts:777-795",
+      "predicates": "Single selected transition cleared through Effects/None; exact remove with present before; id/transition/pinned-group reads; raw opaque data/order preservation; only transition changed; authoritative history/reload; guarded inverse restores the original transition; no legacy writes.",
+      "evidence": "normal original XML PASS; shared helper assertions at p2-tour.spec.ts:476-530, 584-620, 679-743",
+      "limit": "Case-level GO only; not D111 final-tour/final-cut credit."
+    },
+    {
+      "name": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo",
+      "verdict": "GO",
+      "source": "tests/e2e/local/three-products.p2-tour.spec.ts:797-817",
+      "predicates": "Shift-selected two-clip guard; exact two transition removes with present before values; per-clip id/transition plus pinned-group reads; raw unknown-field/order preservation; only intended transition fields changed; authoritative history/reload; guarded inverse restores both; no legacy writes.",
+      "evidence": "normal original XML PASS; shared helper assertions at p2-tour.spec.ts:476-530, 584-620, 679-743",
+      "limit": "Case-level GO only; not D111 final-tour/final-cut credit."
+    }
+  ],
+  "service": {
+    "target": "app-pin-04beedcd",
+    "normal_id": "app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+    "normal_status": "fail",
+    "normal_exit": 1,
+    "normal_duration_seconds": 716,
+    "readiness_status": "PASS",
+    "readiness_count": "1/1",
+    "original_counts": {"pass": 4, "fail": 2, "error": 1, "notrun": 1},
+    "original_xml_tests": 8,
+    "original_xml_failures": 2,
+    "original_xml_errors": 1,
+    "original_xml_skipped": 1,
+    "preflight_id": "app-pin-04beedcd-d73-p2-04beedcd-submit-preflight-1025075410-15434",
+    "preflight_exit": 0
+  },
+  "tuple": {
+    "app": {"sha": "04beedcd18b8abb49502f65cd3facaafbe93db4e", "tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d"},
+    "agent": {"sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"sha": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "hashes": {
+    "normal_request": "214214bd0911a820cc294faac6eb6716cdd6410d2681b74b47abb2049d051aa8",
+    "normal_recipe": "4cab26870d0f631c91d7827e020d3db42a73a07a77086fd887d988c85ba3aad9",
+    "preflight_recipe": "b8ded6bd0727714507a3bdfcc177059e077f37764287f60c4217bcee6b6f568c",
+    "normal_manifest": "7f5add37d722111d9b9ce83e4d7b0d4bd0bada636e94e469946e1ad832578f04",
+    "preflight_manifest": "0b3960cf1378cf530c89ec89cf57d56c5b0d3d9506be4e1f77caddcaaa0d48a1",
+    "original_xml": "5b0f6377b0ca81d77962e8cd750cd9e1472090f0c40d52cb982a7f1d94d3f1da",
+    "readiness_xml": "c81c0c66189c855dded26685cf8a723c2526e16720dc0f880b326b1a8486005c",
+    "collection": "5ceb793cbd0fe3c20aada85d836ca9b44953463b6808795b8b852bb674994f86",
+    "submission_plan": "37b587c8c705384886cce8df38b228d36566d60e1b3e97695bc738aabbeb4788",
+    "terminal_safe_facts": "53ef5b0521e6d24f2c355e9e96db7e79f9c22da34013d8284a2f5fba2e4fa242"
+  },
+  "source_hashes": {
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+  },
+  "imports": {
+    "agent_root": "/home/user/work/wt/agt-pin-070dfc5e",
+    "runtime_root": "/home/user/work/wt/rt-pin-1daca2a3",
+    "astrid_version": "0.1.0",
+    "astrid_runtime_version": "0.1.0",
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "python": "3.13.16",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1",
+    "all_pinned_checkouts_clean": true
+  },
+  "control": {
+    "pinned_contract": "/home/user/work/wt/rt-pin-1daca2a3/contract/commit-v2.md",
+    "pinned_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "sections": {
+      "1_request": "lines 60-92",
+      "2_doc_patch_closure": "lines 276-320",
+      "3_conflicts": "lines 595-612",
+      "4_replies": "lines 703-715",
+      "5_undo": "lines 1563-1635",
+      "6_meta": "lines 4544-4581",
+      "7_history": "lines 4609-4637"
+    },
+    "requested_astrid_control_directory": "absent; pinned Runtime contract is byte-identical to read-only hub design copy"
+  },
+  "not_run": ["tests", "tsc", "lint", "full", "browser", "backend", "HTTP", "provision", "body", "package"],
+  "worktree": {"status": "clean", "git_diff_check": "pass", "product_files_changed": false}
+}

@@ -1,0 +1,7 @@
+Ask: consume independent four-case GO from early full P2 actual19078; numeric App core open is now3 / Owner: App independent reviewer0807 complete; failed-path0810 and Runtime source / By: now
+
+Sole independent app-D108-P2-19078-pass-review-0807 gives CASE-LEVEL GO to ADD,parentmove,singleclear,bulkclear from actual19078 on exact04beed/070dfc/1daca/635f. Byte-exact report design/app-D108-P2-19078-pass-review-0807.md and -verdict.json/-verdict.md published. Exact request/receipt/canonicalclosure/history/reload/guardednativeUndo/zero legacywrites, source/tuple/preflight/XML qualified. No extra body/review owed for these recorded cases. ADD is newly qualified after AgentD110; original SWAP is NOT qualified and D110 source qualification does not claim it.
+
+Early full tour overall remains NO-GO716s: readiness1PASS; originals4PASS/2FAIL/1ERROR/1NOTRUN. Four GO in THIS tuple. Across retained tuples five gestures now qualified (earlier registerAsset27438 plus these four); not five GO on current tuple. Core open3: SWAP,element,placement. Final full tour still reruns after qualified Runtime fixes/adoption.
+
+New exact failures already handed to Runtime peer0810: SWAP409 history_unavailable, element applied status, placement responsewait; retained ProtocolError at _read_transaction/_store_version uncorrelated until failed-path0810 maps it. Sole source-only Luna0810 remains active, no extra original/collector or sourcewriter. Currentfree5.86GB. Every old output/branch/receipt kept; no refused route retried.
