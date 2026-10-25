@@ -94,17 +94,26 @@ def reservation_check(monkeypatch, plan, history_records=()):
 
 
 
-def test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved(monkeypatch):
+def test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved():
+    from tests.sdk.test_timeline_commit_provider import (
+        DetachedPort,
+        DetachedRealm,
+    )
+
     original = commit.bundle_from_document(document_fixture())
     plan = execute(original, [create_command()])
-    reservation_check(monkeypatch, plan)
     for index in (0, 1):
-        history = copy.deepcopy(plan.records)
-        root = history[0]['created'][index]
-        history[0]['created'] = [root]
-        history[0]['command']['created'] = [root['ref']]
-        with pytest.raises(CommandError, match='already reserved'):
-            reservation_check(monkeypatch, plan, history)
+        realm = DetachedRealm(document_fixture())
+        accepted = realm.call([create_command()])
+        assert (accepted['data']['commands'][0]['created'][index] ==
+                plan.records[0]['command']['created'][index])
+        before = (copy.deepcopy(realm.head), copy.deepcopy(realm.entries),
+                  copy.deepcopy(realm.documents), copy.deepcopy(realm.prepared))
+        with pytest.raises(CommandError, match='already reserved') as error:
+            commit._check_reservations(
+                DetachedPort(realm, {}), plan, realm.head, HistoryRejected, realm.head)
+        assert error.value.kind == 'identity_collision'
+        assert (realm.head, realm.entries, realm.documents, realm.prepared) == before
 
 
 @pytest.mark.parametrize('damage', ['shot-owner', 'occurrence-owner', 'kind', 'ref', 'claim'])
