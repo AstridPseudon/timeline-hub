@@ -437,7 +437,9 @@ def _public_document_compound(recorded):
     document, old, new, verified = inputs()
     document["parent_revision"]["payload"]["occurrences"] = document["parent_revision"]["payload"]["occurrences"][:1]
     document["parent_revision"]["content_digest"] = _digest(document["parent_revision"]["payload"])
-    retained = "sha256:" + "3" * 64
+    # Reuse the canonical admitted audio identity without adding an artificial
+    # payload consumer merely to make the retained dependency valid.
+    retained = AUDIO
     document["dependency_manifest"]["media"].append({"media_id": retained, "content_digest": retained})
     new["asset"] = old["asset"]
     verified[1]["selection"] = copy.deepcopy(new)
