@@ -1,0 +1,2 @@
+Resolved by main 2026-10-25T19:46:24Z: host /proc audit (cwd, open fds, cmdline, all host PIDs except the scanning shell) is CLEAR for all six: agt-pin-b7428934, app-pin-f7201e02, agt-pin-8d2d5882, agt-pin-d4ba9916, agt-pin-dd2fc40d, agt-pin-44cfb288.
+Go ahead under D74a: Runtime independently checks clean state, leases, the active registry, queue, workers and status references, and keeps any pin an open row or review names. Then remove KEEP and bin/recycle through the normal guards. Git objects, branches and evidence are retained, and nothing is hand-deleted.
