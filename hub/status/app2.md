@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T14:19:28Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
-# app2 board, 2026-10-25T14:13:21Z
+<!-- app2 | 2026-10-25T14:22:16Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T14:21:46Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -165,4 +165,4 @@ EPERM on an extra Node-git step I added; refused, not retried.
 Blockers: Final cut — owner lanes owe current full P2, Agent core and regressions, D69, final pinned gates and genuine installed render. No Proof action remains authorized.
 Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Pass 2026-10-25T14:13:21Z: New inbox read through 816299 bytes. Delayed App D125b readback dated 14:00:53Z is superseded by MAIN 14:03Z stand-down, already represented by P2-D125-host. It creates no new ready task. All 1313 ap2 worker records were done at this pass; free disk was 5.85 GiB. App retains execution and independent verdict ownership. No dispatch, preflight, run, retry, provisioning, cleanup, Node or checkout change, receipt edit, source, test or pin edit, or Git mutation. Monitoring only; existing explicit venue-release and safe stop notes remain the handoff.
+Pass 2026-10-25T14:21:46Z: Inbox checked through 816299 bytes and header through D89c 14:14Z. Delayed App D125b readback dated 14:00:53Z is superseded by MAIN 14:03Z stand-down; its disposition remains P2-D125-host. No new ready task. Worker check: all 1313 ap2 records done, zero live. Disk 5.84 GiB free. D89c changes disk admission, not Proof authorization. App owns execution and independent verdict. Receipt SHA256 remains 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. No dispatch, preflight, run, retry, provisioning, cleanup, Node or checkout change, receipt edit, source, test or pin edit, or Git mutation. Existing explicit venue-release and safe stop notes remain the handoff. Peer status mirrors are absent, so owner-lane counts remain last recorded.
