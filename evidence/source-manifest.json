@@ -1,0 +1,58 @@
+{
+  "task": "rt-R2-graph-boundary-applicability-1744",
+  "purpose": "Reconcile qualified Runtime R2 inverse/redo source with the App graph child alias seam.",
+  "runtime": {
+    "base": {
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "auth_blob": "66d899edaac201a1700e7ddf9f62091753201bc9",
+      "store_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9"
+    },
+    "qualified": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "auth_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "auth_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "store_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "store_unchanged_from_base": true,
+      "changed_auth_summary": "58 insertions, 15 deletions in timeline_commit_auth.py from 5e9ad to ab1e"
+    },
+    "qualified_source_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-R2-redo-home-1550.json"
+  },
+  "agent": {
+    "graph_source": {
+      "commit": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+      "tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+      "graph_test_blob": "303d076e108132d02133171aa77059b565e93e23",
+      "fixture_blob": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81"
+    },
+    "normal_clean": {
+      "commit": "224de4697c",
+      "tree": "3db8babbbdaf9a011d2eab9e27884c6c195cd76c",
+      "graph_test_blob": "303d076e108132d02133171aa77059b565e93e23",
+      "fixture_blob": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81",
+      "graph_and_fixture_unchanged_from_160": true
+    },
+    "provider_source_blobs_at_160": {
+      "astrid/sdk/timeline/commit.py": "3ca7c6e970cc162cef30989ad9cb5e0e2a61715c",
+      "astrid/sdk/timeline/inverse.py": "8a67cede54f8a02d2561a66e70a31d306c613c6f",
+      "astrid/sdk/timeline/_commit_patch.py": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+      "astrid/sdk/timeline/_recording.py": "523a1280ab916734cefae836adb7c89b6ead2f2f"
+    }
+  },
+  "safe_app_evidence": {
+    "facts": "app-D132a-graph-created-review-1720-facts.json",
+    "verdict": "app-D132a-graph-created-review-1720-verdict.json",
+    "source_custody": "app-D132a-graph-created-review-1720-source-custody.json",
+    "predicate_map": "app-D132a-graph-created-review-1720-predicate-map.json",
+    "commands_results": "app-D132a-graph-created-review-1720-commands-results.md",
+    "peer": "peer-app-to-runtime-agent-20261025T1726Z-graph-child-boundary.md"
+  },
+  "original_true_evidence": {
+    "source_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "result": "rt-Agent-R2-original-True-after-ab1e-1713-result.json",
+    "wholepath": "rt-R2-original-True-review-1712-wholepath.json",
+    "review": "rt-R2-original-True-review-1712-review.json"
+  }
+}

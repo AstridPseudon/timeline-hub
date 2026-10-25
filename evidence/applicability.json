@@ -1,0 +1,92 @@
+{
+  "task": "rt-R2-graph-boundary-applicability-1744",
+  "verdict": "NOT_APPLICABLE_TO_GRAPH_CHILD_ALIAS_SEAM",
+  "scope": "source-only; no product, auth, store, schema, test, pin, generated-file, or Git changes",
+  "base": {
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "runtime_baseline": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_baseline_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "agent_graph_source_commit": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+    "agent_graph_source_tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+    "agent_normal_clean_commit": "224de4697c",
+    "agent_normal_clean_tree": "3db8babbbdaf9a011d2eab9e27884c6c195cd76c"
+  },
+  "qualified_correction": {
+    "runtime_owner": "runtime_protocol/timeline_commit_auth.py",
+    "function": "validate_step",
+    "line_path": "validate -> _inverse_stage_boundaries -> validate_step -> native_site -> site",
+    "added_behavior": "For timeline.inverse, an occurrence owner listed in created may be absent at the command boundary only for an empty-path occurrence/<id>/collection:track read; the parent occurrence absence and a matching root restoration write must be authenticated.",
+    "additional_ab1e_behavior": "Effect bindings use inverse stage boundaries; materialization edge checks use the bound step input.",
+    "coverage": [
+      "genuine3 grouped inverse/redo: separate PASS control",
+      "native2 provider smoke: separate PASS control",
+      "existing R2 inverse/redo boundary tests: PASS in their qualified scope"
+    ],
+    "not_covered": [
+      "occurrence:<id>/collection:clip",
+      "occurrence:<id>/clip:<id> (the graph case is occurrence:new-occ/clip:title)",
+      "any conclusion about the exact graph record/ordinal/phase without its accepted record packet"
+    ]
+  },
+  "graph_evidence": {
+    "safe_source_verdict": "PASS",
+    "safe_source_tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+    "exact_admitted_result": "8 PASS / 1 FAIL",
+    "failing_selector": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+    "failure": {
+      "reason": "invalid_records",
+      "message": "provider occurrence alias is outside its boundary",
+      "runtime_frame": "runtime_protocol/timeline_commit_auth.py:156",
+      "retry": false
+    },
+    "passing_comparator": {
+      "selector": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_root_creation_reload_inverse_redo_exact_closure",
+      "meaning": "Root-only create/inverse/redo uses the same created root refs but does not add child selection, child alias reads, binding, or child writes; its pass does not qualify the child alias seam."
+    },
+    "child_only_source_aliases": [
+      "occurrence:new-occ/collection:clip",
+      "occurrence:new-occ/clip:title"
+    ],
+    "child_only_effects": [
+      "selection on occurrence:new-occ",
+      "read/bind/repeated writes and reads on occurrence:new-occ/clip:title",
+      "additional authenticated reads, binding, and writes beyond the root-only command"
+    ],
+    "applicability_reason": "The current validate_step exception is syntactically and semantically limited to collection:track. Graph child aliases therefore continue to native_site/site resolution against the per-ordinal command boundary; when the occurrence is absent there, site requires exactly one matching occurrence and can reject at line 156. This proves non-coverage, not that the Runtime or Agent emitted the wrong record."
+  },
+  "original_true_comparison": {
+    "selector": "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+    "agent_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "result": "1 FAIL in redo-birth",
+    "message": "provider occurrence alias is outside its boundary",
+    "line_path": "validate_step:426 -> native_site:218 -> site:156",
+    "comparison_rule": "Same line/message is not treated as the same cause. The original True packet does not expose the exact graph read, command ordinal, stage partition, or physical binding."
+  },
+  "source_owner": {
+    "app_graph_child_boundary_applicability": "Runtime R2 authenticated-boundary applicability is the only proved missing source surface.",
+    "exact_causal_owner": "UNKNOWN",
+    "why": "The graph failure stops during alias validation. No accepted records/steps, failing read ref/path/state, command input boundary image, inverse stage ranges, before/after closure pins, physical effect/materialization bindings, continuations, or paired history receipts are available in the safe packet."
+  },
+  "exact_missing": [
+    "accepted graph failure records.commands and records.steps",
+    "failing graph read ref/path/state and command ordinal",
+    "whether the graph failure is undo or redo and its exact stage phase",
+    "per-ordinal sequential command input and output closure images",
+    "inverse.stage native_write_range and effect_range",
+    "per-stage before/after closure image pins",
+    "commit.effect and commit.materialization bindings with physical refs, owners, edge refs, ordinals, and phases",
+    "source/landing closures and authenticated continuations",
+    "paired accepted graph history receipts"
+  ],
+  "holds": {
+    "d130_swap_wal": "HELD and untouched",
+    "disallowed": [
+      "product/auth/store/schema/test changes",
+      "new guard authoring",
+      "body/retry/rerun or new collector",
+      "original9/True/native/full/P4/tour/provider/socket/acquisition/collector qualification"
+    ]
+  }
+}
