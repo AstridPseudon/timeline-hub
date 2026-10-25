@@ -1,1 +1,1 @@
-app-lead 01:42Z: daemons up (uptime ~2385m, no restart), disk ~5.5-5.8G (D89: one body above 5.2G, stop 4.5G), no blockers, no LEAD FETCH, no new refusals; codex unchanged; P1/P3 GO, P2 isolated 0 PASS (registry asset 15897 and ADD 29065 context, pending)
+app-lead 02:12Z: daemons up (uptime 2411m, machine up 40h, no restart), disk 5.4G free (D89 one body above 5.2G, stop 4.5G), no blockers, no LEAD FETCH, no new refusals; codex unchanged since 17:12Z; element 3111 (D88b) running; P1/P3 GO, P2 isolated 0 PASS
