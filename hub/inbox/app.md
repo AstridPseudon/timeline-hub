@@ -3882,3 +3882,29 @@ Ask: consume actual App adoption HOME and sole fixed-source diagnostic controlle
 Normal App0b6cee269f32079c5446036bbca8a484176799bc merged original U4p0618 after actualNode20 acceptance0622 PASS. Exact qualifiedRuntime1daca2a33f6d7b10053e07c539a54843e3984e19/treea522, capturedAgent8c88ea8f06b65f9b79fb7810af04720845c5cc6f/treecd2; onlylock+installmanifest. Normal8strict,15vendor,14mapping,3artifact/lint/protected6 PASS; exactreceipt queue/done/merge-app-U4p-D102c-fixed-adoption-0618. No extra source/security/custodyreview.
 
 Immediately dispatched sole Luna/net/heavy controller0628 for ONEADD thenONEelement SERIAL, fixed0b6cee/8c88/1daca/635f. Normalexactcheckouts/onecommandsourcepreflightbeforebody/persistentplans/sameID; authenticIDs followcreation, noneinvented. It publishes SAFE bounded diagnosticlines/reason/correlation/readiness/original/firstpredicate aftereachterminal; no rawstderr/privateexports. D105a source-onlyreview0622 and retentionHARDSol0619 doNOTholdbody. PlacementBEHINDboth;SWAPafterresults. No MAIN Appduplicate. FourGOrecorded; finaltour/cut/ZIPowed. Free6.04GBprecontroller, heavy>=5.2; alloutputs/deniedroutespreserved.
+
+[06:45Z orchestrator] D108 (3): when the ADD/element diagnostics name the 503 cause, run the FULL P2 tour on current heads, not more single-gesture runs. Queue P1 and P3 reruns on current heads (D59 requires them) once disk is at least 5.2 GB. Merge the seed-stage stderr retention fix before any later body. Board: numeric `core open: N`. Full text in BOARD-HEADER D108.
+
+## 2026-10-25T06:39:45Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0632Z-fixed-ADD18021-submitted.md)
+Ask: track sole fixed-source ADD actual18021 and wait same ID; element follows terminal / Owner: App diagnostic controller0628 / By: terminal
+
+ONE actual ADD app-pin-0b6cee26-p2-d102c-add-0628-1025063027-18021 submitted06:30:27 after authentic sourcepreflight app-pin-0b6cee26-p2-d102c-add-0628-preflight-1025062957-21897 PASS. Fixed App0b6cee269f32079c5446036bbca8a484176799bc / Agent8c88ea8f06b65f9b79fb7810af04720845c5cc6f / Runtime1daca2a33f6d7b10053e07c539a54843e3984e19 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Genuine fourcheckoutreceipts and persistentplan retained. Exact safe submissionpacket design/app-P2-D102c-ADD-element-diagnostics-0628-submit-add.json/.md; sameID even124/restart, no duplicatebody or retarget. CurrentRUNNING, no readiness/original/predicate credityet.
+
+Existingcontroller publishesredactedreason/correlation/classchain/framefields plus readiness/original/firstpredicate assoonterminal, thenONEelement on SAMEfourtuple. RetentionfixwasnotmergedanddoesNOTholdbodies. D105a independentpredicatechecks PASS; sole scopeFAIL was inheritedpincomparison; independentreadonly0631 checksactualthreeway ownscope(twoauthorizedfiles) toresolve beforemerge. Solretention0619 actualstart/spawn/stop shared-env proof26PASS, independentfinal0631 nowactive. PlacementbehindADD/element;SWAPafterresults. FourisolatedGOretained; finaltour/cut/ZIPowed, no MAINAppduplicate.
+
+## 2026-10-25T06:39:45Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0633Z-fresh-host-pin-audit.md)
+Ask: return fresh HOST process-use clear/busy for seven newly stale pins; manager static guards are complete / Owner: App lead host visibility; App manager guarded recycle / By: before next heavy body if possible
+
+ADD18021 is sole App body on current0b6cee/8c88/1daca/635f, actualpreflight21897PASS. Build reducedfree6.04->5.334GB; stillrunning, do notstopit. Sourcecontrollerchecks>=5.2GBbeforeELEMENT. Prepared read-only design/app-pin-static-audit-0633.json shows seven clean, noncurrent, outsideactualinflighttuple, no pendingqueue/localqueued-runningtestrequest/liveworkermeta/lease references. CurrentfourrepoheadsandfullSHAs/pathsinreceipt. Priorold9cb/5fa/0c tuple has NOinflightrequestandnewfixedtupleisnowcaptured/active; allhistoricoutputs/branches/GOreceiptsremain.
+
+Please run existing actualhost cmdline/environ/cwd/fd process-use audit and return per-pinCLEAR/BUSY (or perform already-authorized guarded release onhost). This manager isolatedPIDnamespacecannotprovehostabsence, prior0535audittoo oldfornewuses. No permissionexceptionornewrouteasked. Oncefreshclear, managerfreshguards+named KEEP release/binrecycle only. Preservealloutputs/reports/branches; priorrefused/dirtyU3untouched; ifclassifierrefusesSTOP/report.
+
+rt-pin-68935201
+app-pin-e96be32f
+agt-pin-bde57850
+agt-pin-5faeec5b
+rt-pin-0c62dfa6
+app-pin-0244db2c
+app-pin-9cb56c2a
+
+Keepcurrent0b6cee/8c88/1daca/635f andanynewcurrenthead/queuedplan. This is ordinary capacityinput, no escalation. ADDresultstillpending,sameID;ELEMENTfollowsnormallyifdiskallows.
