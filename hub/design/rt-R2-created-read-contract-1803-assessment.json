@@ -1,0 +1,61 @@
+{
+  "task": "rt-R2-created-read-contract-1803",
+  "scope": "C0 same-command created-child reads and bindings; source-only Runtime assessment",
+  "base": {
+    "commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "product_pin": "ab1e4f6141987706132916e2da16477f5a019464"
+  },
+  "result": "CONTRACT_SOURCE_DISTINCTION",
+  "classification": "NO_RUNTIME_FIX_AUTHORIZED",
+  "conclusion": "C0 specifies command operands and captured command reads at the command's sequential input. It explicitly makes post-creation images available to a subsequent operand/command, but does not define an intra-command post-creation read boundary. Current Runtime follows that distinction: the first command uses the source/pre-command boundary; later commands use an authenticated projected boundary. A same-command child alias refusal therefore proves source applicability at Runtime auth, not a proved contract violation.",
+  "approved_semantics": {
+    "request_reads": "evaluated at batch input",
+    "step_reads": "evaluated immediately before the step's first command",
+    "command_operands_and_changes": "resolved at each command's sequential input, including preceding command creations/removals",
+    "later_created_root_use": "permitted only when an authenticated intermediate image is exposed before a subsequent qualified operand uses it; provider may refuse unsupported input",
+    "own_writes": "earlier steps in the transaction are not intervening publications for conflict/undo scanning; this does not grant a current command's own writes a same-command alias authorization",
+    "same_command_child_read": "not explicitly defined by C0 as either a post-creation read boundary or an excluded-own-write rule"
+  },
+  "source_trace": [
+    {
+      "owner": "Runtime authenticated closure validation",
+      "path": "runtime_protocol/timeline_commit_store.py:1522-1536 -> runtime_protocol/timeline_commit_auth.py:2887-2950",
+      "fact": "Store validation calls auth.validate after prepared records/canonical output exist; validate seeds the first command input from the source closure, projects later command inputs, then invokes validate_step."
+    },
+    {
+      "owner": "Runtime authenticated read resolver",
+      "path": "runtime_protocol/timeline_commit_auth.py:382-442",
+      "fact": "validate_step uses command_inputs[ordinal] as command_boundary and resolves each record read through native_site; the only generic created exception is an exact created ref with an absent state."
+    },
+    {
+      "owner": "Runtime occurrence alias resolver",
+      "path": "runtime_protocol/timeline_commit_auth.py:100-172",
+      "fact": "Occurrence child aliases require one matching occurrence row in the supplied boundary at lines 150-156 before following shot/internal authenticated edges."
+    },
+    {
+      "owner": "Runtime sequential created-child projector",
+      "path": "runtime_protocol/timeline_commit_auth.py:1896-1910, 2189-2209, 2910-2915",
+      "fact": "_project_created_child and command_output construct the intermediate authenticated view for the following command; this is a later-command boundary, not an intra-command read boundary."
+    },
+    {
+      "owner": "Runtime binding authentication",
+      "path": "runtime_protocol/timeline_commit_auth.py:490-558, 2951-2961",
+      "fact": "Bindings are checked against the command input passed to validate_bindings, with effect/materialization phases using their specifically authenticated boundaries; no same-command child alias exception is present."
+    }
+  ],
+  "smallest_proved_seam": {
+    "owner": "runtime_protocol/timeline_commit_auth.py",
+    "function_path": "validate -> validate_step -> native_site -> site",
+    "source_lines": "validate_step:395-426; site:150-156",
+    "proved_behavior": "A child alias such as occurrence:<id>/collection:clip or occurrence:<id>/clip:<id> is resolved against that command's authenticated input boundary. If the occurrence is absent there, native alias resolution rejects it as outside the authenticated boundary.",
+    "not_proved": "No claim is made about an actual failing command ordinal, stage phase, accepted record, physical binding, closure pair, or historical root. Those records/stage pairs remain EXACTMISSING."
+  },
+  "cross_repo_evidence": {
+    "peer_handoff": "peer-app-to-runtime-agent-20261025T1753Z-graph-child-first-boundary.md",
+    "app_applicability": "NOT_APPLICABLE; source review found initial child-birth auth validation before later inverse/redo concerns",
+    "app_review": "PASS; independently confirmed the same initial auth seam and corrected only the ordinary-create Recording.read wording",
+    "record_status": "EXACTMISSING; no records or absent-record claims were reconstructed"
+  },
+  "decision": "Do not broaden aliases, roots, ownership, or Runtime guards. If same-command child reads are intended to be required, the orchestrator must amend/clarify C0 with an authenticated intra-command post-creation boundary and binding rule; this worker does not infer that approval."
+}

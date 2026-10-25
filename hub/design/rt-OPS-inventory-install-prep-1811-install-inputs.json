@@ -1,0 +1,91 @@
+{
+  "task": "rt-OPS-inventory-install-prep-1811",
+  "scope": "private installation preparation only",
+  "base": {
+    "branch": "tl/rt-OPS-inventory-E2E-inputs-1747",
+    "commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+    "repo": "composition"
+  },
+  "source": {
+    "reviewed_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+    "resolved_tree": "32dbfb3e6ec08b032db2c9f75c6fae29e5e4abcc",
+    "path": "ops-child-custody/make-child-venv",
+    "candidate_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "candidate_bytes": 69516,
+    "candidate_mode": "0755",
+    "candidate_regular_file": true,
+    "candidate_symlink": false,
+    "candidate_hardlinks": 1,
+    "candidate_owner": "invoking user",
+    "extraction": "git archive of reviewed_commit into fresh private TMPDIR replica"
+  },
+  "installed_preimage": {
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755",
+    "required_regular_file": true,
+    "required_symlink": false,
+    "required_hardlinks": 1,
+    "required_owner": "invoking user",
+    "cas_action_on_mismatch": "refuse before backup or replacement"
+  },
+  "protected_inputs": {
+    "bench_store.py": {
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "mode": "0755",
+      "action": "read-only invariant before and after"
+    },
+    "verify_dependency_seed.py": {
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "mode": "0755",
+      "action": "read-only invariant before and after"
+    }
+  },
+  "route": {
+    "backup": "ORCH/backups/make-child-venv.<UTC timestamp>.bak",
+    "backup_policy": "exclusive/no-clobber; exact preimage bytes and 0755 readback",
+    "replacement": "same-directory temporary followed by atomic rename",
+    "source_checkout": "physical clean checkout at reviewed_commit",
+    "guards": [
+      "absolute physical ORCH and source paths",
+      "regular non-symlink single-link files",
+      "invoking-user owner",
+      "mode 0755",
+      "candidate and preimage byte/hash/size equality",
+      "protected helper hash equality",
+      "second pre-replacement CAS"
+    ],
+    "refusal": "stop immediately; no alternate route, retry, Store, request, package acquisition, daemon, permission, source, or D130 SWAP/WAL action"
+  },
+  "private_controls": {
+    "script": "ops-child-custody/install-prep/dry_run_controls.py",
+    "result": "PASS",
+    "cases": [
+      "positive candidate match and atomic replacement",
+      "wrong preimage refusal leaves target and helpers unchanged",
+      "existing backup refusal leaves target, backup, and helpers unchanged",
+      "symlink and hardlink shape refusals",
+      "protected helper invariance"
+    ],
+    "live_orch_access": false,
+    "store_or_package_activity": false
+  },
+  "gates": {
+    "source_review_1744": "PASS_SOURCE_SECURITY / 40 tests",
+    "fixture_preparation_1747": "prepared only",
+    "agent_e2e_1800": "REQUIRED; sole genuine E2E; pending",
+    "independent_result_review": "REQUIRED after E2E; pending",
+    "install_decision": "HOLD under D125b"
+  },
+  "live_actions": {
+    "maker_install": false,
+    "ORCH_bin_write": false,
+    "Store_init": false,
+    "child_request": false,
+    "package_acquisition": false,
+    "source_write": false,
+    "permission_write": false,
+    "daemon_change": false,
+    "D130_swap_wal": false
+  }
+}

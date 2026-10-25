@@ -1,0 +1,78 @@
+{
+  "task": "rt-R2-created-read-contract-1803",
+  "method": "read-only AST/hash/source-diff/callgraph/JSON inspection; no product or test changes",
+  "runtime": {
+    "base_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "base_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "files": {
+      "contract/commit-v2.md": {
+        "git_blob": "257024df6fa93be767f0c74ee10014a6770c4fcb",
+        "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+        "citations": ["112-142", "314-336", "356-365", "391-430", "614-661", "1563-1642", "2825-2835"]
+      },
+      "runtime_protocol/timeline_commit_auth.py": {
+        "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+        "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "citations": ["100-172", "382-442", "490-558", "798-871", "1896-1910", "2189-2209", "2887-2967"]
+      },
+      "runtime_protocol/timeline_commit_store.py": {
+        "git_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+        "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "citations": ["1491-1539"]
+      },
+      "runtime_protocol/service.py": {
+        "git_blob": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144",
+        "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+        "citations": ["2468-2547"]
+      },
+      "runtime_protocol/timeline_commit_port.py": {
+        "git_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+        "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"
+      },
+      "runtime_protocol/timeline_commit_execution.py": {
+        "git_blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896",
+        "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"
+      }
+    },
+    "qualified_pin_comparison": {
+      "pin_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "pin_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "auth_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "store_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "current_auth_matches_pin": true,
+      "current_store_matches_pin": true
+    }
+  },
+  "cross_repo_inputs": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-app-to-runtime-agent-20261025T1753Z-graph-child-first-boundary.md",
+      "sha256": "ec4379ce05fc5411368bc2ef1da2b7cb34b45d15c9ac3418981a5b32d71ccda2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D132a-child-boundary-applicability-1744-report.md",
+      "sha256": "b6dbca6c463667e0ed8f9e623877c772674bc27cc81db7cae6976f6379a4bb2c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D132a-child-boundary-applicability-1744-facts.json",
+      "sha256": "e116c38e8931bf75f6e4c527d7485a3724b69896d33f6b304c6e2fdcbe10620f"
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/app-D132a-child-boundary-review-1753-report.md",
+      "sha256": "81b00c9ec8747289ec9e969f5e759ae86d385f101ec13c4ceedf22f4184b7a48"
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/app-D132a-child-boundary-review-1753-facts.json",
+      "sha256": "e4e3d586658db24a430962409bb19a3daed76abe3e369c13d4eea830a68657c5"
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/app-D132a-child-boundary-review-1753-verdict.md",
+      "sha256": "4ada74c722033f7104b822bc8b219e183febbb151255a0090631f8c55cd469c1"
+    }
+  ],
+  "excluded": [
+    "No provider/test/body execution",
+    "No records, ordinals, stage pairs, closure snapshots, or historical-root claims",
+    "No D130 SWAP/WAL/recovery inspection",
+    "No source, schema, guard, alias, root, or ownership changes"
+  ]
+}

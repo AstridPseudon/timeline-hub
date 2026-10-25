@@ -1,0 +1,104 @@
+{
+  "task": "rt-R2-created-read-review-1808",
+  "verdict": "FAIL",
+  "review_scope": "Independent read-only review of rt-R2-created-read-contract-1803; no Runtime, Agent, App, test, schema, generated-file, pin, provider, or fixture changes",
+  "reviewed_author_result": "CONTRACT_SOURCE_DISTINCTION",
+  "verdict_basis": "The author assessment materially overstates the contract limit. C0 defines sequential public operand/change resolution and C0c uses subsequent qualified operand, not subsequent command. It does not thereby require acceptance of every raw post-handler provider read inside the creating command.",
+  "approved_contract_interpretation": {
+    "request_reads": "Evaluate at batch input and apply conservatively to every step (C0:112-120, 614-616).",
+    "step_reads": "Evaluate immediately before the step's first command, after preceding executed changes; a later step can consume an earlier step's output (C0:118-123, 614-616, 650-651).",
+    "public_command_operands_and_changes": "Resolve each command operand/change at its sequential input, including preceding creations/removals; a future creation cannot satisfy an earlier lookup and a detached image cannot satisfy a later lookup (C0:314-322).",
+    "same_batch_creation_visibility": "Semantic closure creation is performed by provider commands; subsequent patches in the same batch may address their created roots (C0:356-367). C0c's verified intermediate images must be exposed before a subsequent qualified operand uses them, or unsupported input may be refused (C0c:2825-2837). 'Operand' is not limited to a separately numbered command.",
+    "captured_provider_reads": "Provider semantic reads remain exact recorder facts with their observed state/evaluation boundary and contribute to dependencies/conflicts (C0:112-155, 603-612). The contract does not say that a raw read made after the handler's own write is automatically a public command-input guard or that Runtime must accept it without an authenticated intra-command boundary.",
+    "own_writes": "Earlier steps are not intervening publications, but that conflict/undo rule does not grant a caller or provider a forged physical identity or an unauthenticated same-command child boundary (C0:650-661, 1612-1636)."
+  },
+  "contract_citations": [
+    {
+      "claim": "Each operand/change is evaluated sequentially, including preceding creations/removals.",
+      "source": "contract/commit-v2.md:314-322"
+    },
+    {
+      "claim": "Subsequent patches in the same batch may address roots created by semantic commands.",
+      "source": "contract/commit-v2.md:356-367"
+    },
+    {
+      "claim": "C0c names a subsequent qualified operand and permits refusal when the intermediate image is unsupported.",
+      "source": "contract/commit-v2.md:2825-2837"
+    },
+    {
+      "claim": "Captured semantic reads are preserved as provider facts and dependencies, with evaluation boundaries retained.",
+      "source": "contract/commit-v2.md:112-155; 603-612"
+    }
+  ],
+  "source_trace": {
+    "runtime_owner": "Runtime authenticated closure validation: validate -> validate_step -> native_site -> site.",
+    "runtime_current": [
+      {
+        "source": "runtime_protocol/timeline_commit_auth.py:2891-2915",
+        "fact": "The first command input starts from the source boundary; command_output projects a later command input from prior authenticated command records."
+      },
+      {
+        "source": "runtime_protocol/timeline_commit_auth.py:393-442",
+        "fact": "validate_step resolves each captured record read against its command_boundary. The generic created exception only skips an exact created root with an absent state."
+      },
+      {
+        "source": "runtime_protocol/timeline_commit_auth.py:150-172",
+        "fact": "Occurrence child aliases require exactly one occurrence row in the supplied boundary before following shot/internal authenticated edges; an absent created occurrence is rejected at line 156."
+      },
+      {
+        "source": "runtime_protocol/timeline_commit_auth.py:1896-1910, 2189-2209",
+        "fact": "The existing projector is explicitly for a later command in the same step; it constructs an authenticated intermediate view from creation writes and following-command bindings."
+      },
+      {
+        "source": "runtime_protocol/timeline_commit_auth.py:490-558, 2951-2965",
+        "fact": "Physical bindings are checked against their assigned input/effect/materialization boundary; no general same-command post-creation child exception exists."
+      },
+      {
+        "source": "runtime_protocol/timeline_commit_store.py:1491-1539",
+        "fact": "Prepared records/canonical output reach authenticated Runtime validation before acceptance."
+      }
+    ],
+    "agent_record_producer": [
+      {
+        "source": "Agent@224de4697c36b8958d94c0b85626e0fedaf007cb astrid/sdk/timeline/_recording.py:93-99",
+        "fact": "Recording.read observes self.state (the staged bundle) and retains that observed value in record['reads']; it is not automatically a command-input observation."
+      },
+      {
+        "source": "Agent@224de4697c36b8958d94c0b85626e0fedaf007cb astrid/sdk/timeline/_recording.py:246-255",
+        "fact": "finish(capture=True) projects public command read guards from command_input while retaining the staged record reads. This confirms the App 1753 wording correction."
+      },
+      {
+        "source": "Agent@224de4697c36b8958d94c0b85626e0fedaf007cb tests/editing_conformance/test_recorded_graph_roots.py:112-123",
+        "fact": "The graph fixture creates roots, then selects/reads/binds/writes occurrence:new-occ/clip:title inside one handler/command."
+      },
+      {
+        "source": "Agent@224de4697c36b8958d94c0b85626e0fedaf007cb tests/sdk/test_timeline_commit_graph_roots.py:312-338",
+        "fact": "The failing graph path invokes that one create command, while the root-only control does not add child aliases."
+      }
+    ]
+  },
+  "source_owner_and_limits": {
+    "owner": "Runtime authenticated closure validator owns the observed refusal; the current source's narrow sequential projector covers a following command, not arbitrary raw reads after writes within one handler.",
+    "producer_limit": "The current Agent graph producer emits staged child reads/bindings with no authenticated intra-command read ordinal or intermediate closure record. Its public command guards are pre-command projections, as required by the App 1753 correction.",
+    "contract_result": "The public doc.patch/semantic-command sequential behavior is already defined by C0. A producer can satisfy it by making the child access a subsequent qualified public operand/patch with the required authenticated intermediate binding, or by refusing unsupported input. No Runtime trust widening follows from the current guard refusal.",
+    "not_authorized": "No Runtime guard, alias, root, ownership, recorder, provider, test, fixture, or contract amendment is authorized by this review."
+  },
+  "evidence_limits": {
+    "retained_execution": "Prior packet only: graph 8 PASS / 1 FAIL on 5e9ad; original True case fails on ab1e. Not rerun.",
+    "exact_missing": [
+      "accepted records.commands and records.steps for the failing graph request",
+      "failing read ref/path/state and exact command ordinal",
+      "intra-command read/change ordinal or authenticated staged boundary",
+      "undo/redo phase and inverse stage range",
+      "per-ordinal sequential input/output closure images",
+      "effect/materialization physical bindings and source-to-successor continuations",
+      "paired accepted history receipts and historical-root provenance"
+    ],
+    "not_claimed": [
+      "No fabricated accepted/stage/physical/ordinal record",
+      "No causal attribution to Agent or Runtime beyond the source ownership seam",
+      "No D130 SWAP/WAL, held source/test/review, provider, body, P4, tour, socket, acquisition, collector, or full-suite qualification"
+    ]
+  },
+  "decision": "FAIL the author assessment's contract interpretation; retain its no-fix/source-only boundary. C0 is not ambiguous on public sequential operand visibility. The remaining raw same-handler capture is a source applicability limit, not a mandate to widen Runtime trust."
+}

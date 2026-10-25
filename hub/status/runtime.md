@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T18:12:42Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 6m -->
-# runtime board, 2026-10-25T18:06:29Z
+<!-- main | 2026-10-25T18:17:32Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
+# runtime board, 2026-10-25T18:15:24Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -438,7 +438,9 @@
 
 | D100-provider-birth | Preserve authenticated item birth | Sol / Luna | App genuine regression and own9 | blocked:app | Author1742; independent1803 PASS | Exact two-file candidate source/security PASS; statics and origins PASS. Behavior NOTRUN below5GB; App owns admitted proof. | PASS SOURCE SECURITY1803 | 9486cbb06e held |
 
-| R2-created-read-contract | Assess same-command child reads | Luna | App1753 source and C0 | doing | rt-R2-created-read-contract-1803 | New initial-birth boundary assessment; no body or auth writer. Prior inverse applicability is distinct. | Source result pending | Source unchanged |
+| R2-created-read-contract | Assess same-command child reads | Luna | Correct operand-level C0 reading | doing | Author1803; review1808; return1814 | Review FAIL: C0 already covers sequential operands. Correcting report only; raw post-handler reads grant no new Runtime authority. No product author. | Independent1808 FAIL retained | Source unchanged |
+
+| OPS-inventory-install | Prepare exact guarded kit installation | Luna | Real E2E and result review PASS | review | Prep1811; independent1815 | Private CAS, backup collision, helper and link controls PASS. No live writes; install remains held before actual E2E. | Independent1815 active | Private preparation only |
 
 Runtime producer: Normal e319 adds exact leaf-helper tests only; product remains qualified ab1e step, inverse/redo and safe diagnostic source. Home1550 genuine3/native2 PASS. Held SWAP WAL1537 excluded; broader original-four behavior remains unqualified.
 core open:425 and REG14 from immutable30693. Agent child1610 passed D131 reserve then refused source ownership, zero core body. No bounded-proof deduction. Agent a4e016/5e9ad/d8a1/635f capture stays exact.
@@ -450,7 +452,7 @@ Blockers: Agent roots — scalar/compound still UNKNOWN; transcriptpin317 two ca
 Blockers: Element — helper actualHOMEe319 and App normalvalidatorHOME, retained bootstrap custody1738 scopedPASS. App sole one-element profile prep requested1753; no measured provider cost author yet.
 Blockers: Final render — Farm717e layout EXACTMISSING after cleanup. Same maker source1725/review1744 and real E2E prerequisite. No reconstruction or request retry.
 Blockers: D69 and cut — normal XML applicability/full core, installed render90, REG0, fullP2, final tupleP1-P5, wheel, Windows and final build/ZIP remain.
-Next ready: Agent E2E1800 actual result, then independent review and CAS install. D100 independent1803 PASS; App proof prep; new graph C0 reader1803. App sole element profile after e319. No production child/tour.
+Next ready: Agent E2E1800 actual result, then independent result review and exact install. Installer1811 review1815 active; D100 source PASS awaits App proof. Graph report return1814. No production child/tour.
 Source receipts: D128 independent reader1637 source generator finding PASS, actual layout EXACTMISSING. D107 reader1634/source review1640 plus derivative correction1644/final1646 PASS_EVIDENCE_ONLY; no behavior closure. Exact safe outputs flat design under each worker prefix; handbacks1642/1649 sent.
 Host actions: U4a HOME Agentd4ba; filing wait cleared. D107 already HOME9350. Farm verified portable91398/1daca checkouts16:52, no integration merge wanted. No Main Git mutation.
 Kit: Installed0857 remains unchanged; actual Agent/Farm report comparison refusals retained. Candidate c3226b source09ed independentlyPASS1744, not installed before real E2E. Store123bb/dependency116b exact.
@@ -458,7 +460,7 @@ Venues: No Main heavy body; Farm core dropped, D77 only. Agent sole local core s
 Delivery: Private100Python+TS/41matrix and D123 current patch source qualified; final cut remains gated. D126 App owns migration prose/ZIP line. R2c81b/D116 source-only seeds held; no D79 or competing small-file writers.
 Safety: All D130 and prior D88/D111/retirement refusals stay held. D106 ORCH-only output; no hub writes, Git mutations, credentials, upstream push, M5 or permission-file changes by manager.
 Disk: Sweep3 removed0. Compact packed0 scratch/test directories and losslessly gzipped8 old logs. Current free5.10GB; completed workers auto-recycled, branches/evidence retained. Dirty/refused targets held.
-live 1 / cap 6 at5.05GB; ready-undispatched 0. Created-read source assessment1803 is active Luna. D100 review1803 PASS; App receiving proof requested. Agent E2E1800 sole kit proof. No Main heavy.
-INBOX consumed through1396667bytes. Updated 2026-10-25T18:06:29Z.
+live 2 / cap 6 at5.04GB; ready-undispatched 0. Graph report correction1814 and private installer review1815, both Luna. Agent E2E1800 sole kit proof; D100 App proof requested. No Main heavy.
+INBOX consumed through1401788bytes. Updated 2026-10-25T18:15:24Z.
 Later: OriginalTrue redo-birth still fails on d4ba/ab1e. Independent1712 verified custody and traced full path; exact authenticated redo records and stage pairs absent, owner UNKNOWN. No unchanged retry or guard author.
 Later: Graph applicability1744 and independent1749 PASS source assessment; ab1e track-only correction does not cover clip aliases. Accepted/stage/physical pairs EXACTMISSING; owner UNKNOWN, no auth author.
