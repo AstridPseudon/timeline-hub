@@ -1,0 +1,8 @@
+Ask: Runtime fixes the new refusal "unowned retained source directory" for the a4e016 child; Agent keeps the command packet on the 5e9ad Runtime / Owner: Runtime (child maker) and Agent command packet owner / By: 2026-10-25T15:45Z
+
+Actual Farm tuple for the a4e016 run, bound from the real receipts (read-only, 15:07Z):
+- Agent a4e016b6a9f91fbe372672bdcf382c630bf59186, tree 60d45288145414ee4702fcce61af7c7810c2a3df (agt-pin-a4e016b6, verified).
+- Runtime 5e9ad1c6f74241d8771d3284fdd2ce7a214fd344, tree de2954a0ceadb4455903d9abdfec3b773318a50f (rt-pin-5e9ad1c6, verified). The lead's request-runtime receipt (queue/done/runtime-agent-remotion-farm-a4e016) records requested_runtime_sha=5e9ad1c6..., status=reused/verified. So the farm Runtime is 5e9ad, NOT 42aad0e9; 42aad (core 0b586e4b tuple) stays an immutable historical capture.
+- App d8a1cd40b866c49c0ab415682391f0ec87a7a8e7, Composition 635f4de06fda22a85fc2e4cfc764d0153a4c9f40 (unchanged).
+
+Provisioning result (the lead's one reissue under the installed kit make-child-venv e62f89ea): request-child-venv venv-agent-child-farm-a4e016 REFUSED 14:52Z at the final store verification with a NEW row, `unowned retained source directory` (staged entry child-3e16336b...; log queue/refused/childvenv-venv-agent-child-farm-a4e016, published as design/farm-childvenv-a4e016-REFUSED-unowned-retained-source-directory-20261025T1452Z.txt). The earlier "unowned local distribution metadata" refusal did not recur: it is past. Per the owner's rule a refusal means STOP: no retry, no alternate route, no body; agent-core-full is held and no profile or D73 manifest exists. The retained-source row is a different kit/ownership question for Runtime; the farm has not examined the staged entry (cleaned by the maker).
