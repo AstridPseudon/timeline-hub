@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T15:58:08Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
-# agent board, 2026-10-25T15:58Z
+<!-- agent | 2026-10-25T16:02:21Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# agent board, 2026-10-25T16:00Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -65,12 +65,12 @@
 
 | D127 provider cost | Reduce provider lifecycle cost | Luna remote | Qualified provider leaf operation | blocked:runtime | Profile1535; leafreview1540 | Real request2 provider60.400percent | Completed request2 is19.603s/provider11.840s. Element request3 pending; leaf frames not qualified. No provider writer until operation proved. | Source unchanged |
 
-| D116 current17 source | Map shared current word baseline | Luna read only | Normal20177 and exact17 map | doing | app-D116-current17-source-1540 | Read only shared root | App15:42 confirms actual reader on exact17 purposes. Approvedten/currenttwo excluded; no original edits/body/retirement. | 20177 source |
+| D116 current17 source | Map shared current word baseline | Luna read only | Finite independent source review | review | App1540; next protected reader | Exact17 AST/statics PASS | Shared seed supports pin/anchor seam; each case still needs its exact topology. No source delta/body/retirement; await final source map. | 20177 source |
 
 | U4a next Runtime | Coalesce qualified Runtime tools | Luna remote | Later qualified recovery and inverse batch | gated:Runtime-batch | Existing normal tool route | Releasedbc487 receipt | Step release consumed. Coalesce next adoption with qualified batch per Runtime1525; no Farm tuple retarget or local author. | Runtimebc487 |
 | Farm review refusal | Complete normal review under D129 | Luna | Owner D129 and normal checks PASS | merged | agt-D129-inverse-normal-review-1549 | PASS_STATIC_SOURCE_REVIEW | Ruff, Python3.11 compile, exact AST/hash/diff/source checks PASS. No source delta or provider repeat. Farm historical NOTRUN retained; refusal disposition closed. | Evidence only |
 
-| D128 local core | Run exact merged batch locally | Luna / service | Normal maker disk reserve | blocked:farm | agt-F-D128-core-local-1543 ended | Zero body; no test ID | Exact pins PASS; old children mismatch. New child refused fixed8GiB reserve. Sixpins recycled; free6.7GB stillshort. Lead no othereligible relief; Farm backup16:30. | a4e016 frozen |
+| D128 local core | Run exact merged batch locally | Luna / service | Reviewed installed D131 kit | gated:D131-kit | Resume1543 prepared; not dispatched | Prior zero body; no test ID | D131 child reserve change owner-approved centrally. Sixpins recycled, free6.76GB. Wait reviewed installed kit then exactchild and fullcore. | a4e016 frozen |
 
 Integration: normal Agent20177e66564f9f91735ed1a11bac821682d60edf/tree68433c5f77be90063b1f43d3e8f1407346a50675. It adds two current-word test paths over a4e016, containing reviewed union16bb through61fefc and host fallback96df. Runtime lock5e9ad. Binding225fccb, capturedredo0b586, producer82b6, installer/XML and atomic are HOME. Released Agent070dfc stays unchanged until own-node proof and Farm core; held9ea excluded.
 
@@ -92,7 +92,7 @@ Disk: 6144704512bytes at15:44Z after owner-approved lead deletion of only old ve
 D120/D124: own failing nodes per fix; one Farm full core per merged batch before adoption. D89b source floor4.6GB/noheavy, ordinary light5.0GB, ongoing stop4.0GB. D89c admission once at controller dispatch.
 Later: D23/D14 deferred anchors exact. Paused small word files await shared17 applicability source; seed3 already HOME does not imply those17 pass. Historical physical records EXACTMISSING. E2/D79 wait ZIP; D13 installed environment gap explicit.
 
-Inbox consumed through1685431 bytes. Manager changed only own board, peer notes and refusal escalation; no product/test/generated/pin/Git edits. Local integration clean; no new ready merge. Old sheet1050 queue refusal is superseded by cumulative reviewed normal0ad492, not retried. Runtime release1525 consumed; Farm source verdict1520 consumed with explicit NOTRUN refusal. Main1519 is separate existing source/genuine3 evidence, not a rerun of refused checks. Peer1533 acknowledges step release/profile owner and Farm stop.
+Inbox consumed through1686093 bytes. Manager changed only own board, peer notes and refusal escalation; no product/test/generated/pin/Git edits. Local integration clean; no new ready merge. Old sheet1050 queue refusal is superseded by cumulative reviewed normal0ad492, not retried. Runtime release1525 consumed; Farm source verdict1520 consumed with explicit NOTRUN refusal. Main1519 is separate existing source/genuine3 evidence, not a rerun of refused checks. Peer1533 acknowledges step release/profile owner and Farm stop.
 Farm frozen a4e016/5e9ad/d8a1/635f pins and lock source already delivered1447/1450 and independently verified. Normal20177 is not retargeted into that captured body. Farm original9ea proof dropped by recorded owner14:42; superseded attempt retained. Host96df beat deadline; REG closes on full core.
 
 Pass15:37: Runtime1525 two original current-equivalent tests both fail baseline5-versus8; Main1530 exclusively repairs their setup purpose, no blind count relaxation. App15:27 final safe sampler custody1524 PASS clears Runtime publication wait; peer1537 asks immediate sole read-only aggregation. Shared-current17 request1526 is pending App receipt, source-only and independent of the two new files.
@@ -108,3 +108,5 @@ Pass 2026-10-25T15:52Z: owner-authorized D129 normalstatic/source checks PASS; t
 Pass 2026-10-25T15:54Z: App actual1540 reader confirmed on15:42 board, shared17 row nowdoing. No unhandled remote merge request. Currenttwo1530 baseline bootstrap3+scenario5 is source-held before independent review; both cases thenfail transcriptpin317. Provider leaf review1540 still required; reserved author not prematurely dispatched. Localfree6.134GB; makerreserve unchanged; Farm backup16:30 remains.
 
 Pass 2026-10-25T15:58Z: leadhostCLEAR15:55 enabled sixoldpin recycle. Receipt agent-D128-six-pin-guards-1557.json: net628158464bytes, actualfree6761951232bytes. Fixed8GiB makerreserve remains unmet; leadconfirms no othereligible relief. No localnewchild retry or guardchange. D128 blockedrow nowFarm backup/Runtime diagnostic, not a stale leadanswer wait; backupdeadline16:30. No newheavy or source starts.
+
+D131 2026-10-25T16:00Z: owner approves centralreviewedCHILDreserve about5.5GiB, Runtime/profilekeep8GiB. Localguardunchanged. Sixpinsalreadyrecycled; actualfree6.76GB. Runtime asked exactqualifiedinstalledhash; sameWIPresume1543 gateduntilkitland. No earlychildrequest/body underD125b. Current17 App1540 sourceAST/statics PASS with topologylimits, finiteindependentreview pending.
