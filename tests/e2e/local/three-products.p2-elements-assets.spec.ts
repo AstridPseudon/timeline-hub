@@ -401,6 +401,17 @@ function digest(value: unknown): string {
   return sha256Hex(new TextEncoder().encode(json));
 }
 
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0))
+    : item);
+}
+
+function materializedIdentity(kind: string, ...parts: unknown[]): string {
+  const encoded = [kind, ...parts.map((part) => canonicalJson(part))].join('\0');
+  return `${kind}-${sha256Hex(new TextEncoder().encode(encoded)).slice('sha256:'.length)}`;
+}
+
 async function revisionBody(harness: DirectHarness, seed: ThreeProductsSeed, revisionId: string): Promise<JsonObject> {
   const response = await harness.runtimeJson<JsonObject>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${revisionId}`);
   expect(response.status, JSON.stringify(response.body)).toBe(200);
@@ -774,6 +785,129 @@ function assertParentListIsolation(
     .toEqual(Object.fromEntries(Object.entries(beforeConfig).filter(([key]) => key !== 'clips' && !changedConfigKeys.includes(key))));
 }
 
+// C0 §2: occurrence.add-media materializes one complete physical closure. The
+// expected closure is derived from the original document, intended row/media,
+// and the native provider's deterministic identity rules, never from `after`.
+function assertOccurrenceParentProjection(
+  before: CanonicalDocument,
+  after: CanonicalDocument,
+  result: CommitAcceptedMutation,
+  occurrenceId: string,
+  intendedRow: JsonObject,
+  source: { objectId: string; digest: string; mediaType: string; generationId: string; variantId: string },
+): void {
+  const beforeParent = before.parent_revision.payload as unknown as JsonObject;
+  const afterParent = after.parent_revision.payload as unknown as JsonObject;
+  const beforeOccurrences = beforeParent.occurrences as Array<JsonObject>;
+  const beforeOccurrence = beforeOccurrences.filter((candidate) => candidate.occurrence_id === occurrenceId);
+  expect(beforeOccurrence).toHaveLength(1);
+  const originalOccurrence = beforeOccurrence[0]!;
+  expect(typeof originalOccurrence.shot_id).toBe('string');
+  expect(typeof originalOccurrence.shot_revision_id).toBe('string');
+  expect(beforeOccurrences.filter((candidate) => candidate.shot_id === originalOccurrence.shot_id)).toHaveLength(1);
+  expect(intendedRow.id).toEqual(expect.any(String));
+  expect(intendedRow.asset).toEqual(expect.any(String));
+  expect(intendedRow.id).not.toBe('');
+  expect(intendedRow.asset).not.toBe('');
+  expect(source.objectId).toMatch(/^sha256:[0-9a-f]{64}$/);
+  expect(source.digest).toMatch(/^sha256:[0-9a-f]{64}$/);
+  const mediaKind = source.mediaType.split('/')[0];
+  expect(['image', 'video']).toContain(mediaKind);
+
+  const beforeShot = before.shot_revisions.filter((image) => image.revision_id === originalOccurrence.shot_revision_id);
+  expect(beforeShot).toHaveLength(1);
+  const originalShot = beforeShot[0]!;
+  expect(originalShot.shot_id).toBe(originalOccurrence.shot_id);
+  const beforeChild = before.internal_timeline_revisions.filter(
+    (image) => image.revision_id === originalShot.internal_timeline_revision_id,
+  );
+  expect(beforeChild).toHaveLength(1);
+  const originalChild = beforeChild[0]!;
+  expect(originalShot.payload.internal_timeline_revision_id).toBe(originalChild.revision_id);
+  expect(originalChild.timeline_id).toBe(before.timeline_id);
+
+  const expectedChildPayload = structuredClone(originalChild.payload) as unknown as JsonObject;
+  const originalRows = expectedChildPayload.clips;
+  expect(Array.isArray(originalRows)).toBe(true);
+  expect((originalRows as Array<JsonObject>).some((candidate) => candidate.id === intendedRow.id)).toBe(false);
+  (expectedChildPayload.clips as Array<JsonObject>).push(structuredClone(intendedRow));
+  const registry = object(expectedChildPayload.registry, 'original child registry');
+  const assets = object(registry.assets, 'original child assets');
+  expect(Object.hasOwn(assets, intendedRow.asset as string)).toBe(false);
+  const normalizedMedia = {
+    media_id: source.objectId,
+    type: mediaKind,
+    generationId: source.generationId,
+    variantId: source.variantId,
+  };
+  expectedChildPayload.registry = { ...registry, assets: { ...assets, [intendedRow.asset as string]: normalizedMedia } };
+
+  const expectedInternalRevisionId = materializedIdentity(
+    'authoring-timeline-revision', before.project_id, before.timeline_id, originalShot.shot_id, expectedChildPayload,
+  );
+  const expectedShotPayload = { ...structuredClone(originalShot.payload) as unknown as JsonObject,
+    internal_timeline_revision_id: expectedInternalRevisionId };
+  const expectedShotRevisionId = materializedIdentity(
+    'authoring-shot-revision', before.project_id, originalShot.shot_id, expectedShotPayload,
+  );
+  const expectedChild = { ...originalChild, revision_id: expectedInternalRevisionId,
+    payload: expectedChildPayload, content_digest: digest(expectedChildPayload) };
+  const expectedShot = { ...originalShot, revision_id: expectedShotRevisionId,
+    internal_timeline_revision_id: expectedInternalRevisionId, payload: expectedShotPayload,
+    content_digest: digest(expectedShotPayload) };
+  expect(expectedShotRevisionId).not.toBe(originalShot.revision_id);
+  expect(expectedInternalRevisionId).not.toBe(originalChild.revision_id);
+
+  const expectedParent = structuredClone(beforeParent);
+  const expectedOccurrence = (expectedParent.occurrences as Array<JsonObject>)
+    .find((candidate) => candidate.occurrence_id === occurrenceId)!;
+  expectedOccurrence.shot_revision_id = expectedShotRevisionId;
+  expect(afterParent).toEqual(expectedParent);
+  expect(after.parent_revision.payload).toEqual(expectedParent);
+
+  const replace = <T extends JsonObject>(items: T[], oldId: string, replacement: T): T[] => {
+    expect(items.filter((item) => item.revision_id === oldId)).toHaveLength(1);
+    return items.map((item) => item.revision_id === oldId ? replacement : item);
+  };
+  const expectedShots = replace(before.shot_revisions as unknown as JsonObject[], originalShot.revision_id, expectedShot as unknown as JsonObject);
+  const expectedChildren = replace(before.internal_timeline_revisions as unknown as JsonObject[], originalChild.revision_id, expectedChild as unknown as JsonObject);
+  expect(after.shot_revisions).toEqual(expectedShots);
+  expect(after.internal_timeline_revisions).toEqual(expectedChildren);
+  expect(after.shot_revisions.filter((image) => image.revision_id === expectedShotRevisionId)).toHaveLength(1);
+  expect(after.internal_timeline_revisions.filter((image) => image.revision_id === expectedInternalRevisionId)).toHaveLength(1);
+  expect(after.shot_revisions.filter((image) => image.shot_id === originalShot.shot_id)).toHaveLength(1);
+  expect(after.internal_timeline_revisions.filter((image) => image.timeline_id === originalChild.timeline_id)).toHaveLength(1);
+
+  const expectedPatch = [
+    { op: 'set', ref: `internal-revision:${expectedInternalRevisionId}`, path: [], before: { state: 'absent' }, value: expectedChildPayload },
+    { op: 'set', ref: `shot-revision:${expectedShotRevisionId}`, path: [], before: { state: 'absent' }, value: expectedShotPayload },
+    { op: 'set', ref: 'parent', path: ['occurrences', `occurrence_id:${occurrenceId}`, 'shot_revision_id'],
+      before: { state: 'present', value: originalShot.revision_id }, value: expectedShotRevisionId },
+    { op: 'remove', ref: `shot-revision:${originalShot.revision_id}`, path: [], before: { state: 'present', value: originalShot.payload } },
+    { op: 'remove', ref: `internal-revision:${originalChild.revision_id}`, path: [], before: { state: 'present', value: originalChild.payload } },
+  ];
+  expect(result.data.steps).toHaveLength(1);
+  expect(result.data.steps![0]!.patch).toEqual(expectedPatch);
+  expect(result.data.canonical_document).toEqual(after);
+  expect(result.data.document_digest).toBe(digest(after));
+  expect(result.data.accepted_revision_id).toBe(after.parent_revision.revision_id);
+
+  const beforeManifest = object(before.dependency_manifest, 'original dependency manifest');
+  const afterManifest = object(after.dependency_manifest, 'updated dependency manifest');
+  expect(afterManifest).toEqual({
+    ...beforeManifest,
+    shots: expectedShots.map((image) => ({ shot_id: image.shot_id, revision_id: image.revision_id,
+      internal_timeline_revision_id: image.internal_timeline_revision_id, content_digest: image.content_digest })),
+    internal_timelines: expectedChildren.map((image) => ({ timeline_id: image.timeline_id, revision_id: image.revision_id,
+      content_digest: image.content_digest })),
+  });
+  expect(afterManifest.media).toEqual(beforeManifest.media);
+  expect(afterManifest.media).toContainEqual({ media_id: source.objectId, content_digest: source.digest });
+  expect(after.parent_revision.content_digest).toBe(digest(expectedParent));
+  for (const image of after.shot_revisions) expect(image.content_digest).toBe(digest(image.payload));
+  for (const image of after.internal_timeline_revisions) expect(image.content_digest).toBe(digest(image.payload));
+}
+
 async function seedImageFile(harness: DirectHarness): Promise<{ name: string; type: string; bytesBase64: string }> {
   const response = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(harness.seed.image.objectId)}`);
   expect(response.status).toBe(200);
@@ -1061,8 +1195,7 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
   expect(afterRows.filter((candidate) => !beforeRows.some((known) => known.id === candidate.id))).toEqual([expect.objectContaining(row)]);
   for (const known of beforeRows) expect(afterRows.find((candidate) => candidate.id === known.id)).toEqual(known);
   expect(afterRows.map((candidate) => candidate.id)).toEqual([...beforeRows.map((candidate) => candidate.id), row.id]);
-  expect(after.parent_revision.payload).toEqual(original.parent_revision.payload);
-  expect(after.shot_revisions).toEqual(original.shot_revisions);
+  assertOccurrenceParentProjection(original, after, result, seed3.occurrenceId, row, mediaEvidence.source);
   const beforeChildRegistry = object(beforeInternal.registry, 'original child registry');
   const afterChildRegistry = object(afterInternal.registry, 'child registry');
   const beforeChildAssets = object(beforeChildRegistry.assets, 'original child assets');
