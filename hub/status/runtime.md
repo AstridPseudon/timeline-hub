@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T20:03:01Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 5m -->
-# runtime board, 2026-10-25T19:57:31Z
+<!-- main | 2026-10-25T20:07:28Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 16 | status age 0m -->
+# runtime board, 2026-10-25T20:08:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -467,28 +467,26 @@
 
 | OPS-stale-pins-1948 | Release two unused proof checkouts | Manager route | Host CLEAR and fresh route checks | merged | bin/recycle f7201 and8d2d | Both clean and unused; observed net292MB. Four other referenced targets retained. All source/evidence preserved. | Host1946 CLEAR | No source change |
 
-Runtime producer: Normal e319 helper/tests only; product ab1e step/inverse plus safe diagnostics. Captured core tuple remains a4e016/5e9ad/d8a1/635f.
-core open:Prior425/REG14 accounting retained. Actual D13418455 terminal: operator8926PASS190FAIL180ERROR,173subtestsPASS; independent Agent1937 owns exact D54a/core/REG counts. Measurement only, no ship credit.
-Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO for element/SWAP. No D59 cut, final build or ZIP.
-Blockers: Agent custody — independent1953 PASS64 onb855 published with exactrunner/support/script and command. Agent soleE2E now ready at5905580032 after check-only. Installer1826 held for actualresult.
-Blockers: SWAP safety — D130 holds WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
-Blockers: Element — actual32016 FAIL. Retained raw lacks sample chains/counters, independently checked1902. App D127c source return1921 owns last cProfile round; no measured cost author yet.
-Blockers: Final render — genuine E2E/result and installed/receiving maker required before D77 request. Farm core remains dropped.
-Blockers: D69 and cut — current core, REG0, full P2, installed render90, final tuple P1–P5, wheel, Windows and final build/ZIP remain owed.
-Blockers: ZIP correctness — Farm1905 export applies but reverts upstream-only Agent98/Runtime29/App154 files. D135 guard and private upstream joins now required; no packaging this tuple.
-Next ready: Receipt1934 then bounded independent hash verification; conflict1928/1935 returns then independent reviews. Portable1926 sourcePASS and exact invocation delivered to Agent.
-Kit: Makerc3226b/source09ed independent1744 PASS; installer a3e707 independent1826 PASS. Live0857 remains; no production install/request before genuine E2E and independent result PASS.
-Delivery: Census1850 PASS is read-only merge-tree evidence, Runtime10/Agent40/App16 files. Composition frozen-ref1916 scoped PASS; five upstream roots and launcher absent, no executable pristine gate. Clone dryrun unperformed.
-Source receipts: D1001914 final42040/testfcd5f follows finite1858 disposition; source held until protected1931 plus App corrected27/own9. D107 transcript records EXACTMISSING, two failures open. OriginalTrue redo birth and graph child alias remain unknown.
-Safety: D130 and prior D88/D111/retirement refusals held. ORCH-only manager boards/briefs/peers; no manager product/test/pin writes, Git mutations, credentials, upstream push, M5 or permission-file changes.
-Venues: Agent sole genuine E2E venue. Main no heavy or production child. D134 measurement18455 has no ship credit; frozen historical tuples never retargeted. Cancelled control-binding request remains unstarted.
-Later: Shared scalar/compound, Gate3 deferred and graph initial child alias remain visible. No unchanged retry or speculative guard author. D133 installed exact worker paragraph in both docs.
-Disk: Two host-CLEAR unused pins recycled; observed net292,171,776bytes freed. Four named by open rows retained. Fresh4.908GB; source4.6/stop4GB, cleanup target5.2GB unmet. Sweep3 removed0; compact gzipped1.
-live 2 / cap 3; ready-undispatched 0. Builderreturn1955 and privateRuntimejoin1952 live; canonical1953 PASS immediately handed to Agent. No duplicate E2E/acceptance.
-INBOX consumed through1463437bytes. Updated 2026-10-25T19:31:53Z.
 
+| OPS-D137-stderr | Retain every failing stage stderr | Luna | D137 owner decision | doing | rt-OPS-D137-stderr-retention-2006 | Source check and focused controls pending. Fixture gate withdrawn; no more fixture bodies. | No install yet | Candidate c3226b baseline |
+| OPS-D137-install | Install qualified maker through CAS | Luna | Stderr source and independent review | gated:source-review | Reviewed installer1826 | D137 replaces fixture acceptance gate. Preserve CAS, backups and verifier. | Independent review next | Live0857 unchanged |
+| OPS-D137-real-child | Build one genuine Agent child | Agent Luna | Installed received kit | gated:installed-kit | Agent sole receiving venue | ONE a4e016/5e9ad request, then ship-grade core if built. Farm D77 follows Agent result. | Actual result owed | No real request yet |
+| U1-D135-union-review | Review private upstream source union | Luna | Finished1952 two-parent candidate | review | rt-U1-D135-union-review-2006 | Actual0bb3 includes e319 and dbc. Author tests NOTRUN; union proof still owed. | Independent pending | 0bb3bc45c |
+| F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
-
-
-
-
+Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and fresh dbc, not merged to integration.
+Core: D13418455 measurement8926PASS190FAIL180ERROR173subtests. Independent1937 custody FAIL: missing XML and disk witness. Known344 new-file core,14 prior REG still FAIL,12 UNKNOWN. No ship credit.
+Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element/SWAP. No D59 cut, final build or ZIP.
+Blockers: Kit installation — stderr source2006 and independent review before D137 CAS installation; Agent real request follows received hash/mode. Fixture gate explicitly withdrawn by owner; branches retained.
+Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
+Blockers: Element — App sole D127c final helper368f and App binder1950 await coupled protected review. No cost author or new body before PASS.
+Blockers: D69 and cut — current ship-grade core, REG0, fullP2, installed render90, final tupleP1-P5, wheel, Windows and build/ZIP remain owed.
+Blockers: ZIP correctness — private U joins and D135 builder guard qualification required. No upstream-only revert permitted. Agent/App own private joins; Runtime independent source union review2006 active.
+Next ready: Stderr return2006 then independent source review and reviewed CAS installer. D135 path review2006 then guarded installer. Runtime union source review and genuine targeted union proof.
+D100: App actual corrected27PASS; original9 nine setup errors at finite-number fps. Independent1946 owns exact boundary; no normal source release or fixture rewrite.
+D77: Farm changed child request follows Agent actual D137 result; no Farm fixture bodies/core. Exact applied source and lock handoffs remain qualified.
+Delivery: Current cut integration tuple only, no stale547e proof pin. App16 final1941PASS:14 true conflicts,13semantic/1textual. Old Agent halves reference stale proof pin; new actuala30e census1947 qualified.
+Safety: D130 and prior refusals held. Managers write ORCH boards/briefs/peers only; no direct product/test/pin/Git writes or credentials.
+Disk: Fresh4.877GB; source cap3 under D89b, stop4GB. Cleanup target5.2GB unmet; preserve all open proof evidence and KEEP.
+live 0 / cap 3; queued 3 source workers; ready-undispatched 0. Initial relative brief path returned launcher usage error, zero workers; corrected absolute paths requeued same IDs.
+INBOX consumed through1497613bytes including explicit20:13 D137. Updated20:08Z.

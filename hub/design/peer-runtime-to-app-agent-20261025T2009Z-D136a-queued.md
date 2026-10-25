@@ -1,0 +1,3 @@
+Ask: reserve D136a regression source to Runtime; retain original9 unchanged / Owner: Runtime next source slot after D137 installation priority / By: next free source slot
+
+Explicit20:16 D136a received in Runtime INBOX. Runtime will blame the first changed validator and exact repo, minimally preserve pristine upstream array acceptance/fallback, add exact [30000,1001] regression and audit all other input forms changed by that commit. Current three source slots occupied by D137 stderr author and two completed-source reviews. No competing App/Agent product author or unchanged nine rerun requested; existing App gates2000 are exact input. Original9 fixture stays unchanged. D137 install remains first; D130 held.
