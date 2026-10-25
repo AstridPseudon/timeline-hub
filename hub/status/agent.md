@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T08:48:42Z | dispatcher heartbeat 11s | live 4 (sol 0, luna 4, other 0) | busy30 10 | status age 0m -->
+<!-- agent | 2026-10-25T08:52:13Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 2m -->
 # agent board, 2026-10-25T08:47:04Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -288,10 +288,11 @@
 | F D108 baseline prep | Bind canonical upstream evidence | Sol / independent Luna | Independent custody PASS | merged | Sol0820; review0830 PASS | Canonical d6ed and23 source pairs qualified;12517 upstream mappings and9268 unchanged joins exact. Baseline remains FAIL. [Review](../../design/handoff-agt-F-D108-baseline-custody-review-0830.md) | Evidence only |
 
 | OPS D108b disk | Retain three historical pins | Luna / light service | Host scope remains incomplete | later | Audit0826; services15709 and27257 | All three KEEP. No active hits, but24 unreadable process and2 namespace fields prevent safe release. [Audit](../../design/handoff-agt-OPS-D108b-pin-audit-0826.md) | No changes |
-| D77 applied staging inputs | Locate genuine applied deployment inputs | Luna source only | Exact graph and seven-key bindings | doing | agt-D77-applied-staging-input-next | Inventory dispatched after core terminal. Return exact existing applied artifact or normal staging route; no new profile/build/body. | No changes |
+| D77 applied staging inputs | Publish exact ordinary staging route | Luna source only | Source inventory complete | merged | agt-D77-applied-staging-input-next | Applied523893 deployment UNPROVIDED. Exact Installer to Backend.stage source route and required artifacts published; no build/install/body. [Route](../../design/handoff-agt-D77-applied-staging-input-next.md) | Evidence only |
 | F D108 category A | Classify184 word and legacy outcomes | Luna read only | Authentic2016 and924 XML | doing | Classify a0846 | All184 exact cohort selectors need per-node upstream/type/location/category and core contribution. No body or product edits. | Evidence only |
 | F D108 category B | Classify226 other editing outcomes | Luna read only | Authentic2016 and924 XML | doing | Classify b0846 | All226 exact cohort selectors; original source/purpose and guard limits retained. No common cause inferred from counts. | Evidence only |
 | F D108 category C | Classify96 SDK and other outcomes | Luna read only | Authentic2016 and924 XML | doing | Classify c0846 | All96 exact cohort selectors; known D13/D23 scope remains exact. No automatic environment classification. | Evidence only |
+| F D108 row applicability | Bind47 scopes to actual current results | Luna read only | Actual2016 source and XML | doing | agt-F-D108-proof-row-map-0850 | Exact reviewed-source and per-case correspondence only. No blanket closure or duplicate category work; held candidates remain separate. | Evidence only |
 Integration: Actual normald0ecf1d69a contains reviewed D07 and Windows test-only additions; production remains released070dfc5ef4 and adopts released Runtime1daca; all15 mappings unchanged. Includes normal mirror5554, D10101d516, media1a977, sheetCLI b948 and graph8c88. D103d588/S3badfe/legacy read79c94 and critical D110 normally merged. Historical D110 home tree605641 equals its independent review; later D07 and Windows changes tests only.
 core open: Classification pending for506 actual2016 bad nodes, in disjoint184/226/96 cohorts. Historical424 is not a current count. P4 independent GO28.101s on786/0c62/1e34/635f; every per-note time UNKNOWN. P2 and final D59 P1-P5/core,D69/genuine installed render still required.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later named proofs retain exact source scope; no full/core-zero/ZIP claim.
@@ -306,7 +307,7 @@ Blockers: Agent D108 classification — Sole full body2016 completed FAIL. Per-n
 Blockers: Agent D69 — Genuine original manifest/parser published; complete final fingerprint membership EXACTMISSING. Finite fallback0806 PASS only. Baseline repair0820 independent0830 PASS; retained upstream FAIL and Runtime isolation UNCERTAIN unchanged.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
 Next ready: Consume disjoint D54a classification returns and publish exact numeric core-open; original membership and applied staging inventories active. Existing held candidates retain separate exact-source proof obligations.
-live 6 / cap 6; ready-undispatched 0 eligible starts. Controller0811 terminal export, three classification0846 workers, original membership and applied staging source inventories. No local heavy body; no manager product/test/pin edits.
+live 5 / cap 6; ready-undispatched 0 eligible starts. Three classification0846 workers, original membership and row applicability0850. Controller0811 and applied staging completed. No local heavy body; no manager product/test/pin edits.
 Inbox consumed through1495015 bytes. Updated 2026-10-25T08:47:04Z.
 Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
 Later: MAIN profile input — Resolved by D108b local venue. Runtime confirms MAIN0759 unsubmitted and retained; no duplicate body. Local0811 uses genuine819acf/lockf4fc/registryd609.

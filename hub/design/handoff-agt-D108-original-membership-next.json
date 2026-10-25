@@ -1,0 +1,189 @@
+{
+  "schema": "timeline.agent.d108.original-membership-next.v1",
+  "task": "F-D108 original metric membership recovery",
+  "status": "SOURCE_ONLY_EXACT_MEMBERSHIP_RECOVERED",
+  "prerequisite": {
+    "d108b_service_id": "agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016",
+    "d108b_terminal": "159 failed, 8763 passed, 86 warnings, 347 errors, 173 subtests passed in 1451.66s",
+    "d108b_manifest": "design/handoff-agt-F-D108b-core-local-0811-manifest.json",
+    "d108b_manifest_sha256": "c180c1c153264d09e2ae79e0ad63007d9551e43e7b72e87973f0927140a6e2eb"
+  },
+  "authentic_inputs": {
+    "manifest": {
+      "path": "design/handoff-rt-D108-0645-d108-source-rehearsal-manifest.json",
+      "sha256": "37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504",
+      "path_membership_rule": "source_upstream_blobs entries ending .py with tests/ or /tests/ in path"
+    },
+    "parser": {
+      "path": "design/handoff-rt-D108-metric-0811-original-parser-source.py",
+      "sha256": "f8a000977ee880cefb4e1d8313157049acc667549a88351d3547b03b5e4c8c96"
+    },
+    "input_hashes": {
+      "path": "design/handoff-rt-D108-metric-0811-input-hashes.sha256",
+      "sha256": "2fe6f8b283913f582c9bee42e67ac4f71a922d7a66f18d4321e77377dff71506"
+    },
+    "metric_record": {
+      "path": "design/handoff-rt-D108-metric-0811-metric-record.md",
+      "sha256": "5e3b0a4433e11d78f5a9dd19caa5605c0a11bcc34b7796b089c02c6fa8e900c7"
+    },
+    "custody_review": {
+      "path": "design/rt-F-D108-custody-review-0816-report.md",
+      "sha256": "b46847186e910e7f86fa0f286731ebaa3f09ef36763ae371e69282a3a04a5902"
+    }
+  },
+  "algorithm": {
+    "semantics": [
+      "git show fresh upstream and captured integration blobs",
+      "ast.parse source text",
+      "top-level and class-member test* functions",
+      "complete-function source sha256 via ast.get_source_segment",
+      "assertion fingerprints via ast.dump(assert.test, include_attributes=False)",
+      "Counter multiset subtraction for removed and added assertion fingerprints",
+      "comparison operator and decorator-name count deltas"
+    ],
+    "only_substitutions": [
+      "unavailable manifest path replaced by the authentic local manifest path",
+      "repo paths are the authentic local source clones named by the manifest"
+    ],
+    "no_execution": [
+      "no imports",
+      "no test collection",
+      "no providers, helpers, probes, browsers, installs, or live requests"
+    ]
+  },
+  "source_identity": {
+    "agent": {
+      "repo": "/home/user/peteromallet/astrid-agent",
+      "upstream_commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+      "upstream_tree": "2694ae8d2709526b40fa037bda8b159cf412769d",
+      "captured_commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+      "captured_tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6",
+      "manifest_source_entry_count": 917
+    },
+    "runtime": {
+      "repo": "/home/user/banodoco/banodoco-workspace-runtime",
+      "upstream_commit": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+      "upstream_tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+      "captured_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "captured_tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "manifest_source_entry_count": 311
+    },
+    "manifest_blob_note": "The replay uses actual Git blobs at the named fresh/captured refs. The manifest upstream_blob field differs from fresh 08e6 for Agent tests/test_installer_platforms.py and non-test astrid/installer/service.py; these are retained in evidence as manifest-versus-Git receipts, not silently substituted into parser semantics. Captured source blobs match the named captured ref."
+  },
+  "aggregates": {
+    "Agent": {
+      "upstream_functions": 2536,
+      "captured_functions": 4893,
+      "missing_functions": 104,
+      "added_functions": 2461,
+      "changed_bodies": 129,
+      "removed_assertion_fingerprints": 113,
+      "added_assertion_fingerprints": 287,
+      "eq_decreases": 3,
+      "increases": 17,
+      "added_skip": 0,
+      "added_xfail": 0,
+      "dropped_parametrize": 0
+    },
+    "Runtime": {
+      "upstream_functions": 525,
+      "captured_functions": 1494,
+      "missing_functions": 10,
+      "added_functions": 979,
+      "changed_bodies": 113,
+      "removed_assertion_fingerprints": 72,
+      "added_assertion_fingerprints": 205,
+      "eq_decreases": 5,
+      "increases": 3,
+      "added_skip": 0,
+      "added_xfail": 0,
+      "dropped_parametrize": 0
+    }
+  },
+  "evidence": {
+    "path": "workers/agt-F-D108-original-membership-next/evidence/original-membership.json",
+    "sha256": "1bd9b4c08c1ade951f28983172c6e76205401c93af5943abc2c3d924ddb6e7d0",
+    "bytes": 2857151,
+    "contents": [
+      "exact changed-body membership",
+      "exact missing and added function membership",
+      "per-function old/new source blob, source line, body hash, assertion fingerprint multiplicity",
+      "per-fingerprint old/new source blob, line, and multiplicity",
+      "manifest path/status/blob receipts for every parsed source path",
+      "actual Git blob identity and manifest-blob mismatch receipts"
+    ]
+  },
+  "review_groups": [
+    {
+      "id": "D108-original-assertion-membership",
+      "scope": "Agent changed-body records and their assertion fingerprint deltas",
+      "membership": {
+        "changed_bodies": 129,
+        "removed_assertion_fingerprints": 113,
+        "added_assertion_fingerprints": 287
+      },
+      "owner": "D108 original-membership follow-up",
+      "disposition": "UNRESOLVED_REVIEW; exact source membership is recovered, but no predicate is cleared by lexical/operator counts",
+      "receipts": [
+        "design/handoff-rt-D108-0645-d108-source-rehearsal-manifest.json",
+        "design/handoff-rt-D108-metric-0811-original-parser-source.py",
+        "design/handoff-rt-D108-metric-0811-metric-record.md",
+        "workers/agt-F-D108-original-membership-next/evidence/original-membership.json"
+      ]
+    },
+    {
+      "id": "D07-b943",
+      "scope": "Three timing/ripple predicates in tests/test_timeline_editing_helpers.py",
+      "membership": 3,
+      "owner": "D07/b943 source and proof owner",
+      "disposition": "RETAIN_SEPARATE; not cleared or edited by D108 membership recovery",
+      "receipts": [
+        "design/handoff-agt-D108-D07-source-0724.md",
+        "design/handoff-agt-D108-D07-source-receipt-0743.md"
+      ]
+    },
+    {
+      "id": "Windows-d0ec",
+      "scope": "tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string",
+      "membership": 1,
+      "owner": "Windows/d0ec source and proof owner",
+      "disposition": "RETAIN_SEPARATE; source-qualified only and not cleared by D108 counts",
+      "receipts": [
+        "design/handoff-agt-U2-D108-windows-review-0745.md"
+      ]
+    },
+    {
+      "id": "D107-2e3331ee",
+      "scope": "M1-baseline10, the exact ten original D107 selectors",
+      "membership": 10,
+      "owner": "D107 source and proof owner",
+      "disposition": "RETAIN_SEPARATE; original ten remain unchanged and behavior-pending",
+      "receipts": [
+        "design/handoff-agt-D107-source-receipt-0721.md"
+      ]
+    },
+    {
+      "id": "D18",
+      "scope": "tests/core/execution/test_generic_host_child_bridge_d18.py::test_output_above_persisted_retention_budget_is_refused_before_any_read",
+      "membership": 1,
+      "owner": "D18 source and proof owner",
+      "disposition": "RETAIN_SEPARATE; excluded from the D108 citation map and not edited here",
+      "receipts": [
+        "design/agent-F-D18-node-return-1049.md"
+      ]
+    }
+  ],
+  "non_claims": [
+    "The 289 direct-tuple example is not the final 287 membership and was not used.",
+    "The finite fallback 189/310/119 is not substituted.",
+    "No retirement, semantic policy, body, probe, import, collection, or product decision was made.",
+    "Existing approvals apply only to exact matching relevant predicate/body and cited review/decision; no blanket clearance is inferred."
+  ],
+  "checks": {
+    "json_parse_and_in_memory_compile": "PASS",
+    "exact_parser_replay_aggregates": "PASS",
+    "membership_arithmetic": "PASS",
+    "git_diff_check": "PASS",
+    "product_tests_typecheck_lint": "N/A read-only source-only task"
+  }
+}
