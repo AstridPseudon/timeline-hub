@@ -22,3 +22,20 @@ All `9268` retained current selectors are indexed: `2956` exact XML joins and `6
 The prior 276-row comparison remains separate: 75 exact XML matches (66 FAIL, 9 PASS) and 201 UNKNOWN, SHA-256 `72534d6e122d282310f9275952f9711abd73c4a3ff8194e6eb5d56b6867cf917`. D13 ENV and both D23 deferred identities remain retained. D63 rows 129 and 181 remain observations only; row 181 has a per-row reference in the return JSON/table. No current failure classification or current core-open count is published before the MAIN terminal. Full-run Runtime isolation remains UNCERTAIN under the D54 custody correction.
 
 No body, collection, pytest, imports, fixtures, services, browsers, install, probes, source/product/test/registry/generated edits, or caller/authority changes were made.
+
+## Canonical publication custody (0820)
+
+- Full index: `design/handoff-agt-D108-baseline-return-0803-upstream-index.tsv`,
+  SHA-256 `d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a`; byte-identical to retained author evidence.
+- Current joins: `design/handoff-agt-D108-baseline-return-0803-current-joins.tsv`,
+  SHA-256 `0fbcdf46e9272a2a3bd1e3f275cfa09f2887e50bef848f41c68c2c71a8ef12c5`; unchanged.
+- Original 0803 evidence summary SHA-256:
+  `7af40efb74bc171142e5a89f7cc25b17c710001c7dba61bb8e04c971764dbfd7`; unchanged.
+
+The 23 restored `tools/astrid-rename` file/line pairs were verified against
+the real 924 Git blobs. Canonical source resolution is 12,515 exact bases,
+two explicitly ambiguous bases (9439 and 9440, both candidate lines retained),
+and zero unresolved. The original summary's zero ambiguous-source count is
+stale and preserved as historical evidence; zero ambiguous current joins
+remains correct. Publication preimages and final readback are referenced by
+`design/handoff-agt-D108-baseline-custody-sol-0820.json`.

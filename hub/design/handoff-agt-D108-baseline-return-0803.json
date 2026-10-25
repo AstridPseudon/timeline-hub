@@ -31,11 +31,12 @@
     "evidence_full_index": {
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-return-0803/evidence/d108-upstream924-full-testcase-index.tsv",
       "rows": 12517,
-      "sha256": "075f630611aad412b8e2fda861e807800d8756dbd31aed19acc0c7d43fe7b456"
+      "sha256": "d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a"
     },
     "full_summary": {
+      "note": "Original author summary bytes preserved; source_location_ambiguous_rows=0 is stale. Canonical index has two explicitly ambiguous AST-base rows; corrected accounting is in source_resolution_accounting.",
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-return-0803/evidence/d108-baseline-return-0803-summary.json",
-      "sha256": "e92bcf07eff73e98b2e837a9305e0bd89915a5030a52fb3b0764ce41c2eb5eb5"
+      "sha256": "7af40efb74bc171142e5a89f7cc25b17c710001c7dba61bb8e04c971764dbfd7"
     },
     "published_current_joins": {
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803-current-joins.tsv",
@@ -45,7 +46,7 @@
     "published_full_index": {
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803-upstream-index.tsv",
       "rows": 12517,
-      "sha256": "075f630611aad412b8e2fda861e807800d8756dbd31aed19acc0c7d43fe7b456"
+      "sha256": "d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a"
     }
   },
   "author_branch": "tl/agt-F-D108-baseline-prep-0756",
@@ -90,6 +91,7 @@
     "sha256": "0fbcdf46e9272a2a3bd1e3f275cfa09f2887e50bef848f41c68c2c71a8ef12c5",
     "unique_current_selectors": 9268
   },
+  "custody_repair": "design/handoff-agt-D108-baseline-custody-sol-0820.json",
   "execution_guards": {
     "body_run": false,
     "collection_run": false,
@@ -161,6 +163,17 @@
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
       "sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f"
     }
+  },
+  "source_resolution_accounting": {
+    "ambiguous_base_rows": 2,
+    "ambiguous_ordinals": [
+      9439,
+      9440
+    ],
+    "exact_base_rows": 12515,
+    "note": "Canonical author index retained byte-for-byte. Both candidate definition lines remain explicit for the two ambiguous AST bases; these are distinct from zero ambiguous current-selector joins.",
+    "rows": 12517,
+    "unresolved_rows": 0
   },
   "status": "complete_source_only_correction",
   "task": "agt-F-D108-baseline-return-0803",

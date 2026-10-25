@@ -39,7 +39,7 @@ Full-run Runtime isolation remains UNCERTAIN under the D54 custody correction.
 Published artifacts:
 
 - `design/handoff-agt-D108-baseline-prep-0756.md/.json` — non-F successor correction; F-prefixed historical artifacts preserved.
-- `design/handoff-agt-D108-baseline-return-0803-upstream-index.tsv` — `075f630611aad412b8e2fda861e807800d8756dbd31aed19acc0c7d43fe7b456`.
+- `design/handoff-agt-D108-baseline-return-0803-upstream-index.tsv` — `d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a`.
 - `design/handoff-agt-D108-baseline-return-0803-current-joins.tsv` — `0fbcdf46e9272a2a3bd1e3f275cfa09f2887e50bef848f41c68c2c71a8ef12c5`.
 - `design/handoff-agt-D108-baseline-return-0803.json`.
 
@@ -49,3 +49,20 @@ Evidence-only source artifacts are under
 No body, collection, pytest, imports, fixtures, services, browsers, install,
 probes, source/product/test/registry/generated edits, caller changes, or
 authority/guard changes were made.
+
+## Canonical custody repair (0820)
+
+The full index now matches the retained author evidence byte-for-byte, including
+all 23 `tools/astrid-rename` file/line mappings (XML ordinals 12309–12331),
+verified against real upstream Git blobs and AST definition lines.
+The original 0803 summary is unchanged at SHA-256
+`7af40efb74bc171142e5a89f7cc25b17c710001c7dba61bb8e04c971764dbfd7`. Its zero ambiguous-source count is stale:
+the canonical index explicitly retains two ambiguous AST bases (ordinals 9439
+and 9440), each with both valid definition lines; 12,515 bases are exact and
+none are unresolved. This does not change the zero ambiguous current joins.
+
+Pre-repair publication bytes are retained in
+`workers/agt-F-D108-baseline-custody-sol-0820/evidence/preimages/`.
+The historical F0756, 0758 review, and 0813 review remain unchanged.
+Final custody and all 23 source pairs are recorded in
+`design/handoff-agt-D108-baseline-custody-sol-0820.json`.

@@ -25,12 +25,18 @@
     "runtime_isolation": "UNCERTAIN_FULL_RUN_PER_D54_CUSTODY_CORRECTION"
   },
   "correction": "The historical F-prefixed prep handoff remains unchanged. This non-F successor adds the complete testcase index from the authentic upstream924 XML and binds all 9268 retained current selectors; it does not replace the historical 276-row comparison.",
+  "custody_repair": "design/handoff-agt-D108-baseline-custody-sol-0820.json",
   "full_upstream924_index": {
     "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-return-0803/evidence/d108-upstream924-full-testcase-index.tsv",
     "publication_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803-upstream-index.tsv",
     "root_total": 13083,
     "rows": 12517,
-    "sha256": "075f630611aad412b8e2fda861e807800d8756dbd31aed19acc0c7d43fe7b456",
+    "sha256": "d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a",
+    "source_resolution": {
+      "ambiguous_base_rows": 2,
+      "exact_base_rows": 12515,
+      "unresolved_rows": 0
+    },
     "subtests": 566,
     "testcase_nodes": 12517,
     "unique_raw_node_ids": 12517
