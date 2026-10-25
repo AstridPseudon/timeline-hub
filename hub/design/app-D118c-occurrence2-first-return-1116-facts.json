@@ -1,0 +1,42 @@
+{
+  "task": "D118c occurrence-create2 first return",
+  "verdict": "UNAPPLIED_OWNER_HANDOFF",
+  "changed_files": ["tests/editing_conformance/test_commit_runtime_occurrence_create.py"],
+  "source": {
+    "current_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+    "authorbase_942855e5_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+    "original_070dfc_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+    "prior_candidate_2f9c56bb_sha256": "91b0d3e7f5815892e58cb0256640a08173fe3e7703cff0a4caa480d0e9bcf855",
+    "pristine_08e6b905": "path absent at that root; used only as evidence, not as a source"
+  },
+  "edit": "Removed only the prior candidate's label, steps, merge, reads, dry_run, source, rationale, and group_id additions; restored the original ABI-1 body wrapper exactly.",
+  "conservation": {
+    "assert_count_current": 29,
+    "assert_count_authorbase": 29,
+    "assert_ast_conserved": true,
+    "target_test_function_ast_conserved": true,
+    "semantic_inputs_changed": false,
+    "invalid_birth_on": "1e308",
+    "expected_status": 409,
+    "expected_reason": "unsupported_timing",
+    "no_write_history_guard_preserved": true,
+    "inverse_redo_retry_preserved": true
+  },
+  "source_mapping": {
+    "producer": "astrid/sdk/timeline/native_occurrence_create.py:33-38; capture_occurrence_create:53-61",
+    "conversion": "occurrence_create converts timing overflow to CommandError(kind='unsupported_timing')",
+    "agent_boundary": "astrid/sdk/timeline/commit.py:1456-1469 passes the kind to _failure",
+    "current_intended_classifier": "astrid/sdk/timeline/_commit_errors.py:65-71 classifies unsupported_* at the base as invalid, HTTP 422",
+    "runtime_conversion": "runtime_protocol/timeline_commit_port.py:96-100 copies failure http_status/details onto RuntimeErrorBase",
+    "unproven": "The retained line-70 status 1 lower cause is not established by source-only evidence."
+  },
+  "checks": [
+    {"command": "/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "/home/user/work/venv-agent/bin/mypy --follow-imports=skip tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "PYTHONPYCACHEPREFIX=<resolved task temp>/pycache-final python -m py_compile tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "git diff --check", "result": "pass"},
+    {"command": "source/hash and AssertAST conservation control", "result": "pass"}
+  ],
+  "behavioral_tests": "not run per D118c source-only brief",
+  "owner_action": "Agent/Runtime owner must reconcile the retained status-1 report with the current intended 422 conversion and decide whether the protected 409 assertion is a contract/source issue; no test assertion or product fix was applied here."
+}

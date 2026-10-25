@@ -1,0 +1,29 @@
+{
+  "task": "D118a-scene-summary1-1118",
+  "repo": "agent",
+  "file": "tests/sdk/test_scene_real_public_summary_rle.py",
+  "original_sha256": "b53c2c4bc53789dd4667b99c4219ec28c4cd9ce850d638f298dfa88d48ad9e8d",
+  "current_sha256": "d688735227bee66f38c420f23abd3c5457c8d6471919a2c96f754708509802c0",
+  "change": "Delete inherited PYTHONNOUSERSITE from the test process before the real public host query.",
+  "causal_evidence": {
+    "source": "handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml",
+    "failure_location": "astrid/core/rendering/scene_answers.py:76",
+    "exception": "astrid.core.rendering.scene_answers.SceneQueryUnavailable",
+    "reason": "runtime validation refuses unsupported loader/interpreter overrides",
+    "environment_key": "PYTHONNOUSERSITE=1",
+    "call_chain": "host_frames_at -> _query -> probe_context"
+  },
+  "conservation": {
+    "ast": "pass: original AST equals current AST after removing only the new delenv statement",
+    "purpose": "pass: real host_frames_at, _scene_only_spans, Checkout._scene_problems and all frame/range/class/content/clip/summary assertions remain unchanged",
+    "scope": "one test file; no production/shared fixture/contract files"
+  },
+  "checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "target_test_body": "not run per static/source-only task constraint",
+    "protected_independent_review": "pass: exact one-line diff, causal cleanup, real caller/assertion preservation, test-scoped restoration"
+  }
+}
