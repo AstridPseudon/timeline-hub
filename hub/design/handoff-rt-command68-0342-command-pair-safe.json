@@ -1,0 +1,81 @@
+{
+  "verdict": "EXACTMISSING",
+  "redaction": {
+    "raw_command_exported": false,
+    "raw_request_exported": false,
+    "raw_body_exported": false,
+    "auth_or_key_exported": false,
+    "url_or_log_dump_exported": false
+  },
+  "private_artifacts": [
+    {
+      "kind": "actual9211_xml",
+      "bytes": 2625666,
+      "sha256": "eef3d52683227fe57b2d5e63abce044d11fd68cb31960e9a4ff5194cfeb5aab2",
+      "published": false
+    },
+    {
+      "kind": "actual9211_body_log",
+      "bytes": 2612623,
+      "sha256": "796efbbcbed165da591506305129f7fce9a99a172b6a0576a2e3bf8134c61981"
+    }
+  ],
+  "representatives": [
+    {
+      "actual_ordinal": "MISSING",
+      "differing_field_paths": [],
+      "safe_scalar_shape": "No retained actual9211 testcase/ordinal for shot.pool promotion",
+      "private_testcase_text_sha256": null,
+      "source_refs": ["tests/editing_conformance/test_recipe_m2_shot_pool.py", "actual9211 safe membership export"]
+    },
+    {
+      "actual_ordinal": 1,
+      "differing_field_paths": [],
+      "safe_scalar_shape": "XML error-only testcase; no submitted/produced command pair object",
+      "private_testcase_text_sha256": "97a3ddda2dc7b9a2b108a37ab2d41829c5eb82365d08052505e0400c939d5cec",
+      "source_refs": ["tests/editing_conformance/test_commit_runtime_occurrence_media.py", "runtime_protocol/service.py:2518", "agt-F-occurrence48-review-0145"]
+    },
+    {
+      "actual_ordinal": 2,
+      "differing_field_paths": [],
+      "safe_scalar_shape": "XML error-only testcase; no submitted/produced command pair object",
+      "private_testcase_text_sha256": "0b8d07e76c117338f855a903cb866d38afb263f2069596a2ab65d3a9e9e41446",
+      "source_refs": ["tests/editing_conformance/test_commit_runtime_occurrence_media.py", "runtime_protocol/service.py:2518", "agt-F-occurrence48-review-0145"]
+    },
+    {
+      "actual_ordinal": 59,
+      "differing_field_paths": [],
+      "safe_scalar_shape": "XML error-only testcase; no submitted/produced command pair object",
+      "private_testcase_text_sha256": "19d973ee8a24428f45f1aff404fc994bfe9104e27e7f16937cf71c276d40cc30",
+      "source_refs": ["tests/editing_conformance/test_recipe_m2_placement_create_unplace.py", "runtime_protocol/service.py:2518", "verdictM2.md", "source-only-review.txt"]
+    },
+    {
+      "actual_ordinal": 60,
+      "differing_field_paths": [],
+      "safe_scalar_shape": "XML error-only testcase; no submitted/produced command pair object",
+      "private_testcase_text_sha256": "1622427f2c7a4bde304f666e4e4f6331f0025ad8d0e00d7fef68f82a66b239c1",
+      "source_refs": ["tests/editing_conformance/test_recipe_m2_placement_create_unplace.py", "runtime_protocol/service.py:2518", "verdictM2.md", "source-only-review.txt"]
+    },
+    {
+      "actual_ordinal": 142,
+      "differing_field_paths": [],
+      "safe_scalar_shape": "XML error-only testcase; no submitted/produced command pair object",
+      "private_testcase_text_sha256": "af9eeac3361a1045244f17064c8601217dd250167a9fe85a15ac3dccba29f123",
+      "source_refs": ["tests/editing_conformance/test_recipe_occurrence_media.py", "runtime_protocol/service.py:2518", "verdictrecipe.md"]
+    },
+    {
+      "actual_ordinal": 143,
+      "differing_field_paths": [],
+      "safe_scalar_shape": "XML error-only testcase; no submitted/produced command pair object",
+      "private_testcase_text_sha256": "2b1f26f6a58a6ad1dddab753be5fd9bd423b4b0948b42f29d2a3f214534cf926",
+      "source_refs": ["tests/editing_conformance/test_recipe_occurrence_media.py", "runtime_protocol/service.py:2518", "verdictrecipe.md"]
+    }
+  ],
+  "coverage_limits": [
+    "161 actual9211 rows were retained: 6 PASS, 43 FAIL, 112 ERROR; no pair is promoted from status alone",
+    "shot.pool promotion has no retained actual9211 ordinal in the safe membership export",
+    "The retained XML/log contain no produced-command marker or explicit submitted-vs-produced pair for these representatives",
+    "Schema-key occurrences are traceback/static context only; no differing field path is inferred",
+    "No new body, replay, collector, reconstruction, or guard change was made"
+  ]
+}

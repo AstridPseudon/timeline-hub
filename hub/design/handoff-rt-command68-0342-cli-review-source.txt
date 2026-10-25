@@ -1,0 +1,18 @@
+verdict=PASS_SOURCE
+task=F-D86
+reviewed_commit=4c62209174a7fd025a47f3bbb73ba3c2365b8b9e
+parent_commit=657bc2e8dba066df1c7d21851315bdb6b0f16a3a
+final_tree=8546b0aaadf331051af30c6ca512e5482b111eba
+changed_path=tests/packs/timeline/test_cli_document_commit.py
+changed_blob=d94ca2dd8f7f12d39742f685bd257ad26ed69777
+changed_blob_sha256=eb5e311c23a6a734fc1e82738bb8c2bbf549717bdc128d7df9de7426f6b2b6da
+delta=one fixture statement removes private _runtime_document before detached JSON serialization
+production_surface_delta=none; native_envelope_alias_retired_surface=none
+ast_compile=in-memory pass
+ast_conservation=12 test bodies, names, args, decorators, assertions unchanged
+assigned_selector_count=8 retained
+ruff=pass (ruff 0.12.0)
+mypy=pass (mypy 1.17.0)
+diff_check=pass
+functional_pass=not claimed
+actual11789_cli_status=8 assigned selectors were retained FAIL in the prior terminal run; this review did not execute or promote them

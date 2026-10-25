@@ -1,0 +1,7 @@
+scan_scope=retained actual9211 XML, body log, central-service duplicate, safe JSON/TSV export
+raw_command_request_body_auth_key_url_dump=0
+explicit_produced_marker=0
+representative_submitted_produced_pairs=0
+shotpool_promotion_retained_ordinal=0
+safe_export_mode=JSON+TSV+SHA256+redaction metadata only
+status=SAFE_EXACTMISSING
