@@ -1,0 +1,36 @@
+{
+  "packet": "fd86-new-source-prep-0530",
+  "mode": "source-only preparation; no functional credit",
+  "ready": {
+    "selected_unique": 60,
+    "families": {
+      "ordinarysheet11": 11,
+      "D92THREE": 3,
+      "word46": 46
+    },
+    "canonical_set_subtraction": "selected from actual6058 source scope after subtracting actual canonical sets and D99 MAIN13/D95 NEW2 where applicable; never a sum of family counts"
+  },
+  "held": {
+    "selected_unique": 10,
+    "families": {
+      "opaqueSIX": 6,
+      "ordinaryscriptFOUR": 4
+    },
+    "reason": "protected PASS_SOURCE exists, but remote0522/remote0525 normal receipts were pending; do not wait when the ready subset can submit and do not silently retarget"
+  },
+  "immutable_actuals": {
+    "actual19214": {"selected": 61, "PASS": 13, "FAIL": 21, "ERROR": 27},
+    "actual6058": {"selected": 96, "PASS": 14, "FAIL": 7, "ERROR": 75},
+    "actual161": "immutable source-specific set; not rebound",
+    "actual102": "immutable source-specific set; not rebound",
+    "actual20": "immutable source-specific set; not rebound",
+    "actual22": "immutable source-specific set; not rebound"
+  },
+  "historical_boundaries": {
+    "original550": {"rows": 550, "sha256": "abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2", "treatment": "preserve separately; not reclassified"},
+    "unexecuted23": {"rows": 23, "sha256": "7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca", "treatment": "preserve separately; not reclassified"},
+    "D95_NEW2": {"rows": 2, "treatment": "separate source-only family; subtract canonical overlap; no behavior credit"}
+  },
+  "source_status": "PASS_SOURCE is not a body PASS and cannot produce semantic NO-GO/GO",
+  "body_status": "not run; held until restore0525 and D1000527 terminal/row controls are restored"
+}

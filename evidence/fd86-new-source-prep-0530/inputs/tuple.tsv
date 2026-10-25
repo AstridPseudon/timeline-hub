@@ -1,0 +1,5 @@
+component	commit	tree	state	role
+agent	6aefd11766c019f8deff0ca5a1bfe18e9e730822	6f6aee59e510a0d6baea023486b97302db58477	read-only qualified current normal source	Agent-generated lock
+runtime	0c62dfa63db9ff608ac9338388431e31a814e080	e22cdd54b668acea9fe593e6724b34d1a56f7530	clean qualified released Runtime	base Runtime / consumer lock
+app	9cb56c2a3f408b21a7610823b6c3b02a5b2e4f07	4f2babc3f26b4a09a023cc7bf72e8a1000e7bb96	read-only qualified source	actual four-tuple context
+composition	635f4de06fda22a85fc2e4cfc764d0153a4c9f40	5ab5191a296980a0a6bcd1178ab6902d6478a148	read-only qualified source	actual four-tuple context

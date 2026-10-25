@@ -1,0 +1,19 @@
+# Bounded recipe only. Do not execute from this packet.
+
+route=D73 existing actual central Runtime route/profile
+selector_file=inputs/selectors.txt
+selector_count=60
+selector_scope=ordinarysheet11 + D92THREE + word46 only
+held_scope=opaqueSIX + ordinaryscriptFOUR; never silently append
+default_marker=no -m
+cache=off (no pytest cacheprovider)
+parallelism=-n 3
+timeout=45s
+positive_control=parsed17 exactly once; one 7-byte marker
+poison_control=parsed1 exactly zero; zero marker bytes
+preflight=source, tuple, authority, ABI/ABA, no-write/no-leak, canonical subtraction, fresh request
+body=only after restore0525 and D1000527 terminal/row controls are restored
+submit=one genuine ready normal four-tuple at actual submit; persist central ID immediately
+restart=repeat exact central ID; no retarget
+receipt=accepted/merged receipt required before semantic accounting; preview/null receipt is not body evidence
+private=raw XML, logs, request/body, media, auth keys, and URLs remain private

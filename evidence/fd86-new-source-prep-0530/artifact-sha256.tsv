@@ -1,0 +1,10 @@
+4cfdf2a5f6dd097e61b7eb6fc425d4ceae83e89ad59159c72609dbbd07614ba8  evidence/fd86-new-source-prep-0530/README.md
+9f523939fb77371975abcc67f6b4acb8e46de2ed843eb3e6f6c85ed2535092ff  evidence/fd86-new-source-prep-0530/controls/source-preflight.txt
+4ab752d1f5d6dca47ab9fee9da1df581ea857cba2a9162fc293379faec160702  evidence/fd86-new-source-prep-0530/inputs/accounting.json
+c3fa457f3aead3607c14c27c9dc4f2dfc0db41ceeb9bda43f1c5b7b2567a6fe3  evidence/fd86-new-source-prep-0530/inputs/held-selectors.txt
+4cd25c6dc90af5315dcc9cbc298de1b23c861520364756dda0c8419daac98bed  evidence/fd86-new-source-prep-0530/inputs/receipts.tsv
+6f38684a27f3e211138f7a1b93b00e4998b62fdf25222881672a981a00d3707a  evidence/fd86-new-source-prep-0530/inputs/selectors.txt
+16d89e7e9176a125c9f04c855a1090ca7966a44407e647e4127dfdf4a65ee2e8  evidence/fd86-new-source-prep-0530/inputs/source-file-hashes.tsv
+247b23e59a8fc2e0531d688822864f7a60c056d1553a48fdf6d39c224fb8902a  evidence/fd86-new-source-prep-0530/inputs/source-manifest.tsv
+e568596cc2890502d776ad7fc348e2bdf2c6142adc393be10bc6ec64ef35b283  evidence/fd86-new-source-prep-0530/inputs/tuple.tsv
+baca73e4495f4ca73c7fece450189039a4f8bb3211402133a62ba8d72db770bc  evidence/fd86-new-source-prep-0530/route/ready-submit-recipe.txt

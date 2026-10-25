@@ -1,0 +1,6 @@
+family	protected_receipt	protected_commit	protected_status	normal_receipt	normal_status	applicability	missing_receipt_action
+ordinarysheet11	protected0500A	ccfe0a354a04584f8a44cb14e38df7020a26e863	PASS_SOURCE	ad7abdd5c8bcee42929f829cbf05a1f7bbdb0372	present	11 exact source selectors	ready source-only; no behavior credit
+D92THREE	protected0451	9b46d1ee088baee7b27d689f95042a4dad8c7f0b	PASS_SOURCE	ef6db3be0fc767c32c389702f268c5b9f23b8ec2	present	3 exact source selectors	ready source-only; no phase inference
+word46	protected0507	a8bf1e51c644bbb3ee8593a3ef888362d6dd0666	PASS_SOURCE	6aefd11766c019f8deff0ca5a1bfe18e9e730822	present	46 exact source selectors	ready source-only; selected Runtime fix is source-only
+opaqueSIX	protected0517	3c742a9cfa1509234ca70048612e7302e4e2298c	PASS_SOURCE	remote0522	pending	6 exact source selectors	hold all six; no functional credit until normal receipt
+ordinaryscriptFOUR	protected0518	060d51642bbffdba51297acfe2341329212e82a2	PASS_SOURCE	remote0525	pending	4 exact source selectors	hold all four; no functional credit until normal receipt
