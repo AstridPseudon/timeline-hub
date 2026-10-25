@@ -94,8 +94,8 @@ describe('TourCard', () => {
     expect(screen.getByText(body)).toBeInTheDocument();
     for (const label of labels) expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     for (const step of SCRIPT.strip) expect(screen.getAllByText(step).length).toBeGreaterThan(0);
-    // The strip fills act by act: one thumbnail per step reached.
-    expect(container.querySelectorAll('ol img, ol video')).toHaveLength(tourAct);
+    // The strip fills act by act; the video keeps a still underneath until decoded.
+    expect(container.querySelectorAll('ol img, ol video')).toHaveLength(tourAct + (tourAct === 3 ? 1 : 0));
 
     expect(container.querySelector('.editor-tour-card-playing')).not.toBeNull();
     advance(TOUR_CARD_ENTRANCE_MS - 1);
@@ -115,7 +115,7 @@ describe('TourCard', () => {
     const { onPrimary, container } = renderAt(3, 'finale');
     expect(screen.getByRole('heading')).toHaveTextContent(SCRIPT.finale.title);
     for (const recap of SCRIPT.finale.recap) expect(screen.getByText(recap)).toBeInTheDocument();
-    expect(container.querySelectorAll('ol img, ol video')).toHaveLength(3);
+    expect(container.querySelectorAll('ol img, ol video')).toHaveLength(4);
     expect(screen.queryByRole('button', { name: /Skip tour/ })).toBeNull();
     advance(TOUR_FINALE_ENTRANCE_MS);
     expect(cardReady()).toBe(true);

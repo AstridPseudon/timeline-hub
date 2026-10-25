@@ -1,4 +1,5 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   editorTourStage,
   getEditorTourState,
@@ -15,7 +16,7 @@ import {
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events.ts';
 import { editorTourSelector, editorTourTrackSelector } from '@/tools/video-editor/tour/anchors.ts';
 import { useTourMediaWarmup } from './useTourMediaWarmup.ts';
-import { EDITOR_TOUR_MEDIA } from '../tourMedia.ts';
+import { EDITOR_TOUR_MEDIA, tourSaveData } from '../tourMedia.ts';
 import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
 import { createEditorTourStagePatch, createEditorTourStageRemovalPatch, tourStageFocusClipId, tourTrackOrder, TOUR_ANCHORS, TOUR_CLIP_IDS } from './tourStages.ts';
 
@@ -83,8 +84,8 @@ async function waitForTourVideoFrame(frame: number | undefined, isCancelled: () 
 }
 
 /**
- * While beat 1 `respond` plays the scene is not on the timeline yet, so a hidden copy boots in an
- * invisible iframe; the real clip then lands on a browser that has already compiled the world.
+ * Before the first land, boot the world and render its opening frame in a composited iframe.
+ * This warms its assets/code/shaders; the real preview still acknowledges its own first frame.
  */
 function SceneWarmup({ liveScene, onWarm }: { liveScene: Record<string, unknown>; onWarm: () => void }) {
   return (
@@ -112,7 +113,7 @@ function SceneWarmup({ liveScene, onWarm }: { liveScene: Record<string, unknown>
  * Reports `ready.timeline` per beat.
  */
 export function EditorTourTimelineDriver() {
-  useTourMediaWarmup();
+  const warmupStarted = useTourMediaWarmup();
   const runId = useEditorTour((state) => state.runId);
   const act = useEditorTour((state) => state.act);
   const beat = useEditorTour((state) => state.beat);
@@ -127,10 +128,13 @@ export function EditorTourTimelineDriver() {
   const [sceneLoadError, setSceneLoadError] = useState(false);
   const [scenePreparing, setScenePreparing] = useState<'waiting' | 'error' | null>(null);
   const [retry, setRetry] = useState(0);
+  const [presented, setPresented] = useState(false);
+  const [posterHost, setPosterHost] = useState<Element | null>(null);
   const applying = useRef(false);
 
-  // The world loads as soon as the tour mounts, well before the first `land` beat needs it.
+  // Start the world and its lazy authoring chunk after first paint, before any Send.
   useEffect(() => {
+    if (!warmupStarted) return;
     let active = true;
     setSceneLoadError(false);
     loadTourLiveScene().then(
@@ -138,7 +142,13 @@ export function EditorTourTimelineDriver() {
       () => { if (active) setSceneLoadError(true); },
     );
     return () => { active = false; };
-  }, [sceneLoadAttempt]);
+  }, [sceneLoadAttempt, warmupStarted]);
+
+  useLayoutEffect(() => {
+    setPresented(false);
+    setPosterHost(document.querySelector('[data-testid="video-editor-preview-surface"]')
+      ?? document.querySelector(editorTourSelector('preview')));
+  }, [runId, act, beat, appliedStage]);
 
   useEffect(() => {
     if (!loaded || !ops || applying.current) return;
@@ -171,7 +181,8 @@ export function EditorTourTimelineDriver() {
   }, [loaded, ops, liveScene, stage, appliedStage, retry]);
 
   const instant = useEditorTour((state) => state.instant);
-  const warming = act === 1 && beat === 'respond' && appliedStage === 0 && !instant;
+  const warming = warmupStarted && act === 1 && appliedStage === 0 && !instant
+    && (!tourSaveData() || beat !== 'welcome');
   useEffect(() => {
     if (!warming) return;
     const timer = window.setTimeout(() => setWarm(true), WARMUP_GIVE_UP_MS);
@@ -222,7 +233,10 @@ export function EditorTourTimelineDriver() {
             // playhead. Only then seek the new composition, whose canvas retains its last picture.
             if (await waitForTourVideoFrame(undefined, videoWaitCancelled) && !videoWaitCancelled()) {
               previewRef.current?.seek(0);
-              if (await waitForTourVideoFrame(0, videoWaitCancelled) && !videoWaitCancelled()) previewRef.current?.play();
+              if (await waitForTourVideoFrame(0, videoWaitCancelled) && !videoWaitCancelled()) {
+                setPresented(true);
+                previewRef.current?.play();
+              }
             }
             if (!isCancelled()) markEditorTourReady('timeline');
             return;
@@ -234,7 +248,10 @@ export function EditorTourTimelineDriver() {
             const painted = await waitForTourSceneFrame(liveScene?.revision, sceneWaitCancelled, setScenePreparing);
             // Skipping an animation may advance the card, but must not run an unready scene clock.
             // Back/instant entry still needs the actual opening frame before it can autoplay.
-            if (painted && !sceneWaitCancelled()) previewRef.current?.play();
+            if (painted && !sceneWaitCancelled()) {
+              setPresented(true);
+              previewRef.current?.play();
+            }
             if (!isCancelled()) setScenePreparing(null);
           } else if (!isCancelled()) previewRef.current?.play();
         }
@@ -244,17 +261,25 @@ export function EditorTourTimelineDriver() {
     return () => { cancelled = true; };
   }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, previewRef, liveScene]);
 
-  if (sceneLoadError) return (
+  const notice = sceneLoadError ? (
     <div role="alert" className="fixed bottom-6 left-1/2 z-[2147483647] flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-background p-4 text-sm text-foreground shadow-lg">
       <span>The Lantern Valley demo could not load. Check your connection and try again.</span>
       <button type="button" className="shrink-0 rounded-md bg-primary px-3 py-2 text-primary-foreground" onClick={() => setSceneLoadAttempt((count) => count + 1)}>Retry demo</button>
     </div>
-  );
-  if (scenePreparing && act === 1 && beat === 'land') return (
+  ) : scenePreparing && act === 1 && beat === 'land' ? (
     <div role={scenePreparing === 'error' ? 'alert' : 'status'} className="fixed bottom-6 left-1/2 z-[2147483647] flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-background p-4 text-sm text-foreground shadow-lg">
       <span>{scenePreparing === 'error' ? 'The 3D world could not render.' : 'Preparing the 3D world. Playback will start when its first frame is ready.'}</span>
       <button type="button" className="shrink-0 rounded-md bg-primary px-3 py-2 text-primary-foreground" onClick={() => { setScenePreparing(null); startEditorTour(); }}>Restart demo</button>
     </div>
-  );
-  return warming && liveScene ? <SceneWarmup liveScene={liveScene} onWarm={() => setWarm(true)} /> : null;
+  ) : null;
+  return <>
+    {notice}
+    {warming && liveScene && <SceneWarmup liveScene={liveScene} onWarm={() => setWarm(true)} />}
+    {posterHost && beat === 'land' && act !== 2 && !presented && createPortal(
+      <img src={act === 1 ? EDITOR_TOUR_MEDIA.frames[0].url : EDITOR_TOUR_MEDIA.stills[0].url}
+        alt="" aria-hidden data-editor-tour-poster
+        className="pointer-events-none absolute inset-0 z-20 h-full w-full bg-black object-contain" />,
+      posterHost,
+    )}
+  </>;
 }
