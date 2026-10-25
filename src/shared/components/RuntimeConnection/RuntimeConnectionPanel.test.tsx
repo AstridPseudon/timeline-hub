@@ -194,6 +194,15 @@ describe('RuntimeConnectionPanel', () => {
     expect(connect).toHaveBeenCalledOnce();
   });
 
+  it('connect pending: stays centred on a phone, while the other cards rest along the bottom', () => {
+    panel(connectionFor({ status: 'needs_permission' }, { isChecking: true }));
+    const layer = screen.getByTestId('runtime-not-connected');
+    expect(layer.querySelector('.max-sm\\:items-end')).toBeNull();
+    cleanup();
+    panel(connectionFor({ status: 'needs_permission' }));
+    expect(screen.getByTestId('runtime-not-connected').querySelector('.max-sm\\:items-end')).not.toBeNull();
+  });
+
   it('connect pending: tells the person to choose Allow, says where, and draws the install dialog\'s arrow outside the card, aimed top left', () => {
     const view = panel(connectionFor({ status: 'needs_permission' }, { isChecking: true }));
 

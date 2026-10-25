@@ -89,9 +89,9 @@ const ConnectedContext = createContext(false);
  * stays mounted while the screen changes (set up, Allow, blocked), so only the card changes. On the way out, the card
  * lifts away and the layer fades, revealing the real editor that has mounted beneath it in the same places.
  */
-function GateLayer({ dataState, exit, children }: { dataState: string; exit: RuntimeConnectionPanelExit | null; children: ReactNode }) {
+function GateLayer({ dataState, exit, placement, children }: { dataState: string; exit: RuntimeConnectionPanelExit | null; placement?: 'center'; children: ReactNode }) {
   const leaving = useLeaving(exit, CONNECTED_MIN_MS);
-  return <EditorCardLayer aria-label={COPY.panelLabel} data-testid="runtime-not-connected" data-state={dataState} data-leaving={leaving ? '' : undefined} leaving={leaving} cardKey={dataState}>
+  return <EditorCardLayer aria-label={COPY.panelLabel} data-testid="runtime-not-connected" data-state={dataState} data-leaving={leaving ? '' : undefined} leaving={leaving} cardKey={dataState} placement={placement}>
     <ConnectedContext.Provider value={Boolean(exit)}>{children}</ConnectedContext.Provider>
   </EditorCardLayer>;
 }
@@ -322,5 +322,6 @@ export function RuntimeConnectionPanel({ connection, exit = null, onBack }: Runt
   if (state.status === 'connecting') return <ConnectingPanel exit={exit} onBack={onBack} />;
   const screen = screenFor(connection, onBack);
   if (!screen) return null;
-  return <GateLayer dataState={screen.name} exit={exit}>{screen.card}</GateLayer>;
+  // The permission prompt card points up at the browser's prompt, so on a phone it stays centred, not along the bottom.
+  return <GateLayer dataState={screen.name} exit={exit} placement={screen.name === 'pending' ? 'center' : undefined}>{screen.card}</GateLayer>;
 }
