@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.agent.d134.admission.v1",
+  "service_id": "agent-agent-core-full-1025191128-18455",
+  "suite": "agent-core-full",
+  "target": "integration:agent",
+  "accepted_route": "normal test service",
+  "fresh_available_bytes": 6639108096,
+  "minimum_admission_bytes": 4700000000,
+  "stop_line_bytes": 4000000000,
+  "other_heavy_body_live": false,
+  "packages_acquired": false,
+  "child_or_profile_build": false,
+  "environment_fallback": false,
+  "full_body_count": 1
+}

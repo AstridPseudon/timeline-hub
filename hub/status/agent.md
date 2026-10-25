@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T19:07:16Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
-# agent board, 2026-10-25T19:04Z
+<!-- agent | 2026-10-25T19:11:51Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
+# agent board, 2026-10-25T19:09Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -92,7 +92,7 @@
 | D107 transcript root | Trace persisted pin after restart | Luna read only | Genuine private authority record | later | Reader1634; final1646 PASS | Source map and corrected custody PASS | Whole path source traced. Owner UNKNOWN; persisted/private record missing. Both317 failures live; no unchanged body or speculative guard author. | Evidence only |
 | D128 fixture result | Review first actual parent failure | Independent Luna | Source1747 fixture correction | blocked:runtime | Reviewer1829 complete; Runtime first return requested1833 | FAIL with exact source cause | Private tests/suites.conf baseline is absent before Store.ensure. No body repeated. [Review](../../design/agt-OPS-inventory-E2E-failure-review-1829-report.md) | Evidence only |
 
-| D134 interim measurement | Prepare count if custody remains red at20:00Z | Luna |20:00 condition and fresh disk check | gated:20:00Z | Prep1844; dry1848; review1857 | Independent1857 PASS; actual DRY controls PASS | Fresh frozen manifests differ only zero agent_sha. Existing environment preflight accepted. No collection/body or ship credit. [Proof](../../design/agt-F-D134-dry-preflight-1848-preflight.json) | Frozena4e016 /5e9ad |
+| D134 interim measurement | Measure frozen full core now | Luna / service | Superseding START NOW decision | doing | agt-F-D134-measurement-1909 | Independent1857 and DRY controls PASS | Controller queued; service ID pending. MEASUREMENT only, no ship credit. E2E waits for core terminal. | Frozen a4e016 /5e9ad |
 Integration: Agent a30e74e901a28b39c28facba3deb00d76f186e23, tree ece8e0887e48e45cb1fce85b1256c49a0f6126c0; clean at 18:27Z. Native companions HOME78db and graph callers HOMEa30e have exact independently reviewed blobs. Runtime ab1e lock remains qualified. Released Agent070dfc stays unchanged until proper batch core. Frozen D128 tuple a4e016 /5e9ad /d8a1 /635f stays exact. Held9ea, D100 product and D130 SWAP source excluded.
 
 core open:425 on immutable30693; REG14 remains until next full core. Original host14 independently passed at normal96df. Checkpoint8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips; exact450 bad conserved. No bounded-proof deduction, retirement0.
@@ -106,7 +106,7 @@ Blockers: SWAP safety — D130 holds recovery and related qualification after au
 Blockers: D69 and D59 — genuine installed render90, platform proof, final upstream audit, fullP2, final tupleP1-P5, wheel and ZIP still owed. Farm remains D77 only, after qualified maker kit.
 
 Next ready: Runtime1855 completes the focused return after portable1847 FAIL, then independent review and target check-only, then exact changed fixture at Agent sole venue. Successful parent RED/candidate GREEN needs one independent result review, reviewed CAS kit install, actual received hash/mode, and same-WIP controller1722 ONE changed normal child request/core. Local production request and core remain unspent.
-live 0 / cap 2 critical receiving; ready-undispatched 0 local. D134 independent1857 PASS, conditional measurement ready for20:00 only. Both local slots available for D128 receiving after Runtime final portable SOURCE PASS; no heavy body.
+live 1 / cap 1 heavy; ready-undispatched 0 local. D134 controller1909 queued under superseding START NOW decision. D128 fixture waits for independent portable PASS and core terminal. No other body.
 
 Disk:6.684GB at18:29Z; fresh scan found0 ended clean nonKEEP worktrees. Sweep3 removed0; compact packed0 and gzipped2 old logs. Protected d22/f1012 and all branches/evidence retained. Six-pin guard receipt remains design/agent-D128-six-pin-guards-1557.json.
 
@@ -138,3 +138,5 @@ Pass18:58Z: local1848 completed actualDRY PASS: positive preflight0/stub17/oneca
 Pass19:01Z: independent1857 PASS confirms exactsource/manifests/counters and durable conditional measurement readiness, no repeatedDRY/body. Exact review packet published. Runtime peer1848 received: source674d/treef2abd is local; runner05c7 and supporte85b fixed; actual source reviewer1847 active. No duplicate review/receiver or execution before itsPASS. Parentstderr remains EXACTMISSING, source1829 alreadypublished. Gate3 deferred; App D100 candidate now24PASS3FAIL, independent1843 actualwholepath owns attribution before any firstreturn.
 
 Pass19:04Z: H6 Runtime18:56 confirms portable1847 FAIL and focused return1855 active. No unreviewed674d check-only or body. Agent sole receiving slot ready after final independent PASS; peer1904 sent. App18:54 provider-leaf table EXACTMISSING, no measured cost author justified. Farm19:03 confirms D77 only and ZIP source dry-run pending lead disposition. Disk6.649GB at19:02; sweep3/compact running. No new inbox beyond1804418bytes; no source merge or core count.
+
+Pass2026-10-25T19:09Z: recorded START NOW delivered19:07:26 supersedes20:00 gate. Dispatched Luna heavy controller1909 from exact1848 after fresh6641332224bytes/no other heavy. Existing1848/1857 DRY/source controls reused; no new packages. Service ID pending. E2E remains NOTGREEN and waits for core terminal if ready. No count or ship credit yet. INBOX through1806444bytes pending exact recount.

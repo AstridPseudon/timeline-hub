@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.agent.d134.service.v1",
+  "status": "SUBMITTED",
+  "suite": "agent-core-full",
+  "service_id": "agent-agent-core-full-1025191128-18455",
+  "target": "integration:agent",
+  "requested_utc": "2026-10-25T19:11:28Z",
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1025191128-18455",
+  "request_mode": "--no-cache",
+  "decision_receipt": "AgentINBOX2026-10-25T19:07:26Z MAIN19:24Z START NOW",
+  "admission": {
+    "clock_gate": "OPEN",
+    "custody_e2e_at_20z": "NOT_GREEN",
+    "dispatch": "AUTHORIZED",
+    "fresh_available_bytes": 6639108096,
+    "stop_line_bytes": 4000000000,
+    "other_heavy_body_live": false
+  },
+  "prior_setup_refusal": {
+    "service_id": "agent-agent-core-full-1025191109-29996",
+    "exit": 126,
+    "body_started": false,
+    "reason": "measurement recipe script lacked executable mode; no launcher or pytest body ran"
+  }
+}
