@@ -1,0 +1,56 @@
+{
+  "schema": "timeline.agent.d134.managed105.review.v1",
+  "task": "D134 independent READ ONLY protected assessment of shared105 author2055",
+  "verdict": "FINITE_SOURCE_ASSESSMENT_UNAPPLIED",
+  "source_delta": false,
+  "product_fault_proved": false,
+  "root": {
+    "id": "root-019",
+    "members": 105,
+    "setup_or_expectation_proved": 102,
+    "unknown": 3
+  },
+  "current_source": {
+    "commit": "5b11a383247c7877b85ec6ae7c08f5cd43d790e7",
+    "tree": "71f45785a19ca3213eb50ac47ab0b9359c0119ca",
+    "clean": true,
+    "target_scope": [
+      "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "tests/editing_conformance/test_commit_runtime_parent_media_swap.py",
+      "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+      "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "tests/editing_conformance/test_recipe_occurrence_media.py",
+      "tests/timeline/test_authoring_media.py"
+    ],
+    "target_files_equal_shared_author_and_prior_base": true,
+    "unrelated_current_delta_from_shared_author": [
+      "tests/editing_conformance/test_occurrence_fork_source_baseline.py"
+    ]
+  },
+  "representative": {
+    "node": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_exact_capture_acceptance_inverse_redo_restart_and_retry[image-add]",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "outcome": "setup_refused",
+    "first_boundary": "authenticated SDK shot-item correspondence guard",
+    "refusal": "shot item correspondence changed",
+    "status": "not behavior-green"
+  },
+  "d100_applicability": {
+    "held_source": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "held_product_path": "astrid/sdk/timeline/_command_state.py",
+    "held_product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "current_product_sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+    "applicable_to_exact_first_birth": true,
+    "behavior_qualified": false,
+    "reason": "D100 authenticates the same physical shot/revision/internal image and empty item_id_map, then permits unique non-empty physical item membership without extending copied-placement alias correspondence. D134's accepted occurrence.create supplies that authenticated empty physical source; a separate item-bearing source is not required by this source comparison.",
+    "conserved_guards": "source shot/revision/internal IDs and content digests, empty map, non-empty unique IDs, copied/remapped exact correspondence, wrong-pair/digest/duplicate/empty/no-write refusals",
+    "no_separate_accepted_source_item_needed": true
+  },
+  "next_owner": "Agent provider owner of held D100 State.shot_item_map/_item_ids/project_shot_items source, then shared105 setup owner for the protected representative rerun",
+  "missing_input": "qualified behavioral receipt for held 9486 on pinned Runtime ab1e through the registered commitTimeline/provider route, followed by the unchanged shared105 representative; no guessed item allocation, source mapping, accepted history, or fixture rewrite",
+  "all_consumers": "UNAPPLIED; all 105 remain open"
+}

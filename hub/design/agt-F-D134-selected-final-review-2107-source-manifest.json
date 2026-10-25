@@ -1,0 +1,27 @@
+{
+  "agent_head": "27140eaafa748eb1d7c0789c8150b5872d1c07ad",
+  "agent_parent": "150597e860d386b6d504df63c1a99e7896c33fb7",
+  "original_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "first_return": "4073fb0f84a9d0afbcba61b9406748a09d9c3c62",
+  "agent_source": {
+    "tests/sdk/test_timeline_selected_schema_runtime.py": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+    "astrid/sdk/timeline/_doc_patch.py": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+    "astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+    "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+  },
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "runtime_protocol/timeline_commit_baseline.py": "36076f4a0ffa26e6544ec9704000a22a6bd46370cacb6577ea9f5dadac346e31",
+    "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+    "runtime_protocol/service.py": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b"
+  },
+  "source_lines": {
+    "Closure.payload": "astrid/sdk/timeline/_doc_patch.py:155-163",
+    "Closure.install": "astrid/sdk/timeline/_doc_patch.py:224-267",
+    "apply_change": "astrid/sdk/timeline/_doc_patch.py:379-457",
+    "patch_sequential_loop": "astrid/sdk/timeline/_doc_patch.py:478-520",
+    "C0_status_and_historical_rules": "/home/user/work/wt/rt-pin-ab1e4f61/contract/commit-v2.md:13-33"
+  }
+}

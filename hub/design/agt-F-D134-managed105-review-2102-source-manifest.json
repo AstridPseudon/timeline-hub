@@ -1,0 +1,474 @@
+{
+  "current": {
+    "commit": "5b11a383247c7877b85ec6ae7c08f5cd43d790e7",
+    "tree": "71f45785a19ca3213eb50ac47ab0b9359c0119ca"
+  },
+  "files": {
+    "tests/editing_conformance/test_commit_runtime_occurrence_media.py": {
+      "assert_nodes": 28,
+      "ast_no_attributes_sha256": "9bbb40881e070cf8c396bb4ef4eab0b1eba2a902fa5512b4059482cf7584578d",
+      "ast_sha256": "4dfa958f558871788776fae1adbbe8efe51cf013ade807ded8a90136d9ff9a03",
+      "bytes": 25622,
+      "git_blob": "c4f54e34536dabbf196fd9a17c337b78394506e3",
+      "history": {
+        "current": {
+          "blob": "c4f54e34536dabbf196fd9a17c337b78394506e3",
+          "sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1"
+        },
+        "prior_base": {
+          "blob": "c4f54e34536dabbf196fd9a17c337b78394506e3",
+          "sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1"
+        },
+        "shared_author": {
+          "blob": "c4f54e34536dabbf196fd9a17c337b78394506e3",
+          "sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1"
+        }
+      },
+      "sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "test_functions": [
+        "test_exact_capture_acceptance_inverse_redo_restart_and_retry",
+        "test_invalid_exact_selection_refuses_without_any_writes",
+        "test_source_metadata_is_part_of_the_exact_selection_fingerprint",
+        "test_capture_to_accept_races_refuse_atomically"
+      ]
+    },
+    "tests/editing_conformance/test_commit_runtime_parent_media_swap.py": {
+      "assert_nodes": 62,
+      "ast_no_attributes_sha256": "40ef73b73aae9ac2d56e3c9b605db6c19360b6c34132249268902e0918520325",
+      "ast_sha256": "89acb9832a0dfa8d94bbdd0ac3bcc6e8c768c8adaabba4d931dee32115a6bfba",
+      "bytes": 22213,
+      "git_blob": "76f584b0b323f47a564f0763f0ae670ac759443a",
+      "history": {
+        "current": {
+          "blob": "76f584b0b323f47a564f0763f0ae670ac759443a",
+          "sha256": "e733226964bb5df253d3a3b4bb887e6fe573eda9090623c91725aa3f2c6f1ec9"
+        },
+        "prior_base": {
+          "blob": "76f584b0b323f47a564f0763f0ae670ac759443a",
+          "sha256": "e733226964bb5df253d3a3b4bb887e6fe573eda9090623c91725aa3f2c6f1ec9"
+        },
+        "shared_author": {
+          "blob": "76f584b0b323f47a564f0763f0ae670ac759443a",
+          "sha256": "e733226964bb5df253d3a3b4bb887e6fe573eda9090623c91725aa3f2c6f1ec9"
+        }
+      },
+      "sha256": "e733226964bb5df253d3a3b4bb887e6fe573eda9090623c91725aa3f2c6f1ec9",
+      "test_functions": [
+        "test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo",
+        "test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo",
+        "test_legacy_composition_writer_checker_rejects_planted_product_write",
+        "test_invalid_selected_media_refuses_without_writes",
+        "test_lifecycle_race_refuses_at_acceptance",
+        "test_accepted_history_rebase_and_guarded_aba_undo"
+      ]
+    },
+    "tests/editing_conformance/test_commit_runtime_video_unplace.py": {
+      "assert_nodes": 23,
+      "ast_no_attributes_sha256": "c82b9000d1384d5abc2ccb36f1e066c47dfffe905fab83f40a03dcb560716603",
+      "ast_sha256": "73519ab4e2383b32006bb89683403280aa4464ab66dc072ad59a80ebe3a3d410",
+      "bytes": 15349,
+      "git_blob": "4abe70f006bf7a9a752a3d6ab9cc34bed507dafe",
+      "history": {
+        "current": {
+          "blob": "4abe70f006bf7a9a752a3d6ab9cc34bed507dafe",
+          "sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2"
+        },
+        "prior_base": {
+          "blob": "4abe70f006bf7a9a752a3d6ab9cc34bed507dafe",
+          "sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2"
+        },
+        "shared_author": {
+          "blob": "4abe70f006bf7a9a752a3d6ab9cc34bed507dafe",
+          "sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2"
+        }
+      },
+      "sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "test_functions": [
+        "test_capture_commit_reload_undo_redo_and_restart_safe_retry"
+      ]
+    },
+    "tests/editing_conformance/test_recipe_m2_auto_placement.py": {
+      "assert_nodes": 46,
+      "ast_no_attributes_sha256": "5a3776bc08dda2bb22ace75d3901e60369b8f2c62b31a2cb7d61b7ea13a68365",
+      "ast_sha256": "bda086bbd9e9012169eb9e195979eb605eda8f4ebff294e17cce84a3a4e1176a",
+      "bytes": 26008,
+      "git_blob": "fe6b163dab6006c0a994c04fd0ee5bfdc5a6f185",
+      "history": {
+        "current": {
+          "blob": "fe6b163dab6006c0a994c04fd0ee5bfdc5a6f185",
+          "sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861"
+        },
+        "prior_base": {
+          "blob": "fe6b163dab6006c0a994c04fd0ee5bfdc5a6f185",
+          "sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861"
+        },
+        "shared_author": {
+          "blob": "fe6b163dab6006c0a994c04fd0ee5bfdc5a6f185",
+          "sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861"
+        }
+      },
+      "sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "test_functions": [
+        "test_portable_goldens",
+        "test_exact_capture_replay_inverse_and_redo",
+        "test_anchor_after_starts_at_the_anchor_end_with_the_completion_default",
+        "test_absent_anchor_appends_at_the_lane_end_and_is_recorded",
+        "test_absent_anchor_on_an_empty_lane_starts_at_the_occurrence_start",
+        "test_video_duration_is_supplied_or_defaults_and_never_exceeds_the_verified_media",
+        "test_the_exact_completed_variant_is_bound_and_siblings_are_untouched",
+        "test_shared_parent_and_unbound_owners_are_refused_without_touching_input",
+        "test_unverified_or_unsupported_media_is_refused",
+        "test_an_anchor_with_unusable_timing_refuses_instead_of_falling_back",
+        "test_replay_conflicts_when_the_anchor_moved_meanwhile_and_a_rebuild_follows_it",
+        "test_replay_conflicts_when_the_lane_end_moved_meanwhile_and_a_rebuild_follows_it",
+        "test_a_clip_moving_onto_the_lane_conflicts_with_the_recorded_lane_end",
+        "test_the_saved_fallback_time_and_track_win_and_stay_fixed_when_siblings_move",
+        "test_the_saved_preferred_track_wins_with_a_present_anchor",
+        "test_a_deleted_saved_track_refuses_instead_of_recomputing_another_lane",
+        "test_a_birth_cannot_appear_through_both_occurrences_after_a_retarget",
+        "test_replay_refuses_when_the_anchor_was_deleted_meanwhile_and_a_rebuild_falls_back",
+        "test_provider_accepts_completion_placement_with_exact_undo_and_redo"
+      ]
+    },
+    "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py": {
+      "assert_nodes": 36,
+      "ast_no_attributes_sha256": "48bb7e83c8771f055d129756731554455e820707cbc478e8d2a15ae4799dd70c",
+      "ast_sha256": "6ab0cc48b3a0d9f1f21e2ab0a9f42c1673cd4181d788fe437e1cc330d3cea937",
+      "bytes": 14679,
+      "git_blob": "68cf00ca0687262d029b70d9789ec0bd4dd76f8e",
+      "history": {
+        "current": {
+          "blob": "68cf00ca0687262d029b70d9789ec0bd4dd76f8e",
+          "sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9"
+        },
+        "prior_base": {
+          "blob": "68cf00ca0687262d029b70d9789ec0bd4dd76f8e",
+          "sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9"
+        },
+        "shared_author": {
+          "blob": "68cf00ca0687262d029b70d9789ec0bd4dd76f8e",
+          "sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9"
+        }
+      },
+      "sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "test_functions": [
+        "test_portable_goldens",
+        "test_exact_capture_replay_inverse_and_redo",
+        "test_create_is_scoped_birth_and_leaves_parent_and_sibling_untouched",
+        "test_unplace_clears_the_child_and_keeps_its_registry_binding",
+        "test_provider_accepts_create_with_exact_undo_and_redo",
+        "test_provider_accepts_unplace_with_exact_undo_and_redo",
+        "test_create_refusals_preserve_input",
+        "test_unplace_refusals_preserve_input",
+        "test_registry_binding_aba_blocks_undo_and_replay_refuses_changed_binding",
+        "test_disjoint_edit_rebases_and_retains_original_capture",
+        "test_later_consumer_of_created_binding_blocks_inverse",
+        "test_unplace_refuses_when_a_member_declares_a_relation",
+        "test_capture_refuses_unsupported_owner_and_identity_before_execution",
+        "test_pool_auto_and_relative_placement_are_not_supported",
+        "test_undo_of_create_refuses_after_any_intervening_write_to_the_created_clip",
+        "test_create_cannot_reuse_a_removed_clip_identity_while_it_is_occupied"
+      ]
+    },
+    "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py": {
+      "assert_nodes": 71,
+      "ast_no_attributes_sha256": "f59ff26dc35e604bf983a00fab0b1e5ffcdc502268ab1b05aca66ae07b0f460f",
+      "ast_sha256": "21ebc0105c4f055219a090ab6736effd4a0908a5b13864064e35ba953eeff07b",
+      "bytes": 23917,
+      "git_blob": "8fb74eb634db888df97cf923c4df2b4023372196",
+      "history": {
+        "current": {
+          "blob": "8fb74eb634db888df97cf923c4df2b4023372196",
+          "sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6"
+        },
+        "prior_base": {
+          "blob": "8fb74eb634db888df97cf923c4df2b4023372196",
+          "sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6"
+        },
+        "shared_author": {
+          "blob": "8fb74eb634db888df97cf923c4df2b4023372196",
+          "sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6"
+        }
+      },
+      "sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "test_functions": [
+        "test_portable_goldens",
+        "test_exact_capture_replay_inverse_and_redo",
+        "test_append_goes_after_the_greatest_end_over_every_lane_with_the_four_second_hold",
+        "test_append_to_an_empty_shot_starts_at_the_occurrence_start",
+        "test_append_past_the_occurrence_window_is_refused_by_the_existing_boundary",
+        "test_lane_is_the_anchor_lane_when_the_anchor_is_in_the_shot_else_the_occurrence_lane",
+        "test_the_anchor_never_moves_the_start",
+        "test_an_occupied_start_frame_shifts_by_one_while_interval_overlap_is_allowed",
+        "test_the_shift_chains_over_consecutive_taken_starts_and_clamps_negative_frames",
+        "test_the_exact_completed_variant_is_bound_and_the_other_occurrence_is_untouched",
+        "test_an_unowned_shared_legacy_or_display_owner_is_refused_without_touching_input",
+        "test_unverified_unsupported_or_too_short_media_is_refused",
+        "test_replay_conflicts_when_the_anchor_lane_changed_and_a_rebuild_inherits_the_new_lane",
+        "test_replay_conflicts_when_the_shot_extent_grew_and_a_rebuild_appends_after_it",
+        "test_replay_conflicts_when_a_clip_moved_onto_the_shifted_start_and_a_rebuild_shifts_again",
+        "test_an_exact_retry_of_the_same_request_returns_the_same_result",
+        "test_a_birth_cannot_appear_through_both_occurrences_after_a_retarget",
+        "test_replay_refuses_when_a_shot_clip_was_deleted_meanwhile_and_a_rebuild_appends_after_the_rest",
+        "test_unplace_removes_the_image_expression_keeps_the_binding_and_is_guarded",
+        "test_provider_accepts_shared_placement_with_exact_undo_and_redo",
+        "test_a_null_frame_records_pool_membership_without_a_clip",
+        "test_keep_as_pooled_removes_the_clip_and_keeps_membership",
+        "test_original_birth_refuses_a_native_pool_add_even_when_the_exact_alias_was_already_bound",
+        "test_original_shared_request_refuses_a_changed_legacy_group_eligibility",
+        "test_birth_reads_come_from_the_handler_and_other_owner_pool_edits_rebase"
+      ]
+    },
+    "tests/editing_conformance/test_recipe_m2_shot_pool.py": {
+      "assert_nodes": 59,
+      "ast_no_attributes_sha256": "f2128441b99eb30eac349d79d4c33c036408c94769a07833e9920e3d621a34be",
+      "ast_sha256": "41680250068a28b3b0c08f1f808e4c475cef0864df43f992f245528aa2f3f8ec",
+      "bytes": 28695,
+      "git_blob": "8f13e7082b6afc7d95ebba4c8d649e7712872acf",
+      "history": {
+        "current": {
+          "blob": "8f13e7082b6afc7d95ebba4c8d649e7712872acf",
+          "sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e"
+        },
+        "prior_base": {
+          "blob": "8f13e7082b6afc7d95ebba4c8d649e7712872acf",
+          "sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e"
+        },
+        "shared_author": {
+          "blob": "8f13e7082b6afc7d95ebba4c8d649e7712872acf",
+          "sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e"
+        }
+      },
+      "sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "test_functions": [
+        "test_portable_goldens",
+        "test_exact_capture_replay_inverse_and_redo",
+        "test_add_appends_in_order_and_binds_the_exact_media_without_touching_the_rest",
+        "test_remove_keeps_the_binding_and_undo_restores_the_original_position",
+        "test_absent_and_empty_pools_are_distinct_and_removing_the_last_member_keeps_an_empty_list",
+        "test_the_first_add_keeps_existing_siblings_of_the_astrid_namespace",
+        "test_legacy_group_pool_ids_in_provenance_are_never_rewritten",
+        "test_refusals_preserve_input",
+        "test_args_are_closed_and_the_selector_must_be_an_explicit_occurrence",
+        "test_schema_registration_is_additive_and_complete",
+        "test_undo_refuses_after_any_intervening_write_to_the_pool_and_replay_refuses_a_changed_pool",
+        "test_disjoint_edits_rebase_and_retain_the_original_capture",
+        "test_provider_accepts_add_and_remove_with_exact_undo_and_redo",
+        "test_a_null_frame_pools_without_a_clip_and_refuses_a_frame_or_anchor",
+        "test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one",
+        "test_promotion_and_keep_as_pooled_round_trip_through_the_provider",
+        "test_keep_as_pooled_needs_the_exact_media_of_the_placed_clip"
+      ]
+    },
+    "tests/editing_conformance/test_recipe_occurrence_media.py": {
+      "assert_nodes": 43,
+      "ast_no_attributes_sha256": "6d9d4b0c96b433b4ba4a5031ad40fe8a7d4007dbc922bf4e7431e2a52d1b615d",
+      "ast_sha256": "4d694176e6acef74b57398540e95869d4bfa176e52ee9281104126597a3d15ea",
+      "bytes": 25046,
+      "git_blob": "c6bc1f1991a16387b80c78a808879cdf0eb1b0f9",
+      "history": {
+        "current": {
+          "blob": "c6bc1f1991a16387b80c78a808879cdf0eb1b0f9",
+          "sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd"
+        },
+        "prior_base": {
+          "blob": "c6bc1f1991a16387b80c78a808879cdf0eb1b0f9",
+          "sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd"
+        },
+        "shared_author": {
+          "blob": "c6bc1f1991a16387b80c78a808879cdf0eb1b0f9",
+          "sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd"
+        }
+      },
+      "sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "test_functions": [
+        "test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields",
+        "test_exact_capture_replay_scoped_birth_and_inverse",
+        "test_image_hold_clip_type_preserves_literal_hold_semantics",
+        "test_portable_goldens",
+        "test_existing_binding_is_required_exactly_without_birth",
+        "test_refusals_preserve_input",
+        "test_asset_address_alias_overlap_and_guarded_dependency",
+        "test_disjoint_edit_rebases_but_same_value_asset_write_blocks_undo",
+        "test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo",
+        "test_same_alias_materialized_payload_still_guards_all_other_input",
+        "test_provider_exact_reload_inverse_redo_and_retired_asset_reservation",
+        "test_missing_port_pin_refuses_before_acceptance",
+        "test_asset_removal_checks_declared_references_across_owners",
+        "test_occupied_asset_alias_is_never_replaced",
+        "test_noninteger_positive_speed_preserves_source_units_and_half_open_boundary"
+      ]
+    },
+    "tests/timeline/test_authoring_media.py": {
+      "assert_nodes": 209,
+      "ast_no_attributes_sha256": "4963d3735d86ca74c5532c976663000d36c058479ed36c0b231ca9eace7a55a7",
+      "ast_sha256": "26595588178de4f1b8fb923b10b4e26462f8bcc5032adeb035027db4e99281cc",
+      "bytes": 86525,
+      "git_blob": "adc6fb3946de7c0fc75dc5bf440c8bdc73b59e17",
+      "history": {
+        "current": {
+          "blob": "adc6fb3946de7c0fc75dc5bf440c8bdc73b59e17",
+          "sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174"
+        },
+        "prior_base": {
+          "blob": "adc6fb3946de7c0fc75dc5bf440c8bdc73b59e17",
+          "sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174"
+        },
+        "shared_author": {
+          "blob": "adc6fb3946de7c0fc75dc5bf440c8bdc73b59e17",
+          "sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174"
+        }
+      },
+      "sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+      "test_functions": [
+        "test_unchanged_json_roundtrip_has_empty_diff",
+        "test_local_registry_replacement_is_readonly_and_strips_stale_authority",
+        "test_import_reuses_catalog_across_retry_keys_and_preserves_distinct_names",
+        "test_all_sources_preflight_before_any_import_or_publication",
+        "test_audio_local_selector_is_probed_and_keeps_audio_mirror",
+        "test_changed_file_after_preflight_imports_nothing",
+        "test_import_failure_cannot_reach_publication",
+        "test_document_publish_forwards_new_stale_head_to_runtime",
+        "test_document_publish_captures_verified_media_before_document_patches",
+        "test_public_document_swap_and_residual_patch_use_original_sequential_closure",
+        "test_public_document_compound_inverse_restores_exact_original",
+        "test_real_runtime_import_and_parent_publication_roundtrip",
+        "test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba",
+        "test_inherited_explicit_local_path_remains_an_active_request",
+        "test_local_shot_item_intent_matches_selected_internal_replacement",
+        "test_unchanged_historical_and_opaque_paths_survive_without_import",
+        "test_historical_path_rows_match_by_identity_after_reorder",
+        "test_duplicate_asset_row_with_one_live_locator_refuses_in_both_orders",
+        "test_renamed_or_duplicate_media_row_cannot_borrow_a_historical_baseline",
+        "test_changed_unconsumed_live_locators_fail_during_planning",
+        "test_changed_remote_live_locator_refuses_while_opaque_remote_url_survives",
+        "test_nonstring_registry_locator_is_malformed_even_when_falsy",
+        "test_nonstring_clip_selector_has_field_specific_refusal",
+        "test_effective_parent_alias_needs_no_local_file_or_import",
+        "test_parent_config_clip_uses_effective_parent_registry_alias",
+        "test_explicit_parent_registry_replacement_normalizes_stale_declarations",
+        "test_persistent_parent_registry_conflict_refuses_after_explicit_projection",
+        "test_removed_local_alias_is_not_resurrected_from_baseline",
+        "test_unsupported_secondary_clip_selector_refuses_with_valid_primary",
+        "test_nonstring_shot_item_selector_has_field_specific_refusal",
+        "test_cleared_shot_item_selector_never_requests_local_input",
+        "test_cleared_optional_path_is_not_a_new_import_request",
+        "test_equal_changed_sources_choose_one_file_but_conflicts_fail",
+        "test_canonical_file_uri_is_supported_and_malformed_or_remote_forms_fail",
+        "test_explicit_local_replacement_strips_stale_remote_descriptor",
+        "test_supplied_plan_is_rechecked_before_catalog_read_or_import",
+        "test_catalog_import_remains_reusable_after_later_parent_cas_conflict",
+        "test_public_document_refuses_unsupported_locator_before_artifacts_or_connection"
+      ]
+    }
+  },
+  "fixture_inputs": {
+    "tests/editing_conformance/fixtures/recipe_m2_auto_placement.json": {
+      "bytes": 53582,
+      "git_blob": "98a06d05132815ab5f296330acca3b49859e8b66",
+      "sha256": "2d79b76b4c54339460f0f5d1bd45083f83e2784b9dd45b683824362bc2cd1efa",
+      "unchanged_from_base": true
+    },
+    "tests/editing_conformance/fixtures/recipe_m2_occurrence_media.json": {
+      "bytes": 82650,
+      "git_blob": "537a06624718f5c2ef699c290f40befb75953489",
+      "sha256": "cf9650d82a3171236dd72a14ca1df2fabee8184edbef63d2020f5eeebcc15d69",
+      "unchanged_from_base": true
+    },
+    "tests/editing_conformance/fixtures/recipe_m2_placement_create_unplace.json": {
+      "bytes": 126229,
+      "git_blob": "e5163ddee75686476f6a51019b0a8ce257423314",
+      "sha256": "78e427c8a7bb42844d6eed6665068a759553bb3e23afdd7a41eeb40f540ae716",
+      "unchanged_from_base": true
+    },
+    "tests/editing_conformance/fixtures/recipe_m2_shared_auto_placement.json": {
+      "bytes": 64102,
+      "git_blob": "c89a4fef893dec56804ba97c9a355d1184d5435c",
+      "sha256": "68934bfe05399636f54122149ac0aab8fce50e6a68c593c3938ec9af35fb7410",
+      "unchanged_from_base": true
+    },
+    "tests/editing_conformance/fixtures/recipe_m2_shot_pool.json": {
+      "bytes": 34421,
+      "git_blob": "ebdc03643ffe178f3ebd966ded5f73321e009420",
+      "sha256": "34edbb5e0f99a0b63b8ca8a5c087074ec871b99151df70e58a792ce806c4b484",
+      "unchanged_from_base": true
+    },
+    "tests/sdk/test_timeline_commit_provider_document.py": {
+      "bytes": 12226,
+      "git_blob": "1b1d0378e52e10e84549e6f651914dbba0a972eb",
+      "sha256": "bd5c5488279a96693d69dd75c365c84af1bec53516653cbe65c3a99006cc5e12",
+      "unchanged_from_base": true
+    },
+    "tests/timeline/test_authoring_bundle.py": {
+      "bytes": 73789,
+      "git_blob": "4e4c9e61cd94707b3ec7d03f7ad1b862511a9275",
+      "sha256": "5c207413bbfb902318270161dd7ae90f0b9fda74d004d2e761e1469e39df8f24",
+      "unchanged_from_base": true
+    }
+  },
+  "prior_base": {
+    "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0"
+  },
+  "schema": "timeline.agent.d134.managed105.review-source-manifest.v1",
+  "shared_author": {
+    "commit": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+    "tree": "6522ff87b592170069fc05d7cc9ee028a8983cdb"
+  },
+  "target_scope": [
+    "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+    "tests/editing_conformance/test_commit_runtime_parent_media_swap.py",
+    "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+    "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+    "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+    "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+    "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+    "tests/editing_conformance/test_recipe_occurrence_media.py",
+    "tests/timeline/test_authoring_media.py"
+  ],
+  "current_donor_scope": {
+    "target_files_equal_shared_author_and_prior_base": true,
+    "unrelated_current_delta_from_shared_author": [
+      "tests/editing_conformance/test_occurrence_fork_source_baseline.py"
+    ],
+    "helper_path_present": false,
+    "production_changes_retained": false,
+    "test_body_or_assertion_changes_retained": false
+  },
+  "held_d100_comparison": {
+    "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "product_path": "astrid/sdk/timeline/_command_state.py",
+    "current_sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+    "held_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "changed_methods": [
+      "State.shot_item_map",
+      "State._item_ids",
+      "State.project_shot_items"
+    ],
+    "applicability": "exact authenticated empty physical source to unique non-empty item membership",
+    "qualification": "UNPROVEN"
+  },
+  "source_citations": {
+    "setup": [
+      "tests/editing_conformance/test_commit_runtime_occurrence_media.py:21-114",
+      "tests/editing_conformance/test_commit_runtime_occurrence_media.py:124-227"
+    ],
+    "command_execution": [
+      "astrid/sdk/timeline/commands.py:201-280",
+      "astrid/sdk/timeline/_recording.py:71-132",
+      "astrid/sdk/timeline/_command_state.py:493-630"
+    ],
+    "item_guard": [
+      "astrid/sdk/timeline/_command_state.py:316-395"
+    ],
+    "closure_guard": [
+      "astrid/sdk/timeline/_doc_patch.py:359-377"
+    ],
+    "comparator": [
+      "tests/editing_conformance/test_recipe_occurrence_media.py:90-149"
+    ],
+    "source_fixture": [
+      "tests/sdk/test_timeline_commit_provider_document.py:19-61"
+    ]
+  }
+}

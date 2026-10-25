@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T21:05:40Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 22 | status age 2m -->
-# agent board, 2026-10-25T21:03Z
+<!-- agent | 2026-10-25T21:09:52Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 22 | status age 2m -->
+# agent board, 2026-10-25T21:07Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -104,46 +104,46 @@
 
 | D134 own344 partition | Separate setup and product evidence | Luna read only | First return2016 | review | Author2003; independent2011 FAIL | See proof | Reviewed132 setup,0 proved product,212 unknown. Exact9 projection downgrade; first return active. | Evidence only |
 
-| D137 real child and core | Retain exact real child refusal | Luna and service | Recorded changed-state disposition | blocked:runtime | Controller2044; evidence reviewer2053 | REFUSED; zero child or core | venv-log-setup exit2: stage_stderr_path missing at environment60. Stage stderr EXACTMISSING; no retry. | Frozen a4e016 /5e9ad |
+| D137 real child and core | Prepare qualified changed child request | Luna and service | New reviewed export fix installed locally | blocked:runtime | Existing2044; next prepared controller | Prior refusal evidence PASS | MAIN21:06 authorizes ONE new request after real-smoke/review/CAS/receivedhash. No request before receipt. | Frozen a4e016 /5e9ad |
 
-| D134 D73 source | Preserve supported launcher environment | Luna | Protected2036 cumulative PASS | doing | agt-D73-source-intake-2102 | Focused2 controls/source PASS | Exact two operational files clean intake. No fullbody replay or D137 prerequisite. | 375c held |
+| D134 D73 source | Preserve supported launcher environment | Luna | Protected2036 cumulative PASS | merged | Source intake2102; normal22bf | Source controls PASS; live core owed | Exact two reviewed operational files HOME. Intake repeated focused2 despite no-repeat brief; retained without extra credit. | 22bf4560aa /bb688 |
 
 | D134 partition return | Correct nine projection classifications | Luna | Independent2020 PASS | merged | Author2016; final review2020 | See proof | Classification PASS only: exact9 category changes,344 IDs and outside fields conserved.132 setup,0 proved product,212 unknown. | Evidence only |
 | D134 managed media48 | Preserve occurrence media setup | Luna | Qualified D100 source and setup | blocked:app | Author2016; independent2024 PASS | See proof | UNAPPLIED source unchanged. Existing9486 addresses item-birth seam; mutable author Runtime and missing XML unqualified. No new API decision. | Evidence only |
 | D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Qualified D100 setup | merged | Protected2026 PASS; normal2034 | See proof | Source e63d exact at96a6. Parent24 and manifest2 still hit shared media setup; no behavior or core closure. | 96a6b2deea |
 
-| D134 managed30 | Preserve managed media setup purposes | App Luna | App protected2037 return | blocked:app | App2033; protected2037 | Managed14 UNAPPLIED | Six App files exclusive through final review. Shared105 author reads only until exact handback. | WIP 6c5c held |
+| D134 managed30 | Preserve managed media setup purposes | App Luna | Qualified held D100 source receipt | blocked:app | Review2037; restore2050; map2056 | Managed14 UNAPPLIED; WIP failed | Three original blobs and173 assertions restored. App applicability2056; no source or behavior credit. | Original a30e exact |
 
-| D134 selected4 | Preserve selected schema and HTTP setup | Sol and Luna | Protected2053 FAIL findings | doing | Sol HTTP return2058 | Status3 SOURCE PASS; HTTP FAIL | Sequential HTTP patch claims clips absent after root installs empty list. Own3 prerequisite3ERROR; no body credit. | 150597 held |
+| D134 selected4 | Preserve selected schema and HTTP setup | Sol and Luna | Final whole-engine source review | review | Sol2058; independent2107 | Source probe PASS; own4 NOTRUN | Physical root guard corrected; Closure.install strips mirror clips. Final review challenges prior simplified probe. | Current held source |
 
 | D134 root clusters | Publish first product frame groups | Luna read only | Independent2029 PASS | merged | Author2022; independent2029 | See proof | All370 IDs, statuses, first frames, groups and10 source hashes qualified. Missing records and final counts remain unknown. | Evidence only |
 
-| D134 mirror7 | Preserve word mirror and restart purposes | Luna | Protected2053 FAIL findings | doing | First return2058; original2032 | Protected FAIL; old7 unqualified | Lost real echo publication/restart and stale mirror objects. Old7 used wrong Runtime; no behavior credit. | ab05311 held |
+| D134 mirror7 | Preserve word mirror and restart purposes | Luna | Final2102 SOURCE PASS | doing | Clean source intake2107 | Source PASS; corrected7 NOTRUN | Real echo publication/restart retained. Current mirror refs corrected. Original7 wrong-Runtime run remains unqualified. | ff887 donor |
 | D134 preflight5 | Preserve genuine fork client plumbing | Luna | Protected2042; exact source intake | merged | Fresh source intake2058 | Source PASS; functional own1 NOTRUN | Exact one reviewed test blob HOME5b11. No artifacts imported. Supported service route remains owed. | 5b11a38324 /0119a22 |
 | D134 expectation12 | Preserve historical source and archive purposes | Runtime Luna | Protected source conservation | doing | Inverse7 source2045; history5 source2045 | Source only; no body | Exact four disjoint files claimed by Runtime. No silent pin refresh or live retirement. | Pending |
 
-| D134 managed105 shared | Preserve genuine managed edge setup | Luna | Independent2102 source assessment | review | Author2055; reviewer2102 | UNAPPLIED;105 open | Source helper reverted after missing authenticated item-1. Reader checks heldD100 applicability versus source-item birth. | Source unchanged |
+| D134 managed105 shared | Preserve genuine managed edge setup | Luna | Qualified held D100 source receipt | blocked:app | Author2055; independent2102 complete | Finite source assessment PASS | Held9486 applies to exact first birth; no separate accepted item source needed. All105 remain open. | Source unchanged |
 | D134 CLI22 shared | Preserve current batch CLI purposes | Luna | Recorded CLI scope disposition | blocked:orchestrator | Author2055; independent2059 ended | No faithful current CLI route | G5 spelling retired; current document/sheet routes alter raw batch inputs. Exact22 remain UNKNOWN; scoped escalation filed. | Source unchanged |
 | D134 Runtime2546 pair | Preserve word35 and selected PARAM14 | Runtime Luna | Exact source and missing records | doing | rt-D134-runtime49-source-2052 | 49 source cases only | Named Runtime owner consumes peer2055. No wrapper-derived fault or guard author. | Pending |
 | D134 fork18 bindings | Preserve fork native binding purposes | App hosted Luna | First admitted hosted source slot | blocked:app | Peer2055; App manager allocator | 18 UNKNOWN; source first | Two exact test files; malformed recorder and genuine fork controls protected. No fake bindings. | Pending |
 | D134 own node route | Publish exact immutable Runtime service route | Runtime Luna | Supported central operational recipe | blocked:runtime | Peer2053; existing D73 owner | Own bodies NOTRUN | Need exact selectors, integration marker and immutable ab1e with source/origin guards. No alternate producer. | Pending |
 | D137 refusal custody | Qualify terminal real request evidence | Luna read only | Exact retained request and source | merged | agt-F-D137-refusal-review-2053 | PASS_EVIDENCE; no body | Confirmed missing helper export at maker385. One refusal; no stage file/child/core/retry. Peer2058 published. | Evidence only |
-| D136a normal intake | Preserve upstream open canvas FPS | Luna | Final2034 independent PASS | merging | agt-D136a-source-intake-2059 | Independent101 and45; matrix46 PASS | Exact three reviewed blobs in49f876; normalmerge queued. Original9 App proof and batch remain owed. | 49f876 held |
+| D136a normal intake | Preserve upstream open canvas FPS | Luna | Final2034 independent PASS | merged | Source intake2059; normal06fce | Source101 and45; matrix46 PASS | Exact three reviewed blobs HOME. App2056 sole original9 proof active; no full-core or release credit. | 06fce335db /49f876 |
 
 
-Integration: Agent96a6b2deea46eb33ba5184203a10e966cc5e9179, tree6522ff87b592170069fc05d7cc9ee028a8983cdb. Manifest-only source merge; no product release. Private U2 candidate32dde independently qualified and held D59. Runtime ab1e lock source qualified. Captured D137 a4e016/5e9ad stays frozen.
+Integration: Agent22bf4560aa (full head/tree verified next receipt). Fork5b11, FPS06fce and D73 launcher22bf are normal source merges; released Agent070dfc unchanged pending batch proof. Private U2 candidate32dde independently qualified and held D59. Runtime ab1e lock source qualified. Captured D137 a4e016/5e9ad stays frozen.
 
 Current measurement: agent-agent-core-full-1025191128-18455 terminal exit1, operator8926 PASS /190 FAIL /180 ERROR /173 subtests PASS /1379.05s. Independent1937 final custody FAIL; XML and full disk witness missing. Final core and REG counts UNKNOWN. Classification-only independent2029 qualifies all370 IDs and first-frame groups; own344 =132 setup,0 proved product,212 UNKNOWN. Original14 UNVERIFIED per owner20:09;12 UNKNOWN. No ship, custody or release credit; retirement0. Raw18455 KEEP remains.
 
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL independently1405. Current originalTrue remains FAIL at redo birth on d4ba/ab1e. Authentic redo and child-birth boundary records missing, causal owner UNKNOWN. Synthetic3/native2 does not close originalfour.
 
-Blockers: Runtime D137 — actual4435 ONE request REFUSED venv-log-setup exit2; stage_stderr_path missing. Stage stderr EXACTMISSING. Existing peer2047 delivered; no retry until recorded changed-state disposition.
+Blockers: Runtime D137 — minimal helper export fix, independently executed real smoke and installed local successor receipt owed. MAIN21:06 authorizes ONE new changed request; prior4435 refusal stays immutable.
 Blockers: Runtime — exact immutable ab1e own-node service route and named2546 shared owner requested2053/2055; current source applicability stays finite.
-Blockers: App — protected managed16 handback and first fork18 source slot requested2055; shared105 owns common kernel without competing consumer writes.
+Blockers: App — D100 behavior receipt and first fork18 hosted slot requested2055; shared105 source applicability independently qualified, no product credit.
 Blockers: SWAP safety — D130 automatic classifier refusal remains held. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-grade core, REG0, installed render90, platform, fullP2, final tupleP1-P5, wheel and ZIP owed. FarmD77 waits genuine child qualification.
 
-Next ready: all local independent source work dispatched. Pass 2026-10-25T20:54Z: live4 / cap6; ready-undispatched0 local. D73 exact source intake dispatched immediately after slot freed. Runtime2546 and Appfork18 have explicit peer owners. Real child/core has priority for the next authorized heavy slot, but current no-retry condition holds.
+Next ready: all local independent source work dispatched. Pass 2026-10-25T20:54Z: live2 / cap6; ready-undispatched0 local. All independent reviews and exact source intakes dispatched; remaining source rows await owner handbacks or decisions. Runtime2546 and Appfork18 have explicit peer owners. Real child/core has priority for the next authorized heavy slot, but current no-retry condition holds.
 
 Disk: fresh6.39GB at20:48Z; source starts above5GB, no heavy body. Ended clean nonKEEP worktree scan found0; Sweep3 removed0; compact packed0 scratch/test dirs and gzipped7 old logs. Both completed; no eligible recycle target. d22/f1012 and six historical refused targets untouched. KEEP current18455 and D137worker2044. No source, generated, pin or Git mutation by manager.
 
@@ -151,9 +151,11 @@ H6: Runtime20:37, App20:39 and Farm20:40 authoritative boards read. Runtime stil
 
 Later: transcript authority, originalTrue redo and graph child birth await authentic missing boundary records; no speculative guard writer or unchanged repeat. D133 corrected optionB DEFERRED, Gate3 unchanged and visibly failing with existing notes line; no optionA review/body. D23/D14 retained. D127 provider cost lacks measured leaf attribution; element loader remains App-owned. D135 current-upstream join stays gated D59.
 
-INBOX consumed through1863073 bytes. Superseded4435 ready notes do not authorize a second request. Evidence publication uses byte-exact worker artifacts, including relative evidence recovered from each worker's actual repo Git blobs. No new rules, ledgers, product code, tests or pins authored by manager.
+INBOX consumed through1867023 bytes. Superseded4435 ready notes do not authorize a second request. Evidence publication uses byte-exact worker artifacts, including relative evidence recovered from each worker's actual repo Git blobs. No new rules, ledgers, product code, tests or pins authored by manager.
 
 Pass 2026-10-25T20:59Z: all completions handled immediately. Mirror first return and selected HTTP Sol continuation dispatched after protected failures. Clean fork import repeats only exact source intake, no body or rereview. CLI22 independent current-route assessment2059 avoids false G5 route restoration. D136a actual source/security report consumed byte exact; normal three-file intake2059 dispatched. D73 exact reviewed source remains ready for next freed slot. Historical expectation12 has two actual Runtime owners2045. D137 independent evidence PASS published; no new child request.
 
-Blockers: Orchestrator CLI22 — current raw batch/file ingress scope under G3/G5 needs a recorded decision; exact source assessment and escalation agent-20261025T2104Z-CLI22-batch-ingress-scope.md filed. No legacy route restored or live behavior retired.
+Blockers: Orchestrator CLI22 — current raw batch/file ingress scope under G3/G5 needs a recorded decision; exact source assessment and escalation agent-20261025T2102Z-CLI22-batch-ingress-scope.md filed. No legacy route restored or live behavior retired.
 Pass 2026-10-25T21:03Z: fork source-only normalmerge5b11 confirmed. D136a threefile reviewed intake49f876 queuednormalmerge and Appreceiver handoff sent. D73 twofile intake2102 active. Managed105 author endedUNAPPLIED; independent2102 checks common source/birth seam, not a new speculative guard author. Shared CLI22 independent no equivalent current route; scoped decision escalated. Runtime49 actualowner2052 and historical12 twoowners2045 consumed. No local ready row waiting.
+
+Pass 2026-10-25T21:07Z: recorded MAIN21:06 changed-state D137 GO principle consumed. New request remains pending exact qualified local successor, no new approval after receipt. Runtime maker2058/wholepath2058 owns source; App original9 receiver2056 active. D136a and D73 HOME confirmed. Shared105 source review2102 refutes need for separate item-bearing source and assigns held9486 qualification; no repeat of unchanged representative. H6 Runtime20:57/App20:53/Farm21:05 read; Farm union2100 separate, no child/core.

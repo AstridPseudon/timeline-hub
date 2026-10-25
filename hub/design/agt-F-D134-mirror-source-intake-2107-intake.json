@@ -1,0 +1,19 @@
+{
+  "task": "agt-F-D134-mirror-source-intake-2107",
+  "repo": "agent",
+  "base_head": "22bf4560aa",
+  "donor_commit": "ff88764f0d3d3b3efcb03e8dec4feb735810be78",
+  "donor_parent": "ab05311ac730b2e53ce2fd71bb4ef176db78bac8",
+  "donor_source_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "preimage_gate": "PASS",
+  "source_scope": [
+    "tests/editing_conformance/test_native_word_anchor.py",
+    "tests/editing_conformance/test_word_binding_recipe.py"
+  ],
+  "exact_donor_import": "PASS",
+  "outside_scope_preserved": "PASS",
+  "behavior_tests": "NOTRUN",
+  "behavior_test_reason": "D134 source intake forbids live selectors; exact immutable Runtime ab1e route remains pending central support",
+  "runtime_required": "ab1e4f6141987706132916e2da16477f5a019464",
+  "artifacts_or_evidence_imported": false
+}

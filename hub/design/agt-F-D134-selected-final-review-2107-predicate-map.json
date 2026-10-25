@@ -1,0 +1,27 @@
+{
+  "verdict": "PASS_SOURCE_CONSERVATION",
+  "current_file": "tests/sdk/test_timeline_selected_schema_runtime.py",
+  "current_sha256": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+  "inherited_commit": "150597e860d386b6d504df63c1a99e7896c33fb7",
+  "delta_from_inherited": "only the two-line HTTP baseline RHS",
+  "assertion_count": 99,
+  "assertion_ast_conserved": true,
+  "seven_unknown_instances_ast_and_byte_conserved": true,
+  "seven_unknown_functions": 6,
+  "http_fixture_body_and_predicates_conserved": true,
+  "http_setup_final_parent_shape_conserved": true,
+  "status_corrections": {
+    "new_rebase_after_v2": "merged",
+    "new_reselection_retry": "merged",
+    "historical_exact_retry": "unchanged"
+  },
+  "source_probe": {
+    "whole_commands_execute_path": true,
+    "physical_root_guard_path": true,
+    "closure_install_mirror_removal": true,
+    "sequential_absent_clips_guard": true,
+    "exact_original_final_parent": true,
+    "request_unchanged": true,
+    "wrong_present_second_guard_refuses": true
+  }
+}

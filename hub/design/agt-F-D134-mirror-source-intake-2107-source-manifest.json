@@ -1,0 +1,35 @@
+{
+  "base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "donor": "ff88764f0d3d3b3efcb03e8dec4feb735810be78",
+  "preimage_check": [
+    {
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "current_preimage_sha256": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8",
+      "donor_base_sha256": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8",
+      "equal": true
+    },
+    {
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "current_preimage_sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04",
+      "donor_base_sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04",
+      "equal": true
+    }
+  ],
+  "final_files": [
+    {
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "git_blob": "ed1fe55219fedd41ce6d0426092c23c3385aa114",
+      "sha256": "5838bd959d4d53a400f87809d4551bf769f23c46202c9b936411f466f4cda8e8"
+    },
+    {
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "git_blob": "6d1f0f50394e5063a1de09564d89dd5c988ae93a",
+      "sha256": "7f644c38f179fc37868b87a588da833947d16b1896210cfaf0fa016941fe8963"
+    }
+  ],
+  "changed_files": [
+    "tests/editing_conformance/test_native_word_anchor.py",
+    "tests/editing_conformance/test_word_binding_recipe.py"
+  ],
+  "scope_check": "Only the two task-authorized test files changed"
+}

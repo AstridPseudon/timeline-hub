@@ -1,0 +1,21 @@
+{
+  "task": "D134",
+  "verdict": "PASS_SOURCE_ONLY",
+  "reviewed_head": "27140eaafa748eb1d7c0789c8150b5872d1c07ad",
+  "reviewed_parent": "150597e860d386b6d504df63c1a99e7896c33fb7",
+  "source_probe": "PASS_SOURCE_ENGINE",
+  "behavioral_credit": false,
+  "own3": "NOTRUN_BY_BRIEF",
+  "http": "NOTRUN_BY_BRIEF",
+  "blocking_source_findings": [],
+  "scope": [
+    "tests/sdk/test_timeline_selected_schema_runtime.py",
+    "astrid/sdk/timeline/_doc_patch.py",
+    "astrid/sdk/timeline/commands.py",
+    "astrid/sdk/timeline/commit.py",
+    "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_baseline.py",
+    "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_store.py",
+    "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/service.py"
+  ],
+  "decision": "The corrected physical canonical root previous-value guard is valid; the sequential absent clips guard remains valid because Closure.install removes mirrored clips while installing the root replacement."
+}

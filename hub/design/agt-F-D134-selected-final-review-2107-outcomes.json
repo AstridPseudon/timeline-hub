@@ -1,0 +1,16 @@
+{
+  "source_verdict": "PASS_SOURCE_ONLY",
+  "source_engine_probe": "PASS",
+  "exact_final_original_parent": true,
+  "all_99_assertions": true,
+  "seven_unknown_cases": "unchanged",
+  "input_control_native_abi_base_reads_keys": "unchanged",
+  "historical_receipts": "unchanged_source_only",
+  "new_statuses": "merged_source_supported",
+  "wrong_second_guard": "refused_previous_value_mismatch_clips",
+  "own3": {"status": "NOTRUN", "behavior_credit": false},
+  "http": {"status": "NOTRUN", "behavior_credit": false},
+  "full_suite": {"status": "NOTREQUESTED", "behavior_credit": false},
+  "blocked": false,
+  "next_step": "Run the exact own3 and HTTP selectors only after the protected Runtime2053 supported immutable route is available."
+}
