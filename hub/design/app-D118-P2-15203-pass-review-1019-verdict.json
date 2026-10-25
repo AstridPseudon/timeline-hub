@@ -1,0 +1,100 @@
+{
+  "task": "D118/P2 independent partial-GO review",
+  "verdict": "PARTIAL-GO",
+  "overall_run": {
+    "status": "NO-GO",
+    "reason": "The authorized original full P2 service exited 1: 2 PASS, 2 FAIL, 1 ERROR, 3 NOTRUN. Only the two authentic PASS cases receive gate credit.",
+    "service_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203",
+    "selector": "p2",
+    "normal_status": "fail",
+    "normal_exit": 1,
+    "normal_duration_seconds": 605,
+    "d66_duration_seconds": 600.974,
+    "readiness": {"status": "PASS", "tests": 1, "exit": 0},
+    "original_counts": {"tests": 8, "pass": 2, "fail": 2, "error": 1, "notrun": 3},
+    "original_xml_sha256": "360e4f07926cfe952f95e48e034d1246dbdde9eb8b3b9290a540abd5aeb3b54d",
+    "readiness_xml_sha256": "a578a9c8c6affeacefec3675b864eaa9430acacb6840a1355d9345f3965c66fc",
+    "manifest_sha256": "9c97027b9e3ee8057638a8d54d7587a8afec088fea2ffcddf77fb6f760752aec",
+    "request_artifact_sha256": "3025043e372a6c6b72351cb8cc18b035f5c57819c64bcd9a0d04bec17607639c",
+    "preflight": {
+      "service_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-preflight-1025100641-19156",
+      "status": "pass",
+      "exit": 0,
+      "manifest_sha256": "0ee430ba3200fb3461d796f1d701a60ac7b891f35ee46602d19e55b1bdb96555",
+      "request_artifact_sha256": "f61ff7c8ba554132be8f831f04471c4eee9e21116207f8307a373bd6f5f433ad"
+    }
+  },
+  "membership": {
+    "collection_sha256": "787474bbdc9420daa1b1a941d58386030fe71e35f7de7981fe092555ee9e7566",
+    "tests": [
+      {"name": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo", "status": "FAIL", "first_unmet": "dialog status contains applied; p2-elements-assets.spec.ts:1052"},
+      {"name": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo", "status": "NOTRUN", "first_unmet": "serially blocked; p2-elements-assets.spec.ts:1133"},
+      {"name": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo", "status": "PASS", "line": 1214},
+      {"name": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit", "status": "PASS", "line": 941},
+      {"name": "P2 popup mounted SWAP on selected child uses authenticated old/new media selections", "status": "FAIL", "first_unmet": "accepted response status 200; p2-popup.spec.ts:495"},
+      {"name": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo", "status": "ERROR", "first_unmet": "commit response wait timeout; p2-tour.spec.ts:125"},
+      {"name": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo", "status": "NOTRUN", "first_unmet": "serially blocked; p2-tour.spec.ts:777"},
+      {"name": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo", "status": "NOTRUN", "first_unmet": "serially blocked; p2-tour.spec.ts:797"}
+    ],
+    "noncredit": "The four non-PASS gesture outcomes remain visible above; no investigation or gate credit was assigned to them."
+  },
+  "tuple": {
+    "app": {"sha": "96d4754b4eef0591a208d6b51b60c30fc44b6915", "tree": "3f9da34c4f116026ec21022421850e0608ba653b", "checkout": "/home/user/work/wt/app-pin-96d4754b", "receipt_sha256": "ca84030e1a52858d6b5dd5366931b29d3719188a2b765c9185652f9bca4dc6e4"},
+    "agent": {"sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3", "checkout": "/home/user/work/wt/agt-pin-070dfc5e", "receipt_sha256": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05"},
+    "runtime": {"sha": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e", "tree": "6283b5fbb128447f1b333e0e6af334d35637cf69", "checkout": "/home/user/work/wt/rt-pin-d23a8e0d", "receipt_sha256": "95b035def5442571264156640456d2764fbc1449e585357e10bd1d11c0bf28ad"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0", "receipt_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"}
+  },
+  "source_custody": {
+    "plan": {"path": "workers/app-D118-full-P2-current-1004/submission/full-p2/p2-submit-plan.json", "sha256": "4d0df1eaac72777a9c6da15252e3db1bcf21079aa9a3fcd450e41d20629fe688"},
+    "submission": {"path": "workers/app-D118-full-P2-current-1004/notes/submission.json", "sha256": "571a6bdc3a4d8952dd6588e987874510c3b7e5f13d602aaa7476bcf97adf4f2e"},
+    "terminal": {"path": "workers/app-D118-full-P2-current-1004/notes/terminal.json", "sha256": "fea75333adf5099198a9ba164c1060f5f593153b6dc7dd05cf814d7f4e9ebd1f"},
+    "checkout_verification": "Read-only git HEAD/tree/status checks matched all four manifest pins; each pinned checkout was clean.",
+    "imports": {
+      "astrid": {"root": "/home/user/work/wt/agt-pin-070dfc5e/astrid", "version": "0.1.0", "file_sha256": "f5fc47afc0afbd81507fecbb41a6d7405f14596bf09400c287bf1e4624fed578"},
+      "astrid_runtime": {"root": "/home/user/work/wt/rt-pin-d23a8e0d/astrid_runtime", "version": "0.1.0", "file_sha256": "b0d1a06374c421bd85ef6bfc308e6b2ef3b2c0472266a2a85e4894138a9bcbe3"},
+      "astrid_runtime_client": {"root": "/home/user/work/wt/agt-pin-070dfc5e/astrid_runtime_client", "version": null, "file_sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"},
+      "runtime_protocol": {"root": "/home/user/work/wt/rt-pin-d23a8e0d/runtime_protocol", "version": null, "file_sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2"}
+    },
+    "profile": {"node": "v20.19.4", "npm": "10.8.2", "runtime_server": "AstridRuntime/0.1 Python/3.13.16", "protocol": "workspace.v1", "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b", "provider": "astrid-v1", "compiler": "authoring-bundle-1"},
+    "source_pinning": {
+      "app_runtime_lock_sha256": "1398edb30fb8378bd707732ddaa56c45d59f421b76fd8a9752c541d0f9daac96",
+      "app_public_source_lock_sha256": "79c5b1b83ea20b964e370f9388f9ba031c8c04a8acd2cfe8793fb040c8fea99b",
+      "runtime_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+      "runtime_commit_schema_sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815"
+    }
+  },
+  "source_hashes": {
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "tests/e2e/local/support/p2-semantic-oracle.ts": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+    "tests/e2e/local/support/p2-media-import-oracle.ts": "a4c8d874114fc57725ea414403d7e8ac25451a00498a7df1ed578eecaca70579"
+  },
+  "case_verdicts": {
+    "popup_add": {
+      "verdict": "GO",
+      "evidence": "Original XML PASS, 36.819s, p2-popup.spec.ts:941; complete original tail is in runPopupCase/assertReloadUndo at lines 920-938 and 854-918.",
+      "request_guards": "assertFullRequest lines 423-463: exact v2 scope/base, nonempty idempotency key, commands/label/steps, merge fields, dry_run false, source app, optional reads, one step with command ordinals and empty submitted patch. assertSharedMediaCommands lines 523-578: fork then occurrence.add-media, created claims, import 201, selection 200, authenticated media identity, exact row/media/ownership.",
+      "reply_and_document_guards": "accepted lines 494-520: 200, exact envelope keys, receipt/idempotency/request/result fields, accepted base landing, canonical closure, digest, commands/steps/provider/compiler/publisher/source/label. Whole canonical document equals independently derived expected document (lines 600-645); closure pins/digests are checked by canonicalAt lines 129-163.",
+      "tail_guards": "History records receipt/label/steps/records/dependencies/bindings/effects (lines 724-852); reload checks occurrence shot/revision, canonical head, clip count/tracks/assets and stable history (lines 867-895); real Close is performed before Undo at line 896; inverse targets the accepted publication, restores exact original canonical closure, records undo_of, preserves prior history, and final history/readback are stable (lines 897-918). assertOnlyCommits lines 338-349 permits only media-import and exact inspect reads; every film mutation is the captured commit."
+    },
+    "automatic_child_placement": {
+      "verdict": "GO",
+      "evidence": "Original XML PASS, 88.780s, p2-elements-assets.spec.ts:1214; producer notes record existing retry also passed.",
+      "request_guards": "placementTest uses the original 14-second seed (lines 50-54). The gesture fetches the genuine Runtime object and verifies status 200, exact size and SHA-256 (lines 926-932), imports/selects media, and derives the expected row independently. assertSemanticAddMediaRequest lines 95-148 enforce exact v2 keys, base, fields, one occurrence.add-media command, ownership, authenticated five-field media, created asset/clip claims, and exact step shape."
+      ,"reply_and_closure_guards": "Placement lines 1224-1266 verify producer-derived selection identity, raw import ABI, exact row, accepted reply, canonical readback/digest, closure, one appended child row, unchanged prior rows/order, parent occurrence projection, child registry isolation, manifest identity and exact physical shot/internal revision materialization. assertClosure lines 488-505 checks schema/scope and every image/manifest digest pin.",
+      "tail_guards": "History is authenticated by receipt and records (lines 1270-1272 and helpers 713-762); reload checks committed revision and projected occurrence-qualified clip, rejects raw clip ID, then performs real Close and asserts dialog-gone before nativeUndo (lines 1273-1279). Undo targets the placement receipt with timeline.inverse, uses the strict scoped nativeUndo oracle (lines 297-410: authenticated target, reverse writes, exact guards/authorship, collection selections/dependencies, physical bindings, derived mirror effect and exact compiler pins), restores parent/shot/internal canonical closure exactly, records undo history, and reload verifies the projected placement is gone (lines 1280-1295). assertNoLegacy lines 773-775 requires no old save/composition-revision/doorlog write."
+    }
+  },
+  "c0_crosscheck": {
+    "contract": "Pinned Runtime contract/commit-v2.md sha256 4581ea85...; sections 1-7 were read. The original PASS predicates cover C0 request/base/idempotency/commands/steps/merge/reads, closure and before guards, accepted reply/receipt, guarded inverse and later-history evidence, meta preservation by whole-document equality, and authoritative history attribution.",
+    "relevant_contract_lines": ["§1 lines 60-274", "§2 lines 276-593", "§3 lines 595-702", "§4 lines 703-1562", "§5 lines 1563-4543", "§6 lines 4544-4608", "§7 lines 4609-4640"],
+    "source_selection": "Manifest-selected pinned imports and versions were verified against actual checkout HEAD/tree/status and file roots; no ambient newer external prose was used."
+  },
+  "not_run": [
+    "No tests, tsc, lint, full suite, browser rerun, backend/HTTP rerun, provisioning, package install, sourcepreflight rerun, or body/package rerun.",
+    "No source/product/test/spec/generated/pin/manifest/kit/registry edits or deletion."
+  ],
+  "worktree": {"review_worktree_clean": true, "git_diff_check": "pass"}
+}
