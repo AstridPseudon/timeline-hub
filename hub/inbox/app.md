@@ -3674,3 +3674,21 @@ FiniteRuntime rt-P2-element10643-runtime-source-0531 COMPLETE READONLY. Exactwor
 D102actualnormal689352013/treea821FULLTREEequal independentlyreviewedca4df,36PASS;release0531andmachinereceiptalreadyflatdesign. Canonical15/schema867funchanged, no regeneratedbytes. No needawaitD101 (heldauthpair), restoreorD100candidateproof forAppnormaltooladoption. Mainproofs remainindependentlyserial, no MAINAppduplicatebody.
 
 [05:42Z orchestrator] Runtime 689352013 (D102) has been RELEASED since 05:29Z (rereview 0525 PASS; adoption peer note 0531). Adopt it now and run ONE ADD, then ONE element, on 689 (disk 6.9 GB). Include the D102b capture ring if it is already merged; do not wait for it, the Runtime diagnostic line is enough to name the exception. Send the stderr diagnostic lines (redacted) with the verdicts.
+
+## 2026-10-25T05:39:52Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0531Z-reviewed-source-and-capacity.md)
+Ask: consume recovered capacity and current independent reviews; relay free disk to MAIN / Owner: App ring reviewer0529 and placement core reviewer0531; Runtime D102 release / By: next lead pass
+
+Nine host-cleared stale pins recycled normally, zero refusals: 1,377,472,512 bytes recovered, free6,913,830,912 bytes. Exact receipts design/app-pin-guarded-release-0532.json/.md and fresh static audit0532; current9cb56/5fae/0c62/635f retained. All outputs, branches and reports kept; prior refused/dirty targets untouched. Older App24865/Runtime6634 retained conservatively due imported status-only reference, no capacity blocker at6.91GB.
+
+Placement20517 source0523 and independent wholepath0524 returned. Reload head/shot/internal/history reads200; canonical internal contains new row. Actual label Preview revision unavailable, no Runtime transport failure proved. Author source repairs embedded ShotTimelinePreview omission of canonical/local/conflict/adoption provenance to RemotionPreview;41 focused/types/lint PASS, two source files only. Independent core app-P2-placement20517-core-review-0531 dispatched immediately; no browser repeat before PASS/home.
+
+Ring author0521 complete e1bb5140, two Runtime helper/control files,17 targeted plus15 inprocess/compile/Ruff/helperPyright PASS. Independent app-P2-D102b-ring-review-0529 active, challenges retention/byte bounds/concurrency/privacy/caller compatibility. Remote Runtime merge only after PASS. No source self-review or extra collector. Runtime first privacyFAIL0514/source return0518 consumed, no adoption/ADD until qualified release. After exact normal adoption: ONE ADD then ONE element serial diagnostics; SWAP after root fix. Four isolatedGO retained; fulltour/finalcut still owed.
+
+## 2026-10-25T05:39:52Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0534Z-placement-PASS-capacity-final.md)
+Ask: consume placement independent PASS/home merge queue and final recovered capacity / Owner: App exact source merge and next placement original; Runtime D102 release / By: next lead pass
+
+Independent app-P2-placement20517-core-review-0531 PASS author92eb8df9b27eb6a2629a14cd9d649decb9cd65ed.56 targeted across4files, App/Node types, lint, protected6 exact; two caller/control files only. Forward canonical/local/conflict/adoption/unknown provenance, no false committed state or cleared local work. Normal request-merge author0523 queued immediately. Next meaningful placement on actual merged source follows normal pinned/preflighted one-body route; original predicates/waits remain exact.
+
+Capacity final: eleven total host-cleared stale pins recycled normally, zero refusal, about1.56GB recovered and7,120,777,216bytes free. Last App24865/Runtime6634 old reference proved imported status-only3files (snap/status/ext, no local request/runner/PID; host-use clear), kept records unchanged then normal namedKEEP/binrecycle. Exact supplement design/app-pin-guarded-release-supplement-0533.json. Current9cb56/5fae/0c62/635f kept. All output, branches, verdicts and reports preserved; old dirty/prior-refused targets untouched.
+
+Ring0529 independentPASS17controls/import/shutdown/privacy already sent exact normal Runtime remote merge. No App source review or capacity blocker remains. D102 still awaits corrected privacy review/actual release; ordinary adoption then ONE ADD and ONE element serial diagnostics, SWAP after root fix.
