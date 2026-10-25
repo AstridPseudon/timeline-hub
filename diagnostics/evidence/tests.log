@@ -1,0 +1,23 @@
+test_all_steps_complete_and_single_use (__main__.GuardControls.test_all_steps_complete_and_single_use) ... ok
+test_command_failure_blocks_later_commands (__main__.GuardControls.test_command_failure_blocks_later_commands) ... ok
+test_exact_1237_native_start_is_rejected_before_jump (__main__.GuardControls.test_exact_1237_native_start_is_rejected_before_jump) ... ok
+test_exact_omp_native_fetch_is_monitored_and_blocks_abi_link (__main__.GuardControls.test_exact_omp_native_fetch_is_monitored_and_blocks_abi_link) ... ok
+test_exact_omp_worker_path_all_steps_with_finite_tools (__main__.GuardControls.test_exact_omp_worker_path_all_steps_with_finite_tools) ... ok
+test_exit_before_first_poll_still_checks_free_and_stops (__main__.GuardControls.test_exit_before_first_poll_still_checks_free_and_stops) ... ok
+test_fast_download_growth_cancels_above_floor_despite_exit_zero (__main__.GuardControls.test_fast_download_growth_cancels_above_floor_despite_exit_zero) ... ok
+test_free_stat_failure_refuses_launch (__main__.GuardControls.test_free_stat_failure_refuses_launch) ... ok
+test_leader_exit_does_not_hide_live_child (__main__.GuardControls.test_leader_exit_does_not_hide_live_child) ... ok
+test_missing_unsafe_bounds_refuse_entire_path_before_launch (__main__.GuardControls.test_missing_unsafe_bounds_refuse_entire_path_before_launch) ... ok
+test_original_pins_commands_and_source_are_preserved (__main__.GuardControls.test_original_pins_commands_and_source_are_preserved) ... ok
+test_owned_child_cleanup_and_caller_cancel_propagation (__main__.GuardControls.test_owned_child_cleanup_and_caller_cancel_propagation) ... ok
+test_post_setup_admission_cannot_use_lower_phase_threshold (__main__.GuardControls.test_post_setup_admission_cannot_use_lower_phase_threshold) ... ok
+test_preexisting_low_space_never_spawns (__main__.GuardControls.test_preexisting_low_space_never_spawns) ... ok
+test_sigterm_to_wrapper_uses_normal_owned_group_cancellation (__main__.GuardControls.test_sigterm_to_wrapper_uses_normal_owned_group_cancellation) ... ok
+test_slow_du_does_not_delay_active_growth_sampling (__main__.GuardControls.test_slow_du_does_not_delay_active_growth_sampling) ... ok
+test_slow_du_is_outside_poll_and_admission_is_rechecked (__main__.GuardControls.test_slow_du_is_outside_poll_and_admission_is_rechecked) ... ok
+test_uncooperative_normal_cancel_reports_unsupported_without_force (__main__.GuardControls.test_uncooperative_normal_cancel_reports_unsupported_without_force) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 5.221s
+
+OK

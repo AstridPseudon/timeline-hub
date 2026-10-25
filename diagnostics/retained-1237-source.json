@@ -1,0 +1,7 @@
+{
+  "wrapper_sha256": "6948b5fbe9b59b424de8b214454ef3501f1fbc6cd3476cda3a7ecdbfc9d12940",
+  "source_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D77-OMP-peak-resume-1237/log.txt",
+  "source_log_sha256": "e55f5c3ab1443e323460ddb7a3986a03dc09e46fe40ed1512533e54e8ee63b53",
+  "retained_result_sha256": "646a4c7c137fbb00482331f99845a6f30cd5e335ccd9064c062335f0023e34ac",
+  "recovery": "shlex decoding of successful /bin/bash -lc heredoc; never executed"
+}

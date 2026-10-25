@@ -1,0 +1,10 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "d77_phase_guard.py": "5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386",
+    "test_d77_phase_guard.py": "7b13e6e08a464ba07fb7417d64d876ee2cc4c93b133cf9cd8908b4e55e8d9c26",
+    "README.md": "373b4d17cf964c50e172084bf29f525ccc166521e347656f2ae948d462a6a1c7",
+    "retained-1237-wrapper.txt": "6948b5fbe9b59b424de8b214454ef3501f1fbc6cd3476cda3a7ecdbfc9d12940",
+    "retained-1237-source.json": "a999c30afe2ba2e5c94fb152d6d89b26f895ea114ca0af9bf782ed8fb3a89aa7"
+  }
+}
