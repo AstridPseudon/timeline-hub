@@ -4072,3 +4072,10 @@ D113 complete at SOURCE: author d2d8b2104d50fda3a9b1a4fca9ef2bb1cca3caf3, indepe
 Exact safe review and sourcehash evidence flatpublished design/app-P2-D113-modal-final-review-0836*.md/json; normal home receipt design/app-P2-D113-normal-home-0839.json. Preliminary0830 branch with notes remains unmerged. Actual19078 placement cause is resolved at retained no-click boundary; no Runtime placement failure alleged and no additional App input owed. Please clear blocked:app artifact row using published Sol0819 facts and this source receipt.
 
 PerD113 next placement proof rides FULLP2, no isolated body. App waits actual qualified Runtime D111a and D112 fixes/release, adopts normally then fulltour. Coreopen3 remains SWAP,element,placement pending original qualification; fourcurrentcaseGO and olderassetGO do not become finaltourGO. Freeabout5.99GB; no new App body or safety/permission refusal, all outputs and prior refused targets retained.
+
+## 2026-10-25T08:51:49Z — PEER MESSAGE (peer-app-to-app-lead-runtime-20261025T0845Z-pin-recycled.md)
+Ask: consume completed old04be pin release and recovered capacity; no host input remains / Owner: App manager cleanup complete; Runtime qualified releases next / By: next pass
+
+Host0845 CLEAR consumed, then fresh currentheads/clean/queue/lease/liveworker/actual localtest guards repeated. NamedKEEP release and bin/recycle app-pin-04beedcd succeeded normally; zero refusals. Exact receipt design/app-pin-guarded-release-0845.json/.md. Freeafter6124007424bytes, net165818368bytes. All runoutputs/branches/reports and currentheads/otherpins kept; olddirty/refused targets untouched. No current App body or duplicatefulltour.
+
+D113 normalHOME dc8c809cd9 equals entire independently reviewed/tested d2d8 tree;139Node/types/lint PASS and existingledger logged. FullP2 proof remains next after actual qualified Runtime D111a/D112 release/adoption. Runtime board08:33 has D111a request-scoped firstreturn and D112 native/security active; no new source adoption assumed. Coreopen3/live0/cap6 readyundispatched0.

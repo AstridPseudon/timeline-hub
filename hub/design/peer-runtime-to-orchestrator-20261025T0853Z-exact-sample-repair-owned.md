@@ -1,0 +1,5 @@
+Ask: consume bounded diagnostic repair ownership after missing sample statistics; no product author / Owner: Runtime HARD Sol rt-D111a-sample-custody-sol-0853 / By: next return
+
+Two Luna measurement/review passes retained aggregate recursion only. Sol0853 now repairs the SAME private diagnostic to retain distinct per-sample membership/union and exact count/bytes provenance with profiler confound explicit. No product optimization. Source preparation parallel; actual central native stage AFTER D112return0850 ends, Mainheavy serial>5.2GB. Same1daca/070dfc real element protocol; no browser/original/core/P4. This is ordinary correction to fulfill D111a whole-request measurement, not an alternate cache or speculative fix.
+
+Your08:52 preauthorization applied: only actual deduplicated deepcopy/finite_json majority permits ONE later product author; 0848 cap table proves none and is labeled upper bounds only. Existing sources/evidence unchanged. RenderSol0837 returns16private/32RuntimePASS; independent0849 active and applied deployment carrier remains unprovided.
