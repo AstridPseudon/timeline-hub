@@ -1,0 +1,68 @@
+{
+  "schema": "timeline.agent.d108.baseline-prep-handoff.v1",
+  "task": "agt-F-D108-baseline-prep-0756",
+  "status": "source_only_ready_for_main_terminal",
+  "base_branch": "tl/integration",
+  "body_run": false,
+  "index": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-prep-0756/evidence/d108-upstream924-node-index.tsv",
+    "sha256": "72534d6e122d282310f9275952f9711abd73c4a3ff8194e6eb5d56b6867cf917",
+    "format": "TSV; one exact row for each D54a selector; raw node IDs and XML blob/failure identities retained"
+  },
+  "summary": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-prep-0756/evidence/d108-upstream924-node-index-summary.json",
+    "sha256": "61d309853e1e68f20de4238c7cde258bc485462a7c17251c06b56e58e05e3736"
+  },
+  "comparison_inputs": {
+    "exact_rows": 276,
+    "unique_orders": true,
+    "orders_1_to_276": true,
+    "upstream_exact_matches": 75,
+    "upstream_unknown": 201,
+    "rename_checks": {
+      "attempted": 201,
+      "exact_match": 2,
+      "no_match": 199,
+      "ambiguous": 0,
+      "method": "existing bounded D63 same-function-name/body-text result"
+    }
+  },
+  "current_inventory_boundary": {
+    "selector_count": 9268,
+    "file_count": 409,
+    "root_count": 22,
+    "aggregate_sha256": "7ac5cdd0bfa2b811f9a0a4fb719d9a28ef6080d2bb879ed29fe54fc1a6882b69",
+    "comparison_rows_present": 175,
+    "comparison_rows_absent": 101,
+    "meaning": "source membership only; no current outcome is inferred"
+  },
+  "known_boundaries": {
+    "D13_ENV": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+    "D23_DEFERRED": [
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head"
+    ],
+    "approved_dead_scope_assignments_in_exact276": 0
+  },
+  "upstream_terminal": {
+    "service_id": "agt-F-D60-baseline-amend-1336-full-upstream-final-9244377-1024135120-1621",
+    "status": "FAIL",
+    "exit_code": 1,
+    "xml_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+    "counts": {
+      "passed": 12396,
+      "failed": 91,
+      "errors": 14,
+      "skipped": 16,
+      "subtests": 566
+    },
+    "runtime_isolation": "UNCERTAIN_FULL_RUN_PER_D54_CUSTODY_CORRECTION"
+  },
+  "guards": {
+    "current_failure_classification": "WITHHELD_UNTIL_D108_TERMINAL",
+    "current_core_open_count": "WITHHELD_UNTIL_D108_TERMINAL",
+    "current_regression_claims": false,
+    "upstream_terminal_is_pass": false,
+    "no_collection_import_pytest_helper_service_browser_install_probe": true
+  }
+}

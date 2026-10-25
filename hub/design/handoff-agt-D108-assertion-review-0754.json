@@ -1,0 +1,116 @@
+{
+  "schema": "timeline.agent.d108.assertion-map-review.v1",
+  "task": "F-D108",
+  "verdict": "FAIL",
+  "reviewed": {
+    "markdown": "design/handoff-agt-D108-assertion-review-0754.md",
+    "json": "design/handoff-agt-D108-assertion-map-0747.json",
+    "worker_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-assertion-map-0747/report.md"
+  },
+  "findings": [
+    {
+      "id": "source-identities",
+      "verdict": "PASS",
+      "evidence": {
+        "captured_agent": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "normal_agent": "b943270a9ed42bb968dbaeace7b296d9898ea21b",
+        "fresh_agent": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+        "upstream924": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+        "applied_agent_d07": "c456b3281497653cecf44f61acd6fa30565d83c8",
+        "all_are": "present Git commit objects"
+      }
+    },
+    {
+      "id": "normal-delta-scope",
+      "verdict": "FAIL",
+      "claim": "normal b943 differs from captured d629 only by D07 new tests",
+      "evidence": {
+        "actual_paths": [
+          "astrid/sdk/timeline/inverse.py",
+          "tests/editing_conformance/test_cli_trim_runtime.py",
+          "tests/editing_conformance/test_m1_legacy_archive_read.py",
+          "tests/editing_conformance/test_recipe_m2_clip_trim.py",
+          "tests/editing_conformance/test_s3_reviewed_cohort_runtime.py",
+          "tests/sdk/test_inverse_removed_shot_owners_runtime.py"
+        ],
+        "d110_paths": [
+          "astrid/sdk/timeline/inverse.py",
+          "tests/sdk/test_inverse_removed_shot_owners_runtime.py"
+        ],
+        "d110_candidate": "ccf831df632c0821fea0dec102b6fbd6a30439ad",
+        "normal_blobs_match_d110_candidate": true
+      }
+    },
+    {
+      "id": "fallback-direction",
+      "verdict": "FAIL",
+      "algorithm": "same modified Python test paths, same qualified functions, AST predicate multisets of ast.Assert.test and ast.Raise.exc",
+      "declared_comparison": {
+        "old": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "current": "08e6b905114a3ee2b05c3e7980421f26b4abf15c"
+      },
+      "independent_counts": {
+        "changed_bodies": 189,
+        "removed_assertion_or_raise_fingerprints": 310,
+        "added_assertion_or_raise_fingerprints": 119
+      },
+      "artifact_counts": {
+        "changed_bodies": 189,
+        "removed_assertion_or_raise_fingerprints": 119,
+        "added_assertion_or_raise_fingerprints": 310
+      },
+      "correct_residue_vs_129_113_287": {
+        "changed_bodies": 60,
+        "removed_assertion_or_raise_fingerprints": 197,
+        "added_assertion_or_raise_fingerprints": -168
+      },
+      "artifact_residue": {
+        "changed_bodies": 60,
+        "removed_assertion_or_raise_fingerprints": 6,
+        "added_assertion_or_raise_fingerprints": 23
+      }
+    },
+    {
+      "id": "authoritative-missing-input",
+      "verdict": "PASS",
+      "evidence": {
+        "named_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D108-rehearsal-source-0645/evidence/d108-source-rehearsal-manifest.json",
+        "exists": false,
+        "aggregate": {
+          "changed_bodies": 129,
+          "removed_assertion_fingerprints": 113,
+          "added_assertion_fingerprints": 287,
+          "status": "EXACTMISSING"
+        },
+        "no_predicates_cleared": true
+      }
+    },
+    {
+      "id": "crosswalk-hash",
+      "verdict": "FAIL",
+      "artifact_value": "37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504",
+      "crosswalk_json_sha256": "e131b68cef9a9198198155d8a736174b2b2970cbba1445870c86f53f37ca1515",
+      "crosswalk_markdown_sha256": "135f2e0b89e8d0767c384f43c5b876fe9cfa6ce15045ec2b23e3266175861d5b",
+      "meaning": "artifact value is the missing manifest's expected hash, not the crosswalk file hash"
+    },
+    {
+      "id": "fallback-rows-and-review-groups",
+      "verdict": "FAIL",
+      "evidence": {
+        "json_bytes": 4098,
+        "fallback_keys": ["status", "comparison", "algorithm", "limits", "observed_metric"],
+        "required_row_keys_absent": ["changed_bodies", "removed_assertions", "added_assertions", "line", "file_blob", "body_sha256", "verdict", "groups"],
+        "classification": "AUTHOR_OMISSION_NOT_INPUT_LIMIT"
+      }
+    }
+  ],
+  "checks": {
+    "json_parse": "PASS",
+    "source_object_hashes": "PASS",
+    "ast_set_arithmetic": "PASS for corrected 189/310/119 direction",
+    "in_memory_compile": "PASS",
+    "git_diff_check": "PASS",
+    "product_tests": "NOT RUN by read-only scope"
+  },
+  "next_step": "Correct direction/scope/hash metadata and provide the promised finite rows/groups; retain 129/113/287 as EXACTMISSING until authoritative membership exists."
+}
