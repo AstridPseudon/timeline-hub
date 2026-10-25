@@ -1,0 +1,62 @@
+{
+  "schema": "timeline.agent.d134.missing-inputs.v1",
+  "status": "EXACTMISSING",
+  "measurement_is_blocked_until": [
+    {
+      "id": "custody-e2e-at-20z",
+      "required": "genuine MAIN custody E2E verdict recorded at/after 20:00Z",
+      "accepted_value_for_measurement": "NOT_GREEN",
+      "current": "EXACTMISSING",
+      "refusal_if_green": "no measurement; no alternate route"
+    },
+    {
+      "id": "p4-d73-manifest",
+      "required": "existing P4_D73_MANIFEST binding the exact frozen Agent/Runtime/App/Composition tuple",
+      "current": "EXACTMISSING",
+      "available_but_rejected": "stale manifest binds f4d6c72c/327da207/255f9f12/635f4de0"
+    },
+    {
+      "id": "p4-d73-evidence",
+      "required": "existing P4_D73_EVIDENCE directory paired with that exact manifest",
+      "current": "EXACTMISSING"
+    },
+    {
+      "id": "main-positive-control",
+      "required": "existing genuine parsed-row positive control entrypoint plus bytes/hash",
+      "current": "EXACTMISSING"
+    },
+    {
+      "id": "main-positive-counter",
+      "required": "fresh MAIN_POSITIVE_COUNTER path bound by MAIN",
+      "current": "EXACTMISSING"
+    },
+    {
+      "id": "main-poison-control",
+      "required": "existing genuine parsed-row poison control entrypoint plus bytes/hash",
+      "current": "EXACTMISSING"
+    },
+    {
+      "id": "main-poison-counter",
+      "required": "fresh MAIN_POISON_COUNTER path bound by MAIN",
+      "current": "EXACTMISSING"
+    },
+    {
+      "id": "ordinary-preflight-acceptance",
+      "required": "MAIN-run ordinary D73 preflight: positive exits 17 with one counter line; poison nonzero with zero counter lines; module origins and all guards pass",
+      "current": "NOT_RUN_BY_DESIGN"
+    }
+  ],
+  "preserved_refusal": {
+    "d128_child_maker_refusal": "maker provision report differs from authenticated installed inventory",
+    "record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/refused/childvenv-venv-agent-child-custody-a4e016",
+    "sha256": "651484cd9b28570730ca3f7458dacbad7daa29241ea082bd376386d15e7de62d"
+  },
+  "prohibited_substitutions": [
+    "stale D73 manifest",
+    "normal integration heads",
+    "new child environment",
+    "alternate profile",
+    "custody or guard bypass",
+    "request-test or body before manager gated followup"
+  ]
+}
