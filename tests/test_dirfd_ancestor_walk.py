@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 
 from runtime_protocol import dirfd
+from tests.lanes import requires_linux_o_path
 
-pytestmark = pytest.mark.skipif(not hasattr(os, "O_PATH") or os.name == "nt",
-                                reason="ancestor walk uses Linux O_PATH")
+pytestmark = requires_linux_o_path
 
 
 def test_chain_does_not_need_read_access_to_ancestors(tmp_path: Path):
@@ -19,8 +19,6 @@ def test_chain_does_not_need_read_access_to_ancestors(tmp_path: Path):
     (leaf / "marker").write_text("ok", encoding="utf-8")
     parent.chmod(0o311)
     try:
-        if os.access(parent, os.R_OK):
-            pytest.skip("permission bits are not enforced for this user")
         fd = dirfd.open_directory_chain(leaf)
         try:
             assert os.path.samestat(os.fstat(fd), os.stat(leaf))

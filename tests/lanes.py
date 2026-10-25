@@ -174,6 +174,10 @@ requires_posix_fork = _declare(
     "posix-fork", "os_name == 'nt'",
     "multiprocessing fork is unavailable on Windows", ("unit",),
 ).mark()
+requires_linux_o_path = _declare(
+    "dirfd-o-path", "sys_platform != 'linux'",
+    "the ancestor walk uses Linux O_PATH", ("unit",),
+).mark()
 
 # Decided while the test runs, so it is a call rather than a mark. The skip can
 # only fire on Windows, and only for WinError 1314 (no symlink privilege).
