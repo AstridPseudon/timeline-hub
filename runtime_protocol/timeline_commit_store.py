@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import re
+import sqlite3
 import threading
 from collections import deque
 from contextlib import contextmanager
@@ -258,11 +259,7 @@ class TimelineCommitStore:
                                    ("records", "entries", "closures", "heads", "chains", "chain_tails", "events", "objects")}
             self._replay_generation += 1
 
-    def _store_version(self):
-        # data_version is meaningful only on the same live connection. The
-        # RealmStore mutex also serializes its use across request threads.
-        if self.store.conn is not self._connection:
-            raise ProtocolError("accepted commit connection was replaced; reopen required")
+    def _physical_version(self):
         files = []
         for index, path in enumerate((self.store.db_path, str(self.store.db_path) + "-wal",
                                       str(self.store.db_path) + "-shm", self.store.db_path.parent)):
@@ -274,18 +271,87 @@ class TimelineCommitStore:
                 files.append((value.st_dev, value.st_ino, *content, value.st_uid, value.st_mode))
             except FileNotFoundError:
                 files.append(None)
-        if files[0] is None or files[0][:2] != self._database_identity:
-            # SQLite still holds the old inode open. Do not authenticate that
-            # disconnected database as the replacement at our live path.
-            raise ProtocolError("accepted commit database was replaced; reopen required")
-        if self._wal_identity is None and files[1] is not None:
-            self._wal_identity = files[1][:2]
-        if self._wal_identity is not None and (files[1] is None or files[1][:2] != self._wal_identity):
-            raise ProtocolError("accepted commit WAL was replaced; reopen required")
         try:
             package_owner = os.stat(os.path.dirname(os.path.realpath(__file__))).st_uid
         except OSError:
             package_owner = None
+        return tuple(files), package_owner
+
+    def _replacement_connection_is_current(self, connection):
+        """Check that an externally supplied handle names this realm DB."""
+        try:
+            database = connection.execute("PRAGMA database_list").fetchone()
+            journal_mode = connection.execute("PRAGMA journal_mode").fetchone()
+        except (AttributeError, sqlite3.Error) as exc:
+            raise ProtocolError("accepted commit connection replacement is unusable") from exc
+        if database is None or len(database) < 3 or not database[2]:
+            raise ProtocolError("accepted commit connection replacement is not the realm database")
+        try:
+            current_path = os.path.realpath(database[2])
+            expected_path = os.path.realpath(self.store.db_path)
+        except OSError as exc:
+            raise ProtocolError("accepted commit connection replacement path is unavailable") from exc
+        if current_path != expected_path:
+            raise ProtocolError("accepted commit connection replacement is not the realm database")
+        if journal_mode is None or str(journal_mode[0]).lower() != "wal":
+            raise ProtocolError("realm storage requires SQLite WAL journal mode")
+
+    def _reestablish_connection(self):
+        """Replace stale storage handles before any authenticated read.
+
+        A handle replacement can be adopted after checking its database path;
+        a changed DB/WAL path is reopened through RealmStore's existing open
+        lifecycle. Both routes discard all retained proofs and establish a
+        new physical identity baseline before verification resumes.
+        """
+        with self.store._mutex:
+            current = self.store.conn
+            if current is None or getattr(self.store, "_lock_file", None) is None:
+                raise ProtocolError("accepted commit storage is closed; reopen required")
+            if getattr(current, "in_transaction", False) or getattr(self._connection, "in_transaction", False):
+                raise ProtocolError("accepted commit storage identity changed during a transaction; reopen required")
+            files, _ = self._physical_version()
+            if files[0] is None:
+                raise ProtocolError("accepted commit database is missing; reopen required")
+
+            if current is not self._connection:
+                self._replacement_connection_is_current(current)
+                current.row_factory = sqlite3.Row
+                current.execute("PRAGMA foreign_keys=ON")
+                current.execute("PRAGMA busy_timeout=10000")
+            else:
+                # Closing the old handle is essential: SQLite may otherwise
+                # continue serving the disconnected inode after DB/WAL swap.
+                current.close()
+                self.store.conn = None
+                try:
+                    self.store._open(fresh=False)
+                except FileNotFoundError as exc:
+                    raise ProtocolError("accepted commit database is missing; reopen required") from exc
+
+            self._connection = self.store.conn
+            files, _ = self._physical_version()
+            if files[0] is None:
+                raise ProtocolError("accepted commit database is missing; reopen required")
+            self._database_identity = files[0][:2]
+            self._wal_identity = None if files[1] is None else files[1][:2]
+            self._replay_store_version = None
+            self.clear_replay_memo()
+
+    def _store_version(self):
+        # data_version is meaningful only on the same live connection. The
+        # RealmStore mutex also serializes its use across request threads.
+        files, package_owner = self._physical_version()
+        connection_changed = self.store.conn is not self._connection
+        database_changed = files[0] is None or files[0][:2] != self._database_identity
+        wal_changed = self._wal_identity is not None and (files[1] is None or files[1][:2] != self._wal_identity)
+        if connection_changed or database_changed or wal_changed:
+            self._reestablish_connection()
+            files, package_owner = self._physical_version()
+        if files[0] is None:
+            raise ProtocolError("accepted commit database is missing; reopen required")
+        if self._wal_identity is None and files[1] is not None:
+            self._wal_identity = files[1][:2]
         return (id(self._connection), self._connection.total_changes,
                 self._connection.execute("PRAGMA data_version").fetchone()[0], tuple(files), package_owner)
 
