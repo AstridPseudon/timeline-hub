@@ -222,15 +222,21 @@ def _saved_document(runtime):
         if shot_key not in seen_shots:
             seen_shots.add(shot_key)
             shot = runtime.get_project_shot_revision(runtime.project_id, *shot_key)
-            shots.append(shot)
+            shots.append({key: shot[key] for key in (
+                "shot_id", "revision_id", "internal_timeline_revision_id",
+                "content_digest", "payload",
+            )})
         internal_id = next(row for row in shots if (row["shot_id"], row["revision_id"]) == shot_key)[
             "internal_timeline_revision_id"
         ]
         if internal_id not in seen_internals:
             seen_internals.add(internal_id)
-            internals.append(runtime.get_project_timeline_revision(
+            internal = runtime.get_project_timeline_revision(
                 runtime.project_id, runtime.timeline_id, internal_id,
-            ))
+            )
+            internals.append({key: internal[key] for key in (
+                "timeline_id", "revision_id", "content_digest", "payload",
+            )})
     return {
         "schema_version": 1,
         "project_id": runtime.project_id,
