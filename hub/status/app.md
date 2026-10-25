@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T13:57:50Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 6 | status age 1m -->
-# app board, 2026-10-25T13:56Z
+<!-- app | 2026-10-25T14:01:48Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
+# app board, 2026-10-25T13:58Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -83,7 +83,8 @@
 | D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1320 SOURCE PASS | merged | Author1312; review1320 | Whole normal tree equals reviewed4c56.29 D66 and2 route, types/lint PASS; actual sampler attachment qualified only in later tour. | af5fe0a274 |
 | D124-bootstrap | Qualify existing normal bootstrap controls | Luna read only | Own three existing controls | review | app-D124-normal-bootstrap-controls-1337 | D78 PASS; throw-fixture500 and event-key schema FAIL. D66 exact helper identity2 PASS. [Report](../../design/app-D124-normal-bootstrap-controls-1337-report.md). | af5fe0 source |
 | D125-full-P2 | Proof hosts tagged full tour now | Proof producer; App Luna verdict | D125a and D125b accepted Node | doing | Proof sole controller; App verdict reserved | Owner accepted exact Node20.19.4 tree; Proof owns ordinary preflight and one submit. No App original or local fallback. | fe3309 /070dfc /5e9ad /635f |
-| D124-bootstrap-return | Repair two current harness contracts | Luna and protected Luna | Exact upstream method decision | blocked:orchestrator | Author1350; independent1354 active | Candidate4b4e owns two files; author controls/types/lint PASS. One upstream-present method migration needs D120 scope. No original body. | 4b4e0558ef |
+| D124-bootstrap-return | Repair two current harness contracts | Luna and protected Luna | D126 APPROVED; sole review1354 | review | Author1350; independent1354 active | Exact upstream POST migration approved. Three old assertions must stay exact. Normal and reviewed helper controls pass at author; review pending. | 4b4e0558ef |
+| D126-notes | Record upstream change and ZIP note | Luna | D126 approved exact delta | doing | app-D126-ledger-zip-note-1359 | Worker authors exact ledger paragraph and one ZIP line; publication follows protected PASS. No product or test edits. | Documentation only |
 
 | D125-local-prep | Prepare authorized fallback without submission | Luna read only | D125c Proof keeps first venue | doing | app-D125-local-fallback-prep-1356 | Local exact receipt and command preparation only. No preflight or original until explicit venue handback. | Frozen fe3309 tuple |
 
@@ -103,10 +104,9 @@ Blockers: App element — Sole App owner. Helper is normal Runtime453b and App h
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Proof exact recipe under D125c; same ID terminal gets App independent verdict. Review1354 runs; upstream scope decision pending. Local fallback prep1356 submits nothing.
-live 2 / cap 6; ready-undispatched 0; core open: 2. Protected review1354 and read only local fallback prep1356. Proof keeps sole D125 venue under D125c; no local body. Small Agent authors remain paused.
+Next ready: Proof exact recipe under D125c; same ID terminal gets App independent verdict. Review1354 runs; D126 upstream scope APPROVED; notes1359 active. Local fallback prep1356 submits nothing.
+live 3 / cap 3; ready-undispatched 0; core open: 2. Protected1354, read only fallback1356 and D126 notes1359. D89b source cap3 below5GB; no App heavy. Proof sole D125 venue under D125c.
 Capacity: Sweep3 removed0; corrected compact packed0 scratch/test dirs and gzipped6 old logs. Free about5.33GB at13:49. Ended nonKEEP unrecycled tree scan0. Heavy5.2GB and stop4.0GB; protected targets untouched.
-INBOX consumed through2227626 bytes, including D125a/D125b accepted Node custody and sole Proof venue. Retained11251/8974/15203/15712 outputs and all prior refused/dirty targets remain protected.
+INBOX consumed through2233362 bytes, including D125a/D125b accepted Node custody and sole Proof venue. Retained11251/8974/15203/15712 outputs and all prior refused/dirty targets remain protected.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 
-Blockers: Orchestrator — D120 exact upstream throw-fixture POST migration decision; independent1354 runs in parallel. [Concrete scope](../../escalations/app-20261025T1354Z-upstream-throw-fixture-method.md). D125 tour unaffected.
