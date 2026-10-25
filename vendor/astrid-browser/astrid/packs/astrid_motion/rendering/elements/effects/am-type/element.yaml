@@ -76,3 +76,23 @@ schema:
       type: integer
       minimum: 0
       description: Clip frame where the underline starts to draw (6 frames).
+    yKeyframes:
+      type: array
+      description: "Optional glide: [{at: clip frame, y: px, ease?: linear|easeOut|easeInOut}], interpolated smoothly per frame (holds before the first and after the last); overrides y, composes with reveal."
+      items:
+        type: object
+        required: [at, y]
+        properties:
+          at: {type: integer, minimum: 0}
+          y: {type: number}
+          ease: {type: string, enum: [linear, easeOut, easeInOut]}
+    xKeyframes:
+      type: array
+      description: "Optional glide on x, same shape as yKeyframes with x in place of y; overrides x."
+      items:
+        type: object
+        required: [at, x]
+        properties:
+          at: {type: integer, minimum: 0}
+          x: {type: number}
+          ease: {type: string, enum: [linear, easeOut, easeInOut]}

@@ -10,6 +10,7 @@ import {
   oneOf,
   type ElementComponentProps,
 } from '../../_shared/am';
+import {interpolateKeys, type PositionKey} from './position-keys';
 
 // am-type: editorial type. Type may ease (masked slide-up uses ease-out
 // cubic); the typewriter reveal and the underline step on frames.
@@ -31,6 +32,8 @@ type Params = {
   lineHeight?: number;
   underlineWord?: string;
   underlineAt?: number;
+  xKeyframes?: PositionKey[];
+  yKeyframes?: PositionKey[];
 };
 
 const SLIDE_FRAMES = 8;
@@ -82,8 +85,8 @@ export default function AmType(props: ElementComponentProps): ReactElement | nul
   const tracking = finiteNumber(params.tracking, isLabel ? 0.12 : -0.01);
   const lineHeight = Math.max(0.5, finiteNumber(params.lineHeight, isLabel ? 1.3 : 0.95));
   const color = params.color ?? COLOR.ink;
-  const x = finiteNumber(params.x, 96);
-  const y = finiteNumber(params.y, 96);
+  const x = interpolateKeys(params.xKeyframes, 'x', frame) ?? finiteNumber(params.x, 96);
+  const y = interpolateKeys(params.yKeyframes, 'y', frame) ?? finiteNumber(params.y, 96);
   const width = Math.max(1, finiteNumber(params.width, 1200));
 
   const italicWord = typeof params.italicWord === 'string' ? params.italicWord.trim() : '';
