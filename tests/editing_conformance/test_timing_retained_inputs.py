@@ -1,8 +1,9 @@
 """Real retained inputs, and the missing accepted word-binding seam.
 
-The fixture provider seeds a bounded film and retains an input through the
-real acceptance port, as in Runtime's prepared-provider suite. Measured commands use the installed Agent. First-selection below is a
-bounded experiment, NOT a history adapter or a new authoring representation.
+The native fixture seeds a bounded film through the current Runtime commit
+provider and retains its exact transcript input. Measured commands use the
+installed Agent. First-selection below is a bounded experiment, NOT a history
+adapter or a new authoring representation.
 """
 from __future__ import annotations
 
@@ -78,64 +79,18 @@ def first_selection(bundle):
 
 @pytest.fixture
 def retained(tmp_path, monkeypatch, request):
-    runtime = use_runtime()
-    monkeypatch.syspath_prepend(str(runtime / "tests"))
-    from runtime_protocol.contract_metadata import SCHEMA_DIGEST
+    use_runtime()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_port import route_path
-    from test_generation_publish_v1_settlement import (
-        _effect,
-        _fixture,
-        _output,
-        _settle,
-    )
 
-    def effect(project):
-        value = _effect(project, groups=[{"group_key": "voice", "selectors": [
-            {"selector": "take", "ordinal": 0, "variant_key": "take", "output_port": "audio"}]}])
-        value["payload"]["metadata"] = {"params": {"duration_seconds": 6}}
-        return value
+    from tests.editing_conformance.native_word_anchor_fixture import seed
 
-    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect, slug="timing")
-    project, root = project["id"], service.store.root
-    _settle(service, attempt, [_output(b"timing-source", output_port="audio", group_key="voice",
-        variant_key="take", ordinal=0, filename="voice.wav", media_type="audio/wav")], effect=admitted)
-    association, = service.managed_outputs(task["task"]["id"])
-    selection = service.get_project_media_selection(project, {
-        "association_id": association["association_id"], "object_id": association["object_id"],
-        "version": association["lifecycle"]["version"]}, authorize=lambda: None)
-    media = selection["object_id"]
-    content = build_transcript(media, "line", "again again stop", [
-        [2, 2.5, "again"], [3, 3.5, "again"], [5.5, 6, "stop"],
-    ])
-    document_id = transcript_document_id(project, media, content["source_id"])
-    source = service.create_document(project, {"document_id": document_id,
-        "kind": "media.transcript", "content": content}, idempotency_key="transcript-v1")["data"]
-    pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
-    voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
-               "at": 1, "from": 2, "to": 6, "speed": 2}]
-    if getattr(request, "param", False):
-        voices.append(dict(voices[0], id="other", at=4))
-    # Bounded fixture data only: current Runtime retires direct shot writes.
-    # The prepared provider below seeds it through the real acceptance port.
-    publication = {
-        "internal_timeline_revisions": [{"timeline_id": "film", "revision_id": "internal",
-            "payload": {"tracks": [{"id": "vo", "kind": "audio"}],
-                "clips": voices, "effects": [], "audio": [], "layout": {}, "assets": [],
-                "registry": {"assets": {"take": {"media_id": media, "type": "audio"}}}}}],
-        "shot_revisions": [{"shot_id": "shot", "revision_id": "shot-revision",
-            "internal_timeline_revision_id": "internal",
-            "payload": {"items": [], "internal_timeline_revision_id": "internal"}}],
-        # Keep the exact rational clock in current output and canvas settings.
-        "parent_composition": {"registry": {}, "config": {"output": {"fps": FPS},
-            "theme_overrides": {"visual": {"canvas": {"fps": FPS}}},
-            "tracks": [{"id": "picture", "kind": "visual"}]},
-            "clips": [{"id": "card", "clipType": "am-type", "track": "picture", "at": 0,
-                       "hold": 1, "app": {"astrid": {"on": DECLARATION, "for": 0.5}}}],
-            "occurrences": [{"occurrence_id": "occ", "shot_id": "shot",
-                "shot_revision_id": "shot-revision", "placement": {"start_ms": 2000, "track": "picture"},
-                "duration_ms": 10000, "track": "picture", "source_offset": 0, "speed": 1,
-                "gain": 1, "muted": False, "transform": {}, "provenance": {}}]}}
+    root = tmp_path / "realm"
+    options = getattr(request, "param", False)
+    options = options if isinstance(options, dict) else {"reused": options}
+    seeded = seed(root, **options)
+    project, pin, source = (seeded[key] for key in ("project", "pin", "source"))
+    service = RuntimeService(root)
 
     case = SimpleNamespace(service=service, root=root, project=project, pin=pin, source=source,
                            hydrated=[], documents={})
@@ -157,43 +112,6 @@ def retained(tmp_path, monkeypatch, request):
         case.documents[document["parent_revision"]["revision_id"]] = document
         return result
 
-    class RetainInput:
-        provider_id = "astrid-v1"
-        interface_version = 1
-        contract_digest = SCHEMA_DIGEST
-
-        def commit(self, context, port):
-            base = port.head()
-            candidate = port.revision_closure(base["revision_id"])
-            assert port.selected_media(selection)["selection"] == selection
-            assert port.transcript_source(pin) == {"pin": pin, "document": source}
-            parent = copy.deepcopy(publication["parent_composition"])
-            shots = copy.deepcopy(publication["shot_revisions"])
-            internals = copy.deepcopy(publication["internal_timeline_revisions"])
-            for image in shots + internals:
-                image["content_digest"] = _digest(image["payload"])
-            candidate.update(
-                parent_revision={"revision_id": "retained-v1", "payload": parent,
-                                 "content_digest": _digest(parent)},
-                shot_revisions=shots, internal_timeline_revisions=internals,
-                dependency_manifest=agent._manifest(shots, internals,
-                    [{"media_id": media, "content_digest": media}], [pin]))
-            record = {"ordinal": 0, "command": context["request"]["commands"][0],
-                "writes": [], "reads": [], "selections": [], "bindings": [], "created": [],
-                "derived_writes": [], "dependencies": [{"key": "fixture.retain", "kind": "transcript",
-                    "pin": pin, "policy": "exact"}]}
-            return port.accept({"expected_head": base, "canonical_document": candidate,
-                "document_digest": _digest(candidate),
-                "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
-                "id_map": {}, "semantic_events": [], "provider_version": "fixture-retain",
-                "compiler_version": "fixture-retain"})
-
-    service.register_timeline_commit_provider(RetainInput())
-    service.create_timeline(project, "film", idempotency_key="empty-film")
-    case.seed = submit(request([{"schema_version": 1, "op": "fixture.retain", "version": "1",
-        "select": None, "args": {"pin": pin, "media": selection}, "created": []}]), "retain")
-    service.close()
-    case.service = RuntimeService(root)
     case.service.register_timeline_commit_provider(agent.create_runtime_commit_service())
     hydrate = agent._hydrate
 
@@ -203,6 +121,29 @@ def retained(tmp_path, monkeypatch, request):
         return result
 
     monkeypatch.setattr(agent, "_hydrate", observed)
+
+    case.seed = submit(request([{"schema_version": 1, "op": "track.create", "version": "1",
+        "select": "parent", "created": ["parent/track:initial"],
+        "args": {"row": {"id": "initial", "kind": "audio"}}}]), "initial")
+
+    # The current native fixture starts with an empty document manifest. Use
+    # the real parent anchor carrier once to retain this exact transcript pin,
+    # then explicitly clear the authored choice before the measured commands.
+    # This keeps source custody in Runtime history without inventing a binding
+    # for any of the retained-input cases below.
+    from astrid.sdk.timeline.native_word_anchor import capture_anchor
+
+    anchor_bundle = agent.bundle_from_document(case.seed["data"]["canonical_document"])
+    anchor_bundle["source_mapping"]["pinned_documents"] = [
+        {"pin": copy.deepcopy(pin), "document": copy.deepcopy(source)}]
+    choice = {"source": "occurrence:occ/clip:voice", "document": copy.deepcopy(pin),
+              "word_ids": [source["content"]["segments"][0]["words"][1]["id"]],
+              "offset_frames": 1}
+    anchored = capture_anchor(anchor_bundle, "parent/clip:card", "on", DECLARATION, choice)
+    case.submit(request([anchored]), "retain-transcript-pin")
+    clear_bundle = agent.bundle_from_document(case.documents[case.head()["revision_id"]])
+    cleared = capture_anchor(clear_bundle, "parent/clip:card", "on", None, None)
+    case.submit(request([cleared]), "clear-retained-word-choice")
 
     def restart(provider=None):
         case.service.close()
