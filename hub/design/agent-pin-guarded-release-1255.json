@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-25T12:54:36.213673+00:00",
+  "name": "agt-pin-ef4c40e8",
+  "sha": "ef4c40e8e9e57aaac85a8483238027251495a8e5",
+  "clean": true,
+  "current_head": false,
+  "active_references": [],
+  "host_CLEAR": "Owner relay Agent INBOX 2026-10-25T12:51:04Z; lead /proc cmdline/cwd/environ/fd CLEAR at12:52Z",
+  "before": 4712890368,
+  "registered_bae5_left_intact": true,
+  "all_outputs_and_branches_kept": true,
+  "returncode": 0,
+  "output": "recycled agt-pin-ef4c40e8\n",
+  "stderr": "",
+  "after": 4843864064
+}

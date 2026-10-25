@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T12:51:20Z | dispatcher heartbeat 14s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 0m -->
+<!-- agent | 2026-10-25T12:55:03Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 1m -->
 # agent board, 2026-10-25T12:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,10 +15,10 @@
 | P4 | Keep exact ten-note qualification | Luna / Service | Recorded tuple | merged | Runtime22560 and independent0450 | PASS28.101s versus45s; all per-note durations UNKNOWN. No repeat; final tuple gates still owed. | 786 /0c62 |
 | D108 core2016 | Retain original full checkpoint | Service / Luna | Exact original evidence | merged | Core0811 and classification0846 | 8763 PASS159 FAIL347 ERROR.506bad; source categories and corrected23-node comparison retained. | 070dfc /1daca |
 | D118 core30693 | Retain latest full checkpoint | Service / Luna | Independent1104 | merged | Core1024; classify1055; review1104 | 8823 PASS159 FAIL291 ERROR;450bad, core425, REG14. Summary ambienttree discrepancy resolved1111. | 120d /1daca |
-| D122 host14 | Repair genuine bootstrap regressions | HARD Sol / protected Luna | Final source9ea675 | review | Origin return1241; final core1249 | Attack4 RED then focused24/isolation37 PASS. Final independent core/security active; original14 still owed. | 9ea67534f6 held |
+| D122 host14 | Repair genuine bootstrap regressions | HARD Sol / protected Luna | Final core/security1249 PASS | review | Farm host14 requested1254 | Author24+37 PASS and independent poison/positive child challenges PASS. Original14 on9ea owed; no behavior closure. | 9ea67534f6 held |
 | D122 host whole path | Compare second failure to passing path | Luna read only | Second fix failed gate | merged | wholepath-return-1217 | New13117 all14 child ModuleNotFoundError runtime_protocol; terminal700 wrapper. Exact per-node stderr/source accounting retained. | Evidence only |
 | D122 product batch | Join reviewed product sources | Runtime Luna | Farm core before release | merged | Ready normal return1232 | Exact six reviewed donor blobs homedb545; host source unchangednormal. Farm receives actualhead and mergedlist; no productrelease before core. | b545b616a4 |
-| D122 XML fixtures | Repair four installer setup failures | Runtime Luna / protected Luna | Independent1152 B PASS | review | XML1148 and clean1156 | Exact four own nodes PASS;108 assertions and authored inputs conserved. Exact clean join onto14c7 source qualified. | 04b7 held |
+| D122 XML fixtures | Repair four installer setup failures | Runtime Luna / protected Luna | Farm integrated proof | merged | Author1148; protected1152 B; normalb545 | Exact four own nodes PASS and108 assertions conserved at reviewed donor. Exact two fixture blobs now HOME; Farm core/platform proof separate. | b545 /04b7 |
 | D122 R2 seed join | Bind reviewed seed to held restore | Runtime Luna / protected Luna | D116 exact source | review | Resume1202; protected1208 A | Exact c81b source PASS. Three originals unqualified; old44cf zero PASS and three setup ERROR retained. | c81b5737 held |
 | D116 current seed | Join genuine word baseline and full envelopes | App Luna / protected Luna | Protected1205 PASS_SOURCE | review | Join1204; review1205; batch receiver | Exact0643 donor-byte join qualified. Historical6 PASS2 recipe FAIL. Existing producer batch owns real raw/config seam. | 0643b073a2 held |
 | D115 effect83 | Consume released ordinal-boundary verifier | Runtime / Agent | Normal tool adoption complete | review | Runtime369 release; Agent30caca | Strict321/native2 PASS at Runtime scope. Actual affected originals and next full count still owed. | Runtime369 /42aad |
@@ -45,7 +45,7 @@
 | D117 installed render | Qualify exact authorized source input | Runtime Luna / review | D117a exact git decision | blocked:runtime | Runtime1128 and1134 | Owner authorized pinned git input; existing integrity review governs next step. Historical denial retained; genuine render NOTRUN. | Applied523893 |
 | D59 final cut | Qualify final gates and full delivery | Runtime coordinator | Core and REG zero, D69, render | gated:D59 | Existing final coordinator | Final P1–P5, full core, reverse audit and genuine installed render owed. No ZIP claim. | Cut pending |
 
-| D122 host proof | Qualify unchanged original14 on21b | Luna / service | Corrected source and final review | gated:host-review | Proof1248 stopped before execution | Independent source FAIL blocks21b body. Preserve any row preparation and require restoration; zero new original14 execution. | 21b held |
+| D122 host proof | Qualify unchanged original14 on21b | Luna / service | Farm genuine inputs | blocked:farm | Farm lead requested1254 | Corrected9ea independently PASS; exact original14 proof movedFarm by owner. Old1248 zero execution; source/profile guards retained. | 9ea held |
 | D118a inverse packet | Preserve exact guarded boundary evidence | App Luna read only | Retained occurrence and scalar evidence | review | app-D118a-inverse-boundary-packet-1212 | Complete per App board; stage and physical records EXACTMISSING. No product attribution or replay. | Evidence only |
 | D118a native checkout4 | Preserve native checkout behavior | App Luna | Genuine current word seed | gated:word-source | app-D118a-native-checkout4-1215 | No diff. Exact own4 setup ERROR at shared m1.film missing legacy word anchor; real checkout tail unverified. | Source unchanged |
 | D118a track batch1 | Preserve parent track batch inverse | App Luna | Genuine current word seed | gated:word-source | app-D118a-track-batch1-1215 | No diff. Exact own1 setup ERROR at shared m1.film missing legacy word anchor. Inputs and grouping unchanged. | Source unchanged |
@@ -61,12 +61,12 @@ core open: 425 on immutable30693. Confirmed regressions:14, all still open until
 Current full checkpoint:8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips on120d/1daca/96d475/635f. Exact450 bad IDs and D54a per-node categories are retained in classification1055 and terminal-review1104. Metadata1111 distinguishes ambient f43dd from actual pinned9a65; no source retag.
 
 Blockers: Agent current core425 andREG14 — exact source owners above; source-only changes never imply functional closure.
-Blockers: Agent host14 light proof — free4.919GB below5.0; corrected host source1241 is active; proof1248 stopped before execution. Host-use audit requested for obsolete bae5/ef4c pins; refused targets untouched.
-Blockers: Agent D69 — index90 genuine installed render and index107 held normal import remain; all other semantic purpose units cleared by exact1150 join.
+Blockers: Farm host14 — corrected9ea source PASS; actual14 body requested1254 under owner venue instruction. Local light floor is no longer the proof blocker; no local duplicate.
+Blockers: Agent D69 — installed render90 and final b742 cut audit remain. XML107 exact reviewed service blob is now homedb545; genuine platform proof still separate.
 Blockers: Runtime D117a — exact authorized git source and installer integrity handoff; historical refusal retained. Genuine installed render NOTRUN.
 Blockers: Final cut — D123 fresh b742 patch, final tuple P1–P5, full core, D69 and render remain owed.
 
-Next ready: host final core/security review1249 active on9ea675; proof1248 stopped before execution on21b. Runtime1232 no-host batch and exact D116/R2 source joins are owned; farm gets actual normal receipt before core. App nativebinding sole core review1221 active; no duplicate author.
+Next ready: host9ea final core/security1249 PASS; Farm original14 requested1254. SharedrootSol1247 remains active. Runtime1232 no-host batch and exact D116/R2 source joins are owned; farm gets actual normal receipt before core. App nativebinding sole core review1221 active; no duplicate author.
 live 2 / cap 6; ready-undispatched 0 local. Light body gated by fresh5GB admission; source-only reviews at D89b floor. Hosted source joins remain assigned. D124 moves the next batch core to Farm; no local heavy. Small file authors paused unless already in review.
 
 Disk: 4919459840 bytes before proof preparation. Sweep-tmp3 complete0 eligible; finished nonKEEP scan found only dirty agt-G2-open-commit, recycle refused once and preserved. No retry. compact-scratch not invoked because its session action is outside allowed scope. Current21b pin and all proof inputs retained; host process-use audit requested before obsolete pin release.
@@ -75,6 +75,6 @@ D120 and D124: own failing nodes per fix; one Farm unfiltered core per merged ba
 
 Later: two D23 child-word originals and D14 deferred anchors remain unchanged and visibly unqualified. Missing numeric3/video4 complete correspondence records remain EXACTMISSING; no invented fixes or collector. E2 ABI retirement paused until after ZIP; withdrawn1171212 memo never adopted. D79 genuine replay input absent. D13 installed environment remains an explicit known gap.
 
-Inbox consumed through 1622940 bytes. Manager made no product, test, generated, pin or Git changes. D123 stopped WIP80d185 is distinct current-normal scope; Runtime hosted resume requested after scope correction. Historical47f6 is not substituted. New source handbacks do not reduce core or regression counts. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
+Inbox consumed through 1626422 bytes. Manager made no product, test, generated, pin or Git changes. D123 stopped WIP80d185 is distinct current-normal scope; Runtime hosted resume requested after scope correction. Historical47f6 is not substituted. New source handbacks do not reduce core or regression counts. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
 
 D124: host fix or upstream-behavior revert by14:00Z if current attempt fails, unless cited C0 requires ours. Recheck exact14 on upstreamb742. Source1241 remains exclusive; farm venue decision received in INBOX12:41, header sync pending.
