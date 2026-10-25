@@ -1,0 +1,48 @@
+{
+  "task": "rt-OPS-D137-retention-return-2018",
+  "base_commit": "4932c0f8e2e02ce6a203bf41fe014f9c3a7db5fa",
+  "source_commit": "UNBOUND_UNCOMMITTED_HARNESS_COMMIT",
+  "candidate": {
+    "path": "/home/user/work/wt/rt-OPS-D137-retention-return-2018/ops-child-custody/make-child-venv",
+    "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bytes": 75503,
+    "mode": "0755"
+  },
+  "private_stderr": {
+    "route": "/maker/tests/provision-stderr/<request>.<stage>.stderr",
+    "metadata_route": "/maker/tests/provision-stderr/<request>.<stage>.json",
+    "payload_mode": "0600",
+    "single_link": true,
+    "limit_bytes": 1048576,
+    "truncation_fields": ["original_bytes", "retained_bytes", "truncated", "sha256"]
+  },
+  "protected_exact": {
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "store_py_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+    "store_verify_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209"
+  },
+  "validation": {
+    "unit_tests": 44,
+    "e2e": "WITHDRAWN/NOTRUN",
+    "production_install": false,
+    "acquisition": false,
+    "store_initialization": false
+  },
+  "install_route": {
+    "command": "ORCH=/approved/orch/root SOURCE_CHECKOUT=/home/user/work/wt/rt-OPS-D137-retention-return-2018 TMPDIR=/approved/private/tmp D137_DECISION=/approved/gates/d137-decision.json bash ops-child-custody/install-prep/apply-reviewed-maker.sh",
+    "decision_schema": {
+      "authorization": "D137",
+      "fixture_e2e_gate": "WITHDRAWN",
+      "e2e_result": "NOTRUN",
+      "e2e_pass": false,
+      "install_route": "CAS_MANAGER_ONLY",
+      "production_install": false,
+      "candidate_sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+      "candidate_bytes": 75503,
+      "source_commit": "exact final 40-hex harness commit",
+      "reviewed_installer": "installer1826",
+      "decision_path": "absolute path to D137 decision JSON"
+    }
+  }
+}

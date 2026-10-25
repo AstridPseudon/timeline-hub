@@ -1,0 +1,82 @@
+{
+  "verdict": {
+    "source": "FAIL",
+    "behavior": "FAIL",
+    "evidence": "PASS_BOUNDED",
+    "release": "BLOCKED"
+  },
+  "findings": [
+    {
+      "id": "D136a-F1",
+      "severity": "blocking",
+      "path": "astrid/sdk/timeline/validation.py:53-109,139-151",
+      "title": "Candidate types an open theme canvas path",
+      "detail": "The candidate applies strict FPS parsing to parent.config.theme_overrides.visual.canvas.fps and cross-location rational parity. The canonical schema makes theme_overrides.visual an object whose additionalProperties are open; canvas and canvas.fps are not TimelineOutput fields. C0 provides no contract evidence for treating this open namespace as a typed parameter.",
+      "effect": "Pristine upstream accepts the same authored input while the provider rejects it before publication, violating OwnerD136a's every-input/same-behavior rule."
+    },
+    {
+      "id": "D136a-F2",
+      "severity": "blocking",
+      "path": "astrid/sdk/timeline/validation.py:53-69,86-97",
+      "title": "Finite complete census of still-rejected open-path forms",
+      "detail": "At theme_overrides.visual.canvas itself, non-object JSON values (boolean, number, string, array) are accepted by pristine upstream but rejected by candidate validation as must be an object. With an object canvas, candidate rejects fps null, strings, booleans, arbitrary mappings, zero/negative scalars, empty/one/three-item arrays, non-integer pairs, and zero/negative pairs. Pristine upstream's open schema accepts each and _timeline_fps falls back to 30.0, except true is read as scalar 1.0 by the existing Python predicate. Candidate accepts only positive finite scalars, exact positive integer numerator/denominator mappings, and exact positive two-integer lists/tuples.",
+      "effect": "The prior audit incorrectly labeled malformed/open forms as typed invalids or fixed/none without proving that the upstream path rejects them. They remain scope regressions under the explicit owner rule."
+    },
+    {
+      "id": "D136a-F3",
+      "severity": "blocking",
+      "path": "astrid/core/timeline/validators/timeline.py:171-187; astrid/sdk/timeline/_timing_evaluators.py:28-45",
+      "title": "Accepted rational spellings do not preserve upstream fallback behavior",
+      "detail": "For the same authored canvas.fps [30000,1001], pristine _timeline_fps returns 30.0. Candidate validation accepts the list and the production timing evaluator resolves 30000/1001. The same mismatch occurs for the exact numerator/denominator mapping: candidate compiles 30000/1001 while pristine _timeline_fps falls back to 30.0 because it only recognizes a positive scalar. Therefore accepting the list is not a same-result behavior fix.",
+      "effect": "Transition/timing validation and compiled frame math can observe different FPS for identical authored JSON. Authored bytes remain unchanged, but resulting behavior is not upstream-equivalent."
+    },
+    {
+      "id": "D136a-F4",
+      "severity": "blocking",
+      "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+      "title": "Five green tests are insufficient scope evidence",
+      "detail": "The candidate's five tests cover one exact list spelling in accepted/dry-run paths and three typed-output invalid controls. They do prove authored list retention and atomic refusal for those controls, but do not prove the complete open namespace or upstream fallback semantics. The nearest focused controls remain green and are retained evidence, not a waiver of F1-F3.",
+      "effect": "Functional evidence is bounded PASS; source and behavior qualification remain FAIL."
+    },
+    {
+      "id": "D136a-F5",
+      "severity": "informational",
+      "path": "tests/sdk/test_d136_fps_upstream_compat.py and App D136 source records",
+      "title": "Authored bytes and existing guard shape are preserved in reviewed candidate",
+      "detail": "The candidate test asserts the exact authored [30000,1001] list remains in canonical_document. The strict typed output controls remain refused atomically, and no privacy/read/no-write guard or original App projection body was edited by this review.",
+      "effect": "This is a retained positive control, not evidence that the open-path policy is correct."
+    }
+  ],
+  "matrix": {
+    "upstream_accepts": [
+      "canvas=null",
+      "canvas=true/false",
+      "canvas=number/string/list",
+      "canvas={}",
+      "canvas.fps=null",
+      "canvas.fps=boolean/string",
+      "canvas.fps=arbitrary mapping",
+      "canvas.fps=zero/negative scalar",
+      "canvas.fps=empty/one/three-item/non-integer/zero/negative list",
+      "canvas.fps=[30000,1001]",
+      "canvas.fps={numerator:30000,denominator:1001}",
+      "canvas.fps=positive scalar"
+    ],
+    "candidate_rejects": [
+      "canvas=true/false/number/string/list",
+      "all listed canvas.fps forms except positive scalar, exact positive mapping, and exact positive two-integer list"
+    ],
+    "same_result_failure": [
+      "[30000,1001]: upstream effective 30.0; candidate compiled 30000/1001",
+      "{numerator:30000,denominator:1001}: upstream effective 30.0; candidate compiled 30000/1001"
+    ]
+  },
+  "limits": {
+    "five_gb_admission": "NOTRUN: disk was 4.46 GB, below the 4.6 GB source-only floor",
+    "full_suite": "NOTRUN by task rule",
+    "App_original_nine": "NOTRUN by task rule and not authorized after this FAIL",
+    "Runtime_App_live_browser_socket_provider_elsewhere": "NOTRUN",
+    "fixture_changes": "none",
+    "product_changes": "none"
+  }
+}

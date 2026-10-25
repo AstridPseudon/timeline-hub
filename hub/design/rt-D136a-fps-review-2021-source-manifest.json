@@ -1,0 +1,58 @@
+{
+  "task": "rt-D136a-fps-review-2021",
+  "review_verdict": {
+    "source": "FAIL",
+    "behavior": "FAIL",
+    "evidence": "PASS_BOUNDED_SOURCE_AND_TARGETED_CONTROLS",
+    "release": "BLOCKED"
+  },
+  "candidate": {
+    "commit": "ebb32e7598a3ad28fd161332f860f446a21cb3ef",
+    "tree": "e75b8d0739e63dec5908641d7db0b6846cec4905",
+    "parent_pristine_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "parent_pristine_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "worktree_clean_before_review": true,
+    "review_source_edits": false,
+    "candidate_delta": [
+      "astrid/sdk/timeline/validation.py",
+      "tests/sdk/test_d136_fps_upstream_compat.py"
+    ]
+  },
+  "source_hashes": {
+    "astrid/sdk/timeline/validation.py": "91cdfa6b0b0adf602cbae9d43f51995aad175f03cd39fe14c84bc93c808b6f3b",
+    "tests/sdk/test_d136_fps_upstream_compat.py": "ab94e6564005ffee14fe2176f136bc5e9a2517d7623678f279b7b5b57364d649",
+    "astrid/core/timeline/validators/timeline.py": "361f759eefeb133634d6b70af320fcb13bd1ad0fa33597860f1c6158696f9686",
+    "astrid/core/timeline/schema/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "app_D136_authored_projection_source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436"
+  },
+  "module_origins": {
+    "astrid.sdk.timeline.validation": "/home/user/work/wt/rt-D136a-fps-review-2021/astrid/sdk/timeline/validation.py",
+    "astrid.sdk.timeline.commit": "/home/user/work/wt/rt-D136a-fps-review-2021/astrid/sdk/timeline/commit.py",
+    "astrid.sdk.timeline._timing_evaluators": "/home/user/work/wt/rt-D136a-fps-review-2021/astrid/sdk/timeline/_timing_evaluators.py",
+    "astrid.core.timeline.validators.timeline": "/home/user/work/wt/rt-D136a-fps-review-2021/astrid/core/timeline/validators/timeline.py",
+    "banodoco_timeline_schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py"
+  },
+  "upstream_evidence": {
+    "app_D136_source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136-fps-readonly-gates-2000-source-manifest.json",
+    "app_D136_findings": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136-fps-readonly-gates-2000-findings.md",
+    "app1946_boundary": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D100-final-result-review-1946-authored-fps-boundary.json",
+    "frozen_sdk_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "frozen_sdk_commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "frozen_sdk_tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610",
+    "captured_pristine_agent_ref": "origin/main@886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "captured_pristine_freshness": "local_ref_only_not_qualified"
+  },
+  "contract_boundary": {
+    "theme_overrides_visual": "object with additionalProperties {}, so canvas is an open value at schema lines 480-505; canvas.fps has no schema declaration",
+    "typed_output_fps": "TimelineOutput.fps is a number at schema lines 506-537; this is a distinct config.output field",
+    "c0": "commit-v2 preserves open document fields and validates known schemas; it does not define TimelineConfig or authorize typing theme_overrides.visual.canvas",
+    "candidate_typed_boundary": "astrid/sdk/timeline/validation.py:_fps_values collects output.fps, open canvas.fps, and child output.fps under one strict rational policy"
+  },
+  "blame": {
+    "same_introducing_commit": "6f4baa07603776840f0a78cc0cf459831bc026af",
+    "first_rejection": "_fps falls through to _validation_number for a list and raises must be a finite number",
+    "production_call": "astrid/sdk/timeline/commit.py:1399-1418",
+    "candidate_fix_commit": "ebb32e7598a3ad28fd161332f860f446a21cb3ef",
+    "candidate_fix_scope": "adds list/tuple parsing only; does not generalize the open namespace or preserve upstream fallback"
+  }
+}

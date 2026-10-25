@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T20:21:22Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 2m -->
-# runtime board, 2026-10-25T20:18:48Z
+<!-- main | 2026-10-25T20:25:54Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 3m -->
+# runtime board, 2026-10-25T20:22:52Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -474,7 +474,7 @@
 | U1-D135-union-review | Review private upstream source union | Luna | Finished1952 two-parent candidate | review | rt-U1-D135-union-review-2006 | Actual0bb3 includes e319 and dbc. Author tests NOTRUN; union proof still owed. | Independent pending | 0bb3bc45c |
 | F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
-| D136a-fps-regression | Restore upstream fps input acceptance | Luna | Owner D136a | doing | rt-D136a-fps-regression-2014 | Blame first; exact array regression and same-commit input audit. Original9 fixture unchanged. | Independent review owed | Agent a30e base |
+| D136a-fps-regression | Restore upstream fps input acceptance | Luna | Exact upstream equivalence review | review | Author2014; independent2021 | BlameAgent6f4baa. Author5+56PASS; fallback30 equivalence and all open forms under review. Original9 unchanged. | Independent pending | ebb32e held |
 
 Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and fresh dbc, not merged to integration.
 Core: D13418455 measurement8926PASS190FAIL180ERROR173subtests;1937 custody FAIL, XML/disk witness missing. Host14 prelaunch environment cause independently proved1954; current REG UNVERIFIED. 344 partition Agent2003; no ship credit.
@@ -489,6 +489,6 @@ D100: App actual corrected27PASS; original9 nine setup errors at finite-number f
 D77: Farm changed child request follows Agent actual D137 result; no Farm fixture bodies/core. Exact applied source and lock handoffs remain qualified.
 Delivery: Current cut integration tuple only, no stale547e proof pin. App16 final1941PASS:14 true conflicts,13semantic/1textual. Old Agent halves reference stale proof pin; new actuala30e census1947 qualified.
 Safety: D130 and prior refusals held. Managers write ORCH boards/briefs/peers only; no direct product/test/pin/Git writes or credentials.
-Disk: Fresh4.715GB; source cap3/stop4GB. Sweep3 removed0; compact packed0 andgzipped3 logs. No eligible ended clean unguarded Runtime trees; target5.2GB unmet. Open raw KEEP retained.
-live 2 / cap 3; queued 0; ready-undispatched 0. D137 return2018 and D136a author2014 active. D135 installed independentPASS; no unassigned ready source row.
-INBOX consumed through1507572bytes including explicit20:13 D137. Updated20:18Z.
+Disk: Fresh4.603GB; source cap3/stop4GB. Sweep3 removed0; compact packed0 andgzipped3 logs. No eligible ended clean unguarded Runtime trees; target5.2GB unmet. Open raw KEEP retained.
+live 2 / cap 3; queued 0; ready-undispatched 0. D137 return2018 and D136a review2021 active. D135 installed independentPASS; no unassigned ready source row.
+INBOX consumed through1509079bytes including explicit20:13 D137. Updated20:23Z.

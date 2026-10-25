@@ -1,0 +1,35 @@
+{
+  "task": "rt-OPS-D137-retention-return-2018",
+  "source": "/home/user/work/wt/rt-OPS-D137-retention-return-2018/ops-child-custody/make-child-venv",
+  "source_sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+  "source_bytes": 75503,
+  "source_mode": "0755",
+  "base_commit": "4932c0f8e2e02ce6a203bf41fe014f9c3a7db5fa",
+  "findings": [
+    {
+      "id": "D137-001",
+      "severity": "blocker",
+      "independent_observation": "Store.ensure rolled staging back before its bounded failure record, deleting .provision-stderr and losing original failed-stage stderr.",
+      "resolution": "resolved-in-source: failure() performs the private maker handoff before exit; Store, STORE_PY, STORE_VERIFY, and the public marker schema are unchanged.",
+      "regression": "actual isolated Store.ensure cleanup boundary passed for nonzero and timeout stages; retained payload remained after staging deletion."
+    }
+  ],
+  "controls": {
+    "handoff_route": "/maker/tests/provision-stderr/<request>.<stage>.stderr",
+    "metadata_route": "/maker/tests/provision-stderr/<request>.<stage>.json",
+    "mode": "0600",
+    "single_link": true,
+    "limit_bytes": 1048576,
+    "safe_names": "venv-agent-child-[a-z0-9-]+ request and [a-z0-9-]{1,64} stage",
+    "no_clobber": true,
+    "public_raw_stderr": false
+  },
+  "decision": {
+    "d137": "WITHDRAWN",
+    "acceptance": "UNVERIFIED",
+    "e2e": "NOTRUN",
+    "install": "NOTRUN",
+    "source_commit": "UNBOUND_UNCOMMITTED_HARNESS_COMMIT"
+  },
+  "protected_exact": true
+}
