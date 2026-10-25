@@ -1,0 +1,80 @@
+{
+  "task": "rt-evidence-publication-1003",
+  "decision": "D106",
+  "result": "published_exact_sources",
+  "repository": "/home/user/banodoco/banodoco-workspace-runtime",
+  "publications": [
+    {
+      "source_ref": "tl/rt-D115-effect-path-0958",
+      "source_commit": "bda43613e70694ad5616f8067dd864368bad19cc",
+      "source_tree": "4b64c30c0c098db3225db0e51f07fcb3cb72641a",
+      "source_path": "evidence/ownership-manifest.md",
+      "source_blob": "22824a08fb561c85b39f86a2c917fcbf4eddac56",
+      "source_sha256": "605616f9ec0e7b7ab300775ea5fb013f9670f98b56c448a7012babafa15cb30f",
+      "target_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-effect-path-0958/evidence/ownership-manifest.md",
+      "target_sha256": "605616f9ec0e7b7ab300775ea5fb013f9670f98b56c448a7012babafa15cb30f"
+    },
+    {
+      "source_ref": "tl/rt-D115-effect-path-0958",
+      "source_commit": "bda43613e70694ad5616f8067dd864368bad19cc",
+      "source_tree": "4b64c30c0c098db3225db0e51f07fcb3cb72641a",
+      "source_path": "evidence/test-results.txt",
+      "source_blob": "1d4d894596447c599633f1358582d21c9ebe598a",
+      "source_sha256": "b7863ceb3ab7687af1c907518e2a6530d3f954e5f8963aaea201535557262b74",
+      "target_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-effect-path-0958/evidence/test-results.txt",
+      "target_sha256": "b7863ceb3ab7687af1c907518e2a6530d3f954e5f8963aaea201535557262b74"
+    },
+    {
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-effect-path-0958/report.md",
+      "source_sha256": "000e54fad17b6b84f0e4455e2c1b35b08c9a5b0d36a39330902f77bdda8014e0",
+      "target_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D115-effect-path-0958.md",
+      "target_sha256": "000e54fad17b6b84f0e4455e2c1b35b08c9a5b0d36a39330902f77bdda8014e0"
+    },
+    {
+      "source_ref": "tl/rt-F-D77-footprint-review-0958",
+      "source_commit": "3a44e54871604be652f7378a310eb0f9f2a6c929",
+      "source_tree": "d4765a32c12bc89dc30aa0c562c8077b4168d945",
+      "source_path": "design/rt-F-D77-footprint-review-0958.md",
+      "source_blob": "820adbf997b99512162d1aae40f86ec210d5b9bd",
+      "source_sha256": "54512ee08d7c26b562d0b9d59db4d1093656ed5225d454b190032f9fc2417ebb",
+      "target_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D77-footprint-review-0958.md",
+      "target_sha256": "54512ee08d7c26b562d0b9d59db4d1093656ed5225d454b190032f9fc2417ebb"
+    }
+  ],
+  "retained_original_worker_evidence": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D77-footprint-review-0958/evidence/arithmetic.txt",
+      "sha256": "9539ca2beca630110c079b00d61ea8b6f89cf238812de73df76e090fe78daece"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D77-footprint-review-0958/evidence/checks.txt",
+      "sha256": "4110dd50530d95d3151a159c1c4aee8c76e30ceaa4f0aa00028c09c3c4863f7f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D77-footprint-review-0958/evidence/input-artifacts.txt",
+      "sha256": "b7119786ed67b71a0708e772421364c6aa1a70f8439205049c7cc8ee1deaf3df"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D77-footprint-review-0958/evidence/review-summary.txt",
+      "sha256": "195558b4d3f9fa07c5dcc2c11b24816454a33787f08d9626bc2d37443ef1c867"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D77-footprint-review-0958/evidence/source-hashes.txt",
+      "sha256": "f9c8f5d7b9692107fea352942a7cbe837a47b520ae735667d27ecadd9fe371a7"
+    }
+  ],
+  "validation": {
+    "source_blob_and_target_sha256_equal": true,
+    "source_report_and_target_sha256_equal": true,
+    "worktree_modified": false,
+    "product_source_body_reviewcycle_changed": false,
+    "code_test_type_lint_run": false
+  },
+  "known_limits": [
+    "This is evidence-only publication and does not qualify or alter product behavior.",
+    "No Runtime worktree, integration worktree, hub, branch ref, source file, test, generated file, pin, registry, or kit was changed.",
+    "D77 retained evidence remains a read-only footprint review; it does not prove a successful installed candidate, render, or finite peak bound.",
+    "The five D77 attachments are retained at the original worker/evidence paths and were not rewritten.",
+    "No code, test, typecheck, lint, service, body, build, acquisition, render, retry, or safety-refusal operation was run."
+  ]
+}
