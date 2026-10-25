@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T15:26:21Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 5m -->
-# agent board, 2026-10-25T15:21Z
+<!-- agent | 2026-10-25T15:30:58Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
+# agent board, 2026-10-25T15:26Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -65,6 +65,8 @@
 
 | D127 provider cost | Reduce measured provider lifecycle cost | Luna remote | Runtime aggregated profile | blocked:runtime | Runtime profile owner; Agent author reserved | Owner15:10 names about12s provider share in20s lifecycle. Await exact dominant path and scoped profile; no speculative fix or repeat. | Source unchanged |
 
+| D116 current17 source | Map shared current word baseline | Luna read only | Normal20177 and exact17 map | ready | App source reader requested1526 | Shared-root review only; originalten and17 untouched. Current predicate and genuine baseline applicability needed; no behavior or retirement credit. | Source unchanged |
+
 Integration: normal Agent20177e6656 adds only two current-word test paths over a4e016b6a9, which contains reviewed union16bb through61fefc and host fallback96df. Local home20177 and normal merge receipt confirmed. Runtime lock5e9ad. Binding225fccb, capturedredo0b586, producer82b6, installer/XML and atomic remain. Released Agent070dfc stays unchanged until own-node proof and Farm core. Host9ea and separate Runtimea1 overlay remain excluded.
 
 core open: 425 on immutable30693. Confirmed regressions:14 until next full core; original14 independently GREEN at fallback96df. Effective retirements added this batch:0. D107 ten remain held, not counted closed.
@@ -77,7 +79,7 @@ Blockers: Agent D69 — installed render90 and final upstream-cut audit owed. XM
 Blockers: Farm D117a — normal installer stage and genuine installed render pending after core. Prior denied route stays stopped.
 Blockers: Final cut — D123 rehearsal5bd01 SOURCE PASS on b742. Final tip freezes once at D59; final gates, core, D69, wheel and render owed.
 
-Next ready: Farm lead has exact a4e016/5e9ad/d8a1/635f pins and lock source, plus qualified291c packet. Runtime owns two separate auth source findings; Farm actual tf inverse1450 queued15:14; Main fallback1501 withdrawn after first dispatch. Main current-equivalent2 proof requested1445 on normal20177; originalten unchanged.
+Next ready: App shared-current17 source reader requested1526. Farm lead has exact a4e016/5e9ad/d8a1/635f pins and lock source, plus qualified291c packet. Runtime owns two separate auth source findings; Farm actual tf inverse1450 queued15:14; Main fallback1501 withdrawn after first dispatch. Main current-equivalent2 proof requested1445 on normal20177; originalten unchanged.
 live 0 / cap0 local by owner14:49 merges-and-receipts directive; ready-undispatched0 local. All local authors/reviewers ended and auto-recycled. Every NEW author/review goes to Farm, or App/Main with room. No local heavy or new source starts pending owner venv disposition.
 
 Disk: 4912865280 bytes at15:12Z; sweep3 removed0 and compact packed0, gzipped0. Fresh ended+clean+nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
@@ -95,3 +97,5 @@ Owner14:45 direct Farm pin request satisfied: a4e016/5e9ad/d8a1/635f exact full 
 Current pass15:12: all local D124 authors/reviewers ended; no new ready merge or queue refusal. Farm14:57 confirms Runtime5e9ad source checkout and reused a4e016 profile, but changed child request refused retained-source ownership after clearing metadata. Sole Runtime census1457 owns source diagnosis; failed request stays stopped. Farm actual tf inverse1450 queued15:14 wins first dispatch; Main fallback1501 withdrawn1521. Meaningful current-equivalent2 receiver1445 and D127 actual aggregated provider profile remain remote inputs. Host six-pin use audit followed up1511; fresh guarded recycling only after factual CLEAR. No local worker, original repeat, product or pin change.
 
 Latest remote receipt15:21: Farm actual review row15:14 names tf-agt-D124-inverse-core-review-1450. Continue that reviewer and cancel Main unstarted1501 fallback; exact Codex model/meta requested with verdict. All four Farm pins verified. Current provider profile source aggregation awaits Runtime; no product, original-body, provisioning retry or count credit added.
+
+Shared-word source15:26: D107 current-equivalent2 covers only the approvedten, not the17 remaining live purposes. App asked for ONE read-only shared17 applicability/predicate review on normal20177, no original changes or bodies. Existing seven small-file rows stay paused; the resulting shared seam will determine a PR-sized author scope. No competing current17 owner appears on latest peer boards.
