@@ -1,0 +1,17 @@
+{
+  "status": "blocked",
+  "key": null,
+  "requested_name": "venv-agent-child-custody-a4e016",
+  "agent_sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+  "runtime_sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "source_carriers": [
+    "/home/user/work/wt/agt-pin-a4e016b6",
+    "/home/user/work/wt/rt-pin-5e9ad1c6"
+  ],
+  "child_path": null,
+  "refusal_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/refused/childvenv-venv-agent-child-custody-a4e016",
+  "refusal_sha256": "651484cd9b28570730ca3f7458dacbad7daa29241ea082bd376386d15e7de62d",
+  "refusal": "maker provision report differs from authenticated installed inventory",
+  "old_d128_refusal_immutable": true,
+  "old_d131_refusal_immutable": true
+}

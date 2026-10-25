@@ -1,0 +1,12 @@
+{
+  "task": "D128",
+  "suite": "agent-core-full",
+  "admission": "captured-before-child-request",
+  "captured_free_bytes": 6701694976,
+  "minimum_start_free_bytes": 4700000000,
+  "ongoing_stop_free_bytes": 4000000000,
+  "child_reserve_bytes": 5905580032,
+  "body_submitted": false,
+  "service_id": null,
+  "request_name": "venv-agent-child-custody-a4e016"
+}
