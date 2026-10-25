@@ -298,7 +298,7 @@ export function ShotTimelineMediaControls({
         Add video after selected clip
       </Button>
       <span className="text-xs text-muted-foreground">
-        {busy ? 'Importing media…' : canSwap ? `Selected clip: ${selectedClip!.id}` : `Add at ${displayTime} on ${trackId ?? 'a visual track'}; select one media clip to swap.`}
+        {busy ? 'Importing media…' : selectedClip ? `Selected clip: ${selectedClip.id}` : `Add at ${displayTime} on ${trackId ?? 'a visual track'}; select one media clip to swap.`}
       </span>
       <input
         ref={inputRef}
