@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-D135-builder-review-1949",
+  "reviewed_at_utc": "2026-10-25",
+  "verdict": "PASS_WITH_FINDING",
+  "verdict_scope": "Independent source/caller review of the D135 delivery builder. This does not certify a positive production build, ZIP, clone, network, install, or full suite.",
+  "candidate": {
+    "commit": "799cf268a1c28cc461d099cf67324e2987a1f1a4",
+    "tree": "663f5e926370d7a9a6bc65a6abbc6f26b8be172d",
+    "script": "ops-delivery-d135/delivery-build",
+    "script_sha256": "afd7625ca64a13eda1f4506e69cb6d1103bd28053b9cde09a1a752dc77b9b84e",
+    "script_mode": "0755",
+    "test": "ops-delivery-d135/tests/test_delivery_build.py",
+    "test_sha256": "a91ab4c9de2b212d3e47dd165a08f21ae4bf8d6486e906228ccd2f7f8eeff103",
+    "test_mode": "0644"
+  },
+  "installed_reference": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "mode": "0755",
+    "regular_non_symlink": true,
+    "candidate_installed": false
+  },
+  "source_tuple": {
+    "path": "ops-delivery-d135/evidence/d59-source-tuple.json",
+    "sha256": "ce3d06b41014bcd5cd42454c62828c7d240d3beb0a570467be0375109b1c4338",
+    "agent": {
+      "root": "/home/user/peteromallet/astrid-agent",
+      "sha": "a30e74e901a28b39c28facba3deb00d76f186e23",
+      "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0"
+    },
+    "runtime": {
+      "root": "/home/user/work/runtime",
+      "sha": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "tree": "d5cb9335a03bf4764548e379ce180a66bf966910"
+    },
+    "app": {
+      "root": "/home/user/work/app",
+      "sha": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+      "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20"
+    },
+    "composition": {
+      "root": "/home/user/work/composition",
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "modes": {
+    "author_unit": "7 tests passed; mocked source/unit controls",
+    "actual_main_refusal": "PASS; exit 2 before delivery/work writes for non-ancestor D59 tuple",
+    "actual_later_repo_refusal": "PASS; composition then stale Agent still checks the later Agent and creates no roots",
+    "actual_wrong_agent": "PASS; stale local 547e10456250c1b5bcf63b44a50c90ff0563ce1e rejected by ancestry",
+    "actual_malformed_tuple": "PASS; extra tuple field rejected before preflight",
+    "actual_private_paths": "PASS closed; symlinked delivery and source roots rejected without writes",
+    "positive_production_build": "NOT RUN; no real D59 cut",
+    "zip_clone_network_install": "NOT RUN"
+  },
+  "checks": [
+    {
+      "command": "python3 -B -m unittest -v ops-delivery-d135/tests/test_delivery_build.py",
+      "result": "PASS (7 tests)"
+    },
+    {
+      "command": "python3 -B -m py_compile ops-delivery-d135/delivery-build",
+      "result": "PASS"
+    },
+    {
+      "command": "ruff check ops-delivery-d135/delivery-build ops-delivery-d135/tests/test_delivery_build.py",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "finding": {
+    "id": "D135-REV-1",
+    "severity": "P2",
+    "status": "open",
+    "path": "ops-delivery-d135/delivery-build",
+    "lines": "643-657",
+    "summary": "Delivery/work/template/gate path guards raise Refused outside the main parser-error try block.",
+    "evidence": "A real symlinked --delivery-root invocation produced a traceback and exit 1, while tuple/preflight refusals produce the normal argparse error and exit 2. The guard still refused before writes; this is an error-surface inconsistency, not an unsafe-write bypass.",
+    "recommended_fix": "Move path resolution/validation into the existing Refused/RuntimeError/OSError parser-error boundary, or explicitly catch Refused around lines 643-657. Add an actual-main test for each path input class."
+  },
+  "safe_cas_install_targets": {
+    "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "required_precondition": "manager-only atomic CAS install after successor D59 tuple and positive production qualification",
+    "expected_candidate_sha256": "afd7625ca64a13eda1f4506e69cb6d1103bd28053b9cde09a1a752dc77b9b84e",
+    "current_target_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "install_performed": false,
+    "other_targets": []
+  },
+  "limitations": [
+    "The author tests do not exercise a real Git fixture: main preflight, tuple parsing, private roots, and build_repo are mocked in the seven-test suite.",
+    "No positive build_repo path was run because the recorded D59 tuple is upstream-incompatible for Agent, Runtime, and App.",
+    "No source checkout, installed script, branch, ref, credential, ZIP, bundle, clone, network, or live root was modified."
+  ]
+}

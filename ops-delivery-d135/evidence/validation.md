@@ -24,3 +24,11 @@ The tests are source/unit mock controls. They honestly do not claim a real Git f
 ## Not run by this worker
 
 No full ZIP, real clone, heavy bundle, core/E2E/browser/network/acquisition run, live install, or production request was run. No shared repo, live script, delivery root, branch, ref, credential, or generated pin was changed.
+
+## Independent review
+
+- Candidate commit/tree: `799cf268a1c28cc461d099cf67324e2987a1f1a4` / `663f5e926370d7a9a6bc65a6abbc6f26b8be172d`.
+- Candidate script/test SHA256: `afd7625ca64a13eda1f4506e69cb6d1103bd28053b9cde09a1a752dc77b9b84e` / `a91ab4c9de2b212d3e47dd165a08f21ae4bf8d6486e906228ccd2f7f8eeff103`.
+- Independent real-main probes confirmed non-ancestor, stale Agent `547e1045`, malformed tuple, later-repository failure, and symlinked private-root refusals before delivery/work writes.
+- One review finding remains open: delivery/work/template/gate path `Refused` exceptions are raised before the parser-error try block, so a symlinked delivery root emits a traceback/exit 1 instead of the normal exit-2 CLI refusal. See `evidence/review.json` (`D135-REV-1`).
+- The positive build remains intentionally unrun until a successor D59 tuple is a real upstream descendant for every selected repository.
