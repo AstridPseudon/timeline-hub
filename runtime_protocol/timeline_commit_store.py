@@ -316,7 +316,10 @@ class TimelineCommitStore:
             current = self.store.conn
             if current is None or getattr(self.store, "_lock_file", None) is None:
                 raise ProtocolError("accepted commit storage is closed; reopen required")
-            if getattr(current, "in_transaction", False) or getattr(self._connection, "in_transaction", False):
+            # A transaction on the currently mounted handle cannot be safely
+            # reopened.  A transaction on the superseded handle is different:
+            # it is precisely the stale state this recovery invalidates.
+            if getattr(current, "in_transaction", False):
                 raise ProtocolError("accepted commit storage identity changed during a transaction; reopen required")
             files, _ = self._physical_version()
             if files[0] is None:
@@ -327,6 +330,11 @@ class TimelineCommitStore:
                 current.row_factory = sqlite3.Row
                 current.execute("PRAGMA foreign_keys=ON")
                 current.execute("PRAGMA busy_timeout=10000")
+                # A superseded transaction must not survive the recovery.  A
+                # quiescent old handle is left to its owner (which may still
+                # be unwinding it), but it is no longer mounted or trusted.
+                if getattr(self._connection, "in_transaction", False):
+                    cast(sqlite3.Connection, self._connection).close()
             else:
                 # Closing the old handle is essential: SQLite may otherwise
                 # continue serving the disconnected inode after DB/WAL swap.

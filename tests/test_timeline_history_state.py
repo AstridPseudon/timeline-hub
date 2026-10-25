@@ -307,6 +307,38 @@ def test_replacing_connection_rebinds_and_fully_verifies(service, monkeypatch):
             service.store.conn = connection
 
 
+def test_replacing_connection_invalidates_stale_transaction_before_replay(service, monkeypatch):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    stale = commits._connection
+    stale.execute("BEGIN")
+    replacement = sqlite3.connect(service.store.db_path, isolation_level=None)
+    service.store.conn = replacement
+    try:
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls == {publication: 2}
+        assert commits._connection is replacement
+        with pytest.raises(sqlite3.ProgrammingError):
+            stale.execute("SELECT 1")
+    finally:
+        service.store.conn = replacement
+
+
+@pytest.mark.parametrize("component", ["database", "wal"])
+def test_replacing_current_transaction_refuses_before_reopen(service, monkeypatch, tmp_path, component):
+    commits, publication, _, _ = warm(service, monkeypatch)
+    target = service.store.db_path if component == "database" else service.store.db_path.with_name("realm.sqlite3-wal")
+    replacement = tmp_path / "replacement.sqlite3"
+    shutil.copyfile(target, replacement)
+    service.store.conn.execute("BEGIN")
+    replacement.replace(target)
+    try:
+        with pytest.raises(ProtocolError, match="identity changed during a transaction"):
+            commits.history_entry(service.test_project, "main", publication)
+        assert not any(commits._history_state.values())
+    finally:
+        service.store.conn.rollback()
+
+
 def test_closed_store_refuses_and_reopened_handle_verifies_cold(service, monkeypatch):
     commits, publication, expected, _ = warm(service, monkeypatch)
     root = service.store.root
