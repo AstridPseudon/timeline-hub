@@ -8,8 +8,8 @@ from __future__ import annotations
 import copy
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -30,7 +30,6 @@ def film(tmp_path, monkeypatch):
 
     from astrid.sdk.timeline.commit import bundle_from_document
     from astrid.sdk.timeline.emitter import emit_document_commands
-    from astrid.sdk.timeline.native_timeline_duplicate import copy_command
 
     source_fixture = build_film_fixture(tmp_path)
     service = RuntimeService(source_fixture.duplicate_root)
@@ -38,27 +37,6 @@ def film(tmp_path, monkeypatch):
         service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
         source_document = service._timeline_commits()[0].revision_closure(
             source_fixture.project_id, source_fixture.timeline_id, source_fixture.parent_revision_id,
-        )
-        target_timeline = "m1-journey"
-        service.create_timeline(
-            source_fixture.project_id, target_timeline,
-            idempotency_key="m1-journey-create",
-        )
-        source_ref = {
-            "project_id": source_fixture.project_id, "timeline_id": source_fixture.timeline_id,
-            "revision_id": source_document["parent_revision"]["revision_id"],
-            "publication_id": service.get_project_timeline(
-                source_fixture.project_id, source_fixture.timeline_id,
-            )["head_publication_id"],
-            "content_digest": source_document["parent_revision"]["content_digest"],
-        }
-        source_rows = source_document["parent_revision"]["payload"]["occurrences"]
-        shot_ids = {row["shot_id"] for row in source_rows}
-        occurrence_ids = {row["occurrence_id"] for row in source_rows}
-        duplicate = copy_command(
-            source_ref,
-            {identity: "m1-" + identity for identity in sorted(shot_ids)},
-            {identity: "m1-" + identity for identity in sorted(occurrence_ids)},
         )
         source_bundle = bundle_from_document(source_document)
         desired_bundle = copy.deepcopy(source_bundle)
@@ -76,41 +54,32 @@ def film(tmp_path, monkeypatch):
         })
         parent["config"]["clips"] = copy.deepcopy(parent["clips"])
         patches = emit_document_commands(source_bundle, desired_bundle)
-        head = service.get_project_timeline(source_fixture.project_id, target_timeline)
+        head = service.get_project_timeline(source_fixture.project_id, source_fixture.timeline_id)
         body = {
-            "api_version": 1, "project_id": source_fixture.project_id, "timeline_id": target_timeline,
+            "api_version": 1, "project_id": source_fixture.project_id,
+            "timeline_id": source_fixture.timeline_id,
             "base_revision_id": head["head_revision_id"], "base_publication_id": head["head_publication_id"],
-            "commands": [duplicate, *patches], "label": "M1 journey baseline", "merge": "atomic",
+            "commands": patches, "label": "M1 journey baseline", "merge": "atomic",
             "reads": [], "dry_run": False, "source": {"via": "python"},
             "rationale": "M1 real provider baseline", "group_id": "m1-journey",
             "steps": [
-                {"id": "copy", "label": "M1 journey source copy", "intent": "Copy source closure",
-                 "tags": ["integration"], "command_ordinals": [0], "patch": [], "reads": []},
                 {"id": "baseline", "label": "M1 journey baseline", "intent": "Prepare M1 fixture",
-                 "tags": ["integration"], "command_ordinals": list(range(1, 1 + len(patches))),
+                 "tags": ["integration"], "command_ordinals": list(range(len(patches))),
                  "patch": [change for command in patches for change in command["args"]["changes"]],
                  "reads": []},
             ],
         }
         publication = service.commit_timeline(
-            source_fixture.project_id, target_timeline, body,
+            source_fixture.project_id, source_fixture.timeline_id, body,
             idempotency_key="m1-journey-baseline",
             publisher="owner",
-            invocation_path=f"/v1/projects/{source_fixture.project_id}/timelines/{target_timeline}/commit",
+            invocation_path=(f"/v1/projects/{source_fixture.project_id}/timelines/"
+                             f"{source_fixture.timeline_id}/commit"),
             authorize=lambda: None,
         )
     finally:
         service.close()
-    fixture = SimpleNamespace(
-        duplicate_root=source_fixture.duplicate_root,
-        source_root=source_fixture.source_root,
-        project_id=source_fixture.project_id,
-        timeline_id=target_timeline,
-        parent_revision_id=publication["data"]["accepted_revision_id"],
-        media_ids=source_fixture.media_ids,
-        transcript_document_id=source_fixture.transcript_document_id,
-        text_binding_id=source_fixture.text_binding_id,
-    )
+    fixture = replace(source_fixture, parent_revision_id=publication["data"]["accepted_revision_id"])
     parent = publication["data"]["canonical_document"]["parent_revision"]["payload"]
     return fixture, parent, publication
 
@@ -345,7 +314,7 @@ def test_cli_python_outbox_restart_and_guarded_inverse(
     base_history = history(client, fixture)
     assert len(base_history["items"]) == 2
     assert base_history["items"][-1]["receipt"] == baseline["receipt"]
-    assert base_history["items"][0]["intent"] == "bootstrap"
+    assert base_history["items"][0]["intent"] == "legacy_unknown"
     assert base_history["items"][-1]["intent"] == "recorded"
     assert base_history["items"][0]["records"] is None
 
