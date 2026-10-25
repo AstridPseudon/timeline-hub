@@ -1,0 +1,7 @@
+# Placement modal dismissal scope
+
+Decision requested: authorize the exact one-line proposal in [Sol0819 proposal](../design/app-A2-placement19078-undo-sol-0819-proposal.patch): close the reloaded embedded dialog after both existing scoped placement-row assertions and before the ORIGINAL parent Undo click. No assertions, locators, waits, timing, fixture or product changes. This changes the protected original's authored UI sequence, outside the explicit D104 fixture-only list; independent protected review app-P2-placement19078-modal-review-0830 is dispatched now.
+
+Retained actual19078 both attempts prove initial occurrence.add-media HTTP200, canonical/history/scoped reload advanced, and zero inverse POST. Enabled parent Undo is under aria-hidden while dialog remains open; its role click never resolves, then teardown closes it after90s. Same-tuple passing ADD19078 already closes its dialog before Undo. Product source stays upstream; no product defect or Runtime failure inferred. Full exact worker evidence and unapplied proposal are published as design/app-A2-placement19078-undo-sol-0819{,-facts}.md, -facts.json and -proposal.patch.
+
+On approval and independent PASS: normal merge exact reviewed proposal with existing ledger entry, then original placement proof at the next authorized body slot; final full P2 still owed. No body/merge before scope answer. This is one concrete protected-scope decision, no new policy or approval stage for Runtime releases.
