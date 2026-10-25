@@ -1,0 +1,64 @@
+{
+  "schema": "F-D86-U4a-D100-candidate-rebind/v1",
+  "task": "U4a exact normal-tool producer rebind for HELD D100 new26 candidate8d43",
+  "status": "HELD_SOURCE_ONLY",
+  "source_only": true,
+  "actual_base": {
+    "branch": "tl/agt-R1-D100-clean-join-0619",
+    "commit": "8d43cc7c6c2c339656bb494ee45791d13f9a1104",
+    "tree": "4f9af1d0f4e98ec6f01daf87b54bce1adc3c709f"
+  },
+  "candidate": {
+    "branch": "tl/agt-U4a-D100-candidate-rebind-0631",
+    "commit": "8d43cc7c6c2c339656bb494ee45791d13f9a1104",
+    "candidate_label": "D100 new26 candidate8d43",
+    "changed_paths": ["runtime.lock.json"],
+    "delta": "source_commit 689352013ef516a224033ba58820759a96504e68 -> 1daca2a33f6d7b10053e07c539a54843e3984e19"
+  },
+  "exact_normal_producer": {
+    "path": "/home/user/work/wt/rt-pin-1daca2a3",
+    "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "tree": "a522511414947e48e317a5e5c2103483b121a750",
+    "checkout": "clean detached exact producer"
+  },
+  "tool_receipt": {
+    "command": "/home/user/work/venv-agent/bin/python scripts/refresh_runtime_client.py --producer /home/user/work/wt/rt-pin-1daca2a3",
+    "result": "refreshed Runtime artifacts from 1daca2a33f6d",
+    "vendor_lock": "PASS: matches producer manifest",
+    "artifact_manifest": "PASS: artifacts.json is current",
+    "diff_check": "PASS"
+  },
+  "preserved_candidate_product_test_hashes": [
+    {"path": "astrid/sdk/timeline/_command_state.py", "git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40", "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"},
+    {"path": "astrid/sdk/timeline/capture.py", "git_blob": "03fc10e75cf389e540cc2ad207d67c8998daccc8", "sha256": "741e3de381b5cc363c5aa827a87b467ac49995eba2823231390c02f027914e1c"},
+    {"path": "tests/sdk/test_capture_move_exact_time.py", "git_blob": "5cfd53d3ca1b65166150262074158cce0a8f3157", "sha256": "2653bc441cc5e6ddf16414dbfc071f177e98332e3867294e73567de03d0deba6"},
+    {"path": "tests/sdk/test_sequential_shared_item_provenance.py", "git_blob": "237494add9ffc5e246886c9bdd0a46ed3006b439", "sha256": "8b9d0b2d48ce09faa66ace3c9769e79508f2ed648457b56a02821bc4b7da6279"}
+  ],
+  "prior_selection_recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D100-0619-manifest.json",
+    "schema": "F-D86-R1-G3-D100-cleanjoin/v1",
+    "new_controls": 26,
+    "membership": {"newexacttime": 4, "newshareditem": 22},
+    "original_ten": "tests/editing_conformance/test_commit_runtime_shared_inverse.py; 10 selectors; excluded and untouched",
+    "behavior_status": "source-selected; changed-source MAIN proof required; no GREEN claim"
+  },
+  "preserved_contract": [
+    "C0 v2 request/reply shape",
+    "historical rebased retries",
+    "opaque inputs",
+    "refusal",
+    "retry",
+    "inverse",
+    "ABA",
+    "no-write guards",
+    "no policy or authority changes"
+  ],
+  "validation": {
+    "locked_file_count": 15,
+    "all_canonical_maps_schema_config_products_tests": "unchanged; vendor lock and artifact manifest pass",
+    "prior_reviewed_product_test_blobs": "preserved; hashes listed above",
+    "ruff_mypy": "not applicable; no Python source changed",
+    "behavioral_proof": "NOT RUN; remains held until exact MAIN candidate proof"
+  },
+  "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U4a-D100-candidate-rebind-0631/evidence"
+}
