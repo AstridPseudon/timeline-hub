@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T02:27:06Z | dispatcher heartbeat 3s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 10m -->
-# app board, 2026-10-25T02:16Z
+<!-- app | 2026-10-25T02:30:50Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 3m -->
+# app board, 2026-10-25T02:26Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -153,7 +153,7 @@
 
 | P2-placement-16952 | Prove actual embedded drop geometry | HARD Sol; Luna applies | Retained16952 and source | merged | Sol0112 complete; application0127 | Real generic coordinator resolves V3/4.5; asset planner expects V2/9. Old5FAIL93PASS versus proposal98PASS. Source unchanged; proposal artifacts ephemeral. | Evidence only |
 | P2-SWAP-11089 | Assert exact conditional created claim | Luna; independent | Independent0115 DiffB PASS | merged | Author0112; review0115 | Four oracle and37 producer controls; three types/lint PASS. Exact two reviewed blobs home. Original browser proof owed. | Home3a2d6067b4 |
-| P2-bulk-21061 | Prove exact mounted bulk dispatch | Luna; independent next | Review0204 coverage finding | doing | app-A3-bulk-mounted-control-0207 | Independent119 controls omit actual two-clip mounted action. Faithful selection/capture/outbox/transport control now owned. | Source pending |
+| P2-bulk-21061 | Prove exact mounted bulk dispatch | Luna; independent | Author0207 complete | review | app-P2-bulk-ADD-review-0223 | Author221PASS and no product edit. Reviewer checks exact retained fixture fidelity before merge; original cause remains unknown. | Source0207 held |
 
 | P2-ADD-selection-current | Qualify mounted selection | Luna; service | Actual28616 terminal | gated:new-runtime-proof | App0147; next meaningful D88b cycle | NO-GO286s; readiness PASS. Shared group356 missing after reload. Later selection/history/Undo unqualified. | App4b984/a3cd |
 
@@ -168,25 +168,25 @@
 
 | P2-registry-asset-current | Qualify exact registry and import identity | Luna; service | Actual15897 terminal | gated:native-oracle-fix | Reviewer0130; source0142 | NO-GO240s. Readiness PASS; canonical registry/history/first reload reached. Undo request181 expects atomic, native sends fields. Later Undo tail NOTRUN. | App37384adf26 |
 
-| P2-asset-native-Undo | Complete strict native inverse tail | Luna; independent | Return0158 complete | review | app-P2-asset-native-rereview-0216 | Full cumulative ec78 proposal challenged against strict independent metadata anchors. Twenty-four Node/types/lint author PASS. | Sourceec78 held |
+| P2-asset-native-Undo | Complete strict native inverse tail | HARD Sol | Second review0216 FAIL | doing | app-P2-native-oracle-sol-0218 | Both Luna proposals held. Sol derives exact native metadata from independent before/target/history/readback inputs; wholepath0218 complete. | Source pending |
 
 | U4p-D88b | Adopt qualified replay memo release | Luna normal tools | Security0125 PASS; normal6634 | merged | app-U4p-D88b-adoption-0150 | Eight strict,15 vendor,14 mappings PASS; protected six exact. Normal queue receipt24865. | Home24865fa212 |
 
-| P2-asset-native-return | Repair failed strict Undo oracle | Luna; independent next | Return0158 complete | review | app-P2-asset-native-rereview-0216 | Candidate ec78 retains two-file scope. No merge or original until actual fresh protected PASS. | Sourceec78 held |
+| P2-asset-native-return | Preserve failed strict Undo oracle | Luna; independent | Independent0216 FAIL | gated:failed-source | Author0158; review0216 | Structural metadata and expected-from-observed controls fail. ec78 remains unmerged; sole Sol0218 replaces proposal. | Sourceec78 held |
 | P2-D88b-element | Qualify element on replay memo | Luna; service | Actual3111 terminal | gated:source-fix | Producer0212 finite facts | NO-GO: readiness1PASS50.3s; original1FAIL61s at applied433 after5s. Eventual outcome unknown; no repeat. | App24865 / Runtime6634 |
 
-| P2-D88b-ADD | Qualify ADD after replay release | Luna; service | Element3111 terminal | doing | app-P2-D88b-ADD-submit-0213 | Same24865/6386/6634/635f tuple; one-command preflight then one original. Actual body ID pending plan. | App24865 |
+| P2-D88b-ADD | Qualify ADD after replay release | Luna; service | Actual3964 terminal | gated:source-fix | Source0222; path0223 | NO-GO after readiness29.9s; original88.9s at selectedcliplabel892. Reload group advances; later tail unqualified. | App24865/6634 |
 
-Integration: Appc101477597 normally merges independently reviewed managed placement over D88b adoption24865. Normal home tree equals clean reviewer0209. Exact canonical client/schema unchanged. Asset native ec78 remains unmerged pending fresh protected0216 review.
+Integration: Appc101477597 normally merges independently reviewed managed placement over D88b adoption24865. Normal home tree equals clean reviewer0209. Exact canonical client/schema unchanged. Asset native ec78 remains unmerged after second independent FAIL; HARD Sol0218 owns replacement.
 
 core open: Zero of eight isolated P2 gestures PASS. Source controls give no browser closure. Element8897 and ADD28616 retain their exact old tuples and NO-GO outcomes. Asset15897 reaches canonical registry/history/reload before native Undo oracle mismatch. Parent24629 and single11446 reach native Undo label mismatch; reviewed4b984 correction is home. Bulk21061 sent no intended POST and App0150 owns attribution.
 regressions: No new proven regression from this pass. P1 actual31083 and P3 actual15493 keep GO only on their recorded tuples.
 
-Blockers: Runtime — Existing SWAP29224 safe response/phase packet requested0205; meaningful reviewed native parent/single main venue requested0206.
+Blockers: Runtime — Existing SWAP29224 finite503 facts pending; native pair0217 exact24865/6386/6634/635f preparing. Actual body or reservation-return disposition requested0226.
 Blockers: Final cut — Runtime coordinates eight isolated P2 plus full App tour, final pinned P1–P5/core and genuine installed render before ZIP.
-Next ready: Asset0216 protected PASS then one meaningful asset after ADD0213 terminal. Bulk0207 mounted control then independent review. Element3111 safe facts0212 and Runtime response. Main reviewed parent/single asked0206; oldSWAP29224 facts asked0205.
-live 4 requested / cap 6; ready-undispatched 0 eligible local starts. Bulk control0207, element facts0212, ADD launcher0213 and asset review0216 assigned; element3111 terminal. Source floor governs new starts. D89 source above5.5GB; one heavy body above5.2GB; nothing new below4.5GB; stop newest nongate4.0GB.
-Capacity: Free5.741GB at02:15. Fresh4b/fd2f pins recycled after actual guarded audits; all output retained. Newly stale4b984 andfd2f pins passed full current-head/queue/lease/local-test/process checks; named KEEP release and recycle succeeded. All outputs retained. Every ended clean nonKEEP local App worker tree scanned; none eligible. Prior dirty U3 and other cleanup refusals stay untouched. All actual run output preserved; old D88 prototype/review stays held. Distinct owner-authorized D88b protectivePASS6634 is adopted normally.
-Inbox consumed through1866975 bytes (last item repeats own0201 note). Main SWAP29224 terminal NO-GO503 consumed; bounded facts asked0205. New reviewed parent/single pair asked0206. Prior0200 no-body input block resolved with exact checkout receipts and local-only body audit; resumed0205.
+Next ready: Native Sol0218 then fresh protected review; ADD0222 then core review; bulk0223 review then exact fixture return if needed. Runtime new native pair0217 preparing; App spare body offered0226. Element corrected packet0221 published; no duplicate original.
+live 3 source / cap 6; ready-undispatched 0 eligible local starts. Native Sol0218, ADD source0222 and bulk/ADD review0223 active. Both App bodies terminal; no new original until meaningful source or explicit native-pair reservation return. D89 source above5.5GB; one heavy body above5.2GB; nothing new below4.5GB; stop newest nongate4.0GB.
+Capacity: Free5.736GB at02:25. Fresh4b/fd2f pins recycled after actual guarded audits; all output retained. Newly stale4b984 andfd2f pins passed full current-head/queue/lease/local-test/process checks; named KEEP release and recycle succeeded. All outputs retained. Every ended clean nonKEEP local App worker tree scanned; none eligible. Prior dirty U3 and other cleanup refusals stay untouched. All actual run output preserved; old D88 prototype/review stays held. Distinct owner-authorized D88b protectivePASS6634 is adopted normally.
+Inbox consumed through1870394 bytes. Runtime0217 native tuple correction consumed; oldtupleproducer stopped beforebody. Actualnewworker/IDs requested0226; App offered free slot only on explicit reservation return. Main SWAP29224 terminal NO-GO503 consumed; bounded facts asked0205. New reviewed parent/single pair asked0206. Prior0200 no-body input block resolved with exact checkout receipts and local-only body audit; resumed0205.
 Later: D79 and E paused until ZIP; F-final fresh Appd11417a59 and Agent08e6 applied-result full suite belong to Runtime final coordinator. Gating App stays frozen upstream3881. D74 refused dirty targets remain stopped; no new cleanup route or raw deletion.
-Evidence: [D88b adoption](../../design/app-U4p-D88b-adoption-0150.md), [native Undo FAIL](../../design/app-P2-asset-native-review-0149.md), [current element brief](briefs/app-P2-D88b-element-resume-0205.md).
+Evidence: [Corrected element3111](../../design/app-P2-element3111-corrected-0221.md), [D88b adoption](../../design/app-U4p-D88b-adoption-0150.md), [native Undo FAIL](../../design/app-P2-asset-native-review-0149.md), [current element brief](briefs/app-P2-D88b-element-resume-0205.md).
