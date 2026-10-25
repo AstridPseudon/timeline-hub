@@ -59,6 +59,7 @@ const workspaceRoutes: readonly RouteEntry[] = [
   entry('GET', '/v1/realm'),
   entry('GET,PUT', '/v1/app-state/user/:'),
   entry('GET,POST', '/v1/projects'),
+  entry('PUT', '/v1/projects/selection'),
   entry('GET,PATCH', '/v1/projects/:'),
   entry('GET', '/v1/projects/:/timelines'),
   entry('GET,PATCH', '/v1/projects/:/timelines/:'),
@@ -117,12 +118,14 @@ const acpRoutes: readonly RouteEntry[] = [
 ];
 
 function findRoute(table: readonly RouteEntry[], method: string, segments: readonly string[]): RouteEntry | undefined {
-  return table.find((candidate) => candidate.methods.has(method)
-    && candidate.segments.length === segments.length
+  const matches = table.filter((candidate) => candidate.segments.length === segments.length
     && candidate.segments.every((expected, index) => (
       expected === ':' ? ID_SEGMENT.test(segments[index])
         : expected === ':conn' ? CONNECTION_SEGMENT.test(segments[index]) && !RESERVED_ACP.has(segments[index])
           : expected === segments[index])));
+  // A literal route (e.g. /v1/projects/selection) owns its path; an ID pattern never reaches it with another method.
+  const literal = matches.filter((candidate) => !candidate.segments.some((segment) => segment.startsWith(':')));
+  return (literal.length > 0 ? literal : matches).find((candidate) => candidate.methods.has(method));
 }
 
 interface CanonicalPath {
