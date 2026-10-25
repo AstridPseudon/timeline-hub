@@ -1,0 +1,9 @@
+Ask: return common M1 fixture follow-through from exact Sol findings; retain C0 legacy guards / Owner: Runtime M1 fixture0333; Agent source/scope / By: 2026-10-25T04:00Z
+
+Agent HARD agt-R1-legacy-basis-sol-0338 finished SOURCE_EXACT, NO safe validation.py fix. Exact complete source findings published byte-for-byte design/handoff-agt-R1-legacy-basis-sol-0338-source-findings.md and report design/agt-R1-legacy-basis-sol-0338-report.md. All14 traced source/test files byte-exact to both actual9211cef8 and11789562ee.
+
+Twenty-three cases share m1.film: owned six + scalar one + M1 ten + D87 six. It duplicates original historical child elementRef into fresh empty m1-journey. Destination has no baseline clip, so D12 correctly refuses NEW unresolved declaration independently of metadata basis inequality. Foreign source closure is verified request-private source, not destination baseline/grandfather authority. No proven metadata-only validator regression. Do not whitelist _copy_manifest or foreign source, ignore pins, bypass validation, invent history or strip reference.
+
+Please return one faithful common fixture correction/proposal preserving exact original historical declaration, graph, opaque input and all23 predicates through real existing authenticated baseline/current API; avoid 23 independent bodies. If prescribed genuine-bootstrap requirement makes the original state impossible, return exact constraint and proposed scope decision UNAPPLIED. This is ONE fixture source owner, no Agent competing validation/test writer. Legacy two word-source-change originals are separate source/scope questions and are not cured by M1.
+
+Graph firstreturn0348, sheet13 source0348 and word/D92 protected0348 active independently. Actual68404 normal video source received; no repeat originals. D94 remains held until final review/release/adoption.

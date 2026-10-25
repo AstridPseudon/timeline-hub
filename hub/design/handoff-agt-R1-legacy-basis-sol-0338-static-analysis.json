@@ -1,0 +1,266 @@
+{
+  "head": "595464fd1cae3204f3c5cb99f7f72a1b4d2083ba",
+  "source_checks": [
+    {
+      "path": "astrid/sdk/timeline/validation.py",
+      "sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c",
+      "same_as_HEAD": true,
+      "assert_count": 0,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "astrid/sdk/timeline/commit.py",
+      "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+      "same_as_HEAD": true,
+      "assert_count": 0,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "astrid/core/timeline/authoring_bundle.py",
+      "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+      "same_as_HEAD": true,
+      "assert_count": 0,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "astrid/sdk/timeline/_doc_patch_materialize.py",
+      "sha256": "68b7494031f739344826d21d690fcf22836c5bcfe5295f736432552fcd86ad2f",
+      "same_as_HEAD": true,
+      "assert_count": 0,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "68b7494031f739344826d21d690fcf22836c5bcfe5295f736432552fcd86ad2f",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "68b7494031f739344826d21d690fcf22836c5bcfe5295f736432552fcd86ad2f",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "astrid/sdk/timeline/native_timeline_duplicate.py",
+      "sha256": "c51409007bde2241682c86da37254524b6b5d201b3e335ba3e81b1c1d75f900f",
+      "same_as_HEAD": true,
+      "assert_count": 0,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "c51409007bde2241682c86da37254524b6b5d201b3e335ba3e81b1c1d75f900f",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "c51409007bde2241682c86da37254524b6b5d201b3e335ba3e81b1c1d75f900f",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "astrid/sdk/timeline/native_occurrence_shared.py",
+      "sha256": "931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840",
+      "same_as_HEAD": true,
+      "assert_count": 0,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "astrid/sdk/timeline/native_text_binding.py",
+      "sha256": "19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d",
+      "same_as_HEAD": true,
+      "assert_count": 0,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_m1.py",
+      "sha256": "aad40f65c3fec32468bbe99f4b328d02a4cd9497e59debdd138265bc0a042545",
+      "same_as_HEAD": true,
+      "assert_count": 87,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "aad40f65c3fec32468bbe99f4b328d02a4cd9497e59debdd138265bc0a042545",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "aad40f65c3fec32468bbe99f4b328d02a4cd9497e59debdd138265bc0a042545",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "tests/editing_conformance/test_owned_move_publish_runtime.py",
+      "sha256": "09b95319e6f261341cfb9d11a671f8e2c72b5ac16c12c446e8a987334c5aa673",
+      "same_as_HEAD": true,
+      "assert_count": 119,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "09b95319e6f261341cfb9d11a671f8e2c72b5ac16c12c446e8a987334c5aa673",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "09b95319e6f261341cfb9d11a671f8e2c72b5ac16c12c446e8a987334c5aa673",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_scalar.py",
+      "sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+      "same_as_HEAD": true,
+      "assert_count": 15,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_text_binding.py",
+      "sha256": "fe7fab9f3f23a103b1c185cc74c4afe47c8b0183cd6dfcacef4796b92a3f61f0",
+      "same_as_HEAD": true,
+      "assert_count": 76,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "fe7fab9f3f23a103b1c185cc74c4afe47c8b0183cd6dfcacef4796b92a3f61f0",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "fe7fab9f3f23a103b1c185cc74c4afe47c8b0183cd6dfcacef4796b92a3f61f0",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_native_checkout.py",
+      "sha256": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461",
+      "same_as_HEAD": true,
+      "assert_count": 35,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+      "sha256": "06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2",
+      "same_as_HEAD": true,
+      "assert_count": 29,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_legacy_text_reference.py",
+      "sha256": "bdbc7ef550b4b800967c16847679c6722be51d09a00275a79645fc67650ef222",
+      "same_as_HEAD": true,
+      "assert_count": 10,
+      "parse_compile": "PASS (no execution)",
+      "captures": {
+        "actual9211": {
+          "sha256": "bdbc7ef550b4b800967c16847679c6722be51d09a00275a79645fc67650ef222",
+          "same_as_current": true
+        },
+        "actual11789": {
+          "sha256": "bdbc7ef550b4b800967c16847679c6722be51d09a00275a79645fc67650ef222",
+          "same_as_current": true
+        }
+      }
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_port.py",
+      "sha256": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+      "parse_compile": "PASS (no execution)"
+    },
+    {
+      "path": "/home/user/work/runtime/tests/timeline_commit_film_fixture.py",
+      "sha256": "7fa6dd0212dae2a8c5157a297c30c3369ec3d68f123bab43ca3552978a123398",
+      "parse_compile": "PASS (no execution)"
+    },
+    {
+      "path": "/home/user/work/runtime/tests/precut_realm_fixture.py",
+      "sha256": "c7fed3953a0de5147260a6e4fd1cb4a3d28b4fb87b04f8bacba928bf1397fff1",
+      "parse_compile": "PASS (no execution)"
+    }
+  ],
+  "safe_packet_selected_count": 25,
+  "product_diff": "",
+  "worktree_status": "",
+  "limitations": [
+    "Static-only; no fixture/helper/test/module execution.",
+    "Actual baseline/candidate snapshots are not published in the safe packets.",
+    "No source change; HEAD and candidate validation.py are byte-identical."
+  ]
+}
