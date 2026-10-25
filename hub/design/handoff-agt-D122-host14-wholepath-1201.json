@@ -1,0 +1,72 @@
+{
+  "task": "D122 REG14 whole-path investigation",
+  "verdict": "common registry-discovery child import failure",
+  "retained_run": {
+    "test_id": "agt-OPS-host14-route-1150-host14-original-final-1025115237-88",
+    "counts": {"passed": 0, "failed": 14, "deselected": 59, "duration_seconds": 34.87},
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "agent_commit": "bae5ab76f0acbf08b2d92d9f770fcf3dbe95f2fd",
+    "agent_tree": "d5c0d544f25062b6c15de32cf71be573a22964ce",
+    "runtime_commit": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "runtime_tree": "9bf331d68df8c966e8927a3f083ba03687803c99",
+    "test_source_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+    "profile": {
+      "node": "v20.19.4",
+      "composition_version": "0.0.14",
+      "lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+      "archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+      "registry_sha256": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96"
+    }
+  },
+  "first_cause": {
+    "phase": "registry_discovery",
+    "child_stderr_sha256": "da119565d5448f18b6297eebb2626490dbbb56761e6a9146769641b6d8b928c9",
+    "exception": "ModuleNotFoundError: No module named 'runtime_protocol'",
+    "import_location": "astrid/core/rendering/remotion_runtime.py:26",
+    "wrapper_location": "astrid/core/rendering/remotion_runtime.py:700",
+    "receipt": {
+      "original_wait_exit_code": 1,
+      "retained_set_final_census_complete": true,
+      "custody_admitted": true
+    }
+  },
+  "comparison": {
+    "upstream_test_id": "rt-D118-upstream23-0951-d118-upstream23-targeted-1025095559-19404",
+    "upstream_result": "15 passed, 1 failed, 0 errors",
+    "upstream_agent": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "upstream_runtime": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "upstream_child_import_root": "/tmp/w-860e2ab8b6/d118-upstream23/overlay/site-packages",
+    "upstream_child_origins": "pristine Agent/Runtime roots only",
+    "core30693_result": "8823 passed, 159 failed, 291 errors",
+    "core30693_note": "same genuine profile; host14 rows failed at earlier unsupported override; unrelated registry/readiness tests passed"
+  },
+  "accounting": {
+    "classification": "REG",
+    "rows": 14,
+    "body_equal_to_upstream": true,
+    "selector_source": "retained D122 report and rt-D118-result-review-1001",
+    "selectors": [
+      "test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]"
+    ]
+  },
+  "repair": {
+    "owner": "agt-D122-host14-source-1201",
+    "scope": "existing source-mode child import projection",
+    "preserve": ["strict origin guards", "Remotion validation", "all 14 original test bodies"],
+    "do_not_fix": ["terminal wrapper line 700", "test expectations", "profile hashes"]
+  },
+  "static_only": true
+}
