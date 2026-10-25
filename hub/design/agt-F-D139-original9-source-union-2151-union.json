@@ -1,0 +1,35 @@
+{
+  "schema": "timeline.agent.d139.source-union.v1",
+  "task": "agt-F-D139-original9-source-union-2151",
+  "repository": "agent",
+  "base": {
+    "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+    "required_ancestor": true
+  },
+  "result": "PASS",
+  "scope": "private source-only candidate for App original9 proof",
+  "changed_paths": [
+    "astrid/sdk/timeline/_command_state.py",
+    "tests/sdk/test_d100_item_birth_boundary.py",
+    "astrid/sdk/timeline/validation.py",
+    "tests/sdk/test_d136_fps_upstream_compat.py",
+    "tests/sdk/test_timeline_capture_projection.py"
+  ],
+  "donor_commits": [
+    "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "f53b016900c99e46998268e36c7c431ac0eec61e"
+  ],
+  "outside_scope": {
+    "status": "PASS",
+    "current_candidate_changed_paths_exact": true,
+    "all_other_current_files_preserved": true,
+    "timing_evaluators_preserved": true,
+    "runtime_lock_preserved": true,
+    "no_merge_release_or_foreign_ancestry": true
+  },
+  "behavior_credit": "none; donor reviews and prior App qualification are source evidence only"
+}
+

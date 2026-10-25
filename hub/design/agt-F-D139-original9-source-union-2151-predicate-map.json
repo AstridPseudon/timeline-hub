@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.agent.d139.predicate-map.v1",
+  "scope": "source preservation, not behavioral qualification",
+  "exact_blob_and_ast_conservation": {
+    "result": "PASS",
+    "all_five_current_blobs_equal_named_donors": true,
+    "python_ast_dumps_equal_named_donors": true,
+    "authored_test_inputs_and_call_sites_conserved_by_byte_identity": true
+  },
+  "predicates": [
+    {
+      "paths": ["astrid/sdk/timeline/_command_state.py", "tests/sdk/test_d100_item_birth_boundary.py"],
+      "predicate": "physical item birth and custody remain authenticated; changed custody, membership, correspondence, or previous value refuses without writes",
+      "source": "D100 reviewed product and corrected boundary test blobs",
+      "result": "preserved"
+    },
+    {
+      "paths": ["astrid/sdk/timeline/validation.py", "tests/sdk/test_d136_fps_upstream_compat.py"],
+      "predicate": "positive typed FPS declarations are accepted at their authored locations while malformed, moved, removed, or conflicting declarations remain refused",
+      "source": "D136a reviewed product and compatibility test blobs",
+      "result": "preserved"
+    },
+    {
+      "paths": ["tests/sdk/test_timeline_capture_projection.py"],
+      "predicate": "detached capture/projection source inputs, predicates, goldens, call inputs, and no-IO controls remain exact, including fractional FPS",
+      "source": "protected f53b0169 source blob",
+      "result": "preserved"
+    }
+  ],
+  "outside_scope_guards": {
+    "timing_evaluators_blob": "7b2937887351251594137628cfbfb58f86cb059e",
+    "runtime_lock_blob": "240f4fba3e86c0762a5c934ec37d9abbbb17e477",
+    "candidate_changed_path_count": 5,
+    "foreign_paths_imported": 0
+  },
+  "behavioral_status": "not run and not claimed"
+}
+

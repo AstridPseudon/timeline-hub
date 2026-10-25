@@ -1,0 +1,77 @@
+{
+  "schema": "timeline.agent.d139.source-manifest.v1",
+  "base": {
+    "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e"
+  },
+  "sources": [
+    {
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "donor_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+      "donor_parent": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+      "base_preimage_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+      "donor_parent_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+      "final_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "bytes": 37283,
+      "review": "rt-Agent-D100-security-review-1803 PASS; product-exact"
+    },
+    {
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "donor_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+      "donor_parent": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+      "base_preimage": "absent",
+      "donor_parent_blob": "68f0999397aa301607128f7747def12001b73a6e",
+      "final_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "bytes": 12114,
+      "review": "rt-Agent-D100-test-review-1931 PASS; corrected source-purpose review"
+    },
+    {
+      "path": "astrid/sdk/timeline/validation.py",
+      "donor_commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+      "donor_parent": "c99214a227154df5fbaf681c2e0fc52c54500025",
+      "base_preimage_blob": "edda2e123a5907ddf1671c705e17fd3aee0cabe6",
+      "donor_parent_blob": "edda2e123a5907ddf1671c705e17fd3aee0cabe6",
+      "final_blob": "e39103bab6f293cb6b078cbe0bdd9c1739302c3a",
+      "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae",
+      "bytes": 36065,
+      "review": "rt-D136a-typed-location-final-review-2119 PASS; source-intake-2141 exact-blobs PASS"
+    },
+    {
+      "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+      "donor_commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+      "donor_parent": "c99214a227154df5fbaf681c2e0fc52c54500025",
+      "base_preimage_blob": "b80b771236ab181d9e84bb96187a5b17e329a4f3",
+      "donor_parent_blob": "b80b771236ab181d9e84bb96187a5b17e329a4f3",
+      "final_blob": "32cf9e15a13fb4bf16a45184789bb3431f01ef0c",
+      "sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042",
+      "bytes": 10234,
+      "review": "rt-D136a-typed-location-final-review-2119 PASS; source-intake-2141 exact-blobs PASS"
+    },
+    {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "donor_commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+      "donor_parent": "20177e66564f9f91735ed1a11bac821682d60edf",
+      "base_preimage_blob": "337379f6d9cc9732664b8423dfe537b6cd71fa09",
+      "donor_parent_blob": "337379f6d9cc9732664b8423dfe537b6cd71fa09",
+      "final_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "bytes": 29425,
+      "review": "App D118d protected source6e41; prior qualification 1616/1646; original9 predicates and inputs exact"
+    }
+  ],
+  "source_map": {
+    "command_state_and_projection_base_preimages_equal_a30e": true,
+    "fps_paths_preimages_equal_donor20db_parent": true,
+    "d100_additive_test_absent_from_base": true
+  },
+  "review_refs": [
+    "rt-Agent-D100-security-review-1803",
+    "rt-Agent-D100-test-review-1931",
+    "rt-D136a-typed-location-final-review-2119",
+    "agt-F-D136a-typed-source-intake-2141",
+    "app-D118d-projection-own9-final-1646"
+  ]
+}
+
