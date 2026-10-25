@@ -1,0 +1,24 @@
+{
+  "target": "/home/user/work/wt/app-pin-d5a1d1ab",
+  "name": "app-pin-d5a1d1ab",
+  "head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+  "current_app": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+  "clean": true,
+  "live_brief_or_lease_refs": [],
+  "active_test_refs": [],
+  "active_queue_refs": [],
+  "issues": [],
+  "host_receipt": "design/app-pin-host-process-use-2055.md",
+  "free_before": 5204168704,
+  "raw_runs_untouched": true,
+  "old_keep_text": "",
+  "named_keep_released": true,
+  "target_absent": true,
+  "recycled_marker": true,
+  "free_after": 5369860096,
+  "raw_keep_guards": {
+    "app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250": true,
+    "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016": true,
+    "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721": true
+  }
+}
