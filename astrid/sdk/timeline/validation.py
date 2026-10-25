@@ -55,13 +55,18 @@ def _fps(value: Any, path: str) -> Fraction:
         if set(value) != {"numerator", "denominator"}:
             _fail(path, "rational fps requires numerator and denominator")
         numerator, denominator = value["numerator"], value["denominator"]
-        if (isinstance(numerator, bool) or isinstance(denominator, bool)
-                or not isinstance(numerator, int) or not isinstance(denominator, int)):
-            _fail(path, "rational fps requires integer numerator/denominator")
-        if numerator <= 0 or denominator <= 0:
-            _fail(path, "fps rational must be positive")
-        return Fraction(numerator, denominator)
-    return _validation_number(value, path, positive=True)
+    elif isinstance(value, (list, tuple)):
+        if len(value) != 2:
+            _fail(path, "rational fps requires numerator and denominator")
+        numerator, denominator = value
+    else:
+        return _validation_number(value, path, positive=True)
+    if (isinstance(numerator, bool) or isinstance(denominator, bool)
+            or not isinstance(numerator, int) or not isinstance(denominator, int)):
+        _fail(path, "rational fps requires integer numerator/denominator")
+    if numerator <= 0 or denominator <= 0:
+        _fail(path, "fps rational must be positive")
+    return Fraction(numerator, denominator)
 
 
 def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
