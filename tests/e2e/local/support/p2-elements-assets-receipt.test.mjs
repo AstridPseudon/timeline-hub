@@ -16,7 +16,7 @@ const extract = (name) => {
 const requestHelper = extract('assertRequestV2');
 const helperSource = [
   'object', 'exactKeys', 'digest', 'nativeImages', 'nativeChild', 'nativeState', 'nativeConfig', 'nativeRows',
-  'nativeValue', 'nativeSite', 'nativeSelection', 'nativeBinding', 'nativeEffects', 'nativeUndoExpected',
+  'nativeValue', 'nativeSite', 'nativeAssetReads', 'nativeSelection', 'nativeBinding', 'nativeEffects', 'nativeUndoExpected',
   'canonicalJson', 'materializedIdentity', 'assertRequestV2', 'acceptedMutation', 'publicationId', 'assertNativeAcceptedReply', 'assertNativeHistoryEntry',
   'assertAcceptedReply', 'assertHistoryEntry', 'assertUndoHistoryEntry', 'assertOccurrenceParentProjection',
   'projectedPlacementClipId', 'assertMountedPlacementIdentity',
@@ -415,7 +415,8 @@ function nativeFixture(kind = 'params') {
       { kind: 'collection', ref: 'parent', path: ['config', 'tracks'], members: ['V1'], order: ['V1'] },
       { kind: 'field', ref: 'parent', path: ['config', 'tracks', 'id:V1'], state: present(tracks[0]) },
       { kind: 'collection', ref: 'parent', path: ['occurrences'], members: [], order: [] },
-      { kind: 'scope', ref: 'parent', path: [] },
+      { kind: 'field', ref: 'parent', path: ['registry'], state: present(landedParent.registry) },
+      { kind: 'field', ref: 'parent', path: ['config', 'registry'], state: absent },
       { kind: 'field', ref: 'parent', path: ['config', 'registry', 'assets', 'asset-new'], state: present(asset) },
       { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:clip-new'], state: present(addedRow) },
     ];
