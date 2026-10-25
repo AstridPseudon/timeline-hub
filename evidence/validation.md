@@ -51,3 +51,30 @@ and the canonical `4c/ab1e` census are not a current `41ad/f103` Farm result.
 Acceptance must use the exact Agent Python and Ruff paths above. No external
 profile, alternate schema source, old tuple, prior failure, original9, D77
 render, or D130 route is admitted.
+
+## Independent review
+
+The independent review reran the author commands and then inspected the
+current exact source objects, the D124 22-root command, the D139a caller and
+installed-schema evidence, the reviewed D73 launcher, and Runtime f103 C0
+schemas. The result is `FAIL_SOURCE`; findings are in `evidence/findings.md`
+and the machine-readable result is `evidence/review.json`.
+
+Commands and results:
+
+| Command | Result |
+| --- | --- |
+| `bash -n ops-d140-farm/receive-farm.sh` | PASS |
+| `/home/user/work/venv-agent/bin/python` in-memory compile of `ops-d140-farm/test_recipe.py` | PASS |
+| `/home/user/work/venv-agent/bin/python -m pytest -q ops-d140-farm/test_recipe.py` | PASS — 4 passed |
+| `/home/user/work/venv-agent/bin/ruff check --no-cache ops-d140-farm/test_recipe.py` | PASS |
+| `ops-d140-farm/receive-farm.sh --check-only` with author source bindings | PASS as a complete JSON census; exit 1, `NOT_READY`, 94 checks (27 PASS, 2 MISMATCH, 65 MISSING) |
+| `/home/user/work/venv-agent/bin/python -m json.tool <check-only-output>` | PASS |
+| `git diff --check` | PASS |
+| `bash -n` on each of the four extracted `commands.md` shell blocks | PASS |
+
+The first review attempt used the harness-provided worker `tmpdir`, which is a
+file rather than a directory; it produced no recipe execution or source
+change. The check-only output was rerun in a private `/tmp` directory.
+
+No full suite or live Farm stage was requested. No author correction was made.

@@ -42,5 +42,19 @@
   },
   "canonical_supporting_census": {"path": "design/agt-F-D139-import-input-census-2149-input-census.json", "sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30", "rows": 1146, "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d", "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464", "applicability_to_current_tuple": "NOT_CLAIMED"},
   "receipts": {"d139a_source_join": "PASS_SOURCE_JOIN in existing composition evidence; not Farm installation/child acceptance", "d73_current_tuple": "MISSING", "farm_current_tuple": "MISSING", "later_changed_heads": "require a named new actual receipt; no mutable recapture"},
-  "live_actions": {"install": false, "request": false, "child": false, "imports": false, "core": false, "store": false, "queue": false, "provider": false, "collection": false, "acquisition": false}
+  "live_actions": {"install": false, "request": false, "child": false, "imports": false, "core": false, "store": false, "queue": false, "provider": false, "collection": false, "acquisition": false},
+  "independent_review": {
+    "task": "rt-F-D140-recipe-review-2316",
+    "verdict": "FAIL_SOURCE",
+    "reviewed_author_commit": "eafe241ab",
+    "current_checkout_observation": {
+      "agent": {"head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e", "expected": "41ad656529fa8489829de9078b1b6e157c7433c8"},
+      "runtime": {"head": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0", "expected": "f103bb46866999c961a8865636f2e66d544e0c9b"},
+      "app": {"head": "5696769dfca056676cde1ab46d8bc94354b3a44a", "expected": "5696769dfca056676cde1ab46d8bc94354b3a44a"},
+      "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "expected": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"}
+    },
+    "check_only": {"status": "NOT_READY", "exit": 1, "checks": 94, "pass": 27, "mismatch": 2, "missing": 65, "side_effects_false": true},
+    "custody_limit": "Committed Git evidence and the permanent author worker directory were recovered; author-relative paths are not Farm receipts.",
+    "findings_file": "evidence/findings.md"
+  }
 }
