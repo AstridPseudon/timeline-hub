@@ -1,0 +1,42 @@
+{
+  "task": "D136c reporting seam",
+  "heads": {
+    "runtime": {"commit": "777f203885ba66d89439d45d584aadd41487119f", "tree": "2c022e367128da7c556d94613fb0a4b2d1915a09"},
+    "agent": {"commit": "d133a14838a4e607947893408bc34ba2742a19c6", "tree": "f87d59a9deb3b64efddd4707d2c8eb8a52e31bf5"}
+  },
+  "runtime_source": [
+    {"path": "runtime_protocol/timeline_commit_auth.py", "git_blob": "b2b238a716b55276e63d23d2886ef8542a382faa", "sha256": "6e227fe16740aa93c1880beea0ff741275a195c0e0d460e9b3d186aed6392598"},
+    {"path": "runtime_protocol/timeline_commit_store.py", "git_blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7", "sha256": "fce6c3ebe916d3a5f6be48125d3214d7cf15b1e51a6f276681a825d0e3925f99"},
+    {"path": "runtime_protocol/timeline_commit_port.py", "git_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3", "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"},
+    {"path": "runtime_protocol/service.py", "git_blob": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144", "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b"},
+    {"path": "runtime_protocol/server.py", "git_blob": "65aa761a3187486d4847ef063192a06434b24d91", "sha256": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc"},
+    {"path": "runtime_protocol/timeline_commit_execution.py", "git_blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896", "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"},
+    {"path": "runtime_protocol/timeline_commit.py", "git_blob": "044a82a3b2305b37833c5dd80c99d6a9f0f69848", "sha256": "f60abe96c8e21e9a43cd0962f4c2511b02b36f557c4d18e68dee7f8b5e539c13"},
+    {"path": "runtime_protocol/errors.py", "git_blob": "71585262c72032b84a495b91f3b001c8a40863e8", "sha256": "f10518c992c28d5836fdd7916337679f0ba92b9722dacc1dd94fe408a22a49f4"},
+    {"path": "runtime_protocol/timeline_commit_provider.py", "git_blob": "a05812e82ee2930f29e277f260f3329855378932", "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"},
+    {"path": "runtime_protocol/daemon.py", "git_blob": "725d4386c2e2690ddd10a233a028ac2f9d48c96c", "sha256": "3dd152c1c3b2744287cedc5fc6b51e39676b3870bae3577cbc555b8d21d8e9fb"},
+    {"path": "tests/test_timeline_missing_observation_diagnostics.py", "git_blob": "15c35c662480d98443b66210a823e3f00967d6db", "sha256": "e2c82f375397a7bc64c198b61b06561e2d11e7fda205ed4aeb2f721af117dc4e"}
+  ],
+  "agent_source": [
+    {"path": "astrid/sdk/timeline/commit.py", "git_blob": "3ca7c6e970cc162cef30989ad9cb5e0e2a61715c", "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"},
+    {"path": "astrid/core/timeline/authoring_bundle.py", "git_blob": "e329c565bbaea9acac81c71929b7f3c3cadd0a17", "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d"},
+    {"path": "tests/sdk/test_capture_source_runtime.py", "git_blob": "092b212d4708c0a19fa4d183632ca5c64abc4da7", "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48"},
+    {"path": "tests/sdk/test_timeline_capture_projection.py", "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19", "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436"}
+  ],
+  "external_reporter_source": {
+    "path": "_pytest/junitxml.py (venv-agent)",
+    "sha256": "d71198950cf33bd1c7dc782167986ee130427fc57e221046e6455dc7a5b63d5a",
+    "lines": "217-229",
+    "note": "Read-only dependency source; not a product or worktree edit."
+  },
+  "retained_artifacts_read_in_place": [
+    {"path_suffix": "workers/app-D136c-original9-resume-2330/private/own9.xml", "mode": "0600", "sha256": "4cc06cd135004d051d25eeaec87c348b516102f0ba2e38584877acdd152c5b88"},
+    {"path_suffix": "workers/app-D136c-original9-resume-2330/private/own9.stdout", "mode": "0600", "sha256": "72853191be48cd2e47218060d06d4c8ac2f3636d010b73615be5d21f07ca7c24"},
+    {"path_suffix": "workers/app-D136c-original9-resume-2330/private/own9.stderr", "mode": "0600", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+  ],
+  "review_correlation": {
+    "reviewed_runtime_donor": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+    "review_status": "PASS",
+    "protected_agent_projection": {"predicates": 43, "test_bodies": 11, "fixture_statements": 54, "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436"}
+  }
+}

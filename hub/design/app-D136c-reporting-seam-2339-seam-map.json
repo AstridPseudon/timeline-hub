@@ -1,0 +1,111 @@
+{
+  "task": "D136c reporting seam",
+  "verdict": "BOUNDED_SEAM_FOUND",
+  "source": {
+    "runtime_commit": "777f203885ba66d89439d45d584aadd41487119f",
+    "runtime_tree": "2c022e367128da7c556d94613fb0a4b2d1915a09",
+    "runtime_immutable_parent": "ab1e4f6141987706132916e2da16477f5a019464",
+    "agent_commit": "d133a14838a4e607947893408bc34ba2742a19c6",
+    "agent_tree": "f87d59a9deb3b64efddd4707d2c8eb8a52e31bf5",
+    "reviewed_runtime_donor": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a"
+  },
+  "first_loss": {
+    "edge": "pytest JUnit reporter",
+    "source": "_pytest/junitxml.py (venv-agent)",
+    "lines": "217-229",
+    "sha256": "d71198950cf33bd1c7dc782167986ee130427fc57e221046e6455dc7a5b63d5a",
+    "mechanism": "append_error derives the XML message from reprcrash.message and writes only str(report.longrepr) as node text; it does not read RuntimeErrorBase.details.",
+    "actual_effect": "The retained XML contains the common setup message and traceback source text, but no safe diagnostic values."
+  },
+  "edges": [
+    {
+      "id": "E0",
+      "owner": "Agent test source / existing fixture",
+      "caller": "tests/sdk/test_capture_source_runtime.py:216",
+      "call": "service.register_timeline_commit_provider(load_timeline_commit_provider(\"astrid\"))",
+      "consumer": "Runtime service provider slot",
+      "fields": "provider identity and contract only; no diagnostic map"
+    },
+    {
+      "id": "E1",
+      "owner": "Agent provider",
+      "caller": "astrid/sdk/timeline/commit.py:1025,1160-1161,1437-1444",
+      "call": "RuntimeCommitService.commit -> port.accept(prepared)",
+      "consumer": "Runtime RequestCommitPort",
+      "fields": "prepared records and retained sequential capture; CommitRejected is not converted to an Agent ErrorObject here"
+    },
+    {
+      "id": "E2",
+      "owner": "Runtime auth guard",
+      "caller": "runtime_protocol/timeline_commit_port.py:688-694,702-712; runtime_protocol/timeline_commit_store.py:1532-1539; runtime_protocol/timeline_commit_auth.py:2982-2987,2272-2279",
+      "call": "accept -> _validate -> _validate_sequential_execution -> validate_sequential_capture -> command_output -> require",
+      "consumer": "existing missing-physical-observation guard",
+      "fields": "closed 13-key safe diagnostic allowlist; guard predicate remains ref in result"
+    },
+    {
+      "id": "E3",
+      "owner": "Runtime store",
+      "caller": "runtime_protocol/timeline_commit_auth.py:18-21; runtime_protocol/timeline_commit_store.py:36-50",
+      "call": "require(..., safe_details=detail) -> reject(..., safe_details=detail) -> CommitRejected(failure)",
+      "consumer": "CommitRejected.failure.details.safe_diagnostic",
+      "fields": "status=refused, reason=invalid_records, code=validation_error, unchanged message, plus safe_diagnostic"
+    },
+    {
+      "id": "E4",
+      "owner": "Runtime service/public port",
+      "caller": "runtime_protocol/service.py:2469-2483,2556-2565,2566-2579; runtime_protocol/timeline_commit_port.py:99-103",
+      "call": "coordinator outcome/error -> public_failure(failure) -> RuntimeErrorBase(details=deepcopy(failure.details))",
+      "consumer": "mounted reply / RuntimeErrorBase.as_dict",
+      "fields": "safe_diagnostic remains in details; focused reviewed test removes only it, then proves the public envelope is otherwise byte-for-byte equivalent"
+    },
+    {
+      "id": "E5",
+      "owner": "Agent existing publication fixture",
+      "caller": "tests/sdk/test_timeline_capture_projection.py:430; astrid/core/timeline/authoring_bundle.py:1884; test_timeline_capture_projection.py:270-276",
+      "call": "publish_authoring_candidate -> _RuntimeAuthoringWriter.commit_timeline -> service.commit_timeline",
+      "consumer": "pytest setup exception",
+      "fields": "actual route is direct in-process Runtime service; no HTTP/RemoteTimelines/ErrorObject conversion occurs"
+    },
+    {
+      "id": "E6",
+      "owner": "pytest JUnit reporter (external dependency)",
+      "caller": "_pytest/junitxml.py:217-229",
+      "call": "pytest setup report -> append_error -> XML error message/text",
+      "consumer": "retained own9.xml",
+      "fields": "only exception display text; RuntimeErrorBase.details.safe_diagnostic is not serialized"
+    }
+  ],
+  "actual_retained_result": {
+    "cases": 9,
+    "setup_errors": 9,
+    "failures": 0,
+    "passes": 0,
+    "skips": 0,
+    "exit_code": 1,
+    "first_seam": "provider intermediate command lacks an authenticated physical observation",
+    "xml_safe_diagnostic_key_occurrences": 9,
+    "xml_approved_value_key_occurrences": 0,
+    "stdout_approved_value_key_occurrences": 0,
+    "classification": "UNKNOWN",
+    "why": "Source proves the map is constructed on the reached guard and public_failure preserves it, but retained JUnit has no per-case map values; actual value binding cannot be reconstructed."
+  },
+  "persistence": {
+    "transient_runtime_exception_details": "SOURCE_PROVEN_UNTIL_JUNIT_HANDOFF",
+    "retained_junit_safe_values": "NOT_RETAINED",
+    "durable_runtime_rows": "NO_WRITE_ON_REFUSAL; NONE_EXPECTED",
+    "raw_xml_stdout_stderr_exported": false
+  },
+  "safe_allowlist": [
+    "verification_phase", "step_ordinal", "command_ordinal",
+    "captured_ref_present", "captured_path_present", "native_site_present",
+    "physical_digest_present", "physical_digest_hash",
+    "creation_exemption", "creation_exemption_outcome",
+    "ownership_state", "binding_state", "continuation_state"
+  ],
+  "proposal_only": {
+    "approach": "Use the existing caught RuntimeErrorBase/public failure object at the existing report boundary to attach a detached, allowlist-validated safe_diagnostic sidecar to the same JUnit result. Do not change the guard, contract, authored inputs, predicates, fixture construction, or test bodies.",
+    "owner": "Agent/Proof test-reporting owner; Runtime owns the already-existing producer and public envelope",
+    "additional_original9_needed": false,
+    "additional_body": "NOT_PROPOSED; if demanded, recorded owner approval is required because the single D136c body is spent"
+  }
+}
