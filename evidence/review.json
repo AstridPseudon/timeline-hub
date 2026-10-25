@@ -1,0 +1,164 @@
+{
+  "schema": "rt-f-tail-composition-ref-final-review-v1",
+  "review": "rt-F-tail-ref-final-review-1916",
+  "task": "F tiny Composition frozen-ref final review",
+  "base": {
+    "repository": "composition",
+    "branch": "tl/integration",
+    "integration_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "integration_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "integration_parent": "7a95a40b07ea0d273e17afb69dbc3456b603f2bc"
+  },
+  "verdict": "PASS",
+  "scope": "Read-only review of only the residual Composition frozen-ref crosswalk finding from rt-F-tail-pristine-final-review-1904, against the corrected pristine evidence and composition-correction.json from rt-F-tail-small-notes-1911.",
+  "source_floor": "4.6GB",
+  "budget_policy": "noheavy; stop4GB",
+  "residual_finding": {
+    "id": "frozen-ref-crosswalk",
+    "prior_disposition": "FAIL",
+    "disposition": "PASS",
+    "severity": "blocking",
+    "required_fix": "Record the exact frozen Composition ref and immutable commit/tree/parent, keep origin/main as the separately named upstream object, and state that the captures are distinct without retargeting either ref.",
+    "acceptance": {
+      "source_object": {
+        "repository": "/home/user/peteromallet/timeline-composition",
+        "working_tree_status": "clean",
+        "base_integration": {
+          "ref": "tl/integration",
+          "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+          "parent": "7a95a40b07ea0d273e17afb69dbc3456b603f2bc"
+        }
+      },
+      "ref_tree_parent_hash_crosswalk": {
+        "frozen_r4": {
+          "ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition",
+          "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+          "tree": "49975e7a54fd594e1b7fc807681fe28611d57864",
+          "parent": "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+          "object_types": {
+            "commit": "commit",
+            "tree": "tree",
+            "parent": "commit"
+          }
+        },
+        "named_upstream": {
+          "ref": "origin/main",
+          "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+          "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+          "parent": "bd1011bce5fb4f172269911555568d18e6b22f3c",
+          "object_types": {
+            "commit": "commit",
+            "tree": "tree",
+            "parent": "commit"
+          }
+        },
+        "relationship": "distinct immutable captures; no ref moved or retargeted",
+        "ref_values_unchanged": true
+      },
+      "historical_tree_typo": {
+        "prior_review_text": "49975e7a54fd594e1b7fc807681fe28611d57864e",
+        "prior_review_text_length": 41,
+        "actual_git_tree": "49975e7a54fd594e1b7fc807681fe28611d57864",
+        "actual_git_tree_length": 40,
+        "disposition": "PASS: preserve the historical error as a documented discrepancy; use the valid local Git object ID; no ref rewrite"
+      }
+    },
+    "checks": {
+      "corrected_pristine_crosswalk": "PASS: corrected inputs.json and source-manifest.json bind the frozen candidate ref to c82eb7c/tree 49975e7a/parent 5947abc, while origin/main remains 67b8aa3/tree 62f4456/parent bd1011b.",
+      "actual_git_objects": "PASS: read-only show-ref, rev-parse, and cat-file checks resolve the exact refs and commit/tree/parent object types.",
+      "five_1857_artifacts": "PASS: commands.md, selector-map.json, and validation.md are byte-identical to 1857; inputs.json and source-manifest.json differ only at the four allowed Composition mapping paths each.",
+      "outside_field_bytes": "PASS: no corrected pristine field outside the residual Composition mapping changed.",
+      "reused_1904_findings": "PASS by reuse: the four non-residual 1904 findings remain accepted and are not re-run or re-gated here.",
+      "d133_author_installation": "PASS by exact 1911 author receipt: the D133 paragraph and installation proof are cited only; no independent renderer or source edit was performed here.",
+      "full_prep_boundary": "PENDING/UNKNOWN: real missing named-upstream inputs remain absent; no pristine executable gate or full preparation PASS is claimed."
+    }
+  },
+  "field_diff": {
+    "inputs.json": {
+      "changed_paths": [
+        "/named_upstream/Composition/frozen_r4_ref",
+        "/named_upstream/Composition/frozen_r4_ref_resolution/commit",
+        "/named_upstream/Composition/frozen_r4_ref_resolution/tree",
+        "/named_upstream/Composition/object_relationship"
+      ],
+      "allowed_paths": "exactly changed_paths",
+      "outside_allowed_paths": [],
+      "status": "PASS"
+    },
+    "source-manifest.json": {
+      "changed_paths": [
+        "/named_upstream_objects/3/frozen_ref",
+        "/named_upstream_objects/3/frozen_r4_ref_resolution/commit",
+        "/named_upstream_objects/3/frozen_r4_ref_resolution/tree",
+        "/named_upstream_objects/3/object_relationship"
+      ],
+      "allowed_paths": "exactly changed_paths",
+      "outside_allowed_paths": [],
+      "status": "PASS"
+    },
+    "unchanged_artifacts": [
+      "commands.md",
+      "selector-map.json",
+      "validation.md"
+    ],
+    "status": "PASS"
+  },
+  "inventory": {
+    "historical_matrix_file_count": 41,
+    "manifest_entry_count": 34,
+    "manifest_self_file_count": 1,
+    "generated_cache_count": 7,
+    "stable_source_only_count": 33,
+    "private_source_identity": {
+      "python_source_count": 100,
+      "python_source_status": "unchanged from immutable 1857 evidence; not independently rehashed in this residual review",
+      "typescript_target": "packages/typescript: npm test",
+      "typescript_status": "unchanged from immutable 1857 evidence; no test run in this residual review"
+    },
+    "route": {
+      "root_count": 22,
+      "order_status": "unchanged from immutable 1857 selector-map.json"
+    },
+    "missing_named_agent_upstream": {
+      "root_count": 5,
+      "launcher": "tools/p4-d73-pinned-launch.sh",
+      "disposition": "UNKNOWN_MISSING_UPSTREAM_SELECTOR",
+      "status": "unchanged; no missing input counted as zero or PASS"
+    },
+    "status": "PASS: inventory and missing-input classifications are unchanged evidence, not new gate execution"
+  },
+  "reused_evidence": {
+    "prior_review": {
+      "path": "workers/rt-F-tail-pristine-final-review-1904/evidence/review.json",
+      "sha256": "2e5696dfba8685e6deb6168c7f32c3c866271cc85f52df8a76d4b29419d8c2e3",
+      "four_non_residual_findings": "PASS and reused without repetition"
+    },
+    "correction": {
+      "path": "workers/rt-F-tail-small-notes-1911/evidence/composition-correction.json",
+      "sha256": "b85bed4ba9685bf3fe117ec9b7dff108a1923bb2dcd787c8ed921297d735b0ca"
+    },
+    "d133_receipt": {
+      "path": "workers/rt-F-tail-small-notes-1911/evidence/receipt.json",
+      "sha256": "2510e2ea764c81864b0d92b12cd347b24572134ef250ded2a6461dc64b588113",
+      "author_installation": "PASS",
+      "exact_paragraph": true,
+      "outside_bytes_equal": true,
+      "renderer_recheck": "not performed; exact author receipt reused"
+    }
+  },
+  "scope_checks": {
+    "read_only_sources_and_refs": "PASS",
+    "composition_mapping_only": "PASS",
+    "no_source_edit": "PASS",
+    "no_pristine_executable_gate_claim": "PASS",
+    "no_new_gates": "PASS",
+    "full_prep": "PENDING/UNKNOWN within real missing-input limits"
+  },
+  "tests": {
+    "run": false,
+    "lint": "N/A: evidence-only review",
+    "typecheck": "N/A: evidence-only review",
+    "reason": "Task forbids test/preflight/core/full/E2E/Store/clone/Git mutation/installer/build/ZIP/provider/network execution."
+  }
+}
