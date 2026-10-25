@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T13:11:22Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 0m -->
-# app board, 2026-10-25T13:13Z
+<!-- app | 2026-10-25T13:15:46Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-25T13:15Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -79,7 +79,7 @@
 | D124-sampler-prep | Reuse sampler for actual element process | Luna | Source inventory complete | merged | app-D124-actual-element-sampler-prep-1245 | Exact seam: D66 overwrites PYTHONPATH; existing phase helper needs sampler wiring. Source and safe recipe inventoried; no body. | Evidence only |
 | D124-full-P2 | Tagged tour and actual element timing | Luna and service | Capture and hook protected PASS | blocked:app | Prepared1306; resume after source | No body submitted. Normal hook cannot attach candidate yet; both source fixes assigned now. | fe3309 /070dfc /5e9ad /635f |
 
-| D124-capture | Correlate and sample existing phase helper | Luna and protected Luna | Review1304 FAIL | doing | app-D124-helper-first-return-1312 | First return fixes dispatch labeling and capture CPU scope. Original18 controls passed; no qualified normal attach or body yet. | 480392 held |
+| D124-capture | Correlate and sample existing phase helper | Luna and protected Luna | First return1312 complete | review | app-D124-helper-final-review-1315 | Author19 controls and statics PASS. Full cumulative helper privacy, dispatch and overhead review active; App hook separate. | 181952 held |
 | D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1304 exact F2 | doing | app-D124-D66-helper-hook-1312 | Explicit diagnostic path plus hash; production Runtime stays exact. App harness only; original specs and waits read only. | Source pending |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
@@ -98,8 +98,8 @@ Blockers: App element — Sole App owner. D124 capture1304 FAIL on truthful disp
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Agent batch — Atomic8a joins held product batch; full core required before adoption. Scalar and auto normal receipt consumed; source waits cleared. Bindingf3a6 held after real rebind FAIL.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Helper first return1312 and App D66 hook1312 active. One protected review for each exact diff, then resume sole fulltour from1306 preparation. No Runtime semantic fix wait. Agent current roots stay with1247.
+Next ready: Helper final1315 review and App D66 hook1312 active. On hook author completion dispatch its sole protected review immediately, then merge. Resume one fulltour from1306 preparation with reviewed source and fresh pins.
 live 2 / cap 6; ready-undispatched 0; core open: 2. D124 source repairs are disjoint. No heavy body active. D89b allows up to3 source/read workers at4.6GB; normal cap6 above5.0GB.
-Capacity: Fresh free5.39GB before controller dispatch. Heavy admission rechecks5.2GB; ongoing stop4.0GB. Sweep3 active. Corrected compact script has removed session operations; only its current guarded scope may run. Prior refused and dirty targets untouched.
-INBOX consumed through2190555 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
+Capacity: Corrected compact ran within current scope:0 scratch dirs,17 old logs gzipped,4 finished test dirs packed losslessly. Free5.364GB at13:14. Ended clean nonKEEP scan0. Heavy5.2GB and stop4.0GB; prior refused and dirty targets untouched.
+INBOX consumed through2205392 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
