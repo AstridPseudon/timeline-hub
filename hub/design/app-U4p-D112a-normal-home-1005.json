@@ -1,0 +1,11 @@
+{
+  "task": "U4p D112a release",
+  "normal_app": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+  "normal_tree": "3f9da34c4f116026ec21022421850e0608ba653b",
+  "author": "890f6d72d730a64e45228381967e28b3fdd4da6c",
+  "whole_tree_equal": true,
+  "runtime": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+  "runtime_tree": "6283b5fbb128447f1b333e0e6af334d35637cf69",
+  "queue_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/merge-app-U4p-D112a-release-adoption-1000",
+  "timestamp": "2026-10-25T10:05:00.832368+00:00"
+}
