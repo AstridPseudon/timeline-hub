@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T05:51:38Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 0m -->
+<!-- agent | 2026-10-25T05:54:53Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 2m -->
 # agent board, 2026-10-25T05:51:18Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -272,5 +272,5 @@ Blockers: MAIN proof — Reviewed restore8aa672 and D100d3b5 await serial actual
 Blockers: Orchestrator permission — Source0537 hub publication rejected outside project; exact denial escalated 20261025T054210Z. Ledger append stopped, no alternate path.
 Blockers: Final cut — D59 pinned P1-P5/core,D69 and genuine installed render required.
 Next ready: D98a review0550, graph review0552, batched A/B/C0553 and U4a0550 active. All new source candidates held for PASS; Runtime owns next proof controllers. D72 publication permission hold remains.
-live 6 / cap 6; ready-undispatched 0 eligible local starts. MAIN already owns ready candidate bodies; projection normal merge gated on D100 actual proof. Workers only write product/tests/generated/pins.
+live 1 / cap 6; ready-undispatched 0 eligible local starts. MAIN already owns ready candidate bodies; projection normal merge gated on D100 actual proof. Workers only write product/tests/generated/pins.
 Inbox consumed through1425795 bytes. Updated 2026-10-25T05:51:18Z. No manager product/test/generated/pin edits or test bodies.
