@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T06:32:46Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 1m -->
-# runtime board, 2026-10-25T06:31:16Z
+<!-- main | 2026-10-25T06:36:14Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 1m -->
+# runtime board, 2026-10-25T06:34:43Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -329,15 +329,18 @@
 | D86-17724-export | Return exact new 13 outcomes | Luna read only | Safe packet published | merged | rt-D86-17724-safe-export-0618 | Exact 13: four FAIL and nine ERROR; nine safe files published byte-exact. No rerun. [Packet](../../design/handoff-rt-D86-17724-0618-README.md) | Evidence only |
 | D102c-consumer-adoption | Adopt qualified fixed Runtime source | App and Agent Luna | Normal fixed release available | ready | App and Agent peer 0615 | Normal tools only, then App ONE ADD diagnostic. No new source review or P4 repeat; actual receipts pending. | Runtime 1daca2a33 |
 
-| R-release-smoke | Require genuine provider seed before release | Luna / independent Luna | Normal merged source qualification | doing | Review 0626 PASS; home 0630 active | Normal c916 retains exact reviewed source; integrated genuine-provider smoke and CLI controls active. [Review](../../design/rt-R-release-smoke-review-0626-report.md) | c91626f5e / 79f49a7dc |
+| R-release-smoke | Require genuine provider seed before release | Luna / independent Luna | Actual normal source proof PASS | merged | Review 0626 PASS; home 0630 PASS | Actual c916: genuine provider two PASS, CLI guard one PASS, shell, Ruff and mypy PASS. [Proof](../../design/rt-R-release-smoke-home-0630-report.md) | c91626f5e / 79f49a7dc |
 | D86-opaque13-follow | Preserve opaque physical correspondence | Luna | Independent source audit complete | merged | Source 0627; wholepath 0627 | Source assessment only. Actual cause UNKNOWN; missing per-command records prevent fixture or product attribution. Original six remain ERROR. | Source unchanged |
-| D86-script13-follow | Preserve four script scenarios | Luna / independent Luna | Protected source review | review | Author 0627; reviewer 0629 | One registered-capture setup correction. Two physical-promotion and one descriptor seams returned unapplied; original predicates retained. | Candidate source only |
+| D86-script13-follow | Preserve four script scenarios | Luna / independent Luna | Normal Agent merge receipt | merging | Author 0627; protected 0629 PASS | Only S3 dry-run setup corrected; all 12 assertions exact. Other three seams remain UNKNOWN_UNAPPLIED. [Review](../../design/rt-D86-script13-protected-0629-report.md) | badfe6964f held |
 | D86-13-wholepath | Compare current failures with passing callers | Luna read only | Source assessment complete | merged | rt-D86-17724-wholepath-0627 | Ten actual outcomes stay UNKNOWN_UNAPPLIED; exact missing provider records identified. [Report](../../design/rt-D86-17724-wholepath-0627-report.md) | Evidence only |
 | D103-17724-follow | Preserve genuine CLI setup metadata | Agent source owner | Actual 17724 packet and peer 0627 | blocked:agent | Agent allocator requested in peer 0627 | Three genuine-media setup errors at selected metadata. Existing times, 42-second container and original assertions remain. | Agent current source |
 | D107-M1-replacement | Cover current combined word-bound sequence | Agent source owner | D107 owner decision | blocked:agent | Agent exclusive source and ledger allocator | D107 answers legacy ten scope. Archive read plus one current combined sequence and independent protected proof now required. | New coverage pending |
 
 | OPS-stale-six-0628 | Release unused main source pins | Manager route | Active paths and registrations audited | merged | bin/recycle six exact stale pins | No active worker, queue, service, lease, process or registration users. Clean sources; about 0.5 GB freed. All branches and evidence retained. | No source change |
 | D86-next21 | Qualify reviewed lane sheet and graph delta | Luna / service | Actual fixed Runtime consumer adoption | gated:D102c-adoption | Existing MAIN receiving route; packet 0612 | Exact 21 source-qualified selectors ready. No new body or source review until genuine adopted tuple receipt. | Source proof pending |
+
+| D86-fixed24-prep | Prepare changed-source functional request | Luna source only | Exact ready21 and registered-capture three | doing | rt-D86-fixed-source24-prep-0632 | Existing route and exact membership only; body waits real fixed-release normal adopter receipt. No observer or registry change. | Private recipe |
+| D100-new26-prep | Prepare valid baseline and candidate controls | Luna source only | Exact reviewed join 8d43 and 26 selectors | doing | rt-D100-new26-prep-0634 | Four time plus 22 shared controls only. Same corrected test bytes for real baseline RED and candidate GREEN; original ten excluded. | Candidate 8d43 held |
 
 Runtime producer: RELEASED 1daca2a33f6d7b10053e07c539a54843e3984e19, tree a522511414947e48e317a5e5c2103483b121a750 exactly equals independent reviewed ab7ebb. Release and normal adoption note 0615 published.
 core open: Released D102 context regression is fixed. Same native-seed source accepts 0c62, fails 689, and accepts local-context 689. Current App original popup Undo and element outcomes await ONE ADD on adopted fixed release.
@@ -346,7 +349,7 @@ Gates: P1/P3 historical GO; current P4 independent GO 28.101s with per-note timi
 
 Blockers: App and Agent — Adopt released 1daca through normal tools and return actual normal receipts. App then ONE ADD diagnostic with reviewed pre-seed log retention; SWAP after root correction.
 Blockers: Agent restore — Mirror fixture is normal 5554; independent protected review 0620 and exact held-product join are pending before the one remaining ID5 proof. No unchanged retry.
-Blockers: Agent D100 — Exact outcomes and both independent whole-path reports published. Agent original time/shared-item owners and earlier whole-path 0555 handle current source corrections; no repeated candidate body.
+Blockers: Agent D100 — Reviewed corrected 8d43 join is ready; Runtime new26 preparation0634 assigned. Candidate remains held. Original ten inverse/history failures have no current cure and are not reselected.
 Blockers: Final cut — All-lane core zero, current final P1-P5/core, D69 and genuine installed render still owed. No final tuple or ZIP.
 Safety: Withdrawn D88 action/prototype remain stopped. D106 clears the wrong-target publication question: one Agent worker uses exact ORCH outputs; nobody retries the denied hub target. New briefs explicitly forbid hub writes.
 Next ready: Actual consumer adoption then ONE App ADD and Runtime D98a or exact21 functional proof. Protected script review0629 and home release-smoke0630 active. Agent owns CLI, D107 and mirror joins.
@@ -354,7 +357,7 @@ Venues: New13 17724 is terminal, registry restored. No MAIN heavy body active. O
 Delivery: Existing-clone rehearsal remains gated on D59. Final build, ZIP and genuine installed render pending.
 Later: No unchanged 161, 102, 20, 22, 96, 61, 60 or 13 repeats; no passed inverse7, four R2 or P4 repeats. Projection nine still needs actual D100 PASS and normal source.
 Disk: About 6.13 GB after six audited stale pins were recycled. Sweep3 removed zero; compact compressed eleven old logs. Registered sources and branches retained. Three v1 trees have untracked tests; no deletion.
-live 2 / cap 6; ready-undispatched 0 eligible local starts. Script protected0629 and integrated release-smoke0630 active. Three functional source packets await genuine consumer adoption or protected mirror join. D98a functional requires actual Agent adoption receipt; no added approval stage.
+live 2 / cap 6; ready-undispatched 0 eligible local starts. Exact functional24 and D100new26 private preparation assigned; actual bodies wait genuine tuple receipts. Script remote merge requested; home smoke passed. D98a functional requires actual Agent adoption receipt; no added approval stage.
 Dispatcher: Normal c916 adds reviewed release checks only; product bytes remain 1daca. Existing 1daca consumer target stays qualified. Agent mirror5554 received; all generated/client/schema bytes preserved.
-INBOX consumed through 998417 bytes. Updated 2026-10-25T06:24:35Z. D105a stays App-owned; D106 complete. D107 source and coverage remain Agent-owned; no duplicate M1 author.
+INBOX consumed through 1002291 bytes. Updated 2026-10-25T06:24:35Z. D105a stays App-owned; D106 complete. D107 source and coverage remain Agent-owned; no duplicate M1 author.
 
