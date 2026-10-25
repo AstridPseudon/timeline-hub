@@ -37,8 +37,21 @@ def shared_editing(request, tmp_path, monkeypatch):
     service = RuntimeService(fixture.duplicate_root)
     edit = Editing(service, SimpleNamespace(fixture=fixture),
                    SimpleNamespace(move=capture_move, bundle=bundle_from_document))
+
+    def submit_setup(commands, key):
+        body = edit.body(commands)
+        body["reads"] = [{"kind": "scope", "ref": "timeline", "path": []}]
+        body["steps"] = [{
+            "id": str(ordinal), "label": body["label"], "intent": "Fixture setup",
+            "tags": ["integration"], "command_ordinals": [ordinal], "reads": [],
+            "patch": copy.deepcopy(command["args"]["changes"])
+            if command["op"] == "doc.patch" else [],
+        } for ordinal, command in enumerate(commands)]
+        return edit.commit(body, key)["data"]["canonical_document"]
+
     try:
         original = edit.document()
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
         index = request.param
         original_bundle = bundle_from_document(original)
         setup_commands = []
@@ -49,8 +62,8 @@ def shared_editing(request, tmp_path, monkeypatch):
                 original_bundle, "occurrence:occurrence-1/shot",
                 values={"name": source_shot["payload"]["metadata"]["title"]},
             )
-            setup_commands.append(shot_set)
-            staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
+            # Sharing captures an unchanged published source, after preparation.
+            staged = submit_setup([shot_set], "shared-inverse-source")
         if index == 3:
             host = copy.deepcopy(staged)
             host_occurrence = next(
@@ -115,26 +128,23 @@ def shared_editing(request, tmp_path, monkeypatch):
             target["shot_revisions"], target["internal_timeline_revisions"],
             target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
         )
-        staged_bundle = bundle_from_document(staged)
-        target_bundle = bundle_from_document(target)
-        authored_target = copy.deepcopy(staged_bundle)
-        authored_target["parent"] = target_bundle["parent"]
-        for local, shot in authored_target["shots"].items():
-            shot["payload"] = target_bundle["shots"][local]["payload"]
-            shot["internal_timeline"] = target_bundle["shots"][local]["internal_timeline"]
-        placement_changes = []
-        _diff(staged["parent_revision"]["payload"]["occurrences"],
-              target["parent_revision"]["payload"]["occurrences"],
-              "parent", ("occurrences",), placement_changes)
-        if placement_changes:
+        # Diff physical payloads once; reopening shared children remaps new item
+        # IDs separately for each occurrence, outside the original item maps.
+        payload_changes = []
+        _diff(staged["parent_revision"]["payload"], target["parent_revision"]["payload"],
+              "parent", (), payload_changes)
+        for key, prefix in (("shot_revisions", "shot-revision:"),
+                            ("internal_timeline_revisions", "internal-revision:")):
+            for before, after in zip(staged[key], target[key]):
+                _diff(before["payload"], after["payload"], prefix + before["revision_id"],
+                      (), payload_changes)
+        if payload_changes:
             setup_commands.append({
                 "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
-                "args": {"changes": placement_changes},
+                "args": {"changes": payload_changes}, "created": [],
             })
-        setup_commands.extend(emit_document_commands(staged_bundle, authored_target))
 
-        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
-        edit.commit(edit.body(setup_commands), "shared-inverse-baseline")
+        submit_setup(setup_commands, "shared-inverse-baseline")
 
         def unavailable(*args, **kwargs):
             raise AssertionError("save evaluated a scene")
