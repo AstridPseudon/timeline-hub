@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from astrid.sdk.timeline._command_state import present
 from tests.editing_conformance.test_commit_runtime_identity import occurrence_image
 from tests.helpers.runtime import use_runtime
 
@@ -21,6 +22,38 @@ def opaque():
         "literal": "item-1", "item-1": None,
         "nested": [{"selected_item_id": "item-2", "parent_item_id": "item-1"}, None],
     }}
+
+
+def occurrence_patch(before, rows):
+    """Capture authored occurrence fields without changing managed edges."""
+    current = {row["occurrence_id"]: row for row in before["parent_revision"]["payload"]["occurrences"]}
+    order = [row["occurrence_id"] for row in before["parent_revision"]["payload"]["occurrences"]]
+    target_order = [row["occurrence_id"] for row in rows]
+    changes = []
+    for index, identity in enumerate(target_order):
+        if order[index] == identity:
+            continue
+        row = copy.deepcopy(current[identity])
+        changes.append({
+            "op": "list.move", "ref": "parent", "path": ["occurrences"],
+            "id": identity, "before": present(row), "order_before": list(order),
+            "after_id": target_order[index - 1] if index else None,
+        })
+        old_index = order.index(identity)
+        moved = order.pop(old_index)
+        insert_at = order.index(target_order[index - 1]) + 1 if index else 0
+        order.insert(insert_at, moved)
+    for row in rows:
+        identity = row["occurrence_id"]
+        if current[identity] == row:
+            continue
+        changes.append({
+            "op": "set", "ref": "parent",
+            "path": ["occurrences", "occurrence_id:" + identity],
+            "before": present(current[identity]), "value": copy.deepcopy(row),
+        })
+    return {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+            "args": {"changes": changes}}
 
 
 @pytest.fixture(params=["item_id", "id", "both"])
@@ -87,7 +120,17 @@ def opaque_film(request, tmp_path, monkeypatch):
             target["shot_revisions"], target["internal_timeline_revisions"],
             target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
         )
-        setup = emit_document_commands(bundle_from_document(staged), bundle_from_document(target))
+        staged_bundle = bundle_from_document(staged)
+        target_bundle = bundle_from_document(target)
+        authored_target = copy.deepcopy(staged_bundle)
+        authored_target["parent"] = target_bundle["parent"]
+        for local, shot in authored_target["shots"].items():
+            shot["payload"] = target_bundle["shots"][local]["payload"]
+            shot["internal_timeline"] = target_bundle["shots"][local]["internal_timeline"]
+        setup = emit_document_commands(staged_bundle, authored_target)
+        source_row = copy.deepcopy(staged["parent_revision"]["payload"]["occurrences"][0])
+        source_row.update(data=opaque(), app=opaque(), opaque=opaque())
+        setup.append(occurrence_patch(staged, [source_row, *staged["parent_revision"]["payload"]["occurrences"][1:]]))
         source = edit.commit(edit.body(setup), "opaque-source")
 
         source_document = source["data"]["canonical_document"]
@@ -99,9 +142,8 @@ def opaque_film(request, tmp_path, monkeypatch):
 
         # Restore the premigration occurrence rows and order while retaining
         # the authenticated source revision returned by place-shared.
-        target = copy.deepcopy(shared_document)
-        parent = target["parent_revision"]["payload"]
-        current = {row["occurrence_id"]: row for row in parent["occurrences"]}
+        current = {row["occurrence_id"]: row for row in
+                   shared_document["parent_revision"]["payload"]["occurrences"]}
         original_rows = {
             row["occurrence_id"]: row
             for row in original["parent_revision"]["payload"]["occurrences"]
@@ -117,16 +159,7 @@ def opaque_film(request, tmp_path, monkeypatch):
                 row["shot_revision_id"] = source_row["shot_revision_id"]
                 row.update(data=opaque(), app=opaque(), opaque=opaque())
             rows.append(row)
-        parent["occurrences"] = rows
-        target["parent_revision"]["content_digest"] = _digest(parent)
-        target["dependency_manifest"] = _manifest(
-            target["shot_revisions"], target["internal_timeline_revisions"],
-            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
-        )
-        setup = emit_document_commands(
-            bundle_from_document(shared_document), bundle_from_document(target),
-        )
-        baseline = edit.commit(edit.body(setup), "opaque-baseline")
+        baseline = edit.commit(edit.body([occurrence_patch(shared_document, rows)]), "opaque-baseline")
         baseline_document = baseline["data"]["canonical_document"]
         first = occurrence_image(baseline_document, "occurrence-1")
         second = occurrence_image(baseline_document, "occurrence-2")
