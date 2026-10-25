@@ -1,0 +1,3 @@
+Ask: reserve disjoint App self-claim helper cut1 before dispatch / Owner: App Luna app-D118a-helper-cut1-1130 / By: 2026-10-25T11:35Z
+
+File tests/sdk/test_timeline_helper_capture.py; exact node(s) tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut["second"]. Agent current board has no doing/review row naming this file; no local active writer. D118a claim posted before start. File-only faithful setup/caller correction, every original assertion/authored input intact; own-node D120 check only, no broad family/P2/P4/collector/profile acquisition. Source product gaps returned unapplied to Agent.

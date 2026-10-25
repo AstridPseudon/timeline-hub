@@ -1,0 +1,37 @@
+{
+  "task": "D118a app-D118a-atomic-scope1-1124",
+  "result": "UNAPPLIED",
+  "blocked_by": "current production caller strips authenticated source image before emitter materializes atomic scopes",
+  "worktree_head": "36e44e1c0ed9b454faaf973715a2be7119552d0a",
+  "target_source_sha256": "c4e95a4cdc74fe8de9b151c818492f6a2fd4301c699a43bc686611bcbdeff5a4",
+  "runtime_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+  "runtime_worktree_clean": true,
+  "failure": {
+    "nodeid": "tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py::test_complete_json_script_commit_authenticates_materialized_atomic_scopes",
+    "location": "astrid/sdk/timeline/emitter.py:271",
+    "exception": "RuntimeError: document publish is held: cannot emit a source-bound doc.patch: '_runtime_document'",
+    "failure_text_sha256": "d66c65ee6be3bdf2bba2f4b9e66230f4c77f024b2a33f629e6491f75d53b2131",
+    "exit_code": 1
+  },
+  "comparison": {
+    "current_caller": "timeline_document.py uses TimelineSession._bundle(session_state)",
+    "current_caller_sha256": "5ec4a3f2b2ef1585e6707c029dc271acb6a4bd7f11f010def18f086d51f28e33",
+    "session_bundle_sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254",
+    "session_bundle_behavior": "_bundle removes source_mapping._runtime_document",
+    "supported_producer": "fetch_bundle(revision_id, publication_id, client) retains the complete pinned closure image",
+    "supported_producer_sha256": "e1bb20da211dd9573b38d63a0b1acab7ab0d2f6c3d085bc97e3184ba012ee029",
+    "emitter_sha256": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a"
+  },
+  "checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "worktree_changed": false
+  },
+  "evidence": {
+    "node_log": "evidence/node.log",
+    "node_xml": "evidence/node.xml",
+    "node_log_sha256": "5e0294ca44b890357f5158f9e3d524104e8c5ad5eaa5849dbe06b07890ce6a8a8"
+  }
+}

@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T11:27:22Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 1m -->
+<!-- app | 2026-10-25T11:31:28Z | dispatcher heartbeat 0s | live 3 (sol 0, luna 3, other 0) | busy30 16 | status age 2m -->
 # app board, 2026-10-25T11:25Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -42,7 +42,9 @@
 | F-final | Final pinned gates and core suites | Runtime coordinator and services | D59 cut and current core zero | gated:D59-cut | Existing final coordinator | Current P2, final P1-P5, core, D69 and genuine installed render still owed. No ZIP claim. | Cut pending |
 | D77-D117 | Genuine installed render access | Owner and Runtime | Authorized pinned OMP source | gated:D117 | Runtime coordinator | HTTP403 and auto classifier refusal remain stopped. No retry, alternate acquisition or installed render claim. | Evidence retained |
 | D118a-script-pin1 | Preserve pinned script after rebind | Luna | Claim1124 posted before dispatch | doing | app-D118a-script-pin1-1124 | Own exact failing node under D120, then faithful file-only setup fix or precise product handback. | Base36e44 |
-| D118a-atomic-scope1 | Preserve authenticated atomic scope | Luna | Claim1124 posted before dispatch | doing | app-D118a-atomic-scope1-1124 | Own exact failing node under D120; assertions, authored JSON and strict atomic purpose protected. | Base36e44 |
+| D118a-atomic-scope1 | Preserve authenticated atomic scope | Luna | Genuine own-node RED on42aad | blocked:agent | app-D118a-atomic-scope1-1124 | Real document helper passes caller-visible bundle to private emitter; missing authority. Clean source; precise product owner peer1130 filed. | No source diff |
+
+| D118a-helper-cut1 | Preserve independent cuts after restart | Luna | Claim1130 posted first | doing | app-D118a-helper-cut1-1130 | Exact own-node D120 check; file-only caller fix or precise live product handback. | Base36e44 |
 
 Integration: App96af9c08b0d80e0bdebda998662ff9773eab6caf/treea6190929019538bca9d76552ce6b915501193f73; full tree equals tested c2a43. Qualified Runtime42aad/tree085a adopted by tools. D119/D115 retained; Agent production input070dfc and Composition635f unchanged. No manager product, tests, generated, pin or Git writes. [Receipt](../../design/app-U4p-D115-output-normal-home-1108.json).
 
@@ -52,10 +54,11 @@ Host14 author1105 and independent1111 SOURCEPASS: sanitized child copy reaches s
 
 D118a claim1124 posted to Agent INBOX before three starts: occurrence2 unchanged own-node diagnostic; new script-pin1 and atomic-scope1 disjoint file authors. Scene1118 author claimed an independent review without a separate worker; that claim is disregarded. Sole independent1123 owns the actual protected verdict. D120 permits own failing-node checks; no acquisition or wider body.
 
-Blockers: Runtime D111b — Native1057 failed unchanged growth gate1.971x versus1.5x. Sol1115 and independent wholepath1115 own remaining closure/history cost; performance source remains unadopted.
-Blockers: Runtime current SWAP — Initial409 history_unavailable has no correlated lower tag; return1055 native replay failed canonical setup. App exact15203 packet consumed; no circular App wait.
+Blockers: Runtime D111b — Native10398 now PASS1.448x versus1.5x. Exactf0c4 source still held on security1122; no qualified release/adoption yet.
+Blockers: Runtime current SWAP — Native20990 reached App-shaped409 dependency_changed, not original history_unavailable; exact root remains UNKNOWN. Tags1124 is sole diagnostic source owner.
 Blockers: Agent authentic host14 — Source-qualified bae5ab76 requires original14 with genuine source-matched existing profile. App has no applicable profile and has not substituted one.
-Blockers: Agent normal queue — Reviewed sheet c3be plus38c remains PENDING ownerreview. Video47d1ca and Scene528ec normal remote command exits3 on this manager sandbox; lead asked to file it. No direct hub retry.
+Blockers: Agent normal queue — Reviewed sheet c3be plus38c remains PENDING ownerreview. Video47d1ca normal remote request filed by lead11:28, receipt pending. Scene528ec request awaits same host manager route. No sandbox retry.
+Blockers: Agent atomic script — Genuine private-authority source defect handed to Agent in peer1130. No fixture/assertion bypass; owner needed for source correction.
 Blockers: Final cut — Current full P2, final pinned P1-P5/core/D69 and genuine installed render remain owed. D117 denied OMP acquisition stays stopped.
 Next ready: consume host manager remote requests; consume own-node findings and review each proved source correction immediately. Adopt qualified Runtime release through tools when published; preserve current15203 artifacts.
 live 3 / cap 6; ready-undispatched 0; core open: 4. Three disjoint own-node source authors assigned; sole Scene reviewer1123 completed SOURCEPASS.

@@ -1,0 +1,142 @@
+{
+  "task": "D118c occurrence2 own nodes",
+  "verdict": "LOWER_CAUSE_OBSERVED_UNAPPLIED",
+  "scope": {
+    "allowed_file": "tests/editing_conformance/test_commit_runtime_occurrence_create.py",
+    "worktree_status": "clean",
+    "product_or_test_edits": false,
+    "source_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+    "head_source_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+    "source_equal_head": true,
+    "git_blob_sha1": "0178b098cb6298f9f36c58ef35eb5e7d2391cea7"
+  },
+  "conservation": {
+    "file_ast_sha256": "c12417e3d2c7f458ae570921546f7da3b0f483adb2b4800e1693ae88da3cb2ec",
+    "target_function_ast_sha256": "dc6bc6486801002127032b25b301bfc46535a98d93e55be55d5cb8b981f2df06",
+    "target_function_ast_equal_head": true,
+    "assert_count": 29,
+    "assert_count_head": 29,
+    "semantic_inputs_changed": false,
+    "invalid_birth_on": "1e308",
+    "expected_status": 409,
+    "expected_reason": "unsupported_timing",
+    "no_write_history_guard_preserved": true,
+    "inverse_redo_retry_purpose_preserved": true
+  },
+  "agent_source": {
+    "commit": "36e44e1c0ed9b454faaf973715a2be7119552d0a",
+    "tree": "ad8b2be09adf3b8dfa7d091511e9a25e912adb79",
+    "provider_profile": "astrid",
+    "provider_factory": "astrid.sdk.timeline.commit.create_runtime_commit_service",
+    "authenticated_publisher": "birth-editor",
+    "authenticated_scopes": ["projects:read", "projects:write"],
+    "canonical_invocation_path": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+    "source_sha256": {
+      "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+      "astrid/sdk/timeline/native_occurrence_create.py": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22",
+      "astrid/sdk/timeline/_commit_errors.py": "c0e11dcdd2e6f511f18ce08afd60eff5d54554bcfb93855ab667c7e047a476e3"
+    }
+  },
+  "runtime_source": {
+    "selected_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "selected_tree": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "source_archive_sha256": "dbd5a6b13994fd62d44dbe952a2a31c2d63caf97a4bec89442800a41010d5ead",
+    "clean_at_selection": true,
+    "source_sha256": {
+      "runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+      "runtime_protocol/timeline_commit_port.py": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+      "runtime_protocol/errors.py": "f10518c992c28d5836fdd7916337679f0ba92b9722dacc1dd94fe408a22a49f4",
+      "runtime_protocol/service.py": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666"
+    },
+    "post_run_shared_checkout_observation": {
+      "commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+      "note": "A concurrent merge advanced the shared integration checkout after the first qualified run; private generated-runtime hashes below prove both qualified nodes used 42aad."
+    }
+  },
+  "generated_runtime": {
+    "generator_commands": [
+      "generators/generate.py",
+      "generators/generate.py --check",
+      "scripts/artifact_manifest.py",
+      "scripts/artifact_manifest.py --check"
+    ],
+    "generator_result_each_node": "all four exited 0 inside generated_runtime fixture",
+    "qualified_roots": {
+      "False": "tmpdir/pytest-false/birth-runtime0",
+      "True": "tmpdir/pytest-true-r42/birth-runtime0"
+    },
+    "key_sha256_equal_in_both_roots": {
+      "runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+      "runtime_protocol/timeline_commit_port.py": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+      "runtime_protocol/errors.py": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666",
+      "runtime_protocol/service.py": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666",
+      "contract/schemas/edit-command.json": "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d",
+      "generators/generate.py": "eeb2356a971849b8003254969cf287a815ade08f4281dfcf70eac0a1c780bece",
+      "scripts/artifact_manifest.py": "759f740bbd76cfa3407876a5b1e4222ce894c1d32a1de8401dd40d16f22123ef",
+      "contract/manifest.json": "414243ac7ab66ea197571e0ef85dbe8b4049e7a10a662a90870d9b9459aad369",
+      "contract/component-manifest.json": "1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5"
+    }
+  },
+  "nodes": [
+    {
+      "parameter": false,
+      "ordinal": 1286,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]",
+      "pytest_exit": 1,
+      "child_subprocess_exit": 1,
+      "observed_exception": "runtime_protocol.errors.RuntimeErrorBase",
+      "observed_status": 422,
+      "observed_reason": "unsupported_timing",
+      "observed_detail_keys": ["base", "code", "conflicts", "current", "hint", "path", "reason", "status", "suggested_command"],
+      "observed_frame": {"file": "test_commit_runtime_occurrence_create.py", "function": "_prove_birth", "line": 173},
+      "expected_status": 409,
+      "expected_reason": "unsupported_timing",
+      "original_failure_text_sha256": "387f761ad90d7a74ffaaef23cc6df8a9b95a4c2e153f5ca31dfd11aaa073992f",
+      "qualified_evidence": {
+        "log": "node-false.log",
+        "xml": "node-false.xml",
+        "trace": "node-false-trace.json",
+        "log_sha256": "31cc3b2a0ffb7c5931dd53d4fcad900d2dedbba002da118d41fb1a393b610e55",
+        "xml_sha256": "ab0a583de9bea36c30350723087234aff6eabeb67db80ce948d321b1bbabe3b7",
+        "trace_sha256": "2d3de0f7926a71f855f2030d2708ee677b3fb5230c3324bb332c9c943e81d7ce"
+      }
+    },
+    {
+      "parameter": true,
+      "ordinal": 1289,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+      "pytest_exit": 1,
+      "child_subprocess_exit": 1,
+      "observed_exception": "runtime_protocol.errors.RuntimeErrorBase",
+      "observed_status": 422,
+      "observed_reason": "unsupported_timing",
+      "observed_detail_keys": ["base", "code", "conflicts", "current", "hint", "path", "reason", "status", "suggested_command"],
+      "observed_frame": {"file": "test_commit_runtime_occurrence_create.py", "function": "_prove_birth", "line": 173},
+      "expected_status": 409,
+      "expected_reason": "unsupported_timing",
+      "original_failure_text_sha256": "1b6fb40635fb3d07dad7f056e30744f0e369b4b09429261177ec7f762ab425a",
+      "qualified_evidence": {
+        "log": "node-true-r42.log",
+        "xml": "node-true-r42.xml",
+        "trace": "node-true-trace.json",
+        "log_sha256": "19f4598bf4240f9d3108a5b56885b52018fb50deee03ede1a1b74df2f2759e22",
+        "xml_sha256": "524fb1bc4a30b66add14bcb0e649b755788e41b54b61ea716eb46737111464ff",
+        "trace_sha256": "2d3de0f7926a71f855f2030d2708ee677b3fb5230c3324bb332c9c943e81d7ce"
+      }
+    }
+  ],
+  "static_checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass"
+  },
+  "disposition": {
+    "classification": "LOWER_CAUSE_SOURCE_CONTRACT_MISMATCH_OBSERVED",
+    "facts": "Agent occurrence.create converts the authored overflow to unsupported_timing; the current Agent failure classifier emits HTTP 422/invalid at the unchanged base, and Runtime public_failure preserves that status. The authenticated exact-provider runs observed 422 for both nodes while the retained test expects 409.",
+    "owner": "Agent/Runtime contract owner",
+    "action": "Reconcile the 409 retained expectation with the observed 422 source/contract mapping; no product or test correction was authorized here.",
+    "unverified": "No later history, inverse, redo, retry, or no-write assertions were reached after the retained status assertion failed."
+  }
+}

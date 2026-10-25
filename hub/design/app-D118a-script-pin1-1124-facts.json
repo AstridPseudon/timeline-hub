@@ -1,0 +1,35 @@
+{
+  "task": "D118a app-D118a-script-pin1-1124",
+  "repo": "agent",
+  "allowed_changed_path": "tests/sdk/test_timeline_script.py",
+  "nodeid": "tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+  "original_source_sha256": "c2cabefe8a55cd2d98aeb22ab2d37095bd7139cba9af516d26797c0e0c8c2fc5",
+  "current_source_sha256": "72163d079c23ab7f67a2498cc6894de161556afc60969e7ca46a617d16168193",
+  "original_failure": {
+    "location": "tests/sdk/test_timeline_script.py:276",
+    "failure_text_sha256": "334f04d0a62f11d871309979adcd8d87ead24fe77f1dcd882872e92f5ca3d2e7",
+    "message": "Incomplete pinned text descriptor"
+  },
+  "current_node": {
+    "outcome": "passed",
+    "summary": "1 passed in 1.87s",
+    "xml": "evidence/node.xml",
+    "log": "evidence/node.log"
+  },
+  "change": "After the native current-provider binding commit, patch the authored shot descriptor through the current v2 doc.patch caller using the Runtime-returned live binding row.",
+  "conservation": {
+    "old_assert_nodes_preserved": 7,
+    "current_assert_nodes": 8,
+    "authored_inputs_preserved": ["Pinned before rebind.", "New mutable head.", "text/plain; charset=utf-8"],
+    "old_script_assertions_preserved": true,
+    "head_revision_full_config_assertions_preserved": true
+  },
+  "checks": {
+    "ruff": "passed",
+    "mypy_follow_imports_skip": "passed",
+    "py_compile": "passed",
+    "git_diff_check": "passed",
+    "changed_paths": ["tests/sdk/test_timeline_script.py"]
+  },
+  "runtime": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0"
+}
