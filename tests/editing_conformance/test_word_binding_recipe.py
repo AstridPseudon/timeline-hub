@@ -25,6 +25,20 @@ REF = "parent/clip:card"
 KEY = (REF, "on")
 
 
+def mirrored_parent_clip_apps(bundle):
+    clips = bundle["parent"]["clips"]
+    mirrors = bundle["parent"]["config"]["clips"]
+    assert [clip["id"] for clip in clips] == [clip["id"] for clip in mirrors]
+    primary = next(clip for clip in clips if clip["id"] == "card")
+    mirror = next(clip for clip in mirrors if clip["id"] == "card")
+    assert primary == mirror
+    bundle["parent"]["config"]["clips"] = clips
+    current_mirrors = bundle["parent"]["config"]["clips"]
+    primary = next(clip for clip in clips if clip["id"] == "card")
+    mirror = next(clip for clip in current_mirrors if clip["id"] == "card")
+    return [primary["app"]["astrid"], mirror["app"]["astrid"]]
+
+
 @pytest.fixture
 def recipe(retained, monkeypatch):
     install(monkeypatch)
@@ -329,6 +343,7 @@ print(json.dumps({key: str(interval[key]) for key in ("start", "end", "start_fra
 def test_reference_is_authoritative_and_kernel_never_searches_echo(recipe, monkeypatch, echo):
     case = recipe
     case.submit(case.request([pick(case, 1)]), "reference")
+    case.restart()
     current = bundle(case)
     sources = current["source_mapping"]["pinned_documents"]
     expected = compile_authored(current, sources)
@@ -338,11 +353,13 @@ def test_reference_is_authoritative_and_kernel_never_searches_echo(recipe, monke
                      "choice": authored(current)[KEY]["choice"]}}]), "change-echo")
         case.restart()
         current = bundle(case)
-    app = current["parent"]["clips"][0]["app"]["astrid"]
+    apps = mirrored_parent_clip_apps(current)
     if echo is None:
-        del app["on"]
+        for app in apps:
+            del app["on"]
     else:
-        app["on"] = echo
+        for app in apps:
+            app["on"] = echo
 
     def no_search(*args, **kwargs):
         pytest.fail("a present stable reference must never search for text")
@@ -476,13 +493,16 @@ def test_invalid_authored_reference_never_falls_back_to_valid_echo(recipe, damag
     case = recipe
     case.submit(case.request([pick(case, 1)]), "chosen")
     current = bundle(case)
-    app = current["parent"]["clips"][0]["app"]["astrid"]
-    ref = app["word_anchors"]["on"]
+    apps = mirrored_parent_clip_apps(current)
+    app = apps[0]
+    refs = [entry["word_anchors"]["on"] for entry in apps]
+    ref = refs[0]
     sources = current["source_mapping"]["pinned_documents"]
     if damage == "missing-occurrence":
         ref["source"] = "occurrence:gone/clip:voice"
     elif damage == "missing-clip":
-        ref["source"] = "occurrence:occ/clip:gone"
+        for ref in refs:
+            ref["source"] = "occurrence:occ/clip:gone"
     elif damage == "missing-word":
         ref["word_ids"] = ["word:" + "0" * 64]
     elif damage == "missing-pin":
