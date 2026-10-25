@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T03:28:14Z | dispatcher heartbeat 0s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 4m -->
-# app board, 2026-10-25T03:24Z
+<!-- app | 2026-10-25T03:32:09Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 2m -->
+# app board, 2026-10-25T03:30Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -190,23 +190,26 @@
 | P2-ADD27885-source | Display selected hold clip identity | HARD Sol; independent Luna | Independent0317 PASS | merged | Author0305; review0317 | Exact two reviewed blobs home.154 controls, old RED/new GREEN,4 oracle, three types/lint PASS. Original ADD follows current body order. | Normal merge0317 |
 | P2-ADD27885-path | Attribute reloaded ADD selection | Luna read only | Exact retained27885/9674 | merged | app-P2-ADD27885-wholepath-0305 | ADD click selects hold clip. Label incorrectly follows canSwap; SWAP media clip passes. No owner or pointer failure proved. | Read only |
 | P2-parent12208-path | Bound missing parent dispatch cause | Luna read only | Corrected first return0313 | blocked:runtime | app-P2-parent12208-current-return-0313 | Cause UNKNOWN. Historical5e already in actual24865; exact12208 pointer/DOM/capture facts requested from retained main trace only. | No source change |
-| P2-bulk-current-plan | Qualify repaired bulk materialization | Luna source only | Review0255 and types0302 PASS | gated:body-order | app-P2-bulk-fixed-plan-prep-0309 | Fixed2d25/6386/6634/635f plan ready with null execution IDs. Wait current placement body; no mutable recapture. | App2d25 |
+| P2-bulk-current-plan | Qualify repaired bulk materialization | Luna; App service | Review0255 and types0302 PASS | doing | app-P2-bulk-original-submit-0327 | Sole next App original using fixed2d25/6386/6634/635f and authentic plan0309. Request ID pending; no claim before actual body. | App2d25 |
 | P2-native-prep-scope | Hold unrequested harness changes | Luna | Prep0257 exceeded readonly scope | gated:out-of-scope | app-P2-native-asset-placement-prep-0257 | D66 helper and test patch remain unmerged. Plans only data; original normal API required for actual submissions. | Branch held |
 
-| P2-native-placement-current | Qualify current managed placement | Luna; App service | Preflight4476 PASS | doing | App0319; actual12145 | Fixed5337/6386/6634/635f; original submitted03:21:48. Wait same ID. Prior32150 exited before tests, outputs retained. | App5337 |
+| P2-native-placement-current | Qualify current managed placement | Luna; App service | Actual12145 terminal | gated:source-fix | Actual12145; source0327 | Readiness PASS; original409 occurrence_boundary at accepted586 via1047. Real intended POST sent; interval accounting source author active. | 5337/6386/6634/635f |
 
-| D73-explicit-tuple | Honor explicit tuple in submit path | Luna | Repeated wrong Agent captures | doing | app-D73-explicit-submit-tuple-0322 | Minimal existing D66 submit fix; default capture and all source guards unchanged. Mock preflight and zero-body poison controls required. | Base2d25 |
+| D73-explicit-tuple | Honor explicit tuple in submit path | Luna; independent | Author24 controls/lint PASS | review | Author0322; review0327 | Existing submit preserves complete fixed tuple and default fresh capture; partial/mismatched inputs fail before request. Original sources exact. | Source9f9338bb14 |
 
-Integration: Normal App now includes independently reviewed hold-label0317 over native5337, Core06014 and bulk2d25. Exact reviewed blobs home. Explicit App/Node project types0302 PASS; bulk source acceptance complete, browser proof owed.
+| P2-placement12145-source | Attribute actual interval refusal | Luna | Actual12145 intended POST409 | doing | app-A3-placement12145-boundary-0327 | Derive exact child and occurrence windows from retained input. Guard remains strict; no speculative fixture or producer edits. | Base546510 |
 
-core open: Single-clear5678 and registerAsset27438 independently GO on their recorded tuples. Six isolated gestures remain open, followed by one full App tour. Element3111 applied433 still fails5s. ADD27885 selected label892 still fails after two reviewed owner repairs. Asset27438 independent GO0315; placement first-return0319 assigned on same5337 tuple. Parent12208 cause UNKNOWN, finite retained main facts requested; bulk21061 materializer source repaired and plan ready.
+Integration: Normal App5465100844 includes independently reviewed hold-label0317 over native5337, Core06014 and bulk2d25. Exact two label blobs match review. Exact reviewed blobs home. Explicit App/Node project types0302 PASS; bulk source acceptance complete, browser proof owed.
+
+core open: Single-clear5678 and registerAsset27438 independently GO on their recorded tuples. Six isolated gestures remain open, followed by one full App tour. Element3111 applied433 still fails5s. ADD27885 selected label892 still fails after two reviewed owner repairs. Asset27438 independent GO0315; placement12145 now409 finite occurrence refusal; source0327 active. Parent12208 cause UNKNOWN, finite retained main facts requested; bulk21061 materializer source repaired and plan ready.
 regressions: No newly proven regression. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Final cut — Runtime coordinates remaining isolated P2, full App tour, final pinned P1–P5/core and genuine installed render before ZIP.
-Next ready: Monitor same placement12145, then bulk fixed2d25 original, then meaningful ADD on reviewed label home. D73 explicit-tuple author0322 proceeds independently; no ready source row waiting.
-live 1 / cap 6; ready-undispatched 0. D73 source0322 active; sole App body12145. Parent retained facts blocked:runtime; bulk and ADD wait body order. Heavy one above5.2GB; source above5.0GB.
-Capacity: Guarded release0252 recycled35 stale pins, net2.727GB freed. Current free about7.2GB. All outputs, reports, branches and protected tuples retained; old dirty/prior-refused targets untouched.
-Inbox consumed through1888162 bytes. Runtime source and custody waits clear. Parent finite packet became row/worker this pass. Runtime cost0215 refusal remains stopped and orchestrator-owned; no alternate route.
+Blockers: Runtime retained parent facts — Parent12208 cause UNKNOWN. Peer0316 requests only existing trace pointer/DOM/capture facts; no new collector or body.
+Next ready: Bulk0327 sole next App body, then original ADD on reviewed label546510. Placement actual409 source0327 and D73 independentreview0327 proceed in parallel. No ready independent task waiting.
+live 3 / cap 6; ready-undispatched 0. Bulk launcher0327, placement source0327, D73review0327 assigned; one heavy body reserved to bulk. Source above5.0GB; heavy one above5.2GB.
+Capacity: Guarded release0252 recycled35 stale pins, net2.727GB freed. Current free about6.9GB. All outputs, reports, branches and protected tuples retained; old dirty/prior-refused targets untouched.
+Inbox consumed through1890103 bytes. Runtime source and custody waits clear. Parent finite packet became row/worker this pass. Runtime cost0215 refusal remains stopped and orchestrator-owned; no alternate route.
 
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59 and Agent08e6 applied-result suites belong to Runtime final coordinator. Gating stays frozen upstream3881. Withdrawn D88/denied actions stay held; protective D88b6634 adopted normally.
 Evidence: [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md), [Bulk types](../../design/app-A3-bulk-required-types-0302.md), [Single GO](../../design/app-P2-single5678-GO-resume-0255.md), [SWAP facts](../../design/app-P2-SWAP9674-retained-return-0255.md), [Pin release](../../design/app-pin-guarded-release-0252.md).

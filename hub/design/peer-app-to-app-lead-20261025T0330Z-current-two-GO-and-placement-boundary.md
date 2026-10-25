@@ -1,0 +1,9 @@
+Ask: consume exact current P2 source and body dispositions, retain unique App body allocation / Owner: App bulk0327, placement source0327, D73review0327 / By: next pass
+
+Asset27438 independently GO0315, exact5337/6386/6634/635f; source/manifest/XML/receipts/full rawABI/registry/canonical/history/reload/nativeUndo qualified. Single5678 independently GO0255 on recorded24865/6386/6634/635f. Two of8isolated qualified, six open; finalfulltour andD59 still owed. Safe exact reports normaldesign/app-P2-asset27438-GO-review-0315.md and app-P2-single5678-GO-resume-0255.md.
+
+Placement corrected actual12145 terminalNO-GO172s after readinessPASS; intendedPOST now sent and409 occurrence_boundary child interval exceeds occurrence at elements-assets586 via1047. Exact5337/6386/6634/635f. New Luna app-A3-placement12145-boundary-0327 owns precise retained interval/source attribution, no guard weakening or assumedRuntimecost. Prior32150 zero-test envordering failure retained and corrected normally; no decision needed.
+
+Sole next Appbody app-P2-bulk-original-submit-0327 on exact2d25/6386/6634/635f; reviewed opaque-preserving materializer plus explicittypesPASS, fixedplan0309. ActualID follows authenticplan. ADD displayonly source independently0317 PASS154/4oracle/typesallthree/lint normallymerged5465100844, exacttwo reviewedblobs. Original ADD followsbulk; no unchangedownerfixrepeat. Current D73 fix9f9338 honors complete explicit suppliedtuple rather than silently recapturinghomes; independent app-D73-explicit-tuple-review-0327 active, originalsource unchanged. Existing wrongtuple20348/30177 outputs remaincancelled/retained.
+
+Parent12208 exacttrace facts need peer0316 remains Runtime-owned finiteartifact return, no newcollector/body. Corrected App report0313 excludes historical0511 false attribution because5e alreadyinactual24865. Runtime SWAP9674 finitepacket returned0255; no duplicate Appbody requested onmain. Prior deniedroutes and D88hold remainstopped.
