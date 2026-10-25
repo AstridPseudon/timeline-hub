@@ -1,0 +1,43 @@
+{
+  "task": "D126",
+  "candidate": "4b4e0558ef3853bc999dd65c0df4580ad5704eff",
+  "parent": "af5fe0a2748ce6df65fb36ce9cd435fc1df0502a",
+  "candidate_tree": "8e4c8ca6d96a8d39fdad7d4618f940880f8ab46e",
+  "frozen_upstream": "3881e9440688f774878e18806da2dc5c993a9b00",
+  "upstream_file": {
+    "path": "tests/e2e/fake-runtime/server.contract.test.mjs",
+    "upstream_git_blob": "d519e7437e73b3a465a989e97555946d48ad12bc",
+    "candidate_git_blob": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+    "upstream_sha256": "d828318c032f6d256589c4c62669b9452107181bcc0caedaf4579ecdeb9f8955",
+    "candidate_sha256": "62dfab746b917e6e5539dadc4d56f2e36a5b72fb1519890e1f1aad55e08fdf3e",
+    "numstat": "2 2",
+    "delta": "same timeline path GET -> POST plus description only",
+    "assertions": ["status 500", "JSON code fake_internal", "health status 200"]
+  },
+  "ours_only_file": {
+    "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+    "upstream_present": false,
+    "candidate_git_blob": "c2e4e25007b83bb542ecf032e39a2709853994de",
+    "candidate_sha256": "dbcef52b9ee9759967e3790277a19083d4ce2225db1cbbbd3d15dd9dfb70c21f"
+  },
+  "independent_review": {
+    "worker": "app-D124-bootstrap-protected-review-1354",
+    "result": "FAIL",
+    "reason": "malformed validator mutations were accepted",
+    "focused_commands": [
+      "timeout 180 env TMPDIR=/tmp/w-d124-bootstrap-protected-review-1354-normal ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-5e9ad1c6 ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-070dfc5e ASTRID_PYTHON=/home/user/work/venv-agent/bin/python ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=20 /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --import tsx --test --test-name-pattern='a fixture that throws|P2 Runtime observer bootstrap' tests/e2e/fake-runtime/server.contract.test.mjs tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "timeout 180 env TMPDIR=/tmp/w-d124-bootstrap-protected-review-1354-reviewed D66_P2_COMMIT_PHASE_CAPTURE_HELPER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D124-helper-final-review-1315-helper.py D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256=6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-5e9ad1c6 ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-070dfc5e ASTRID_PYTHON=/home/user/work/venv-agent/bin/python ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=20 /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --import tsx --test --test-name-pattern='a fixture that throws|P2 Runtime observer bootstrap' tests/e2e/fake-runtime/server.contract.test.mjs tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+    ],
+    "focused_result": "normal 2 passed/0 failed; reviewed 2 passed/0 failed; ESLint, app tsc, node tsc, and diff check passed",
+    "audit_command": "Node 20.19.4 --input-type=module assertCaptureEvent mutation audit",
+    "accepted_probes": [
+      "normal retention overflow",
+      "normal UNKNOWN with count",
+      "normal negative phase time",
+      "reviewed sample share >1",
+      "reviewed output bytes overflow",
+      "reviewed private marker value"
+    ]
+  },
+  "publication": "held pending independent repair and rerun"
+}
