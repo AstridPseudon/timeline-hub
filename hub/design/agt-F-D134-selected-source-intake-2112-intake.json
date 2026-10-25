@@ -1,0 +1,17 @@
+{
+  "task": "D134",
+  "base": "tl/integration",
+  "donor_ref": "tl/agt-F-D134-selected-http-return-sol-2058",
+  "donor_commit": "27140eaafa748eb1d7c0789c8150b5872d1c07ad",
+  "donor_tree": "f7eea928c3a0dd501a6502099ef58fc5cfeb4df5",
+  "file": "tests/sdk/test_timeline_selected_schema_runtime.py",
+  "donor_sha256": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+  "worktree_sha256": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+  "original_donor_a30e_sha256": "6d7ba7623cb59931d76d3eeefc564200f4a0336199cc64331fea0fc976939b9a",
+  "outside_current_files_exact": true,
+  "source_review": "PASS_SOURCE_ONLY",
+  "behavior_credit": false,
+  "live_own3": "NOTRUN",
+  "live_http": "NOTRUN",
+  "full_suite": "NOTREQUESTED"
+}

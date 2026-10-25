@@ -1,0 +1,19 @@
+{
+  "source": {
+    "ref": "tl/agt-F-D134-selected-http-return-sol-2058",
+    "commit": "27140eaafa748eb1d7c0789c8150b5872d1c07ad",
+    "tree": "f7eea928c3a0dd501a6502099ef58fc5cfeb4df5",
+    "path": "tests/sdk/test_timeline_selected_schema_runtime.py",
+    "sha256": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86"
+  },
+  "preimage": {
+    "ref": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "sha256": "6d7ba7623cb59931d76d3eeefc564200f4a0336199cc64331fea0fc976939b9a"
+  },
+  "conservation": {
+    "assertions": 99,
+    "seven_unknown_instances": true,
+    "authored_inputs": true,
+    "source_evidence": "final review 2107 and Sol 2058 packets"
+  }
+}
