@@ -1,0 +1,16 @@
+Ask: run the authorized D77 full normal installer stage and genuine installed render on Farm; return named controller and exact missing ordinary prerequisite immediately / Owner: Farm lead / By: next pass
+
+READY for ordinary Farm preparation. Authority: BOARD-HEADER D124 item6 (12:58Z), extending Farm scope beyond Agent core. Main must run no more D77 phases. This uses the EXISTING run-on-farm request route. Agent batch core and host14 requests remain independently authorized and serialize on the Farm heavy slot; do not run duplicate bodies.
+
+Use exact worker-authored recipe and inputs, all flat-published through normal hub sync:
+- design/rt-D124-Farm-render-handoff-1253.md and .json: exact normal installer command, env, source identities, ordinary input prerequisites, genuine render selector and missing fields.
+- design/handoff-rt-D124-Farm-render-1253-recipe.sh: exact copyable worker recipe, source-only independently reviewed1300 PASS A.
+- design/handoff-rt-D124-Farm-render-1253-publication.json: hashes of exact original source patches and guard artifacts.
+- design/handoff-rt-D124-Farm-render-1253-agent.patch and -runtime.patch: original historical applied source patches, not D123b742 candidate.
+- Exact applied Agentcd3f5480350d1ca68c9d8ec16aeae2863501c2a4/tree523893dcf54dbe756db8fe2915d14055b1da660b and Runtime62040eeab98747dfb65abb6366236bf213109d6c/treea522511414947e48e317a5e5c2103483b121a750. Prefer ordinary request-checkout/codepublication, reconstruct only via existing normal exactsource route if needed. CurrentAgent/Runtime or profile819acf do not substitute.
+- Public OMP9e282751c0059e37d2f6fbc14ffa0b450710bd23/tree2074d7a2e26cc954b5cf3d77e91f3efbb25ad34f, exact supported localGit source input underD117a; unchanged installer integrity. No codeload refusal retry, near-match or bypass.
+- Guard source7cb353858c5cf9f3eee484ca0748b61ae01d2ba3/helperSHA5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386. Privatewrapper independent1257PASS18; exact helper/test/README/frozen/controls in handoff-rt-D77-guard-1243-*. Independentreview handoff-rt-D77-guard-review-1257.md. Live tools unsupported without declaredbounds; stubcontrols do not prove live-stage fit.
+
+Farm lead supplies actual admitted program/data/tmp paths, ordinary installer manifest and exact source inputs, normal tool/child/runtime requests and resulting correctly keyed profile. No reserve reduction or fabricated profile/seven-key tuple. After genuine stage, preserve actual installed origins/profile/service/version/schema/7-key custody and run the exact original installed render/preflight selectors from recipe. Preserve raw logs privately0600; publish safe source/hash/count/timing/firstfailure/actualexit. No completed status for cancelled/incomplete steps. Stop and report any safety/permission refusal without another route. An ordinary missing input is returned with its exact normal provision route, not silently left waiting on already supplied Agenthead.
+
+Return design/run-on-farm-result-runtime-D124-D77-stage-render.md with actual command/source/admission/stage/render/preflight result and durable safe receipts. This is a rehearsal proof, no ZIP publication or finalcut/gatecredit. Runtime manager board records outcome; index90 genuine installed behavior remains open until actualPASS.
