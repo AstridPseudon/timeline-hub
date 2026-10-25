@@ -1,0 +1,70 @@
+{
+  "prefix": "D69",
+  "task": "D69 independent READ ONLY semantic review",
+  "partition": "even-d",
+  "immutable_function_indexes": [98, 104, 112, 114, 124],
+  "source_commits": {
+    "old": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "captured_new": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "current_normal": "d0ecf1d69a7b37f86034bc52004f73f6c6231603"
+  },
+  "scope": {
+    "functions": 5,
+    "assertion_units": 13,
+    "removed_units": 5,
+    "added_units": 8
+  },
+  "verdicts": {
+    "PASS": 0,
+    "equivalent-approved": 13,
+    "FAIL": 0,
+    "UNRESOLVED": 0
+  },
+  "source_identity": "PASS: all selected current-normal blobs and body hashes equal captured-new",
+  "functions": [
+    {
+      "function_index": 98,
+      "function_key": "tests/stage1/test_vendored_workspace_client_parity_luna.py:test_vendored_client_is_the_locked_runtime_artifact",
+      "verdict": "equivalent-approved",
+      "caller": "scripts/vendor_lock.py:check over runtime.lock.json and the vendored astrid_runtime_client artifact set",
+      "unit_verdicts": ["equivalent-approved", "equivalent-approved"]
+    },
+    {
+      "function_index": 104,
+      "function_key": "tests/test_capability_ledger.py:test_host_consumes_the_reconciled_ledger_before_readiness_matrix",
+      "verdict": "equivalent-approved",
+      "caller": "GenericPackHost.__init__:5545 -> load_capability_ledger -> _reconcile_sources; a521535cc5 approved music.duck admission",
+      "unit_verdicts": ["equivalent-approved", "equivalent-approved"]
+    },
+    {
+      "function_index": 112,
+      "function_key": "tests/test_vendor_lock.py:test_one_root_lock_covers_all_known_runtime_paths",
+      "verdict": "equivalent-approved",
+      "caller": "tests/test_vendor_lock.py and scripts/vendor_lock.py:check over the single runtime.lock.json root",
+      "unit_verdicts": ["equivalent-approved", "equivalent-approved"]
+    },
+    {
+      "function_index": 114,
+      "function_key": "tests/timeline/test_authoring_bundle.py:test_group_move_compiles_and_uses_existing_publication_boundary",
+      "verdict": "equivalent-approved",
+      "caller": "publish_authoring_candidate -> authoring_commit_request -> writer.commit_timeline; Runtime commitTimeline provider",
+      "unit_verdicts": ["equivalent-approved", "equivalent-approved", "equivalent-approved", "equivalent-approved", "equivalent-approved"]
+    },
+    {
+      "function_index": 124,
+      "function_key": "tests/v10/test_domain_cli_projects_timelines.py:test_timeline_navigation_preserves_resolved_scope_and_editing_resources",
+      "verdict": "equivalent-approved",
+      "caller": "_show_navigation_help/_visualization_navigation_help -> _editing_navigation -> timeline_document commit -> TimelineSession.commit_many",
+      "unit_verdicts": ["equivalent-approved", "equivalent-approved"]
+    }
+  ],
+  "checks": {
+    "membership_json_parse": "PASS",
+    "source_blob_hash_conservation": "PASS",
+    "ast_fingerprints": "PASS from immutable handoff records and static parsing; no runtime imports",
+    "json_runtime_lock_and_capability_config": "PASS",
+    "git_diff_check": "PASS",
+    "tests_typecheck_lint": "N/A read-only task"
+  },
+  "changes": "No product, test, generated, pin, registry, ledger, or foreign-output file was modified."
+}

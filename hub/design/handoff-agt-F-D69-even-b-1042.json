@@ -1,0 +1,31 @@
+{
+  "prefix": "D69",
+  "task": "D69 independent READ ONLY semantic review",
+  "partition": "even-b",
+  "review_status": "complete",
+  "immutable_function_indexes": [28, 30, 38, 46, 54],
+  "source_refs": {
+    "old": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "captured_new": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "current_normal": "d0ecf1d69a7b37f86034bc52004f73f6c6231603"
+  },
+  "result": {
+    "pass": 10,
+    "equivalent_approved": 2,
+    "fail": 0,
+    "unresolved": 0,
+    "removed_units": 2,
+    "added_units": 10,
+    "whole_membership_conservation": "129/113/287 unchanged"
+  },
+  "function_verdicts": [
+    {"function_index": 28, "verdict": "equivalent-approved", "removed": ["p0-f28-r-0"], "added": ["p0-f28-a-0"]},
+    {"function_index": 30, "verdict": "equivalent-approved", "removed": ["p0-f30-r-0"], "added": ["p0-f30-a-0"]},
+    {"function_index": 38, "verdict": "PASS", "removed": [], "added": ["p0-f38-a-0", "p0-f38-a-1", "p0-f38-a-2", "p0-f38-a-3", "p0-f38-a-4"]},
+    {"function_index": 46, "verdict": "PASS", "removed": [], "added": ["p0-f46-a-0"]},
+    {"function_index": 54, "verdict": "PASS", "removed": [], "added": ["p0-f54-a-0", "p0-f54-a-1"]}
+  ],
+  "evidence": "workers/agt-F-D69-even-b-1042/evidence/source-checks.json",
+  "tests_typecheck_lint": "not run; N/A for immutable read-only review",
+  "changes": "No product, test, ledger, registry, pin, generated-file, foreign-output, or worktree source changes."
+}
