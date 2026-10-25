@@ -1,0 +1,93 @@
+{
+  "schema": "timeline.agent.d134.source-custody-review.v1",
+  "result": "PASS",
+  "frozen_tuple": {
+    "Agent": {
+      "sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "clean": true
+    },
+    "Runtime": {
+      "sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "clean": true
+    },
+    "App": {
+      "sha": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+      "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9",
+      "path": "/home/user/work/wt/app-pin-d8a1cd40",
+      "origin": "https://github.com/banodoco/reigh-app",
+      "clean": true
+    },
+    "Composition": {
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "path": "/home/user/work/wt/vw-pin-635f4de0",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "clean": true
+    }
+  },
+  "parents": {
+    "Agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186 61fefc6983f4413f1d1964b149bbaf5eadb8d2f0 96df3f5b4862b1c267e3816237bae8a64b5dc31f",
+    "Runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 7070f1378d1917fcce69857ebd33cd2b3015568b ef4728a1c07b7d3909d5027fbf1e673f6aec0030",
+    "App": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7 34d4644589970274a5252c0f7c68b6288eb0b0b4 331a58363d1dc6ade1db2d2fa9d58688520c51bd",
+    "Composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a"
+  },
+  "normal_recipe": {
+    "maker": "/home/user/work/wt/agt-pin-a4e016b6/tests/suites.conf.candidate.request.md",
+    "maker_git_blob": "fbde96168dca681a76cff1526c23b8d0b74001eb",
+    "maker_sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c",
+    "launcher": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+    "launcher_git_blob": "2844cec15b97fa995ecaf120961fc891e8b13b1c",
+    "launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "old_manifest_reuse": false
+  },
+  "runtime_lock": {
+    "path": "/home/user/work/wt/agt-pin-a4e016b6/runtime.lock.json",
+    "sha256": "4a3d51004d022b4c4adc77a15ac919f9716e7c01b37e30eba7d16031aa51d0be",
+    "source_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "producer": "astrid-runtime",
+    "file_count": 15
+  },
+  "schema": {
+    "runtime_path": "/home/user/work/wt/rt-pin-5e9ad1c6/contract/schemas/timeline-config.schema.json",
+    "app_path": "/home/user/work/wt/app-pin-d8a1cd40/vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json",
+    "runtime_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "app_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "client_version": "0.2.14",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "environment": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "python_version": "3.13.16",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "profile_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "profile_archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "profile_registry_sha256": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+    "composition_version": "0.0.14",
+    "profile_node_modules_is_symlink": false
+  },
+  "stub": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh",
+    "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "expected_behavior": "append called to P4_STUB_COUNT and exit 17"
+  },
+  "missing_inputs": [
+    {
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/docs/projects/timeline-r4/agent-core-full-command.md",
+      "status": "EXACTMISSING",
+      "bounded_effect": "used available hub design copy for static reference; normal maker and launcher were independently hash-verified"
+    },
+    {
+      "path": "/tmp/w-17bdcf2b40/dry.EG3ZhE and /tmp/w-17bdcf2b40/manifest.Rveybz",
+      "status": "EXACTMISSING_RECYCLED_PRIVATE_SCRATCH",
+      "bounded_effect": "raw logs unavailable; retained structured results, counters, manifest hashes, and receipt hashes remain"
+    }
+  ]
+}

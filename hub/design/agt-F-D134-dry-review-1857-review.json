@@ -1,0 +1,55 @@
+{
+  "schema": "timeline.agent.d134.dry-review.v1",
+  "reviewed_utc": "2026-10-25T19:01:00Z",
+  "result": "PASS",
+  "scope": "readiness for owner-authorized conditional 20:00Z measurement only",
+  "ship_credit": false,
+  "body_run_by_review": false,
+  "source_review": "PASS_STATIC_SOURCE_CONSERVED",
+  "manifest_review": "PASS_EXACT_TUPLE_AND_SINGLE_FIELD_POISON",
+  "dry_result_review": {
+    "positive": {
+      "manifest_sha256": "b539c6bda83fcef7222a3be667a74465317fe05b8de359dc6e7784db5d9b676d",
+      "preflight_exit": 0,
+      "stub_exit": 17,
+      "counter_lines": 1
+    },
+    "poison": {
+      "manifest_sha256": "f41fef0062e6c1c3ceb766ca9fdb144d649d1408221a0ac35d4163f6525e6dad",
+      "preflight_exit": 1,
+      "counter_lines": 0,
+      "guard": "D73 launcher: agent SHA mismatch"
+    }
+  },
+  "control": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh",
+    "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "provenance": "actual0811 / agt-F-core-rehearsal-2234",
+    "same_entrypoint_for_poison": true
+  },
+  "recipe": {
+    "selector_roots": 22,
+    "xdist_workers": 3,
+    "addopts": "",
+    "cache_provider": "disabled",
+    "timeout_seconds": 45
+  },
+  "bounded_findings": [
+    "The requested Agent-local agent-core-full-command.md is absent; the available hub copy was used as the authoritative design reference.",
+    "The private raw DRY scratch directories were recycled; retained structured results, counters, manifests, and hashes are present and independently parsed.",
+    "D128 genuine fixture custody and the 20:00Z custody verdict/space checks remain future owner/manager inputs; this PASS does not assert them."
+  ],
+  "durability": {
+    "receiving_source": "tracked evidence/ in this Composition review worktree and its harness commit",
+    "retained_manifest_paths": [
+      "evidence/positive.manifest",
+      "evidence/poison.manifest"
+    ],
+    "retained_script_paths": [
+      "evidence/measurement-command.sh",
+      "evidence/preflight-command.sh"
+    ],
+    "manager_publication_prefix": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D134-dry-review-1857-",
+    "recycled_private_paths_are_not_required": true
+  }
+}
