@@ -1,0 +1,66 @@
+{
+  "task": "tf-zip-dryrun-1905",
+  "date": "2026-10-25",
+  "kind": "one bounded test-only patch-export dry run; no push, no integration or ref write, no ZIP, no delivery claim",
+  "script": {
+    "installed_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "installed_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "how_run": "loaded read-only with SourceFileLoader by dryrun/run-dryrun.py; DELIVERY, TEMPLATE, GATE_RESULTS, WORK redirected in memory to private roots; TIMELINE_DELIVERY_SCRIPT_SHA set to the installed hash; --dry-run --repos 'agent runtime app composition'",
+    "why_not_bare": "hard-coded DELIVERY (ORCH/delivery) is created even with --dry-run; no private-root option; TEMPLATE path absent; agent tip from tl/integration differs from pin"
+  },
+  "runner_files": {
+    "dryrun/run-dryrun.py": "worker folder",
+    "dryrun/applycheck.py": "worker folder",
+    "dryrun/identity.py": "worker folder",
+    "dryrun/README.template.md": "stand-in template (live template absent)"
+  },
+  "private_roots": {
+    "delivery_staging": "dryrun/delivery/build-20261025T190713Z (1117.1 MiB, over the 50 MB worker-folder limit; not deleted)",
+    "work": "dryrun/work (symlinks to pinned checkouts; agent -> private bare view)",
+    "agent_view": "dryrun/agent-view.git (bare --shared clone of farm astrid-agent; refs origin/main=886a3183, tl/integration=547e1045)",
+    "clones": "dryrun/clones (index-only checks)"
+  },
+  "upstream": {
+    "agent": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "runtime": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "app": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+    "composition": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+  },
+  "integration_tuple_pinned": {
+    "runtime": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "agent": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "app": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "patches": {
+    "agent": {"path": "dryrun/delivery/build-20261025T190713Z/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch", "sha256": "1ffd36dce1a03a6d733be7b9934e64d299fec9c19651f1676ab6599c747fcc61", "bytes": 12789085, "apply_check_rc": 0, "verify": "PASS"},
+    "runtime": {"path": "dryrun/delivery/build-20261025T190713Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch", "sha256": "de8e76eb6fea38691ecfe1ae7dcd70eb49b47b3e5e19f64e5af45e2cea51b861", "bytes": 15177343, "apply_check_rc": 0, "verify": "PASS"},
+    "app": {"path": "dryrun/delivery/build-20261025T190713Z/patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch", "sha256": "e36f42a765006dccb47da3a09bada6ee3b743937044743f01a0068f66f3b7c90", "bytes": 10667149, "apply_check_rc": 0, "verify": "PASS"},
+    "composition": {"path": "dryrun/delivery/build-20261025T190713Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch", "sha256": "cb14e7c81da56ba434ab675daef76d9015861fca29c7a3e2a2469be7e1514e4f", "bytes": 507922, "apply_check_rc": 0, "verify": "PASS"}
+  },
+  "staging_SHA256SUMS": {"path": "dryrun/delivery/build-20261025T190713Z/SHA256SUMS", "sha256": "56d7420178118ca59db818ecd9ed47e92c8e911b38e2100a20b717b2023d454f"},
+  "bundles_in_staging_not_used_for_handoff": {
+    "agent": "307.1 MiB", "app": "767.6 MiB", "runtime": "4.7 MiB", "composition": "0.2 MiB"
+  },
+  "evidence_sha256": {
+    "evidence/patch-apply.json": "2c39fc153ec583e2cbf1c11383a68bf1d87fe6e15c3016ee76a966f8aad5db58",
+    "evidence/identity-before.json": "05a5dec3fceaf419fb824b91c2581e6a37c10971f2b0b186026ebc6d798e3a35",
+    "evidence/identity-after.json": "0f52c324a1f8446af3ffab966672e5df224e1e990db6fc35e2358c4af44580e1",
+    "evidence/commands.md": "156d1d829b223cfa87fbb3c616e3d53c81b1669c2492db3c1261aff9e267b29e"
+  },
+  "disk": {
+    "start_free": "about 11 GiB (df -BG, rounded)",
+    "end_free_gib": 9.66,
+    "peak": "not sampled during the run; staging alone 1117.1 MiB; floor 6.0 GiB held (lowest measured 9.66 GiB)"
+  },
+  "identity": {
+    "before_equals_after": true,
+    "refs_changed": false
+  },
+  "findings": [
+    "agent tl/integration (a30e74e9) != pinned agent 547e1045; not an ancestor either way (merge-base 070dfc5e)",
+    "agent, runtime and app upstream bases are not ancestors of their pinned tips (22, 16, 68 upstream-only commits)",
+    "squash patches touch every upstream-only file (98/98, 29/29, 154/154): applying to current main overwrites or reverts upstream work; apply --check still passes",
+    "staging (1.1 GiB) sits in the worker folder, over the 50 MB limit; not deleted (no approved delete route here)"
+  ]
+}

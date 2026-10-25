@@ -1,0 +1,26 @@
+{
+  "captured": "2026-10-25, before any dry-run command (read-only git rev-parse / status, transcribed from command output)",
+  "checkouts": {
+    "integration/agent": {"head": "a30e74e901a28b39c28facba3deb00d76f186e23", "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0", "clean": true},
+    "integration/runtime": {"head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9", "tree": "d5cb9335a03bf4764548e379ce180a66bf966910", "clean": true},
+    "integration/app": {"head": "d5a1d1ab6550187e377fd7387d300102b8b82ece", "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20", "clean": true},
+    "integration/composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true},
+    "pin/agent": {"head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e", "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7", "clean": true, "note": "detached"},
+    "pin/runtime": {"head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9", "tree": "d5cb9335a03bf4764548e379ce180a66bf966910", "clean": true, "note": "detached"},
+    "pin/app": {"head": "d5a1d1ab6550187e377fd7387d300102b8b82ece", "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20", "clean": true, "note": "detached"},
+    "pin/composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true, "note": "detached"}
+  },
+  "refs": {
+    "agent": {"tl/integration": "a30e74e901a28b39c28facba3deb00d76f186e23", "origin/main": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55"},
+    "runtime": {"tl/integration": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9", "origin/main": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"},
+    "app": {"tl/integration": "d5a1d1ab6550187e377fd7387d300102b8b82ece", "origin/main": "213318f1ec6ea5c324787bbd1c30a73072d1151a"},
+    "composition": {"tl/integration": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "origin/main": "67b8aa3d0d6831d3e3504a340ff583c3da253707"}
+  },
+  "upstream_objects": {
+    "agent": {"sha": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55", "type": "commit"},
+    "runtime": {"sha": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f", "type": "commit"},
+    "app": {"sha": "213318f1ec6ea5c324787bbd1c30a73072d1151a", "type": "commit"},
+    "composition": {"sha": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "type": "commit"}
+  },
+  "disk": {"free_note": "df -BG /home/user/work: 11G available (rounded); statvfs after the run: 9.66 GiB"}
+}

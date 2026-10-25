@@ -1,1 +1,1 @@
-2026-10-25T19:11:12Z procs: hub-syncd dispatcher run-manager up; workers running: tf-zip-dryrun-1905 (F-ZIP-dryrun, Claude Haiku fallback); disk 10G free; D77 render HELD: Runtime reviewed kit not yet published (kit still 0857a5e0)
+2026-10-25T19:33:26Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; F-ZIP-dryrun DONE (tf-zip-dryrun-1905): all 4 patches apply, but Agent/Runtime/App carry silent reverts of upstream-only work (98/29/154 files), see design/farm-zip-dryrun-1905-*; D77 render HELD (kit still 0857a5e0)
