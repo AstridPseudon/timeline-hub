@@ -21,7 +21,7 @@ from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.compiler import WordBinding
 from astrid.sdk.timeline.units import source_to_timeline_time
-from tests.helpers.runtime import runtime_checkout, use_runtime
+from tests.helpers.runtime import use_runtime
 
 TARGET = ('parent', '', 'card')
 DECLARATION = '\"again\" in line #2 +1f'
@@ -197,14 +197,11 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
 
 @pytest.fixture
 def retained(tmp_path, monkeypatch, request):
-    use_runtime()
+    runtime = use_runtime()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_port import route_path
 
     root = tmp_path / 'realm'
-    historical = (Path(os.environ['ASTRID_WORD_ANCHOR_SEED_RUNTIME'])
-                  if os.environ.get('ASTRID_WORD_ANCHOR_SEED_RUNTIME')
-                  else runtime_checkout('80973d34ae10e498d7213c30287012c9876f4b1a'))
     script = """
 import json, sys
 from tests.editing_conformance.native_word_anchor_fixture import seed
@@ -215,7 +212,8 @@ print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
     options = options if isinstance(options, dict) else {'reused': options}
     seeded = subprocess.run([sys.executable, '-c', script, str(root),
         json.dumps(options)], text=True, capture_output=True, check=True,
-        env={**os.environ, 'PYTHONPATH': str(Path(__file__).resolve().parents[2]) + os.pathsep + str(historical),
+        env={**os.environ,
+             'PYTHONPATH': str(Path(__file__).resolve().parents[2]) + os.pathsep + str(runtime),
              'PYTHONDONTWRITEBYTECODE': '1'}, cwd=tmp_path)
     values = json.loads(seeded.stdout)
     project, pin, source = (values[key] for key in ('project', 'pin', 'source'))
