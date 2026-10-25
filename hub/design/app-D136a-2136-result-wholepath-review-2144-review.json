@@ -1,0 +1,68 @@
+{
+  "task": "D136a/D100 independent actual-result/custody review",
+  "verdict": "FAIL_ALL_FINDINGS_ONCE",
+  "release": "HELD",
+  "qualification": "NO_GO",
+  "actual_result": {
+    "run_once": true,
+    "selectors": 9,
+    "tests": 9,
+    "passes": 0,
+    "failures": 0,
+    "errors": 9,
+    "skips": 0,
+    "exit_code": 1,
+    "xml_time_seconds": "34.783",
+    "measured_duration_ns": 35996764405,
+    "admission_free_bytes_before": 5316198400,
+    "admission_free_bytes_after": 5309915136,
+    "first_seam": "provider intermediate command lacks an authenticated physical observation",
+    "error_kind": "RuntimeErrorBase",
+    "retry": false,
+    "adaptation": false,
+    "selector_substitution": false,
+    "alternate_runtime": false
+  },
+  "custody": {
+    "receiver_base_commit": "e22217705f422436c111b65d40e4f155971864c7",
+    "receiver_base_tree": "b3df00f58bdf40ed8a7b5c1e3e19d07b6da9d44d",
+    "reviewed_candidate_commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "reviewed_candidate_tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+    "review_worktree_head": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+    "review_worktree_tree": "0b66c7a0c1b1af0400055cce16827e42a2908dd9",
+    "receiver_diff_sha256": "3ffa61f81dfdf088693fc728e824454321c82963b73b3abbe5b1066074919cda",
+    "changed_paths": [
+      "astrid/sdk/timeline/validation.py",
+      "tests/sdk/test_d136_fps_upstream_compat.py"
+    ],
+    "received_blobs_exact": true,
+    "d100_protected_exact": true,
+    "d100_projection_census": {"predicates": 43, "test_bodies": 11, "fixture_statements": 54},
+    "ast_conservation": {
+      "validation_non_fps_functions": "19/19 unchanged",
+      "original_d136_functions": "7/7 unchanged",
+      "additive_d136_functions": 3
+    }
+  },
+  "runtime": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "refusal_guard": "runtime_protocol/timeline_commit_auth.py:2209",
+    "refusal_guard_proven": true,
+    "missing_record_or_ref": "not exposed by safe evidence; causal owner UNKNOWN"
+  },
+  "source_checks": {
+    "prior_review_2119": "PASS_BOUNDED_SOURCE_SECURITY",
+    "prior_d100_security_1803": "PASS_SOURCE_SECURITY; behavior NOTRUN under its disk gate",
+    "received_focused_checks": "57 passed; Ruff, mypy, compile, diff check PASS",
+    "this_review_pytest": "NOTRUN per no-rerun brief",
+    "this_review_tsc_lint": "NOTNEEDED for unchanged source"
+  },
+  "privacy": {
+    "private_xml_mode": "0600",
+    "private_log_mode": "0600",
+    "private_metadata_mode": "0600",
+    "request_payload_key_url_raw_stack_exported": false
+  }
+}
