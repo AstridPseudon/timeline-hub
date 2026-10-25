@@ -1,0 +1,64 @@
+{
+  "task": "rt-F-D117a-input-review-1134",
+  "result": "PASS",
+  "scope": "exact supported OMP local/offline stage-input seam; not full stage qualification",
+  "pin": {
+    "commit": "9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+    "tree": "2074d7a2e26cc954b5cf3d77e91f3efbb25ad34f",
+    "lfs_pointer_blobs": 0,
+    "fetch_exit": 0,
+    "local_source_exit": 0,
+    "extract_exit": 0,
+    "version": "17.4.0",
+    "bun_lock_sha256": "f08eab1fd7e0519e8b131697d6a35815fd71d9b0a61a8d70cc57b499bcba53ee",
+    "source_tree_sha256": "3a84ac8be7d11434de8b22f4f0f1d643582ecc01c644e347bb0e056401da7b2e",
+    "codeload_archive_sha256": "ee8b3117370f6f2b3aa1a7f0f3ba8948113fb61fd1abc963b47cb82716c1bbdf",
+    "local_git_archive_sha256": "a7673f9f9b77d24989a5a84b70380f77af3dd869a7be2b94c8d56de404065ecb",
+    "archive_hashes_equated": false
+  },
+  "seam": {
+    "call_path": [
+      "Installer.run",
+      "Backend.stage",
+      "install_tools(manifest, folder / tools, platform_target(), self.run)",
+      "_install_omp_source(selected, recipe, omp, target, run, env)",
+      "local_source(selected[repo], selected[sha], root / source.download)",
+      "extract(archive, container)"
+    ],
+    "manifest_shape": "tools.omp.source = {repo: absolute local path or file:// URL, sha: full lowercase 40-hex commit SHA}",
+    "archive_sha256_required_for_local_omp_source": false,
+    "post_extract_checks": [
+      "source_tree_sha256 computable and regular entries only",
+      "bun.lock SHA-256",
+      "package version",
+      "native archive SHA-256",
+      "native ABI marker",
+      "final bun.lock SHA-256"
+    ]
+  },
+  "custody": {
+    "omp_artifact_retained": false,
+    "stage_executed": false,
+    "first_ordinary_missing_input": "exact applied Agent/Runtime deployment source set",
+    "complete_stage_peak": "unknown",
+    "near_match_substituted": false,
+    "applied_agent": {
+      "commit": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+      "tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+      "exact_objects_found_by_readonly_cat_file": false
+    },
+    "applied_runtime": {
+      "commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "commit_found_by_readonly_cat_file": false,
+      "tree_found_by_readonly_cat_file": true
+    }
+  },
+  "static_checks": {
+    "python_ast": "pass",
+    "recipe_json": "pass",
+    "current_source_matches_retained_hashes": true,
+    "tests_run": false,
+    "source_changed": false
+  }
+}
