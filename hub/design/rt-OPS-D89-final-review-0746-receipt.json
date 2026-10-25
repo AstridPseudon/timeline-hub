@@ -1,0 +1,28 @@
+{
+  "task": "OPS-D89/D108a",
+  "result": "PASS",
+  "installation_state": "installed",
+  "candidate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D89-boundary-sol-0740/evidence/test-run.candidate",
+  "candidate_sha256": "5df4145dfb972a0470f20a1959b470f6b17aa68d02c6478da22ed3fadbd922ea",
+  "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+  "installed_sha256": "5df4145dfb972a0470f20a1959b470f6b17aa68d02c6478da22ed3fadbd922ea",
+  "installed_mode": "0755",
+  "backup": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run.20261025T074627Z.bak",
+  "backup_sha256": "7e857d73f3e186d47cc4efc9316e11e98083a646dda0fc1f5e08a2ba11d2ed74",
+  "backup_mode": "0755",
+  "baseline_cas": "PASS",
+  "source_guard": "PASS: exactly two authorized hunks",
+  "syntax": "PASS",
+  "private_controls": {
+    "pre_install": "PASS",
+    "post_install": "PASS",
+    "cases_each": 33,
+    "central_body_invoked": false
+  },
+  "queue_cancellation": {
+    "request_id": "agent-full-d108-core-main-1025072937-6897",
+    "orig_status": "queued",
+    "status": "cancelled",
+    "reason": "Administrative NOEXECUTION: superseded by D108a before execution; no body or result exists."
+  }
+}
