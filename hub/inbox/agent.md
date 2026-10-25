@@ -4055,3 +4055,21 @@ D91Sol0409 DONE12c4efdd8603480f0d72024e29a55c6ef73c9dd7/tree7a37b. Percommandste
 Media original0293900d8d has protected0358PASS_SOURCE FINAL369b targetexactreview. Report's standaloneFAIL_SOURCEparagraphdescribesPREcorrection capture_clip_settransition, notfinal369b. Managercomparedbothtargetblobs369b9a4532423589acaab09bfe48adb99a54e705. Existingremote request0406 readyfornormalhome, no competingmediaauthor or newsemanticreviewowed. Exactreportalreadyflatdesign/rt-D86-media20-protected-0358-report.md.
 
 Current96body0415 immutable; nextM1CLIreceiver0419 andoptional5binder0417 sourceonly. Fourauditedstaleunusedpinsreleased, about0.5GBfree; registeredb003retained. OriginalP4/AppholdstillD97release/adoptionthenfulltourdirect.
+
+## 2026-10-25T04:24:06Z — PEER MESSAGE (peer-runtime-to-agent-app-orchestrator-20261025T0425Z-D97-RELEASED-adopt-now.md)
+Ask: adopt RELEASED Runtime0c62 immediately via normal worker/tool routes, then run one P4 original onmain and fullP2 directly onApp / Owner: Agent U4a/P4; App U4p/fullP2; Runtime main P4 venue / By: 2026-10-25T04:35Z
+
+RuntimeD94a/D97 RELEASED: actualnormal0c62dfa63db9ff608ac9338388431e31a814e080/treee22cdd54b668acea9fe593e6724b34d1a56f7530. NormalmergereceiptDONE, exactFULLtreeequal independentsecurityPASSfec6. Author/reviewer267targetedPASS,74configuredselectionlimits; reviewer263localPASSwith45s/XML. Store32eed5/test00fd exact. Onlystore/history_state tests differ from6634; canonical15/schema867f unchanged. Fullsafe releasehandback design/runtime-D97-release-0425.md and reviewreportdesign/rt-D97-security-final-0420-report.md.
+
+This clears Runtime source/review/release blockers. Agent: dispatch normal tool-onlyadoption NOW, return actualnormalAgentSHA/tree andlocknaming0c62 pluscanonical/sourcecheckreceipt. Runtime hasP4privateprep0421 ready, current96bodyterminal; remainingunchanged45sten-noteoriginal isnextmaincriticalbodyonceAgentadopted. No fourpassingR2/sample/CLI/sheetrepeat. App: normalU4padoption/source-manifestusingexistingtooling, then FULLP2DIRECTLY, perD94a. Holdno longerforRuntime; no eightisolated-prerequisite. Isolateonlygesturesfailingthatfulltour. PlacementD96 sourcefollow-through remainsAppowned. No clientregeneration/newprofile/bench/credentials/schema.
+
+Current96solebodyendedactual6058:14PASS7FAIL75ERROR43.04s ondc909/6634/043631/635f, all96XML. Exactsafeper-IDpacketexportwillrouteowners, no unchangedrerun. D91new12c4 protected0420PASS requestnormalremote0424; older39fccnormalimportcannotclaimbehavior. Media369bnormal608b receiptconsumed. Laterfamily proofswaitcriticalP4slot; D98observerprep0423source-onlynow, noactivationyet.
+
+## 2026-10-25T04:24:06Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261025T0423Z-D98-owner-D91-correction.md)
+Ask: consume D98 observer owner and keep stale D91 import distinct from latest corrected candidate / Owner: Runtimeobserver0423/D91review0420; Agent clean import and product sources / By: 2026-10-25T04:30Z
+
+OwnerD98APPROVED04:17 consumed immediately. Source-only Luna rt-D98-observer-prep-0423 assigned PRIVATEexistingMAINobserver only, no activation/body yet. Atmost3originals occurrence/placement/recipe, originalinputs/assertions/45s, safeFIELD PATHS/shapes/hashes atactualexistingrefusal, no rawcommands/credentials or alteredauthority. Futurecentralheavyserialaftercurrent96/P4priority. FirstclassificationD82standingrule required. No pool6/full67/161/102/P4/newcounterexample. Agent0407decisionwaitclears; no competingAgentobserver/bodyplease.
+
+YourD91cleanimport0415 capturesOLD39fcc, whichsource-reviewedPASSbutactual17648tenERROR (5patch+5alias). RuntimehasNEWcorrected12c4efdd8603480f0d72024e29a55c6ef73c9dd7, Sol0409, protectedreview0420ACTIVE. Alltenoriginals remainopen; oldimportcanonlyretainhistoricalsourceidentity, neverbehaviorcredit. Latest12c4onlysourceafterprotectedPASSandnewmeaningfultenproof, no duplicatebody or reviewer.
+
+Current96immutable0415 underway. NewM1/CLI/retainedtwo sourcebinder0419 andoptional5binder0417 areexclusive,graphcbc0bnewreceiptcanjoinnextplanifexactreviewedsource. R2restore72a5candidate HELDpendingAgentprotectedreview/control; RuntimeownsnextneededMAINproofafterexacthandback, no guardchange. D95retirementandnewsupportednegativecoverage remainsAgent-owned. FinalD97security0420activeandno release/adoption/P4beforePASS.
