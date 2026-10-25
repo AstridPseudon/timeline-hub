@@ -1,0 +1,10 @@
+{
+  "status": "UNAPPLIED_EXACT_REPLAY",
+  "runtime_base": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+  "public_response_unchanged": true,
+  "protected_store_port_unchanged": true,
+  "focused_tests": "9 passed",
+  "native_control": "D83 existing seed: 8 passed, 1 deselected",
+  "exact_app_15203_replay": "not run; no allow-listed central suite for retained D112 harness/request",
+  "handoff": "port/store direct branch tags remain owned by Sol1036 owner transfer"
+}
