@@ -1,0 +1,26 @@
+{
+  "task": "rt-D111b-curve-wholepath-1010",
+  "decision": "corrected_measurement_seam",
+  "finding": "Native0905 classified generic _read records by position; native0958 directly instrumented source-document hooks and observed zero source calls. The packets therefore measured different paths.",
+  "native0958": {
+    "runtime_baseline": "8b3895cf141f5b7359cceacefde62c9a9475eabf",
+    "runtime_candidate": "02b244732e788f22d8e3d9e9497387543ab410fa",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "source_document_calls": {"baseline": 0, "candidate": 0},
+    "source_store_calls": {"baseline": 0, "candidate": 0},
+    "read_wall_seconds": {"baseline": 17.353, "candidate": 18.255},
+    "deepcopy_calls": {"baseline": 2058, "candidate": 2058},
+    "manifest_pins_per_request": {"baseline": 2, "candidate": 2},
+    "source": "workers/rt-D111b-native-return-0958/evidence/D111b-failure-summary.json"
+  },
+  "exact_corrected_measurement_seam": "Run the same Runtime baseline/candidate and Agent provider through an existing real source-bearing command so Agent _hydrate reaches transcript_source/config_source, RequestCommitPort._document and TimelineCommitStore._capture_document_input. Require direct source counters greater than zero in both stages before comparing source wall/copy costs.",
+  "minimum_scope": "Native0958's sole author adds only an existing source-bearing fixture/client path; no invented source payload, old profile, generic cache or cross-request memo.",
+  "production_wiring": "Runtime provider import/bootstrap/coordinator files are unchanged between baseline and candidate; candidate changes are in the request port/store snapshot seam.",
+  "contract_checked": "commit-v2 request fields and accepted/merged/canonical receipt/effects/bindings/dependencies plus conflict/invalid/dry-run reply categories remain unchanged.",
+  "unknowns": [
+    "Source-bearing wall time and source-specific deepcopy/SQL cost remain unmeasured.",
+    "No candidate fault can be inferred from the zero-source native0958 journey.",
+    "Native0958 remains the owner of the actual measurement and final report."
+  ],
+  "full_evidence": "workers/rt-D111b-curve-wholepath-1010/evidence/D111b-wholepath-1010.json"
+}
