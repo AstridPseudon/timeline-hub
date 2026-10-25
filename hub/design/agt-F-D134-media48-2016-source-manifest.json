@@ -1,0 +1,11 @@
+{
+  "task": "D134 managed-edge cluster A",
+  "status": "UNAPPLIED",
+  "agent_head": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "runtime_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+  "files_allowed": ["tests/editing_conformance/test_commit_runtime_occurrence_media.py"],
+  "files_changed": [],
+  "source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+  "cohort": 48,
+  "cohort_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D134-own344-partition-2003/evidence/per-id.tsv"
+}

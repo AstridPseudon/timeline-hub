@@ -1,0 +1,48 @@
+{
+  "frozen_tuple": {
+    "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "agent_tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+    "app_commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+    "app_tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "named_upstream": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "terminal_reference": "92443771676ef2bbb547d0a103d708fa8bec4c63"
+  },
+  "input_sha256": {
+    "agt-F-D134-own344-partition-2003-clusters.json": "c7f841bd0196165e6b669450f2a34339a9fd1bda3a8bd4a169428cf3d7538443",
+    "agt-F-D134-own344-partition-2003-partition.json": "cf7c3117a140d9f8d9a232132d2a122c94f9a794067572016b4d13c378b2403c",
+    "agt-F-D134-own344-partition-2003-per-id.tsv": "f98a97e4f9dd9773acd18f85d7ae649c95f1c970a213680d9324c573c9d2b97a",
+    "agt-F-D134-own344-review-2011-review.json": "88e1cb3bd5f2bea8c15da777bd23e23c1dd97c0e90550117cf516d4e377d0d21",
+    "agt-F-D134-partition-return-2016-clusters.json": "8185ab786528916f3e8ddc031fd236e753e008337e2d00e9d3e5c1c84d6632d3",
+    "agt-F-D134-partition-return-2016-partition.json": "733a1d825478cb9fc97910b4ec34aada9d0eadf64ab5b3fdc12db099d72848f6",
+    "agt-F-D134-partition-return-2016-per-id.tsv": "7f21622bc47a04f5a1259cafdcf7541f7a4fbbf4571d10b35aefaa986e4d802a",
+    "agt-F-D134-result-review-1937-classification.json": "2dbbb4053256235ab37723cb6700019daa4f40a4e562f644f0c5bd4f07ea5f10",
+    "agt-F-D134-result-review-1937-per-id.tsv": "b1fc1bab86fa570917adf7d2bbcb6ddca94cec4c27fd9bdf38b86d7a2e2f646d",
+    "agt-F-D134-result-review-1937-review.json": "9b90bd2906ff5be140606e285b6caeae94b5d5d407abd91bb5349fc91c2ca0a8"
+  },
+  "interpretation": {
+    "core_or_reg_counts_inferred": false,
+    "product_fault_proved": false,
+    "raw_xml_or_private_payloads_published": false,
+    "test_file_provenance_is_not_product_causality": true
+  },
+  "membership": {
+    "ours_new_file": 344,
+    "prior_unknown": 12,
+    "raw_ids": 370,
+    "unique_current_source_blobs": 64,
+    "unverified_current_reg": 14
+  },
+  "schema": "timeline.agent.f_d134_root_clusters_sources.v1",
+  "service": {
+    "id": "agent-agent-core-full-1025191128-18455",
+    "keep_marker": "tests/agent-agent-core-full-1025191128-18455/KEEP",
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "raw_runner_receipt": "EXACTMISSING",
+    "retained_log_path": "tests/agent-agent-core-full-1025191128-18455/log.txt",
+    "xml": "EXACTMISSING"
+  }
+}

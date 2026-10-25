@@ -1,0 +1,29 @@
+{
+  "cohort": 48,
+  "test_file": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+  "preserved_without_source_change": {
+    "behavioral_families": ["occurrence.add-media", "occurrence.swap-media"],
+    "media_kinds": ["image", "video"],
+    "owners": ["occurrence", "parent helper reuse"],
+    "predicates": [
+      "real media selection and catalog fingerprint",
+      "managed generation/variant/object identity",
+      "parent versus occurrence ownership",
+      "shared sibling placement and closure ownership",
+      "video source window and timing",
+      "opaque authored values and unknown fields",
+      "dry-run no-write behavior",
+      "accepted history, inverse, redo, restart and exact retry",
+      "stale, foreign, fingerprint and capture-to-accept refusal atomicity"
+    ],
+    "assertions": "unchanged",
+    "authored_fixture_input": "unchanged"
+  },
+  "unsupported_setup_boundary": {
+    "first_current_refusal": "shot:chapter-shot root replacement adding authenticated item correspondence",
+    "refusal": "shot item correspondence changed",
+    "shot_guard": "astrid/sdk/timeline/_command_state.py:359-369",
+    "secondary_managed_edge": "parent/occurrences occurrence-root replacement",
+    "parent_guard": "astrid/sdk/timeline/_doc_patch.py:370-377,450-456"
+  }
+}

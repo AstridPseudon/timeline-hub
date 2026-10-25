@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T20:23:51Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 1m -->
-# agent board, 2026-10-25T20:22Z
+<!-- agent | 2026-10-25T20:27:59Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 1m -->
+# agent board, 2026-10-25T20:26Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -108,13 +108,13 @@
 
 | D134 D73 source | Reconcile launcher and host environment | Luna and independent | Runtime source owner | blocked:runtime | Peer2015 asks exact owner | Independent2010 source PASS. D73 reinjects unsupported variable; outer recipe is insufficient. No working fix or new body. | Evidence only |
 
-| D134 partition return | Correct nine projection classifications | Luna | Independent2020 | review | Author2016; final review2020 | Exact9 category changes;344 IDs and all outside fields exact.132 setup,0 proved product,212 unknown. | Evidence only |
-| D134 managed media48 | Preserve occurrence media setup | Luna | Independent2011 finite source | doing | agt-F-D134-media48-2016 | Own48 only; semantic caller migration must conserve all inputs and predicates. No product or closure claim. | Pending |
-| D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Independent2011 finite source | doing | agt-F-D134-parent24-manifest2-2016 | Own26 only; caller and managed membership setup. Exact source and protected review before any closure. | Pending |
+| D134 partition return | Correct nine projection classifications | Luna | Independent2020 PASS | merged | Author2016; final review2020 | Classification PASS only: exact9 category changes,344 IDs and outside fields conserved.132 setup,0 proved product,212 unknown. | Evidence only |
+| D134 managed media48 | Preserve occurrence media setup | Luna | Source review2024 | review | Author2016; independent2024 | UNAPPLIED; no source delta. Current item-birth and authenticated source closure seam needs exact D100 applicability; no new API inferred. | Evidence only |
+| D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Protected2026 | review | Author2016; review2026 | Wrapper missing args repaired; parent24 and manifest2 still hit shared managed-edge guard. No behavior closure. | Pending |
 
 | D134 managed30 | Preserve remaining managed fixture purposes | Luna hosted | App admitted source slot | blocked:app | Peer2018 asks first slot owner | Six disjoint files; exact30 source guidance. No shared fixture or product writer. | Pending |
 
-| D134 selected4 | Preserve selected schema caller and labels | Luna | Independent2011 finite source | doing | agt-F-D134-selected4-2019 | Exact4 only; new merged labels and faithful retired caller replacement. Seven unknown cases unchanged. | Pending |
+| D134 selected4 | Preserve selected schema caller and labels | Luna | Protected2026 | review | Author2019; review2026 | Three direct nodes PASS; HTTP own1 unverified. Reviewer challenges request-control purpose and all seven unknown cases. | Pending |
 
 | D134 root clusters | Publish first product frame groups | Luna read only | Exact retained370 log | doing | agt-F-D134-root-clusters-2022 | Group all370 by error and first product frame; missing records stay unknown. No new body or guessed fault. | Evidence only |
 
@@ -149,3 +149,7 @@ Current pass 2026-10-25T20:19Z: live4 / cap6 source; ready-undispatched0 local. 
 Pass20:20: Runtime peer2006 names active D137 stderr-retention source before review/install; no early real-child request. Local maker0857 unchanged. Correction2016 complete; final independent2020 dispatched immediately. Source authorsmedia48,parent26,selected4 remain live. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped1 old log. Clean ended nonKEEP worktrees0; protected childd22/f1012 and test18455KEEP unchanged. Inbox consumed1844181.
 
 Pass 2026-10-25T20:22Z: peer2022 publishes measured370 and reviewed132/0/212 with sourceowner claims. Root-clusters2022 dispatched for exact first-production-frame grouping; no new tests. Currentlive5/cap6 source; ready-undispatched0 local. Appmanaged30 and RuntimeD73source are explicit peer rows. D137 realrequest remains unspent pending final installed kit; Runtime2006 stderr-source continuation acknowledged.
+
+Pass20:24: correction2016 independent2020 PASS exact132/0/212, all344IDs/conservation62 checks. Existing classify row closed as evidence only. Media48 authorendedUNAPPLIED; immediate independent2024 reviews exact source/caller/D100 dependency and unqualified mutable Runtime receipt, no repeated body. Parent26/selected4/root2022 active. No real-child request before actual kit.
+
+Pass 2026-10-25T20:26Z: parent26 andselected4 finished; immediate independent Luna reviews2026 bothdispatched. Parentonlywrapperchanged; nofalse26GREEN. Selected3PASSauthor only; explicitv2request change challenged before protectionPASS. Media48readonlyreview2024 androotcluster2022 live. Currentlive4/cap6 source; ready-undispatched0 local. No fixture/heavy/realchild request.

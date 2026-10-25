@@ -1,0 +1,24 @@
+{
+  "status": "finite_boundary",
+  "source_change": "manifest caller forwards required operation, media_owner, and real source_bytes",
+  "parent24": {
+    "cohort_cases": 24,
+    "passed": 0,
+    "errors": 24,
+    "boundary": "readonly tests/editing_conformance/test_commit_runtime_occurrence_media.py:93",
+    "error": "CommandError: replacement changes provider-managed edges"
+  },
+  "manifest2": {
+    "cases": 2,
+    "passed": 0,
+    "errors": 2,
+    "boundary": "readonly tests/editing_conformance/test_commit_runtime_occurrence_media.py:93",
+    "previous_boundary_repaired": true
+  },
+  "non_cohort_parent_result": {
+    "passed": 1,
+    "description": "legacy composition writer checker"
+  },
+  "next_owner": "media48 worker owning the readonly occurrence-media helper",
+  "source_only_closure": false
+}

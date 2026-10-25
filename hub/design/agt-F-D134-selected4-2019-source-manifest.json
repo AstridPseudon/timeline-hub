@@ -1,0 +1,11 @@
+{
+  "repo": "agent",
+  "base_branch": "tl/integration",
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "runtime_checkout": "/home/user/work/runtime",
+  "runtime_commit_observed": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "changed_file": "tests/sdk/test_timeline_selected_schema_runtime.py",
+  "changed_file_sha256": "c0f2fb03c793f5b44491f63b1b64a7dd22a22dd90e0b8114758151468014c6b2",
+  "diff_stat": {"insertions": 29, "deletions": 11},
+  "scope_check": "only the assigned test file changed"
+}

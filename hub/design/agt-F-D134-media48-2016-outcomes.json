@@ -1,0 +1,10 @@
+{
+  "status": "UNAPPLIED",
+  "cohort": 48,
+  "changed_source": false,
+  "behavior_credit": false,
+  "setup_credit": false,
+  "blocked_at": "faithful complete child closure setup",
+  "reason": "No existing registered semantic caller can create the declared shot item correspondence and authored occurrence topology from the empty bootstrap without an authenticated source closure.",
+  "next_step": "Provide an already-authorized production source closure/caller seam, or explicitly authorize a separate API/fixture design decision; do not alter this test's authored inputs or assertions."
+}

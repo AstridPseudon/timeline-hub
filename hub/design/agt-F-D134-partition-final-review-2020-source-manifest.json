@@ -1,0 +1,66 @@
+{
+  "schema": "timeline.agent.f_d134_partition_final_review_source_manifest.v1",
+  "review_id": "F-D134-partition-final-review-2020",
+  "inputs": {
+    "author_packet": {
+      "worker": "agt-F-D134-own344-partition-2003",
+      "evidence_sha256": {
+        "clusters.json": "c7f841bd0196165e6b669450f2a34339a9fd1bda3a8bd4a169428cf3d7538443",
+        "findings.md": "fe229d6eac36d5220e56fdf4082c0a2ecf75361b7b5f2ae2fbcadf9e4c48b390",
+        "partition.json": "cf7c3117a140d9f8d9a232132d2a122c94f9a794067572016b4d13c378b2403c",
+        "per-id.tsv": "f98a97e4f9dd9773acd18f85d7ae649c95f1c970a213680d9324c573c9d2b97a",
+        "progress.md": "a23fd3cdc297840a323b57e4bbcbc1d14b879a85d6740aad66f0ed15b395da02",
+        "source-manifest.json": "bb840f4501a16bf276eacdeaf45a5576c8d2709f91a58d96b5da05945da41517",
+        "validation.md": "6bcbff5de717073a92f1c88da472f3c20ef3b820eb6c66bf96ea495dc053fc29"
+      }
+    },
+    "review_packet": {
+      "worker": "agt-F-D134-own344-review-2011",
+      "evidence_sha256": {
+        "classification-bounds.json": "e8e651f4da5e898f0d5c8bc96a8eb94076ee0fca02c48d07598f1062f1c40bb5",
+        "findings.md": "06d3b2e2cb0a0eb400eba1d5496e8e2485a7ae44458d770c57166b8060cb1b1e",
+        "progress.md": "3a9ba22256dd413dc060d9a022063566178c8911d7dc3ae18de8e62a5587decb",
+        "review.json": "88e1cb3bd5f2bea8c15da777bd23e23c1dd97c0e90550117cf516d4e377d0d21",
+        "source-manifest.json": "8e62df1310f3b81af05124a960844ca62de81b17fd86cca567bd928c0147035b",
+        "validation.md": "069588e1d1b90eec06ae98ecdedaa7cd789ba1dc27c45d7200cf23fb36ef7f02"
+      }
+    },
+    "firstreturn2016_packet": {
+      "worker": "agt-F-D134-partition-return-2016",
+      "evidence_sha256": {
+        "clusters.json": "8185ab786528916f3e8ddc031fd236e753e008337e2d00e9d3e5c1c84d6632d3",
+        "findings.md": "2c62bd383f3352ebb70ddb0962686abb6b65389a765e18a81f1f023b401f0099",
+        "partition.json": "733a1d825478cb9fc97910b4ec34aada9d0eadf64ab5b3fdc12db099d72848f6",
+        "per-id.tsv": "7f21622bc47a04f5a1259cafdcf7541f7a4fbbf4571d10b35aefaa986e4d802a",
+        "progress.md": "f8b9d5d163c58cada70cebc9b8a190099332383395e406e0b472449744119658",
+        "source-manifest.json": "34506d3281fbb29186b08a58b362f63c8e3fb4d6eb7970c41f2966d05f152b75",
+        "validation.md": "e6a25cfd0a39325c0da9fb0d67ddaa899924b1ecff207dcac2ba995a4ac28d90"
+      }
+    }
+  },
+  "flatdesign": {
+    "scope": "All permanent evidence files above were compared byte-for-byte with their agt-F-D134-* flatdesign copies.",
+    "author": "MATCH",
+    "review": "MATCH",
+    "firstreturn2016": "MATCH"
+  },
+  "actual": {
+    "service": "agent-agent-core-full-1025191128-18455",
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "xml": "EXACTMISSING"
+  },
+  "tuple": {
+    "agent": {"commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186", "tree": "60d45288145414ee4702fcce61af7c7810c2a3df"},
+    "runtime": {"commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "app": {"commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7", "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "named_upstream": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "terminal_reference": "92443771676ef2bbb547d0a103d708fa8bec4c63"
+  },
+  "source_policy": {
+    "original_log_hash_tuple_source_fields_unchanged": true,
+    "classification_only": true,
+    "product_fault_credit": false,
+    "migration_credit": false
+  }
+}

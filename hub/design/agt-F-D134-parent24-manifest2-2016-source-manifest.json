@@ -1,0 +1,15 @@
+{
+  "task": "agt-F-D134-parent24-manifest2-2016",
+  "repository": "agent",
+  "base_revision": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "changed_paths": [
+    "tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py"
+  ],
+  "unchanged_target_path": "tests/editing_conformance/test_commit_runtime_parent_media_swap.py",
+  "file_hashes": {
+    "tests/editing_conformance/test_commit_runtime_parent_media_swap.py": "76f584b0b323f47a564f0763f0ae670ac759443a",
+    "tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py": "e63d777f93b458f6276d10aafa69497b8e2a75d8"
+  },
+  "prior_manifest_hash": "18ab205665cde75e4c58d2f2e8f4ef917b63fabb",
+  "scope": "Only the two assigned conformance tests were inspected; only the manifest inverse test was changed. No product, shared fixture, Runtime, client, generated, pin, schema, or kit files were changed."
+}

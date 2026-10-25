@@ -1,0 +1,47 @@
+{
+  "schema": "timeline.f_d134_media48_predicate_map.v1",
+  "cohort": 48,
+  "test_file": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+  "preserved_without_source_change": {
+    "behavioral_families": ["occurrence.add-media", "occurrence.swap-media"],
+    "media_kinds": ["image", "video"],
+    "owners": ["occurrence", "parent helper reuse"],
+    "predicates": [
+      "real media selection and catalog fingerprint",
+      "managed generation/variant/object identity",
+      "parent versus occurrence ownership",
+      "shared sibling placement and closure ownership",
+      "video source window and timing",
+      "opaque authored values and unknown fields",
+      "dry-run no-write behavior",
+      "accepted history, inverse, redo, restart and exact retry",
+      "stale, foreign, fingerprint and capture-to-accept refusal atomicity"
+    ],
+    "assertions": "unchanged",
+    "authored_fixture_input": "unchanged",
+    "topology_and_pins": "unchanged"
+  },
+  "current_setup_boundary": {
+    "first_current_refusal": "shot:chapter-shot root replacement adding authenticated item correspondence",
+    "refusal": "shot item correspondence changed",
+    "current_guard": "astrid/sdk/timeline/_command_state.py:359-369",
+    "secondary_managed_edge": "parent/occurrences occurrence-root replacement",
+    "parent_guard": "astrid/sdk/timeline/_doc_patch.py:370-377,450-456"
+  },
+  "held_d100_applicable_boundary": {
+    "source": "astrid/sdk/timeline/_command_state.py in 9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "physical_birth": "For an authenticated un-copied shot with empty item_id_map, unique non-empty physical item IDs may be admitted without extending the alias map.",
+    "copied_correspondence": "Copied/remapped placements continue to require exact item correspondence and identity custody.",
+    "relationship_to_d134": "Directly addresses the genuine item-1 item-set boundary in the D134 setup.",
+    "qualification": "UNPROVEN until meaningful current D100 source/registered-provider behavior evidence exists."
+  },
+  "caller_inventory": {
+    "occurrence.create": "creates an empty child closure",
+    "occurrence.add-media": "creates occurrence-owned raw media/clip and registry state; does not allocate shot-item correspondence",
+    "occurrence.duplicate": "requires an authenticated existing occurrence source",
+    "occurrence.fork": "requires an authenticated existing occurrence source",
+    "occurrence.place-shared": "requires an authenticated local or foreign source closure",
+    "timeline.duplicate": "requires an authenticated foreign source closure"
+  },
+  "disposition": "UNAPPLIED; block on current meaningful D100 qualification, not a new API/scope decision"
+}

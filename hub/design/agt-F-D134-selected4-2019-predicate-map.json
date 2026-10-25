@@ -1,0 +1,20 @@
+{
+  "retired_save_route_expectation1": {
+    "nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart",
+    "setup_line": 241,
+    "before": "publish_parent_composition",
+    "after": "commitTimeline doc.patch root set through the registered provider",
+    "preserved": ["empty parent topology", "exact downstream schema pin", "HTTP readback", "lost ACK", "restart", "undo"]
+  },
+  "v2_status_label_expectation3": {
+    "nodeids": [
+      "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+      "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
+      "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]"
+    ],
+    "new_v2_proof": "each stale-base request is explicitly labeled with merge=fields and reads=[] before submission",
+    "expected_status": "merged",
+    "historical_rebased_behavior": "unchanged"
+  },
+  "unknown_cases": "no code, predicate, assertion, or purpose change"
+}

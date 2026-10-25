@@ -1,0 +1,73 @@
+{
+  "schema": "timeline.f_d134_media48_source_review.v1",
+  "review_id": "agt-F-D134-media48-review-2024",
+  "verdict": "PASS_FINITE_UNAPPLIED",
+  "scope": "Independent read-only source/evidence review of finished agt-F-D134-media48-2016; no D134 behavior credit.",
+  "source_claim": {
+    "status": "UNAPPLIED",
+    "cohort": 48,
+    "agent_ref": "tl/agt-F-D134-media48-2016",
+    "agent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "agent_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "file": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+    "git_blob_sha1": "c4f54e34536dabbf196fd9a17c337b78394506e3",
+    "sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+    "changed_files": [],
+    "behavior_credit": false,
+    "setup_credit": false
+  },
+  "source_custody": {
+    "author_parent_diff_paths": [
+      "tests/editing_conformance/test_recorded_graph_roots.py",
+      "tests/sdk/test_timeline_commit_graph_roots.py"
+    ],
+    "d134_test_changed_in_author_commit": false,
+    "author_ref_equals_current_agent_integration": true,
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "permanent_author_evidence_byte_equal": true,
+    "hidden_generated_delta_found": false,
+    "private_targeted_xml": "EXACTMISSING",
+    "private_experiment_patch_record": "EXACTMISSING; author log records the apply/revert outcome only"
+  },
+  "predicate_and_input_preservation": {
+    "original_authored_inputs_preserved": true,
+    "original_assertions_preserved": true,
+    "original_topology_opaque_media_timing_order_grouping_pins_preserved": true,
+    "behavioral_families": ["occurrence.add-media", "occurrence.swap-media"],
+    "limits": "Source-only preservation review; no whole-cohort or behavioral closure claim."
+  },
+  "caller_boundary_correction": {
+    "categorical_no_existing_caller_claim": "CORRECTED",
+    "held_d100_source": {
+      "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+      "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+      "product": "astrid/sdk/timeline/_command_state.py",
+      "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "test": "tests/sdk/test_d100_item_birth_boundary.py",
+      "test_sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58"
+    },
+    "applicability": "The held D100 first-birth source directly covers the genuine item-set boundary: an authenticated un-copied physical shot may admit unique non-empty item IDs without extending an alias map; copied/remapped placement correspondence remains exact.",
+    "current_integration": "NOT_PRESENT: current Agent tl/integration is a30e74e9 and retains the pre-D100 shot-item guard.",
+    "qualification": "UNPROVEN: D100 Agent behavior was not run; App currentproof1939 own9 stopped in setup before projection acceptance.",
+    "required_blocker": "Block D134 on meaningful current D100 source/behavior qualification and registered-provider applicability, not on a new API or scope decision."
+  },
+  "environment_and_outcome": {
+    "author_declared_runtime_source": "ab1e4f6141987706132916e2da16477f5a019464",
+    "author_validation_runtime_path": "/home/user/work/runtime",
+    "author_validation_runtime_is_immutable_ab1e_receipt": false,
+    "current_runtime_checkout_head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "current_runtime_checkout_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "compiler": "Python 3.13.16; author command used /home/user/work/venv-agent/bin/python",
+    "author_targeted_case": "Reached setup refusal: shot item correspondence changed; behavior body did not execute.",
+    "outcome_status": "UNAPPLIED",
+    "outcome_limit": "The raw setup refusal is not parent-RED, new-GREEN, or whole-48 credit."
+  },
+  "prohibited_changes": {
+    "production": false,
+    "fixture_author": false,
+    "new_api": false,
+    "provider_or_runtime": false,
+    "test_body_or_assertion": false,
+    "generated_schema_pin": false
+  }
+}

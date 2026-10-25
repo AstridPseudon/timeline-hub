@@ -1,0 +1,10 @@
+{
+  "status": "complete_with_http_unverified",
+  "direct_v2_nodes": {"passed": 3, "failed": 0},
+  "http_node": {
+    "nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart",
+    "executed": false,
+    "reason": "central integration service stopped before collection in all available integration-enabled attempts"
+  },
+  "full_suite": "not requested"
+}
