@@ -212,15 +212,15 @@ class SyncGatewayTest(unittest.TestCase):
             self.assertEqual(gateway.resolve(), view.resolve())
             self.assertTrue((view / "SKILL.md").is_file())
             pack_link = view / "packs" / "foley"
-            self.assertTrue(pack_link.is_symlink())
+            self.assertTrue(pack_link.is_dir())
+            self.assertFalse(pack_link.is_symlink())
             self.assertTrue((pack_link / "SKILL.md").is_file())
             video_skill = view / "packs" / "video_editing" / "SKILL.md"
-            video_source = next(
-                descriptor.skill_md for descriptor in _descriptors()
-                if descriptor.pack_id == "video_editing"
-            )
             self.assertTrue(video_skill.resolve().is_file())
-            self.assertEqual(video_skill.read_bytes(), video_source.read_bytes())
+            self.assertIn(
+                str(discovery.PACKS_DIR / "video_editing/actions/event_talks/run.py"),
+                video_skill.read_text(encoding="utf-8"),
+            )
             self.assertIn(registry.BEGIN_MARKER, (view / "creative-work" / "references" / "packs.md").read_text(encoding="utf-8"))
             for route in (
                 video_skill,

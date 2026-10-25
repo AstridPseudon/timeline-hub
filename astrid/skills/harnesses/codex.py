@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 from typing import Iterable, Optional
 
+from ..commands import rewrite_commands
 from ..discovery import SkillDescriptor
 from .base import (
     Action,
@@ -141,7 +142,7 @@ class CodexAdapter(HarnessAdapter):
                 desc_line = desc[0] if desc else ""
                 lines.append(f"- `{descriptor.pack_id}` ({target}): {desc_line}".rstrip())
             inner = "\n".join(lines)
-        return f"{BEGIN_MARKER}\n# Astrid skills\n\n{inner}\n{END_MARKER}"
+        return rewrite_commands(f"{BEGIN_MARKER}\n# Astrid skills\n\n{inner}\n{END_MARKER}")
 
     @staticmethod
     def _merge_block(existing: str, block: str) -> str:
