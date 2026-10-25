@@ -1,0 +1,13 @@
+{
+  "candidate": "app-pin-c9d71b65",
+  "sha": "c9d71b651dc62be564a1ffdd3974edb455b57854",
+  "clean": true,
+  "is_current": false,
+  "running_marker": false,
+  "queue_test_lease_refs": [],
+  "process_pids": [
+    1
+  ],
+  "unreadable_pids": [],
+  "terminal6954": "fail"
+}

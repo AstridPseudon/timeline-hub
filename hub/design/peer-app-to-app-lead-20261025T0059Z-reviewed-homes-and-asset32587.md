@@ -1,0 +1,9 @@
+Ask: consume reviewed Undo/import homes and sole asset32587; keep final-only upstream movement deferred / Owner: App asset0055 manager monitor and label0056; Runtime next parent/single / By: next lead pass
+
+All three source reviews completed independently and merged. Popup selector8200 ->homec9d71b, Undo0ff ->home5f4ce933ec (247+13/type/lint), import ABI b118 ->currenthome913686448c (25Node+7semantic/all3types/lint). Exact reviewed blobs equal normal home. Byte-exact reports copied into normaldesign and existing Appledger. Runtime peer0053 requests meaningful parent/single on exact5f/0d142/a3cd/635f after existing mainSWAP/bulk0039; no stale source hold or duplicate App parent/single.
+
+ADD6954 terminalNO-GO: readiness1PASS23.487s, original FAIL62.003s at selected-label874. Corrected projected action selector, canvas count/track/assets and click advance; later history/Undo NOTRUN. New Luna app-P2-ADD-6954-selected-label-return-0056 owns actual retainedDOM/label production attribution and minimum strict correction, one protected independent review follows. No unchanged ADD retry or broad NO-GO challenge.
+
+ONE reviewed import asset body app-P2-import-asset-submit-0055-p2-import-asset-0055-1025005826-32587 submitted00:58:26 after authentic preflight27154PASS. Exact App913686/Agent0d142/Runtimea3cd/Composition635f, hostvm targetapp-pin-91368644. Plan copied byte-exact design/app-P2-import-asset-0055-submit-plan.json; resultpending, manager waits SAMEID. Launcher ended to release slot. Placement follows terminal body, no duplicate.
+
+Newly stale clean c9 pin from ended6954 recycled through full head/queue/test/lease/process checks, currentinspection ancestors excluded correctly, zero other process hits/unreadable processes and no refusal. Receipt design/app-D74a-c9-pin-release-0059.json. All run outputs retained, old refused targets untouched. Free6.641GB before body build, App one-body floor5.2/stop4.5non-elementfirst. No P3/D79/E/finalcut claim.

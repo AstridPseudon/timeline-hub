@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "suite": "p2-register-asset",
+  "pins": {
+    "app": {
+      "head": "913686448cafbb63dfba5d8053cb725e1140bb07",
+      "tree": "963b621de5f3b4235895b543bfa949a080e4cc0c",
+      "checkout": "/home/user/work/wt/app-pin-91368644"
+    },
+    "agent": {
+      "head": "0d142f79518ba4ec20eb195657ccc7eb6e903fc3",
+      "tree": "f490451a3fa92f847a9ff2d26daac9e1157925e3",
+      "checkout": "/home/user/work/wt/agt-pin-0d142f79"
+    },
+    "runtime": {
+      "head": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de",
+      "tree": "64bb0caf0b7b950e02c4075077868a3dcd12ee06",
+      "checkout": "/home/user/work/wt/rt-pin-a3cd1a32"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0"
+    }
+  },
+  "checkouts": {
+    "app": "/home/user/work/wt/app-pin-91368644",
+    "agent": "/home/user/work/wt/agt-pin-0d142f79",
+    "runtime": "/home/user/work/wt/rt-pin-a3cd1a32",
+    "composition": "/home/user/work/wt/vw-pin-635f4de0"
+  },
+  "target": "app-pin-91368644",
+  "suites": {
+    "normal": "p2-import-asset-0055",
+    "preflight": "p2-import-asset-0055-preflight"
+  },
+  "recipes": {
+    "preflight": "D66_APP_SHA='913686448cafbb63dfba5d8053cb725e1140bb07' D66_APP_TREE='963b621de5f3b4235895b543bfa949a080e4cc0c' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-91368644' D66_AGENT_SHA='0d142f79518ba4ec20eb195657ccc7eb6e903fc3' D66_AGENT_TREE='f490451a3fa92f847a9ff2d26daac9e1157925e3' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-0d142f79' D66_RUNTIME_SHA='a3cd1a3214fa1632879c21d82d1abb9ea720b1de' D66_RUNTIME_TREE='64bb0caf0b7b950e02c4075077868a3dcd12ee06' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-a3cd1a32' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-register-asset' --preflight",
+    "normal": "D66_APP_SHA='913686448cafbb63dfba5d8053cb725e1140bb07' D66_APP_TREE='963b621de5f3b4235895b543bfa949a080e4cc0c' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-91368644' D66_AGENT_SHA='0d142f79518ba4ec20eb195657ccc7eb6e903fc3' D66_AGENT_TREE='f490451a3fa92f847a9ff2d26daac9e1157925e3' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-0d142f79' D66_RUNTIME_SHA='a3cd1a3214fa1632879c21d82d1abb9ea720b1de' D66_RUNTIME_TREE='64bb0caf0b7b950e02c4075077868a3dcd12ee06' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-a3cd1a32' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-register-asset'"
+  },
+  "preflight": {
+    "id": "app-P2-import-asset-submit-0055-p2-import-asset-0055-preflight-1025005743-27154",
+    "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-P2-import-asset-submit-0055-p2-import-asset-0055-preflight-1025005743-27154",
+    "status": "pass"
+  },
+  "normal": {
+    "id": "app-P2-import-asset-submit-0055-p2-import-asset-0055-1025005826-32587",
+    "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-P2-import-asset-submit-0055-p2-import-asset-0055-1025005826-32587"
+  }
+}

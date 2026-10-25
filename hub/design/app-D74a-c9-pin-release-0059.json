@@ -1,0 +1,18 @@
+{
+  "candidate": "app-pin-c9d71b65",
+  "sha": "c9d71b651dc62be564a1ffdd3974edb455b57854",
+  "clean": true,
+  "is_current": false,
+  "refs": [],
+  "process_pids": [],
+  "unreadable_pids": [],
+  "inspection_ancestor_pids": [
+    1,
+    2,
+    8
+  ],
+  "terminal6954": "fail",
+  "eligible": true,
+  "recycle_stdout": "recycled app-pin-c9d71b65\n",
+  "recycle_exit": 0
+}
