@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T07:56:23Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 3m -->
-# agent board, 2026-10-25T07:53:26Z
+<!-- agent | 2026-10-25T07:59:43Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 1m -->
+# agent board, 2026-10-25T07:58:29Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -284,8 +284,8 @@
 | F D108 D07 coverage | Preserve timing audio and window predicates | Luna / independent Luna | D108 terminal before needed proof | merging | Author0732; review0737 A PASS | Normalb943 adds three faithful current tests. All old predicates and existing ASTs conserved; statics pass. Functional proof pending on exact source. | b943270a9e |
 | U2 D108 Windows | Restore exact Windows registration test | Luna / independent Luna | Proper F-final platform proof | merging | Author0742; review0745 PASS | Normald0ec retains exact upstream registration and unchanged cleanup tests. Statics and source review pass; no Windows functional proof. | d0ecf1d69a |
 | F D07 source receipt | Record exact pending coverage | Luna | Normalb943 and review0737 A | merged | agt-F-D108-D07-source-receipt-0743 PASS | Exact three mappings and handoff copies; prefix CAS, hash and JSON checks pass. Source qualified, behavior pending; no D69 closure. | Evidence only |
-| F D108 assertion map | Qualify each changed assertion signal | Luna read only | Exact applied audit membership | review | Author0747; independent0754 | Author reports missing129/113/287 membership; fallback189/119/310 remains unqualified. Review checks source direction, hashes and omitted rows. | Evidence only |
-| F D108 baseline prep | Prepare exact upstream comparison input | Luna source only | Existing upstream924 XML and D63 map | doing | agt-F-D108-baseline-prep-0756 | Exact baseline and rename inputs only; current count awaits MAIN terminal. No body or current classification. | Evidence only |
+| F D108 assertion map | Qualify each changed assertion signal | Luna read only | Exact applied audit membership | doing | Review0754 FAIL; return0758 | Four report errors: wrong scope, reversed counts, mislabeled hash and missing rows. Same-branch first return active; authoritative membership still missing. | Evidence only |
+| F D108 baseline prep | Prepare exact upstream comparison input | Luna source only | Authentic full upstream924 XML | review | Author0756; independent0758 | Author returned historical276 only; full-node completeness under review. Existing authentic upstream full index requested via peer0755. | Evidence only |
 
 Integration: Actual normald0ecf1d69a contains reviewed D07 and Windows test-only additions; production remains released070dfc5ef4 and adopts released Runtime1daca; all15 mappings unchanged. Includes normal mirror5554, D10101d516, media1a977, sheetCLI b948 and graph8c88. D103d588/S3badfe/legacy read79c94 and critical D110 normally merged. Historical D110 home tree605641 equals its independent review; later D07 and Windows changes tests only.
 core open: UNKNOWN current count until D108 terminal; historical424 is not a current numeric result. P4 independent GO28.101s on786/0c62/1e34/635f; every per-note time UNKNOWN. P2 and final D59 P1-P5/core,D69/genuine installed render still required.
@@ -295,12 +295,12 @@ D100: Runtime receiver0634 has exact dd2fc new26 with lock1daca; actual old30890
 Restore: Exact44cf combines reviewed restore and two word-choice originals on corrected mirror and released1daca. Prior new regression and strict3 PASS retained; only ID5 and choices3/9 owed. No four-control or unchanged60 repeat.
 D107: Sol0659 exact2e3331 independent protected0715 PASS_SOURCE. Exact legacy read remains normalb27ff; original ten unchanged. Current equivalent still depends on held2154. No normal merge or functional closure.
 Safety: Withdrawn D88 action stopped. D93 original credential/session/scope limits persist. D98a diagnostic spent; no new observer/body. D106 denies hub writes; all new worker outputs use exact ORCH paths.
-Disk: Free5.45GiB; no eligible clean ended Agent tree; only old dirty G2 remains. Compact not run: script writes sessions under codex, forbidden by D108a. Sweep3 complete; D89 source/review6 above5.0GB, heavy1 above5.2GB, nothing new below4.5GB. Sweep3 removed0 with broken-pipe warnings; compact packed0; ended clean nonKEEP source trees auto-recycled. Only old dirty G2 remains; prior refused targets untouched.
+Disk: Free5.27GiB; no eligible clean ended Agent tree, old dirty G2 retained. Sweep3 removed0, broken-pipe warnings. Compact not run because it writes codex sessions, forbidden by D108a. D89 source6 above5GB, heavy1 above5.2GB, no starts below4.5GB.
 Blockers: Agent D107 — Independent0715 PASS_SOURCE; current test remains held on2154 and D108 terminal before needed MAIN proof. Receipt0721 PASS; no effective retirement.
 Blockers: Runtime D108 — Exact expanded command published with live_scene and all22 actual inventory roots. MAIN agent-core-full owns captured tuple/body; terminal pending.
 Blockers: Agent D69 — D07 normalb943 and Windows normald0ec source independently qualified. Exact assertion review0754 and baseline prep0756 active; functional/platform proof and final source accounting owed.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
-Next ready: MAIN agent-core-full after normal D89 kit correction; exact command published. assertion review0754 and baseline prep0756 active; Windows normald0ec protected PASS. App D110 adopted6e21; full P2 awaits qualified D111 and capture fix. Family bodies paused.
-live 2 / cap 6; ready-undispatched 0 eligible local starts. Assertion review0754 and baseline prep0756 active; Windows normald0ec protected PASS; source receipt0743 PASS; batch0737 A PASS, B live Windows gap; protected0715 PASS. Duplicate0718 stopped. MAIN D108 owns full core. No manager product/test/generated/pin edits or test execution.
-Inbox consumed through1479346 bytes. Updated 2026-10-25T07:53:26Z.
+Next ready: MAIN agent-core-full via installed D89 runner and exact published command. Assertion return0758 and baseline review0758 active; every completed source has its required reviewer. Family bodies paused.
+live 2 / cap 6; ready-undispatched 0 eligible local starts. Assertion first return0758 and baseline independent0758 active. MAIN full-core sole controller0748 uses installed D89 runner. No manager product/test/generated/pin edits or body execution.
+Inbox consumed through1479346 bytes. Updated 2026-10-25T07:58:29Z.
 Later: U4a D111 — Runtime memo1171212 security0729 FAIL; wholepath0729 and measured Sol0744 own genuine scaling follow-through. Agent adoption waits actual qualified release/security/native-seed smoke; no duplicate writer or P2 single.
