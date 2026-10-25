@@ -15,6 +15,22 @@ Terminal outcome and D63/upstream-924 classification will be appended after
 short-polling the existing service. No product or test source files were
 changed.
 
+The zero-body setup fix was installed via the existing CAS/backup/atomic
+mechanism and parsed-row `bash -n` passed again. The retained evidence
+manifest is byte-identical to the private input manifest at
+`/tmp/w-f749cb78cc/agent-core-full-input.manifest`; only the launcher input
+path changed.
+
+Retry service ID: `agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016`
+
+Retry result directory:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016`
+
+While the admitted body is running, available space reached
+`5,183,291,392` bytes at `2026-10-25T08:20Z`, below the 5,200,000,000-byte
+heavy admission floor. The run is left untouched; no shared bytes were
+recycled or modified.
+
 ## Setup retry
 
 The first request terminated before pytest with exit 1 because the launcher
@@ -23,3 +39,8 @@ path. The log records the exact `cp: ... are the same file` diagnostic; no
 pytest body was started. The same manifest bytes are retained in evidence,
 and the registered command is being corrected to use a private input path
 outside the evidence directory before the single allowed zero-body retry.
+
+At `2026-10-25T08:21Z`, available space was `5,042,421,760` bytes while the
+retry body continued and its log was growing. This is the latest exact
+below-floor figure reported to the manager; no recycling, cache deletion, or
+interruption was performed.

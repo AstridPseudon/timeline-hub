@@ -1,0 +1,73 @@
+{
+  "schema": "timeline.agent.d108.baseline-rereview.handoff.v1",
+  "task": "agt-F-D108-baseline-rereview-0813",
+  "base": "tl/integration",
+  "decision": "FAIL_SECOND",
+  "review_type": "independent first-return rereview",
+  "evidence": "workers/agt-F-D108-baseline-rereview-0813/evidence/review-validation.json",
+  "authentic_xml_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+  "xml": {
+    "testcase_rows": 12517,
+    "outcomes": {"PASS": 12396, "FAIL": 91, "ERROR": 14, "SKIP": 16},
+    "subtests": 566,
+    "suite_total": 13083,
+    "arithmetic": "12517 + 566 = 13083",
+    "duplicate_raw_ids": 0,
+    "terminal": "FAIL/exit 1"
+  },
+  "current_join": {
+    "current_rows": 9268,
+    "exact": 2956,
+    "absent": 6312,
+    "ambiguous": 0,
+    "unique_ids": true,
+    "current_membership_hashes": "PASS",
+    "outcome_source_crosschecks": "PASS",
+    "parameter_class_function_collisions_preserved": true,
+    "rename_distinctions": {"body_equal": 65, "name_only": 17, "no_match": 6230}
+  },
+  "historical": {
+    "rows": 276,
+    "exact": 75,
+    "unknown": 201,
+    "outcomes": {"FAIL": 66, "PASS": 9},
+    "separate": true,
+    "D63_order_181_refs_corrected_in_return_json": true
+  },
+  "artifact_hashes": {
+    "evidence_full_index_actual": "d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a",
+    "published_full_index_actual": "075f630611aad412b8e2fda861e807800d8756dbd31aed19acc0c7d43fe7b456",
+    "published_current_joins_actual": "0fbcdf46e9272a2a3bd1e3f275cfa09f2887e50bef848f41c68c2c71a8ef12c5",
+    "summary_actual": "7af40efb74bc171142e5a89f7cc25b17c710001c7dba61bb8e04c971764dbfd7",
+    "return_json_claims_evidence_full_index": "075f630611aad412b8e2fda861e807800d8756dbd31aed19acc0c7d43fe7b456",
+    "return_json_claims_summary": "e92bcf07eff73e98b2e837a9305e0bd89915a5030a52fb3b0764ce41c2eb5eb5"
+  },
+  "findings": [
+    {
+      "id": "D108-ARTIFACT-CUSTODY",
+      "severity": "blocking",
+      "finding": "Successor JSON hash claims do not match actual evidence bytes: full index claim 075f... versus actual d6ed...; summary claim e92bc... versus actual 7af40...."
+    },
+    {
+      "id": "D108-PUBLISHED-SOURCE-RESOLUTION",
+      "severity": "blocking",
+      "finding": "Published full index differs from author evidence in 23 rows, ordinals 12309-12331. These tools/astrid-rename rows have file/line blanked and source_location_method set to not_resolved_in_authentic924_tree, although the files exist in the real 924 tree."
+    }
+  ],
+  "preserved_boundaries": {
+    "runtime_full_run_isolation": "UNCERTAIN",
+    "upstream_terminal": "FAIL",
+    "D13_ENV": true,
+    "D23_deferred": true,
+    "current_failure_classification": "WITHHELD_UNTIL_D108_TERMINAL",
+    "current_core_open_count": "WITHHELD_UNTIL_D108_TERMINAL",
+    "technical_index_pass_is_not_current_gate_proof": true
+  },
+  "minimal_hard_scope": [
+    "Publish one canonical full index from authentic XML plus the real 924 tree, retaining all 12517 source mappings.",
+    "Recompute all dependent JSON/MD hash claims and verify every path/hash pair against actual bytes.",
+    "Keep current classification/core count withheld and preserve Runtime UNCERTAIN, upstream FAIL, D13 ENV, and D23 deferred."
+  ],
+  "product_tests": "not applicable; not run",
+  "source_or_product_changes": false
+}
