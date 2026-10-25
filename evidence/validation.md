@@ -55,3 +55,15 @@ D128's child-maker custody refusal remains immutable and is not a route for this
 worker. The dry controls are accepted only for the exact positive/poison
 preflight assertions; they provide no full-body, behavior, or ship-grade
 custody credit.
+
+## Independent D134 review
+
+The accepted service `agent-agent-core-full-1025191128-18455` is terminal exit 1, preflight exit 0, with one body. Operator packet commit/tree: `abf555e3638955ae90f796815fd66ed6d6e95e91` / `2b46e9b653479acc9d77029ac552e2c88743b7a4`.
+
+The durable service log SHA-256 is `65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e`; safe short-summary parsing found 190 FAILED, 180 ERROR, 370 unique bad IDs, and no duplicates. In-place baseline 30693 parsing reproduced `error/error=180`, `failed/error=36`, `failed/failed=111`, `failed/passed=43`. In-place upstream 9244377 parsing reproduced `failed/failed=16`, `failed/passed=2`, `error/missing=180`, `failed/missing=172`.
+
+Named `08e6b905` source checks resolved all current bad-ID source blobs at current `a4e016b6`; 344 files were absent and 26 present at the named tip. Fourteen retained D118 REG14 IDs are preserved in `per-id.tsv` and all are current FAIL.
+
+The retained REG14 evidence preserves the original pristine `26621` and independent `1307` comparisons; this actual run does not close REG14. The operator's D134 START NOW receipt is present. No independent C0 request/response packet was retained for caller-contract behavior validation.
+
+Actual XML, raw runner receipt, and start/stop disk witness were unavailable after finalization. XML-level duplicate/collection/subtest checks and final source custody are therefore UNKNOWN/NOT PASS. No product/pristine tests, body, collection, dry run, retry, or alternate route was executed.

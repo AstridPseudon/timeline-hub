@@ -82,5 +82,22 @@
     "poison_manifest_sha256": "f41fef0062e6c1c3ceb766ca9fdb144d649d1408221a0ac35d4163f6525e6dad",
     "poison_diff": "only agent_sha differs; see manifest-diff.json",
     "old_manifest_disposition": "070dfc/f4d6 manifest artifacts rejected; no normal-head substitution"
+  },
+  "review": {
+    "operator_final_commit": "abf555e3638955ae90f796815fd66ed6d6e95e91",
+    "operator_final_tree": "2b46e9b653479acc9d77029ac552e2c88743b7a4",
+    "service_id": "agent-agent-core-full-1025191128-18455",
+    "service_snapshot_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "xml_sha256_claimed": "f5759f48e82d209051611736d15ea625c84fdaebb210d9a5f23b046b84c0abf3",
+    "xml_available": false,
+    "service_log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "recipe_sha256": "3d2333d9d17997512f614f16badf10c01eebf477aabd2466164a19ce41e2b398",
+    "launcher_git_blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "maker_git_blob": "fbde96168dca681a76cff1526c23b8d0b74001eb",
+    "maker_sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c",
+    "source_manifest_sha256": "b539c6bda83fcef7222a3be667a74465317fe05b8de359dc6e7784db5d9b676d",
+    "poison_manifest_sha256": "f41fef0062e6c1c3ceb766ca9fdb144d649d1408221a0ac35d4163f6525e6dad",
+    "final_source_custody": "NOT_PASS_XML_AND_DISK_WITNESS_UNAVAILABLE"
   }
 }

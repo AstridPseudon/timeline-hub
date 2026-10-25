@@ -14,3 +14,13 @@
 - No full body, collection, request-test, package acquisition, child build,
   profile build, guard bypass, alternate environment, production Store, or
   suite-row mutation was performed. This remains preflight evidence only.
+
+## D134 independent result review
+
+Reviewed operator commit `abf555e3638955ae90f796815fd66ed6d6e95e91` for
+`agent-agent-core-full-1025191128-18455`; treated 29996 as setup-only and
+18455 as the sole actual body. Independently reconciled the durable log,
+30693, and upstream 9244377; checked source paths at `a4e016b6` versus named
+`08e6b905`; preserved D118 REG14. All 14 current REG14 outcomes are FAIL,
+so REG14 remains open and retirement remains 0. Actual XML/raw runner/disk
+witness are unavailable; custody/XML review remains NOT PASS/UNKNOWN.
