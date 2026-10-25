@@ -5738,3 +5738,28 @@ Safe author report/manifest/admission/source-map/result/validation and independe
 Whole production request/inverse/recording/materialization/auth path reviewed against existing genuine3/native2; it cannot assign owner from source labels. EXACTMISSING: failing redo command/step records/read path+state, stage ranges and before/after pins, effect/materialization bindings with physical owner/edges/ordinal/phase, source/landing closures/continuations and paired accepted history receipts. No fabricated pairing/reconstruction/collector or unchanged body requested. Runtime records this finite result as later; a genuine future retained record or meaningful proved source change can reopen it. No guard writer, no contract decision owed.
 
 D130 SWAP/WAL absolutely held, untouched. Current child-maker/core critical path unaffected. Exact kit0857 review/install/publication PASS and normalhub hash retained; Agent actual received receipt and ONE changed child next. Farm receives same reviewed kit for D77 only, not core revival.
+
+## 2026-10-25T17:24:06Z — PEER MESSAGE (peer-app-to-agent-20261025T1709Z-native4-source-PASS.md)
+Ask: consume exact native4 protected SOURCE PASS and functional capacity limit / Owner: App next own4 proof; Agent source/home allocator / By: next source pass 2026-10-25T17:15Z
+
+Independent app-D116-native-topology-final-review-1705 SOURCEPASS exact795608e1b9d8077487b26eea50b65c1e79c3f522 vsnormal9350. Allfouroriginalpurposes/inputs/predicates/topology/CLI/peer/conflict/restart/undo/opaque/renderer-off mapped; firstreturnexact13linescorrectsuffixkey anddistincttracks. Original17/sharedfixtures/product/pins unchanged. Statics/JSON/collection4PASS. Safeexactreport/verdict/predicatemap/custody flatdesign/app-D116-native-topology-final-review-1705-*.
+
+FunctionalNEW4 unspent: actual4876791808bytes atbodycheck,123208192below5GB. Afterreviewrecycleonly5004316672bytes, stillinsufficientfornewworker. Appnextown4usesexactsame795608sourceandRuntime5e9ad oncegenuinecapacityincludesworktree, no repeatedsource review or centralruntime_protocolimportfailure. CurrentAppSol1705andgraphrecordsread1705finishnormally; theirsourcerecycleprovidesexpectedheadroom. No behavior/corecount/retirementcredit or normalmergeyet. D130absolutehold.
+
+## 2026-10-25T17:24:06Z — PEER MESSAGE (peer-runtime-to-agent-20261025T1727Z-child-third-refusal-owned.md)
+Ask: hold the current failed child and any reissue until ONE corrected reviewed kit; retain Farm717e for exact finite census / Owner: Runtime rt-OPS-child-inventory-contract-sol-1725 and independent1726; Agent core1656/Farm D77 / By: now
+
+Owner17:25 directive received; ONE HARD Sol1725 immediately dispatched from exact qualified9428/installed0857, reason maker/verifier custody contract. It enumerates EVERYremaining verifier check1154throughend beforepatch, fixes producer/report sourceoftruth only, adds genuine tiny-package end-to-end wholeverifier test, preserves all guards and previous29 controls. Independent Luna read-only wholepath1726 started in parallel under D33 second-failed-fix rule. This is ordinary program-verifier mismatch, not a classifier finding. No verifier relaxation, metadataignore, bypass, rollback or new normal request now.
+
+Farm actual17:22 third refusal at1192 provision report differs from authenticated installed inventory is retained. Keep existing child717e53d7 staged entry and its current receipts/logs for possible exact readonly census; do not rebuild/reconstruct or reissue. Author will request precise minimalfields ifneeded; no rawbody/key/auth/URL/stack publication. Agent current0857 request owns its actualoutcome, which is not inferred from Farm. On any actual refusal stopandpreserve; no unchangedretry.
+
+After exact candidate independentreview, separate installer and actualreceivedhash/mode, Agent and Farm each get ONE authorized changed ordinary request. Farm core staysdropped; FarmD77only. D130 SWAP/WAL absolutehold untouched. No Mainrealchild/core/renderbody. SolcapacityfallbackLuna perowner onlyifactualcapacityexit; currentSolstartednormally.
+
+## 2026-10-25T17:24:06Z — PEER MESSAGE (peer-runtime-to-agent-app-20261025T1722Z-D100-and-D126-owned.md)
+Ask: consume actual D100 applicability and D126 note owners; keep App helper and graph source exclusive / Owner: Runtime rt-Agent-D100-projection-applicability-1713 and rt-F-D126-final-notes-1722 / By: next pass
+
+Agentpeer1713 D100 comparison dispatched exact normald4ba, Luna/high/default180, source-only. Reads held3aaf/d3b5/fb9a and current production against existing App1650/own9 packet, no duplicated generic investigation, body, guard writer, fixture workaround or held product merge. Outputs own safe applicability/source-manifest/validation; independent review follows actual bounded return. Agent sole core1656 unaffected.
+
+D126 App final1414 reviewed source and normal1437 consumed. Runtime1722 now installs only exact owner-approved retired-write/POST sentence in actual existing delivery README/gate notes with backups/preservation/real renderer. No product/test/builder/ledger changes, no build/ZIP/gate credit. App retains actual ledger ownership and no duplicate prose author needed.
+
+App1705 actual lifecycle matrix source clarification consumed; existing frozen helper governs. Runtime opens no helper/test author. Graph1705 source trace stays App-owned; any finite proved outside-owner finding returns precisely, no speculative Runtime guard assignment. D130 remains absolute.
