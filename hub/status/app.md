@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T04:26:18Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
-# app board, 2026-10-25T04:25Z
+<!-- app | 2026-10-25T04:30:00Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# app board, 2026-10-25T04:30Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -205,15 +205,15 @@
 
 | P2-placement-setup-review | Audit shared finite fixture scope | Luna independent | D96 every-caller condition | merged | Exact0358 PASS; caller0403 global FAIL | All17 callers mapped. Popup adjacency depends12s, so global patch stays unapplied. D96 default12 placement-only fallback dispatched. | Read only |
 | P2-D96-placement | Qualify placement-only finite setup | Luna; service | Actual26522 terminal | gated:source-fix | Actual26522; source0424 | Preflight18613/readiness PASS. Original FAIL at parent payload equality1064 after acceptance/canonical readback. Later tail unqualified. | App1e34f8eac5 |
-| P2-placement26522-source | Attribute exact canonical parent difference | Luna | Retained actual26522 | doing | app-P2-placement26522-canonical-source-0424 | Same-ID actual evidence first; minimum strict source-derived proposal and full tail audit. No body repeat or inferred product cause. | Base1e34f8eac5 |
+| P2-placement26522-source | Qualify exact canonical parent projection | Luna; independent | Author0424 complete | review | app-P2-placement26522-canonical-review-0430 | Author123 receipt/3 setup controls,3 types/lint PASS. Reviewer challenges full canonical tail and unchanged shot equality before any merge or body. | Candidate held |
 Integration: Normal App1e34f8eac5 includes exact independently reviewed D96 three-file fixture change. Placement alone14s; all17 other calls default12. Original innerbody, waits, native assertions preserved.
 core open: Placement26522 accepts and reaches canonical readback, then strict parent payload equality1064 fails; source0424 owns attribution. Three of eight isolated gestures independently GO on recorded tuples: single-clear5678, registerAsset27438 and bulk-clear21852. Five remain. D94a now requires full App tour directly after D94 adoption; isolate only failures. Element3111 applied433 fails5s. ADD11713 advances past selection and reaches native Undo503. SWAP9674 also failed Undo503; no shared cause proved. Parent12208 has no intended POST; current-path qualification0346 consumes actual pointer packet. Placement12145 is invalid under the12s fixture. D96 global14s rejected due popup12s adjacency; independent final0411 PASS applied placement-only14s. Sole placement original0419 active.
 regressions: No newly proven regression. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Final cut — Qualified Runtime D94 adoption precedes full App P2 directly; isolate only its failed gestures. Final pinned P1–P5/core and genuine installed render still precede ZIP.
 Blockers: Runtime source — Element5s and native Undo503 remain open. Runtime D94 and inverse-auth owners continue; App same-ID11713 finite facts0346 published. D94a full-tour order adopted.
-Next ready: Source0424 owns actual26522 first difference; independent protected review follows source completion. D94/D97 must release before normal adoption and FULL P2 directly; isolate only failed gestures. Element/parent/SWAP/ADD originals held. Bulk21852 GO retained.
-live 1 / cap 6; ready-undispatched 0. Source0424 dispatched; no active App body. D94a holds four Runtime-stalled originals until adoption and full tour.
+Next ready: Review0430 owns complete parent-projection proposal, including all remaining canonical assertions. D94/D97 must release before normal adoption and FULL P2 directly; isolate only failed gestures. Element/parent/SWAP/ADD originals held. Bulk21852 GO retained.
+live 1 / cap 6; ready-undispatched 0. Independent review0430 assigned; no active App body. D94a holds four Runtime-stalled originals until adoption and full tour.
 Capacity: Current free6.75GB after placement terminal. Fresh ended clean nonKEEP scan zero eligible. Every ended nonKEEP local App worktree checked; zero clean eligible trees remain. Earlier35 pins recycled normally with all outputs, branches and reports retained. Old dirty and prior-refused targets untouched.
 Inbox consumed through1902788 bytes. Runtime parent artifact wait cleared by normal hub safe packet0328; unredacted worker log remains private. No repeated cleanup denial, cost0215 or withdrawn D88 route.
 
