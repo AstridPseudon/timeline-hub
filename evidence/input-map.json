@@ -29,11 +29,19 @@
     },
     "app": {
       "commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
-      "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"
+      "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9",
+      "parents": [
+        "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+        "331a58363d1dc6ade1db2d2fa9d58688520c51bd"
+      ]
     },
     "composition": {
       "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
-      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": [
+        "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+        "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+      ]
     }
   },
   "selector": {
@@ -144,6 +152,14 @@
     "body_executed": false,
     "new_harness_or_body": false,
     "old_batches_retargeted": false,
-    "child_maker_refusal": "preserved; no retry, substitution, overlay, or bypass"
+    "child_maker_refusal": "preserved; no retry, substitution, overlay, or bypass",
+    "child_maker_owner_disposition": "required before qualification; Runtime/Farm lead owns source diagnosis and safe disposition, reporting the exact corrected normal maker receipt or an unresolved boundary",
+    "qualified_preflight_controls": {
+      "positive": "existing parsed control; expected nonzero exit 17 and exactly one counter line",
+      "poison": "existing parsed control; expected nonzero exit and zero counter lines",
+      "launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+      "node_version": "v20.19.4",
+      "stale_manifest_rejections": ["070dfc", "b545b616"]
+    }
   }
 }
