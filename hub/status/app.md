@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T08:54:22Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 3m -->
-# app board, 2026-10-25T08:51Z
+<!-- app | 2026-10-25T08:58:28Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
+# app board, 2026-10-25T08:55Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -277,6 +277,8 @@
 
 | D74-D113-stale-pin | Retire old completed App tuple pin | Manager; host input | Host0845 and fresh static guards | merged | Normal recycle0845 | Old04be pin recycled; zero refusals. Net165818368bytes; free6124007424bytes. All outputs/branches/reports kept. | No source change |
 
+| P2-D114-asset-current | Qualify skipped asset original on recorded tuple | Luna; service; independent verdict next | D114 explicit04be/070dfc/1daca/635f | doing | app-P2-D114-register-asset-submit-0855 | Normal source-preflight then one original; actual service ID follows persistent plan. All output kept through independent verdict. | Fixed04be tuple |
+
 Integration: App dc8c809cd9 normal merge includes exact reviewed D113 candidate d2d8; entire tree equals independently tested author. Only two added placement UI lines above prior04beed. Runtime lockc916 remains production-equivalent to released1daca; AgentD110 adopted. No D111 memo or D112 candidate adopted.
 core open: 3 — SWAP, element and placement lack GO. ADD, parent, single and bulk have independent full-tail caseGO in19078. Older asset27438 GO is a separate tuple; current full tour and current asset proof remain owed.
 regressions: D102 context and D110 inverse KeyError source repairs released. Current SWAP initial409 is Runtime D112; placement error is a protected original modal sequence, not a demonstrated product defect.
@@ -285,9 +287,9 @@ Decision: D113 conditions satisfied and source merged normally: upstream modal e
 Blockers: Runtime D111a — profile0811 diagnostic integrity PASS, dominant-root/wall-share claim FAIL in independent0819. Request-scoped read/detach measurement precedes any optimization; memo remains withdrawn.
 Blockers: Runtime D112 — initial SWAP409 store-identity fallback source correction, security review and qualified release precede adoption and next full tour.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
-Next ready: No App source/review/body eligible now. On qualified Runtime D111a/D112 release, immediately dispatch normal tool adoption on current Appdc8c, then authorized full P2; D113 rides that full tour, no isolated placement body.
-live 0 / cap 6; ready-undispatched 0; core open: 3. Latest dispatcher scan has no running App worker or pending App source request. Normal D113 source merged; no heavy App body.
+Next ready: D114 isolated asset producer0855 is dispatched now, normal checkout04be re-requested. Expose actual ID then independent verdict on servicePASS. D111a/D112 qualified releases then normal adoption and full P2; no isolated placement body.
+live 1 / cap 6; ready-undispatched 0; core open: 3. D114 explicit asset worker0855 queued, sole App heavy body reservation. No other original service request live.
 Capacity: Free6.10GB at fresh scan. Host0845 CLEAR plus fresh guards and namedKEEP/binrecycle retired old04be pin, zero refusals/net166MB. All outputs/branches/reports/current heads/other pins retained. No ended clean non-KEEP App tree eligible; dirty/prior-refused targets untouched.
-Inbox consumed through2031337 bytes. Delayed self-peers0830/0832 are superseded by formal D113 and normal home0839. Runtime owner board rechecked: D111a measurement first-return and D112 separate native/security active; no release. Source rows and cleanup complete; no safety or permission refusal.
+Inbox consumed through2032444 bytes, including ownerD114. Immediately dispatched asset0855 on exact04be/070dfc/1daca/635f, normal App04be re-checkout after prior cleanup. D113 home remainsdc8c. D111a/D112 candidates unreleased; no extra adoption/source gate.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).

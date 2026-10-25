@@ -1,0 +1,83 @@
+{
+  "checkpoint": "submitted-and-preflight-pass",
+  "suite_selector": "p2-register-asset",
+  "selector_count": 1,
+  "selector_name": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$",
+  "service_target": "app-pin-04beedcd",
+  "preflight": {
+    "id": "app-pin-04beedcd-p2-d114-asset-0855-preflight-1025085706-9872",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-preflight-1025085706-9872",
+    "status": "PASS",
+    "exit": 0,
+    "duration_seconds": 3,
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-preflight-1025085706-9872/d66/manifest.json"
+  },
+  "normal": {
+    "id": "app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712",
+    "status": "queued",
+    "submitted_after_preflight": true,
+    "no_duplicate_or_retarget": true
+  },
+  "tuple": {
+    "app": {
+      "sha": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+      "tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d",
+      "checkout": "/home/user/work/wt/app-pin-04beedcd",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-04beedcd18b8abb49502f65cd3facaafbe93db4e"
+    },
+    "agent": {
+      "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+    },
+    "runtime": {
+      "sha": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "checkout": "/home/user/work/wt/rt-pin-1daca2a3",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-1daca2a33f6d7b10053e07c539a54843e3984e19"
+    },
+    "composition": {
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    }
+  },
+  "recipe_sha256": {
+    "preflight": "4d8cb2a6e44c49839358e532c2fdd6a04d11a1b0ab151e5bec2843f47f3ea5e5",
+    "normal": "bf74b52fa1fafe9254f70d0be846058725cd54bac60c59fa63b39e8f89039ee6"
+  },
+  "plan": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D114-register-asset-submit-0855/submission/p2-register-asset/p2-register-asset-submit-plan.json",
+    "sha256": "c6c674ec9bfa20fd8fca2dbd9f5d07bac8886cb9af7370056bf206c8a5e60e66"
+  },
+  "sourcehashes": {
+    "mounted_readiness": {
+      "path": "tests/e2e/local/three-products.mounted-readiness.spec.ts",
+      "sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+    },
+    "p1_chain": {
+      "path": "tests/e2e/local/three-products.p1-chain.spec.ts",
+      "sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17"
+    },
+    "p2_popup": {
+      "path": "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9"
+    },
+    "p2_tour": {
+      "path": "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "sha256": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7"
+    },
+    "p2_elements_assets": {
+      "path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "sha256": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7"
+    },
+    "p3": {
+      "path": "tests/e2e/local/three-products.spec.ts",
+      "sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b"
+    }
+  },
+  "retained_output_policy": "preserve all run outputs through verdict"
+}
