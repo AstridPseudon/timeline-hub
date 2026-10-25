@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-25T08:38:03Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 5m -->
+<!-- app2 | 2026-10-25T08:40:32Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
 # app2 board, 2026-10-25T08:32Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -129,6 +129,8 @@
 
 | P2-D111a-early | Qualify early current full tour | App Luna; independent Luna | Four case GO; remaining paths assigned | review | Actual19078; review0807; wire0815 | Exit1/716s:4GO,2FAIL,1ERROR,1NOTRUN. Placement initial200, later Undo noPOST; SWAP409; element pending. AppSol0819 and RuntimeD111a/D112 own repairs. | 04beed / 070dfc / 1daca / 635f |
 
+| P2-D113-placement | Close modal before parent Undo | App Luna; independent Luna | D113 approved; final review | doing | App author0832; review0830 | Upstream modal check, real Close and dialog-gone assertion required. Existing inputs, predicates, waits and 14 s setup stay exact. Next run is full P2. | Base04beed; source pending |
+
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. No new Proof dispatch, original run or product merge is owed. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
 live 0 / cap 6 source; ready-undispatched 0 for Proof under D56.4. bin/workers confirms all1313 records done. D89 allows6 source above5.0GB, one service above5.2GB; nothing new below4.5GB.
@@ -138,10 +140,10 @@ regressions: 0 newly open after qualified Runtime1daca release. D102 strict-cont
 
 Blockers: Runtime D111a — Final native sample0811 needs independent0819 qualification and cost disposition before repair, curve, seed smoke, review and normal adoption. Memo withdrawn.
 Blockers: Runtime D112 — Author0819 measures store identity mismatch and repairs full-verification fallback, with security review and normal release before final P2.
-Blockers: App placement — Sol0819 found parent Undo hidden by the open embedded modal. One-line dismissal proposal awaits App protected-source scope and review; no product repair or new GO.
+Blockers: App placement — D113 scope approved. Author0832 and independent0830 own real dismissal, dialog-gone assertion, upstream modal proof and ledger before normal merge/full P2.
 Blockers: Final cut — Five gesture GO across tuples; complete current P2, Agent core2016, D69, final tuple gates/core and genuine installed render remain owed.
 
-Next ready: None for Proof under D56.4. RuntimeD111a review0819 and D112 author0819 active; App placement0819 read-only finding complete; App source-scope/review follow. Agent core2016 running. Rehearsal render inputs are owned by Runtime0820 and Agent.
+Next ready: None for Proof under D56.4. RuntimeD111a review0819 and D112 author0819 active; App D113author0832 and review0830 active after exact modal finding0819. Agent core2016 running. Rehearsal render inputs are owned by Runtime0820 and Agent.
 
 Current gate evidence:
 - P2 early19078: independent App0807 case-level GO for ADD,parent,single,bulk. Normal service exit1/716s; eight originals4PASS2FAIL1ERROR1NOTRUN, readiness1PASS. Exact04beed/070dfc/1daca/635f tuple, clean checkouts, source hashes/XML/import roots and complete strict tails qualified. SWAP409 history_unavailable, element applied-status FAIL, placement Undo response-wait ERROR and assetNOTRUN receive zero current gate credit. Wire0815 later qualifies initial placement add-media200; no inversePOST was sent at the later wait. Complete current tour remains NO-GO. [Independent partial GO](/home/user/timeline-hub/hub/design/app-D108-P2-19078-pass-review-0807-verdict.md), [Terminal report](/home/user/timeline-hub/hub/design/app-D108-full-P2-early-0753.md).
@@ -162,6 +164,8 @@ Current gate evidence:
 - D77a: consumerdfea above2a163 is normally HOME; both D76 and D77 remote receipts visibly say MERGED831df. Agent1837 actual34 adversarial+2positive PASS, exactdfea and197 dependencies. Fixture1841 passes canonical file with13 test bodies unchanged. Final genuine installed render remains cut-blocking; D67 genuine environment gap stays explicit. [Source security and remaining render seam](../../design/peer-runtime-to-agent-orchestrator-20261024T1825-D77-security-PASS.md).
 
 Decisions retained:
+- D11308:32: placement correction approved as our spec missed a user step. App0832 uses the real Close, asserts dialog gone and proves upstream modal behavior; all existing bytes and14s setup retained. Independent0830 and ledger precede merge, then fullP2 only. No Proof assignment.
+
 - D11208:22, amended08:28: Runtime0819 measures the exact store-identity mismatch then clears memo/re-establishes baseline/full verification on identity change. WAL/DB/connection RED/GREEN, SWAP native sequence, real-provider seed, unchanged flat curve and security review precede release. Placement ran before SWAP and gestures after SWAP passed; no shared-cause inference. Proof has no source or capture assignment.
 
 - D108b08:10 supersedes the MAIN core venue and resolves escalation0802. Agent uses authentic819acf and22 roots. First25132 stopped before pytest at same-file manifest copy; normal zero-body correction submitted2016 at08:18:35 on070dfc/1daca/04beed/635f. Latest progress08:21 reports body running,5.042GB available there; no new heavy or duplicate body. MAIN prep remains unsubmitted; no bench-store initialization/reserve change/near-match profile.
@@ -225,6 +229,6 @@ Pass 2026-10-25T08:32Z: Restart reads PLAN then MANAGER-COMMON, new INBOX bytes,
 
 Evidence: [Placement wire correction](/home/user/timeline-hub/hub/design/app-P2-19078-wire-return-0815-facts.md), [Runtime D112 and profile owners](/home/user/timeline-hub/hub/design/peer-runtime-to-agent-app-orchestrator-20261025T0820Z-render-inputs-and-D112.md), [D111a sample](/home/user/timeline-hub/hub/design/rt-D111a-element-sample-0811-report.md), [Agent core progress](/home/user/timeline-hub/hub/design/handoff-agt-F-D108b-core-local-0811-progress.md), [P2 failed paths](/home/user/timeline-hub/hub/design/app-P2-19078-failed-paths-0810-facts.md), [D108a published command](../../design/agent-core-full-command.md), [D108a count peer](../../design/peer-app2-to-runtime-20261025T0739Z-D108a-command-published.md), [Ready Runtime release peer](../../design/peer-app2-to-app-20261025T0621Z-D102c-release-ready.md), [Published input and D106 peer](../../design/peer-app2-to-agent-20261025T0603Z-published-inputs-and-D106.md), [Asset27438 independent GO](/home/user/timeline-hub/hub/design/app-P2-asset27438-GO-review-0315.md), [Single5678 independent GO](../../design/app-P2-single5678-GO-resume-0255.md), [corrected P4 sample](../../design/agt-P4-crossprocess-sample-0242-report.md), [App current owners](/home/user/timeline-hub/hub/status/app.md), [Runtime current owners](/home/user/timeline-hub/hub/status/runtime.md), [Agent current owners](/home/user/timeline-hub/hub/status/agent.md).
 
-Next watch: Agent core2016; Runtime D111a independent0819 and D112 author0819; App placement modal-dismissal scope/review after Sol0819; rehearsal audit and genuine render inputs0820. Complete P2/final tuple still owed. D56.4 binding; restart from this board and INBOX byte793776.
+Next watch: Agent core2016; Runtime D111a independent0819 and D112 author0819; App D113author0832 and final review0830; rehearsal audit and genuine render inputs0820. Complete P2/final tuple still owed. D56.4 binding; restart from this board and INBOX byte793776.
 
 Inbox read through793776 bytes. STATUS is restart point; [D83 handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md), [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md), [D84a release](../../design/runtime-D84a-release-2205.md) remain binding.
