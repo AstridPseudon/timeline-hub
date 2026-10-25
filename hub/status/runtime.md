@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T09:24:26Z | dispatcher heartbeat 0s | live 4 (sol 0, luna 4, other 0) | busy30 16 | status age 1m -->
+<!-- main | 2026-10-25T09:29:27Z | dispatcher heartbeat 15s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 3m -->
 # runtime board, 2026-10-25T09:23:01Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -340,9 +340,9 @@
 | D86-next21 | Qualify reviewed lane sheet and graph delta | Luna / service | Agent exact2016 outcome accounting | review | Private prep0632; WIP0640 | Exact 21 selectors are source-qualified. Normal-source functional coverage now comes from D108 full core before any extra family body. | Original proof pending |
 
 | D86-fixed24-prep | Preserve exact functional request | Luna source only | Agent exact2016 outcome accounting | review | Prep0632 complete; body0640 stopped | Exact 21 plus three source packet ready. No body submitted; private WIP committed. Full core will decide remaining source-specific proof. | Private recipe retained |
-| D100-new26-prep | Prepare exact valid candidate controls | Luna | Critical heavy stages | ready | Prepared0901; controller0634 | Reviewed26 source hashes and route valid. Agent checkout receipt now received; no extra source review owed. | dd2fc held |
+| D100-new26-prep | Prepare exact valid candidate controls | Luna | Critical heavy stages | gated:Main-heavy | Prepared0901; controller0634 | Reviewed26 source hashes and route valid. Agent checkout receipt now received; no extra source review owed. | dd2fc held |
 
-| R2-choice-three-prep | Prepare inverse and choice originals | Luna | Critical heavy stages | ready | Prepared0901; controller0638 | Exact source and mirror verified; Agent checkout receipt received. No prior controls or old60 repeated. | 44cf held |
+| R2-choice-three-prep | Prepare inverse and choice originals | Luna | Critical heavy stages | gated:Main-heavy | Prepared0901; controller0638 | Exact source and mirror verified; Agent checkout receipt received. No prior controls or old60 repeated. | 44cf held |
 
 | D108-Agent-core | Measure current Agent core outcomes | Agent Luna / service | Exact D54a classification | review | Agent0811; service2016 terminal | Actual9269:8763PASS159FAIL347ERROR;173subtests,1451.66s. Agent disjoint506-outcome classifiers active; no unchanged full retry. | 070dfc /1daca /04beed /635f |
 | D108-reverse-audit | Preserve upstream and live predicates | Luna independent | Exact applied trees | review | rt-F-D108-reverse-audit-0645 | Source identities checked. Final initial audit: Agent96 cited and8 unresolved; Runtime10 unresolved. Citation crosswalk and TS audit assigned. | Source only |
@@ -374,20 +374,20 @@
 | D108-snapshot-coverage | Restore immutable publication payload proof | Luna / independent | Exact integrated20 proof passed | merged | Author0813; review0824; result0839 | Actuale6b669:20 PASS47.36s with durable XML; reviewed +24/-0. Broad414PASS/1retainedFAIL remains disclosed. | 1eceb7ff7 /e6b669b98 |
 | D108-custody-review | Verify recovered metric source provenance | Luna independent | Exact authored blobs available | merged | rt-F-D108-custody-review-0816 PASS | Original command/blob hashes and missing-membership limit verified; no semantic equivalence or new audit claimed. | Evidence only |
 
-| D112-SWAP-identity | Fully verify after identity changes | Luna / security | Owner flatness criterion | blocked:orchestrator | Security0827; Sol0907 | Recovery RED3/GREEN3 and seed/SWAP pass. Same-lifecycle baseline counters equal; literal flat flags false. [Question](../../escalations/runtime-20261025T0923Z-D112-flatness-scope.md) | be828 held |
+| D112-SWAP-identity | Fully verify after identity changes | Luna / security | D112a warm check | review | rt-D112a-warm-release-check-0927 | Recovery RED3/GREEN3 and seed/SWAP pass. Same-lifecycle baseline counters equal; literal flat flags false. [Question](../../escalations/runtime-20261025T0923Z-D112-flatness-scope.md) | be828 held |
 | P2-19078-placement | Preserve placement user action | App HARD Sol / Luna | D113 protected correction | doing | App0819; protected0830 | Initial placement200 in11.38s; later Undo has no POST because modal remains open. D113 authorizes close then assert gone; next full tour only. | Recorded19078 |
 | D108-render-inputs | Stage authentic applied deployment | Luna | Normal stage prerequisites | doing | rt-F-D77-stage-continue-0923 | Agent523893 and Runtimea522 materialized through genuine refs/source route. Ordinary backend stage now owns sole heavy slot. | Applied523893 graph |
 
 | D112-security | Review full-verification recovery authority | Luna independent | Native acceptance before release | review | rt-D112-security-review-0827 PASS | 344 source controls PASS; two authorizer failures reproduced on parent. Existing Pyright diagnostics disclosed. Native proof remains separate. | be828d92c held |
-| D112-native | Prove SWAP and recovery sequence | Sol / independent | Owner flatness criterion | blocked:orchestrator | Sol0907; wholepath0907 | Baseline and candidate history/counters identical. Curve includes external invalidation; no identity reopen. No waiver or release. | be828 held |
+| D112-native | Prove SWAP and recovery sequence | Sol / independent | D112a warm check | review | rt-D112a-warm-release-check-0927 | Baseline and candidate history/counters identical. Curve includes external invalidation; no identity reopen. No waiver or release. | be828 held |
 
 | D111b-read-snapshot | Remove repeated per-request reads | Luna / independent | Correct cold-read regression and scaling | doing | Author0923; readonly0923 | Review0905 FAIL: test also passes parent. Native16269 accepted and isolated, but total per-call work grows. No release. | 7d433 held |
 
 | D108-legacy-archive-input | Return retained authentic archive | Luna / independent | Independent safe handback | review | Author0912; review0923 | Existing26543byte archive matches2915 hash and normalreceipt. Original43ENV remain until corrected-input proof. | Evidence only |
 
 | D111b-cost-wholepath | Isolate remaining measured read cost | Luna read only | Retained native16269 | doing | rt-D111b-cost-wholepath-0923 | Independent source and retained timers/bytes; no new body or product writer. | Evidence only |
-| D112-curve-criterion | Set exact flatness gate scope | Orchestrator | Same-lifecycle comparison | blocked:orchestrator | Escalation0923 | Both curves nonflat with growing responses and external invalidation; candidate counters equal baseline. No gate waiver. | be828 held |
-| D108-archive-handback | Verify and publish existing archive | Luna independent | Located original2915 | review | rt-D108-archive-review-0923 | Exact hash, receipt and safe metadata check; no archive acquisition or reader behavior claim. | Evidence only |
+| D112-curve-criterion | Apply owner flatness criterion | Orchestrator | D112a09:25 | merged | Header D112a | Same-lifecycle counters equal meets criterion. Existing D94 warm forward/read test is sole remaining release check. | Decision only |
+| D108-archive-handback | Verify and publish existing archive | Luna independent | Verified original2915 | merged | rt-D108-archive-review-0923 PASS | Original safe bytes and receipt published; Agent handback complete. Existing43ENV remain until corrected-input proof. | Evidence only |
 
 Runtime producer: RELEASED1daca2a33 reviewed treea522. Normale6b669 adds reviewed snapshot tests; product unchanged. Agent070dfc D110 released, App04be includes reviewed portable capture and D110 adoption.
 core open: 2 Runtime findings: D111b element cost and D112 identity recovery. Agent438 current core-open, PRE0/KNOWN1/ENV59/NEWcore438/NONCORE8/REG0 proven; upstream Runtime isolation UNCERTAIN. App core open3.
@@ -396,7 +396,7 @@ Gates: Recorded P1/P3 independent GO; P4 independent GO28.101s. Final tuple/core
 
 Blockers: Agent core — D115 cluster repair replaces per-row bodies for actual506 bad nodes. Runtime requested named existing2524 extractor/root groups; terminal service frame alone proves no Runtime fault.
 Blockers: Runtime D111b — Source review0905 FAIL because cold-read regression also passes parent. Native16269 accepted, bytes identical and no leaks; overall cost still grows. Firstreturn0923 and independent readonly0923 active.
-Blockers: Runtime D112 — Owner criterion question in escalations/runtime-20261025T0923Z-D112-flatness-scope.md. Native recovery and tamper controls pass; baseline/candidate counters equal with required invalidations. Both literal flat flags false; source held.
+Blockers: Runtime D112 — D112a resolves curve criterion; existing D94 warm forward/read check0927 is active. Release immediately on PASS through normal queue; native and security evidence already qualified.
 Blockers: Runtime D69 — Runtime normalized113function JOIN and72assert/8raises verified, RT07 snapshot repair actual20PASS on e6b669. Agent recovered129/113/287 membership; predicate-purpose mappings still owed. App scoped mapping0742PASS; lexical limits remain.
 Blockers: Final render — Genuine appliedAgent523893 and Runtimea522 source refs restored through ordinary route. Stage0923 now owns sole Main heavy slot. Strict D13/schema guards retained; render NOTRUN.
 Blockers: Final cut — D69, green current core, final pinned P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
@@ -406,6 +406,6 @@ Venues: Agent fullcore2016 terminal; no unchanged full retry. Main normalstage t
 Delivery: Applied rehearsal source trees and durable patches retained. Source-only D07/Windows later tests require final application at cut; no ZIP.
 Later: D107 held2154; D100new26/R2three held until needed proof, originalTEN distinct and unchanged. P4 and prior passed controls not repeated. Three Remotion copies await owner disposition.
 Safety: Withdrawn D88 and D111memo stay stopped. D106 ORCH-only outputs; denied hub target never retried. Manager changes no product/test/generated/pin files.
-Disk: About6.1GiB free before new staging. Fresh sweep3 in progress. Existing five dirty v1 trees and prohibited Codex session paths untouched; compact-scratch not invoked because it touches those paths.
-live 4 / cap 6; ready-undispatched 0 eligible source starts. Two prepared candidate bodies need the single occupied heavy slot and critical precedence; no worker kept waiting idle.
+Disk: About6.1GiB free before new staging. Fresh sweep3 in progress. Sweep3 removed0. Existing five dirty v1 trees and prohibited Codex session paths untouched; compact-scratch not invoked because it touches those paths.
+live 3 / cap 6; ready-undispatched 0 eligible source starts. D111b0923, normalstage0923, warmcheck0927 active. Archive handback and readonly cost complete; two prepared candidate bodies need the occupied heavy slot.
 INBOX consumed through 1093497 bytes. Updated 2026-10-25T09:23:01Z.
