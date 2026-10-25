@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -19,6 +20,7 @@ from astrid.sdk.timeline.native_occurrence_media_commands import (
     capture_occurrence_swap_media,
 )
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance import test_commit_runtime_occurrence_media as runtime_occurrence
 from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import inverse, later
 from tests.sdk.test_timeline_commit_provider import (
@@ -26,7 +28,6 @@ from tests.sdk.test_timeline_commit_provider import (
     DetachedPort,
     DetachedRealm,
     refusal,
-    runtime_abi,  # noqa: F401 -- detached ABI fixture
 )
 from tests.sdk.test_timeline_commit_provider import inverse as inverse_call
 from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
@@ -35,6 +36,15 @@ OWNER = 'occurrence:occ-a'
 TARGET = OWNER + '/clip:clip-a'
 NEW = 'sha256:' + '2' * 64
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_occurrence_media.json'
+
+
+@pytest.fixture(autouse=True)
+def _runtime_abi(monkeypatch, request):
+    if {'genuine_same_alias_realm', 'genuine_video_editing'} & set(request.fixturenames):
+        return
+    from tests.sdk.test_timeline_commit_provider import runtime_abi
+
+    runtime_abi.__wrapped__(monkeypatch)
 
 
 def inputs(kind='image'):
@@ -266,6 +276,94 @@ class MediaRealm(DetachedRealm):
         return create_runtime_commit_service().commit(context, MediaPort(self, context))
 
 
+def _genuine_editing_fixture(kind, operation, tmp_path, monkeypatch):
+    """Reuse the current Runtime bootstrap and registered Agent provider."""
+    fixture = runtime_occurrence.editing.__wrapped__(
+        SimpleNamespace(param=kind), tmp_path, monkeypatch, operation,
+        OWNER, lambda media_kind, name: name.encode(),
+    )
+    try:
+        yield next(fixture)
+    finally:
+        next(fixture, None)
+
+
+@pytest.fixture
+def genuine_same_alias_realm(tmp_path, monkeypatch):
+    yield from _genuine_editing_fixture('image', 'swap', tmp_path, monkeypatch)
+
+
+@pytest.fixture
+def genuine_video_editing(request, tmp_path, monkeypatch):
+    operation = request.getfixturevalue('operation')
+    yield from _genuine_editing_fixture('video', operation, tmp_path, monkeypatch)
+
+
+def _genuine_request(editing, commands, label, *, dry_run=False):
+    patches = [change for command in commands if command['op'] == 'doc.patch'
+               for change in command['args']['changes']]
+    return {
+        **runtime_occurrence.body(editing, commands, dry_run=dry_run),
+        'label': label,
+        'steps': [{
+            'id': label, 'label': label, 'intent': 'Occurrence media edit',
+            'tags': ['occurrence-media'], 'command_ordinals': list(range(len(commands))),
+            'patch': patches, 'reads': [],
+        }],
+        'merge': 'atomic', 'reads': [],
+        'rationale': 'Apply an occurrence media edit.', 'group_id': 'F-D86-occurrence-recipe3',
+    }
+
+
+def _genuine_preview(editing):
+    raw = runtime_occurrence.raw_command(editing)
+    runtime_occurrence.commit(
+        editing, _genuine_request(editing, [raw], 'occurrence-media-preview', dry_run=True),
+        'occurrence-media-preview',
+    )
+
+
+def _genuine_capture(editing, operation, *, same_alias=False, document=None):
+    bundle = bundle_from_document(document or editing.closures[-1])
+    verified = copy.deepcopy(editing.selected)
+    media = copy.deepcopy(editing.new)
+    if same_alias:
+        media['asset'] = editing.old['asset']
+        for value in verified:
+            if value['selection']['object_id'] == media['object_id']:
+                value['selection']['asset'] = media['asset']
+    if operation == 'add':
+        raw = runtime_occurrence.raw_command(editing)
+        return capture_occurrence_add_media(
+            bundle, OWNER, raw['args']['row'], media, verified_media=verified,
+        )
+    return capture_occurrence_swap_media(
+        bundle, TARGET, editing.old, media, verified_media=verified,
+    )
+
+
+def _genuine_same_alias_baseline(editing):
+    document = copy.deepcopy(editing.closures[-1])
+    bundle = bundle_from_document(document)
+    shot = State(bundle).occurrence(OWNER)['shot_id']
+    before = bundle['shots'][shot]['payload']['unknown']['keep']
+    patch = {
+        'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+        'args': {'changes': [{
+            'op': 'set', 'ref': 'shot:' + shot, 'path': ['unknown', 'keep'],
+            'before': {'state': 'present', 'value': before}, 'value': True,
+        }]},
+    }
+    result = _genuine_commit(editing, patch, 'same-alias-baseline', 'same-alias-baseline')
+    return copy.deepcopy(result['data']['canonical_document'])
+
+
+def _genuine_commit(editing, command, label, key):
+    return runtime_occurrence.commit(
+        editing, _genuine_request(editing, [command], label), key,
+    )
+
+
 @pytest.fixture
 def same_alias_realm():
     document, old, new, verified = inputs()
@@ -282,11 +380,20 @@ def same_alias_realm():
     return realm, document, created
 
 
-def test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo(same_alias_realm):
-    realm, document, created = same_alias_realm
-    undo = realm.call([inverse_call([created['receipt']['receipt_id']])])
+@pytest.mark.integration
+def test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo(genuine_same_alias_realm):
+    editing = genuine_same_alias_realm
+    _genuine_preview(editing)
+    document = _genuine_same_alias_baseline(editing)
+    command = _genuine_capture(editing, 'swap', same_alias=True, document=document)
+    created = _genuine_commit(editing, command, 'same-alias', 'same-alias')
+    undo = _genuine_commit(
+        editing, inverse_call([created['receipt']['receipt_id']]), 'same-alias-undo', 'same-alias-undo',
+    )
     assert undo['data']['canonical_document'] == document
-    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    redo = _genuine_commit(
+        editing, inverse_call([undo['receipt']['receipt_id']]), 'same-alias-redo', 'same-alias-redo',
+    )
     assert redo['data']['canonical_document'] == created['data']['canonical_document']
 
 
@@ -314,21 +421,49 @@ def test_same_alias_materialized_payload_still_guards_all_other_input(same_alias
 
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
-def test_provider_exact_reload_inverse_redo_and_retired_asset_reservation(operation):
-    document, _, command, verified = captured(operation, 'video')
-    realm = MediaRealm(document, verified)
-    created = realm.call([command])
-    undo = realm.call([inverse_call([created['receipt']['receipt_id']])])
+@pytest.mark.integration
+def test_provider_exact_reload_inverse_redo_and_retired_asset_reservation(
+        operation, genuine_video_editing, monkeypatch):
+    editing = genuine_video_editing
+    _genuine_preview(editing)
+    document = copy.deepcopy(editing.closures[0])
+    command = _genuine_capture(editing, operation)
+    request = _genuine_request(editing, [command], 'provider-exact')
+    created = runtime_occurrence.commit(editing, request, 'provider-exact')
+    undo_request = _genuine_request(
+        editing, [inverse_call([created['receipt']['receipt_id']])], 'provider-exact-undo',
+    )
+    undo = runtime_occurrence.commit(editing, undo_request, 'provider-exact-undo')
     assert undo['data']['canonical_document'] == document
-    head, history = copy.deepcopy(realm.head), copy.deepcopy(realm.entries)
+    history = editing.service.list_timeline_commits(
+        editing.project, 'film', authorize=editing.authorize,
+    )
     # A fresh request cannot reuse an alias retired by accepted history.
-    with pytest.raises(CommitRejected) as error:
-        realm.call([command])
-    assert error.value.failure['details']['reason'] == 'identity_collision'
-    assert (realm.head, realm.entries) == (head, history)
-    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    from runtime_protocol.errors import RuntimeErrorBase
+    with pytest.raises(RuntimeErrorBase) as error:
+        _genuine_commit(editing, command, 'provider-exact-fresh', 'provider-exact-fresh')
+    assert error.value.details['reason'] == 'identity_collision'
+    assert editing.service.list_timeline_commits(
+        editing.project, 'film', authorize=editing.authorize,
+    ) == history
+    root = editing.root
+    editing.service.close()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+    editing.service = RuntimeService(root)
+    editing.service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+    with monkeypatch.context() as retry:
+        from astrid.sdk.timeline import commands
+        retry.setattr(commands, 'execute', lambda *args, **kwargs: pytest.fail('exact retry executed semantics'))
+        assert runtime_occurrence.commit(editing, request, 'provider-exact') == created
+        assert runtime_occurrence.commit(editing, undo_request, 'provider-exact-undo') == undo
+    redo = _genuine_commit(
+        editing, inverse_call([undo['receipt']['receipt_id']]), 'provider-exact-redo', 'provider-exact-redo',
+    )
     assert redo['data']['canonical_document'] == created['data']['canonical_document']
-    again = realm.call([inverse_call([redo['receipt']['receipt_id']])])
+    again = _genuine_commit(
+        editing, inverse_call([redo['receipt']['receipt_id']]), 'provider-exact-again', 'provider-exact-again',
+    )
     assert again['data']['canonical_document'] == document
 
 
