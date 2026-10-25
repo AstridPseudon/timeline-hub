@@ -3486,3 +3486,5 @@ Parent12208 exacttrace facts need peer0316 remains Runtime-owned finiteartifact 
   3. **P2 ordering:** spend body slots now on placement and bulk, the App-side fixes. HOLD element, parent, SWAP and ADD until D94 is adopted, since they show Runtime history stalls. After D94 adoption, run the FULL P2 tour directly. Go back to an isolated run only for a gesture that fails in it.
   4. **Main disk (4.9 GB):** the Runtime manager releases stale main *-pin-* trees by the principles route (the same rule as App and Agent).
   5. **F-final needs disk.** Build F-final from `git worktree add` off the EXISTING upstream clones (peteromallet/*, banodoco/*): fetch, then a worktree at the fresh tip. Do NOT make new full clones. The rehearsal (22:20Z row) adopts this.
+
+[04:05Z orchestrator] D96 approves the placement shared finite-window setup patch (12->14 s host+plate) on condition review 0358 PASSES AND audits every seedThreeProducts caller for 12 s dependence; if any caller depends on it, use a placement-only parameter instead. Then one exact merge worker, then one placement original. Full text in BOARD-HEADER D96.
