@@ -1,0 +1,42 @@
+{
+  "format_version": 1,
+  "summary_field": "cprofile",
+  "fields": {
+    "format_version": "finite integer",
+    "status": "captured|unavailable",
+    "scope": "fixed RuntimeHandler._timeline_commit",
+    "functions": {
+      "max_items": 40,
+      "row_fields": ["rank", "file", "line", "function", "ncalls", "primitive_calls", "tottime", "cumtime"],
+      "rank": "descending cumtime, then file/line/function",
+      "file": "module-relative <runtime>|<agent>|<stdlib>|<package> path; absolute paths rejected",
+      "function": "finite sanitized string, bounded to 160 characters",
+      "counts": "stdlib pstats primitive and total call counts",
+      "times": "stdlib pstats self tottime and inclusive cumtime seconds"
+    },
+    "edges": {
+      "max_items": 1600,
+      "row_fields": ["caller", "callee", "ncalls"],
+      "scope": "caller and callee both in emitted top-function set"
+    },
+    "limits": ["max_functions", "max_edges", "dropped_rows", "dropped_edges"],
+    "timing_note": "absolute times are observational because cProfile overhead is included; ranking and call counts only, never original budget"
+  },
+  "never_emitted": [
+    "request bodies",
+    "arguments",
+    "payloads",
+    "keys and key hashes",
+    "URLs",
+    "locals",
+    "exception text",
+    "raw stacks"
+  ],
+  "raw_pstats": {
+    "optional": true,
+    "location": "TMPDIR only",
+    "file_mode": "0600",
+    "parent_mode": "0700",
+    "published": false
+  }
+}

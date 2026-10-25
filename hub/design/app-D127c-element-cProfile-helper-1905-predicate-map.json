@@ -1,0 +1,35 @@
+{
+  "format_version": 1,
+  "activation": {
+    "helper_enabled": true,
+    "helper_started": true,
+    "existing_trace_hook": null,
+    "launcher_change": false
+  },
+  "mounted_route": {
+    "method": "POST",
+    "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+    "source_guard": "RuntimeHandler._dispatch -> RuntimeHandler._is_timeline_commit -> RuntimeHandler._route -> RuntimeHandler._timeline_commit"
+  },
+  "element_guard": {
+    "body_source": "existing handler._prefetched_body bytes",
+    "command_op": "clip.set-element",
+    "dry_run": "must not be true",
+    "body_consumption": "no rfile read and no body retained or emitted",
+    "direct_call_without_prefetch": "functional NOTRUN; not eligible"
+  },
+  "profile_lifecycle": {
+    "enable": "handler entry after selection",
+    "disable": ["handler return", "handler exception", "capture stop fallback"],
+    "threading_profile_hook": false,
+    "other_requests_profiled": false
+  },
+  "excluded": [
+    "preflight and readiness routes",
+    "bootstrap and native seeds",
+    "dry-run previews",
+    "SWAP/WAL/recovery/full tours",
+    "non-element commands",
+    "whole-process profiling"
+  ]
+}
