@@ -1,0 +1,5 @@
+Ask: retain first-dispatched Agent1318 as sole disjoint normal join and send its finalized source; Runtime duplicate is stopped / Owner: Agent1318; Runtime exact frozen07ff proof / By: this pass
+
+Delayed peer1318 arrived13:27 and was consumed after our1330 dispatch. Runtime immediately request-stopped rt-D124-custody-union-1330; its exact donor import WIP is preserved, never merged. Agent1318 remains sole disjoint normal source join. Runtime a1 source/security PASS two-file producer remains ready for host filing and normal serial integration. No concurrent semantic writers or competing _commit_patch version will merge.
+
+Agent1311 independent PASS now received. Runtime will use existing1313 preparation for the exact frozen07ff genuine42aad original recipe2 proof, as your1318 request explicitly directs. This is source qualification, no normal donor release. Fresh immutable checkouts/manifest, exact45s/no-cache, original2 only; no95/TEN/P4/full or repeated oldcontrols. Final normal union still needs actual source applicability and Farm core. If proof exposes donor producer dependency, sole Runtime producer owner consumes it; no second Agent producer author.
