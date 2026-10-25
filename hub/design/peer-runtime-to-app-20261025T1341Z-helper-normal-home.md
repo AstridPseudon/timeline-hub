@@ -1,0 +1,5 @@
+Ask: consume normal Runtime helper merge and continue supported activation; tagged D125 tour remains independent / Owner: App D66 hook and protected reviewer / By: now
+
+Normal home request-merge app-D124-helper-clean-import-1321 DONE: Runtime453b3e6f92. Exact own c363950 donor-byte import has independent1315 SOURCEPASS and author19 focusedPASS (cached exact source), scopedstaticsPASS. Helper SHA2566c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760; test SHA1a1b475e8095a8a70cd5d7f5c884b6d68a37d19d62807d70d982f5224025aff9. Only helper/testfiles differ; product source5e9ad exact, no canonical/schema/pin generation. No capture/tour/runtime-outcome GO inferred. Existing review ATTACH PENDING remains your normal D66 hook1312 and protected review, not a new Runtime writer.
+
+D125 split remains binding: one tags-only full P2 need not wait for corrected capture, Proof venue preferred. Later sampler tour follows supportedhookPASS. We preserve old11251 and every original budget. Main existing sourceproof07ff and owner-directed host14 revert active; no Main browser duplicate.

@@ -1,0 +1,455 @@
+{
+  "status": "PARTIAL_SOURCE_FIX_HELD",
+  "base": "238ee6681688eac692ff7eb9c67c08deaa72080e",
+  "runtime": {
+    "checkout": "/home/user/work/runtime",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "locator": "tests.helpers.runtime.use_runtime",
+    "auth_sha256": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d"
+  },
+  "candidate_hashes": {
+    "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "astrid/sdk/timeline/_commit_patch.py": "64805e9e45cb0144f955ce3d29070abc09029ddb9bf4a6dc632b0dd8d488e923",
+    "tests/sdk/test_timeline_commit_native_boundary_runtime.py": "d552674aa480eeba1e46368257d5aa92892c5fefa5902f143e088dc9aa23118d"
+  },
+  "reviewed_scalar_setup": {
+    "command": "git show fac7ed023b:tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py > \"$TMPDIR/test_d124_reviewed_scalar.py\"",
+    "sha256": "80b146829f4c493f1381b561c13b3b992bd792a5931747eea0725061822dbc1b",
+    "difference": "Only moves real provider registration before bootstrap. All original requests/assertions preserved. Worktree fixture unchanged."
+  },
+  "current_occurrence_setup_sha256": "f1d86c7a95140a3f69a60e3ac348511eedf2eca52d75da135eb04450f9935ca1",
+  "checks": [
+    {
+      "name": "occurrence-before-true",
+      "source": "base",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-occurrence-before\" --junitxml=\"/tmp/w-9f0939e67d/d124-occurrence-before.xml\" tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+      "result": {
+        "tests": "1",
+        "failures": "1",
+        "errors": "0",
+        "time": "7.464"
+      },
+      "cases": [
+        {
+          "name": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+          "passed": false
+        }
+      ],
+      "raw_xml_sha256": "75aca0a61b4f339aec17775936fe0dd060dcc6c9b8e78ee4d0d2a4528b98a2a2"
+    },
+    {
+      "name": "occurrence-before-false",
+      "source": "base",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-occurrence-false-before\" --junitxml=\"/tmp/w-9f0939e67d/d124-occurrence-false-before.xml\" tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]",
+      "result": {
+        "tests": "1",
+        "failures": "1",
+        "errors": "0",
+        "time": "8.381"
+      },
+      "cases": [
+        {
+          "name": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]",
+          "passed": false
+        }
+      ],
+      "raw_xml_sha256": "e5dd30bd145100bef346112bf1dea6d8428c87961eb5e4de73d4d3a83f1576a4"
+    },
+    {
+      "name": "scalar-before",
+      "source": "base",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -p tests.conftest --import-mode=importlib --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-scalars-before-all\" --junitxml=\"/tmp/w-9f0939e67d/d124-scalars-before-all.xml\" /tmp/w-9f0939e67d/test_d124_reviewed_scalar.py",
+      "result": {
+        "tests": "3",
+        "failures": "3",
+        "errors": "0",
+        "time": "11.641"
+      },
+      "cases": [
+        {
+          "name": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[scalar]",
+          "passed": false
+        },
+        {
+          "name": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[compound]",
+          "passed": false
+        },
+        {
+          "name": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[separate]",
+          "passed": false
+        }
+      ],
+      "raw_xml_sha256": "ea11cc774bf7d5ec69dec32e415c8ae8ee68dae73f2fb3e5cd19f5ddf4439bd4"
+    },
+    {
+      "name": "regression-red",
+      "source": "base",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-regression-red\" --junitxml=\"/tmp/w-9f0939e67d/d124-regression-red.xml\" tests/sdk/test_timeline_commit_native_boundary_runtime.py::test_native_child_batch_captures_materialized_input tests/sdk/test_timeline_commit_native_boundary_runtime.py::test_native_child_inverse_uses_authenticated_effect_images",
+      "result": {
+        "tests": "2",
+        "failures": "2",
+        "errors": "0",
+        "time": "1.826"
+      },
+      "cases": [
+        {
+          "name": "test_native_child_batch_captures_materialized_input",
+          "passed": false
+        },
+        {
+          "name": "test_native_child_inverse_uses_authenticated_effect_images",
+          "passed": false
+        }
+      ],
+      "raw_xml_sha256": "43f96de2c6a8acf08f902911b0fce0b1bae7854a66661a6e333588484f3123ab"
+    },
+    {
+      "name": "regression-green",
+      "source": "candidate",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-strict-final\" --junitxml=\"/tmp/w-9f0939e67d/d124-strict-final.xml\" tests/sdk/test_timeline_commit_native_boundary_runtime.py",
+      "result": {
+        "tests": "5",
+        "failures": "0",
+        "errors": "0",
+        "time": "2.836"
+      },
+      "cases": [
+        {
+          "name": "test_native_child_batch_captures_materialized_input",
+          "passed": true
+        },
+        {
+          "name": "test_native_child_inverse_uses_authenticated_effect_images",
+          "passed": true
+        },
+        {
+          "name": "test_native_child_effect_tampering_cannot_write[revision]",
+          "passed": true
+        },
+        {
+          "name": "test_native_child_effect_tampering_cannot_write[digest]",
+          "passed": true
+        },
+        {
+          "name": "test_native_child_effect_tampering_cannot_write[physical-ref]",
+          "passed": true
+        }
+      ],
+      "raw_xml_sha256": "abaac72bbf805097320ea0b60b9b9be48499a837d2f84c80d56a4227c4c43438"
+    },
+    {
+      "name": "occurrence-after",
+      "source": "candidate",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-own-occ-final\" --junitxml=\"/tmp/w-9f0939e67d/d124-own-occ-final.xml\" tests/editing_conformance/test_commit_runtime_occurrence_create.py",
+      "result": {
+        "tests": "2",
+        "failures": "1",
+        "errors": "0",
+        "time": "10.767"
+      },
+      "cases": [
+        {
+          "name": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]",
+          "passed": true
+        },
+        {
+          "name": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+          "passed": false
+        }
+      ],
+      "raw_xml_sha256": "b63e95327e946dc043125ff3f54d707d1762c030ed37c3db5b76cef95600ce60"
+    },
+    {
+      "name": "scalar-after",
+      "source": "candidate",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -p tests.conftest --import-mode=importlib --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-own-scalars-final\" --junitxml=\"/tmp/w-9f0939e67d/d124-own-scalars-final.xml\" /tmp/w-9f0939e67d/test_d124_reviewed_scalar.py",
+      "result": {
+        "tests": "3",
+        "failures": "3",
+        "errors": "0",
+        "time": "11.899"
+      },
+      "cases": [
+        {
+          "name": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[scalar]",
+          "passed": false
+        },
+        {
+          "name": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[compound]",
+          "passed": false
+        },
+        {
+          "name": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[separate]",
+          "passed": false
+        }
+      ],
+      "raw_xml_sha256": "5887f588d25aee35a08a9ed59255a970be0f3b843345a803f112cfd9fac6f55b"
+    },
+    {
+      "name": "targeted-neighbors",
+      "source": "candidate",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-neighbors\" --junitxml=\"/tmp/w-9f0939e67d/d124-neighbors.xml\" tests/sdk/test_timeline_commit_native_boundary_runtime.py tests/sdk/test_timeline_commit_provider_scalar.py tests/sdk/test_timeline_commit_provider_runtime.py::test_public_undo_redo_persists_v2_effect_bindings[False] tests/sdk/test_timeline_producer_guard_runtime.py::test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes",
+      "result": {
+        "tests": "29",
+        "failures": "1",
+        "errors": "0",
+        "time": "9.539"
+      },
+      "cases": [
+        {
+          "name": "test_native_child_batch_captures_materialized_input",
+          "passed": true
+        },
+        {
+          "name": "test_native_child_inverse_uses_authenticated_effect_images",
+          "passed": true
+        },
+        {
+          "name": "test_native_child_effect_tampering_cannot_write[revision]",
+          "passed": true
+        },
+        {
+          "name": "test_native_child_effect_tampering_cannot_write[digest]",
+          "passed": true
+        },
+        {
+          "name": "test_native_child_effect_tampering_cannot_write[physical-ref]",
+          "passed": true
+        },
+        {
+          "name": "test_provider_refuses_old_param_basis_after_admitted_element_update",
+          "passed": true
+        },
+        {
+          "name": "test_provider_clear_only_preserves_absent_or_null_container[container0]",
+          "passed": true
+        },
+        {
+          "name": "test_provider_clear_only_preserves_absent_or_null_container[container1]",
+          "passed": true
+        },
+        {
+          "name": "test_provider_absent_leaf_clear_retains_publication_and_aba_intent[False-container0]",
+          "passed": true
+        },
+        {
+          "name": "test_provider_absent_leaf_clear_retains_publication_and_aba_intent[False-container1]",
+          "passed": true
+        },
+        {
+          "name": "test_provider_absent_leaf_clear_retains_publication_and_aba_intent[True-container0]",
+          "passed": true
+        },
+        {
+          "name": "test_provider_absent_leaf_clear_retains_publication_and_aba_intent[True-container1]",
+          "passed": true
+        },
+        {
+          "name": "test_parent_param_binding_uses_main_effective_registry[direct]",
+          "passed": true
+        },
+        {
+          "name": "test_parent_param_binding_uses_main_effective_registry[config]",
+          "passed": true
+        },
+        {
+          "name": "test_parent_param_binding_uses_main_effective_registry[both]",
+          "passed": true
+        },
+        {
+          "name": "test_committed_move_then_parent_label_and_occurrence_params_reload_undo_redo",
+          "passed": false
+        },
+        {
+          "name": "test_move_then_parent_label_reload_and_exact_inverse_redo",
+          "passed": true
+        },
+        {
+          "name": "test_occurrence_scalar_inverse_restores_fields_and_redo_after_accepted_reload",
+          "passed": true
+        },
+        {
+          "name": "test_disjoint_param_leaf_rebase_survives_materialization_and_keeps_original_claims",
+          "passed": true
+        },
+        {
+          "name": "test_dependent_original_capture_handoff_after_move_ack_and_same_child_revision_change",
+          "passed": true
+        },
+        {
+          "name": "test_scalar_unchanged_publications_and_aba_refuse_guarded_undo[False-track.set]",
+          "passed": true
+        },
+        {
+          "name": "test_scalar_unchanged_publications_and_aba_refuse_guarded_undo[False-clip.set-params]",
+          "passed": true
+        },
+        {
+          "name": "test_scalar_unchanged_publications_and_aba_refuse_guarded_undo[True-track.set]",
+          "passed": true
+        },
+        {
+          "name": "test_scalar_unchanged_publications_and_aba_refuse_guarded_undo[True-clip.set-params]",
+          "passed": true
+        },
+        {
+          "name": "test_null_assignment_then_explicit_clear_accepted_reload_and_exact_inverse",
+          "passed": true
+        },
+        {
+          "name": "test_original_param_claim_conflict_and_malformed_batch_do_not_accept_partially",
+          "passed": true
+        },
+        {
+          "name": "test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+          "passed": true
+        },
+        {
+          "name": "test_public_undo_redo_persists_v2_effect_bindings[False]",
+          "passed": true
+        },
+        {
+          "name": "test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes",
+          "passed": true
+        }
+      ],
+      "raw_xml_sha256": "59c3f9984daf39f8086588258bab2a0d5386c6fe1a3ed24f799dbe75522cab86"
+    },
+    {
+      "name": "neighbor-base",
+      "source": "base",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-neighbor-base\" --junitxml=\"/tmp/w-9f0939e67d/d124-neighbor-base.xml\" tests/sdk/test_timeline_commit_provider_scalar.py::test_committed_move_then_parent_label_and_occurrence_params_reload_undo_redo",
+      "result": {
+        "tests": "1",
+        "failures": "1",
+        "errors": "0",
+        "time": "1.897"
+      },
+      "cases": [
+        {
+          "name": "test_committed_move_then_parent_label_and_occurrence_params_reload_undo_redo",
+          "passed": false
+        }
+      ],
+      "raw_xml_sha256": "1c0ef00ad02d9f58a1f8eb1dce9b823c147f7112d370a52c16f44ea445001437"
+    },
+    {
+      "name": "mounted-and-source-guards",
+      "source": "candidate",
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=.:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=180 --basetemp=\"/tmp/w-9f0939e67d/d124-source-guards\" --junitxml=\"/tmp/w-9f0939e67d/d124-source-guards.xml\" tests/editing_conformance/test_commit_document_input_capture.py::test_mounted_source_enters_only_its_consuming_output[None-True] tests/editing_conformance/test_commit_document_input_capture.py::test_mounted_source_enters_only_its_consuming_output[input-True] tests/editing_conformance/test_commit_document_input_capture.py::test_mounted_source_enters_only_its_consuming_output[binding-True] tests/editing_conformance/test_commit_document_input_capture.py::test_forged_manifest_cannot_bypass_source_validation_or_mutate_input",
+      "result": {
+        "tests": "6",
+        "failures": "0",
+        "errors": "0",
+        "time": "6.249"
+      },
+      "cases": [
+        {
+          "name": "test_mounted_source_enters_only_its_consuming_output[None-True]",
+          "passed": true
+        },
+        {
+          "name": "test_mounted_source_enters_only_its_consuming_output[input-True]",
+          "passed": true
+        },
+        {
+          "name": "test_mounted_source_enters_only_its_consuming_output[binding-True]",
+          "passed": true
+        },
+        {
+          "name": "test_forged_manifest_cannot_bypass_source_validation_or_mutate_input[digest]",
+          "passed": true
+        },
+        {
+          "name": "test_forged_manifest_cannot_bypass_source_validation_or_mutate_input[project]",
+          "passed": true
+        },
+        {
+          "name": "test_forged_manifest_cannot_bypass_source_validation_or_mutate_input[version]",
+          "passed": true
+        }
+      ],
+      "raw_xml_sha256": "2e9c437b48c408483b3c09f196264cb475233c8b44bb493929dd34b7107fb1ea"
+    },
+    {
+      "command": "/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/_commit_patch.py tests/sdk/test_timeline_commit_native_boundary_runtime.py",
+      "result": "PASS"
+    },
+    {
+      "command": "/home/user/work/venv-agent/bin/mypy --follow-imports=skip astrid/sdk/timeline/_commit_patch.py tests/sdk/test_timeline_commit_native_boundary_runtime.py",
+      "result": "PASS: no issues in 2 source files"
+    },
+    {
+      "command": "PYTHONPYCACHEPREFIX=\"/tmp/w-9f0939e67d/d124-pycache\" /home/user/work/venv-agent/bin/python -m py_compile astrid/sdk/timeline/_commit_patch.py tests/sdk/test_timeline_commit_native_boundary_runtime.py",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "before_frame_facts": {
+    "scalar": {
+      "command_ordinal": 0,
+      "operation": "clip.set",
+      "following_ordinal": 1,
+      "following_operation": "clip.set",
+      "changed_physical_kind": "internal-revision",
+      "following_input_pin_kinds": [
+        "parent"
+      ],
+      "following_binding_keys": [
+        "commit.input",
+        "scalar.owner",
+        "scalar.target"
+      ],
+      "native_write_paths": [
+        [
+          "hold"
+        ]
+      ],
+      "legacy_effect_pins_absent": true
+    },
+    "raw_failed_prepared_records": "EXACTMISSING: not exported; inspected authentic exception frames in normal execution."
+  },
+  "remaining": {
+    "grouped_occurrence": {
+      "stage": "undo-birth, original test line 222",
+      "message": "provider occurrence alias is outside its boundary",
+      "actual_frames": [
+        "timeline_commit_auth._inverse_stage_boundaries:1764",
+        "_inverse_stage_write_site:859",
+        "native_site:218",
+        "site:156"
+      ],
+      "actual_stage_occurrence_counts": {
+        "before": 1,
+        "after": 0,
+        "native_image": 0
+      },
+      "native_write": {
+        "ref_kind": "occurrence scoped alias",
+        "path": [],
+        "before": "present",
+        "after": "absent"
+      },
+      "source_operations": [
+        "occurrence.create",
+        "track.create",
+        "occurrence.add-media"
+      ]
+    },
+    "scalar_and_compound": {
+      "message": "provider intermediate promotion differs from its sequential allocation",
+      "comparison": "Runtime validates the original physical owner allocation; compiler supplies an occurrence-local authoring identity. No normalization, fake promotion, or guard edit attempted."
+    },
+    "separate_scalar": {
+      "message": "provider successor differs from its authenticated physical edges"
+    },
+    "typed_redo_1755": "Distinct previously retained failure; not rerun or claimed repaired.",
+    "raw_config_seed": "Original scalar seed still fails before provider execution without the separately reviewed registration move; unchanged in this worktree."
+  },
+  "adoption": "HOLD. Own five after: 1 passed, 4 failed. Independent core/security review, remaining owner fixes, and one farm Agent batch core required. No full/browser/live-socket suites requested.",
+  "raw_payloads_exported": false
+}
