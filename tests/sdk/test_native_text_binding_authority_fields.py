@@ -4,8 +4,6 @@ from __future__ import annotations
 import copy
 import hashlib
 
-import pytest
-
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute
@@ -101,14 +99,15 @@ def test_native_set_refuses_incomplete_or_wrong_authenticated_pin_without_write(
     assert value == before
 
 
-def test_native_set_refuses_changed_media_for_authenticated_pin_without_write():
+def test_native_rebind_drops_stale_authority_for_changed_media_without_write():
     value, _ = _bundle_with_binding()
     replacement = _descriptor("Replacement wording")
     before = copy.deepcopy(value)
 
-    with pytest.raises(CommandError, match="authenticated text binding pin") as error:
-        capture_text_binding_set(value, OWNER, BINDING, text=replacement,
-                                 verified_text=[{**replacement, "utf8": True}])
+    command = capture_text_binding_set(value, OWNER, BINDING, text=replacement,
+                                       verified_text=[{**replacement, "utf8": True}])
+    plan = execute(value, [command], verified_media=[{**replacement, "utf8": True}])
+    row = State(plan.bundle).entity(OWNER + "/text-binding:voiceover_script")
 
-    assert error.value.kind == "dependency_changed"
+    assert not AUTHORITY_FIELDS & row.keys()
     assert value == before

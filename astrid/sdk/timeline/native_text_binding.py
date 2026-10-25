@@ -63,11 +63,9 @@ def text_binding_set(ctx, command):
         raise CommandError('text object id must equal its content digest', ref=ref)
     if not any(equal(value, {**pin, 'utf8': True}) for value in ctx.verified_media):
         raise CommandError('text binding requires exact Runtime-verified UTF-8 input', kind='dependency_changed')
-    if authority and any(old.get(key) != pin_value for key, pin_value in (
-            ('media_id', pin['object_id']), ('content_hash', pin['digest']),
-            ('byte_size', pin['size']), ('mime_type', pin['media_type']))):
-        raise CommandError('authenticated text binding pin does not match the new text',
-                           kind='dependency_changed', ref=ref)
+    same_pin = authority == AUTHORITY_FIELDS and all(old.get(key) == pin_value for key, pin_value in (
+        ('media_id', pin['object_id']), ('content_hash', pin['digest']),
+        ('byte_size', pin['size']), ('mime_type', pin['media_type'])))
     if old is None:
         path = ['payload', 'text_bindings']
         if ctx.state.get(owner + '/shot', path) == ABSENT:
@@ -76,7 +74,7 @@ def text_binding_set(ctx, command):
         ctx.select('collection.text-bindings.append', owner)
     ctx.dependency('text:' + pin['digest'], 'media', pin)
     row = {key: copy.deepcopy(value) for key, value in (old or {}).items()
-           if key not in DERIVED_FIELDS or key in AUTHORITY_FIELDS}
+           if key not in DERIVED_FIELDS or (same_pin and key in AUTHORITY_FIELDS)}
     row.update(args['binding'], media_id=pin['object_id'], content_hash=pin['digest'],
                byte_size=pin['size'], mime_type=pin['media_type'])
     ctx.write(ref, [], row)
