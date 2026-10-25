@@ -30,7 +30,7 @@ def shared_editing(request, tmp_path, monkeypatch):
         bundle_from_document,
         document_from_bundle,
     )
-    from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.timeline.emitter import _diff, emit_document_commands
     from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
 
     fixture = build_film_fixture(tmp_path)
@@ -63,6 +63,15 @@ def shared_editing(request, tmp_path, monkeypatch):
             staged_bundle = bundle_from_document(staged)
             host_bundle = copy.deepcopy(staged_bundle)
             host_bundle["parent"] = bundle_from_document(host)["parent"]
+            placement_changes = []
+            _diff(staged["parent_revision"]["payload"]["occurrences"],
+                  host["parent_revision"]["payload"]["occurrences"],
+                  "parent", ("occurrences",), placement_changes)
+            if placement_changes:
+                setup_commands.append({
+                    "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                    "args": {"changes": placement_changes},
+                })
             setup_commands.extend(emit_document_commands(
                 staged_bundle, host_bundle))
             staged = host
@@ -113,6 +122,15 @@ def shared_editing(request, tmp_path, monkeypatch):
         for local, shot in authored_target["shots"].items():
             shot["payload"] = target_bundle["shots"][local]["payload"]
             shot["internal_timeline"] = target_bundle["shots"][local]["internal_timeline"]
+        placement_changes = []
+        _diff(staged["parent_revision"]["payload"]["occurrences"],
+              target["parent_revision"]["payload"]["occurrences"],
+              "parent", ("occurrences",), placement_changes)
+        if placement_changes:
+            setup_commands.append({
+                "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                "args": {"changes": placement_changes},
+            })
         setup_commands.extend(emit_document_commands(staged_bundle, authored_target))
 
         service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
