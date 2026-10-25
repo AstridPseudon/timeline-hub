@@ -71,6 +71,14 @@ def export(runtime, capsys, tmp_path):
     return session, sheet, path
 
 
+def detached_commit_file(expected, head, tmp_path):
+    """Write the edited bundle in the ordinary detached commit format."""
+    candidate = Checkout(copy.deepcopy(expected.bundle))
+    candidate.bundle['base_parent']['revision_id'] = head['revision_id']
+    candidate.bundle['base_parent']['publication_id'] = head['publication_id']
+    return candidate.save(tmp_path / 'timeline.json', quiet=True)
+
+
 def seed(runtime):
     runtime.session().commit_many([
         command('track.create', 'parent', {'row': {'id': 'picture', 'kind': 'visual', 'opaque': [None, True, 1]}}),
@@ -1111,22 +1119,26 @@ def test_http_semantic_batch_original_pins_reload_inverse_redo(runtime, tmp_path
     before = session.client.timelines.open_bundle(runtime.project, 'film', revision_id=head['revision_id']).data['bundle']
     expected = execute(before, raw())
     assert sheet.preview(path.read_text()).commands == expected.commands
+    cli_commands = None
     if entry == 'python':
         result = session.commit_many(raw())
     elif entry == 'cli':
-        path = tmp_path / 'commands.json'
-        path.write_text(json.dumps(raw()))
-        assert run(runtime, 'edit', 'commands-file', 'film', str(path),
-                   '--base-revision-id', head['revision_id'], '--base-publication-id', head['publication_id']) == 0
+        commit_path = detached_commit_file(expected, head, tmp_path)
+        cli_commands = emit_document_commands(before, Checkout.load(commit_path).bundle)
+        assert run(runtime, 'commit', 'film', '--file', str(commit_path),
+                   '--message', 'Native sheet batch', '--idempotency-key', 'sheet-cli-batch') == 0
         result = json.loads(capsys.readouterr().out)
     elif entry == 'sheet-python':
         result = sheet.apply(path.read_text(), session=session, dry_run=False)
     else:
-        assert run(runtime, 'apply', 'film', str(path), '--native') == 0
+        assert run(runtime, 'apply', 'film', str(path), '--idempotency-key', 'sheet-cli-batch') == 0
         result = json.loads(capsys.readouterr().out)
     body = json.loads(runtime.calls[-1][0])
     assert body['base_revision_id'] == head['revision_id'] and body['base_publication_id'] == head['publication_id']
-    assert body['commands'] == expected.commands
+    if entry == 'cli':
+        assert body['commands'] == cli_commands
+    else:
+        assert body['commands'] == expected.commands
     actual = bundle_from_document(result['data']['canonical_document'])
     assert State(actual).entity(REF) == State(expected.bundle).entity(REF)
     assert len(runtime.history()['items']) == 3
@@ -1144,17 +1156,17 @@ def test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba(runtime
     seed(runtime)
     session, sheet, path = export(runtime, capsys, tmp_path)
     runtime.lost.add('sheet-once')
-    assert run(runtime, 'apply', 'film', str(path), '--native', '--idempotency-key', 'sheet-once') == 1
+    assert run(runtime, 'apply', 'film', str(path), '--idempotency-key', 'sheet-once') == 1
     assert 'edited sheet kept' in capsys.readouterr().out
     first = copy.deepcopy(runtime.calls[-1][:2])
     durable = session.outbox.path.read_bytes()
     runtime.restart()
-    assert run(runtime, 'apply', 'film', str(path), '--native', '--idempotency-key', 'changed') == 1
+    assert run(runtime, 'apply', 'film', str(path), '--idempotency-key', 'changed') == 1
     assert 'immutable' in capsys.readouterr().out
     assert session.outbox.path.read_bytes() == durable
     before = path.read_text()
     path.write_text(property_cell(before, REF, 'hold', '4.013'))
-    assert run(runtime, 'apply', 'film', str(path), '--native') == 1
+    assert run(runtime, 'apply', 'film', str(path)) == 1
     assert 'pending intent' in capsys.readouterr().out
     assert session.outbox.path.read_bytes() == durable
     path.write_text(before)
@@ -1164,15 +1176,17 @@ def test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba(runtime
 
     with monkeypatch.context() as retry_patch:
         retry_patch.setattr(TimelineSession, '_bundle', no_read)
-        assert run(runtime, 'apply', 'film', str(path), '--native') == 0
+        assert run(runtime, 'apply', 'film', str(path)) == 0
         accepted = json.loads(capsys.readouterr().out)
         assert runtime.calls[-1][:2] == first and len(runtime.history()['items']) == 3
     peer = runtime.session(name='peer')
     peer.commit(label('away'))
     peer.commit(label(''))
     current = copy.deepcopy(runtime.history()['head'])
-    assert run(runtime, 'undo', 'film', '--publication', accepted['receipt']['receipt_id']) == 1
-    assert 'intervening' in capsys.readouterr().out
+    reloaded = TimelineSession.open(runtime.project, 'film', client=runtime.client())
+    with pytest.raises(CommitConflict) as refused:
+        reloaded.undo([accepted['receipt']['receipt_id']], idempotency_key='sheet-undo')
+    assert 'intervening' in str(refused.value)
     assert runtime.history()['head'] == current
     assert path.read_text() == before
     assert sheet.preview(path.read_text()).commands == json.loads(first[0])['commands']
