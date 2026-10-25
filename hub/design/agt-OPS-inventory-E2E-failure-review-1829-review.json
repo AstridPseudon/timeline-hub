@@ -1,0 +1,42 @@
+{
+  "task": "D128/F",
+  "verdict": "FAIL",
+  "review_scope": "read-only evidence/source review",
+  "service_id": "agt-OPS-inventory-E2E-final-receive-1822-inventory-whole-maker-1025182407-27653",
+  "service_snapshot_tree": "d6d79256c5c432a4aced5d66a6cb24afecee3058",
+  "source1747_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "first_actual_boundary": "parent maker Store.ensure pre-build projection check",
+  "first_cause": {
+    "classification": "fixture invocation/source1747 preparation defect",
+    "source_path": "ops-child-custody/tests/e2e_inventory.py",
+    "source_lines": [180, 189],
+    "condition": "prepare_venue creates tiny-orch/tests but does not create tiny-orch/tests/suites.conf",
+    "consumer_path": "parent maker -> embedded STORE_PY -> Store.ensure -> Store._verify_projection",
+    "consumer_lines": [654, 656],
+    "failure": "Store._verify_projection unconditionally reads tests/suites.conf; the retained venue has no such file",
+    "observed_result_consistent_with_cause": "parent exited 2 with zero stage records before build/run_stage"
+  },
+  "minimum_unapplied_source_correction": {
+    "file": "ops-child-custody/tests/e2e_inventory.py",
+    "location": "prepare_venue immediately after (orch / 'tests').mkdir()",
+    "change": "create an empty baseline suites.conf before either Store.initialize call",
+    "example": "(orch / 'tests' / 'suites.conf').write_text('')",
+    "applied": false
+  },
+  "evidence_limits": {
+    "retained_stdout": "EXACTMISSING",
+    "retained_stderr": "EXACTMISSING",
+    "parent_stage_records": [],
+    "direct_parent_error_text": "EXACTMISSING; source review deterministically identifies FileNotFoundError for tiny-orch/tests/suites.conf",
+    "candidate_green": false,
+    "sealed_verifier": false,
+    "registration": false,
+    "adversarial_checks": 0
+  },
+  "classification_notes": [
+    "This is not a product defect: the production maker, Store, verifier, and registration path were not qualified by this run.",
+    "This is not a safety, classifier, or permission refusal.",
+    "The fixture Git commits and private Store.initialize calls did occur; no maker retry or body replay was performed by this review.",
+    "Core425, REG14, retirement0, request/reply contract, and D130 hold remain unchanged."
+  ]
+}

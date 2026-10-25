@@ -1,0 +1,92 @@
+{
+  "schema": "timeline.ops-child-custody.d128f.failure-review.v1",
+  "mode": "READ_ONLY",
+  "verdict": "FAIL",
+  "service": {
+    "id": "agt-OPS-inventory-E2E-final-receive-1822-inventory-whole-maker-1025182407-27653",
+    "snapshot_tree": "d6d79256c5c432a4aced5d66a6cb24afecee3058",
+    "wrapper_sha256": "564716bca87c9b48251ceecb3b6455bea40147e94cae9b5e25d98dee9747fa3f",
+    "suite_row_sha256": "fcfd280bb6441a462707e645743187efec6a6ff95d83528903579bac67b0fd8f",
+    "exit_code": 2,
+    "retained_result": "parent exit 2; parent_stages=[]; whole_make_e2e=NOTRUN",
+    "retained_stdout": "EXACTMISSING",
+    "retained_stderr": "EXACTMISSING"
+  },
+  "bindings": {
+    "source1747_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+    "source1747_runner_sha256": "4249af6c2f99a01d3eed7fa951a3c2477c25a5e0c6a9c0f61f55f2c505ba4788",
+    "source1747_support_sha256": "8e61d99631e417e39e95b845f5433525ec25a26f190cd433380ebc75f830ec42",
+    "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "agent_fixture_commit": "7f3c9ec5f7b8a57f13adbb2f770497d72eacb6de",
+    "runtime_fixture_commit": "c0342526fe16160776c3ac5fdab1587434e69f73"
+  },
+  "path_trace": [
+    {
+      "order": 1,
+      "stage": "wrapper preflight and source1747 extraction",
+      "state": "PASS",
+      "evidence": "source hashes, Python bindings, wheelhouse, disk guard, and source archive controls are retained as PASS"
+    },
+    {
+      "order": 2,
+      "stage": "fixture Git commits",
+      "state": "PASS",
+      "evidence": "two clean private fixture repositories; exact heads 7f3c9ec5 and c0342526"
+    },
+    {
+      "order": 3,
+      "stage": "private Store initialization",
+      "state": "PASS",
+      "evidence": "tiny-parent-work and tiny-candidate-work each contain initialized empty Store metadata"
+    },
+    {
+      "order": 4,
+      "stage": "parent maker invocation",
+      "state": "FAIL",
+      "argv": [
+        "bash",
+        "/tmp/w-f24ccbdde1/inventory-parent-0857",
+        "venv-agent-child-inventory-parent",
+        "7f3c9ec5f7b8a57f13adbb2f770497d72eacb6de",
+        "--source-carrier",
+        "/tmp/w-f24ccbdde1/tiny-agent-fixture",
+        "/tmp/w-f24ccbdde1/tiny-runtime-fixture",
+        "c0342526fe16160776c3ac5fdab1587434e69f73"
+      ],
+      "exit_code": 2,
+      "stage_records": [],
+      "source_determined_first_cause": "Store.ensure calls _verify_projection before build; _verify_projection reads /tmp/w-f24ccbdde1/tiny-orch/tests/suites.conf, which prepare_venue never creates"
+    },
+    {
+      "order": 5,
+      "stage": "expected parent inventory refusal",
+      "state": "NOTREACHED",
+      "reason": "the parent failed before STORE_BUILD/run_stage and before STORE_VERIFY"
+    },
+    {
+      "order": 6,
+      "stage": "candidate maker, verifier, sealed registration, adversarial controls",
+      "state": "NOTREACHED",
+      "reason": "the source1747 runner stops after the parent assertion"
+    }
+  ],
+  "source_control_comparison": {
+    "known_passing_contract": "Store._verify_projection reads the existing suites.conf projection baseline; normal Store lifecycle paths supply that baseline before ensure/registration",
+    "actual_service_preparation": "prepare_venue creates orch/tests and initializes Stores but leaves suites.conf EXACTMISSING",
+    "shell_options": "parent maker uses set -u -o pipefail; its embedded STORE_PY catches the pre-build exception and exits 2",
+    "source_state": "Agent and Runtime fixture heads match the requested hashes and are clean",
+    "lock_identity": "requirements/proof.lock is checked by the parent preflight; no lock mismatch is implicated before the missing projection baseline",
+    "private_roots": "parent and candidate Store roots are distinct private TMPDIR paths; no production Store is involved",
+    "helper_bootstrap": "no dependency seed or Farm route is selected; the missing suites.conf is earlier than any build/bootstrap helper stage"
+  },
+  "unqualified": [
+    "parent RED at the expected authenticated inventory refusal",
+    "candidate GREEN",
+    "sealed registration",
+    "unchanged verifier against the genuine candidate",
+    "strict adversarial controls"
+  ],
+  "minimum_unapplied_correction": "source1747 prepare_venue must create an empty tests/suites.conf baseline before Store.ensure can run"
+}
