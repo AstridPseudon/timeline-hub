@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-25T00:16:16Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 715m -->
+<!-- farm | 2026-10-25T00:18:23Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 717m -->
 # farm board, 2026-10-24T12:25Z. STOOD DOWN (D56.3). No worker running; no new dispatches.
 
 Orchestrator 12:27Z, owner-approved (D56.3): F-final and the ZIP move to main, so the farm stands down. Machinery idle, daemons stay up, until the orchestrator releases the farm.
