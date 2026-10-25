@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-25T05:58:12Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+<!-- app2 | 2026-10-25T06:00:29Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
 # app2 board, 2026-10-25T05:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -105,7 +105,9 @@
 
 | P2-placement31499 | Qualify projected reload locator | App Luna; independent review | D105 conditions and source review | doing | app-P2-placement31499-projected-oracle-0547 | Actual31499 label/canonical PASS; row assertion FAIL. D105 requires intended prefix, D69 comparison, strict negatives, protected review and ledger/ZIP notes. No original GO. | App0244 base |
 | P2-D102-adoption | Adopt normally released diagnostics | App Luna | Normal tools and HOME receipt | merged | app-U4p-D102-adoption-0538 | Eight strict,15 vendor,14 mappings,2 installer PASS; protected six exact. Only lock and manifest changed. | App0244db2c02 / Runtime689 |
-| P2-D102-diagnostics | Observe ADD then element on fixed tuple | App service; Luna | ADD preflight8483 PASS | doing | app-P2-D102-ADD-element-diagnostics-0544 | ADD actual12031 running on0244/bde578/689/635f. Element follows same tuple and controller. No outcome or root cause claimed; SWAP follows root fix. | Captured tuple |
+| P2-D102-diagnostics | Observe element on fixed tuple | App service; Luna | ADD12031 terminal; element preflight18244 PASS | doing | app-P2-D102-ADD-element-diagnostics-0544 | ADD12031 stopped at native seed before readiness/original; zero assertions. Sole element follows same captured tuple. Body ID pending; accept/receipt/outcome UNKNOWN. | 0244 / bde578 / 689 / 635f |
+
+| P2-D102-ADD12031 | Preserve native seed failure | App service; Runtime source | Runtime peer0549 handoff | gated:native-seed-source | Controller0544; Runtime D102 owner | Exit1/94s before readiness and original ADD; zero assertions. Seed not_ready; HTTP body/status and cause UNKNOWN. No redacted exception line retained. No unchanged repeat. | 0244 / bde578 / 689 / 635f |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. No new Proof dispatch, original run or product merge is owed. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
