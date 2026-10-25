@@ -52,12 +52,9 @@ def test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart(t
         source = {'id': 'voice', 'clipType': 'video', 'track': 'picture',
                   'asset': case.pins['new']['asset'], 'at': 0, 'hold': 4,
                   'from': 0, 'to': 4, 'speed': 1, 'opaque': [None, False, 0.0]}
-        raw_media = parent.call('occurrence.add-media', {'row': source, 'media': case.pins['new']},
-                                'occurrence:born-occ')
-        raw_media['intent'] = {'ownership': 'occurrence'}
-        parent.commit(case, parent.body(case, [raw_media], dry_run=True), 's3-child-media-selection')
         child_media = capture_occurrence_add_media(
             bundle(), 'occurrence:born-occ', source, case.pins['new'], verified_media=case.selected)
+        parent.commit(case, parent.body(case, [child_media], dry_run=True), 's3-child-media-selection')
         submit([child_media], 's3-child-media')
         submit([capture_track_create(bundle(), 'parent', {'id': 'overlay', 'kind': 'visual'})],
                's3-overlay')
