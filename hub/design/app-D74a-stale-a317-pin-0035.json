@@ -1,0 +1,14 @@
+{
+  "worker": "app-pin-a3174ca3",
+  "head": "a3174ca39aacee1ce7c4d5f2bcd80200b79017fa",
+  "at": "2026-10-25T00:34:28.707100+00:00",
+  "active_test_count": 8,
+  "process_hits": 0,
+  "unreadable_processes": 0,
+  "guards": [],
+  "keep_exists": true,
+  "preserved_main_reservation": "fd2f/0d142/a3cd/635f",
+  "terminal_use": "actual17228 terminal NO-GO; all outputs retained",
+  "recycle_exit": 0,
+  "recycle_output": "recycled app-pin-a3174ca3\n"
+}
