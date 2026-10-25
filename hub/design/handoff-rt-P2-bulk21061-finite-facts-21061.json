@@ -1,0 +1,162 @@
+{
+  "packet": "P2 bulk21061 finite existing-evidence facts",
+  "version": 1,
+  "classification": "finite_existing_evidence",
+  "decision": "no_additional_verdict",
+  "tuple": {
+    "app_commit": "fd2f843a6957deef0a059a97d36671cee9d39e91",
+    "app_tree": "9fd43cb9b47d64c747508ed2436d275019bc2599",
+    "agent_commit": "0d142f79518ba4ec20eb195657ccc7eb6e903fc3",
+    "agent_tree": "f490451a3fa92f847a9ff2d26daac9e1157925e3",
+    "runtime_commit": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de",
+    "runtime_tree": "64bb0caf0b7b950e02c4075077868a3dcd12ee06",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "runs": {
+    "preflight": {
+      "id": "app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-preflight-1025004623-19129",
+      "status": "pass",
+      "exit": 0,
+      "source_manifest_sha256": "c4411da5c9fefbbd68716bc1bd92981adcd3e45c90d0d8f324fa10e0424424ee",
+      "summary_sha256": "49e04f43f7ab0187c824601338dff757400ef8fd24db85d2626f4d3e71799927",
+      "log_sha256": "09609860aae66d85ea669b54ac9ddcff525dceabd687f8706b6a886a5ba26e85"
+    },
+    "original": {
+      "id": "app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061",
+      "status": "fail",
+      "exit": 1,
+      "suite": "p2-transition-none-bulk",
+      "test": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo",
+      "test_location": "tests/e2e/local/three-products.p2-tour.spec.ts:791",
+      "elapsed_seconds": 242,
+      "junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 1,
+        "time_seconds": 104.494,
+        "error": "page.waitForResponse timeout after 90000ms"
+      },
+      "readiness_junit": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "time_seconds": 22.266874,
+        "test": "D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture"
+      },
+      "source_manifest_sha256": "a08c551273a1e28fc11466fb9dc745dfcbe5ce8dbd4da2a75ad585c06fd719d8",
+      "junit_sha256": "acca7967692e063ff90119b883294703bc424834b337fea7b71d680dd698fe92",
+      "readiness_junit_sha256": "9579f4794746907548720d08e7a9a4a20919d7d2f8b80e3fefa452e90c4c278d",
+      "summary_sha256": "e43c63e321afe192d384a5a35acd53c2617bd1cef813350a7fbb8f663643a871",
+      "log_sha256": "ff603303df00d648a1de051ce749ffe8ae89512882e65d2cf8f8766733a7e6fa",
+      "phase_capture_sha256": "aaaf38244cf1360c5a93c37897c887f3eed1093608b7e697b4a409612f5e1f46",
+      "trace_sha256": "3c0acea23a7c3a1cadc63abee0b7f910f28c4b7bdeb54b7ac3616742bba03019"
+    }
+  },
+  "protected_source_sha256": {
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "da55dba9476ef35ebd98973b2c3c6eaeea4deaaa73d34f9b2e51eabf7da0277e",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "scripts/testing/d66-plain-stack-profile.mjs": "e082c9a8b99533809ea6e7d613f070fbdaf683dc3bb8d7ee065b5d9f45afebd4",
+    "scripts/testing/d66-vite-profile.config.ts": "fe3aac633d1174d93754ef9d748877daeffd082b408718f1ccd4a3fdddbece1d"
+  },
+  "profile_lineage_discrepancy": {
+    "claimed_d66_plain_stack_sha256": "7c1663a41d75281c72e0bcf85f099127921a73125a42d1c085459c162c864351",
+    "claimed_d66_vite_sha256": "1c2ac0d9a281cb3cfa8965469c03e4fc0770c4d9f782a7d4d09a03fd373a7acd",
+    "actual_recorded_d66_plain_stack_sha256": "e082c9a8b99533809ea6e7d613f070fbdaf683dc3bb8d7ee065b5d9f45afebd4",
+    "actual_recorded_d66_vite_sha256": "fe3aac633d1174d93754ef9d748877daeffd082b408718f1ccd4a3fdddbece1d",
+    "interpretation": "environment provenance discrepancy only; no profile identity or GO inference"
+  },
+  "gesture_post_classification": {
+    "intended_commit_post": "absent_in_browser_trace",
+    "intended_request_ordinal": null,
+    "intended_runtime_phase_ordinal": null,
+    "commit_route_observations": {
+      "post": 0,
+      "get": 1,
+      "get_status": 200
+    },
+    "browser_trace_resources": {
+      "total": 254,
+      "get": 231,
+      "post": 22,
+      "put": 1,
+      "post_categories": {
+        "handshake": 6,
+        "read_only_inspect": 16,
+        "intended_commit": 0
+      }
+    },
+    "gesture_window": {
+      "wait_for_response_start_source": "tests/e2e/local/three-products.p2-tour.spec.ts:125",
+      "gesture_source": "tests/e2e/local/three-products.p2-tour.spec.ts:664",
+      "action": "two-clip selection followed by Effects > Transition > None",
+      "terminal": "caller-side waitForResponse timeout at 90000ms",
+      "caller_receipt": "unobserved",
+      "runtime_pending_claim": false,
+      "reason": "the required POST to the commit route is absent; this is not evidence of a Runtime-pending request"
+    }
+  },
+  "runtime_phase_capture": {
+    "schema_version": 1,
+    "requests_observed": [1, 2],
+    "request_1": {
+      "classification": "pre-gesture seed/setup; exact operation label unavailable",
+      "phases": {
+        "handler_entry": {"count": 1, "start_ms": 1791.705, "end_ms": 3473.858},
+        "authorization": {"count": 14, "start_ms": 1866.195, "end_ms": 3143.792},
+        "coordinator_admission": {"count": 1, "start_ms": 1873.222, "end_ms": 3473.176},
+        "coordinator_lock": {"count": 1, "start_ms": 1873.315, "end_ms": 3472.959},
+        "provider": {"count": 1, "start_ms": 1887.358, "end_ms": 3139.163},
+        "accept": {"count": 1, "start_ms": 2753.609, "end_ms": 3138.989},
+        "receipt": {"count": 1, "start_ms": 2761.885, "end_ms": 3138.648},
+        "http_response": {"count": 2, "start_ms": 3473.526, "end_ms": 3474.633, "status": 200}
+      },
+      "terminal": "runtime handler returned; response-write observed"
+    },
+    "request_2": {
+      "classification": "pre-gesture seed/setup; exact operation label unavailable",
+      "phases": {
+        "handler_entry": {"count": 1, "start_ms": 11070.402, "end_ms": 25518.536},
+        "authorization": {"count": 23, "start_ms": 11412.846, "end_ms": 20926.464},
+        "coordinator_admission": {"count": 1, "start_ms": 11519.352, "end_ms": 25515.394},
+        "coordinator_lock": {"count": 1, "start_ms": 11519.813, "end_ms": 25514.920},
+        "provider": {"count": 1, "start_ms": 11731.097, "end_ms": 20874.840},
+        "accept": {"count": 1, "start_ms": 16222.130, "end_ms": 20874.071},
+        "receipt": {"count": 1, "start_ms": 16373.158, "end_ms": 20871.281},
+        "http_response": {"count": 2, "start_ms": 25517.665, "end_ms": 25522.162, "status": 200}
+      },
+      "terminal": "runtime handler returned; response-write observed"
+    },
+    "unreached_or_unknown": {
+      "dispatch_queue": "UNKNOWN; absent from old schema-1 helper output",
+      "handler_duration": "UNKNOWN; not emitted by old schema-1 helper",
+      "execution_lock_wait": "UNKNOWN; not emitted by old schema-1 helper",
+      "caller_receipt": "UNKNOWN; outside Runtime process",
+      "gesture_phase_ordinal": "UNAVAILABLE; no gesture commit POST reached Runtime"
+    }
+  },
+  "hung_request_stack_capture": {
+    "records": 170,
+    "source": "app-runtime",
+    "terminal_counts": {"response": 168, "failed": 2},
+    "failed_request_ordinals": [42, 45],
+    "dump_attribution": "UNKNOWN; no retained route/body mapping, and no watchdog dump is attributed to the gesture or to phase request 1/2"
+  },
+  "limits": [
+    "No intended commit request body, headers, auth, raw URL, or response body is exported.",
+    "No intended commit request ordinal exists because the browser did not emit the POST.",
+    "No accepted/merged/refused result, receipt, canonical document delta, or undo result exists for the attempted gesture.",
+    "No permanent-deadlock or cause claim is made from the 90-second caller wait.",
+    "No profile identity inference is made from the lineage hash discrepancy."
+  ],
+  "original_records": {
+    "preflight_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-preflight-1025004623-19129/d66/manifest.json",
+    "original_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/manifest.json",
+    "original_junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/p2-transition-none-bulk.xml",
+    "readiness_junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/readiness.xml",
+    "original_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/log.txt",
+    "original_phase_capture": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/runtime-private/p2-commit-phase.jsonl",
+    "original_trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/p2-transition-none-bulk/three-products.p2-tour-P2--917c4-elds-order-and-guarded-Undo/trace.zip",
+    "original_stack_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/hung-request-stacks/"
+  }
+}

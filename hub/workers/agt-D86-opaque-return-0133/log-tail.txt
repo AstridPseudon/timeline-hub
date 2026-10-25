@@ -1,400 +1,400 @@
-docs/architecture/repo-shape.md:128:| Old surface | Canonical surface |
-docs/architecture/repo-shape.md:135:| `astrid.packs.{cli,validate,agent_index,gitignore,install,_canonical_entrypoint}` | `astrid.core.pack.*` |
-docs/architecture/repo-shape.md:198:it are retired; new capability work uses the canonical shipped packs.
-docs/architecture/repo-shape.md:254:| `docs/architecture/repo-shape.md` | **This document** — M5 canonical repo-shape contract |
-docs/architecture/repo-shape.md:301:canonical repository structure drifts.
-docs/architecture/provider-independent-generation-experiments-plan.md:186:  manifest as canonical generation executors.
-docs/architecture/provider-independent-generation-experiments-plan.md:188:- There is no canonical experiment schema.
-docs/architecture/provider-independent-generation-experiments-plan.md:279:### AD-6: Local hashes are canonical
-docs/architecture/provider-independent-generation-experiments-plan.md:281:Canonical artifact identity is:
-docs/architecture/provider-independent-generation-experiments-plan.md:551:| Fal through canonical generation executors | Generation manifest v2 | Verify requested/applied features, request ID, endpoint, cost, and failure fixtures |
-docs/architecture/provider-independent-generation-experiments-plan.md:552:| OpenAI through canonical generation executors | Generation manifest v2 | Verify reference ordering, quality/size fields, request ID, and redaction |
-docs/architecture/provider-independent-generation-experiments-plan.md:554:| ComfyUI through canonical generation adapter | Generation manifest where available | Preserve workflow hash, template ID, declared bindings, checkpoint/LoRA metadata, and output mapping |
-docs/architecture/provider-independent-generation-experiments-plan.md:561:Do not pretend every workflow node maps cleanly to canonical generation
-docs/architecture/provider-independent-generation-experiments-plan.md:809:- Verification of canonical Fal, OpenAI, and local generation manifests.
-docs/architecture/provider-independent-generation-experiments-plan.md:922:| Schema overlap between project runs, thread runs, generation manifests, and experiment records | Make experiment an index over canonical runs; do not duplicate lifecycle fields unnecessarily |
-docs/architecture/provider-independent-generation-experiments-plan.md:931:| Large media duplication | Reference content by run and hash; materialize portable copies only on explicit export |
-astrid/sdk/_child_bridge.py:25:    from .results import InvocationResult, MaterializedChildOutput
-astrid/sdk/_child_bridge.py:44:_BRIDGE_OPERATIONS = frozenset({"submit", "status", "outputs", "publish_snapshot", "materialize_output"})
-astrid/sdk/_child_bridge.py:190:    def materialize(self, result: InvocationResult, association_id: str) -> MaterializedChildOutput:
-astrid/sdk/_child_bridge.py:206:        return self._bridge.materialize_output(
-astrid/sdk/_child_bridge.py:400:            if op == "materialize_output":
-astrid/sdk/_child_bridge.py:404:                    raise ValueError("invalid materialized child output")
-astrid/sdk/_child_bridge.py:450:    def materialize_output(self, *, child_key: str, task_id: str,
-astrid/sdk/_child_bridge.py:451:                           output: dict[str, Any]) -> MaterializedChildOutput:
-astrid/sdk/_child_bridge.py:453:        from .results import MaterializedChildOutput
-astrid/sdk/_child_bridge.py:456:            raise CapabilityValidationError("materialization requires exact child key and task IDs")
-astrid/sdk/_child_bridge.py:461:        data = self._exchange("materialize_output", {
-astrid/sdk/_child_bridge.py:464:        return MaterializedChildOutput(output=MappingProxyType(dict(data["output"])), filename=data["filename"])
-docs/architecture/hivemind-hybrid-search-plan.md:147:This remains the canonical public row shape.
-docs/architecture/hivemind-hybrid-search-plan.md:172:`corpus_path`; they do not yet have materialized Python or workflow JSON in the
-docs/architecture/hivemind-hybrid-search-plan.md:196:- canonical text and SHA-256 content hashes
-docs/architecture/hivemind-hybrid-search-plan.md:335:`representation_hash` covers the complete canonical representation identified by
-docs/architecture/hivemind-hybrid-search-plan.md:348:    canonicalization_version integer not null,
-docs/architecture/hivemind-hybrid-search-plan.md:380:### AD-4: Canonical representations are explicit, deduplicated, and versioned
-docs/architecture/hivemind-hybrid-search-plan.md:387:| Item/representation | Canonical semantic text |
-docs/architecture/hivemind-hybrid-search-plan.md:404:remove that delimited code block from the workflow's canonical prose before
-docs/architecture/hivemind-hybrid-search-plan.md:430:Store a `canonicalization_version` either on the embedding row or in the model
-docs/architecture/hivemind-hybrid-search-plan.md:433:that contract. A canonical-representation change must be able to trigger a
-docs/architecture/hivemind-hybrid-search-plan.md:524:- Pumpernickel-specific canonicalizers and hydrators.
-docs/architecture/hivemind-hybrid-search-plan.md:553:one canonical Hivemind expression—prefer `simple` for punctuation-heavy model,
-docs/architecture/hivemind-hybrid-search-plan.md:579:For `kind=workflow`, build the lexical document from the canonical
-docs/architecture/hivemind-hybrid-search-plan.md:662:  provider + model + dimension + canonicalization version + chunking version
-docs/architecture/hivemind-hybrid-search-plan.md:689:Workflow-code embeddings are built from the exact canonical Python
-docs/architecture/hivemind-hybrid-search-plan.md:847:- Materialize `payload.python_source`, recognized representations, derivation
-docs/architecture/hivemind-hybrid-search-plan.md:874:safe/quarantined state, materialized Python coverage, unavailable rows,
-docs/architecture/hivemind-hybrid-search-plan.md:907:2. Fetches the current source through a canonical searchable-content surface,
-docs/architecture/hivemind-hybrid-search-plan.md:1053:remains the canonical shared-knowledge capability.
-docs/architecture/hivemind-hybrid-search-plan.md:1112:- Workflow Python materialization and embedding coverage.
-docs/architecture/hivemind-hybrid-search-plan.md:1147:- Canonical text for every source type.
-docs/architecture/hivemind-hybrid-search-plan.md:1208:- Re-embedding only changed canonical content.
-docs/architecture/hivemind-hybrid-search-plan.md:1235:total canonical input tokens / 1,000,000 × provider price per million tokens
-docs/architecture/hivemind-hybrid-search-plan.md:1392:| 1.1 | Choose the canonical PostgreSQL text-search configuration and exact indexed expressions for all entity/representation types. | **Medium** | 0.2, 0.6, 0.8 | Decision explicitly resolves `simple` versus existing `english` behavior and bounded workflow-code documents. |
-docs/architecture/hivemind-hybrid-search-plan.md:1394:| 1.3 | Build the canonical Discord message FTS index safely on staging and production-sized data. | **Difficult** | 0.3, 1.1 | Online index build completes within storage/lock limits and query plans use it. |
-docs/architecture/hivemind-hybrid-search-plan.md:1412:| 2.5 | Implement canonical representations and hashes for each entity/representation type, including strict workflow Python precedence, secret-state exclusion, deduplication, and contract versioning. | **Medium** | 0.8, 2.1, 2.4 | Python/TypeScript and SQL fixtures produce identical safe prose/code representations and hashes without duplicate or quarantined Python. |
-docs/architecture/hivemind-hybrid-search-plan.md:1424:| 2.17 | Add lifecycle, worker, representation-remediation/backfill, vector, workflow code canonicalization/chunking/change/deduplication/quarantine, semantic SQL, dimension-mismatch, and failure-mode tests. | **Difficult** | 2.1–2.16 | Payload-only, legacy-body-only, duplicated, changed, huge generated, parser-fallback, unavailable, and quarantined workflow fixtures pass the semantic, concurrency, and recovery suites. |
-docs/architecture/hivemind-hybrid-search-plan.md:1459:| 5.3 | Run/reconcile production workflow representation remediation and quarantine review, then backfill and verify all eligible distillations and resource representations under the selected active contract. | **Medium** | 2.12–2.17, 5.2 | Eligible prose coverage is 100%; every recoverable safe workflow has one canonical Python source; unavailable/quarantined rows are explained; stale representation hashes are below 0.1%; no Python is double indexed. |
-docs/architecture/hivemind-hybrid-search-plan.md:1580:- Ported canonicalization, hashing, vector validation, and worker behavior.
-docs/architecture/hivemind-hybrid-search-plan.md:1581:- Separate workflow prose/Python canonicalization, code-aware chunking,
-docs/architecture/hivemind-hybrid-search-plan.md:1845:- Workflow lexical retrieval searches the exact canonical Python
-docs/architecture/hivemind-hybrid-search-plan.md:1854:- Every recoverable historical workflow has a materialized, versioned, hashed
-docs/architecture/pack-layout-variants.json:283:    "description": "Every declared layout exception that keeps a pack from being purely canonical. None remain after the M2 cleanup.",
-docs/architecture/runtime-database-clean-break-plan.md:62:### 2. One canonical format
-docs/architecture/runtime-database-clean-break-plan.md:126:Verify a snapshot, materialize a fresh root, verify it again, stop the old
-docs/architecture/runtime-database-clean-break-plan.md:138:1. Consolidate the current domain schema into one canonical fresh-format
-astrid/sdk/_remote_timeline.py:12:    """Keep canonical revision reads and ledger operations off ``remote.py``.
-astrid/sdk/_remote_timeline.py:87:                        "integrity_error", "canonical internal timeline pin is invalid", {}
-astrid/sdk/_remote_timeline.py:92:                        "integrity_error", "canonical internal timeline pin has no exact owner", {}
-astrid/sdk/_remote_timeline.py:97:                        "integrity_error", "canonical internal revision has conflicting owners",
-astrid/sdk/_remote_timeline.py:144:            # that are not part of a canonical immutable image.  Keep those
-astrid/sdk/_remote_timeline.py:146:            # the existing canonical fieldsets before opening the bundle.
-astrid/sdk/_remote_timeline.py:189:                document = entry["receipt"]["result"].get("canonical_document")
-astrid/sdk/_remote_timeline.py:208:                    raise AuthoringBundleError("canonical document differs from the original closure read")
-astrid/sdk/_remote_timeline.py:236:                ErrorObject("protocol_error", "timeline scope has no canonical project/timeline identity", {}),
-astrid/sdk/_remote_timeline.py:263:                ErrorObject("protocol_error", "timeline scope has no canonical project/timeline identity", {})
-astrid/sdk/_remote_timeline.py:278:                ErrorObject("protocol_error", "timeline listing has no canonical identity", {}),
-docs/architecture/pack-hosted-interfaces.md:3:**Status:** Architecture proposal, 2026-09-22. This document records a product direction; it does not amend the canonical pack schema, SDK, discovery behavior, or trust policy.
-docs/architecture/pack-hosted-interfaces.md:7:The companion [gap analysis](../../../docs/architecture/astrid-packs-and-extensions/gap-to-end-state.md) checks the 2026-09-22 source, distinguishes reusable Video Editor infrastructure from missing shared platform work, and proposes phased acceptance criteria. It does not change this proposal's non-normative status or the canonical pack contract.
-docs/architecture/pack-hosted-interfaces.md:19:The v2 `pack.yaml` already has a canonical pack identity, `extensions` metadata, resource declarations, and capability declarations. This gives a natural home for future interface contributions. But the current SDK capability kinds and runtime are executor, orchestrator, and element; v2's open-ended `extensions` value is metadata flexibility, not a working UI plugin API.
-docs/architecture/pack-hosted-interfaces.md:33:The app's frontend needs a UI-capable pack projection in addition to the current execution-capability catalog. That projection should point back to canonical Astrid pack identity and resource provenance. It should not add React entrypoints to the workspace runtime's generic task/capability readiness records. Agents can continue to discover and invoke capabilities through the SDK while the app discovers pack-owned interfaces through a corresponding manifest-backed surface.
-docs/architecture/pack-hosted-interfaces.md:75:- Astrid discovers its canonical pack manifest, capabilities, and UI contribution metadata.
-astrid/sdk/invocation.py:598:        # Match the canonical executor builder's reserved brief values without
-astrid/sdk/invocation.py:889:    """Reject canvas/fps profiles that cannot match the canonical theme.
-astrid/sdk/invocation.py:907:            f"cannot resolve authoritative theme canvas for canonical timeline "
-astrid/sdk/invocation.py:924:            f"invalid render profile for canonical timeline {timeline_slug!r}: "
-astrid/sdk/invocation.py:986:                f"caller-supplied {name} is not accepted; canonical render authority is host-owned"
-astrid/sdk/invocation.py:993:                "file mode or timeline_ref for canonical managed mode"
-astrid/sdk/invocation.py:1210:    """Select admitted file inputs or resolve a canonical render snapshot.
-astrid/sdk/invocation.py:1213:    materializes them beneath the assigned attempt.
-astrid/sdk/invocation.py:1228:        # declared file admission and host materialization own those bytes.
-astrid/sdk/invocation.py:1273:                    f"project {project!r} has no configured default canonical timeline; "
-astrid/sdk/invocation.py:1285:            "assets_registry cannot be overridden with timeline_ref; the canonical timeline "
-astrid/sdk/invocation.py:1335:        canonical_expansion = snapshot.expansion if isinstance(snapshot.expansion, Mapping) and snapshot.expansion.get("canonical") is True else None
-astrid/sdk/invocation.py:1336:        if canonical_expansion is not None:
-astrid/sdk/invocation.py:1337:            for shot in canonical_expansion.get("shots", []):
-astrid/sdk/invocation.py:1344:                        f"canonical shot {shot_id!r} has no immutable revision identity"
-astrid/sdk/invocation.py:1371:            for occurrence in canonical_expansion.get("occurrences", []):
-astrid/sdk/invocation.py:1422:                f"canonical timeline {snapshot.timeline_slug!r} contains legacy clipType=shot entries; "
-astrid/sdk/invocation.py:1429:        # after reading it from the canonical shot registry; child/caller
-astrid/sdk/invocation.py:1456:            materialized_registry_hash=_expanded_config_hash(expanded_registry),
-astrid/sdk/invocation.py:1530:            # The generic host materializes this immutable snapshot below the
-astrid/sdk/invocation.py:1693:def _materialize_filmstrip_outputs(
-astrid/sdk/invocation.py:1843:        # with local paths; callers can request explicit materialization.
-astrid/sdk/invocation.py:1947:    """Validate and copy the opaque generation intent envelope."""
-astrid/sdk/invocation.py:2169:    Routes whose output cardinality comes from an opaque prompt file are left
-astrid/sdk/invocation.py:2171:    with a declared count, or a single fixed output, can use the canonical
-astrid/sdk/invocation.py:2562:        # Canonical sibling/source invocations use the same preflight as the
-astrid/sdk/invocation.py:2566:        canonical_names = {"python", "companion", "source", "source_video"}
-astrid/sdk/invocation.py:2586:            canonical_names & set(preflight_inputs)
-astrid/sdk/invocation.py:2595:            # Unwrap both layers before the canonical bundle preflight.  The
-astrid/sdk/invocation.py:2602:                    "canonical VibeComfy preflight requires the runtime object reader"
-astrid/sdk/invocation.py:2631:    # the generic host can materialize registry assets below the attempt.
-astrid/sdk/invocation.py:2638:    # miss for VibeComfy's canonical sibling bundle and managed source video.
-astrid/sdk/invocation.py:2652:            canonical = managed_file_digest(value, name)
-astrid/sdk/invocation.py:2655:        if canonical not in input_manifest:
-astrid/sdk/invocation.py:2656:            input_manifest.append(canonical)
-astrid/sdk/invocation.py:2657:        input_digests.append({"name": name, "digest": canonical})
-astrid/sdk/invocation.py:2686:            canonical_digest = "sha256:" + digest
-astrid/sdk/invocation.py:2687:            if canonical_digest in seen_reference_digests:
-astrid/sdk/invocation.py:2689:            seen_reference_digests.add(canonical_digest)
-astrid/sdk/invocation.py:2690:            codex_reference_digests.append(canonical_digest)
-astrid/sdk/invocation.py:2794:        # public file argument. Generic-host materialization requires the
-astrid/sdk/invocation.py:2953:                canonical = metadata.get("canonical_timeline") if isinstance(metadata.get("canonical_timeline"), Mapping) else {}
-astrid/sdk/invocation.py:2956:                    "project_id": context.get("project_id") or canonical.get("project_id") or capture.get("project_id"),
-astrid/sdk/invocation.py:2957:                    "timeline_id": context.get("timeline_id") or canonical.get("timeline_id") or capture.get("timeline_id"),
-astrid/sdk/invocation.py:2958:                    "revision_id": context.get("revision_id") or canonical.get("parent_revision_id") or capture.get("parent_revision_id"),
-astrid/sdk/invocation.py:2959:                    "revision_digest": canonical.get("parent_content_digest") or capture.get("parent_content_digest"),
-astrid/sdk/invocation.py:3027:                raise CapabilityInvocationError("recovery cannot resolve the canonical task project")
-astrid/sdk/invocation.py:3028:            canonical_project = resolved.data.get("project_id")
-astrid/sdk/invocation.py:3029:            if not isinstance(canonical_project, str) or not canonical_project:
-astrid/sdk/invocation.py:3030:                raise CapabilityInvocationError("recovery project lookup returned no canonical identity")
-astrid/sdk/invocation.py:3031:            request["project_id"] = canonical_project
-astrid/sdk/invocation.py:3035:                    effect["target_id"] = canonical_project
-astrid/sdk/invocation.py:3593:        discovered_manifest = _materialize_filmstrip_outputs(
-astrid/sdk/invocation.py:4272:    # a project tree or materialize a render snapshot.
-astrid/sdk/invocation.py:4324:                # the host materializes them as the executor's input files.
-astrid/sdk/invocation.py:4325:                # Runtime must see a canonical capture before publishing it;
-astrid/sdk/invocation.py:4328:                canonical_capture = (isinstance(invocation_authority_context.get("capture_snapshot"), Mapping)
-astrid/sdk/invocation.py:4330:                stored = None if canonical_capture else _store_visualize_objects(
-astrid/sdk/invocation.py:4353:            # sync so the Runtime host can materialize the attempt-local
-astrid/sdk/invocation.py:4362:                        "managed render storage estimation requires the expanded canonical snapshot"
-astrid/sdk/invocation.py:4670:    """Invoke a private backend used by a canonical product operation."""
-astrid/sdk/verified_speech_authoring.py:20:def canonical_json_bytes(value: Any) -> bytes:
-astrid/sdk/verified_speech_authoring.py:78:def build_verified_speech_materialization(
-astrid/sdk/verified_speech_authoring.py:105:    transcript_bytes = canonical_json_bytes(transcript)
-astrid/sdk/verified_speech_authoring.py:130:    annotation_bytes = canonical_json_bytes(annotations)
-astrid/sdk/verified_speech_authoring.py:179:def materialize_transcript_object(
-astrid/sdk/verified_speech_authoring.py:183:    materialization: Mapping[str, Any],
-astrid/sdk/verified_speech_authoring.py:188:    data = materialization.get("transcript_bytes")
-astrid/sdk/verified_speech_authoring.py:189:    declaration = materialization.get("transcript_declaration")
-astrid/sdk/verified_speech_authoring.py:191:        raise ValueError("invalid verified speech materialization")
-astrid/sdk/verified_speech_authoring.py:211:    "build_verified_speech_materialization",
-astrid/sdk/verified_speech_authoring.py:212:    "canonical_json_bytes",
-astrid/sdk/verified_speech_authoring.py:213:    "materialize_transcript_object",
-astrid/sdk/authoring_media.py:71:            raise ValueError(f"Local media requires a canonical absolute file URI: {value}")
-astrid/sdk/authoring_media.py:151:    authenticated closure. Historical/opaque fields are deliberately excluded.
-astrid/sdk/authoring_media.py:369:        # labels and opaque fields. New aliases still receive import metadata.
-docs/architecture/timeline-visualization-plan.md:87:# One canonical clip, with all active layers and optional nearby sequence
-docs/architecture/timeline-visualization-plan.md:94:# One canonical asset and every clip that uses it
-docs/architecture/timeline-visualization-plan.md:142:| `--clip ID` | Focus one canonical clip and retain every intersecting layer |
-docs/architecture/timeline-visualization-plan.md:143:| `--asset ID` | Inspect one canonical asset and its timeline uses |
-docs/architecture/timeline-visualization-plan.md:247:    "canonical_ref": {
-docs/architecture/timeline-visualization-plan.md:331:`asset-index.json` records each qualified asset id, canonical registry id,
-docs/architecture/timeline-visualization-plan.md:573:deterministically assigned from canonical object identity and ordering; they
-docs/architecture/timeline-visualization-plan.md:1011:- Use `understanding.visual_understand` or the canonical image-understanding
-astrid/sdk/client.py:368:        # through to an ambient canonical Runtime.
-docs/architecture/semantic-mutations-events-and-agent-ux.md:13:2. The runtime has strong canonical ownership, compare-and-swap protection,
-docs/architecture/semantic-mutations-events-and-agent-ux.md:118:For example, `clip.retimed` projects onto canonical `at` and `hold` fields and
-docs/architecture/semantic-mutations-events-and-agent-ux.md:166:be inferred. A command aimed at an exact canonical resource should not require
-docs/architecture/semantic-mutations-events-and-agent-ux.md:192:| Immutable artifact | managed media, render output | import, derive, verify, materialize/open |
-docs/architecture/semantic-mutations-events-and-agent-ux.md:222:5. normalize intent into canonical operations;
-docs/architecture/semantic-mutations-events-and-agent-ux.md:279:not mint a mutation receipt because it changed no canonical state.
-docs/architecture/semantic-mutations-events-and-agent-ux.md:283:A domain event answers: **what canonical state changed, and why?**
-docs/architecture/semantic-mutations-events-and-agent-ux.md:295:| Run cancel/retry | Idempotent legacy record | Run/task lifecycle events, but incomplete canonical receipt linkage |
-docs/architecture/semantic-mutations-events-and-agent-ux.md:314:  resolved canonical IDs, before/after values or sufficient inverse data, and
-docs/architecture/semantic-mutations-events-and-agent-ux.md:316:- Projection applies those events to the canonical snapshot in the same runtime
-docs/architecture/semantic-mutations-events-and-agent-ux.md:357:| `runs open` | No | No canonical mutation; access telemetry may be separate |
-docs/architecture/semantic-mutations-events-and-agent-ux.md:362:The canonical design should remain kernel snapshot plus append-only audit:
-docs/architecture/semantic-mutations-events-and-agent-ux.md:455:or materialization path, exact open command, and recent completed-task command.
-docs/architecture/semantic-mutations-events-and-agent-ux.md:509:       -> canonical timeline authority and terminology
-docs/architecture/semantic-mutations-events-and-agent-ux.md:546:- Define canonical project/resource resolution.
-docs/architecture/semantic-mutations-events-and-agent-ux.md:552:- Connect it to canonical timeline projection and validation.
-docs/architecture/semantic-mutations-events-and-agent-ux.md:588:2. review a bounded interval and know the exact canonical version reviewed;
-astrid/sdk/documents.py:28:    """Stable one-per-project pack document ID; pass an explicit canonical ID."""
-astrid/sdk/documents.py:137:            return _failure("protocol_error", "Runtime did not return a canonical project identity.")
-astrid/sdk/timeline_editing.py:57:    """Remap schema-owned item references while leaving opaque strings alone."""
-astrid/sdk/timeline_editing.py:63:                child_key in {"item_id", "source_item_id", "selected_item_id", "parent_item_id"}
-astrid/sdk/timeline_editing.py:78:    """Return a detached candidate while preserving opaque fields."""
-astrid/sdk/timeline_editing.py:116:    """Return canonical top-level clips (with a legacy track-local fallback)."""
-astrid/sdk/timeline_editing.py:175:    # Runtime's canonical timeline schema requires a human-readable label on
-astrid/sdk/timeline_editing.py:290:    Provenance and arbitrary opaque strings are deliberately untouched. Only
-astrid/sdk/timeline_editing.py:448:    can materialize a new immutable child revision on the next full commit.
-astrid/sdk/timeline_editing.py:472:        # Seed the complete canonical child envelopes.  Runtime publication
-astrid/sdk/timeline_editing.py:485:            # A synthetic source identity forces the compiler to materialize
-astrid/sdk/timeline_editing.py:502:        # schema-owned item references; arbitrary provenance/opaque literals
-docs/architecture/giant-file-split-candidates.json:10:    "description": "These five files are the canonical starting set from repo-shape.md §9.1. M4 must split these first.",
-astrid/sdk/authoring_bundle.py:1:"""Lazy SDK-facing adapter for the canonical timeline authoring bundle.
-tests/suites.conf.candidate:8:agent OWN-REHEARSAL-CONTRASTS env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/usr/local/bin:/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 P4_D73_MANIFEST=__P4_D73_MANIFEST__ P4_D73_EVIDENCE=__P4_D73_EVIDENCE__ P4_D73_REQUEST_ID=__P4_D73_REQUEST_ID_CONTRASTS__ /bin/bash --noprofile --norc -c 'set -eu; test "$(command -v git)" = /usr/bin/git; test "$(command -v ffmpeg)" = /usr/bin/ffmpeg; test "$(command -v ffprobe)" = /usr/bin/ffprobe; exec __P4_D73_AGENT_PATH__/tools/p4-d73-pinned-launch.sh "$P4_D73_MANIFEST" run -- -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$P4_D73_EVIDENCE/OWN-REHEARSAL-CONTRASTS.xml" tests/packs/rendering/test_timeline_filmstrip_cards.py::test_pack_uses_rendered_frames_without_html_artifact tests/packs/rendering/test_timeline_filmstrip_cards.py::test_pack_keeps_audio_navigation_links_separate_from_compact_receipt tests/packs/rendering/test_timeline_filmstrip_cards.py::test_pack_keeps_audio_navigation_in_rich_result_index tests/packs/rendering/test_timeline_filmstrip_execution.py::test_input_audio_visualizer_uses_verified_source_amplitude tests/packs/rendering/test_timeline_filmstrip_execution.py::test_input_audio_visualizer_discovers_audio_embedded_in_verified_video tests/packs/rendering/test_timeline_filmstrip_execution.py::test_managed_execution_verifies_video_before_extracting tests/packs/rendering/test_timeline_filmstrip_execution.py::test_execution_delivers_audio_sidecar_optional_media_and_reuses_cache tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[agent-False] tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[agent-True] tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[vibecomfy-False] tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[vibecomfy-True] tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[missing] tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[tree] tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[tag] tests/test_installer_sources.py::test_local_source_rejects_tracked_links_and_submodules[120000] tests/test_installer_sources.py::test_local_source_rejects_tracked_links_and_submodules[160000] tests/test_installer_sources.py::test_local_source_reports_missing_git tests/test_installer_sources.py::test_local_source_cleans_failed_extraction'
-docs/contracts/managed-generation-result-v1.md:18:- `evidence.producer` and `evidence.transport`, kept as opaque namespaced
-tests/visual-boundary.test.mjs:35:  assert.deepEqual(result.opaque, ['unknown effect timing']);
-tests/visual-boundary.test.mjs:41:  assert.deepEqual(result.opaque, ['unverified element reference timing']);
-tests/visual-boundary.test.mjs:55:  assert.ok(result.opaque.some(reason => reason.startsWith('failed disclosure:')));
-tests/visual-boundary.test.mjs:66:test('optional empty effects canonicalize to absence while real effects remain bound', () => {
-astrid/sdk/render_shot_snapshot.py:1:"""Pin canonical shot text identities for immutable render provenance."""
-astrid/sdk/render_shot_snapshot.py:20:    """Read the complete canonical binding set without creating a text authority.
-tests/test_tool_catalog_v3.py:73:    assert tool["canonical_id"] == "video_editing.video-editor"
-tests/test_tool_catalog_v3.py:136:    assert generator.canonical_json_bytes(descriptor) == expected_bytes
-tests/test_tool_catalog_v3.py:137:    assert hashlib.sha256(generator.canonical_json_bytes(descriptor)).hexdigest() == (
-astrid/sdk/visualize_cache.py:3:Every visualize capture is materialized host-side into
-astrid/sdk/visualize_cache.py:7:after each materialization, and the explicit prune used by the operator verb
-tests/test_generic_host_canonical_sibling_bundle.py:64:        host._materialize_inputs({"inputs": {"request": value}}, tmp_path / "attempt",
-tests/test_generic_host_canonical_sibling_bundle.py:70:def test_host_materializes_prefixed_digest_and_preserves_literal_json(tmp_path: Path):
-tests/test_generic_host_canonical_sibling_bundle.py:76:    values = host._materialize_inputs(
-tests/test_generic_host_canonical_sibling_bundle.py:84:def test_materialization_does_not_treat_revision_hash_as_file_digest(
-tests/test_generic_host_canonical_sibling_bundle.py:87:    source_bytes = b"canonical Python workflow\n"
-tests/test_generic_host_canonical_sibling_bundle.py:93:    values = host._materialize_inputs(
-tests/test_generic_host_canonical_sibling_bundle.py:113:def test_host_child_rejects_modified_canonical_member_before_launch(
-tests/test_generic_host_canonical_sibling_bundle.py:170:def test_generic_host_materializes_named_sibling_inputs_and_settles_four_outputs(
-tests/test_generic_host_canonical_sibling_bundle.py:209:    # Bind the host-staged inputs explicitly and preserve canonical output
-tests/test_generic_host_canonical_sibling_bundle.py:230:        "id": "test.canonical_bundle",
-tests/test_generic_host_canonical_sibling_bundle.py:231:        "name": "Canonical Bundle Fixture",
-tests/test_generic_host_canonical_sibling_bundle.py:267:            "id": "canonical-bundle-task",
-tests/test_generic_host_canonical_sibling_bundle.py:268:            "capability": "test.canonical_bundle",
-tests/test_generic_host_canonical_sibling_bundle.py:270:            "attempt_id": "canonical-bundle-attempt",
-tests/test_generic_host_canonical_sibling_bundle.py:283:    runtime.tasks["canonical-bundle-task"] = task
-astrid/sdk/exceptions.py:274:    """An idempotency key was reused with different canonical input.
-astrid/sdk/exceptions.py:625:                "and retry with one canonical association id"
-astrid/sdk/exceptions.py:710:            "the requested project does not exist; use its canonical id or slug",
-tests/test_pure_generative_pipeline.py:121:    def test_audio_probe_and_generative_materialization(self) -> None:
-astrid/sdk/host_bootstrap.py:175:    from astrid.core.execution.custody_broker import _canonical, _digest_bytes
-astrid/sdk/host_bootstrap.py:181:    return _digest_bytes(_canonical(list(argv)))
-astrid/sdk/host_bootstrap.py:315:        opaque = "<opaque:sha256:" + hashlib.sha256(os.fsencode(module)).hexdigest() + ">"
-astrid/sdk/host_bootstrap.py:316:        return any(argv[index] == "-m" and argv[index + 1] in {module, opaque}
-astrid/sdk/host_bootstrap.py:388:    """Opaque value that changes whenever the starting host shows progress.
-astrid/sdk/host_bootstrap.py:468:    canonical schema, and resolved Node executable into the same explicit
-astrid/sdk/host_bootstrap.py:825:    # This is the canonical worker filter. Invocation metadata added later is
-astrid/sdk/host_bootstrap.py:873:    canonical host is parked, before registration or credential consumption.
-astrid/sdk/host_bootstrap.py:1132:            _canonical_digest,
-astrid/sdk/host_bootstrap.py:1200:            "dependency_closure_digest": "sha256:" + _canonical_digest(dependencies),
-astrid/sdk/host_bootstrap.py:1228:            _canonical_digest,
-astrid/sdk/host_bootstrap.py:1269:        source_digest = _canonical_digest({item.id: item.source_digest for item in records})
-astrid/sdk/host_bootstrap.py:1270:        dependency_digest = _canonical_digest({item.id: item.dependency_digest for item in records})
-tests/test_capability_ledger.py:44:def test_ledger_has_only_canonical_ids_models_backends_and_explicit_unmapped_labels():
-tests/test_capability_ledger.py:179:def test_reviewed_v3_pack_labels_preserve_exact_canonical_action_admission():
-tests/test_capability_ledger.py:211:            assert source["canonical_id"] is None
-tests/test_capability_ledger.py:214:            assert source["canonical_id"] == action_id
-astrid/sdk/managed_transcript.py:25:    The returned digest is derived only from the canonical Runtime snapshot.
-astrid/sdk/managed_transcript.py:55:                    f"config.app.transcript.media.asset_key {media['asset_key']!r} is not in the canonical registry"
-astrid/sdk/managed_transcript.py:62:                raise ValueError("config.app.transcript.media.sha256 does not match the canonical media hash")
-astrid/sdk/authoring_revision_diff.py:1:"""Read exact canonical closures for the existing timelines.diff operation."""
-astrid/sdk/authoring_revision_diff.py:19:            raise AuthoringBundleError("canonical internal timeline pin is invalid")
-astrid/sdk/authoring_revision_diff.py:22:            raise AuthoringBundleError("canonical internal timeline pin has no exact owner")
-astrid/sdk/authoring_revision_diff.py:25:            raise AuthoringBundleError("canonical internal revision has conflicting owners")
-astrid/sdk/discovery.py:234:            "canonical_kind": descriptor.canonical_kind,
-astrid/sdk/discovery.py:441:def _split_canonical_element_id(
-astrid/sdk/discovery.py:451:        canonical_kind = registry.element_kind_registry.normalize(kind)
-astrid/sdk/discovery.py:456:    return canonical_kind, local_id
-astrid/sdk/discovery.py:637:        canonical = _split_canonical_element_id(capability_id, registry=registry, strict=True)
-astrid/sdk/discovery.py:638:        if canonical is not None:
-astrid/sdk/discovery.py:639:            requested_kind, requested_local_id = canonical
-astrid/sdk/discovery.py:653:    canonical = _split_canonical_element_id(capability_id, registry=registry, strict=True)
-astrid/sdk/discovery.py:654:    if canonical is not None:
-astrid/sdk/discovery.py:655:        requested_kind, requested_local_id = canonical
-astrid/sdk/timeline_sheet.py:554:    """Resolve a range endpoint through the same canonical address API as edits."""
-astrid/sdk/timeline_sheet.py:728:        from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
-astrid/sdk/timeline_sheet.py:751:            materialize_transcript_inputs(
-astrid/sdk/timeline_sheet.py:821:                            raise SheetError(f"unsupported parameter {key} at {ref}; selected pack/opaque editing requires exact inputs")
-astrid/sdk/timeline_intent.py:32:    # Migrate only recognized intent keys. Opaque collisions stay untouched.
-astrid/sdk/remote.py:40:    """Validate a complete canonical VibeComfy task before admission.
-astrid/sdk/remote.py:42:    Older non-canonical VibeComfy tasks (for example import/edit tasks) do not
-astrid/sdk/remote.py:43:    enter this path. Once a task declares any canonical sibling member, the
-astrid/sdk/remote.py:49:            raise ValueError("canonical VibeComfy task requires an input manifest")
-astrid/sdk/remote.py:52:    canonical_names = ("python", "companion", "source")
-astrid/sdk/remote.py:53:    if not any(name in inputs for name in canonical_names):
-astrid/sdk/remote.py:55:            raise ValueError("canonical VibeComfy task is missing bundle members")
-astrid/sdk/remote.py:57:    missing = [name for name in canonical_names if name not in inputs]
-astrid/sdk/remote.py:60:            "canonical VibeComfy task is missing bundle members: "
-astrid/sdk/remote.py:68:        # ``object_id`` is the canonical immutable CAS identity; ``digest``
-astrid/sdk/remote.py:70:        # must accept the canonical object-id-only spelling and derive the
-astrid/sdk/remote.py:89:    descriptors = {name: descriptor(name) for name in canonical_names}
-astrid/sdk/remote.py:297:                # ``_kernel_invoke`` supplies the manifest in the canonical
-astrid/sdk/remote.py:469:                f"timeline document route {operation!r} is retired; use canonical current-head inspection",
-astrid/sdk/remote.py:552:            canonical_name = name if name is not None else "Main"
-astrid/sdk/remote.py:553:            slug = re.sub(r"[^a-z0-9]+", "-", canonical_name.lower()).strip("-") or "timeline"
-astrid/sdk/remote.py:559:                before, name=canonical_name, slug=slug, output=default_output,
-astrid/sdk/remote.py:658:        document = data.get("canonical_document")
-astrid/sdk/remote.py:774:                        "project has no configured default canonical timeline",
-astrid/sdk/remote.py:808:                    "Runtime timeline listing omitted its canonical timeline id",
-astrid/sdk/remote.py:822:        """Resolve the canonical project/timeline pair without reading a document."""
-astrid/sdk/remote.py:826:        """Canonical current-head alias retained for SDK callers."""
-astrid/sdk/remote.py:886:                    "Runtime does not expose canonical timeline inspection",
-astrid/sdk/remote.py:938:        capture requested frames from the exact pinned canonical composition.
-astrid/sdk/remote.py:1028:                        "revision diff requires the canonical invocation route",
+def _copy_shot_for_placement(
+    payload: Mapping[str, Any],
+    *,
+    project_id: str,
+    timeline_id: str,
+    occurrence_id: str,
+    authoring_shot_id: str,
+    source_shot_id: str,
+) -> tuple[dict[str, Any], dict[str, str]]:
+    result = _copy(dict(payload))
+    if authoring_shot_id == source_shot_id:
+        return result, {}
+    items = result.get("items", [])
+    if not isinstance(items, list):
+        raise AuthoringBundleError("shot revision payload.items must be a list")
+    remap: dict[str, str] = {}
+    for index, raw_item in enumerate(items):
+        item = _mapping(raw_item, f"shot payload.items[{index}]")
+        source_item_id = item.get("item_id", item.get("id"))
+        source_item_id = _string(source_item_id, f"shot payload.items[{index}].item_id")
+        if source_item_id in remap:
+            raise AuthoringBundleError(
+                f"shot payload contains duplicate item identity {source_item_id!r}"
+            )
+        remap[source_item_id] = _identity(
+            "shot-item-placement",
+            project_id,
+            timeline_id,
+            occurrence_id,
+            authoring_shot_id,
+            source_item_id,
+        )
+    result = _remap_known_item_references(result, remap)
+    return result, remap
+
+
+def open_authoring_bundle(
+    parent_revision: Mapping[str, Any],
+    *,
+    shot_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+    internal_timeline_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Open one exact immutable closure as a detached, lossless working copy.
+
+    ``parent_revision`` and both child collections are the exact-head Runtime
+    read results.  No mutable child head is consulted and this function has no
+    persistence port, so opening cannot mutate storage.
+    """
+
+    parent = _mapping(parent_revision, "parent_revision")
+    project_id = _string(parent.get("project_id"), "parent_revision.project_id")
+    timeline_id = _string(parent.get("timeline_id"), "parent_revision.timeline_id")
+    revision_id = _string(parent.get("revision_id"), "parent_revision.revision_id")
+    payload = _mapping(parent.get("payload"), "parent_revision.payload")
+    _validate_timeline_payload_meta(
+        payload, path="parent_revision.payload", include_parent_locations=True
+    )
+    parent_digest = _verify_digest(
+        payload, parent.get("content_digest"), "parent_revision.content_digest"
+    )
+    occurrences = _sequence(payload.get("occurrences"), "parent_revision.payload.occurrences")
+    shot_index = _records_by_identity(shot_revisions, identity="revision_id", path="shot_revisions")
+    internal_index = _records_by_identity(
+        internal_timeline_revisions,
+        identity="revision_id",
+        path="internal_timeline_revisions",
+    )
+
+    source_counts = Counter(
+        _string(
+            _mapping(row, f"occurrences[{index}]").get("shot_id"), f"occurrences[{index}].shot_id"
+        )
+        for index, row in enumerate(occurrences)
+    )
+    candidate_parent = _copy(dict(payload))
+    candidate_parent.pop("occurrences", None)
+    placements: list[dict[str, Any]] = []
+    base_placements: dict[str, dict[str, Any]] = {}
+    shots: dict[str, dict[str, Any]] = {}
+    shot_sources: dict[str, dict[str, Any]] = {}
+    seen_occurrences: set[str] = set()
+    seen_authoring_shots: set[str] = set()
+    seen_items: set[str] = set()
+
+    for ordinal, raw_occurrence in enumerate(occurrences):
+        occurrence = _copy(dict(_mapping(raw_occurrence, f"occurrences[{ordinal}]")))
+        occurrence_id = _string(
+            occurrence.get("occurrence_id"), f"occurrences[{ordinal}].occurrence_id"
+        )
+        if occurrence_id in seen_occurrences:
+            raise AuthoringBundleError(f"duplicate occurrence identity {occurrence_id!r}")
+        seen_occurrences.add(occurrence_id)
+        source_shot_id = _string(occurrence.get("shot_id"), f"occurrences[{ordinal}].shot_id")
+        source_revision_id = _string(
+            occurrence.get("shot_revision_id"), f"occurrences[{ordinal}].shot_revision_id"
 
 exec
-/bin/bash -lc "for f in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/*.md; do if rg -qi 'three.famil|FAIL_SOURCE|opaque|D86' \""'$f"; then echo "--- $f"; rg -n -i -C 3 '"'three.famil|FAIL_SOURCE|opaque|D86|source topology|premigration|canonical' \""'$f" | head -160; fi; done' in /home/user/work/wt/agt-D86-opaque-return-0133
- succeeded in 29ms:
---- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/01-vision.md
-37-
-38-The Runtime is the neutral durable layer. It owns the database, immutable revisions, head movement, authentication, authorization, compare-and-swap acceptance, idempotent request identity, receipts, history, and transport. “Compare-and-swap” means accepting a write only if the caller’s expected head is still current.
-39-
-40:The Runtime should not interpret Astrid timing semantics. Astrid supplies the semantic provider; the Runtime validates and accepts it atomically. The Runtime source describes this boundary directly: command execution and the single rebase belong to the commit implementation, while the Runtime owns the durable acceptance boundary and ledger ([timeline_commit.py:1](/home/user/banodoco/banodoco-workspace-runtime/runtime_protocol/timeline_commit.py:1)). Its README likewise describes a canonical SQLite database, append-only content-addressed storage, credentials, and a loopback HTTP boundary ([README.md:3](/home/user/banodoco/banodoco-workspace-runtime/README.md:3)).
-41-
-42-### App / Reigh
-43-
---
-53-
-54-## Releases
-55-
-56:Release 1 is the intermediate “safe many-hands editing” milestone. It covers one commit path for App and agents, preservation of opaque fields and explicit clears, lossless migration, anchored timing, stable cuts, shared preview/render evaluation, change review, history/undo/revert/restore, agent synchronization, App collaboration UI, and hosted security. It is accepted only after the full integration candidate passes, the App has no fallback writers, the owner watches the real film, and an App edit appears in the log and survives a re-flow ([release-contract.md:36](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/release-contract.md:36), [release-contract.md:109](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/release-contract.md:109)).
-57-
-58-Release 2 adds richer editing on the same foundations: timing repairs, music segments, chapters and beats, transitions, audio ducking, motion, targeted lint, script re-flow, and Runtime schema warnings. Its key film-level guarantee is that chapter-start frames remain exact ([release-contract.md:53](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/release-contract.md:53)).
-59-
---
-64-These are integration-proof gates, not separate products:
-65-
-66-- **IP0:** baseline and gate—inventory existing behavior, freeze renderer closure and v8 identity.
-67:- **IP1:** preservation—real App save/reload, opaque-field preservation, explicit clears, renderer pinning, and golden film baseline.
-68-- **IP2:** compiler—extract timing behavior and prove compiled bytes, cut rows, and intent remain stable.
-69-- **IP3:** commit path—prove atomic acceptance, lost-response retry, crash recovery, and dry-run rebase.
-70-- **IP4:** App save—prove a real App gesture survives an intervening agent edit and preserves a newer local suffix.
---
-80-The ten project letters are workstream ownership labels:
-81-
-82-- **A — Integration:** baselines, contracts, gates, release acceptance, and merge coordination.
-83:- **B — Preservation:** compatibility, migration, opaque data, and no-loss round trips.
-84-- **C — Runtime:** atomic acceptance, history, revisions, retries, and schema warnings.
-85-- **D — Semantic editing:** commands, runner, registry, rebase, commit, history-facing CLI, and agent sync.
-86-- **E — App saving:** gestures, writer conversion, save routing, suffix recovery, collaboration UX, and proposal review.
---
-98-
-99-First, the human rejected historical-input bureaucracy as a reason to stall implementation. Missing historical evidence is not magically treated as passed, but implementation should proceed where safe, while named historical, publication, security, migration, and owner-viewing gates remain ([20261015-human-historical-gate-challenge.json:9](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/amendments/20261015-human-historical-gate-challenge.json:9)). A second amendment removed invented fixed worker/project/time ceilings and required capacity decisions to use actual resources and throughput ([20261015-human-no-arbitrary-limits.json:8](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/amendments/20261015-human-no-arbitrary-limits.json:8)).
-100-
-101:The large Astra098 amendment added additive operation-version compatibility, generated client inventories, a generic document facade, versioned extension namespaces, immutable transcript bindings, explicit transcript correction commands, source snapshot identity, canonical film-owned tracks, and storage flatten/split inside the authoring adapter. It explicitly rejects a new service, second history, hidden refresh, generic timeline-document writes, or a sixth extension kind ([20261016-upstream-transcript-extension-integration.md:67](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/amendments/20261016-upstream-transcript-extension-integration.md:67), [20261016-upstream-transcript-extension-integration.md:79](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/amendments/20261016-upstream-transcript-extension-integration.md:79)).
-102-
-103:The track addendum supplied a concrete mirror failure: track definitions existed both at film and chapter level, causing flattening to refuse the film. The adopted direction is one canonical film-level track definition, with chapter references and lossless conflict handling ([20261016-user-track-mirror-addendum.txt:3](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/amendments/20261016-user-track-mirror-addendum.txt:3)).
-104-
-105-Finally, the human restored all five Release 3 extension kinds after an earlier narrowing to one. This changed the portfolio from 92 to 95 cards and from 131.25 to 137.25 worker-days; J grew from roughly four to ten days ([amendment-integration.md:5](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/amendment-integration.md:5)). The remaining typed-input amendment adds substantial source, selection, restore, transcript, and generation constraints without adding cards or review stages ([20261018-remaining-typed-inputs-166.md:3](/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/amendments/20261018-remaining-typed-inputs-166.md:3)).
-106-
---- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/07-runtime.md
-30-
-31-See `banodoco_local/paths.py:18-87`.
-32-
-33:`configure_workspace()` explicitly supports only `create` and `attach`. It rejects relative or symlinked realm roots, requires a stable opaque realm ID, checks an attached realm’s canonical identity, serializes bootstrap changes, and records exactly one selected realm in the catalog (`banodoco_local/workspace.py:107-179`). `inspect_workspace()` is read-only and verifies that a root is a healthy, unambiguous canonical workspace before returning its identity (`workspace.py:69-104`).
-34-
-35-This is separate from the Runtime’s HTTP lifecycle. The workspace can be configured without starting the daemon; the returned next action is `astrid-runtime up`. That separation is sound and matches the intended “explicit workspace selection, then Runtime ownership” model.
-36-
---- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/12-main-testing.md
-221-
-222-| R4 criterion | Main-suite home | Remaining limitation |
-223-|---|---|---|
-224:| I1: no data loss, opaque fields, explicit clears, undo/redo, idempotence | Agent editing conformance; App byte-identical reload and opaque-data assertions; Runtime CAS tests | Must add the exact R4 field matrix and occurrence cases |
-225-| I2: exact base, atomic CAS, durable request identity, exact retry | Runtime idempotency/CAS tests; App stale-head and lost-ack journeys | R4’s crash-between-head-and-response proof still needs a real integration case |
-226-| I3: one write path | App direct/three-product save tests and route policy tests | The R4 writers census and zero-fallback-writer claim are not one automated main gate |
-227-| I4: compatible formats and old-document preservation | Contract fixtures, generated-client parity, editing fixtures, App contract tests | Does not prove the frozen R4 composition/schema artifact tuple |
---
-254-## Open questions
-255-
-256-- Should `scripts/check-before-push` be corrected to actually run smoke/full journeys, or is the testing plan stale?
-257:- Which main tests will encode R4’s exact occurrence, transcript, chapter, music, and opaque-field matrices?
-258-- Is the intended post-integration behavior conflict-only, or automatic suffix preservation after a lost acknowledgement?
-259-- What test or receipt will establish the exact four-repository composition/renderer closure?
-260-- When will current Host/profile readiness and Player/native audio evidence replace the incomplete R4 handover checkpoints?
---- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/16-cut-verify.md
-14-| **2b Extra Runtime operations** | **CUT-WITH-CARE.** Purge/preparation can wait: R:`runtime_protocol/service.py:4372`, `:6078`. Purge schema **372**, purge handlers **29**, preparation method **37** = **438 measured lines**, excluding supporting code. But media selection supports ordinary add/swap: U:`src/tools/video-editor/commands/selectedProjectMedia.ts:153`. Keep that read or equivalent immutable selection. Generation duplication is a distinct feature (**72-line method**, R:`service.py:4698`); defer explicitly. History/restore reads are required for promised undo/revert. |
-15-| **2c Leases/expiry/provenance** | **CUT-WITH-CARE:** no automatic expiry means lease machinery can disappear safely; A:`astrid/sdk/timeline/drafts.py:68` expires only provably clean drafts. Draft module **115**, retention module **361**. Lost features: automatic cleanup and purge. **Keep publication identity/ancestry and authored-write history**: A:`astrid/sdk/timeline/commit.py:704` uses them against ABA and intervening edits. Author+source alone cannot make undo safe. |
-16-| **2d Evidence/receipt plumbing** | **CUT-WITH-CARE:** failed-output archival and handback presentation are dispensable; A:`astrid/core/execution/remotion_host_session.py:301` has a **40-line** failed-output helper. Semantic evidence is not merely bureaucracy: A:`astrid/sdk/timeline/commit.py:738` reads recorded writes to reject unsafe inverses. Preserve those writes, durable request/result identity and accepted revision identity, using main’s envelope. The **12-line provider evidence construction** at `:215` contains both disposable decoration and required history; no honest blanket savings count. |
-17:| **2e Tests** | Measured additions are approximately **134,976 test/fixture lines**, rather than 125k. **CUT-WITH-CARE:** discard unported machinery tests and literal-closure tests. Preserve behavioural coverage for opaque fields, explicit clears, occurrence identity, competing edits, lost acknowledgements, crashes and undo ABA. A **12–15k** retained suite would avoid roughly **120k lines**, but that is a target, not verified equivalence. |
-18-| **3a Deprecated retiming** | The premise exaggerates scope. Main’s file is **883**, R4’s **913** lines. Main’s two retime functions occupy an **83-line block**, A:`astrid/sdk/timeline_editing.py:351` (**M**); R4 marks them deprecated at `:354`. Other functions include source-time conversion and shot construction used by adoption/duplication. **CUT-WITH-CARE:** remove retime primitives after migration; retain or relocate those utilities. “Most of 913” is unsubstantiated. |
-19-| **3b Old inverses** | **CUT**, after registry inverses land: **783 lines**. Repository search finds the old module’s consumer in A:`tests/timeline/test_inverses.py:45` (**M**), not product code. Its replacement remains necessary: R4 `astrid/sdk/timeline/inverse.py` is **902 lines**. Deleting both loses undo. |
-20-| **3c Old extensions** | **CUT:** **1,698 lines** across eight files. Main imports found outside the package are tests; A:`astrid/core/extensions/__init__.py:1` exposes the unused generic framework. No demonstrated live product behaviour is lost. Phase 6 need not preserve it. |
-21-| **3d Duplicate evaluators** | **KEEP `_timing_evaluators.py` semantics.** It is absent on main and R4’s compiler imports it directly: A:`astrid/sdk/timeline/compiler.py:392`. Its **1,375 lines** materialize timing; C:`typescript/src/scene-evaluation.ts:28` queries already-resolved scenes. Composition cannot replace it. **CUT-WITH-CARE** only private visibility math. Main fast_lane/motion/model/sweep total **1,941 lines**, but fast_lane also performs managed pixel verification (`fast_lane.py:1`), so that entire total is not removable. |
-22:| **3e App fallback writers** | **CUT-WITH-CARE:** convert or explicitly remove each consumer before deleting its writer. Main’s Astrid route already offers no save: U:`src/integrations/astrid/timelineRoutes.ts:1` (**M**), so **zero saving there**. Persistence fallback remains at `src/tools/video-editor/hooks/useTimelinePersistence.ts:399`; deleting it prematurely disables saves. `timeline-save-utils.ts` is **123 main lines**, not all compatibility-only. Preserve opaque-field reconstruction until command producers replace it. Local history overlaps 1.2. |
-23-| **4a Process removal** | **CUT** rituals; **0 product lines** directly. Preserve request/content/artifact digests where code consumes them; deleting those is a different, unsafe change. R4’s contract explicitly distinguishes exact retry and immutable revisions: control `release-contract.md:76`. |
-24-| **4b Retained rigor** | **KEEP**, with one correction: existing main tests are insufficient unchanged. U:`tests/e2e/local/three-products.spec.ts:405` (**M**) expects a conflict and retained draft, not automatic suffix reconciliation. Add that behaviour, exact-revision parity and crash-window cases. **0 immediate product savings**; retain the human viewing gate and record the tested revision tuple. |
-25-| **4c Archive control docs** | **CUT** from product delivery; preserve the archive. Actual local tree: **58 files, 40,158 lines, 2.09 MB**, including attachments—not 466 KB. It is absent from the three product candidate trees, so **zero product-diff savings**. Keep one architecture page plus runnable build/test instructions. |
---
-31-Additional omissions:
-32-
-33-- **Do not resurrect retired providers:** R4 App `src/tools/video-editor/data/AstridBridgeDataProvider.ts` **1,350 lines**, `SupabaseDataProvider.ts` **139**; both absent on main. The latter explicitly identifies itself as compatibility delegation (`:1`).
-34:- **Replace duplicated Composition source trees with one reproducible package:** Agent `remotion/vendor/timeline-composition/` **6,246 lines**, App `vendor/timeline-composition/` **6,404**. Canonical source is **3,597 lines**. This reduces repository duplication, not necessarily installed code. Standalone stale `typescript/dist/` contributes another **2,182 generated lines**; package exports select source (`C:package.json:7`). Also remove build-failure suppression at `:49`.
-35-- **Omit unrelated chiptune planning expansion:** A:`astrid/packs/chiptune/actions/compose/planner.py:1`, **471 lines**, plus coupled estimator changes. Keep main’s existing capability.
-36-- **Defer the concrete extension demo:** U:`src/tools/video-editor/extensions/transcript-caption-foundry/` **640 lines**; preserve already-published transcript data independently.
-37-
---- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/17-astra-overall.md
-2-
-3-**1. Strategy verdict—and Astra’s responsibility**
-4-
-5:Port forward onto main in small, behavior-complete units. Main’s door, lifecycle, portability and storage plumbing should win. Keep `EditCommand` canonical, expose commit through `/v1` using `CommittedMutation`, put semantic execution in the Agent provider hosted by Runtime, and use one timing compiler and one Composition evaluator.
-6-
-7-“Main wins” is a foundation choice, not proof of correctness. Preserve its newer transcript, chapter, explicit-clear and source-window fixes while transplanting R4 semantics.
-8-
---
-35-
-36-Use existing suites, adding these specific behavioral gates:
-37-
-38:1. **Lossless semantics:** `tests/editing_conformance` across CLI, Python and sheet; opaque fields, explicit clears, occurrence isolation, transcript/source bindings, rational FPS, half-open boundaries, deterministic timing, undo/redo restoration.
-39-2. **Atomic acceptance:** concurrent commits; stale-head rebase and real conflict; crash before transaction completion and after commit/before response; identical retry returns the original result; changed payload under the same key refuses; no duplicate revision/event; failure leaves no partial write.
-40-3. **Renderer-independent save:** stop or omit the renderer, successfully commit/reload/undo, and show preview unavailability honestly.
-41-4. **Actual transport:** Runtime `test_door_routes.py`, `test_door_transport.py`, `test_http_response_lock.py`, generated-client/contract tests and exact-idempotency tests, extended for `/v1` commit authorization and project scope.
+/bin/bash -lc "sed -n '420,550p' astrid/core/timeline/authoring_bundle.py" in /home/user/work/wt/agt-D86-opaque-return-0133
+ succeeded in 0ms:
+            occurrence.get("shot_revision_id"), f"occurrences[{ordinal}].shot_revision_id"
+        )
+        shot = shot_index.get(source_revision_id)
+        if (
+            shot is None
+            or shot.get("shot_id") != source_shot_id
+            or shot.get("project_id") != project_id
+        ):
+            raise AuthoringBundleError(
+                f"occurrence {occurrence_id!r} does not resolve to its pinned shot revision"
+            )
+        shot_payload = _mapping(
+            shot.get("payload"), f"shot_revisions[{source_revision_id}].payload"
+        )
+        if "meta" in shot:
+            validate_meta(shot["meta"], path=f"shot_revisions[{source_revision_id}].meta")
+        if "meta" in shot_payload:
+            validate_meta(
+                shot_payload["meta"],
+                path=f"shot_revisions[{source_revision_id}].payload.meta",
+            )
+        shot_digest = _verify_digest(
+            shot_payload,
+            shot.get("content_digest"),
+            f"shot_revisions[{source_revision_id}].content_digest",
+        )
+        internal_revision_id = _string(
+            shot.get(
+                "internal_timeline_revision_id", shot_payload.get("internal_timeline_revision_id")
+            ),
+            f"shot_revisions[{source_revision_id}].internal_timeline_revision_id",
+        )
+        internal = internal_index.get(internal_revision_id)
+        if internal is None or internal.get("project_id") != project_id:
+            raise AuthoringBundleError(
+                f"shot revision {source_revision_id!r} is missing its pinned internal timeline"
+            )
+        internal_payload = _mapping(
+            internal.get("payload"), f"internal_timeline_revisions[{internal_revision_id}].payload"
+        )
+        _validate_timeline_payload_meta(
+            internal_payload,
+            path=f"internal_timeline_revisions[{internal_revision_id}].payload",
+        )
+        internal_digest = _verify_digest(
+            internal_payload,
+            internal.get("content_digest"),
+            f"internal_timeline_revisions[{internal_revision_id}].content_digest",
+        )
+        internal_timeline_id = _string(
+            internal.get("timeline_id"),
+            f"internal_timeline_revisions[{internal_revision_id}].timeline_id",
+        )
+        authoring_shot_id = _authoring_shot_id(
+            project_id,
+            timeline_id,
+            occurrence_id,
+            source_shot_id,
+            shared=source_counts[source_shot_id] > 1,
+        )
+        if authoring_shot_id in seen_authoring_shots:
+            raise AuthoringBundleError(f"independent shot identity collision {authoring_shot_id!r}")
+        seen_authoring_shots.add(authoring_shot_id)
+        copied_shot, item_id_map = _copy_shot_for_placement(
+            shot_payload,
+            project_id=project_id,
+            timeline_id=timeline_id,
+            occurrence_id=occurrence_id,
+            authoring_shot_id=authoring_shot_id,
+            source_shot_id=source_shot_id,
+        )
+        for item in copied_shot.get("items", []):
+            item_id = _string(item.get("item_id", item.get("id")), "shot payload item identity")
+            if item_id in seen_items:
+                raise AuthoringBundleError(f"authoring shot item identity collision {item_id!r}")
+            seen_items.add(item_id)
+        copied_internal = _copy(dict(internal_payload))
+        source = {
+            "shot_id": source_shot_id,
+            "revision_id": source_revision_id,
+            "content_digest": shot_digest,
+            "internal_timeline_id": internal_timeline_id,
+            "internal_timeline_revision_id": internal_revision_id,
+            "internal_timeline_content_digest": internal_digest,
+            "item_id_map": item_id_map,
+        }
+        shots[authoring_shot_id] = {
+            "shot_id": authoring_shot_id,
+            "base_payload": _copy(copied_shot),
+            "payload": _copy(copied_shot),
+            "base_internal_timeline": _copy(copied_internal),
+            "internal_timeline": _copy(copied_internal),
+        }
+        shot_sources[authoring_shot_id] = source
+        occurrence.pop("shot_revision_id", None)
+        occurrence.pop("revision_id", None)
+        occurrence["shot_id"] = authoring_shot_id
+        placements.append(occurrence)
+        base_placements[occurrence_id] = _copy(occurrence)
 
+    return {
+        "schema_version": AUTHORING_BUNDLE_SCHEMA_VERSION,
+        "project_id": project_id,
+        "timeline_id": timeline_id,
+        "base_parent": {"revision_id": revision_id, "content_digest": parent_digest},
+        "base_parent_payload": _copy(candidate_parent),
+        "base_placements": _copy(base_placements),
+        "parent": _copy(candidate_parent),
+        "placements": placements,
+        "shots": shots,
+        "source_mapping": {
+            "placements": base_placements,
+            "shots": shot_sources,
+        },
+    }
+
+
+def _changed_media_selector(base: Mapping[str, Any], candidate: Mapping[str, Any]) -> bool:
+    return any(base.get(key) != candidate.get(key) for key in _MEDIA_SELECTOR_KEYS)
+
+
+def _media_identity(value: Any, path: str) -> str:
+    if not isinstance(value, str) or not (
+        _DIGEST_RE.fullmatch(value) or _BARE_DIGEST_RE.fullmatch(value)
+    ):
+        raise AuthoringBundleError(f"{path} must be a SHA-256 media identity")
+    # Runtime accepts both historical bare object IDs and canonical wire IDs.
+    # Normalize only comparison/dependency identities; authored bytes remain
+    # untouched in the publication payload.
+    return value if value.startswith("sha256:") else "sha256:" + value
+
+
+codex
+Permitted checks pass: in-memory compile, Ruff baseline/candidate, mypy, diff check, and AST conservation of all test functions. No pytest collection, fixture/helper execution, Runtime service execution, build, browser, or full suite was run. The changed source hash is `5ae20ab0a747a16debdd5415516a07f1e6f35118a16a2afdcfbdf1b4716ea770`.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque-return-0133/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque-return-0133/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque-return-0133/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..069f7364f608eba3b232ba8c4bb0f591999de837
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque-return-0133/commit-msg
+@@ -0,0 +1,4 @@
++test(F-D86): restore shared opaque occurrence fixture
++
++Build the opaque baseline through semantic occurrence deletion and shared
++placement, then apply the authored payload through the current commit path.
+diff --git a/tests/editing_conformance/test_commit_runtime_opaque_items.py b/tests/editing_conformance/test_commit_runtime_opaque_items.py
+index c5895f3594ea4e44c652d6e67c35f5af64668cda..a7902fac3b3925be7b8392dc43440bb3f3cd4a28
+--- a/tests/editing_conformance/test_commit_runtime_opaque_items.py
++++ b/tests/editing_conformance/test_commit_runtime_opaque_items.py
+@@ -33,16 +33,32 @@
+     from timeline_commit_film_fixture import build_film_fixture
+ 
+     from astrid.sdk.timeline.capture import capture_move
+-    from astrid.sdk.timeline.commit import _digest, _manifest, bundle_from_document
++    from astrid.sdk.timeline.commit import (
++        _digest,
++        _manifest,
++        bundle_from_document,
++    )
+     from astrid.sdk.timeline.emitter import emit_document_commands
++    from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
++    from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
+ 
+     fixture = build_film_fixture(tmp_path)
+     service = RuntimeService(fixture.duplicate_root)
+     edit = Editing(service, SimpleNamespace(fixture=fixture),
+                    SimpleNamespace(move=capture_move, bundle=bundle_from_document))
+     try:
++        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+         original = edit.document()
+-        target = copy.deepcopy(original)
++
++        # Open occurrence-2 only through the real semantic route.  The source
++        # occurrence is then a genuine shared physical closure for the opaque
++        # payload patch below; an independently rewritten source would bypass
++        # the materialization case this fixture is meant to cover.
++        deleted = edit.commit(edit.body([capture_occurrence_delete(
++            bundle_from_document(original), "occurrence:occurrence-2",
++        )]), "opaque-delete-source")
++        staged = deleted["data"]["canonical_document"]
++        target = copy.deepcopy(staged)
+         parent = target["parent_revision"]["payload"]
+         _, shot, internal = occurrence_image(target, "occurrence-1")
+         internal["payload"]["clips"][0]["hold"] = 0.25
+@@ -61,8 +77,7 @@
+                     parent["clips"][0], shot["payload"], internal["payload"],
+                     internal["payload"]["tracks"][0], internal["payload"]["clips"][0]):
+             row.update(data=opaque(), app=opaque(), opaque=opaque())
+-        for occurrence in parent["occurrences"][:2]:
+-            occurrence.update(data=opaque(), app=opaque(), opaque=opaque())
++        parent["occurrences"][0].update(data=opaque(), app=opaque(), opaque=opaque())
+         target["parent_revision"]["content_digest"] = _digest(parent)
+         for image in target["shot_revisions"]:
+             image["content_digest"] = _digest(image["payload"])
+@@ -72,9 +87,51 @@
+             target["shot_revisions"], target["internal_timeline_revisions"],
+             target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+         )
+-        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+-        setup = emit_document_commands(bundle_from_document(original), bundle_from_document(target))
+-        edit.commit(edit.body(setup), "opaque-baseline")
++        setup = emit_document_commands(bundle_from_document(staged), bundle_from_document(target))
++        source = edit.commit(edit.body(setup), "opaque-source")
++
++        source_document = source["data"]["canonical_document"]
++        shared = capture_occurrence_place_shared(
++            bundle_from_document(source_document), "occurrence:occurrence-1", "occurrence-2", on=1,
++        )
++        shared_result = edit.commit(edit.body([shared]), "opaque-shared-source")
++        shared_document = shared_result["data"]["canonical_document"]
++
++        # Restore the premigration occurrence rows and order while retaining
++        # the authenticated source revision returned by place-shared.
++        target = copy.deepcopy(shared_document)
++        parent = target["parent_revision"]["payload"]
++        current = {row["occurrence_id"]: row for row in parent["occurrences"]}
++        original_rows = {
++            row["occurrence_id"]: row
++            for row in original["parent_revision"]["payload"]["occurrences"]
++        }
++        rows = []
++        for occurrence_id in (
++            row["occurrence_id"] for row in original["parent_revision"]["payload"]["occurrences"]
++        ):
++            row = copy.deepcopy(original_rows[occurrence_id])
++            if occurrence_id in ("occurrence-1", "occurrence-2"):
++                source_row = current[occurrence_id]
++                row["shot_id"] = source_row["shot_id"]
++                row["shot_revision_id"] = source_row["shot_revision_id"]
++                row.update(data=opaque(), app=opaque(), opaque=opaque())
++            rows.append(row)
++        parent["occurrences"] = rows
++        target["parent_revision"]["content_digest"] = _digest(parent)
++        target["dependency_manifest"] = _manifest(
++            target["shot_revisions"], target["internal_timeline_revisions"],
++            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
++        )
++        setup = emit_document_commands(
++            bundle_from_document(shared_document), bundle_from_document(target),
++        )
++        baseline = edit.commit(edit.body(setup), "opaque-baseline")
++        baseline_document = baseline["data"]["canonical_document"]
++        first = occurrence_image(baseline_document, "occurrence-1")
++        second = occurrence_image(baseline_document, "occurrence-2")
++        assert first[1]["revision_id"] == second[1]["revision_id"]
++        assert first[1]["internal_timeline_revision_id"] == second[1]["internal_timeline_revision_id"]
+         yield edit, load_timeline_commit_provider
+     finally:
+         edit.service.close()
+
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque-return-0133/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque-return-0133/DONE && printf '"'DONE marker: PASS\\n' && printf '%s\\n' '--- commit message ---' && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-opaque-return-0133/commit-msg && printf '%s\\n' '--- final status ---' && git status --short" in /home/user/work/wt/agt-D86-opaque-return-0133
+ succeeded in 286ms:
+DONE marker: PASS
+--- commit message ---
+test(F-D86): restore shared opaque occurrence fixture
+
+Build the opaque baseline through semantic occurrence deletion and shared
+placement, then apply the authored payload through the current commit path.
+--- final status ---
+ M tests/editing_conformance/test_commit_runtime_opaque_items.py
+
+codex
+## Report
+
+- Updated only `tests/editing_conformance/test_commit_runtime_opaque_items.py`.
+- Restored shared physical topology via semantic `occurrence.delete` + `occurrence.place-shared`, then guarded `doc.patch` authored data/order.
+- Preserved all test bodies; AST conservation passed.
+- Commit message written; `DONE` marker created.
+
+Checks passed:
+
+- In-memory compile
+- Ruff baseline and candidate
+- Mypy
+- `git diff --check`
+
+No pytest collection or execution, fixture/service runs, builds, browsers, or full suites were run per task limits. Functional qualification and independent protected review remain pending.
+
+Source hash: `5ae20ab0a747a16debdd5415516a07f1e6f35118a16a2afdcfbdf1b4716ea770`
+tokens used
+229,398
+## Report
+
+- Updated only `tests/editing_conformance/test_commit_runtime_opaque_items.py`.
+- Restored shared physical topology via semantic `occurrence.delete` + `occurrence.place-shared`, then guarded `doc.patch` authored data/order.
+- Preserved all test bodies; AST conservation passed.
+- Commit message written; `DONE` marker created.
+
+Checks passed:
+
+- In-memory compile
+- Ruff baseline and candidate
+- Mypy
+- `git diff --check`
+
+No pytest collection or execution, fixture/service runs, builds, browsers, or full suites were run per task limits. Functional qualification and independent protected review remain pending.
+
+Source hash: `5ae20ab0a747a16debdd5415516a07f1e6f35118a16a2afdcfbdf1b4716ea770`
