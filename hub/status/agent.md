@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T20:27:59Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 1m -->
-# agent board, 2026-10-25T20:26Z
+<!-- agent | 2026-10-25T20:32:03Z | dispatcher heartbeat 14s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 0m -->
+# agent board, 2026-10-25T20:31Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -109,14 +109,18 @@
 | D134 D73 source | Reconcile launcher and host environment | Luna and independent | Runtime source owner | blocked:runtime | Peer2015 asks exact owner | Independent2010 source PASS. D73 reinjects unsupported variable; outer recipe is insufficient. No working fix or new body. | Evidence only |
 
 | D134 partition return | Correct nine projection classifications | Luna | Independent2020 PASS | merged | Author2016; final review2020 | Classification PASS only: exact9 category changes,344 IDs and outside fields conserved.132 setup,0 proved product,212 unknown. | Evidence only |
-| D134 managed media48 | Preserve occurrence media setup | Luna | Source review2024 | review | Author2016; independent2024 | UNAPPLIED; no source delta. Current item-birth and authenticated source closure seam needs exact D100 applicability; no new API inferred. | Evidence only |
+| D134 managed media48 | Preserve occurrence media setup | Luna | Qualified D100 source and setup | blocked:app | Author2016; independent2024 PASS | UNAPPLIED source unchanged. Existing9486 addresses item-birth seam; mutable author Runtime and missing XML unqualified. No new API decision. | Evidence only |
 | D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Protected2026 | review | Author2016; review2026 | Wrapper missing args repaired; parent24 and manifest2 still hit shared managed-edge guard. No behavior closure. | Pending |
 
 | D134 managed30 | Preserve remaining managed fixture purposes | Luna hosted | App admitted source slot | blocked:app | Peer2018 asks first slot owner | Six disjoint files; exact30 source guidance. No shared fixture or product writer. | Pending |
 
 | D134 selected4 | Preserve selected schema caller and labels | Luna | Protected2026 | review | Author2019; review2026 | Three direct nodes PASS; HTTP own1 unverified. Reviewer challenges request-control purpose and all seven unknown cases. | Pending |
 
-| D134 root clusters | Publish first product frame groups | Luna read only | Exact retained370 log | doing | agt-F-D134-root-clusters-2022 | Group all370 by error and first product frame; missing records stay unknown. No new body or guessed fault. | Evidence only |
+| D134 root clusters | Publish first product frame groups | Luna read only | Independent2029 | review | Author2022; review2029 | Exact370 IDs and all source hashes conserved. First production frame groups under source review; no fault promotion. | Evidence only |
+
+| D134 mirror7 | Preserve word fixture mirror inputs | Luna | Protected source conservation | doing | agt-F-D134-mirror7-2032 | Exact7 only; no anchor removal, normalization or other unknown case changes. | Pending |
+| D134 preflight5 | Preserve genuine sheet and fork plumbing | Luna | Proven existing caller input | doing | agt-F-D134-preflight5-2032 | Four detached checks and one missing client; no fabricated clip, source history or authority. | Pending |
+| D134 expectation12 | Preserve historical source and archive purposes | Luna hosted | Runtime admitted slot | blocked:runtime | Peer2032 asks exact source owner | Eleven hash or pin cases and one archive case. No silent pin refresh or retired behavior. | Pending |
 
 Integration: Agent a30e74e901a28b39c28facba3deb00d76f186e23, tree ece8e0887e48e45cb1fce85b1256c49a0f6126c0; clean19:40Z. Native companions78db and graph callers a30e contain exact reviewed blobs. Runtime ab1e lock qualified. Released Agent070dfc unchanged; no product release before proper batch proof.
 
@@ -153,3 +157,7 @@ Pass 2026-10-25T20:22Z: peer2022 publishes measured370 and reviewed132/0/212 wit
 Pass20:24: correction2016 independent2020 PASS exact132/0/212, all344IDs/conservation62 checks. Existing classify row closed as evidence only. Media48 authorendedUNAPPLIED; immediate independent2024 reviews exact source/caller/D100 dependency and unqualified mutable Runtime receipt, no repeated body. Parent26/selected4/root2022 active. No real-child request before actual kit.
 
 Pass 2026-10-25T20:26Z: parent26 andselected4 finished; immediate independent Luna reviews2026 bothdispatched. Parentonlywrapperchanged; nofalse26GREEN. Selected3PASSauthor only; explicitv2request change challenged before protectionPASS. Media48readonlyreview2024 androotcluster2022 live. Currentlive4/cap6 source; ready-undispatched0 local. No fixture/heavy/realchild request.
+
+Pass20:29: Rootclusters2022 finished; immediate independent2029 queued. Media48 independent2024 finitePASS corrects noAPI claim: existingD1009486 applicability owns nextmeaningfulsource. Peer2029 informs App/Runtime; no newauthor orbody. Source unchanged48 remainsblocked:app. Parentwrapper andselected4 independent2026 stilllive.
+
+Pass 2026-10-25T20:31Z: mirror7 andpreflight5 Luna sourceauthorsdispatched oncurrenthome; allindependentreadylocalcohortsassigned. Remainingexpectation12requestedRuntimebehindcriticalkit, exactfourfilesreservedinpeer2032; Appmanaged30awaitsactualsourceowner. Local5/cap6source, ready-undispatched0local; noheavy/fixture/bodyrequest. Allprotectedmissingauthority cases remainlater ratherthaninventingsemanticfixes.
