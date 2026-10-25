@@ -1,0 +1,22 @@
+{
+  "task": "F-D86/D95",
+  "scope": "two separate NEW-FIRST MAIN selectors",
+  "source_file": "tests/editing_conformance/test_commit_runtime_text_binding.py",
+  "candidate_commit": "33be39334ddac2ee54091a58ec1f96bcb0249092",
+  "normal_receipt": "5faeec5bbced687f040751ded739e1b9c8c41757",
+  "source_sha256": "79da31cef4dd0f1e0c40d53be31d333e4f184563c8a8c37256f22303d1ff17b5",
+  "function_sha256": "08f2fbbf7288b52d01c291bc2d0ec1739f11ef069143bc1df20ffe5a54d03823",
+  "protected_review": "handoff-agt-restore-review-0425-A-F-D86-D95.md",
+  "verdict": "PASS_SOURCE",
+  "selectors": [
+    "tests/editing_conformance/test_commit_runtime_text_binding.py::test_bound_main_descriptor_invalidating_set_and_clear_refuse_without_writes[rebind]",
+    "tests/editing_conformance/test_commit_runtime_text_binding.py::test_bound_main_descriptor_invalidating_set_and_clear_refuse_without_writes[clear]"
+  ],
+  "assertions": ["validation_error", "invalid_document", "path=[]", "exact historical-reference refusal message", "unchanged head/history/closure/live row/original CAS/replacement CAS"],
+  "originals": {
+    "99": {"selector": "test_rebind_existing_main_descriptor_undo_is_exact", "source_sha256": "89fe35961b080093706962b2d3183f6f3adac813038e2b4701154e33a87df094", "disposition": "retired legacy-only"},
+    "101": {"selector": "test_clear_existing_main_descriptor_and_inverse_are_exact", "source_sha256": "481335a01f05363a4460873466a2c6b3ac8efb96185a8528793a28161a5a0a6d", "disposition": "retired legacy-only"}
+  },
+  "not_this_body": ["unbound inverse positives remain LIVE and unmodified", "historical ID5 word-recipe restore", "original 550 census"],
+  "behavior_credit": false
+}

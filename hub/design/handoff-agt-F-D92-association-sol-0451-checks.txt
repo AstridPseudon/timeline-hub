@@ -1,0 +1,18 @@
+All commands run from /home/user/work/wt/agt-F-D92-association-sol-0451.
+
+1. python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D92-association-sol-0451/evidence/audit_source.py
+   exit 0; baseline/candidate AST parse and in-memory compile PASS; 207 original asserts preserved +2 new; 27 raises unchanged; 58 other top-level nodes unchanged; da61/b7c5/dc909 source blobs equal HEAD baseline.
+2. /home/user/work/venv-agent/bin/python -m ruff check --no-cache --stdin-filename tests/timeline/test_authoring_media.py - < /tmp/w-2bad9d734f/d92-static/baseline.py
+   exit 0; All checks passed!
+3. /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/timeline/test_authoring_media.py
+   exit 0; All checks passed! (final source)
+4. /home/user/work/venv-agent/bin/python -m mypy --cache-dir /tmp/w-2bad9d734f/d92-static/mypy-baseline --shadow-file tests/timeline/test_authoring_media.py /tmp/w-2bad9d734f/d92-static/baseline.py tests/timeline/test_authoring_media.py
+   exit 0; Success: no issues found in 1 source file
+5. /home/user/work/venv-agent/bin/python -m mypy --cache-dir /tmp/w-2bad9d734f/d92-static/mypy-candidate tests/timeline/test_authoring_media.py
+   exit 0; Success: no issues found in 1 source file (final source)
+6. git diff --check
+   exit 0; no output
+7. git status --short; git diff --stat
+   only tests/timeline/test_authoring_media.py; 15 insertions, 9 deletions.
+
+Ruff 0.12.0; mypy 1.17.0 (compiled). No environment limitation encountered for these exact scoped commands. No tests or collection run, per SOURCE ONLY. This is not behavioral PASS evidence.

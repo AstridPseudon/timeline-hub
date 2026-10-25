@@ -1,0 +1,28 @@
+{
+  "task": "F-D86/D99",
+  "scope": "one approved MAIN13 body",
+  "source_run": "agent-fd86-later102-first-body-0303-1025030606-11789",
+  "source_packet": "handoff-rt-D86-11789-outcomes-0310-per-id-outcomes.tsv",
+  "source_packet_sha256": "610390447cbd610e91982851ac0d070dbb56f2ca66598072343e99af005c3396",
+  "source_file": "tests/editing_conformance/test_native_sheet_current_runtime.py",
+  "reviewed_source_commit": "c354c6ea942b4ed0bc11334fe2040ddb2e028cda",
+  "normal_import_commit": "0a9552a81d5a8c1971b8f359208e40373f8889c5",
+  "source_sha256": "69fc35444afe8c62fd689e25889855ab99b73e4483bb0bbd08402a4865b06cf9",
+  "counts": {"selected": 13, "media_role": 9, "emitter_error": 4, "retained_source_cases": 17},
+  "source_review": {
+    "review": "agt-F-D99-sheet-review-0435-report.md",
+    "verdict": "PASS_SOURCE",
+    "ast_test_functions": 10,
+    "body_assertions": 239,
+    "all_17_assigned_selectors_present": true,
+    "cross_mime_identity_assertion": false,
+    "behavior_credit": false
+  },
+  "selector_file": "d99-main13-selectors.tsv",
+  "excluded_live_unqualified": {
+    "cli_cases": 3,
+    "omitted_row_cases": 1,
+    "disposition": "preserved; not retired, rerun, or counted in MAIN13"
+  },
+  "ownership_exclusions": ["inverse7", "D91 ten", "P4 critical single", "held parent/word/restore", "historical 550 census"]
+}

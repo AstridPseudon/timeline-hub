@@ -1,0 +1,57 @@
+{
+  "base_commit": "6cd767b6afd157b3f12e14dde5e9ef50dcb1f70a",
+  "baseline_sha256": "c6796ffbafce1645722b3331d53a4128bf2febceba9bc8abd5e0653309d5fa46",
+  "candidate_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+  "compile": "PASS baseline and candidate in memory; never executed",
+  "changed_top_level_nodes": [
+    "_genuine_compound_source"
+  ],
+  "unchanged_top_level_nodes": 58,
+  "all_original_assertions_preserved_in_order": true,
+  "assertion_counts": [
+    207,
+    209
+  ],
+  "new_assertions": 2,
+  "all_pytest_raises_ast_equal": true,
+  "pytest_raises_counts": [
+    27,
+    27
+  ],
+  "protected_assertions": {
+    "_genuine_compound_source": [
+      4,
+      6
+    ],
+    "_public_document_compound": [
+      18,
+      18
+    ],
+    "test_public_document_swap_and_residual_patch_use_original_sequential_closure": [
+      0,
+      0
+    ],
+    "test_public_document_compound_inverse_restores_exact_original": [
+      5,
+      5
+    ],
+    "test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba": [
+      59,
+      59
+    ]
+  },
+  "retained_source_joins": {
+    "da61c4b29a2fa5d1c49eb36922c1b042e9e72852": {
+      "sha256": "c6796ffbafce1645722b3331d53a4128bf2febceba9bc8abd5e0653309d5fa46",
+      "equals_baseline": true
+    },
+    "b7c5ce47fd6b1bdc3ae84b4de6b7734acfb4991b": {
+      "sha256": "c6796ffbafce1645722b3331d53a4128bf2febceba9bc8abd5e0653309d5fa46",
+      "equals_baseline": true
+    },
+    "dc909681bac9637b3a49af34c1c7c5c87a8a67b8": {
+      "sha256": "c6796ffbafce1645722b3331d53a4128bf2febceba9bc8abd5e0653309d5fa46",
+      "equals_baseline": true
+    }
+  }
+}

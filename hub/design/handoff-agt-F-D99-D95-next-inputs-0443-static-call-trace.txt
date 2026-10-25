@@ -1,0 +1,25 @@
+SOURCE-ONLY STATIC CALL TRACE
+
+D99 current source:
+  test_* -> seed_tiny_cut_parent / seed_labeled_tiny_cut_parent /
+  seed_rational_tiny_cut_parent -> tiny_cut_parent -> Runtime import_media /
+  verified selection -> semantic capture_clip_add_media where needed ->
+  TimelineSession.commit_many -> registered commitTimeline/provider.
+  Emitter selectors: test_* -> seed_document_diff_parent ->
+  seed_shared_occurrence_parent -> semantic managed media setup ->
+  emit_document_commands -> destination.commit_many.
+
+D95 NEW2 current source:
+  parametrized test -> body/call -> submit -> editing.service.commit_timeline
+  -> registered text-binding.set -> final validation. The reviewed predicate is
+  _validate_element_reference for legacy elementRef.binding_id; rebind/clear
+  must refuse invalidating changes without head/history/closure/live/CAS writes.
+
+SDK production forwarding inspected statically:
+  astrid/sdk/timeline/sync.py:119 commitTimeline invocation
+  astrid/sdk/workspace_client.py:485-496 commit_timeline forwarding
+  astrid/sdk/remote.py:1547-1549 generated commit_timeline forwarding
+  astrid/sdk/timeline/outbox.py:13-15 canonical request serialization
+
+No caller, helper, fixture, service, probe, body, collection, browser, render,
+or live socket was executed.

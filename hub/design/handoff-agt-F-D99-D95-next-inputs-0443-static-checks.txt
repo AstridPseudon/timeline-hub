@@ -1,0 +1,18 @@
+F-D86 source-only checks (2026-10-25 UTC)
+
+PASS  /home/user/work/venv-agent/bin/python AST parse + in-memory compile:
+      tests/editing_conformance/test_native_sheet_current_runtime.py
+      tests/editing_conformance/test_commit_runtime_text_binding.py
+PASS  /home/user/work/venv-agent/bin/python -m ruff check --no-cache
+      tests/editing_conformance/test_native_sheet_current_runtime.py
+      tests/editing_conformance/test_commit_runtime_text_binding.py
+      output: All checks passed!
+PASS  /home/user/work/venv-agent/bin/python -m mypy --no-incremental
+      --cache-dir /tmp/agt-F-D99-D95-mypy-0443 [same two files]
+      output: Success: no issues found in 2 source files
+PASS  git diff --check (clean worktree)
+
+No pytest, test collection, helper/fixture/function execution, service, probe,
+full suite, browser, render, package install, or original run was performed.
+Behavior remains unverified by design. Prior D99/D95 protected-source checks
+are cited in the packet; this worker only reconciles inputs and ownership.

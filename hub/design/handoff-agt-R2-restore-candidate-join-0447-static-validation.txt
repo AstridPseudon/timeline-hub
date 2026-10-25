@@ -1,0 +1,20 @@
+F-D86/R2 source-only candidate evidence
+
+Base: HEAD/tl/integration 6cd767b6afd157b3f12e14dde5e9ef50dcb1f70a.
+Product parent hash: 57c246395cf662d831f100522f2ce45c0bb5b708.
+Product candidate hash: 221e517c246e220580c77411ca6d0863996f092d,
+  exact 72a5e5333171bed4221865329ab48eb233b1bbda blob.
+Test candidate hash: d85d96ea5fc00fc4c53dbdb030a8874ae5e54617,
+  exact a67e77df9ccc99ebac1d6767114b0c755c334271 blob.
+
+Static results:
+- AST parse and in-memory compile: PASS for both allowed files.
+- Ruff candidate product: PASS.
+- Ruff candidate regression: PASS.
+- Mypy candidate product: PASS, no issues.
+- Mypy candidate regression: PASS, no issues.
+- git diff --check: PASS.
+- Parent Ruff via stdin: PASS for product and regression parent.
+- Parent mypy via stdin: unavailable; mypy 1.17.0 reports it cannot read file '-'.
+
+No pytest, Runtime, service, browser, full suite, package install, or protected review was run.

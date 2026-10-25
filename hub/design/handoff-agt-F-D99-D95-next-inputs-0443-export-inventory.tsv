@@ -1,0 +1,10 @@
+artifact	kind	status_or_digest	use
+handoff-rt-D86-11789-outcomes-0310-per-id-outcomes.tsv	published safe per-ID source packet	sha256 610390447cbd610e91982851ac0d070dbb56f2ca66598072343e99af005c3396; 102 rows	Authoritative D99 selector/status source; only current-sheet13 rows 18-30 selected
+handoff-rt-D86-11789-outcomes-0310-accounting.json	published accounting	selected=102; PASS10 FAIL24 ERROR68; historical550 and omitted23 retained	Confirms no count-sum and source-only status
+agent-fd86-later102-first-body-0303-1025030606-11789	actual body receipt	body exit 1; 10 passed, 24 failed, 68 errors; private XML/log not published	Source outcome provenance only; no behavior credit
+agent-fd86-current96-body-0415-1025041953-6058	actual current96 receipt	body exit 1; 14 passed, 7 failed, 75 errors; 96 selectors; published_per_id=false	Immutable ownership; not used to derive D99 selectors
+agt-F-D99-sheet-review-0435-report.md	protected D99 review	PASS_SOURCE; c354c6e9; source sha256 69fc3544	Source eligibility and conservation
+agt-F-D99-clean-import-0441/report.md	normal D99 import	0a9552a8 / target sha256 69fc3544	Existing MAIN receiver input, not a behavior receipt
+handoff-agt-restore-review-0425-A-F-D86-D95.md	protected D95 review	PASS_SOURCE; candidate 33be3933; source sha256 79da31ce	Two NEW-first source selectors and legacy disposition
+agt-F-current-successor-bind-0425/evidence/main-handback.md	existing MAIN receiver	0419 receiver; ownership retained	Runtime coalesces proof ownership; no new runner or installation
+agt-F-current-successor-bind-0425/evidence/actual-receipts.tsv	existing receipt inventory	11789 f518 source; 18575 b7c5 source; D95 9dc6/b8a source	Referenced, not replayed or count-summed
