@@ -102,7 +102,7 @@ def body(editing, commands=None, *, dry_run=False):
 
 
 @pytest.fixture(params=['parent', 'occurrence:occ-a'])
-def http_editing(request, tmp_path, monkeypatch):
+def http_editing(request, tmp_path, monkeypatch, source_bytes):
     """Use one normal image fixture for the bounded parent/occurrence HTTP proof."""
     from tests.editing_conformance.test_commit_runtime_occurrence_media import (
         editing as occurrence_editing,
