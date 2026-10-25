@@ -118,6 +118,36 @@ def test_allowed_health_read_and_response_headers(tmp_path, prefix):
         world.stop()
 
 
+def test_health_reports_pinokio_only_as_a_door_extension(tmp_path, monkeypatch):
+    world = start_door_world(tmp_path)
+    try:
+        monkeypatch.delenv("ASTRID_INSTALL_MANAGED_BY", raising=False)
+        reply = world.call(f"{API_RUNTIME}/v1/health")
+        assert reply.status == 200
+        assert "install" not in reply.json()
+
+        monkeypatch.setenv("ASTRID_INSTALL_MANAGED_BY", "other")
+        reply = world.call(f"{API_RUNTIME}/v1/health")
+        assert reply.status == 200
+        assert "install" not in reply.json()
+
+        monkeypatch.setenv("ASTRID_INSTALL_MANAGED_BY", "Pinokio")
+        reply = world.call(f"{API_RUNTIME}/v1/health")
+        assert reply.status == 200
+        assert "install" not in reply.json()
+
+        monkeypatch.setenv("ASTRID_INSTALL_MANAGED_BY", "pinokio")
+        reply = world.call(f"{API_RUNTIME}/v1/health")
+        assert reply.status == 200
+        assert reply.json()["install"] == {"managed_by": "pinokio"}
+
+        status, body = world.owner("GET", "/v1/health")
+        assert status == 200
+        assert "install" not in json.loads(body)
+    finally:
+        world.stop()
+
+
 def test_realm_read_through_the_door(tmp_path):
     world = start_door_world(tmp_path)
     try:

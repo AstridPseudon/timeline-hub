@@ -33,6 +33,7 @@ from __future__ import annotations
 import errno
 import http.client
 import json
+import os as process_os
 from .dirfd import filesystem as os
 import re
 import socket
@@ -612,6 +613,28 @@ class DoorHandler(RuntimeHandler):
         return self.server.credentials.require(self._door_token, scope)
 
     # -- responses ---------------------------------------------------------
+
+    def _send(self, status, payload=None, *, headers=None, body=None, error=None, receipt=None, idempotency_key=None):
+        # The hosted App uses this door health response to show install-manager
+        # guidance. Keep this browser-facing marker out of Runtime's canonical
+        # health contract so the Runtime schema digest remains stable.
+        if (
+            status == 200
+            and self.command == "GET"
+            and self.path.split("?", 1)[0] == "/v1/health"
+            and isinstance(payload, dict)
+            and process_os.environ.get("ASTRID_INSTALL_MANAGED_BY") == "pinokio"
+        ):
+            payload = {**payload, "install": {"managed_by": "pinokio"}}
+        return super()._send(
+            status,
+            payload,
+            headers=headers,
+            body=body,
+            error=error,
+            receipt=receipt,
+            idempotency_key=idempotency_key,
+        )
 
     def _refuse(self, status: int, code: str):
         if getattr(self, "_response_started", False):

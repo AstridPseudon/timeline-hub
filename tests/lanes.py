@@ -101,7 +101,7 @@ class DeclaredSkip:
 
 
 SKIP_REGISTRY: dict[str, DeclaredSkip] = {}
-NO_WINDOWS_CI = "Windows is not supported yet; no Windows CI job until Windows support is real work"
+NO_WINDOWS_CI = "Windows is supported as a beta; there is no Windows CI job (CI runs on Linux and macOS)"
 
 
 def _declare(name: str, skip_when: str, reason: str, ci: tuple[str, ...], **extra) -> DeclaredSkip:

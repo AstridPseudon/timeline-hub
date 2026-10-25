@@ -2,8 +2,9 @@
 
 The portability CI job runs the platform boundary, native process custody,
 foreground lifecycle, and installed-wheel lifecycle checks on Ubuntu and macOS.
-Windows is not supported yet and has no CI job. It invokes the selected tests with `-m ""` because pytest's
-default configuration excludes integration-marked tests.
+Windows is supported as a beta and has no CI job yet. The job invokes the selected
+tests with `-m ""` because pytest's default configuration excludes
+integration-marked tests.
 
 Run the same host-specific subset locally after installing the test and
 generated-client packages:
