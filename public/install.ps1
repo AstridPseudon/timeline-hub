@@ -1,7 +1,7 @@
 # Astrid's bootstrap, PowerShell 5.1+. Run with -NoProfile -ExecutionPolicy Bypass.
 # A child scope keeps irm | iex from changing the caller's error preference.
 & {
-    $FileInvocation = [bool]$PSCommandPath
+    param([bool]$FileInvocation)
     $InstallerArgs = @($args)
     $ErrorActionPreference = 'Stop'
     $UvVersion = '0.11.32'
@@ -322,4 +322,4 @@ public sealed class AstridInstallerProcessV4 {
     } finally {
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $Temp
     }
-} @args
+} ([bool]$PSCommandPath -and $MyInvocation.MyCommand -is [Management.Automation.ExternalScriptInfo]) @args

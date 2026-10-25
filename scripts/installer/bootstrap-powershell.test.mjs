@@ -26,9 +26,11 @@ test('PowerShell bootstrap source selects local manifest pins before download an
   assert.ok(manifestScan >= 0 && download > manifestScan && pinRead > download && coreArgs > pinRead && forwardArgs > coreArgs);
   assert.match(script, /if \(-not \$ManifestProvided\) \{\s*\$ManifestUrl = if/s);
   assert.match(script, /if \(-not \$ManifestProvided\) \{ \$RunArgs \+= @\('--manifest', \$Manifest\) \}/);
-  assert.match(script, /& \{\s+\$FileInvocation = \[bool\]\$PSCommandPath\s+\$InstallerArgs = @\(\$args\)/);
-  assert.doesNotMatch(script, /param\(\[bool\]\$FileInvocation\)/);
-  assert.match(script, /\} @args\s*$/);
+  const outerBlock = script.indexOf('& {');
+  const innerBlock = script.indexOf('param([bool]$FileInvocation)');
+  assert.ok(outerBlock >= 0 && innerBlock > outerBlock);
+  assert.doesNotMatch(script.slice(0, outerBlock), /\bparam\s*\(/);
+  assert.match(script, /\} \(\[bool\]\$PSCommandPath -and \$MyInvocation\.MyCommand -is \[Management\.Automation\.ExternalScriptInfo\]\) @args\s*$/);
 });
 
 test('PowerShell explains first-run preparation before Python setup completes', () => scenario(async (context) => {
