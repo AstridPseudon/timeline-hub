@@ -1,0 +1,128 @@
+{
+  "task": "D118d",
+  "repo": "Agent",
+  "investigation": "independent read-only whole-path projection audit",
+  "worktree": {
+    "path": "/home/user/work/wt/app-D118d-projection-wholepath-1552",
+    "commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "tree": "68433c5f77be90063b1f43d3e8f1407346a50675",
+    "clean": true
+  },
+  "finalized_source": {
+    "branch": "tl/app-D118d-projection-first-return-1551",
+    "commit": "e02180cedafa581bc8105d77341456b8b1c50b5b",
+    "tree": "b83fcf6cbb2b9bd8620a8b203ba8d0419fa8c354",
+    "base_commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "blob": "cadb75166a0fa8eace677554564cea352bf51a7d",
+    "sha256": "8747fa62ef628a9c25455fe30876a008ebf54b3b22d575c697c2f6893ca276da",
+    "diff": {"added": 9, "removed": 3, "changed_paths": ["tests/sdk/test_timeline_capture_projection.py"]},
+    "test_function_ast_equal_to_candidate": true,
+    "changed_helper": "_saved_document"
+  },
+  "protected_prior_observation": {
+    "candidate_commit": "a92c6afe0ccd2359e952fc534788d1fce2169049",
+    "result": "FAIL",
+    "classification": "exact-unapplied-setup-seam",
+    "own9": "9 setup errors",
+    "first_failure": {
+      "path": "tests/sdk/test_timeline_capture_projection.py:284",
+      "call": "bundle_from_document(document)",
+      "exception": "AuthoringBundleError: project scope belongs on the canonical document"
+    },
+    "registered_doc_patch_reached": false,
+    "cause": "_saved_document() returned Runtime child rows with project_id; bundle_from_document() rejects project_id on canonical revision rows"
+  },
+  "boundary_proof": {
+    "canonical_validator": "astrid/sdk/timeline/commit.py:_verify_document",
+    "validator_rules": [
+      "project_id and timeline_id are top-level canonical document scope",
+      "project_id is forbidden on parent, shot, and internal revision image rows",
+      "shot images have exactly revision_id, content_digest, payload, shot_id, internal_timeline_revision_id",
+      "internal images have exactly revision_id, content_digest, payload, timeline_id"
+    ],
+    "bundle_converter": "astrid/sdk/timeline/commit.py:bundle_from_document",
+    "runtime_canonical_image": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py:_image",
+    "runtime_image_shape": ["revision_id", "content_digest", "payload"],
+    "runtime_closure_additions": ["shot_id", "internal_timeline_revision_id", "timeline_id"],
+    "exact_genuine_caller": {
+      "path": "tests/sdk/test_capture_source_runtime.py",
+      "lines": "219-249",
+      "route": "read_document projects public child reads to the same canonical image field sets before bundle_from_document"
+    },
+    "supported_current_production_route": {
+      "path": "astrid/sdk/timeline_filmstrip.py:_open_current_input_closure",
+      "route": "prepare_filmstrip -> _open_current_input_closure -> managed_timeline._project_exact_parent_head -> projected config/registry/authority",
+      "property": "the caller consumes Runtime's exact parent/shot/internal closure projection; it does not relax _verify_document or treat public row metadata as canonical image content"
+    },
+    "finalized_fixture_converter": {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "lines": "215-248",
+      "route": "_saved_document now projects the same shot/internal fields and retains top-level project_id/timeline_id"
+    },
+    "field_sets_equal": true
+  },
+  "whole_path": {
+    "source_fixture": {
+      "path": "tests/sdk/test_capture_source_runtime.py",
+      "route": "open_source_runtime creates real Runtime source state, registers the astrid provider, and submits semantic setup commands through Runtime commit_timeline",
+      "registration_lines": "216-217",
+      "commit_route_lines": "251-260"
+    },
+    "source_item_identity": {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "lines": "290-305",
+      "item_id": "item-1",
+      "identity_source": "media_id is read from the source shot internal registry clip; patch ref is shot-revision:<source_shot revision_id>",
+      "before": {"state": "present", "value": []},
+      "after": "one source_item object"
+    },
+    "registered_commit": {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "lines": "308-334",
+      "status_asserted_by_source": "accepted",
+      "canonical_reload": "source reloads admitted data through _saved_document after the accepted response"
+    },
+    "provider": {
+      "agent_factory": "astrid/sdk/timeline/commit.py:create_runtime_commit_service",
+      "runtime_loader": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_provider.py:70-95",
+      "runtime_execution": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_execution.py:312-365",
+      "acceptance_persistence": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py:1831-1915",
+      "saved_projection": "Runtime persists candidate canonical_document, publishes the receipt, and revision_closure reconstructs canonical images from stored rows"
+    },
+    "saved_projection_and_opener": {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "saved_golden_lines": "428-513",
+      "candidate_opener_lines": "516-553",
+      "golden_outcomes_preserved": [
+        "projected config and registry equal the managed exact-parent projection",
+        "canonical expansion retains parent revision, children, shots, occurrences, outputs, and parent digest",
+        "shot order is shot-z then shot-a",
+        "authored payload fields, opaque fields, pins, read rows, and dependency manifest survive",
+        "SDK candidate opener projection equals provider projection for parent, child, new_shot, duplicate, remove, and sdk_bundle"
+      ],
+      "behavioral_status": "UNPROVEN after e021: writer did not run own9; protected prior own9 stopped before registered commit"
+    }
+  },
+  "source_conservation": {
+    "candidate_blob_sha256": "4c85d15814c2b1b8128be5af5bac447cded17a72babd2d3450efdd6147fffb48",
+    "final_blob_sha256": "8747fa62ef628a9c25455fe30876a008ebf54b3b22d575c697c2f6893ca276da",
+    "test_function_count": 11,
+    "test_functions_changed": [],
+    "authored_inputs_assertions_goldens_pins_order_preserved": true,
+    "production_or_guard_source_changed": false
+  },
+  "next_gate": {
+    "source_version": "e02180cedafa581bc8105d77341456b8b1c50b5b",
+    "runtime_pin": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "required_nodes": 9,
+    "constraint": "run the exact retained own9 node set against finalized e021 source only after disk admission is at least 5000000000 bytes, then obtain the required protected review",
+    "not_run_by_this_worker": true
+  },
+  "unproved": [
+    "post-fix own9 acceptance",
+    "source-item admission and canonical source provenance after the doc.patch",
+    "Runtime saved projection/opening golden outcomes after the fix",
+    "downstream opener equivalence and any full-suite result"
+  ]
+}

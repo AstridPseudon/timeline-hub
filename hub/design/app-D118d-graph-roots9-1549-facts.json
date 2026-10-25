@@ -1,0 +1,83 @@
+{
+  "task": "D118d",
+  "repository": "agent",
+  "worktree": "/home/user/work/wt/app-D118d-graph-roots9-1549",
+  "allowed_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+  "parent_tree": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "parent_file_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+  "current_file_sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+  "change": "RuntimeRealm.call now sends current v2 label/steps/merge/reads metadata; command fixtures and assertions are unchanged.",
+  "exact_handoff_failures": [
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "3a49b8af477eef20fc355cc965b14bfd99758f856cfb88d1f3acab7d1676f75a"
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[shot-owner]",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "b2926a002259fc46ea1700f5b7279bbb00eb2659d65b44ccd9f81e3ea65762e7"
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[occurrence-owner]",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "177f8e6afdc9a52320d40c59e3a5e4a0db4e85dfd5ace369e0b67d17d147e30e",
+      "failure_location": "../rt-pin-1daca2a3/runtime_protocol/timeline_commit_validation.py:173"
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[kind]",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "607367420899c43991e654217a4afd97838ebdc2aea904d4f22bcf4fefbb880b",
+      "failure_location": "../rt-pin-1daca2a3/runtime_protocol/timeline_commit_validation.py:173"
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[ref]",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "1c535c6a8d2df708711cef91f2758755a2cd89f602ee13d8751c9e4ad26a4deb",
+      "failure_location": "../rt-pin-1daca2a3/runtime_protocol/timeline_commit_validation.py:173"
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[claim]",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "3746a4aec7d0ecc91009c4b60eda4633a7ec36bb69f9dfafbbc72edaeff869f2",
+      "failure_location": "../rt-pin-1daca2a3/runtime_protocol/timeline_commit_validation.py:173"
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_trusted_inverse_recreation_keeps_identity_reservation",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "1c3845636e4cb91eed28c27c3a19ee7c9cc33e954be6fed61b0d44e3bbbeda90",
+      "failure_location": "../rt-pin-1daca2a3/runtime_protocol/timeline_commit_validation.py:173"
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_root_creation_reload_inverse_redo_exact_closure",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "9044fa728b884f43a4f5ee824ae72b763b4c349fed53beb821f9e32d34fc6aa7",
+      "failure_location": "../rt-pin-1daca2a3/runtime_protocol/timeline_commit_validation.py:173"
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "source_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+      "failure_text_sha256": "fc29e39e5346ccb022811faed8829e7ecb95cae4169e9e5224a308d38b952668",
+      "failure_location": "../rt-pin-1daca2a3/runtime_protocol/timeline_commit_validation.py:173"
+    }
+  ],
+  "conservation": {
+    "assert_ast_equal": true,
+    "assert_count_parent": 33,
+    "assert_count_current": 33,
+    "parametrize_count_parent": 7,
+    "parametrize_count_current": 7,
+    "only_product_file_modified": true
+  },
+  "upstream_92443771676ef2bbb547d0a103d708fa8bec4c63_file": "absent",
+  "static_checks": {
+    "py_compile": "passed",
+    "ruff": "passed",
+    "mypy": "passed",
+    "git_diff_check": "passed"
+  },
+  "own_exact9": {
+    "status": "NOTRUN",
+    "reason": "free space was 4,953,280,512 bytes, below the mandated 5,000,000,000-byte light-run floor"
+  }
+}
