@@ -1,0 +1,92 @@
+{
+  "schema_version": 2,
+  "task": "rt-F-tail-Agent-A-review-1935",
+  "source": {
+    "repo": "agent",
+    "root_read_only": "/home/user/work/agent",
+    "base": {
+      "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"
+    },
+    "ours": {
+      "ref": "tl/integration",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+      "status_clean": true
+    },
+    "upstream": {
+      "ref": "refs/remotes/origin/main",
+      "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "tree": "f53cc8426ccef8760021ef6207303bce7b80e777"
+    },
+    "merge_base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "qualified_census": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-census.json",
+      "sha256": "2adbabd4a8e9f93dbc1d60b3c1489f611b527e402dc40629597d49f5502c0e16",
+      "bytes": 127515,
+      "captured_at_utc": "2026-10-25T18:47:50.824772Z"
+    },
+    "qualified_source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-source-manifest.json",
+      "sha256": "d4a449ebac4509e3d5cff094d6e69f3ccac7ab8b46ba6fcf3062a7ab2f09b535",
+      "bytes": 11330
+    },
+    "qualified_conflicts": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-conflicts.md",
+      "sha256": "3c03a417eb6d9a3a52c496b2d919348b0171aa34dfa0ac005f72d2805b312025",
+      "bytes": 19161
+    }
+  },
+  "partition": {
+    "ordering": "qualified census Agent conflict list, alphabetical",
+    "start_inclusive": 1,
+    "end_inclusive": 20,
+    "count": 20,
+    "second_half_disjoint": true,
+    "paths": [
+      "astrid/chat/acpProcessHost.test.ts",
+      "astrid/chat/acpProcessHost.ts",
+      "astrid/chat/astrid-acp-bridge.ts",
+      "astrid/chat/astrid-acp-models.test.ts",
+      "astrid/chat/astrid-agent-models.test.ts",
+      "astrid/chat/astrid-agent-models.ts",
+      "astrid/chat/astrid-local-agent-host.ts",
+      "astrid/chat/astrid-local-agents.test.ts",
+      "astrid/chat/astrid-local-agents.ts",
+      "astrid/chat/astrid-project-chat.test.ts",
+      "astrid/chat/astrid-project-chat.ts",
+      "astrid/chat/astrid-shared-acp-sessions.test.ts",
+      "astrid/chat/astrid-shared-acp-sessions.ts",
+      "astrid/chat/discoveryProbe.ts",
+      "astrid/chat/localAgents.ts",
+      "astrid/chat/modelCatalog.ts",
+      "astrid/chat/service.mjs",
+      "astrid/chat/service.test.ts",
+      "astrid/chat/service.ts",
+      "astrid/core/gateway/dispatch.py"
+    ]
+  },
+  "blob_crosswalk": [
+    {"path":"astrid/chat/acpProcessHost.test.ts","base":"c1e9602b23b1f46ef4b8c089916cff28e3e2a90d","ours":"8619d6ebdefd8c6f259b53002a6c6a452dc9e3eb","upstream":"4fef09d77e2655de84f90e5265d6a8bb3cdeb8cf","ours_bytes":13346,"upstream_bytes":14424},
+    {"path":"astrid/chat/acpProcessHost.ts","base":"c410008357d85b695896f0ccb4ae4baeac4b6851","ours":"971388aa835af637972501e7666a41450b66d1fd","upstream":"4aa1d7de8c7e123c7b327c4e6201b0a3e842eb2c","ours_bytes":17132,"upstream_bytes":17607},
+    {"path":"astrid/chat/astrid-acp-bridge.ts","base":"6b7329a3f6d807305fea46434c68812cbb377cf8","ours":"90818a91e509a270899dcfff11be7343fee5d06a","upstream":"455d13f34b4b1c3aa121afbc79066d73163ae3e9","ours_bytes":54267,"upstream_bytes":56110},
+    {"path":"astrid/chat/astrid-acp-models.test.ts","base":"ab398a8f5e6ba1525039b3f93df110f91b6369c0","ours":"63d5b69eb9b979debac8c371ee2b81e59e59e49b","upstream":"6bc1c1b8c90ba5bc415e4857159b1df116aaaeca","ours_bytes":20395,"upstream_bytes":21184},
+    {"path":"astrid/chat/astrid-agent-models.test.ts","base":"1599b6c98a1f9df64ba15f5cdafed383a23f0213","ours":"ec407f3cc8514253042d40632f2be4838de835e7","upstream":"21fa3c0c168a49d7c5464032c0539063b97ccedf","ours_bytes":14991,"upstream_bytes":16440},
+    {"path":"astrid/chat/astrid-agent-models.ts","base":"82ae8f42a1cdeaa26b88285c9bbcb24727b15838","ours":"3888b90d8fae241f1752f8a833948a25c0fed2c4","upstream":"6223a477ec1e36750c29034abeefc564ad322fb8","ours_bytes":3140,"upstream_bytes":3653},
+    {"path":"astrid/chat/astrid-local-agent-host.ts","base":"f4258dd781697032459928e1c8b8d732d904d16d","ours":"e223c10ac00986c5a9a6a3ef58ee23f4ab85cb0f","upstream":"aa938dd6765c2c752c468d4353858a0f3066a2a0","ours_bytes":7193,"upstream_bytes":7346},
+    {"path":"astrid/chat/astrid-local-agents.test.ts","base":"31c8f3fe305e134b1362c880b58568e632c4f775","ours":"0fcbe2999d13bf0590644067cbf9fe3aa71b2df1","upstream":"6e614214b69905a65999f6c0048fc6124d8582e8","ours_bytes":21564,"upstream_bytes":26222},
+    {"path":"astrid/chat/astrid-local-agents.ts","base":"9fe3e410c3d968404a5782f38d38489b889cad3d","ours":"e7b15de9f5add03f5432efa5737cd918a0e56758","upstream":"2344c0dafdf56b6baa75b3079aacf92885618d1c","ours_bytes":15541,"upstream_bytes":15952},
+    {"path":"astrid/chat/astrid-project-chat.test.ts","base":"42c112ac990bc9a65029f84da0f1774012898807","ours":"e1fe377ff8af99d9de11ec7694c7ea76b1c1d896","upstream":"f399a7c64eb802f9a1bb118072f2e5039dd3e12c","ours_bytes":12596,"upstream_bytes":13429},
+    {"path":"astrid/chat/astrid-project-chat.ts","base":"f33578bc20b21df3d356e881b1b149bdb0631ad7","ours":"13f1b6c0113202ad79242d8d79938f7539069639","upstream":"c8efeaf87a403c3056b9870a3ac701588c4499ad","ours_bytes":20685,"upstream_bytes":20955},
+    {"path":"astrid/chat/astrid-shared-acp-sessions.test.ts","base":"fa469335d2bd4636032e1d7b0a643cc358733fa5","ours":"c3bc7b16d52302212e46470c33adf5219a766001","upstream":"790c31642a30321273d428d92059aad445e13196","ours_bytes":21803,"upstream_bytes":23178},
+    {"path":"astrid/chat/astrid-shared-acp-sessions.ts","base":"aacf7ffe99c4f9ce4f21edbfabc5f67b48be1be2","ours":"f31f2fc92f7990ad480796316e1f502704c779a1","upstream":"8e6c944bff0feeff1fb41f0b57904957a233c765","ours_bytes":20848,"upstream_bytes":21008},
+    {"path":"astrid/chat/discoveryProbe.ts","base":"a328096587b3a850011906dcdcb6eb32f37b9eac","ours":"09ba9f0b007097bae3b5e36fdf4182f508fb2d49","upstream":"ade24dfe88bc54254fdb8dc581b63229e4dec875","ours_bytes":2850,"upstream_bytes":3086},
+    {"path":"astrid/chat/localAgents.ts","base":"adc3829fb0332ea5f60f4b2d404170df6d088654","ours":"5f3dbcb908121958983a3bc3b78d67555246d538","upstream":"7bd7d4d419d6ce55f8edafe91c214369af781896","ours_bytes":4950,"upstream_bytes":7079},
+    {"path":"astrid/chat/modelCatalog.ts","base":"c01412c65eee7ecba641f2ae6f61f22d4b73cc65","ours":"5de3f13200a72ecbaa5d071af0fc774ac7b09764","upstream":"7c650c0c4415ceb56387f83f6c149ba8c901eebd","ours_bytes":952,"upstream_bytes":1154},
+    {"path":"astrid/chat/service.mjs","base":"c04a5c992684d30378f07c09c977f4af869fe13e","ours":"945a9bcf8d0dd7ba0237afc0229ac31b3f816f23","upstream":"011689ea7756036fe71dd725e64de7f0f68a03d9","ours_bytes":190447,"upstream_bytes":193191},
+    {"path":"astrid/chat/service.test.ts","base":"a498d3e9124331cc00b4e962db82c33462bde225","ours":"f88e5e44a24981d8ad6a7a4191234b1d8ea15d96","upstream":"4cc86ad0985733d8776294a6e0c6bc2b45842d1c","ours_bytes":6794,"upstream_bytes":6890},
+    {"path":"astrid/chat/service.ts","base":"fc30a4eef1dca949e5d09283366bb6a71ac4f651","ours":"3b6dfa004bcc452d1c55712aa760d81dae85367c","upstream":"ec6b9ca21483b242fb0c50f55a8309e907644904","ours_bytes":2999,"upstream_bytes":3081},
+    {"path":"astrid/core/gateway/dispatch.py","base":"faee0ff3e1a1c400e8bdaca212b88fe966ef31cd","ours":"239587646b1cb0b259d454bc2cc1faa7922b2c7a","upstream":"402362763963c5858bd1003bce5b26c0cf42fbbd","ours_bytes":28556,"upstream_bytes":28705}
+  ],
+  "read_only_boundary": "Only this composition worktree evidence is writable; Agent source, refs, trees, blobs, generated files, pins, and Git state were not modified."
+}

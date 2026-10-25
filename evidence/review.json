@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-tail-Agent-A-review-1935",
+  "result": "PASS",
+  "basis": "Independent read-only review of the qualified 2026-10-25 Agent census and exact BASE/OURS/UPSTREAM Git objects.",
+  "identity": {
+    "base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "ours": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "ours_tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+    "upstream": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "upstream_tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+    "census": "rt-F-tail-upstream-census-1844-census.json@2adbabd4a8e9f93dbc1d60b3c1489f611b527e402dc40629597d49f5502c0e16"
+  },
+  "scope": {
+    "partition": "Agent conflict paths 1..20, alphabetical",
+    "paths": 20,
+    "ours_hunks": 35,
+    "upstream_hunks": 95,
+    "merge_tree_hunks": 62,
+    "ours_trivial_eof_whitespace_hunks": 18,
+    "ours_semantic_generated_service_hunks": 15,
+    "ours_semantic_dispatch_import_hunks": 2,
+    "upstream_auto_composable_source_or_test_hunks": 80,
+    "upstream_generated_rebuild_hunks": 15,
+    "upstream_genuine_mutual_intent_hunks": 0
+  },
+  "classification_rule": {
+    "trivial_ours": "Exactly one added blank line at EOF, with no non-whitespace byte change.",
+    "auto_composable": "Upstream hunk is outside the non-whitespace ours change and merge-tree carries it without an overlapping textual choice.",
+    "generated_rebuild": "service.mjs is generated; its upstream bytes are not hand-merged. Rebuild from the final source after source-owner decisions.",
+    "mutual_intent": "Only a hunk whose two sides change the same behavior or require choosing incompatible owners; none is present in this first-20 partition."
+  },
+  "files": [
+    {"path":"astrid/chat/acpProcessHost.test.ts","ours_hunks":1,"upstream_hunks":1,"merge_tree_hunks":1,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/acpProcessHost.ts","ours_hunks":1,"upstream_hunks":6,"merge_tree_hunks":4,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-acp-bridge.ts","ours_hunks":1,"upstream_hunks":11,"merge_tree_hunks":8,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-acp-models.test.ts","ours_hunks":1,"upstream_hunks":5,"merge_tree_hunks":3,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-agent-models.test.ts","ours_hunks":1,"upstream_hunks":7,"merge_tree_hunks":5,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-agent-models.ts","ours_hunks":1,"upstream_hunks":3,"merge_tree_hunks":3,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-local-agent-host.ts","ours_hunks":1,"upstream_hunks":2,"merge_tree_hunks":2,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-local-agents.test.ts","ours_hunks":1,"upstream_hunks":13,"merge_tree_hunks":10,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-local-agents.ts","ours_hunks":1,"upstream_hunks":6,"merge_tree_hunks":4,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-project-chat.test.ts","ours_hunks":1,"upstream_hunks":1,"merge_tree_hunks":1,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-project-chat.ts","ours_hunks":1,"upstream_hunks":1,"merge_tree_hunks":1,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-shared-acp-sessions.test.ts","ours_hunks":1,"upstream_hunks":1,"merge_tree_hunks":1,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/astrid-shared-acp-sessions.ts","ours_hunks":1,"upstream_hunks":1,"merge_tree_hunks":1,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/discoveryProbe.ts","ours_hunks":1,"upstream_hunks":3,"merge_tree_hunks":2,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/localAgents.ts","ours_hunks":1,"upstream_hunks":10,"merge_tree_hunks":6,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/modelCatalog.ts","ours_hunks":1,"upstream_hunks":1,"merge_tree_hunks":1,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/service.mjs","ours_hunks":15,"upstream_hunks":15,"merge_tree_hunks":3,"ours":"semantic-generated-artifact","upstream":"generated-rebuild-required"},
+    {"path":"astrid/chat/service.test.ts","ours_hunks":1,"upstream_hunks":4,"merge_tree_hunks":2,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/chat/service.ts","ours_hunks":1,"upstream_hunks":2,"merge_tree_hunks":2,"ours":"trivial-eof-whitespace","upstream":"auto-compose-source-or-test-addition"},
+    {"path":"astrid/core/gateway/dispatch.py","ours_hunks":2,"upstream_hunks":2,"merge_tree_hunks":2,"ours":"semantic-doctor-import-relocation","upstream":"auto-compose-skills-route-addition"}
+  ],
+  "owner_questions": [],
+  "preservation": {
+    "18_file_deletion_only_whitespace_patch": "git apply --check passes in the prior artifact; it removes only one ours-only EOF blank line in each of the 18 named files.",
+    "nonwhitespace_bytes": "No non-whitespace ours bytes are included in that private patch; source and test behavior remains unchanged.",
+    "both_live_predicates": "The upstream additions and captured ours predicates remain represented by separate source blobs; no side was hand-selected.",
+    "generated_service": "Must be regenerated later from resolved service.ts and its dependencies; no hand merge is authorized.",
+    "whole_actual_clone": "Not performed and intentionally remains unverified."
+  },
+  "write_boundary": "No Agent source, tests, generated files, pins, refs, fetches, merges, or Git writes were performed."
+}
