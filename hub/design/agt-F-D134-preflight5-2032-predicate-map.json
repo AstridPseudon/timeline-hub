@@ -1,0 +1,13 @@
+{
+  "ordinary_detached_fixture_preflight": {
+    "authored_rows": ["video", "title"],
+    "preflight_assertions": "unchanged",
+    "status": "UNAPPLIED dependency: current semantic occurrence-media plumbing needs a verified catalog selection and mirrored shot item; fixture supplies only raw ingest plus its existing authored patch"
+  },
+  "occurrence_fork_source_baseline": {
+    "authored_inputs": "unchanged",
+    "source_helper": "seed_document_diff_parent",
+    "repair": "real RuntimeDaemon Astrid provider and AstridClient for the same realm",
+    "assertions": "unchanged"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.agent.f_d134_first_return_source_manifest.v1",
+  "repo": "agent",
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "review_head": "d67a83086cdfb165a1b8e229b5cd1f3307004d09",
+  "working_file": "tests/sdk/test_timeline_selected_schema_runtime.py",
+  "working_file_sha256": "d48c63f0dd8799f058fb8aa1c9abf0729a1d938465b793788fc0936f06d9fca4",
+  "changed_paths": ["tests/sdk/test_timeline_selected_schema_runtime.py"],
+  "runtime_checkout": "/home/user/work/runtime",
+  "runtime_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+  "source_gate": {
+    "py_compile": "pass",
+    "ruff": "pass",
+    "mypy": "known baseline failure: missing types-PyYAML only",
+    "git_diff_check": "pass"
+  },
+  "body_gate": {
+    "local_abi1_nodes": "executed; live status returned merged",
+    "http_node": "unverified; central targeted route deselected it for CI lanes-integration"
+  }
+}

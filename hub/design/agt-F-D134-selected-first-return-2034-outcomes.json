@@ -1,0 +1,18 @@
+{
+  "status": "source_repaired_live_compatibility_boundary",
+  "source": "PASS",
+  "request_controls": "restored exact ABI-1 case.request bodies",
+  "parent_shape": "restored exact retired shape with config.clips absent",
+  "unknown_cases": "conserved",
+  "local_nodes": {
+    "executed": 3,
+    "expected_assertion": "rebased",
+    "observed_runtime_status": "merged",
+    "credited": false,
+    "reason": "C0 requires historical ABI-1 rebased semantics; do not encode the live mismatch as a product assertion"
+  },
+  "http_node": {
+    "status": "unverified",
+    "reason": "central targeted route deselected integration node; safety policy stopped retry"
+  }
+}

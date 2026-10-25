@@ -1,0 +1,24 @@
+{
+  "scope": "tests/sdk/test_timeline_selected_schema_runtime.py",
+  "original_request_controls": {
+    "case_request": "preserved; no label, steps, merge, or reads added",
+    "v2_request_helper": "removed",
+    "rebase_status_assertions": "preserved as rebased"
+  },
+  "changed_nodes": [
+    "test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+    "test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
+    "test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]",
+    "http_retained_pack setup"
+  ],
+  "unknown_cases": [
+    {"nodeid": "test_pre_enforcement_alias_history_reopens_with_current_authority", "sha256": "6dca7b6c66e444b40569f9e9d7bbdcc6cb25dd85173fcf3f607732635f2c0b5a", "assertions": 8},
+    {"nodeid": "test_mixed_pack_readmission_keeps_old_and_new_native_param_sources", "sha256": "2445ac5c260b717857714b060acbbaf83e1fd8c0038994da73fe3a04c3d926a1", "assertions": 16},
+    {"nodeid": "test_native_disjoint_staged_label_and_inverse_preserve_opaque[False]", "sha256": "c029d45165dc96194f21c84d25c15ba8277a2243ef7262d5206094a1e7a8202a", "assertions": 2},
+    {"nodeid": "test_native_disjoint_staged_label_and_inverse_preserve_opaque[True]", "sha256": "c029d45165dc96194f21c84d25c15ba8277a2243ef7262d5206094a1e7a8202a", "assertions": 2},
+    {"nodeid": "test_native_inverse_then_selection_and_params_use_staged_pin", "sha256": "3ba602a0a7c8a276acae3c880b87e096d31e92486904f6737e45e2658e25bb12", "assertions": 2},
+    {"nodeid": "test_native_equal_json_opposite_selection_order_and_inverse_restore", "sha256": "8b71fbed028bef3049b5040f7a53559b1c62b88913cf427863788f25a69a6b84", "assertions": 6},
+    {"nodeid": "test_native_retained_schema_replay_inverse_reload_and_exact_retry", "sha256": "16ce3f4a3901f278a6863f36ddbd6f4b5d01ac5d270ce1a87e23815c7cf0c03a", "assertions": 8}
+  ],
+  "conservation": "all seven UNKNOWN function bodies and assertion counts match pristine base"
+}

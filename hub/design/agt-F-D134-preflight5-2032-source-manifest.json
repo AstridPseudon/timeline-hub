@@ -1,0 +1,8 @@
+{
+  "base_revision": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "changed_files": [
+    "tests/editing_conformance/test_occurrence_fork_source_baseline.py"
+  ],
+  "ordinary_file_unchanged": true,
+  "scope": "D134 fixture plumbing"
+}

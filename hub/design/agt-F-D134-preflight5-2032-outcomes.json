@@ -1,0 +1,8 @@
+{
+  "fork_fixture": "source repaired; live integration unverified",
+  "ordinary_detached_fixture_preflight": "UNAPPLIED dependency",
+  "central_targeted": {
+    "default": "exit 5; 5 deselected",
+    "integration_agent": "exit 5; 5 deselected"
+  }
+}
