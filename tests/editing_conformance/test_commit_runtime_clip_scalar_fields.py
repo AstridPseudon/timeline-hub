@@ -186,17 +186,7 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, 
         pin = head()
         return {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
                 'base_revision_id': pin['revision_id'], 'base_publication_id': pin['publication_id'],
-                'commands': calls, 'label': 'App scalar fixture',
-                'steps': [{'id': str(index), 'label': 'App scalar fixture',
-                           'intent': 'Apply current scalar fields', 'tags': ['fixture'],
-                           'command_ordinals': [index],
-                           'patch': (copy.deepcopy(command['args']['changes'])
-                                     if command['op'] == 'doc.patch' else []),
-                           'reads': []}
-                          for index, command in enumerate(calls)],
-                'merge': 'fields', 'reads': [], 'dry_run': False,
-                'source': {'via': 'python'}, 'rationale': 'Current scalar fixture',
-                'group_id': 'app-scalar-fixture'}
+                'commands': calls, 'dry_run': False}
 
     def submit(body, key):
         return service.commit_timeline(project, 'film', body, idempotency_key=key,
