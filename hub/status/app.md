@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T22:55:43Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
-# app board, 2026-10-25T22:51Z
+<!-- app | 2026-10-25T23:00:26Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# app board, 2026-10-25T22:57Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -131,7 +131,7 @@ Blockers: Agent core and render — Runtime D139 recipe2153 and Agent input cens
 Blockers: Final cut — ship-grade core, REG0, full P2, final P1-P5/D69, installed render, platform and ZIP remain owed. No final gate or ZIP claim.
 Next ready: D136c sole original-nine controller after Runtime exact diagnostics candidate and independent security PASS; not dispatched early. No admitted App source/body. Element safety/repair and final cut gates remain.
 live 0 / cap 6; ready-undispatched 0. D136c readiness sent Runtime and lead. Candidate/security prerequisites not yet available; no body or profiling.
-INBOX consumed through2518113 bytes. H6 Runtime22:02, Agent22:10 and Farm22:00 boards plus D139/H72 and D127e header consumed. All cross-lane asks have existing rows or later entries.
+INBOX consumed through2520545 bytes. H6 Runtime22:02, Agent22:10 and Farm22:00 boards plus D139/H72 and D127e header consumed. All cross-lane asks have existing rows or later entries.
 
 Safety: Manager edits only ORCH briefs/board/peers and byte-publishes authored SAFE artifacts. No manager product/test/generated/pin changes, direct Git writes, upstream push, M5, credentials or refused-route retry. Dirty U3/orphan guards and exact1.107GB orphan graph remain untouched.
 Later: D133 correctedB Gate3 DEFERRED, existing worker1853 paragraph installed Runtime1911; no optionA author/review/body. Word/native originals and originalTrue/graph require authentic records; no unchangedrerun. D79 ZIP-held; E4 dropped; helpercut D23; D14 retained. Agent shared105 sole2055 propagation waits D100/FPS qualification; managed30 source exact/restored. Agent CLI22 proof waits Runtime2104 route, no Appduplicate. D127e waiter census belongs Runtime/Agent owner; App only verification.
@@ -155,3 +155,9 @@ Disk pass: compact kit exact1f6926c6 verified, all8 raw testKEEP plus original21
 Source readiness 2026-10-25T22:52Z: exact Agent d133 named branch ref is absent locally; normal host receive requested in peer STATUS.md. Existing reviewed source only, no new author or body. This is a concrete transport input for later D136c, not a decision escalation.
 
 Source correction 2026-10-25T22:54Z: host confirms exact Agent d133 object/tree already local; missing named branch was mistaken for missing object. Use ordinary request-checkout by exactSHA only after D136c security PASS, as lead instructed. No source delivery, worker or earlycheckout needed; transport blocker cleared.
+
+Prepared 2026-10-25T22:56Z: unbound D136c controller brief only, no worker dispatch or earlycheckout. Safe evidence recipe reuses exact2136 nine selectors and unchanged predicate/input hashes. Runtime candidate/security receipt still required. Normal maintenance terminal: sweep3 removed0, compact packed0scratch/0testdirs and gzipped4oldlogs; receipt design/app-disk-maintenance-2254.json.
+
+Ownership 2026-10-25T22:57Z: Runtime2233 actualSTART22:31:10 precedes App2231 START22:31:16 by6seconds; Runtime is first source owner. App2231/2240 had already ended and stay independently qualified supporting evidence. Existing Runtime2247 finishes claim review; no new App author/reviewer/body. Peers 20261025T2257Z reconcile exact chronology and current135UNKNOWN limits.
+
+Header check22:58: recorded D136c22:59 now present in BOARD-HEADER; prior lead-relayed authority confirmed. Runtime owns diagnostics plus security review; App exact source and unchanged-nine recipe prepared. No candidate source/security packet yet, no new ready row or early dispatch.
