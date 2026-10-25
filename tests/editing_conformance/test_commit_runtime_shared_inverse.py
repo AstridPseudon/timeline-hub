@@ -47,7 +47,7 @@ def shared_editing(request, tmp_path, monkeypatch):
             _, source_shot, _ = occurrence_image(original, "occurrence-1")
             shot_set = capture_shot_set(
                 original_bundle, "occurrence:occurrence-1/shot",
-                values={"name": source_shot["payload"]["name"]},
+                values={"name": source_shot["payload"]["metadata"]["title"]},
             )
             setup_commands.append(shot_set)
             staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
