@@ -154,6 +154,7 @@ interface CardProps {
  */
 function Card({ title, sentence, action, children, status, pointer, showHelp = false, onBack }: CardProps) {
   const connected = useContext(ConnectedContext);
+  if (connected) return <div className="overflow-hidden rounded-[18px] border border-border bg-card shadow-lg"><StatusLine text={COPY.connected.sentence} help={false} /></div>;
   return <>
     <EditorCard title={title} sentence={sentence} topLeft={onBack ? <BackButton onBack={onBack} /> : undefined} foot={(status || connected) ? <StatusLine text={status ?? COPY.waiting} help={showHelp} /> : undefined}>
       {children}
@@ -223,11 +224,12 @@ function PhoneCard({ onBack }: { readonly onBack?: () => void }) {
 }
 
 /** A desktop browser without local-network access: carry this tab's link to a supported browser. */
-function UnsupportedCard({ onBack }: { readonly onBack?: () => void }) {
+function UnsupportedCard({ onBack, updateNeeded = false }: { readonly onBack?: () => void; readonly updateNeeded?: boolean }) {
   const { unsupported } = COPY;
+  const message = updateNeeded ? COPY.browserUpdateNeeded : unsupported;
   const link = window.location.href;
   const copy = useCopyAction(link);
-  return <Card title={unsupported.title} sentence={unsupported.sentence} onBack={onBack} action={<div className="space-y-2">
+  return <Card title={withBrowser(message.title)} sentence={withBrowser(message.sentence)} onBack={onBack} action={<div className="space-y-2">
     <Button type="button" className="h-11 w-full rounded-xl" onClick={() => void copy.copy()}>{copy.status === 'copied' ? unsupported.copied : unsupported.button}</Button>
     {copy.status === 'failed' && <CopyFallback text={link} label={unsupported.button} />}
   </div>} />;
@@ -281,9 +283,9 @@ function BlockedCard({ onBack }: { readonly onBack?: () => void }) {
 }
 
 /** Repeated probes went unanswered with permission granted; polling continues during install or repair. */
-function NotRunningCard({ onBack }: { readonly onBack?: () => void }) {
+function NotRunningCard({ connection, onBack }: { readonly connection: RuntimeConnectionValue; readonly onBack?: () => void }) {
   const { notRunning } = COPY;
-  return <Card title={notRunning.title} sentence={notRunning.sentence} onBack={onBack} action={<CopyInstallCommand mode="install" />} status={COPY.waiting} showHelp />;
+  return <Card title={notRunning.title} sentence={notRunning.sentence} onBack={onBack} action={<div className="space-y-2"><CopyInstallCommand mode="install" /><Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
 }
 
 function UpdateNeededCard({ onBack }: { readonly onBack?: () => void }) {
@@ -298,7 +300,9 @@ function screenFor(connection: RuntimeConnectionValue, onBack?: () => void): { n
     case 'needs_permission': return { name: connection.isChecking ? 'pending' : 'permission', card: <PermissionCard connection={connection} onBack={onBack} /> };
     case 'phone': return { name: 'phone', card: <PhoneCard onBack={onBack} /> };
     case 'unsupported': return { name: 'unsupported', card: <UnsupportedCard onBack={onBack} /> };
-    case 'not_running': return { name: 'not_running', card: <NotRunningCard onBack={onBack} /> };
+    case 'browser_update_needed': return { name: 'browser_update_needed', card: <UnsupportedCard updateNeeded onBack={onBack} /> };
+    case 'restart': return { name: 'restart', card: <Card title={COPY.restarted.title} sentence={COPY.restarted.sentence} onBack={onBack} action={<Button type="button" className="w-full" onClick={() => window.location.reload()}>{COPY.restarted.reload}</Button>} /> };
+    case 'not_running': return { name: 'not_running', card: <NotRunningCard connection={connection} onBack={onBack} /> };
     case 'blocked': return { name: 'blocked', card: <BlockedCard onBack={onBack} /> };
     case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard onBack={onBack} /> };
     default: return null;

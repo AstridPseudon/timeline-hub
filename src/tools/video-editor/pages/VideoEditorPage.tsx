@@ -1,3 +1,5 @@
+import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { EmptyWorkspaceGuidance } from '@/shared/components/RuntimeConnection/EmptyWorkspaceGuidance.tsx';
 import { WorkspaceDiscoveryPending } from '@/shared/components/RuntimeConnection/WorkspaceDiscoveryPending.tsx';
 import { useNativeEditorRecovery } from '../hooks/useNativeEditorRecovery.ts';
@@ -831,6 +833,8 @@ export default function VideoEditorPage() {
     />
   ) : null;
 
+  const recoveryCardShowing = useRecoveryCardShowing();
+  const hosted = runtimeOrigin() !== '';
   const recoveryError = runtimeConnectorError ?? discoveryError;
   const connectionFailed = !!(recoveryError || nativeRecoveryError);
   return (
@@ -877,21 +881,21 @@ export default function VideoEditorPage() {
       ) : (
         <>
           {selectorsHeader}
-          {workspaceSettling ? <WorkspaceDiscoveryPending onRetry={() => void runtimeDiscovery.reconnect()} /> : (
+          {hosted && recoveryCardShowing ? null : workspaceSettling ? <WorkspaceDiscoveryPending onRetry={() => void runtimeDiscovery.reconnect()} /> : (
             <>
               <div className="px-4 py-2">{timelinePreviewControls}</div>
               <div className="flex flex-1 items-center justify-center px-6">
                 <Card className="w-full max-w-md">
                   <CardHeader>
                     <CardTitle>{projectMissing ? "Project not found"
-                      : discoveryError ? selectedProject ? "Timelines unavailable" : "Workspace unavailable"
+                      : discoveryError ? hosted ? RUNTIME_CONNECTION_COPY.loadFailed.title : selectedProject ? "Timelines unavailable" : "Workspace unavailable"
                       : !projectId ? projects?.length === 0 ? "No projects yet" : "Select a project"
                       : timelineMissing ? "Timeline not found"
                       : "No timeline yet"}</CardTitle>
                     <CardDescription>{projectMissing
                       ? `“${projectId}” is not available in this workspace. Choose an existing project or create one.`
                       : timelineMissing ? "The selected timeline is not available in this project. Choose another timeline."
-                      : discoveryError ? discoveryError.message
+                      : discoveryError ? hosted ? RUNTIME_CONNECTION_COPY.loadFailed.sentence : discoveryError.message
                       : !projectId ? "Create a project with New project above, or choose an existing project."
                       : "Create a blank timeline for this project to open it in the editor."}</CardDescription>
                   </CardHeader>
@@ -907,7 +911,7 @@ export default function VideoEditorPage() {
                     {firstTimelineError && <p className="mt-3 text-xs text-destructive" role="alert">
                       Timeline setup failed ({firstTimelineError}). Retry here or check the connected Astrid Runtime.
                     </p>}
-                    {discoveryError && <Button onClick={() => void runtimeDiscovery.reconnect()}>Retry workspace discovery</Button>}
+                    {discoveryError && <Button onClick={() => void runtimeDiscovery.reconnect()}>{hosted ? RUNTIME_CONNECTION_COPY.loadFailed.button : "Retry workspace discovery"}</Button>}
                   </CardContent>
                 </Card>
               </div>

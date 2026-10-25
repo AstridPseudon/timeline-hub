@@ -11,8 +11,8 @@
  *   Chrome ask. Re-checking stays off until the browser reports `granted` (the permission's `onchange`).
  * - `denied`: `blocked`, nothing sent.
  *
- * Two unanswered readings with permission granted show one install/start action. A probe that reaches its own
- * timeout is slow, not a failed reading. Background probes leave the current panel in place while they run.
+ * Two unanswered readings with permission granted show install/start help. Slow probes count as unanswered
+ * readings, with one follow-up bounded to 60 seconds. Background probes leave the current panel in place.
  * Phones and unsupported browsers never query permission or probe. Once connected the
  * state is sticky: a Runtime that stops later shows a recovery card, keeping the editor and its unsaved work mounted.
  *
@@ -50,6 +50,7 @@ import { getSettingsStore } from '@/shared/settings/instance';
 
 export const POLL_INTERVAL_MS = 3000;
 export const PROBE_TIMEOUT_MS = 5000;
+export const SLOW_PROBE_TIMEOUT_MS = 60_000;
 const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
 /** The `error` codes of the Runtime door's refusals (astrid-runtime runtime_protocol/door.py): the only error bodies the page reads as the door's. */
 export type RuntimeRefusalCode = 'runtime_unavailable' | 'runtime_identity_mismatch';
@@ -140,7 +141,7 @@ function writeConnectedBefore(): void {
 export interface RuntimeConnectionValue {
   /** True when the app waits for a confirmed Runtime connection before mounting its children. */
   gated: boolean;
-  state: RuntimeConnectionState;
+  state: RuntimeConnectionState | { status: 'restart' } | { status: 'browser_update_needed' };
   isConnected: boolean;
   /** This browser has reached Astrid before, so missing-work guidance can distinguish a return visit from first setup. */
   connectedBefore: boolean;
@@ -159,7 +160,7 @@ export interface RuntimeConnectionValue {
    */
   localServiceOutOfDate: boolean;
   setLocalServiceOutOfDate: (outOfDate: boolean) => void;
-  /** Probes now without a timeout, so Chrome's permission prompt can stay open. No-op when connected, denied or checking. */
+  /** Probes now, leaving Chrome's permission prompt untimed. No-op when connected or denied. */
   connect: () => void;
 }
 
@@ -200,14 +201,14 @@ export function RuntimeConnectionProvider({
   const [localServiceOutOfDate, setLocalServiceOutOfDate] = useState(false);
   const [failedReadings, setFailedReadings] = useState(0);
   const [scenario] = useState(detectInstallScenario);
-  const canConnect = !requireLocalNetworkPermission || scenario === 'chromium';
+  const canConnect = scenario !== 'mobile' && (!requireLocalNetworkPermission || scenario === 'chromium');
   const [connectedBeforeAtMount] = useState(() => !gated || readConnectedBefore());
 
   const mounted = useRef(true);
   const inFlight = useRef<AbortController | null>(null);
   /** The untimed probe `connect()` started while the permission was not yet granted: the one a grant must replace. */
   const promptProbe = useRef<AbortController | null>(null);
-  /** A timed probe's untimed slow follow-up: an explicit Connect takes priority over it. */
+  /** A timed probe's longer slow follow-up: an explicit Connect takes priority over it. */
   const slowProbe = useRef<AbortController | null>(null);
   /** Sticky once a probe connects (set in `runProbe`, before the render): no probe starts after it. */
   const connectedRef = useRef(false);
@@ -251,6 +252,24 @@ export function RuntimeConnectionProvider({
     };
   }, [gated, requireLocalNetworkPermission, canConnect, permissions]);
 
+  // Site settings do not always dispatch a permission change before this tab resumes.
+  useEffect(() => {
+    if (!gated || !requireLocalNetworkPermission || !canConnect || permission !== 'denied') return undefined;
+    let cancelled = false;
+    const check = async () => {
+      const current = await queryLocalNetworkPermission(permissions);
+      if (!cancelled) setPermission(current);
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible') void check(); };
+    window.addEventListener('focus', check);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', check);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [gated, requireLocalNetworkPermission, canConnect, permission, permissions]);
+
   const runProbe = useCallback(async function runProbe(untimed: boolean, explicit = false) {
     if (explicit && inFlight.current && inFlight.current === slowProbe.current) {
       inFlight.current.abort();
@@ -263,7 +282,8 @@ export function RuntimeConnectionProvider({
     if (untimed && permissionRef.current !== 'granted') promptProbe.current = controller;
     if (untimed && !explicit && permissionRef.current === 'granted') slowProbe.current = controller;
     setIsChecking(untimed);
-    const timer = untimed ? undefined : setTimeout(() => controller.abort(new DOMException('Runtime probe timed out', 'TimeoutError')), PROBE_TIMEOUT_MS);
+    const timeoutMs = untimed ? permissionRef.current === 'granted' ? SLOW_PROBE_TIMEOUT_MS : undefined : PROBE_TIMEOUT_MS;
+    const timer = timeoutMs === undefined ? undefined : setTimeout(() => controller.abort(new DOMException('Runtime probe timed out', 'TimeoutError')), timeoutMs);
     let result: RuntimeProbeOutcome;
     try {
       result = await probeRuntime(controller.signal, fetchImpl);
@@ -285,7 +305,7 @@ export function RuntimeConnectionProvider({
     }
     if (result.kind === 'slow' && !untimed && permissionRef.current === 'granted') void runProbe(true);
     // A failed request held behind a browser question is not evidence that Astrid is absent.
-    if (permissionRef.current === 'granted' && result.kind !== 'slow') {
+    if (permissionRef.current === 'granted') {
       setFailedReadings((previous) => result.kind === 'connected' ? 0 : previous + 1);
     }
     setOutcome(result);
@@ -373,11 +393,13 @@ export function RuntimeConnectionProvider({
       return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, realmName: outcome.realm.display_name, schemaDigest: outcome.schemaDigest };
     }
     const notConnected = { ...base, isConnected: false, realmName: null, schemaDigest: null };
-    if (requireLocalNetworkPermission && scenario === 'mobile') return { ...notConnected, state: { status: 'phone' }, isBooting: false };
-    if (requireLocalNetworkPermission && (scenario === 'unsupported' || permission === 'unsupported')) return { ...notConnected, state: { status: 'unsupported' }, isBooting: false };
+    if (scenario === 'mobile') return { ...notConnected, state: { status: 'phone' }, isBooting: false };
+    if (requireLocalNetworkPermission && scenario === 'unsupported') return { ...notConnected, state: { status: 'unsupported' }, isBooting: false };
+    if (requireLocalNetworkPermission && permission === 'unsupported') return { ...notConnected, state: { status: 'browser_update_needed' }, isBooting: false };
     if (permission === null) return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
     if (permission === 'denied') return { ...notConnected, state: { status: 'blocked' }, isBooting: false };
     if (permission === 'prompt') return { ...notConnected, state: { status: 'needs_permission' }, isBooting: false };
+    if (outcome?.kind === 'restart') return { ...notConnected, state: { status: 'restart' }, isBooting: false };
     if (outcome?.kind === 'update_needed') return { ...notConnected, state: { status: 'update_needed' }, isBooting: false };
     if (failedReadings >= 2) {
       return {
