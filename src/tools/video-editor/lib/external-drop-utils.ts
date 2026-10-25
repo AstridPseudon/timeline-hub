@@ -810,6 +810,7 @@ export function finalizeExternalDrop({
   externalDragFrameRef,
   latestExternalDragRef,
   latestExternalPositionRef,
+  managedImage = false,
 }: {
   event: DragEvent<HTMLDivElement>;
   coordinator: DragCoordinator;
@@ -819,8 +820,10 @@ export function finalizeExternalDrop({
     clientX: number;
     clientY: number;
     sourceKind: TrackKind | null;
+    managedImage?: boolean;
   } | null>;
   latestExternalPositionRef: MutableRefObject<ReturnType<DragCoordinator['update']> | null>;
+  managedImage?: boolean;
 }): TimelineDropPosition {
   event.preventDefault();
   delete event.currentTarget.dataset.dragOver;
@@ -836,6 +839,7 @@ export function finalizeExternalDrop({
       clientX: latestExternalDragRef.current.clientX,
       clientY: latestExternalDragRef.current.clientY,
       sourceKind: latestExternalDragRef.current.sourceKind,
+      managedImage: latestExternalDragRef.current.managedImage,
     });
   }
 
@@ -845,6 +849,7 @@ export function finalizeExternalDrop({
       clientX: event.clientX,
       clientY: event.clientY,
       sourceKind: inferDragKind(event),
+      managedImage,
     });
 
   latestExternalDragRef.current = null;

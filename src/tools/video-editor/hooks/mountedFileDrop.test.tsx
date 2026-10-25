@@ -133,12 +133,12 @@ async function environment(child: boolean, delayed = false) {
     const drop = useExternalDrop({ ...assets, dataRef: commit.dataRef, pendingOpsRef: commit.pendingOpsRef,
       selectedTrackId: trackId, scale: 5, scaleWidth: 160, applyEdit: commit.applyEdit, invalidateAssetRegistry: vi.fn(),
       resolveAssetUrl: provider.resolveAssetUrl, coordinator: drag.coordinator, finalVideoMap: new Map() });
-    return { ...drop, commit, assets, coordinator: drag.coordinator };
+    return { ...drop, commit, assets, coordinator: drag.coordinator, indicatorRef: drag.indicatorRef };
   }, { wrapper });
   mounted.result.current.coordinator.editAreaRef.current = editArea;
   cleanups.push(() => mounted.unmount());
   return { mounted, outboxes, scope, captures, failures, send, prepareMediaImport, document, handoff, descriptor, releaseImport,
-    coordinator: mounted.result.current.coordinator };
+    coordinator: mounted.result.current.coordinator, indicatorRef: mounted.result.current.indicatorRef };
 }
 
 function fileDropEvent(child = false) {
@@ -149,6 +149,22 @@ function fileDropEvent(child = false) {
 
 it.each([false, true])('routes a mounted file drop into A2 (embedded: %s)', async child => {
   const env = await environment(child);
+  const indicator = { show: vi.fn(), hide: vi.fn(), showSecondaryGhosts: vi.fn() };
+  env.mounted.result.current.indicatorRef.current = indicator;
+  const preview = env.coordinator.update({ clientX: child ? 368 : 384, clientY: child ? 54 : 30,
+    sourceKind: 'visual', managedImage: true });
+  expect(preview.trackId).toBe(child ? 'V2' : 'V1');
+  expect(preview.time).toBe(child ? 9 : 5);
+  expect(indicator.show).toHaveBeenCalledWith(expect.objectContaining({
+    trackId: child ? 'V2' : 'V1',
+    label: child ? 'V2 · 9.0s' : 'V1 · 5.0s',
+    ghostLabel: child ? '9.0s' : '5.0s',
+    lineLeft: preview.screenCoords.ghostCenter,
+    ghostLeft: preview.screenCoords.clipLeft,
+    ghostWidth: preview.screenCoords.clipWidth,
+    ghostTop: preview.screenCoords.rowTop + 2,
+    ghostHeight: Math.max(0, preview.screenCoords.rowHeight - 4),
+  }));
   const resolvedDrop = env.coordinator.update({ clientX: child ? 368 : 384, clientY: child ? 54 : 30, sourceKind: null });
   expect(resolvedDrop.time).toBe(child ? 4.5 : 5);
   expect(resolvedDrop.pointerTrackId).toBe(child ? 'V2' : 'V1');
@@ -176,6 +192,7 @@ it.each([false, true])('routes a mounted file drop into A2 (embedded: %s)', asyn
     merge: 'fields', dry_run: false, source: { via: 'app' },
     commands: [{ op: child ? 'occurrence.add-media' : 'clip.add-media', args: { media } }],
     steps: [{ command_ordinals: [0], patch: [] }] });
+  expect(request.commands[0]?.args.row).toMatchObject({ at: preview.time, track: preview.trackId });
   const owner = child ? 'occurrence:occ-0' : 'parent';
   expect(request.commands).toEqual([{ schema_version: 1, op: child ? 'occurrence.add-media' : 'clip.add-media',
     version: '1', select: owner, intent: child ? { ownership: 'occurrence' } : {},

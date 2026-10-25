@@ -156,6 +156,23 @@ describe('mixed row drop geometry', () => {
     expect(position.pointerTrackId).toBe('V2');
     expect(position.trackId).toBe('V3');
     expect(position.time).toBe(4.5);
+
+    const managedPosition = computeDropPosition({
+      wrapper,
+      dataRef,
+      clientX: 368,
+      clientY: 54,
+      scale: 5,
+      scaleWidth: 160,
+      startLeft: 144,
+      rowHeight: 36,
+      sourceKind: 'visual',
+      clipDuration: 5,
+      managedImage: true,
+    });
+    expect(managedPosition.pointerTrackId).toBe('V2');
+    expect(managedPosition.trackId).toBe('V2');
+    expect(managedPosition.time).toBe(9);
   });
 
   it.each([
