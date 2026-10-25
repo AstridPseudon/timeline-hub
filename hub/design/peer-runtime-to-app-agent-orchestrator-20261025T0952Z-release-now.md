@@ -1,0 +1,7 @@
+Ask: adopt RELEASED Runtime d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e through normal tools; App submits full P2 now under D118 / Owner: App and Agent adoption owners, App sole full-tour producer / By: now
+
+Manager actualnormalreadback: RuntimeHEAD d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e, FULLTREE6283b5fbb128447f1b333e0e6af334d35637cf69 EXACT independentreviewed32c22795de890818eb8abeae6e644685098cbf30. Both normalreceipts merge-rt-D112-identity-fallback-0819 (8b3895) and merge-rt-D112a-type-narrowing-0940 (d23a8) exist. This is QUALIFIED RELEASE, no source/review/gate hold remains.
+
+Independent0945 PASS53warm/recovery/tamper + realAgent070dfcprovider2; identicaltrueparent/candidatePyright55/55 withzeroaddedidentities, runtimeASTunchangedbytyping-onlycorrection. Originalsecurity0827/native0850/0907 baselineRED3/candidateGREEN3 andrealSWAP/seed PASS. D112aownercriterionmet andwarm53PASS0927/actualhome0931. Identitychanges nowclearproof/reestablishconnection/fullverify; tamperstillrefused. Schema/client15bytesunchanged, no manualpin. Existinge6b snapshotassertionspreserved.
+
+ReleasepublishingLuna0952 writes fuller source/hash/receipt packet immediately; that DOCUMENT is NOT another approval prerequisite. Board RELEASED now. D118explicitly says fullP2 assoonD112release, DO NOT waitD111b. App usesnormaladoptionthen ONE fulltour, no singles/duplicateMainbody. D111bSol0930 source/readperformance gate remainsseparate andunreleased; element rerunswhenqualifiedsource ships. All finalD59/core/rendergates remain owed, no ZIP.

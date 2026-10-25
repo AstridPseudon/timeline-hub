@@ -1,0 +1,139 @@
+{
+  "schema": "timeline.runtime.d112a.release.v1",
+  "status": "RELEASED",
+  "published_at": "2026-10-25T09:52:00Z",
+  "task": "rt-D112a-release-publish-0952",
+  "repo": "runtime",
+  "normal_branch": "tl/integration",
+  "actual_normal_head": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+  "actual_normal_tree": "6283b5fbb128447f1b333e0e6af334d35637cf69",
+  "reviewed_candidate": {
+    "commit": "32c22795de890818eb8abeae6e644685098cbf30",
+    "tree": "6283b5fbb128447f1b333e0e6af334d35637cf69",
+    "normal_merge_receipt": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "tree_exact": true
+  },
+  "normal_merge_receipts": [
+    {
+      "commit": "8b3895cf141f5b7359cceacefde62c9a9475eabf",
+      "purpose": "D112 normal identity-fallback merge"
+    },
+    {
+      "commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+      "purpose": "D112a type-only correction merge"
+    }
+  ],
+  "original_product_semantic_identity": {
+    "commit": "be828d92cba9200a6ae0ded3a2e968dc3f6ac383",
+    "tree": "08ea7479d3709a915a51e17ade13453eee914da5",
+    "store_sha256": "34d0f401236c957cb126713c0f1319affadf65e08cbe727223d97ad0de775e56",
+    "history_test_sha256": "788e1280c61cbee6817595544495ba462365d956d0cd85499923328dedba838b",
+    "source_pair_sha256": "0fa2ad93606210d29538b6be4265e0175dc994f23919325dd496b21b5aa897d4",
+    "semantic_product_diff_from_be828": [
+      "typing-only narrowing in runtime_protocol/timeline_commit_store.py from 32c22795de890818eb8abeae6e644685098cbf30",
+      "preserved e6b669b98 snapshot assertions in tests/test_timeline_render_publication.py"
+    ],
+    "product_semantics_preserved": true
+  },
+  "current_source_blobs": {
+    "runtime_protocol/timeline_commit_store.py": {
+      "git_blob": "6e29f654710649bd1110d5c5a4be04dbfde198c8",
+      "sha256": "f0867b6bf083aef2ca280c3f1bcbbbc926c7dfc448c519836e286022f5e3d59a"
+    },
+    "tests/test_timeline_history_state.py": {
+      "git_blob": "098eee4efb4236e45dda2b0742295aece56f50e9",
+      "sha256": "788e1280c61cbee6817595544495ba462365d956d0cd85499923328dedba838b"
+    },
+    "tests/test_timeline_render_publication.py": {
+      "git_blob": "88ff0a9d94af99d28e58b935de946f9ca1ffc7c2",
+      "sha256": "7de21278fa27582e7b6d4d47a2fac69468c9466931f4f2c44923d8e44977e6a2"
+    },
+    "current_store_history_source_pair_sha256": "639afa0d321ce071552724248ca49a33522118c0d0573ba781c56da121024d9d"
+  },
+  "type_only_correction": {
+    "commit": "32c22795de890818eb8abeae6e644685098cbf30",
+    "parent": "8b3895cf141f5b7359cceacefde62c9a9475eabf",
+    "changed_path": "runtime_protocol/timeline_commit_store.py",
+    "change": "typing.cast import plus typed local sqlite3.Connection aliases at the five existing optional-connection member uses",
+    "runtime_ast_sha256": "d6c9b5d449530c541236d95c6122382ce83cf4a27d82c970e5864b262b23678d",
+    "normalized_ast_equal_after_removing_cast_and_aliases": true,
+    "tests_changed": false,
+    "generated_client_schema_pin_changes": false
+  },
+  "canonical_client_schema_unchanged": {
+    "count": 15,
+    "against_commit": "be828d92cba9200a6ae0ded3a2e968dc3f6ac383",
+    "all_byte_identical": true,
+    "paths": [
+      {"path": "contract/schemas/timeline-commit.json", "git_blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815"},
+      {"path": "runtime_protocol/schemas/timeline-commit-bundle.json", "git_blob": "6ba53bc1e4ce2e1c5681a77a7107d5a98e214207", "sha256": "e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1"},
+      {"path": "runtime_protocol/timeline_commit_types.py", "git_blob": "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
+      {"path": "packages/python/astrid_runtime_client/__init__.py", "git_blob": "9b4dc2a37eed9e99673485c66c504c1125b5f315", "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"},
+      {"path": "packages/python/astrid_runtime_client/contract_metadata.py", "git_blob": "6cffd789cb8f527108e6b9b6995229e9ad37085f", "sha256": "b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b"},
+      {"path": "packages/python/astrid_runtime_client/generated.py", "git_blob": "b8dd84cf35db2420ba23bb560abcbd5d6115a77b", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
+      {"path": "packages/python/astrid_runtime_client/timeline_commit_types.py", "git_blob": "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
+      {"path": "packages/typescript/src/contract-metadata.ts", "git_blob": "100bc43789a8949591358035d8163ab48c95068e", "sha256": "adedd98ba6672fc1ab7476fccb69b1380fc23f09edd42a80a9b2294182a2e15c"},
+      {"path": "packages/typescript/src/generated.ts", "git_blob": "eaee6688c68cd657f55fd5675d8b5199bf7867ec", "sha256": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4"},
+      {"path": "packages/typescript/src/index.ts", "git_blob": "270fdf03fc27473a1b12560bd9592241b9861c9d", "sha256": "2d23f8ee1cb38e6b1d3366663887b88a4981ec298d8c8d5a758a62a7ad8cc0e4"},
+      {"path": "packages/typescript/src/timeline-commit-types.ts", "git_blob": "347bae5ac98677a7ee0de1bb685bbfe9829c7842", "sha256": "b567dcc623d3b3047b931c4337d9f6688efdfa590c9108c3406d0659fa152674"},
+      {"path": "conformance/second-client-core-v1.yaml", "git_blob": "f18940302f1bfb7fbab128a29fadfd2d82b2eea6", "sha256": "3a0a5aff4e66435212ba567850a0a27c5555601a33ecbd3ed7e21737948662e3"},
+      {"path": "conformance/typescript/generated.ts", "git_blob": "10c1e0a86ba8ea1b77b0b5b17d0e98d8fc28cafd", "sha256": "35318089ebbb8d7edec4d8a77096295fd5807e4dac9d0fe9a2a7a5c404c86cae"},
+      {"path": "contract/schemas/document.json", "git_blob": "4d835e89031074fba77d5e5f34393e4b0866b4b2", "sha256": "6d8fe08563eb96504c874c1d3535527371a8a67f54b06bcd324c32f99cb286e3"},
+      {"path": "contract/schemas/edit-command.json", "git_blob": "de301d13e44bad44c84bac35f8d929e24fbf55ff", "sha256": "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d"}
+    ]
+  },
+  "proofs": [
+    {"id": "rt-D112-security-review-0827", "result": "PASS identity-fallback controls; 344 controls; two parent-identical PRAGMA data_version authorizer failures disclosed"},
+    {"id": "rt-D112-native-acceptance-0827-targeted-1025084336-23116", "result": "PASS native registered-provider seed, ADD, SWAP, native undo, startup/refusal/history"},
+    {"id": "rt-D112-native-acceptance-0827-targeted-1025084443-11165", "result": "PASS repeat native acceptance"},
+    {"id": "rt-D112-acceptance-return-0850", "result": "PASS scoped identity RED3/GREEN3 and tamper controls; no flat-curve claim"},
+    {"id": "rt-D112-curve-return-sol-0907", "result": "baseline/candidate counters and payload sizes matched; retained flatness flags false; no candidate-only regression demonstrated"},
+    {"id": "rt-D112-curve-wholepath-0907", "result": "retained source and curve analysis; no new semantic claim"},
+    {"id": "rt-D112-identity-fallback-0819", "result": "identity replacement recovery and tamper refusal implementation"},
+    {"id": "rt-D112a-warm-release-check-0927", "result": "PASS 53 history-state tests on be828; D94 warm forward/read controls"},
+    {"id": "rt-D112a-type-narrowing-0940", "result": "PASS type-only correction; 53 history-state tests; 2 provider smoke tests"},
+    {"id": "rt-D112a-typing-review-0945", "result": "PASS independent final review; exact candidate/tree; 55/55 Pyright identity"},
+    {"id": "rt-D112a-home-release-0931", "result": "held only on five now-corrected Pyright diagnostics; superseded by the final review and merge"},
+    {"id": "e6b669b98d8eeb349c311741cdfd8cfbfe5e5486", "result": "preserved D108 snapshot-test merge"}
+  ],
+  "xml_and_artifact_hashes": {
+    "native_smoke_xml": {"path": "workers/rt-D112a-home-release-0931/evidence/native-smoke.xml", "sha256": "0a2742d6bb186d90953a6c1929653ec3d2729a06d088a8a89e1f366acb9ce800"},
+    "history_state_junit_xml": {"path": "workers/rt-D112-security-review-0827/evidence/history-state-junit.xml", "sha256": "338d9815b1bb370f560fe36c9cfe856b4843bc3ab769027c800ae04fe41a5304"},
+    "verification_routes_lifecycle_junit_xml": {"path": "workers/rt-D112-security-review-0827/evidence/verification-routes-lifecycle-junit.xml", "sha256": "31bf127b8656c203c4a21d011df77dea2e9d2cc804bd60554184b93e02d0ba39"},
+    "commit_port_exec_auth_validation_junit_xml": {"path": "workers/rt-D112-security-review-0827/evidence/commit-port-exec-auth-validation-junit.xml", "sha256": "e26ac5f5a2a0a2ca236469c19c4ef1b27d4b8e8e34fd4e44e3c73c0e9253e66c"},
+    "candidate_authorizer_junit_xml": {"path": "workers/rt-D112-security-review-0827/evidence/candidate-authorizer-junit.xml", "sha256": "8fe8e007fde67e2eb72e0f61f8e7fc746819ad4cd690d95a903828f5d8c35584"},
+    "identity_summary_json": {"path": "workers/rt-D112-acceptance-return-0850/evidence/identity-controls/summary.json", "sha256": "d249bd5ea86bd8981595fc7c627e4aca074c1d1b42ed1ff09b834dcbb7b96bb6"},
+    "retained_curve_json": {"path": "workers/rt-D112-acceptance-return-0850/evidence/finite-curve/run-9233-1792918986781364164/result-candidate-curve.json", "sha256": "2d7133dbdce443a088e17e2fda4260b2e8f7f4426bc23791518f823c0c31ba6f"},
+    "typed_ast_conservation_json": {"path": "workers/rt-D112a-type-narrowing-0940/evidence/typed-ast-conservation.json", "sha256": "83179f0c386192cfd89d3b91e555988452255f7f8c1962f9758ece820ce352ed"},
+    "pyright_identity_json": {"path": "workers/rt-D112a-type-narrowing-0940/evidence/pyright-identity-comparison.json", "sha256": "bd89b2ce6623e47c39291ea1d864ae8cfae273e7961f68fa0bb3a49a0c1a1ce5"}
+  },
+  "commands_and_results": [
+    {"command": "/home/user/work/venv-runtime/bin/python -m pytest -q tests/test_timeline_history_state.py", "result": "53 passed in 24.95s; exit 0"},
+    {"command": "ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-070dfc5e PYTHONDONTWRITEBYTECODE=1 bash scripts/check-before-push --native-provider-smoke", "result": "2 passed; exit 0; provider origin verified"},
+    {"command": "/root/.local/bin/pyright --outputjson runtime_protocol/timeline_commit_store.py tests/test_timeline_history_state.py", "result": "Pyright 1.1.414: parent 55 diagnostics, candidate 55 diagnostics, added identities 0, removed identities 0, exit 1 on both due inherited diagnostics"},
+    {"command": "/root/.local/bin/ruff check --no-cache --select E9,F runtime_protocol/timeline_commit_store.py tests/test_timeline_history_state.py", "result": "PASS"},
+    {"command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/w-d75051f122/d112a-review/pycache /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_history_state.py", "result": "53 passed; exit 0"},
+    {"command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/w-d75051f122/d112a-review/pycache /home/user/work/venv-runtime/bin/python -m py_compile runtime_protocol/timeline_commit_store.py tests/test_timeline_history_state.py", "result": "PASS; exit 0"},
+    {"command": "git diff --check", "result": "PASS; exit 0"},
+    {"command": "git diff --exit-code 32c22795de890818eb8abeae6e644685098cbf30 -- .", "result": "clean; actual normal tree exact"}
+  ],
+  "pyright_diagnostics": {
+    "tool": "Pyright 1.1.414",
+    "parent_count": 55,
+    "candidate_count": 55,
+    "added_identity_count": 0,
+    "removed_identity_count": 0,
+    "remaining_inherited_optional_member_lines": [1158, 1886, 1925, 1925, 1926, 1926, 1927, 1927],
+    "current_same_as_baseline": true
+  },
+  "safe_release_summary": {
+    "identity_change": "identity changes drop the replay memo, re-establish the connection, reset the physical baseline, and full-verify before use",
+    "tamper": "tampered or invalid state remains refused with no write",
+    "unchanged": ["public C0 request/reply §§1/4", "authorization", "freshness", "CAS and reply semantics", "canonical client/schema surfaces"],
+    "not_claimed": "This packet does not claim the original tour SWAP GO; retained native seed/SWAP/recovery proof is scoped and does not establish the original SWAP-409 reproduction.",
+    "remaining_gates": "D59 final gates remain owed; D111b remains held pending genuine source-doc read-wall, independent review, and real-provider acceptance."
+  },
+  "clean_home": true,
+  "no_changes_made_by_publication_worker": true,
+  "no_full_suite_requested": true
+}

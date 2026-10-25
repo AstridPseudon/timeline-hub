@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T09:49:26Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 18 | status age 5m -->
+<!-- main | 2026-10-25T09:53:10Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 1m -->
 # runtime board, 2026-10-25T09:44:21Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -374,12 +374,12 @@
 | D108-snapshot-coverage | Restore immutable publication payload proof | Luna / independent | Exact integrated20 proof passed | merged | Author0813; review0824; result0839 | Actuale6b669:20 PASS47.36s with durable XML; reviewed +24/-0. Broad414PASS/1retainedFAIL remains disclosed. | 1eceb7ff7 /e6b669b98 |
 | D108-custody-review | Verify recovered metric source provenance | Luna independent | Exact authored blobs available | merged | rt-F-D108-custody-review-0816 PASS | Original command/blob hashes and missing-membership limit verified; no semantic equivalence or new audit claimed. | Evidence only |
 
-| D112-SWAP-identity | Fully verify after identity changes | Luna / security | D112a warm check | review | rt-D112a-warm-release-check-0927 | Recovery RED3/GREEN3 and seed/SWAP pass. Same-lifecycle baseline counters equal; literal flat flags false. [Question](../../escalations/runtime-20261025T0923Z-D112-flatness-scope.md) | be828 held |
+| D112-SWAP-identity | Recover identity changes with full verify | Luna / independent | Qualified normal source | merged | Native0907; review0945 | Normal d23a8 tree equals reviewed32c. Recovery RED3/GREEN3, tamper, warm53 and real-provider2 PASS. | d23a8e0d2 |
 | P2-19078-placement | Preserve placement user action | App HARD Sol / Luna | D113 protected correction | doing | App0819; protected0830 | Initial placement200 in11.38s; later Undo has no POST because modal remains open. D113 authorizes close then assert gone; next full tour only. | Recorded19078 |
 | D108-render-inputs | Stage applied deployment | Luna / independent | OMP archive permission | blocked:orchestrator | Stage0923; review0933 | Actual normal stage stopped at HTTP403. No profile or carrier. [Review](../../design/rt-D77-stage-review-0933.md) | Applied523893 graph |
 
 | D112-security | Review full-verification recovery authority | Luna independent | Native acceptance before release | review | rt-D112-security-review-0827 PASS | 344 source controls PASS; two authorizer failures reproduced on parent. Existing Pyright diagnostics disclosed. Native proof remains separate. | be828d92c held |
-| D112-native | Prove SWAP and recovery sequence | Sol / independent | D112a warm check | review | rt-D112a-warm-release-check-0927 | Baseline and candidate history/counters identical. Curve includes external invalidation; no identity reopen. No waiver or release. | be828 held |
+| D112-native | Prove SWAP and identity recovery | Sol / Luna | D112a accepted criterion | merged | Native0850; comparison0907; review0945 | Identical lifecycle counters; existing warm53 PASS. Actual source is byte-exact reviewed normal d23a8. | d23a8e0d2 |
 
 | D111b-read-snapshot | Remove repeated request reads | Sol / Luna | Dominant store read cost | doing | Sol0930; review0930 PASS | Corrected cold-read test is parent RED and candidate GREEN. Source PASS only; scaling remains open. | Corrected candidate held |
 
@@ -393,14 +393,16 @@
 
 | D77-footprint | Bound a future normal stage | Luna read only | D117 retained stage evidence | doing | rt-F-D77-footprint-bound-0947 | Source-only bytes and peak budget assessment. No install, acquisition, profile, carrier or render. | Evidence only |
 
-Runtime producer: RELEASED1daca2a33 reviewed treea522; normal8b3895cf1 now includes reviewedD112 fallback and e6b snapshot tests. D112 actualhome0931 qualifying before release. Agent070dfc D110 released, App04be includes reviewed portable capture and D110 adoption.
-core open: 2 Runtime findings: D111b element cost and D112 identity recovery. Agent437 current core-open after exact D110 fixture proof, PRE0/KNOWN1/ENV59/NEWcore438/NONCORE8/REG0 proven; upstream Runtime isolation UNCERTAIN. App core open3.
+| D118-upstream23 | Isolate pristine upstream failures | Luna / service | Genuine upstream checkouts | doing | rt-D118-upstream23-0951 | Authoritative membership and actual module origins before targeted proof on Agent08e6 and Runtimed4f. | Pristine upstream only |
+
+Runtime producer: RELEASED d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e, full tree6283b5 EXACT reviewed32c. D112 fallback, typing correction and e6b snapshot tests qualified; normal adoption now ready. Agent070dfc D110 released, App04be includes reviewed portable capture and D110 adoption.
+core open: 1 Runtime finding: D111b element read cost. D112 identity recovery is qualified and released. Agent437 current core-open after exact D110 fixture proof, PRE0/KNOWN1/ENV59/NEWcore438/NONCORE8/REG0 proven; upstream Runtime isolation UNCERTAIN. App core open3.
 regressions: D102 context regression closed on1daca; D110 KeyError released. Current full P2 remains owed.
 Gates: Recorded P1/P3 independent GO; P4 independent GO28.101s. Final tuple/core/P2/render remain required.
 
 Blockers: Agent core — D115 service107 splits83 effect-image cases and other inverse/sequential groups; AgentSol0932 owns producer. Runtime fixture-purpose0934 queued for exact27 historical legacy inputs. No competing author.
 Blockers: Runtime D111b — Corrected cold-read regression source PASS0930; native16269 remains nonflat. Sol0930 owns the measured source-document/store boundary, 97.2% of retained read time. No cross-request cache or trust change.
-Blockers: Runtime D112 — Normal8b3895 warm53 and real-provider2 PASS, but five new Pyright errors found. Narrow type-only correction0940 passes53+2 and55/55 diagnostics; independent review0945 active before final merge/release.
+D112 RELEASED: Normal d23a8 full tree equals independent32c tree6283b5. Warm/recovery/tamper53 and real-provider2 PASS; Pyright55/55 zero new identities. App full P2 may adopt now per D118, without waiting D111b.
 Blockers: Runtime D69 — Runtime normalized113function JOIN and72assert/8raises verified, RT07 snapshot repair actual20PASS on e6b669. Agent recovered129/113/287 membership; predicate-purpose mappings still owed. App scoped mapping0742PASS; lexical limits remain.
 Blockers: Final render — D117 confirms GitHub scope denial and classifier refusal, surfaced to owner. No retry or other source. Actual stage produced no profile/carrier/render; footprint plan0947 is source only.
 Blockers: Final cut — D69, green current core, final pinned P1-P5 and genuine installed render remain owed. No final tuple or ZIP.

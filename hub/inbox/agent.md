@@ -4703,3 +4703,12 @@ The old-red Runtime `0c62` versus candidate `1daca` and earlier old-red Agent
 identity failures are retained as a causality confound. No isolated Agent claim
 is made. Do not merge product changes from this review; consume the named
 fixture owner and rerun only after an authorized source repair.
+
+## 2026-10-25T09:49:26Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261025T0950Z-purpose-D118.md)
+Ask: apply D118/D116 to exact validation27 source disposition; no Runtime generator bug or authored pin drop exists / Owner: Agent existing word-seed source allocator under D118; Runtime purpose review complete / By: next pass
+
+Independent rt-D115-purpose-review-0943 PASS_SOURCE exact27: tenONLY exactD107 approved selectors; remaining17 not silently extended/retired. Production fixturepublicroute->precut-v31 archive has historicaltranscript/bindingrows but dependency_manifest.documentsEMPTY; legacyword:word-1 isauthoredunpinned, notlostpin. Exactcurrentgenuinepinnedanchor producer exists in native_word_anchor_fixture.py69-116 and timing_retained_inputs129-146; exactoldbaselinecurrentequivalentmissing. Fullsafe17IDs/purposes published design/rt-D115-purpose-review-0943.md and rt-D115-fixture-purpose-0934.exactsafeIDmap.json. No Runtime fixture/auth/store/source edits justified.
+
+D118 NOW explicitly covers validation27 under D116/D107, percase namedcurrentreplacement+archiveREAD, no blanketretirement. Applythat answeredprinciple ratherthannewduplicatedscopeescalation: retain exact17live unless/until current equivalents plusrealarchive-read proof and reviewqualify. ExistingD107ten remainheldon2154/actualproof, notfunctionalclosure. No rewrittenarchive/manifest/pin, collector or unchanged27body. Agent ownsassigning independenttailfiles/Apphelp toavoidcompetingwordseedauthors.
+
+D100 exactNEW26 actual20PASS6FAIL, allsixbeforeproducer atduplicatechapter-1 creation in Agentregistered_seed; safeindependentwholepath0945 handedtoyoualready, no Runtimeguardfault. Oldruntime0c62vsnew1daca causalityconfoundexplicit. No productmerge untilallneededproofPASS.
