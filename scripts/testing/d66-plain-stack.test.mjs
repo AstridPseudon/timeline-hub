@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
-import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, configureRuntimeLogEnv, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
+import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, configureRuntimeLogEnv, D66_PHASE_CAPTURE_HELPER_ENV, D66_PHASE_CAPTURE_HELPER_SHA256_ENV, diagnosticHelperIdentity, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const require = createRequire(import.meta.url);
 const state = (overrides = {}) => ({
@@ -424,6 +424,47 @@ test('D78 service recipes select the Runtime watchdog only for the intended P2 r
   assert.equal(watchdog('p2'), '20');
   assert.equal(watchdog('p1'), '');
   assert.equal(watchdog('p3'), '');
+});
+
+test('D124 requires and carries the reviewed diagnostic helper path and SHA256 without changing the default helper route', () => {
+  const base = mkdtempSync(path.join(os.tmpdir(), 'd124-helper-identity-'));
+  const helper = path.join(base, 'p2_commit_phase_capture.py');
+  writeFileSync(helper, 'reviewed helper\n');
+  const sha256 = createHash('sha256').update(readFileSync(helper)).digest('hex');
+  const env = { [D66_PHASE_CAPTURE_HELPER_ENV]: helper, [D66_PHASE_CAPTURE_HELPER_SHA256_ENV]: sha256 };
+  assert.deepEqual(diagnosticHelperIdentity({ runtimeCheckout: base, env, required: true }), {
+    path: helper, sha256, source: 'explicit',
+  });
+  const pins = {
+    app: { head: 'a'.repeat(40), tree: '1'.repeat(40) }, agent: { head: 'b'.repeat(40), tree: '2'.repeat(40) },
+    runtime: { head: 'c'.repeat(40), tree: '3'.repeat(40) }, composition: { head: 'd'.repeat(40), tree: '4'.repeat(40) },
+  };
+  const checkouts = { app: '/snapshot/app', agent: '/snapshot/agent', runtime: '/snapshot/runtime', composition: '/snapshot/composition' };
+  const recipe = serviceRecipe({ name: 'p2', pins, checkouts, diagnosticHelper: { path: helper, sha256 } });
+  assert.match(recipe, new RegExp(`${D66_PHASE_CAPTURE_HELPER_ENV}='${helper.replaceAll('/', '\\/')}'`));
+  assert.match(recipe, new RegExp(`${D66_PHASE_CAPTURE_HELPER_SHA256_ENV}='${sha256}'`));
+  assert.doesNotMatch(serviceRecipe({ name: 'p2', pins, checkouts }), new RegExp(`${D66_PHASE_CAPTURE_HELPER_ENV}=`));
+  assert.throws(() => diagnosticHelperIdentity({ runtimeCheckout: base, env: { [D66_PHASE_CAPTURE_HELPER_ENV]: helper }, required: true }), /SHA256/);
+  assert.throws(() => diagnosticHelperIdentity({ runtimeCheckout: base, env: { ...env, [D66_PHASE_CAPTURE_HELPER_SHA256_ENV]: '0'.repeat(64) }, required: true }), /mismatch/);
+  assert.throws(() => diagnosticHelperIdentity({ runtimeCheckout: base, env: { ...env, [D66_PHASE_CAPTURE_HELPER_ENV]: path.join(base, 'missing.py') }, required: true }), /unavailable/);
+});
+
+test('D124 normal submit recipe carries the reviewed helper identity before service startup', async () => {
+  const f = serviceFixture();
+  const helper = path.join(f.base, 'reviewed-p2-helper.py');
+  writeFileSync(helper, 'reviewed helper\n');
+  const sha256 = createHash('sha256').update(readFileSync(helper)).digest('hex');
+  const registryPath = path.join(f.base, 'suites.conf');
+  writeFileSync(registryPath, 'app existing-suite existing-command\n');
+  const env = { ...f.env, D66_OUTPUT_DIR: f.base, D66_SUBMIT_SUITE: 'd124-helper-submit',
+    [D66_PHASE_CAPTURE_HELPER_ENV]: helper, [D66_PHASE_CAPTURE_HELPER_SHA256_ENV]: sha256 };
+  const io = submitIo(f);
+  await submit('p1', { env, homes: f.homes, appRoot: f.snapshot, receiptRoot: f.receiptRoot,
+    workerRoot: f.workerRoot, checkoutRoot: f.base, registryPath, runCommand: io.runCommand,
+    runWait: io.runWait, readStatus: io.readStatus });
+  const registered = readFileSync(registryPath, 'utf8');
+  assert.equal((registered.match(new RegExp(`${D66_PHASE_CAPTURE_HELPER_ENV}=`, 'g')) ?? []).length, 2);
+  assert.match(registered, new RegExp(`${D66_PHASE_CAPTURE_HELPER_SHA256_ENV}='${sha256}'`));
 });
 
 function runGit(directory, ...args) {
