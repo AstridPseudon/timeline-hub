@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T05:57:59Z | dispatcher heartbeat 12s | live 4 (sol 0, luna 4, other 0) | busy30 23 | status age 6m -->
-# runtime board, 2026-10-25T05:51:25Z
+<!-- main | 2026-10-25T06:01:28Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 24 | status age 2m -->
+# runtime board, 2026-10-25T05:59:18Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -284,7 +284,7 @@
 | D98-observer | Preserve active three-case diagnostic | Luna / service | Safe evidence published | merged | Actual32278; rt-D98a-route-submit-0517 | Active real pytest observer;3ERROR5.505s,three records. First command.authorship differs;29paths each. Exact D82 owner UNKNOWN. | Diagnostic only |
 | D86-6058-export | Return exact current96 outcomes | Luna read only | Safe export complete | merged | rt-D86-6058-safe-export-0428 | 96 unique:14PASS7FAIL75ERROR. Exact authored safe packet published. [Report](../../design/rt-D86-6058-safe-export-0428-report.md) | Evidence only |
 | D97-consumer-adoption | Adopt released source in both callers | Agent / App Luna | Normal tool receipts complete | merged | Agent0435; App0438 | Agent786 lock7c16 source0c62; App319911 strict8/vendor15/mappings14 PASS. Caller adoption blockers cleared. | Agent49f66 / App319911 |
-| R1-asset-normalization | Preserve lossless asset read union | HARD Sol / Luna | Security and protected PASS; six PASS | review | Security 0514; protected 0534; result 0550 | Actual 6205: six originals PASS in 6.49s. Exact a9c89/e021 pair; finite result audit active. No repeat. | Runtime a9c89 / Agent e021 held |
+| R1-asset-normalization | Preserve lossless asset read union | HARD Sol / Luna | Agent normal receipt and Runtime home proof | merging | Home 0558; paired remote queue | Security 0514, protected 0534 and actual six 6205 independently PASS. Runtime source is normal 7463; no repeated original body. | Runtime 7463 / Agent e021 |
 | D95-refusal-two | Qualify two bound refusal originals | Luna / service | Exact per-ID19214 handback | review | Included actual19214 | Both NEW identities stay separate from original550. Exact safe outcomes await exporter0514. | ef6d/0c62/9cb56/635f |
 | P4-undo-times | Return retained per-note Undo intervals | Luna read only | Finite artifact check complete | merged | rt-P4-undo-times-0454 | Allten intervals UNKNOWN; original records have no per-call timestamps. [Limit](../../design/runtime-P4-undo-times-0454.md); no rerun. | Recorded786/0c62 |
 
@@ -307,28 +307,36 @@
 | D102b-phase-ring | Preserve bounded diagnostic request tail | App Luna / Luna | Independent review 0529 PASS | merged | Remote 0521; integrated 0550 | Normal c97a contains exact reviewed helper and controls. App release note 0550 sent; combined targeted check active. | c97a12456 / e1bb5140 |
 
 
-| D102b-integrated | Verify combined released diagnostics | Luna | Reviewed normal c97a | doing | rt-D102b-integrated-0550 | Exact 17 ring plus 36 catchall targets, source identity and scoped statics. No original browser body. | c97a12456 |
-| D101-result-review | Verify six-case source and result custody | Luna read only | Actual 6205 six PASS | review | rt-D101-result-review-0550 | Existing JUnit and receipts only; no semantic re-review or repeated body. Normal paired merge follows PASS. | a9c89 / e021 |
-| R2-restore-ID5 | Qualify remaining restore original | Luna / service | Reviewed current fixture join | doing | rt-R2-restore-ID5-main-0552 | ONE original ID5 on exact 7e775 with corrected child Runtime. Four already passed candidate cases excluded. | Agent 7e775 held |
-| R2-restore-inputs | Export original restore setup boundary | Luna read only | Retained 30269 and 31475 | doing | rt-R2-restore-safe-export-0550 | Safe per-ID and source handback only; no new collector or body. Current join 0540 has already proved stale Runtime cause. | Evidence only |
-| D86-1565-export | Return exact 60-case outcomes | Luna read only | Actual 1565 terminal | doing | rt-D86-1565-safe-export-0552 | Three FAIL and 57 ERROR retained; safe exact exceptions, phase, sources and owners. No original repeat. | Evidence only |
-| D86-new13 | Qualify newly merged opaque script and CLI | Luna / service | Restore ID5 terminal and serial body | doing | rt-D86-new13-main-0552 | Source binds opaque six, script four and CLI three with canonical subtraction. Actual source and original proof stay distinct. | Normal Agent source pending capture |
+| D102b-integrated | Verify combined released diagnostics | Luna | Normal integrated head | merged | rt-D102b-integrated-0550 PASS | Actual c97a: 53 PASS in 28.93s; five reviewed blobs exact, App API and scoped statics passed. | c97a12456 |
+| D101-result-review | Verify six-case source and result custody | Luna read only | Exact six originals PASS | merged | rt-D101-result-review-0550 PASS | Actual 6205 source, tuple, controls and original 45s verified. Runtime half merged; Agent normal request queued. | Runtime 7463 / Agent e021 queued |
+| R2-restore-ID5 | Qualify remaining restore original | Luna / service | Private exact-selector route repair | doing | rt-R2-ID5-route-return-0558 | First 0552 attempt made no submission: standalone private allow-list absent. Worker repairs only private D73 selection and runs ONE ID5. | Agent 7e775 held |
+| R2-restore-inputs | Export original restore setup boundary | Luna read only | Finite evidence complete | merged | rt-R2-restore-safe-export-0550 | Safe per-ID, provenance and inventory published. Old 31475 and candidate 30269 retain their original setup errors. | Evidence only |
+| D86-1565-export | Return exact 60-case outcomes | Luna read only | Safe publication complete | merged | rt-D86-1565-safe-export-0552 | Nine exact safe files published: 3 FAIL, 57 ERROR, zero PASS. Held ten and original 550/23 remain separate. | Evidence only |
+| D86-new13 | Qualify new opaque script and CLI sources | Luna / service | Critical comparison then serial slot | gated:serial-slot | Prepared 0552; resume after D102c | Exact 13 unique selectors and zero overlap with spent 60 verified. No body yet; serialization does not require restore behavior PASS. | Reviewed normal Agent sources |
 
-Runtime producer: RELEASED c97a12456c9583351d3e05dcdd5bd5235ff05d11. Exact reviewed D102 catchalls plus D102b ring. App normal adoption note 0550 sent; integrated targeted check active.
-core open: Actual App Undo exception remains UNKNOWN until approved ADD diagnostic. Element provider-to-outcome remains UNKNOWN. D101 six passed; result custody before paired normal merge.
-regressions: No newly established Runtime regression. D100 candidate 30890 failed and stays held. All historical failures remain unchanged; no source-only behavioral credit.
-Gates: P1 and P3 historical GO. Current P4 independent GO 28.101s; all ten per-note intervals UNKNOWN. P2 four recorded isolated GO; full tour and final D59 proofs still owed.
 
-Blockers: App — Normally adopt released c97a, then ONE ADD and ONE element diagnostic after current placement 31499 terminal. SWAP follows the root correction.
-Blockers: Agent D100 — Exact 30890 per-ID packet published. Original capture and shared-item owners plus independent whole-path comparison requested in peer 0552; no unchanged candidate repeat.
-Blockers: Final cut — All-lane core zero, current final P1-P5/core, D69 and genuine installed render still required. No final tuple or ZIP.
-Safety: Withdrawn D88 denied action and prototype stay stopped. D93 uses original credentials, session and granted scopes. No credentials copied or printed. D98a original diagnostic is spent; source owner Agent 0539.
-Next ready: D101 paired normal merge after result 0550 PASS. Restore ID5 0552 owns next MAIN body; new 13 controller prepares now and follows its terminal and registry restoration.
-Venues: One MAIN heavy body at a time above 5.2 GB. No duplicate App body. All functional proof bodies use central service; no manager product, test, pin or generated edits.
-Delivery: Existing-clone rehearsal held for D59 cut. Final install, build, ZIP and genuine installed render remain pending.
-Later: No unchanged 161, 102, 20, 22, 96, 61 or 60 repeats; no passed inverse7, four R2 or P4 repeats. Projection nine depends on actual D100 PASS and normal source.
-Disk: Main 5.94 GB before new starts; above source and heavy floors. sweep-tmp 3 and compact-scratch running. Only audited finished non-KEEP worktrees may be recycled; branches and evidence retained.
-live 4 / cap 6; ready-undispatched 0 eligible starts. D102b integrated, D101 result, restore safe export, restore ID5, D86 60 export and new 13 controllers assigned.
-Dispatcher: First relative-brief requests were ordinary zero-worker setup failures; resubmitted exact same requests with absolute brief paths and all launched normally. No tests or review weakened.
-INBOX consumed through 965257 bytes. Updated 2026-10-25T05:51:25Z. New remote ring release, Agent D98a source owner and App placement reservation consumed.
+| D101-home | Qualify normal Runtime asset union | Luna | Exact reviewed pair | doing | rt-D101-integrated-0558 | Runtime native asset union controls on normal 7463, with exact paired Agent source. No repeated original six. | Runtime 7463 |
+| D102c-tags | Distinguish every unavailable emitter | Luna / independent Luna | Actual native-seed 503 without diagnostic | review | Author 0555; review 0601 | Author 56 PASS. Door, provider, server and catchalls have distinct bounded tags; public response unchanged. | Candidate held |
+| D102c-seed | Compare genuine App native seed | Luna | Source-derived original setup and serial slot | doing | rt-D102c-seed-return-0601 | Same deterministic seed on 0c62, 689 and 689 with request_id outside shared context. First 0555 made no execution. | Recorded 0244 / bde578 / 689 |
+| D102c-context | Trace shared context consumers | Luna read only | Owner hypothesis requires evidence | doing | rt-D102c-context-path-0600 | Source-only full-path check of context request_id, provider, ledger and non-exception public failures. No duplicate comparison body. | Source facts pending |
+| D100-wholepath | Compare actual failed and passing paths | Luna read only | Exact 59 and 26 case packets | doing | rt-D100-wholepath-0600 | Independent D33 full-path audit; Agent original capture and shared-item writers retain ownership. No body or source changes. | Candidate d3b5 held |
+
+Runtime producer: Released c97a has exact D102 diagnostics and reviewed D102b ring; integrated 53 PASS. Normal 7463 additionally has reviewed D101 Runtime half; paired Agent normal receipt pending.
+core open: App ADD 12031 and element 4757 fail in native seed on 689 with no exception diagnostic. D102c tags are in review; real same-source comparison and request_id hypothesis checks active.
+regressions: A 689 regression is a hypothesis, not measured yet. D100 candidate 30890 remains failed and held. All historical failures stay unchanged; source PASS gives no behavior credit.
+Gates: P1/P3 historical GO. P4 independent GO 28.101s; all per-note Undo intervals UNKNOWN. Four recorded isolated P2 GO; current full tour and final D59 proofs remain owed.
+
+Blockers: App — Existing captured 689 element diagnostic may finish. After D102c qualified release and normal adoption, ONE tagged element or ADD diagnostic; SWAP follows root correction.
+Blockers: Agent D101 — Runtime half normal 7463 and all source/security/six/result gates PASS. Own-only e021 normal merge requested; receipt clears paired release wait.
+Blockers: Agent D100 — Exact 30890 packet published; Runtime whole-path 0600 active. Original product owners handle actual source findings; no unchanged candidate or original-ten repeat.
+Blockers: Final cut — All-lane core zero, current final P1-P5/core, D69 and genuine installed render remain required. No final tuple or ZIP.
+Safety: Withdrawn D88 denied action and prototype stay stopped. D93 uses original source session mint, granted scopes and calls. D98a diagnostic is spent; Agent 0545 owns precise caller capture source.
+Next ready: Merge D102c tags on independent PASS; route any confirmed context defect to same product owner. Restore exact ID5 route repair active. New 13 is prepared and yields to critical seed comparison.
+Venues: One MAIN heavy body at a time above 5.2 GB; all ready source workers assigned up to six. No duplicate App body or unchanged passed controls.
+Delivery: Existing-clone rehearsal remains gated on D59. Final build, ZIP and genuine installed render are pending.
+Later: No unchanged 161, 102, 20, 22, 96, 61 or 60 repeats; no passed inverse7, four R2 or P4 repeats. Projection nine waits actual D100 proof and normal source.
+Disk: About 5.90 GB, above active floors. sweep-tmp removed zero; compact-scratch compressed 18 old worker logs. Five old v1 worktrees have dirty paths, so no destructive cleanup or retry.
+live 6 / cap 6; ready-undispatched 0 eligible starts. Tags review, native seed comparison, context trace, D101 home, restore route and D100 whole-path workers assigned.
+Dispatcher: Absolute brief paths are used. Ordinary private selection and missing checkout issues are resolved through existing worker/request routes, without changing tests or authority.
+INBOX consumed through 973325 bytes. Updated 2026-10-25T05:59:18Z. D102c(b) hypothesis, current App diagnostics and D98a exclusive source owner consumed.
 

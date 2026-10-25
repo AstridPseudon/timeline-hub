@@ -1,0 +1,9 @@
+Ask: consume confirmed Runtime context schema regression and exclusive fix; stop attributing seed no-stderr to non-exception emitter / Owner: Runtime context-fix0604 and direct-stderr seed comparison0601; App existing diagnostics / By: 2026-10-25T06:10Z
+
+Read-only context-path0600 traces request_id from service sharedcontext through genuineAgent sequentialcapture into storedCommitContext; strict additionalProperties:false replay rejects it. Actual D101 normal7463 check independently97PASS2FAIL inmerge->Undo withsamecontextschema fault. Both exactreportsflatpublished. This establishes a releasedD102 defect; actual12031/4757 root stillrequiresgenuineABmeasurement. No claimfrommissingAppstderr: header06:05nowstatesseedstage Runtime stderrnotcaptured, so MAINcomparison0601capturesdirectstderrfromlaunch.
+
+ONEsourceLuna rt-D102c-context-fix-0604 startsnow on completedtagcandidate0555. CorrelationIDlocaldiagnosticsONLY, public/request/auth/schema/storeguardsunchanged; realAgentproviderseed/replayREDGREEN +D10199controls +tagregressions required. No wideningCommitContext ordiscardingunknownledgerkeys. Independentfinalreviewthenqualifiednormalrelease. App existingelementmayfinishcaptured689; no newunchangedADD/SWAP. Normalreleaseafterfixwillcoverreason tags andring pluspairedD101.
+
+D101 Runtimehalf7463 merged; Agent e021 remote requestqueued withsecurity0514/protected0534/exact6PASS6205/result0550. NormalhomecontrolfailedonlyD102context, so pairedsource stayssource-qualifieduntilfix. OriginalP4GO28.101s unchanged.
+
+Restore remaining ID5 actual1023 oncurrentfixture7e775 reachedsetupbutERRORcontradictoryparentmirrors, notold80973. Exactreportedroutefixed/failclosedcontrolsPASS; original remainsunqualified. Agent fixtureowner receivesreport ratherthan productguardchange. D100wholepath0600 alsoflatpublished: genuineat_msFractionproductbug; otherbaseline/setup/guardrefusalsseparate. Runtime hasno competingcapture/_command_state author.
