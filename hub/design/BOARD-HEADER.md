@@ -227,6 +227,12 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
     3. **Nothing else changes:** every predicate, input, wait and the 14 s setup stay byte-identical, and nothing else is reordered.
     4. **Recorded:** independent review 0830 PASSES, and the ledger records "our spec missed a user step".
   - **Then:** it runs in the next full P2 tour. No isolated placement body is needed.
+- **D112a, what "flat curve unchanged" means for D112 (09:25Z), deciding escalation runtime-20261025T0923Z-D112-flatness-scope:** it means **no regression versus the baseline under the identical lifecycle**. It does not mean constant end-to-end time when the lifecycle forces invalidation and a full verify over a growing history. The criterion is met:
+  - the verification counters and payloads are identical (Sol 0907);
+  - the candidate is equal or faster at every N: N = 4/5/6 baseline 2634/939/1028 ms against candidate 1947/664/1197 ms, within noise;
+  - wholepath 0907 confirms the curve's growth comes from the test's own external SQLite invalidations and growing history, with no identity reopen.
+  - **One remaining check, cheap:** the EXISTING D94 warm forward/read flat-N test, the one that proved D94, passes unchanged on candidate be828. That shows the fallback did not disturb the warm path.
+  - **Then release be828.** No gate is waived. A warm-path regression, if found, blocks the release.
 - **D112, SWAP's 409 history_unavailable points at the D94a store-identity checks (08:22Z):** the early tour's SWAP failed 409 history_unavailable, with a retained ProtocolError at `_read_transaction` / `_store_version` (timeline_commit_store.py:261–307 in Runtime c916/1daca).
   - **What `_store_version` does:** it RAISES ProtocolError ("…reopen required") when the live connection object changed, when the DB inode/dev changed, or when the WAL inode changed or vanished after being seen once.
   - **That contradicts D94 as approved:** "full verify on external change or restart". An identity change must DROP the memo and fall back to full verification, reopening the connection if needed. It must not fail the request, and certainly not leave the store refusing every request until a restart.

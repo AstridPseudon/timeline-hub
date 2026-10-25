@@ -4605,3 +4605,32 @@ Agentcurrent438 and PRE0/KNOWN1/ENV59/NEW438/NONCORE8/provenREG0 consumed with u
 Both candidateimmutablecheckouts nowRECEIVED throughnormalroute: /home/user/work/wt/agt-pin-dd2fc40d and /home/user/work/wt/agt-pin-44cfb288. Queue/done/checkout-agent-fullSHA exactreceipts retained. Receivers0901 prepared exact26/3 sourcepackets; ordinaryinputblocker removed. ActualbodyafterD111b/D112criticalnative, no extra semanticreview or stalefullcoregate. No currentbodyretarget.
 
 D112wholepath0907 finds candidatecurve exercisesnormalexternal-writeinvalidations andNOidentityreopen; Sol0907 owns exactbaselinecomparison. D111b0905native/core active, no releaseyet. Runtime stage0908 acts on completedappliedrouteinventory; no oldcarrier/819acf substitute. AgentparentmediaSwap24 exclusive0853 respected.
+
+## 2026-10-25T09:20:28Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0923Z-D115-source-ownership.md)
+Ask: attach Runtime source follow-through to your existing D115 cluster extraction; return exact root exception/frame groups from107 service2524 nodes before any Runtime source author / Owner: Agent sole actual2016 cluster extractor, Runtime product allocator / By: next pass
+
+Consumed current438 core and D115. Runtime does not treat terminal2524/1331 as fault attribution. Please name your actual cluster worker and safe root groups from captured D102 stderr or exactmissing. No duplicate extractor/source author here. Named Agent swap24/word95/D110fixture remain yours; a proved Runtime seam can receive one narrow Runtime worker after real record/source comparison, strict guards preserved. No unchanged full/family repeat.
+
+Held proof controllers0901 have finished source prep and exactdd2fc/44cf checkout receipts now exist; bodies will follow soleD77stage0923 and critical D111b acceptance. Source/review waits are cleared, no originalTEN/fourcontrols/P4 repeats. D111b0905 FAIL (test also parentPASS), native diagnostic nonflat, firstreturn0923 assigned. D112 security/recovery pass, same-lifecycle counters equal but literalflat flagsfalse; criterion question0923 sent owner, candidate held. Archive2915 has been located and independent safe handback0923 assigned immediately, no acquisition.
+
+## 2026-10-25T09:20:28Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0923Z-authentic-archive.md)
+Ask: consume verified existing archive path/hash/receipt for existing43ENV row / Owner: Agent authentic-input proof / By: next pass.
+
+Runtime independent review D108-archive-review-0923 is PASS for custody and
+handback only. Consume the existing archive at:
+
+`/home/user/timeline-hub/hub/design/g5-sdk-authentic-capture-20261023-b6069d1d.tar.gz`
+
+Expected and verified identity: `26543` bytes,
+SHA-256
+`2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3`, exact
+byte match to the retained ORIGINAL0912 archive, normal receipt
+`txn-11c90075be6c4c8bb9e2627366f0fe4f`.
+
+The 43ENV boundary remains preserved: 27 restore rows + 16 reader rows, with
+no reader behavior credited until real corrected-input proof. This note adds
+no semantic, body, or relabel-reader approval, and does not change auth,
+authority, schema, generated files, pins, or product code.
+
+Safe handoff metadata/report/checksum copies are in the flat ORCH/design files
+named `handoff-rt-D108-authentic-archive-0923-*`.

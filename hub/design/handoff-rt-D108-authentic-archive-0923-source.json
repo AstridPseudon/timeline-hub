@@ -1,0 +1,77 @@
+{
+  "task": "D108-authentic-archive-input-0912",
+  "status": "FOUND_EXISTING_AUTHENTIC_ARCHIVE",
+  "scope": {
+    "purpose": "Existing authenticated legacy archive input handback only",
+    "new_acquisition": false,
+    "replay_or_collector": false,
+    "binary_or_private_content_in_output": false,
+    "production_changes": false
+  },
+  "input_env": {
+    "name": "ASTRID_AUTHENTIC_LEGACY_ARCHIVE",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-b6069d1d.tar.gz",
+    "size_bytes": 26543,
+    "sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+    "retained_as": "existing lossless normal artifact"
+  },
+  "source_identity": {
+    "runtime_repository": "/home/user/banodoco/banodoco-workspace-runtime",
+    "runtime_refs": [
+      "tl/rt-G5-authentic-capture-1632",
+      "tl/rt-G5-authentic-review-1640",
+      "tl/rt-G5-custody-review-1645"
+    ],
+    "runtime_commit": "d9e2a71e87c827290a3ff58a94f6fb8b4bc11e0b",
+    "git_blobs_at_runtime_commit": {
+      "runtime_protocol/service.py": "9fe59146467fd2b5dfd62bc5e444bac7e657763e",
+      "runtime_protocol/backup.py": "0e83ee9864b853298f726421556daa298e03f0ba",
+      "tests/precut_realm_fixture.py": "f30f8dd9656071741d827633869870ddb10cb7dc"
+    },
+    "old_source_commit": "0ba9622a3e98a85577ef893be85988ba7f203b88",
+    "old_source_tree": "c0bbd76656ac21439d11bf928eb970d60fe6e690"
+  },
+  "normal_receipt": {
+    "receipt_id": "txn-11c90075be6c4c8bb9e2627366f0fe4f",
+    "publication_id": "txn-11c90075be6c4c8bb9e2627366f0fe4f",
+    "event_id": "3",
+    "command_kind": "parent_composition.publish",
+    "content_digest": "sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb",
+    "revision_id": "a3e671256f1c42b8837d3e118c97b21b",
+    "predecessor_receipt_id": "txn-55c0651b2cd64255ae06e73f9708220a",
+    "predecessor_revision_id": "film-parent-v1"
+  },
+  "custody": {
+    "manifest_sha256": "c76824ce644868ee8878a25df1eae06754d79b1a83a6eeeb6fb8272344e9841f",
+    "cas_manifest_sha256": "9964c3fb382ae717525039324e307b719627061156dce8a400663f2e365c80eb",
+    "database_sha256": "6db73521dc4a65e370995464ff310b05f2ee1ca9e5a43c5381b173b628e8a992",
+    "key_material_written": false,
+    "source_checks": {
+      "current_source_unchanged": true,
+      "normal_head_cas": true,
+      "no_direct_cas_write": true,
+      "no_history_fabrication": true,
+      "no_sql_execute": true,
+      "public_publish": true
+    }
+  },
+  "historical_setup_gap": {
+    "error": "KeyError: absent ASTRID_AUTHENTIC_LEGACY_ARCHIVE",
+    "authenticated_legacy_restore_rows": 27,
+    "current_pair_reader_rows": 16,
+    "total_environment_errors": 43,
+    "reader_behavior_run": false,
+    "retained_disclosure": "Historical setup/toolchain/archive evidence stops before assertion; ENV-KNOWN-GAP remains preserved.",
+    "rollup_citations": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-11789-outcomes-0310-historical__original550-rollup.tsv",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-20-22-0406-historical__original550-rollup.tsv",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-9211-outcomes-0303-historical__original550-rollup.tsv"
+    ]
+  },
+  "receipt_links": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/g5-sdk-authentic-capture-20261023-sha256sums-final.txt",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/g5-sdk-authentic-review-1640-sourcechecks.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/g5-sdk-authentic-review-1640-manifest.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/g5-sdk-authentic-review-1640-current-reader.json"
+  ]
+}
