@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T04:07:55Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
-# app board, 2026-10-25T04:06Z
+<!-- app | 2026-10-25T04:11:30Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 2m -->
+# app board, 2026-10-25T04:09Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -197,7 +197,7 @@
 
 | D73-explicit-tuple | Honor explicit tuple in submit path | Luna; independent | Review0327 PASS | merged | app-D73-explicit-tuple-review-0327 | Exact two reviewed blobs home;24 controls, syntax and lint PASS. Originals unchanged. | Home043631 |
 
-| P2-placement12145-source | Use placement-only valid finite fixture | Luna; independent next | D96 fallback approved | doing | app-P2-D96-placement-only-fixture-0407 | Caller audit found popup adjacency depends12s. Global patch unapplied. Default12, explicit placement14 only; strict body and guards preserved. | Base043631 |
+| P2-placement12145-source | Scope valid fixture to placement alone | Luna; independent | D96 fallback; first return | doing | Author0411; protected reviewer0411 | Candidate422905 gives all three file cases14s. Return isolates placement14 while same-file asset/element keep12. No source merged. | Held422905 |
 
 | P2-bulk21852-GO | Qualify bulk-clear original | Luna read only | Same artifact return0339 GO | merged | app-P2-bulk21852-GO-return-0339 | Exit0/213s; readiness1 and original1 PASS. Ambient ext head explained; actual selected Agent6386 proved. Diagnostic phase cap disclosed. | 2d25/6386/6634/635f |
 | P2-ADD11713 | Qualify repaired hold selection | Luna; App service | Actual11713 terminal | gated:runtime-source | Launcher0335; facts0346 | Readiness PASS; selection advanced. Native Undo503 at accepted495 via902. Later inverse tail not run; finite same-ID facts assigned. | 043631/6386/6634/635f |
@@ -210,8 +210,8 @@ regressions: No newly proven regression. P1 actual31083 and P3 actual15493 retai
 
 Blockers: Final cut — Runtime coordinates remaining isolated P2, full App tour, final pinned P1–P5/core and genuine installed render before ZIP.
 Blockers: Runtime source — Element5s and native Undo503 remain open. Runtime D94 and inverse-auth owners continue; App same-ID11713 finite facts0346 published. D94a full-tour order adopted.
-Next ready: D96 placement-only author0407, then same independent protected reviewer applies on PASS; normal merge and one meaningful placement original. Popup/shared defaults stay12. Bulk21852 is GO. D94a holds element, parent, SWAP and ADD until D94 adoption, then full P2 directly.
-live 1 / cap 6; ready-undispatched 0. Placement-only source author0407 assigned immediately after global-scope failure. One heavy slot free above5.2GB.
+Next ready: D96 first return0411 and same protected reviewer0411 run together; exact per-case fixture isolation required before normal merge and placement original. Popup/shared defaults stay12. Bulk21852 is GO. D94a holds element, parent, SWAP and ADD until D94 adoption, then full P2 directly.
+live 2 / cap 6; ready-undispatched 0. Scope return0411 and protected final reviewer0411 assigned immediately. One heavy slot free above5.2GB.
 Capacity: Current free6.67GB. Every ended nonKEEP local App worktree checked; zero clean eligible trees remain. Earlier35 pins recycled normally with all outputs, branches and reports retained. Old dirty and prior-refused targets untouched.
 Inbox consumed through1899722 bytes. Runtime parent artifact wait cleared by normal hub safe packet0328; unredacted worker log remains private. No repeated cleanup denial, cost0215 or withdrawn D88 route.
 
