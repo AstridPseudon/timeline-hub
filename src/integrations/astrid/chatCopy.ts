@@ -135,4 +135,7 @@ Test the integration rather than only testing the new table entry:
   Ask it to make a timeline edit and confirm the edit appears in the app.
   Stop the processes you started and report any checks you could not complete.
 
-Open a pull request on each repo touched with the test results.`;
+Once it works end to end (the real run above passes), open a pull request on each repo you touched
+(github.com/banodoco/astrid-agent and github.com/banodoco/astrid-app) so everyone can use it.
+In each PR: what the agent is, how it signs in, the tests you ran with their results,
+and a screenshot of the setup card and a reply in the chat.`;
