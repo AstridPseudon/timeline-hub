@@ -77,6 +77,11 @@ def _create_fixture(service, project, document, selection, *, authorize):
     append({'schema_version': 1, 'op': 'occurrence.create', 'version': '1', 'select': 'parent',
             'args': {'occurrence_id': 'occ-a', 'shot_id': 'chapter-shot', 'name': 'Chapter One',
                      'track': 'picture', 'on': 8, 'duration': 10}})
+    # Runtime must accept the semantic birth before guarded patches can use its
+    # registered source mapping for the new occurrence.
+    birth = submit(calls, 'popup-birth')
+    calls = []
+    bundle = bundle_from_document(birth['data']['canonical_document'])
     current = document_from_bundle(bundle)
     patch('internal:film', current['internal_timeline_revisions'][0]['payload'],
           copy.deepcopy(document['internal_timeline_revisions'][0]['payload']))
