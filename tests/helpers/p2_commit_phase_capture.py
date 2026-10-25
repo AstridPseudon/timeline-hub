@@ -344,31 +344,39 @@ class P2CommitPhaseCapture:
                 request["sample_total"] += 1
                 self._sample_total += 1
             seen: set[tuple[str, str, int]] = set()
+            nearest_safe: tuple[str, str, int] | None = None
             while frame is not None:
                 item = _safe_frame(frame)
                 if item is not None and item not in seen:
                     seen.add(item)
+                    if nearest_safe is None:
+                        nearest_safe = item
                     with self._lock:
                         request["stack_counts"][item] = request["stack_counts"].get(item, 0) + 1
                         self._stack_counts[item] = self._stack_counts.get(item, 0) + 1
                 frame = frame.f_back
+            if nearest_safe is not None:
+                with self._lock:
+                    request["leaf_counts"][nearest_safe] = (
+                        request["leaf_counts"].get(nearest_safe, 0) + 1)
 
     @staticmethod
     def _sample_rows(request: dict[str, Any], dispatch_wall_ms: float | None,
-                     *, interval: float) -> list[dict[str, Any]]:
+                     *, interval: float, counter: str = "stack_counts") -> list[dict[str, Any]]:
         total = request["sample_total"]
         denominator = (dispatch_wall_ms
                        if isinstance(dispatch_wall_ms, (int, float)) and dispatch_wall_ms > 0
                        else None)
         rows = []
         for (file, function, line), count in sorted(
-                request["stack_counts"].items(), key=lambda item: (-item[1], item[0]))[:10]:
+                request[counter].items(), key=lambda item: (-item[1], item[0]))[:10]:
             rows.append({
                 "file": file,
                 "function": function,
                 "line": line,
                 "sample_count": count,
                 "sample_total": total,
+                "lost_samples": request["lost_samples"],
                 "sample_share": count / total if total else 0.0,
                 "dispatch_wall_share": (count * interval * 1000 / denominator
                                          if denominator else None),
@@ -387,6 +395,9 @@ class P2CommitPhaseCapture:
             ),
             "top_inclusive_frames": self._sample_rows(
                 request, dispatch_wall_ms, interval=self.sampling_interval),
+            "top_leaf_frames": self._sample_rows(
+                request, dispatch_wall_ms, interval=self.sampling_interval,
+                counter="leaf_counts"),
             "sample_membership": "each safe frame identity is counted at most once per sample",
             "dispatch_wall_denominator_ms": dispatch_wall_ms,
             "counter_limits": {
@@ -484,14 +495,13 @@ class P2CommitPhaseCapture:
 
     @staticmethod
     def _request_outcome(request: dict[str, Any]) -> str:
-        if any(state["error"] for state in request["phases"].values()):
-            return "failed"
         if not request["dispatch_finished"]:
-            return "pending"
-        response = request["phases"]["http_response"]
-        if type(response.get("status")) is int and response["status"] >= 400:
-            return "failed"
-        return "complete"
+            return "pending_at_stop"
+        if request["dispatch_returned"] and request["phases"]["http_response"]["count"]:
+            return "completed"
+        if request["dispatch_raised"]:
+            return "raised"
+        return "returned_without_response"
 
     def _record_request_event(self, request: dict[str, Any], event: dict[str, Any], size: int) -> None:
         request["events_seen"] += 1
@@ -552,6 +562,8 @@ class P2CommitPhaseCapture:
                 "dispatch_start_ms": None,
                 "dispatch_end_ms": None,
                 "dispatch_finished": False,
+                "dispatch_returned": False,
+                "dispatch_raised": False,
                 "watchdog_timer": None,
                 "watchdog_token": None,
                 "watchdog_fired": False,
@@ -565,6 +577,7 @@ class P2CommitPhaseCapture:
                 "sample_total": 0,
                 "lost_samples": 0,
                 "stack_counts": {},
+                "leaf_counts": {},
             }
             if handler is not None:
                 self._handler_requests[id(handler)] = ordinal
@@ -575,10 +588,8 @@ class P2CommitPhaseCapture:
         return ordinal
 
     def _select_final_request(self) -> dict[str, Any] | None:
-        candidates = [
-            request for request in self._requests.values()
-            if self._request_outcome(request) != "complete"
-        ]
+        candidates = [request for request in self._requests.values()
+                      if self._request_outcome(request) != "completed"]
         return max(candidates, key=lambda request: request["ordinal"], default=None)
 
     def _request_for_frame(self, frame: Any) -> int | None:
@@ -663,7 +674,8 @@ class P2CommitPhaseCapture:
                 phases[phase]["status"] = "raised"
         dispatch_start = phases["dispatch_queue"]["start_ms"]
         handler_start = phases["handler_entry"]["start_ms"]
-        dispatch_end = request["dispatch_end_ms"]
+        dispatch_end = (request["dispatch_end_ms"]
+                        if request["dispatch_returned"] else None)
         provider = phases["provider"]
 
         def duration(start: Any, end: Any) -> float | None:
@@ -686,6 +698,7 @@ class P2CommitPhaseCapture:
         }
         summary = {"schema_version": 1, "request": request["ordinal"], "phase": "summary",
                    "last_phase": request["last_phase"] or "UNKNOWN", "phases": phases,
+                   "lifecycle": self._request_outcome(request),
                    "durations_ms": durations,
                    "utc": self._utc_text(), "at_ms": self._at_ms(),
                    "capture_anchor": {"utc": self._utc_anchor, "at_ms": 0.0},
@@ -780,6 +793,7 @@ class P2CommitPhaseCapture:
                 "outcome": self._request_outcome(target),
                 "events_seen": target["events_seen"],
                 "events_retained": target_selected,
+                "buffer_complete": complete,
                 "complete": complete,
                 "incomplete_limit": incomplete,
             }
@@ -932,9 +946,15 @@ class P2CommitPhaseCapture:
         phase = state["phase"]
         ordinal = state["ordinal"]
         if phase == "request_scope":
+            if event == "exception":
+                state["error"] = True
+                return self._trace
             if event == "return":
                 request = self._requests[ordinal]
-                request["dispatch_end_ms"] = self._at_ms()
+                request["dispatch_returned"] = True
+                request["dispatch_raised"] = state.get("error", False)
+                if not request["dispatch_raised"]:
+                    request["dispatch_end_ms"] = self._at_ms()
                 if request["phases"]["dispatch_queue"]["end_ms"] is None:
                     self._end(ordinal, "dispatch_queue", error=state.get("error", False))
                 with self._lock:
