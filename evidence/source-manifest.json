@@ -1,0 +1,129 @@
+{
+  "schema": "timeline.ops-child-custody.tiny-source.v1",
+  "source_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "archive_operands": [
+    "ops-child-custody/tests/e2e_inventory.py",
+    "ops-child-custody/tests/support.py",
+    "ops-child-custody/e2e-fixtures/tiny"
+  ],
+  "archive_omissions_relevant_to_next_boundary": [
+    "ops-child-custody/make-child-venv",
+    ".git"
+  ],
+  "files": {
+    "ops-child-custody/tests/e2e_inventory.py": {
+      "mode": "100644",
+      "sha256": "4249af6c2f99a01d3eed7fa951a3c2477c25a5e0c6a9c0f61f55f2c505ba4788"
+    },
+    "ops-child-custody/tests/support.py": {
+      "mode": "100644",
+      "sha256": "8e61d99631e417e39e95b845f5433525ec25a26f190cd433380ebc75f830ec42"
+    },
+    "ops-child-custody/e2e-fixtures/tiny/manifest.json": {
+      "mode": "100644",
+      "sha256": "bcb635d082fdb8835ce814ae79f8313dd27ed21f01926206ea364b01cfd08456"
+    },
+    "ops-child-custody/make-child-venv": {
+      "mode": "100755",
+      "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+      "note": "present in source commit and current service checkout, omitted from wrapper archive"
+    }
+  },
+  "tiny_layout": {
+    "agent": [
+      {
+        "path": "LICENSE",
+        "mode": "100644",
+        "sha256": "40ba8a8b08a725cc4d7c6d674297c4447ba0357020cb23f19107557705916b2d"
+      },
+      {
+        "path": "astrid/__init__.py",
+        "mode": "100644",
+        "sha256": "57af0815dfaaf2a9ac485a45c83126a7d7926dd900a02cc9667af3a825fc481d"
+      },
+      {
+        "path": "astrid_runtime_client/__init__.py",
+        "mode": "100644",
+        "sha256": "dde31f7e1cc63ef00cb7eee89d0b12514b29549448525367b3ab75962ad7c3ca"
+      },
+      {
+        "path": "pyproject.toml",
+        "mode": "100644",
+        "sha256": "4d2a2286436fb8b084cc4e492f55c768df9a706f687da943ed621e834c68e6db"
+      },
+      {
+        "path": "requirements/proof.lock",
+        "mode": "100644",
+        "sha256": "934a9a0c59d4310eacb6a02699644b1df5e5a847c65ba0708997b37348fd0185"
+      }
+    ],
+    "runtime": [
+      {
+        "path": "LICENSE",
+        "mode": "100644",
+        "sha256": "40ba8a8b08a725cc4d7c6d674297c4447ba0357020cb23f19107557705916b2d"
+      },
+      {
+        "path": "astrid_runtime/__init__.py",
+        "mode": "100644",
+        "sha256": "1043ef52e8b2145382368acfe3244720f319f539a54f1542a9c3c857ed3d2111"
+      },
+      {
+        "path": "astrid_runtime/__main__.py",
+        "mode": "100644",
+        "sha256": "6834b438d197bcd8ac3a32e661e2667c54dbe84a79f58e7cc98baa2c82d0ee53"
+      },
+      {
+        "path": "packages/python/astrid_runtime_client/__init__.py",
+        "mode": "100644",
+        "sha256": "dde31f7e1cc63ef00cb7eee89d0b12514b29549448525367b3ab75962ad7c3ca"
+      },
+      {
+        "path": "pyproject.toml",
+        "mode": "100644",
+        "sha256": "ac8868ea6e75f9ed6a55c7e13141555c66ec945b0e7c8283cc0ad63a2bbc7f61"
+      },
+      {
+        "path": "runtime_protocol/__init__.py",
+        "mode": "100644",
+        "sha256": "1043ef52e8b2145382368acfe3244720f319f539a54f1542a9c3c857ed3d2111"
+      }
+    ],
+    "dependency-dot": [
+      {
+        "path": "custody_b/__init__.py",
+        "mode": "100644",
+        "sha256": "d0a9c55fc2a992698d2b88161905a4d3a7900aac6a9171d8708571f30ac98d76"
+      },
+      {
+        "path": "pyproject.toml",
+        "mode": "100644",
+        "sha256": "26b92b5c2fd49a8269722b6b17bda2a305d2cbb136860117e46138649034a0e4"
+      }
+    ],
+    "dependency-underscore": [
+      {
+        "path": "custody_a/__init__.py",
+        "mode": "100644",
+        "sha256": "9a63481bae87da9982570dda365619c24c6ec148d9c93e5ab61cbd6cb8cecf37"
+      },
+      {
+        "path": "pyproject.toml",
+        "mode": "100644",
+        "sha256": "5f0ce1ee39a927ec85a1523e7315b4abcda525f8b0a6a2d6955141aa0fe1dd92"
+      }
+    ]
+  },
+  "protected": {
+    "parent_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+    "parent_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "candidate_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_helper": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "mode": "755",
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+    },
+    "parent_candidate_store_verify_equal": true
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "task": "D33 whole-path inventory",
+  "mode": "READ_ONLY",
+  "qualification": "UNQUALIFIED",
+  "source_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "source_controls": {
+    "runner_sha256": "4249af6c2f99a01d3eed7fa951a3c2477c25a5e0c6a9c0f61f55f2c505ba4788",
+    "manifest_sha256": "bcb635d082fdb8835ce814ae79f8313dd27ed21f01926206ea364b01cfd08456",
+    "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "parent_maker_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+    "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "protected_store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "protected_dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "service": {
+    "id": "agt-OPS-inventory-E2E-preflight-resume-1810-inventory-whole-maker-1025181215-16002",
+    "repo": "composition",
+    "suite": "inventory-whole-maker",
+    "snapshot_tree": "32dbfb3e6ec08b032db2c9f75c6fae29e5e4abcc",
+    "request": "requested=2026-10-25T18:12:15Z",
+    "command": "env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 TMPDIR=/tmp/w-8b7d930172 PATH=/home/user/work/venv-agent/bin:/usr/local/bin:/usr/bin:/bin /bin/bash /tmp/w-8b7d930172/inventory_whole_maker.sh",
+    "exit_code": 1,
+    "log_empty": true
+  },
+  "first_failure": {
+    "boundary": "wrapper prerequisite guard",
+    "wrapper_line": 22,
+    "path": "/home/user/work/venv-runtime/bin/python",
+    "reason": "missing; test -x failed before source archive, input writer, wheel build, fixture Git, Store, maker, verifier, or registration",
+    "service_log": "empty"
+  },
+  "body_state": {
+    "source_inputs": false,
+    "offline_wheels": false,
+    "fixture_git_commits": false,
+    "private_store_initialization": false,
+    "parent_red": false,
+    "candidate_green": false,
+    "sealed_verifier": false,
+    "adversarial_checks": 0,
+    "production_store_touched": false,
+    "production_request_sent": false,
+    "network_acquisition": false,
+    "safety_permission_classifier_refusal": false
+  },
+  "trace": [
+    "durable wrapper inventory_whole_maker.sh",
+    "ordinary service row and env -i execution",
+    "numeric preflight/parser",
+    "missing runtime interpreter guard (first actual boundary)",
+    "source1747 --write-inputs: NOTREACHED",
+    "offline wheel build: NOTREACHED",
+    "fixture Git commits: NOTREACHED",
+    "Store.initialize/prepare-venue: NOTREACHED",
+    "parent 0857 RED: NOTREACHED",
+    "candidate c3226b GREEN: NOTREACHED",
+    "unchanged sealed verifier/adversarial checks: NOTREACHED"
+  ],
+  "further_portability_defects": [
+    {
+      "order": 1,
+      "binding": "runtime Python",
+      "evidence": "The wrapper hard-codes /home/user/work/venv-runtime/bin/python; it is absent. /home/user/work/venv-agent/bin/python exists and is Python 3.13.16 with build 1.4.0, setuptools 80.9.0 and wheel 0.46.3 imports passing.",
+      "minimal_change": "Bind RUNTIME_PYTHON to the qualified existing /home/user/work/venv-agent/bin/python (or pass an equivalent validated absolute path from the service). Do not substitute /usr/bin/python3.13 for the whole wrapper: it lacks the build module needed by --build-wheels."
+    },
+    {
+      "order": 2,
+      "binding": "archived runner maker/Git context",
+      "evidence": "The wrapper archives only ops-child-custody/tests/e2e_inventory.py, ops-child-custody/tests/support.py and ops-child-custody/e2e-fixtures/tiny. source1747 support.py resolves MAKER as the sibling ../make-child-venv, which is absent from that archive. Its e2e runner then executes git show with cwd=MAKER.parents[1], but an archive extraction root has no .git.",
+      "minimal_change": "Run the source1747 runner from a real temporary Git checkout/worktree rooted at the exact source commit, with make-child-venv at the path support.py resolves; retain the existing exact hash checks. Merely adding make-child-venv to the tar is insufficient because the parent git show still needs the source checkout's Git object database."
+    }
+  ],
+  "next_step": "After the two bindings are repaired by the wrapper author, perform one fresh admitted service run; this audit did not submit or retry a service."
+}
