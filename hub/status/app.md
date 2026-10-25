@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T10:07:01Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
-# app board, 2026-10-25T10:05Z
+<!-- app | 2026-10-25T10:11:05Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
+# app board, 2026-10-25T10:08Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -289,7 +289,9 @@
 
 | U4p-D112a-release | Adopt final qualified D112 typing correction | Luna normal tools | Released d23a8; exact reviewed tree6283 | merged | app-U4p-D112a-release-adoption-1000 | Normal home tree equals tested author;8 strict,17 vendor/skew,3 artifact/lint PASS; protected8/14 mappings exact. | Home96d4754b4e |
 
-Integration: App96d4754b4e normal merge tree3f9da34c4f equals tested author890f6d72d7. Runtime released d23a8/tree6283 adopted through normal tools; Agent070dfc retained. D113/D115/schema/mappings exact. D118 sole full P2 producer1004 queued on this immutable tuple; actual service ID pending.
+| D118-full-P2-15203 | Current eight original gestures | Luna; service | Preflight19156 PASS | doing | app-D118-full-P2-current-1004; actual15203 | Submitted10:07:12 on96d475/070dfc/d23a8/635f. Exact tuple/receipts/source locked; same ID to terminal. No case result yet. | App96d4754b4e |
+
+Integration: App96d4754b4e normal merge tree3f9da34c4f equals tested author890f6d72d7. Runtime released d23a8/tree6283 adopted through normal tools; Agent070dfc retained. D113/D115/schema/mappings exact. D118 sole full P2 producer1004 submitted actual15203 after preflight19156 PASS on this immutable tuple. Same ID to terminal; no case result yet.
 core open: 4 — SWAP, element, placement and current asset lack GO. ADD, parent, single and bulk have independent full-tail caseGO in19078. Older asset27438 GO is a separate tuple; current full tour and current asset proof remain owed.
 regressions: D102 context and D110 inverse KeyError source repairs released. Current SWAP initial409 is Runtime D112; placement error is a protected original modal sequence, not a demonstrated product defect.
 
@@ -298,9 +300,9 @@ Blockers: Runtime D111b element follow-through only — corrected cold-read sour
 Blockers: Agent tail allocation — D118 asks up to three App Luna source authors; Agent manager must name exact unowned nodes/files. Peer0951 and App lead relay requested; capacity available.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
 Next ready: Track authentic full P2 submission ID and same-ID terminal; dispatch up to three Agent-assigned tail clusters as soon as ownership arrives. No isolated successor.
-live 1 / cap 6; ready-undispatched 0; core open: 4. Full P2 producer1004 queued immediately after actual adoption home; one heavy slot reserved. Agent tail allocation awaited.
-Capacity: Free5.89GB before full-tour producer, above5.2GB heavy floor. Completed adoption worker recycled normally. Sweep3 removed zero; no eligible clean ended nonKEEP worktrees. Last normal recycle of recreated old04be pin preserved all outputs. Fresh static guards and host0921 CLEAR; zero refusals. All15712 and historical outputs/branches/reports retained. Current inputs and old dirty/refused targets untouched.
-Inbox consumed through2057745 bytes. Fresh pass 2026-10-25T09:57Z: D118 allocation peer sent; Runtime corrected type-only source normald23 visible but final independent0945/release still owner-side. D111b Sol0930 active; App normal28660 is a provenance adoption, not Runtime release or gesture GO. No safety refusal in this App pass.
+live 1 / cap 6; ready-undispatched 0; core open: 4. Full P2 actual15203 RUNNING; producer1004 waits same ID. One App heavy body. Agent tail allocation awaited.
+Capacity: Free5.38GB during full-tour build; admission above5.2GB, existing-run stop4.0GB. Recheck5.0GB source floor for any Agent tail allocation. Completed adoption worker recycled normally. Sweep3 removed zero; no eligible clean ended nonKEEP worktrees. Last normal recycle of recreated old04be pin preserved all outputs. Fresh static guards and host0921 CLEAR; zero refusals. All15712 and historical outputs/branches/reports retained. Current inputs and old dirty/refused targets untouched.
+Inbox consumed through2060508 bytes. Fresh pass 2026-10-25T09:57Z: D118 allocation peer sent; Runtime corrected type-only source normald23 visible but final independent0945/release still owner-side. D111b Sol0930 active; App normal28660 is a provenance adoption, not Runtime release or gesture GO. No safety refusal in this App pass.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).
 Retained run: app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712. Preserve every output through D55 disposition; no compact, sweep or raw cleanup of this run.
