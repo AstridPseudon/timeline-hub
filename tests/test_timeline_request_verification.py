@@ -16,6 +16,9 @@ service = auth.service
 
 
 def accepted(service, monkeypatch):
+    commits, _ = service._timeline_commits()
+    # Pre-D88 events retain the original full replay behavior and its attacks.
+    monkeypatch.setattr(commits, "_attest_acceptance", lambda result: None)
     auth.provider(service)
     result = commit(service, auth.body(service))
     commits, _ = service._timeline_commits()

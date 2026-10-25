@@ -133,6 +133,8 @@ def _parser():
     )
     audit.add_argument("--root", default=os.environ.get("ASTRID_RUNTIME_ROOT", ".runtime"))
     audit.add_argument("--project-id")
+    verify_history = sub.add_parser("verify-timeline-history", help="offline full replay of accepted timeline history")
+    verify_history.add_argument("--root", required=True)
     purge = sub.add_parser("purge", help="irreversibly remove a tombstoned realm (offline only)")
     purge.add_argument("--root", required=True)
     purge.add_argument("--confirm", required=True)
@@ -193,6 +195,17 @@ def _main(args):
             result["next_action"] = "astrid-runtime-protocol create --root <realm>"
         print(json.dumps(result, sort_keys=True))
         return 0 if result.get("ok") else 1
+    if args.command == "verify-timeline-history":
+        from .service import RuntimeService
+
+        # RuntimeService takes the normal exclusive realm-owner fence.
+        service = RuntimeService(args.root)
+        try:
+            errors = service._timeline_commits()[0].verify_history()
+        finally:
+            service.close()
+        print(json.dumps({"ok": not errors, "errors": errors}, sort_keys=True))
+        return 1 if errors else 0
     if args.command == "audit-timelines":
         from .timeline_cutover import audit_active_timeline_heads
 

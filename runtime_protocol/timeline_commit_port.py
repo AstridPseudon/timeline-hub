@@ -222,24 +222,19 @@ class RequestCommitPort:
             return pin
         return self._read(read)
 
-    def _ancestors(self, root):
-        current, seen = root, set()
-        while current and current["publication_id"] not in seen:
-            seen.add(current["publication_id"])
-            entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
-            if entry["revision_id"] != current["revision_id"]:
-                raise refused("history_unavailable", "publication/revision pins disagree")
-            yield entry
-            current = entry["previous"]
-
     def _ancestor(self, publication_id):
         roots = list(self.__observed.values()) + [{
             "revision_id": self.__request["base_revision_id"],
             "publication_id": self.__request["base_publication_id"],
         }]
         for root in roots:
-            for entry in self._ancestors(root):
-                if entry["publication_id"] == publication_id:
+            current, seen = root, set()
+            while current and current["publication_id"] not in seen:
+                seen.add(current["publication_id"])
+                entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+                if entry["revision_id"] != current["revision_id"]:
+                    raise refused("history_unavailable", "publication/revision pins disagree")
+                if current["publication_id"] == publication_id:
                     from .timeline_commit_inputs import reachable_document_input_pins
                     pins = reachable_document_input_pins(self.__store.conn, self.__project, self.__timeline,
                                                          publication_ids=[publication_id])
@@ -272,14 +267,11 @@ class RequestCommitPort:
                            if "revision_id" in item and "content_digest" in item)
             if revision_id not in allowed:
                 current = self.head()
-                # Walk the proven head's links once, rather than restarting
-                # ancestry authentication from that head for every predecessor.
-                for entry in self._ancestors(current):
-                    from .timeline_commit_inputs import reachable_document_input_pins
-                    pins = reachable_document_input_pins(self.__store.conn, self.__project, self.__timeline,
-                                                         publication_ids=[entry["publication_id"]])
-                    self.__history_pins.extend(pin for pin in pins if pin not in self.__history_pins)
+                cursor = current
+                while cursor:
+                    entry = self._ancestor(cursor["publication_id"])
                     allowed.add(entry["revision_id"])
+                    cursor = entry["previous"]
             if revision_id not in allowed:
                 raise refused("history_unavailable", "revision is outside request ancestry or declared source")
             # The original base pair must itself be a proven accepted edge.

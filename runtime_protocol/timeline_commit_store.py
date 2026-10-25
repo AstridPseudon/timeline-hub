@@ -23,6 +23,7 @@ from .util import canonical_json, new_id, now
 
 _METADATA = ("source", "label", "rationale", "group_id")
 _PRIVATE_EXECUTION = "_sequential_execution"
+_VERIFICATION = "verification"
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)(?::([a-z][a-z0-9-]{0,63}))?\Z")
 
@@ -224,7 +225,7 @@ class TimelineCommitStore:
     def verification_scope(self):
         """Start an independent evaluation, including when another is nested."""
         previous = getattr(self._verification, "current", None)
-        current = {"verified": set(), "active": set(), "traversal": None, "inputs": None}
+        current = {"verified": set(), "active": set(), "traversal": None, "inputs": None, "full_replay": previous["full_replay"] if previous else False}
         self._verification.current = current
         try:
             yield
@@ -341,7 +342,7 @@ class TimelineCommitStore:
         # replay proof pass. Later lookups rebuild it, even in the same scope.
         traversal = {"nodes": {identity: (row, edge, allow_archived)},
                      "dependencies": {identity: set()}, "pending": deque([identity]),
-                     "replays": {}, "current": identity,
+                     "replays": {}, "events": {}, "current": identity,
                      "inputs": current["inputs"] if current["inputs"] is not None else
                                _HistoryReadInputs(self.store.conn, self.store.cas_root)}
         current["traversal"] = traversal
@@ -441,23 +442,15 @@ class TimelineCommitStore:
                 valid = valid and data.get("label") == records["label"]
             if "merge_mode" in records:
                 valid = valid and data.get("merge_mode") == records["merge_mode"]
+            verification = None
             ids = json.loads(row["event_ids_json"])
             seq = row["resulting_stream_seq"]
-            # Replay verifies the accepted prefix, independent of later writes.
-            events = self.conn.execute("SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id LIMIT ?",
-                                       (edge["timeline_id"], seq)).fetchall()
+            events = self._accepted_events(edge["timeline_id"], seq)
             valid = valid and isinstance(ids, list) and 0 < len(ids) <= seq <= len(events)
             valid = valid and ids == [str(e["id"]) for e in events[seq - len(ids):seq]]
             project_seq = self.conn.execute("SELECT next_seq FROM project_sequences WHERE project_id=?",
                                             (edge["project_id"],)).fetchone()
             valid = valid and project_seq is not None and 0 < edge["project_seq"] < project_seq[0]
-            previous_hash = ""
-            for event in events:
-                hashed = {"timeline_id": edge["timeline_id"], "kind": event["kind"],
-                          "payload": json.loads(event["payload_json"]), "previous_hash": previous_hash,
-                          "created_at": event["created_at"]}
-                valid = valid and event["previous_hash"] == previous_hash and event["event_hash"] == digest(hashed)[7:]
-                previous_hash = event["event_hash"]
             event = self.conn.execute("SELECT * FROM timeline_events WHERE id=? AND timeline_id=?",
                                       (ids[-1], edge["timeline_id"])).fetchone()
             valid = valid and event is not None and event["kind"] == "timeline.commit.accepted"
@@ -475,6 +468,10 @@ class TimelineCommitStore:
                              and type(payload.get("recorder_abi")) is int) and valid
                     expected.update(recorder_abi=abi, request_hash=row["request_hash"],
                                     metadata_digest=digest(metadata))
+                verification = payload.get(_VERIFICATION)
+                if _VERIFICATION in payload:
+                    self._verify_recorded_result(row, edge, verification, metadata, records)
+                    expected[_VERIFICATION] = verification
                 valid = valid and payload == expected
             if not valid:
                 raise ValueError()
@@ -489,11 +486,128 @@ class TimelineCommitStore:
                     raise ValueError()
                 self._check_inherited_allocations(project, timeline, records, allocations, edge["project_seq"],
                                                    allow_archived=allow_archived)
-            if "steps" in records:
+            if verification is not None:
+                self._verify_recorded_sources(edge, data, verification, allow_archived=allow_archived)
+            if "steps" in records and (verification is None or self._verification.current["full_replay"]):
                 self._accepted_replay(row, edge, data, metadata, records, previous, events,
                                       allow_archived=allow_archived)
         except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
             raise ProtocolError("accepted commit record is corrupt") from exc
+
+    def _accepted_events(self, timeline, seq):
+        traversal = self._verification.current["traversal"]
+        cached = traversal["events"].get(timeline) if traversal else None
+        if cached is not None and seq <= len(cached):
+            return cached[:seq]
+        events = self.conn.execute("SELECT * FROM timeline_events WHERE timeline_id=? ORDER BY id LIMIT ?",
+                                   (timeline, seq)).fetchall()
+        if type(seq) is not int or seq < 1 or len(events) != seq:
+            raise ValueError("accepted event prefix is incomplete")
+        previous_hash = ""
+        for event in events:
+            hashed = {"timeline_id": timeline, "kind": event["kind"],
+                      "payload": json.loads(event["payload_json"]), "previous_hash": previous_hash,
+                      "created_at": event["created_at"]}
+            if event["previous_hash"] != previous_hash or event["event_hash"] != digest(hashed)[7:]:
+                raise ValueError("accepted event chain is corrupt")
+            previous_hash = event["event_hash"]
+        if traversal is not None:
+            traversal["events"][timeline] = events
+        return events
+
+    @staticmethod
+    def _entry_digest(row, edge):
+        # Include the exact stored JSON strings, receipt identity and sequence,
+        # not just decoded values or an unauthenticated history-row flag.
+        return digest({"receipt": dict(row), "history": dict(edge)})
+
+    def _previous_entry(self, edge):
+        previous = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=?",
+                                     (edge["previous_publication_id"],)).fetchone()
+        if (previous is None or previous["project_id"] != edge["project_id"]
+                or previous["timeline_id"] != edge["timeline_id"]
+                or previous["revision_id"] != edge["previous_revision_id"]
+                or previous["project_seq"] >= edge["project_seq"]):
+            raise ValueError("accepted predecessor differs from verification")
+        ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?",
+                                   (previous["publication_id"],)).fetchone()
+        if ledger is None or ledger["first_project_seq"] != previous["project_seq"]:
+            raise ValueError("accepted predecessor receipt is missing")
+        # Sequence order must be the same as linkage, including legacy edges.
+        adjacent = self.conn.execute("SELECT publication_id FROM timeline_commit_history WHERE project_id=? "
+                                     "AND timeline_id=? AND project_seq<? ORDER BY project_seq DESC LIMIT 1",
+                                     (edge["project_id"], edge["timeline_id"], edge["project_seq"])).fetchone()
+        if adjacent is None or adjacent[0] != previous["publication_id"]:
+            raise ValueError("accepted predecessor is not adjacent")
+        return ledger, previous
+
+    def _verification_facts(self, metadata, records):
+        # These are facts the existing validator actually proves. In particular
+        # this does not claim D62 native submit coverage completeness.
+        return {"recorder_abi": metadata["recorder_abi"],
+                "step_records": "steps" in records,
+                "sequential_capture": _PRIVATE_EXECUTION in metadata}
+
+    def _verify_recorded_result(self, row, edge, verification, metadata, records):
+        if (not isinstance(verification, dict) or set(verification) != {
+                "version", "entry_digest", "previous_digest", "source_digest", "realm_id", "facts"}
+                or type(verification["version"]) is not int or verification["version"] != 1
+                or verification["entry_digest"] != self._entry_digest(row, edge)
+                or canonical_json(verification["facts"]) != canonical_json(self._verification_facts(metadata, records))):
+            raise ValueError("accepted verification result is malformed or mismatched")
+        realm = self.conn.execute("SELECT realm_id FROM projects WHERE id=?", (edge["project_id"],)).fetchone()
+        if realm is None or realm[0] != verification["realm_id"]:
+            raise ValueError("accepted source realm changed")
+        ledger, previous = self._previous_entry(edge)
+        if verification["previous_digest"] != self._entry_digest(ledger, previous):
+            raise ValueError("accepted digest chain is broken")
+        if previous["intent"] == "recorded" or ledger["command_kind"] == "timeline.commit":
+            self._verify_accepted(ledger, previous, allow_archived=True)
+        elif previous["records_json"] is not None or ledger["command_kind"] != "parent_composition.publish":
+            raise ValueError("accepted legacy predecessor is corrupt")
+
+    def _verify_recorded_sources(self, edge, data, verification, *, allow_archived):
+        project, timeline = edge["project_id"], edge["timeline_id"]
+        source = self.revision_closure(project, timeline, edge["previous_revision_id"],
+                                       allow_archived=allow_archived)
+        accepted = self.revision_closure(project, timeline, edge["revision_id"],
+                                         allow_archived=allow_archived)
+        if digest(source) != verification["source_digest"] or accepted != data["canonical_document"]:
+            raise ValueError("accepted source bytes differ from verification")
+
+    def _attest_acceptance(self, result):
+        publication = result["receipt"]["receipt_id"]
+        row = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication,)).fetchone()
+        edge = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=?", (publication,)).fetchone()
+        # The result is sealed only after the existing full acceptance and
+        # replay checks, including persistence of retained capture inputs.
+        with self.verification_scope():
+            self._verify_accepted(row, edge)
+        metadata, records = json.loads(edge["metadata_json"]), json.loads(edge["records_json"])
+        ledger, previous = self._previous_entry(edge)
+        source = self.revision_closure(edge["project_id"], edge["timeline_id"], edge["previous_revision_id"])
+        verification = {"version": 1, "entry_digest": self._entry_digest(row, edge),
+                        "previous_digest": self._entry_digest(ledger, previous), "source_digest": digest(source),
+                        "realm_id": self._membership(edge["project_id"], edge["timeline_id"]),
+                        "facts": self._verification_facts(metadata, records)}
+        event_id = json.loads(row["event_ids_json"])[-1]
+        event = self.conn.execute("SELECT * FROM timeline_events WHERE id=? AND timeline_id=?",
+                                  (event_id, edge["timeline_id"])).fetchone()
+        payload = json.loads(event["payload_json"])
+        payload[_VERIFICATION] = verification
+        # Still inside the acceptance transaction: seal its final event before
+        # any reader can observe the publication. The event hash format stays
+        # exactly the same as _append_timeline_event.
+        hashed = {"timeline_id": edge["timeline_id"], "kind": event["kind"], "payload": payload,
+                  "previous_hash": event["previous_hash"], "created_at": event["created_at"]}
+        self.conn.execute("UPDATE timeline_events SET payload_json=?, event_hash=? WHERE id=?",
+                          (canonical_json(payload), digest(hashed)[7:], event_id))
+
+    def verify_history(self):
+        """Offline full replay, including entries with recorded verification."""
+        with self.store._mutex, self.verification_scope():
+            self._verification.current["full_replay"] = True
+            return self.integrity_errors()
 
     def _accepted_replay(self, row, edge, data, metadata, records, previous, events, *, allow_archived):
         base = {"revision_id": data["base_revision_id"], "publication_id": data["base_publication_id"]}
@@ -1511,6 +1625,7 @@ class TimelineCommitStore:
                 self._project_text_bindings(candidate["canonical_document"], prepared["records"], result["receipt"]["receipt_id"])
                 if inputs is not None:
                     inputs.persist(prepared, result["receipt"]["receipt_id"], data["accepted_revision_id"])
+                self._attest_acceptance(result)
                 return result
 
     def _project_text_bindings(self, document, records, publication_id):
