@@ -5,7 +5,7 @@ import copy
 
 from tests.editing_conformance import test_occurrence_hold_current_runtime as runtime_case
 
-pytest_plugins = ("tests.editing_conformance.test_occurrence_hold_current_runtime",)
+editing = runtime_case.editing
 
 
 def test_occurrence_add_or_swap_then_undo_restores_the_authenticated_baseline(editing):
