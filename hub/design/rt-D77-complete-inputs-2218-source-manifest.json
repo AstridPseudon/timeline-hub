@@ -1,0 +1,184 @@
+{
+  "schema": "timeline.d77.complete-source-manifest/v1",
+  "task": "D77-complete-inputs-2218",
+  "result": "SOURCE_CUSTODY_COMPLETE_FOR_REVIEW_NOT_READY_FOR_RUN",
+  "scope": "source-only; no installer, stage, preflight, browser, provider, render, network acquisition, or livekit action",
+  "composition_base": {
+    "repository": "composition",
+    "branch": "tl/integration",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "mode_proof": "existing D77 source-review handoff; tracked modes and source files were unchanged by this worker",
+    "owner_proof": "Composition integration worktree is the assigned read-only base"
+  },
+  "tuple_policy": {
+    "current_authority": "D139 final merged tuple",
+    "historical_d77_tuple": "preserved as historical evidence only; do not relabel its child/runtime/stage receipts as D139 qualification",
+    "older_applied_tuple": {
+      "agent": {
+        "commit": "91398e9de4500ce16c8e55741209ba3609cb1694",
+        "tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+        "status": "historical_D77_applied_source_preserved_not_current"
+      },
+      "runtime": {
+        "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+        "tree": "a522511414947e48e317a5e5c2103483b121a750",
+        "status": "historical_D77_applied_source_preserved_not_current"
+      },
+      "receipts": [
+        "design/handoff-rt-D77-portable-1624-handoff.json",
+        "design/rt-D77-source-review-handoff-1624-report.md",
+        "Farm inventory tf-d77-inventory-2140 read-only report"
+      ]
+    }
+  },
+  "current_d139_tuple": {
+    "agent": {
+      "repository": "agent",
+      "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+      "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+      "origin": "public GitHub repository; exact source identity in D139 authenticated source manifest",
+      "mode_proof": "D139 source census verified source rows, AST parsing, RECORD mappings, and source-object hashes; no symlinked source claim",
+      "owner_proof": "D139 integrated acceptance and independent import-census review",
+      "qualification": "CONDITIONAL_PUBLICATION; graph has 17,604 edges versus 17,642 import occurrences and 38 exclusions are not declared"
+    },
+    "runtime": {
+      "repository": "runtime",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "origin": "public GitHub repository; exact source identity in D139 authenticated source manifest",
+      "mode_proof": "D139 source census verified source rows, AST parsing, RECORD mappings, and source-object hashes; no symlinked source claim",
+      "owner_proof": "D139 independent import-census review",
+      "qualification": "CONDITIONAL_PUBLICATION_PENDING_DOCUMENTED_GRAPH_EXCLUSIONS"
+    },
+    "tuple_receipt_rule": "A D77 run may use only receipts tied to both current D139 identities; the historical 91398/1daca receipts remain preserved but cannot satisfy this rule"
+  },
+  "public_locked_inputs": {
+    "vibecomfy": {
+      "commit": "31f90bb03d330283b76e7dbdda51197be787090d",
+      "tree": "101744f0d87eebe5ddf6752c10f01f52dc94e3e9",
+      "mode": "exact pinned source; no new fetch in this bundle",
+      "owner_proof": "D77 portable handoff and Farm inventory exact fixture check",
+      "route": "authenticated installer manifest through normal Installer.stage; public pin may be carried, private manifest remains Farm-owned"
+    },
+    "omp": {
+      "public_repository": "peteromallet/oh-my-pi",
+      "commit": "9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+      "tree": "2074d7a2e26cc954b5cf3d77e91f3efbb25ad34f",
+      "archive_bytes": 166266880,
+      "archive_sha256": "a7673f9f9b77d24989a5a84b70380f77af3dd869a7be2b94c8d56de404065ecb",
+      "source_tree_sha256": "3a84ac8be7d11434de8b22f4f0f1d643582ecc01c644e347bb0e056401da7b2e",
+      "bun_lock_sha256": "f08eab1fd7e0519e8b131697d6a35815fd71d9b0a61a8d70cc57b499bcba53ee",
+      "package_version": "17.4.0",
+      "bun_version": "1.3.14",
+      "mode": "supported local/public source evidence retained; no new OMP fetch",
+      "owner_proof": "D77 portable source review; installer OMP recipe requires exact source tree and lock"
+    },
+    "remotion_lock": {
+      "sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+      "mode": "exact lock hash ends 18d",
+      "owner_proof": "corrected D77 source review and Farm exact-lock check",
+      "rejected_historical_value": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18e"
+    },
+    "node": {
+      "version": "20.19.4",
+      "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+      "mode": "Farm inventory verified exact managed Node bytes",
+      "owner_proof": "tf-d77-inventory-2140 read-only inventory"
+    },
+    "browser": {
+      "required_sha256": "85918a9937192b78da8edb51c38a7af4920ac6bd9ba19939ecb0bb724d5a1a95",
+      "mode": "required installed executable; no Farm browser found",
+      "owner_proof": "Farm inventory explicitly reports no chromium/chrome and no matching hash",
+      "status": "MISSING"
+    },
+    "ffmpeg": {
+      "required_sha256": "ed16af623947494a72e284b6eb8ff225f2da22b38b5d5069c2fd4b4ba3384e41",
+      "mode": "required installed executable; path/hash not exported",
+      "owner_proof": "Farm inventory could not hash the outside-sandbox executable",
+      "status": "UNVERIFIED"
+    },
+    "ffprobe": {
+      "required_sha256": "272f6ebc634a63d9c8b4ca68e964119d980f25154e5aa2c35e5487da48e9a58f",
+      "mode": "required installed executable; path/hash not exported",
+      "owner_proof": "Farm inventory could not hash the outside-sandbox executable",
+      "status": "UNVERIFIED"
+    }
+  },
+  "guard_custody": {
+    "guard_author": "Sol1243",
+    "guard_candidate_commit": "7cb353858c5cf9f3eee484ca0748b61ae01d2ba3",
+    "guard_helper_sha256": "5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386",
+    "independent_receipt": {
+      "reviewer": "Luna1257",
+      "reference": "design/handoff-rt-D77-guard-review-1257.md",
+      "sha256": "cdbb9fd919edf832e2da6f09e591f9aa9366cefd51d3f87ab44c8acf0211e57e",
+      "verdict": "PASS",
+      "controls": 18,
+      "scope": "private diagnostics wrapper only; not a live stage/render proof"
+    },
+    "custody_receipt": {
+      "reference": "design/rt-D124-handoff-custody-review-1300.md",
+      "sha256": "8b29293a95628463bf567b82b852e23d679685af9b7a11d527b554ee58b8f588",
+      "verdict": "PASS_A",
+      "scope": "source-only handoff route/custody review"
+    }
+  },
+  "source_call_chain": {
+    "launcher": "normal installed astrid/run-astrid generated by installer.launcher.install",
+    "installer": [
+      "run-astrid install --root PROGRAM_ROOT --data-root DATA_ROOT --manifest INSTALL_MANIFEST --uv UV",
+      "astrid.installer.cli.main",
+      "validate_manifest",
+      "Installer.run",
+      "Backend.stage"
+    ],
+    "stage_materialization": [
+      "source(agent) into managed version/a",
+      "source(runtime) into managed version/r",
+      "source(vibecomfy) into managed version/v",
+      "uv venv --python manifest.tools.python.version",
+      "uv pip install --require-hashes agent/runtime.lock",
+      "uv pip install --no-deps runtime/python/agent/vibecomfy",
+      "install_tools for Bun, Node, FFmpeg/FFprobe and OMP",
+      "Node npm ci --no-audit --no-fund in Agent remotion",
+      "service_declaration",
+      "profile.json with source_checkout, source_digest, runtime_environment and service_declaration"
+    ],
+    "consumer": [
+      "generic_host --service",
+      "run_pack_host_foreground / ensure_pack_host",
+      "D13 installed native preflight",
+      "daemon-backed authoring and final render selector"
+    ],
+    "source_references": [
+      "agent/astrid/installer/cli.py",
+      "agent/astrid/installer/core.py",
+      "agent/astrid/installer/backend.py",
+      "agent/astrid/installer/tools.py",
+      "agent/astrid/installer/launcher.py",
+      "agent/tests/packs/video_editing/test_runtime_publication_chain.py"
+    ]
+  },
+  "v2_contract_carry_forward": {
+    "request": [
+      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+      "commands[{schema_version,op,version,select,args}]", "label",
+      "steps[{id,label,intent,tags,command_ordinals,patch,optional reads}]",
+      "merge fields|atomic", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"
+    ],
+    "replies": {
+      "accepted_or_merged": ["accepted", "merged", "canonical", "base", "landing", "merge_mode", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps"],
+      "conflict": ["reason", "head"],
+      "invalid": ["code", "path", "hint", "suggested_command"],
+      "preview": ["would_status", "receipt|null"]
+    },
+    "status": "source contract only; no product or schema change"
+  },
+  "no_private_export": {
+    "credentials": "not included",
+    "private_paths": "not included; placeholders and role names only",
+    "private_identifiers": "not included",
+    "public_hashes": "included where already published and required for custody"
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "schema": "timeline.d77.finite-footprint/v1",
+  "task": "D77-complete-inputs-2218",
+  "status": "UNKNOWN_UNBOUNDED",
+  "bound_type": "peak_workspace_footprint",
+  "source_admission_bytes": 4600000000,
+  "source_admission_rule": "strictly greater than 4.6 GB for this source bundle",
+  "stop_bytes": 4000000000,
+  "d89_heavy_admission_floor_bytes": 5200000000,
+  "d89_floor_is_peak_bound": false,
+  "d89_note": "The retained D89 admission floor is an operational admission/stop rule, not a finite peak-footprint proof.",
+  "retained_measurements": [
+    {
+      "name": "historical_private_staging_observation",
+      "bytes": 1168669468,
+      "semantics": "reported before automatic temporary-tree cleanup; apparent-versus-allocated and peak status unknown",
+      "owner_proof": "rt-D77-footprint-bound-0947"
+    },
+    {
+      "name": "historical_OMP_archive",
+      "bytes": 166266880,
+      "semantics": "exact public source archive input; archive may overlap the retained staging observation",
+      "sha256": "a7673f9f9b77d24989a5a84b70380f77af3dd869a7be2b94c8d56de404065ecb"
+    }
+  ],
+  "authentic_known_source_sizes": [
+    {
+      "name": "historical_D77_Runtime_tracked_source",
+      "bytes": 19938578,
+      "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "semantics": "tracked apparent bytes from exact retained tree; historical source only"
+    },
+    {
+      "name": "historical_D77_VibeComfy_tracked_source",
+      "bytes": 169901555,
+      "commit": "31f90bb03d330283b76e7dbdda51197be787090d",
+      "tree": "101744f0d87eebe5ddf6752c10f01f52dc94e3e9",
+      "semantics": "tracked apparent bytes from exact retained tree"
+    },
+    {
+      "name": "historical_D77_Agent_tracked_source",
+      "bytes": null,
+      "semantics": "exact object size was not retained in the source-only evidence; do not substitute a near-match"
+    }
+  ],
+  "arithmetic": {
+    "known_source_sum_bytes": 189840133,
+    "known_only_additive_planning_bytes": 1358509601,
+    "known_only_formula": "1168669468 + 19938578 + 169901555 = 1358509601",
+    "known_inputs_plus_OMP_archive_if_nonoverlapping_bytes": 1524776481,
+    "known_inputs_plus_OMP_formula": "1168669468 + 19938578 + 169901555 + 166266880 = 1524776481",
+    "interpretation": "These are planning sums only. The OMP archive can overlap the retained observation, and Agent/source/build/cache/render sizes are not included. Neither sum is a peak bound."
+  },
+  "phase_overlap_model": [
+    {
+      "phase": "archive_and_unpack",
+      "may_overlap": ["source archive", "extracted source tree", "download temporary"],
+      "measured_or_structural_bound": "archive bytes known for OMP only; source/archive extraction sizes and cleanup timing are not bounded"
+    },
+    {
+      "phase": "uv_venv_and_locked_dependencies",
+      "may_overlap": ["Python venv", "wheel/build temporary", "uv cache", "source trees"],
+      "measured_or_structural_bound": "no exact venv, wheel closure, cache policy or maximum temporary size retained"
+    },
+    {
+      "phase": "Bun_OMP_native_build",
+      "may_overlap": ["OMP source", "Bun install tree", "native archive", "generated outputs", "Bun cache"],
+      "measured_or_structural_bound": "OMP archive and native recipe hashes exist; extracted/build/cache sizes are not bounded"
+    },
+    {
+      "phase": "Node_Remotion_install",
+      "may_overlap": ["Agent remotion source", "package-lock", "node_modules", "npm cache"],
+      "measured_or_structural_bound": "lock hash exists; node_modules and cache size are unmeasured"
+    },
+    {
+      "phase": "profile_service_and_backup",
+      "may_overlap": ["candidate version", "profile", "service declaration", "old version", "backup"],
+      "measured_or_structural_bound": "Installer.finish/backup behavior is structurally known; exact old workspace/backup bytes are absent"
+    },
+    {
+      "phase": "preflight_and_render",
+      "may_overlap": ["runtime support", "pack host", "render temporary", "encoded result", "logs"],
+      "measured_or_structural_bound": "browser, payload, output and temporary sizes are absent; no render ran"
+    }
+  ],
+  "exact_missing_quantities_and_owners": [
+    {"quantity": "exact current D139 Agent apparent and allocated source bytes", "owner": "Agent source custody"},
+    {"quantity": "current D139 Runtime/VibeComfy/OMP materialization and cleanup overlap", "owner": "Farm installer owner"},
+    {"quantity": "uv wheel/build temporary and venv closure maximum", "owner": "Farm installer owner"},
+    {"quantity": "Bun/OMP source, native archive, generated output and cache maximum", "owner": "Farm installer owner"},
+    {"quantity": "Remotion node_modules/npm cache maximum", "owner": "Farm installer owner"},
+    {"quantity": "old workspace/backup and render input/output bytes", "owner": "Farm stage/render owner"}
+  ],
+  "conclusion": "UNKNOWN_UNBOUNDED: the known arithmetic cannot be promoted to a finite peak bound because several overlapping phases have no authenticated upper-size quantity. Do not start piecemeal stage work or treat 4.6 GB/5.2 GB admission as the peak bound."
+}

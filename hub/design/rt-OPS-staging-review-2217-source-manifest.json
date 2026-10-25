@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "review": "rt-OPS-staging-review-2217",
+  "status": "FAIL",
+  "source": {
+    "repo": "composition",
+    "worktree": "/home/user/work/wt/rt-OPS-staging-review-2217",
+    "commit": "017bd30c33f88c2e4bed8fb03e910ee1cde6f7db",
+    "tree": "7f9ce60cc681937681d96cc88b90da7ff3f92e33",
+    "parent": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "base": "composition tl/integration"
+  },
+  "files": [
+    {"path": "ops-drop-staging/README.md", "mode": "0644", "sha256": "25b6dcd5f66b6c1123f84a6c17c73c39ef2a2a911a91e782a2c76060acc7f9e2"},
+    {"path": "ops-drop-staging/drop-staging", "mode": "0755", "sha256": "4ff7ff083dae0e4d20badb6cec69e29f5018e2934a14e0e18eca1882067ee5e7"},
+    {"path": "ops-drop-staging/drop_staging.py", "mode": "0644", "sha256": "20a2396149d7419db85e4d8b28e91555f35d5aac2250e75059282d116ae0ec77"},
+    {"path": "ops-drop-staging/test_drop_staging.py", "mode": "0755", "sha256": "c22e5a676c9a43e62843ff855c32f2c7105696ecfadaa612b3f541b44fd97b0f"}
+  ],
+  "guarded_install_route": {
+    "route": "ORCH/bin/drop-staging WORKER RELPATH",
+    "source_files": ["ops-drop-staging/drop_staging.py", "ops-drop-staging/drop-staging"],
+    "destination": "future ORCH/bin only after independent PASS/CAS approval",
+    "dependencies": "Python standard library; Linux O_NOFOLLOW, dir_fd, flock",
+    "installation_performed": false,
+    "live_cleanup_performed": false
+  }
+}

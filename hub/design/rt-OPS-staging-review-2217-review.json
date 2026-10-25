@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "status": "FAIL",
+  "decision": "REJECT_CANDIDATE_PENDING_GUARD_FIX",
+  "candidate_commit": "017bd30c33f88c2e4bed8fb03e910ee1cde6f7db",
+  "candidate_tree": "7f9ce60cc681937681d96cc88b90da7ff3f92e33",
+  "author_cli_cases": {"command": "python3 ops-drop-staging/test_drop_staging.py", "result": "PASS", "tests": 8},
+  "findings": [
+    {
+      "id": "OPS-STAGING-001",
+      "severity": "high",
+      "status": "fail",
+      "summary": "ACTIVE/LEASE protected path components are not guarded",
+      "source": "ops-drop-staging/drop_staging.py:429-437",
+      "evidence": "Private CLI controls removed parent/ACTIVE/staging, parent/active/staging, parent/LEASE/staging, and parent/lease/staging; only parent/KEEP is checked and the target-root marker is excluded from rglob."
+    },
+    {
+      "id": "OPS-STAGING-002",
+      "severity": "critical",
+      "status": "fail",
+      "summary": "Preflight worker identity is not bound through execute; replacement worker can be removed",
+      "source": "ops-drop-staging/drop_staging.py:363-385, 642-689",
+      "evidence": "Private direct control preflighted worker w, renamed it to original-w, created a different valid worker at w, then called execute(preflight). Candidate returned packed, removed replacement w/staging, and left original-w/staging intact."
+    },
+    {
+      "id": "OPS-STAGING-003",
+      "severity": "high",
+      "status": "fail",
+      "summary": "lstat-then-open hashing permits symlink substitution during traversal and evidence verification",
+      "source": "ops-drop-staging/drop_staging.py:220-235, 272-360",
+      "evidence": "Private control swapped a regular staging file to a symlink from the lstat/hash boundary; _safe_walk returned the outside file's SHA-256 with no refusal. The same pattern exists in _verify_evidence via read_text and _sha256_file."
+    },
+    {
+      "id": "OPS-STAGING-004",
+      "severity": "high",
+      "status": "fail",
+      "summary": "Symlinked manager lease path is silently ignored",
+      "source": "ops-drop-staging/drop_staging.py:182-199",
+      "evidence": "Private CLI control created ORCH/managers as a symlink to an external manager tree containing runtime/notes/runtime.lease naming worker w; candidate packed and removed staging instead of refusing."
+    }
+  ],
+  "scope_limits": [
+    "No real worker was removed or archived.",
+    "No live installation, publication, network acquisition, full suite, browser, socket, provider body, child request, or D130 work was performed."
+  ]
+}

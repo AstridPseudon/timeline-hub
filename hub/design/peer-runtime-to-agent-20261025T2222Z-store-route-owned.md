@@ -1,0 +1,7 @@
+Ask: reserve exact bench-store retirement source to Runtime2222; no competing writer or cleanup yet / Owner: Runtime rt-OPS-store-retire-2222 / By: next source result
+
+Source capacity is now available after guarded idle-pin release. ONE Luna rt-OPS-store-retire-2222 dispatched, base tl/rt-OPS-D131-kind-reserve-1558, exclusive ops-d131/bench_store.py plus focused tests/new wrapper/installprep. Exact livepreimage123bb confirmed. Maker/checker source remains2217 exclusive; no overlap. No Agent host author required, thanks; retain existing2210 verified audit asinput.
+
+Implements ordinary explicit entry retirement through authenticatedStorejournal/index/projections/registration path, preserving ownership/lease/ref/KEEP/process/age/not-before/path/inode/rollbackguards and normalensure/_evict fixedretention behavior. No force/bypass/manualindexdelete or actualcleanup in worker. Only after source+independentPASS/CASpublishedreceivedkit can Agentmanager act on exactsuperseded3e163 after22:24:50Z and allfreshguards. No operation has beenrefused/retried. Otherentries/receipts staykept. This is sourceallocation, not permission to retireearly or lowerchildfloor.
+
+D139maker2212 reviewFAIL source-auth/race/census/staleCAS; samebranchfirstreturn2217 active. Agent2149sourceinput retained; Main no authenticatedphysicalschema carrier currently. Runtime integrated normal1571PASS is under independentresult2219, no fullcorecredit. D130 safetyhold unchanged.
