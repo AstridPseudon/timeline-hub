@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T22:54:07Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 20 | status age 0m -->
+<!-- main | 2026-10-25T22:58:49Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 17 | status age 3m -->
 # runtime board, 2026-10-25T22:50:33Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -511,7 +511,7 @@
 
 | D139-schema-input | Implement approved pinned installed input | Luna / independent Luna | Final joined source and installation | review | Maker2239; security2250 PASS | Exact18 RECORD/12 hashes;57 focused PASS. Both source components qualified; join2300 active. No real child or installation. | Independent2250 PASS | Candidatefd83 reviewed |
 
-| F-final-D139a-notes | Record installed schema provenance | Luna | Recorded D139a condition5 | doing | rt-F-D139a-schema-notes-2255 | Minimal actual delivery prose update; predecessor/CAS/render proof required. No child, build or ZIP claim. | D56 author prose verification | Pending |
+| F-final-D139a-notes | Record installed schema provenance | Luna | Actual delivery rendering verified | merged | rt-F-D139a-schema-notes-2255 | Two actual documents installed; outside bytes, backups, CAS, modes and real renderer PASS. [Receipt](../../design/rt-F-D139a-schema-notes-2255-receipt.json). | D56 author prose proof | Installed docs |
 
 | D139a-source-join | Join exact reviewed recipe components | Luna | Independent checker and maker PASS | doing | rt-OPS-D139a-reviewed-join-2300 | Exact five maker files onto checker; final manifest and combined controls. No install or child. | Final independent review next | Private candidates |
 | D136c-safe-refusal | Add safe physical-observation diagnostics | Luna, owner D136c | D139a combined source qualified | gated:D139a-source | Not dispatched before recipe | Safe flags and ordinals only; refusal decision unchanged. Independent privacy review then App sole original9. | Review required | No source change |
@@ -525,13 +525,13 @@ Blockers: D73 receiving — exactafda6 independent2209 sourcePASS. Genuine manif
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after automatic classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
 Runtime integrated proof: actual9082 PASS1571 onf103/Agent4c,raw0; independent2219 PASS verifies source and durable XML. Historical1341 errors retained; no full suite or gate credit.
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tupleP1-P5, wheel, Windows and ZIP remain owed.
-Next ready: independent staging2223 review at terminal; child2228 and Store2228 security reviews active. D77 complete inventory qualified, deployment still gated on inputs and finite peak.
+Next ready: final joined recipe review at2300 terminal, then CAS installer and D136c source author. Store Sol2253 returns correction or finite UNAPPLIED. Staging held; no duplicate body.
 D100: candidate27 PASS; original9 on latest20db is nine setup errors at missing authenticated physical observation. Sole App2144 wholepath active. No release, fixture rewrite or unchanged repeat.
 Element: D127d UNAPPLIED; offline warm123ms/synthetic267ms did not reproduce live delay. Full-path return2143 stopped under new D127e. Read-only Luna2153 includes Agent provider; independent2202 PASS source facts only. D112 path static candidate is held, not proved waiter. Actual32016/15200 boundaries only;10721 request2 is NOT element. No further profile body.
 Delivery: prepared joins merge now under D139; second upstream merge at final D59 cut. Farm old union harness STOPPED. D77 final merged tuple inputs remain incomplete.
 Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and byte-exact handbacks only. No product/test/generated/pin/Git internals/credentials mutation.
 Disk:4.617GB before read-only review2202. Five unused clean pins released after full audit; a30e,369f,c916 plus b742,d4ba. Latest two net191MB. All branches and evidence retained. Source cap3/floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and compressed7 logs. Registered pins and protected test KEEP remain.
-live3 / cap6; ready-undispatched0. Recipejoin2300, StoreSol2253 and D139a notes2255 active. Fresh5.11GB; no heavy body. D136c gated until recipe source qualified.
+live2 / cap6; ready-undispatched0. Recipejoin2300 and StoreSol2253 active. Fresh5.11GB; no heavy body. D139a notes installed; D136c brief prepared, gated until recipe source qualified.
 INBOX consumed through1651445 bytes including ownerD136c priority and Main2233 supporting-only routing disposition. App2231 is sole producer reader. LaterAgent2224 source/review overlap alreadyaskedstop; earlierMainStore owner22:21:24 and current2241 remainsoleintake. Agent laterStore2224 overlaps earlierMain2222 actual22:21:24; normal stop requested by peer2234, earlierMainfirstreturn2235 remains sole owner. Round continues from terminal receipts.
 
 Model rule: owner2250 requires hard=<actual reason> in every new Sol worker meta; otherwise Luna. D136b2233 owner HARD and census2238 second-Luna-failure reasons recorded. Staging next round Luna per owner.

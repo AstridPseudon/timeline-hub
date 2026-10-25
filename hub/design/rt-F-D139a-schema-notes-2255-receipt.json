@@ -1,0 +1,59 @@
+{
+  "schema": "rt-f-delivery-prose-install-receipt-v1",
+  "worker": "rt-F-D139a-schema-notes-2255",
+  "installed_utc": "2026-10-25T22:51:43Z",
+  "source": {
+    "decision": "runtime-20261025T2234Z-D139-schema-supported-input.resolved.md",
+    "worker_note": "rt-OPS-D139a-installed-schema-2239/evidence/zip-note.md",
+    "agent_2214": "design/agt-F-D139-schema-carrier-return-2214-source-manifest.json",
+    "agent_2218": "design/agt-F-D139-schema-carrier-review-2218-report.md",
+    "provenance": "authenticated installed banodoco-timeline-schema==0.0.2; ArtAgents 242f9c4306bf3b501222cb041a9eb246ef47bc85; packages/timeline-schema/python",
+    "record_closure": "18 rows: 12 hashed and six named standard unhashed rows",
+    "source_tree_tie": "UNAVAILABLE: no genuine pinned object was held; no acquisition occurred",
+    "fresh_source_build": false
+  },
+  "paragraph": {
+    "sha256": "8ca0cbd13f43783eec7b91e317e7bbe74355c2e9b5fefbc7f9861c62ec7d6cf1",
+    "bytes": 1205,
+    "count_per_input": 1
+  },
+  "builder": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "active_process_at_cas": false,
+    "render_check": "render_readme controlled four-repository stub; PASS; exact paragraph twice; no unresolved placeholders; balanced fences; links check passed"
+  },
+  "targets": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "predecessor_sha256": "df9b4a622fddcb570a6919f4ff1dfd793f2929f0db87bb9aa55f3b529eba79b9",
+      "candidate_sha256": "ffe1da575b397629f301c3b8043bc1cc7ed8d6f17fde0505b0bdc0c4fffded51",
+      "installed_sha256": "ffe1da575b397629f301c3b8043bc1cc7ed8d6f17fde0505b0bdc0c4fffded51",
+      "predecessor_backup": "evidence/predecessor-README.md",
+      "mode": "0644",
+      "bytes": 25537,
+      "outside_bytes_equal": true
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "predecessor_sha256": "5661b6b698620bb6a486fad9677d2dad7117646a2723845f389a73dd40b63b8e",
+      "candidate_sha256": "1d47199bcadb6d463ed94cb5e41a5a9845a167dacdea3ce8aaa6ab26d4a49835",
+      "installed_sha256": "1d47199bcadb6d463ed94cb5e41a5a9845a167dacdea3ce8aaa6ab26d4a49835",
+      "predecessor_backup": "evidence/predecessor-gates.md",
+      "mode": "0644",
+      "bytes": 14970,
+      "outside_bytes_equal": true
+    }
+  },
+  "installation": {
+    "method": "predecessor hash/mode/process guard; same-directory temporary candidates; atomic rename",
+    "cas_predecessor_match": true,
+    "original_modes_preserved": true,
+    "no_builder_or_source_drift": true,
+    "no_product_or_test_changes": true,
+    "actual_child": "not claimed",
+    "core_suite": "not claimed",
+    "render_or_zip": "not claimed",
+    "maker_candidate": "111171 bytes, fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5; awaits security review 2250 and CAS"
+  }
+}
