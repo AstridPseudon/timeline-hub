@@ -1,0 +1,7 @@
+result	path	detail
+PASS	tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py	functions=9	bytes=10928
+PASS	tests/editing_conformance/test_commit_runtime_scalar.py	functions=1	bytes=4919
+PASS	tests/sdk/test_timeline_clip_scalar_provider.py	functions=7	bytes=7839
+PASS	tests/sdk/test_timeline_commit_provider_scalar.py	functions=16	bytes=17326
+PASS	tests/editing_conformance/test_historical_shared_redo_authority.py	functions=13	bytes=15589
+PASS	tests/sdk/test_timeline_commit_graph_roots.py	functions=14	bytes=11551

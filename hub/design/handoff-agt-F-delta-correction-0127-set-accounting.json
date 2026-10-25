@@ -1,0 +1,22 @@
+{
+  "first_subset_eligible": 289,
+  "first_subset_excluded_numeric9": 9,
+  "historical0118": 13,
+  "later_delta_held_scalar11": 11,
+  "original550": 550,
+  "original550_remainder_after_historical0118_delta": 537,
+  "prior0055": 298,
+  "qualification_note": "Counts are derived from exact canonical sets and direct row counts; no sum is used as proof.",
+  "schema": "astrid.timeline.incremental-successor-set-accounting/v1",
+  "set_checks": {
+    "all_original550_rows_preserved": true,
+    "first_subset_disjoint_later_delta": true,
+    "first_subset_disjoint_successor": true,
+    "first_subset_exact_difference_prior_minus_numeric9": true,
+    "historical13_exact_union_graph2_scalar11": true,
+    "later_delta_exact_scalar11": true,
+    "prior0055_unique": true,
+    "successor_exact_graph2": true
+  },
+  "successor_eligible_graph2": 2
+}

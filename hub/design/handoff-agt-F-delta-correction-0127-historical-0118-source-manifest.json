@@ -1,0 +1,125 @@
+{
+  "schema": "astrid.timeline.incremental-followup-input/v1",
+  "task": "F-D89",
+  "generated_at_utc": "2026-10-25T01:18:00Z",
+  "actual_home": {
+    "path": "/home/user/work/agent",
+    "branch": "tl/integration",
+    "commit": "219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b",
+    "tree": "9d26efc30836abb7ae3a19882e6e917405db2f89",
+    "parents": [
+      "0ae146e1b0acc6e4a82ba6b4f905d88bad48320c",
+      "fa81e23749d7a7c58a386dc0ce11ce058d359047"
+    ],
+    "matches_worker_head": true
+  },
+  "worker_head": {
+    "path": "/home/user/work/wt/agt-F-incremental-delta-0118",
+    "branch": "tl/agt-F-incremental-delta-0118",
+    "commit": "219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b",
+    "tree": "9d26efc30836abb7ae3a19882e6e917405db2f89",
+    "parents": [
+      "0ae146e1b0acc6e4a82ba6b4f905d88bad48320c",
+      "fa81e23749d7a7c58a386dc0ce11ce058d359047"
+    ]
+  },
+  "runtime_input": {
+    "release_commit": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de",
+    "status": "released",
+    "harness_commit": "766fd6700c3128ea9fc833086a517de2acb535e2",
+    "harness_note": "product-identical harness only; not the release identity"
+  },
+  "dependency_hashes": {
+    "path": "dependency-hashes.tsv",
+    "count": 1932,
+    "method": "all tracked Python source under astrid/ and tests/ hashed from current Agent HEAD; no dynamic resource or runtime proof inferred"
+  },
+  "readonly_context": {
+    "app_commit": "18de74bd43bab71d11188054bd3035016b37ceaa",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "original550": {
+    "rollup_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-rehearsal-rollup-return-2320-rehearsal-rollup.tsv",
+    "record_count": 550,
+    "sha256": "5fdefc7f09ec13f2cdf16f3c870a114e9c7097a224afd6127ea8b2f370d87722"
+  },
+  "prior_packet": {
+    "packet": "handoff-agt-F-incremental-0055",
+    "selector_count": 298,
+    "membership_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-incremental-0055-membership.tsv",
+    "source_manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-incremental-0055-source-manifest.json"
+  },
+  "delta": {
+    "eligible_records": 13,
+    "scalar_records": 11,
+    "graph_records": 2,
+    "original298_overlap": 0,
+    "union_if_applied": 311,
+    "retained_original550_remainder": 537,
+    "cli_trim3_included": false,
+    "p4_or_qualified_r2_included": false,
+    "held_families_excluded": [
+      "owned-move",
+      "compound/recipe",
+      "newSolCandidate",
+      "cli-trim3"
+    ],
+    "selectors_file": "selectors.txt",
+    "membership_file": "membership-delta.tsv",
+    "dispositions_file": "dispositions.tsv"
+  },
+  "source_files": [
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py",
+      "sha256": "3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee",
+      "family": "scalar11",
+      "qualification": "protected PASS + merged"
+    },
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_scalar.py",
+      "sha256": "691046ff5ac6919746c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+      "family": "scalar11",
+      "qualification": "protected PASS + merged"
+    },
+    {
+      "path": "tests/sdk/test_timeline_clip_scalar_provider.py",
+      "sha256": "1428644d1f81787cbb283f5bfe8eab0b717970928ab46ccd3ccf5ae109e1888c",
+      "family": "scalar11",
+      "qualification": "protected PASS + merged"
+    },
+    {
+      "path": "tests/sdk/test_timeline_commit_provider_scalar.py",
+      "sha256": "15b731bc8598c83639e12110a042b1b2ac9f31ba44cf25883a18a0bbe7b656ea",
+      "family": "scalar11",
+      "qualification": "protected PASS + merged"
+    },
+    {
+      "path": "tests/editing_conformance/test_historical_shared_redo_authority.py",
+      "sha256": "10030e11d52cce3ce93ebf15ebeec202c0855c375e61083a33754915d4beedb2",
+      "family": "graph-redo2",
+      "qualification": "SOURCE_EXACT"
+    },
+    {
+      "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+      "sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "family": "graph-redo2",
+      "qualification": "SOURCE_EXACT"
+    }
+  ],
+  "review_receipts": {
+    "scalar_author_candidate": "fa81e23749d7a7c58a386dc0ce11ce058d359047",
+    "scalar_author_parent": "f2def38890237646943fdad185d0b21d1d7f9938",
+    "scalar_merge_receipt": "219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b",
+    "scalar_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-review-batchA-0107.md",
+    "graph_source_exact_worker": "tl/agt-F-graph-redo2-0112",
+    "graph_source_exact_head": "219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b",
+    "graph_source_exact_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-graph-redo2-0112/report.md",
+    "graph_prior_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-graph-root-diagnosis-2306/report.md",
+    "cli_trim3_review_required": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-F-cli-trim-review-0112.md"
+  },
+  "behavior_status": {
+    "scalar": "previous protected source PASS; current MAIN behavior pending",
+    "graph": "previous SOURCE_EXACT; current behavior pending; no functional PASS inferred"
+  },
+  "c0_v2_shape_preserved": true
+}
