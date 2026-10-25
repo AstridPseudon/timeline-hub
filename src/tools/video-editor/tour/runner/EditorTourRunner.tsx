@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { EDITOR_TOUR_ANCHORS, EDITOR_TOUR_TRACK_IDS, editorTourSelector, editorTourTrackSelector } from '../anchors';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
-import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
+import { getEditorTourState, useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
 import { TourCard } from '../card/TourCard';
 import { TourSpotlight } from './TourSpotlight';
 import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
@@ -46,14 +46,18 @@ export function EditorTourRunner() {
   return createPortal(<RunningTour />, document.body);
 }
 
-/** Leaving the page mid-tour ends it. Deferred a tick so a StrictMode remount does not. */
+/** Leaving the page mid-tour ends that run. Defer to survive StrictMode replay and guard replacement runs. */
 function useEndTourOnUnmount(): void {
   const mounted = useRef(false);
   useEffect(() => {
+    const runId = getEditorTourState().runId;
     mounted.current = true;
     return () => {
       mounted.current = false;
-      setTimeout(() => { if (!mounted.current) finishEditorTour(); }, 0);
+      setTimeout(() => {
+        const current = getEditorTourState();
+        if (!mounted.current && current.runId === runId) finishEditorTour();
+      }, 0);
     };
   }, []);
 }

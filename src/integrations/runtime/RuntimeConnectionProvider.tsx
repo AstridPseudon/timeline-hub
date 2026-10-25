@@ -17,11 +17,11 @@
  * state is sticky: a Runtime that stops later shows a recovery card, keeping the editor and its unsaved work mounted.
  *
  * The first connection also marks this browser as one that chose the app (`rememberAppEntryPreference`), so the next
- * visit to the bare domain skips the landing page. The gate only exists on the hosted build, so a same-origin build
- * never sets it.
+ * visit to the bare domain skips the landing page. The default app gate is hosted-only; welcome can also opt into a
+ * same-origin reachability gate.
  *
- * Same-origin builds (no `VITE_RUNTIME_ORIGIN`: local dev, Plan B's relay) are not gated. `gated` is false, nothing
- * is probed, and the gate renders its children at once.
+ * Same-origin builds (no `VITE_RUNTIME_ORIGIN`: local dev, Plan B's relay) are not gated by default. The welcome
+ * handoff opts into a reachability gate through the same-origin server proxy, without querying local-network permission.
  *
  * The panel and pill are render props with a placeholder default each, so the real ones are plugged in here and
  * `Layout.tsx` is not edited again.
@@ -33,6 +33,7 @@ import { rememberAppEntryPreference } from '@/app/entryClassification';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 import {
   queryLocalNetworkPermission,
+  requiresLocalNetworkPermission as needsLocalNetworkPermission,
   watchLocalNetworkPermission,
   type LocalNetworkPermissionState,
   type PermissionsLike,
@@ -137,7 +138,7 @@ function writeConnectedBefore(): void {
 }
 
 export interface RuntimeConnectionValue {
-  /** True on the hosted build (a Runtime origin is configured). False means same-origin: nothing is probed. */
+  /** True when the app waits for a confirmed Runtime connection before mounting its children. */
   gated: boolean;
   state: RuntimeConnectionState;
   isConnected: boolean;
@@ -168,6 +169,8 @@ export interface RuntimeConnectionProviderProps {
   children: React.ReactNode;
   /** Override for tests; defaults to "a Runtime origin is configured". */
   gated?: boolean;
+  /** Whether a gated connection waits for the browser's local-network permission; inferred from page/runtime origins. */
+  requireLocalNetworkPermission?: boolean;
   /** Override for tests; defaults to `navigator.permissions`. */
   permissions?: PermissionsLike;
   /** Override for tests; defaults to `fetch`. */
@@ -180,18 +183,24 @@ export interface RuntimeConnectionProviderProps {
 export function RuntimeConnectionProvider({
   children,
   gated = runtimeOrigin() !== '',
+  requireLocalNetworkPermission = gated && needsLocalNetworkPermission(
+    runtimeOrigin(),
+    typeof window === 'undefined' ? '' : window.location.origin,
+  ),
   permissions,
   fetchImpl,
   pollIntervalMs = POLL_INTERVAL_MS,
   onConnected,
 }: RuntimeConnectionProviderProps) {
-  const [permission, setPermission] = useState<LocalNetworkPermissionState | null>(null);
+  const [permission, setPermission] = useState<LocalNetworkPermissionState | null>(
+    () => gated && requireLocalNetworkPermission ? null : 'granted',
+  );
   const [outcome, setOutcome] = useState<RuntimeProbeOutcome | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [localServiceOutOfDate, setLocalServiceOutOfDate] = useState(false);
   const [failedReadings, setFailedReadings] = useState(0);
   const [scenario] = useState(detectInstallScenario);
-  const canConnect = scenario === 'chromium';
+  const canConnect = !requireLocalNetworkPermission || scenario === 'chromium';
   const [connectedBeforeAtMount] = useState(() => !gated || readConnectedBefore());
 
   const mounted = useRef(true);
@@ -218,7 +227,10 @@ export function RuntimeConnectionProvider({
 
   // The permission, and every change the browser reports to it.
   useEffect(() => {
-    if (!gated || !canConnect) return undefined;
+    if (!gated || !requireLocalNetworkPermission || !canConnect) {
+      if (gated && !requireLocalNetworkPermission) setPermission('granted');
+      return undefined;
+    }
     let cancelled = false;
     let unwatch: () => void = () => {};
     void (async () => {
@@ -237,7 +249,7 @@ export function RuntimeConnectionProvider({
       cancelled = true;
       unwatch();
     };
-  }, [gated, canConnect, permissions]);
+  }, [gated, requireLocalNetworkPermission, canConnect, permissions]);
 
   const runProbe = useCallback(async function runProbe(untimed: boolean, explicit = false) {
     if (explicit && inFlight.current && inFlight.current === slowProbe.current) {
@@ -277,12 +289,12 @@ export function RuntimeConnectionProvider({
       setFailedReadings((previous) => result.kind === 'connected' ? 0 : previous + 1);
     }
     setOutcome(result);
-    if (result.kind !== 'connected' && permissionRef.current !== 'granted') {
+    if (requireLocalNetworkPermission && result.kind !== 'connected' && permissionRef.current !== 'granted') {
       // A denied fetch looks like nothing listening, so the permission is the only way to tell them apart.
       const current = await queryLocalNetworkPermission(permissions);
       if (mounted.current) setPermission(current);
     }
-  }, [fetchImpl, permissions]);
+  }, [fetchImpl, permissions, requireLocalNetworkPermission]);
 
   const isConnected = outcome?.kind === 'connected';
 
@@ -361,8 +373,8 @@ export function RuntimeConnectionProvider({
       return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, realmName: outcome.realm.display_name, schemaDigest: outcome.schemaDigest };
     }
     const notConnected = { ...base, isConnected: false, realmName: null, schemaDigest: null };
-    if (scenario === 'mobile') return { ...notConnected, state: { status: 'phone' }, isBooting: false };
-    if (scenario === 'unsupported' || permission === 'unsupported') return { ...notConnected, state: { status: 'unsupported' }, isBooting: false };
+    if (requireLocalNetworkPermission && scenario === 'mobile') return { ...notConnected, state: { status: 'phone' }, isBooting: false };
+    if (requireLocalNetworkPermission && (scenario === 'unsupported' || permission === 'unsupported')) return { ...notConnected, state: { status: 'unsupported' }, isBooting: false };
     if (permission === null) return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
     if (permission === 'denied') return { ...notConnected, state: { status: 'blocked' }, isBooting: false };
     if (permission === 'prompt') return { ...notConnected, state: { status: 'needs_permission' }, isBooting: false };
@@ -375,7 +387,7 @@ export function RuntimeConnectionProvider({
       };
     }
     return { ...notConnected, state: { status: 'connecting' }, isBooting: outcome === null };
-  }, [gated, outcome, permission, isChecking, connectedBeforeAtMount, connect, failedReadings, scenario, localServiceOutOfDate]);
+  }, [gated, requireLocalNetworkPermission, outcome, permission, isChecking, connectedBeforeAtMount, connect, failedReadings, scenario, localServiceOutOfDate]);
 
   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;
 }

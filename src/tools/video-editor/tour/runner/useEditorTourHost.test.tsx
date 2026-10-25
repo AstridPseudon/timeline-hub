@@ -2,6 +2,7 @@
 
 import { act, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { StrictMode } from 'react';
 import { exitEditorTour, getEditorTourState, markEditorTourReady, startEditorTour } from '@/shared/state/editorTourStore';
 import { EditorTourSlot } from '../timeline/editorTourSlot';
 import { useEditorTourHost } from './useEditorTourHost';
@@ -65,5 +66,34 @@ describe('useEditorTourHost', () => {
     expect(enter.defaultPrevented).toBe(true);
     expect(getEditorTourState()).toMatchObject({ act: 1, beat: 'compose' });
     unmount();
+  });
+
+  it('does not let a deferred unmount from an old runner finish a replacement run', async () => {
+    const first = render(<Page />);
+    act(() => startEditorTour());
+    await waitFor(() => expect(document.querySelector('[data-editor-tour-shield]')).not.toBeNull());
+    const firstRunId = getEditorTourState().runId;
+    first.unmount();
+
+    const second = render(<Page />);
+    act(() => startEditorTour());
+    await waitFor(() => expect(document.querySelector('[data-editor-tour-shield]')).not.toBeNull());
+    expect(getEditorTourState().runId).toBeGreaterThan(firstRunId);
+
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    expect(getEditorTourState().status).toBe('running');
+    second.unmount();
+  });
+
+  it('preserves StrictMode effect replay and finishes on the real unmount', async () => {
+    const view = render(<StrictMode><Page /></StrictMode>);
+    act(() => startEditorTour());
+    await waitFor(() => expect(document.querySelector('[data-editor-tour-shield]')).not.toBeNull());
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    expect(getEditorTourState().status).toBe('running');
+
+    view.unmount();
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    expect(getEditorTourState().status).toBe('idle');
   });
 });

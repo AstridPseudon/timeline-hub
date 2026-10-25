@@ -16,7 +16,7 @@ vi.mock('./BrowserTourEditor', () => ({ BrowserTourEditor: ({onFinish}: {onFinis
   }, [onFinish]);
   return <><h1>Welcome to Astrid</h1><button onClick={finishEditorTour}>Skip</button><button onClick={() => { setEditorTourBeat(3, 'feedback'); finishEditorTour(); }}>Done</button></>;
 } }));
-vi.mock('./WelcomeConnection', () => ({ default: () => { spies.connected(); return <h1>Connect your machine</h1>; } }));
+vi.mock('./WelcomeConnection', () => ({ default: ({ onBack }: { onBack: () => void }) => { spies.connected(); return <><h1>Connect your machine</h1><button onClick={onBack}>Back</button></>; } }));
 vi.mock('./WelcomeRunMode', () => ({ WelcomeRunMode: ({ onContinue, runMode, setRunMode }: { onContinue: (phase: 'local' | 'connection') => void; runMode: 'hosted' | 'local'; setRunMode: (mode: 'hosted' | 'local') => void }) => <><h1>How do you want to run Astrid?</h1><button onClick={() => onContinue('connection')}>Connect</button><button onClick={() => { setRunMode('local'); onContinue('local'); }}>Local</button><span>{runMode}</span></> }));
 vi.mock('./WelcomeLocalSetup', () => ({ WelcomeLocalSetup: ({ onBack }: { onBack: () => void }) => <><h1>Have your agent set it up</h1><button onClick={onBack}>Back</button></> }));
 import { WelcomeFlow } from './WelcomeFlow';
@@ -56,6 +56,18 @@ it('moves from the choice to local setup or connection and back', async () => {
   fireEvent.click(screen.getByText('Connect'));
   expect(await screen.findByText('Connect your machine')).toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');
+});
+
+it('returns from connection to the saved hosting choice', async () => {
+  render(<WelcomeFlow entry="choose" />);
+  fireEvent.click(screen.getByText('Connect'));
+  expect(await screen.findByText('Connect your machine')).toBeInTheDocument();
+  expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');
+
+  fireEvent.click(screen.getByText('Back'));
+  expect(await screen.findByText('How do you want to run Astrid?')).toBeInTheDocument();
+  expect(screen.getByText('hosted')).toBeInTheDocument();
+  expect(localStorage.getItem('astrid:welcome-v1')).toBe('choose');
 });
 
 it('returns from the local screen with local selected, including after loading that phase directly', async () => {
