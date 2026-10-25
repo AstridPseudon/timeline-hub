@@ -187,8 +187,10 @@ export function createTimelineLocalSaveHandoff(options: {
         schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
         args: { publications: [target] },
       };
+      // Native inverse guards come from authenticated publications, with no
+      // additional caller reads beyond the target operand.
       await options.session.append({ before, after: before,
-        label: `${kind === 'undo' ? 'Undo' : 'Redo'} timeline`, commands: [command] });
+        label: `${kind === 'undo' ? 'Undo' : 'Redo'} timeline`, commands: [command], reads: [] });
       await handoff.flush();
     } finally {
       inversePending = false;
