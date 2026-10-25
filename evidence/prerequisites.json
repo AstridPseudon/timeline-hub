@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.d140.farm-prerequisites/v1",
+  "status": "NOT_READY",
+  "observed_mode": "source-only check-only census; Farm venue not authenticated",
+  "source_tuple": {
+    "agent": {"commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa", "checkout": "/home/user/work/agent", "checkout_status": "STALE_547e1045_OBJECT_PRESENT"},
+    "runtime": {"commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883", "checkout": "/home/user/work/runtime", "checkout_status": "PASS"},
+    "app": {"commit": "5696769dfca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a", "checkout": "/home/user/work/app", "checkout_status": "PASS"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/composition", "checkout_status": "PASS"}
+  },
+  "required_bindings": {
+    "source_checkouts": "FARM_SOURCE_RECEIPT_REQUIRED",
+    "normal_interpreter": "MISSING",
+    "normal_bootstrap": "MISSING",
+    "dependency_seed": "MISSING",
+    "schema_installed_distribution": "MISSING",
+    "schema_trusted_manifest": "MISSING",
+    "schema_record_closure": "MISSING",
+    "schema_direct_url": "MISSING",
+    "received_maker_0755": "MISSING",
+    "central_service": "MISSING",
+    "central_suite": "MISSING",
+    "d73_launcher": "SOURCE_HASH_VERIFIED / FARM_PATH_MISSING",
+    "node_20_19_4": "MISSING_FARM_BINDING",
+    "profile": "MISSING",
+    "d73_manifest": "MISSING",
+    "d73_evidence": "MISSING",
+    "retained_root": "MISSING",
+    "disk_admission": "MISSING",
+    "output_roots": "MISSING",
+    "normal_request_route": "MISSING",
+    "import_check_route": "MISSING",
+    "d73_dry_route": "MISSING",
+    "core_route": "MISSING",
+    "positive_control_and_counter": "MISSING",
+    "poison_control_and_counter": "MISSING",
+    "current_authenticated_farm_receipts": "MISSING"
+  },
+  "side_effects": {
+    "child": false,
+    "pytest": false,
+    "installer": false,
+    "import": false,
+    "store": false,
+    "queue": false,
+    "provider": false,
+    "package_acquisition": false
+  },
+  "owners": ["Farm receiving owner", "Farm source owner", "D139a schema owner", "D73 launcher/profile owner", "central test service owner"],
+  "next": "Do not proceed to request-child-venv until every missing binding has an authentic receipt. Then run commands.md exactly once in order."
+}

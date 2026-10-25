@@ -1,0 +1,17 @@
+{
+  "schema": "timeline.d140.farm-controls/v1",
+  "status": "SOURCE_CONTROLS_READY_BODY_NOTRUN",
+  "private_controls": [
+    {"id": "argv", "asserts": ["only --check-only accepted", "unknown modes refuse", "no body route in receiver"], "result": "PASS_SOURCE"},
+    {"id": "source", "asserts": ["exact commits/trees/origins", "clean exact checkout required", "read-only object presence", "blob and sha256 identity for lock/client/schema/launcher/suite"], "result": "PASS_SOURCE"},
+    {"id": "root-membership", "asserts": ["all Farm paths are explicit bindings", "physical path/no symlink checks", "outputs, JUnit, raw, start/stop and KEEP roots are named"], "result": "PASS_SOURCE"},
+    {"id": "schema", "asserts": ["D139a installed distribution route only", "18 RECORD rows", "12 hashed rows", "six named unhashed rows", "direct URL and trusted manifest required", "tree_tie remains UNAVAILABLE"], "result": "PASS_SOURCE"},
+    {"id": "classification", "asserts": ["canonical 1146 packet authenticated as 4c/ab1e", "mandatory and diagnostic classes stay distinct", "no current 41ad/f103 census hash claim"], "result": "PASS_SOURCE"},
+    {"id": "d73-positive", "asserts": ["stub exit 17", "one counter line"], "result": "SPECIFIED_NOTRUN"},
+    {"id": "d73-poison", "asserts": ["agent_sha all zeroes", "nonzero exit", "zero counter lines"], "result": "SPECIFIED_NOTRUN"},
+    {"id": "core", "asserts": ["existing launcher only", "unfiltered selector", "exactly 22 roots", "JUnit/raw/start-stop/disk/KEEP retained before cleanup"], "result": "SPECIFIED_NOTRUN"},
+    {"id": "wire", "asserts": ["C0 full request and accepted/merged/conflict/invalid/preview reply fields are documented"], "result": "PASS_SOURCE"}
+  ],
+  "actual_runs": {"check_only": "PASS_COMPLETE_NOT_READY", "positive_stub": "NOTRUN", "poison_manifest": "NOTRUN", "child_imports": "NOTRUN", "core": "NOTRUN"},
+  "suite_membership": "not counted; no expected PASS total invented"
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "timeline.d140.farm-missing-inputs/v1",
+  "status": "NOT_READY",
+  "inputs": [
+    {"id": "agent.clean-exact-checkout", "owner": "Farm source owner", "required": "clean checkout at 41ad656529fa8489829de9078b1b6e157c7433c8 / d29e47fe7be6e55940b42fa1477a23e7925f62fa", "observed": "Main /home/user/work/agent is 547e10456250c1b5bcf63b44a50c90ff0563ce1e; object present; no retarget performed"},
+    {"id": "schema.record-closure", "owner": "D139a schema owner / Farm venue", "required": "physical dist-info with exact 18-row RECORD, 12 hashed rows, six named unhashed rows", "observed": "EXACTMISSING on this venue; no oldvenv copy allowed"},
+    {"id": "schema.trusted-manifest", "owner": "D139a schema owner / Farm venue", "required": "physical trusted manifest for ArtAgents 242f9c4306bf3b501222cb041a9eb246ef47bc85 / 75a5a697f630affee40632e500b3f5b704a9b834", "observed": "MISSING"},
+    {"id": "farm.received-maker", "owner": "Farm receiving owner", "required": "actual received maker receipt, regular mode 0755", "observed": "MISSING"},
+    {"id": "farm.normal-venue", "owner": "Farm receiving owner", "required": "registered normal interpreter, bootstrap, dependency seed, retained disk/admission, output roots", "observed": "MISSING"},
+    {"id": "farm.d73-venue", "owner": "D73 launcher/profile owner", "required": "current tuple manifest, profile, Node v20.19.4, central service/suite and authenticated D73 evidence paths", "observed": "MISSING"},
+    {"id": "farm.controls", "owner": "D134 control owner", "required": "positive and poison parsed controls with fresh counters", "observed": "MISSING; no dry control run"},
+    {"id": "farm.receipts", "owner": "Farm receipt owner", "required": "current authenticated Agent/Runtime/App/Composition, D139a kit and D73 receipts", "observed": "MISSING; source hashes are not receipts"}
+  ],
+  "forbidden_substitutions": ["Main-only interpreter", "stale 547e Agent home", "arbitrary oldvenv", "alternate schema source", "package acquisition", "prior 403 retry", "external profile fallback", "guard loosening", "mutable silent recapture"],
+  "side_effects": "zero child/pytest/installer/import/Store/queue/provider/acquisition effects"
+}

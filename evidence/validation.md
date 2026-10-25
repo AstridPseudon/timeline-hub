@@ -1,35 +1,53 @@
-# D139a reviewed join validation
+# D140 Farm recipe validation
 
-## Source custody
+## Source and scope
 
-The worktree started exactly at bae2ba5ec66e6fb4115c2f79299f82f535e68bb1.
-Only the five paths from e9fdcfe299a20f1a137e0c87d2c0bf2de49f9e45 were
-imported. Each is byte-identical to the maker commit. The bae2 checker and
-`test_canonical_census.py` remain byte-identical. The final product source
-manifest is the only shared manifest update.
+The packet is source-only and contains no product, test, pin, kit, Store,
+queue, provider, collection, acquisition, or global-registry change. The
+existing D139a maker/checker/wrapper sources are consumed by hash; the new
+operational receiver is isolated under `ops-d140-farm/`.
 
-Candidate: `fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5`,
-111171 bytes, mode 0755. Required installed preimage:
-`f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f`,
-75541 bytes, mode 0755.
+Verified read-only source objects:
+
+- Agent `41ad656529fa8489829de9078b1b6e157c7433c8` / tree
+  `d29e47fe7be6e55940b42fa1477a23e7925f62fa`;
+- Runtime `f103bb46866999c961a8865636f2e66d544e0c9b` / tree
+  `5d0cedf2e5134acf895e8d43191cc5fdc09f9883`;
+- App `5696769dfca056676cde1ab46d8bc94354b3a44a` / tree
+  `0748df404125114a0f68b701fa76f43abd3fc79a`;
+- Composition `635f4de06fda22a85fc2e4cfc764d0153a4c9f40` / tree
+  `5ab5191a296980a0a6bcd1178ab6902d6478a148`.
+
+The actual Main Agent checkout remains stale at `547e1045`; it was not
+retargeted. The exact `41ad…` object is present and is recorded as a read-only
+source identity, not as an exact checkout receipt.
 
 ## Commands and results
 
 | Command | Result |
 | --- | --- |
-| `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m unittest discover -s ops-child-custody/tests -p 'test_*.py' -v` | PASS — 63 tests |
-| `/home/user/work/venv-agent/bin/ruff check --no-cache ops-child-custody/tests ops-child-custody/check-child-imports` | PASS — all checks passed |
-| `bash -n ops-child-custody/make-child-venv ops-child-custody/install-prep/apply-reviewed-maker.sh` | PASS |
-| seven embedded Python compile blocks with `/home/user/work/venv-agent/bin/python` | PASS — 7/7 |
-| `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -B ops-child-custody/install-prep/dry_run_controls.py` | PASS — private candidate/preimage/CAS/helper/shape controls |
-| exact canonical 1146-row CLI with `/home/user/work/venv-agent/bin/python` | EXPECTED status 1 — 1146 census rows, 22 attempted modules, 12 canonical missing names, 12 failures; no installed-distribution or child claim |
-| `/home/user/work/venv-agent/bin/python -m json.tool ops-child-custody/source-manifest.json` | PASS |
+| `bash -n ops-d140-farm/receive-farm.sh` | PASS |
+| `/home/user/work/venv-agent/bin/python - <<'PY' ... compile(test_recipe.py) ... PY` | PASS — in-memory compile |
+| `/home/user/work/venv-agent/bin/python -m pytest -q ops-d140-farm/test_recipe.py` | PASS — 4 tests |
+| `AGENT_CHECKOUT=/home/user/work/agent ... ops-d140-farm/receive-farm.sh --check-only` | PASS — complete JSON census; exit 1 because status is finite `NOT_READY` |
+| `/home/user/work/venv-agent/bin/python -m json.tool <check-only-output>` | PASS |
+| `/home/user/work/venv-agent/bin/ruff check --no-cache ops-d140-farm/test_recipe.py` | PASS |
 | `git diff --check` | PASS |
 
-The focused unittest command was run once on the joined source. The canonical
-CLI used the authenticated Agent2149 packet and `/usr/bin/python3.13` only as a
-supporting system probe; its all-missing result is intentionally not genuine
-child acceptance.
+The check-only run reported `NOT_READY`, 94 checks, 66 non-PASS checks, and
+named their owners. It confirmed the four source object identities,
+D139a maker `fd83…`, normal wrapper `60d223…`, checker `8215…`, launcher
+`9f668…`, client/schema/runtime-lock hashes and the supporting canonical
+1146-row packet. It found no Farm schema RECORD closure, received maker,
+registered child/interpreter/bootstrap, current D73 manifest/profile, central
+service, retained-disk admission, output roots, fresh controls, or current
+Farm receipts.
 
-No install, package acquisition, child request, provider, browser, Store,
-registry, suite, full suite, or Git mutation was run.
+The D73 positive/poison controls, registered child import census, and the
+22-root Agent core were not run. No full suite, browser, socket, Store,
+installer, package acquisition, or body was run. The 57-source-control result
+and the canonical `4c/ab1e` census are not a current `41ad/f103` Farm result.
+
+Acceptance must use the exact Agent Python and Ruff paths above. No external
+profile, alternate schema source, old tuple, prior failure, original9, D77
+render, or D130 route is admitted.
