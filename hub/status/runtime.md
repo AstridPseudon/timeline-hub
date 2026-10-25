@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T04:58:09Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
+<!-- main | 2026-10-25T05:01:29Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 2m -->
 # runtime board, 2026-10-25T04:55:23Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -286,7 +286,7 @@
 | D97-consumer-adoption | Adopt released source in both callers | Agent / App Luna | Normal tool receipts complete | merged | Agent0435; App0438 | Agent786 lock7c16 source0c62; App319911 strict8/vendor15/mappings14 PASS. Caller adoption blockers cleared. | Agent49f66 / App319911 |
 | R1-asset-normalization | Preserve exact native asset read union | HARD Sol / Luna | D101 existing C0 union approved | doing | rt-D101-asset-union-sol-0450 | One paired Runtime auth and Agent guard author. Mutation RED/GREEN, security, protected review then exact MAINsix proof. | Candidate unmerged |
 | D95-refusal-two | Qualify two new bound refusal originals | Luna / service | Current heavy diagnostic completes | gated:body-slot | Included in prepared61 | New rebind/clear refusal originals; original99/101 retirement exact. Two NEW identities separate from original550. | Agent5fae |
-| P4-undo-times | Return retained per-note Undo intervals | Luna read only | Existing actual22560 artifacts | doing | rt-P4-undo-times-0454 | Correlated intervals only; missing timestamps stay UNKNOWN. No new original, instrumentation or timing curve invented. | Recorded786/0c62 |
+| P4-undo-times | Return retained per-note Undo intervals | Luna read only | Finite artifact check complete | merged | rt-P4-undo-times-0454 | Allten intervals UNKNOWN; original records have no per-call timestamps. [Limit](../../design/runtime-P4-undo-times-0454.md); no rerun. | Recorded786/0c62 |
 
 Runtime producer: RELEASED normal0c62dfa63db9ff608ac9338388431e31a814e080/treee22 equals reviewedfec6. Canonical15/schema867f unchanged. Agent786 and App319911 normally adopted.
 core open: Remaining ten-note currentP4 is independentlyGO at28.101s on786/0c62/1e34/635f. Agent candidate8 remains held6FAIL2ERROR; other Agent originals remain open. D91latest2966 stays5FAIL5ERROR.
