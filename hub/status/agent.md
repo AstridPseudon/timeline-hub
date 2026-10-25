@@ -1,9 +1,9 @@
-<!-- agent | 2026-10-25T12:47:36Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 0m -->
+<!-- agent | 2026-10-25T12:51:20Z | dispatcher heartbeat 14s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 0m -->
 # agent board, 2026-10-25T12:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
-| U2 D123 | Refresh final patch onto upstream b742 | HARD Sol | Owner D123 scope | doing | Runtime rt-F-D123-Agent-join-sol-1212 | Sole earlier Runtime owner. Duplicate Agent1221 stopped; exact source checkpoint exported; no test or cut credit. | b742 base |
+| U2 D123 | Refresh final patch onto upstream b742 | HARD Sol | Owner D123 scope | doing | Runtime current resume requested1250 | Historical Runtime47f6 complete; current Agent80d185 WIP is distinct and preserved. Exact current refresh resume requested; review and tests owed. | b742 /80d185 WIP |
 | U4a | Adopt released Runtime output provenance | Luna | Runtime42aad | merged | agt-U4a-output-clean-import-1130 | Only lock changed;15 mappings exact; vendor, artifacts, compile and diff PASS. | 30caca3e23 |
 | R1 | Patches, reads and conflict semantics | Sol / Luna | C0 | merged | Original and later source owners | Historical scoped controls qualified; current core failures remain in measured cohorts below. | Original bac094;440cc |
 | R2 | Guarded inverse and step undo | Sol / Luna | R1 | merged | Original and later source owners | Historical controls and D110 ADD/SWAP PASS; held current restores remain separate. | Original0b8cb;070dfc |
@@ -15,9 +15,9 @@
 | P4 | Keep exact ten-note qualification | Luna / Service | Recorded tuple | merged | Runtime22560 and independent0450 | PASS28.101s versus45s; all per-note durations UNKNOWN. No repeat; final tuple gates still owed. | 786 /0c62 |
 | D108 core2016 | Retain original full checkpoint | Service / Luna | Exact original evidence | merged | Core0811 and classification0846 | 8763 PASS159 FAIL347 ERROR.506bad; source categories and corrected23-node comparison retained. | 070dfc /1daca |
 | D118 core30693 | Retain latest full checkpoint | Service / Luna | Independent1104 | merged | Core1024; classify1055; review1104 | 8823 PASS159 FAIL291 ERROR;450bad, core425, REG14. Summary ambienttree discrepancy resolved1111. | 120d /1daca |
-| D122 host14 | Repair genuine bootstrap regressions | HARD Sol / protected Luna | Core review1237 FAIL | doing | agt-D122-host14-origin-return-sol-1241 | Foreign Runtime package initializer bypass found; bounded source return assigned. Original14 unrun on21b; prior14 FAIL retained. | 21b held |
+| D122 host14 | Repair genuine bootstrap regressions | HARD Sol / protected Luna | Final source9ea675 | review | Origin return1241; final core1249 | Attack4 RED then focused24/isolation37 PASS. Final independent core/security active; original14 still owed. | 9ea67534f6 held |
 | D122 host whole path | Compare second failure to passing path | Luna read only | Second fix failed gate | merged | wholepath-return-1217 | New13117 all14 child ModuleNotFoundError runtime_protocol; terminal700 wrapper. Exact per-node stderr/source accounting retained. | Evidence only |
-| D122 product batch | Join reviewed product sources | Runtime Luna | Normal30caca and held donors | review | Ready normal return1232 | Exact reviewed producer,XML and atomic join onto normalf90e; excludes unqualified host deltas. Final own-only join then core before adoption. | Source pending |
+| D122 product batch | Join reviewed product sources | Runtime Luna | Farm core before release | merged | Ready normal return1232 | Exact six reviewed donor blobs homedb545; host source unchangednormal. Farm receives actualhead and mergedlist; no productrelease before core. | b545b616a4 |
 | D122 XML fixtures | Repair four installer setup failures | Runtime Luna / protected Luna | Independent1152 B PASS | review | XML1148 and clean1156 | Exact four own nodes PASS;108 assertions and authored inputs conserved. Exact clean join onto14c7 source qualified. | 04b7 held |
 | D122 R2 seed join | Bind reviewed seed to held restore | Runtime Luna / protected Luna | D116 exact source | review | Resume1202; protected1208 A | Exact c81b source PASS. Three originals unqualified; old44cf zero PASS and three setup ERROR retained. | c81b5737 held |
 | D116 current seed | Join genuine word baseline and full envelopes | App Luna / protected Luna | Protected1205 PASS_SOURCE | review | Join1204; review1205; batch receiver | Exact0643 donor-byte join qualified. Historical6 PASS2 recipe FAIL. Existing producer batch owns real raw/config seam. | 0643b073a2 held |
@@ -51,10 +51,10 @@
 | D118a track batch1 | Preserve parent track batch inverse | App Luna | Genuine current word seed | gated:word-source | app-D118a-track-batch1-1215 | No diff. Exact own1 setup ERROR at shared m1.film missing legacy word anchor. Inputs and grouping unchanged. | Source unchanged |
 
 | D124 shared product roots | Repair shared promotion, inverse and seed roots | HARD Sol | Owner D124 | doing | agt-D124-shared-custody-sol-1247 | One owner for auth2267,inverse1645/1755 and D116 raw/config; exact reviewed prerequisites first. No small file authors or guard relaxation. | Base3ab324 |
-| D124 Farm core | Measure reviewed merged batch | Farm service | Actual1232 normal receipt and authentic inputs | blocked:farm | Farm lead requested1245 | Current3ab supplied; pending1232 list explicit. One unfiltered core after actual final head; no local duplicate. | Head pending |
+| D124 Farm core | Measure reviewed merged batch | Farm service | Actual1232 normal receipt and authentic inputs | blocked:farm | Farm lead requested1245 | Actualb545 and exact1232 mergedlist published1251. Sole unfiltered Farm core requested; genuine inputs first, no local duplicate. | b545b616a4 |
 | D124 upstream host14 | Recheck pristine b742 behavior | Runtime Luna requested | Existing D123 source qualification | blocked:runtime | D123 owner requested1248 | Exact original14 on pristine b742 pair; genuine profile and source guards. No current-source repeat or gating retarget. | b742 base |
 
-Integration: normal Agent3ab324c891 contains reviewed sheet, WC6, video and Scene test changes plus normal Runtime42aad lock-only provenance. Agent product remains released070dfc. Held82b6/adcb/bae5 product changes are not adopted. Exact merge receipts are in queue/done and worker reports.
+Integration: normal Agentb545b616a4 contains reviewed sheet, WC6, video and Scene test changes plus normal Runtime42aad lock-only provenance. Released product remains070dfc pending Farm core. Reviewed82b6/installer/XML/atomic are now HOME inb545; unqualified hostdeltas remain held and are not adopted. Exact merge receipts are in queue/done and worker reports.
 
 core open: 425 on immutable30693. Confirmed regressions:14, all still open until original-node proof. Effective retirements added this batch:0. D107 ten remain held, not counted as closed. Historical550,267,276 and506 inventories remain distinct.
 
@@ -66,7 +66,7 @@ Blockers: Agent D69 — index90 genuine installed render and index107 held norma
 Blockers: Runtime D117a — exact authorized git source and installer integrity handoff; historical refusal retained. Genuine installed render NOTRUN.
 Blockers: Final cut — D123 fresh b742 patch, final tuple P1–P5, full core, D69 and render remain owed.
 
-Next ready: host origin source return1241 active after independent1237 FAIL; proof1248 stopped before execution. Runtime1232 no-host batch and exact D116/R2 source joins are owned; farm gets actual normal receipt before core. App nativebinding sole core review1221 active; no duplicate author.
+Next ready: host final core/security review1249 active on9ea675; proof1248 stopped before execution on21b. Runtime1232 no-host batch and exact D116/R2 source joins are owned; farm gets actual normal receipt before core. App nativebinding sole core review1221 active; no duplicate author.
 live 2 / cap 6; ready-undispatched 0 local. Light body gated by fresh5GB admission; source-only reviews at D89b floor. Hosted source joins remain assigned. D124 moves the next batch core to Farm; no local heavy. Small file authors paused unless already in review.
 
 Disk: 4919459840 bytes before proof preparation. Sweep-tmp3 complete0 eligible; finished nonKEEP scan found only dirty agt-G2-open-commit, recycle refused once and preserved. No retry. compact-scratch not invoked because its session action is outside allowed scope. Current21b pin and all proof inputs retained; host process-use audit requested before obsolete pin release.
@@ -75,6 +75,6 @@ D120 and D124: own failing nodes per fix; one Farm unfiltered core per merged ba
 
 Later: two D23 child-word originals and D14 deferred anchors remain unchanged and visibly unqualified. Missing numeric3/video4 complete correspondence records remain EXACTMISSING; no invented fixes or collector. E2 ABI retirement paused until after ZIP; withdrawn1171212 memo never adopted. D79 genuine replay input absent. D13 installed environment remains an explicit known gap.
 
-Inbox consumed through 1619513 bytes. Manager made no product, test, generated, pin or Git changes. Duplicate D123 stopped; Runtime sole owner receives byte-exact checkpoint. New source handbacks do not reduce core or regression counts. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
+Inbox consumed through 1622940 bytes. Manager made no product, test, generated, pin or Git changes. D123 stopped WIP80d185 is distinct current-normal scope; Runtime hosted resume requested after scope correction. Historical47f6 is not substituted. New source handbacks do not reduce core or regression counts. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
 
 D124: host fix or upstream-behavior revert by14:00Z if current attempt fails, unless cited C0 requires ours. Recheck exact14 on upstreamb742. Source1241 remains exclusive; farm venue decision received in INBOX12:41, header sync pending.
