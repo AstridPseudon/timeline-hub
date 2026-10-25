@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T13:40:07Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 4m -->
-# runtime board, 2026-10-25T13:35:29Z
+<!-- main | 2026-10-25T13:44:20Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 3m -->
+# runtime board, 2026-10-25T13:41:13Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -454,9 +454,9 @@
 | D124-pristine-host14 | Recheck unchanged host tests on b742 | Luna / service | Current Agent fix or revert | merged | Actual26621; independent1307 PASS | Actual14PASS2.29s proved by four pristine origins. Receipt labels are stale; standalone receipt congruence FAIL disclosed. CurrentREG14 open. | Independent1307 scoped PASS | Pristineb742 / d4f496 |
 | D124-handoff-review | Verify Farm and sampler input custody | Luna independent | Actual downstream input custody | merged | rt-D124-handoff-custody-review-1300 | Separate A Farm PASS and B sampler PASS; original source identities, commands and eight-file publication verified. No body run. | Independent1300 PASS | Evidence only |
 
-| D124-App-helper | Bind actual request timing in existing helper | App Luna / reviewer | Normal activation and protected PASS | review | Author1255; App reviewer1304 | Exact480392 helper adds safe key hash and UTC plus sampler reuse. App reports18PASS; no actual tour or Runtime product credit. | App combined1304 active | 480392a1b held |
+| D124-App-helper | Bind actual request timing in existing helper | App Luna / reviewer | App supported hook activation | merged | Clean1321; independent1315 PASS | Normal453b tree equals c363 exactly; reviewed19 PASS source retained. Helper and tests only. Actual attachment and tour remain App-owned. | Independent1315 SOURCE PASS | 453b3e6f92 / c363950 |
 
-| D124-shared-two | Qualify genuine word recipe originals | Luna / service | Frozen07ff review1311 PASS | doing | rt-D124-recipe-two-1333 | Exact frozen donor proof resumes1313 preparation. Runtime42aad and Agent07ff receipts ready; fresh four-repo manifest before one body. | Donor1311 PASS; prep1319 PASS | Agent07ff held |
+| D124-shared-two | Qualify genuine word recipe originals | Luna / service | Existing route disk admission | gated:light-floor | Controllers1333 and1341 | Both zero-body exit78; exact source and fresh manifest controls PASS. Existing guard needs5000000KiB; no provider, pytest or XML yet. | Donor1311 PASS; prep1319 PASS | Agent07ff held |
 
 | D124-custody-union | Preserve stopped duplicate source join | Luna | Agent owns earlier join 1318 | gated:duplicate-stopped | rt-D124-custody-union-1330 | Delayed peer revealed earlier Agent join. Stopped immediately; exact imported WIP held. No normal integration or new semantics. | Donor1307 and1311 PASS | WIP retained |
 | D125-tagged-tour | Name current SWAP refusing branch | App / Proof Luna | Normal pinned tour preflight | blocked:app | App and Proof managers | Header permits one tagged full P2 before corrected capture. App owns independent verdict. No Main duplicate. | App owns verdict | Runtime5e9ad |
@@ -472,12 +472,12 @@ Blockers: SWAP — tags5e9ad are normal Appd8a1. Next App full tour names the br
 Blockers: Final render — Farm owns full normal installer stage and genuine render underD124.6. Exact source and recipe1253 published; private wrapper independent1257 PASS. Custody1300 PASS for both packets; Farm owns actual stage inputs.
 Blockers: D69 — source XML107 is normal Agentb545, applicability and batch proof pending. Genuine installed render90 remains open. No whole audit PASS.
 Blockers: Final cut — green core, REG0, full current P2, D69, final tuple P1–P5 and genuine installed render required. No build or ZIP.
-Next ready: Recipe-two1333 running with exact07ff/42aad. Host14 revert1338 dispatched by direct owner priority. Agent1318 owns disjoint normal join; a1 filed13:34. No other assigned ready source row.
+Next ready: Host14 revert1338 final source then independent review immediately. Exact recipe2 resumes after its existing5000000KiB guard clears. Agent owns disjoint join and sole semantic union; a1 filed13:34.
 Host filing: Lead filed Agent rt-D124-producer-sol-1247 a1a8bc6 at13:34. Independent1307 source/security PASS; two-file source only. Await Agent normal result; original four failures remain. Farm core before release.
 Venues: No Main heavy body. Farm has exact core checkouts and awaits keyed normal profile and D73 inputs; host14 and render serialize there. D125 Proof hosts the next tagged full P2; App owns verdict and later sampling.
 Delivery: Private100Python+TS/41 matrix inventory qualified. Current D123 source5bd01 with patchb0ff4205 independently1317 SOURCEPASS onb742 and capturednormalb545.173predicates conserved. Historical47f6/failed41702 retained. Wheelastrid.core fixture gap, full C0/finalmatrix/actualWindows proof remain unverified. Finalcut uses b742.
 Later: R2c81b and D1160643 exact donor seed source PASS, raw/config behavior remains owed. D100 six custody PASS at donor scope only; originalTEN unchanged. Occurrence stage and promotion records EXACTMISSING, no cross-lane input wait.
 Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote filing. D117a pinned public Git/local input with unchanged integrity only. Four host retirement targets remain held under owner12:25, no attempt or alternative route.
-Disk: About5.28GB before App receipt. Sweep3 removed0; compact-scratch packed0 and gzipped10 old logs, preserving bytes. Five remaining old V1 trees are previously held; no retry. Main heavy phases stopped; overall stop4.0GB.
-live 1 / cap 3; ready-undispatched 0; queued 1. Recipe-two1333 running; host14 revert1338 queued. Duplicate union1330 stopped and WIP held. Source floor and light-body admission remain enforced.
-INBOX consumed through 1229906 bytes. Updated 2026-10-25T13:35:29Z.
+Disk: About5.08GB. Sweep3 removed0; compact passes packed1 scratch directory and gzipped13 old logs losslessly. Existing recipe2 guard requires5.12GB. Active source finalization restores space; held targets remain untouched.
+live 1 / cap 3; ready-undispatched 0; queued 0. Host14 revert1338 active. Recipe2 has zero actual bodies; pending on stricter existing disk guard. Duplicate union1330 stopped and WIP held.
+INBOX consumed through 1230792 bytes. Updated 2026-10-25T13:41:13Z.

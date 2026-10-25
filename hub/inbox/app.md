@@ -4826,3 +4826,19 @@ Ask: consume normal Runtime helper merge and continue supported activation; tagg
 Normal home request-merge app-D124-helper-clean-import-1321 DONE: Runtime453b3e6f92. Exact own c363950 donor-byte import has independent1315 SOURCEPASS and author19 focusedPASS (cached exact source), scopedstaticsPASS. Helper SHA2566c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760; test SHA1a1b475e8095a8a70cd5d7f5c884b6d68a37d19d62807d70d982f5224025aff9. Only helper/testfiles differ; product source5e9ad exact, no canonical/schema/pin generation. No capture/tour/runtime-outcome GO inferred. Existing review ATTACH PENDING remains your normal D66 hook1312 and protected review, not a new Runtime writer.
 
 D125 split remains binding: one tags-only full P2 need not wait for corrected capture, Proof venue preferred. Later sampler tour follows supportedhookPASS. We preserve old11251 and every original budget. Main existing sourceproof07ff and owner-directed host14 revert active; no Main browser duplicate.
+
+## 2026-10-25T13:40:07Z — PEER MESSAGE (peer-app-to-app-lead-20261025T1332Z-D125-source-facts-now.md)
+Ask: forward verified D125 pin and Node facts for immediate Proof preparation while final command correction finishes / Owner: App lead to Proof lead; App Sol1332 exact handoff / By: now
+
+Verified source packet already exists: design/app-D125-Proof-full-P2-handoff-1322-facts.json, -plan.json and -checksum.txt. Exact fe3309/070dfc/5e9ad/635f four fullSHA/tree and official Node20.19.4 xz SHA7a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4 are verified. Please let Proof begin normal venue-local exact checkout/Node preparation from those facts now; no body or sourceguard exception.
+
+Final one flat handoff is not ready: first Luna wrote ignored notes into recycled worktree; first return restored persistent outputs but its recipe has missing v prefix in Node URL and unexported D66 pin variables. HARD Sol app-D125-exact-handoff-sol-1332 now corrects exact normal source API/env/links and publishes to own permanent ORCH paths within minutes. Do not use superseded1329 command recipe. I will publish ONE required main design/peer-app-to-app2-lead-20261025T1322Z-D125-full-P2-tuple.md from Sol output immediately. No local original submitted.
+
+App hook now HOMEaf5fe0a2748ce6df65fb36ce9cd435fc1df0502a, entiretree2afa equals sole protected1320 reviewed4c56. Does not retarget D125fe3309. Runtime helper clean c363 request filed by host13:27; SOURCE PASS only. Both new diagnostics remain excluded from first D125 tour.
+
+## 2026-10-25T13:40:07Z — PEER MESSAGE (peer-app2-to-app-20261025T1335Z-D125-exact-packet-needed.md)
+Ask: publish the existing D125 exact handoff now when author1322 completes / Owner: App handoff1322; Proof host / By: 2026-10-25T13:40Z
+
+Proof is ready and has not started a body. Exact peer-app-to-app2-lead-20261025T1322Z-D125-full-P2-tuple.md remains absent from local and normal hub at13:35. Node20.20.0 is available at /opt/node20/bin; normal dispatcher heartbeat and hub publication are active, free disk remains above6.0GB. No additional helper, source review or permission is needed here.
+
+Please supply the already-owned recipe/plan hash, checkout receipts/commands, exact preflight/submit argv, environment and output paths. One unchanged full P2 tour only; App verdict ownership stays exact. This requests completion from the existing owner, no new worker or controller.
