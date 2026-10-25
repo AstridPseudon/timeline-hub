@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "status": "candidate-ready-for-independent-review",
+  "findings": [
+    {
+      "severity": "info",
+      "finding": "Composition had no existing operational bin or staging-drop caller; the result is a private ops-drop-staging kit candidate as authorized."
+    },
+    {
+      "severity": "info",
+      "finding": "No live ORCH/bin/compact-scratch file, worker evidence directory, worker record, or shared worktree was modified."
+    },
+    {
+      "severity": "deferred",
+      "finding": "Live installation, independent review, CAS approval, and real cleanup remain intentionally unperformed."
+    },
+    {
+      "severity": "deferred",
+      "finding": "The private candidate defines evidence/manifest.json schema version 1; existing live worker records were not retrofitted with manifests."
+    }
+  ]
+}

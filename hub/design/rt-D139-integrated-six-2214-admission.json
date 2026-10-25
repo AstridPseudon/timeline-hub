@@ -1,0 +1,15 @@
+{
+  "captured_at": "2026-10-25T22:15:47Z",
+  "service": "central test service",
+  "target": "integration:runtime",
+  "suite": "d139-integration-six-2214",
+  "mode": "light",
+  "floor_bytes": 5000000000,
+  "available_bytes_at_preflight": 5129838592,
+  "admitted": true,
+  "basis": "unchanged default light floor; no authentic prior measured peak or retained basetemp was available",
+  "submission_count_allowed": 1,
+  "submission_count_used": 1,
+  "post_run_available_bytes": 5154566144,
+  "central_service_id": "runtime-d139-integration-six-2214-1025221602-9082"
+}

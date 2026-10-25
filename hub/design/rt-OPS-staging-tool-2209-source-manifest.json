@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "base": "composition tl/integration",
+  "candidate": "ops-drop-staging",
+  "files": [
+    {"path": "ops-drop-staging/README.md", "mode": "0644", "sha256": "25b6dcd5f66b6c1123f84a6c17c73c39ef2a2a911a91e782a2c76060acc7f9e2"},
+    {"path": "ops-drop-staging/drop-staging", "mode": "0755", "sha256": "4ff7ff083dae0e4d20badb6cec69e29f5018e2934a14e0e18eca1882067ee5e7"},
+    {"path": "ops-drop-staging/drop_staging.py", "mode": "0644", "sha256": "20a2396149d7419db85e4d8b28e91555f35d5aac2250e75059282d116ae0ec77"},
+    {"path": "ops-drop-staging/test_drop_staging.py", "mode": "0755", "sha256": "c22e5a676c9a43e62843ff855c32f2c7105696ecfadaa612b3f541b44fd97b0f"}
+  ]
+}

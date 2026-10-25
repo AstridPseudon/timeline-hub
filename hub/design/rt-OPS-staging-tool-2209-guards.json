@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "scope": "one explicit worker record and one relative target",
+  "pre_action_refusals": [
+    "worker is not a single path component",
+    "target is absolute, empty, dotted, or traversing",
+    "worker root, worker record, target, evidence, or any path component is missing/unsafe",
+    "target is worker root, outside worker, or overlaps evidence",
+    "worker lacks a regular ended marker, has running/KEEP/active marker, or has a matching manager lease",
+    "evidence/manifest.json is missing/invalid, evidence path escapes, or content/mode hash differs",
+    "target contains a symlink, unsupported entry, protected marker, or archive collision exists"
+  ],
+  "execution_guards": [
+    "exclusive flock on the worker directory",
+    "recheck ended/running/markers/leases after lock",
+    "O_NOFOLLOW directory opens for target components",
+    "same-device check and realpath/path-component checks",
+    "atomic quarantine rename before action",
+    "archive member kind/path/content/mode listing verification",
+    "evidence re-verification before removal",
+    "recursive removal uses dirfd unlink/rmdir without following symlinks",
+    "archive publication uses a no-overwrite hard link"
+  ],
+  "preservation": [
+    "evidence and evidence/manifest.json are never below the removal target",
+    "pack keeps the verified <target-name>.tgz and durable worker/staging-drop.log",
+    "fallback keeps evidence and logs original bytes, full-listing SHA-256, manifest digest, and action outside target",
+    "archive and target-missing repeats refuse without a broad sweep"
+  ]
+}

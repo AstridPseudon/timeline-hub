@@ -1,0 +1,62 @@
+{
+  "purpose": "D139 normal Runtime integrated six-file targeted proof preflight",
+  "captured_at": "2026-10-25T22:15:47Z",
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-D139-integrated-six-2214",
+    "branch": "tl/rt-D139-integrated-six-2214",
+    "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "clean": true,
+    "required_ancestors": {
+      "cf0b82dd47452a7a34fc63eb233e9b1dc0532806": true,
+      "0bb3bc45cef22bc317398d79e1617da3eb430df2": true
+    }
+  },
+  "agent": {
+    "checkout": "/home/user/work/wt/agt-pin-4c4ee35d",
+    "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+    "clean": true,
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "receipt_text": "created /home/user/work/wt/agt-pin-4c4ee35d (detached at 4c4ee35d5687c4cd40a0e5395efda53aa56f939d, KEEP)"
+  },
+  "interpreter": {
+    "path": "/home/user/work/venv-runtime/bin/python",
+    "version": "3.13.16",
+    "astrid_checkout": "/home/user/work/wt/agt-pin-4c4ee35d",
+    "pythonpath": "/home/user/work/wt/rt-D139-integrated-six-2214:/home/user/work/wt/agt-pin-4c4ee35d",
+    "pythondontwritebytecode": true
+  },
+  "import_origins": {
+    "runtime_protocol": "/home/user/work/wt/rt-D139-integrated-six-2214/runtime_protocol/__init__.py",
+    "runtime_protocol.process_control": "/home/user/work/wt/rt-D139-integrated-six-2214/runtime_protocol/process_control.py",
+    "runtime_protocol.door": "/home/user/work/wt/rt-D139-integrated-six-2214/runtime_protocol/door.py",
+    "runtime_protocol.service": "/home/user/work/wt/rt-D139-integrated-six-2214/runtime_protocol/service.py",
+    "runtime_protocol.timeline_commit": "/home/user/work/wt/rt-D139-integrated-six-2214/runtime_protocol/timeline_commit.py",
+    "astrid_runtime_client": "/home/user/work/wt/agt-pin-4c4ee35d/astrid_runtime_client/__init__.py",
+    "astrid.sdk.timeline.capture": "/home/user/work/wt/agt-pin-4c4ee35d/astrid/sdk/timeline/capture.py",
+    "astrid.sdk.timeline.commit": "/home/user/work/wt/agt-pin-4c4ee35d/astrid/sdk/timeline/commit.py"
+  },
+  "suite": {
+    "registry": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "name": "d139-integration-six-2214",
+    "row_sha256_after_insert": "675af56eca6d87169a4f67fc2cac57db8e6c648cf4ea70a474d40694b5f20edb",
+    "row": "runtime d139-integration-six-2214 env ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-4c4ee35d PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-4c4ee35d PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --junitxml=\"$D66_OUTPUT_DIR/d139-runtime-six.xml\"",
+    "selected_files": [
+      "tests/test_process_control.py",
+      "tests/test_platform_signaling.py",
+      "tests/test_door_routes.py",
+      "tests/test_managed_output_public_api.py",
+      "tests/test_timeline_commit_contract.py",
+      "tests/test_timeline_legacy_authority.py"
+    ]
+  },
+  "test_inputs": {
+    "tests/test_process_control.py": {"sha256": "260ea8f64aaf3f9e919d4086688cc5bed2aa427c0a963fb6a9e01ef0c6d8a696", "bytes": 13341},
+    "tests/test_platform_signaling.py": {"sha256": "520dccc3cab41d9c8eded56b101c48bc960e1294d77246281880371bae2d10ec", "bytes": 23728},
+    "tests/test_door_routes.py": {"sha256": "9b757d2c7d1125a76db1ad188672429e2b2e9ea2007cc0f248eda96331c8b67d", "bytes": 17187},
+    "tests/test_managed_output_public_api.py": {"sha256": "89c4b3f0aa7998c334d4635524ebb22b75f2f4930f5a028ca8e390c260c82a90", "bytes": 10318},
+    "tests/test_timeline_commit_contract.py": {"sha256": "59693de6b54c7b2660469a771e6d705cdcb4fd512c5700b9089ddb232838404b", "bytes": 37426},
+    "tests/test_timeline_legacy_authority.py": {"sha256": "55194d035225111dd8989f8885899428b2ef60c86a4f927914eabca810f84305", "bytes": 27570}
+  }
+}

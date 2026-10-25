@@ -1,0 +1,45 @@
+{
+  "task": "D139",
+  "result": "PASS",
+  "central_service_id": "runtime-d139-integration-six-2214-1025221602-9082",
+  "runtime": {
+    "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "clean_after": true,
+    "cf0b_helper_ancestor": true,
+    "0bb3_union_ancestor": true
+  },
+  "agent": {
+    "checkout": "/home/user/work/wt/agt-pin-4c4ee35d",
+    "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+    "clean_after": true
+  },
+  "service": {
+    "raw_exit": 0,
+    "collected": 1571,
+    "passed": 1571,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "duration_seconds": 70.60
+  },
+  "disk": {
+    "floor_bytes": 5000000000,
+    "pre_submit_available_bytes": 5129838592,
+    "post_run_available_bytes": 5154566144
+  },
+  "evidence": {
+    "source_manifest": "evidence/source-manifest.json",
+    "validation": "evidence/validation.md",
+    "admission": "evidence/admission.json",
+    "service": "evidence/service.json",
+    "per_id": "evidence/per-id.tsv",
+    "integrated_xml": "evidence/integrated.xml",
+    "rawrunner": "evidence/rawrunner.log",
+    "harnessreport": "evidence/harnessreport"
+  },
+  "historical_comparison": "The prior 1491-pass/80-error/1341 historical evidence was preserved as historical context; this run reports its own collected totals and is not assumed to match it."
+}

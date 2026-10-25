@@ -1,0 +1,39 @@
+{
+  "service_id": "runtime-d139-integration-six-2214-1025221602-9082",
+  "target": "integration:runtime",
+  "suite": "d139-integration-six-2214",
+  "requested_at": "2026-10-25T22:16:02Z",
+  "terminal_status": "pass",
+  "raw_exit": 0,
+  "runtime_tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+  "runtime_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+  "agent_checkout": "/home/user/work/wt/agt-pin-4c4ee35d",
+  "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+  "command": "env ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-4c4ee35d PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-4c4ee35d PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --junitxml=\"$D66_OUTPUT_DIR/d139-runtime-six.xml\" tests/test_process_control.py tests/test_platform_signaling.py tests/test_door_routes.py tests/test_managed_output_public_api.py tests/test_timeline_commit_contract.py tests/test_timeline_legacy_authority.py",
+  "duration_seconds": 70.60,
+  "counts": {
+    "collected": 1571,
+    "passed": 1571,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0
+  },
+  "per_file": {
+    "tests/test_process_control.py": 26,
+    "tests/test_platform_signaling.py": 104,
+    "tests/test_door_routes.py": 1282,
+    "tests/test_managed_output_public_api.py": 4,
+    "tests/test_timeline_commit_contract.py": 75,
+    "tests/test_timeline_legacy_authority.py": 80
+  },
+  "xml": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-d139-integration-six-2214-1025221602-9082/d66/d139-runtime-six.xml",
+    "retained": "evidence/integrated.xml",
+    "sha256": "6442c80417d385363c5258e156135e6b3aaeb8d9614d245ee7f1cbe42b61f00f",
+    "bytes": 259928
+  },
+  "raw_runner": "evidence/rawrunner.log",
+  "harness_report": "evidence/harnessreport"
+}

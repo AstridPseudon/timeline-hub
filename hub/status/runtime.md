@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T22:16:34Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
+<!-- main | 2026-10-25T22:21:12Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 12 | status age 1m -->
 # runtime board, 2026-10-25T22:09:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -495,11 +495,11 @@
 
 | D127d-element-cost | Preserve stopped offline cost trial | HARD Sol / Luna | D127e waiter census | gated:D127e | Source2123; path2135; stopped2143 | No safe optimization; warm123ms and synthetic267ms do not reproduce live delay. Later author stopped before product change. | Independent2135 source only | No product change |
 | CLI22-scope-relay | Apply owner D138 CLI scope | Agent owner | Recorded D138 decision | later | Agent existing CLI22 allocator | No new ingress. Per-case current caller migration only with exact predicates; legacy cases listed and boundary changes stopped. | Source decision only | No source change |
-| D139-child-imports | Complete child dependency recipe | Luna | Source security and authentic schema carrier | review | Author2153; security2212 | Candidate86a1 adds pinned source binding/check-only;44 controls PASS. Source carrier absent locally. Real-child identity and census scope under review. | Independent2212 active | 86a1a976 held |
+| D139-child-imports | Complete child dependency recipe | Luna | Source security and authentic schema carrier | review | Author2153; security2212 FAIL; return2217 | Source auth/race, census, missing schema/child custody and staleCASpreimage block86a1. All44 baseline PASS; one Luna firstreturn active. | Independent2212 FAIL retained | 86a1a976 held |
 | D127e-waiter-census | Trace Runtime and Agent waiters | Luna read only | Independent source review | review | Author2153; reviewer2202 PASS | Static D112 reconnect path reachable; actual waiter UNKNOWN. Stopped under D130. No test, fix or profile. | Independent2202 PASS | Source unchanged |
-| OPS-staging-route | Guard regenerable staging removal | Luna | Owner22:03 | doing | rt-OPS-staging-tool-2209 | Private guarded tool candidate; actual real cleanup excluded until independent review and installation. | Independent review next | No live source change |
-| D77-complete-inputs | Bind final installed-render inputs | Luna | Core critical source first | later | Not yet dispatched | Farm2140 lacks launcher, manifest, browser source, roots/stage receipts and finite peak. Produce one complete bundle; no piecemeal stage. | Guard1257 retained | No deployment |
-| D139-Runtime-targeted | Qualify normal merged Runtime | Luna / central service | Exact tuple and test admission | doing | rt-D139-integrated-six-2214 | f103 and Agent4c receipts ready. One normal six-file row and central request; default5GB unless authentic prior D89d peak recovered. | Source2006 PASS | f103bb4686 |
+| OPS-staging-route | Guard regenerable staging removal | Luna | Independent2217 | review | Author2209; reviewer2217 | Private017bd:8 CLIcases andstatics PASS. Archive/fallback/path/evidence/race safety under independent review. No livecleanup/install. | Independent2217 active | 017bd held |
+| D77-complete-inputs | Bind final installed-render inputs | Luna read only | Exact finaltuple sources and finite bound | doing | rt-D77-complete-inputs-2218 | One complete source/hash/availability/footprint bundle; unknowns stay explicit. No piecemeal stage or render. | Guard1257 retained | No deployment |
+| D139-Runtime-targeted | Qualify normal merged Runtime | Luna / central service | Independent actual-result review | review | Controller2214; service9082; review2219 | Actual f103 plusAgent4c:1571PASS70.60s,raw0,no cache,0fail/error/skip. DurableXML and disk records retained. | Resultreview2219 active | f103bb4686 |
 
 | OPS-three-idle-pins | Release obsolete clean proof checkouts | Manager guarded route | Full host and live-reference audit clear | merged | bin/recycle a30e,369f,c916 | All ended, clean and ancestors; no process, queue, service, lease or registration users. 08e6 and d4f remain registered and kept. | Guarded recycle PASS | Branches and evidence retained |
 
@@ -511,7 +511,7 @@ Gates: Historical P1/P3/P4/P5 GO. Full P2 NO-GO element and SWAP. No final cut, 
 Blockers: Child/core — Runtime2153 owns exhaustive D139 dependency recipe and built-child import check. Agent2136 is input census only. Existing child registration is genuine; no frozen core retry.
 Blockers: D73 — final2143 source FAIL retained; Sol2156 corrects real manifest and run-mode controls. No installed own-node route or functional credit.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after automatic classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
-Blockers: Runtime integrated proof — f103 and Agent4c4ee exact checkout receipts present. Prior central1341 has no retained peak or basetemp; D89d floor cannot be guessed. Need5GB light admission; main4.596GB, no heavy body.
+Runtime integrated proof: actual9082 PASS1571 onf103/Agent4c,raw0. Independent2219 checks source and durable records. Historical1341 errors retained; no fullsuite or gate credit.
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tupleP1-P5, wheel, Windows and ZIP remain owed.
 Next ready: normal Runtime targeted controller when source slot and light-test disk ready; lower priority guarded staging tool and complete D77 input bundle next slots. No duplicate FPS or App original9 author.
 D100: candidate27 PASS; original9 on latest20db is nine setup errors at missing authenticated physical observation. Sole App2144 wholepath active. No release, fixture rewrite or unchanged repeat.
@@ -519,5 +519,5 @@ Element: D127d UNAPPLIED; offline warm123ms/synthetic267ms did not reproduce liv
 Delivery: prepared joins merge now under D139; second upstream merge at final D59 cut. Farm old union harness STOPPED. D77 final merged tuple inputs remain incomplete.
 Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and byte-exact handbacks only. No product/test/generated/pin/Git internals/credentials mutation.
 Disk:4.617GB before read-only review2202. Five unused clean pins released after full audit; a30e,369f,c916 plus b742,d4ba. Latest two net191MB. All branches and evidence retained. Source cap3/floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and compressed7 logs. Registered pins and protected test KEEP remain.
-live3 / cap3; ready-undispatched0 admitted. Childsecurity2212, staging2209 and integrationcontroller2214 active. D73review2209 PASS private source; receiving prerequisites remain. Source4.908GB before controller, actual tests gated5GB unless authentic D89d.
+live4 / cap6; ready-undispatched0. Childfirstreturn2217, stagingreview2217, Runtime9082resultreview2219 and D77bundle2218 active. Runtime1571PASS completed at normal5GB floor. Fresh5.16GB; no heavy body.
 INBOX consumed through1598755 bytes including current new2144 receipt; manager reads new tail next pass. Round continues from terminal receipts.
