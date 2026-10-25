@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-25T22:54Z",
+  "compact_sha256": "1f6926c6164e73dd9c0c36556fa4897a933f7a742b5a8acfc26c58bdfc5695af",
+  "retained_test_KEEP_count": 8,
+  "original2136_worker_KEEP": true,
+  "original2136_private_mode": "0700",
+  "ended_nonKEEP_worktree_candidates": 0,
+  "guarded_or_refused_targets_retried": false,
+  "sweep_summary": [
+    "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 5254M -> 5253M"
+  ],
+  "compact_partial_summary": [
+    "packed 0 scratch dirs; free 5254M -> 5253M",
+    "gzipped 4 old worker logs; free now 5258M"
+  ],
+  "free_bytes": 5512708096,
+  "compact_complete_summary": [
+    "packed 0 scratch dirs; free 5254M -> 5253M",
+    "gzipped 4 old worker logs; free now 5258M",
+    "packed 0 finished test-run dirs; free now 5258M"
+  ],
+  "free_bytes_final": 5508333568
+}
