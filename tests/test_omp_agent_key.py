@@ -122,7 +122,8 @@ def assert_private_import(fake_omp, tmp_path, capsys):
     return json.loads(captured.out), records
 
 
-def test_key_import_uses_private_file_and_leaves_automatic_model(provider, fake_omp, tmp_path, capsys):
+def test_key_import_uses_private_file_and_leaves_automatic_model(provider, fake_omp, tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr(omp_agent, "ASTRID_OPENROUTER_DEFAULT_MODEL", None)
     assert omp_agent.main(["agent", "key", "set", "openrouter"]) == 0
     response, records = assert_private_import(fake_omp, tmp_path, capsys)
     assert response == {"provider": "openrouter", "signedIn": True, "currentModel": "openrouter/automatic"}
@@ -130,7 +131,8 @@ def test_key_import_uses_private_file_and_leaves_automatic_model(provider, fake_
     assert not any(record["argv"][2:3] == ["config"] for record in records)
 
 
-def test_key_import_reports_null_when_no_model_is_available(provider, fake_omp, tmp_path, capsys):
+def test_key_import_reports_null_when_no_model_is_available(provider, fake_omp, tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr(omp_agent, "ASTRID_OPENROUTER_DEFAULT_MODEL", None)
     fake_omp[0].write_text(json.dumps({"default": None}))
     assert omp_agent.main(["agent", "key", "set", "openrouter"]) == 0
     response, _records = assert_private_import(fake_omp, tmp_path, capsys)

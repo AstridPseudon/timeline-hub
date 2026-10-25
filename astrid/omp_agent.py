@@ -26,7 +26,7 @@ from .core.util.process import replace_process
 from .version import ASTRID_VERSION
 
 DEFAULT_AGENT = "astrid"
-ASTRID_OPENROUTER_DEFAULT_MODEL: str | None = None
+ASTRID_OPENROUTER_DEFAULT_MODEL: str | None = "openrouter/deepseek/deepseek-v4.1-flash-1017"  # DeepSeek V4.1 Flash 1017 (OpenRouter, Oct 2026); applied only when no default is set
 _AGENT_PROFILE_FILE = Path(__file__).resolve().parent / "agent_profiles" / "astrid.md"
 
 # ``astrid`` is the single user-facing command. Product families are stable
