@@ -1,0 +1,124 @@
+{
+  "receipt_marker": "F-D86-D107-source-0721",
+  "task": "F-D86 D107 source-qualified receipt",
+  "status": "SOURCE-QUALIFIED/BEHAVIOR-PENDING",
+  "source_scope": "M1-baseline10",
+  "original_file": "tests/editing_conformance/test_commit_runtime_m1.py",
+  "original_file_sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+  "original_untouched": true,
+  "current_equivalent": {
+    "candidate_commit": "2e3331ee2f035e302f5ca52488832cd0e22bb3aa",
+    "source_file": "tests/editing_conformance/test_m1_current_equivalent.py",
+    "source_file_sha256": "7c8a4cc3a0383542999d95762ae77b6ce9468414e3313562b09f0f4c9018cbfc",
+    "selectors": [
+      "tests/editing_conformance/test_m1_current_equivalent.py::test_new_ours_current_equivalent_preserves_m1_commit_journey[disjoint-rebase-undo]",
+      "tests/editing_conformance/test_m1_current_equivalent.py::test_new_ours_current_equivalent_preserves_m1_commit_journey[touched-basis-conflict]"
+    ],
+    "independent_review": "handoff-agt-D107-sol-review-0715.md",
+    "independent_review_verdict": "PASS_SOURCE",
+    "dependency": "2154168d308bdf5b0903d150cd3855765685f92f",
+    "dependency_status": "HELD",
+    "run_status": "must_not_merge_or_run_before_dependency_release_and_D108_full_core_terminal"
+  },
+  "archive_read": {
+    "selector": "tests/editing_conformance/test_m1_legacy_archive_read.py::test_explicit_held_baseline_then_current_word_bound_read_is_closure_exact",
+    "archive_sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+    "baseline_pair": {
+      "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+      "timeline_id": "film",
+      "revision_id": "film-parent-v1",
+      "publication_id": "txn-55c0651b2cd64255ae06e73f9708220a"
+    },
+    "advanced_pair": {
+      "revision_id": "a3e671256f1c42b8837d3e118c97b21b",
+      "publication_id": "txn-11c90075be6c4c8bb9e2627366f0fe4f"
+    },
+    "source_review": "agt-F-D107-read-rereview-0647/report.md",
+    "source_review_verdict": "PASS_SOURCE",
+    "combination_proof": false
+  },
+  "original_ten": [
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "accept CLI move; lost ACK; dependent outbox; restart; exact idempotent retry; disjoint rebase; inverse; history/readback/no-write",
+      "current_mapping": "tests/editing_conformance/test_m1_current_equivalent.py::test_new_ours_current_equivalent_preserves_m1_commit_journey[disjoint-rebase-undo]",
+      "disposition": "original unchanged; source mapping held pending behavior"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "preserve touched-basis conflict; pending command; exact base pair; refusal and no-write",
+      "current_mapping": "tests/editing_conformance/test_m1_current_equivalent.py::test_new_ours_current_equivalent_preserves_m1_commit_journey[touched-basis-conflict]",
+      "disposition": "original unchanged; source mapping held pending behavior"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_lost_ack_restart_and_fresh_head",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "view lost ACK; restart; exact key replay; changed-body idempotency conflict; fresh head",
+      "current_mapping": "tests/test_timeline_native_inspection.py::test_view_write_authority_and_key_before_any_persistence; tests/test_timeline_native_inspection.py::test_view_retry_keeps_original_revision_after_head_advances; tests/test_timeline_native_inspection.py::test_daemon_generated_client_without_executor_catalog",
+      "disposition": "partial foundation only; exact historical combination pending"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_requires_write_but_inspection_remains_read_only",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "read-only view refuses without persistence; inspection remains readable; writer accepts same view",
+      "current_mapping": "tests/test_timeline_native_inspection.py::test_view_write_authority_and_key_before_any_persistence; tests/test_timeline_native_inspection.py::test_view_retry_keeps_original_revision_after_head_advances; tests/test_timeline_native_inspection.py::test_daemon_generated_client_without_executor_catalog",
+      "disposition": "partial foundation only; original unchanged"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-image]",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "image anchor auto-placement; dry-run null receipt/no write; accepted canonical equals preview; restart retry; inverse/redo",
+      "current_mapping": "tests/editing_conformance/test_recipe_auto_placement_reads.py; tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "disposition": "partial recipe coverage only; full M1 combination pending"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-video]",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "video anchor auto-placement; duration/output media selection; dry-run; retry; inverse/redo",
+      "current_mapping": "tests/editing_conformance/test_recipe_auto_placement_reads.py; tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "disposition": "partial recipe coverage only; full M1 combination pending"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-image]",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "image fallback placement at fallback_at=1; dry-run; accepted/retry; inverse/redo",
+      "current_mapping": "tests/editing_conformance/test_recipe_auto_placement_reads.py; tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "disposition": "partial recipe coverage only; full M1 combination pending"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-video]",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "video fallback placement at fallback_at=1; duration/output media selection; dry-run; accepted/retry; inverse/redo",
+      "current_mapping": "tests/editing_conformance/test_recipe_auto_placement_reads.py; tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "disposition": "partial recipe coverage only; full M1 combination pending"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-image]",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "image shared placement with frame=24; dry-run; accepted/retry; inverse/redo",
+      "current_mapping": "tests/editing_conformance/test_recipe_auto_placement_reads.py; tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "disposition": "partial recipe coverage only; full M1 combination pending"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-video]",
+      "original_outcome": "ERROR setup: legacy word anchor is missing",
+      "purpose": "video shared placement with frame=24; duration/output media selection; dry-run; accepted/retry; inverse/redo",
+      "current_mapping": "tests/editing_conformance/test_recipe_auto_placement_reads.py; tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "disposition": "partial recipe coverage only; full M1 combination pending"
+    }
+  ],
+  "separation": {
+    "D100": "separate original-third inverse-materialization and ABA packet; not folded into D107",
+    "D110": "separate P2 inverse/undo issue; not folded into D107",
+    "aba": "original M1 has no ABA tail; genuine separate ABA tests remain unchanged and are not combination proof"
+  },
+  "ledger_cas": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md",
+    "marker": "D107-SOURCE-RECEIPT-0721",
+    "append_only": true,
+    "prefix_hash_recorded_before_append": true,
+    "exact_readback_required": true
+  }
+}

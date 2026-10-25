@@ -410,3 +410,22 @@ validity claim is made.
 | D106-sheetCLI | ordinary sheet provenance source lane | D72 source-qualified lane | registered `commitTimeline` provider; exact `open_bundle` publication pair | Agent | D86 | SOURCE-QUALIFIED/BEHAVIOR-PENDING | source `b68d6b96af9a830da3c4402c3d5fa6bb8a1b3206`, blob `13937e75836f5468467579898ddb4cde2afdb92e`, source SHA-256 `3d391f6362053159a15f7d8ee15c7088c4b4e44a85431c0b094195a07027b8b7`; independent `reviewbatch0553 C PASS`; normal `b9484befcadb9427ebac65de938dfa10217edb4f`; handback `handoff-agt-D106-0604-sheetCLI.md`; retained membership 3, historical 2 PASS / 1 FAIL remains. |
 | F-D86-D103-0648 | D103 CLI trim/move metadata-only source correction in `tests/editing_conformance/test_cli_trim_runtime.py` | D72(2)/D103 setup validity; no behavior closure | exact three D103 original selectors in `handoff-agt-D103-S3-0648-selectors.txt`, then registered capture/current commit through Runtime `commitTimeline` | agent | D72 | SOURCEQUALIFIED/BEHAVIORPENDING | integrated `dac3df399f204126e802f7888bd006c81dffa7af`; blob `9c425dea9b9aa01f6811bed76512c09b1154ad97`; SHA-256 `f95422aa07b917aafda4d533ddc2ff887336e2ff9e4c9d5a56f073056e41229d`; independent `A-D103.md` PASS_SOURCE; 38 asserts and genuine 1920x1080/42s MP4 metadata; historical 17724 3 ERROR retained; canonical predecessor suffix 169696 bytes SHA-256 `db446389e7746d91cf7c972a0e94af16d76b9c98af89d118c7af904b30809ed5`. |
 | F-D86-S3-0648 | S3 dry-run occurrence-media setup correction in `tests/editing_conformance/test_s3_reviewed_cohort_runtime.py` | D72/D86 source correction; no behavior closure | the one changed-source S3 original selector in `handoff-agt-D103-S3-0648-selectors.txt`, using registered `capture_occurrence_add_media` through current commitTimeline | agent | D72 | SOURCEQUALIFIED/BEHAVIORPENDING | integrated `dac3df399f204126e802f7888bd006c81dffa7af`; blob `e754ff53b3df0f0541e5484cc38167caf3dd1844`; SHA-256 `b611bf469880172b725c8cf6052a1288a3d101bf65218b86f00028df4d07cafe`; protected `rt-D86-script13-protected-0629-report.md` PASS; all 12 asserts unchanged; historical 17724 4 ordinary-script FAILs and other three unchanged selectors excluded; canonical predecessor suffix 169696 bytes SHA-256 `db446389e7746d91cf7c972a0e94af16d76b9c98af89d118c7af904b30809ed5`. |
+
+
+## F-D86 D107 source-qualified receipt — 0721
+
+<!-- source-receipt-marker: D107-SOURCE-RECEIPT-0721 -->
+
+| Receipt | Scope | Candidate/source review | Archive read | Status | Handoff |
+| --- | --- | --- | --- | --- | --- |
+| F-D86-D107-source-0721 | Exact M1 baseline ten (M1-baseline10), original file and ten selectors untouched | Current equivalent candidate 2e3331ee2f035e302f5ca52488832cd0e22bb3aa; independent handoff-agt-D107-sol-review-0715.md = PASS_SOURCE; held dependency 2154168d308bdf5b0903d150cd3855765685f92f remains unreleased | Authentic normal archive-read79c94, selector and archive SHA-256 recorded separately in the handoff; independent read review = PASS_SOURCE | SOURCE-QUALIFIED / BEHAVIOR-PENDING | [handoff-agt-D107-source-receipt-0721.md](handoff-agt-D107-source-receipt-0721.md) and [handoff-agt-D107-source-receipt-0721.json](handoff-agt-D107-source-receipt-0721.json) |
+
+The linked handoff retains the exact original-ten membership and replacement
+selector mapping from handoff-agt-M1-scope-0610-selectors.tsv. This receipt
+records source qualification only. It does **not** retire the ten original
+tests, close D107, or confer functional proof; final effective
+retirement/closure awaits current dependency release and meaningful MAIN
+outcomes, including the D108 full-core terminal. The archive read is not
+combination proof. D100 and D110 remain separate; the original M1 source has
+no ABA tail, and genuine separate ABA tests remain unchanged.
+
