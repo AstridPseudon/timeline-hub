@@ -1,0 +1,101 @@
+{
+  "schema": "F-D86-U4a-D102c-candidate-rebind/v1",
+  "task": "U4a exact normal-tool producer rebind for HELD R2/V2 combined three-original candidateea573",
+  "status": "HELD_SOURCE_ONLY",
+  "source_only": true,
+  "actual_base": {
+    "branch": "tl/agt-R2-word-choice-restore-join-0622",
+    "commit": "ea57362992e03919651b2f28936b245d9596d279",
+    "tree": "50c6aab534e22563220fed59b4c583a4e0056f4f"
+  },
+  "candidate": {
+    "branch": "tl/agt-U4a-R2-word-candidate-rebind-0631",
+    "commit": "ea57362992e03919651b2f28936b245d9596d279",
+    "candidate_label": "D102c candidateea573",
+    "changed_paths": ["runtime.lock.json"],
+    "delta": "source_commit 689352013ef516a224033ba58820759a96504e68 -> 1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "working_tree_only": true
+  },
+  "exact_normal_producer": {
+    "path": "/home/user/work/wt/rt-pin-1daca2a3",
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "tree": "a522511414947e48e317a5e5c2103483b121a750",
+    "independent_reviewed_tree": "ab7ebb4244a40d27ccf9faf56a7916f72fa8765f",
+    "checkout": "clean detached exact producer"
+  },
+  "tool_receipt": {
+    "command": "/home/user/work/venv-agent/bin/python scripts/refresh_runtime_client.py --producer /home/user/work/wt/rt-pin-1daca2a3",
+    "result": "refreshed Runtime artifacts from 1daca2a33f6d",
+    "vendor_lock": "PASS: matches producer manifest",
+    "artifact_manifest": "PASS: artifacts.json is current",
+    "diff_check": "PASS"
+  },
+  "preserved_candidate_product_test_hashes": [
+    {
+      "role": "R2-product",
+      "path": "astrid/sdk/timeline/_step_undo.py",
+      "source_commit": "7e7753564f127eb0242f53704ad33ba63d9e2e63",
+      "git_blob_sha1": "221e517c246e220580c77411ca6d0863996f092d",
+      "sha256": "7a90a66ab49d58bd2722857e95319ebafe648ab514409aa1bb403189b479f322",
+      "bytes": 30429
+    },
+    {
+      "role": "R2-regression",
+      "path": "tests/sdk/test_timeline_restore_effect_order_runtime.py",
+      "source_commit": "7e7753564f127eb0242f53704ad33ba63d9e2e63",
+      "git_blob_sha1": "d85d96ea5fc00fc4c53dbdb030a8874ae5e54617",
+      "sha256": "52b0f6836af7d2ee68b7d0a9b43dde2ba3c0c6d4d9f7b3360e8c95174290bd9d",
+      "bytes": 10612
+    },
+    {
+      "role": "V2-product",
+      "path": "astrid/sdk/timeline/native_word_anchor.py",
+      "source_commit": "11d8a231ee503b409337eda563f865f0443e572e",
+      "git_blob_sha1": "edeb0a24253b32d958f4f2fafe7514b9a0139ee0",
+      "sha256": "1b74fd5f43bade668a9467b41f006273aa46b7dc668f80bf5c36717273492c51",
+      "bytes": 21735
+    },
+    {
+      "role": "V2-product",
+      "path": "astrid/sdk/timeline/_commit_timing_validation.py",
+      "source_commit": "11d8a231ee503b409337eda563f865f0443e572e",
+      "git_blob_sha1": "a5496a6d2a8f0aad618ca9b3229716060c88622e",
+      "sha256": "522d632acdb7e0e836694b43065849dfec24bc22dccdfb8025077e5bde724d85",
+      "bytes": 30663
+    }
+  ],
+  "prior_selection_recipe": {
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-R2-word-0622-manifest.json",
+    "selectors": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-R2-word-0622-selectors.txt",
+    "selected_originals": [
+      "5: tests/editing_conformance/test_word_binding_recipe.py::test_last_write_clear_undo_restore_and_restore_inverse",
+      "3: tests/editing_conformance/test_word_binding_recipe.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]",
+      "9: tests/editing_conformance/test_word_binding_recipe.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word"
+    ],
+    "excluded": ["original TEN", "P4", "parent 6", "four already-PASS controls", "new regression repeat", "unchanged 60"],
+    "behavior_status": "source-selected; exact MAIN candidate proof required; no PASS claim"
+  },
+  "preserved_contract": [
+    "C0 v2 request/reply shape",
+    "historical rebased retries",
+    "opaque inputs",
+    "refusal",
+    "retry",
+    "inverse",
+    "ABA",
+    "no-write guards",
+    "no policy or authority changes"
+  ],
+  "validation": {
+    "locked_file_count": 15,
+    "all_canonical_maps_schema_config_products_tests": "unchanged; all base/current/producer/lock hashes equal",
+    "prior_reviewed_product_test_blobs": "preserved; hashes listed above",
+    "in_memory_compile": "PASS: four vendored Python artifacts",
+    "static_caller_trace": "PASS: commit session -> registered provider -> generated commitTimeline route",
+    "ruff_mypy": "not applicable; no Python source changed",
+    "behavioral_proof": "NOT RUN; remains held until exact MAIN candidate proof",
+    "broader_delta": "UNAPPLIED"
+  },
+  "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U4a-R2-word-candidate-rebind-0631/evidence"
+}
