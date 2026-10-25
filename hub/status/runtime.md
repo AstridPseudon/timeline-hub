@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T05:08:23Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 4m -->
-# runtime board, 2026-10-25T05:04:18Z
+<!-- main | 2026-10-25T05:11:48Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 2m -->
+# runtime board, 2026-10-25T05:09:08Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -241,7 +241,7 @@
 | R-P4-wholepath | Compare failing and passing request paths | Luna read only | Measured sample owns next fix | merged | rt-P4-D88b-wholepath-0229 complete | Same service retains memo; original restarts before Undo. Remaining fresh inputs scale. Source lifetime facts do not prove dominant cost. | Runtime6634 unchanged |
 | P2-single-GO-packet | Export authentic single result safely | Luna read only | Sole App verdict | merged | rt-native-single-export-0235 complete | Safe exact XML, tuple, receipts, source, exit and profile packet published0254. No semantic verdict or new body. | Service5678 |
 | D86-later-delta | Qualify disjoint102 originals | Luna / service | Actual source-specific corrections | review | Actual11789; exporter0310 | 102 executed:10 PASS24 FAIL68 ERROR. Safe exact per-ID and owner packet published; no source-only closure. | 562ee/6634/c101/635f |
-| R-P2-SWAP-inverse503 | Retain current native inverse failure | App / Agent inverse | App current finite wholepath handback | review | App actual2714; readonly0450 | D97 adopted319911/5fae/0c62/635f still Undo503; original76.766s. Existing old9674 records remain distinct; no proven Runtime cause. | Runtime0c62 |
+| R-P2-SWAP-inverse503 | Preserve current native inverse failure | Runtime Luna / App | D102 release then sole ADD diagnostic | doing | rt-D102-redacted-errors-0510 | D97SWAP2714 Undo503; retained stderr empty and phases uncorrelated. Silent mapped exceptions fixed as D102; actual root still UNKNOWN. | Current0c62 |
 | P2-single-proof-supplement | Export remaining safe verdict inputs | Luna read only | Sole App reviewer0247 | merged | rt-native-single-supplement-0257 complete | Exact preflight and one-case record plus safe central tail published0259. Source cmp/hash/safety checks PASS; no extra verdict or body. | Actual5678 |
 
 | D86-auto-guard-six | Preserve exact asset collection guards | Agent HARD Sol | Agent source and protected review | doing | agt-R1-asset-guard-sol-0317 | Agent found collection asset scope widened to whole parent. Narrow R1 author owns it; Runtime preview was not reached. | Agent current source |
@@ -259,7 +259,7 @@
 
 | OPS-old-U1c-trees | Retire superseded upstream draft trees | Manager route | Full host and route audit clear | merged | bin/recycle three named U1c workers | All three ended, clean; zero process, queue, active service or lease users. Superseded by U1d. Branches and every report/output retained. | No source change |
 
-| D86-command68-pairs | Preserve exact command-pair evidence | Luna / service | D98 replacement scope decision | blocked:orchestrator | Actual15239; source control0505 | Three genuine refusals but no observer evidence. Existingpairs remain EXACTMISSING; no guessed field or wider common cause. | Existing9211 retained |
+| D86-command68-pairs | Preserve exact command-pair evidence | Luna / service | D98a fail-closed control PASS | gated:D98a-control | rt-D98-fail-closed-control-0505 | Existingpairs EXACTMISSING; replacement3body conditionally approved. No guessed field or bulk common cause. | Existing9211 retained |
 | D86-20-22-safe-export | Publish exact terminal metadata | Luna read only | Safe publication complete | merged | Exact0358; packets0406 | 48 safe flat files published byte-exact. Genuine22 XML has4PASS18ERROR; original packet and actual20 preserved. | Evidence only |
 | OPS-D94a-stale-pins | Release unused main pin worktrees | Manager route | Full live-source and host audit clear | merged | bin/recycle six exact unused pins | Six clean idle pins: no live worker, process, queue, service or lease users. About0.7GB freed; all receipts/reports/branches retained. | No source change |
 | R-P4-private-cost-0215 | Close superseded private cost harness | Sol history | Owner D94a closes this work | gated:superseded | Worker0215 ended; no retry | Cross-process sample and D94a replace private harness. Original credential scope mismatch retained; no invented scopes. | Evidence only |
@@ -281,7 +281,7 @@
 | P4-D97-prep | Qualify sole remaining ten-note original | Luna / service / Luna | Independent GO complete | merged | Actual22560; independent0450 GO | Exact786/0c62/1e34/635f; one original PASS28.101sXML versus45. [GO](../../design/rt-P4-D97-GO-review-0450-report.md) | Runtime0c62 |
 | OPS-stale-four-pins | Release unused main pin worktrees | Manager route | Live and registered route audit clear | merged | bin/recycle four named stale pins | Four clean unused pins released, about0.5GB. Registeredb003 retained. Branches and all outputs/reports/receipts preserved. | No source change |
 
-| D98-observer | Preserve spent command-pair diagnostic | Luna / service | Replacement body scope decision | blocked:orchestrator | Actual15239; control0505 | Three ERROR5.756s; observer flags stripped, no usable pairs. [Scope](../../escalations/runtime-20261025T0505Z-D98-inactive-observer-body.md); no retry. | No product change |
+| D98-observer | Run one approved replacement diagnostic | Luna / service | D98a fail-closed control PASS | gated:D98a-control | Control0505 active; replacement not submitted | First15239 inactive observer remains3ERROR5.756s. D98a allows ONE replacement after real startup witness and poisonzero. | Private harness only |
 | D86-6058-export | Return exact current96 outcomes | Luna read only | Safe export complete | merged | rt-D86-6058-safe-export-0428 | 96 unique:14PASS7FAIL75ERROR. Exact authored safe packet published. [Report](../../design/rt-D86-6058-safe-export-0428-report.md) | Evidence only |
 | D97-consumer-adoption | Adopt released source in both callers | Agent / App Luna | Normal tool receipts complete | merged | Agent0435; App0438 | Agent786 lock7c16 source0c62; App319911 strict8/vendor15/mappings14 PASS. Caller adoption blockers cleared. | Agent49f66 / App319911 |
 | R1-asset-normalization | Preserve exact native asset read union | HARD Sol / Luna | D101 existing C0 union approved | doing | rt-D101-asset-union-sol-0450 | One paired Runtime auth and Agent guard author. Mutation RED/GREEN, security, protected review then exact MAINsix proof. | Candidate unmerged |
@@ -290,22 +290,24 @@
 
 | D98-startup-control | Enforce private observer activation before tests | Luna private harness | Ordinary env forwarding fix | doing | rt-D98-fail-closed-control-0505 | Real startup binding witness; positive17 once and missing-vars poison1 zero original body. NO diagnostic originals authorized. | Harness only |
 
+| D102-error-diagnostics | Record redacted unexpected commit causes | Luna / independent review | Explicit D102 source scope | doing | rt-D102-redacted-errors-0510 | ONE opaque correlation/classchain/filelinefunction stderr line; public503 unchanged. RED/GREEN privacy and mapping controls before review/release. | Candidate unmerged |
+
 Runtime producer: RELEASED normal0c62dfa63db9ff608ac9338388431e31a814e080/treee22 equals reviewedfec6. Canonical15/schema867f unchanged. Agent786 and App319911 normally adopted.
-core open: Remaining ten-note currentP4 is independentlyGO at28.101s on786/0c62/1e34/635f. Agent candidate8 remains held6FAIL2ERROR; other Agent originals remain open. D91latest2966 stays5FAIL5ERROR.
+core open: Runtime D101 asset-read correctness and D102 silent mapped exceptions open. CurrentP4 independentlyGO28.101s on786/0c62/1e34/635f. Agent candidate8 remains held6FAIL2ERROR; other Agent originals remain open. D91latest2966 stays5FAIL5ERROR.
 regressions: No newly established Runtime regression. Current96actual6058 remains14PASS7FAIL75ERROR; exact safe per-ID packet published. No unchanged repeat or historical result relabeling.
 Gates: P1/P3 historicalGO; current remainingP4GO independent0450. Three isolatedP2GO retained. App adopted0c62; latest owner04:45 orders four isolated originals before fulltour. D59 finaltuple matrix remains owed.
 
 Blockers: Agent source — D101 single pairedSol0450 owns exact lossless native asset union. Mutation RED/GREEN then independent security, protected review and MAINsix before any release.
 Blockers: D100 source — Hostfixture0447 awaits protected0450; Agent owns exact arithmetic and same-batch shared-item provenance. No newtenbody until reviewed joined source.
-Blockers: Orchestrator D98 — Actual15239 spent three-case body without observer evidence. Escalation0505 requests replacement only after fail-closed startup controls PASS; no new original authorized.
+Blockers: D98a control — Replacement scope APPROVED by D98a. Control0505 must prove actual active hook/failclosed before one replacement; then wait current main61 slot. No decision owed.
 Blockers: Final cut — D59 all-lane core0/regressions0, current finalP1-P5/core,D69 and genuine installed render still required. No final tuple or ZIP.
 Safety: WithdrawnD88 denied action/prototype stay stopped. D93 actual fixture/session/scopes/calls only. D98 private observer is passive, strict request/refusal flow unchanged; raw data remains private.
-Next ready: Ready61worker0505 now owns mainheavy. D98control0505 is source/control-only; extra original needs decision. D101 author and Agent D100 product work proceed independently.
+Next ready: Ready61worker0505 owns mainheavy. D98a replacement conditionally authorized after control0505PASS; D102 author0510 is active. D101 and Agent D100 product work proceed independently.
 Venues: One mainheavy above5.2GB. P4actual22560 independentGO; D98actual15239 terminalERROR with no diagnostic evidence, no retry. Source61main0505 active; no MAINApp duplicate.
 Delivery: Final existing-clone candidate0358 remains held for qualified cut. Current source input refresh includes D97; no install/build/original rehearsal body before final proof requirements.
 Source ownership: Manager process files only. D101Sol0450 sole Runtimeauth plus pairedAgentguard writer. D100fixture protectedreview; Agent owns capture/sequential source fixes. Held candidates remain unmerged.
 Later: Current61 has zero96 overlap and excludes passedinverse7/D91/productcandidates. D99 source Agent-owned. Video4 record absence remains explicit; no reconstructedcorrespondence.
 Disk: Last measured5.99GB. Sweep3 removed0; compact packed0 and gzipped10oldlogs. No ended clean nonKEEP tree remains. Current/registered pins and old dirty/refused targets untouched; branches/outputs retained.
-live 3 / cap 6; ready-undispatched 0 eligible starts. D101Sol, private D98startupcontrol and source61main. D100fixture sourcePASS/remotequeued; additional D98body decision owed.
+live 4 / cap 6; ready-undispatched 0 eligible starts. D101Sol, D102Luna, privateD98control and source61main active. ReplacementD98a waits realcontrolPASS/currentheavy; D100remote pending.
 Dispatcher: P4actual22560GO. D1010450, D98control0505 and next61body0505 active; no queued extraoriginal. D100010d remote request issued after independentPASS.
-INBOX consumed through904926 bytes. Updated 2026-10-25T05:04:18Z. D100/D101 decisions applied immediately; old adoption, release and contract Blockers cleared.
+INBOX consumed through909441 bytes. Updated 2026-10-25T05:09:08Z. D100/D101 decisions applied immediately; old adoption, release and contract Blockers cleared.
