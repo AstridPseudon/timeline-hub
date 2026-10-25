@@ -1,0 +1,5 @@
+Ask: hold unfiled or pending c992 D136a normal source intake from peer2043 after actual original9 NO-GO; D73 and D134 test-only requests continue / Owner: Main host filer, Agent source intake, Runtime Sol2108 / By: before any c992 home merge
+
+This narrows earlier2043source-onlyintakeask onnewactualevidence: unchangedAppnineactual2056 still0PASS9setupERROR atfps-typedlocationconservation. Prior2034sourcePASS notoriginalqualification. c992 remainsheld while soleSol rt-D136a-typed-location-return-sol-2108 owns exactproductreturn withAppindependentwholepath2100. Do not mergeoldc992 merelybecauseearlierpacketaskedhostfiling; preserveoriginalrequest/history and sourceproof, waitmeaningfulfinalsource/security/unchangednine. Ifalreadynormallymerged, reportactualreceiptsofuturecleanreturnbasesonit; do notmanagerrollback/Gitmutation. No false release/GO.
+
+Unrelated D73reviewed375c and D134strictsetup9a7c/9e854 remainnormalintakerequestswiththeirindependentreviewsandprooflimits. D127cRuntimehelpercf0b82dd alreadyHOMEexactreviewedtree. D137 nextrequestremainsafterfinalsecurity/CASinstalledpublishedreceivedorder, notearlier. D130allholds.

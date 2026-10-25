@@ -1,0 +1,34 @@
+{
+  "task": "rt-OPS-D137-shell-security-review-2103",
+  "verdict": "PASS",
+  "all_findings_once": "PASS",
+  "findings": [],
+  "confirmed_controls": [
+    "exact STORE_CONTEXT closure: failure, run_stage, progress, source_state, stage_stderr_path, retain_stage_stderr",
+    "real Store.ensure rollback boundary regression for nonzero and timeout",
+    "private 0600 stderr, 1 MiB truthful truncation/hash, no-follow/no-clobber",
+    "public failure payload exclusion and exit-status preservation",
+    "STORE_PY/STORE_VERIFY/STORE_BUILD and all other embedded blocks unchanged",
+    "ownership, RECORD, hash, source closure, registration, reserve and installer CAS controls unchanged"
+  ],
+  "limitations_not_findings": [
+    "No production install or live request was authorized or run",
+    "No real child package acquisition, whole make, provider/core, browser, Farm or full suite was run",
+    "D137 fixture E2E is WITHDRAWN/NOTRUN",
+    "The external D137 decision JSON/source commit was not supplied; installer gate remains the binding validator"
+  ],
+  "parent_actual": {
+    "commit": "0c4170e42d2ff435ea855a54c940299619f6a285",
+    "maker_sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "result": "RED",
+    "returncode": 2,
+    "first_error": "environment: line 60: stage_stderr_path: command not found"
+  },
+  "candidate_actual": {
+    "commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "maker_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "result": "GREEN_SOURCE_UNIT",
+    "returncode": 0,
+    "boundary": "source-derived STORE_CONTEXT through Store.ensure cleanup regression"
+  }
+}

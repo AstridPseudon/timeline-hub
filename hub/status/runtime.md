@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T21:07:30Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 2m -->
-# runtime board, 2026-10-25T21:05:03Z
+<!-- main | 2026-10-25T21:12:10Z | dispatcher heartbeat 15s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 2m -->
+# runtime board, 2026-10-25T21:10:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -474,7 +474,7 @@
 | U1-D135-union-review | Prove private Runtime upstream union | Luna and Farm | Farm exact paired checkouts | review | Source2006 PASS; handoff2041 | Recipe and protected hashes published; Agent32dde/tree81ad paired with Runtime0bb3/tree73d. Six-file functional result owed. | Independent2006 source PASS | 0bb3bc45c |
 | F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
-| D136a-fps-regression | Preserve every open canvas input | Luna | Agent normal intake and original nine | merging | Return2026; final2034 PASS | Independent101 target and45 own PASS; open forms preserve upstream fallback. [Review](../../design/rt-D136a-fps-final-review-2034-report.md) | Independent2034 PASS | c99214a held |
+| D136a-fps-regression | Preserve open and typed FPS input behavior | Sol after Luna failure | Exact original nine acceptance | doing | rt-D136a-typed-location-return-sol-2108 | Actual joined2056 nine setup errors at typed-location guard. c992 held; App2100 wholepath owns independent cause review. | Prior2034 bounded PASS retained | c992 held |
 
 | D73-env | Preserve supported launcher environment | Luna | Host filing and Agent intake | merging | Author2026; protected2036 PASS | Two child shells unset inherited variable; actual launcher positive and poison controls PASS. No live body claim. | Independent2036 PASS | 375c773449 |
 
@@ -484,7 +484,7 @@
 
 | D134-Runtime49 | Classify word and PARAM boundaries | Luna | Source evidence qualified | merged | Author2052; review2100 PASS | Exact49:27 setup,22 UNKNOWN,0 proved product gaps. Review report count typo disclosed; per-ID and JSON counts qualified. | Independent2100 C PASS | Evidence only |
 
-| OPS-D137-shell-closure | Carry all maker shell dependencies | Luna | Final independent security | review | Source2058; wholepath2058; review2103 | Both omitted helpers proved. Parent RED and candidate GREEN through serialized boundary;44 controls PASS. No live acceptance. | Security2103 active | cf80cfcb91 / f07b8093 |
+| OPS-D137-shell-closure | Carry all maker shell dependencies | Luna | Guarded CAS installation | merging | Author2058; security2103 PASS; install2110 | Real serialized parent RED/candidate GREEN; independent44 PASS, verifier and guards exact. No child acceptance yet. | Independent2103 PASS | cf80cfcb91 / f07b8093 |
 
 | D127c-normal-source | Carry reviewed final profiler helper | Luna | Exact reviewed and integrated tree | merged | App clean2010; normal cf0b82dd | Full tree8d568 equals reviewedfb4add. Central61 and Node20three controls retained; no original element result. | Runtime2002 and App2047 PASS | cf0b82dd47 |
 
@@ -493,17 +493,17 @@
 Runtime producer: Normal cf0b82dd helper/tests, entire reviewed8d568 tree exact; product ab1e unchanged. Private upstream0bb3 uses earlier e319 helper, so D59 join must conserve new helper too. No U1 merge before D59.
 Core: D13418455 measurement8926 PASS190 FAIL180 ERROR173 subtests; raw XML and full disk witness missing. Reviewed own344 split132 setup,0 proved product,212 unknown. Current REG unverified, no ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element/SWAP. No D59 cut, final build or ZIP.
-Blockers: Child/core — actual2044 refused at venv-log-setup, missing stage_stderr_path. Both missing helpers proved; source2058 candidate f07b8093, final security2103 active. No child/core or stage log; Agent request and Farm remain held.
+Blockers: KIT CHANGE make-child-venv f07b8093 — source/security2103 PASS, CAS installer2110 active with exact4435 preimage. Agent next ONE request follows installed/published/received receipt; Farm D77 waits actual result.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
 Blockers: Element — Runtime helper normalcf0b82dd exact reviewedtree; AppF001 and actualNode20F0022047 PASS. App sole later element receiver needs genuine admission and original proof; no cost author yet.
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tuple P1-P5, wheel, Windows and ZIP remain owed.
-Blockers: Agent source intake — D136a c992 final2034 PASS and D73 375c protected2036 PASS; remote helpers exit3 D106. Host filing requested in peer2043; no direct hub writes or retry.
+Blockers: Agent source intake — D73 375c and D134 test-only9a7c/9e854 protected PASS await host filing; helper exit3 D106. Old c992 intake explicitly held in peer2109 after original9 NO-GO.
 Blockers: Runtime union — Farm sole six-file receiving proof now has flat recipe and exact32dde Agent binding in peer2041. Functional result owed; private source review PASS only.
-Next ready: Maker final security2103 then normal reviewed CAS installation. Future changed real request still needs recorded owner disposition. Host files reviewed D136a and D73 branches. Farm union receiver has exact inputs; Agent actual request stopped pending reviewed change and owner disposition.
-D100: App corrected27 PASS; original9 nine setup errors. D136a product correction independently source/security PASS and held for Agent intake, unchanged original9 and later batch core. No fixture rewrite.
+Next ready: Installer2110 receipt and exact kit publication, then Agent next ONE received-kit real request per owner21:05. No further permission gate after that order. Host files reviewed D136a and D73 branches. Farm union receiver has exact inputs; Agent actual request stopped pending reviewed change and owner disposition.
+D100: Corrected27 PASS, original9 still nine setup errors afterc992 at typed-location conservation. Sol2108 owns product return; App2100 independent wholepath. No fixture rewrite or normal c992 intake.
 D77: Farm changed child follows Agent actual D137 result; no Farm fixture bodies/core. Exact applied source and lock handoffs remain qualified.
 Delivery: D59 integration tuple only; stale547e proof pin excluded. Private Agent32dde review1959 PASS; Runtime0bb3 source PASS, Farm targeted result owed. App private upstream join remains App-owned.
 Safety: All prior refusals held. Managers write ORCH boards/briefs/peers and copy authored handbacks only. No product/test/pin/Git mutation or credentials.
 Disk: Fresh4.758 GB after completed-source auto-recycle and before reviewer2100; cap3 below5GB, source floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and gzipped3 logs; no eligible unguarded Runtime trees identified. Protected raw KEEP retained.
-live 2 / cap 3; ready-undispatched 0. Maker final security2103 and Agent exact-node route2104 active. Source returns2100 PASS sent for host filing. Fresh4.869GB before route dispatch; no local heavy body.
-INBOX consumed through1536218 bytes including Agent2053 exact-node service ask; worker2104 assigned. Helper merged cf0b82dd; App original9 review wait explicitly cleared in peer2102. Owner20:52 Runtime49 source returned and under review2100. D134 twelve assigned; App helper Node20 bound proof and private menu source remain App-owned. Updated 2026-10-25T20:43:37Z.
+live 3 / cap 3; ready-undispatched 0. CAS installer2110, exact-node route2104 and HARD Sol FPS2108 active. Fresh4.732GB before installation dispatch; no local heavy body.
+INBOX consumed through1543134 bytes: owner21:05 maker order, Agent2546 and actual refusal review, App original9 NO-GO. Existing Runtime49 source assessment already reviewed; no duplicate2546 worker. Owner20:52 Runtime49 source returned and under review2100. D134 twelve assigned; App helper Node20 bound proof and private menu source remain App-owned. Updated 2026-10-25T20:43:37Z.
