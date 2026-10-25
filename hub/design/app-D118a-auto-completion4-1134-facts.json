@@ -1,0 +1,38 @@
+{
+  "task": "D118a-auto-completion4-1134",
+  "base_agent": "0ad49261ed36f043b059c07de989bd39cd3a5889",
+  "target": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py",
+  "target_sha256": "3138f2ac264cf3a5e52bdd44677eb6f8cf9f70d362a0630e5b16490307a6b22c",
+  "target_unchanged": true,
+  "runtime_checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+  "runtime_head": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+  "runtime_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+  "runtime_clean": true,
+  "retained_nodes": {
+    "count": 4,
+    "outcome": "failed",
+    "failure_location": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py:176",
+    "failure_reason": "value_conflict",
+    "expected_reason_for_at_hold": "dependency_changed",
+    "failure_text_sha256": [
+      "dd93c67f84ec37a424ce6e6662fb03f047a5eb11bb889ac360c03184313ba381",
+      "7475d6debc2b260edb7e181c7b5afd54b4ae1013e962071aca79160f7294f4b3",
+      "72b41522c7f36bff90e85052ee9c5698f7c835248bd624ad5f78f9a1595b114b",
+      "7d8d76b3089b419ec56266a1b344a4ef7ceae3fdbfb19d9d218c4d484193e7d9"
+    ]
+  },
+  "seam": {
+    "owner": "Agent production caller/commit conflict classification",
+    "evidence": "auto_place_completion parent caller captures anchor timing as field reads; changed fields classify as value_conflict",
+    "required_for_expected_test": "scope-level dependency_changed classification",
+    "authorized_test_only_fix": false
+  },
+  "static_checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "git_status": "clean"
+  },
+  "result": "blocked_no_change"
+}

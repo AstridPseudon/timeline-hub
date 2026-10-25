@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T11:35:48Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 2m -->
+<!-- app | 2026-10-25T11:40:02Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 2m -->
 # app board, 2026-10-25T11:31Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,14 +23,14 @@
 | P2-current-parent | Admit gesture after connection panel exit | Luna and independent | D119 final1050 PASS | merged | Author1043; final review1050 | Exact one-line source home; Node20 types/lint, ours file and upstream gate qualified. Existing ledger logged; no browser credit. | 7e92cd9468 |
 | P2-parent-readiness-review | Preserve preliminary source review | Luna independent | Sol1028 count0 proposal | merged | app-P2-parent15203-readiness-review-1036 | Preliminary SOURCE PASS154, types and lint; D119 final toBeHidden candidate still needs exact independent continuation. | Proposal only |
 | P2-15203-wholepath | Separate current failure owners | Luna read only | Exact retained15203 artifacts | merged | app-D118-P2-15203-wholepath-1019 | SWAP POST409 belongs Runtime verified history; parent no POST belongs App caller boundary. No guessed lower cause. | Source unchanged |
-| P2-current-element | Qualify applied status after read fix | Runtime HARD Sol and Luna | Qualified D111b release | blocked:runtime | Runtime actual read Sol1016 | Actual15203 applied status FAIL11.905s. Prior snapshot had no gain and stays held; actual doc patch read path retarget active. | Released d23a8 only |
+| P2-current-element | Qualify actual element after read fix | Luna and service | Qualified Runtime7070 released | doing | Adopter1139 then sole full P2 | Source release qualified native1.448x and normal9 smoke. Actual original element proof still owed; no single rerun. | Runtime7070 released |
 | P2-current-asset | Qualify exact D115 inverse envelope | Service and Luna | Meaningful full tour successor | gated:full-P2 | D115 already home | NOTRUN in15203 after element failure. Retain15712 and old27438 GO with tuple scope; no isolated successor. | Source7841 retained |
 | P2-current-clears | Retain both clear purposes | Service and Luna | Meaningful full tour successor | gated:full-P2 | Exact originals unchanged | Both NOTRUN in15203 after parent error; earlier19078 full tails remain GO on recorded tuple. | Source unchanged |
 | D118-tail-audio2 | Preserve prepared audio vectors | Luna and independent Luna | Independent1017 PASS_SOURCE | merged | Author1015; remote normal receipt | Normal Agent e8b1a517f6. Only fixture env cleanup;52 assertion ASTs exact. Functional core proof still owed. | Agent e8b1a517f6 |
 | D118-tail-sheet15 | Correct supported verified-media fixture caller | Luna and independent | Final1056 cumulative PASS | merging | Author1054; remote Agent request | Four supported setup reads;248 assertions/10 tests exact, statics PASS. Prior1050 gap resolved; other two failures open. | c3be5da plus38c672 |
 | D118-tail-WC6three | Preserve completion capture coverage | Luna and independent | Independent1054 PASS15 offline | merged | Author1050; normal remote receipt36e44 | Genuine fake protocol, original not_ready and current helper/source guards home. Protected59 assertions exact; no real service/core credit. | Agent36e44e1c0e |
 | D118c-host14 | Repair genuine upstream host regressions | Luna and independent core | Authentic original14 proof | blocked:agent | Author1105; independent1111 SOURCEPASS | Strict validator and actual launch use sanitized copy; additive3/static PASS. Original14 exact; local profile is old079 and unused. Agent proof requested. | bae5ab76 held |
-| D118c-occurrence2 | Preserve occurrence birth conformance | Luna | Own-node1124 observed422 twice | doing | app-D118c-occurrence2-invalid-exact-1132 | Tiny exact current-contract status migration only; unchanged1e308/reason/no-write and full later tail protected. Immutable Runtime42aad requested. | No accepted fix yet |
+| D118c-occurrence2 | Preserve occurrence birth conformance | Luna and protected Luna | Author1132 exact contract correction | review | app-D118c-occurrence2-exact-protected-review-1135 | Exact invalid422/status/code assertions pass; later inverse/grouped guards fail on42aad. Both live boundaries handed to Agent/Runtime. | edb6b9d83 held |
 | D118c-video1 | Preserve prepared video conformance | Luna and protected Luna | Independent1111 SOURCEPASS | merging | Author1105; review1111; lead1128 | Normal remote requested by lead1128; result pending. Strict369 source guard and52 assertions preserved; functional proof owed. | 47d1ca64c |
 | D74-two-15203-pins | Release completed tuple worktrees | Manager and lead | Host1103 and fresh guards | merged | Guarded recycle1105 | Both96d475 andd23a pins recycled normally, zero refusal. Net187105280 bytes; all outputs/branches/reports kept. | No source edits |
 | D118a-scene-summary1 | Preserve real Scene to summary | Luna and independent Luna | Independent1123 SOURCEPASS | merging | Author1118; reviewer1123; lead1131 | Normal remote request filed by lead1131. Real Scene node still awaits authentic Agent profile; no functional GO. | 528ec4f219 |
@@ -41,13 +41,15 @@
 | E4 | Dropped history and undo design | Luna | D81 cut | gated:dropped | Author2005 stopped | WIP retained; no integration merge or new task. | No product edits |
 | F-final | Final pinned gates and core suites | Runtime coordinator and services | D59 cut and current core zero | gated:D59-cut | Existing final coordinator | Current P2, final P1-P5, core, D69 and genuine installed render still owed. No ZIP claim. | Cut pending |
 | D77-D117 | Genuine installed render access | Owner and Runtime | Authorized pinned OMP source | gated:D117 | Runtime coordinator | HTTP403 and auto classifier refusal remain stopped. No retry, alternate acquisition or installed render claim. | Evidence retained |
-| D118a-script-pin1 | Preserve pinned script after rebind | Luna and independent Luna | Own-node author RED then GREEN | review | app-D118a-script-pin-protected-review-1132 | Author706e adds12 setup lines;7 original assertions exact. Review challenges masking native-binding bug and qualifies immutable Runtime source. | 706e83559 held |
-| D118a-atomic-scope1 | Preserve authenticated atomic scope | Luna | Genuine own-node RED on42aad | blocked:agent | app-D118a-atomic-scope1-1124 | Real document helper passes caller-visible bundle to private emitter; missing authority. Clean source; precise product owner peer1130 filed. | No source diff |
+| D118a-script-pin1 | Preserve pinned script after rebind | Luna and independent Luna | Independent1132 PASS own node | merging | Author1124; reviewer1132; lead1138 | Exact node1 PASS2.41s on immutable42aad;7 original predicates and49 call ASTs exact. Normal remote request filed by host. | 706e83559 |
+| D118a-atomic-scope1 | Preserve authenticated atomic scope | Luna | Genuine own-node RED on42aad | doing | app-D118a-atomic-caller-source-1137 | Live private caller repair claimed before start. Public bundle privacy, emitter/auth and original predicates remain protected. | Product candidate pending |
 
 | D118a-helper-cut1 | Preserve owner-deferred timing purpose | Luna | Existing D23 scope | gated:D23 | app-D118a-helper-cut1-1130 | No source change; exact second word-anchor case is already owner-deferred. Authenticated binding would change input. No new core bug claimed. | Original exact |
 
 | D118a-clip-scalars3 | Preserve clip scalar changes | Luna | Claim1134 posted first | doing | app-D118a-clip-scalars3-1134 | Exact own failing nodes; immutable Runtime42aad, all authored values and protected assertions unchanged. | Base0ad49261 |
 | D118a-auto-completion4 | Preserve parent automatic placement | Luna | Claim1134 posted first | doing | app-D118a-auto-completion4-1134 | Exact own failed nodes; file-only fixture/caller fix or precise live source handback. | Base0ad49261 |
+
+| U4p-D111b | Adopt qualified generic read performance | Luna | Released normal7070 | doing | app-U4p-D111b-release-adoption-1139 | Normal tools only; preserve Agent070dfc,14 mappings and all protected test files. Current P2 follows actual normal receipt. | App base96af9 |
 
 Integration: App96af9c08b0d80e0bdebda998662ff9773eab6caf/treea6190929019538bca9d76552ce6b915501193f73; full tree equals tested c2a43. Qualified Runtime42aad/tree085a adopted by tools. D119/D115 retained; Agent production input070dfc and Composition635f unchanged. No manager product, tests, generated, pin or Git writes. [Receipt](../../design/app-U4p-D115-output-normal-home-1108.json).
 
@@ -57,14 +59,14 @@ Host14 author1105 and independent1111 SOURCEPASS: sanitized child copy reaches s
 
 D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node lower cause observed; script candidate GREEN; atomic source bug handed to Agent. Helper cut1130 now active. Scene1118 author claimed an independent review without a separate worker; that claim is disregarded. Sole independent1123 owns the actual protected verdict. D120 permits own failing-node checks; no acquisition or wider body.
 
-Blockers: Runtime D111b — Native10398 now PASS1.448x versus1.5x. Exactf0c4 source still held on security1122; no qualified release/adoption yet.
+
 Blockers: Runtime current SWAP — Native20990 reached App-shaped409 dependency_changed, not original history_unavailable; exact root remains UNKNOWN. Tags1124 is sole diagnostic source owner.
 Blockers: Agent authentic host14 — Source-qualified bae5ab76 requires original14 with genuine source-matched existing profile. App has no applicable profile and has not substituted one.
 Blockers: Agent normal queue — Reviewed sheet c3be plus38c remains PENDING ownerreview. Video47d1ca normal remote request filed by lead11:28, receipt pending. Scene528ec normal request filed by lead11:31, result pending. No sandbox retry.
-Blockers: Agent atomic script — Genuine private-authority source defect handed to Agent in peer1130. No fixture/assertion bypass; owner needed for source correction.
+
 Blockers: Final cut — Current full P2, final pinned P1-P5/core/D69 and genuine installed render remain owed. D117 denied OMP acquisition stays stopped.
-Next ready: consume host manager remote requests; consume own-node findings and review each proved source correction immediately. Adopt qualified Runtime release through tools when published; preserve current15203 artifacts.
-live 4 / cap 6; ready-undispatched 0; core open: 4. Three authors: occurrence1132, clip-scalars3 and auto-completion4; script protected reviewer1132. Scene review complete.
+Next ready: merge normal adopter1139 on focused PASS, then ONE preflighted full P2 on adopted tuple. No tag wait, no singles. Consume remote merge results and independent source review1135 immediately.
+live 5 / cap 6; ready-undispatched 0; core open: 4. Three authors: occurrence1132, clip-scalars3 and auto-completion4; script protected reviewer1132. Scene review complete.
 Capacity: 5.500 GB free at2026-10-25T11:25Z. Source floor5.0 and heavy floor5.2 checked. All finished merged clean nonKEEP worktrees already recycled; fresh eligible scan found0. Sweep3 complete:0 removed; compact-scratch touches prohibited sessions and is not retried. Dirty/refused cleanup and all15203/15712 outputs remain untouched.
 INBOX consumed through2111630 bytes. New D120 owner speed-up consumed from live user instructions; preserve original assertions and use one protected review for our tests.
 Later: two residual sheet failures require exact product/input disposition from Agent; D79 waits ZIP, E4 dropped. D74 old graph and dirty trees remain behind their recorded guards. No upstream push/M5/test weakening/credential output or retry of denied cleanup/acquisition/hub routes.
