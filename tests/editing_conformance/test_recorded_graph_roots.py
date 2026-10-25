@@ -36,7 +36,7 @@ def root_values():
         {'ref': 'shot:new-shot', 'kind': 'shot', 'owner': None, 'value': {
             'payload': {'name': 'New shot', 'items': [], 'unknown': {
                 'pinnedShotGroups': None, 'clipType': 'shot', 'empty': {}, 'ordered': [None, False, 0]},
-                'metadata': None},
+                'metadata': {}},
             'internal_timeline': {'tracks': [{'id': 'picture', 'kind': 'visual', 'unknown': None}],
                                   'clips': [{'id': 'title', 'track': 'picture', 'at': 0,
                                              'hold': 2, 'text': 'Hello', 'unknown': [None]}],
@@ -46,15 +46,17 @@ def root_values():
         {'ref': 'occurrence:new-occ', 'kind': 'occurrence', 'owner': 'parent', 'value': {
             'occurrence_id': 'new-occ', 'shot_id': 'new-shot', 'track': 'picture',
             'placement': {'start_ms': 20000, 'track': 'picture'}, 'duration_ms': 2000,
-            'source_offset': 0, 'speed': 1, 'gain': None,
+            'source_offset': 0, 'speed': 1, 'gain': 1,
             'provenance': {'group_migration': {'opaque': [None, {'clipType': 'shot'}]}},
         }},
     ]
 
 
 def create_command(roots=None):
+    roots = root_values() if roots is None else roots
     return {'schema_version': 1, 'op': 'test.create-roots', 'version': '1',
-            'select': 'parent', 'args': {'roots': root_values() if roots is None else roots}}
+            'select': 'parent', 'args': {'roots': roots},
+            'created': [root['ref'] for root in roots]}
 
 
 def test_missing_roots_are_tagged_absent():
