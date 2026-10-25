@@ -1,1 +1,1 @@
-2026-10-25T16:47:05Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 12G free; D77: checkouts DONE for Agent 91398e9d / Runtime 1daca2a3; no runtime/child/stage/render requested; waiting for qualified child maker (Runtime Sol1633) per Runtime/MAIN
+2026-10-25T17:40:31Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 12G free; D77 render HELD: applied child-venv refused 17:22Z (provision report differs from installed inventory); Runtime doing one hard kit pass; no retry until reviewed kit published
