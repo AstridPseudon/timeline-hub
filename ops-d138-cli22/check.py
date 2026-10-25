@@ -55,9 +55,13 @@ ORIGINS = {
 }
 LAUNCHER = AGENT / "tools/p4-d73-pinned-launch.sh"
 TEST_SOURCE = AGENT / "tests/editing_conformance/test_native_batch_ingress.py"
+RUNTIME_HELPER = AGENT / "tests/helpers/runtime.py"
+SYNC_SOURCE = AGENT / "astrid/sdk/timeline/sync.py"
 LOCK = AGENT / "runtime.lock.json"
 LAUNCHER_SHA = "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
 TEST_SOURCE_SHA = "8bff12b06be10a5b08597dc6c0bf6566b1ffe409f479a6b7d49ac3285dfb845e"
+RUNTIME_HELPER_SHA = "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f"
+SYNC_SOURCE_SHA = "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254"
 LOCK_SHA = "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"
 CLIENT_VERSION = "0.2.14"
 SCHEMA_DIGEST = "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
@@ -132,6 +136,12 @@ def git(path: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(path), *args], text=True).strip()
 
 
+def git_file(path: Path, revision: str, relative: str) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(path), "show", f"{revision}:{relative}"], text=True
+    )
+
+
 def checkout_errors(name: str, path: Path, sha: str, tree: str, parents: str) -> list[str]:
     if not path.is_absolute() or path.resolve() != path or not path.is_dir():
         return [f"{name}: missing or noncanonical checkout {path}"]
@@ -164,6 +174,8 @@ def source_errors() -> list[str]:
     for path, expected, label in (
         (LAUNCHER, LAUNCHER_SHA, "launcher"),
         (TEST_SOURCE, TEST_SOURCE_SHA, "test source"),
+        (RUNTIME_HELPER, RUNTIME_HELPER_SHA, "runtime helper"),
+        (SYNC_SOURCE, SYNC_SOURCE_SHA, "TimelineSession source"),
         (LOCK, LOCK_SHA, "runtime lock"),
     ):
         if not path.is_file() or digest(path) != expected:
@@ -180,22 +192,54 @@ def source_errors() -> list[str]:
     except (OSError, ValueError, KeyError, TypeError):
         errors.append("agent: runtime lock unreadable")
     try:
-        tree = ast.parse(TEST_SOURCE.read_text())
+        candidate_test = git_file(AGENT, AGENT_SHA, "tests/editing_conformance/test_native_batch_ingress.py")
+        tree = ast.parse(candidate_test)
         marker = any(
             isinstance(node, ast.Assign)
             and any(isinstance(target, ast.Name) and target.id == "pytestmark" for target in node.targets)
+            and isinstance(node.value, ast.Attribute)
+            and node.value.attr == "integration"
+            and isinstance(node.value.value, ast.Attribute)
+            and node.value.value.attr == "mark"
+            and isinstance(node.value.value.value, ast.Name)
+            and node.value.value.value.id == "pytest"
             for node in tree.body
         )
         if not marker:
-            errors.append("test source: integration marker missing")
+            errors.append("test source: exact pytestmark=pytest.mark.integration missing")
         names = {node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
         required_names = {selector.split("::", 1)[1].split("[", 1)[0] for selector in SELECTORS}
         if not required_names <= names:
             errors.append("test source: one or more exact22 test functions missing")
         if RETIRED_SENTINEL.split("::", 1)[1] not in names:
             errors.append("test source: retired parser-only sentinel missing from source")
-    except (OSError, SyntaxError):
+        candidate_lock = json.loads(git_file(AGENT, AGENT_SHA, "runtime.lock.json"))
+        if "use_runtime(vendored_runtime_commit())" in candidate_test and candidate_lock.get("source_commit") != RUNTIME_SHA:
+            errors.append(
+                "test source: use_runtime(vendored_runtime_commit()) selects preserved Agent lock "
+                f"{candidate_lock.get('source_commit')}, not manifest Runtime {RUNTIME_SHA}"
+            )
+    except (OSError, SyntaxError, subprocess.CalledProcessError, ValueError, TypeError):
         errors.append("test source: AST inspection failed")
+    try:
+        helper = git_file(AGENT, AGENT_SHA, "tests/helpers/runtime.py")
+        if 'json.loads(lock.read_text(encoding="utf-8"))["source_commit"]' not in helper:
+            errors.append("runtime helper: vendored_runtime_commit source binding changed")
+        if "git archive" not in helper or "runtime_checkout(commit" not in helper:
+            errors.append("runtime helper: pinned commit does not archive the selected Runtime source")
+        sync = git_file(AGENT, AGENT_SHA, "astrid/sdk/timeline/sync.py")
+        for field in (
+            '"api_version"', '"project_id"', '"timeline_id"', '"base_revision_id"',
+            '"base_publication_id"', '"commands"', '"source"', '"dry_run"',
+            "commit_options", "idempotency_key",
+        ):
+            if field not in sync:
+                errors.append(f"TimelineSession source: request field guard missing {field}")
+        launcher = LAUNCHER.read_text()
+        if 'pin["$key"]=${line#*=}' in launcher and "duplicate" not in launcher.lower():
+            errors.append("launcher: duplicate manifest keys are silently last-write-wins")
+    except (OSError, subprocess.CalledProcessError):
+        errors.append("runtime helper or TimelineSession source unreadable")
     return errors
 
 

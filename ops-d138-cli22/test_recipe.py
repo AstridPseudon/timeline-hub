@@ -32,6 +32,8 @@ from check import (
     LOCK_SHA,
     ORCH,
     RETIRED_SENTINEL,
+    RUNTIME_HELPER,
+    RUNTIME_HELPER_SHA,
     RUNTIME,
     RUNTIME_PARENTS,
     RUNTIME_SHA,
@@ -41,6 +43,8 @@ from check import (
     SUITE,
     TEST_SOURCE,
     TEST_SOURCE_SHA,
+    SYNC_SOURCE,
+    SYNC_SOURCE_SHA,
     artifact_paths,
     manifest_errors,
     parse_manifest,
@@ -157,10 +161,30 @@ class SourceControls(unittest.TestCase):
         self.assertEqual(len(set(SELECTORS)), 22)
         self.assertNotIn(RETIRED_SENTINEL, SELECTORS)
         source = ast.parse(TEST_SOURCE.read_text(encoding="utf-8"))
-        self.assertTrue(any(isinstance(node, ast.Assign) and any(getattr(target, "id", None) == "pytestmark" for target in node.targets) for node in source.body))
+        self.assertTrue(any(
+            isinstance(node, ast.Assign)
+            and any(getattr(target, "id", None) == "pytestmark" for target in node.targets)
+            and ast.unparse(node.value) == "pytest.mark.integration"
+            for node in source.body
+        ))
         names = {node.name for node in ast.walk(source) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
         self.assertTrue({item.split("::", 1)[1].split("[", 1)[0] for item in SELECTORS} <= names)
         self.assertIn(RETIRED_SENTINEL.split("::", 1)[1], names)
+
+    def test_runtime_adapter_cannot_mix_lock_and_manifest_sources(self):
+        self.assertEqual(hashlib.sha256(RUNTIME_HELPER.read_bytes()).hexdigest(), RUNTIME_HELPER_SHA)
+        self.assertEqual(hashlib.sha256(SYNC_SOURCE.read_bytes()).hexdigest(), SYNC_SOURCE_SHA)
+        self.assertNotEqual(LOCK_RUNTIME_SHA, RUNTIME_SHA)
+        candidate_lock = json.loads(subprocess.check_output(
+            ["git", "-C", str(AGENT), "show", f"{AGENT_SHA}:runtime.lock.json"],
+            text=True,
+        ))
+        candidate_test = subprocess.check_output(
+            ["git", "-C", str(AGENT), "show", f"{AGENT_SHA}:tests/editing_conformance/test_native_batch_ingress.py"],
+            text=True,
+        )
+        self.assertEqual(candidate_lock["source_commit"], LOCK_RUNTIME_SHA)
+        self.assertIn("use_runtime(vendored_runtime_commit())", candidate_test)
 
     def test_named_row_uses_existing_parser_and_exact_argv(self):
         command = suite_command()
@@ -169,7 +193,7 @@ class SourceControls(unittest.TestCase):
         self.assertIn("-p no:cacheprovider", command)
         self.assertIn("--timeout=180", command)
         self.assertIn("--junitxml=", command)
-        self.assertEqual(sum(command.count(selector) for selector in SELECTORS), 22)
+        self.assertTrue(all(command.count(selector) == 1 for selector in SELECTORS))
         self.assertNotIn(RETIRED_SENTINEL, command)
         self.assertEqual(command.count("test_native_batch_ingress.py::"), 22)
 
@@ -210,6 +234,9 @@ class SourceControls(unittest.TestCase):
         self.assertEqual(parsed["service_versions"], "a=b,c=d")
         self.assertTrue(any("missing agent_sha" in error for error in errors))
         self.assertTrue(parse_manifest(json.dumps(values))[1])
+        _, duplicate_errors = parse_manifest("agent_sha=one\nagent_sha=two\nnot-a-key\n")
+        self.assertTrue(any("duplicate agent_sha" in error for error in duplicate_errors))
+        self.assertTrue(any("malformed key=value" in error for error in duplicate_errors))
 
     def test_manifest_rejects_current_source_mismatch(self):
         values = {key: "present" for key in __import__("check").REQUIRED}
@@ -235,10 +262,13 @@ class SourceControls(unittest.TestCase):
         self.assertTrue(any("agent_sha" in error for error in manifest_errors(values)))
 
     def test_lock_is_preserved_and_normal_runtime_is_distinct(self):
-        lock = json.loads(LOCK.read_text(encoding="utf-8"))
+        lock_bytes = subprocess.check_output(
+            ["git", "-C", str(AGENT), "show", f"{AGENT_SHA}:runtime.lock.json"]
+        )
+        lock = json.loads(lock_bytes)
         self.assertEqual(lock["source_commit"], LOCK_RUNTIME_SHA)
         self.assertNotEqual(lock["source_commit"], RUNTIME_SHA)
-        self.assertEqual(hashlib.sha256(LOCK.read_bytes()).hexdigest(), LOCK_SHA)
+        self.assertEqual(hashlib.sha256(lock_bytes).hexdigest(), LOCK_SHA)
         self.assertEqual(hashlib.sha256(LAUNCHER.read_bytes()).hexdigest(), LAUNCHER_SHA)
         self.assertEqual(hashlib.sha256(TEST_SOURCE.read_bytes()).hexdigest(), TEST_SOURCE_SHA)
 
@@ -262,18 +292,44 @@ class SourceControls(unittest.TestCase):
                 "P4_D73_REQUEST_ID": "positive",
             }
             positive = subprocess.run(
-                [str(LAUNCHER), str(manifest), "run", "--", "-m", "pytest"],
+                [str(LAUNCHER), str(manifest), "run", "--", "-m", "pytest",
+                 "value with spaces", "semi;colon", "quote'and\"double"],
                 cwd=AGENT,
                 env=environment,
                 capture_output=True,
                 text=True,
             )
             self.assertEqual(positive.returncode, 17, positive.stderr)
-            self.assertEqual(marker.read_text(encoding="utf-8").splitlines(), ["[\"-P\", \"-m\", \"pytest\"]"])
+            self.assertEqual(marker.read_text(encoding="utf-8").splitlines(), [
+                '["-P", "-m", "pytest", "value with spaces", "semi;colon", "quote\'and\\\"double"]'
+            ])
             self.assertEqual((root / "positive" / "d66" / "positive.preflight.exit").read_text().strip(), "0")
             self.assertEqual((root / "positive" / "d66" / "positive.body.exit").read_text().strip(), "17")
+            duplicate = root / "duplicate-manifest"
+            duplicate.write_text(manifest.read_text() + f"agent_sha={AGENT_SHA}\n", encoding="utf-8")
+            duplicate_result = subprocess.run(
+                [str(LAUNCHER), str(duplicate), "run", "--", "-m", "pytest"],
+                cwd=AGENT,
+                env={**environment, "P4_D73_EVIDENCE": str(root / "duplicate" / "d66"), "P4_D73_REQUEST_ID": "duplicate"},
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(duplicate_result.returncode, 17, duplicate_result.stderr)
+            self.assertEqual(len(marker.read_text(encoding="utf-8").splitlines()), 2)
+            malformed = root / "malformed-manifest"
+            malformed.write_text(manifest.read_text() + "not-a-manifest-line\n", encoding="utf-8")
+            malformed_result = subprocess.run(
+                [str(LAUNCHER), str(malformed), "run", "--", "-m", "pytest"],
+                cwd=AGENT,
+                env={**environment, "P4_D73_EVIDENCE": str(root / "malformed" / "d66"), "P4_D73_REQUEST_ID": "malformed"},
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(malformed_result.returncode, 0)
+            self.assertIn("malformed manifest line", malformed_result.stderr)
+            self.assertEqual(len(marker.read_text(encoding="utf-8").splitlines()), 2)
             poisoned = root / "poisoned-manifest"
-            poisoned.write_text(manifest.read_text().replace(f"agent_sha={AGENT_SHA}", "agent_sha=" + "0" * 40), encoding="utf-8")
+            poisoned.write_text(manifest.read_text().replace(f"runtime_sha={RUNTIME_SHA}", "runtime_sha=" + "0" * 40), encoding="utf-8")
             poison = subprocess.run(
                 [str(LAUNCHER), str(poisoned), "run", "--", "-m", "pytest"],
                 cwd=AGENT,
@@ -283,7 +339,7 @@ class SourceControls(unittest.TestCase):
             )
             self.assertNotEqual(poison.returncode, 0)
             self.assertIn("SHA mismatch", poison.stderr)
-            self.assertEqual(marker.read_text(encoding="utf-8").splitlines(), ["[\"-P\", \"-m\", \"pytest\"]"])
+            self.assertEqual(len(marker.read_text(encoding="utf-8").splitlines()), 2)
             self.assertFalse((root / "poison" / "d66" / "poison.body.exit").exists())
 
     def test_launcher_seam_is_explicit_not_bypassed(self):

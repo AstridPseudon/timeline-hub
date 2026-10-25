@@ -30,5 +30,11 @@ this as `NOT_READY`; the private controls still exercise the unmodified
 launcher’s run-mode success (exit 17, one body call) and poisoned-identity
 refusal (zero body calls).
 
+The review is fail-closed on two additional operational facts: the migrated
+fixture’s `use_runtime(vendored_runtime_commit())` follows the preserved Agent
+lock rather than the manifest Runtime, and the unchanged launcher accepts
+duplicate manifest keys last-write-wins. The private controls record both
+findings; they do not retarget the candidate or claim original behavior.
+
 No central registry row, manifest, receipt, checkout, dependency, schema
 carrier, install, product test, or 22-case body run is created here.
