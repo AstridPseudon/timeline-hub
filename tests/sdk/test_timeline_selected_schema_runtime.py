@@ -245,20 +245,27 @@ def http_retained_pack(configured_project_pack, selected_runtime_env, tmp_path, 
             'publication_id': resource['head_publication_id']}
     baseline = commit.bundle_from_document(service._timeline_commits()[0].revision_closure(
         project, 'film', base['revision_id']))['parent']
-    patch = {'op': 'set', 'ref': 'parent', 'path': [],
-             'before': {'state': 'present', 'value': copy.deepcopy(baseline)},
-             'value': copy.deepcopy(baseline)}
+    original_parent = {
+        'config': {'tracks': []}, 'registry': {}, 'clips': [], 'occurrences': [],
+    }
+    changes = [
+        {'op': 'set', 'ref': 'parent', 'path': [],
+         'before': {'state': 'present', 'value': copy.deepcopy(baseline)},
+         'value': copy.deepcopy(original_parent)},
+        {'op': 'set', 'ref': 'parent', 'path': ['clips'],
+         'before': {'state': 'absent'}, 'value': []},
+    ]
     seeded = service.commit_timeline(
         project, 'film', {
             'api_version': 1, 'project_id': project, 'timeline_id': 'film',
             'base_revision_id': base['revision_id'],
             'base_publication_id': base['publication_id'],
             'commands': [{'schema_version': 1, 'op': 'doc.patch', 'version': '1',
-                          'select': None, 'args': {'changes': [patch]}}],
+                          'select': None, 'args': {'changes': changes}}],
         }, idempotency_key='selected-http-baseline', publisher='author',
         invocation_path=route_path(project, 'film'), authorize=lambda: None,
     )
-    assert seeded['data']['canonical_document']['parent_revision']['payload'] == baseline
+    assert seeded['data']['canonical_document']['parent_revision']['payload'] == original_parent
     service.close()
     daemon = real_runtime(root, support_root=tmp_path / 'support', authoring_profile='astrid')
     client = open_client(daemon)
@@ -410,12 +417,6 @@ def test_http_attached_selected_param_retains_original_pin_after_v2_removal_rest
 def inverse(publication):
     return {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
             'select': None, 'args': {'publications': [publication]}}
-
-
-def v2_request(case, calls, base=None):
-    body = case.request(calls, base)
-    body.update(label='Selected schema edit', merge='fields', reads=[])
-    return body
 
 
 def raw_params(case, values, clear=()):
@@ -754,7 +755,7 @@ def test_native_rebase_after_v2_and_selection_removal_uses_original_object(multi
     case = multi_pack
     case.submit(case.request([raw_params(case, {'seed': 4})]), 'retain-multi')
     base = case.head()
-    body = v2_request(case, [raw_params(case, {'seed': 8})], base)
+    body = case.request([raw_params(case, {'seed': 8})], base)
     # A later source version cannot change the accepted declaration's meaning.
     current = case.service.get_document(case.project, case.pin['document_id'])
     case.service.update_document(
@@ -765,7 +766,7 @@ def test_native_rebase_after_v2_and_selection_removal_uses_original_object(multi
                                                values={'label': 'After V2'})]), 'after-v2')
     case.object_reads.clear()
     accepted = case.submit(body, 'rebase-after-v2')
-    assert accepted['data']['status'] == 'merged'
+    assert accepted['data']['status'] == 'rebased'
     assert case.object_reads == [(case.pin, case.object_id)] * 2
     case.object_reads.clear()
     undone = case.submit(case.request([inverse(accepted['receipt']['receipt_id'])]), 'undo-after-v2')
@@ -994,11 +995,11 @@ def test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_surviv
 
     case = retained_pack
     base = case.head()
-    body = v2_request(case, [raw_params(case, {'seed': 8})], base)
+    body = case.request([raw_params(case, {'seed': 8})], base)
     case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
                                                values={'label': 'Peer'})]), 'authority-peer')
     accepted = case.submit(body, 'authority-retry')
-    assert accepted['data']['status'] == 'merged'
+    assert accepted['data']['status'] == 'rebased'
     manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
     test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
     packs.admit_project_pack('realm', case.project)
