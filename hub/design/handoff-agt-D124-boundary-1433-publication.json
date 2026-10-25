@@ -1,0 +1,29 @@
+{
+  "author_commit": "8d2d58828a9b03ea6868c339e45369bb5f96adad",
+  "files": [
+    {
+      "path": "design/handoff-agt-D124-boundary-1433-root-cause.md",
+      "sha256": "e822be4730ac546939b21bcd7483b9c1c5c7ba7f5b5ec73f1257367aa099b566"
+    },
+    {
+      "path": "design/handoff-agt-D124-boundary-1433-validation.md",
+      "sha256": "a46c4e8183ecb524e5c62e786946ecb8523bbe1e8a512b567ae172d5b06c00d3"
+    },
+    {
+      "path": "design/handoff-agt-D124-boundary-1433-source-manifest.json",
+      "sha256": "5c1a0f9584aae92de22d03204486e5db6e40434b5d837675b1da766cba6f82e2"
+    },
+    {
+      "path": "design/handoff-agt-D124-boundary-1433-own-node-recipe.md",
+      "sha256": "86f029c71f8ac18be2d6ffee9c80d3b04285b5a4c2a951f3c5e9f65119205cb6"
+    },
+    {
+      "path": "design/handoff-agt-D124-boundary-1433-regression.py",
+      "source_commit": "8d2d58828a9b03ea6868c339e45369bb5f96adad",
+      "source_path": "tests/sdk/test_d124_sequential_materialization.py",
+      "sha256": "e166ca832bad75df0415e004bcd854058387b4aa38c6393f781f126828b8af44"
+    }
+  ],
+  "product_changes": false,
+  "source_claim": "pending independent review; one Runtime boundary only"
+}
