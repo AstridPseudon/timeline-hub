@@ -1,0 +1,12 @@
+# D124 candidateNOTAPPLIED
+#
+# No unified product diff is emitted: every current-normal-versus-b742
+# host_bootstrap delta is an intentional source/schema/custody guard and the
+# only qualified upstream behaviour is the separately authenticated b742 +
+# d4f496 Runtime environment tuple. Applying a blanket b742 revert would
+# remove strict source/hash/symlink/owner/refusal/custody checks.
+#
+# Required acceptance before any product action: a fresh Farm original14 proof
+# at the existing venue using the exact b742/d4f496 tuple and unchanged input,
+# source, test, PYTHONNOUSERSITE=1, budgets, and origin controls.
+
