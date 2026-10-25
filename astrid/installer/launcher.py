@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import importlib
 import ntpath
 import os
 import shlex
 from pathlib import Path
+from typing import Any
 
 from ..core.util import process as _process
 
@@ -26,7 +28,7 @@ def _windows_path_key(value: str) -> str:
 
 
 def _registry_path(machine: bool = False) -> str:
-    import winreg
+    winreg: Any = importlib.import_module("winreg")  # Windows only; mypy pins platform=darwin.
 
     try:
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE if machine else winreg.HKEY_CURRENT_USER,
@@ -37,7 +39,7 @@ def _registry_path(machine: bool = False) -> str:
 
 
 def _update_user_path(service, *, add: bool) -> None:
-    import winreg
+    winreg: Any = importlib.import_module("winreg")  # Windows only; mypy pins platform=darwin.
 
     with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, "Environment", 0,
                            winreg.KEY_READ | winreg.KEY_WRITE) as key:
