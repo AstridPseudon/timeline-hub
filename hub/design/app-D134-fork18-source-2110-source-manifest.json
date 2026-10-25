@@ -1,0 +1,40 @@
+{
+  "task": "D134 root-008",
+  "status": "UNAPPLIED",
+  "behavior_status": "NOTRUN",
+  "repository": "agent",
+  "base": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "owned_files": {
+    "tests/editing_conformance/test_fork_abi1_binding_set.py": {
+      "sha256": "901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2",
+      "base_blob": "fe4b81c92dceda1750fb6effd6ee6deb9e8f4c47",
+      "current_blob": "fe4b81c92dceda1750fb6effd6ee6deb9e8f4c47",
+      "ast_function_bodies_changed": false
+    },
+    "tests/editing_conformance/test_recipe_occurrence_fork.py": {
+      "sha256": "19b1e47a89604803d0f0f90964db48788d0bfc82955eb229949d9dee158ade2a",
+      "base_blob": "1ad7b6c1b1b1190152270b7f106d449ac8aa4479",
+      "current_blob": "1ad7b6c1b1b1190152270b7f106d449ac8aa4479",
+      "ast_function_bodies_changed": false
+    }
+  },
+  "exact_membership": {
+    "cluster": "root-008",
+    "count": 18,
+    "source": "$ORCH/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+    "membership_conserved": true
+  },
+  "frozen_reference": {
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "owned_files_present": false,
+    "comparison_note": "The frozen SDK ref predates these two owned test files; no frozen test blob was substituted."
+  },
+  "scope": {
+    "product_files_changed": false,
+    "shared_fixtures_changed": false,
+    "runtime_or_schema_changed": false,
+    "generated_or_pin_files_changed": false,
+    "outside_scope_blob_equality": true
+  }
+}

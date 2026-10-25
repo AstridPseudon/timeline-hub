@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T21:06:59Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
-# app board, 2026-10-25T21:06Z
+<!-- app | 2026-10-25T21:11:36Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 1m -->
+# app board, 2026-10-25T21:08Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -99,7 +99,7 @@
 | D127-element-profile | Measure actual element leaf cost | Luna and independent Luna | Sole result1847 complete | gated:recorded-no-go | Actual32016; independent1847 | Readiness PASS; element FAIL1052. Runtime completed21.741s/provider13.781s; safe profile qualified. Caller outcome UNKNOWN. | Appd5a1 Runtimeab1e |
 | D128-inclusive-table | Rank functions under timeline commit | Luna read only | Actual safe projection only | gated:missing-counters | app-D128-element-inclusive-table-1851 complete | EXACTMISSING: five routing rows, no descendant membership/counters or call counts. [Table](../../design/app-D128-element-inclusive-table-1851-inclusive-table.md). | Source unchanged |
 | D127bA-descendants | Recover retained inclusive cost table | Luna and one quick checker | Independent1902 complete | gated:missing-counters | Author1858; quickcheck1902 PASS | Genuine828/lost15; no sampled chains/full counters retained. Safe fields/custody PASS, top25/edges EXACTMISSING. No cost author. | Source unchanged |
-| D127c-last-profile | Profile actual element handler calls | Luna and independent | Runtime normal helper receipt | blocked:runtime | Prep2053 SOURCE READY; host2055 filed | All source gates PASS; one body unspent. Canonical095c/private0600, newAppb5 checkout receipt real. Normal5.2 admission awaits final remote home. | App b5c9; Runtime fb4 ready |
+| D127c-last-profile | Profile actual element handler calls | Luna and independent Luna | Normal cf0b and App b5c9; all source gates PASS | doing | app-D127c-last-element-controller-2105 | Admitted5479763968 once; preflight4786 PASS; actual15200 RUNNING. Private rawKEEP set. No original or profile credit yet. | App b5c9; product ab1e |
 | F-tail-App16 | Classify App ZIP conflict hunks | Luna | Independent census 1850 PASS | gated:D59-cut | Author1932 and independent1941 PASS | Final classification16/81/14/67/13/1 and checked import patch artifact qualified. Appmanager13 preservation choices delivered. Semantic resolution waits cut. | Source unchanged |
 | U3-D135 | Preserve current upstream App behavior | Luna independent | Cumulative2040 SOURCE PASS | merged | Author2033; normal merge2f362 | Normal tree exactly equals reviewedeba8. Affected127 and warmup2/types/lint PASS. Final producer-first cut pins and tuple proofs still owed. | 2f36246a32 |
 | D127c-App-validator | Validate strict profiler capture | HARD Sol and independent Luna | Actual controls and independent2047 PASS | merged | Appguard2017; closure2047; normalb5c9 | Node20 intended3 PASS; source/privacy/event integrity PASS. Exact59a4 blob normal home atop reviewedU3; four unrelated nonmatching cases excluded. | b5c9eadfa1 |
@@ -110,7 +110,7 @@
 
 | D134-D100-map | Map managed30 to held birth fix | Luna independent | Independent2103 source PASS | merged | Author2056; checker2103 PASS | Exact30 original sources map to heldD100 first-birth fix. No new API need; no setup, behavior, normal home, core or retirement credit. | Evidence only |
 
-| D134-fork18 | Preserve fork binding and history purposes | Luna | Agent2055 exclusive claim | doing | app-D134-fork18-source-2110 | Source-only exact18 assessment; protected inputs and predicates fixed. No body before independent review. | Agent96a6 base |
+| D134-fork18 | Preserve fork binding and history purposes | Luna | Agent2055 exclusive claim | review | app-D134-fork18-review-2111 | Author UNAPPLIED; original18 unchanged. Independent source wholepath challenges ABI and current caller before handback. | Agent96a6 base |
 
 | D74-d5a1-old-pin | Release obsolete completed App source pin | Manager and host | Host2055 and fresh static CLEAR | merged | Normal recycle2057 | Only oldd5a1 checkout recycled; currentb5 pin and all rawruns/KEEP unchanged. No refusal. [Receipt](../../design/app-d5a1-static-release-2057.json). | No source edits |
 
@@ -121,12 +121,12 @@ Current P2 NO-GO. Historical six cases qualified; full original tour and final t
 
 Blockers: SWAP safety — D130 holds recovery, related acceptance, release, adoption and tours after automatic classifier refusal. No retry, alternate route, transfer or rollback.
 Blockers: Projection9 — Independent2100 proves new output.fps=30 initialization is rejected by typed-location set equality, validation.py143-144. Existing Runtime D136a owner receives exact wholepath; fixture unchanged, no retry.
-Blockers: Element profile — Runtime source receipt pending; peer2106 names all cleared source gates. Exact controller2105 starts on normal receipt and genuine5.2GB. No body early.
+
 Blockers: Graph child birth — Runtime1814/final1821 complete; C0 sequential operands defined. Authentic intermediate bindings/stages absent, causal owner UNKNOWN.
 Blockers: Agent core and final render — D137 real-child route replaces fixture gate. Installed4435 received; Agent2044 real child refused venv-log-setup. No retry before changed-state disposition. D134 XML missing; REG UNVERIFIED. Farm D77 only.
 Blockers: Final cut — Full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
-Next ready: Runtime helper home then sole last-element controller2105 at genuine5.2GB. Fork18 independent review on source completion. Runtime D136a source return owns typed-location addition failure.
-live 1 / cap 6; ready-undispatched 0. Luna fork18 source2110 active; final profile waits normal Runtime receipt. No heavy body. Fresh5.624GB before dispatch; stop4GB.
+Next ready: Fork18 protected source review on author completion; sole D127c actual result/privacy/table review after terminal. Runtime D136a owns typed-location first seam. No second body.
+live 2 / cap 6; ready-undispatched 0. Fork18 Luna source and sole last-element controller active. Heavy admitted5479763968 bytes once at21:07:43Z; stop4GB.
 INBOX consumed through2458248 bytes. Agent2055 shared105/fork18 hub notes consumed and answered peer2105; Runtime receipt request and final typed-location seam peer2106 published.
 Safety: No manager product/test/generated/pin edits, direct Git writes, upstream push, M5, credentials or refused-route retries. Current inputs, raw captures, outputs, branches and reports retained. Historical dirty/orphan guards untouched.
 Later: Gate3 D133 corrected B DEFERRED, worker1853 ZIP paragraph delivered; no optionA author/review/body. Word cases need transcript authority records. Parentlabels2/native originals4/trackbatch1 remain source-gated. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Graph and originalTrue live failures remain visible, no unchanged rerun. Agent40 conflicts belong Agent allocator; no duplicate local authors.
@@ -162,3 +162,9 @@ Pass 2026-10-25T20:53Z: U3 normal2f362 source tree equals reviewed2040 candidate
 Pass 2026-10-25T21:02Z: Exact original9 joined2056 runs once, all9ERROR at nextguard. Independent2100 actual custody PASS/sourcefault proved: caller initialization adds valid typed output.fps=30; strict location set rejects addition. Full source root sent Runtime existingowner, no App input/test edits or rerun. D134 corrected30source map independently2103PASS, no newAPIneed or behaviorcredit. Final D127c recipe2053 SOURCE READY; Runtime remotehost2055 filed but normalreceipt absent, so no body early. Oldd5pin recycled afterhost/staticCLEAR; currentb5pin and everyrawKEEP kept. Sourceprefix had live0 at21:02; current counts below supersede it.
 
 Pass 2026-10-25T21:06Z: Re-read PLAN/common/header and authoritative Runtime20:49, Agent20:54, Farm20:40 boards. Runtime helper receipt remains PENDING; peer2106 states all cleared App gates and exact independent2100 typed-location first seam. Agent2055 fork18 request claimed before source-only Luna2110 dispatch on exact96a6; shared105 ownership retained, managed30 unchanged handback sent. Source-floor fresh5.624GB; current1 live/cap6, ready0, no heavy. Every six retained test KEEP checked. No source/pin/product/test/Git edits or safety-held routes.
+
+Pass 2026-10-25T21:08Z: Runtime normal source receipt MERGEDcf0b82dd47 received; actual full tree8d568 equals tested reviewedfb4, helper095c exact, normal Appb5c9 exact. Cleared helper blocker and dispatched sole last-element controller2105 immediately with5479763968bytes admission; D89c once, stop4GB. Product tuple unchanged; no original ID yet. Runtime/lead handback follows.
+
+Source2110 completed unchanged UNAPPLIED/NOTRUN; Ruff/mypy/AST/compile/diff PASS. Exact18 source map SAFE-published. Sole independent Luna2111 dispatched immediately at5288382464bytes; no body or source author. Sweep3 completed0 removed despite brokenpipe diagnostics; compact1f completed0 scratch/0testdirs,6 old logs losslessly compressed. All six rawKEEP unchanged.
+
+Retained current D127c input: app-pin-b5c9eadf-d73-p2-element-b5c9eadf-submit-1025210853-15200. Actual one bodyRUNNING after app-pin-b5c9eadf-d73-p2-element-b5c9eadf-submit-preflight-1025210823-4786 PASS. KEEP confirmed; no compaction/deletion of complete run. Same ID only through terminal. PlanSHA 793495d5f586a40414e17598616f86dc6f3bbd56bc81de634ae6242ab62a4013.

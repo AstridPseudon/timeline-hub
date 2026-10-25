@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-25T21:10:16.562420+00:00",
+  "controller": "app-D127c-last-element-controller-2105",
+  "preflight_id": "app-pin-b5c9eadf-d73-p2-element-b5c9eadf-submit-preflight-1025210823-4786",
+  "preflight_result": "PASS exit0",
+  "body_id": "app-pin-b5c9eadf-d73-p2-element-b5c9eadf-submit-1025210853-15200",
+  "status": "running",
+  "plan_sha256": "793495d5f586a40414e17598616f86dc6f3bbd56bc81de634ae6242ab62a4013",
+  "KEEP": true,
+  "scope": "ONE element original only; full original wait/tail unchanged; D130 absolute hold"
+}

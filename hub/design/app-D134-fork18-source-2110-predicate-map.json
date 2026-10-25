@@ -1,0 +1,163 @@
+{
+  "task": "D134 root-008",
+  "status": "UNAPPLIED",
+  "behavior_status": "NOTRUN",
+  "conservation_basis": "Exact 96a6 source blobs and AST function bodies are unchanged.",
+  "cases": [
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_authenticated_history_abi_preserves_original_fork_proofs[1-False]",
+      "inputs": "DetachedRealm(fork_document()); _accepted_fork(v2=False); authenticated entry recorder_abi=1; track_create(); reads=[]",
+      "topology": "one occurrence fork creates shot-fork, then a separate track.create history probe",
+      "opaque_values": "fork_document opaque payloads and source closure remain fixture-authored",
+      "predicate": "accepted status; authenticated ABI-1 history replay preserves original fork proof"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_authenticated_history_abi_preserves_original_fork_proofs[absent-False]",
+      "inputs": "DetachedRealm(fork_document()); _accepted_fork(v2=False); recorder_abi absent; track_create(); reads=[]",
+      "topology": "same single fork followed by history probe",
+      "opaque_values": "unchanged fixture closure",
+      "predicate": "legacy absent recorder ABI defaults to the authenticated ABI-1 path and is accepted"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_caller_annotations_and_recorder_schema_do_not_supply_history_abi",
+      "inputs": "ABI-1 accepted fork; caller source/rationale and receipt result are annotated with forged recorder ABI values; track_create(); reads=[]",
+      "topology": "single fork followed by a separate track.create",
+      "opaque_values": "source, rationale, receipt and records schema annotations are preserved as authored",
+      "predicate": "caller annotations do not replace authenticated history ABI; request remains accepted"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[*]",
+      "inputs": "ABI-1 accepted fork; each authored metadata value in the existing parametrization; track_create(); reads=[]",
+      "topology": "single fork followed by a history probe",
+      "opaque_values": "all existing malformed metadata values remain exact",
+      "predicate": "malformed authenticated recorder ABI refuses with history_unavailable and performs no write"
+    },
+    {
+      "nodeid": "test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[1]",
+      "inputs": "fork_document(count=1); capture occurrence:occ-0 to shot-fork; local authenticated redo helper",
+      "topology": "one occurrence; fork, reload, inverse, redo and replay",
+      "opaque_values": "identity_document payload, item metadata, source mapping and raw closure bytes remain exact",
+      "predicate": "reload/inverse/redo restore exact original and forked documents; replay records are equal"
+    },
+    {
+      "nodeid": "test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[2]",
+      "inputs": "fork_document(count=2); same selected occurrence and destination",
+      "topology": "two occurrences with exact untouched sibling; fork, reload, inverse, redo and replay",
+      "opaque_values": "selected source and untouched sibling payloads, including opaque metadata, remain exact",
+      "predicate": "same exact restoration and replay guarantees with surviving sibling topology"
+    },
+    {
+      "nodeid": "test_recipe_occurrence_fork.py::test_undo_refuses_aba_and_surviving_owner",
+      "inputs": "fork_document(); selected occurrence:occ-0; destination shot-fork; later authored shot_id mutation and consumer placement",
+      "topology": "forked owner plus an intervening ABA write or surviving dependent owner",
+      "opaque_values": "original fork closure is not rewritten",
+      "predicate": "inverse refuses intervening ABA and surviving dependents with the original guard kinds"
+    }
+  ],
+  "exact_member_index": [
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_authenticated_history_abi_preserves_original_fork_proofs[1-False]",
+      "authored_input": "recorder_abi=1, v2=False",
+      "predicate_ref": "history_abi_preserves_original_fork_proofs"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_authenticated_history_abi_preserves_original_fork_proofs[absent-False]",
+      "authored_input": "recorder_abi absent, v2=False",
+      "predicate_ref": "history_abi_preserves_original_fork_proofs"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_caller_annotations_and_recorder_schema_do_not_supply_history_abi",
+      "authored_input": "accepted ABI-1 fork plus forged caller/source/receipt recorder ABI annotations",
+      "predicate_ref": "caller_annotations_do_not_supply_history_abi"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[0]",
+      "authored_input": "metadata=0",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[1.0]",
+      "authored_input": "metadata=1.0",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[1]",
+      "authored_input": "metadata='1'",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[2.0]",
+      "authored_input": "metadata=2.0",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[2]",
+      "authored_input": "metadata='2'",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[3]",
+      "authored_input": "metadata=3",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[False]",
+      "authored_input": "metadata=False",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[None]",
+      "authored_input": "metadata=None",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[True]",
+      "authored_input": "metadata=True",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[metadata10]",
+      "authored_input": "metadata={}",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[metadata11]",
+      "authored_input": "metadata={'recorder_abi': 2}",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[metadata9]",
+      "authored_input": "metadata=[]",
+      "predicate_ref": "malformed_recorder_abi_fails_closed"
+    },
+    {
+      "nodeid": "test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[1]",
+      "authored_input": "fork_document(count=1), occurrence:occ-0 to shot-fork",
+      "predicate_ref": "reload_undo_redo_replay_exact"
+    },
+    {
+      "nodeid": "test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[2]",
+      "authored_input": "fork_document(count=2), occurrence:occ-0 to shot-fork",
+      "predicate_ref": "reload_undo_redo_replay_exact"
+    },
+    {
+      "nodeid": "test_recipe_occurrence_fork.py::test_undo_refuses_aba_and_surviving_owner",
+      "authored_input": "fork_document(), later shot_id mutation and consumer placement",
+      "predicate_ref": "undo_refuses_aba_and_surviving_owner"
+    }
+  ],
+  "unlisted_root_members": {
+    "count": 0,
+    "note": "All 18 exact root members are enumerated above; the shared case entries retain the full topology, opaque-value, and assertion descriptions.",
+    "families": [
+      "none"
+    ],
+    "exact_membership_source": "$ORCH/design/agt-F-D134-root-clusters-2022-root-clusters.json"
+  },
+  "shared_negative_purposes_preserved": [
+    "malformed recorder ABI fails closed",
+    "caller annotations cannot supply history ABI",
+    "reload/inverse/redo/replay exactness",
+    "ABA and surviving-owner refusal"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-25T21:07:43.017734+00:00",
+  "worker": "app-D127c-last-element-controller-2105",
+  "dispatch_admission_bytes": 5479763968,
+  "dispatch_floor_bytes": 5200000000,
+  "stop_bytes": 4000000000,
+  "D89c": "once at controller dispatch; own preparation does not re-trigger floor",
+  "heavy_bodies_before_dispatch": 0,
+  "normal_receipt": "MERGED cf0b82dd47",
+  "normal_runtime_commit": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+  "normal_runtime_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+  "reviewed_carrier_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+  "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+  "source_gates": "Runtime2002 PASS61; App F001 fixed; independent2047 actual Node20 intended3 PASS; normal Appb5c9",
+  "scope": "ONE final authorized D127c element only; no SWAP/WAL/recovery/fulltour; fixed product tuple from recipe2053"
+}

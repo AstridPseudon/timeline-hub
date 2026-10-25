@@ -1,0 +1,37 @@
+{
+  "task": "D134 root-008",
+  "status": "UNAPPLIED",
+  "behavior_status": "NOTRUN",
+  "retained_failure": {
+    "cluster": "root-008",
+    "count": 18,
+    "classification": "UNKNOWN",
+    "first_agent_frame": "astrid/sdk/timeline/commit.py:1398",
+    "first_runtime_frame": "EXACTMISSING",
+    "retained_log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "failure_families": [
+      "fork native binding schema changed",
+      "source identity/hash mismatch"
+    ]
+  },
+  "source_trace": {
+    "registered_caller": "tests/editing_conformance/test_doc_patch_v2.py:45-50 calls create_runtime_commit_service().commit",
+    "fork_capture": "tests/editing_conformance/test_provider_occurrence_fork.py:17-19 calls capture_occurrence_fork",
+    "binding_producer": "astrid/sdk/timeline/_recording.py:113-115 emits the four native fixed bindings",
+    "v2_enrichment": "astrid/sdk/timeline/_commit_patch.py:280-281 and :493-501 add physical binding fields only when v2 controls are present",
+    "history_consumer": "astrid/sdk/timeline/commit.py:1005-1016 authenticates recorder_abi; :884-905 distinguishes complete ABI-1 from physical v2 fork bindings",
+    "current_comparator": "tests/editing_conformance/test_provider_occurrence_fork.py:27-45 explicitly supplies label, merge, reads and steps and asserts physical binding output"
+  },
+  "decision": {
+    "supported_caller_correction": false,
+    "reason": "The exact failing ABI-1 cases intentionally omit v2 controls. Adding the current comparator controls would change the authored request ABI and history predicate, and would not preserve the original negative/authentication purposes.",
+    "missing_evidence": "An authenticated current Runtime commitTimeline accepted record and canonical predecessor/output closure for the ABI-1 fork history path, plus the corresponding recorder_abi, bindings and boundary fields. The retained record omits that payload and the source task forbids a body run.",
+    "required_owner": "Agent provider/Runtime producer-history seam, outside the two owned test files"
+  },
+  "prohibited_changes_not_made": [
+    "No ABI normalization or fabricated bindings",
+    "No authored input, topology, opaque value or assertion changes",
+    "No synthetic history or receipt",
+    "No product, Runtime, auth, schema, generated, pin or shared fixture edit"
+  ]
+}
