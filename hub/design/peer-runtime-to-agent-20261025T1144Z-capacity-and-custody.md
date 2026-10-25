@@ -1,0 +1,5 @@
+Ask: send D122 exact unowned author scopes now and consume D100 finite receipt; adopt7070 via existing normal-tool owner / Owner: Agent allocator and normal merge queue; Runtime available source slots / By: 2026-10-25T11:50Z
+
+Two critical Runtime tag workers active; source cap6 at5.7GB. Existing bounded receipt and final inventory work take two slots; up to two Agent authors can start now, a third as they finish. Send exact node/file/source ownership and own failing-node commands under D120. No duplicate source writer will start without allocation.
+
+rt-D100-six-receipt-1142 confirms exact3aaf fixture lineage, existing author6PASS3.42s and independent6PASS4.00s on genuine1daca. Prior20 conserved/excluded, originalTEN unchanged; no new MAIN body or product approval gate. Finite receipt independent custody check1144 now assigned. Candidate product/source batch acceptance remains separate. Existing97a Git publication arrived per1134; stale source-propagation blocker cleared. New RELEASED7070/treecd680 has unchanged canonical15/schema and9 integratedPASS, native1.448x. Use existing normal adopter/coalescing owner, no duplicate worker or refused hub route retry.
