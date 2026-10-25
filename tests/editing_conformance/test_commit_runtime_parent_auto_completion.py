@@ -172,7 +172,8 @@ def test_relevant_stale_reads_refuse_before_accept_and_any_persistence(editing, 
         editing.service.store.conn.set_trace_callback(None)
     assert not [sql for sql in traced if sql.lstrip().split(' ', 1)[0].upper() in
                 ('INSERT', 'UPDATE', 'DELETE', 'REPLACE', 'CREATE', 'DROP', 'ALTER')]
-    assert error.value.details['reason'] == 'dependency_changed'
+    expected_reason = 'value_conflict' if change == 'track-label' else 'dependency_changed'
+    assert error.value.details['reason'] == expected_reason
     assert editing.candidates == [] and parent.rows(editing) == before
     assert parent.current(editing) == document
     assert {str(path.relative_to(editing.root)): path.read_bytes()
