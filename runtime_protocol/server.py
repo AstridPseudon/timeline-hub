@@ -92,6 +92,12 @@ class RuntimeHandler(BaseHTTPRequestHandler):
     def log_message(self, *_):
         return
 
+    def handle_one_request(self):
+        # BaseHTTPRequestHandler reuses this instance for keep-alive requests;
+        # the public id is stable only for the request currently being parsed.
+        self._runtime_request_id = None
+        return super().handle_one_request()
+
     def _request_id(self):
         current = getattr(self, "_runtime_request_id", None)
         if current:
@@ -301,24 +307,37 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         key = self._commit_idempotency_key()
         commit = getattr(self.runtime, "commit_timeline", None)
         if not callable(commit):
-            from .timeline_commit_execution import _emit_redacted_diagnostic
+            from .timeline_commit_execution import (
+                _emit_redacted_diagnostic,
+                _new_request_id,
+            )
             from .timeline_commit_provider import TimelineCommitUnavailable
-            _emit_redacted_diagnostic(self._request_id(), reason="timeline_commit_unavailable")
+            public_request_id = self._request_id()
+            _emit_redacted_diagnostic(
+                _new_request_id(), reason="timeline_commit_unavailable",
+                public_request_id=public_request_id,
+                idempotency_key=key,
+            )
             raise TimelineCommitUnavailable()
         publisher = identity["actor"]
 
         def authorize():
             return self._authorize_timeline_commit(publisher)
 
-        return self._send(200, commit(
-            project_id,
-            timeline_id,
-            body,
-            idempotency_key=key,
-            publisher=publisher,
-            invocation_path=self._timeline_path(project_id, timeline_id, "commit"),
-            authorize=authorize,
-        ))
+        from .timeline_commit_execution import (
+            idempotency_key_scope,
+            public_request_id_scope,
+        )
+        with public_request_id_scope(self._request_id()), idempotency_key_scope(key):
+            return self._send(200, commit(
+                project_id,
+                timeline_id,
+                body,
+                idempotency_key=key,
+                publisher=publisher,
+                invocation_path=self._timeline_path(project_id, timeline_id, "commit"),
+                authorize=authorize,
+            ))
 
     def _send(self, status, payload=None, *, headers=None, body=None, error=None, receipt=None, idempotency_key=None):
         if getattr(self, "_defer_response", False):
@@ -623,16 +642,18 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     raise AuthorizationError("authenticated publisher changed during restore")
                 return current
 
-            return self._send(200, restore(
-                path[2], path[4], path[6], body,
-                idempotency_key=self._commit_idempotency_key(),
-                publisher=identity["actor"],
-                invocation_path=self._timeline_path(
-                    path[2], path[4],
-                    f"composition-revisions/{quote(path[6], safe='')}/restore",
-                ),
-                authorize=authorize,
-            ))
+            from .timeline_commit_execution import public_request_id_scope
+            with public_request_id_scope(self._request_id()):
+                return self._send(200, restore(
+                    path[2], path[4], path[6], body,
+                    idempotency_key=self._commit_idempotency_key(),
+                    publisher=identity["actor"],
+                    invocation_path=self._timeline_path(
+                        path[2], path[4],
+                        f"composition-revisions/{quote(path[6], safe='')}/restore",
+                    ),
+                    authorize=authorize,
+                ))
         if len(path) == 7 and path[:2] == ["v1", "projects"] and path[5] == "revisions" and method == "GET":
             self._identity("projects:read")
             if path[3] == "shots":

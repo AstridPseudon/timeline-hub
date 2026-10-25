@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import re
 
@@ -180,7 +181,10 @@ def test_malicious_exception_metadata_is_bounded_and_public_reply_is_unchanged(r
         "reason",
         "exception_class_chain",
         "frames",
+        "idempotency_key_sha256",
     }
+    assert diagnostic["idempotency_key_sha256"] == hashlib.sha256(request["idempotency_key"].encode("utf-8")).hexdigest()
+    assert request["idempotency_key"] not in stderr
     assert diagnostic["reason"].startswith("catchall:sha256:")
     assert re.fullmatch(r"[a-f0-9]{32}", diagnostic["request_id"])
     assert len(diagnostic["exception_class_chain"]) <= 8
