@@ -1,0 +1,64 @@
+{
+  "task": "P2 D102 ADD diagnostic",
+  "scope": "safe request-correlated facts only; no causal diagnosis or verdict repair",
+  "selector": "p2-popup-add",
+  "suite": "p2-d102-add-0544",
+  "host": "app-pin-0244db2c",
+  "terminal": "FAIL",
+  "preflight": {
+    "id": "app-pin-0244db2c-p2-d102-add-0544-preflight-1025054428-8483",
+    "status": "pass",
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-0244db2c-p2-d102-add-0544-preflight-1025054428-8483/d66/manifest.json",
+    "manifest_sha256": "ec9aa9c664213e4dd55116bf01f1801de16c762f4ce52c6eee21335df89cc6c9"
+  },
+  "body": {
+    "id": "app-pin-0244db2c-p2-d102-add-0544-1025054458-12031",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-0244db2c-p2-d102-add-0544-1025054458-12031",
+    "manifest": "d66/manifest.json",
+    "manifest_sha256": "3ea113b2a2ec5ad4aaff8e8d361985b505b4c03f0457cdc7b8f203d492d5f114",
+    "status_file": "status (fail)",
+    "started_at": "2026-10-25T05:45:03.618Z",
+    "finished_at": "2026-10-25T05:46:31.760Z",
+    "duration_seconds": 94,
+    "readiness": "UNKNOWN: not reached",
+    "original": "UNKNOWN: not reached",
+    "collected_tests": 1,
+    "assertions_reached": 0,
+    "stage": "native-seed"
+  },
+  "source": {
+    "app": {"commit": "0244db2c02e7efb27c97844b6d2f4a80faec6e99", "tree": "126c5569ac7460290ed3648f380b27261604f0e2"},
+    "agent": {"commit": "bde578505c035ae949ee8176b466bf8297772904", "tree": "1df31228fa89d4b56c09e505ea2c0aed8c7fc2b0"},
+    "runtime": {"commit": "689352013ef516a224033ba58820759a96504e68", "tree": "a8217bdb09e7433b36580841311c1d8094799510"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "runtime_import_roots": {
+      "agent": "/home/user/work/wt/agt-pin-bde57850",
+      "runtime": "/home/user/work/wt/rt-pin-68935201"
+    },
+    "helper_sha256": null,
+    "helper_note": "D102b ring helper was pending and was not adopted; no helper hash is claimed."
+  },
+  "first_failed_predicate": {
+    "source": "scripts/testing/d66-plain-stack.mjs:807",
+    "stage": "native-seed",
+    "observed": "seed client returned code not_ready with reason runtime_unavailable",
+    "predicate": "seed commit did not produce an accepted result",
+    "request": "native seed commit; popup ADD body was not entered",
+    "http_disposition": "UNKNOWN: no HTTP status or body retained"
+  },
+  "diagnostics": [],
+  "diagnostic_limits": [
+    "No retained redacted unexpected-exception line was present in the private Runtime/daemon/Agent artifacts for this terminal.",
+    "No messages, locals, raw body, auth, URL, IDs, stacks, or full stderr are exported.",
+    "Missing diagnostic line, correlation, and HTTP outcome remain UNKNOWN; no lock, busy, cost, or shared-cause inference is made."
+  ],
+  "artifacts": {
+    "submit_plan": "submission/p2-popup-add/p2-popup-add-submit-plan.json",
+    "submit_plan_sha256": "3f86121f109309a693e23a88427b7b65bf34f1729d6dd12be8d8c4acc07494d4",
+    "collection": "d66/collection.txt",
+    "original_xml": null,
+    "readiness_xml": null
+  },
+  "next": "Proceed to one ELEMENT body on the same fixed tuple after this handoff; do not repeat ADD."
+}
