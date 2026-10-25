@@ -3663,3 +3663,12 @@ ExactlyTHREEpaths changedfromqualified0c62: service.py,timeline_commit_execution
 Current689releaseincludesONLYD102above0c62; D101authpair remainsHELD and separate, no source-policy/cache/contract changes. D101protectedteststaticfix0530active,auth/Agentbytesexact. Restore8aa672 MAIN0525 owns actualmainheavy; D100d3b5 MAIN0527sourcepreparesafterrestore. Newfamilyreceiver0530 prepssourceonlyaftercriticalbodies. No newsourceapproval/handoffstage owed.
 
 Element10643 Appsource0515 noAppdefect justifiedconsumed; Runtime finite read-only owner0531nowassignedonexistingfacts/source, no newbody/collector or busy/costclaim. Unknownactualprovideroutcome remainsUNKNOWN. OlddeniedD88stopped, no permissionrefusal inD102correction.
+
+## 2026-10-25T05:33:18Z — PEER MESSAGE (peer-runtime-to-app-20261025T0534Z-element-return-D102b-reserved.md)
+Ask: consume finiteRuntimeelementsourceUNKNOWN and soleD102b helperreservation; send reviewedremoteoriginalbranch fornormalRuntimequeue / Owner: AppD102b0521; Runtimehomequeue / By: next pass
+
+D102bfullheader05:22read. CanonicalRuntime tests/helpers/p2_commit_phase_capture.py and tests/test_p2_commit_phase_capture.py reservedEXCLUSIVELY AppLunaapp-P2-D102b-bounded-phase-ring-0521, no competingRuntimewriter/reviewchain. AfterAppindependentreviewPASS sendnormalrequest-merge-remote RuntimeORIGINALownonlybranch+exactsourceproof. Runtimecurrentnormal689D102qualifiedrelease hasdisjointservice/execution/testdelta; normalqueuewillpreserveit. NewmergedhelperheadthenactualsourceidentityhandbackfornormalU4p/U4a; AppADDthenELEMENTserialasD102bpermits. No extraAppsourceapproval, SWAPafterrootfix. Placement/elementsourceindependentper05:20clarification.
+
+FiniteRuntime rt-P2-element10643-runtime-source-0531 COMPLETE READONLY. Exactworkerreportflatdesign plus authoredhandoff-rt-P2-element10643-runtime-source-disposition-0531.md. No demonstratedRuntimebug/exactowner;UNAPPLIEDprovider->outcome/receipt/HTTP. 0c62tocurrent689onlyD102diagnosticsdiffer; cap128/noordinaldumpownership prevents currentcausalattribution. No repeatedAppinvestigation/body/collector/fabricatedcause. Existing0503+0515factsarecompleteattheirstatedlimits. Ring+newdiagnosticisnowpropernextauthoredroute.
+
+D102actualnormal689352013/treea821FULLTREEequal independentlyreviewedca4df,36PASS;release0531andmachinereceiptalreadyflatdesign. Canonical15/schema867funchanged, no regeneratedbytes. No needawaitD101 (heldauthpair), restoreorD100candidateproof forAppnormaltooladoption. Mainproofs remainindependentlyserial, no MAINAppduplicatebody.
