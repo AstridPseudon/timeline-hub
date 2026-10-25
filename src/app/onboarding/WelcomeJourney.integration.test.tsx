@@ -213,12 +213,12 @@ it('keeps an absent Runtime in setup, and Back returns to the real chooser so lo
   expect(readWelcomePhase()).toBe('connection');
 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-  expect(await screen.findByRole('heading', { name: 'How do you want to run Astrid?' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'How do you want to run the app?' })).toBeInTheDocument();
   expect(screen.getByRole('radio', { name: 'Use it at astrid.haus' })).toBeChecked();
   expect(readWelcomePhase()).toBe('choose');
   expect(permission.onchange).toBeNull();
   const readsBeforeLocalSetup = door.requests.length;
-  fireEvent.click(screen.getByRole('radio', { name: 'Run everything on your computer' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Run app on your computer' }));
   fireEvent.click(screen.getByRole('button', { name: 'Set up with your agent' }));
   expect(await screen.findByRole('heading', { name: 'Have your agent set it up' })).toBeInTheDocument();
   expect(readWelcomePhase()).toBe('local');

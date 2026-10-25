@@ -17,7 +17,7 @@ vi.mock('./BrowserTourEditor', () => ({ BrowserTourEditor: ({onFinish}: {onFinis
   return <><h1>Welcome to Astrid</h1><button onClick={finishEditorTour}>Skip</button><button onClick={() => { setEditorTourBeat(3, 'feedback'); finishEditorTour(); }}>Done</button></>;
 } }));
 vi.mock('./WelcomeConnection', () => ({ default: ({ onBack }: { onBack: () => void }) => { spies.connected(); return <><h1>Connect your machine</h1><button onClick={onBack}>Back</button></>; } }));
-vi.mock('./WelcomeRunMode', () => ({ WelcomeRunMode: ({ onContinue, runMode, setRunMode }: { onContinue: (phase: 'local' | 'connection') => void; runMode: 'hosted' | 'local'; setRunMode: (mode: 'hosted' | 'local') => void }) => <><h1>How do you want to run Astrid?</h1><button onClick={() => onContinue('connection')}>Connect</button><button onClick={() => { setRunMode('local'); onContinue('local'); }}>Local</button><span>{runMode}</span></> }));
+vi.mock('./WelcomeRunMode', () => ({ WelcomeRunMode: ({ onContinue, runMode, setRunMode }: { onContinue: (phase: 'local' | 'connection') => void; runMode: 'hosted' | 'local'; setRunMode: (mode: 'hosted' | 'local') => void }) => <><h1>How do you want to run the app?</h1><button onClick={() => onContinue('connection')}>Connect</button><button onClick={() => { setRunMode('local'); onContinue('local'); }}>Local</button><span>{runMode}</span></> }));
 vi.mock('./WelcomeLocalSetup', () => ({ WelcomeLocalSetup: ({ onBack }: { onBack: () => void }) => <><h1>Have your agent set it up</h1><button onClick={onBack}>Back</button></> }));
 import { WelcomeFlow } from './WelcomeFlow';
 beforeEach(() => {
@@ -32,7 +32,7 @@ for (const action of ['Skip', 'Done']) it(`${action} opens the run-mode choice`,
   expect(screen.getByText('Welcome to Astrid')).toBeInTheDocument();
   expect(spies.connected).not.toHaveBeenCalled();
   fireEvent.click(screen.getByText(action));
-  await waitFor(() => expect(screen.getByText('How do you want to run Astrid?')).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText('How do you want to run the app?')).toBeInTheDocument());
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('choose');
   expect(getEditorTourState().status).toBe('idle');
   expect(spies.record).not.toHaveBeenCalled();
@@ -41,7 +41,7 @@ for (const action of ['Skip', 'Done']) it(`${action} opens the run-mode choice`,
 it('Escape opens the run-mode choice', async () => {
   render(<WelcomeFlow entry="tour" />);
   fireEvent.keyDown(window, { key: 'Escape' });
-  expect(await screen.findByText('How do you want to run Astrid?')).toBeInTheDocument();
+  expect(await screen.findByText('How do you want to run the app?')).toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('choose');
 });
 
@@ -51,7 +51,7 @@ it('moves from the choice to local setup or connection and back', async () => {
   expect(await screen.findByText('Have your agent set it up')).toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('local');
   fireEvent.click(screen.getByText('Back'));
-  expect(await screen.findByText('How do you want to run Astrid?')).toBeInTheDocument();
+  expect(await screen.findByText('How do you want to run the app?')).toBeInTheDocument();
   expect(screen.getByText('local')).toBeInTheDocument();
   fireEvent.click(screen.getByText('Connect'));
   expect(await screen.findByText('Connect your machine')).toBeInTheDocument();
@@ -65,7 +65,7 @@ it('returns from connection to the saved hosting choice', async () => {
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');
 
   fireEvent.click(screen.getByText('Back'));
-  expect(await screen.findByText('How do you want to run Astrid?')).toBeInTheDocument();
+  expect(await screen.findByText('How do you want to run the app?')).toBeInTheDocument();
   expect(screen.getByText('hosted')).toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('choose');
 });
@@ -74,7 +74,7 @@ it('returns from the local screen with local selected, including after loading t
   render(<WelcomeFlow entry="local" />);
   expect(await screen.findByText('Have your agent set it up')).toBeInTheDocument();
   fireEvent.click(screen.getByText('Back'));
-  expect(await screen.findByText('How do you want to run Astrid?')).toBeInTheDocument();
+  expect(await screen.findByText('How do you want to run the app?')).toBeInTheDocument();
   expect(screen.getByText('local')).toBeInTheDocument();
 });
 
@@ -101,10 +101,10 @@ it.each([['local editor', { localBuild: true }], ['phone', { localBuild: false }
   fireEvent.click(screen.getByText('Done'));
   expect(await screen.findByText('Connect your machine')).toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');
-  expect(screen.queryByText('How do you want to run Astrid?')).not.toBeInTheDocument();
+  expect(screen.queryByText('How do you want to run the app?')).not.toBeInTheDocument();
   // Back returns to where the user came from, never to the skipped run-mode choice.
   fireEvent.click(screen.getByText('Back'));
   expect(await screen.findByText('Welcome to Astrid')).toBeInTheDocument();
-  expect(screen.queryByText('How do you want to run Astrid?')).not.toBeInTheDocument();
+  expect(screen.queryByText('How do you want to run the app?')).not.toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('tour');
 });

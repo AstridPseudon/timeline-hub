@@ -159,7 +159,7 @@ it('starts the hosted permission probe in the same tab after Continue in this ta
 it('keeps the full local choice outside the hosted Runtime permission gate', async () => {
   render(<WelcomeFlow entry="choose" />);
 
-  fireEvent.click(screen.getByRole('radio', { name: 'Run everything on your computer' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Run app on your computer' }));
   fireEvent.click(screen.getByRole('button', { name: 'Set up with your agent' }));
 
   expect(await screen.findByRole('heading', { name: 'Have your agent set it up' })).toBeInTheDocument();
