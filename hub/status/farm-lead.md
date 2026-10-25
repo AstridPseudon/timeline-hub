@@ -1,1 +1,1 @@
-2026-10-25T21:10:09Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; six-file union proof BLOCKED at preflight (venv-runtime missing), reported; D77 render HELD (waits Agent's real child result; kit D137 4435d499 received)
+2026-10-25T21:32:52Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; D77: child venv BUILT+registered 21:32Z (child-717e53d7), manager continuing to installed stage/render; union proof still waits Runtime interpreter answer
