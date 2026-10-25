@@ -1,0 +1,58 @@
+{
+  "scope": {
+    "allowed_app_file": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+    "review_diff_lines": "50 insertions, 2 deletions",
+    "normal_arm": "preserved; existing exact keysets, bounds, privacy predicates and normal helper hash a17a9211... remain unchanged",
+    "reviewed_legacy_arm": "preserved; existing exact keysets, old complete|failed|pending outcomes and helper hash 6c9daef2... remain unchanged"
+  },
+  "reviewed_new": {
+    "helper_selection": "readCapture selects reviewed-new only for exact SHA256 4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "schema": "schema_version=1; exact summary/event keysets; lifecycle enum completed|raised|returned_without_response|pending_at_stop",
+    "phase_map": "exact arrival+normal phase keys; count bounds; UNKNOWN/observed/raised state shape; arrival remains unsupported",
+    "durations": "finite nonnegative values; dispatch_total equals queue+handler when all are present; reviewed wall duration equals dispatch_total",
+    "lifecycle_duration": "raised and pending_at_stop require handler_ms, dispatch_total_ms and dispatch_to_completion_wall_ms null; completed and returned_without_response require both dispatch-total and wall values non-null",
+    "lifecycle_phase_current": "completed requires response count>0; returned_without_response requires response count=0; raised requires dispatch_queue.status=raised and response count=0; all variants require dispatch count>=1",
+    "lifecycle_phase_gap": "completed/returned_without_response do not require dispatch_queue.status/end state consistent with a non-raised completed dispatch; pending_at_stop does not require dispatch_queue.status=observed and end_ms=null",
+    "valid_pending_race": "helper outcome checks dispatch_finished first, so a pending snapshot may retain an observed response before dispatch return; validator appropriately does not reject response count>0 solely for pending",
+    "retention": "exact rolling/final/output shape; reviewed-new final_request adds buffer_complete and uses lifecycle enum; buffer_complete equals complete",
+    "final_request_relation": "null final_request requires summary completed; non-null final_request cannot be completed; same-request final outcome must equal summary lifecycle",
+    "privacy_and_bounds": "recursive private-key rejection; safe identifiers/paths; max requests=8, events=128, bytes=65536, interval=20ms, top frames=10, exact denominator/share/loss relationships",
+    "negative_mutations_present": [
+      "missing/unknown lifecycle",
+      "pending duration contradiction",
+      "completed without response/ended duration",
+      "returned_without_response with response/ended duration mutation",
+      "raised without raised dispatch mutation",
+      "denominator and arrival contradictions",
+      "invalid final retention enum/outcome relation",
+      "buffer completeness contradiction",
+      "leaf/loss/share/privacy mutations"
+    ],
+    "negative_mutations_missing": [
+      "pending_at_stop with dispatch_queue.status=raised",
+      "pending_at_stop with dispatch_queue.end_ms non-null",
+      "returned_without_response with dispatch_queue.status=raised"
+    ]
+  },
+  "frozen_helper_derivation": {
+    "source": "Runtime candidate 231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py",
+    "request_outcome": [
+      "if not dispatch_finished: pending_at_stop",
+      "else if dispatch_returned and http_response.count: completed",
+      "else if dispatch_raised: raised",
+      "else: returned_without_response"
+    ],
+    "dispatch_phase": "dispatch_queue ends only on dispatch-scope return; error state marks it raised",
+    "implication": "pending cannot have an ended/raised dispatch queue; a finished raised dispatch cannot be returned_without_response"
+  },
+  "in_memory_validator_probe": {
+    "method": "actual App validator loaded from source in memory with test callbacks disabled; no repository or temp source file changed",
+    "results": [
+      "baseline pending: accepted",
+      "pending with raised dispatch phase: accepted",
+      "pending with ended dispatch phase: accepted",
+      "completed with raised dispatch phase: accepted",
+      "returned_without_response with raised dispatch phase: accepted after constructing otherwise valid durations/retention"
+    ]
+  }
+}

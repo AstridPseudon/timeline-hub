@@ -1,0 +1,39 @@
+{
+  "task": "D127 independent lifecycle protected review",
+  "repository": "App",
+  "worktree": "/home/user/work/wt/app-D127-lifecycle-protected-review-1647",
+  "branch": "tl/app-D127-lifecycle-protected-review-1647",
+  "normal_integration_head": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+  "review_parent": "f9fa634aa9a547ade4ae545129dce8e75f1afe06",
+  "review_commit": "5a9e0eb523353a95af45563a4f3e80bd8772222e",
+  "review_tree": "8bc819a506b01520a7a539d2d125f9fdf13cdb89",
+  "merge_base_with_normal_integration": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+  "cumulative_changed_files": [
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "commit_diff": {
+    "stat": "1 file changed, 50 insertions(+), 2 deletions(-)",
+    "sha256_binary_patch": "d8d1f5846ae9c198cd41c0364cd887f2591d2308de3b9ac7e5195575576148b3",
+    "patch_id_stable": "3c7fe010b5159d22c9e0badb9ea98f18392df859",
+    "file_sha256_at_review_commit": "1855a9c9b68818f27bbfb420a9c6c1b97312bd30a52f21fbab76c2b4e5a177de"
+  },
+  "runtime_custody": {
+    "candidate_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "candidate_helper_path": "tests/helpers/p2_commit_phase_capture.py",
+    "candidate_helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "qualified_runtime_checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "qualified_runtime_head": "ab1e4f6141987706132916e2da16477f5a019464",
+    "qualified_agent_checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+    "qualified_agent_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime_source_mutated": false,
+    "helper_copy_created": false,
+    "helper_copy_reason": "focused proof gated by source FAIL"
+  },
+  "worktree_custody": {
+    "status_before": "clean at review commit",
+    "status_after": "clean at review commit",
+    "repository_files_written": false,
+    "git_commit_merge_rebase_checkout_push": false,
+    "generated_or_dependency_changes": false
+  }
+}

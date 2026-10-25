@@ -1,0 +1,28 @@
+{
+  "task": "D127 independent lifecycle protected review",
+  "source_verdict": "FAIL",
+  "focused_proof_verdict": "NOTRUN_SOURCE_GATE",
+  "gate": "The brief permits focused D78 and reviewed-new 4ee bootstrap controls only after SOURCE PASS.",
+  "qualified_runtime_checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+  "qualified_runtime_head": "ab1e4f6141987706132916e2da16477f5a019464",
+  "qualified_agent_checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+  "qualified_agent_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+  "external_helper": {
+    "basename": "p2_commit_phase_capture.py",
+    "sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "source_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "copy_status": "NOT_CREATED_SOURCE_GATE"
+  },
+  "normal_path_hash_hook": "NOTRUN_SOURCE_GATE",
+  "positive_controls": {
+    "D78_bootstrap": "NOTRUN_SOURCE_GATE",
+    "reviewed_new_bootstrap": "NOTRUN_SOURCE_GATE",
+    "focused_observer": "not duplicated; prior qualified evidence retained"
+  },
+  "safety": {
+    "actual_tour": false,
+    "5GB_gate": "not reached; no focused body attempted",
+    "4GB_stop": "not reached",
+    "permission_or_classifier_refusal": false
+  }
+}

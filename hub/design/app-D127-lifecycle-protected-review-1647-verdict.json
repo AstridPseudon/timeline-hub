@@ -1,0 +1,49 @@
+{
+  "task": "D127 independent lifecycle protected review",
+  "verdict": "FAIL",
+  "source_verdict": "FAIL",
+  "focused_proof_verdict": "NOTRUN_SOURCE_GATE",
+  "finding": {
+    "id": "D127-LIFECYCLE-001",
+    "severity": "blocking",
+    "owner": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts:243-267",
+    "title": "lifecycle is not fully bound to dispatch phase state",
+    "detail": "The new validator checks response count and duration nullness, but accepts pending_at_stop with a raised or ended dispatch_queue and accepts returned_without_response with a raised dispatch_queue. Frozen helper semantics make pending require dispatch_finished=false and make raised take precedence over returned_without_response after dispatch finishes.",
+    "valid_pending_exception_preserved": "A stop race may observe http_response before the dispatch-scope return trace; pending must not be overconstrained to response count zero."
+  },
+  "source_scope": {
+    "worktree": "/home/user/work/wt/app-D127-lifecycle-protected-review-1647",
+    "integration_head": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+    "review_parent": "f9fa634aa9a547ade4ae545129dce8e75f1afe06",
+    "review_commit": "5a9e0eb523353a95af45563a4f3e80bd8772222e",
+    "review_tree": "8bc819a506b01520a7a539d2d125f9fdf13cdb89",
+    "changed_files_against_integration": [
+      "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+    ],
+    "repository_clean_after_review": true,
+    "source_edits_made": false
+  },
+  "custody": {
+    "app_source_sha256": "1855a9c9b68818f27bbfb420a9c6c1b97312bd30a52f21fbab76c2b4e5a177de",
+    "review_diff_sha256": "d8d1f5846ae9c198cd41c0364cd887f2591d2308de3b9ac7e5195575576148b3",
+    "runtime_candidate_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "runtime_helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "qualified_runtime_head": "ab1e4f6141987706132916e2da16477f5a019464",
+    "qualified_agent_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "test_results": {
+    "source_selector": "PASS: 2 passed, 2 skipped",
+    "eslint": "PASS",
+    "tsconfig_app": "PASS",
+    "tsconfig_node": "PASS",
+    "git_diff_check": "PASS",
+    "focused_controls": "NOTRUN: source did not pass"
+  },
+  "provenance": {
+    "no_installs": true,
+    "no_generated_files": true,
+    "no_product_changes": true,
+    "no_git_writes": true,
+    "no_full_or_browser_or_native_or_tour": true
+  }
+}

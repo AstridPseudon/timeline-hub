@@ -1,0 +1,63 @@
+{
+  "task": "D118d independent read-only projection identity whole-path investigation",
+  "repo": "Agent",
+  "source_commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+  "source_tree": "6b7bc811f07abb169dcf8858f316af3fea589b4f",
+  "runtime_pin": {
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true
+  },
+  "retained_execution": {
+    "source": "app-D118d-projection-own9-final-1646",
+    "command_scope": "exact retained own9 selectors",
+    "pytest_exit_code": 1,
+    "tests": 9,
+    "setup_errors": 9,
+    "failures": 0,
+    "skipped": 0,
+    "first_failure": {
+      "fixture": "tests/sdk/test_timeline_capture_projection.py:311",
+      "provider_frame": "astrid/sdk/timeline/_command_state.py:369",
+      "kind": "identity_conflict",
+      "message": "shot item correspondence changed",
+      "ref_shape": "occurrence-owned shot payload",
+      "candidate_row_count": 1,
+      "authenticated_expected_row_count": 0,
+      "phase": "registered provider execution, before Runtime acceptance/persistence"
+    },
+    "retained_xml_sha256": "77366ef6526f64ffa53e15c4b192df84c5604ebb4f756da3c0e65bedf9beb44e",
+    "retained_log_sha256": "6c6c720c79e7587b77f0fad1dbece7ae4f19e4cd2136051469df9f3f0dc82a0f"
+  },
+  "whole_path": [
+    {"stage": "source setup", "status": "reached", "evidence": "open_source_runtime and prior semantic setup complete before fixture line 311"},
+    {"stage": "registered provider", "status": "reached", "evidence": "Runtime loads astrid provider and calls RuntimeCommitService.commit"},
+    {"stage": "source commit execution", "status": "rejected", "evidence": "State.set -> project_shot_items -> shot_item_map -> _item_ids"},
+    {"stage": "accepted source commit", "status": "not reached", "evidence": "no accepted response or persisted item row exists in retained run"},
+    {"stage": "canonical reread/source_mapping", "status": "not reached after item patch", "evidence": "fixture reread is after the asserted accepted response"},
+    {"stage": "duplication command", "status": "not reached", "evidence": "duplicate calls occur later in saved_closure"},
+    {"stage": "identity check", "status": "failed", "evidence": "Agent correspondence guard compares one candidate row to empty authenticated baseline"}
+  ],
+  "identity_roles": {
+    "authoring_id": "placement-local item identity in the detached authoring bundle; no pre-existing item exists in this source baseline",
+    "accepted_physical_id": "Runtime canonical shot payload/shot_items identity; none was accepted for the candidate row because the provider rejected before store acceptance",
+    "alias": "the physical shot-revision root alias in the doc.patch ref; it selects the verified immutable shot image and is not an item identity",
+    "source_mapping_identity": "source_mapping.shots entry carrying source shot/revision/internal/digest custody and an empty item_id_map for the un-copied source; it is not an allocation ledger"
+  },
+  "ownership": {
+    "first_failing_owner": "Agent provider identity guard",
+    "runtime_role": "registered provider admission, transaction/persistence, and canonical reread; Runtime surfaces the provider refusal",
+    "fixture_role": "requests a new item row on an empty physical source list and assumes that row can be admitted by doc.patch"
+  },
+  "changes": {
+    "product_source_changed": false,
+    "test_source_changed": false,
+    "generated_files_changed": false,
+    "git_worktree_clean": true
+  },
+  "limits": [
+    "No pytest, replay, service body, browser, full suite, or held SWAP inspection was run by this worker.",
+    "No source or guard fix is proposed or applied.",
+    "Post-acceptance saved projection, duplicate, and canonical reread behavior remains unverified for this fixture because setup stops at the first provider guard."
+  ]
+}

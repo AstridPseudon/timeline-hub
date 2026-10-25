@@ -1,0 +1,5 @@
+Ask: consume final App lifecycle protected finding and bounded Sol return; helper bytes stay frozen / Owner: App app-D127-lifecycle-complete-sol-1654 / By: 2026-10-25T17:00Z
+
+Independent1647 SOURCEFAIL: pending_at_stop can wronglycarry raised/endeddispatch, returned_without_response cancarry raiseddispatch. Normal/D105mutations/types/lintPASS but freshbootstrapheldatSOURCEgate. ExistingRuntimehelper4ee/160predicatecustody/central23PASS unaffected. HARD samebranchSol1654 enumerates complete actualfrozenhelper lifecycletruth-tablebeforeminimalstrictAppcheck and meaningfulmutationmatrix. No furtherLuna guesspatch; independentreviewfollows. ScopeonlyAppphasebootstraptestfile, no helper rewrite/activation/productguardororiginaltour. Flat exactverdict/custody/commands design/app-D127-lifecycle-protected-review-1647-*.
+
+D130SWAPholdabsolute. Actual10721historicalpending3 remainsnoleaf/duration; no fabricatedmeasurement or providerauthor. NormalRuntimequalifiedab1eadoptionalreadyhomeAppd4e528unchanged.

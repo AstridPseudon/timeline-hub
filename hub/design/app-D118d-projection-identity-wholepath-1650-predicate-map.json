@@ -1,0 +1,63 @@
+{
+  "predicates": [
+    {
+      "id": "P1",
+      "label": "canonical reread shape",
+      "source": "tests/sdk/test_timeline_capture_projection.py:215-248",
+      "fact": "_saved_document selects the canonical parent/shot/internal image fields before bundle_from_document; this is the prior seam fixed by the earlier setup delta"
+    },
+    {
+      "id": "P2",
+      "label": "physical source root selection",
+      "source": "tests/sdk/test_timeline_capture_projection.py:293-305",
+      "fact": "the patch targets the source shot revision alias and declares an empty prior items value"
+    },
+    {
+      "id": "P3",
+      "label": "provider registration and call",
+      "source": "runtime_protocol/timeline_commit_provider.py:70-93; runtime_protocol/service.py:2412-2479",
+      "fact": "the immutable Runtime registers the astrid provider and invokes the canonical commit route"
+    },
+    {
+      "id": "P4",
+      "label": "source map custody",
+      "source": "astrid/core/timeline/authoring_bundle.py:326-359; astrid/sdk/timeline/commit.py:154-166",
+      "fact": "an un-copied source shot retains source pins with an empty item_id_map; bundle conversion does not allocate a new item"
+    },
+    {
+      "id": "P5",
+      "label": "correspondence guard",
+      "source": "astrid/sdk/timeline/_command_state.py:316-369",
+      "fact": "shot_item_map authenticates source pins, derives the expected item set from the baseline, and _item_ids rejects any candidate set that differs; here expected is empty while candidate has one row"
+    },
+    {
+      "id": "P6",
+      "label": "Runtime acceptance/persistence boundary",
+      "source": "runtime_protocol/timeline_commit_store.py:1832-1895 and 2008-2033",
+      "fact": "Runtime persists canonical child rows and shot_items only after provider validation returns; this boundary is not reached for the candidate row"
+    },
+    {
+      "id": "P7",
+      "label": "canonical reread after acceptance",
+      "source": "runtime_protocol/timeline_commit_store.py:1148-1193; tests/sdk/test_timeline_capture_projection.py:336-345",
+      "fact": "revision_closure reconstructs canonical images from stored rows and the fixture rereads only after an accepted response; no post-patch reread exists in the failing run"
+    },
+    {
+      "id": "P8",
+      "label": "duplicate identity path",
+      "source": "astrid/sdk/timeline_editing.py:501-515 and 564-590; tests/sdk/test_timeline_capture_projection.py:392-415",
+      "fact": "duplicate authoring creates placement-local item identities and a source-to-authoring item_id_map, but the failing fixture never reaches these calls"
+    }
+  ],
+  "classification": {
+    "first_failure": "P5",
+    "root_cause_class": "unallocated physical membership introduced through a strict correspondence-checked patch",
+    "not_a_failure_of": [
+      "canonical child row field projection",
+      "Runtime provider registration",
+      "Runtime persistence or canonical reread",
+      "duplicate remapping itself"
+    ],
+    "owner": "Agent provider identity/correspondence guard, with fixture setup assuming a creation route that is not established by the request"
+  }
+}
