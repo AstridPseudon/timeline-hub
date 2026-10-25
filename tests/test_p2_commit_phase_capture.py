@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import http.client
+import importlib.util
 import io
 import json
 import os
@@ -8,6 +10,7 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -50,6 +53,29 @@ def _handler(runtime, body, *, key="phase-key"):
 
 def _summary(capture):
     return [event for event in capture.events if event["phase"] == "summary"]
+
+
+def test_supported_app_bootstrap_loads_this_pinned_helper_offline(tmp_path, monkeypatch):
+    """Exercise the normal sitecustomize loader without starting Runtime or HTTP."""
+    helper_path = str((Path(__file__).parent / "helpers/p2_commit_phase_capture.py").resolve())
+    bootstrap_path = Path("/home/user/work/app/scripts/testing/sitecustomize.py")
+    assert bootstrap_path.is_file()
+    sink = tmp_path / "normal-loader.jsonl"
+    monkeypatch.setenv("ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK", str(sink))
+    monkeypatch.setenv("ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER", helper_path)
+    monkeypatch.setattr(sys, "argv", ["-m", "start"])
+    spec = importlib.util.spec_from_file_location("d124_sitecustomize", bootstrap_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module._start_capture()
+    try:
+        assert module._capture is not None
+        assert module._capture.active
+        assert module._capture.__class__.__module__ == "_astrid_p2_commit_phase_capture"
+    finally:
+        module._capture.stop()
+    assert sink.exists()
 
 
 class _FakeTimer:
@@ -118,8 +144,11 @@ def test_capture_allowlist_redacts_by_not_retaining_transport_values(tmp_path):
     assert "not-allowlisted" not in serialized
     assert "error" not in serialized or '"error":true' not in serialized
     assert all(set(event) <= {"schema_version", "request", "phase", "state", "at_ms", "count",
-                              "status", "last_phase", "phases", "durations_ms",
-                              "unknown_boundaries", "truncated", "retention"}
+                              "status", "last_phase", "phases", "durations_ms", "utc", "namespace",
+                              "capture_namespace", "pid", "birth_ticks", "method", "route_template",
+                              "idempotency_key_sha256", "boundary", "request_wall_ms", "sampling",
+                              "capture_anchor", "unknown_boundaries", "unsupported_boundaries",
+                              "truncated", "retention"}
                for event in capture.events)
 
 
@@ -193,13 +222,30 @@ def test_pending_request_is_the_final_correlated_request_and_shutdown_is_determi
         assert request is not None
         capture._begin(request, "handler_entry")
         capture.stop()
-        return capture.events, capture.retention
+        return capture.events, capture.retention, capture.namespace
 
-    first_events, first_retention = snapshot()
-    second_events, second_retention = snapshot()
-    assert first_events == second_events
+    first_events, first_retention, first_namespace = snapshot()
+    second_events, second_retention, second_namespace = snapshot()
+    def without_restart_identity(events):
+        normalized = []
+        for event in events:
+            value = {key: value for key, value in event.items()
+                     if key not in {"capture_namespace", "utc", "pid", "birth_ticks"}}
+            if "sampling" in value:
+                value["sampling"] = {
+                    key: item for key, item in value["sampling"].items()
+                    if key != "observer_cpu_ms"
+                }
+            if "capture_anchor" in value:
+                value["capture_anchor"] = {"utc": "normalized", "at_ms": 0.0}
+            normalized.append(value)
+        return normalized
+    assert without_restart_identity(first_events) == without_restart_identity(second_events)
+    assert first_namespace != second_namespace
     assert first_retention["final_request"]["request"] == 1
     assert first_retention["final_request"]["outcome"] == "pending"
+    first_retention["output"].pop("bytes")
+    second_retention["output"].pop("bytes")
     assert first_retention == second_retention
 
 
@@ -305,6 +351,7 @@ def test_mounted_http_commit_route_and_provider_are_observed(service, tmp_path):
     summaries = _summary(capture)
     assert len(summaries) == 1
     phases = summaries[0]["phases"]
+    assert phases["arrival"]["status"] == "observed"
     assert phases["dispatch_queue"]["status"] == "observed"
     assert phases["dispatch_queue"]["end_ms"] is not None
     for phase in ("handler_entry", "authorization", "coordinator_admission", "coordinator_lock",
@@ -322,6 +369,15 @@ def test_mounted_http_commit_route_and_provider_are_observed(service, tmp_path):
         phases["provider"]["end_ms"] - phases["provider"]["start_ms"], abs=0.001)
     assert durations["execution_lock_wait_ms"] is None
     assert durations["caller_receipt_ms"] is None
+    assert summaries[0]["method"] == "POST"
+    assert summaries[0]["route_template"] == "/v1/projects/{project_id}/timelines/{timeline_id}/commit"
+    assert summaries[0]["idempotency_key_sha256"] == hashlib.sha256(b"mounted-phase").hexdigest()
+    assert summaries[0]["request_wall_ms"] is not None
+    assert summaries[0]["request_wall_ms"] > 0
+    assert summaries[0]["sampling"]["sampling_interval_ms"] == 20
+    assert summaries[0]["sampling"]["counter_limits"]["top_frames"] == 10
+    assert all(body["project_id"] not in json.dumps(event) for event in capture.events)
+    assert all("/timelines/main/" not in json.dumps(event) for event in capture.events)
     assert summaries[0]["unknown_boundaries"]["client_request_to_server_receive"] == "outside Runtime process"
     serialized = (tmp_path / "mounted-phase.jsonl").read_text()
     assert body["project_id"] not in serialized
@@ -699,6 +755,12 @@ def test_live_watchdog_uses_real_handler_and_private_faulthandler_output(tmp_pat
     assert capture.watchdog_sink.exists()
     assert os.stat(capture.watchdog_sink).st_mode & 0o777 == 0o600
     assert "Thread" in capture.watchdog_sink.read_text()
+    summary = _summary(capture)[0]
+    sampling = summary["sampling"]
+    assert sampling["sample_total"] > 0
+    assert sampling["request_wall_denominator_ms"] == summary["request_wall_ms"]
+    assert len(sampling["top_inclusive_frames"]) <= 10
+    assert sampling["sampler_errors"] == []
 
 
 def test_watchdog_stop_is_truthful_before_a_new_daemon_capture(tmp_path):
