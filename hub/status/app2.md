@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T13:48:35Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-25T13:47Z
+<!-- app2 | 2026-10-25T13:51:16Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T13:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,11 +143,11 @@
 
 | P2-D118-current-SWAP | Qualify history refusal tags | Runtime Sol; independent Luna | Normal release1221; App adoption1230 | merged | Independent1206; home1221 | Source GO: normal56 controls and provider2 PASS, public503 retained. App adopted5e9ad atd8a1. Original11251 lower guard UNKNOWN; browser proof owed. | Runtime5e9ad / Appd8a1 |
 
-| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | D125b accepted; exact handoff | doing | Proof normal D66 controller | MAIN accepted exact Node tree; plan hash matches. Preparing normal central preflight, then one original if PASS. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
+| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Host preparation EPERM | gated:host-stopped | Proof stopped; lead notified | No original or preflight ID. Node spawnSync git EPERM in extra checkout verification; stopped under D125b. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
 
 D56.4: Proof is folded into App. D125 is a ONE-job hosting exception only. App owns the independent verdict; Proof hosts one full P2 without the new capture/helper/hook. Other Proof dispatch and product merges remain stood down.
 
-live 0 / cap 1 D125 hosting; ready-undispatched 0. All1313 prior worker records done. One normal D66 controller starts now; it queues central preflight, then normal fullP2 only after PASS. No local duplicate preflight/body.
+live 0 / cap 1 D125 hosting; ready-undispatched 0. All1313 prior worker records done. D125 host preparation stopped before D66 central preflight or submit. No live controller or service body; no alternate route or retry.
 
 core open: 2 transferred App P2 gestures, SWAP and element. Prior11251 remains NO-GO5PASS2FAIL1NOTRUN. Independent1202 qualifies five full tails and isolatedasset8974GO1226 qualifies sixth on34d464/070dfc/7070/635f. No full-tour GO. Recorded P1/P3/P4 retain tuple limits; final tuple/core/D69/installed render remain owner-lane obligations.
 regressions: 14 recorded Agent host regressions remain owner-lane work; no new Proof credit or change.
@@ -164,9 +164,19 @@ Corrected handoff and recipe now read from normal hub. Preparation plan SHA256cd
 
 Controller private root: /tmp/ap2-D125-node20194.PVhkwz. Durable plan: /tmp/ap2-D125-node20194.PVhkwz/d125-full-p2/submission/full-p2/p2-submit-plan.json. Inspect this on restart; never create a new plan to retry. Normal one-command --submit handles central preflight then one full body. Wait same IDs on124. Stop/report any refusal or ambiguity. No run ID yet.
 
-Blockers: Final cut — owner lanes still owe current fullP2, Agent core/regressions, D69, final pinned gates and genuine installed render. D125 execution now has no approval/Node/handoff blocker.
-Next ready: Normal central D66 preflight and one fullP2 from the exact supplied recipe. Publish actual ID immediately to design and App INBOX; safe terminal counts/first predicate follow. App sole independent app-D125-P2-Proof-GO-review owns verdict.
+Blockers: Final cut — owner lanes still owe current fullP2, Agent core/regressions, D69, final pinned gates and genuine installed render. D125 host cannot proceed: Node subprocess verification EPERM before any central request; lead owns fallback under D125.
+Next ready: None for Proof. D125 host stopped on EPERM as instructed. Lead reports to MAIN/App; App owns any fallback and independent verdict.
 
 Disk: 6305521664 bytes free at 2026-10-25T13:47Z; above recipe6.0GB and latest lead heavy5.2GB floors. No reclaim, retire-venv or deletion. Prior safety/permission refusals remain stopped.
 
 Pass 2026-10-25T13:47Z: D125b read and applied; exact hash/receipt/Node checks complete. No source/test/pin edit, Git mutation, upstream push or new helper. Executing only authorized normal machinery. Inbox read through803975 bytes.
+
+D125 HOST STOP 2026-10-25T13:49Z: preparation command exited1 at an extra checkout verification inside Node: `execFileSync('git',...)` reports `spawnSync git EPERM`, errno-1, syscallspawnSyncgit. The git child output contains the correct requested App SHA and status0, but Node still throws; cause is not inferred. This was a redundant verification I added around the handoff preparation code; the original shell checkout checks had already PASS. The D66 source API plan generation and --submit were not reached. This is a sandbox/subprocess failure, not a D66 sourceguard rejection, product failure, auto-review classifier refusal or original test result. Exact task instruction says stop on any refusal or ambiguity; no alternate command or retry attempted.
+
+Local exact plan path exists: False. Local venue preparation JSON exists: False. Controller log/exit do not exist because shell exited before that call. No preflight ID, normal ID, XML or service artifact. All8 originals NOTRUN; readiness NOTRUN. The one full-P2 body allowance remains unused, not a failed gate. Four checkouts and accepted Node tree retained; no further runtime-path write or source/test/pin/Git change. Free bytes6301900800. Lead/App exact safe failure peer follows.
+
+Blockers: D125 hosting — Proof preparation stops at Node spawnSync git EPERM before normal preflight/submit. Lead reports fallback; no Proof retry or additional dispatch.
+
+D125 communication: this venue has only managers/app2; direct managers/app/INBOX.md is absent. Safe stop peer design/peer-app2-to-app-lead-20261025T1349Z-D125-host-stopped.md is complete. Existing normal hub-sync peer routing delivers its app recipient into App INBOX via main; no new inbox/directory or alternate publication route was created. STATUS and run receipt are complete. Stop remains active; no retry.
+
+Audit 2026-10-25T13:50Z: all1313 prior Proof records done; live0; ready-undispatched0. D125 host stop remains; no preflight/normal plan or ID, source edit, retry or cleanup. INBOX still803975bytes. Free6301749248bytes.
