@@ -26,13 +26,28 @@ def _timing_number(value):
 
 
 def _fps(bundle):
-    # Match bundle_fps's two canonical canvas locations without converting rationals to float.
+    # The detached compiler keeps exact rational spellings for its direct
+    # callers. The registered provider additionally carries the runtime
+    # document marker; there, the open canvas path follows upstream's
+    # positive-scalar-or-30 fallback, including True -> 1.0.
+    source_mapping = bundle.get("source_mapping")
+    production = (isinstance(source_mapping, dict)
+                  and "_runtime_document" in source_mapping
+                  and source_mapping.get("_timing_open_canvas", False))
     for key in ("parent", "base_parent_payload"):
         config = (bundle.get(key) or {}).get("config") or {}
-        canvas = ((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {}
-        value = canvas.get("fps")
-        if value is None:
+        overrides = config.get("theme_overrides")
+        visual = overrides.get("visual") if isinstance(overrides, dict) else None
+        canvas = visual.get("canvas") if isinstance(visual, dict) else None
+        if not isinstance(canvas, dict) or "fps" not in canvas:
             continue
+        value = canvas["fps"]
+        if production:
+            if isinstance(value, (int, float)) and float(value) > 0:
+                if isinstance(value, bool):
+                    return Fraction(int(value), 1)
+                return _playback_rate(value)
+            return Fraction(30)
         if isinstance(value, dict) and set(value) == {"numerator", "denominator"}:
             parts = [value["numerator"], value["denominator"]]
         elif isinstance(value, list) and len(value) == 2:
