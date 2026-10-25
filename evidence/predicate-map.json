@@ -1,0 +1,51 @@
+{
+  "scope": "tests/sdk/test_timeline_selected_schema_runtime.py",
+  "original_assertions": 98,
+  "current_assertions": 99,
+  "assertion_delta": "one added setup payload-equality assertion; no original assertion removed",
+  "test_function_count": {"base": 17, "current": 17},
+  "changed_behavior_nodes": [
+    {
+      "nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+      "original_request": "case.request([raw_params(case, {'seed': 8})], base)",
+      "current_request": "v2_request(case, [raw_params(case, {'seed': 8})], base)",
+      "original_status": "rebased",
+      "current_status": "merged",
+      "assertions_base_current": [8, 8]
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
+      "original_request": "case.request([raw_params(case, {'seed': 8})], base)",
+      "current_request": "v2_request(case, [raw_params(case, {'seed': 8})], base)",
+      "original_status": "rebased",
+      "current_status": "merged",
+      "assertions_base_current": [8, 8]
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]",
+      "original_request": "case.request([raw_params(case, {'seed': 8})], base)",
+      "current_request": "v2_request(case, [raw_params(case, {'seed': 8})], base)",
+      "original_status": "rebased",
+      "current_status": "merged",
+      "assertions_base_current": [8, 8]
+    }
+  ],
+  "unknown_cases": [
+    {"nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_pre_enforcement_alias_history_reopens_with_current_authority", "base_lines": [36, 102], "current_lines": [36, 102], "same_source": true, "sha256": "b8262b40aaeaea8af342f16ee0f0e46641002862035ba5bf81c56a9c5a6fc75a6", "assertions": 8},
+    {"nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_mixed_pack_readmission_keeps_old_and_new_native_param_sources", "base_lines": [499, 600], "current_lines": [517, 618], "same_source": true, "sha256": "839e77dfae2f8b08233b2f17c50649383b5cc3ebebd7335cc3fe837f0cf2f270", "assertions": 16},
+    {"nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_disjoint_staged_label_and_inverse_preserve_opaque[False]", "base_lines": [470, 482], "current_lines": [488, 500], "same_source": true, "sha256": "37b9c176c81bac7d01b4944f765582601d325e6dbb30bd029cd2e426618d36dd", "assertions": 2},
+    {"nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_disjoint_staged_label_and_inverse_preserve_opaque[True]", "base_lines": [470, 482], "current_lines": [488, 500], "same_source": true, "sha256": "37b9c176c81bac7d01b4944f765582601d325e6dbb30bd029cd2e426618d36dd", "assertions": 2},
+    {"nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_inverse_then_selection_and_params_use_staged_pin", "base_lines": [485, 496], "current_lines": [503, 514], "same_source": true, "sha256": "9837383c574f227863c35ff6164a6cf39fe16604666105f0ead031bec3f19186", "assertions": 2},
+    {"nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_equal_json_opposite_selection_order_and_inverse_restore", "base_lines": [911, 969], "current_lines": [929, 987], "same_source": true, "sha256": "e05c81fe990d9c191776fce25323a070c054bec2d9382ec2b8aae352bfd3f2dc", "assertions": 6},
+    {"nodeid": "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_retained_schema_replay_inverse_reload_and_exact_retry", "base_lines": [771, 827], "current_lines": [789, 845], "same_source": true, "sha256": "0fd8e47cd8aac7d01b4944f18b11005e6f761e9fe9490bb60f79cb7b7fec3963", "assertions": 8}
+  ],
+  "outside_paths": "exact; git diff --name-status reports only the assigned test file"
+  ,"retired_setup": {
+    "base_authored_parent": {"config": {"tracks": []}, "registry": {}, "clips": [], "occurrences": []},
+    "current_bootstrap_parent": {"config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": []},
+    "payload_shape_equal": false,
+    "difference": "current baseline adds config.clips=[]",
+    "self_equality_assertion": "tests/sdk/test_timeline_selected_schema_runtime.py:261",
+    "frozen_r4_normalizer": "RuntimeService._complete_parent_payload defaults config={} and does not add config.clips"
+  }
+}
