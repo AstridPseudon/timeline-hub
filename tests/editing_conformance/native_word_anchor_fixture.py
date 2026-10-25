@@ -27,6 +27,21 @@ TARGET = ('parent', '', 'card')
 DECLARATION = '\"again\" in line #2 +1f'
 FPS = {'numerator': 30000, 'denominator': 1001}
 
+
+def _steps(commands, label):
+    return [{
+        "id": f"{label}-{index + 1}", "label": label, "intent": "", "tags": [],
+        "command_ordinals": [index],
+        "patch": copy.deepcopy(command.get("args", {}).get("changes", []))
+        if command["op"] == "doc.patch" else [],
+        "reads": [],
+    } for index, command in enumerate(commands)]
+
+
+def _merge_mode(commands):
+    return "atomic" if any(command["op"] == "doc.patch" for command in commands) else "fields"
+
+
 def first_selection(bundle):
     """Select once from this fixture's sole verified source using main's grammar.
 
@@ -66,7 +81,8 @@ def first_selection(bundle):
                        pin["version"], pin["content_digest"], tuple(word.id for word in chosen))
 
 
-def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scope=None):
+def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scope=None,
+         current_form=False):
     # Source documents are ordinary Runtime data.  The timeline fixture is
     # bootstrapped through the live commit provider below, not the retired
     # parent-composition publisher.
@@ -78,6 +94,7 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
     from astrid.sdk.timeline.emitter import emit_document_commands
     from astrid.sdk.timeline.native_initialize import capture_initialize
     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+    from astrid.sdk.timeline.native_word_anchor import capture_anchor
 
     root = Path(root)
     RealmStore.initialize(root).close()
@@ -104,22 +121,16 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
 
     def submit(commands, key):
         current = head()
-        steps = [{
-            "id": f"bootstrap-{index + 1}", "label": key, "intent": "", "tags": [],
-            "command_ordinals": [index],
-            "patch": copy.deepcopy(command.get("args", {}).get("changes", []))
-            if command["op"] == "doc.patch" else [],
-            "reads": [],
-        } for index, command in enumerate(commands)]
+        body = {
+            "api_version": 1, "project_id": project, "timeline_id": "film",
+            "base_revision_id": current["revision_id"],
+            "base_publication_id": current["publication_id"],
+            "commands": commands, "label": key, "steps": _steps(commands, key),
+            "merge": _merge_mode(commands), "reads": [], "dry_run": False,
+            "source": {"via": "python"}, "rationale": key, "group_id": key,
+        }
         result = service.commit_timeline(
-            project, "film", {
-                "api_version": 1, "project_id": project, "timeline_id": "film",
-                "base_revision_id": current["revision_id"],
-                "base_publication_id": current["publication_id"],
-                "commands": commands, "label": key, "steps": steps,
-                "merge": "atomic", "reads": [], "dry_run": False,
-                "source": {"via": "python"}, "rationale": key, "group_id": key,
-            }, idempotency_key=key, publisher="timing-editor",
+            project, "film", body, idempotency_key=key, publisher="timing-editor",
             invocation_path=route_path(project, "film"), authorize=lambda: None,
         )
         return result["data"]["canonical_document"]
@@ -150,16 +161,24 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
         "hold": 1,
     })
     carded = execute(tracked, [card]).bundle
-    authored_card = copy.deepcopy(carded)
-    authored_card["parent"]["clips"][0]["app"] = {
-        "astrid": {"on": DECLARATION, "for": 0.5},
-    }
-    # Keep the two physical parent clip mirrors identical while constructing
-    # the authored declaration; the emitter validates both before projection.
-    authored_card["parent"]["config"]["clips"] = copy.deepcopy(
-        authored_card["parent"]["clips"])
-    card_declaration = emit_document_commands(carded, authored_card)
-    authored_card = execute(carded, card_declaration).bundle
+    if current_form:
+        authored_card = copy.deepcopy(carded)
+        authored_card["parent"]["clips"][0]["app"] = {"astrid": {"for": 0.5}}
+        authored_card["parent"]["config"]["clips"] = copy.deepcopy(
+            authored_card["parent"]["clips"])
+        card_declaration = emit_document_commands(carded, authored_card)
+        authored_card = execute(carded, card_declaration).bundle
+    else:
+        authored_card = copy.deepcopy(carded)
+        authored_card["parent"]["clips"][0]["app"] = {
+            "astrid": {"on": DECLARATION, "for": 0.5},
+        }
+        # Keep the two physical parent clip mirrors identical while constructing
+        # the authored declaration; the emitter validates both before projection.
+        authored_card["parent"]["config"]["clips"] = copy.deepcopy(
+            authored_card["parent"]["clips"])
+        card_declaration = emit_document_commands(carded, authored_card)
+        authored_card = execute(carded, card_declaration).bundle
     occurrence = capture_occurrence_create(
         authored_card, "occ", "shot", name="Voice", track="picture", on=2,
         duration=duration_ms / 1000,
@@ -168,6 +187,10 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
 
     voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
                "at": 1, "from": 2, "to": 6, "speed": 2}]
+    if current_form and duration_ms == 1750:
+        # The boundary case's selected second word ends at the occurrence's
+        # half-open boundary; keep the source interval itself valid for C0.
+        voices[0]["to"] = 3.5
     if source_window is not None:
         voices[0]['source_window'] = source_window
     if reused:
@@ -202,15 +225,88 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
         "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
         "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
     }
-    submit([initialize, parent_track, card, *card_declaration, occurrence, media_admission,
-            *changes], "initial-commit")
+    if current_form:
+        # Allocate the real source track through its native command before the
+        # source-bound document patch.  The bootstrap has no legacy declaration;
+        # the following anchor is the authenticated current-form first use.
+        source_track = capture_track_create(occurred, "occurrence:occ", {
+            "id": "vo", "kind": "audio"})
+        source_before = execute(occurred, [source_track]).bundle
+        source_after = copy.deepcopy(source_before)
+        source_after["shots"]["shot"]["internal_timeline"]["output"]["fps"] = 30
+        source_after["shots"]["shot"]["payload"].update(
+            {"items": [], **(opaque if opaque_pin_scope == "shot" else {})})
+        internal = source_after["shots"]["shot"]["internal_timeline"]
+        internal["clips"] = voices
+        internal["registry"] = {"assets": {"take": {"media_id": media, "type": "audio"}}}
+        if opaque_pin_scope == "parent":
+            source_after["parent"]["opaque"] = copy.deepcopy(opaque)
+        if opaque_pin_scope == "occurrence":
+            source_after["placements"][0]["opaque"] = copy.deepcopy(opaque)
+        source_changes = emit_document_commands(source_before, source_after)
+        placement_start = source_before["placements"][0]["placement"]["start_ms"]
+        source_changes[0]["args"]["changes"].insert(0, {
+            "op": "set", "ref": "parent",
+            "path": ["occurrences", "occurrence_id:occ", "placement", "start_ms"],
+            "before": {"state": "present", "value": placement_start}, "value": 2000,
+        })
+        initial = submit([initialize, parent_track, card, occurrence, source_track,
+                          *source_changes, media_admission], "initial-commit")
+        anchored = bundle_from_document(initial)
+        anchored["source_mapping"]["pinned_documents"] = [{
+            "pin": copy.deepcopy(pin), "document": copy.deepcopy(source)}]
+        choice = {
+            "source": "occurrence:occ/clip:voice", "document": copy.deepcopy(pin),
+            "word_ids": [content["segments"][0]["words"][1]["id"]],
+        }
+        anchor = capture_anchor(anchored, "parent/clip:card", "on", '"again"', choice)
+        anchor["intent"] = {"anchor": "follow"}
+        initial = submit([anchor], "initial-word-anchor")
+    else:
+        initial = submit([initialize, parent_track, card, *card_declaration, occurrence,
+                          media_admission, *changes], "initial-commit")
+
+    if current_form:
+        # Exercise the supported first-use path through the registered provider:
+        # authenticate the exact transcript choice, then clear the authored
+        # choice while C0 retains the source pin for later reads.
+        clear = capture_anchor(bundle_from_document(initial),
+                               "parent/clip:card", "on", None, None)
+        cleared = submit([clear], "retain-and-clear-word-anchor")
+        corrected = bundle_from_document(cleared)
+        corrected_after = copy.deepcopy(corrected)
+        corrected_after["parent"]["config"]["output"]["fps"] = copy.deepcopy(FPS)
+        corrected_after["parent"]["config"]["theme_overrides"] = {
+            "visual": {"canvas": {"fps": FPS}}}
+        corrected_after["shots"]["shot"]["internal_timeline"]["output"]["fps"] = copy.deepcopy(FPS)
+        corrected_after["parent"]["config"]["clips"] = copy.deepcopy(
+            corrected_after["parent"]["clips"])
+        corrections = emit_document_commands(corrected, corrected_after)
+        corrections.append({"schema_version": 1, "op": "doc.patch", "version": "1",
+            "select": None, "args": {"changes": [{
+                "op": "set", "ref": "parent", "path": ["config", "clips"],
+                "before": {"state": "present",
+                           "value": copy.deepcopy(corrected["parent"]["config"]["clips"])},
+                "value": copy.deepcopy(corrected_after["parent"]["config"]["clips"]),
+            }]}})
+        corrections.append({"schema_version": 1, "op": "doc.patch", "version": "1",
+            "select": None, "args": {"changes": [{
+                "op": "set", "ref": "parent", "path": ["clips", "id:card", "app", "astrid", "for"],
+                "before": {"state": "absent"}, "value": 0.5,
+            }]}})
+        corrections.append({"schema_version": 1, "op": "doc.patch", "version": "1",
+            "select": None, "args": {"changes": [{
+                "op": "remove", "ref": "parent",
+                "path": ["clips", "id:card", "app", "astrid", "word_anchors"],
+                "before": {"state": "present", "value": {}},
+            }]}})
+        submit(corrections, "current-baseline-corrections")
 
     service.close()
     return {'project': project, 'pin': pin, 'source': source}
 
 
-@pytest.fixture
-def retained(tmp_path, monkeypatch, request):
+def _retained_case(tmp_path, monkeypatch, request, *, current_form):
     runtime = use_runtime()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_port import route_path
@@ -224,6 +320,14 @@ print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
 """
     options = getattr(request, 'param', False)
     options = options if isinstance(options, dict) else {'reused': options}
+    requested_options = dict(options)
+    seed_options = dict(options)
+    if current_form:
+        if seed_options.get('duration_ms') == 100:
+            seed_options.pop('duration_ms')
+        if 'source_window' in seed_options:
+            seed_options.pop('source_window')
+    options = {**seed_options, 'current_form': current_form}
     seeded = subprocess.run([sys.executable, '-c', script, str(root),
         json.dumps(options)], text=True, capture_output=True, check=True,
         env={**os.environ,
@@ -233,7 +337,7 @@ print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
     project, pin, source = (values[key] for key in ('project', 'pin', 'source'))
     service = RuntimeService(root)
     case = SimpleNamespace(service=service, root=root, project=project, pin=pin, source=source,
-                           hydrated=[], documents={})
+                           hydrated=[], documents={}, negative_options=requested_options)
 
     class NoSceneImports:
         def find_spec(self, fullname, path=None, target=None):
@@ -256,9 +360,32 @@ print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
 
     def request(commands, base=None):
         base = base or head()
+        if (current_form and base['revision_id'] in case.documents
+                and any(command.get('op') == 'clip.anchor' for command in commands)
+                and ('duration_ms' in requested_options and 'duration_ms' not in seed_options
+                     or 'source_window' in requested_options and 'source_window' not in seed_options)):
+            current_bundle = agent.bundle_from_document(case.documents[base['revision_id']])
+            changes = []
+            if 'duration_ms' in requested_options and 'duration_ms' not in seed_options:
+                current = current_bundle['placements'][0]['duration_ms']
+                changes.append({'op': 'set', 'ref': 'parent',
+                    'path': ['occurrences', 'occurrence_id:occ', 'duration_ms'],
+                    'before': {'state': 'present', 'value': current},
+                    'value': requested_options['duration_ms']})
+            if 'source_window' in requested_options and 'source_window' not in seed_options:
+                changes.append({'op': 'set', 'ref': 'internal:film',
+                    'path': ['clips', 'id:voice', 'source_window'],
+                    'before': {'state': 'absent'},
+                    'value': copy.deepcopy(requested_options['source_window'])})
+            commands = [{"schema_version": 1, "op": "doc.patch", "version": "1",
+                         "select": None, "args": {"changes": changes}}, *commands]
+        label = "Timeline conformance edit"
         return {"api_version": 1, "project_id": project, "timeline_id": "film",
                 "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
-                "commands": commands}
+                "commands": commands, "label": label, "steps": _steps(commands, label),
+                "merge": _merge_mode(commands), "reads": [], "dry_run": False,
+                "source": {"via": "python"}, "rationale": label,
+                "group_id": "timeline-conformance"}
 
     def submit(body, key, authorize=lambda: None):
         result = case.service.commit_timeline(project, "film", body, idempotency_key=key,
@@ -298,3 +425,13 @@ print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
         yield case
     finally:
         case.service.close()
+
+
+@pytest.fixture
+def retained(tmp_path, monkeypatch, request):
+    yield from _retained_case(tmp_path, monkeypatch, request, current_form=False)
+
+
+@pytest.fixture
+def current_retained(tmp_path, monkeypatch, request):
+    yield from _retained_case(tmp_path, monkeypatch, request, current_form=True)

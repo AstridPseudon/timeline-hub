@@ -220,6 +220,9 @@ class Recording:
         return ref
 
     def compile_inputs(self):
+        # Consumers validate the complete native input, including recorded
+        # parent mirrors, before deriving timing from it.
+        self.compile_mirrors()
         # The compiler retains this immutable input closure. These pins do not
         # imply that the move evaluated an anchor or any document settings.
         mapping = self.state.bundle.get('source_mapping', {})
