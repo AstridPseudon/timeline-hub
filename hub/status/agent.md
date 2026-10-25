@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T20:44:24Z | dispatcher heartbeat 10s | live 4 (sol 1, luna 3, other 0) | busy30 19 | status age 0m -->
-# agent board, 2026-10-25T20:44Z
+<!-- agent | 2026-10-25T20:48:34Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 1m -->
+# agent board, 2026-10-25T20:47Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -104,7 +104,7 @@
 
 | D134 own344 partition | Separate setup and product evidence | Luna read only | First return2016 | review | Author2003; independent2011 FAIL | See proof | Reviewed132 setup,0 proved product,212 unknown. Exact9 projection downgrade; first return active. | Evidence only |
 
-| D137 real child and core | Build exact child then run ship-grade core | Luna and service | Actual4435 receipt GO | doing | agt-F-D137-real-child-core-2044 | See proof | Exact4435 regular0755 received; ONE frozen a4e016/5e9ad child, core if built, exact stage stderr if refused. | Frozen a4e016 /5e9ad |
+| D137 real child and core | Preserve exact real-child refusal | Luna and service | Owner changed-state disposition | blocked:runtime | agt-F-D137-real-child-core-2044 | See proof | REFUSED venv-log-setup exit2: stage_stderr_path missing at environment60. Stage stderr EXACTMISSING. No registration or core; no retry. | Frozen a4e016 /5e9ad |
 
 | D134 D73 source | Reconcile launcher and host environment | Luna and independent | Runtime source review and kit | doing | rt-D73-env-source-2026 | See proof | Narrow launcher source owner active; host guard and parsed controls preserved. No extra D137 prerequisite. | Pending |
 
@@ -172,3 +172,6 @@ Pass 2026-10-25T20:42Z: secondselectedfixkeptoriginalcontrolsbutthreecurrentmerg
 D137 GO20:44: actualreceiving4435 regular0755/75503bytes independentlyverified, freshadmission above5905580032. Owner20:41GO and CAS2031installedpublication recorded. DispatchimmediateONErealchild/core controller2044 fromsameD128WIP. No furtherkitwait orfixturegate, no manualcopy. Existingauthors finish source; no newlocalauthors whileheavybody active.
 
 Current 2026-10-25T20:44Z: D137 receiving blockerCLEARED andcontroller2044queuedimmediately. Localmaker4435 regular0755/75503; dispatchdisk6157840384bytes, canonicalchild5905580032threshold. No morefixturebodies. All newrowcolumnsnormalizedtocurrentnine-columnboard; originalprotectedrowsuntouched. Five sourceworkersorcontrollersatcap6; ready-undispatched0local, no newauthorsduringheavy.
+
+Blockers: Runtime D137 — ONE actual4435 request REFUSED venv-log-setup exit2, stage_stderr_path command missing atenvironment60. Stage stderr EXACTMISSING; nochild/core. Peer2047sent; no retry or alternate route.
+Pass 2026-10-25T20:47Z: realrequestspentandstopped; noheavybodyeverstarted. Immutablequeue/wrapper/actualsourcespreservedunderworkerKEEP. Independentresultreviewnextafterterminalreport; allotherauthorizedsourceworkcontinues, norealrequestwithoutrecordedchanged-stateownerdisposition.

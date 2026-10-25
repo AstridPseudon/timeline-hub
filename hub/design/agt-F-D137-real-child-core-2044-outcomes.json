@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.ops.d137.outcomes/v1",
+  "child": {
+    "status": "REFUSED",
+    "stage": "venv-log-setup",
+    "exit": 2,
+    "first_error": "environment: line 60: stage_stderr_path: command not found",
+    "stderr": "EXACTMISSING"
+  },
+  "core": {
+    "status": "NOTRUN",
+    "reason": "child refusal"
+  },
+  "classification": "ordinary-maker-refusal-stop"
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "timeline.ops.d137.service/v1",
+  "service": "agent-core-full",
+  "status": "NOTRUN",
+  "reason": "authorized child maker refusal; no retry or fallback",
+  "request_test_submission": false,
+  "service_id": null,
+  "raw_xml": null,
+  "runner_receipt": null,
+  "registered_child_interpreter": null
+}

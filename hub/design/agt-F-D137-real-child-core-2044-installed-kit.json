@@ -1,0 +1,27 @@
+{
+  "schema": "timeline.ops.d137.installed-kit/v1",
+  "status": "qualified_for_one_request",
+  "installer": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bytes": 75503,
+    "mode": "0755",
+    "regular_nonsymlink": true
+  },
+  "source": {
+    "commit": "0c4170e42d2ff435ea855a54c940299619f6a285",
+    "tree": "b43a840b75bf895f9789732c56585175c4b367bf",
+    "review": "PASS_SOURCE_SECURITY",
+    "reviewed_installer": "installer1826"
+  },
+  "protected_helpers": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "receipts": {
+    "installation": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D137-CAS-install-2031-installation.json",
+    "validation": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D137-CAS-install-2031-validation.md",
+    "receiving": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-20261025T2035Z-D137-INSTALLED-real-request-ready.md"
+  },
+  "publication_note": "Owner/lead receipt records installed and published; installation.json itself records publication.published=false. No production acceptance or fixture E2E claim is made."
+}

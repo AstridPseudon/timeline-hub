@@ -1,0 +1,3 @@
+component	status	stage	exit	first_error	stderr
+child	REFUSED	venv-log-setup	2	stage_stderr_path command-not-found	EXACTMISSING
+agent-core-full	NOTRUN			child refusal	

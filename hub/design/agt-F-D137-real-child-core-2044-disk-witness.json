@@ -1,0 +1,11 @@
+{
+  "schema": "timeline.ops.d137.disk-witness/v1",
+  "filesystem": "/home/user/work",
+  "reserve_bytes": 5905580032,
+  "stop_bytes": 4000000000,
+  "start": {"utc": "2026-10-25T20:43:22.328310+00:00", "free_bytes": 6157840384, "source": "dispatch receiving witness"},
+  "stop": {"utc": "2026-10-25T20:45:48.811180726Z", "free_bytes": 6262321152, "source": "worker witness"},
+  "stop_above_reserve": true,
+  "stop_above_stop": true,
+  "heavy_body": false
+}
