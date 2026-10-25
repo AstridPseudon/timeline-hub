@@ -1,0 +1,47 @@
+{
+  "task": "rt-D136a-typed-location-final-review-2119",
+  "verdict": "PASS_BOUNDED_SOURCE_SECURITY",
+  "release": "HELD",
+  "candidate": {
+    "commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+    "parent": "c99214a227154df5fbaf681c2e0fc52c54500025",
+    "parent_tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+    "diff_sha256": "1f3f7af792722507c9d61ad7f4c6f13468424fb75b7a5fe60daa3b44e9cdde91",
+    "changed_paths": [
+      "astrid/sdk/timeline/validation.py",
+      "tests/sdk/test_d136_fps_upstream_compat.py"
+    ],
+    "timing_evaluator_unchanged": true,
+    "protected_files_unchanged": true
+  },
+  "source_review": {
+    "finding_count": 0,
+    "change": "_validate_fps now requires baseline typed locations to be a subset of candidate locations, allowing new canonical declarations while retaining strict parsing, parity, and D12 checks.",
+    "original45_ast_conserved": true,
+    "non_fps_validation_ast_conserved": true,
+    "new_negative_guards": "8/8 parameterized removal, relocation, and rate-change refusal cases",
+    "actual_initialization_regression": "genuine capture_initialize/timeline.init through provider; accepted and preview paths exercised",
+    "open_canvas_preserved": "authored JSON retained; upstream fallback 30 and True -> 1 behavior retained by unchanged timing evaluator",
+    "auth_privacy_read_no_write_wrong_pair": "no changed source boundary; bounded controls remained green"
+  },
+  "independent_controls": {
+    "own": "57 passed",
+    "nearest": "138 passed",
+    "ruff": "All checks passed",
+    "mypy": "no issues in 3 source files",
+    "private_compile": "exit 0",
+    "diff_check": "exit 0"
+  },
+  "prior_custody": {
+    "owner_d136a": "PASS source/security and bounded provider matrix; release held",
+    "app_independent_2100": "FAIL actual original9 at first seam; source/custody qualified",
+    "preserved_original9": "9 setup errors, 0 passes, 0 failures, 0 skips; unchanged and not re-run"
+  },
+  "limits": [
+    "No RuntimeStore, HTTP, production coordinator, original9/27, full/core/P4/tour/socket/body/acquisition/profile/child/D130 run",
+    "No genuine 5 GB body admission",
+    "No independent whole-path redispatch"
+  ],
+  "next_step": "Keep release held until the sole unchanged App original9 is run after meaningful source/independent PASS and genuine admission."
+}

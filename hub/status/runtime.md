@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T21:21:14Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
-# runtime board, 2026-10-25T21:19:59Z
+<!-- main | 2026-10-25T21:25:51Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 13 | status age 1m -->
+# runtime board, 2026-10-25T21:24:27Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -404,13 +404,13 @@
 | OPS-Farm-review | Verify narrow distribution ownership fix | Luna independent | Source review complete | merged | rt-OPS-Farm-metadata-review-resume-1417 | Source PASS through real embedded caller; live root remains inferred. [Review](../../design/rt-OPS-Farm-metadata-review-resume-1417.md). | Independent1417 PASS | Evidence only |
 | R-P2-SWAP-3250 | Qualify safe tags and key hash | Sol / Luna | Integrated diagnostic source | review | Protected1527; clean1537 | Diagnostic source normal00ede;53+23+19+native1 PASS. OrdinaryHTTP failure reproduced on parent in Agent capture. | Independent1527 PASS | 00ede8c3fa |
 | OPS-Farm-installed | Verify installed maker custody | Luna independent | Farm propagation and actual result | merged | rt-OPS-Farm-installed-review-1440 | Installed and candidate e62f exact, backupff8 exact, mode0755 and embedded controls PASS. [Review](../../design/rt-OPS-Farm-installed-review-1440.md) | Independent1440 PASS | e62f89ea installed |
-| P2-SWAP-native-prep | Hold source-faithful SWAP acceptance | Luna / Luna | Owner D130 safety disposition | blocked:orchestrator | Source1545 stop requested | D130 holds this path. Source1545 stopped, WIP retained; no alternate qualification or historical replay. | Recipe1507 PASS only | Held1545 |
+| P2-SWAP-native-prep | Hold native SWAP acceptance | Luna | D130 safety hold | gated:D130-safety | Source1545 stopped; WIP retained | Automatic safety refusal holds this path. No retry, alternate qualification, historical replay or transfer. | Recipe1507 only | Held1545 |
 | R2-step-boundary | Authenticate complete step source | Sol / Luna | Exact integrated proof passed | merged | Author1444; security1458; home1519 | Actualbc487 tree equals reviewed39229. Integrated registered-provider2 and native2 PASS; all source/origin hashes verified. | Security1458 and result1514 PASS | 39229 /bc487 |
 | Agent-next-Farm-packet | Preserve reviewed future batch command | Agent Luna | Authentic Farm inputs and child | review | Agent1424; independent1426 PASS | Exact291c source packet published. Future a4e016/5e9ad; captured Farm tuples remain unchanged. No body or profile inference. | Independent1426 PASS | Packet291c |
 | P2-SWAP-key-correlation | Join helper and diagnostic hashes | Sol / Luna | Current diagnostic home | merged | Clean1537; protected1527 | LowercaseUTF8 key hash and exact key sets PASS. Runtime public envelope unchanged. No new browser join inferred. | Independent1527 PASS | 00ede8c3fa |
 | OPS-Farm-ownership-census | Preserve stopped Farm census | Sol / Luna | Owner drops Farm core | gated:D128-dropped | Sol1530 ended | Partial source diagnostic only; actual layout EXACTMISSING. No more census, fix, build or reissue. | Prior failures retained | Source only |
 | OPS-finite-pin-headroom | Audit five finite source pins | Luna read only | Manager purpose disposition | review | Audit1453 | Five clean pins total417MB; host process and route guards clear. KEEP purposes remain; no removals or retry. | No removal authorized | Evidence only |
-| D127-recovery | Hold physical identity recovery | Sol / Luna | Owner D130 safety disposition | blocked:orchestrator | WALSol1537 ended; D130 hold | Automatic safety classifier refused scoped recovery tests. WIP held; no review, retry, merge or release. | Prior1533 FAIL | Held1537 |
+| D127-recovery | Hold physical identity recovery | Sol / Luna | D130 safety hold | gated:D130-safety | WALSol1537 ended | Automatic classifier refused scoped tests; source and evidence held. No review, retry, merge, release or alternative route. | Prior1533 FAIL retained | Held1537 |
 | R2-inverse-boundary | Authenticate grouped inverse and redo | Sol / Luna | Exact integrated proof passed | merged | Author1523; security1537; home1550 | Exactab1e genuine3/native2 PASS;1501Agent blobs exact. [Receipt](../../design/rt-R2-redo-home-1550.md). Other roots UNKNOWN. | Independent1537 PASS | a5fc9 / ab1e4f6141 |
 | R2-step-home | Verify integrated step correction | Luna | Exact integratedbc487 | merged | rt-R2-step-home-proof-1519 | Actualbc487 genuine2 and native2 PASS, scoped static PASS. Durable XML and before/after origins retained. | Prior1514 PASS | bc487974a5 |
 | Agent-inverse-diagnosis | Challenge grouped inverse diagnosis | Luna read only | Exact source review complete | merged | rt-Agent-inverse-diagnosis-review-1519 | Formal source PASS; exact genuine3 reproduces2PASS1specificRED on5e9ad. No product edits or original-four closure. | Independent1519 PASS source | Agent a0d839 |
@@ -474,7 +474,7 @@
 | U1-D135-union-review | Prove private Runtime upstream union | Luna and Farm | Actual Farm import census | review | Preflight2116; Farm receiver2106 | Farm source guards PASS; Main-only Python absent. Portable venv-agent import census active; no functional credit. | Independent2006 source PASS | 0bb3bc45c |
 | F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
-| D136a-fps-regression | Preserve open and typed FPS inputs | Sol / Luna | Exact original nine acceptance | review | Author2108; final independent2119 | Candidate20db: 57 own and138 nearest PASS; source init parent2 RED and candidate2 GREEN. Original9 acceptance still owed. | App2100; Luna2119 active | 20dbfdef4 held |
+| D136a-fps-regression | Preserve open and typed FPS inputs | Sol / Luna | Sole unchanged original9 | review | Author2108; independent2119 PASS; App next original9 | Exact20db:57 own and138 nearest PASS independently. Real initialization parent2 RED and candidate2 GREEN in detached loader scope. | Independent2119 PASS | 20dbfdef4 held |
 
 | D73-env | Preserve supported launcher environment | Luna | Host filing and Agent intake | merging | Author2026; protected2036 PASS | Two child shells unset inherited variable; actual launcher positive and poison controls PASS. No live body claim. | Independent2036 PASS | 375c773449 |
 
@@ -484,28 +484,30 @@
 
 | D134-Runtime49 | Classify word and PARAM boundaries | Luna | Source evidence qualified | merged | Author2052; review2100 PASS | Exact49:27 setup,22 UNKNOWN,0 proved product gaps. Review report count typo disclosed; per-ID and JSON counts qualified. | Independent2100 C PASS | Evidence only |
 
-| OPS-D137-shell-closure | Carry all maker shell dependencies | Luna | Installed and published exact source | review | Source2058; security2103; installer2110; installed review2116 | Installed f07b, 44 controls and real shell smoke PASS. Agent next one request authorized21:05; actual result owed. | Independent2103 PASS | cf80 / f07b8093 |
+| OPS-D137-shell-closure | Carry all maker shell dependencies | Luna | Next real Agent acceptance | review | Source2058; security2103; installer2110; installed2116 PASS | Installed f07b,44 controls and real shell smoke PASS. Normal hub HEAD kit exact. Agent next one request authorized; actual result owed. | Independent2103 and2116 PASS | cf80 / f07b8093 |
 
 | D127c-normal-source | Carry reviewed final profiler helper | Luna | Exact reviewed and integrated tree | merged | App clean2010; normal cf0b82dd | Full tree8d568 equals reviewedfb4add. Central61 and Node20three controls retained; no original element result. | Runtime2002 and App2047 PASS | cf0b82dd47 |
 
-| D73-exact-node-route | Bind immutable own-node route | Luna | Independent review then installation | review | Author2104; review next source slot | Private68343 candidate prepared; source guards and dry argv PASS. Five receipt or install needs remain; no body. | Pending | 68343fb8e |
+| D73-exact-node-route | Bind immutable own-node route | Luna | Review then receipt and installation | review | Author2104; independent2120 active | Private68343 prepared; five receipt or install needs remain. Later Agent2111 duplicate reconciled; no body. | Pending2120 | 68343fb8e |
 
-| U1-Farm-portable-preflight | Supply Farm interpreter and imports | Luna | Exact six test files and conftest | doing | rt-U1-D135-farm-preflight-2116 | Source-only portable recipe; actual Farm preflight and six-file body remain owed. | Review after return | Pending |
-| OPS-D137-installed-shell | Verify exact installed shell fix | Luna independent | Installed f07b | review | rt-OPS-D137-installed-shell-review-2116 | Source and installer smoke PASS; independent installed custody check active in parallel. | Active2116 | f07b8093 |
+| U1-Farm-portable-preflight | Supply Farm interpreter and imports | Luna | Actual Farm imports then six files | review | Author2116; independent2122 | Exacta736 provides seven-module import census and portable venv-agent recipe. Actual Farm preflight and body NOTRUN. | Review2122 active | a736572e6 |
+| OPS-D137-installed-shell | Verify exact installed shell fix | Luna independent | Installed f07b | merged | rt-OPS-D137-installed-shell-review-2116 | Installed-byte failure17 and timeout124, private stderr0600 and cleanup PASS. Exact backup and protected source verified. | Independent2116 PASS | f07b8093 |
 
+| D127d-element-cost | Reduce measured element commit cost | HARD Sol | Offline reproduction before source fix | doing | rt-D127d-element-cost-sol-2123 | OwnerD127d: reproduce lifecycle-size cost offline; one behavior-preserving fix and independent review, then App verifies once. | Review after source | Pending |
+| CLI22-scope-relay | Apply owner D138 CLI scope | Agent owner | Recorded D138 decision | later | Agent existing CLI22 allocator | No new ingress. Per-case current caller migration only with exact predicates; legacy cases listed and boundary changes stopped. | Source decision only | No source change |
 Runtime producer: Normal cf0b82dd helper and tests equals reviewed tree8d568. Product ab1e unchanged. Private upstream0bb3 must conserve new helper at D59; no early U1 integration merge.
 Core: D13418455 measurement8926 PASS190 FAIL180 ERROR173 subtests. Raw XML and full disk witness missing. Own344 split132 setup,0 proved product,212 unknown. Current REG unverified; no ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element and SWAP. No D59 cut, final build or ZIP.
 Blockers: Agent real child — exact f07b installed21:11 and current normal hub kit bytes match. Source2103 and installed smoke PASS. Agent receives then next ONE request per owner21:05. Actual result owed; Farm D77 waits.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after automatic classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
-Blockers: Element — normal Runtime helpercf0b exact reviewed source and App F001/actual Node20 F002 PASS. App sole admitted element proof owns next outcome; no cost author before actual profile.
+Blockers: Element — D127d stops profiling. Sole HARD Sol2123 reproduces cost offline and makes one measured fix. App actual15200 remains recorded; next element body verifies qualified fix only.
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tupleP1-P5, wheel, Windows and ZIP remain owed.
 Blockers: Runtime union — Farm source guards PASS, interpreter absent. Author2116 produces exhaustive imports and venv-agent conditional recipe. No Runtime venv acquisition or six-file body before Farm preflight PASS.
-Next ready: D73 exact-node source review; final FPS security review on source return; portable Farm recipe independent review on return. Source cap3 currently full.
-D100: Corrected27 PASS; original9 remain nine setup errors at typed-location conservation. Sol2108 owns product correction; App2100 independent whole path complete. No fixture rewrite or normal c992 release.
+Next ready: completed D73 and Farm source reviews decide their narrow returns or receiving work; App sole original9 now source-ready. Current source cap3 full, no ready row waiting below cap.
+D100: Corrected27 PASS. Final FPS20db independent2119 PASS sent App for sole unchanged9. Historical nine setup errors retained; release held until actual proof, no fixture rewrite.
 D77: Farm changed child follows Agent actual new D137 result. No Farm fixture body or core. Exact applied source and lock handoffs remain qualified.
 Delivery: D59 integration tuple only. Private Agent32dde independent1959 PASS; Runtime0bb3 source PASS and Farm functional proof owed. App private upstream join stays App-owned.
 Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and copies authored handbacks only. No product, test, generated, pin, Git internals or credentials mutation.
-Disk: Fresh4.708 GB; source cap3/floor4.6 GB, stop4 GB. Sweep3 removed0; compact gzipped6 logs, test pass active. Three old Runtime trees are dirty and protected. Protected raw KEEP retained; no local heavy body.
-live 3 / cap 3; ready-undispatched 1. Active FPS review2119, Farm prerequisite2116 and installed review2116. Next source slot goes to D73 review unless a critical author returns first.
-INBOX consumed through1553083 bytes. Latest21:15 Farm interpreter ask assigned2116; App2103 typed-location source evidence consumed; owner21:05 authorizes next one received-kit request. Updated 2026-10-25T21:19:59Z.
+Disk: Fresh4.84 GB before Sol2123. Source cap3/floor4.6 GB, stop4 GB. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped6 logs. Three old Runtime trees dirty; protected raw KEEP retained. No local heavy body.
+live 3 / cap 3; ready-undispatched 0. D73 review2120, Farm review2122 and HARD Sol cost2123 active. All independent ready Runtime rows dispatched; actual proof receiving stays with App, Agent and Farm.
+INBOX consumed through1562932 bytes. D127d assigned2123 after maker/FPS source completion; D138 CLI decision recorded. Agent receives f07b then one request; Farm conditional venv-agent route in review. Updated 2026-10-25T21:24:27Z.

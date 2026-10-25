@@ -1,0 +1,44 @@
+{
+  "task": "rt-D136a-typed-location-final-review-2119",
+  "repository": "Agent",
+  "candidate": {
+    "commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+    "parent_commit": "c99214a227154df5fbaf681c2e0fc52c54500025",
+    "parent_tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+    "diff_sha256": "1f3f7af792722507c9d61ad7f4c6f13468424fb75b7a5fe60daa3b44e9cdde91",
+    "changed_paths": [
+      "astrid/sdk/timeline/validation.py",
+      "tests/sdk/test_d136_fps_upstream_compat.py"
+    ]
+  },
+  "blobs": {
+    "astrid/sdk/timeline/validation.py": {
+      "git_blob": "e39103bab6f293cb6b078cbe0bdd9c1739302c3a",
+      "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae",
+      "parent_git_blob": "edda2e123a5907ddf1671c705e17fd3aee0cabe6"
+    },
+    "astrid/sdk/timeline/_timing_evaluators.py": {
+      "git_blob": "7b2937887351251594137628cfbfb58f86cb059e",
+      "sha256": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268",
+      "parent_git_blob": "7b2937887351251594137628cfbfb58f86cb059e"
+    },
+    "tests/sdk/test_d136_fps_upstream_compat.py": {
+      "git_blob": "32cf9e15a13fb4bf16a45184789bb3431f01ef0c",
+      "sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042",
+      "parent_git_blob": "b80b771236ab181d9e84bb96187a5b17e329a4f3"
+    }
+  },
+  "protected_files": [
+    "astrid/sdk/timeline/_command_state.py",
+    "astrid/sdk/timeline/commit.py",
+    "astrid/sdk/timeline/native_initialize.py",
+    "tests/sdk/test_capture_source_runtime.py",
+    "tests/sdk/test_timeline_capture_projection.py"
+  ],
+  "ast": {
+    "validation_non_fps_functions_unchanged": true,
+    "original45_test_functions_unchanged": true
+  },
+  "scope": "Read-only exact candidate/parent custody and source review; no product edits."
+}
