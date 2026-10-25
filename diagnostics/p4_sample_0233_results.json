@@ -1,0 +1,457 @@
+{
+  "service_id": "agent-p4-current-becfe-http-3legs-1025024042-30057",
+  "service_status": "fail",
+  "exit_code": 1,
+  "diagnostic_validity": "INCOMPLETE: sampler thread TypeError before first timed capture; no second collector or body",
+  "tuple": {
+    "agent": "d407b8777d5df8c827702030c5cd2331666ab119",
+    "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "app": "4b98436552bf30f5fb28bbb958b1817430b12e34",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "profile": "/home/user/work/runtimes/agent-remotion-0013",
+  "profile_hashes": {
+    "profile_lock_sha": "c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24",
+    "profile_archive_sha": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "profile_registry_sha": "b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d"
+  },
+  "original_path_sensitive_hash": "7580dbbc7fd82d746873b4370763b27753ceb9997a88a4f4deef43a854a9c847",
+  "original_test_file_hash": "c0132e0dac31be278eaa850a8cc5d96d535550e461685be263c3372b46f6d0a0",
+  "selector": "tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo",
+  "junit_testcase_seconds": 45.478,
+  "service_wall_seconds": 51,
+  "process": {
+    "pid": 11837,
+    "test_start_main_cpu_seconds": 1.26,
+    "call_report_main_cpu_seconds": 45.160000000000004,
+    "test_start_to_call_report_cpu_seconds": 43.9,
+    "test_start_to_call_report_wall_seconds": 46.142378,
+    "diagnostic_end_main_cpu_seconds": 45.35,
+    "diagnostic_end_wall_seconds": 48.075038144990685,
+    "limit": "CPU interval includes failure formatting/reporting; not a request span"
+  },
+  "checkpoints": {
+    "10": "MISSING: sampler failed",
+    "25": "MISSING: sampler failed",
+    "40": "MISSING: sampler failed"
+  },
+  "python_cli_children_observed": 0,
+  "cli_spawn_wall_seconds": 0,
+  "inline_cli_calls": 2,
+  "inline_cli_call_count_basis": "unchanged test source; both occur before reached inverse loop",
+  "children": [
+    {
+      "pid": 12371,
+      "executable": "git",
+      "operation": "cat-file",
+      "birth_elapsed": 1.271934866992524,
+      "birth_ticks": 12694726,
+      "spawn_wall_seconds": 0.0005617010028799996,
+      "exit_code": 0,
+      "exit_observed_elapsed": 48.06252613000106,
+      "lifetime_upper_bound_seconds": 46.79115163399547,
+      "cpu": "unmeasured; initial stat rounded to zero; no subsequent live sample",
+      "stacks": "unmeasured; native child; no timed capture",
+      "source_bounded_lifetime_seconds_upper": 0.0033530580112710595,
+      "exit_fact": "synchronous subprocess.run returned before the following git archive spawn; therefore exited before 10 s"
+    },
+    {
+      "pid": 12373,
+      "executable": "git",
+      "operation": "archive",
+      "birth_elapsed": 1.2751966979994904,
+      "birth_ticks": 12694726,
+      "spawn_wall_seconds": 0.00047047399857547134,
+      "exit_code": 0,
+      "exit_observed_elapsed": 48.06260356899293,
+      "lifetime_upper_bound_seconds": 46.787877953989664,
+      "cpu": "unmeasured; initial stat rounded to zero; no subsequent live sample",
+      "stacks": "unmeasured; native child; no timed capture",
+      "source_bounded_lifetime_seconds_upper": 1.716077293996932,
+      "exit_fact": "synchronous subprocess.run returned and archive extraction completed before fixture setup report; therefore exited before 10 s"
+    },
+    {
+      "pid": 2142,
+      "executable": "ps",
+      "operation": "process_cleanup_listing",
+      "birth_elapsed": 47.87991692399373,
+      "birth_ticks": 12699387,
+      "spawn_wall_seconds": 0.0006438620039261878,
+      "exit_code": 0,
+      "exit_observed_elapsed": 48.062652833003085,
+      "lifetime_upper_bound_seconds": 0.18338187599147204,
+      "cpu": "unmeasured; initial stat rounded to zero; no subsequent live sample",
+      "stacks": "unmeasured; native child; no timed capture",
+      "exit_fact": "spawned during pytest cleanup after the requested 40 s checkpoint; exited before pytest.main returned"
+    }
+  ],
+  "import_startup": {
+    "bootstrap_elapsed": 0,
+    "pytest_import_elapsed": 0.10348420999071095,
+    "collection_finished_elapsed": 1.258820207993267,
+    "python_child_count": 0,
+    "limit": "whole startup and collection measured; isolated import CPU and complete import timing attribution not established"
+  },
+  "sleep": {
+    "observed_explicit_sleep_calls": 0,
+    "limit": "poll/select waits and shutdown delays not individually timed"
+  },
+  "retained_curve": {
+    "source": "read-only retained fixture command_idempotency rows; acceptance-to-acceptance intervals, not request spans",
+    "acceptance_curve": [
+      {
+        "operation": "ten_note_commit",
+        "note": null,
+        "accepted_at": "2026-10-25T02:40:57.159+00:00",
+        "seconds_since_ten_note_commit": 0.0,
+        "seconds_since_previous_acceptance": 0.0
+      },
+      {
+        "operation": "undo",
+        "note": 1,
+        "accepted_at": "2026-10-25T02:40:59.656+00:00",
+        "seconds_since_ten_note_commit": 2.497,
+        "seconds_since_previous_acceptance": 2.497
+      },
+      {
+        "operation": "redo",
+        "note": 1,
+        "accepted_at": "2026-10-25T02:41:02.164+00:00",
+        "seconds_since_ten_note_commit": 5.005,
+        "seconds_since_previous_acceptance": 2.508
+      },
+      {
+        "operation": "undo",
+        "note": 2,
+        "accepted_at": "2026-10-25T02:41:07.045+00:00",
+        "seconds_since_ten_note_commit": 9.886,
+        "seconds_since_previous_acceptance": 4.881
+      },
+      {
+        "operation": "redo",
+        "note": 2,
+        "accepted_at": "2026-10-25T02:41:10.480+00:00",
+        "seconds_since_ten_note_commit": 13.321,
+        "seconds_since_previous_acceptance": 3.435
+      },
+      {
+        "operation": "undo",
+        "note": 3,
+        "accepted_at": "2026-10-25T02:41:19.832+00:00",
+        "seconds_since_ten_note_commit": 22.673,
+        "seconds_since_previous_acceptance": 9.352
+      },
+      {
+        "operation": "redo",
+        "note": 3,
+        "accepted_at": "2026-10-25T02:41:24.550+00:00",
+        "seconds_since_ten_note_commit": 27.391,
+        "seconds_since_previous_acceptance": 4.718
+      }
+    ],
+    "pending_operation": {
+      "operation": "undo",
+      "note": 4
+    }
+  },
+  "timeout_stack": [
+    {
+      "file": "tests/editing_conformance/test_p4_ten_note_v2_runtime.py",
+      "line": 431,
+      "function": null
+    },
+    {
+      "file": "astrid/sdk/timeline/sync.py",
+      "line": 462,
+      "function": "undo"
+    },
+    {
+      "file": "astrid/sdk/timeline/sync.py",
+      "line": 556,
+      "function": "_flush"
+    },
+    {
+      "file": "astrid/sdk/_remote_timeline.py",
+      "line": 248,
+      "function": "commit"
+    },
+    {
+      "file": "astrid/sdk/remote.py",
+      "line": 356,
+      "function": "_typed"
+    },
+    {
+      "file": "astrid/sdk/workspace_client.py",
+      "line": 494,
+      "function": "commit_timeline"
+    },
+    {
+      "file": "astrid/sdk/workspace_client.py",
+      "line": 290,
+      "function": "_call_generated"
+    },
+    {
+      "file": "astrid_runtime_client/generated.py",
+      "line": 965,
+      "function": "commit_timeline"
+    },
+    {
+      "file": "astrid_runtime_client/generated.py",
+      "line": 656,
+      "function": "_request"
+    },
+    {
+      "file": "tests/editing_conformance/test_native_batch_ingress.py",
+      "line": 76,
+      "function": "transport"
+    },
+    {
+      "file": "/usr/lib/python3.13/socketserver.py",
+      "line": 766,
+      "function": "__init__"
+    },
+    {
+      "file": "/usr/lib/python3.13/http/server.py",
+      "line": 451,
+      "function": "handle"
+    },
+    {
+      "file": "/usr/lib/python3.13/http/server.py",
+      "line": 439,
+      "function": "handle_one_request"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/server.py",
+      "line": 1241,
+      "function": "do_POST"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/server.py",
+      "line": 1206,
+      "function": "_dispatch"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/server.py",
+      "line": 526,
+      "function": "_route"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/server.py",
+      "line": 311,
+      "function": "_timeline_commit"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/service.py",
+      "line": 438,
+      "function": "wrapped"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/service.py",
+      "line": 2457,
+      "function": "commit_timeline"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/service.py",
+      "line": 438,
+      "function": "wrapped"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/service.py",
+      "line": 2513,
+      "function": "_execute_timeline_commit"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_execution.py",
+      "line": 71,
+      "function": "execute"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_execution.py",
+      "line": 109,
+      "function": "_execute"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_execution.py",
+      "line": 91,
+      "function": "_execute"
+    },
+    {
+      "file": "astrid/sdk/timeline/commit.py",
+      "line": 1331,
+      "function": "commit"
+    },
+    {
+      "file": "astrid/sdk/timeline/commands.py",
+      "line": 268,
+      "function": "execute"
+    },
+    {
+      "file": "astrid/sdk/timeline/inverse.py",
+      "line": 1123,
+      "function": "apply_inverse"
+    },
+    {
+      "file": "astrid/sdk/timeline/commit.py",
+      "line": 1276,
+      "function": "load_boundary"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "line": 247,
+      "function": "history_entry"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "line": 216,
+      "function": "_read"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "line": 247,
+      "function": "<lambda>"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "line": 234,
+      "function": "_ancestor"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 161,
+      "function": "evaluate"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 760,
+      "function": "history_entry"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 161,
+      "function": "evaluate"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 410,
+      "function": "_verify_accepted"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 548,
+      "function": "_verify_accepted_record"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 563,
+      "function": "_accepted_replay"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 1178,
+      "function": "_inverse_stage_history"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 161,
+      "function": "evaluate"
+    },
+    {
+      "file": "../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "line": 763,
+      "function": "history_entry"
+    },
+    {
+      "file": "/usr/lib/python3.13/json/__init__.py",
+      "line": 352,
+      "function": "loads"
+    },
+    {
+      "file": "/usr/lib/python3.13/json/decoder.py",
+      "line": 346,
+      "function": null
+    }
+  ],
+  "loaded_origins_verified": 232,
+  "missing": [
+    "10/25/40-second main-thread CPU and top frames for all live processes",
+    "per-frame frequency or exclusive/inclusive hot cost",
+    "precise child exit times and cumulative child CPU",
+    "individual per-note request spans and timed samples for notes 4-10",
+    "sampler overhead accounting and full descendant census"
+  ],
+  "raw_private_sha256": {
+    "p4-allprocess-0233.command": "bde7d3af76246576f01587847ab72f39befbc79c07a868e83fa54db5ae0287b9",
+    "service-request.stderr": "51e3f932bd9eba37d0566a4aa4e7a8e9fba61a9222e64a1b2fab1a0f0217cf93",
+    "p4-allprocess-0233.request-id": "7ee80ed2f25f3b2021890417060a226b87636a14d996608fd9341bbd5e4dee0d",
+    "registry-restore.json": "35bd541c9e382a0ef183ee2c70d9983c7a0bbe892c25f5144aac02677e3cb823",
+    "parsed-preflight.json": "3130d4cabe5f62141b3f3939e5f58a180dc5e0d587a80851674f2d078fc6d2b3",
+    "p4-allprocess-0233.runmanifest": "9ccc4875ad9cddfaa8405242e82941678df008e044f466ececa66dd8bcc2e49b",
+    "retained-acceptance-curve.json": "ccb65b86d79930f157cda8350db2fbcf01e2843dcff84deb953b89177cc025ee",
+    "four-checkout-receipts.json": "e21d73556a7fca31912b677f78c03cc581c33e511cbed5086ad382366001bc07",
+    "registry-cas.json": "97a8dece24fd0b49e913c259e8a26f107f64f84ee461b0256e6b71288a03c69e",
+    "p4-profile.xml": "60bee1e7106a492887799d3640a8b2b322a30f223536a3ddc27e3a986b8e479b",
+    "wait-test-private.log": "1a7b484cdff91a53060c1d570ed66499922cb9446603f9c47e8a7c16d6a86e00",
+    "stub-count": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "positive-0233.body.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "positive-0233.preflight.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "p4-allprocess-0233.body.exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "p4-allprocess-0233.body.log": "43bfa6f2b76feded70d8cf5f07f1a15b86f2a3a67c6c6da4c36d4899efda4408",
+    "positive-0233.command": "cf73b13df649ddd90d369acf212676f8bd1cadbd6c5695f2d92b7cc84cb74bbe",
+    "registered-row.txt": "3d1cfaafb9b8c8b5e6c533780260f1aeed56904d9f78a5eb3fc46ac1186a3a92",
+    "positive-0233.request-id": "fb00d7d455896092f93a6adc8543342afdf9b65dc2e2b43744bd038e5e71317e",
+    "actual-argv.json": "3976d179c67a1f5bd123dec2544be7afada68d8d1f5bdfaab73103cf0aa4adf0",
+    "service-id.txt": "4d3b3e2e49db7ebeda1b4c9fae5063ff39ae0f194e220ef456a0d1614f9b53d2",
+    "positive.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "positive-0233.runmanifest": "9ccc4875ad9cddfaa8405242e82941678df008e044f466ececa66dd8bcc2e49b",
+    "syntax.json": "3167c4e7986a8e9d31a2f3b44317596249397ea220c9460df19b9c5bd4a9e46f",
+    "suites.conf.pre-20261025T024035.783555Z.bak": "6e2cc2978775bd71321f93e8a573b2a4051bc3c7255393204081bdd85654f98e",
+    "poison-input.manifest": "1280d891096a5ef171346d5921264426f45f04be1701dd5e2a87611b3076ac65",
+    "positive-0233.preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "suites.conf.pre-restore-20261025T024402.865973Z.bak": "968ecb088b45df53bf0828ed304efa34e00e1cec299dc7ab754110563d55e401",
+    "poison.log": "bc85d8762dfb2215099766272d96b8934c29188224dbfb80b14f5cdd0f4395ae",
+    "p4-allprocess-0233.manifest": "cd9fc4c0e9a079d25dda0cd4c70600b61617880d9e33110ca7547cb5af0d5ee4",
+    "input.manifest": "cd9fc4c0e9a079d25dda0cd4c70600b61617880d9e33110ca7547cb5af0d5ee4",
+    "positive-0233.body.exit": "54183f4323f377b737433a1e98229ead0fdc686f93bab057ecb612daa94002b5",
+    "service-request.stdout": "7bdb0059fc841db4ad7fb87762e6da38cdea4464be5fdadd785a5b0f2d75005f",
+    "prebody-admission.json": "1234cfe0ef9874435283e19ac9a06fc25f8e2de8e82ffbfdc624695bf60785c1",
+    "p4-allprocess-0233.preflight.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "positive-0233.manifest": "cd9fc4c0e9a079d25dda0cd4c70600b61617880d9e33110ca7547cb5af0d5ee4",
+    "p4-allprocess-0233.preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw-private/events.jsonl": "6bc422f416d96a9067af6c3e723f428ca8eb3262cf2f9bc0f6a69eddd56c887c",
+    "raw-private/loaded-origins.json": "aa4a872b978289198fe5cbbd0b6744ae0011a0c89f8cd76ef5a0db5ae7fab763",
+    "raw-private/faulthandler.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "recommendation": "Do not choose a code fix from the failed sampler. Manager must decide whether to authorize another bounded diagnostic; this worker ran no second collector/body.",
+  "preserved_candidate": "6b957f2f118a611d38f5154e6354d34c74c0c9e7; inherited candidate unchanged and not used by measured Runtime",
+  "profiler_origin": {
+    "path": "/home/user/work/wt/rt-P4-allprocess-sample-sol-0233/diagnostics/p4_sample_0233.py",
+    "sha256": "2898371f00c296958e71bdf29b2e7fa461092d4e7041f23674e82c79d8f73a05",
+    "stack_mechanism": "stdlib faulthandler; sampler thread failed before scheduled captures",
+    "python_version": "Python 3.13.16",
+    "new_dependencies_installed": false,
+    "post_submission_profiler_changes": false
+  },
+  "retained_input_hashes": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P4-cost-D93-sol-resume-0228/log.txt": "5aa6f37aaefdf1bf7e2be83caeaac44bfe3de58c5c0bede87c318ba782d162e2",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P4-current-cost-sol-0215/report.md": "d71a2c2bb632d530e23feb28fc79ccede970bbc238acc34720ae082db50bf47b",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P4-D88b-wholepath-0229/report.md": "5b111d71f720b8aac36f73f54a67add7a5354e7d7722d817949e93ebf24df1c0"
+  },
+  "validation": {
+    "bash_n_launcher": 0,
+    "bash_n_rendered_service_command": 0,
+    "bootstrap_compile": "passed",
+    "ruff_command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache diagnostics/p4_sample_0233.py",
+    "ruff_result": "All checks passed",
+    "diff_check": "passed",
+    "preflight": {
+      "positive_exit": 17,
+      "positive_calls": 1,
+      "poison_exit": 1,
+      "poison_calls": 0
+    },
+    "central_request": "request-test integration:agent p4-current-becfe-http-3legs --no-cache",
+    "wait_command": "wait-test agent-p4-current-becfe-http-3legs-1025024042-30057 1",
+    "wait_exit": 1,
+    "full_suite_requested": false
+  }
+}
