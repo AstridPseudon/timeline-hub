@@ -1,0 +1,9 @@
+# F-D89 scalar protected source verdict
+
+Verdict: `PASS_SOURCE` (independent; normal original-author fixture merge and MAIN proof remain required).
+
+Candidate: `tl/agt-F-scalar-media-sol-0127` at `721189cbc8aeab7fed64643ca625e505e52b8d54`, tree `1c55ccb6b3d004c0f507a4c9666e3faa5e619e0e`, parent `7c94e9d2d753fc8f082877ef3de50b3a55a18689`. Only `tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py` changes. True original `f2def38890237646943fdad185d0b21d1d7f9938` source hash is `ba36dd95923c47d1bdbe37117a1857254b17e1529b6e6ccff8887880c87c28e9`; immediate baseline hash is `3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee`; candidate hash is `52c63fa1a59d4ac08ca9077b97e6facfe7947cc36fde2795d1538df31a14cfed`.
+
+The setup uses the existing Runtime-ingested media object and `MediaReads.raw_media_info`, emits `media.admit` before patching, declares allocations from `apply_change`/`allocations`, guards occurrence rows by `occurrence_id`, and submits the first occurrence/physical source before the shared placement and second-row patch. The parent, child, audio, numeric, registry, config, opaque, and dependency values remain sourced from the original fixture. The sole test function is AST-identical to true original and immediate baseline: 14 asserts, original parameters, selectors, literals, inverse/redo/ABA/no-write branches unchanged. Product guards and all other source files are unchanged.
+
+Static evidence: candidate and baseline AST parse/in-memory compile passed; Ruff passed for both; mypy with `--follow-imports=silent` yielded the identical NumPy 3.12-stub diagnostic for both; mypy with `--python-version 3.13 --follow-imports=silent` passed for both; `git diff --check` passed. No pytest, collection, helper/fixture execution, service, build, browser, render, or probe ran. Functional MAIN proof remains owed.
