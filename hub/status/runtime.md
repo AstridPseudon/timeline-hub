@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T00:38:07Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-25T00:33:43Z
+<!-- main | 2026-10-25T00:41:23Z | dispatcher heartbeat 7s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 0m -->
+# runtime board, 2026-10-25T00:40:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -222,31 +222,34 @@
 | D86-main-batch-251 | Bind authentic affected-node membership | Luna | Reviewed source union and tuple | gated:source-union | rt-D86-bind-251-0003 PREPARED | Exact251 hash/member/argv/AST PASS;299 remainder visible. Five source hashes, final receipts/profile and later37 inputs pending. No body. | Private candidate only |
 | D86-next-families | Host next disjoint source families | Luna / Agent review | All eight assigned authors returned | review | Parent swap0013; numeric0013 | New21 source branches sent to Agent protected queue. Original six returns and first corrections retained; no unassigned received family. | Source only |
 | D86-inverse7-review | Review original inverse custody purpose | Luna | Agent normal author merge | merging | rt-D86-inverse7-review-0010 PASS | Exact debb current custody authentic;7 originals conserved. Scoped Ruff/mypy PASS; full mypy env-blocked. Agent can merge original author. | debb643fa3 held for Agent |
-| D86-video12-review | Restore original shared video setup | Luna | Fresh protected review capacity | ready | agt-D86-video12-return-0034 returned | Shared placement correction preserves all twelve scenarios. Source held for fresh independent review; no body. | 9f884cdf held |
+| D86-video12-review | Restore original shared video setup | Luna | Fresh protected source review | review | rt-D86-video12-rereview-0039 | Corrected shared placement and all twelve scenarios retained. Source held for fresh review; no body. | 9f884cdf held |
 | D86-parent-swap12 | Preserve selected parent swap scenarios | Luna / Agent review | Protected source review | review | agt-D86-main-parent-swap-0013 | Twelve selectors and six bodies conserved. Compile/mypy PASS; Ruff parent-equivalent. Normal remote review requested; no body. | 2f935f6d4d held |
 | D86-numeric9 | Preserve exact numeric move and params | Luna / Agent review | Protected source review | review | agt-D86-main-numeric-0013 | Exact original types/ASTs retained, statics PASS. Fixture-builder probe outside brief disclosed and uncredited; no family qualification. | ec76fa69e6 held |
-| F-final-D87 | Qualify retired CLI migration notes | Luna | Exact Agent evidence export | review | rt-D87-coverage-review-0033 | Independent capability mapping review assigned. Exact appendix and ZIP text requested from Agent; no new native envelope. | Evidence only |
+| F-final-D87 | Install retired CLI migration notes | Luna | Existing docs owner capacity | ready | Review0033 PASS; installer next slot | Exact24+1 capability mapping and ZIP text qualified. Agent publishes original appendix; Runtime installs prose only. | Evidence only |
 | D86-CLI8-review | Review real CLI retries | Luna | Normal Agent merge | merging | rt-D86-CLI-review-0022 PASS | Real Runtime retry and exact mismatch retained. [Review](../../design/rt-D86-CLI-review-0022.md) | 27dc8f04cd |
 | D86-inverse10-review | Review shared allocation | Luna | Normal Agent merge | merging | rt-D86-inverse10-review-0022 PASS | Original shared identity and all ten scenarios retained. [Review](../../design/rt-D86-inverse10-review-0022.md) | 4a16d56238 |
 | D86-scalar11-review | Review scalar setup | Luna | Agent original owner correction | blocked:agent | rt-D86-scalar11-review-0022 FAIL | value_at called with two arguments, requires three. [Finding](../../design/rt-D86-scalar11-review-0022.md) | f2def held |
 | D86-word11-review | Review retained transcript pins | Luna | Agent manifest correction | blocked:agent | rt-D86-word11-review-0022 FAIL | Hydrated transcript pin dropped when media manifest exists. [Finding](../../design/rt-D86-word11-review-0022.md) | 7d0 held |
-| P4-main-tennote | Run remaining original on main | Luna / service | Four genuine checkouts and floor | doing | rt-P4-main-tennote-0033 | Authorized main venue; fixed fbbae/a3cd/fd2f/635f. One unchanged unprofiled45s original only. Actual3362 XML FAIL45.244s; final packet pending. | Tuple fixed |
+| P4-main-tennote | Run remaining original on main | Luna / service | Complete retained NO-GO | merged | rt-P4-main-tennote-0033; actual3362 | Original FAIL45.244s; controls and receipts PASS. Recorded main profile differs from historical path. [Result](../../design/rt-P4-main-tennote-0033.md) | fbbae/a3cd/fd2f/635f |
 | R-internal-GET-sample | Measure genuine internal revision read | HARD Sol | Source facts complete | merged | rt-R-internal-GET-sample-sol-0027 | One real GET200 in5.254ms; handler4ms and zero history calls. Profile ranking invalid; original cause unknown. [Facts](../../design/runtime-internal-GET-sample-0027.md) | a3cd unchanged |
 | D86-sheet17-review | Review current sheet physical edges | Luna | Agent original author merge | merging | rt-D86-sheet17-review-0033 PASS | Both emitter inputs and physical edges conserved; all original scenarios, compile and statics PASS. Functional main batch owed. | 6cfb / hash6e8b |
-| P2-main-SWAP-bulk | Run reviewed SWAP and bulk | Luna | Priority main P4 completion | ready | Prep0035 complete | Two exact persistent plans committed; checkouts and22 controls PASS. Sourcepreflight/body not submitted. | Tuple fixed |
+| P2-main-SWAP-bulk | Run reviewed SWAP and bulk | Luna | Main body floor and preflight | doing | rt-P2-SWAP-bulk-submit-0039 | Priority P4 terminal. Two meaningful originals serial on fixed fd2f/0d142/a3cd/635f; actual IDs pending. | Tuple fixed |
 | D86-manifest-inverse8 | Preserve manifest inverse scenarios | Luna | Main source capacity | ready | Reserved main; next capacity slot | Eight exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 | D86-occurrence-opaque9 | Preserve occurrence and opaque items | Luna | Main source capacity | ready | Reserved main; next capacity slot | Nine exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 | D86-parent-track3 | Preserve track inverse and labels | Luna | Main source capacity | ready | Reserved main; next capacity slot | Three exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 | D86-ordinary-script4 | Preserve ordinary and script behavior | Luna | Main source capacity | ready | Reserved main; next capacity slot | Four exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 
+| R-P4-current-cost | Isolate remaining measured request cost | HARD Sol | Current actual3362 trace | doing | rt-P4-current-cost-sol-0039 | One cheap finite control, then minimum strict repair if proved. No original rerun or cross-request memo. | a3cd base |
+| F-final-upstream-App | Preserve fresh App packaging tests | Luna | Final checklist owner capacity | ready | Existing final private candidate owner | D68 fresh Appd11417; overlap WelcomeConnection.test.tsx. Preserve both; final App full on applied result. No gating merge. | Upstreamd11417 |
+
 Runtime producer: RELEASED a3cd1a3214fa1632879c21d82d1abb9ea720b1de, tree64bb0caf0b7b950e02c4075077868a3dcd12ee06. Canonical15/schema867f unchanged. Security2346 qualified. Agentfbbae and Appfd2f adoption complete.
 
-core open: P4 ten-note45.314s remains failed; authorized MAIN one-original worker0033 active. Four R2 originals qualified at Agent7c48/Runtime732 remain closed until final matrix. Current element8897 still failed5s on a3cd. GET sample0027 finished cheaply; original App wait cause unknown. No source-only timing closure.
+core open: P4 ten-note actualMAIN3362 failed45.244s on a3cd; source continuation0039 active. Prior45.314s remains historical. Four R2 originals qualified at Agent7c48/Runtime732 remain closed until final matrix. Current element8897 still failed5s on a3cd. GET sample0027 finished cheaply; original App wait cause unknown. No source-only timing closure.
 regressions: No newly established Runtime regression. D77 genuine installed render and final tuple proofs remain cut-blocking. Historical failures and known gaps retain their recorded scope.
 Gates: P1 GO31083 and P3 GO15493/independent2024 at recorded tuples. All eight P2 still unqualified, one final full tour required. No cut, final build or delivery ZIP.
 
 Blockers: Main capacity — five workers remain after GET sample completion; free6136152064 bytes now. No further source dispatch while below6.5GB. P4 body checks>=6GB; only one heavy body below7.5GB.
-Blockers: Agent source — scalar11 exact value_at arity failure and word11 transcript manifest finding returned0033. D87 exact appendix/source-acceptance/ZIP text requested0035 for existing reviewer; remote worker folders do not sync.
+Blockers: Agent source — scalar11 exact value_at arity failure and word11 transcript manifest finding returned0033. D87 exact artifacts received and coverage review0033 PASS; Agent original ledger publication and Runtime docs installation ready.
 Blockers: App P2 — current element8897 failed5s; actual ordinal3 validation frame published. Parent/single0006 both fail strict Undo reads[] shape, returned App. Main SWAP/bulk new source plans preparing; no unchanged parent/single retry.
 Blockers: Final cut — D59 needs every lane core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Rehearsal remains gated by heavy disk capacity and critical priority; private candidates stay uninstalled.
 Next ready: Reserved four new Agent source families24 IDs when capacity opens; source reviews/critical P4 and current GET measurement have priority. Agent owns returned scalar/word corrections.
@@ -257,6 +260,8 @@ Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 
 Disk: No clean ended nonKEEP rt/agt-D86 worktree eligible; exact four completed0022 review routes returned no worktree, no target refusal. Sweep3 removed0; compact packed4 test directories and compressed9 oldlogs. No denied/dirty/KEEP target retry.
 
 live 3 at dispatcher header00:34:56; actual two remain after source completions. cap2 below6.5GB; no further starts. ready-undispatched6 capacity-held: video review, SWAP/bulk and four families.
-Current pass 2026-10-25T00:33:43Z: INBOX through675099 bytes. CLI/inverse PASS original-author remote requests sent; scalar/word FAIL returned. Sheet17,D87,video12,P4main and SWAP/bulkprep assigned. Initial relative-brief dispatch input errors corrected before worker creation; no safety refusal or duplicate body.
+Prior pass 2026-10-25T00:33:43Z: INBOX through675099 bytes. CLI/inverse PASS original-author remote requests sent; scalar/word FAIL returned. Sheet17,D87,video12,P4main and SWAP/bulkprep assigned. Initial relative-brief dispatch input errors corrected before worker creation; no safety refusal or duplicate body.
 
 Later: NEW28 source reservations provider-custody4, docpatch5, ownedmove8, CLItrim3, occurrence-recipe3, graphredo2, publication1, core-element2, plus D87 live-frontends6; same Agent list, capacity after critical reviews and existing four families. No competing author or per-family body.
+
+Current pass 2026-10-25T00:40:00Z: INBOX through679580 bytes. ActualMAIN P4 NO-GO published, no rerun. D87 coverage and sheet17 PASS returned; fresh video review, current source continuation and SWAP/bulk producer assigned immediately. App upstreamd11417 packaging-only checklist row added.

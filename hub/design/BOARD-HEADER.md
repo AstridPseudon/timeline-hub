@@ -201,6 +201,21 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D88, stop REPLAY-verifying accepted history on every request: reads trust Runtime's own accept-time verification, guarded by the digest chain (00:50Z).**
+  - **The evidence:** three cost fixes (bc04, D84a, a3cd) left P4 ten-note at 45.3 / 45.3 / 45.24 s. Its ~68 requests each re-verify the WHOLE accepted history by REPLAYING recorders and captures: O(N) per request, so O(N²) per session. Request-scoped dedup cannot remove that. App's slow reads are the same cost seen from the outside: one revision GET takes 5 ms alone, but about 10 s behind expensive writes, because requests serialize.
+  - **The decision:** Runtime is the SOLE writer, and it fully verifies each commit at ACCEPT. Re-deriving that by replay on every later read is defence-in-depth against storage tampering, and its cost has become what blocks the gates. So:
+    - At accept, Runtime records its verification result IN the authenticated accepted event: entry digest, previous digest, and the verified recorder ABI/coverage facts it already derives.
+    - Later requests check the authenticated DIGEST CHAIN from the requested base to the head. That is cheap hashing and linkage, with no recorder replay.
+    - Full replay verification remains only at accept time, for entries without the recorded result (legacy, or before this change; they fall back to today's path), and in an offline verify command.
+  - **Tamper detection is preserved:**
+    - any changed byte in an entry breaks its digest;
+    - any reorder, insertion or rewind breaks the chain;
+    - the head pair is still CAS-checked;
+    - the event authentication is unchanged.
+    - This is the integrity model git uses.
+  - **This is the class D45/D47 deferred.** It needs ONE HARD Sol plus ONE independent security review. The reviewer must specifically attack: the chain break, rewind, fork, ABA, restart, a legacy mix, a partial write, and a forged "verified" flag (which must be impossible because it sits inside the authenticated event).
+  - **Gate:** in the local loop, per-request cost is flat in N; then P4 ten-note < 45 s and the App reload GETs < 1 s.
+  - **In parallel (Opus action 1):** one Luna takes ONE live run, records queue time versus handler time for each request plus `py-spy` at 5 s and 30 s, and confirms whether the requests serialize behind one worker or lock. That decides whether a concurrency fix is also needed.
 - **D87, CLI native captured-batch scenarios are RETIRED, with no new format (00:05Z), deciding escalation agent-20261024T2355Z-current-CLI-native-batch-scope:**
   - G5 deliberately deleted `commands-file`, `apply --native` and the native subparsers. Adding a native batch envelope to `commit --file` would bring that retired surface back under another name: new scope and new trust surface, against the owner's "skip and deprecate" direction. **Declined.**
   - **The 24 native-batch family records go to the deletion ledger**, citing G5/D52/D72(1). Each entry names the CURRENT test covering the replacement behaviour:
