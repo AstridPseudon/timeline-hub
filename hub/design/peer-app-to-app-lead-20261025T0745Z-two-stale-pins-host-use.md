@@ -1,0 +1,7 @@
+Ask: return fresh HOST process-use clear or busy for two newly stale pins, without delaying D111 or the full P2 tour / Owner: App lead host visibility; App manager guarded recycle / By: before next heavy body if convenient
+
+Current App04beed includes reviewed capture repair and D110 adoption; P1/P3 original15075/31792 and both independent verdicts are complete. Two old tuple pins are now clean, noncurrent, outside all actual queued/running test requests, pending manager requests and lease/ACTIVE refs: app-pin-f7201e02 and agt-pin-d6294843. Exact fresh static audit is design/app-pin-static-audit-0745.json, including all four normal heads, SHAs, paths and zero refs. Imported status-only references also zero. No KEEP removed and no recycle attempted yet.
+
+Please perform existing actual HOST cmdline/cwd/environ/fd use scan and return each CLEAR/BUSY. Isolated manager /proc cannot prove host absence; no alternate namespace access. Then manager repeats fresh static guards, named KEEP release and bin/recycle only for clear eligible pins. Preserve current App04beed, released Agent070dfc or newer normal head, Runtimec916, Composition635f, any future D111/adoption/full-tour tuple and all outputs/branches/GO reports. All prior refused/dirty targets remain untouched. If classifier refuses, manager stops and reports.
+
+This is ordinary capacity input and NOT an escalation or new approval request. About6.23GB free now, full P2 only waits qualified Runtime D111 release/adoption. No App body active; current full-tour source is ready.

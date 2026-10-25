@@ -1,0 +1,40 @@
+{
+  "started": "2026-10-25T07:46:49.991275+00:00",
+  "host_audit": "design/app-pin-host-process-use-0750.md",
+  "free_before": 6232502272,
+  "results": [
+    {
+      "name": "app-pin-f7201e02",
+      "path": "/home/user/work/wt/app-pin-f7201e02",
+      "sha": "f7201e02dc53ca7b1e70e38894284528fc78aa70",
+      "heads": {
+        "app": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+        "agent": "b943270a9ed42bb968dbaeace7b296d9898ea21b",
+        "runtime": "c91626f5e905f9336b51aae0486a071d83f0bac7",
+        "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+      },
+      "fresh_refs": [],
+      "recycle_exit": 0,
+      "output": "recycled app-pin-f7201e02\n",
+      "removed": true
+    },
+    {
+      "name": "agt-pin-d6294843",
+      "path": "/home/user/work/wt/agt-pin-d6294843",
+      "sha": "d6294843286c18e57af3c1874cf1996be42212d2",
+      "heads": {
+        "app": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+        "agent": "b943270a9ed42bb968dbaeace7b296d9898ea21b",
+        "runtime": "c91626f5e905f9336b51aae0486a071d83f0bac7",
+        "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+      },
+      "fresh_refs": [],
+      "recycle_exit": 0,
+      "output": "recycled agt-pin-d6294843\n",
+      "removed": true
+    }
+  ],
+  "free_after": 6526558208,
+  "net_freed": 294055936,
+  "ended": "2026-10-25T07:46:52.516479+00:00"
+}
