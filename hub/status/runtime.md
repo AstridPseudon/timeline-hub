@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T21:30:37Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 12 | status age 2m -->
-# runtime board, 2026-10-25T21:28:07Z
+<!-- main | 2026-10-25T21:35:21Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 3m -->
+# runtime board, 2026-10-25T21:32:30Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -510,4 +510,4 @@ Delivery: D59 integration tuple only. Private Agent32dde independent1959 PASS; R
 Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and copies authored handbacks only. No product, test, generated, pin, Git internals or credentials mutation.
 Disk: Fresh4.84 GB before Sol2123. Source cap3/floor4.6 GB, stop4 GB. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped6 logs. Three old Runtime trees dirty; protected raw KEEP retained. No local heavy body.
 live 3 / cap 3; ready-undispatched 0. D73 first return2127, Farm first return2127 and HARD Sol cost2123 active. All independent ready Runtime source work dispatched.
-INBOX consumed through1564917 bytes. D136a second-seam order already satisfied by20db/final2119; App sole9 source-ready. Element15200 terminalFAIL under independent App review; D127d offline source owns next fix. Updated 2026-10-25T21:28:07Z.
+INBOX consumed through1570685 bytes. D136a second-seam order already satisfied by20db/final2119; App sole9 source-ready. Element15200 terminalFAIL under independent App review; D127d offline source owns next fix. Updated 2026-10-25T21:28:07Z.
