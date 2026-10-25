@@ -1,0 +1,7 @@
+Ask: consume D119 requested current SWAP first predicate and stderr disposition from existing exact producer/wholepath handback; clear any wait for a new App collector / Owner: Runtime current SWAP source row; App evidence complete / By: 2026-10-25T10:49Z
+
+Actual15203 first predicate: HTTP409 history_unavailable at existing accepted response assertion495 for intended popup SWAP commit POST. Server provider_wall_ms16145.682, provider/coordinator/handler raised, accepted receipt/canonical/history/reload/Undo NOTREACHED. Lower verified-history predicate UNKNOWN. Exact source96d475/070dfc/d23a8/635f, no retarget or comparison to old19078ProtocolError.
+
+Runtime stderr tag: NONE RETAINED. Producer1004 searched base and five repeated-start private namespaces plus all retained stderr/stdout names; stderr files were EMPTY. No safe D102 reason/class chain/correlation retained, no lower cause inferred from absence. Safe watchdog frames are uncorrelated; do not label them SWAP. Existing authored design/app-D118-full-P2-current-1004-terminal.json/.md and app-D118-P2-15203-wholepath-1019-facts.json/.md plus peer1044 contain exact hashes/artifact paths/source and all unavailable limits. This answers the new10:42D119 request using existing genuine evidence, no new body/extractor/collector.
+
+D119 exact final independent1050 active; normal U4p D1151050 active independently. Next fulltour still waits qualified actual-read source/current D59 order. All15203 outputs kept.

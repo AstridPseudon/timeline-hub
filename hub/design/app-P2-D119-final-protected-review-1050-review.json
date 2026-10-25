@@ -1,0 +1,72 @@
+{
+  "task": "app-P2-D119-final-protected-review-1050",
+  "verdict": "PASS",
+  "qualification": "SOURCE_ONLY_NO_BROWSER_GO",
+  "candidate": {
+    "commit": "f5f26c18daa9e715e0004777a573732c7954ad72",
+    "parent_base": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "subject": "test(app): P2 D119 wait for connection panel before gesture"
+  },
+  "source": {
+    "path": "tests/e2e/local/three-products.p2-tour.spec.ts",
+    "candidate_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625",
+    "base_blob": "62d799a92fca8b98399b6ca5bbd3a06127cd9d86",
+    "candidate_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "base_sha256": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+    "diff": "1 insertion, 0 deletions",
+    "authorized_line": "await expect(page.getByTestId('runtime-not-connected')).toBeHidden();",
+    "location": "openCommandTimeline after connected/project/visible-track checks, line 147",
+    "reverse_line_removal_restores_base_bytes": true,
+    "other_changed_files": []
+  },
+  "callers": [
+    {"line": 747, "test": "P2 mounted single parent move"},
+    {"line": 779, "test": "P2 mounted transition None single"},
+    {"line": 799, "test": "P2 mounted transition None bulk"}
+  ],
+  "frozen_upstream": {
+    "commit": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "target_file_present": false,
+    "provider": {
+      "path": "src/integrations/runtime/RuntimeConnectionProvider.tsx",
+      "git_blob": "d7e57cab13b1a37abafa0233f194252667f3913e",
+      "sha256": "cf07a243f882591446965e161e20d611bb422a4f0767d3e20955c3d4dc7260f0",
+      "candidate_blob_matches": true
+    },
+    "panel": {
+      "path": "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx",
+      "git_blob": "2008a4bb89e0bd624cefc90bb5c21a9817520e58",
+      "sha256": "7285e0ad6dc9700dfb48483eef0070c15e5ff16723520e2ea718e1dcb4ebc5fd",
+      "candidate_blob_matches": true
+    },
+    "gate_invariant": "Provider keeps the connected app inert while the panel overlay exists; panel useLeaving waits for app settlement and leave timing, then calls exit.left to clear the overlay."
+  },
+  "retained_witness": {
+    "frames": 9,
+    "observed": "Connected and visible checks passed while the parent remained under inert at mouse-down; inert cleared by move completion; clip position and selection were unchanged; zero commit POSTs.",
+    "unknown": ["exact event target", "callback/capture outcome", "save scheduling", "outbox state", "Runtime cause"],
+    "interpretation": "This is a bounded readiness witness, not a Runtime or callback claim. The new hidden-panel assertion rejects the retained-before-down state."
+  },
+  "ledger": {
+    "reviewed_paragraph": "design/app-P2-D119-panel-hidden-author-1043-ledger-paragraph.md",
+    "omission_found": "The existing paragraph records the one-line scope and remaining browser proof but omits the qualified D69 upstream provider/panel blob identities and inert-gate behavior.",
+    "shared_ledger_edited": false,
+    "corrected_private_paragraph": "evidence/ledger-paragraph.md"
+  },
+  "checks": {
+    "node": "v20.20.0",
+    "commands": {
+      "tsc_app": "PATH=/opt/node20/bin:$PATH node_modules/.bin/tsc --noEmit -p tsconfig.app.json",
+      "tsc_node": "PATH=/opt/node20/bin:$PATH node_modules/.bin/tsc --noEmit -p tsconfig.node.json",
+      "eslint": "PATH=/opt/node20/bin:$PATH node_modules/.bin/eslint tests/e2e/local/three-products.p2-tour.spec.ts --max-warnings 0",
+      "diff_check": "git diff --check 96d4754b4eef0591a208d6b51b60c30fc44b6915 f5f26c18daa9e715e0004777a573732c7954ad72"
+    },
+    "results": {
+      "tsc_app": "PASS",
+      "tsc_node": "PASS",
+      "eslint": "PASS",
+      "diff_check": "PASS"
+    },
+    "browser_service_full_backend_vitest": "NOT_RUN_BY_SCOPE"
+  }
+}
