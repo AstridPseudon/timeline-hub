@@ -44,6 +44,9 @@ import { NewChatMenu, type NewChatAgentModels, type NewChatMenuHandle } from './
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
 import { AgentSetupCard } from './AgentSetupCard';
+import { TerminalNudge } from './TerminalNudge';
+import { useSetting } from '@/shared/settings/useSetting.ts';
+import { terminalNudgeSeen } from '@/shared/settings/declarations.ts';
 import { CommandLine } from './CommandLine';
 import { AgentIcon, agentNames, isAgentUsable } from './agentIdentity';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
@@ -528,6 +531,27 @@ function AvailableAgentChatPanel({
     inputRef.current?.focus({ preventScroll: true });
     focusedSetupRef.current = setupDone;
   }, [setupDone, activeSessionId, showSetupCard, agentBroken, startingAgent, configurationFailed, isFollower, isCancelled]);
+  // The terminal note: once per browser, under "✓ X is set up" after the first finished reply; the chat menu reopens it.
+  const [nudgeSeen, setNudgeSeen] = useSetting(terminalNudgeSeen);
+  const [terminalNudge, setTerminalNudge] = useState<{ sessionId: string; afterTurns: number; fromMenu: boolean } | null>(null);
+  const terminalNudgeRef = useRef<HTMLElement>(null);
+  const agentTerminal = activeAgentRow?.terminal;
+  const terminalCommand = agentTerminal?.skillSynced ? agentTerminal.command : null;
+  const firstReplyIndex = renderedTurns.findIndex(item => item.kind === 'message' && item.turn.role === 'assistant');
+  const setupDoneShown = Boolean(setupDone && setupDone.sessionId === activeSessionId && !showSetupCard && !agentBroken);
+  useEffect(() => {
+    if (nudgeSeen || !terminalCommand || !activeSessionId || !setupDoneShown || firstReplyIndex < 0 || isProcessing) return;
+    setNudgeSeen(true);
+    setTerminalNudge({ sessionId: activeSessionId, afterTurns: firstReplyIndex + 1, fromMenu: false });
+  }, [nudgeSeen, terminalCommand, activeSessionId, setupDoneShown, firstReplyIndex, isProcessing, setNudgeSeen]);
+  const showTerminalNudge = Boolean(terminalCommand && terminalNudge && terminalNudge.sessionId === activeSessionId);
+  useEffect(() => {
+    if (!showTerminalNudge || !terminalNudge?.fromMenu) return;
+    terminalNudgeRef.current?.scrollIntoView?.({ block: 'nearest' });
+    terminalNudgeRef.current?.focus({ preventScroll: true });
+  }, [showTerminalNudge, terminalNudge]);
+  const terminalNudgeView = showTerminalNudge && terminalCommand ? <TerminalNudge ref={terminalNudgeRef} agent={chatAgent} command={terminalCommand}
+    projectName={editorContext?.projectName} onDismiss={() => { setTerminalNudge(null); inputRef.current?.focus({ preventScroll: true }); }} /> : null;
   useEffect(() => {
     if (!writableChat || !isAgentSetupError(turnFailure)) return;
     setSetupDone(null);
@@ -1021,6 +1045,9 @@ function AvailableAgentChatPanel({
             disabled={startingAgent !== null || !hasProject}
             attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
             onOpenChange={(open) => setHeaderOverlayOpen('menu', open)}
+            onUseFromTerminal={terminalCommand && activeSessionId
+              ? () => setTerminalNudge({ sessionId: activeSessionId, afterTurns: renderedTurns.length, fromMenu: true })
+              : undefined}
           />
           <AgentChatModelLine
             agent={startingAgent ?? chatAgent}
@@ -1218,7 +1245,8 @@ function AvailableAgentChatPanel({
         )}
 
         <div ref={scrollContentRef} className="flex flex-col gap-2.5">
-          {renderedTurns.map((item) =>
+          {terminalNudge?.afterTurns === 0 && terminalNudgeView && <div className="py-1">{terminalNudgeView}</div>}
+          {renderedTurns.map((item, turnIndex) => [
             item.kind === 'message' ? (
               <AgentChatMessage
                 key={item.key}
@@ -1234,7 +1262,8 @@ function AvailableAgentChatPanel({
                 </div>)}
               </div>
             ),
-          )}
+            terminalNudge?.afterTurns === turnIndex + 1 ? <div key="terminal-nudge" className="py-1">{terminalNudgeView}</div> : null,
+          ])}
 
           {!startingAgent && optimisticMessage && !optimisticTurnAlreadyMaterialized && (
             <div className="flex w-full justify-end">

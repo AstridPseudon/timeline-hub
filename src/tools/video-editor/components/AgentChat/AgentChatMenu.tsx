@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
-import { Paperclip } from 'lucide-react';
+import { Paperclip, SquareTerminal } from 'lucide-react';
 import { PickerFooterAction, PickerMenu, PickerRow, PickerTrigger, RenameDialog } from '@/shared/components/ui/picker-menu.tsx';
 import type { LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { AgentIcon, agentNames } from './agentIdentity.tsx';
 
 const chatLabel = (session: AgentChatMenuSession, index: number) => session.title?.trim() || `Chat ${session.chatNumber ?? index + 1}`;
@@ -24,12 +25,14 @@ interface AgentChatMenuProps {
   /** Bring a chat started elsewhere into this project. */
   attachExisting?: { open: boolean; toggle: () => void };
   onOpenChange?: (open: boolean) => void;
+  /** Reopens the terminal note for the open chat's agent; absent when that agent has no synced terminal skill. */
+  onUseFromTerminal?: () => void;
 }
 
 /** The chat header's chats menu: its trigger names the open chat, and it switches chats, renames, makes a chat Main and attaches existing chats. Starting chats is the new-chat button's job. */
 export function AgentChatMenu({
   sessions, activeSessionId, mainSessionId = null, settingMainSessionId = null, describeSession, onSelectSession, onSetMainSession, onRenameSession,
-  starting = false, disabled = false, attachExisting, onOpenChange,
+  starting = false, disabled = false, attachExisting, onOpenChange, onUseFromTerminal,
 }: AgentChatMenuProps) {
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState<{ id: string; label: string } | null>(null);
@@ -69,11 +72,18 @@ export function AgentChatMenu({
       <PickerMenu open={open} onOpenChange={changeOpen} plural="chats" ariaLabel="Chats" currentValue={activeSession ? `session:${activeSession.id}` : undefined}
         count={sessions.length} panelClassName="w-64 max-w-[calc(100vw-2rem)] p-0" emptyHint="Use + to start one."
         trigger={<PickerTrigger label={triggerLabel} aria-label={`Chat: ${triggerLabel}`} title="Switch chats" disabled={disabled} variant="title" className="max-w-full" />}
-        footer={attachExisting && (
-          <PickerFooterAction icon={Paperclip} onClick={() => { changeOpen(false); attachExisting.toggle(); }}>
-            {attachExisting.open ? 'Hide existing chats' : 'Attach an existing chat…'}
-          </PickerFooterAction>
-        )}>
+        footer={(attachExisting || onUseFromTerminal) && <>
+          {onUseFromTerminal && (
+            <PickerFooterAction icon={SquareTerminal} onClick={() => { changeOpen(false); onUseFromTerminal(); }}>
+              {AGENT_CHAT_COPY.terminalMenu}
+            </PickerFooterAction>
+          )}
+          {attachExisting && (
+            <PickerFooterAction icon={Paperclip} onClick={() => { changeOpen(false); attachExisting.toggle(); }}>
+              {attachExisting.open ? 'Hide existing chats' : 'Attach an existing chat…'}
+            </PickerFooterAction>
+          )}
+        </>}>
         {chatRows}
       </PickerMenu>
       {onRenameSession && <RenameDialog noun="chat" target={renaming} onClose={() => setRenaming(null)} onRename={onRenameSession} />}

@@ -9,6 +9,8 @@ export type AgentChatEditorContext = {
   tool: 'video-editor';
   projectId: string | null;
   projectSlug: string | null;
+  /** The open project's name, for chat display only; requests never carry it. */
+  projectName?: string | null;
   timelineId: string | null;
   timelineName: string | null;
   deepLink?: string | null;
@@ -189,14 +191,20 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
     };
   }, [reactiveState]);
 
-  const contextValue = useMemo<AgentChatContextValue>(() => ({
+  const contextValue = useMemo<AgentChatContextValue>(() => {
     // A previous editor must not leak its context after route project switch.
-    ...((projectScope && override?.editorContext?.projectId !== projectScope.editorContext?.projectId
-      ? null : override) ?? projectScope ?? defaultValue),
-    requestComposerPrompt,
-    pendingComposerPrompt,
-    clearPendingComposerPrompt,
-  }), [clearPendingComposerPrompt, defaultValue, override, projectScope, pendingComposerPrompt, requestComposerPrompt]);
+    const active = (projectScope && override?.editorContext?.projectId !== projectScope.editorContext?.projectId
+      ? null : override) ?? projectScope ?? defaultValue;
+    // The route knows the project's name; a timeline editor's registration for the same project does not carry it.
+    const projectName = active.editorContext && !active.editorContext.projectName ? projectScope?.editorContext?.projectName : undefined;
+    return {
+      ...active,
+      ...(active.editorContext && projectName ? { editorContext: { ...active.editorContext, projectName } } : {}),
+      requestComposerPrompt,
+      pendingComposerPrompt,
+      clearPendingComposerPrompt,
+    };
+  }, [clearPendingComposerPrompt, defaultValue, override, projectScope, pendingComposerPrompt, requestComposerPrompt]);
 
   return (
     <AgentChatRegistryContext.Provider value={registry}>

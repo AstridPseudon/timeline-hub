@@ -49,12 +49,24 @@ for (const theme of ['light', 'dark'] as const) {
       await expect(composer(page)).toBeFocused();
       await shot(page, scenario, 'done');
     }
-    async function hi(page: Page, scenario: string) {
+    async function hi(page: Page, scenario: string, terminalCommand?: string) {
       await composer(page).fill('hi');
       await shot(page, scenario, 'message');
       await composer(page).press('Enter');
       await expect(page.getByText("Hi! I'm ready.", { exact: true })).toBeVisible({ timeout: 20_000 });
       await shot(page, scenario, 'reply');
+      if (!terminalCommand) return;
+      // The terminal note follows the first reply once, with the agent row's command and the open project.
+      const nudge = page.getByRole('region', { name: 'You can also talk to Astrid from your terminal' });
+      await expect(nudge).toBeVisible({ timeout: 10_000 });
+      await expect(nudge.locator("code")).toHaveText(terminalCommand);
+      await expect(nudge).toContainText('Updated "Demo Project"');
+      await shot(page, scenario, 'nudge');
+      await nudge.getByRole('button', { name: 'Close' }).click();
+      await expect(nudge).toHaveCount(0);
+      await page.getByRole('button', { name: /^Chat:/ }).click();
+      await page.getByRole('button', { name: 'Use from your terminal' }).click();
+      await expect(nudge).toBeVisible();
     }
 
     test('A: nothing configured locks the composer and reports all four agents honestly', async ({ page }) => {
@@ -70,7 +82,7 @@ for (const theme of ['light', 'dark'] as const) {
       await expect(card(page).getByRole('option', { name: /Codex/ })).toContainText('Ready');
       await card(page).getByRole('option', { name: /Codex/ }).click();
       await done(page, 'B', 'Codex');
-      await hi(page, 'B');
+      await hi(page, 'B', 'codex');
     });
 
     test('C: Claude sign-in advances by polling after the runtime changes', async ({ page, context }) => {
@@ -132,7 +144,8 @@ for (const theme of ['light', 'dark'] as const) {
       await shot(page, 'E', 'models');
       await card(page).getByRole('button', { name: 'Use Claude Sonnet 4', exact: true }).click();
       await done(page, 'E', "Astrid's agent");
-      await hi(page, 'E');
+      await hi(page, 'E', 'astrid');
+      await expect(page.getByText('Uses the same OpenRouter key and model as here.')).toBeVisible();
       const dom = await page.content();
       const history = await page.evaluate(() => (window as Window & { setupDomHistory: string[] }).setupDomHistory);
       for (const key of keys) {
