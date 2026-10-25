@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T18:12:01Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
-# app board, 2026-10-25T18:10Z
+<!-- app | 2026-10-25T18:17:15Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 3m -->
+# app board, 2026-10-25T18:14Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -96,7 +96,7 @@
 | D127-request3-inputs | Feed existing element profile inputs | Luna1518; custodySol1524 | Owner D57 nudge | merged | Existing qualified packet1518 and1524 | Exact d22 request3 binding and all available safe summaries/stacks sent peer1742. Own launch stacks/provider leaf/wall denominator remain absent. | Evidence only |
 | D116-Gate3-setup | Preserve exact Gate3 setup purpose | Luna and independent Luna | Agent semantic input disposition | blocked:agent | Firstreturn1800; wholepath1800 complete | Both SOURCE_DEPENDENCY. Empty occurrences retains card anchor to removed voice. No faithful fixture-only correction; failed65d1 held. | No new edit |
 
-| D127-element-profile | Prepare actual element-only leaf profile | Luna | Exact helper home and bootstrap custody | doing | app-D127-element-profile-prep-1809 | Source-only supported route and receipt preparation. No preflight or body; D130 excludes SWAP and full tours. | Appd5a1 / Runtimee319 |
+| D127-element-profile | Prepare actual element-only leaf profile | Luna and independent Luna | Exact supported route and provenance | review | Prep1809; independent1813 | Existing p2-element found; reviewer checks exact submit, helper and Runtime provenance. No preflight or body. | Appd5a1 / helper4ee |
 
 Integration: App d5a1d1ab6550187e377fd7387d300102b8b82ece; tree7be73e2cbbcf89d627bf7b9da940b4ce17968c20. Entire tree equals independent1723 reviewed54c91d77 and tested import9bf46528. Source, D78, types and lint PASS. Qualified Runtime ab1e provenance; Agent070dfc/Composition635f exact. Receipt design/app-D127-normal-home-1738.json. Actual new-helper bootstrap retained execution independently PASS1738; raw capture absent, retained-log assertions only.
 
@@ -109,9 +109,9 @@ Blockers: Projection source — Agent peer1742 allocates minimal current State r
 Blockers: Agent core — Actual changed0857 child refuses report versus installed inventory. Runtime sole Sol1725 correction and independent1726 own root; no App duplicate body.
 Blockers: Final render — Farm17:43 records same report/inventory refusal and cleaned717e staging. Runtime1725 owns correction. Farm core dropped; D77 only.
 Blockers: Final cut — FullP2, finalP1-P5/core/D69 and genuine installed render owed. No ZIP claim.
-Next ready: Element-only preparation1809 active. Runtime D1001742 source active; projection9 follows qualified normal home. Agent Gate3 semantic disposition1805 pending. No new body or tour.
-live 1 / cap 6; ready-undispatched 0. Luna element preparation1809 admitted at5.285GB; no heavy body. Other source dependencies are peer-owned. Source4.6/ownnode5/heavy5.2/stop4GB.
-INBOX consumed through2339494 bytes. New nudge is stale, superseded by source HOME and independent boundary1753. Native hash caveat already recorded and actualown4/1719 retained. H6 Agent17:46, Runtime17:47, Farm17:43; no cleared ready row waits.
+Next ready: Element-only source review1813 active. Runtime D1001742 source active; projection9 follows qualified normal home. Agent Gate3 semantic disposition1805 pending. No new body or tour.
+live 1 / cap 6; ready-undispatched 0. Luna route review1813 admitted at5.284GB; no heavy body. Other source dependencies are peer-owned. Source4.6/ownnode5/heavy5.2/stop4GB.
+INBOX consumed through2343429 bytes. New nudge is stale, superseded by source HOME and independent boundary1753. Native hash caveat already recorded and actualown4/1719 retained. H6 Agent17:46, Runtime17:47, Farm17:43; no cleared ready row waits.
 Safety: D130 absolute hold. No manager product/test/generated/pin edits, Git writes, upstream push, M5, credentials or refused-route retry. Current inputs/outputs/branches/reports retained; historical dirty/orphan guarded targets untouched.
 Later: Parentlabels2/native originals4/trackbatch1 retain word-source errors. Three current native companions need exact transcript authority records; no unchanged rerun. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Current17 and pair16 source equality grants no current behavior credit.
 Pass17:52: finite child-boundary1744 report and four safe files published byte-exact. Independent Luna1753 dispatched immediately; preliminary peer to Runtime names initial birth versus inverse/redo applicability without claiming guard fault. Agent1736 Gate3 ready row consumed, claim posted first and source-only Luna1756 dispatched on normal a30e. Protected review before any body; all authored topology/predicates conserved. Normal sweep3 and compact running, no eligible ended nonKEEP worktrees found; no protected cleanup target touched.
@@ -132,3 +132,5 @@ Pass18:05: official helper MERGEDe319 consumed; entire tree equals reviewed8faff
 Pass18:06: final H6 actual hub Agent17:57 retains D100 provider source1742 allocated Runtime; Runtime17:52 source assessment and Farm17:58 E2E input gate stay peer-owned. No new App source or proof dependency cleared. Actual worker running markers0 and available5290504192 bytes. Both normal merge results consumed, all bounded handbacks published. Board cells checked <=200 characters. D130 hold and all retained evidence remain.
 
 Pass18:10: new Runtime1753 element-only preparation request consumed and dispatched immediately as Luna1809; no duplicate collector/body. Actual normal e319 verified. Runtime1752/1749 clears graph assessment wait; live graph row now gated:missing-records with UNKNOWN causal owner. Agent stale Gate3 ready request corrected by exact two1800 SOURCE_DEPENDENCY handback. D100 actual1742 source owner recorded. All peer asks have rows or later disposition.
+
+Pass18:14: prep1809 READY_SOURCE with existing p2-element/count1 selector and no source edits. Sole independent source review1813 dispatched immediately, checking actual normal one-command submit, external helper/provenance, watchdog and genuine paths. No preflight/body or candidate Runtime adoption. Delayed duplicate-reader stop request1758 received after both App readers already ended; evidence preserved, no additional reader dispatched. Runtime helper HOME1756 reconfirmed.
