@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T10:42:33Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-25T10:41Z
+<!-- app2 | 2026-10-25T10:45:08Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T10:44Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -123,7 +123,7 @@
 
 
 | P2-D110-inverse | Fix removed-shot owner in native Undo | Agent Luna; protected review | Independent0658 PASS; normal home | merged | Author0651; review0658; release0702 | Normal070dfc tree equals reviewedccf831. GenuineRED2/GREEN2, independent44/types/lint PASS; no stale images or weakened guards. App fullP2 still owed. | Agent070dfc5ef4 |
-| P2-D111-history | Reduce actual generic request reads | Runtime HARD Sol; Luna | Corrected whole path1010 | doing | Runtime Sol1016 | Held02b source PASS, native FAIL: no improvement and source calls0. Earlier97.2 percent source attribution was positional. Actual generic path retargeted. | Normal d23a base |
+| P2-D111-history | Reduce actual generic request reads | Runtime HARD Sol; Luna | Actual native timing and growth gate | doing | Runtime Sol1016 | Early actual-path read wall drops; growth criterion still fails. Held02b source calls0 and no native gain remain explicit. No release or browser credit. | Normal d23a base |
 | P2-phase-sink-current | Preserve capture across all tour starts | App HARD Sol; Luna | Independent0736 PASS and normal HOME | merged | App Sol0726; review0736 | Portable history-free snapshot27 and D66controls27 PASS; types/lint PASS. Two parent bootstrap failures retained. No original gate credit. | HOME04beedcd18 |
 
 | P1-D108-current | Qualify current mixed chain | App service; independent Luna | Actual15075 and independent0657 GO | merged | App15075; app-D108-P1-15075-GO-review-0657 | Original2 and readiness1 PASS, zero failures/errors/skips. Manifest, tuple/source and captured checkouts qualified; final-cut matrix remains. | f7201 / d629 / c916 / 635f |
@@ -138,6 +138,8 @@
 | P2-D118-current-ADD | Qualify complete current popup ADD | App independent Luna | Same15203 and verdict1019 | merged | Same sole1019 reviewer | GO36.819s: exact request,canonical,history,reload and complete guarded inverse. Full tour still NO-GO. | App96d475 |
 | P2-D118-current-parent | Resolve mounted parent no POST | App HARD Sol; independent Luna | Wholepath1019 confirms no POST | doing | app-A2-parent15203-dispatch-sol-1028 | Actual responsewait90s ERROR,zero commit POST. Smallest proven gesture-to-outbox repair or exact missing fact; no shared Runtime cause. | App96d475 base |
 
+| P2-D118-current-SWAP | Attribute current initial history refusal | Runtime and App Luna | Correlated App evidence | review | Runtime1033; App1019 | Source facts PASS; exact lower predicate and producer record UNKNOWN. Runtime row exists; App owns retained request and parent attribution. No duplicate collector. | Actual15203 / Runtime d23a8 |
+
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. No new Proof dispatch, original run or product merge is owed. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
 live 0 / cap 6 source; ready-undispatched 0 for Proof under D56.4. bin/workers confirms all1313 records done. D89 allows6 source above5.0GB, one service above5.2GB; nothing new below4.5GB.
@@ -145,8 +147,8 @@ live 0 / cap 6 source; ready-undispatched 0 for Proof under D56.4. bin/workers c
 core open: 4 transferred App-owned P2 gestures remain without current GO: SWAP, element, asset and reopened parent. Independent App1019 gives placement and ADD complete-tail GO on actual15203. Full tour NO-GO605s: originals2PASS2FAIL1ERROR3NOTRUN,readiness1PASS8.622s. SWAP initial409 history unavailable persists despite releasedD112; App wholepath1019 and existing Runtime owner handle it. Element applied11.905sFAIL; asset and both clears NOTRUN. Prior19078 parent/single/bulk GO and olderasset27438 remain scoped to historical tuples. Runtime1010 corrected D111b source attribution; held02b sourcePASS/nativeFAIL, actual generic-read Sol1016 active. Agent core437 and14 bounded host regressions remain owned. P1/P3 recorded GO and final-cut obligations separate. Proof remains stood down.
 regressions: 14 newly proved in Runtime D118 pristine-upstream23 comparison; independent1001 reports PRE0/REG14/NEW8/UNKN1. These are host-bootstrap identical-body failures in that bounded scope, assigned to Agent. Prior general zero-regression wording is superseded. D102 and D110 source repairs remain qualified; current P2 result is separate.
 
-Blockers: Runtime element D111b — Held02b source PASS but native FAIL; corrected1010 proves source calls0. Sol1016 owns actual generic-read path. No D111b wait applies to active full P2.
-Blockers: App current P2 — Full15203 NO-GO. Placement/ADD GO. SWAP POST409 belongs Runtime; parent zeroPOST belongs App Sol1028. Element waits qualified D111b; asset and clears NOTRUN.
+Blockers: Runtime element D111b — Sol1016 actual generic-read path shows early read wall gain but growth criterion still fails. Held02b remains native FAIL with source calls0; no release.
+Blockers: App current P2 — Full15203 NO-GO; placement and ADD GO. Parent zeroPOST belongs App Sol1028. Runtime1033 source facts complete; SWAP correlated predicate/producer evidence belongs App1019. Element awaits qualified D111b; asset and clears NOTRUN.
 Blockers: Final cut — Current full P2, Agent core437, fourteen newly proved D54a regressions, D69, final tuple gates/core and genuine installed render remain owed. D117 acquisition stays stopped.
 
 Next ready: None for Proof under D56.4. App parent Sol1028 active; Runtime current SWAP owner note sent, generic-read Sol1016 separate. Agent core30693 running and D69 reviews active; App tail source packets normally requested.
@@ -246,10 +248,10 @@ Safety: D88 automatic safety review stopped its reviewer for possible cybersecur
 
 Disk: 7110533120 bytes free at 2026-10-25T10:41Z. Lead06:33 remains binding: no pause or reclaim, no retire-venv or delete. Prior refused targets stay stopped.
 
-Pass 2026-10-25T10:41Z: Restart checks complete. PLAN, MANAGER-COMMON, current header and owner boards consumed. INBOX795002 unchanged; bin/workers reports1313 done and zero live. D56.4 remains in force, with no new Proof assignment. App parent Sol1028 and Runtime actual-read Sol1016 remain owned; Agent core30693 still running. Existing1038 peer already requests Runtime terminal15203/currentSWAP ownership correction; no duplicate peer or source writer. App audio source now normally merged e8b1, while Agent board still awaits receipt. Sheet exact-input and WC6 ownership asks stay with existing App/Agent owners. No ready Proof task, merge, product/test/generated/pin/Git mutation or cleanup. Monitoring continues for the next pass.
+Pass 2026-10-25T10:44Z: Observation continues. INBOX795002 unchanged; all1313 Proof workers done. Runtime has corrected terminal15203 and added currentSWAP blocked:app row. Read-only1033 establishes source facts only; exact request, producer output, head pins and first correlated failure predicate remain missing. Existing App1019 owns retained attribution; no duplicate collector. D115 actual369ffa normally equals reviewed274bb; source321 plus provider2 proof and baseline-identical limits retained. D111b early actual-read gain still fails growth and stays unreleased. App parent Sol1028 and Agent core30693 remain active; no new Proof assignment or source work. Disk no-reclaim instruction retained.
 
 Evidence: [App current owners](/home/user/timeline-hub/hub/status/app.md), [Runtime current owners](/home/user/timeline-hub/hub/status/runtime.md), [Agent current owners](/home/user/timeline-hub/hub/status/agent.md), [D113 author](../../design/app-P2-D113-modal-dismissal-0832.md), [D111a independent review](/home/user/timeline-hub/hub/design/rt-D111a-profile-review-0819-report.md), [D112 author scope](/home/user/timeline-hub/hub/design/rt-D112-identity-fallback-0819-report.md).
 
-Next watch: App parent Sol1028, Runtime currentSWAP row and actual generic-read Sol1016; Agent core30693 terminal count/D116/D69/host14; D117 owner access decision. Full15203 remains NO-GO with placement/ADD GO. D56.4 persists.
+Next watch: App parent Sol1028 and currentSWAP retained attribution; Runtime actual generic-read Sol1016 and output projection1037; Agent core30693 terminal count/D116/D69/host14; D117 owner access decision. Runtime1033 now records terminal15203 and bounded unknowns. D115 normal369ffa is released, with owner adoption and future proof separate. Full15203 remains NO-GO with placement/ADD GO; D56.4 persists.
 
 Inbox read through795002 bytes. STATUS is restart point; [D83 handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md), [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remain binding.
