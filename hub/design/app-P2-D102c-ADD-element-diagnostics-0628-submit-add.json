@@ -1,0 +1,48 @@
+{
+  "task": "P2 D102c fixed-source diagnostics",
+  "stage": "ADD",
+  "selector": "p2-popup-add",
+  "suite": "p2-d102c-add-0628",
+  "host": "app-pin-0b6cee26",
+  "status_at_publish": "running",
+  "preflight": {
+    "id": "app-pin-0b6cee26-p2-d102c-add-0628-preflight-1025062957-21897",
+    "status": "pass",
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102c-ADD-element-diagnostics-0628/submission/p2-popup-add/manifest.json",
+    "manifest_sha256": "bcc9b8d71234eb3a55583efafdded20cb9896c68bb4cff0c89f9cadb4b7c4c78"
+  },
+  "body": {
+    "id": "app-pin-0b6cee26-p2-d102c-add-0628-1025063027-18021",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-0b6cee26-p2-d102c-add-0628-1025063027-18021"
+  },
+  "tuple": {
+    "app": {"commit": "0b6cee269f32079c5446036bbca8a484176799bc", "tree": "9456c9edf3229ddcfd824b0f626516f2c602ccfa"},
+    "agent": {"commit": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f", "tree": "cd2a51721f07b447215f4084980d385de3842fd9"},
+    "runtime": {"commit": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "checkouts": {
+    "app": "/home/user/work/wt/app-pin-0b6cee26",
+    "agent": "/home/user/work/wt/agt-pin-8c88ea8f",
+    "runtime": "/home/user/work/wt/rt-pin-1daca2a3",
+    "composition": "/home/user/work/wt/vw-pin-635f4de0"
+  },
+  "checkout_receipts": {
+    "app": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-0b6cee269f32079c5446036bbca8a484176799bc",
+    "agent": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+    "runtime": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "composition": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "submit_plan": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D102c-ADD-element-diagnostics-0628/submission/p2-popup-add/p2-popup-add-submit-plan.json",
+    "sha256": "88cadeeb463eb8fb5f04ea3718bbffc56aaa497f29c7d296ac48eb09accb45d1"
+  },
+  "source_hashes": {
+    "scripts/testing/d66-plain-stack.mjs": "5d4f29fc6af03b505398328040b3e4103dba9232d59b06c53cb0ec8bf5ad2b2c",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "runtime/tests/helpers/p2_commit_phase_capture.py": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4",
+    "runtime/tests/test_p2_commit_phase_capture.py": "a6767ea56b3899871fac75bf6bfcb8bc65a9acac76ed8e12eb6438fd2ff9a8e4"
+  },
+  "limits": ["No raw stderr, request/response body, auth, private URL, locals, messages, or raw stack exported.", "Terminal outcome and predicate fields remain pending until same-ID completion."]
+}
