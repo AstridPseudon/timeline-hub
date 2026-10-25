@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-25T10:15:06.564090+00:00",
+  "host_clear": "design/app-pin-host-process-use-1015.md",
+  "pins": [
+    {
+      "name": "rt-pin-c91626f5",
+      "sha": "c91626f5e905f9336b51aae0486a071d83f0bac7",
+      "heads": {
+        "app": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+        "agent": "120d71202a9ebafa99011aec417cfca6d67fafc2",
+        "runtime": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+        "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+      },
+      "clean": true,
+      "references": [],
+      "host_clear": true,
+      "named_keep_released": true,
+      "result": "recycled rt-pin-c91626f5\n"
+    },
+    {
+      "name": "rt-pin-1daca2a3",
+      "sha": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "heads": {
+        "app": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+        "agent": "120d71202a9ebafa99011aec417cfca6d67fafc2",
+        "runtime": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+        "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+      },
+      "clean": true,
+      "references": [],
+      "host_clear": true,
+      "named_keep_released": true,
+      "result": "recycled rt-pin-1daca2a3\n"
+    }
+  ],
+  "available_before": 5146656768,
+  "available_after": 5189398528,
+  "net_freed": 42741760
+}

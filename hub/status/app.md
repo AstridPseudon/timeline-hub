@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T10:11:05Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
-# app board, 2026-10-25T10:08Z
+<!-- app | 2026-10-25T10:15:21Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
+# app board, 2026-10-25T10:13Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -285,11 +285,14 @@
 
 | U4p-D112 | Adopt verified identity recovery | Luna normal tools | Normal Runtime 8b389; D112a warm PASS53 | merged | Author0938; acceptance0942 PASS | Normal home tree equals tested author. Node20 updater2,17 vendor/skew,manifest/schema/artifacts/lint PASS; protected8 exact. | Home 28660e72fa |
 
-| D118-Agent-tail | Help assigned Agent tail clusters | Luna up to three | Agent manager assigns exact unowned nodes and files | blocked:agent | App dispatch after allocation | Local capacity ready above5.0GB; peer requests exact ownership and retained failure inputs. No duplicate writer. | Base Agent070dfc |
+| D118-Agent-tail | Help allocated Agent tail scopes | Luna up to three | Exact Agent allocation0956 | doing | Audio and sheet1015; WC6 ready | Three disjoint test scopes reserved; source floor checked before each start. | Agent e9e3b8 |
+| D118-tail-audio2 | Preserve prepared audio coverage | Luna | Agent allocation0956 | doing | app-D118-tail-audio2-1015 | Source only; two exact original nodes, assertions and input retained. | Base e9e3b8 |
+| D118-tail-sheet15 | Preserve current sheet purposes | Luna | Agent allocation0956 | doing | app-D118-tail-sheet15-1015 | Source only; fifteen exact original nodes, no product writer. | Base e9e3b8 |
+| D118-tail-WC6three | Preserve completion capture coverage | Luna | Source floor above 5.0 GB | gated:disk-source-floor | Brief1015 prepared | Two files reserved; admission rechecked after sheet tree. | Base e9e3b8 |
 
 | U4p-D112a-release | Adopt final qualified D112 typing correction | Luna normal tools | Released d23a8; exact reviewed tree6283 | merged | app-U4p-D112a-release-adoption-1000 | Normal home tree equals tested author;8 strict,17 vendor/skew,3 artifact/lint PASS; protected8/14 mappings exact. | Home96d4754b4e |
 
-| D118-full-P2-15203 | Current eight original gestures | Luna; service | Preflight19156 PASS | doing | app-D118-full-P2-current-1004; actual15203 | Submitted10:07:12 on96d475/070dfc/d23a8/635f. Exact tuple/receipts/source locked; same ID to terminal. No case result yet. | App96d4754b4e |
+| D118-full-P2-15203 | Current eight original gestures | Luna; service | Preflight19156 PASS | doing | app-D118-full-P2-current-1004; actual15203 | Submitted10:07:12 on96d475/070dfc/d23a8/635f. Exact tuple/receipts/source locked; same ID to terminal. Readiness PASS; element FAIL, asset NOTRUN, placement servicePASS. Other cases still running; no independent GO. | App96d4754b4e |
 
 Integration: App96d4754b4e normal merge tree3f9da34c4f equals tested author890f6d72d7. Runtime released d23a8/tree6283 adopted through normal tools; Agent070dfc retained. D113/D115/schema/mappings exact. D118 sole full P2 producer1004 submitted actual15203 after preflight19156 PASS on this immutable tuple. Same ID to terminal; no case result yet.
 core open: 4 — SWAP, element, placement and current asset lack GO. ADD, parent, single and bulk have independent full-tail caseGO in19078. Older asset27438 GO is a separate tuple; current full tour and current asset proof remain owed.
@@ -297,11 +300,11 @@ regressions: D102 context and D110 inverse KeyError source repairs released. Cur
 
 Decision: D113 conditions satisfied and source merged normally: upstream modal exact, real Close, meaningful dialog-gone assertion, all pre-existing bytes preserved, independent139/types/lint PASS and existing ledger paragraph. No isolated placement body; next proof full P2.
 Blockers: Runtime D111b element follow-through only — corrected cold-read source review0930 PASS; scaling remains open. This does not block D118 full P2. Sol0930 owns measured source-document/store reads, 97.2 percent of retained read time.
-Blockers: Agent tail allocation — D118 asks up to three App Luna source authors; Agent manager must name exact unowned nodes/files. Peer0951 and App lead relay requested; capacity available.
+Blockers: Capacity input — App lead fresh host use audit requested1013 for two stale Runtime pins. Manager static guards found no current or live request references; no KEEP released yet.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
-Next ready: Track authentic full P2 submission ID and same-ID terminal; dispatch up to three Agent-assigned tail clusters as soon as ownership arrives. No isolated successor.
-live 1 / cap 6; ready-undispatched 0; core open: 4. Full P2 actual15203 RUNNING; producer1004 waits same ID. One App heavy body. Agent tail allocation awaited.
-Capacity: Free5.38GB during full-tour build; admission above5.2GB, existing-run stop4.0GB. Recheck5.0GB source floor for any Agent tail allocation. Completed adoption worker recycled normally. Sweep3 removed zero; no eligible clean ended nonKEEP worktrees. Last normal recycle of recreated old04be pin preserved all outputs. Fresh static guards and host0921 CLEAR; zero refusals. All15712 and historical outputs/branches/reports retained. Current inputs and old dirty/refused targets untouched.
+Next ready: Wait same full P2 ID15203 to terminal; dispatch WC6third immediately when source admission is above5.0GB. Review each completed owned source diff; no isolated gesture successor.
+live 3 / cap 6; ready-undispatched 0; core open: 4. Full P2 actual15203 RUNNING. Audio running and sheet queued; WC6 gated at4.85GB, below5.0GB source floor. One App heavy body.
+Capacity: Free5.38GB during full-tour build; admission above5.2GB, existing-run stop4.0GB. Recheck5.0GB source floor for any Agent tail allocation. Completed adoption worker recycled normally. Sweep3 removed zero; no eligible clean ended nonKEEP worktrees. Last normal recycle of recreated old04be pin preserved all outputs. Fresh static guards and host0921 CLEAR; zero refusals. All15712 and historical outputs/branches/reports retained. Current inputs and old dirty/refused targets untouched. Fresh10:12 free5.029GB after audio tree; guarded old Runtime pin host audit requested1013. compact-scratch not run because it includes prohibited Codex session paths.
 Inbox consumed through2060508 bytes. Fresh pass 2026-10-25T09:57Z: D118 allocation peer sent; Runtime corrected type-only source normald23 visible but final independent0945/release still owner-side. D111b Sol0930 active; App normal28660 is a provenance adoption, not Runtime release or gesture GO. No safety refusal in this App pass.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).
@@ -310,3 +313,7 @@ Retained run: app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712. Preserve eve
 Later: Runtime peer0940 D77 staging OMP fetch returned HTTP403 origin/network permission denial. D117 owner stop applies to that route; no App retry, alternate acquisition, render or ZIP claim. Runtime coordinator owns disposition.
 
 Decision: D11809:50 supersedes the D111b full-tour hold. Next FULL P2 after D112 qualified release/adoption; element reruns when D111b ships. Agent manager assigns up to three unowned tail clusters before App Luna dispatch; peer allocation request sent this pass. Agent product releases require unfiltered core proof before adoption elsewhere.
+
+Decision 10:13Z: consumed exact Agent allocation0956 from local design (not yet INBOX). Source-only audio2 and sheet15 dispatched; WC6three admission checks source floor. No duplicate Agent author. Full P2 same15203 continues; placement servicePASS pending independent verdict. All outputs retained.
+
+Capacity 10:14Z: 4.85GB free after sheet tree; WC6 held by D89 source floor. No additional source or heavy start. Host audit requested for two stale clean Runtime pins; guarded release only after actual host clearance. Sweep3 in progress, compact-scratch prohibited session path untouched.
