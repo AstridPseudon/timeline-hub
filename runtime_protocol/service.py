@@ -2548,12 +2548,15 @@ class RuntimeService:
                 if replay is not None:
                     return replay
                 require_active()
-                _emit_redacted_diagnostic(request_id, reason="provider_none",
-                                           public_request_id=public_request_id)
+                _emit_redacted_diagnostic(
+                    request_id, reason="provider_none", public_request_id=public_request_id,
+                    idempotency_key=idempotency_key,
+                )
                 raise CommitUnavailable()
             outcome = coordinator.execute(context, provider, port_factory, authorize=check,
                                           diagnostic_request_id=request_id,
-                                          public_request_id=public_request_id)
+                                          public_request_id=public_request_id,
+                                          idempotency_key=idempotency_key)
             if "http_status" in outcome:
                 failure = public_failure(outcome)
                 if _is_history_failure(outcome):
@@ -2569,8 +2572,10 @@ class RuntimeService:
                 exc.failure, source_reason=getattr(exc, "_diagnostic_reason", None)
             )
             if reason is not None:
-                _emit_redacted_diagnostic(request_id, reason=reason,
-                                           public_request_id=public_request_id)
+                _emit_redacted_diagnostic(
+                    request_id, reason=reason, public_request_id=public_request_id,
+                    idempotency_key=idempotency_key,
+                )
             raise public_failure(exc.failure) from exc
         except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError) as exc:
             if isinstance(exc, ConflictError) and isinstance(exc.details, dict):
@@ -2582,26 +2587,38 @@ class RuntimeService:
                     {"details": exc.details}, source_reason=getattr(exc, "_diagnostic_reason", None)
                 )
                 if reason is not None:
-                    _emit_redacted_diagnostic(request_id, reason=reason,
-                                               public_request_id=public_request_id)
+                    _emit_redacted_diagnostic(
+                        request_id, reason=reason, public_request_id=public_request_id,
+                        idempotency_key=idempotency_key,
+                    )
             raise
         except ReferenceProjectionError as exc:
             if exc.reason == "history_unavailable":
-                _emit_redacted_diagnostic(request_id, reason="store_reference_projection_apply_history",
-                                           public_request_id=public_request_id)
+                _emit_redacted_diagnostic(
+                    request_id, reason="store_reference_projection_apply_history",
+                    public_request_id=public_request_id, idempotency_key=idempotency_key,
+                )
             else:
-                _emit_redacted_diagnostic(request_id, exc, public_request_id=public_request_id)
+                _emit_redacted_diagnostic(
+                    request_id, exc, public_request_id=public_request_id,
+                    idempotency_key=idempotency_key,
+                )
             raise CommitUnavailable() from exc
         except RuntimeErrorBase as exc:
             reason = _history_diagnostic_reason(
                 {"details": exc.details}, source_reason=getattr(exc, "_diagnostic_reason", None)
             )
             if reason is not None:
-                _emit_redacted_diagnostic(request_id, reason=reason,
-                                           public_request_id=public_request_id)
+                _emit_redacted_diagnostic(
+                    request_id, reason=reason, public_request_id=public_request_id,
+                    idempotency_key=idempotency_key,
+                )
             raise
         except Exception as exc:
-            _emit_redacted_diagnostic(request_id, exc, public_request_id=public_request_id)
+            _emit_redacted_diagnostic(
+                request_id, exc, public_request_id=public_request_id,
+                idempotency_key=idempotency_key,
+            )
             raise CommitUnavailable() from exc
 
     def _ensure_timeline_commit_baseline(self, commits, project_id, timeline_id, authorize):

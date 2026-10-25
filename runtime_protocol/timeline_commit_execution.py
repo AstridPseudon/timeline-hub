@@ -25,7 +25,9 @@ _SAFE_CLASS_RE = re.compile(
 )
 _SAFE_FILENAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+|<[^<>\r\n]{1,64}>)$")
 _SAFE_REASON_RE = re.compile(r"^(?:[a-z_]+|catchall:[A-Za-z0-9_.<>:-]{1,256})$")
+_IDEMPOTENCY_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$")
 _PUBLIC_REQUEST_ID = ContextVar("timeline_public_request_id", default=None)
+_IDEMPOTENCY_KEY = ContextVar("timeline_idempotency_key", default=None)
 
 
 def _new_request_id():
@@ -52,6 +54,13 @@ def _public_request_id_hash(value):
     return "sha256:" + hashlib.sha256(value.encode("ascii")).hexdigest()
 
 
+def _idempotency_key_hash(value):
+    """Return the helper-compatible hash for one accepted header value."""
+    if not isinstance(value, str) or not _IDEMPOTENCY_KEY_RE.fullmatch(value):
+        return None
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
 @contextmanager
 def public_request_id_scope(value):
     token = _PUBLIC_REQUEST_ID.set(value)
@@ -61,8 +70,21 @@ def public_request_id_scope(value):
         _PUBLIC_REQUEST_ID.reset(token)
 
 
+@contextmanager
+def idempotency_key_scope(value):
+    token = _IDEMPOTENCY_KEY.set(value)
+    try:
+        yield
+    finally:
+        _IDEMPOTENCY_KEY.reset(token)
+
+
 def current_public_request_id():
     return _PUBLIC_REQUEST_ID.get()
+
+
+def current_idempotency_key():
+    return _IDEMPOTENCY_KEY.get()
 
 
 def _safe_metadata(value, pattern):
@@ -168,7 +190,8 @@ def _diagnostic_reason(error, reason):
     return "catchall:invalid"
 
 
-def _emit_redacted_diagnostic(request_id, error=None, *, reason=None, public_request_id=None):
+def _emit_redacted_diagnostic(request_id, error=None, *, reason=None, public_request_id=None,
+                              idempotency_key=None):
     """Write one bounded, source-only diagnostic without inspecting exception data."""
     try:
         payload = {
@@ -183,6 +206,11 @@ def _emit_redacted_diagnostic(request_id, error=None, *, reason=None, public_req
         )
         if public_hash is not None:
             payload["public_request_id_hash"] = public_hash
+        key_hash = _idempotency_key_hash(
+            idempotency_key if idempotency_key is not None else _IDEMPOTENCY_KEY.get()
+        )
+        if key_hash is not None:
+            payload["idempotency_key_sha256"] = key_hash
         sys.stderr.write(_diagnostic_line(payload) + "\n")
     except BaseException:  # noqa: BLE001, S110 - diagnostics cannot affect the result
         # Diagnostics must never replace the original commit outcome.
@@ -318,7 +346,8 @@ class CommitExecutionCoordinator:
                 if entry.users == 0:
                     del self._entries[key]
 
-    def _lookup(self, context, authorize, *, diagnostic_request_id=None, public_request_id=None):
+    def _lookup(self, context, authorize, *, diagnostic_request_id=None, public_request_id=None,
+                idempotency_key=None):
         from .errors import AuthorizationError, ForbiddenError
         from .timeline_commit import CommitRejected
 
@@ -327,18 +356,22 @@ class CommitExecutionCoordinator:
         except (CommitRejected, AuthorizationError, ForbiddenError):
             raise
         except Exception as exc:
-            _emit_redacted_diagnostic(diagnostic_request_id, exc, public_request_id=public_request_id)
+            _emit_redacted_diagnostic(
+                diagnostic_request_id, exc, public_request_id=public_request_id,
+                idempotency_key=idempotency_key,
+            )
             raise CommitOutcomeUnknown() from exc
 
     def execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None,
-                public_request_id=None):
+                public_request_id=None, idempotency_key=None):
         with self.commit_store.verification_scope():
             return self._execute(context, provider, port_factory, authorize=authorize,
                                  diagnostic_request_id=diagnostic_request_id,
-                                 public_request_id=public_request_id)
+                                 public_request_id=public_request_id,
+                                 idempotency_key=idempotency_key)
 
     def _execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None,
-                 public_request_id=None):
+                 public_request_id=None, idempotency_key=None):
         context = detached(context)
         if request_identity(context) != context["request_hash"]:
             reject("invocation_mismatch", status=422)
@@ -346,7 +379,8 @@ class CommitExecutionCoordinator:
         # callers with an earlier cache miss repeat this lookup after waiting.
         with self._execution(context) as acquired:
             replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id,
-                                  public_request_id=public_request_id)
+                                  public_request_id=public_request_id,
+                                  idempotency_key=idempotency_key)
             if replay is not None:
                 return replay
             if not acquired:
@@ -377,7 +411,8 @@ class CommitExecutionCoordinator:
             # No provider completion, including a close/hook exception, can
             # supersede a committed winner. A failed read is an unknown outcome.
             replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id,
-                                  public_request_id=public_request_id)
+                                  public_request_id=public_request_id,
+                                  idempotency_key=idempotency_key)
             if replay is not None:
                 return replay
             if error is not None:

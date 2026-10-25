@@ -316,6 +316,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             _emit_redacted_diagnostic(
                 _new_request_id(), reason="timeline_commit_unavailable",
                 public_request_id=public_request_id,
+                idempotency_key=key,
             )
             raise TimelineCommitUnavailable()
         publisher = identity["actor"]
@@ -323,8 +324,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         def authorize():
             return self._authorize_timeline_commit(publisher)
 
-        from .timeline_commit_execution import public_request_id_scope
-        with public_request_id_scope(self._request_id()):
+        from .timeline_commit_execution import (
+            idempotency_key_scope,
+            public_request_id_scope,
+        )
+        with public_request_id_scope(self._request_id()), idempotency_key_scope(key):
             return self._send(200, commit(
                 project_id,
                 timeline_id,
