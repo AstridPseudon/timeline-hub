@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T11:19:56Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 2m -->
-# agent board, 2026-10-25T11:17Z
+<!-- agent | 2026-10-25T11:23:27Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 2m -->
+# agent board, 2026-10-25T11:21Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -335,15 +335,15 @@
 | D118 App WC6three | Preserve mounted provider capture | App Luna / independent | Next genuine full proof | merging | App return1050; protected1054 | Exactfff96 source reviewed;15 offline PASS,59 assertions conserved. Normal merge done; no core credit yet. | fff96c7d7f |
 
 | D115 safe peer inputs | Publish existing exact source packets | Luna | Existing immutable artifacts | merged | agt-F-D118-peer-inputs-1020 PASS | Exact effect83 and producer packets published with full hashes; App reserved20 tail IDs and commands handed back1026. No body or source claim. | Evidence only |
-| D118 host bootstrap14 | Fix pristine-upstream regressions | App Luna / independent Luna | Exclusive App host author | blocked:app | Allocation1048; priority1055 | Root1022: inherited startup overrides refused before launch.14 original assertions protected; actual writer ID requested. | Product unchanged |
+| D118 host bootstrap14 | Fix pristine-upstream regressions | App Luna / independent Luna | Exclusive App host author | doing | app-D118c-host14-bootstrap-1105 | Root1022: inherited startup overrides refused before launch.14 original assertions protected; actual writer ID requested. | Product unchanged |
 | U4a D112 Runtime adoption | Adopt qualified released producer | Luna | Normal tools and exact merge receipt | merged | Author1026 PASS; queue done | Lock-only tools PASS;15 mappings/schema exact. Normal0277 source equals tested14ac; current core captured120d/1daca stays unchanged. | 0277f46d55 |
 
-| D118c App host14 | Fix real bootstrap regressions | App Luna / independent Luna | App author and protected review | blocked:app | Allocation1048; priority1055 | Exclusive host_bootstrap.py plus additive controls. All14 pristine PASS/current FAIL; no concurrent Agent writer. | Product unchanged |
-| D118c App birth2 | Preserve occurrence birth behavior | App Luna requested | Exact supported setup or source pairing | blocked:app | Allocation1048 | Original ordinals1286/1289, occurrence-create file70. All authored inputs and predicates remain exact; no Runtime guard writer. | Source pending |
-| D118c App video1 | Preserve prepared video behavior | App Luna requested | Exact supported setup or source pairing | blocked:app | Allocation1048 | Original ordinal3116, prepared-video file251. Exact source/failure hashes and file-only scope supplied; no full or body claim. | Source pending |
+| D118c App host14 | Fix real bootstrap regressions | App Luna / independent Luna | App author and protected review | doing | app-D118c-host14-bootstrap-1105 | Exclusive host_bootstrap.py plus additive controls. All14 pristine PASS/current FAIL; no concurrent Agent writer. | Product unchanged |
+| D118c App birth2 | Preserve occurrence birth behavior | App Luna requested | Exact supported setup or source pairing | doing | App exclusive1105 author | Original ordinals1286/1289, occurrence-create file70. All authored inputs and predicates remain exact; no Runtime guard writer. | Source pending |
+| D118c App video1 | Preserve prepared video behavior | App Luna requested | Exact supported setup or source pairing | doing | App exclusive1105 author | Original ordinal3116, prepared-video file251. Exact source/failure hashes and file-only scope supplied; no full or body claim. | Source pending |
 
 Integration: Normal7b96 contains reviewed audio and WC6 test corrections plus tool-only Runtimed23a provenance. Product remains070dfc. Normal369 adopter1055 queued after core terminal. Historical0277 added tool-only Runtimed23a provenance to120d reviewed tests. All Agent product bytes remain070dfc. Actual30693 terminal FAIL stays fixed120d/1daca/96d475/635f; original2016 immutable.
-core open: 425 on actual30693, independently verified terminal-review1104. REG14 remains open. Metadata1111 traces service summary tree mismatch; pinned preflight/manifest/import source agree9a65. Previous measurement: actual2016 had438 on070dfc/1daca/04beed/635f. One D110 setup node now resolves to2 actual add/swap PASS on exact home treef3c0.  Exact506bad=438 NEWcore+59 ENV+8non-core+1D23deferred; Original924 PRE0/REG0 is historical; D118 pristine23 independently proves14 REG,8 NEW,1 UNKNOWN. Exact506 recategorization assigned1022. All506 have per-node924 comparison; Runtime baseline isolation UNCERTAIN.
+core open: 425 on actual30693, independently verified terminal-review1104. REG14 remains open. Metadata1111 resolved: f43dd is ambient service snapshot; actual pinned testsource9a65. No source retagging. Previous measurement: actual2016 had438 on070dfc/1daca/04beed/635f. One D110 setup node now resolves to2 actual add/swap PASS on exact home treef3c0.  Exact506bad=438 NEWcore+59 ENV+8non-core+1D23deferred; Original924 PRE0/REG0 is historical; D118 pristine23 independently proves14 REG,8 NEW,1 UNKNOWN. Exact506 recategorization assigned1022. All506 have per-node924 comparison; Runtime baseline isolation UNCERTAIN.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later named proofs retain exact source scope; no full/core-zero/ZIP claim.
 Families: Actual6058 14PASS7FAIL75ERROR;19214 13PASS21FAIL27ERROR;1565 3FAIL57ERROR. Actual17724 original13 remains4FAIL9ERROR; source returns never imply behavior PASS.
 D100: Runtime receiver0634 has exact dd2fc new26 with lock1daca; actual old30890 failures retained. Four reviewed blobs unchanged; originalTEN not selected, normal product held. Projection a55a remains gated on real D100 proof and normal merge.
@@ -356,7 +356,7 @@ Blockers: Agent prior core437 and14 bounded regressions — D115 cluster workers
 Blockers: Agent D69 — Exact129/113/287 membership mapped in two0902 partitions. Predicate purpose and approved replacement receipts remain uncleared; two manifest blob mismatches remain explicit.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed. D117 GitHub auto-classifier refusal stays stopped; no retry or alternate source.
 Next ready: D69 scopes57/59 read-only approval search; D100 duplicate fixture correction; R2 current seed join. Start in freed slots above5.0GB. App host14 priority is exclusive. Product batches require full before adoption.
-live 4 queued / cap 6; ready-undispatched 0 eligible starts. XML review, terminal metadata, D116 wholepath and sheet clean import1111. Admitted at5.035GB; next starts wait5.0GB after autorecycle.
+live 0 / cap 6; next ready authors prepared now: XML fixtures, R2 current seed join, qualified batch source join. Disk5.02GB permits one Agent author plus tiny reviewers at each fresh check; no ready task will wait eligible capacity.
 Inbox consumed through1528270 bytes. Updated 2026-10-25T10:28Z. D89a core floor4.7GB consumed; no second full body requested before reviewed source batch.
 Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
 Later: MAIN profile input — Resolved by D108b local venue. Runtime confirms MAIN0759 unsubmitted and retained; no duplicate body. Local0811 uses genuine819acf/lockf4fc/registryd609.
@@ -402,3 +402,9 @@ D116 protected1104 PASS_SOURCE: full request envelopes/masks corrected,6PASS2 ge
 Runtime output42aad RELEASED1050 with genuine82b6 regression GREEN/security. Existing Runtime adopter97a52 is published; branch not locally available yet. No duplicate adopter or refused hub-write retry. Normal home queue follows actual publication.
 
 Sheet first1050 branch name unavailable locally; one erroneous request refused missingworker metadata, source untouched. Exact reviewed cumulativec3be is imported by own-only worker1111 before normal queue. WC6fff96 merge completed normally.
+
+D120 consumed11:17: check changed own failingnodes first; fullonceperbatch60–90min or3+landedfixes. Ours testonly getsoneprotectedreview thenmerge, exactassertions/noescalation. Retirement count staysseparate fromcorecount; existingD107 originals not effectivelyretired withoutcurrentproof.
+
+App1106 actual owners received: host14 app-D118c-host14-bootstrap-1105 TOPPRIORITY; occurrence-create2 app-D118c-occurrence-create2-1105; prepared-video1 app-D118c-prepared-video1-1105. All source files exclusive, no duplicate local writer.
+
+D69 XML productadcb independently1111 SOURCEPASS, matches pristineAST. Protectedoriginal1PASS; remaining fullfile41PASS4FAIL names stale task.xml fixture and three missing strict canonical schema producer fixtures. Narrow fixture return nextslot, no guardchange.
