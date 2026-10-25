@@ -15,7 +15,7 @@ if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled 
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
-HV=light; case $suite in full*) HV=heavy;; esac
+HV=light; case $suite in full*|agent-core-full) HV=heavy;; esac
 if [ -z "$RUN" ]; then
   IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null
   TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
@@ -31,7 +31,11 @@ if [ -z "$RUN" ]; then
   [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
   [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
   [ $HV = light ] && [ $(alive light) -ge 3 ] && { echo "3 targeted/named runs already running" | tee $D/why; exit 3; }
-  FLOOR=5; [ $HV = heavy ] && FLOOR=8; [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt $FLOOR ] && { echo "low disk (<${FLOOR}G free; heavy runs need 8G so Runtime storage preflight does not cause false reds)" | tee $D/why; exit 3; }
+  FLOOR_BYTES=5000000000; [ "$HV" = heavy ] && FLOOR_BYTES=5200000000
+  DF_OUTPUT=$(df -B1 --output=avail /home/user 2>/dev/null) || { echo "disk availability unreadable; refusing admission" | tee "$D/why"; exit 3; }
+  AVAILABLE_BYTES=$(printf '%s\n' "$DF_OUTPUT" | awk '$1 ~ /^[0-9]+$/ { if (++n == 1) value=$1 } END { if (n != 1) exit 1; print value }') || { echo "disk availability invalid; refusing admission" | tee "$D/why"; exit 3; }
+  [ "$AVAILABLE_BYTES" -le 4500000000 ] && { echo "low disk (available=${AVAILABLE_BYTES} bytes; no new runs below or at 4500000000 bytes)" | tee "$D/why"; exit 3; }
+  { [ "$AVAILABLE_BYTES" -lt "$FLOOR_BYTES" ] || { [ "$HV" = heavy ] && [ "$AVAILABLE_BYTES" -eq "$FLOOR_BYTES" ]; }; } && { echo "low disk (available=${AVAILABLE_BYTES} bytes; floor=${FLOOR_BYTES}, light inclusive, heavy strictly above)" | tee "$D/why"; exit 3; }
   [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
   setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
 fi
