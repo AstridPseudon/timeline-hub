@@ -1,5 +1,25 @@
 # Private `drop-staging` kit candidate
 
+**UNAPPLIED — D139 residual review.** This candidate remains unqualified for
+installation or real cleanup. The unchanged source passes its 14 existing
+tests, but five additional private CLI controls reproduce archive replacement,
+worker detachment, a late lease, partial fallback deletion after a late KEEP,
+and evidence replacement after verification.
+
+The worker-directory `flock` only excludes cooperating lock holders. It does
+not prevent those mutations, and quarantine does not revoke existing directory
+descriptors. The supported operational route has no shared transaction or
+exclusion protocol covering the worker's name, staging, archive, evidence and
+manager leases through deletion. Further rechecks cannot establish that
+guarantee; fallback cannot restore bytes already unlinked without retaining a
+copy. A source-only repair within this directory cannot supply that protocol.
+
+Archive-first removal, guarded low-disk fallback, marker/lease protection and
+verified evidence remain requirements. The behavior below describes the
+candidate's intended operation, not qualification under concurrent mutation.
+Keep installation and cleanup unapplied until the orchestrator approves a
+supported exclusion and recovery mechanism and an independent review passes.
+
 `drop-staging WORKER RELPATH` operates on exactly one worker record.  The
 future normal installation is `ORCH/bin/drop-staging`, with worker records at
 `ORCH/workers`; this source candidate accepts `--workers-root` for private
