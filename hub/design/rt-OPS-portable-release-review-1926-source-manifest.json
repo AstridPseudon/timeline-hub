@@ -1,0 +1,45 @@
+{
+  "schema": "timeline.ops-child-custody.portable-final-independent-source.v1",
+  "final_commit": "60753548ebc8e69f3c84fbb28fa2e09b1ca78316",
+  "final_tree": "dd4347a933103bbfc17c3e3237d52ea13ac1f677",
+  "parent_commit": "2fffe593175338ffb8144705bb70c9542fa4459f",
+  "runner": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "mode": "0755"
+  },
+  "support_sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+  "new_test_sha256": "eeeddb0fcac8863a364c4814fac82830f3fb70b7505a311eb10acc954fdd0137",
+  "manifest_sha256": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8",
+  "immutable": {
+    "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "verifier_block_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "bootstrap_artifact_sha256": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548",
+    "parent_mode": "0755",
+    "candidate_mode": "0755",
+    "store_helper_mode": "0755",
+    "dependency_helper_mode": "0755"
+  },
+  "constants": {
+    "source_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+    "parent_maker_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+    "candidate_maker_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+    "normal_reserve_bytes": 5905580032,
+    "stop_line_bytes": 4000000000,
+    "source_floor_bytes": 4600000000,
+    "no_heavy": true,
+    "default_timeout_seconds": 180
+  },
+  "invariants": {
+    "only_two_final_source_files_changed": true,
+    "prepare_venue_ast_unchanged": true,
+    "run_venue_ast_unchanged": true,
+    "original_42_controls_retained": true,
+    "pyright_no_new_against_author_five_error_baseline": true,
+    "raw_historical_diff_only_two_frozen_maker_eof_diagnostics": true,
+    "actual_component_readonly_checks": true
+  }
+}

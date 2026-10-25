@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-tail-Runtime-review-1927",
+  "reviewed_task": "rt-F-tail-Runtime-conflicts-1902",
+  "reviewed_at_utc": "2026-10-25",
+  "verdict": "PASS",
+  "verdict_scope": "Independent source-only review of the recorded Runtime conflict classification and two private CI/docs resolutions. This does not certify an upstream merge, clone/service dry run, final cut, ZIP, or delivery build.",
+  "source_tuple": {
+    "merge_base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "merge_base_tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+    "ours_ref": "tl/integration",
+    "ours": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "ours_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "upstream_ref": "refs/remotes/origin/main",
+    "upstream": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "upstream_tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210",
+    "merge_tree_command": "git merge-tree --trivial-merge d4f496ec4fbcae7a1f3a51d47ed5147c561117ad e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9 dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "merge_tree_bytes": 71105,
+    "merge_tree_sha256": "2d341b37bafebc1feb09d4e69971bcde5ed12b729dcdc6e1c041838e714254e0"
+  },
+  "accounting": {
+    "changed_in_both_files": 10,
+    "recorded_files": 10,
+    "recorded_hunks": 22,
+    "classes": {
+      "trivial_textual": 3,
+      "trivial_context_only": 2,
+      "semantic_owner_decision": 17
+    },
+    "crosswalk_exact": true,
+    "source_blobs_exact": "30/30",
+    "non_conflict_merge_tree_add": {
+      "status": "added in remote",
+      "path": "runtime_protocol/process_control.py",
+      "hunks": 1,
+      "counted_in_22_conflict_hunks": false
+    }
+  },
+  "semantic_disposition": {
+    "actual_unsolved_intent": true,
+    "routine_upstream_plus_c0_silent_resolutions": 0,
+    "questions": 17,
+    "areas": [
+      "daemon startup/provider admission order",
+      "door ACP reservation, API-key boundary, exact-route precedence, selection and commit routes",
+      "platform process identity, sandbox fallback, pidfd compatibility, race and error contract",
+      "server traceback/request-path diagnostics versus redaction and public error envelopes",
+      "managed-output original_name authority",
+      "pytest process-control isolation and denied-cleanup ownership",
+      "lane markers and door-route assertions preserving current test semantics"
+    ],
+    "d130_wal": "excluded"
+  },
+  "private_patch": {
+    "artifact": "rt-F-tail-Runtime-conflicts-1902-trivial-resolutions.patch",
+    "sha256": "748f0df7e627676bc718220050b8c8415afe7daa76ffe544a0ac6bc2817ddda7",
+    "paths_exact": [
+      ".github/workflows/ci.yml",
+      "docs/runtime-portability-testing.md"
+    ],
+    "source_guards": {
+      ".github/workflows/ci.yml": {
+        "upstream_blob": "80517dd88d253b921bf463e585ba4753e371bdb2",
+        "resolved_blob_label": "a59b4a00ca2edf0026cc52d8571fbf4c2d32d175"
+      },
+      "docs/runtime-portability-testing.md": {
+        "upstream_blob": "0e5fa5426b98fd3c640d4c0cd90a232fef653250",
+        "resolved_blob_label": "b939f1284c0330991d42ed9a8bba9c4602d2ce2b"
+      }
+    },
+    "git_apply_check": "PASS; read-only --check against exact upstream source files",
+    "git_apply_whitespace_error_check": "PASS; read-only --check --whitespace=error",
+    "added_line_whitespace": "none",
+    "preserves_upstream_sandbox_process_control": true,
+    "preserves_ours_windows_matrix_and_worker_handoff": true,
+    "upstream_behavior_scope": "CI/docs only; no Runtime product behavior resolved"
+  },
+  "refs_and_scope": {
+    "worker_head_unchanged": true,
+    "integration_ref_unchanged": true,
+    "upstream_ref_unchanged": true,
+    "frozen_runtime_r4_ref": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+    "proposed_source_only": true,
+    "product_worktree_clean": true,
+    "delivery_build_whitespace_error_flag": false,
+    "d68_wrapper_whitespace_error_flag": false
+  },
+  "limitations": [
+    "No merge, rebase, checkout, fetch, clone, Git mutation, service dry run, product implementation, test suite, build, ZIP, provider, network, or acquisition was run.",
+    "The authorized test service supports named suites/selectors, not an arbitrary clone/Git-apply/delivery-wrapper operation; no applied service proof is claimed.",
+    "The delivery builder uses git am -q and ZIP creation; the checked D68 wrapper uses git apply --index --3way, and neither supplies --whitespace=error. The exported patch itself passes an independent read-only whitespace-error check."
+  ]
+}

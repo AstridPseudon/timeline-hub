@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T19:32:15Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 0m -->
-# runtime board, 2026-10-25T19:31:53Z
+<!-- main | 2026-10-25T19:36:57Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 0m -->
+# runtime board, 2026-10-25T19:34:06Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -434,7 +434,7 @@
 
 | R2-graph-boundary | Assess current graph child inverse | Luna | Authentic stage and physical records | later | Author1744; independent1749 PASS | Current track-only fix does not cover clip aliases. Causal owner UNKNOWN; exact accepted/stage/physical records absent. No body. | PASS SOURCE ASSESSMENT1749 | Source unchanged |
 | D127-leaf-current | Preserve exact helper import evidence | Luna | App1734 is first intake owner | gated:duplicate | rt-D127-leaf-retention-ready-1741 | Exact231ddb import completed. Offline21PASS and prior23 reused; three parent E402 diagnostics retained. No duplicate merge; App1734 owns intake. | Prior helper review reused | Duplicate source only |
-| OPS-inventory-E2E | Review complete portable census | Sol / Luna | Exact final source review | review | Author1908; independent1933 RUNNING | Final607535/tree dd434; author64 PASS. Agent genuine whole-make remains unrun. | Prior1903 FAIL retained | 60753548eb |
+| OPS-inventory-E2E | Review complete portable census | Sol / Luna | Agent genuine whole-make proof | review | Author1908; independent1926 PASS | Final607535/tree dd434; independent64 PASS. Exact receiving command sent Agent; genuine E2E unrun. | Prior1903 FAIL retained | 60753548eb |
 
 | D100-provider-birth | Preserve authenticated item birth | Sol / Luna | Exact additive and original proof | review | Source1742; security1803; App1837; reader1858 | Parent23/27; candidate24/27. First-birth/no-write RED to PASS; three additive failures remain. Own9 unrun. Source disposition active. | App1843 PASS WITH BOUNDARY | 9486 held |
 
@@ -447,26 +447,30 @@
 | F-tail-patch-dryrun | Check fresh upstream patch export | Farm runner | Farm receiving source route | blocked:farm | Peer1844 exact test-only handoff | Existing squash/export script, private clones and apply check. No live delivery, ZIP or integration mutation. Farm headroom requested. | Result review follows | No run yet |
 
 
-| D100-additive-correction | Preserve custody test purposes | Luna | Independent protected review | review | Author1914; reviewer1931 queued | Exact42040 changes one new test; product exact9486. Behavior NOTRUN below5GB; App sole receiver next. | Independent1931 | 42040a9c05 |
-| F-tail-Runtime-classes | Classify ten Runtime conflict files | Luna | Independent source review | review | Author1902; remote review offer held during Agent core | All22 hunks:3 textual,2 context,17 semantic. Only CI/docs private patches; clone route unavailable. | Review next admitted slot | Source only |
-| F-tail-App-classes | Classify sixteen App conflict files | Luna | Census1850 PASS | blocked:app | App peer1901 assignment requested | Disjoint App owner; preserve both test families and upstream behavior. No normal merge. | Pending source return | Source only |
-| F-tail-Agent-classes-A | Classify first twenty Agent conflicts | Luna | Census1850 PASS | ready | Agent peer1901 hosted allocation requested | Agent owner assigns exact disjoint half and actual worker. No normal merge. | Pending source return | Source only |
-| F-tail-Agent-classes-B | Classify second twenty Agent conflicts | Luna | Census1850 PASS | ready | Agent peer1901 hosted allocation requested | Second disjoint half; no competing semantic author. No normal merge. | Pending source return | Source only |
+| D100-additive-correction | Preserve custody test purposes | Luna | Correct evidence then App behavior | review | 1919 FAIL; receipt1934 active | Protected source purpose PASS; two manifest hash strings truncated. Product/test exact42040. No behavioral proof yet. | Independent1919 | 42040a9c05 |
+| F-tail-Runtime-classes | Classify ten Runtime conflict files | Luna | Independent source review | review | Author1902; independent1927 PASS | All22 hunks:3 textual,2 context,17 semantic. Only CI/docs private patches; clone route unavailable. | Independent1927 scoped PASS | Source only |
+| F-tail-App-classes | Classify sixteen App conflict files | App Luna | Qualified census | doing | app-F-App16-conflict-classify-1921 | Exact16 source-only files, no integration mutation. | Review after source | Frozen213318 upstream |
+| F-tail-Agent-classes-A | Classify first twenty Agent conflicts | Luna | Qualified census | doing | rt-F-tail-Agent-A-1928 | Exact first20 files; source only, no normal merge or clone credit. | Independent review next | Frozen547e104 |
+| F-tail-Agent-classes-B | Classify last twenty Agent conflicts | Luna | Qualified census | doing | rt-F-tail-Agent-B-1935 queued | Exact last20 files; disjoint from1928. Source only, no normal merge. | Independent review next | Frozen547e104 |
 
 | F-final-D133-notes | Include deferred Gate3 paragraph | Luna | Actual installed renderer proof | merged | rt-F-tail-small-notes-1911 | Exact App1853 paragraph installed in both real docs. CAS backups, mode0644, outside bytes and real renderer PASS. No build/ZIP. | D56 author proof | Installed prose |
 
 | D127c-profile | Deterministic element cost capture | App Luna | Protected selection and privacy PASS | review | Author1905; review1909 FAIL; return1921 | Existing helper only. No body, cost author or normal source intake before protected PASS. | App independent review | Held source |
 
+| F-D135-builder | Refuse upstream reverts in package builder | Luna | Fresh source slot | ready | Prepared brief1938 | Farm1905 applies cleanly but reverts upstream-only work. Guard/private roots/pinned Agent tip required. | Independent review next | Source pending |
+| U1-D135-private-join | Prepare current upstream merge | Luna | Lead fresh upstream and source slot | ready | Runtime owner pending | Private tl branch only, preserve both source/test families. Integration stays frozen for D59. | Security and union proof next | No join yet |
+| F-D135-notes | Name fresh upstream patch base | Luna | Notes worker slot | ready | Existing delivery notes owner | Patch base must be current upstream main at cut. No new build or ZIP. | D56 prose checks | Pending |
+
 Runtime producer: Normal e319 helper/tests only; product ab1e step/inverse plus safe diagnostics. Captured core tuple remains a4e016/5e9ad/d8a1/635f.
 core open:425 and REG14 from immutable30693. D134 measurement18455 RUNNING since19:11:28; no newer count or ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO for element/SWAP. No D59 cut, final build or ZIP.
-Blockers: Agent custody — sole independent1933 reviews final607535 portable source. Genuine E2E waits Agent18455 terminal and check-only PASS; reserve5905580032 unchanged. Installer1826 PASS held.
+Blockers: Agent custody — independent1926 PASS published with exact607535/runner1498/supporte85b and command. Genuine E2E waits Agent18455 terminal and check-only PASS; reserve unchanged. Installer1826 held.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
 Blockers: Element — actual32016 FAIL. Retained raw lacks sample chains/counters, independently checked1902. App D127c source return1921 owns last cProfile round; no measured cost author yet.
 Blockers: Final render — genuine E2E/result and installed/receiving maker required before D77 request. Farm core remains dropped.
 Blockers: D69 and cut — current core, REG0, full P2, installed render90, final tuple P1–P5, wheel, Windows and final build/ZIP remain owed.
-Blockers: ZIP patch dryrun — Farm test-only receiving requested1844; current Farm disposition not yet received. No duplicate Main body.
-Next ready: Runtime conflict1902 independent review; Agent conflict halves need hosted Main capacity. D1001931 and portable1933 own current admitted slots. App duplicate1921 stop requested.
+Blockers: ZIP correctness — Farm1905 export applies but reverts upstream-only Agent98/Runtime29/App154 files. D135 guard and private upstream joins now required; no packaging this tuple.
+Next ready: Receipt1934 then bounded independent hash verification; conflict1928/1935 returns then independent reviews. Portable1926 sourcePASS and exact invocation delivered to Agent.
 Kit: Makerc3226b/source09ed independent1744 PASS; installer a3e707 independent1826 PASS. Live0857 remains; no production install/request before genuine E2E and independent result PASS.
 Delivery: Census1850 PASS is read-only merge-tree evidence, Runtime10/Agent40/App16 files. Composition frozen-ref1916 scoped PASS; five upstream roots and launcher absent, no executable pristine gate. Clone dryrun unperformed.
 Source receipts: D1001914 final42040/testfcd5f follows finite1858 disposition; source held until protected1931 plus App corrected27/own9. D107 transcript records EXACTMISSING, two failures open. OriginalTrue redo birth and graph child alias remain unknown.
@@ -474,6 +478,6 @@ Safety: D130 and prior D88/D111/retirement refusals held. ORCH-only manager boar
 Venues: Agent sole genuine E2E venue. Main no heavy or production child. D134 measurement18455 has no ship credit; frozen historical tuples never retargeted. Cancelled control-binding request remains unstarted.
 Later: Shared scalar/compound, Gate3 deferred and graph initial child alias remain visible. No unchanged retry or speculative guard author. D133 installed exact worker paragraph in both docs.
 Disk: Fresh4.629GB before second source review dispatch; cleanup restored admission from4.584GB. Sweep3/compact in progress; no protected or refused target retried. Stop4GB.
-live 2 / cap 3; ready-undispatched 3 source rows, gated by fresh per-start4.6GB floor if unavailable; next check immediately after dispatch.
+live 3 / cap 3; ready-undispatched 3 D135 rows at capacity. B1935, A review1935 and receipt1934 live; fresh floor4.599GB bars additional starts.
 INBOX consumed through1463437bytes. Updated 2026-10-25T19:31:53Z.
 

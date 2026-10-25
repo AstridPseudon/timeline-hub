@@ -1,0 +1,73 @@
+{
+  "schema": "timeline.ops-child-custody.portable-complete-source.v1",
+  "base_commit": "2fffe593175338ffb8144705bb70c9542fa4459f",
+  "base_tree": "516da69731401037b6845f1e14ea11b4c9135628",
+  "base_parent": "674d13e26ce40ce9a158a7e50b226c247fbc9588",
+  "final_commit": null,
+  "final_commit_status": "EXACTMISSING until harness commits after worker exit; do not label base/parent as final",
+  "final_source_tree": "dd4347a933103bbfc17c3e3237d52ea13ac1f677",
+  "final_source_tree_method": "Calculated Git tree hash from HEAD entries plus the two final working file blobs; baseline calculation equals actual Git tree; no Git writes",
+  "runner_sha256": "1498a1597c058f92176a0d447b372b4791e6af345c479445b9027e0521d75085",
+  "test_sha256": "eeeddb0fcac8863a364c4814fac82830f3fb70b7505a311eb10acc954fdd0137",
+  "changed_paths": [
+    "ops-child-custody/tests/e2e_inventory.py",
+    "ops-child-custody/tests/test_e2e_inventory.py"
+  ],
+  "immutable": {
+    "parent_maker": {
+      "path": "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv",
+      "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+      "mode": "0o755"
+    },
+    "candidate_maker": {
+      "path": "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv",
+      "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+      "mode": "0o755"
+    },
+    "verifier_block_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "protected_store_helper": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2"
+    },
+    "protected_dependency_helper": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+    },
+    "bootstrap_artifact": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz",
+      "sha256": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548"
+    },
+    "ops-child-custody/make-child-venv": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "ops-child-custody/tests/support.py": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+    "ops-child-custody/tests/test_custody.py": "d6be27f90288a00880eefbe1873200e4bb688d26aa1a493aeb0692685a2a5a55",
+    "ops-child-custody/tests/test_inventory.py": "016469c6ac1e5baddc1c60f7b8ff7cbff6d3c9e43b3ba1d3c317ac9e4f1c5534",
+    "ops-child-custody/e2e-fixtures/tiny/manifest.json": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8"
+  },
+  "all_15_source_files_hashes_modes_and_base_bytes": "PASS",
+  "original_42_controls_retained": true,
+  "original_two_census_method_asts_unchanged": true,
+  "prepare_venue_and_run_venue_asts_unchanged": true,
+  "pyright_no_new_against_five_baseline": true,
+  "diffs": {
+    "owned_vs_base": {
+      "command": "git diff --check 2fffe593175338ffb8144705bb70c9542fa4459f -- ops-child-custody/tests/e2e_inventory.py ops-child-custody/tests/test_e2e_inventory.py",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "owned_vs_historical": {
+      "command": "git diff --check f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe -- ops-child-custody/tests/e2e_inventory.py ops-child-custody/tests/test_e2e_inventory.py",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "raw_vs_historical": {
+      "command": "git diff --check f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+      "exit_code": 2,
+      "stdout": "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv:1224: new blank line at EOF.\nops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv:1201: new blank line at EOF.\n",
+      "stderr": ""
+    }
+  },
+  "reserve_bytes": 5905580032,
+  "stop_line_bytes": 4000000000
+}

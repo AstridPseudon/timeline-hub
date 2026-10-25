@@ -1,0 +1,94 @@
+{
+  "schema": "timeline.ops-child-custody.portable-findings-map.v1",
+  "source_tree": "dd4347a933103bbfc17c3e3237d52ea13ac1f677",
+  "review1909_consumed": true,
+  "all_finite_1909_findings": [
+    "uncaught-wheel-role-shape",
+    "uncaught-maker-path-type",
+    "missing-required-source-roles",
+    "ambient-python3-not-censused",
+    "tmpdir-writability-not-censused"
+  ],
+  "findings": [
+    {
+      "id": "1903/new-test-ruff",
+      "disposition": "Fixed import ordering and unused maker; both scoped Ruff 0.16.8 and repository 0.12.0 pass.",
+      "validation": "test_e2e_inventory.py; exact scoped Ruff"
+    },
+    {
+      "id": "1903/malformed-role-early-exception",
+      "disposition": "Explicit role/wheel mapping validation; independent valid pins and prerequisites retained; no broad exception fallback.",
+      "validation": "test_malformed_role_variants_accumulate_with_simultaneous_missing_prerequisites"
+    },
+    {
+      "id": "1847/committed-source-hashes",
+      "disposition": "Retained git cat-file blob hash checks plus physical working bytes/modes; altered clean committed blob still refuses.",
+      "validation": "test_check_only_refuses_altered_clean_committed_source_bytes"
+    },
+    {
+      "id": "1847/missing-fixture-complete-census",
+      "disposition": "Missing/hash/mode/UTF8/nonregular fixtures accumulate with all independent failures.",
+      "validation": "test_check_only_accumulates_missing_and_malformed_sources_with_other_prerequisites; missing manifest/source/maker variants"
+    },
+    {
+      "id": "1847/frozen-maker-eof",
+      "disposition": "Preserved exact frozen bytes/modes per brief; raw diff exit 2 disclosed verbatim; owned diff exits 0.",
+      "validation": "source-manifest.json diffs"
+    },
+    {
+      "id": "1829/private-suites-conf",
+      "disposition": "Retained private empty suites.conf before both unchanged Store.initialize calls; prepare_venue AST identical to base.",
+      "validation": "source-manifest.json AST check; no genuine E2E claim"
+    },
+    {
+      "id": "1816/runner-and-source-bindings",
+      "disposition": "Supported Agent venv runner/build, physical /usr/bin/python3.13 child, complete pinned source tree and private receiving Git service documented.",
+      "validation": "receiving-invocation.md; supported venv symlink control"
+    },
+    {
+      "id": "1822/failed-real-run",
+      "disposition": "No retry or claimed GREEN. Agent sole actual venue after exact final independent PASS; installer1826 remains held.",
+      "validation": "receiving-invocation.md"
+    },
+    {
+      "id": "actual-component/helper-api-false-negative",
+      "disposition": "Inherited literal Store.initialize is absent from the authentic helper; check def initialize( under unchanged authenticated 123bb bytes.",
+      "validation": "test_actual_manifest_helper_and_frozen_makers_pass_readonly_component_checks"
+    },
+    {
+      "id": "actual-component/verifier-markers",
+      "disposition": "Count exact delimiter lines, not quoted END marker references embedded in frozen maker source.",
+      "validation": "test_actual_manifest_helper_and_frozen_makers_pass_readonly_component_checks"
+    },
+    {
+      "id": "1909/uncaught-wheel-role-shape",
+      "disposition": "Explicit role and wheel mapping type checks; no AttributeError path.",
+      "validation": "test_e2e_inventory.py explicit negative and positive controls"
+    },
+    {
+      "id": "1909/uncaught-maker-path-type",
+      "disposition": "Type/canonical-relative validation before any Path join; maker mode/hash/commit also validated.",
+      "validation": "test_e2e_inventory.py explicit negative and positive controls"
+    },
+    {
+      "id": "1909/missing-required-source-roles",
+      "disposition": "Exact four required roles, nonempty required file sets and nonempty authenticated carriers.",
+      "validation": "test_e2e_inventory.py explicit negative and positive controls"
+    },
+    {
+      "id": "1909/ambient-python3-not-censused",
+      "disposition": "Ambient python3 discovery and Python 3.11+/stdlib facts are checked without cache writes.",
+      "validation": "test_e2e_inventory.py explicit negative and positive controls"
+    },
+    {
+      "id": "1909/tmpdir-writability-not-censused",
+      "disposition": "TMPDIR and all creation parents require write/search capability; no probe writes.",
+      "validation": "test_e2e_inventory.py explicit negative and positive controls"
+    }
+  ],
+  "remaining": [
+    "harness final commit SHA pending",
+    "independent exact-final source review",
+    "Agent-only admitted genuine E2E and result review; installer1826 held"
+  ]
+}
