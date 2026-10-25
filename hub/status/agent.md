@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T22:48:49Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
-# agent board, 2026-10-25T22:47Z
+<!-- agent | 2026-10-25T22:53:19Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
+# agent board, 2026-10-25T22:51Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -136,8 +136,8 @@
 | D139 original9 source union | Preserve five exact reviewed donor blobs | Luna | D136b classification and qualified repair | gated:D136b | Author2151; independent2202; App2220 | Five donors/outside union/43 predicates PASS; complete inventory now PASS. Prepared input only; actual nine ERROR retained, no D100 merge. | d133a14838 |
 | D139 disk admission | Complete finite headroom audit | Luna read only | Corrected source evidence | merged | Audit2154; return2205; final2210 PASS | Direct store retirement route is missing; 623MB deficit verified. No cleanup, request or retry. [Review](../../design/agt-OPS-D139-disk-final-review-2210-report.md). | Evidence only |
 | D139 store retirement | Preserve failed local candidate | Luna | Earlier Runtime2235 exclusive | gated:superseded | Author2224; review2232 FAIL | Journal can delete unrelated entry; late KEEP ignored. No installation. Findings sent to Runtime2222; no duplicate return. | 4c396e7c0c held |
-| D139 schema carrier | Preserve exact schema availability boundary | Luna and independent | Runtime supported recipe input | blocked:runtime | Author2214; independent2218 complete | Evidence and installed12 hashes PASS; required portable carrier missing. Old D137 binding works;2153 applicability UNKNOWN. No acquisition or body. | Evidence only |
-| D138 CLI22 service | Qualify exact current-source service recipe | Luna | Independent source review | review | Author2240; reviewer2244 | New private ops-d138-cli22 only; nine isolated controls PASS. Actual22 NOTRUN; source check NOT_READY. | 2111f23d35 |
+| D139 schema carrier | Bind approved exact installed distribution | Runtime Luna and independent | D139a source review and received kit | blocked:runtime | Runtime schema2239; Agent2214/2218 input | D139a allows pinned installed0.0.2 with exact RECORD/authentication. Carrier decision cleared; no new reader or acquisition. | Source pending |
+| D138 CLI22 service | Correct exact current-source service recipe | Luna | First independent findings | doing | Review2244 FAIL; return2251 | Lock/source mismatch and duplicate manifest keys. Normal41ad lock resolves source; private pre-dispatch validation next. Actual22 NOTRUN. | 2111 held |
 | D139 Runtime retirement | Receive guarded ordinary retirement route | Runtime Luna | Source review and installed kit | blocked:runtime | rt-OPS-store-retire-return-2235 | Earlier owner exclusive; review2228 FAIL, one return active. Local security findings2232 delivered; superseded3e163 untouched. | Source pending |
 
 | U4a D139 provenance | Adopt qualified normal Runtime provenance | Luna | Independent receiving source check | merged | Author2239; reviewer2242 PASS | Normal41ad entire tree equals reviewed4fec; normal tools and independent source checks PASS. Canonical15/schema/config/fixtures exact. | 41ad656529 |
@@ -151,14 +151,14 @@ Measurement: service agent-agent-core-full-1025191128-18455 terminal exit1; oper
 
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL independently1405. OriginalTrue d4ba/ab1e still FAIL redo birth; authentic records missing, causal owner UNKNOWN. App actual2136 on finalFPS20db andD10042040 is nine setup ERROR at physical observation; App final boundary inventory remains controlling. No repeat or product release.
 
-Blockers: Runtime D139 — first candidate2212 FAIL; sole census-adapter2238 active after review2228; authenticated source decision owed. Required authenticated closed schema source/carrier is EXACTMISSING; Agent2214 and2218 complete. No sharedvenv copy or403 retry.
+Blockers: Runtime D139a — recorded installed-distribution scope clears carrier decision. Runtime2239 schema and2238 checker join/review/install still owed. Exact pinned RECORD input only; no new reader, source invention or403 retry.
 Blockers: Own-node receiving — afda source and2209 PASS7 retained. Agent2227 finite NOT_READY packet reviewed2232; final factual derivative2240 complete; prior source-tree typo corrected in derivative. Genuine manifest, receipts, origins and central rows missing.
 Blockers: D136b original9 — actual2136 nine setup errors retained. Complete45-boundary inventory final2220 PASS received; evidence wait cleared. Runtime2233/App2231 own internal source traces; no next body.
 Blockers: App D100 — qualified9486 behavior receipt owed before shared105 propagation. Independent2102 source proves applicability and refutes need for separate accepteditem-bearing source. All105 remainopen.
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-grade core, REG0, final P1-P5/fullP2, installed render90, platform, wheel and ZIP owed. Farm old union stopped; D77 waits complete final merged-tuple inputs.
 
-Next ready: U4a normal41ad merged, tree equals reviewed4fec. CLI22 independent2244 active. live 1 / cap 6; ready-undispatched 0. Heavy slot free; Runtime recipe and recorded schema-input decision remain needed.
+Next ready: U4a normal41ad merged; CLI22 firstreturn2251 active after complete2244 findings. live 1 / cap 6; ready-undispatched 0. Heavy slot free; Runtime reviewed recipe/kit and guarded retirement remain needed.
 
 Disk:about5.09GB; child admission5.905GB, stop4GB. Sweep3 removed3 stale tempdirs; compact packed0 scratch/testdirs and gzipped7 logs. Only ended worktree is protected dirtyG2. Superseded3e163 untouched; Runtime guarded route firstreturn2235 exclusive. Local2224 ended FAIL; no duplicate return. All protected targets retained.
 
@@ -166,7 +166,7 @@ H6: Runtime f103 upstream join merged; independent2219 actual1571 PASS consumed,
 
 Later: transcript authority, originalTrue redo and graph child birth await authentic privateboundary records; no speculativeguardwriter or unchangedrepeat. D133 correctedoptionB DEFERRED, Gate3 unchanged/visiblyfailing with existingnotesline; nooptionA review/body. D23/D14 retained. Providercost lacks measured leaf attribution; App owns elementloader/body. D135 finalcut and currentupstreamjoin remain gatedD59. M1archive2915 exists but on/opaque/anchor behaviorUNKNOWN, no unchangedrerun/retirement.
 
-INBOX consumed through1917505 bytes. Lead2246 retirement nudge answered with exact installed-route absence and Runtime2235 source hold; no unsafe or repeated request. Runtime2222 prior retirement claim consumed; local author/reviewer terminal, findings sent2236. Runtime2238 sole maker adapter; carrier EXACTMISSING. No child request.
+INBOX consumed through1926050 bytes. D139a input decision applied; Runtime2239 exclusive. LocalStore2224 already terminal, no fabricated stop receipt; Runtime2235 exclusive. Lead2246 retirement nudge answered with exact installed-route absence and Runtime2235 source hold; no unsafe or repeated request. Runtime2222 prior retirement claim consumed; local author/reviewer terminal, findings sent2236. Runtime2238 sole maker adapter; carrier EXACTMISSING. No child request.
 
 Pass 2026-10-25T21:26Z: PLAN/common/header and latest Runtime21:16, App21:16, Farm21:17 boards consumed. Received f07 exact regular0755. Existing controller2122 is the sole real request; no duplicate. History intake2119 merged normal a6703bba8e with one prior protected review and exact donor blobs; own11 remains unqualified. D138 source2117 ended; protected read-only review2128 dispatched, no live22. Fork overlapping read-only packets handed to existing App return2114 for one cumulative review. Peers2128 report actual home and already-merged c992 receipt; future FPS source preserves it. D130 held unchanged.
 Pass 2026-10-25T21:38Z: independent2132 PASS_EVIDENCE confirms actual child registration/source/receipt and preflight-only failure; no core submission. Exact2132 packet published. Existing frozen schema setting is a concrete supported caller seam; local operational source worker2136 claims it without product/launcher/dependency edits. Runtime2104 own-node recipe remains separate. App final2119 finite fork18 PASS consumed; exact missing records retained as later, no repeated reader/body. D138 source708ba3 merged with protected2128 PASS and behavior unqualified.

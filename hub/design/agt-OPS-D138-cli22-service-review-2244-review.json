@@ -1,0 +1,58 @@
+{
+  "schema": "timeline.agent.ops_d138_cli22_service_review.v1",
+  "task": "agt-OPS-D138-cli22-service-review-2244",
+  "reviewed_recipe_commit": "2111f23d356de971b28947ac0ce01f45e429f6d5",
+  "reviewed_recipe_base": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+  "verdict": "FAIL",
+  "findings": [
+    {
+      "id": "D138-F1",
+      "severity": "blocking",
+      "status": "FAIL",
+      "title": "CLI22 fixture selects the preserved lock Runtime, not the manifest Runtime",
+      "evidence": {
+        "reviewed_agent": "cd63be424d62226e3ee5c26fc5ce03227f5394a5",
+        "reviewed_agent_tree": "e9167d50ce30659772f7ef16912cfea3fd20815c",
+        "reviewed_lock_source": "ab1e4f6141987706132916e2da16477f5a019464",
+        "intended_manifest_runtime": "f103bb46866999c961a8865636f2e66d544e0c9b",
+        "helper_sha256": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f",
+        "test_source_sha256": "8bff12b06be10a5b08597dc6c0bf6566b1ffe409f479a6b7d49ac3285dfb845e"
+      },
+      "cause": "tests/helpers/runtime.py vendored_runtime_commit() reads runtime.lock.json and use_runtime(vendored_runtime_commit()) archives that commit; the migrated test calls it before starting the daemon. The launcher manifest's f103 Runtime path is therefore not the Runtime used by the body.",
+      "control": "source-check reports the exact mixed tuple; no fake receipt or retarget was introduced"
+    },
+    {
+      "id": "D138-F2",
+      "severity": "high",
+      "status": "FAIL",
+      "title": "Supported launcher accepts duplicate manifest keys",
+      "evidence": {
+        "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+        "private_control": "duplicate manifest key reached the fake body with exit 17 and produced a second body-call record",
+        "parser_control": "private manifest parser rejects duplicate keys, but p4-d73-pinned-launch.sh does not"
+      },
+      "cause": "The launcher assigns pin[key] on every key=value line without a seen-key guard; last-write-wins can alter an otherwise rendered tuple.",
+      "control": "malformed manifest is refused before body; duplicate behavior is recorded as a finding"
+    }
+  ],
+  "receiving": {
+    "status": "NOT_READY",
+    "central_row": "not installed",
+    "authentic_manifest": "not received",
+    "real_profile_schema_interpreter_origins": "not received",
+    "per_id_receipts_xml_logs": "NOTRUN",
+    "pytest_collection": "NOTRUN",
+    "exact22_body": "NOTRUN",
+    "full_suite": "NOTRUN",
+    "reason": "The reviewed cd63/ab1e candidate is not admitted, and the shared Agent checkout observed during review had moved to the pending U4a lock-only merge 41ad656529fa8489829de9078b1b6e157c7433c8. That mutable checkout was not silently adopted."
+  },
+  "focused_controls": {
+    "exact22_ast_and_argv": "PASS",
+    "integration_marker": "PASS",
+    "central_test_run_parser": "PASS",
+    "launcher_positive_exit17_one_call": "PASS",
+    "launcher_malformed_refusal": "PASS",
+    "launcher_poisoned_identity_zero_call": "PASS",
+    "per_id_artifacts": "PASS"
+  }
+}

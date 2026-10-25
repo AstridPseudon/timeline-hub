@@ -1,0 +1,69 @@
+{
+  "schema": "timeline.agent.ops_d138_cli22_source_manifest.v1",
+  "recipe": {
+    "commit": "2111f23d356de971b28947ac0ce01f45e429f6d5",
+    "base": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+    "owned_surface": "ops-d138-cli22/"
+  },
+  "reviewed_tuple": {
+    "agent": {
+      "commit": "cd63be424d62226e3ee5c26fc5ce03227f5394a5",
+      "tree": "e9167d50ce30659772f7ef16912cfea3fd20815c",
+      "parents": "cd63be424d62226e3ee5c26fc5ce03227f5394a5 4c4ee35d5687c4cd40a0e5395efda53aa56f939d 0dbfb4e7f05430f7efbb32226d6260e258ad0a93",
+      "origin": "https://github.com/peteromallet/astrid-agent"
+    },
+    "runtime": {
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+      "parents": "f103bb46866999c961a8865636f2e66d544e0c9b cf0b82dd47452a7a34fc63eb233e9b1dc0532806 0bb3bc45cef22bc317398d79e1617da3eb430df2",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
+    },
+    "agent_lock_provenance": {
+      "source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "source_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "lock_sha256": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce",
+      "file_count": 15
+    },
+    "app": {
+      "commit": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+      "tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+      "origin": "https://github.com/banodoco/reigh-app"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "origin": "https://github.com/peteromallet/timeline-composition"
+    }
+  },
+  "source_inputs": {
+    "launcher": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "test_source": "/home/user/work/agent/tests/editing_conformance/test_native_batch_ingress.py",
+    "test_source_sha256": "8bff12b06be10a5b08597dc6c0bf6566b1ffe409f479a6b7d49ac3285dfb845e",
+    "runtime_helper_sha256": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f",
+    "sync_source_sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254",
+    "client_version": "0.2.14",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "protocol": "workspace.v1",
+    "schema_origin": "https://github.com/banodoco/ArtAgents.git@242f9c4306bf3b501222cb041a9eb246ef47bc85#packages/timeline-schema/python"
+  },
+  "historical_caller_inputs": {
+    "original": "2eca9a1da94eb35bb969540e150192ff920ce326",
+    "author_migration": "aa62c1a1726a14d6fb08c73143334c91dfc89663",
+    "protected_review": "aa62c1a1726a14d6fb08c73143334c91dfc89663",
+    "parser_only_retired_test": "excluded from exact22 and unchanged"
+  },
+  "observed_pending_seam": {
+    "u4a_author_commit": "4fec53e0b14aea355e51c96c883fd75eef67a17c",
+    "shared_agent_observed_commit": "41ad656529fa8489829de9078b1b6e157c7433c8",
+    "shared_agent_observed_lock_source": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "admission": "not adopted; reviewed candidate remains cd63 with ab1e lock provenance"
+  },
+  "missing_real_receiving_inputs": [
+    "central named row and request-test receipt",
+    "receipt-rendered key=value manifest with complete tuple and origin fields",
+    "authentic interpreter, schema carrier, profile/node_modules and dependency hashes",
+    "fresh request snapshot, per-ID XML, launcher preflight/body logs and disk witnesses",
+    "actual pytest collection and exact22 body/provider result"
+  ]
+}
