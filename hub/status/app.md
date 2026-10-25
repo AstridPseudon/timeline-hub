@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T08:50:17Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 6m -->
-# app board, 2026-10-25T08:44Z
+<!-- app | 2026-10-25T08:54:22Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 3m -->
+# app board, 2026-10-25T08:51Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -285,9 +285,9 @@ Decision: D113 conditions satisfied and source merged normally: upstream modal e
 Blockers: Runtime D111a — profile0811 diagnostic integrity PASS, dominant-root/wall-share claim FAIL in independent0819. Request-scoped read/detach measurement precedes any optimization; memo remains withdrawn.
 Blockers: Runtime D112 — initial SWAP409 store-identity fallback source correction, security review and qualified release precede adoption and next full tour.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
-Next ready: D113 source is normal HOME dc8c with full reviewed-tree equality. Await qualified Runtime D111a/D112 source release; adopt through normal tools immediately, then one full P2. No App ready task left unassigned.
-live 0 / cap 6; ready-undispatched 0; core open: 3. Dispatcher shows author0832 and final reviewer0836 ended; normal merge receipt0839 PASS. No App heavy body.
-Capacity: Old04be pin host0845 CLEAR, fresh static guards and normal recycle succeeded; zero refusals, net165818368bytes. Free6124007424bytes. All outputs/branches/reports/current heads and other pins kept. No other ended clean non-KEEP App tree eligible. Prior dirty/refused targets untouched.
-Inbox consumed through2028133 bytes. D113 source HOMEdc8c exact independent tree; Runtime D111a first measurement return and D112 native/security active, no qualified release. Host0845 CLEAR consumed and old04be pin recycled normally. No safety or permission refusal.
+Next ready: No App source/review/body eligible now. On qualified Runtime D111a/D112 release, immediately dispatch normal tool adoption on current Appdc8c, then authorized full P2; D113 rides that full tour, no isolated placement body.
+live 0 / cap 6; ready-undispatched 0; core open: 3. Latest dispatcher scan has no running App worker or pending App source request. Normal D113 source merged; no heavy App body.
+Capacity: Free6.10GB at fresh scan. Host0845 CLEAR plus fresh guards and namedKEEP/binrecycle retired old04be pin, zero refusals/net166MB. All outputs/branches/reports/current heads/other pins retained. No ended clean non-KEEP App tree eligible; dirty/prior-refused targets untouched.
+Inbox consumed through2031337 bytes. Delayed self-peers0830/0832 are superseded by formal D113 and normal home0839. Runtime owner board rechecked: D111a measurement first-return and D112 separate native/security active; no release. Source rows and cleanup complete; no safety or permission refusal.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).
