@@ -1,0 +1,21 @@
+{
+  "review_id": "F-D134-result-review-1937",
+  "verdict": "FAIL",
+  "service": {
+    "id": "agent-agent-core-full-1025191128-18455",
+    "target": "integration:agent",
+    "status": "TERMINAL_FAIL",
+    "exit": 1,
+    "preflight_exit": 0,
+    "body_count": 1,
+    "terminal": {"tests_declared": 9469, "passed": 8926, "failed": 190, "errors": 180, "skipped": 0, "warnings": 86, "subtests_passed": 173, "xml_testcase_elements": 9296},
+    "xml_sha256_claimed": "f5759f48e82d209051611736d15ea625c84fdaebb210d9a5f23b046b84c0abf3",
+    "xml_available": false,
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e"
+  },
+  "packet": {"commit": "abf555e3638955ae90f796815fd66ed6d6e95e91", "tree": "2b46e9b653479acc9d77029ac552e2c88743b7a4", "immutable": true, "no_ship_custody_release_retirement_credit": true},
+  "controls": {"preflight": 0, "body_runs": 1, "roots": 22, "xdist": 3, "addopts": "", "no_cache": true, "timeout": 45, "historical_29996": "exit126_no_body", "actual_18455": "sole_full_body"},
+  "scopes": {"source": "PASS_DECLARED_BINDING", "custody": "NOT_PASS", "behavior": "INCOMPLETE_XML_CORE_REG_UNKNOWN"},
+  "classification": {"bad_ids": 370, "failed": 190, "errors": 180, "ours_new_file": 344, "approved_reg14": 14, "unknown": 12, "preexisting": 0, "environment": 0, "retirement": 0, "core_open_n": "UNKNOWN", "reg_open_n": "UNKNOWN", "reg14_closed": false},
+  "missing": ["actual_xml", "raw_runner_receipt", "start_stop_disk_witness", "xml_duplicate_collection_subtest_parse"]
+}

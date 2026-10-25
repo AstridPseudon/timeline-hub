@@ -1,0 +1,10 @@
+{
+  "review_id": "F-D134-result-review-1937",
+  "terminal": {"tests_declared": 9469, "passed": 8926, "failed": 190, "errors": 180, "skipped": 0, "warnings": 86, "subtests_passed": 173, "xml_testcase_elements": 9296},
+  "durable_log": {"failed": 190, "errors": 180, "unique_bad_ids": 370, "duplicates": 0, "summary_matches": true},
+  "baseline_30693": {"sha256": "483e5c13c3443147488da436acc49d0c0f322f7e4d3f020fbd656a548459139c", "nodes": 9273, "pairs": {"error/error": 180, "failed/error": 36, "failed/failed": 111, "failed/passed": 43}},
+  "upstream_9244377": {"sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f", "nodes": 12517, "pairs": {"failed/failed": 16, "failed/passed": 2, "error/missing": 180, "failed/missing": 172}},
+  "actual_xml": "UNKNOWN_UNAVAILABLE",
+  "core_open_n": "UNKNOWN",
+  "reg_open_n": "UNKNOWN"
+}

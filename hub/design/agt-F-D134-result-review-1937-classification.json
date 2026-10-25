@@ -1,0 +1,11 @@
+{
+  "review_id": "F-D134-result-review-1937",
+  "rules": {"absent_at_08e6": "OURS_NEW_FILE", "present_without_exact_pristine": "UNKNOWN", "status_match_not_causal": true},
+  "counts": {"OURS_NEW_FILE": 344, "APPROVED_NONCORE_REG14": 14, "UNKNOWN": 12},
+  "scope_counts": {"noncore": 14, "UNKNOWN": 356},
+  "retirement": 0,
+  "core_open_n": "UNKNOWN",
+  "reg_open_n": "UNKNOWN",
+  "reg14": {"count": 14, "closed": false, "current_statuses": {"failed": 14}, "ids_in_per_id_tsv": true},
+  "source_tip": {"commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c", "current_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186", "present": 26, "absent": 344, "all_current_blobs": true}
+}
