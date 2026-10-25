@@ -1,0 +1,7 @@
+bash_n=0
+positive_exit=17
+positive_calls=1
+poison_exit=1
+poison_calls=0
+missinginput_exit=2
+missinginput_calls=0

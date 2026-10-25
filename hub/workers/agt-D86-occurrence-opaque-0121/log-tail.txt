@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:365:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[args-replacement0]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:366:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[args-replacement1]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:367:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[select-parent/clip:substitute]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:368:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[version-2]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:369:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[expect-replacement4]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:370:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[reads-replacement5]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:371:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[selections-replacement6]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:372:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[bindings-replacement7]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:373:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[created-replacement8]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:374:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[authorship-replacement9]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:375:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[intent-replacement10]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:376:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[rationale-requester changed reason]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:377:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[group_id-another-group]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:378:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[resolved-replacement13]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:379:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_value_and_capture_mutations[op-track.create]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:380:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[command-order]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:381:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[read-order]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:382:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[extra-command]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:383:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[missing-command]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:384:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[reason]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:385:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[missing-reason]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:386:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[null-reason]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:387:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[extra-null]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:388:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[missing-field]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:389:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[pin-id]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:390:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[pin-extra]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:391:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[target]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:392:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[digest]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:393:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[proposal-copy]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:394:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[serialized-proposal]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:395:tests.editing_conformance.test_settled_proposal_contract::test_node_forwarding_refuses_order_presence_pin_and_copy_mutations[raw-json]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:396:tests.editing_conformance.test_settled_proposal_contract::test_tampered_artifact_refuses_original_pin[False-False]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:397:tests.editing_conformance.test_settled_proposal_contract::test_tampered_artifact_refuses_original_pin[True-False]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:398:tests.editing_conformance.test_settled_proposal_contract::test_tampered_artifact_refuses_original_pin[True-True]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:399:tests.editing_conformance.test_timing_retained_inputs::test_accepted_rebase_has_exact_document_but_no_reconstructible_word_choice	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:400:tests.editing_conformance.test_timing_retained_inputs::test_reselecting_ordinal_after_real_rebase_silently_changes_raw_source_clip[True]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:401:tests.editing_conformance.test_occurrence_media_manifest_inverse::test_compiled_popup_inverse_restores_exact_original_document[add]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:402:tests.editing_conformance.test_occurrence_media_manifest_inverse::test_compiled_popup_inverse_restores_exact_original_document[swap]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:403:tests.editing_conformance.test_word_binding_recipe::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-False]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:404:tests.editing_conformance.test_occurrence_media_manifest_inverse::test_multiple_target_pin_changes_use_reverse_publication_order[add-create-undo]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:405:tests.editing_conformance.test_occurrence_media_manifest_inverse::test_multiple_target_pin_changes_use_reverse_publication_order[add-undo-redo]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:406:tests.editing_conformance.test_word_binding_recipe::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-True]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:407:tests.editing_conformance.test_occurrence_media_manifest_inverse::test_multiple_target_pin_changes_use_reverse_publication_order[swap-create-undo]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:408:tests.editing_conformance.test_occurrence_media_manifest_inverse::test_multiple_target_pin_changes_use_reverse_publication_order[swap-undo-redo]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:409:tests.editing_conformance.test_word_binding_recipe::test_follow_rebases_original_choice_after_source_move_and_reorder[True]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:410:tests.editing_conformance.test_word_binding_recipe::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:411:tests.editing_conformance.test_word_binding_recipe::test_last_write_clear_undo_restore_and_restore_inverse	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:412:tests.editing_conformance.test_word_binding_recipe::test_raw_canonical_bundle_compiles_in_fresh_process_without_history	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:413:tests.editing_conformance.test_word_binding_recipe::test_on_until_clear_preserves_other_reference_and_opaque_fields	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:414:tests.editing_conformance.test_word_binding_recipe::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:415:tests.editing_conformance.test_word_binding_recipe::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:416:tests.editing_conformance.test_owned_move_publish_runtime::test_http_original_sdk_move_publish_disjoint_rebase_reload_undo	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:417:tests.editing_conformance.test_owned_move_publish_runtime::test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:418:tests.editing_conformance.test_owned_move_publish_runtime::test_http_original_sdk_parent_transition_clear_lost_ack_reload_retry_undo	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:419:tests.editing_conformance.test_owned_move_publish_runtime::test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:420:tests.editing_conformance.test_owned_move_publish_runtime::test_http_original_sdk_parent_split_stale_rebase_lost_ack_reload_retry_undo	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:421:tests.sdk.test_scene_real_public_summary_rle::test_real_public_scene_answers_reach_rle_summary	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:422:tests.editing_conformance.test_owned_move_publish_runtime::test_http_original_sdk_parent_delete_stale_rebase_lost_ack_reload_retry_undo	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:423:tests.editing_conformance.test_owned_move_publish_runtime::test_http_ambiguous_owner_and_mixed_edits_keep_original_draft	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:425:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[None]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:426:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[physical_ref]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:427:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[owners]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:428:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[revision_id]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:429:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[content_digest]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:430:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[path]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:431:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[base_revision_id]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:432:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[base_publication_id]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:433:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[evaluated_head]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:434:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[step_id]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:435:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[command_ordinal]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:436:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[phase]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:437:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[boundary_extra]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:438:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[boundary_missing]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:439:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[missing_image]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:440:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[extra_image]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:441:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[stripped_image]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:442:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[source]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:443:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[element]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:444:tests.sdk.test_selected_param_neutral_stage::test_mounted_param_custody_refuses_corruption_atomically[object]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:445:tests.sdk.test_timeline_capture_projection::test_real_saved_projection_config_registry_and_full_pins_golden	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:446:tests.sdk.test_timeline_capture_projection::test_real_saved_entire_expansion_golden	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:447:tests.sdk.test_timeline_capture_projection::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:448:tests.sdk.test_timeline_capture_projection::test_real_candidate_matches_sdk_opener_exactly[parent]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:449:tests.sdk.test_timeline_capture_projection::test_real_candidate_matches_sdk_opener_exactly[child]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:450:tests.sdk.test_timeline_capture_projection::test_real_candidate_matches_sdk_opener_exactly[new_shot]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:451:tests.sdk.test_timeline_capture_projection::test_real_candidate_matches_sdk_opener_exactly[duplicate]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:452:tests.sdk.test_timeline_capture_projection::test_real_candidate_matches_sdk_opener_exactly[remove]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:453:tests.sdk.test_timeline_capture_projection::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:454:tests.editing_conformance.test_prepared_video_birth::test_prepared_video_public_preview_accept_retry_undo_and_no_write	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:455:tests.editing_conformance.test_producer_insertion::test_settled_assembly_normalization_numeric_forwarding_and_normal_outbox	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:456:tests.sdk.test_timeline_clip_scalar_provider::test_original_app_fields_provider_reload_exact_inverse_redo_and_disjoint_rebase	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:457:tests.sdk.test_timeline_clip_scalar_provider::test_provider_unchanged_publication_and_aba_refuse_old_inverse[True-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:458:tests.sdk.test_timeline_clip_scalar_provider::test_move_then_hold_accepts_original_capture_and_generic_inverse_stages[False-occurrence:f2-occurrence/clip:f2-agent-clip-4]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:459:tests.sdk.test_timeline_clip_scalar_provider::test_move_then_hold_accepts_original_capture_and_generic_inverse_stages[True-occurrence:f2-occurrence/clip:f2-agent-clip-4]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:460:tests.sdk.test_timeline_commit_graph_roots::test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:461:tests.sdk.test_timeline_commit_provider::test_restore_undo_redo_exact_full_closure_and_unknown_fields	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:462:tests.sdk.test_timeline_commit_provider_add_delete_runtime::test_native_add_delete_one_publication_inverse_redo_restart_reservations[net-zero]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:463:tests.sdk.test_timeline_commit_provider_add_delete_runtime::test_native_add_delete_one_publication_inverse_redo_restart_reservations[replace-existing]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:464:tests.sdk.test_timeline_commit_provider_scalar::test_committed_move_then_parent_label_and_occurrence_params_reload_undo_redo	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:465:tests.sdk.test_timeline_commit_provider_scalar::test_occurrence_scalar_inverse_restores_fields_and_redo_after_accepted_reload	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:466:tests.sdk.test_timeline_commit_provider_scalar::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:467:tests.sdk.test_timeline_numeric_revision_runtime::test_native_params_exact_values_history_reload_retry_and_inverse[2-2.0]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:468:tests.sdk.test_timeline_numeric_revision_runtime::test_native_params_exact_values_history_reload_retry_and_inverse[1-True]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:469:tests.sdk.test_timeline_numeric_revision_runtime::test_native_params_exact_values_history_reload_retry_and_inverse[True-1]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:470:tests.sdk.test_timeline_numeric_revision_runtime::test_native_params_exact_values_history_reload_retry_and_inverse[2-2]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:471:tests.sdk.test_timeline_numeric_revision_runtime::test_native_params_exact_values_history_reload_retry_and_inverse[2.0-2.0]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:472:tests.sdk.test_timeline_numeric_revision_runtime::test_native_params_exact_values_history_reload_retry_and_inverse[True-True]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:473:tests.sdk.test_timeline_numeric_revision_runtime::test_native_original_value_guards_keep_numeric_equivalence_and_bool_distinction[2-2.0-True]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:474:tests.sdk.test_timeline_numeric_revision_runtime::test_native_original_value_guards_keep_numeric_equivalence_and_bool_distinction[1-True-False]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:475:tests.sdk.test_timeline_numeric_revision_runtime::test_native_original_value_guards_keep_numeric_equivalence_and_bool_distinction[True-1-False]	error	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:476:tests.sdk.test_host_bootstrap_source_identity::test_bootstrap_passes_inventory_identity_and_restarts_on_change	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:477:tests.sdk.test_host_bootstrap_source_identity::test_bootstrap_stops_on_correlated_terminal_registration_failure	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-classification.tsv:478:tests.sdk.test_host_bootstrap_source_identity::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]	failed	core	uncertain cause	D54a classification boundary; no retained exact decision for this current node	current JUnit outcome alone does not prove regression, pre-existing cause, environment, dead scope, or deferral
+
+exec
+/bin/bash -lc "sed -n '1,220p' Makefile; sed -n '1,260p' scripts/reshape/compare_ruff_baseline.py; sed -n '1,260p' scripts/reshape/compare_mypy_baseline.py; sed -n '1,180p' pyproject.toml | tail -60" in /home/user/work/wt/agt-D86-occurrence-opaque-0121
+ succeeded in 0ms:
+# Astrid local gate — run before pushing to catch CI/deploy failures locally.
+#
+#   make check   blocking pre-deploy gates, including renderer parity + Remotion typecheck
+#   make ci      check + editable import + wheel-install smoke + the default pytest lane — minutes
+#
+# `make check` green ≈ the CI "Python quality gates" deploy job will pass its fast gates.
+# These run the SAME scripts CI runs (see .github/workflows/ci.yml), so they stay in lockstep.
+
+PY ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
+
+.PHONY: help test check ci preflight structure doc-refs doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity wheel editable lock-build lock-runtime lock-proof lock-validate toolchain-record
+
+help:
+	@echo "make check   - blocking gates: structure, doc-refs, doctor, ruff, mypy, cycles, Remotion, renderer parity"
+	@echo "make ci      - check + editable + wheel-install smoke + default pytest lane (minutes)"
+	@echo "make lock-runtime / lock-build / lock-proof - refresh universal SHA-256 dependency locks with uv"
+	@echo "make lock-validate - validate exact pins, hashes, and direct dependency coverage"
+	@echo "make <gate>  - run one gate: structure | doctor | ruff | mypy | cycles | remotion-install | remotion-typecheck | renderer-parity | wheel | editable"
+	@echo "make preflight - verify Python, Node, ffmpeg, and locked Remotion prerequisites"
+
+# --- Fast gates: catch the common deploy blockers in seconds. Run before every push. ---
+check: preflight structure doc-refs doctor ruff mypy cycles remotion-typecheck renderer-parity
+	@echo "✅ make check: blocking pre-deploy gates passed"
+
+preflight:
+	@$(PY) -c "import importlib.util, sys; required=('pytest','pytest_cov','pytest_timeout','mypy','ruff','build','banodoco_timeline_schema'); missing=[name for name in required if importlib.util.find_spec(name) is None]; problems=[]; sys.version_info < (3,11) and problems.append('Python >=3.11 is required (found %s)' % sys.version.split()[0]); missing and problems.append('missing Python modules: %s (run %s -m pip install -e \'.[dev]\')' % (', '.join(missing), sys.executable)); problems and sys.exit('PREFLIGHT FAILED: ' + '; '.join(problems))"
+	@for tool in ffmpeg ffprobe node npm; do \
+		if ! command -v "$$tool" >/dev/null 2>&1; then \
+			echo "PREFLIGHT FAILED: '$$tool' is required; install it and retry (macOS: brew install ffmpeg node)" >&2; \
+			exit 1; \
+		fi; \
+	done
+	@if [ ! -d remotion/node_modules ]; then \
+		echo "PREFLIGHT FAILED: remotion/node_modules is absent; run 'cd remotion && npm ci' and retry" >&2; \
+		exit 1; \
+	fi
+	@echo "✓ local gate preflight ($(PY))"
+
+structure:
+	@$(PY) -m scripts.reshape.compare_structure_baseline
+	@echo "✓ repo structure: no violation beyond the shrink-only baseline"
+
+doc-refs:
+	@$(PY) scripts/reshape/check_doc_references.py
+	@echo "✓ doc-refs (agent docs match the registry, gateway parser, and generated catalog)"
+
+doctor:
+	@$(PY) scripts/reshape/ci_doctor.py
+	@echo "✓ doctor (deploy health gate)"
+
+ruff:
+	@$(PY) -m scripts.reshape.compare_ruff_baseline
+	@echo "✓ ruff baseline (no lint regression)"
+
+mypy:
+	@$(PY) -m scripts.reshape.compare_mypy_baseline
+	@echo "✓ mypy baseline (no type regression)"
+
+cycles:
+	@$(PY) -m scripts.reshape.import_cycles --baseline scripts/reshape/baselines/import_cycles.json
+	@echo "✓ import cycles (no new cross-package cycle)"
+
+remotion-install:
+	@$(PY) scripts/reshape/remotion_gate.py install
+
+remotion-typecheck:
+	@$(PY) scripts/reshape/remotion_gate.py typecheck
+
+renderer-parity:
+	@$(PY) scripts/reshape/remotion_gate.py parity
+
+# --- Slow local gates (adds the wheel-install smoke). Run before a release / when in doubt. ---
+ci: check editable wheel test
+	@echo "✅ make ci: check + editable + wheel-install + default test lane passed"
+
+test:
+	@$(PY) -m pytest -q
+
+editable:
+	@$(PY) -c "import astrid; print('✓ editable install imports')"
+
+wheel:
+	PYTHON_BIN="$(PY)" bash scripts/smoke_wheel_install.sh
+
+lock-build:
+	uv pip compile requirements/build.in --universal --python-version 3.11 --generate-hashes --no-annotate --custom-compile-command 'make lock-build' --output-file requirements/build.lock
+
+lock-runtime:
+	uv pip compile pyproject.toml --universal --python-version 3.11 --generate-hashes --no-annotate --custom-compile-command 'make lock-runtime' --output-file requirements/runtime.lock
+
+lock-proof:
+	uv pip compile requirements/proof.in --universal --python-version 3.11 --generate-hashes --no-annotate --custom-compile-command 'make lock-proof' --output-file requirements/proof.lock
+
+lock-validate:
+	@$(PY) -c "from scripts.reshape.release_reproducibility import validate_dependency_locks; validate_dependency_locks(); print('✓ hashed dependency locks')"
+
+toolchain-record:
+	@$(PY) -m scripts.reshape.release_reproducibility --output out/release-toolchain.json >/dev/null
+	@echo "✓ release toolchain recorded in out/release-toolchain.json"
+from __future__ import annotations
+
+import collections
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+from scripts.reshape import count_baseline
+
+BASELINE_PATH = Path("scripts/reshape/baselines/ruff_astrid.json")
+COMMAND = [
+    sys.executable,
+    "-m",
+    "ruff",
+    "check",
+    ".",
+    "--output-format",
+    "json",
+]
+
+
+def _run() -> dict[str, Any]:
+    try:
+        proc = subprocess.run(COMMAND, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        raise RuntimeError(f"ruff failed to execute: {exc}") from exc
+    if proc.returncode not in (0, 1):
+        detail = (proc.stderr or proc.stdout).strip() or "no diagnostic output"
+        raise RuntimeError(f"ruff failed to execute (exit {proc.returncode}): {detail}")
+    try:
+        findings = json.loads(proc.stdout or "[]")
+    except json.JSONDecodeError as exc:
+        detail = (proc.stderr or proc.stdout).strip() or "invalid JSON output"
+        raise RuntimeError(f"ruff failed to execute: {detail}") from exc
+    if not isinstance(findings, list):
+        raise RuntimeError("ruff failed to execute: expected a JSON findings list")
+    if proc.returncode == 1 and not findings:
+        detail = (proc.stderr or proc.stdout).strip() or "no diagnostic output"
+        raise RuntimeError(f"ruff failed to execute (exit 1): {detail}")
+    return {
+        "tool": "ruff",
+        "scope": ["pyproject.toml [tool.ruff].include"],
+        "command": COMMAND,
+        "finding_count": len(findings),
+        "code_counts": dict(collections.Counter(item["code"] for item in findings)),
+    }
+
+
+def main() -> int:
+    return count_baseline.main("Ruff", BASELINE_PATH, _run)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+from __future__ import annotations
+
+import collections
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+from scripts.reshape import count_baseline
+
+BASELINE_PATH = Path("scripts/reshape/baselines/mypy_astrid.json")
+COMMAND = [
+    sys.executable,
+    "-m",
+    "mypy",
+    "astrid",
+    "scripts/reshape",
+    "--hide-error-context",
+    "--no-color-output",
+    "--no-pretty",
+    "--show-error-codes",
+]
+ERROR_RE = re.compile(r"^(.*?):(\d+):(?:(\d+):)? error: (.*?)\s+\[(.*?)\]$")
+
+
+def _run() -> dict[str, Any]:
+    try:
+        proc = subprocess.run(COMMAND, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        raise RuntimeError(f"mypy failed to execute: {exc}") from exc
+    findings = []
+    for line in (proc.stdout.splitlines() + proc.stderr.splitlines()):
+        match = ERROR_RE.match(line)
+        if not match:
+            continue
+        findings.append(
+            {
+                "path": match.group(1),
+                "line": int(match.group(2)),
+                "column": int(match.group(3) or 0),
+                "message": match.group(4),
+                "code": match.group(5),
+            }
+        )
+    if proc.returncode not in (0, 1) or (proc.returncode == 1 and not findings):
+        detail = (proc.stderr or proc.stdout).strip() or "no diagnostic output"
+        raise RuntimeError(f"mypy failed to execute (exit {proc.returncode}): {detail}")
+    return {
+        "tool": "mypy",
+        "scope": COMMAND[3:5],
+        "command": COMMAND,
+        "finding_count": len(findings),
+        "code_counts": dict(
+            sorted(collections.Counter(item["code"] for item in findings).items())
+        ),
+    }
+
+
+def main() -> int:
+    return count_baseline.main("Mypy", BASELINE_PATH, _run)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+    "core/**/*.sql",
+    "core/**/*.yaml",
+    "core/rendering/fixtures/renderer_parity/*",
+    "core/rendering/schemas/v1/*.json",
+
+    # The named OMP profile is a runtime resource, not a user-home seed.
+    "agent_profiles/*.md",
+    "omp_extensions/*.ts",
+    # Native build pins for explicitly selected OMP fork sources.
+    "installer/omp/*.json",
+
+    # Installed service declarations launch this prebuilt Bun bundle. Ship its
+    # local-only configuration and third-party notices alongside it.
+    "chat/service.mjs",
+    "chat/astrid-acp-local-only.yml",
+    "chat/THIRD_PARTY_LICENSES.txt",
+
+    # Capability manifests, runtime data, and agent-facing pack guidance.
+    # V3 docs, action guides, and declared requirements are release inputs;
+    # golden logs and other authoring-only material remain excluded below.
+    "packs/**/pack.yaml",
+    "tools/*.json",
+    # Agent-facing pack skills are shipped with the product.  They are
+    # discovered from the installed package on a fresh machine, so they
+    # cannot remain authoring-only source files.
+    "packs/**/skill/*",
+    "packs/**/skill/**/*",
+    "packs/**/docs/*",
+    "packs/**/docs/**/*",
+    "packs/**/actions/**/*.md",
+    "packs/**/actions/**/*.txt",
+    "packs/**/requirements.txt",
+    "packs/**/requirements.windows-nvidia.txt",
+    "packs/**/rendering/**/*.md",
+    "packs/**/AGENTS.md",
+    "packs/**/README.md",
+    "packs/**/*.yaml",
+    "packs/**/*.json",
+    # Runtime mask resources used by the packaged LanPaint compiler.
+    "packs/h3_av/workflows/lanpaint_h3_av_generalized/mask_full_frame.png",
+    "packs/h3_av/workflows/lanpaint_h3_av_generalized/mask_preserve.png",
+    # The accepted V3 local pack declares these seven ignored release assets
+    # beneath its rendering root; keep the allow-list narrow and explicit.
+    "packs/local/rendering/elements/effects/frame-overlay/assets/frame.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4.png",
+    "packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png",
+    # Additional resources are declared by the V3 pack manifests/elements;
+    # keep these exact directories/files narrow so no unrelated media enters
+    # the wheel.
+    "packs/astrid_motion/preview/render.mjs",
+    "packs/blender/server/blender-render-api.service",
+    "packs/rendering/actions/timeline_visualize/motion/element_motion.mjs",
+    "packs/local/rendering/elements/effects/end-codex-transform/assets/*.png",
+    "packs/local/rendering/elements/effects/end-codex-transform/assets/plate.mp4",
+    "packs/local/rendering/elements/effects/end-mid-combined/assets/*.png",
+    "packs/local/rendering/elements/effects/end-minimax-animate/assets/*.png",
+
+codex
+The transitive source is also exact: all imported Agent helpers match the authenticated pin, and the Runtime helper fixtures match released `a3cd1a32…`; the current Runtime `766fd670…` differs from release only in the two stated capture-test files. The old failures are product/runtime-route or harness-generation issues (`status` assertion, retired route, guarded inverse), not a justified change to these tests. I’m running only the permitted static checks now—AST/in-memory compile, scoped Ruff, and repository baseline Ruff/mypy comparisons—without pytest, collection, fixture, service, or function execution.

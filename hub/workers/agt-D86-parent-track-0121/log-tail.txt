@@ -1,0 +1,400 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6501:tests.sdk.test_p1_doc_patch_requests::test_same_field_refusal_uses_real_base_and_labels_constructed_head	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6508:tests.sdk.test_timeline_selection::test_chapter_without_labels_is_the_shot_and_an_unknown_chapter_lists_the_chapters	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6591:tests.sdk.test_timeline_sheet_native::test_detached_static_type_string_uses_retained_native_params_command[font-label]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6616:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[""-absent]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6617:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[""-None]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6618:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[""-]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6619:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[""-Old]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6620:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[""-clear]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6621:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[clear-absent]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6622:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[clear-None]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6623:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[clear-]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6624:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[clear-Old]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6625:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear[clear-clear]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6626:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear["clear"-absent]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6627:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear["clear"-None]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6628:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear["clear"-]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6629:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear["clear"-Old]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6630:tests.sdk.test_timeline_sheet_native::test_label_clear_is_distinct_from_empty_and_literal_clear["clear"-clear]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6631:tests.sdk.test_timeline_sheet_native::test_label_json_text_round_trips_without_comment_truncation[say " # keep]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6632:tests.sdk.test_timeline_sheet_native::test_label_json_text_round_trips_without_comment_truncation[path\\" # keep]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6633:tests.sdk.test_timeline_sheet_native::test_label_json_text_round_trips_without_comment_truncation[caf\xe9]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6634:tests.sdk.test_timeline_sheet_native::test_label_json_text_round_trips_without_comment_truncation[line\nnew]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6635:tests.sdk.test_timeline_sheet_native::test_label_json_text_round_trips_without_comment_truncation[clear]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6694:tests.sdk.test_timeline_structure::test_one_shot_keeps_every_time_and_labels_the_chapters	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6777:tests.sdk.test_timeline_cuts::test_summary_of_a_film_with_several_shots_lists_the_shots_as_chapters_and_ignores_labels	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6820:tests.sdk.test_timeline_filmstrip::test_auto_selected_current_render_has_distinct_provenance_label	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6828:tests.sdk.test_timeline_filmstrip::test_exact_unpublished_candidate_is_admitted_and_labelled_truthfully	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6863:tests.sdk.test_timeline_filmstrip::test_authored_review_context_never_infers_shot_labels	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6930:tests.sdk.test_timeline_sync_native::test_native_lost_ack_retry_precedes_original_suffix_with_fresh_key[label]	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6961:tests.sdk.test_timeline_transaction::test_the_undo_label_joins_the_labels_of_the_edits_in_the_save	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6979:tests.sdk.test_timeline_restructure::test_flatten_takes_the_films_track_definition_when_a_shot_copy_has_another_label	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6991:tests.sdk.test_timeline_restructure::test_a_one_shot_film_still_uses_its_labels	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:6992:tests.sdk.test_timeline_restructure::test_restructure_drops_the_label_list_after_cutting	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:7200:tests.timeline.test_authoring_bundle::test_frozen_candidate_projects_to_labelled_managed_render_without_publication	passed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-outcomes.tsv:7227:tests.timeline.test_authoring_diff_format::test_readable_reorder_locator_is_labeled_as_order	passed
+--- exact selectors in XML ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25552-&gt;           raise public_failure(exc.failure) from exc
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25553-E           runtime_protocol.errors.RuntimeErrorBase: provider executed a different command
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25554-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml:25555:../runtime/runtime_protocol/service.py:2504: RuntimeErrorBase</failure></testcase><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-fallback-home-video]" time="0.153" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-fallback-overlay-image]" time="0.108" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-fallback-overlay-video]" time="0.170" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-lane-end-image]" time="0.196" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-lane-end-video]" time="0.109" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-append-home-image]" time="0.207" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-append-home-video]" time="0.136" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-append-overlay-image]" time="0.101" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-append-overlay-video]" time="0.101" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-explicit-image]" time="0.113" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-explicit-video]" time="0.138" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-anchor-home-image]" time="0.165" /><testcase classname="tests.editing_conformance.test_commit_runtime_parent_track_batch_inverse" name="test_grouped_parent_track_create_move_reload_undo_redo" time="0.113"><error message="failed on setup with &quot;runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline&quot;">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3/popen-gw1/test_grouped_parent_track_crea0')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25556-monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe4b26b2890&gt;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25557-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25558-    @pytest.fixture
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25608-        )
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25609-E       runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25610-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml:25611:../runtime/runtime_protocol/service.py:1654: RetiredRouteError</error></testcase><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-anchor-home-video]" time="0.141" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-anchor-overlay-image]" time="0.163" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-anchor-overlay-video]" time="0.142" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-fallback-home-image]" time="0.113" /><testcase classname="tests.editing_conformance.test_commit_runtime_parent_track_label" name="test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move" time="0.162"><error message="failed on setup with &quot;runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline&quot;">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3/popen-gw1/test_move_then_parent_label_re0')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25612-monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe4b269c9f0&gt;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25613-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25614-    @pytest.fixture
+--
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25664-        )
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25665-E       runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25666-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml:25667:../runtime/runtime_protocol/service.py:1654: RetiredRouteError</error></testcase><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-fallback-home-video]" time="0.083" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-fallback-overlay-image]" time="0.074" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-fallback-overlay-video]" time="0.074" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-lane-end-image]" time="0.106" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-lane-end-video]" time="0.170" /><testcase classname="tests.editing_conformance.test_commit_runtime_parent_track_label" name="test_native_label_cli_lost_ack_then_python_suffix_keeps_original_claims" time="0.101"><error message="failed on setup with &quot;runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline&quot;">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3/popen-gw1/test_native_label_cli_lost_ack0')
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25668-monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe4b264c2f0&gt;
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25669-
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml-25670-    @pytest.fixture
+
+exec
+/bin/bash -lc "git log --all --format='%H %s' -- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py | head -20 && printf '\\n--- parent-auto current from likely commit ---\\n' && c="'$(git log --all --format='"'%H' -- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py | head -1); test -n \""'$c" && git show "$c:tests/editing_conformance/test_commit_runtime_parent_auto_completion.py" | sed -n '"'1,180p' && printf '\\n--- rehearsal exact setup traceback windows ---\\n' && sed -n '25540,25685p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml" in /home/user/work/wt/agt-D86-parent-track-0121
+ succeeded in 497ms:
+cf0251d0b23cf55d90858f78c48192922d316115 test(timeline): F-D86 D86-parent-auto fixture migration
+ba21beffd177e7d80a5b839bde5a9e25b97235c2 feat(timeline): stage ordinary 6ba source on Main-current
+06aadccd3e3b59f56cca3942695dfbe4c60e374e feat(timeline): forward ordinary014 onto current integration
+c9b9e279f3677d47a9b4a98aabc69e47118ff06f feat(timeline): stage current ordinary014 consumer
+ce3e647f10f6b7950de19e4219da6d55af4d3939 feat(timeline): prepare complete next ordinary command union
+0937d6fd867c13ec55691966a830a708fdd3b0d3 fix(timeline): guard parent automatic media completion
+
+--- parent-auto current from likely commit ---
+"""Parent automatic completion through the normally generated whole private S3 pair.
+
+In-process Runtime only: native creation, real managed outputs, current provider,
+normal validation, reload and guarded history. No legacy baseline publication.
+"""
+from __future__ import annotations
+
+import copy
+
+import pytest
+
+from astrid.sdk.timeline import commands
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
+from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.native_auto_placement import auto_place_completion
+from tests.editing_conformance import test_commit_runtime_parent_media as parent
+from tests.editing_conformance.test_next_command_cohort_runtime import reopen
+
+pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(params=['image', 'video'])
+def editing(request, tmp_path, monkeypatch):
+    realm = parent.media_realm(tmp_path, monkeypatch, request.param, historical=False, pristine=True)
+    try:
+        editing = next(realm)
+        from astrid.sdk.timeline.emitter import emit_document_commands
+
+        before = bundle_from_document(parent.current(editing))
+        after = copy.deepcopy(before)
+        after['parent']['config']['tracks'].append({
+            'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False],
+        })
+        commands_to_apply = emit_document_commands(before, after)
+        request_body = parent.body(editing, commands_to_apply)
+        request_body.update(
+            label='parent auto fixture', merge='atomic', reads=[],
+            rationale='Parent auto fixture bootstrap', group_id='parent-auto-fixture',
+            steps=[{
+                'id': 'parent-auto-fixture', 'label': 'parent auto fixture',
+                'intent': 'Prepare parent auto fixture', 'tags': ['integration'],
+                'command_ordinals': list(range(len(commands_to_apply))),
+                'patch': [change for command in commands_to_apply
+                          for change in command['args']['changes']],
+                'reads': [],
+            }],
+        )
+        parent.commit(editing, request_body, 'parent-auto-fixture')
+        yield editing
+    finally:
+        realm.close()
+
+
+def completion(editing, policy):
+    # A normal dry-run obtains the exact detached VerifiedMedia facts from Runtime.
+    parent.commit(editing, parent.body(editing, [parent.birth(editing)], dry_run=True), 'media-preview')
+    original = bundle_from_document(parent.current(editing))
+    result = auto_place_completion(original, 'parent', 'completed', editing.pins['new'],
+                                   ownership='parent', track='visual', verified_media=editing.selected,
+                                   **policy)
+    return parent.body(editing, result['commands']), result['capture']
+
+
+def anchor(editing):
+    value = parent.row(editing, 'anchor', asset='anchor-source')
+    value.update(at=8, hold=2.5)
+    if editing.kind == 'video':
+        value.update({'from': 0, 'to': 2.5, 'speed': 1})
+    parent.commit(editing, parent.body(editing, [parent.birth(editing, value, editing.pins['old'])]), 'anchor')
+
+
+def guards(monkeypatch):
+    from runtime_protocol.service import RuntimeService
+
+    def unavailable(*args, **kwargs):
+        pytest.fail('completion used legacy publication or renderer')
+
+    for name in ('publish_parent_composition', 'publish_timeline_render', 'update_timeline',
+                 'replace_timeline_clip', 'replace_parent_composition_media'):
+        if hasattr(RuntimeService, name):
+            monkeypatch.setattr(RuntimeService, name, unavailable)
+    import runtime_protocol.service as service_module
+    import runtime_protocol.visual_seam as visual_seam
+    monkeypatch.setattr(service_module, 'evaluate_closure', unavailable)
+    monkeypatch.setattr(visual_seam, 'evaluate_closure', unavailable)
+
+
+@pytest.mark.parametrize('mode', ['anchor', 'fallback', 'lane-end'])
+def test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id(editing, monkeypatch, mode):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.timeline_commit_validation import validate_commit_value
+
+    guards(monkeypatch)
+    anchor(editing)
+    policy = {'anchor': 'anchor', 'preferred_track': 'visual'} if mode == 'anchor' else (
+        {'anchor': 'absent', 'fallback_at': 22.25, 'fallback_track': 'visual'} if mode == 'fallback' else {})
+    request, capture = completion(editing, policy)
+    validate_commit_value(request, 'CommitRequest')
+    assert capture['media'] == editing.pins['new']
+    assert capture['seconds'] == 5
+    assert capture['resolution'] == {'anchor': 'anchor-after', 'fallback': 'fallback-at',
+                                     'lane-end': 'lane-end'}[mode]
+    [command] = request['commands']
+    assert set(command['args']) == {'row', 'media'} and command['op'] == 'clip.add-media'
+    changed = capture_clip_set_params(bundle_from_document(parent.current(editing)),
+                                     'parent/clip:anchor', values={'later': [None, False, {'custom': 1}]})
+    parent.commit(editing, parent.body(editing, [changed]), 'disjoint')
+    baseline = parent.current(editing)
+    before = parent.rows(editing)
+    preview = parent.commit(editing, dict(request, dry_run=True), 'completion-preview')
+    assert parent.rows(editing) == before
+    result = parent.commit(editing, request, 'complete')
+    document = parent.current(editing)
+    assert result['data']['canonical_document'] == document == preview['data']['canonical_document']
+    placed = State(bundle_from_document(document)).entity('parent/clip:completed')
+    assert placed == command['args']['row']
+    assert placed['at'] == capture['on']
+    assert State(bundle_from_document(document)).entity('parent/clip:anchor')['params']['later'] == [
+        None, False, {'custom': 1}]
+    binding = document['parent_revision']['payload']['registry']['assets'][editing.pins['new']['asset']]
+    assert binding['variantId'] == editing.pins['new']['variant_id']
+    assert binding['media_id'] == editing.pins['new']['object_id']
+    history = editing.service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
+    reopen(editing)
+    assert parent.current(editing) == document
+    with monkeypatch.context() as retry:
+        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('retry executed semantics'))
+        assert parent.commit(editing, request, 'complete') == result
+    assert editing.service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize) == history
+    undone = parent.undo(editing, result, 'undo-complete')
+    assert parent.current(editing) == undone['data']['canonical_document'] == baseline
+    before = parent.rows(editing)
+    with pytest.raises(RuntimeErrorBase) as error:
+        parent.commit(editing, parent.body(editing, [command]), 'retired-reservation')
+    assert error.value.details['reason'] == 'identity_collision'
+    assert parent.rows(editing) == before
+    redone = parent.undo(editing, undone, 'redo-complete')
+    assert parent.current(editing) == redone['data']['canonical_document'] == document
+    assert editing.service.store.integrity_report()['ok']
+
+
+@pytest.mark.parametrize('change', ['at', 'hold', 'track-label'])
+def test_relevant_stale_reads_refuse_before_accept_and_any_persistence(editing, monkeypatch, change):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    guards(monkeypatch)
+    anchor(editing)
+    request, _ = completion(editing, {'anchor': 'anchor'})
+    bundle = bundle_from_document(parent.current(editing))
+    if change == 'at':
+        changed = capture_move(bundle, 'parent/clip:anchor', 9)
+    elif change == 'hold':
+        changed = capture_clip_set(bundle, 'parent/clip:anchor', values={'hold': 2})
+    else:
+        changed = capture_track_set(bundle, 'parent/track:visual', values={'label': 'changed saved lane'})
+    parent.commit(editing, parent.body(editing, [changed]), 'relevant')
+    editing.candidates.clear()
+    before, document = parent.rows(editing), copy.deepcopy(parent.current(editing))
+    objects = {str(path.relative_to(editing.root)): path.read_bytes()
+               for path in editing.root.rglob('*') if path.is_file() and
+               any(part in ('cas', 'staging', 'snapshots') for part in path.parts)}
+    assert objects
+    traced = []
+    editing.service.store.conn.set_trace_callback(traced.append)
+    try:
+        with pytest.raises(RuntimeErrorBase) as error:
+            parent.commit(editing, request, 'stale-complete')
+    finally:
+        editing.service.store.conn.set_trace_callback(None)
+    assert not [sql for sql in traced if sql.lstrip().split(' ', 1)[0].upper() in
+                ('INSERT', 'UPDATE', 'DELETE', 'REPLACE', 'CREATE', 'DROP', 'ALTER')]
+    assert error.value.details['reason'] == 'dependency_changed'
+    assert editing.candidates == [] and parent.rows(editing) == before
+    assert parent.current(editing) == document
+    assert {str(path.relative_to(editing.root)): path.read_bytes()
+            for path in editing.root.rglob('*') if path.is_file() and
+            any(part in ('cas', 'staging', 'snapshots') for part in path.parts)} == objects
+
+--- rehearsal exact setup traceback windows ---
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                require_active()
+                raise CommitUnavailable()
+            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+            if "http_status" in outcome:
+                raise public_failure(outcome)
+            return outcome
+        except CommitRejected as exc:
+&gt;           raise public_failure(exc.failure) from exc
+E           runtime_protocol.errors.RuntimeErrorBase: provider executed a different command
+
+../runtime/runtime_protocol/service.py:2504: RuntimeErrorBase</failure></testcase><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-fallback-home-video]" time="0.153" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-fallback-overlay-image]" time="0.108" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-fallback-overlay-video]" time="0.170" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-lane-end-image]" time="0.196" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-lane-end-video]" time="0.109" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-append-home-image]" time="0.207" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-append-home-video]" time="0.136" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-append-overlay-image]" time="0.101" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-append-overlay-video]" time="0.101" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-explicit-image]" time="0.113" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[child-fps-explicit-video]" time="0.138" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-anchor-home-image]" time="0.165" /><testcase classname="tests.editing_conformance.test_commit_runtime_parent_track_batch_inverse" name="test_grouped_parent_track_create_move_reload_undo_redo" time="0.113"><error message="failed on setup with &quot;runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline&quot;">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3/popen-gw1/test_grouped_parent_track_crea0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe4b26b2890&gt;
+
+    @pytest.fixture
+    def film(tmp_path, monkeypatch):
+        runtime = use_runtime(commit=vendored_runtime_commit())
+        # Reuse Runtime's API-built duplicate realm/CAS fixture, as its own real
+        # provider lane does. Never create a second bootstrap or DB model here.
+        monkeypatch.syspath_prepend(str(runtime / "tests"))
+        from runtime_protocol.service import RuntimeService
+        from timeline_commit_film_fixture import build_film_fixture
+    
+        fixture = build_film_fixture(tmp_path)
+        service = RuntimeService(fixture.duplicate_root)
+        try:
+            original = service.get_project_parent_composition_revision(
+                fixture.project_id, fixture.timeline_id, fixture.parent_revision_id,
+            )
+            parent = copy.deepcopy(original["payload"])
+            parent["config"]["tracks"].append({"id": "music-other", "kind": "audio"})
+            parent["clips"][0]["app"] = {
+                "on": "word:word-1", "until": None, "until_film_end": True,
+                "astrid": {"on": "word:word-1", "until": None, "until_film_end": True,
+                           "fixed_start": False, "for": 5.5, "opaque": [None, {"keep": True}]},
+            }
+            parent["clips"].append({
+                "id": "music-other", "clipType": "audio", "asset": "music-bed",
+                "track": "music-other", "at": 0, "hold": 5.5,
+                "extension": {"opaque": [None, {"keep": True}]},
+            })
+            parent["config"]["clips"] = copy.deepcopy(parent["clips"])
+&gt;           publication = service.publish_parent_composition(
+                fixture.project_id, fixture.timeline_id,
+                {"project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
+                 "expected_head": fixture.parent_revision_id,
+                 "parent_revision_id": "m1-journey-baseline", "parent_composition": parent},
+                idempotency_key="m1-journey-baseline",
+            )
+
+tests/editing_conformance/test_commit_runtime_m1.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../runtime/runtime_protocol/service.py:2786: in publish_parent_composition
+    self._require_timeline_command()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @staticmethod
+    def _require_timeline_command():
+&gt;       raise RetiredRouteError(
+            "legacy timeline writes are retired; submit EditCommands through commitTimeline",
+            details={"status": "refused", "reason": "timeline_commit_required",
+                     "hint": "Submit a timeline commit instead of the retired save route.",
+                     "suggested_command": "timeline commit",
+                     "replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit"},
+        )
+E       runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline
+
+../runtime/runtime_protocol/service.py:1654: RetiredRouteError</error></testcase><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-anchor-home-video]" time="0.141" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-anchor-overlay-image]" time="0.163" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-anchor-overlay-video]" time="0.142" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-fallback-home-image]" time="0.113" /><testcase classname="tests.editing_conformance.test_commit_runtime_parent_track_label" name="test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move" time="0.162"><error message="failed on setup with &quot;runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline&quot;">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3/popen-gw1/test_move_then_parent_label_re0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe4b269c9f0&gt;
+
+    @pytest.fixture
+    def film(tmp_path, monkeypatch):
+        runtime = use_runtime(commit=vendored_runtime_commit())
+        # Reuse Runtime's API-built duplicate realm/CAS fixture, as its own real
+        # provider lane does. Never create a second bootstrap or DB model here.
+        monkeypatch.syspath_prepend(str(runtime / "tests"))
+        from runtime_protocol.service import RuntimeService
+        from timeline_commit_film_fixture import build_film_fixture
+    
+        fixture = build_film_fixture(tmp_path)
+        service = RuntimeService(fixture.duplicate_root)
+        try:
+            original = service.get_project_parent_composition_revision(
+                fixture.project_id, fixture.timeline_id, fixture.parent_revision_id,
+            )
+            parent = copy.deepcopy(original["payload"])
+            parent["config"]["tracks"].append({"id": "music-other", "kind": "audio"})
+            parent["clips"][0]["app"] = {
+                "on": "word:word-1", "until": None, "until_film_end": True,
+                "astrid": {"on": "word:word-1", "until": None, "until_film_end": True,
+                           "fixed_start": False, "for": 5.5, "opaque": [None, {"keep": True}]},
+            }
+            parent["clips"].append({
+                "id": "music-other", "clipType": "audio", "asset": "music-bed",
+                "track": "music-other", "at": 0, "hold": 5.5,
+                "extension": {"opaque": [None, {"keep": True}]},
+            })
+            parent["config"]["clips"] = copy.deepcopy(parent["clips"])
+&gt;           publication = service.publish_parent_composition(
+                fixture.project_id, fixture.timeline_id,
+                {"project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
+                 "expected_head": fixture.parent_revision_id,
+                 "parent_revision_id": "m1-journey-baseline", "parent_composition": parent},
+                idempotency_key="m1-journey-baseline",
+            )
+
+tests/editing_conformance/test_commit_runtime_m1.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../runtime/runtime_protocol/service.py:2786: in publish_parent_composition
+    self._require_timeline_command()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    @staticmethod
+    def _require_timeline_command():
+&gt;       raise RetiredRouteError(
+            "legacy timeline writes are retired; submit EditCommands through commitTimeline",
+            details={"status": "refused", "reason": "timeline_commit_required",
+                     "hint": "Submit a timeline commit instead of the retired save route.",
+                     "suggested_command": "timeline commit",
+                     "replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit"},
+        )
+E       runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline
+
+../runtime/runtime_protocol/service.py:1654: RetiredRouteError</error></testcase><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-fallback-home-video]" time="0.083" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-fallback-overlay-image]" time="0.074" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-fallback-overlay-video]" time="0.074" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-lane-end-image]" time="0.106" /><testcase classname="tests.editing_conformance.test_recipe_auto_placement_reads" name="test_guard_matrix[origin-lane-end-video]" time="0.170" /><testcase classname="tests.editing_conformance.test_commit_runtime_parent_track_label" name="test_native_label_cli_lost_ack_then_python_suffix_keeps_original_claims" time="0.101"><error message="failed on setup with &quot;runtime_protocol.errors.RetiredRouteError: legacy timeline writes are retired; submit EditCommands through commitTimeline&quot;">tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3/popen-gw1/test_native_label_cli_lost_ack0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fe4b264c2f0&gt;
+
+    @pytest.fixture
+    def film(tmp_path, monkeypatch):
+        runtime = use_runtime(commit=vendored_runtime_commit())
+        # Reuse Runtime's API-built duplicate realm/CAS fixture, as its own real
+        # provider lane does. Never create a second bootstrap or DB model here.
+        monkeypatch.syspath_prepend(str(runtime / "tests"))
+        from runtime_protocol.service import RuntimeService
+        from timeline_commit_film_fixture import build_film_fixture
+    
+        fixture = build_film_fixture(tmp_path)
+        service = RuntimeService(fixture.duplicate_root)
+        try:
+            original = service.get_project_parent_composition_revision(
+                fixture.project_id, fixture.timeline_id, fixture.parent_revision_id,
+            )
+            parent = copy.deepcopy(original["payload"])
+
