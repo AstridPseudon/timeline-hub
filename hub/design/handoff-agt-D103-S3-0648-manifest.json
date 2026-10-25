@@ -1,0 +1,99 @@
+{
+  "schema": "astrid.timeline.f-d86-d103-s3-source-handoff/v1",
+  "status": "SOURCEQUALIFIED/BEHAVIORPENDING",
+  "normal_agent": {
+    "commit": "dac3df399f204126e802f7888bd006c81dffa7af",
+    "tree": "4629d906a3bfeb4566eb6cde510a2172a99f5f34",
+    "parents": [
+      "21703579e68cfdf66218fca2c9dd2e806bb9fbde",
+      "badfe6964f7db44959bcc13d61123ad4ace8e312"
+    ],
+    "branch": "tl/integration",
+    "path": "/home/user/work/agent"
+  },
+  "source_receipts": [
+    {
+      "family": "D103",
+      "candidate_commit": "d588e552be3c71ed36efa1dd04c8abd3e854fe85",
+      "merge_commit": "21703579e68cfdf66218fca2c9dd2e806bb9fbde",
+      "path": "tests/editing_conformance/test_cli_trim_runtime.py",
+      "original_17724_blob": "793ab7efc71ead62c0b8e2ab827f31856a066aec",
+      "original_17724_sha256": "bd29a7a63e2213c326321ddf38bae2fe3df751c60ffa8acef1eaed46e8743868",
+      "integrated_blob": "9c425dea9b9aa01f6811bed76512c09b1154ad97",
+      "integrated_sha256": "f95422aa07b917aafda4d533ddc2ff887336e2ff9e4c9d5a56f073056e41229d",
+      "independent_review": "workers/agt-F-D103-D107-batch-review-0639/evidence/A-D103.md",
+      "review_verdict": "PASS_SOURCE",
+      "assertions": 38,
+      "metadata": {"width": 1920, "height": 1080, "duration_seconds": 42.0, "fps": 30.0},
+      "fixture_blob": "c54c64cdc532ef4d08752ee01983966e58726531",
+      "fixture_sha256": "a13a68e512b6fae7fa4edd71b68266b33d1f7581be3fa199031809ec14d2f95e"
+    },
+    {
+      "family": "S3",
+      "candidate_commit": "badfe6964f7db44959bcc13d61123ad4ace8e312",
+      "parent_commit": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+      "path": "tests/editing_conformance/test_s3_reviewed_cohort_runtime.py",
+      "original_17724_blob": "ab01bba8f17a2946464dc9cabdaab4fee9c03286",
+      "original_17724_sha256": "e76420c9adc51701bd2c0aff27530a84a206fe583a0215e575f4bf6c2eaf92f5",
+      "integrated_blob": "e754ff53b3df0f0541e5484cc38167caf3dd1844",
+      "integrated_sha256": "b611bf469880172b725c8cf6052a1288a3d101bf65218b86f00028df4d07cafe",
+      "independent_review": "/home/user/timeline-hub/hub/design/rt-D86-script13-protected-0629-report.md",
+      "review_verdict": "PASS",
+      "assertions": 12,
+      "changed_operation": "capture_occurrence_add_media"
+    }
+  ],
+  "successor": {
+    "selector_file": "handoff-agt-D103-S3-0648-selectors.txt",
+    "selector_count": 4,
+    "families": {"D103-CLItrim": 3, "S3": 1},
+    "canonical_main_overlap": "receiving MAIN responsibility",
+    "excluded": "unchanged opaqueSIX and the other three ordinaryscript selectors",
+    "source_delta_cure_inferred": false
+  },
+  "historical_17724": {
+    "packet": "F-D86-17724-0618",
+    "central_result_id": "rt-D86-new13-body-0611-fd86-new13-body-0611-1025061304-17724",
+    "selected": 13,
+    "executed": 13,
+    "status_counts": {"PASS": 0, "FAIL": 4, "ERROR": 9},
+    "family_counts": {
+      "opaqueSIX": {"selected": 6, "ERROR": 6},
+      "ordinaryscriptFOUR": {"selected": 4, "FAIL": 4},
+      "D103-CLItrim": {"selected": 3, "ERROR": 3}
+    },
+    "tuple_agent_commit": "bde578505c035ae949ee8176b466bf8297772904",
+    "source_hashes_manifest": "/home/user/timeline-hub/hub/design/handoff-rt-D86-17724-0618-source-hashes.tsv"
+  },
+  "preserved_identity_sets": {
+    "original550": {
+      "count": 550,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-inputs-0200/evidence/historical-original550-rollup.tsv",
+      "sha256": "5fdefc7f09ec13f2cdf16f3c870a114e9c7097a224afd6127ea8b2f370d87722"
+    },
+    "unexecuted23": {
+      "count": 23,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-inputs-0200/evidence/unexecuted.tsv",
+      "sha256": "7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca"
+    },
+    "new_identity_packet": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-inputs-0200/evidence/membership.tsv",
+      "count": 161,
+      "sha256": "2bc617115617936b91221096882319305d99f40d98a238ae4c3f901da837c790"
+    }
+  },
+  "production_route": {
+    "caller": "registered capture/current commit",
+    "writer": "Runtime commitTimeline",
+    "provider": "registered Agent provider",
+    "no_new_observer_or_registry_install": true
+  },
+  "static_checks": {
+    "ast_compile": "PASS",
+    "assertion_conservation": "D103 38; S3 12; original-17724 equal",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "git_diff_check": "PASS",
+    "behavior_run": "NOT RUN"
+  }
+}

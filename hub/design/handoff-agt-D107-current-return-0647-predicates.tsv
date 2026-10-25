@@ -1,0 +1,11 @@
+predicate	original source	current-equivalent preservation
+current word binding and held declaration	test_commit_runtime_m1.py + native_word_anchor_fixture.py	current_pick(case) from the real pinned transcript; DECLARATION and pin/source assertions retained
+CLI write and canonical exact readback	test_commit_runtime_m1.py:321-326, 435-448	CLI edit move plus stored parent, reopened bundle, receipt, command, source, show/layers/visualize assertions
+independent disjoint clip topology	test_commit_runtime_m1.py:44-55	current emitter creates music-bed audio on music-other at 0 hold 5.5 with extension.opaque; mirror and identity assertions
+lost ACK durable acceptance	test_commit_runtime_m1.py:331-346	new-ours-a transport response is durable, flight/body/key/pending/base/command/receipt/readback asserted
+dependent B before ACK/restart	test_commit_runtime_m1.py:347-352	queue_move B occurs while A flight exists; pending [A,B], exact B guard and A flight retained before peer/restart
+disjoint peer preservation	test_commit_runtime_m1.py:353-356, 418-424	peer moves music-other; landed B expected parent preserves peer at 2, opaque extension, and timing
+restart exact retry and no duplicate history	test_commit_runtime_m1.py:361-413	foreign realm and actor refusal; Runtime epoch advances; retry wire body/payload/receipt exact; history unchanged
+touched-basis conflict/refusal/no-write	test_commit_runtime_m1.py:357-360, 396-413	parameterized relevant peer move; conflict status/reason, exact refused B body, pending/flight retention, history unchanged
+guarded undo/redo and provenance	test_commit_runtime_m1.py:426-449	undo returns disjoint canonical document; redo equals accepted B; undo_of rows, receipts, readback and inspection asserted
+base/commands/source/pins/opaque/timing	test_commit_runtime_m1.py:324-326, 340-345, 414-421, 435-449	request base pairs, exact command bodies/guards/source, transcript pin, music opaque/hold, and start timing asserted
