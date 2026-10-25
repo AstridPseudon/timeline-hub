@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T02:29:07Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 1m -->
+<!-- agent | 2026-10-25T02:32:08Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
 # agent board, 2026-10-25T02:19:26Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -165,7 +165,7 @@
 | F current sheet17 | Preserve current sheet scenarios | Luna | MAIN corrected subset proof | merging | Author0157; review0203 PASS | Normal3b8f exact reviewed64166; original17 conserved. Init/emitter source corrected; inverse1 and retired CLI3 findings held. | 3b8f341cf6 |
 | F main batch recipe | Hand back exact affected-node inputs | Luna | Main recipe2337 and source joins | merging | agt-F-main-batch-prep-2342 | Exact251 source-only snapshot exported. Extra37 assigned cases join later; remaining live core stays visible. No registry install or body. | Private bundle only |
 | F M2 placement20 | Preserve placement recipe scenarios | Luna | MAIN successor qualification | merging | BatchE0151 PASS; home536b | Exact85e046 protected PASS, mirrored parent clips preserved; all20 retained. Source joined; behavior owed. | 536bb82153 |
-| F inverse stage7 | Preserve authenticated inverse regressions | Luna | Actual source-hash fixture correction | doing | agt-F-inverse7-hash-0223 | Seven actual setup errors require exact current source-pair purpose check. Strong custody equality and all original predicates stay. | Current cef8 |
+| F inverse stage7 | Preserve authenticated inverse regressions | Luna | Protected current-pair review | review | Author0223; review0230 | Literal source update returned; independent review checks D90 Agent and D88b Runtime applicability. All seven strong custody predicates retained. | Author branch held |
 | F M2 pool6 | Preserve shot-pool recipe behavior | Luna | MAIN exact six needed proof | merging | agt-F-pool6-actual-0223 SOURCE_EXACT | All6 directly use shared helper now fixed by095177 semantic birth/canonical reload. Exact dependency traced; no new source or behavior claim. | Source unchanged |
 | F video unplace12 | Preserve video placement and removal | Main HARD Sol requested | Later MAIN functional proof | merging | HARD0107; review0117 PASS; home27c6 | Full original12 source reviewed, genuine shared topology and opaque graph preserved. Normal source now home; functional proof pending. | 27c68177c1 |
 | F native frontends7 | Preserve current frontend and checkout | Luna | D87 exact coverage mapping | doing | Ledger0007 covers one retired case | One native-packet assertion shares D87 retirement; other6 remain live. Held fixture95fe stays unmerged pending faithful scope split. | 95fe9d2e90 held |
@@ -191,7 +191,7 @@
 | D87 ZIP prose | Hand back reviewed migration notes | Runtime Luna | Installed prose proof complete | merged | rt-F-final-D87-docs-0107 | Exact reviewed README06aa and notes7576 installed; real renderer PASS. No build, ZIP or final gate credit. | Docs8e978458 |
 | F affected incremental batch | Qualify already merged families | Main Luna / Service | Source corrections before next body | merged | Actual10077; exporter0117 exact | 268selected:30PASS39FAIL176ERROR23NO_JUNIT_CASE. Exact245 outcomes preserved byte exact; no all298 or final proof claim. | 0ae1/a3cd/913686/635f |
 
-| R2 provider physical targets | Preserve inverse and effect images | HARD Sol / Luna proof | Exact source and MAIN proof passed | merging | Source0131; review0135; MAIN28969 | Exact8964 candidate 36 PASS in6.54s, including original redo2 and strictfork. Source base blobs unchanged; original author normal merge queued. | 89642bafc8 |
+| R2 provider physical targets | Preserve inverse and effect images | HARD Sol / Luna proof | Source review and exact MAIN proof passed | merged | Author0131; review0135; proof28969 | Normal bd3c has exact reviewed product/test hashes. Candidate36PASS includes both redo originals and strict fork guards. Final tuple remains separate. | bd3c95b1ce |
 | F incremental next delta | Correct newly eligible source inputs | Luna | Actual10077 plus new source joins | merged | agt-F-delta-correction-0127 | Graph2 delta ready; scalar11 held. Historical289 recipe retained but cannot authorize unchanged268 retry. New source joins need exact successor mapping. | Capturedc6c3158d |
 
 | F10077 clusters | Route first exceptions without body | Manager read only | Existing authentic XML | merged | Original10077; routing0143 | Nine exact error clusters total176; no common PATH/tools exception. [Table](../../design/agt-F-10077-error-clusters-0143.md) | Evidence only |
@@ -206,7 +206,7 @@
 
 | D91 inverse window | Make five original-third hosts valid | Main Luna | Approved D91 setup-only scope | doing | agt-D91-host-window-0218 | Only host1.8 to2.0s authorized; other authored timing and all predicates fixed. Protected review, MAIN proof and D72 log owed. | No new source yet |
 
-Integration: Home cef8a5be53 includes all exact reviewed fixture joins through current sheet, D87 live frontends, restored inverse host and net-zero oracle. D90 product candidate 8964 remains UNMERGED pending MAIN proof. P4 d407/6634 remains its fixed failed checkpoint.
+Integration: Home cef8a5be53 includes all exact reviewed fixture joins through current sheet, D87 live frontends, restored inverse host and net-zero oracle. D90 source8964 is now normally merged as bd3c after exact36PASS and source review. P4 d407/6634 remains its fixed failed checkpoint.
 core open: P4 service14151 FAIL 45.448 s versus 45 s on D88b. Runtime owns next measured cost source and independent whole-path comparison. No Agent diagnosis or unchanged repeat. Four R2 originals retain their prior qualified scopes until final matrix.
 Gates: P1 and P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine installed render still owed. No full PASS, core0, final tuple or ZIP claim. D87 exact24 plus separate1 ledgered; six live frontend cases source joined and need proof. E2/D79 after ZIP.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed; every identity and scope limit retained.
@@ -214,7 +214,7 @@ Families: Exact161 ready packet0200 plus69 additional0209 yields230 corrected se
 Admission: Old D88 prototype and denied security analysis remain stopped. Distinct D88b protective review passed and source adopted; actual P4 performance remains failed. Compound legacy unused-pin evidence exists but no qualified current history pair; scope decision0216 owed.
 Disk: D89 source/review cap6 above5.5GB, heavy1 above5.2GB, nothing new below4.5GB. Latest5666447360 bytes after completed review recycling. Sweep3 removed0; compact packed0/gzipped0. No ended clean nonKEEP tree; dirty/KEEP/refused targets untouched.
 Blockers: Runtime cost — P4 actual14151 FAIL45.448s; next measured strict source and read-only whole-path comparison remain Runtime owned. No unchanged original.
-Blockers: MAIN proof — D90 exact28969 passed36 and original author merge queued; ready corrected-node qualification remains owed. Ready230 corrected nodes, exact23 first bodies, livefrontend6 and netzero1 need meaningful existing-runner qualification.
+Blockers: MAIN proof — D90 exact28969 passed36 and source is normally merged bd3c; ready corrected-node qualification remains owed. Ready230 corrected nodes, exact23 first bodies, livefrontend6 and netzero1 need meaningful existing-runner qualification.
 Blockers: Orchestrator — Compound unused-pin current source-admission decision0216; genuine legacy evidence lacks current history pair.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
 Next ready: MAIN D90 exact8964 candidate proof, ready230 corrected-node qualification and approved D91 source continuation. Net-zero exact original joins meaningful next batch. No Agent local duplicate.
