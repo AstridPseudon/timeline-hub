@@ -1,0 +1,7 @@
+Ask: consume non-proven majority and exact measurement limit before any optimization author / Owner: Runtime D111a measurement; no product author / By: next pass
+
+0848 final correction confirms retained0827 serialized ONLY aggregate recursive frame occurrences, not individual stacks or distinct sample membership. Therefore a deduplicated top10 and deepcopy/finite_json union wall share are EXACTMISSING. 0848 table caps each aggregate at235; these are UPPER BOUNDS, NOT measured shares or valid estimators. Its repeated76.06% rows do not confirm a majority. No product author. Exact authored outputs flat handoff-rt-D111a-distribution-0848.md/.json, original erroneous0843 retained.
+
+Verified named timers:657deepcopy3966.176ms,41finite_json1501.570ms; correct RequestCommitPort._read is11calls4226.860ms inclusive/53.702ms named-self, not store_read0.677ms quoted by0843. All three byte inputs EXACTMISSING; sys.setprofile perturbs timings and overlap cannot be added. Request6179.286ms,235samples,141.659ms samplerCPU,0lost. This does not prove non-dominance either; the requested statistic was not retained.
+
+Next ordinary diagnostic correction must retain per-sample distinct stack memberships, exact operation bytes/count provenance and actual hook overhead before optimization. Main heavy is currently D112 first return0850 for missing currentcurve and executed old/new identity pairs; security source unchangedPASS. RenderSol0837 completed16private+32RuntimePASS and finalreview0849 active; authentic applied carrier still unprovided.

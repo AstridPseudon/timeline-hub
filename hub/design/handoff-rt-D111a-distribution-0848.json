@@ -1,0 +1,228 @@
+{
+  "causal_strength": "distribution only; aggregate profiler input cannot recover exact per-sample membership, inclusive frame shares overlap, and named wall timers include sys.setprofile effects",
+  "input": {
+    "junit_sha256": "25a3408c2a1d035f6b0009c1430e15114aeca3f2b7f1a89ce48962af19bbedbf",
+    "normalization": "strip trailing source line number; aggregate repeated recursive occurrences; cap membership at sample_total",
+    "preserved_original_0843_json_sha256": "86f5b4e8e0e749a41500570e2836eb2ce1517fd0ec8f1c6e72ca9d9a43ff5673",
+    "preserved_original_0843_md_sha256": "a8e7ecafc3ea73e3e22627edbb1ed8c66df7f928329505adff67f3ec53db1679",
+    "profile_has_per_sample_stack_matrix": false,
+    "profile_sha256": "0c264e56d1f3d54e612c720736d7cb8d071f951466feba817ae3a74579e0dc92",
+    "result_sha256": "d7772a8dd3137b551348b18bd512c8799b094d2050bc11fff4013b423b0cd971",
+    "source": "tl/rt-D111a-scope-return-0827",
+    "source_hashes_sha256": "6f0a89575016457ce58fae37ad2d3eb2cc35878ddbcef2677d32722b7767d20f"
+  },
+  "invariants": {
+    "each_fraction_le_one": true,
+    "each_frame_membership_le_sample_count": true,
+    "union_fraction_le_one": true,
+    "union_le_sample_count": true
+  },
+  "junit": {
+    "failures": 0,
+    "sha256": "25a3408c2a1d035f6b0009c1430e15114aeca3f2b7f1a89ce48962af19bbedbf",
+    "testcase": "whole_request_native_element",
+    "tests": 1
+  },
+  "named_operations": {
+    "RequestCommitPort._read": {
+      "bytes_handled": "EXACTMISSING",
+      "calls": 11,
+      "inclusive_cpu_ms": 3911.438917,
+      "inclusive_wall_ms": 4226.860125,
+      "repeated_sum_bytes": "EXACTMISSING",
+      "self_cpu_ms": 42.45334,
+      "self_wall_ms": 53.702374,
+      "unique_value_bytes": "EXACTMISSING"
+    },
+    "deepcopy": {
+      "bytes_handled": "EXACTMISSING",
+      "calls": 657,
+      "inclusive_cpu_ms": 3674.464272,
+      "inclusive_wall_ms": 3966.175982,
+      "repeated_sum_bytes": "EXACTMISSING",
+      "self_cpu_ms": 3674.464272,
+      "self_wall_ms": 3966.175982,
+      "unique_value_bytes": "EXACTMISSING"
+    },
+    "finite_json": {
+      "bytes_handled": "EXACTMISSING",
+      "calls": 41,
+      "inclusive_cpu_ms": 1390.9641,
+      "inclusive_wall_ms": 1501.569942,
+      "repeated_sum_bytes": "EXACTMISSING",
+      "self_cpu_ms": 1390.9641,
+      "self_wall_ms": 1501.569942,
+      "unique_value_bytes": "EXACTMISSING"
+    }
+  },
+  "parser_sha256": "cb738755446f557faa23464931cf554a249b4785c060be2bbf66ee8b2f5da787",
+  "request_reply_shape_check": {
+    "idempotency_key_used_by_launcher": true,
+    "raw_request_reply_exported": false,
+    "reply_has_data_and_receipt": true,
+    "reply_keys": [
+      "data",
+      "receipt"
+    ],
+    "request_body_keys": [
+      "api_version",
+      "base_publication_id",
+      "base_revision_id",
+      "commands",
+      "dry_run",
+      "label",
+      "merge",
+      "project_id",
+      "reads",
+      "source",
+      "steps",
+      "timeline_id"
+    ],
+    "request_required_v2_fields_present": true
+  },
+  "request_wall": {
+    "first_sample_offset_ms": 15.136463,
+    "internal_elapsed_ms": 6178.104907,
+    "last_sample_offset_ms": 6166.091824,
+    "lost_samples": 0,
+    "nominal_coverage_fraction": 0.7606056201330198,
+    "nominal_sample_wall_ms": 4700.0,
+    "observer_cpu_as_wall_scale": 0.022924811985172565,
+    "observer_cpu_ms": 141.65898,
+    "runtime_elapsed_ms": 6179.286447,
+    "sample_count": 235,
+    "sampling_interval_ms": 20.0
+  },
+  "run_id": "1792917417224776367-32439",
+  "source_fidelity": {
+    "live_source_hashes": {
+      "agent_commit_sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+      "agent_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "app_harness_sha256": "e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3",
+      "app_oracle_sha256": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+      "launcher_sha256": "7f5a9f3363beb2466f4c398a1536930cfd792798816f453a7faad5247e7f329a",
+      "profiler_sha256": "30b345f07bec70cefdd44c9b8eb57fceda6482dd9e24b1f42df5d4f1b72a0ae7",
+      "runtime_head": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "runtime_protocol_init_sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2",
+      "runtime_tree": "a522511414947e48e317a5e5c2103483b121a750"
+    },
+    "recorded_source_hashes": {
+      "agent_commit_sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+      "agent_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "app_harness_sha256": "e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3",
+      "app_oracle_sha256": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+      "launcher_sha256": "7f5a9f3363beb2466f4c398a1536930cfd792798816f453a7faad5247e7f329a",
+      "profiler_sha256": "30b345f07bec70cefdd44c9b8eb57fceda6482dd9e24b1f42df5d4f1b72a0ae7",
+      "runtime_head": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "runtime_protocol_init_sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2",
+      "runtime_tree": "a522511414947e48e317a5e5c2103483b121a750"
+    },
+    "recorded_source_hashes_match_live": true
+  },
+  "task": "D111a-distribution-return-0848",
+  "top_distinct_stack_membership_caps": [
+    {
+      "aggregate_occurrences": 1083,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<stdlib>/copy.py:deepcopy",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 649,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<stdlib>/copy.py:_deepcopy_dict",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 468,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<runtime>/runtime_protocol/service.py:wrapped",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 297,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<runtime>/runtime_protocol/timeline_commit_store.py:evaluate",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 292,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<stdlib>/copy.py:_deepcopy_list",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 235,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<runtime>/runtime_protocol/server.py:_dispatch",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 235,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<runtime>/runtime_protocol/server.py:_route",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 235,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<runtime>/runtime_protocol/server.py:_timeline_commit",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 235,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<runtime>/runtime_protocol/server.py:do_POST",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    },
+    {
+      "aggregate_occurrences": 235,
+      "exact_sample_membership_count": "EXACTMISSING",
+      "frame": "<stdlib>/server.py:handle",
+      "sample_membership_count": 235,
+      "sample_wall_estimator_ms": 4700.0,
+      "whole_request_wall_share_estimator": 0.7606056201330198
+    }
+  ],
+  "unattributed_captured_sizes_bytes": {
+    "canonical_document_bytes": 6843,
+    "history_bytes": 611939,
+    "history_items": 2,
+    "internal_timeline_revision_count": 1,
+    "parent_clip_count": 2,
+    "parent_payload_bytes": 2744,
+    "shot_revision_count": 1
+  },
+  "union": {
+    "exact_sample_membership_count": "EXACTMISSING",
+    "frames": [
+      "<stdlib>/copy.py:deepcopy",
+      "<runtime>/runtime_protocol/timeline_commit_validation.py:finite_json"
+    ],
+    "overlap_handling": "union is capped at sample_count; deepcopy and finite_json shares are not added",
+    "sample_membership_count_cap": 235,
+    "sample_wall_estimator_ms": 4700.0,
+    "whole_request_wall_share_estimator": 0.7606056201330198
+  },
+  "verdict": "NOAUTHOR"
+}

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T08:48:01Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 0m -->
-# runtime board, 2026-10-25T08:47:34Z
+<!-- main | 2026-10-25T08:51:49Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 0m -->
+# runtime board, 2026-10-25T08:51:44Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -366,9 +366,9 @@
 | D108-applied-audit | Verify retained applied predicates | Luna independent | Independent assertion join | review | rt-F-D108-assertions-review-0813 | Runtime partitions map 72 removed assertions and eight raises. Ten publication-purpose fingerprints unresolved by author; review active. | Read only |
 | D108-crosswalk-restore | Restore authentic audit publication | Agent Luna / independent | Independent exact-byte verification | merged | Return0731; review0737 B | Original MD354c2aa0 and JSONcd784758 restored exactly. Agent derivative census stays separate. | Evidence only |
 
-| D111a-profile | Scope whole native element request | Luna / independent | Correct distribution return0848 | review | Scope0827; distribution return0848 | 6179ms/235samples/0lost. Review0843 overcounted recursive frames above100%; correction reuses retained samples. Bytes missing; no optimization author. | 1daca /070dfc unchanged |
+| D111a-profile | Scope whole native element request | Luna / independent | Exact distinct samples absent | review | Scope0827; return0848 NOAUTHOR | Only aggregate recursive counts retained. Exact top10/union wall shares and operation bytes missing; capped bounds do not prove majority. No optimization author. | 1daca /070dfc unchanged |
 | D108-Runtime-assertions | Preserve exact assertion purposes | Luna independent | Exact integrated20 proof passed | merged | Review0824; result0839 PASS | Actuale6b669:20 PASS47.36s with durable XML. Exact113-function JOIN and72assert/8raises mapping verified; no prior assertion removed. | e6b669b98 |
-| D108-render-prep | Prepare genuine installed rehearsal render | HARD Sol / Luna | Exact authentic deployment inputs | doing | Sol0837; wholepath0837 | Second review0830 FAIL: unbound Agent ID and duplicate argv accepted. Sol correction active; authentic applied carrier absent. No render run. | Private candidate held |
+| D108-render-prep | Prepare genuine installed rehearsal render | HARD Sol / independent Luna | Final review0849; actual inputs | review | Sol0837; finalreview0849 | Sol16private+32RuntimePASS; exact Agent/argv guarded. Readiness UNPROVED/renderNOTRUN. Authentic523893 deployment carrier remains missing. | Private candidate held |
 | D108-metric-custody | Return original audit membership inputs | Luna / independent | Original parser custody PASS | merged | Author0811; independent0816 PASS | Exact parser and aggregates published. Original full membership EXACTMISSING; historical289 record and limited examples kept distinct. | b52d3a319 evidence only |
 
 | D108-snapshot-coverage | Restore immutable publication payload proof | Luna / independent | Exact integrated20 proof passed | merged | Author0813; review0824; result0839 | Actuale6b669:20 PASS47.36s with durable XML; reviewed +24/-0. Broad414PASS/1retainedFAIL remains disclosed. | 1eceb7ff7 /e6b669b98 |
@@ -379,7 +379,7 @@
 | D108-render-inputs | Obtain authentic installed rehearsal carrier | Agent source owner | Agent core terminal | blocked:agent | Agent later row0834 | Applied523893 profile, wheel and seven-key carrier UNPROVIDED. Agent inventories authentic artifacts or normal staging route after core. | AppliedAgent523893 |
 
 | D112-security | Review full-verification recovery authority | Luna independent | Native acceptance before release | review | rt-D112-security-review-0827 PASS | 344 source controls PASS; two authorizer failures reproduced on parent. Existing Pyright diagnostics disclosed. Native proof remains separate. | be828d92c held |
-| D112-native | Prove real SWAP and recovery sequence | Luna / independent | Mandatory result accounting0848 | review | Native0827; resultreview0848 | Real-provider ADD/SWAP/Undo1PASS on old and new;53 controlsPASS. Original409 not reproduced. Exact identity/tamper/curve credit under review. | be828d92c held |
+| D112-native | Prove real SWAP and recovery sequence | Luna / independent | Acceptance firstreturn0850 | doing | Native0827; review0848 FAIL; return0850 | Old/new native positives retained. Currentcurve and executed baseline identity-pair evidence missing; return0850 owns these only. | be828d92c held |
 
 Runtime producer: RELEASED1daca2a33 reviewed treea522. Normale6b669 adds reviewed snapshot tests afterc916 release tooling; product unchanged. Agent070dfc D110 released; App04be includes reviewed portable capture and D110 adoption.
 core open: 2 Runtime findings: element cost D111a and SWAP identity recovery D112. Agent count UNKNOWN until actual2016 terminal. App core open3; early19078 independently GO for ADD,parent,single,bulk.
@@ -387,17 +387,17 @@ regressions: D102 context regression closed on1daca; D110 inverse KeyError relea
 Gates: P1/P3 independently GO on recordedf7201/d629/c916/635f. P4 independent GO28.101s; per-note intervals UNKNOWN. Final tuple/core/P2/render still required.
 
 Blockers: Agent full core — Actual2016 runs remotely on070dfc/1daca/04beed/635f with authentic819acf; Main and family bodies remain unsubmitted. Baseline custody0830 independently PASS; current classification awaits terminal.
-Blockers: Runtime D111a — Review0843 counts recursive frames repeatedly, so its wall-share table is rejected. First return0848 deduplicates exact retained samples. Counts657deepcopy/41finite_json/11read; bytes EXACTMISSING. No author before corrected distribution.
-Blockers: Runtime D112 — Security0827 PASS on heldbe828. Native0827 real-provider ADD/SWAP/Undo1PASS on old/new, no original409 reproduction. Independent resultreview0848 verifies mandatory recovery/tamper/flat-curve credit before release.
+Blockers: Runtime D111a — 0848 confirms exact distinct sample membership and byte inputs were not retained. Caps are upper bounds, not measured wall shares. Named timers are profiled and overlap. Non-proven majority reported to orchestrator0851; no optimization author.
+Blockers: Runtime D112 — Security0827 PASS; native old/new scoped positives PASS. Result0848 FAIL/MISSING currentcurve and executed baseline recovery pairs. Same-branch firstreturn0850 dispatched immediately; no source merge/release.
 Blockers: Runtime D69 — Runtime snapshot and assertion purpose proof now PASS20 on actuale6b669 with durable XML. Agent113 membership accounting remains open; App scoped mappings passed0742.
-Blockers: Final render — Sol0837 corrects second readiness-review failure. Exact applied Agent523893 deployment receipt/profile/seven-key carrier remains UNPROVIDED; Agent later owner after core terminal.
+Blockers: Final render — Sol0837 completed16private/32Runtime controls; finalreview0849 active. Exact applied523893 wheel/profile/seven-key carrier UNPROVIDED; Agent later row after core. D13/normal-installer compatibility is a disclosed source limit.
 Blockers: Final cut — D69, current full core, final pinned P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
 KIT CHANGE installed: bin/test-run SHA5df4145, independent0746 PASS33 before and after; predecessor backed up. No live-kit blocker.
-Next ready: Assigned D112 resultreview0848, D111a distribution return0848 and render Sol0837. No unassigned eligible source work. Snapshot integrated20 PASS closes its proof wait.
+Next ready: Assigned D112 acceptance return0850 and render finalreview0849. D111a exact-sample measurement gap is reported before any optimization. Snapshot integrated20 PASS closes its proof wait.
 Venues: D108b full core is Agent-only. Main native diagnostic bodies serialize above5.2GB. No family or duplicate App body.
 Delivery: Rehearsal0645 applied trees and patches retained; manifest37e559 and initial audit flat-published. Agent D07/Windows later source inputs stay separate; no ZIP.
 Later: D107 held2154 and full core; D100new26/R2three and original ten remain held. P4 and passed controls are not repeated. Three Remotion copies await owner disposition.
 Safety: Withdrawn D88 remains stopped; D111 memo withdrawn. D106 ORCH-only outputs; no denied hub write retries. Manager edits no product, test, generated file or pin.
 Disk: About5.85GB free. Fresh scan found no ended clean non-KEEP Runtime v1/U1 worktree. Five dirty v1 trees retained. Sweep3 removed0 directories; free about5.92GB. Compact-scratch would touch prohibited Codex sessions, so it is not invoked.
-live 3 / cap 6; ready-undispatched 0. D112 result review, D111a distribution return and render Sol assigned. No active main heavy body; source-only reviews active.
-INBOX consumed through 1080101 bytes. Updated 2026-10-25T08:47:34Z.
+live 2 / cap 6; ready-undispatched 0. D112 firstreturn0850 owns sole Main heavy; render finalreview0849 is read-only. No product author without D111a measured cause.
+INBOX consumed through 1080840 bytes. Updated 2026-10-25T08:51:44Z.
