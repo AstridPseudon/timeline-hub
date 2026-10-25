@@ -1,0 +1,23 @@
+{
+  "validator_arm": {
+    "name": "reviewed-profiler",
+    "activation": "only helper SHA-256 a92122c24afc581f71687d25ffc6a4bd8bb7c2e7381e5b47a6be861d23594a1c",
+    "source": "Runtime commit 5747c48931839356b049a8fb6ddaf8f30b5b6d1a exact Git blob",
+    "old_arms_preserved": ["normal", "reviewed", "reviewed-new"]
+  },
+  "summary_states": {
+    "captured": "cprofile is present with safe functions and edges",
+    "unavailable": "cprofile is present with empty functions/edges and unavailable rank meaning",
+    "noeligibleprofile": "cprofile is absent, as emitted when profile_eligible is false"
+  },
+  "cprofile": {
+    "function_fields": ["rank", "file", "line", "function", "ncalls", "primitive_calls", "tottime", "cumtime"],
+    "edge_fields": ["caller", "callee", "ncalls"],
+    "limits": {"max_functions": 40, "max_edges": 1600},
+    "ranking": "descending cumtime, then module-relative file/line/function",
+    "paths": "<runtime>|<agent>|<stdlib>|<package> relative paths only",
+    "arithmetic": "integer counts and finite nonnegative times",
+    "privacy": ["payloads", "keys", "URLs", "locals", "absolute paths", "unknown fields"]
+  },
+  "lifecycle": "all existing phase, duration, retention, lifecycle, privacy, and mutation predicates remain active"
+}

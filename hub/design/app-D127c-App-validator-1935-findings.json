@@ -1,0 +1,26 @@
+{
+  "result": "PASS_SOURCE_ONLY",
+  "findings": [
+    {
+      "id": "D127C-APP-1",
+      "result": "corrected",
+      "detail": "Strict App capture validation recognizes the exact final profiler helper identity and cprofile summary field without widening old helper arms."
+    },
+    {
+      "id": "D127C-APP-2",
+      "result": "covered",
+      "detail": "Captured, unavailable, and no-eligible-profile states are validated against the helper's actual emission behavior."
+    },
+    {
+      "id": "D127C-APP-3",
+      "result": "covered",
+      "detail": "Mutation controls reject private paths/payloads/keys/URLs/locals, unknown fields, duplicate identities, bounds violations, negative or non-finite arithmetic, invalid edge counts, ranking changes, and missing overhead semantics."
+    },
+    {
+      "id": "D127C-APP-4",
+      "result": "unverified",
+      "detail": "Mounted browser/bootstrap body and live D66 activation were not run; the source-only validator arm is not production-path qualification."
+    }
+  ],
+  "scope": "Only tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts changed"
+}

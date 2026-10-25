@@ -1,0 +1,110 @@
+{
+  "base_commit": "5747c48931839356b049a8fb6ddaf8f30b5b6d1a",
+  "behavior_parent": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "caller_evidence": {
+    "app_files": {
+      "scripts/testing/d66-plain-stack.mjs": {
+        "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+        "sha256": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def"
+      },
+      "scripts/testing/sitecustomize.py": {
+        "path": "/home/user/work/app/scripts/testing/sitecustomize.py",
+        "sha256": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e"
+      },
+      "src/integrations/runtime/client.ts": {
+        "path": "/home/user/work/app/src/integrations/runtime/client.ts",
+        "sha256": "8e3fdb4919ad993ba7e038f5eeab6a4d79e12d8dffb05e4003443e44d58e1d61"
+      },
+      "src/integrations/runtime/dataProvider.ts": {
+        "path": "/home/user/work/app/src/integrations/runtime/dataProvider.ts",
+        "sha256": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988"
+      },
+      "src/tools/video-editor/commands/commitOutbox.ts": {
+        "path": "/home/user/work/app/src/tools/video-editor/commands/commitOutbox.ts",
+        "sha256": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21"
+      },
+      "src/tools/video-editor/commands/commitSession.ts": {
+        "path": "/home/user/work/app/src/tools/video-editor/commands/commitSession.ts",
+        "sha256": "7bddb9c4adc28ff7d7079c4011ae965e65952570abe248f3d0247789a3532648"
+      },
+      "src/tools/video-editor/commands/documentPatchIntent.ts": {
+        "path": "/home/user/work/app/src/tools/video-editor/commands/documentPatchIntent.ts",
+        "sha256": "732473c05b7709b8a4bb95160df3f40679caca9e7fe26384fe0a2ec4d80d08b6"
+      },
+      "src/tools/video-editor/commands/localSaveSession.ts": {
+        "path": "/home/user/work/app/src/tools/video-editor/commands/localSaveSession.ts",
+        "sha256": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230"
+      },
+      "src/tools/video-editor/components/ElementsLibraryPanel.tsx": {
+        "path": "/home/user/work/app/src/tools/video-editor/components/ElementsLibraryPanel.tsx",
+        "sha256": "2f0c716bd77a5efb7fe18436bfdc1e46b8a85f16d0f562b3986cf67bb30e3f4c"
+      },
+      "src/tools/video-editor/contexts/VideoEditorProvider.tsx": {
+        "path": "/home/user/work/app/src/tools/video-editor/contexts/VideoEditorProvider.tsx",
+        "sha256": "2fe46627544cca23a5102846fa6a6bc37afd752ab6a03fde7f6cec51b346a687"
+      },
+      "src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts": {
+        "path": "/home/user/work/app/src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts",
+        "sha256": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c"
+      },
+      "src/tools/video-editor/hooks/useTimelineSave.ts": {
+        "path": "/home/user/work/app/src/tools/video-editor/hooks/useTimelineSave.ts",
+        "sha256": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a"
+      },
+      "src/tools/video-editor/runtime/element-adapter.ts": {
+        "path": "/home/user/work/app/src/tools/video-editor/runtime/element-adapter.ts",
+        "sha256": "4f6e7621bcd8795c150a2282d5d41aa8a003ab0570bc1238e88f64d4328344b9"
+      },
+      "tests/e2e/local/support/harness.ts": {
+        "path": "/home/user/work/app/tests/e2e/local/support/harness.ts",
+        "sha256": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e"
+      },
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts": {
+        "path": "/home/user/work/app/tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+        "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"
+      }
+    },
+    "app_head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "runtime_server": {
+      "path": "/home/user/work/wt/app-D127c-mounted-selection-sol-1935/runtime_protocol/server.py",
+      "sha256": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc"
+    }
+  },
+  "central_test": {
+    "id": "app-D127c-mounted-selection-sol-1935-targeted-1025194027-30318",
+    "result": "61 passed in 3.62s",
+    "source_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75"
+  },
+  "changed_paths": [
+    "tests/helpers/p2_commit_phase_capture.py",
+    "tests/test_p2_commit_phase_capture.py"
+  ],
+  "commit_resolution_after_harness": "git -C /home/user/work/wt/app-D127c-mounted-selection-sol-1935 rev-parse refs/heads/tl/app-D127c-mounted-selection-sol-1935",
+  "expected_final_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+  "files": {
+    "tests/helpers/p2_commit_phase_capture.py": {
+      "absolute_path": "/home/user/work/wt/app-D127c-mounted-selection-sol-1935/tests/helpers/p2_commit_phase_capture.py",
+      "git_blob_sha1": "2ae83f1bb8420f1b409165382711aaaeb485fb1f",
+      "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d"
+    },
+    "tests/test_p2_commit_phase_capture.py": {
+      "absolute_path": "/home/user/work/wt/app-D127c-mounted-selection-sol-1935/tests/test_p2_commit_phase_capture.py",
+      "git_blob_sha1": "261b74fb9d8338b2ea786a5833f601569dd58229",
+      "sha256": "ee789ec10738e1d9f3a2aae92c15b6d49cc86ad4f3c6e0e7cafc5fe5c883cf88"
+    }
+  },
+  "final_commit_owner": "harness after worker exit",
+  "final_commit_sha": null,
+  "final_source_ref": "refs/heads/tl/app-D127c-mounted-selection-sol-1935",
+  "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+  "ordinary_source_route": "git -C /home/user/work/wt/app-D127c-mounted-selection-sol-1935 show tl/app-D127c-mounted-selection-sol-1935:tests/helpers/p2_commit_phase_capture.py",
+  "outside_tracked_blobs_changed": [],
+  "qualification_limits": [
+    "source and targeted Runtime unit evidence only",
+    "no actual element body/browser/original/full/native/tour/SWAP/WAL/recovery run",
+    "App validator adaptation owned separately; one coupled independent review remains"
+  ],
+  "status": "source-corrected; coupled review and harness commit pending",
+  "task": "D127c",
+  "untracked_paths": []
+}

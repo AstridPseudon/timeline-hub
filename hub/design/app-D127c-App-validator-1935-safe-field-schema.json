@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "summary_field": "cprofile",
+  "scope": "RuntimeHandler._timeline_commit",
+  "statuses": {
+    "captured": "functions and edges emitted",
+    "unavailable": "empty functions and edges with unavailable rank meaning",
+    "noeligibleprofile": "summary omits cprofile"
+  },
+  "function_fields": ["rank", "file", "line", "function", "ncalls", "primitive_calls", "tottime", "cumtime"],
+  "edge_fields": ["caller", "callee", "ncalls"],
+  "limits": {"max_functions": 40, "max_edges": 1600},
+  "ranking": "functions sorted descending cumtime, then file/line/function",
+  "path_policy": "<runtime>|<agent>|<stdlib>|<package> relative paths; no absolute or parent traversal",
+  "arithmetic_policy": "counts are nonnegative integers; times are finite nonnegative numbers; cumtime >= tottime",
+  "privacy_exclusions": ["payloads", "keys", "URLs", "locals", "absolute paths", "raw stacks", "unknown fields"],
+  "timing_note": "cProfile overhead inflates absolute times; use ranking and call counts observationally, never as the original budget"
+}

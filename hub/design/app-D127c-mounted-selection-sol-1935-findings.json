@@ -1,0 +1,49 @@
+{
+  "task": "D127c",
+  "verdict": "SOURCE CORRECTED; final coupled independent review required; STOP_UNAPPLIED to normal/home/body",
+  "fixed": [
+    {
+      "id": "D127C-SEL-1",
+      "resolution": "Use the real mounted single doc.patch, parent clips list.insert, absent previous item, consistent allocated row ID/created address, appended order, pinned effect elementRef, original timeline.apply_element step, and App source. No raw identity allowlist."
+    },
+    {
+      "id": "D127C-PROV-2",
+      "resolution": "A live actual dispatch frame must trace its own bounded prefetch completion. Same handler/thread and unchanged buffer identity must reach the handler before profiling. Direct handler calls and fabricated prefetch without that trace cannot arm or close selection."
+    },
+    {
+      "id": "D127C-TYPE-3",
+      "resolution": "Separate optional callee_stats lookup from the previous nonoptional values tuple and narrow before indexing. No ignores or checker suppression."
+    }
+  ],
+  "preserved": [
+    "stdlib cProfile only",
+    "5747 cprofile output schema and phase summary vocabulary",
+    "first-attempt one-shot including mixed/dryrun refusal",
+    "all 160 original predicates including four existing lifecycle migrations",
+    "all e319 test bodies and 183 full-file assertions",
+    "profile finally/partial-enable restoration",
+    "private raw pstats guards, bounds, ranks, edges, overhead note",
+    "request/hash/process birth/UTC joins",
+    "C0 requests and replies forwarded unchanged"
+  ],
+  "outside_scope": [
+    "D127C-APP-4 strict App validator identity/schema adaptation owned by app-D127c-App-validator-1935",
+    "harness commit SHA unavailable until exit; expected exact final tree and helper SHA published",
+    "final coupled source review before any normal/home/body activation"
+  ],
+  "validation": {
+    "central_targeted": "61 passed in 3.62s",
+    "helper_pyright": "0 errors",
+    "scoped_mypy": "0 new; two matching parent import diagnostics",
+    "ruff": "PASS",
+    "compile_python311": "PASS",
+    "diff_outside_blobs_AST": "PASS"
+  },
+  "not_run": [
+    "red unit-body execution before correction: below 5GB light admission; new selection/provenance nodes were authored first",
+    "local duplicate corrected unit bodies",
+    "full suites",
+    "actual element/profile/browser/original/native/tour bodies",
+    "SWAP/WAL/recovery"
+  ]
+}

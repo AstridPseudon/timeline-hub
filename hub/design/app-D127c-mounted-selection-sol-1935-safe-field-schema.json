@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "D127c frozen 5747 optional summary.cprofile field",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format_version",
+    "status",
+    "scope",
+    "functions",
+    "edges",
+    "limits",
+    "rank_meaning",
+    "timing_note"
+  ],
+  "properties": {
+    "format_version": {
+      "const": 1
+    },
+    "status": {
+      "enum": [
+        "captured",
+        "unavailable"
+      ]
+    },
+    "scope": {
+      "const": "RuntimeHandler._timeline_commit"
+    },
+    "functions": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rank",
+          "file",
+          "line",
+          "function",
+          "ncalls",
+          "primitive_calls",
+          "tottime",
+          "cumtime"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "maxLength": 240,
+            "pattern": "^<(runtime|agent|stdlib|package)>/[^\\r\\n]+$"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "function": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160,
+            "pattern": "^[A-Za-z0-9_.$<>:' -]+$"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 40
+          },
+          "ncalls": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "primitive_calls": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tottime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cumtime": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "maxItems": 1600,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "caller",
+          "callee",
+          "ncalls"
+        ],
+        "properties": {
+          "caller": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "line",
+              "function"
+            ],
+            "properties": {
+              "file": {
+                "type": "string",
+                "maxLength": 240,
+                "pattern": "^<(runtime|agent|stdlib|package)>/[^\\r\\n]+$"
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "function": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "pattern": "^[A-Za-z0-9_.$<>:' -]+$"
+              }
+            }
+          },
+          "callee": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "line",
+              "function"
+            ],
+            "properties": {
+              "file": {
+                "type": "string",
+                "maxLength": 240,
+                "pattern": "^<(runtime|agent|stdlib|package)>/[^\\r\\n]+$"
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "function": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160,
+                "pattern": "^[A-Za-z0-9_.$<>:' -]+$"
+              }
+            }
+          },
+          "ncalls": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_functions",
+        "max_edges",
+        "dropped_rows",
+        "dropped_edges"
+      ],
+      "properties": {
+        "max_functions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 40
+        },
+        "max_edges": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1600
+        },
+        "dropped_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dropped_edges": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "rank_meaning": {
+      "type": "string"
+    },
+    "timing_note": {
+      "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "captured"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "rank_meaning": {
+            "const": "functions sorted descending cumtime, then file/line/function"
+          },
+          "timing_note": {
+            "const": "cProfile overhead inflates absolute times; use ranking and call counts observationally, never as the original budget"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "functions": {
+            "maxItems": 0
+          },
+          "edges": {
+            "maxItems": 0
+          },
+          "rank_meaning": {
+            "const": "unavailable"
+          },
+          "timing_note": {
+            "const": "cProfile overhead is not measured as original budget time"
+          }
+        }
+      }
+    }
+  ],
+  "$comment": "Optional field only; no eligible request means no cprofile key. Existing event/summary fields and versions remain unchanged. JSON Schema does not admit NaN/Infinity. Additional semantic constraints: unique sanitized function identities, consecutive ranks 1..N sorted by descending cumtime then file/line/function, N <= limits.max_functions, edge count <= limits.max_edges, endpoints among these functions, and exact nonnegative pstats caller call counts. Dropped counters report bounded projection loss. No raw IDs, keys, URLs, payloads, locals, exception text, absolute paths, stacks or raw pstats are public fields. Raw pstats is optional separate private output, never a JSON field. Helper SHA256: 095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d. Shape frozen from 5747c48931839356b049a8fb6ddaf8f30b5b6d1a."
+}

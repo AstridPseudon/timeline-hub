@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "task": "app-D127c-App-validator-1935",
+  "base": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+  "changed_files": [
+    {
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "sha256": "556594ff981bb6c1251ecd04e0178d5f5ec36d9fbfc819aa1272306eef205645"
+    }
+  ],
+  "product_source_modified": false,
+  "helper_source": {
+    "runtime_commit": "5747c48931839356b049a8fb6ddaf8f30b5b6d1a",
+    "path": "tests/helpers/p2_commit_phase_capture.py",
+    "sha256": "a92122c24afc581f71687d25ffc6a4bd8bb7c2e7381e5b47a6be861d23594a1c",
+    "identity_arm": "reviewed-profiler"
+  },
+  "read_only_app_sources": {
+    "mounted_element_test": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "d66_launcher": "scripts/testing/d66-plain-stack.mjs",
+    "harness": "tests/e2e/local/support/harness.ts"
+  },
+  "outside_blobs": "none",
+  "private_verification": "not included"
+}
