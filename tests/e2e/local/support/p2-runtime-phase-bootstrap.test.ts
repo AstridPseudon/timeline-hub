@@ -12,8 +12,12 @@ const runtimeCheckout = RUNTIME_CHECKOUT;
 const bootstrapDirectory = path.resolve('scripts/testing');
 const NORMAL_HELPER_SHA256 = 'a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4';
 const REVIEWED_HELPER_SHA256 = '6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760';
+const REVIEWED_NEW_HELPER_SHA256 = '4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e';
+const CAPTURE_SCHEMA_VERSION = 1;
+const RETENTION_FORMAT_VERSION = 2;
 const NORMAL_PHASES = ['dispatch_queue', 'handler_entry', 'authorization', 'coordinator_admission', 'coordinator_lock', 'provider', 'accept', 'receipt', 'http_response'];
 const REVIEWED_PHASES = ['arrival', ...NORMAL_PHASES];
+const NEW_LIFECYCLE_VALUES = ['completed', 'raised', 'returned_without_response', 'pending_at_stop'];
 const MAX_REQUESTS = 8;
 const MAX_EVENTS = 128;
 const MAX_BYTES = 64 * 1024;
@@ -98,10 +102,10 @@ function assertPhaseMap(phases: unknown, reviewed: boolean): void {
   }
 }
 
-function assertRetention(value: unknown): void {
+function assertRetention(value: unknown, newSchema = false): void {
   const retention = record(value, 'retention');
   exactKeys(retention, ['format_version', 'mode', 'rolling', 'final_request', 'output']);
-  assert.equal(retention.format_version, 2);
+  assert.equal(retention.format_version, RETENTION_FORMAT_VERSION);
   assert.equal(retention.mode, 'rolling_plus_final_request');
   const rolling = record(retention.rolling, 'retention.rolling');
   exactKeys(rolling, ['capacity_events', 'events_seen', 'events_retained', 'capacity_dropped_events', 'complete', 'incomplete_limit']);
@@ -133,14 +137,18 @@ function assertRetention(value: unknown): void {
   assert.ok(rolling.events_retained <= output.events);
   if (retention.final_request === null) return;
   const finalRequest = record(retention.final_request, 'retention.final_request');
-  exactKeys(finalRequest, ['request', 'outcome', 'events_seen', 'events_retained', 'complete', 'incomplete_limit']);
+  exactKeys(finalRequest, newSchema
+    ? ['request', 'outcome', 'events_seen', 'events_retained', 'buffer_complete', 'complete', 'incomplete_limit']
+    : ['request', 'outcome', 'events_seen', 'events_retained', 'complete', 'incomplete_limit']);
   assertInteger(finalRequest.request, 'final_request.request', { minimum: 1, maximum: MAX_REQUESTS });
-  assert.ok(['complete', 'failed', 'pending'].includes(finalRequest.outcome as string));
+  assert.ok((newSchema ? NEW_LIFECYCLE_VALUES : ['complete', 'failed', 'pending']).includes(finalRequest.outcome as string));
   assertInteger(finalRequest.events_seen, 'final_request.events_seen');
   assertInteger(finalRequest.events_retained, 'final_request.events_retained');
   assert.ok(finalRequest.events_retained <= finalRequest.events_seen);
   assert.ok(finalRequest.events_retained <= output.events);
+  if (newSchema) assert.equal(typeof finalRequest.buffer_complete, 'boolean');
   assert.equal(typeof finalRequest.complete, 'boolean');
+  if (newSchema) assert.equal(finalRequest.buffer_complete, finalRequest.complete);
   if (finalRequest.complete) assert.equal(finalRequest.incomplete_limit, null);
   else {
     const limit = record(finalRequest.incomplete_limit, 'final_request.incomplete_limit');
@@ -166,9 +174,11 @@ function assertDropLimit(limit: Record<string, unknown>, label: string, requestL
   }
 }
 
-function assertSampling(value: unknown): void {
+function assertSampling(value: unknown, newSchema = false): void {
   const sampling = record(value, 'sampling');
-  exactKeys(sampling, ['sampling_interval_ms', 'sample_total', 'lost_samples', 'observer_cpu_ms', 'observer_cpu_scope', 'observer_cpu_attribution', 'top_inclusive_frames', 'sample_membership', 'dispatch_wall_denominator_ms', 'counter_limits', 'sampler_errors']);
+  exactKeys(sampling, newSchema
+    ? ['sampling_interval_ms', 'sample_total', 'lost_samples', 'observer_cpu_ms', 'observer_cpu_scope', 'observer_cpu_attribution', 'top_inclusive_frames', 'top_leaf_frames', 'sample_membership', 'dispatch_wall_denominator_ms', 'counter_limits', 'sampler_errors']
+    : ['sampling_interval_ms', 'sample_total', 'lost_samples', 'observer_cpu_ms', 'observer_cpu_scope', 'observer_cpu_attribution', 'top_inclusive_frames', 'sample_membership', 'dispatch_wall_denominator_ms', 'counter_limits', 'sampler_errors']);
   assertFiniteNumber(sampling.sampling_interval_ms, 'sampling_interval_ms', { nonnegative: true });
   assert.equal(sampling.sampling_interval_ms, 20);
   assertInteger(sampling.sample_total, 'sample_total');
@@ -184,49 +194,67 @@ function assertSampling(value: unknown): void {
   const limits = record(sampling.counter_limits, 'counter_limits');
   exactKeys(limits, ['max_requests', 'max_events', 'max_bytes', 'top_frames']);
   assert.deepEqual(limits, { max_requests: 8, max_events: 128, max_bytes: 64 * 1024, top_frames: 10 });
-  assert.ok(Array.isArray(sampling.top_inclusive_frames));
-  assert.ok(sampling.top_inclusive_frames.length <= 10);
-  const seenFrames = new Set<string>();
-  for (const frame of sampling.top_inclusive_frames) {
-    const row = record(frame, 'top_inclusive_frames row');
-    exactKeys(row, ['file', 'function', 'line', 'sample_count', 'sample_total', 'sample_share', 'dispatch_wall_share']);
-    assert.equal(typeof row.file, 'string');
-    assert.match(row.file, /^<(?:runtime|agent|stdlib)>\/[A-Za-z0-9_./<>-]+$/);
-    assert.doesNotMatch(row.file, PRIVATE_VALUE);
-    assertSafeIdentifier(row.function, 'frame.function');
-    assertInteger(row.line, 'frame.line', { minimum: 1 });
-    assertInteger(row.sample_count, 'frame.sample_count', { minimum: 1 });
-    assertInteger(row.sample_total, 'frame.sample_total');
-    assert.equal(row.sample_total, sampling.sample_total);
-    assert.ok(row.sample_count <= row.sample_total);
-    assertFiniteNumber(row.sample_share, 'sample_share', { nonnegative: true });
-    assert.ok(row.sample_share <= 1);
-    assert.equal(row.sample_total === 0, false);
-    assert.ok(Math.abs(row.sample_share - row.sample_count / row.sample_total) < 1e-12);
-    assertNumberOrNull(row.dispatch_wall_share, 'dispatch_wall_share');
-    if (row.dispatch_wall_share !== null) {
-      assert.ok(row.dispatch_wall_share >= 0);
-      assert.ok(sampling.dispatch_wall_denominator_ms !== null);
-      assert.ok(Math.abs(row.dispatch_wall_share - (row.sample_count * 20 / sampling.dispatch_wall_denominator_ms)) < 1e-12);
+  const assertFrameRows = (value: unknown, label: string): void => {
+    assert.ok(Array.isArray(value), label);
+    assert.ok(value.length <= 10, label);
+    const seenFrames = new Set<string>();
+    for (const frame of value) {
+      const row = record(frame, 'top_inclusive_frames row');
+      exactKeys(row, newSchema
+        ? ['file', 'function', 'line', 'sample_count', 'sample_total', 'lost_samples', 'sample_share', 'dispatch_wall_share']
+        : ['file', 'function', 'line', 'sample_count', 'sample_total', 'sample_share', 'dispatch_wall_share']);
+      assert.equal(typeof row.file, 'string');
+      assert.match(row.file, /^<(?:runtime|agent|stdlib)>\/[A-Za-z0-9_./<>-]+$/);
+      assert.doesNotMatch(row.file, PRIVATE_VALUE);
+      assertSafeIdentifier(row.function, 'frame.function');
+      assertInteger(row.line, 'frame.line', { minimum: 1 });
+      assertInteger(row.sample_count, 'frame.sample_count', { minimum: 1 });
+      assertInteger(row.sample_total, 'frame.sample_total');
+      assert.equal(row.sample_total, sampling.sample_total);
+      assert.ok(row.sample_count <= row.sample_total);
+      if (newSchema) {
+        assertInteger(row.lost_samples, 'frame.lost_samples');
+        assert.equal(row.lost_samples, sampling.lost_samples);
+      }
+      assertFiniteNumber(row.sample_share, 'sample_share', { nonnegative: true });
+      assert.ok(row.sample_share <= 1);
+      assert.equal(row.sample_total === 0, false);
+      assert.ok(Math.abs(row.sample_share - row.sample_count / row.sample_total) < 1e-12);
+      assertNumberOrNull(row.dispatch_wall_share, 'dispatch_wall_share');
+      if (row.dispatch_wall_share !== null) {
+        assert.ok(row.dispatch_wall_share >= 0);
+        assert.ok(sampling.dispatch_wall_denominator_ms !== null);
+        assert.ok(Math.abs(row.dispatch_wall_share - (row.sample_count * 20 / sampling.dispatch_wall_denominator_ms)) < 1e-12);
+      } else if (newSchema) {
+        assert.equal(sampling.dispatch_wall_denominator_ms, null);
+      }
+      if (newSchema && sampling.dispatch_wall_denominator_ms !== null) assert.notEqual(row.dispatch_wall_share, null);
+      const identity = `${row.file}\0${row.function}\0${row.line}`;
+      assert.equal(seenFrames.has(identity), false);
+      seenFrames.add(identity);
     }
-    const identity = `${row.file}\0${row.function}\0${row.line}`;
-    assert.equal(seenFrames.has(identity), false);
-    seenFrames.add(identity);
-  }
+  };
+  assertFrameRows(sampling.top_inclusive_frames, 'top_inclusive_frames');
+  if (newSchema) assertFrameRows(sampling.top_leaf_frames, 'top_leaf_frames');
 }
 
-function assertCaptureEvent(event: Record<string, unknown>, reviewed: boolean): void {
+type CaptureValidatorArm = 'normal' | 'reviewed' | 'reviewed-new';
+
+function assertCaptureEvent(event: Record<string, unknown>, arm: CaptureValidatorArm): void {
+  const reviewed = arm !== 'normal';
+  const newSchema = arm === 'reviewed-new';
   assertNoPrivateKeys(event);
   const phase = event.phase;
-  assert.equal(event.schema_version, 1);
+  assert.equal(event.schema_version, CAPTURE_SCHEMA_VERSION);
   assertInteger(event.request, 'request', { minimum: 1, maximum: MAX_REQUESTS });
   if (phase !== 'summary' || reviewed) assertFiniteNumber(event.at_ms, 'at_ms', { nonnegative: true });
   if (phase === 'summary') {
     exactKeys(event, reviewed
-      ? ['schema_version', 'request', 'phase', 'last_phase', 'phases', 'durations_ms', 'utc', 'at_ms', 'capture_anchor', 'capture_namespace', 'pid', 'birth_ticks', 'method', 'route_template', 'idempotency_key_sha256', 'dispatch_start_ms', 'sampling', 'unknown_boundaries', 'unsupported_boundaries', 'truncated', 'retention']
+      ? [...(newSchema ? ['lifecycle'] : []), 'schema_version', 'request', 'phase', 'last_phase', 'phases', 'durations_ms', 'utc', 'at_ms', 'capture_anchor', 'capture_namespace', 'pid', 'birth_ticks', 'method', 'route_template', 'idempotency_key_sha256', 'dispatch_start_ms', 'sampling', 'unknown_boundaries', 'unsupported_boundaries', 'truncated', 'retention']
       : ['schema_version', 'request', 'phase', 'last_phase', 'phases', 'durations_ms', 'unknown_boundaries', 'truncated', 'retention']);
     assert.equal(typeof event.last_phase, 'string');
     assert.ok([...NORMAL_PHASES, 'UNKNOWN'].includes(event.last_phase as string));
+    if (newSchema) assert.ok(NEW_LIFECYCLE_VALUES.includes(event.lifecycle as string));
     assertPhaseMap(event.phases, reviewed);
     const durations = record(event.durations_ms, 'durations_ms');
     const durationKeys = reviewed
@@ -242,7 +270,16 @@ function assertCaptureEvent(event: Record<string, unknown>, reviewed: boolean): 
     }
     if (reviewed) assert.equal(durations.dispatch_to_completion_wall_ms, durations.dispatch_total_ms);
     assert.equal(typeof event.truncated, 'boolean');
-    assertRetention(event.retention);
+    if (newSchema) {
+      const lifecycle = event.lifecycle as string;
+      if (lifecycle === 'raised' || lifecycle === 'pending_at_stop') {
+        assert.equal(durations.handler_ms, null);
+        assert.equal(durations.dispatch_total_ms, null);
+        assert.equal(durations.dispatch_to_completion_wall_ms, null);
+      }
+      assert.equal(durations.dispatch_to_completion_wall_ms, durations.dispatch_total_ms);
+    }
+    assertRetention(event.retention, newSchema);
     const unknown = record(event.unknown_boundaries, 'unknown_boundaries');
     exactKeys(unknown, reviewed
       ? ['client_request_to_server_receive', 'request_body_receive', 'execution_lock_wait', 'caller_receipt']
@@ -265,7 +302,11 @@ function assertCaptureEvent(event: Record<string, unknown>, reviewed: boolean): 
       assert.match(event.idempotency_key_sha256 as string, /^[0-9a-f]{64}$/);
       assertNumberOrNull(event.dispatch_start_ms, 'dispatch_start_ms');
       if (event.dispatch_start_ms !== null) assert.ok(event.dispatch_start_ms >= 0);
-      assertSampling(event.sampling);
+      assertSampling(event.sampling, newSchema);
+      if (newSchema) {
+        const sampling = record(event.sampling, 'sampling');
+        assert.equal(sampling.dispatch_wall_denominator_ms, durations.dispatch_to_completion_wall_ms);
+      }
       const unsupported = record(event.unsupported_boundaries, 'unsupported_boundaries');
       exactKeys(unsupported, ['network_arrival_ms', 'request_body_receive_ms', 'execution_lock_wait_ms', 'caller_receipt_ms']);
       assert.deepEqual(unsupported, { network_arrival_ms: null, request_body_receive_ms: null, execution_lock_wait_ms: null, caller_receipt_ms: null });
@@ -310,16 +351,143 @@ test('D105 launch ownership gives each retained DirectHarness start a distinct s
 function readCapture(sink: string, helperSha256: string): string {
   const text = readFileSync(sink, 'utf8');
   assert.ok(text.length <= 64 * 1024);
-  const reviewed = helperSha256 === REVIEWED_HELPER_SHA256;
-  assert.ok(helperSha256 === NORMAL_HELPER_SHA256 || reviewed, `unexpected P2 helper identity: ${helperSha256}`);
+  assert.ok([NORMAL_HELPER_SHA256, REVIEWED_HELPER_SHA256, REVIEWED_NEW_HELPER_SHA256].includes(helperSha256), `unexpected P2 helper identity: ${helperSha256}`);
+  const arm: CaptureValidatorArm = helperSha256 === NORMAL_HELPER_SHA256
+    ? 'normal'
+    : helperSha256 === REVIEWED_HELPER_SHA256
+      ? 'reviewed'
+      : 'reviewed-new';
   const events = text.trim().split('\n').map((line) => JSON.parse(line) as Record<string, unknown>);
   assert.ok(events.length > 0);
-  for (const event of events) assertCaptureEvent(event, reviewed);
+  for (const event of events) assertCaptureEvent(event, arm);
   assert.equal(text.includes('p2_commit_phase_capture.py'), false);
   assert.equal(text.includes('Bearer '), false);
   assert.equal(text.includes('Content-Type'), false);
   return text;
 }
+
+function newValidatorSummaryFixture(): Record<string, unknown> {
+  const phases = Object.fromEntries(REVIEWED_PHASES.map((phase) => [phase, phase === 'arrival'
+    ? { status: 'unsupported', count: 0, start_ms: null, end_ms: null, reason: 'no earlier socket/server-accept hook' }
+    : { status: 'UNKNOWN', count: 0, start_ms: null, end_ms: null }]));
+  const frame = {
+    file: '<runtime>/provider.py',
+    function: 'commit',
+    line: 1,
+    sample_count: 1,
+    sample_total: 2,
+    lost_samples: 1,
+    sample_share: 0.5,
+    dispatch_wall_share: null,
+  };
+  const sampling = {
+    sampling_interval_ms: 20,
+    sample_total: 2,
+    lost_samples: 1,
+    observer_cpu_ms: 0,
+    observer_cpu_scope: 'capture-wide',
+    observer_cpu_attribution: 'sampler CPU covers the whole capture and is not attributed to this request',
+    top_inclusive_frames: [frame],
+    top_leaf_frames: [frame],
+    sample_membership: 'each safe frame identity is counted at most once per sample',
+    dispatch_wall_denominator_ms: null,
+    counter_limits: { max_requests: 8, max_events: 128, max_bytes: 64 * 1024, top_frames: 10 },
+    sampler_errors: [],
+  };
+  return {
+    schema_version: CAPTURE_SCHEMA_VERSION,
+    request: 1,
+    phase: 'summary',
+    last_phase: 'UNKNOWN',
+    phases,
+    lifecycle: 'pending_at_stop',
+    durations_ms: {
+      dispatch_queue_ms: null,
+      handler_ms: null,
+      dispatch_total_ms: null,
+      dispatch_to_completion_wall_ms: null,
+      provider_wall_ms: null,
+      response_write_wall_ms: null,
+      execution_lock_wait_ms: null,
+      caller_receipt_ms: null,
+    },
+    utc: '2026-10-25T00:00:00.000Z',
+    at_ms: 1,
+    capture_anchor: { utc: '2026-10-25T00:00:00.000Z', at_ms: 0 },
+    capture_namespace: 'pid-1-birth-unknown-capture-1',
+    pid: 1,
+    birth_ticks: null,
+    method: 'POST',
+    route_template: '/v1/projects/{project_id}/timelines/{timeline_id}/commit',
+    idempotency_key_sha256: 'a'.repeat(64),
+    dispatch_start_ms: null,
+    sampling,
+    unknown_boundaries: {
+      client_request_to_server_receive: 'unsupported: no earlier socket/server-accept hook',
+      request_body_receive: 'unsupported: no body-read hook; body time is not separately measured',
+      execution_lock_wait: 'phase hook has no exact threading.Lock.acquire boundary',
+      caller_receipt: 'outside Runtime process',
+    },
+    unsupported_boundaries: {
+      network_arrival_ms: null,
+      request_body_receive_ms: null,
+      execution_lock_wait_ms: null,
+      caller_receipt_ms: null,
+    },
+    truncated: false,
+    retention: {
+      format_version: RETENTION_FORMAT_VERSION,
+      mode: 'rolling_plus_final_request',
+      rolling: {
+        capacity_events: MAX_EVENTS,
+        events_seen: 1,
+        events_retained: 1,
+        capacity_dropped_events: 0,
+        complete: true,
+        incomplete_limit: null,
+      },
+      final_request: {
+        request: 1,
+        outcome: 'pending_at_stop',
+        events_seen: 1,
+        events_retained: 1,
+        buffer_complete: true,
+        complete: true,
+        incomplete_limit: null,
+      },
+      output: { max_bytes: MAX_BYTES, bytes: 100, events: 1 },
+    },
+  };
+}
+
+test('D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations', () => {
+  const fixture = newValidatorSummaryFixture();
+  assert.doesNotThrow(() => assertCaptureEvent(fixture, 'reviewed-new'));
+  const rejects = (label: string, mutate: (event: Record<string, any>) => void): void => {
+    const mutated = JSON.parse(JSON.stringify(fixture)) as Record<string, any>;
+    mutate(mutated);
+    assert.throws(() => assertCaptureEvent(mutated, 'reviewed-new'), undefined, label);
+  };
+  rejects('summary lifecycle is required and enumerated', (event) => { delete event.lifecycle; });
+  rejects('unknown lifecycle is refused', (event) => { event.lifecycle = 'pending'; });
+  rejects('top leaf field is required', (event) => { delete event.sampling.top_leaf_frames; });
+  rejects('leaf row lost_samples is required', (event) => { delete event.sampling.top_leaf_frames[0].lost_samples; });
+  rejects('leaf row lost_samples must match the sample summary', (event) => { event.sampling.top_leaf_frames[0].lost_samples = 0; });
+  rejects('leaf count cannot exceed sample total', (event) => { event.sampling.top_leaf_frames[0].sample_count = 3; });
+  rejects('leaf frame identity remains safe', (event) => { event.sampling.top_leaf_frames[0].function = 'private token'; });
+  rejects('pending lifecycle cannot claim a dispatch duration', (event) => {
+    event.durations_ms.dispatch_total_ms = 1;
+    event.durations_ms.dispatch_to_completion_wall_ms = 1;
+  });
+  rejects('dispatch denominator cannot contradict unknown duration', (event) => {
+    event.sampling.dispatch_wall_denominator_ms = 20;
+  });
+  rejects('arrival phase contradiction is refused', (event) => {
+    event.phases.arrival = { status: 'observed', count: 1, start_ms: 0, end_ms: 1, reason: 'no earlier socket/server-accept hook' };
+  });
+  rejects('retention outcome uses the new lifecycle enum', (event) => { event.retention.final_request.outcome = 'pending'; });
+  rejects('buffer completeness must agree with complete', (event) => { event.retention.final_request.buffer_complete = false; });
+});
 
 function readBootstrappedWatchdog(root: string, seconds?: string): { seconds: number; stack_sink: string } {
   const config = p2CommitPhaseCaptureConfig(path.join(root, seconds ? `watchdog-${seconds}` : 'watchdog-default'))!;
@@ -417,8 +585,11 @@ test('P2 Runtime observer bootstrap is opt-in, source-pinned, bounded, and flush
   assert.equal(statSync(config.directory).mode & 0o777, 0o700);
   if (config.helperSha256 === NORMAL_HELPER_SHA256) {
     assert.equal(config.helper, path.join(runtimeCheckout, 'tests/helpers/p2_commit_phase_capture.py'));
-  } else {
+  } else if (config.helperSha256 === REVIEWED_HELPER_SHA256) {
     assert.equal(config.helperSha256, REVIEWED_HELPER_SHA256);
+    assert.equal(path.basename(config.helper), 'p2_commit_phase_capture.py');
+  } else {
+    assert.equal(config.helperSha256, REVIEWED_NEW_HELPER_SHA256);
     assert.equal(path.basename(config.helper), 'p2_commit_phase_capture.py');
   }
   const smokeText = readCapture(config.sink, config.helperSha256);
