@@ -1,0 +1,341 @@
+{
+  "body_exit_code": 1,
+  "classification_counts": {
+    "D13_ENV": 1,
+    "D23_DEFERRED": 2,
+    "D63_UPSTREAM924_MATCHED_STATUS_DIFFERENT_CAUSE_OR_RESULT": 15,
+    "D63_UPSTREAM924_MATCHED_STATUS_SAME": 2756,
+    "UNCLASSIFIED_NO_UPSTREAM_EXACT_NODE": 6499
+  },
+  "classification_rule": "Existing D63/upstream924 matching only by exact nodeid; exact status differences retained as different cause/result; current-only nodes unclassified; D13_ENV and D23_DEFERRED preserved; no independent numeric core or NO-GO verdict.",
+  "controls": {
+    "poison_body_exit": 19,
+    "poison_count": 0,
+    "poison_preflight_exit": 0,
+    "positive_body_exit": 17,
+    "positive_count": 1,
+    "positive_preflight_exit": 0
+  },
+  "counts": {
+    "error": 291,
+    "failed": 159,
+    "passed": 8823
+  },
+  "coverage": {
+    "absent_case_pass_claim": false,
+    "all_nodes_have_outcome": true,
+    "missing_upstream_exact_node_count": 6499,
+    "root_count": 22,
+    "root_counts": {
+      "tests/core/rendering/test_local_schema.py": {
+        "passed": 29
+      },
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py": {
+        "passed": 11
+      },
+      "tests/core/test_timeline_element_orphan_cleanup.py": {
+        "passed": 48
+      },
+      "tests/core/test_timeline_element_publication.py": {
+        "passed": 45
+      },
+      "tests/core/test_timeline_element_publication_runtime.py": {
+        "failed": 4,
+        "passed": 56
+      },
+      "tests/core/timeline": {
+        "passed": 304
+      },
+      "tests/editing_conformance": {
+        "error": 279,
+        "failed": 86,
+        "passed": 4050
+      },
+      "tests/packs/rendering/test_composition_package.py": {
+        "passed": 7
+      },
+      "tests/packs/rendering/test_live_scene_composition.py": {
+        "error": 1,
+        "passed": 19
+      },
+      "tests/packs/rendering/test_render_export_task_adapter.py": {
+        "failed": 2,
+        "passed": 135
+      },
+      "tests/packs/rendering/test_timeline_filmstrip_cards.py": {
+        "passed": 39
+      },
+      "tests/packs/rendering/test_timeline_filmstrip_execution.py": {
+        "passed": 28
+      },
+      "tests/packs/timeline": {
+        "passed": 365
+      },
+      "tests/packs/video_editing/test_runtime_publication_chain.py": {
+        "error": 1,
+        "failed": 1,
+        "passed": 12
+      },
+      "tests/sdk": {
+        "error": 10,
+        "failed": 62,
+        "passed": 3009
+      },
+      "tests/stage1/test_cold_launch_autobootstrap.py": {
+        "passed": 30
+      },
+      "tests/test_installer_bootstrap_schema.py": {
+        "passed": 1
+      },
+      "tests/test_installer_schema.py": {
+        "passed": 4
+      },
+      "tests/test_installer_sources.py": {
+        "passed": 44
+      },
+      "tests/test_timeline_clip_replacement.py": {
+        "passed": 8
+      },
+      "tests/timeline": {
+        "failed": 4,
+        "passed": 563
+      },
+      "tests/v10/test_timelines_create.py": {
+        "passed": 16
+      }
+    },
+    "roots": [
+      "tests/editing_conformance",
+      "tests/sdk",
+      "tests/timeline",
+      "tests/core/timeline",
+      "tests/core/test_timeline_element_orphan_cleanup.py",
+      "tests/core/test_timeline_element_publication.py",
+      "tests/core/test_timeline_element_publication_runtime.py",
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+      "tests/core/rendering/test_local_schema.py",
+      "tests/packs/timeline",
+      "tests/packs/rendering/test_composition_package.py",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_render_export_task_adapter.py",
+      "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+      "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+      "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "tests/stage1/test_cold_launch_autobootstrap.py",
+      "tests/test_installer_schema.py",
+      "tests/test_installer_sources.py",
+      "tests/test_timeline_clip_replacement.py",
+      "tests/v10/test_timelines_create.py",
+      "tests/test_installer_bootstrap_schema.py"
+    ],
+    "unmapped_root_count": 0,
+    "xml_declared_tests": 9446,
+    "xml_nodeids_unique": true,
+    "xml_testcase_count": 9273
+  },
+  "current_body_exit": {
+    "bytes": 2,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/agent-core-full.body.exit",
+    "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  },
+  "current_body_log": {
+    "bytes": 9662203,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/agent-core-full.body.log",
+    "sha256": "7bae40c4091d95ada10ea4c91980941acb06310ff5761004b6c8d66828565805"
+  },
+  "current_command": {
+    "bytes": 1130,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/agent-core-full.command",
+    "sha256": "a554ddddc38f8e0b05b38749fbeb8493853e2542df01940477d98fc9edede0cf"
+  },
+  "current_preflight_exit": {
+    "bytes": 2,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/agent-core-full.preflight.exit",
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "current_runmanifest": {
+    "bytes": 601,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/agent-core-full.runmanifest",
+    "sha256": "7338f54cf65584106956056dec87e6d20971ef4fba17cd18987e080d07481f54"
+  },
+  "current_xml": {
+    "bytes": 15287552,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/agent-core-full-terminal.xml",
+    "sha256": "483e5c13c3443147488da436acc49d0c0f322f7e4d3f020fbd656a548459139c"
+  },
+  "disk_monitoring": {
+    "observed_minimum_after_start_bytes": 4886441984,
+    "stop_requested": false,
+    "stop_threshold_bytes": 4000000000,
+    "terminal_free_bytes": 5152694272
+  },
+  "duration_seconds": 1558.79,
+  "exit_code": 1,
+  "preflight_exit_code": 0,
+  "profile_hashes": {
+    "composition_version": "0.0.14",
+    "node_version": "v20.19.4",
+    "profile_archive_sha": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "profile_lock_sha": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "profile_registry_sha": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+    "schema_digest": "867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "profile_provider_receipt": {
+    "bytes": 581,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/profile-provider-receipt.txt",
+    "sha256": "9d02d2a93000d466edee87aa3e6ca2f9388f213e0943f7bf688dc3abbad792c3"
+  },
+  "published_outputs": {
+    "handoff-agt-F-D118-core-D89a-1024-outcomes.json": {
+      "bytes": 12341845,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D118-core-D89a-1024-outcomes.json",
+      "sha256": "d2c12dcab7f89327bf901ba4db65fc69b0b0d9819cd8b076969adf700d0971ff"
+    },
+    "handoff-agt-F-D118-core-D89a-1024-outcomes.tsv": {
+      "bytes": 7713466,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D118-core-D89a-1024-outcomes.tsv",
+      "sha256": "8f2c882f431ec8778974eb8996af0fd0701f0e2f2a523595d86e3bfd484ea3c5"
+    }
+  },
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1025102421-30693",
+  "result_summary_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1025102421-30693/summary",
+  "runtime_provider_paths": {
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "python": "/home/user/work/venv-agent/bin/python",
+    "runtime_checkout": "/home/user/work/wt/rt-pin-1daca2a3",
+    "schema": "/home/user/work/venv-agent/lib/python3.13/site-packages"
+  },
+  "schema": "timeline.agent.d118.full-terminal-manifest.v1",
+  "selector_root_count": 22,
+  "selector_roots": [
+    "tests/editing_conformance",
+    "tests/sdk",
+    "tests/timeline",
+    "tests/core/timeline",
+    "tests/core/test_timeline_element_orphan_cleanup.py",
+    "tests/core/test_timeline_element_publication.py",
+    "tests/core/test_timeline_element_publication_runtime.py",
+    "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+    "tests/core/rendering/test_local_schema.py",
+    "tests/packs/timeline",
+    "tests/packs/rendering/test_composition_package.py",
+    "tests/packs/rendering/test_live_scene_composition.py",
+    "tests/packs/rendering/test_render_export_task_adapter.py",
+    "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+    "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+    "tests/packs/video_editing/test_runtime_publication_chain.py",
+    "tests/stage1/test_cold_launch_autobootstrap.py",
+    "tests/test_installer_schema.py",
+    "tests/test_installer_sources.py",
+    "tests/test_timeline_clip_replacement.py",
+    "tests/v10/test_timelines_create.py",
+    "tests/test_installer_bootstrap_schema.py"
+  ],
+  "service_artifacts": {
+    "service-30693.BENCH-LEASE-RESULT": {
+      "bytes": 9,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/service-30693.BENCH-LEASE-RESULT",
+      "sha256": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1"
+    },
+    "service-30693.exit": {
+      "bytes": 2,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/service-30693.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "service-30693.heavy": {
+      "bytes": 0,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/service-30693.heavy",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "service-30693.request": {
+      "bytes": 108,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/service-30693.request",
+      "sha256": "602f488b8c2b1c00921ebdf8878f116a510eb68f0b1366d553dbdcf6b5b4ecd0"
+    },
+    "service-30693.sha256": {
+      "bytes": 1717,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/service-30693.sha256",
+      "sha256": "7e4faeb0936cf720635d79d85eed30c9d76b665ef495463ea8a7fbce1dd8171a"
+    },
+    "service-30693.snap": {
+      "bytes": 114,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/service-30693.snap",
+      "sha256": "43d85770716df63c1fd48b2dc061bfe167ff8ea6395e12c065eadf1df1b6de0e"
+    },
+    "service-30693.status": {
+      "bytes": 5,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/service-30693.status",
+      "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997"
+    },
+    "service-30693.summary": {
+      "bytes": 11295,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/service-30693.summary",
+      "sha256": "ca37d55c96c9147270270bdadac6571414d9df9e133fea60a8a213e92b05764a"
+    }
+  },
+  "service_id": "agent-agent-core-full-1025102421-30693",
+  "setup_history": {
+    "corrected_service_id": "agent-agent-core-full-1025102421-30693",
+    "first_result": "zero-body setup failure: manifest source and evidence destination were identical",
+    "first_service_id": "agent-agent-core-full-1025102221-15065",
+    "meaningful_body_repeated": false
+  },
+  "source_hashes": {
+    "agent_commit": "120d71202a9ebafa99011aec417cfca6d67fafc2",
+    "agent_tree": "9a65a32e4462464825df6cfe4d913408694ad4c5",
+    "app_commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "runtime_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "runtime_tree": "a522511414947e48e317a5e5c2103483b121a750"
+  },
+  "source_manifest": {
+    "bytes": 2364,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/agent-core-full.manifest",
+    "sha256": "dcfb6e253acbc1dad1011019eb8610d3d8e507c0872f257a10b30f209d98e817"
+  },
+  "source_manifest_sha256": "dcfb6e253acbc1dad1011019eb8610d3d8e507c0872f257a10b30f209d98e817",
+  "source_test_hashes": {
+    "installed_test_run_candidate_sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "original_p4_test_hash": "3ec918b987c0b5f26d4a17210f37b87ee05f9598b5360e9b9b917cfd5a26fdc0",
+    "suite_row_sha256": "b4753881a2f4efc6770b78d205a321005f124c46ab5e07cb46ed34e4bf97540c"
+  },
+  "status": "fail",
+  "subtests_reported": 173,
+  "suite_row_admission": {
+    "installed_sha256": "b4753881a2f4efc6770b78d205a321005f124c46ab5e07cb46ed34e4bf97540c",
+    "manifest_input": "/tmp/w-e4e38edaae/agent-core-full-input.manifest",
+    "parsed_row_bash_n": "PASS",
+    "preimage_sha256": "1bf0bbe87720011b830222f614bad5d7353773cfd3d3dc6b86eb98d3aaa18fbe"
+  },
+  "terminal_summary": "159 failed, 8823 passed, 86 warnings, 291 errors, 173 subtests passed in 1558.79s (0:25:58)",
+  "test_run_admission": {
+    "backup_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/archive-v1/test-run-pre-D89a-1024",
+    "controls": "8 offline boundary/busy/invalid-df controls PASS pre-install, post-install, and retry; central_body_invoked=false",
+    "default_heavy_floor_bytes": 5200000000,
+    "default_heavy_strict": true,
+    "installed_mode": "755",
+    "installed_sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "light_floor_bytes": 5000000000,
+    "light_inclusive": true,
+    "named_floor_bytes": 4700000000,
+    "named_floor_inclusive": true,
+    "preimage_sha256": "5df4145dfb972a0470f20a1959b470f6b17aa68d02c6478da22ed3fadbd922ea"
+  },
+  "tuple_capture": {
+    "bytes": 1737,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D118-core-D89a-1024/evidence/tuple-captured-once.txt",
+    "sha256": "99024a552efe4d5736780c710f9a2a0420e6c056f5b5c175310664da3c1841c9"
+  },
+  "upstream_reference": {
+    "baseline_counts": {
+      "error": 14,
+      "failed": 91,
+      "passed": 12396,
+      "skipped": 16
+    },
+    "xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+    "xml_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f"
+  },
+  "worker": "agt-F-D118-core-D89a-1024"
+}
