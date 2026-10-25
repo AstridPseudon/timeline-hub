@@ -137,7 +137,7 @@ def test_windows_task_settings_and_no_console_executable():
     xml = service.render('win32', version, data, log)
     assert xml.startswith('<Task ')
     assert '<?xml' not in xml
-    assert 'Hidden' not in xml
+    assert 'Hidden' not in service.render('win32', version, data, log)
 
 
 def test_systemd_quotes_spaces_percent_dollar_and_supply_tool_path():
