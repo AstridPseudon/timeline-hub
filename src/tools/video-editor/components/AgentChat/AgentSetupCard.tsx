@@ -11,7 +11,10 @@ import { AgentIcon, agentNames, isAgentUsable } from './agentIdentity';
 import { CommandLine, CommandStep } from './CommandLine';
 import { readNewChatChoice, rememberNewChatChoice } from './newChatThinkingSelection';
 
-const client = new AstridLocalClient({ projectSlug: 'astrid-acp' });
+// Saving a key validates it with OpenRouter and lists models afterwards, which can take longer than a read.
+const client = new AstridLocalClient({ projectSlug: 'astrid-acp', timeoutMs: 120_000 });
+// ACP model ids are provider/model selectors; the catalog lists bare ids per provider.
+const selectorOf = (providerId: string, modelId: string) => `${providerId}/${modelId}`;
 const setupName = (agent: LocalAgentId) => agent === 'astrid' ? copy.astridAgent : agentNames[agent];
 
 type Props = {
@@ -104,10 +107,11 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
 
   const providers = [...(models.data?.providers ?? [])].sort((a, b) => Number(b.signedIn) - Number(a.signedIn));
   const hasModels = providers.some(provider => provider.signedIn && provider.models.length > 0);
-  const availableModels = providers.filter(provider => provider.signedIn).flatMap(provider => provider.models);
-  const modelId = chosenModel && availableModels.some(model => model.id === chosenModel) ? chosenModel
-    : availableModels.find(model => model.id === models.data?.currentModel)?.id ?? availableModels[0]?.id;
-  const model = availableModels.find(model => model.id === modelId);
+  const availableModels = providers.filter(provider => provider.signedIn)
+    .flatMap(provider => provider.models.map(item => ({ ...item, selector: selectorOf(provider.id, item.id) })));
+  const modelId = chosenModel && availableModels.some(model => model.selector === chosenModel) ? chosenModel
+    : availableModels.find(model => model.selector === models.data?.currentModel)?.selector ?? availableModels[0]?.selector;
+  const model = availableModels.find(model => model.selector === modelId);
   const setupError = isAgentSetupError(failure);
   const steps = agent?.steps?.length ? agent.steps.filter(item => agent.state === 'not-installed' || item.kind === 'sign-in') : [];
   const instructions = <div className="space-y-2">
@@ -156,7 +160,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
               const matches = provider.models.filter(item => `${provider.name} ${item.name} ${item.id}`.toLowerCase().includes(search.toLowerCase()));
               return matches.length ? <fieldset key={provider.id} disabled={!provider.signedIn}>
                 <legend className="text-xs font-medium text-muted-foreground">{provider.name}</legend>
-                {matches.map(item => <label key={item.id} className="flex items-center gap-2 py-1"><input type="radio" name="setup-model" value={item.id} checked={modelId === item.id} onChange={() => setChosenModel(item.id)} />{item.name}</label>)}
+                {matches.map(item => { const selector = selectorOf(provider.id, item.id); return <label key={selector} className="flex items-center gap-2 py-1"><input type="radio" name="setup-model" value={selector} checked={modelId === selector} onChange={() => setChosenModel(selector)} />{item.name}</label>; })}
               </fieldset> : null;
             })}
           </div>

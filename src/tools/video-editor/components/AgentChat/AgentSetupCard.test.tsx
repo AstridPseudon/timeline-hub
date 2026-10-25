@@ -13,9 +13,9 @@ vi.mock('./newChatThinkingSelection', () => ({ readNewChatChoice: mocks.readChoi
 const clients: QueryClient[] = [];
 const ready = (): LocalAgentChoice[] => LOCAL_AGENT_IDS.map(id => ({ id, name: LOCAL_AGENT_TABLE[id].name, state: 'ready', signIn: 'signed-in', line: null, models: [], defaultModel: null }));
 const catalog = (): AcpModelCatalog => ({ providers: [
-  { id: 'other', name: 'Other account', signedIn: false, models: [{ id: 'other/model', name: 'Unavailable model' }] },
-  { id: 'openrouter', name: 'OpenRouter', signedIn: true, models: [{ id: 'openrouter/first', name: 'First model' }, { id: 'openrouter/default', name: 'Default model' }] },
-  { id: 'claude', name: 'Claude', signedIn: true, models: [{ id: 'claude/sonnet', name: 'Sonnet' }] },
+  { id: 'other', name: 'Other account', signedIn: false, models: [{ id: 'model', name: 'Unavailable model' }] },
+  { id: 'openrouter', name: 'OpenRouter', signedIn: true, models: [{ id: 'first', name: 'First model' }, { id: 'default', name: 'Default model' }] },
+  { id: 'claude', name: 'Claude', signedIn: true, models: [{ id: 'sonnet', name: 'Sonnet' }] },
 ], currentModel: 'openrouter/default' });
 function mount(props: Partial<React.ComponentProps<typeof AgentSetupCard>> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -132,7 +132,7 @@ describe('external setup and recovery', () => {
 describe("Astrid's setup", () => {
   it('groups and searches the full catalog, selects currentModel and starts with the selected model', async () => {
     const data = catalog();
-    data.providers[1].models.push(...Array.from({ length: 60 }, (_, i) => ({ id: `openrouter/model-${i}`, name: `Model ${i}` })));
+    data.providers[1].models.push(...Array.from({ length: 60 }, (_, i) => ({ id: `model-${i}`, name: `Model ${i}` })));
     mocks.models.mockResolvedValue(data);
     const view = mount(); choose("Astrid's agent");
     expect(await screen.findByRole('radio', { name: 'Default model' })).toBeChecked();
