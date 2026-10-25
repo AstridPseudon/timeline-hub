@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T01:59:38Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 1m -->
+<!-- main | 2026-10-25T02:02:55Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 0m -->
 # runtime board, 2026-10-25T01:58:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -223,15 +223,17 @@
 
 | D86-core-element2 | Preserve two current element originals | Luna | Exact remaining caller findings | review | Review0145 SOURCE_EXACT | SOURCE_EXACT. Lost-ACK metadata refusal and merged versus rebased expectation remain bounded unapplied findings. | Blob91b8d15 |
 
-| D86-unexecuted23 | Account exact missing JUnit cases | Luna | Actual retained10077 records | doing | rt-D86-10077-unexecuted-facts-0155 | CLI8, WC6eleven and M2four need exact per-ID disposition; absence alone remains UNKNOWN. No body or collection. | Existing10077 only |
+| D86-unexecuted23 | Account exact missing JUnit cases | Luna | First actual body still owed | review | rt-D86-10077-unexecuted-facts-0155 complete | 23-ID packet: source-supported integration marker filter; retained deselection record absent. All remain no-JUnit and unqualified. No body/collection. | Existing10077 only |
 
-| D87-live-frontends6 | Preserve six current frontend scenarios | Luna | First source return under settled D87 | doing | agt-D87-live-frontends-return-0148 | Six exact live cases retained; separate retired native-param function restored only if rewritten. No envelope or behavioral closure. | Held95fe input |
+| D87-live-frontends6 | Preserve six current frontend scenarios | Luna | Fresh full-stack protected review | review | Author0148; reviewer0202 | Six exact live cases retained; separate retired native-param function restored only if rewritten. No envelope or behavioral closure. | Held95fe input |
 
-| D86-inverse-host | Preserve original shared move host | Luna | Original host and authored input comparison | doing | agt-D86-inverse-host-0158 | Keep authored move3.5, clip duration and inverse predicates. Correct original supported host only if faithful; otherwise return exact contradiction unapplied. | Reviewed title base |
+| D86-inverse-host | Preserve original shared move host | Luna | Independent original-host source review | review | Author0158; review0204 | Authored-first original13s restored; original-third incompatible3.5/3.3/1.8 inputs unchanged. Full original-data review0204; no interval guard change. | Reviewed title base |
 
-| D90-candidate-proof | Prove exact guarded inverse candidate | Luna / main service | Protected source PASS then actual body | doing | rt-D90-candidate-proof-0200 | Exact89642 candidate; two originals, four new variants and strict fork file. Product stays unmerged until proof and one result verdict PASS. | Candidate89642bafc8 |
-| D86-compound-input | Find existing admitted unused manifest source | Luna | Source floor and held input inspection | ready | Brief0202 prepared | Read existing qualified held source only; no new consumer, synthetic authority, corpus or body. Return exact source or bounded absence. | Input need only |
+| D90-candidate-proof | Prove exact guarded inverse candidate | Luna / main service | P4 next body priority per Agent0153 | ready | Prep0200 checkpoint stop; resume WIP afterP4 | Exact89642 candidate; two originals, four new variants and strict fork file. Product stays unmerged until proof and one result verdict PASS. | Candidate89642bafc8 |
+| D86-compound-input | Find existing admitted unused manifest source | Luna | Existing held input assessment | doing | rt-compound-held-source-0202 | Read existing qualified held source only; no new consumer, synthetic authority, corpus or body. Return exact source or bounded absence. | Input need only |
 | P2-parent-single-current | Qualify reviewed native reply successor | Luna / main service | Next heavy slot after D90 | ready | Exact App4b984 plan source ready | App0138 protectedPASS and home4b984; exact0d142/a3cd/635f. Two originals serial; prior24629/11446 stay failed. | Captured App4b984365 |
+
+| P4-D88b-main | Qualify remaining ten-note original | Luna / main service | Actual D88b adoption home d407 | ready | rt-P4-D88b-tennote-0206 brief ready | Explicit Agent0153 main venue. Exactd407/6634; sole unprofiled45s original; D90 preparation checkpointed before body. | Fixed Agentd407 / Runtime6634 |
 
 Runtime producer: RELEASED D88b product6634a17f3ffd885567ba3c91b6c7a560df7375a4, tree47b376 equals independent reviewedb69a exactly. Auth172/history81/warm forgery1/central14 PASS; canonical15/schema867f unchanged. Old withdrawn D88 prototype never released.
 core open: P4 main3362 FAIL45.244s versus45s and element8897 FAIL5s retain olda3cd scope. D88b warm replay0 is source qualified with uneven timings; next meaningful originals owed. Four R2 retain qualified7c48/732 until final matrix.
@@ -250,6 +252,6 @@ Source ownership: MAIN word helper, M1 and shared inverse corrections0145; ordin
 Later qualification input R2r-inverse-coverage: historical23499 replace-existing add-delete ends inverse nativewritecoverage1739; current behavior unknown. Agent D90 source0131 separate; Runtime guards unchanged.
 Later: Shared inverse original-third host followthrough prepared0158; no interval guard or authored move changed. E1/E3/AgentE2/D79 afterZIP; D42 held; V4 cut; D14/D23 deferred; unsafe D34 held; D56 Farm/schema stopped. Existing safety/access/cleanup/process refusals stay stopped.
 Disk: Free6.009GB at six0145 requests; each start rechecked current source5.5GB or heavy5.2GB floor. All prior workers recycled. Sweep3 removed0; compact packed4 old test dirs and gzipped4 logs. Five ended nonKEEP trees are old dirty targets and untouched. After inverse ended, newly stale766 pin passed currenthead/test/queue/lease/process audit with zero unreadable and recycled; free5.537GB. Outputs retained.
-live 3 / cap 6; ready-undispatched 0 eligible starts after floor checks. Wordreview0152 requested at5.564GB; D87source next when currentfree stays above5.5GB. D89 source above5.5GB, heavy one above5.2GB, nothing new below4.5GB; stop newest non-gate at4GB. Source floor after request governs remaining D87 start; all actual starts rechecked.
+live 4 requested / cap 6; ready-undispatched 0 eligible starts after floor checks. Wordreview0152 requested at5.564GB; D87source next when currentfree stays above5.5GB. D89 source above5.5GB, heavy one above5.2GB, nothing new below4.5GB; stop newest non-gate at4GB. Source floor after request governs remaining D87 start; all actual starts rechecked.
 
-INBOX consumed through752925 bytes. Updated 2026-10-25T01:43:04Z: D88b protectivePASS and normal6634 exact-tree release published immediately; bulk finite no-POST packet returned. Agent actual source joins consumed; six new bounded jobs requested.
+INBOX consumed through755721 bytes. Updated 2026-10-25T01:43:04Z: D88b protectivePASS and normal6634 exact-tree release published immediately; bulk finite no-POST packet returned. Agent actual source joins consumed; six new bounded jobs requested.

@@ -1,0 +1,9 @@
+test agent-d90-r2-legacy-proof-1025020209-28969: pass exit=0 in 9s — d90-r2-legacy-proof on integration:agent (agent tree c16326135cd09e4e4e72caac66e92c755b792ce4)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 P4_D73_MANIFEST=/home/user/work/wt/rt-D90-candidate-proof-0200/evidence/rt-D90-candidate-proof-0200/d90-main.manifest P4_D73_EVIDENCE=/home/user/work/wt/rt-D90-candidate-proof-0200/evidence/rt-D90-candidate-proof-0200 P4_D73_REQUEST_ID=d90-r2-legacy-proof /bin/bash --noprofile --norc -c 'set -eu; exec /home/user/work/wt/agt-pin-89642baf/tools/p4-d73-pinned-launch.sh "$P4_D73_MANIFEST" run -- -m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$P4_D73_EVIDENCE/d90-r2-legacy-proof.xml" tests/sdk/test_timeline_commit_provider.py::test_restore_undo_redo_exact_full_closure_and_unknown_fields tests/sdk/test_timeline_commit_provider.py::test_restore_inverse_proof_representations_allow_preview_and_redo tests/sdk/test_timeline_semantic_reservations.py::test_aggregate_children_are_retired_in_their_occurrence_scope tests/sdk/test_timeline_inverse_fork_guard.py'
+counts: 36 passed in 6.54s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d90-r2-legacy-proof-1025020209-28969/log.txt ---
+bringing up nodes...
+bringing up nodes...
+
+....................................                                     [100%]
+36 passed in 6.54s
