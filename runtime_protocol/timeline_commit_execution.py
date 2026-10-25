@@ -161,6 +161,39 @@ def _emit_redacted_diagnostic(request_id, error=None, *, reason=None):
         pass
 
 
+_HISTORY_MESSAGE_TAGS = {
+    "publication/revision pins disagree": "history_port_publication_revision_pins",
+    "publication is outside request ancestry": "history_port_publication_outside_ancestry",
+    "history bounds disagree": "history_port_bounds",
+    "revision is outside request ancestry or declared source": "history_port_revision_outside_ancestry",
+    "base pins disagree": "history_port_base_pins",
+    "candidate head was not observed through this port": "history_port_candidate_head_unobserved",
+}
+
+
+def _history_diagnostic_reason(failure):
+    """Map an intentional history refusal to a bounded private source tag."""
+    if not isinstance(failure, dict):
+        return None
+    details = failure.get("details")
+    if not isinstance(details, dict) or details.get("reason") != "history_unavailable":
+        return None
+    integrity_reason = details.get("integrity_reason")
+    if isinstance(integrity_reason, str):
+        if integrity_reason.startswith("publication_dependency_unavailable:"):
+            return "history_baseline_publication_dependency"
+        if integrity_reason.startswith("missing_or_corrupt_publication_facts:"):
+            return "history_baseline_corrupt_publication_facts"
+        if integrity_reason == "source_publication_missing":
+            return "history_baseline_source_publication_missing"
+        if integrity_reason == "unretained_document_dependency":
+            return "history_baseline_unretained_document_dependency"
+    message = failure.get("message")
+    if message in _HISTORY_MESSAGE_TAGS:
+        return _HISTORY_MESSAGE_TAGS[message]
+    return "history_provider_or_store_guard"
+
+
 class CommitOutcomeUnknown(RuntimeErrorBase):
     code = "not_ready"
     status = 503
@@ -213,7 +246,9 @@ class CommitExecutionCoordinator:
 
         try:
             return self.commit_store.lookup(context, authorize=authorize)
-        except (CommitRejected, AuthorizationError, ForbiddenError):
+        except CommitRejected:
+            raise
+        except (AuthorizationError, ForbiddenError):
             raise
         except Exception as exc:
             _emit_redacted_diagnostic(diagnostic_request_id, exc)

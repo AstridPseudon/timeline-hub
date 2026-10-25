@@ -2527,8 +2527,23 @@ class RuntimeService:
                 raise public_failure(outcome)
             return outcome
         except CommitRejected as exc:
+            from .timeline_commit_execution import (
+                _emit_redacted_diagnostic,
+                _history_diagnostic_reason,
+            )
+            reason = _history_diagnostic_reason(exc.failure)
+            if reason is not None:
+                _emit_redacted_diagnostic(request_id, reason=reason)
             raise public_failure(exc.failure) from exc
-        except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError):
+        except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError) as exc:
+            if isinstance(exc, ConflictError) and isinstance(exc.details, dict):
+                from .timeline_commit_execution import (
+                    _emit_redacted_diagnostic,
+                    _history_diagnostic_reason,
+                )
+                reason = _history_diagnostic_reason({"details": exc.details})
+                if reason is not None:
+                    _emit_redacted_diagnostic(request_id, reason=reason)
             raise
         except RuntimeErrorBase:
             raise
