@@ -154,6 +154,7 @@ WORKSPACE_ROUTES = (
     _entry("GET", "/v1/realm"),
     _entry("GET,PUT", "/v1/app-state/user/:"),
     _entry("GET,POST", "/v1/projects"),
+    _entry("PUT", "/v1/projects/selection"),
     _entry("GET,PATCH", "/v1/projects/:"),
     _entry("GET", "/v1/projects/:/timelines"),
     _entry("GET,PATCH", "/v1/projects/:/timelines/:"),
@@ -232,6 +233,13 @@ def _segment_matches(expected: str, actual: str) -> bool:
 
 
 def _find(table, method: str, segments: list[str]) -> bool:
+    # Exact routes reserve their path even for methods they don't allow, so a
+    # parameterized route can't reinterpret a reserved word as an id.
+    exact = next((methods for methods, template in table
+                  if len(template) == len(segments) and ":" not in template
+                  and template == tuple(segments)), None)
+    if exact is not None:
+        return method in exact
     return any(
         method in methods and len(template) == len(segments)
         and all(_segment_matches(expected, actual) for expected, actual in zip(template, segments))

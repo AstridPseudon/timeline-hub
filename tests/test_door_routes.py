@@ -37,6 +37,7 @@ PRODUCT_CALLS = [
     ("PUT", runtime("/v1/app-state/user/editor-tour"), "runtime"),
     ("GET", runtime("/v1/projects?limit=50&cursor=c1"), "runtime"),
     ("POST", runtime("/v1/projects"), "runtime"),
+    ("PUT", runtime("/v1/projects/selection"), "runtime"),
     ("GET", runtime(f"/v1/projects/{P}"), "runtime"),
     ("PATCH", runtime(f"/v1/projects/{P}"), "runtime"),
     ("GET", runtime(f"/v1/projects/{P}/timelines?limit=50"), "runtime"),
@@ -109,6 +110,8 @@ PRODUCT_CALLS = [
 ]
 
 FORBIDDEN = [
+    ("GET", runtime("/v1/projects/selection")),
+    ("PATCH", runtime("/v1/projects/selection")),
     ("POST", astrid("/acp/model")),
     ("POST", astrid("/acp/conn-1/model")),
     ("DELETE", astrid("/acp/models")),
