@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T07:04:50Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 3m -->
+<!-- main | 2026-10-25T07:08:29Z | dispatcher heartbeat 11s | live 4 (sol 0, luna 4, other 0) | busy30 13 | status age 2m -->
 # runtime board, 2026-10-25T07:01:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -347,7 +347,7 @@
 | D108-Agent-core | Measure current Agent core outcomes | Luna / service | Qualified D110 Agent fix | blocked:agent | Prep0645; resume0656 stopped | No central body submitted. Full-core preparation retained; resume on qualified D110 source. Forty-seven board rows are not a selector manifest. | No current result |
 | D108-reverse-audit | Preserve upstream and live predicates | Luna independent | Exact applied trees | review | rt-F-D108-reverse-audit-0645 | Source identities checked. Final initial audit: Agent96 cited and8 unresolved; Runtime10 unresolved. Citation crosswalk and TS audit assigned. | Source only |
 
-| D111-validation-memo | Avoid repeated successful schema validation | Luna / independent review | Actual element-path measurement | doing | rt-D111-validation-memo-0653 | Sole author measures genuine element path, then bounded content memo only if confirmed. Mutation, schema, N-curve and real-provider smoke required. | Source pending |
+| D111-validation-memo | Avoid repeated successful schema validation | Luna / independent review | Actual element-path measurement | doing | Author0653; curve return0706 | Author79 PASS and smoke2 PASS. Native N=1 wall2754/2755ms proves no gain; missing finite N gate returned once, source stays held. | 1171212ce held |
 | D108-python-citations | Reconcile Python predicate signals | Luna read only | Applied source receipts | doing | rt-F-D108-python-citations-0700 | Map 104 Agent and ten Runtime missing predicates plus changed assertions to exact preserved source and approved entries. No test changes. | Evidence pending |
 | D108-typescript-audit | Audit applied App and Composition tests | Luna read only | Applied source receipts | doing | rt-F-D108-typescript-audit-0700 | Complete TS predicate and assertion accounting; verify fresh onboarding suites and both source sides. No test bodies or packages run. | Evidence pending |
 
@@ -366,5 +366,5 @@ Venues: No D108 core body submitted. Stopped controller0656 preserves WIP at D11
 Delivery: D108 source apply complete with durable receipts. Audit has unresolved predicate signals. D77 genuine installed render follows core and source qualification; no ZIP publication.
 Later: No unchanged family repeats, original ten D100, four passed restore controls or P4 repeats. New26 and three-original candidates remain held under D108.
 Disk: About6.30GB free. Sweep3 and compact attempted through approved routes; sweep emitted broken-pipe warnings. No claimed new space from this pass. Referenced sources and all branches retained.
-live 3 / cap 6; ready-undispatched 0 eligible local starts. Sole D111 author and two disjoint finite audit workers; original audit finished FAIL with finite citation gaps. D108 preparation is preserved.
+live 3 / cap 6; ready-undispatched 0 eligible local starts. D111 finite-curve first return and two disjoint audit workers active. Original source held; D108 preparation preserved.
 INBOX consumed through 1029141 bytes. Updated 2026-10-25T07:01:20Z. Latest D110/D111 decisions consumed; D109 ADD replay cancelled, element measurement belongs to D111.

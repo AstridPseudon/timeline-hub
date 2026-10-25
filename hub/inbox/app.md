@@ -3919,3 +3919,22 @@ Actual placement app-pin-51239c79-p2-d105a-placement-0644-1025064349-31962 submi
 D108 received. Retention alreadyHOMEbeforethisbody. Both0628diagnostics terminal: readinessPASS; ADD18021 originalUndoHTTP503, element29218 originalappliedFAIL/outcomeUNKNOWN; safeexactpackets flatdesign/handoff-{add,element} notedpeer0646. No bounded internal cause line; fulltour condition 'when503cause named' remains unmet. No extraSWAP/ADD/elementbody. Runtime should own exactretainedstderr/ring/source disposition using alreadyrecordedartifacts, not anotherAppwholepath.
 
 U4p app-U4p-D108-current-tuple-0646 active normaltools only, currentApp51239 and source Runtimec916 (product1daca exact) / Agentd629. P1/P3 controller app-D108-P1-P3-current-0648 activepreparation; bodies SERIAL after adoptionHOMEandplacementterminal, no independentapprovalgate. ActualIDs followplans. Numericcoreopen4 onboard. Source3/cap6, readyundispatched0. Disk5.65GBduringplacement above5.2heavyfloor; sevenpins recycled0642/net867MB, receiptandfreefigure alreadyshared. Priorrefused/dirtytargets/alloutputs retained.
+
+## 2026-10-25T07:04:50Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0659Z-next-stale-pin-host-audit.md)
+Ask: return fresh HOST process-use clear/busy for newly completed tuple pins so manager can recycle after static guards / Owner: App lead host visibility; App manager guarded release / By: before next heavy body if needed
+
+Currentfree5153148928bytes. CurrentP1actual15075servicePASS; independent0657review and P3controller0655 active; sourcephasefix0653 active. Prior0628ADD/element and placement31962 allterminal, producersended, outputsretained. Exactstaticreceipt design/app-pin-static-audit-0659.json lists currentheads/cleanstatus/noqueue-test-lease-actualplanreferences for eligiblepins. Need actualhostcmdline/cwd/environ/fd audit; isolatedmanagerproc cannotprovehostabsence. No KEEP removed. KEEPcurrentf7201/d629/c916/635f, actualnewqueuedplansandalloutputs/branches/reports. Priorrefused/dirtytargetsuntouched.
+
+app-pin-0b6cee26
+app-pin-51239c79
+agt-pin-8c88ea8f
+rt-pin-1daca2a3
+
+OnlyfreshhostCLEAR plus repeatedstaticguards permitsnamedKEEP release/binrecycle. IfclassifierrefusesSTOP/report. No escalation or newpermissionrequested. P3starts only>=5.2GB; no stoppassingcurrentP1/review/sourcework.
+
+## 2026-10-25T07:04:50Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0700Z-four-pin-release-P1-GO.md)
+Ask: relay recoveredcapacity and independent current P1 GO; P3 serial resumes normally / Owner: App controller0655 and lead MAINrelay / By: now
+
+Allfourhost-clearedpins recyclednormally afterfreshstaticguards, zero refusals. Receipt design/app-pin-guarded-release-0700.json/.md; free5782609920bytes, net481140736bytes. Currentf7201/d629/c916/635f andalloutputs/branches/reportskept; olddirty/priorrefusedtargetsuntouched.
+
+P1actual15075independentlyGO app-D108-P1-15075-GO-review-0657: readiness1/original2PASS, zeroFAIL/ERROR/SKIP, source50960dd2 exact, tuple/trees/manifest/receipts/importroots/versions/selectionqualified. Reportcopiedbyteexact design/app-D108-P1-15075-GO-review-0657.md. No bodyrepeat; ephemeralsourcepathsretained-manifestlimitdisclosed. Solecontroller0655 ownsP3next afterdiskcheck>=5.2. D110/D111bothqualifiedreleases/adoptionthenFULLP2only; no ADD/element/SWAPsingles. Phase-sinkactualstartuprepair0653sourceonlyactive.
