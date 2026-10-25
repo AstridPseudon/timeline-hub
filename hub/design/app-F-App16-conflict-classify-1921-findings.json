@@ -1,0 +1,36 @@
+{
+  "task": "app-F-App16-conflict-classify-1921",
+  "classification": "provisional source-only classification; no accepted merge or functional GO",
+  "all_hunks": {
+    "class": "semantic",
+    "owner_and_decision": "See conflict-classes.json; each hunk requires the named App owner to reconcile both sides while preserving C0 and live predicates.",
+    "byte_citation": {
+      "base": "3881e9440688f774878e18806da2dc5c993a9b00",
+      "ours": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+      "upstream": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+      "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a",
+      "preview_sha256": "6c7cf7073a554a81ddbfe9aca90da2a192e73bed90245e137e030998c4439535",
+      "preview_bytes": 769114,
+      "locator": "exact path plus exact @@ header below in the read-only preview; side bytes are git show BLOB:path and git diff --unified=0 BASE SIDE -- path"
+    },
+    "files": [
+      { "path": "package.json", "base_blob": "a91b81dbbba7c2e00a1e0a22b57e9da91abeca87", "ours_blob": "84e4f6e61ae28f094f159c4869a5b20899b98e8c", "upstream_blob": "5bdc5b0aaab190884feea72120b3d9d12ab926f4", "hunks": ["@@ -9,6 +9,9 @@"] },
+      { "path": "public/install-manifest.json", "base_blob": "52f4898421560448a383afd516c1c6b9a3828565", "ours_blob": "47df36d127f0b04517e24756cd87147512bbda94", "upstream_blob": "4ba29b084df42dc1dfa41d2b23549b05752568e2", "hunks": ["@@ -1,11 +1,22 @@", "@@ -42,7 +53,7 @@"] },
+      { "path": "src/app/onboarding/WelcomeConnection.test.tsx", "base_blob": "30fdfd9527f2da15bbaced1c792f44f1ec96ee41", "ours_blob": "26df345b4496372cc93d2e805976e89ccca4bb56", "upstream_blob": "b685a48015b52de2e382d710e21de4725b80a587", "hunks": ["@@ -18,6 +18,11 @@", "@@ -154,7 +159,7 @@"] },
+      { "path": "src/integrations/astrid/localAgents.ts", "base_blob": "7cb0a23ec932716eef4e99f8dad6eaf1e769ec10", "ours_blob": "d0e540ea595be85c644c2273942a05a76624fcb2", "upstream_blob": "4dd520e91bafce42277ba859b92bc37933ea440f", "hunks": ["@@ -32,20 +32,66 @@", "@@ -57,11 +103,18 @@"] },
+      { "path": "src/integrations/paired/pairedRoutePolicy.test.ts", "base_blob": "ba560ef0f59d65ac034933ef111419aed2fbd755", "ours_blob": "3e920fffa81bd88877f66bd60d5b81fda96810ce", "upstream_blob": "f66fdbaf5a700b0eb0eac1082aa8578b4ba923e6", "hunks": ["@@ -21,6 +21,7 @@", "@@ -74,6 +75,7 @@"] },
+      { "path": "src/integrations/runtime/client.ts", "base_blob": "35f523c35ed8fd56f0a42da5a484e029aa881564", "ours_blob": "9f1050799bd86a46d35cf5c07daa4ed05187e6b5", "upstream_blob": "126ef1d1cbc6fb71b301b6c0f6e0f213e3f24174", "hunks": ["@@ -620,6 +620,10 @@"] },
+      { "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx", "base_blob": "7f36f6c12c64e523324dfb7eecbdb76b66ef8e98", "ours_blob": "d3b24fdccbed282fd63f5aaaa8a3dfe3393328d6", "upstream_blob": "9e7f4f342491110ccdfafe8bd82ab6a590aef07a", "hunks": ["@@ -1,7 +1,7 @@", "@@ -54,8 +54,14 @@"] },
+      { "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx", "base_blob": "6ccf2f8679385f5ee7e81fa151b92406e81911b0", "ours_blob": "3b25e68e194d2826529fd9048515ae197cbdf7cc", "upstream_blob": "aff454f75905cbe6eb01314ec02504844a445810", "hunks": ["@@ -4,6 +4,7 @@", "@@ -33,6 +34,9 @@", "@@ -43,6 +47,7 @@", "@@ -65,8 +70,10 @@", "@@ -103,6 +110,7 @@", "@@ -119,6 +127,7 @@", "@@ -186,6 +195,121 @@"] },
+      { "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx", "base_blob": "162e62562d6bb5256d0c60fefea92edd39b6becc", "ours_blob": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1", "upstream_blob": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d", "hunks": ["@@ -6,7 +6,11 @@", "@@ -175,6 +179,8 @@", "@@ -182,6 +188,8 @@", "@@ -265,6 +273,13 @@", "@@ -314,7 +329,219 @@", "@@ -452,7 +679,7 @@", "@@ -513,6 +740,12 @@", "@@ -1365,7 +1598,11 @@", "@@ -1374,8 +1611,16 @@"] },
+      { "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx", "base_blob": "a82ace6b6a75d4a0f34f54ad71685925adecae02", "ours_blob": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02", "upstream_blob": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb", "hunks": ["@@ -3,7 +3,7 @@", "@@ -45,7 +45,12 @@", "@@ -315,8 +320,15 @@", "@@ -521,9 +533,11 @@", "@@ -534,7 +548,17 @@", "@@ -546,11 +570,69 @@", "@@ -657,6 +739,7 @@", "@@ -668,11 +751,10 @@", "@@ -683,7 +765,7 @@", "@@ -882,6 +964,8 @@", "@@ -906,49 +990,57 @@", "@@ -1017,7 +1109,7 @@", "@@ -1038,10 +1130,17 @@", "@@ -1057,7 +1156,36 @@", "@@ -1080,7 +1208,7 @@", "@@ -1142,20 +1270,48 @@", "@@ -1185,7 +1341,8 @@", "@@ -1201,7 +1358,8 @@", "@@ -1373,7 +1531,7 @@", "@@ -1396,6 +1554,7 @@", "@@ -1461,6 +1620,35 @@"] },
+      { "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx", "base_blob": "1f8ec360ccaa22b9523f51039a8e7b2be1121792", "ours_blob": "fa386e33b828ea613da3a8114df7991a89d92ae2", "upstream_blob": "9305a1690c661242812032fc950eefa7105aaf43", "hunks": ["@@ -1,3 +1,4 @@", "@@ -9,6 +10,14 @@", "@@ -55,6 +64,8 @@", "@@ -84,9 +95,14 @@", "@@ -299,6 +315,7 @@", "@@ -365,6 +382,26 @@"] },
+      { "path": "src/tools/video-editor/components/AgentChat/AgentChatModelLine.tsx", "base_blob": "bafb8fdc879b10da663a90a70b8a6be925771e74", "ours_blob": "a851a9bc80d20f2ef3ed28792dfbe9fc312388ca", "upstream_blob": "831f3bb0144b9d1eeb8aee1b974c155560f5396c", "hunks": ["@@ -6,7 +6,7 @@"] },
+      { "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx", "base_blob": "cba152e0a30c55dd0f62aa756497095838382317", "ours_blob": "3d8001013ad1a70253fe28f251f0376f5373e4a7", "upstream_blob": "d4c5e76ff7c6b54365f9c6537337e97cf0acaf18", "hunks": ["@@ -152,8 +152,18 @@"] },
+      { "path": "src/tools/video-editor/hooks/useAgentSession.ts", "base_blob": "33297d969f64f1bdefe107a7dcb949a70dde2b2f", "ours_blob": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e", "upstream_blob": "2f250db12d21659166c6243939f5f911fbb3a160", "hunks": ["@@ -1,4 +1,4 @@", "@@ -13,7 +13,7 @@", "@@ -71,6 +71,7 @@", "@@ -91,7 +92,9 @@", "@@ -352,7 +355,7 @@", "@@ -363,7 +366,7 @@", "@@ -388,6 +391,10 @@", "@@ -416,7 +423,7 @@", "@@ -430,7 +437,7 @@", "@@ -443,7 +450,7 @@", "@@ -464,14 +471,14 @@", "@@ -497,18 +504,18 @@", "@@ -536,7 +543,7 @@", "@@ -550,7 +557,7 @@", "@@ -589,6 +596,7 @@", "@@ -616,7 +624,7 @@", "@@ -651,9 +659,11 @@", "@@ -784,7 +794,7 @@", "@@ -1324,7 +1334,7 @@"] },
+      { "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx", "base_blob": "f7546db6121de17afebe7eb972489105bc4ebfb5", "ours_blob": "9cb4d5da89cf82258f17bca96175f06342c3ff38", "upstream_blob": "7565bdcfd6db01c3e3feee2f85d4f7bd68d158f9", "hunks": ["@@ -1212,9 +1212,7 @@", "@@ -1542,6 +1540,21 @@"] },
+      { "path": "tests/e2e/fake-runtime/server.contract.test.mjs", "base_blob": "d519e7437e73b3a465a989e97555946d48ad12bc", "ours_blob": "62a0e80dcd4b70523cbf4490e20cb7fe17518558", "upstream_blob": "ab92ec3028eb4a94d163469f3e44b48efaca6cce", "hunks": ["@@ -103,7 +103,7 @@", "@@ -335,6 +335,23 @@", "@@ -584,8 +601,11 @@"] }
+    ]
+  },
+  "coverage": { "expected_paths": 16, "actual_paths": 16, "expected_hunks": 81, "actual_hunks": 81, "unclassified_hunks": 0 }
+}

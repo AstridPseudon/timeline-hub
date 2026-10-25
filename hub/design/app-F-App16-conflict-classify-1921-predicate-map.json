@@ -1,0 +1,74 @@
+{
+  "task": "app-F-App16-conflict-classify-1921",
+  "status": "read-only source map; predicates are preserved requirements, not newly accepted behavior",
+  "c0_request": {
+    "required": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "HTTP Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "command_shape": ["schema_version", "op", "version", "select", "args", "created when native shape requires"],
+    "step_shape": ["id", "label", "intent", "tags", "command_ordinals", "patch", "optional reads"],
+    "allowed_merge": ["fields", "atomic"],
+    "source_citations": [
+      "src/tools/video-editor/commands/localSaveSession.ts:165-188",
+      "src/integrations/runtime/dataProvider.ts:751-767",
+      "src/integrations/runtime/client.ts:735-742",
+      "PLAN.md §2 and task brief C0 full v2 request"
+    ]
+  },
+  "c0_reply": {
+    "accepted_or_merged": ["accepted", "merged", "canonical_document", "document_digest", "normalized commands", "identity map", "base/previous/accepted revision", "landing/rebased_onto", "merge_mode", "durable receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps"],
+    "conflict": ["reason", "head"],
+    "invalid": ["code", "path", "hint", "suggested_command"],
+    "dry_run": ["would_status", "receipt must be null"],
+    "source_citations": [
+      "src/integrations/runtime/dataProvider.ts:807-820",
+      "src/tools/video-editor/commands/localSaveSession.ts:192-205",
+      "src/integrations/runtime/timeline-commit-types.ts"
+    ]
+  },
+  "mounted_production_caller": {
+    "proof": "useTimelineSave -> createLocalSaveSession -> localSaveSession/outbox -> RuntimeDataProvider.commitTimeline -> AstridRuntimeClient/generated transport",
+    "source_citations": [
+      "src/tools/video-editor/hooks/useTimelineSave.ts:302-322",
+      "src/tools/video-editor/hooks/useTimelineSave.ts:319-323",
+      "src/tools/video-editor/commands/localSaveSession.ts:158-188",
+      "src/integrations/runtime/dataProvider.ts:751-767",
+      "src/integrations/runtime/client.ts:735-742",
+      "src/tools/video-editor/hooks/useTimelineCommandsService.persistence.test.tsx:732"
+    ],
+    "authority_guards": [
+      "Runtime owns suffix revalidation and canonical closure; App never executes or recaptures an accepted suffix (localSaveSession.ts:141-150).",
+      "Only the official full-v2 generated contract enables doc.patch (localSaveSession.ts:159-162).",
+      "The request carries the persisted original commands/operands/reads and advances only the verified head pair (localSaveSession.ts:165-181).",
+      "Provider rejects untrusted project/timeline and missing revision/publication base (dataProvider.ts:751-767)."
+    ]
+  },
+  "ordinary_d66_diagnostic_hook": {
+    "producer": "emitTimelineSaveDiagnostic emits the mounted timeline:save-diagnostic event from the real save owner lifecycle.",
+    "consumer": "mountedDiagnosticInitScript listens to timeline:save-diagnostic and projects bounded records.",
+    "ordinary_gate": "isTimelineDiagnosticsEnabled requires DEV plus URL query debugTimeline=1.",
+    "source_citations": [
+      "src/tools/video-editor/lib/timeline-diagnostics.ts:1-19",
+      "src/tools/video-editor/hooks/useTimelineSave.ts:313-365",
+      "tests/e2e/local/p1-diagnostic-safety.ts:17-18",
+      "tests/e2e/local/p1-diagnostic-safety.ts:324-340",
+      "tests/e2e/local/support/harness.ts:52-59",
+      "tests/e2e/local/support/harness.ts:101-118"
+    ],
+    "no_unmounted_credit": "No helper-only or fixture-only caller was credited; the map names the mounted producer and its registered event consumer only."
+  },
+  "protected_live_predicates": {
+    "identity": ["actor_id", "realm_id", "runtime_instance_id", "source via app", "recoverable owner scope"],
+    "source_citations": ["src/integrations/runtime/client.ts:355-375", "src/tools/video-editor/hooks/useTimelineSave.ts:312-322"],
+    "privacy": ["diagnostic projection uses bounded own-data fields and redaction; no credentials or local paths"],
+    "source_citations_privacy": ["tests/e2e/local/p1-diagnostic-safety.ts:1-33", "tests/e2e/local/support/harness.ts:61-75"],
+    "recovery": ["exact persisted request replay, lost acknowledgement, dependent chain retained, refusal rolls back visible projection without deleting outbox intent"],
+    "source_citations_recovery": ["src/tools/video-editor/commands/localSaveSession.ts:106-150", "src/tools/video-editor/commands/localSaveSession.ts:189-205"],
+    "both_test_families": "Every test hunk in the 16-file census is semantic and must be carried forward; no test was weakened, skipped, or deleted."
+  },
+  "zip_apply": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "observed": "The verifier uses git am -q on generated patches (lines 195-198); no git apply --whitespace=error flag is present.",
+    "result": "flag_not_set; no own-whitespace patch artifact justified",
+    "ours_whitespace": "Qualified validation reports App captured integration side has 56 committed-tree diff-check findings, led by three new blank lines at EOF; they are pre-existing committed bytes and were not edited.",
+    "source_citation": "rt-F-tail-upstream-census-1844-validation.md Patch-equivalence / git diff --check section"
+  }
+}

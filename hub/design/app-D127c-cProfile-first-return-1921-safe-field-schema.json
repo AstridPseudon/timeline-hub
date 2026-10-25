@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "summary_field": "cprofile",
+  "scope": "RuntimeHandler._timeline_commit",
+  "safe_function_fields": ["rank", "file", "line", "function", "ncalls", "primitive_calls", "tottime", "cumtime"],
+  "safe_edge_fields": ["caller", "callee", "ncalls"],
+  "limits": {"max_functions": 40, "max_edges": 1600},
+  "ranking": "descending cumtime then module-relative file/line/function",
+  "path_policy": "runtime/agent/stdlib/package module-relative forms only",
+  "raw_policy": "optional pstats file is newly created 0600 under an existing owner-only 0700 non-symlink child directory of TMPDIR; never public",
+  "privacy_exclusions": ["arguments", "payloads", "headers", "keys", "key_hashes", "URLs", "locals", "exception_text", "absolute_paths", "raw_stacks"],
+  "timing_note": "cProfile overhead inflates absolute times; use ranking and call counts observationally, never as the original budget"
+}

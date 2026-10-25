@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "selection": {
+    "handler_type": "runtime_protocol.server.RuntimeHandler",
+    "method": "POST",
+    "route": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+    "query_string": "rejected",
+    "body_source": "existing handler._prefetched_body",
+    "api_version": 1,
+    "dry_run": "rejected when exactly true",
+    "commands": "exactly one dict with op clip.set-element",
+    "mixed_commands": "rejected",
+    "direct_or_unselected_handler": "rejected",
+    "selection_cardinality": "one exact element-shaped POST; later element requests are retries and rejected",
+    "setup_commands": "non-element setup/native requests do not consume the element selection"
+  },
+  "lifecycle": {
+    "enable": "only selected RuntimeHandler._timeline_commit entry",
+    "normal_return_disable": true,
+    "handler_exception_disable": true,
+    "partial_enable_disable": true,
+    "previous_profile_restored": true,
+    "other_threads_or_requests": false
+  },
+  "projection": {
+    "functions_max": 40,
+    "edges_max": 1600,
+    "ranking": "descending cumtime, then module-relative file/line/function",
+    "fields": ["rank", "file", "line", "function", "ncalls", "primitive_calls", "tottime", "cumtime"],
+    "edge_fields": ["caller", "callee", "ncalls"],
+    "paths": "module-relative runtime/agent/stdlib/package allowlist",
+    "raw_pstats": "optional newly-created 0600 file only under an existing owner-only 0700 child of TMPDIR",
+    "raw_parent_mutation": false,
+    "timing": "observational ranking and call counts; cProfile-inflated absolute time is not an original budget"
+  },
+  "controls_added": [
+    "mixed command and second element/retry rejection",
+    "wrong method/path/query/request and unselected handler rejection",
+    "partial enable cleanup",
+    "projection row and caller-edge bounds/counts",
+    "symlink/overwrite/shared or non-0700 raw-pstats parent rejection"
+  ]
+}

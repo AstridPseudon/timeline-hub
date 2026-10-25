@@ -1,0 +1,37 @@
+{
+  "task": "app-F-App16-conflict-classify-1921",
+  "source": "qualified rt-F-tail-upstream-census-1844",
+  "captured_at_utc": "2026-10-25T18:47:50.824772Z",
+  "repo": "app",
+  "base": "3881e9440688f774878e18806da2dc5c993a9b00",
+  "ours": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+  "ours_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+  "upstream": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+  "upstream_tree": "591327d499ea162dd2ccb4620e577480aa305fae",
+  "merge_base_tree": "210e5739b838ef7655f87238c711704301d12846",
+  "merge_preview": {
+    "command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a",
+    "output_bytes": 769114,
+    "output_sha256": "6c7cf7073a554a81ddbfe9aca90da2a192e73bed90245e137e030998c4439535",
+    "read_only": true
+  },
+  "qualified_inputs": {
+    "census": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-census.json",
+    "conflicts": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-conflicts.md",
+    "already_upstream": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-already-upstream.json",
+    "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-source-manifest.json"
+  },
+  "qualified_input_sha256": {
+    "census.json": "2adbabd4a8e9f93dbc1d60b3c1489f611b527e402dc40629597d49f5502c0e16",
+    "conflicts.md": "3c03a417eb6d9a3a52c496b2d919348b0171aa34dfa0ac005f72d2805b312025",
+    "already-upstream.json": "3ec7a337b6f7e13db39b005a711e47272ba056b9a0021feca80cbbb84b7681c9",
+    "source-manifest.json": "d4a449ebac4509e3d5cff094d6e69f3ccac7ab8b46ba6fcf3062a7ab2f09b535"
+  },
+  "frozen_candidate": "8f0c2484463e9b666d184a744d52e252984e551a",
+  "frozen_candidate_ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+  "integration_branch": "tl/integration",
+  "integration_status_clean_at_capture": true,
+  "upstream_ref": "refs/remotes/origin/main",
+  "independent_1850": "PASS",
+  "classification_only": true
+}

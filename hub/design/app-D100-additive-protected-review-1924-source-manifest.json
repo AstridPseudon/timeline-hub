@@ -1,0 +1,61 @@
+{
+  "task": "app-D100-additive-protected-review-1924",
+  "verdict": "PASS_SOURCE_PURPOSE",
+  "candidate": {
+    "commit": "92eb2dafc6a3d4735253b14882fd336faa79837c",
+    "tree": "7a03ee6731d10d024419a3fd8c2383e5b2c29e44",
+    "parent": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "changed_paths": [
+      "tests/sdk/test_d100_item_birth_boundary.py"
+    ],
+    "test_blob": "605086c4866f77851ef5d14a14495378c68c5f41",
+    "test_sha256": "9f4501c694dab5244d6e8bde1113d1c1a6b056f3fd5c0e4375c86a10ac8d2597",
+    "product_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+  },
+  "base": {
+    "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "test_blob": "68f0999397aa301607128f7747def12001b73a6e",
+    "test_sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+  },
+  "approved_disposition": {
+    "source_1858": "rt-Agent-D100-boundary-decision-1858",
+    "peer_1901": "peer-runtime-to-app-agent-lead-20261025T1901Z-D100-setup-disposition.md",
+    "source_release": "HELD",
+    "fixture_delta": "source_offset 0 plus recomputed authored parent content_digest",
+    "cache_delta": "authoritative shots/placements/_runtime_document exact; only _doc_patch_images extra and separately exact"
+  },
+  "retained_packets": {
+    "author_1921": {
+      "candidate": "92eb2dafc6a3d4735253b14882fd336faa79837c",
+      "source_manifest_sha256": "91f32b17d42c204825b5e236a14060fc6baa3487abfc7120d3a8fdeb9ea217ce",
+      "predicate_map_sha256": "7053d023e66232ed28bf4491f37f4243269f24a1506d6ad9d31e6c2e2f0064d4"
+    },
+    "actual_1837": {
+      "candidate": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+      "result": "24 passed, 3 failed",
+      "facts_sha256": "2ee794dfbb018cf459da10cd46d41a6f903c827130a1d214e9cb5c673041cccb"
+    },
+    "independent_1843": {
+      "candidate": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+      "result": "PASS_WITH_BOUNDARY",
+      "verdict_sha256": "f4f9fe9cfc668727e67c0143b422237cc43f9510aaa0e19b9e5dcce80cd83ec8"
+    }
+  },
+  "production_source_heads": {
+    "app_commit": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "app_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "runtime_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "runtime_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "runtime_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "outside_blob_equality": {
+    "candidate_diff_paths_count": 1,
+    "candidate_diff_path": "tests/sdk/test_d100_item_birth_boundary.py",
+    "protected_product_base_equals_candidate": true,
+    "runtime_and_app_worktrees_modified": false,
+    "fixture_receiving_applied": false,
+    "generated_or_schema_changes": false
+  }
+}

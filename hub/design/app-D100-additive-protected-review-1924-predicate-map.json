@@ -1,0 +1,87 @@
+{
+  "task": "app-D100-additive-protected-review-1924",
+  "verdict": "PASS_SOURCE_PURPOSE",
+  "candidate": "92eb2dafc6a3d4735253b14882fd336faa79837c",
+  "base": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+  "changed_assertions_and_inputs": [
+    {
+      "location": "tests/sdk/test_d100_item_birth_boundary.py:49-61",
+      "input": "empty_source(); aggregate False/True; authored replacement from document payload plus ITEM; doc.patch ref shot-revision:shot-1",
+      "assertions": [
+        "source_mapping.shots equals before",
+        "source_mapping.placements equals before",
+        "source_mapping._runtime_document equals before",
+        "top-level source_mapping keys are exactly before keys plus _doc_patch_images",
+        "_doc_patch_images has exactly owner occurrence:occ-a",
+        "cache shot_id chapter-shot and internal_timeline_id chapter-1 are exact",
+        "cache source_shot_revision shot-1 and source_internal_revision internal-1 are exact",
+        "cache payload is the authored replacement input",
+        "cache internal_timeline is the authored internal-timeline input"
+      ],
+      "purpose": "separate authoritative custody from the sole permitted private compiler projection without weakening any custody predicate"
+    },
+    {
+      "location": "tests/sdk/test_d100_item_birth_boundary.py:166-195",
+      "input": "empty_source(); set authored parent occurrence source_offset to 0; recompute parent content_digest from the authored payload; execute occurrence.place-shared then the same doc.patch",
+      "assertions": [
+        "shared occurrence sees the same physical item payload",
+        "source_mapping.shots, placements, and _runtime_document equal before",
+        "only _doc_patch_images is added",
+        "_doc_patch_images has exactly occurrence:occ-a and occurrence:shared",
+        "both owners map to exact chapter-shot/chapter-1 and shot-1/internal-1",
+        "both cache payloads and internal timelines equal authored inputs",
+        "canonical output has one shot and only the original chapter-shot parent occurrence",
+        "input bundle remains unchanged"
+      ],
+      "purpose": "use the approved admitted default-source fixture and prove shared logical ownership does not allocate or rewrite physical custody"
+    }
+  ],
+  "preserved_predicates_and_inputs": {
+    "custody": [
+      "authenticated shot_id/revision_id/content_digest/internal_timeline_id/internal_timeline_revision_id/internal_timeline_content_digest",
+      "source_mapping.shots chapter-shot item_id_map remains empty",
+      "source_mapping.placements remains exact",
+      "source_mapping._runtime_document remains exact",
+      "physical item identity and opaque fields survive"
+    ],
+    "refusals": [
+      "wrong physical custody pair",
+      "forged authenticated image digest/payload",
+      "empty/null/malformed/duplicate item IDs",
+      "copied placement birth/missing/duplicate/owner/map mismatch",
+      "wrong previous value refuses the whole patch without writes",
+      "existing owner cannot switch to another physical source"
+    ],
+    "canonical_and_history": [
+      "canonical shot payload equals replacement",
+      "internal timeline revision remains exact",
+      "original input bundle remains unchanged",
+      "registered Runtime accepted first physical item",
+      "registered Runtime wrong-previous retry refuses and head remains unchanged"
+    ],
+    "unchanged_inputs": [
+      "ITEM shape and opaque values",
+      "document_fixture/empty_source construction except approved shared-owner offset/digest setup",
+      "all command schema/version/select/args/created fields",
+      "patch paths, before values, refs, labels and idempotency key",
+      "all parameterizations and integration marker"
+    ]
+  },
+  "authority_map": {
+    "authoritative": ["source_mapping.shots", "source_mapping.placements", "source_mapping._runtime_document"],
+    "derived_only": ["source_mapping._doc_patch_images"],
+    "cache_owner_keys": ["occurrence:occ-a", "occurrence:shared"],
+    "cache_value_origin": "authored document/replacement input, never actual output",
+    "production_caller": "mounted App localSaveSession durable outbox -> DataProvider.commitTimeline -> RuntimeService.commit_timeline -> startup-registered Astrid provider",
+    "direct_helper": "execute() shared-owner setup is a local test input, not production-path credit",
+    "d66": "not applicable to this physical item-birth source-purpose assertion"
+  },
+  "contract_shape_preserved": {
+    "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands(schema_version/op/version/select/args/created when native)", "label", "steps(id/label/intent/tags/command_ordinals/patch/optional reads)", "merge fields|atomic", "reads", "HTTP Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "success": ["accepted|merged", "canonical_document", "digest", "normalized commands", "identity map", "base/previous/accepted revision", "landing/rebased_onto", "merge_mode", "durable receipt", "records/bindings/effects/dependencies/history/undo_steps"],
+    "failure": ["conflict reason/head", "invalid code/path/hint/suggested_command"],
+    "preview": ["would_status", "receipt null"],
+    "authority": "unchanged product and Runtime contract; no source-purpose test delta changes request/reply semantics"
+  },
+  "not_claimed": ["behavior GREEN", "App projection", "own27", "original9", "full suite", "browser", "socket", "D130", "source release"]
+}

@@ -1,0 +1,40 @@
+{
+  "task": "app-D100-additive-protected-review-1924",
+  "verdict": "PASS_SOURCE_PURPOSE",
+  "scope": "Independent protected purpose review only; no product, Runtime, fixture, provider, or behavior-body changes.",
+  "base_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+  "candidate_commit": "92eb2dafc6a3d4735253b14882fd336faa79837c",
+  "candidate_tree": "7a03ee6731d10d024419a3fd8c2383e5b2c29e44",
+  "changed_paths": [
+    "tests/sdk/test_d100_item_birth_boundary.py"
+  ],
+  "product": {
+    "path": "astrid/sdk/timeline/_command_state.py",
+    "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "base_equals_candidate": true
+  },
+  "candidate_test_sha256": "9f4501c694dab5244d6e8bde1113d1c1a6b056f3fd5c0e4375c86a10ac8d2597",
+  "source_disposition": "Approved finite disposition 1858 and peer1901: normalize only the new direct shared-owner setup to admitted source_offset 0 with an authored parent digest recomputation; separate authoritative custody from the private _doc_patch_images compiler cache. Source remains HELD pending later genuine behavior/home/batch proof.",
+  "author_packet": {
+    "task": "app-D100-additive-first-return-1921",
+    "static_validation": "PASS",
+    "behavior": "NOTRUN per packet; later acceptance remains separate"
+  },
+  "actual_packet": {
+    "task": "app-D100-projection-proof-resume-1837",
+    "result": "parent 23/27, candidate 24/27; source_mapping cache equality and shared-owner setup boundaries retained"
+  },
+  "independent_packet": {
+    "task": "app-D100-behavior-result-review-1843",
+    "result": "PASS_WITH_BOUNDARY; registered-provider first-birth behavior meaningful, whole candidate GREEN unproven"
+  },
+  "production_boundary": {
+    "app": "mounted shotTimelineDataProvider localSaveSession uses the durable commit outbox and sends through DataProvider.commitTimeline",
+    "runtime": "RuntimeService.commit_timeline validates the canonical commitTimeline path and uses the startup-registered Astrid provider",
+    "agent": "registered provider executes commands.execute/doc.patch/State.set",
+    "d66": "not relevant to physical item-birth custody; no diagnostic credit claimed",
+    "unmounted_helper_credit": false
+  },
+  "behavior_status": "NOTRUN",
+  "findings": []
+}

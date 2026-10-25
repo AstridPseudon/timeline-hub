@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task": "app-D127c-cProfile-first-return-1921",
+  "prior_review": "app-D127c-cProfile-protected-review-1909",
+  "result": "source-corrections-applied; independent cumulative review pending",
+  "findings": [
+    {"id": "D127C-F1", "status": "corrected", "detail": "Exact mounted RuntimeHandler, API v1, non-dry-run, one-command clip.set-element predicate with one-shot element selection."},
+    {"id": "D127C-F2", "status": "corrected", "detail": "Raw pstats requires an existing owner-only 0700 non-symlink child directory under TMPDIR and creates only a new 0600 file with exclusive open; no existing parent chmod."},
+    {"id": "D127C-F3", "status": "corrected", "detail": "Partial enable invokes disable when available and restores the prior process profile in finally."},
+    {"id": "D127C-F4", "status": "corrected", "detail": "Added focused controls for mixed/retry, wrong method/path/query/request/handler, private path cases, bounded projection, and exact caller-edge count."},
+    {"id": "D127C-F5", "status": "corrected", "detail": "Stats.stats is accessed through a typed cast of getattr; helper-only Pyright and touched-file mypy report no new errors."}
+  ],
+  "unqualified": [
+    "Central targeted suite remained queued because free disk was 4,984,758,272 bytes, below the 5,000,000,000-byte admission floor.",
+    "No mounted body or full tour was run; production behavior remains unqualified here."
+  ]
+}
