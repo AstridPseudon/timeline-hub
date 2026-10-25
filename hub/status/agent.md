@@ -1,9 +1,9 @@
-<!-- agent | 2026-10-25T13:33:05Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 3m -->
+<!-- agent | 2026-10-25T13:36:54Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
 # agent board, 2026-10-25T13:29Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
-| U2 D123 | Apply current Agent patch to upstream b742 | HARD Sol / Luna | Renderer assertion restored and rereview | doing | Runtime predicate-return1314 | Initial1307 FAIL | Review found omitted stronger renderer assertion. Exact restoration and derived maps underway; no product or gating tuple change. Wheel gap retained. | 41702c71c5 held |
+| U2 D123 | Apply current Agent patch to upstream b742 | HARD Sol / Luna | Future D59 cut matrix | gated:D59 | Runtime1314; protected1317 | SOURCE PASS173 predicates | Exact renderer assertion restored; six normal paths and3571 inventory qualified. Installer212/inputs11/chat checks source-applicable; Windows and wheel gap remain. | 5bd01bfd1a held |
 | U4a | Adopt released Runtime tags with normal tools | Luna | Released5e9ad | merged | agt-U4a-tags-normal-1323 | Normal tool checks PASS | Only lock provenance changed; canonical15 byte-exact. Vendor/artifact/compile/diff PASS; focused29 not run below5 GB. Farm captured42aad unchanged. | 5caa12bda3 |
 | R1 | Patches, reads and conflict semantics | Sol / Luna | C0 | merged | Original and later source owners | Historical scope | Historical scoped controls qualified; current core failures remain in measured cohorts below. | Original bac094;440cc |
 | R2 | Guarded inverse and step undo | Sol / Luna | R1 | merged | Original and later source owners | Historical scope | Historical controls and D110 ADD/SWAP PASS; held current restores remain separate. | Original0b8cb;070dfc |
@@ -56,7 +56,7 @@
 
 | D118a captured redo1 | Preserve exact captured redo closure | App Luna / protected Luna | Farm batch core | merged | Author1242; protected1251 | PASS1 and statics | SQLite file and matching db_path setup only; seven assertions and authored inputs exact. Original1 PASS2.38s at donor; HOME. | 0b586e4b56 |
 
-| D124 host fallback | Prepare minimal upstream behavior fallback | Luna read only | Fix or revert by14:00Z | doing | agt-D124-host-fallback-map-1328 | No product change | Exact hunk and C0-required exception map only. Farm9ea proof remains sole current14 body; no speculative guard relaxation. | Evidence pending |
+| D124 host fallback | Prepare upstream behavior candidate on Main | Runtime Luna | Exact14 GREEN and review | doing | Main sole revert author requested | No product change locally | Owner13:32 moved sole revert to Main. Local map preserved; map review1333 stopped. Farm9ea may finish profile after14:00Z; first real14 GREEN goes in. | Main source pending |
 
 | D124 Farm input command | Adapt existing qualified core commands | Luna read only | Farm actual tuple receipts | doing | agt-D124-Farm-input-command-1330 | Source only | Exact b545/42aad command and D73 maker input map. Lead profile and child provisioning proceeds in parallel; no duplicate body. | Captured Farm tuple |
 
@@ -72,7 +72,7 @@ Blockers: Agent D69 — installed render90 and final b742 cut audit remain. XML1
 Blockers: Runtime D117a — exact authorized git source and installer integrity handoff; historical refusal retained. Genuine installed render NOTRUN.
 Blockers: Final cut — D123 fresh b742 patch, final tuple P1–P5, full core, D69 and render remain owed.
 
-Next ready: one shared-source Sol union1327 active after independent Agent1311 and Runtime1307 PASS. Host fallback1328 prepares exact upstream behavior map without product edits. Main receiver1313 prepares genuine42aad recipe2 on frozen07ff. Agent Luna1330 adapts existing Farm command and D73 inputs; no new harness or body. Farm has captured b545/42aad/Appd8a1/Composition635f and is provisioning keyed profile/child; host9ea/369 is separate.
+Next ready: one shared-source Sol union1327 active after independent Agent1311 and Runtime1307 PASS. Host revert is now Main-only under owner13:32; local readonly map finished, review1333 stopped and WIP preserved. Main receiver1313 prepares fresh finalunion/5e9ad recipe2 input; prior42aad/07ff prep remains no execution. Agent Luna1330 adapts existing Farm command and D73 inputs; no new harness or body. Farm has captured b545/42aad/Appd8a1/Composition635f and is provisioning keyed profile/child; host9ea/369 is separate.
 live 3 / cap 3 at D89b floor; ready-undispatched 0 local. Small-file authors paused. No local heavy. Full source/review proof gaps remain visible; no core or regression deduction from source checks.
 
 Disk: 5142237184 bytes after lead-CLEAR and fresh-guard normal recycling21b and9ea; all source branches/evidence retained. No refusal. compact-scratch completed0 dirs,0 logs,0 test dirs. Sweep3 completed0 removed. Only finished nonKEEP worktree is prior dirty/refused agt-G2-open-commit, preserved. Receipts design/agent-agt-pin-21b30467-guarded-release-1315.json and agent-agt-pin-9ea67534-guarded-release-1315.json.
