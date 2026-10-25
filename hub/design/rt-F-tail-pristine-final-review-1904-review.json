@@ -1,0 +1,55 @@
+{
+  "review": "rt-F-tail-pristine-final-review-1904",
+  "task": "F ZIP-tail pristine preparation independent first-return review",
+  "base": "tl/rt-F-tail-pristine-return-1857",
+  "verdict": "FAIL",
+  "scope": "Read-only review of all five rt-F-tail-pristine-review-1851 findings against the rt-F-tail-pristine-return-1857 durable evidence and the exact rt-F-tail-pristine-core-prep-1844 tuple. No source, test, runner, install, build, clone, ZIP, provider, Store, network, registry, pin, or Git mutation was performed.",
+  "source_floor": "4.6GB",
+  "budget_policy": "noheavy; stop4GB",
+  "finding_dispositions": [
+    {
+      "id": "C0-step-field-crosswalk",
+      "disposition": "PASS",
+      "evidence": "1857 commands.md uses steps[].reads; optionalreads is absent. The current integration Runtime contract schema also defines RequestedStep.reads.",
+      "verification": "JSON/source crosswalk passed against current Runtime integration commit e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9."
+    },
+    {
+      "id": "C0-idempotency-location",
+      "disposition": "PASS",
+      "evidence": "1857 keeps Idempotency-Key outside the JSON body and presents it as HTTP header metadata. The current integration contract states that the header is required for mutation.",
+      "verification": "Fixed commands.md text and current Runtime contract/header source crosswalk passed."
+    },
+    {
+      "id": "missing-selector-classification",
+      "disposition": "PASS",
+      "evidence": "All five missing named-Agent route roots and tools/p4-d73-pinned-launch.sh carry UNKNOWN_MISSING_UPSTREAM_SELECTOR in selector-map.json. The exact named Agent commit has none of these six paths.",
+      "verification": "Read-only git cat-file checks passed: 5 missing roots plus launcher; no missing input was counted as zero or PASS."
+    },
+    {
+      "id": "frozen-ref-crosswalk",
+      "disposition": "FAIL",
+      "severity": "blocking",
+      "evidence": "1857 correctly maps Agent, Runtime, and App frozen refs to 11caf1d9de291d76f491cf69f7942606b7471d7a, 31c7ac3a00f7a205f507bb5bd4d4625628d429bd, and 8f0c2484463e9b666d184a744d52e252984e551a. Its Composition entry omits frozen_ref and records origin/main 67b8aa3d0d6831d3e3504a340ff583c3da253707 as the frozen resolution. The required frozen Composition ref origin/codex/handover-timeline-r4-20261019-candidate-composition resolves to c82eb7c459d0a41263954bf007071a6a0e8e0a6a (tree 49975e7a54fd594e1b7fc807681fe28611d57864e), while origin/main resolves to 67b8aa3d0d6831d3e3504a340ff583c3da253707 (tree 62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120).",
+      "required_fix": "Add the Composition frozen_r4_ref and its actual immutable resolution, keep origin/main as the separately named upstream object, and state that the two captures are distinct without retargeting either ref."
+    },
+    {
+      "id": "matrix-manifest-coverage",
+      "disposition": "PASS",
+      "evidence": "Independent enumeration finds 41 actual files: 34 listed manifest entries, 1 source-hash-manifest self-file, and 7 generated caches. Exactly 33 actual files are stable source-only entries. One listed generated-cache hash mismatches and remains explicitly unqualified; six caches are unlisted and unqualified.",
+      "verification": "All 34 listed file hashes were checked; the only mismatch is the disclosed run-final-matrix.pyc cache. The 41/34/33/7/1/6 reconciliation is exact."
+    }
+  ],
+  "additional_checks": {
+    "original_1844_tuple": "PASS: named upstream commit/tree/parent/origin identities, current integration snapshot identities, base Composition tuple, route source/hash, and five D54a node selectors are preserved.",
+    "canonical_route": "PASS: published route has exactly 22 roots in exact order; selector-map.json matches it with no extra root.",
+    "private_source_identity": "PASS: 100/100 Python source SHA-256 values match immutable Runtime 7070 commit 7070f1378d1917fcce69857ebd33cd2b3015568b and all 100 sources parse as Python AST; TypeScript identity remains packages/typescript: npm test.",
+    "current_final_tuple": "PASS boundary only: final D59 tuple remains pending; no tuple was cut and no pristine gate execution was claimed.",
+    "unexecutable_upstream_gate": "PASS boundary only: missing roots and launcher remain unknown, so the named upstream route is unexecutable and no zero/PASS/preexisting inference is made.",
+    "scope_diff_check": "PASS: git diff --check; review worktree has no product changes.",
+    "lint_type": "N/A: evidence-only review; no lint/type suite requested or run"
+  },
+  "tests": {
+    "run": false,
+    "reason": "Task forbids install/build/clone/ZIP/core/preflight/runner/provider/network execution; only read-only evidence and syntax/hash/object checks were run."
+  }
+}

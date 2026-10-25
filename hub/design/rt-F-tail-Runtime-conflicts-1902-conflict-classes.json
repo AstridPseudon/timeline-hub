@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-tail-Runtime-conflicts-1902",
+  "status": "source-only-classification-provisional",
+  "reason": "The authorized test-service route has no operation for an arbitrary mktemp clone/Git apply dry-run; no clone or applied proof is claimed.",
+  "source_tuple": {
+    "merge_base": {"commit": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad", "tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075"},
+    "ours": {"ref": "tl/integration", "commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9", "tree": "d5cb9335a03bf4764548e379ce180a66bf966910"},
+    "upstream": {"ref": "refs/remotes/origin/main", "commit": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f", "tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210"},
+    "merge_tree": {"command": "git merge-tree --trivial-merge d4f496ec4fbcae7a1f3a51d47ed5147c561117ad e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9 dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f", "bytes": 71105, "sha256": "2d341b37bafebc1feb09d4e69971bcde5ed12b729dcdc6e1c041838e714254e0", "changed_in_both": 10, "recorded_hunks": 22}
+  },
+  "input_hashes": {
+    "census.json": "2adbabd4a8e9f93dbc1d60b3c1489f611b527e402dc40629597d49f5502c0e16",
+    "conflicts.md": "3c03a417eb6d9a3a52c496b2d919348b0171aa34dfa0ac005f72d2805b312025",
+    "already-upstream.json": "3ec7a337b6f7e13db39b005a711e47272ba056b9a0021feca80cbbb84b7681c9",
+    "census-source-manifest.json": "d4a449ebac4509e3d5cff094d6e69f3ccac7ab8b46ba6fcf3062a7ab2f09b535",
+    "independent-1850-report.md": "570de6aa369fbe559d04657577a6b90cae1f9346d17af3fcc077d2436b6f21cd",
+    "independent-1850-review.json": "9079685af5809474fe9e2655a93fd25e2b339ecebea65eef3cfdd540ba1b9f72",
+    "commit-v2.md": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "summary": {
+    "files": 10,
+    "hunks": 22,
+    "trivial_textual": 3,
+    "trivial_context_only": 2,
+    "trivial_or_context": 5,
+    "semantic_owner_decision": 17,
+    "exported_resolution_files": [".github/workflows/ci.yml", "docs/runtime-portability-testing.md"],
+    "excluded": "D130 WAL recovery is outside this ten-file scope."
+  },
+  "crosswalk": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "base_blob": "741e027678a38d0c17cc74b83f8b1e8479085508",
+      "ours_blob": "94ffdaf70b7b44d12c9f41a67d6632b0e07d7531",
+      "upstream_blob": "80517dd88d253b921bf463e585ba4753e371bdb2",
+      "ours_hunks": ["@@ -26,0 +27,2 @@ jobs:", "@@ -30 +32 @@ jobs:", "@@ -40,0 +43,3 @@ jobs:", "@@ -91 +96 @@ jobs:", "@@ -100,0 +106,11 @@ jobs:", "@@ -120,0 +137,17 @@ jobs:"],
+      "upstream_hunks": ["@@ -86,0 +87,8 @@ jobs:"],
+      "hunks": [{"merge_tree": "@@ -89,6 +89,14 @@", "class": "trivial_textual", "resolution": "retain upstream sandbox-process-control job and ours Windows matrix/worker-handoff additions; no product or auth behavior"}]
+    },
+    {
+      "path": "docs/runtime-portability-testing.md",
+      "base_blob": "57289e7cc1a9f3a532a1d9d6d9553f85c5ec43ad",
+      "ours_blob": "6c490e2bcc9e95e0ac7528474f49fe3b4a098941",
+      "upstream_blob": "0e5fa5426b98fd3c640d4c0cd90a232fef653250",
+      "ours_hunks": ["@@ -4,2 +4,2 @@ The portability CI job runs the platform boundary, native process custody,"],
+      "upstream_hunks": ["@@ -54,0 +55,21 @@ sequence. The syscall fallback accepts only `None` for siginfo."],
+      "hunks": [{"merge_tree": "@@ -52,6 +52,27 @@", "class": "trivial_textual", "resolution": "retain upstream sandbox-process-control explanation and ours Windows portability wording; documentation-only"}]
+    },
+    {
+      "path": "runtime_protocol/daemon.py",
+      "base_blob": "31ca7eeef3deb7401edd7bc4d69b122273faaa5e",
+      "ours_blob": "725d4386c2e2690ddd10a233a028ac2f9d48c96c",
+      "upstream_blob": "d406ef24cff8676f5c4a78ba60facf2af5db9c7f",
+      "ours_hunks": ["@@ -56 +56 @@ class RuntimeDaemon:", "@@ -73,0 +74,3 @@ class RuntimeDaemon:", "@@ -235,0 +239,5 @@ class RuntimeDaemon:", "@@ -237,0 +246 @@ class RuntimeDaemon:", "@@ -239,0 +249,12 @@ class RuntimeDaemon:"],
+      "upstream_hunks": ["@@ -7,0 +8 @@ from . import cancellation", "@@ -237,0 +239,4 @@ class RuntimeDaemon:"],
+      "hunks": [
+        {"merge_tree": "@@ -5,6 +5,7 @@", "class": "trivial_context_only", "resolution": "upstream import is required by the semantic startup policy hunk; not independently exportable"},
+        {"merge_tree": "@@ -243,7 +244,14 @@", "class": "semantic_owner_decision", "question": "Should process-control configuration/probe/announcement run before provider loading, or should provider loading/registering remain first? Both affect startup refusal, cleanup, and the C0 Runtime-only writer admission path."}
+      ]
+    },
+    {
+      "path": "runtime_protocol/door.py",
+      "base_blob": "b352613ffad3b9f6cd738738f0f5a4c02edbb7c8",
+      "ours_blob": "674d8b55865dfdffa66c20cb51d7331fab18c4cd",
+      "upstream_blob": "1c5ef0337a2f49fbc290f908d5898078f18e4773",
+      "ours_hunks": ["@@ -158 +158 @@ WORKSPACE_ROUTES = (", "@@ -159,0 +160,2 @@ WORKSPACE_ROUTES = (", "@@ -164,0 +167,4 @@ WORKSPACE_ROUTES = (", "@@ -581 +587,4 @@ class DoorHandler(RuntimeHandler):", "@@ -582,0 +592,5 @@ class DoorHandler(RuntimeHandler):", "@@ -587 +601 @@ class DoorHandler(RuntimeHandler):", "@@ -591 +605 @@ class DoorHandler(RuntimeHandler):"],
+      "upstream_hunks": ["@@ -142 +142 @@ _ENCODED_SEGMENT = re.compile(r\"(?:[^%]|%[0-9A-Fa-f]{2})*\")", "@@ -156,0 +157 @@ WORKSPACE_ROUTES = (", "@@ -195,0 +197,2 @@ ACP_ROUTES = (", "@@ -232,0 +236,7 @@ def _find(table, method: str, segments: list[str]) -> bool:"],
+      "hunks": [
+        {"merge_tree": "@@ -139,7 +139,7 @@", "class": "semantic_owner_decision", "question": "Does reserving the literal ACP id `astrid` preserve the intended `/acp/astrid/api-key` route without changing connection-id authorization?"},
+        {"merge_tree": "@@ -154,6 +154,7 @@", "class": "semantic_owner_decision", "question": "Can upstream PUT `/v1/projects/selection` coexist with ours POST timeline/commit and commit-history routes under the same route matcher and auth scopes?"},
+        {"merge_tree": "@@ -199,6 +200,8 @@", "class": "semantic_owner_decision", "question": "Does forwarding `/acp/astrid/api-key` preserve the product-token/ACP security boundary and intended caller?"},
+        {"merge_tree": "@@ -236,6 +239,13 @@", "class": "semantic_owner_decision", "question": "Must exact disallowed routes win over parameterized routes for all methods, including the new commit routes, or is the existing matcher contract authoritative?"}
+      ]
+    },
+    {
+      "path": "runtime_protocol/platform.py",
+      "base_blob": "9f0d8b21582162d48cf1e646a2cd49aedf680184",
+      "ours_blob": "70049865a0c11d1f874339259884dd5102350cb7",
+      "upstream_blob": "9f5cd8aa6cafcb024515a47e28939b55110d3141",
+      "ours_hunks": ["@@ -25,0 +26 @@ import time", "@@ -564,0 +566,8 @@ def process_identity(pid: int, *, timeout: float = 1.0):", "@@ -568,0 +578,2 @@ def process_identity(pid: int, *, timeout: float = 1.0):", "@@ -570 +581 @@ def process_identity(pid: int, *, timeout: float = 1.0):", "@@ -1027 +1038,5 @@ def pidfd_open(pid: int, flags: int = 0) -> int:"],
+      "upstream_hunks": ["@@ -10,0 +11,3 @@ Callers using these low-level helpers own identity checks and fd closure.", "@@ -970 +973,9 @@ def _signal_linux_group(process, signum):", "@@ -1047,0 +1059,180 @@ def pidfd_send_signal(fd: int, signum: int, siginfo=None, flags: int = 0) -> Non", "@@ -1049 +1240,5 @@ def signal_process(expected, signum):", "@@ -1098 +1293,7 @@ def signal_process(expected, signum):"],
+      "hunks": [
+        {"merge_tree": "@@ -8,6 +8,9 @@", "class": "trivial_textual", "resolution": "upstream module documentation can be retained; no independent behavior"},
+        {"merge_tree": "@@ -978,7 +981,15 @@", "class": "semantic_owner_decision", "question": "When killpg is denied, does the upstream member walk satisfy the existing identity-safe process signaling contract after ours changes birth_id to boot-bound values?"},
+        {"merge_tree": "@@ -1060,8 +1071,192 @@", "class": "semantic_owner_decision", "question": "Which process-control mode is authoritative, and can sandbox PID fallback/member-walk be admitted without weakening Runtime sole-writer/security guarantees?"},
+        {"merge_tree": "@@ -1110,7 +1305,13 @@", "class": "semantic_owner_decision", "question": "Must signal_process retain ours boot-bound identity and pidfd wrapper compatibility while adding upstream ENOSYS fallback, and what is the accepted race/error contract?"}
+      ]
+    },
+    {
+      "path": "runtime_protocol/server.py",
+      "base_blob": "13537c0cda2fb8975d4560488218e227f6beeea5",
+      "ours_blob": "65aa761a3187486d4847ef063192a06434b24d91",
+      "upstream_blob": "5c2b62737dedf8b4d77ee2ffc0f29c4e55da082a",
+      "ours_hunks": ["@@ -3,0 +4 @@ import json", "@@ -9 +10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer", "@@ -15,0 +17,49 @@ from .cas import IO_CHUNK_BYTES", "@@ -38,0 +89 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -43,0 +95,6 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -134 +191 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -137 +194 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -143 +200 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -153 +210 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -157 +214 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -163 +220 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -171,0 +229,22 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -192,0 +272,70 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -254,0 +404,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -255,0 +416,3 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -382,0 +546,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -386,0 +552,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -401,0 +569,41 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -404,4 +612 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -410 +615 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -421,2 +626,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -425 +630 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -430,4 +635,22 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -448 +671 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -451 +674 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -519 +742,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -522,4 +746 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -535 +756,4 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -860,2 +1084 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -1001 +1224 @@ class RuntimeHandler(BaseHTTPRequestHandler):", "@@ -1003,0 +1227,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):"],
+      "upstream_hunks": ["@@ -6,0 +7 @@ import sys", "@@ -261 +262,6 @@ class RuntimeHandler(BaseHTTPRequestHandler):"],
+      "hunks": [
+        {"merge_tree": "@@ -5,6 +5,7 @@", "class": "trivial_context_only", "resolution": "traceback import is only useful with the semantic error-logging change; do not export alone"},
+        {"merge_tree": "@@ -421,7 +422,12 @@", "class": "semantic_owner_decision", "question": "May unexpected Runtime exceptions log formatted traceback plus request method/path to stderr while preserving the C0 public error envelope and redaction/security policy?"}
+      ]
+    },
+    {
+      "path": "runtime_protocol/service.py",
+      "base_blob": "be200b27f228e3526d5cd7cd3129d477012719aa",
+      "ours_blob": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144",
+      "upstream_blob": "63c944106eaf729afb424c078fcc1019550fa769",
+      "ours_hunks": ["@@ -41 +41,2 @@ from pathlib import Path", "@@ -43,0 +45 @@ from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain", "@@ -431,0 +434,12 @@ def _page_rows(rows, *, scope, cursor, limit, key_fn, resource_fn, skip_after=No", "@@ -461,0 +476,4 @@ def _durable_mutation(function):", "@@ -490,0 +509,4 @@ class RuntimeService:", "@@ -809 +831 @@ class RuntimeService:", "@@ -1372,12 +1394,2 @@ class RuntimeService:", "@@ -1448 +1460 @@ class RuntimeService:", "@@ -1508 +1520 @@ class RuntimeService:", "@@ -1522,0 +1535,2 @@ class RuntimeService:", "@@ -1650,39 +1663,0 @@ class RuntimeService:", "@@ -1690,9 +1665,8 @@ class RuntimeService:", "@@ -1700 +1673,0 @@ class RuntimeService:", "@@ -1702,51 +1675 @@ class RuntimeService:", "@@ -1754 +1676,0 @@ class RuntimeService:", "@@ -1756,122 +1678 @@ class RuntimeService:", "@@ -1926 +1727,3 @@ class RuntimeService:", "@@ -1934 +1737 @@ class RuntimeService:", "@@ -1938,0 +1742,14 @@ class RuntimeService:", "@@ -1940,22 +1757,10 @@ class RuntimeService:", "@@ -1963,6 +1768,25 @@ class RuntimeService:", "@@ -1970,6 +1794,8 @@ class RuntimeService:", "@@ -2047 +1873 @@ class RuntimeService:", "@@ -2161 +1987 @@ class RuntimeService:", "@@ -2543 +2369,8 @@ class RuntimeService:", "@@ -2579,3 +2412,96 @@ class RuntimeService:", "@@ -2583,17 +2509,61 @@ class RuntimeService:", "@@ -2601,5 +2571,2 @@ class RuntimeService:", "@@ -2607,35 +2574,36 @@ class RuntimeService:", "@@ -2643,11 +2611,10 @@ class RuntimeService:", "@@ -2655,5 +2622 @@ class RuntimeService:", "@@ -2661,30 +2624,6 @@ class RuntimeService:", "@@ -2692,20 +2631,43 @@ class RuntimeService:", "@@ -2713,30 +2675,80 @@ class RuntimeService:", "@@ -2751 +2763,2 @@ class RuntimeService:", "@@ -2752,0 +2766 @@ class RuntimeService:", "@@ -2753,0 +2768,6 @@ class RuntimeService:", "@@ -2780 +2800 @@ class RuntimeService:", "@@ -2786,0 +2807 @@ class RuntimeService:", "@@ -2788 +2808,0 @@ class RuntimeService:", "@@ -2790,210 +2810 @@ class RuntimeService:", "@@ -3132 +2942,0 @@ class RuntimeService:", "@@ -3134,347 +2944 @@ class RuntimeService:", "@@ -3498,0 +2963 @@ class RuntimeService:", "@@ -3507,0 +2973,3 @@ class RuntimeService:", "@@ -3509,54 +2977,15 @@ class RuntimeService:", "@@ -3566 +2995,2 @@ class RuntimeService:", "@@ -3572,17 +3002,25 @@ class RuntimeService:", "@@ -3595,4 +3033,6 @@ class RuntimeService:", "@@ -3600,20 +3040,35 @@ class RuntimeService:", "@@ -3623 +3078,2 @@ class RuntimeService:", "@@ -3629 +3084,0 @@ class RuntimeService:", "@@ -3632,13 +3087,22 @@ class RuntimeService:", "@@ -3650,5 +3114,4 @@ class RuntimeService:", "@@ -3656,14 +3119,29 @@ class RuntimeService:", "@@ -3781,3 +3259,40 @@ class RuntimeService:", "@@ -3795,0 +3311,52 @@ class RuntimeService:", "@@ -3851,12 +3418,3 @@ class RuntimeService:", "@@ -3874 +3432,3 @@ class RuntimeService:", "@@ -3882,0 +3443,17 @@ class RuntimeService:", "@@ -3888,0 +3466,2 @@ class RuntimeService:", "@@ -3902,2 +3481,5 @@ class RuntimeService:", "@@ -3907,4 +3489,2 @@ class RuntimeService:", "@@ -3912,2 +3492,2 @@ class RuntimeService:", "@@ -3916,4 +3496,12 @@ class RuntimeService:", "@@ -3921,0 +3510,16 @@ class RuntimeService:", "@@ -3923 +3527,4 @@ class RuntimeService:", "@@ -3927,2 +3534,9 @@ class RuntimeService:", "@@ -3934,4 +3547,0 @@ class RuntimeService:", "@@ -3939 +3549,4 @@ class RuntimeService:", "@@ -3943 +3556,4 @@ class RuntimeService:", "@@ -3945,2 +3561,8 @@ class RuntimeService:", "@@ -3948 +3570,4 @@ class RuntimeService:", "@@ -3955,2 +3580,8 @@ class RuntimeService:", "@@ -3958,0 +3590,9 @@ class RuntimeService:", "@@ -3963 +3603,2 @@ class RuntimeService:", "@@ -3965 +3606,2 @@ class RuntimeService:", "@@ -3966,0 +3609,9 @@ class RuntimeService:", "@@ -3968,8 +3619,2 @@ class RuntimeService:", "@@ -3978,6 +3623,17 @@ class RuntimeService:", "@@ -3985 +3641,4 @@ class RuntimeService:", "@@ -3989,2 +3648,7 @@ class RuntimeService:", "@@ -3992 +3656,3 @@ class RuntimeService:", "@@ -3995 +3661 @@ class RuntimeService:", "@@ -3998,5 +3664,15 @@ class RuntimeService:", "@@ -4006,2 +3682,4 @@ class RuntimeService:", "@@ -4009,3 +3687,2 @@ class RuntimeService:", "@@ -4013,2 +3690,8 @@ class RuntimeService:", "@@ -4016,2 +3699,21 @@ class RuntimeService:", "@@ -4019,6 +3721,18 @@ class RuntimeService:", "@@ -4030 +3744,3 @@ class RuntimeService:", "@@ -4041 +3757 @@ class RuntimeService:", "@@ -4145,2 +3861,7 @@ class RuntimeService:", "@@ -4150,9 +3871,23 @@ class RuntimeService:", "@@ -4165,2 +3900,2 @@ class RuntimeService:", "@@ -4169,2 +3904,69 @@ class RuntimeService:", "@@ -4174,45 +3976,3 @@ class RuntimeService:", "@@ -4220,9 +3980,19 @@ class RuntimeService:", "@@ -4237,25 +4007 @@ class RuntimeService:", "@@ -4509,0 +4256,3 @@ class RuntimeService:", "@@ -4519,0 +4269,5 @@ class RuntimeService:", "@@ -4527,0 +4282,6 @@ class RuntimeService:", "@@ -4534 +4293,0 @@ class RuntimeService:", "@@ -4568,0 +4328,11 @@ class RuntimeService:", "@@ -4573 +4342,0 @@ class RuntimeService:", "@@ -4594,3 +4362,0 @@ class RuntimeService:", "@@ -4600,8 +4365,0 @@ class RuntimeService:", "@@ -4863,31 +4620,0 @@ class RuntimeService:", "@@ -4900,27 +4627 @@ class RuntimeService:", "@@ -5895 +5596,4 @@ class RuntimeService:", "@@ -6510 +6214 @@ class RuntimeService:", "@@ -6528 +6232 @@ class RuntimeService:", "@@ -6531 +6235 @@ class RuntimeService:", "@@ -6598 +6302 @@ class RuntimeService:", "@@ -6639 +6343 @@ class RuntimeService:", "@@ -6660 +6364 @@ class RuntimeService:", "@@ -7506,0 +7211,2 @@ class RuntimeService:", "@@ -7649,0 +7356 @@ class RuntimeService:", "@@ -7658 +7364,0 @@ class RuntimeService:", "@@ -7660,169 +7366 @@ class RuntimeService:", "@@ -7908,0 +7447 @@ class RuntimeService:", "@@ -8127,0 +7667,7 @@ class RuntimeService:", "@@ -8146 +7692,9 @@ class RuntimeService:"],
+      "upstream_hunks": ["@@ -8403,0 +8404,2 @@ class RuntimeService:", "@@ -8406 +8408 @@ class RuntimeService:"],
+      "hunks": [{"merge_tree": "@@ -7955,9 +7955,11 @@", "class": "semantic_owner_decision", "question": "Should managed-output objects use the settled output filename or the logical output-port name as original_name, and how does that affect existing object/media callers and generated-output tests?"}]
+    },
+    {
+      "path": "tests/conftest.py",
+      "base_blob": "68b75310a620fe8ea672f9b8e2e268b264f5c455",
+      "ours_blob": "9b50df102d31971f90d9b34e1f7bf9339eb0203b",
+      "upstream_blob": "0b1014372d2a58a11b86ec2fb4a934c3dfce6fad",
+      "ours_hunks": ["@@ -122,0 +123,16 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path", "@@ -140,0 +157,5 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path", "@@ -142 +163 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path", "@@ -143,0 +165 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path"],
+      "upstream_hunks": ["@@ -16,0 +17,32 @@ from tests.process_groups import ProcessGroups", "@@ -79 +111,3 @@ def pytest_sessionfinish(session, exitstatus):", "@@ -88 +122 @@ def pytest_sessionfinish(session, exitstatus):"],
+      "hunks": [
+        {"merge_tree": "@@ -14,6 +14,38 @@", "class": "semantic_owner_decision", "question": "Can the process-control pytest option/autouse fixture override process_control.configure_from globally without changing provider/runtime test isolation?"},
+        {"merge_tree": "@@ -76,7 +108,9 @@", "class": "semantic_owner_decision", "question": "Should PermissionError during group cleanup be swallowed as upstream proposes, or must ours retain cleanup ownership and leak reporting under sandbox mode?"},
+        {"merge_tree": "@@ -85,7 +119,7 @@", "class": "semantic_owner_decision", "question": "What cleanup result is authoritative when SIGKILL/group cleanup is denied: preserve leak diagnostics or treat the denied signal as terminal?"}
+      ]
+    },
+    {
+      "path": "tests/lanes.py",
+      "base_blob": "ba2097d5a169c4a5af6eea8632471a64e9aae438",
+      "ours_blob": "410f3144b440b4df933bd351ffca77f044e91aac",
+      "upstream_blob": "381a1b2cea580fe6d6a80d244fe742135e917aea",
+      "ours_hunks": ["@@ -25 +24,0 @@ import pytest", "@@ -57,4 +56,5 @@ LANE_MARKERS = {", "@@ -87 +87 @@ class DeclaredSkip:", "@@ -103 +103,111 @@ SKIP_REGISTRY: dict[str, DeclaredSkip] = {}", "@@ -114 +224 @@ requires_windows_security = _declare(", "@@ -138 +248 @@ requires_windows_token_process_times = _declare(", "@@ -146 +256 @@ requires_windows_job_object = _declare(", "@@ -150 +260 @@ requires_windows_dirfd_adapter = _declare(", "@@ -154 +264 @@ requires_windows_reparse_point_rejection = _declare(", "@@ -158 +268 @@ requires_windows_sqlite_backup = _declare(", "@@ -162 +272 @@ requires_windows_process_and_lock_apis = _declare(", "@@ -181 +291 @@ _WINDOWS_SYMLINKS = _declare(", "@@ -226,0 +337,6 @@ _DECLARED_TAG = re.compile(r\"\\[declared:([a-z0-9-]+)\\]\")", "@@ -232,2 +348,4 @@ class _SkipGuard:", "@@ -237,0 +356 @@ class _SkipGuard:", "@@ -238,0 +358,29 @@ class _SkipGuard:", "@@ -241,3 +388,0 @@ class _SkipGuard:", "@@ -251,2 +396,2 @@ class _SkipGuard:", "@@ -255,5 +400 @@ class _SkipGuard:", "@@ -266,0 +408,15 @@ class _SkipGuard:", "@@ -275,0 +432,4 @@ class _SkipGuard:", "@@ -278 +438 @@ class _SkipGuard:", "@@ -286 +446 @@ class _SkipGuard:", "@@ -291 +451 @@ class _SkipGuard:"],
+      "upstream_hunks": ["@@ -35,0 +36 @@ LANE_MARKERS = {", "@@ -175,0 +177,4 @@ requires_posix_fork = _declare("],
+      "hunks": [
+        {"merge_tree": "@@ -32,6 +32,7 @@", "class": "semantic_owner_decision", "question": "Should the new needs_real_pidfd marker be excluded only by sandbox CI while ours's lane registry remains authoritative?"},
+        {"merge_tree": "@@ -283,6 +284,10 @@", "class": "semantic_owner_decision", "question": "Can requires_linux_o_path be added without changing current unit-lane skip and declared-skip semantics?"}
+      ]
+    },
+    {
+      "path": "tests/test_door_routes.py",
+      "base_blob": "9851e7240db6e484751fed727aa52da60678df2c",
+      "ours_blob": "046dc68015752e0c445b0e9541302aa27175a972",
+      "upstream_blob": "78bf364cc445371f663c01057198964882825a05",
+      "ours_hunks": ["@@ -42,0 +43 @@ PRODUCT_CALLS = ["],
+      "upstream_hunks": ["@@ -39,0 +40 @@ PRODUCT_CALLS = [", "@@ -111,0 +113,2 @@ FORBIDDEN = ["],
+      "hunks": [
+        {"merge_tree": "@@ -37,6 +37,7 @@", "class": "semantic_owner_decision", "question": "Should PUT `/v1/projects/selection` be admitted while ours's product-call route list and auth expectations remain unchanged?"},
+        {"merge_tree": "@@ -110,6 +111,8 @@", "class": "semantic_owner_decision", "question": "Do upstream forbidden selection methods remain forbidden after combining ours's product route assertions?"}
+      ]
+    }
+  ],
+  "caller_and_contract_crosswalk": {
+    "c0": ["Runtime is the only writer", "commit route requires authenticated projects:write publisher", "Idempotency-Key is required", "public replies preserve accepted/merged/conflict/invalid/preview shapes", "auth and redacted error/security checks remain authoritative"],
+    "callers": ["runtime_protocol/daemon.py:RuntimeDaemon._start", "runtime_protocol/door.py:DoorHandler._product_token and route matcher", "runtime_protocol/platform.py:process_identity/pidfd_open/signal_process", "runtime_protocol/server.py:RuntimeHandler._timeline_commit and _error", "runtime_protocol/service.py:managed-output settlement", "tests/test_timeline_commit_contract.py", "tests/test_timeline_commit_integration.py", "tests/test_timeline_commit_authentication.py", "tests/test_door_routes.py", "tests/test_platform_signaling.py", "tests/test_managed_output_public_api.py"]
+  }
+}

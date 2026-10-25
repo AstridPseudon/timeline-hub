@@ -1,0 +1,46 @@
+{
+  "schema": "timeline.ops-child-custody.portable-source-return.v1",
+  "validated_head_sha": "674d13e26ce40ce9a158a7e50b226c247fbc9588",
+  "validated_tree_sha": "f2abd214b4b45fa4a6b6de0932ad5371e4f3fc4b",
+  "base_source_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "runner_sha256": "f02fdcca8ad7c9484866b1817bb67272212933c4576d2212c2d163a07edf1c96",
+  "python_runner_sha256": "a35753ccb97941cce1467786cce892e608141f09d717188a3235d4f51a754446",
+  "changed_paths": [
+    "ops-child-custody/tests/e2e_inventory.py",
+    "ops-child-custody/tests/test_e2e_inventory.py"
+  ],
+  "source_hashes": {
+    "ops-child-custody/tests/support.py": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+    "ops-child-custody/e2e-fixtures/tiny/manifest.json": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8",
+    "ops-child-custody/tests/e2e_inventory.py": "f02fdcca8ad7c9484866b1817bb67272212933c4576d2212c2d163a07edf1c96",
+    "ops-child-custody/tests/test_e2e_inventory.py": "dee7cb8abe05c3855033aa0f30aea623122ad6dc0cf6eef8d7b274c66894a7d2"
+  },
+  "fixture_source_inputs": {
+    "agent": {
+      "LICENSE": "40ba8a8b08a725cc4d7c6d674297c4447ba0357020cb23f19107557705916b2d",
+      "astrid/__init__.py": "57af0815dfaaf2a9ac485a45c83126a7d7926dd900a02cc9667af3a825fc481d",
+      "astrid_runtime_client/__init__.py": "dde31f7e1cc63ef00cb7eee89d0b12514b29549448525367b3ab75962ad7c3ca",
+      "pyproject.toml": "4d2a2286436fb8b084cc4e492f55c768df9a706f687da943ed621e834c68e6db",
+      "requirements/proof.lock": "934a9a0c59d4310eacb6a02699644b1df5e5a847c65ba0708997b37348fd0185"
+    },
+    "runtime": {
+      "LICENSE": "40ba8a8b08a725cc4d7c6d674297c4447ba0357020cb23f19107557705916b2d",
+      "astrid_runtime/__init__.py": "1043ef52e8b2145382368acfe3244720f319f539a54f1542a9c3c857ed3d2111",
+      "astrid_runtime/__main__.py": "6834b438d197bcd8ac3a32e661e2667c54dbe84a79f58e7cc98baa2c82d0ee53",
+      "packages/python/astrid_runtime_client/__init__.py": "dde31f7e1cc63ef00cb7eee89d0b12514b29549448525367b3ab75962ad7c3ca",
+      "pyproject.toml": "ac8868ea6e75f9ed6a55c7e13141555c66ec945b0e7c8283cc0ad63a2bbc7f61",
+      "runtime_protocol/__init__.py": "1043ef52e8b2145382368acfe3244720f319f539a54f1542a9c3c857ed3d2111"
+    }
+  },
+  "immutable_inputs": {
+    "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "parent_candidate_verifier_block_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "parent_mode": "755",
+    "candidate_mode": "755",
+    "maker_bytes_changed": false
+  },
+  "harness_commit_pending": true
+}

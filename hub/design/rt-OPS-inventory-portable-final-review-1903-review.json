@@ -1,0 +1,50 @@
+{
+  "schema": "timeline.ops-child-custody.portable-final-review.v1",
+  "verdict": "FAIL",
+  "reviewed_commit": "2fffe593175338ffb8144705bb70c9542fa4459f",
+  "reviewed_tree": "516da69731401037b6845f1e14ea11b4c9135628",
+  "reviewed_parent": "674d13e26ce40ce9a158a7e50b226c247fbc9588",
+  "historical_input_label": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "runner_sha256": "f02fdcca8ad7c9484866b1817bb67272212933c4576d2212c2d163a07edf1c96",
+  "support_sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+  "new_test_sha256": "dee7cb8abe05c3855033aa0f30aea623122ad6dc0cf6eef8d7b274c66894a7d2",
+  "changed_paths": [
+    "ops-child-custody/tests/e2e_inventory.py",
+    "ops-child-custody/tests/test_e2e_inventory.py"
+  ],
+  "findings": [
+    {
+      "id": "new-test-ruff",
+      "severity": "blocking",
+      "path": "ops-child-custody/tests/test_e2e_inventory.py",
+      "detail": "Scoped Ruff fails on I001 import ordering and RUF059 unused local maker. Both are in the added test file; the runner's I001/PLW1510 diagnostics are pre-existing baseline findings."
+    },
+    {
+      "id": "malformed-role-early-exception",
+      "severity": "blocking",
+      "path": "ops-child-custody/tests/e2e_inventory.py",
+      "detail": "check_only raises AttributeError ('list' object has no attribute 'get') when a malformed dependency-dot role entry is a list and a wheelhouse is supplied, instead of returning the complete missing-prerequisite census. No setup, Git mutation, Store initialization, maker, or body ran in the probe."
+    }
+  ],
+  "fixed_1847_findings": [
+    "check-only compares each clean carrier's committed Git blobs against manifest SHA-256 values",
+    "missing and malformed source files accumulate with other check-only failures",
+    "private suites.conf is created before unchanged Store.initialize calls"
+  ],
+  "immutable_inputs": {
+    "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "parent_mode": "100755",
+    "candidate_mode": "100755",
+    "verifier_block_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "acceptance_limits": {
+    "author_42_pass_retained": true,
+    "whole_maker_e2e": "NOTRUN",
+    "reason": "Review brief forbids genuine E2E and preserved reserve admission is below 5905580032 bytes; no Store initialization/install/network/provider/core/browser/ZIP/full suite was run.",
+    "reserve_bytes": 5905580032,
+    "stop_line_bytes": 4000000000
+  }
+}

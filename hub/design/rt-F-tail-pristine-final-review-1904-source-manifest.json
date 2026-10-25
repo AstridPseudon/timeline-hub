@@ -1,0 +1,114 @@
+{
+  "manifest_version": 1,
+  "review": "rt-F-tail-pristine-final-review-1904",
+  "verdict": "FAIL",
+  "inputs_reviewed": {
+    "prior_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-pristine-review-1851/evidence/review.json",
+      "sha256": "fb007d438a4bf42571e3fa34c96809efd549813b43bd4fff21e8276ae58bacd9"
+    },
+    "first_return_commands": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-pristine-return-1857/evidence/commands.md",
+      "sha256": "26e4037bb7b63977e3a140c2a5a7cbd2e64146f18e991662a4a76ecc2144b16d"
+    },
+    "first_return_inputs": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-pristine-return-1857/evidence/inputs.json",
+      "sha256": "71452986726ca177f39d5e6e96dc8b76b648cb60cf8699e39f0ba0c308cfef21"
+    },
+    "first_return_selector_map": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-pristine-return-1857/evidence/selector-map.json",
+      "sha256": "5adbe81d6dc3749994798810569c47a6bb9347ee94efef75217e3fab650846e6"
+    },
+    "first_return_source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-pristine-return-1857/evidence/source-manifest.json",
+      "sha256": "911e9e2dddfc265a5c2303ffe2660df6a7d378b2818b4e82aaa310460f95e1b1"
+    },
+    "original_1844_inputs": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-pristine-core-prep-1844/evidence/inputs.json",
+      "sha256": "b32e8b7cf248a0810fb6cace00fc4196bf2654e02c1f0eba01c21e05d85e116d"
+    }
+  },
+  "original_1844_tuple_crosswalk": {
+    "base_composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "base_composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "named_upstream": {
+      "Agent": {"commit":"886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55","tree":"f53cc8426ccef8760021ef6207303bce7b80e777","parent":"b565ea8dd8252e41bb802140ed2df3a1a4efd68b","origin":"https://github.com/peteromallet/astrid-agent"},
+      "Runtime": {"commit":"dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f","tree":"904d3d90d8235d4a27f2d5a8cbf88298d5ec0210","parent":"2b632c68e3547db073e21c6adaa8bc5db4c0360a","origin":"https://github.com/banodoco/banodoco-workspace-runtime"},
+      "App": {"commit":"213318f1ec6ea5c324787bbd1c30a73072d1151a","tree":"591327d499ea162dd2ccb4620e577480aa305fae","parent":"c27957dcfd429c0e585bfa73ec53d961d0b6743b","origin":"https://github.com/banodoco/reigh-app"},
+      "Composition": {"commit":"67b8aa3d0d6831d3e3504a340ff583c3da253707","tree":"62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120","parent":"bd1011bce5fb4f172269911555568d18e6b22f3c","origin":"https://github.com/peteromallet/timeline-composition"}
+    },
+    "current_integration": {
+      "Agent": {"commit":"547e10456250c1b5bcf63b44a50c90ff0563ce1e","tree":"68df11fad2b082fa12d99ca20404e1e40e350cd7"},
+      "Runtime": {"commit":"e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9","tree":"d5cb9335a03bf4764548e379ce180a66bf966910"},
+      "App": {"commit":"d5a1d1ab6550187e377fd7387d300102b8b82ece","tree":"7be73e2cbbcf89d627bf7b9da940b4ce17968c20"},
+      "Composition": {"commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "route": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-core-full-command.md",
+      "sha256": "8cd8300a4d1e4f43dc7895907f858f6f2989e964ba38cc017a6a5fbe4cfd2637",
+      "root_count": 22,
+      "order": "exactly matches first-return selector-map.json"
+    },
+    "D54a_exact_selector_count": 5,
+    "disposition": "PASS: identity fields and selector predicates retained from 1844; only first-return corrections/additional boundary evidence changed."
+  },
+  "final_source_identity": {
+    "runtime_7070": {
+      "commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+      "python_target_count": 100,
+      "python_sha256_matches": "100/100",
+      "python_ast_parse": "100/100",
+      "typescript_target": "packages/typescript: npm test"
+    },
+    "current_runtime_contract_objects": {
+      "integration_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "contract/commit-v2.md": "257024df6fa93be767f0c74ee10014a6770c4fcb",
+      "contract/schemas/timeline-commit.json": "d94415a7d57e7d113223a425c076af7b1a8a4248",
+      "step_field": "reads",
+      "idempotency_location": "HTTP header; not JSON body"
+    },
+    "current_agent_source_blobs": {
+      "tools/p4-d73-pinned-launch.sh": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+      "tests/editing_conformance/test_provider_occurrence_fork.py": "601101d7cf0074514fa3bca4ade5ec1133380b01",
+      "tests/editing_conformance/test_recipe_occurrence_fork.py": "1ad7b6c1b1b1190152270b7f106d449ac8aa4479",
+      "tests/packs/video_editing/test_runtime_publication_chain.py": "38884ae901955ce59a949daaf788936812c4dd45"
+    }
+  },
+  "ref_object_crosswalk": {
+    "Agent": {"named_commit":"886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55","named_tree":"f53cc8426ccef8760021ef6207303bce7b80e777","frozen_ref":"origin/codex/handover-timeline-r4-20261019-candidate-sdk","frozen_commit":"11caf1d9de291d76f491cf69f7942606b7471d7a","frozen_tree":"f6f4fad77ded050b1e9c2d802cc3da35b459e610","disposition":"PASS: distinct immutable captures, no retarget"},
+    "Runtime": {"named_commit":"dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f","named_tree":"904d3d90d8235d4a27f2d5a8cbf88298d5ec0210","frozen_ref":"origin/codex/handover-timeline-r4-20261019-candidate-runtime","frozen_commit":"31c7ac3a00f7a205f507bb5bd4d4625628d429bd","frozen_tree":"73e676f420ba0545b6eebe45870d532344a9e69b","disposition":"PASS: distinct immutable captures, no retarget"},
+    "App": {"named_commit":"213318f1ec6ea5c324787bbd1c30a73072d1151a","named_tree":"591327d499ea162dd2ccb4620e577480aa305fae","frozen_ref":"origin/codex/handover-timeline-r4-20261019-candidate-app-qualified","frozen_commit":"8f0c2484463e9b666d184a744d52e252984e551a","frozen_tree":"26ad064632fac9ff123670aa7d6ed0e3d8f89178","disposition":"PASS: distinct immutable captures, no retarget"},
+    "Composition": {"named_commit":"67b8aa3d0d6831d3e3504a340ff583c3da253707","named_tree":"62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120","required_frozen_ref":"origin/codex/handover-timeline-r4-20261019-candidate-composition","actual_frozen_commit":"c82eb7c459d0a41263954bf007071a6a0e8e0a6a","actual_frozen_tree":"49975e7a54fd594e1b7fc807681fe28611d57864e","first_return_claimed_frozen_commit":"67b8aa3d0d6831d3e3504a340ff583c3da253707","first_return_claimed_frozen_tree":"62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120","disposition":"FAIL: frozen candidate mapping omitted/incorrect; origin/main was substituted"}
+  },
+  "selector_crosswalk": {
+    "route_root_count": 22,
+    "route_order": "PASS exact published argv order",
+    "missing_route_roots": 5,
+    "missing_launcher": "tools/p4-d73-pinned-launch.sh",
+    "missing_disposition": "UNKNOWN_MISSING_UPSTREAM_SELECTOR for all six",
+    "D54a_open_selectors": 5,
+    "D54a_disposition": "PASS: exact nodeids and predicates retained; absent upstream nodes remain unknown"
+  },
+  "matrix_crosswalk": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-7070-inventory-1144/evidence/candidate/d59-final-matrix",
+    "actual_files": 41,
+    "manifest_entries": 34,
+    "manifest_self_file": 1,
+    "generated_caches": 7,
+    "listed_caches": 1,
+    "unlisted_caches": 6,
+    "stable_source_only": 33,
+    "listed_hashes_verified": "33 source files plus all other listed entries verified",
+    "cache_hash_mismatch": "__pycache__/run-final-matrix.cpython-313.pyc only; observed d7aaec0e36f7a2315a4048c1b84f107bddeb2fc6d1e911b2d99195f35ed28d3f versus recorded c7ad0d1a35be84b4a02818e66971caa8bc17e760cee9eb547887d9b3069f2b9b; unqualified",
+    "qualification": "PASS as reconciled source-only evidence; historical 41 is not a source-file count"
+  },
+  "execution_boundary": {
+    "final_D59_tuple": "pending",
+    "current_bench": "not run",
+    "zip_tail_bench": "not run",
+    "upstream_gate": "unexecutable until missing roots and launcher exist",
+    "zero_or_preexisting_inference": false,
+    "D130": "excluded"
+  }
+}

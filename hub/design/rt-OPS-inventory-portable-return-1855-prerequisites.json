@@ -1,0 +1,41 @@
+{
+  "schema": "timeline.ops-child-custody.portable-prerequisites-return.v1",
+  "status": "TARGETED_PASS_CHECK_ONLY_CORRECTED",
+  "correction": [
+    "--check-only reads each committed Agent/Runtime source blob with git cat-file and compares its SHA-256 to the exact fixture manifest hash",
+    "manifest/source expectation extraction records malformed entries and never calls fixture_sources() from the census",
+    "private tests/suites.conf creation remains before unchanged Store.initialize"
+  ],
+  "controls": {
+    "altered_clean_committed_bytes": {
+      "exit": 2,
+      "result_ok": false,
+      "diagnostic": "Agent source carrier checkout committed source bytes agent.py",
+      "clean_tree_diagnostic_missing": false
+    },
+    "missing_and_malformed_sources_with_other_missing_prerequisites": {
+      "exit": 2,
+      "result_ok": false,
+      "source_diagnostics": [
+        "fixture source agent/agent.py",
+        "fixture source runtime/runtime.py"
+      ],
+      "additional_diagnostics_count": 19,
+      "uncaught_require_abort": false
+    }
+  },
+  "reserve": {
+    "available_bytes_at_validation": 4717395968,
+    "start_reserve_bytes": 5905580032,
+    "stop_line_bytes": 4000000000,
+    "whole_make_admitted": false,
+    "whole_make_e2e": "NOTRUN"
+  },
+  "mutating_setup": {
+    "store_initialized": false,
+    "production_install": false,
+    "package_acquisition": false,
+    "git_history_created_by_worker": false,
+    "network_or_socket": false
+  }
+}

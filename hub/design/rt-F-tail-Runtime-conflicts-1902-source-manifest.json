@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-tail-Runtime-conflicts-1902",
+  "captured_at_utc": "2026-10-25T18:47:50.824772Z",
+  "classification_source": "rt-F-tail-upstream-census-1844 plus rt-F-tail-census-review-1850",
+  "refs": {
+    "base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "ours": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "upstream": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "ours_branch": "tl/integration",
+    "upstream_ref": "refs/remotes/origin/main",
+    "worker_head_unchanged": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9"
+  },
+  "trees": {
+    "base": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+    "ours": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "upstream": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210"
+  },
+  "source_files": {
+    ".github/workflows/ci.yml": {"base": "741e027678a38d0c17cc74b83f8b1e8479085508", "ours": "94ffdaf70b7b44d12c9f41a67d6632b0e07d7531", "upstream": "80517dd88d253b921bf463e585ba4753e371bdb2"},
+    "docs/runtime-portability-testing.md": {"base": "57289e7cc1a9f3a532a1d9d6d9553f85c5ec43ad", "ours": "6c490e2bcc9e95e0ac7528474f49fe3b4a098941", "upstream": "0e5fa5426b98fd3c640d4c0cd90a232fef653250"},
+    "runtime_protocol/daemon.py": {"base": "31ca7eeef3deb7401edd7bc4d69b122273faaa5e", "ours": "725d4386c2e2690ddd10a233a028ac2f9d48c96c", "upstream": "d406ef24cff8676f5c4a78ba60facf2af5db9c7f"},
+    "runtime_protocol/door.py": {"base": "b352613ffad3b9f6cd738738f0f5a4c02edbb7c8", "ours": "674d8b55865dfdffa66c20cb51d7331fab18c4cd", "upstream": "1c5ef0337a2f49fbc290f908d5898078f18e4773"},
+    "runtime_protocol/platform.py": {"base": "9f0d8b21582162d48cf1e646a2cd49aedf680184", "ours": "70049865a0c11d1f874339259884dd5102350cb7", "upstream": "9f5cd8aa6cafcb024515a47e28939b55110d3141"},
+    "runtime_protocol/server.py": {"base": "13537c0cda2fb8975d4560488218e227f6beeea5", "ours": "65aa761a3187486d4847ef063192a06434b24d91", "upstream": "5c2b62737dedf8b4d77ee2ffc0f29c4e55da082a"},
+    "runtime_protocol/service.py": {"base": "be200b27f228e3526d5cd7cd3129d477012719aa", "ours": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144", "upstream": "63c944106eaf729afb424c078fcc1019550fa769"},
+    "tests/conftest.py": {"base": "68b75310a620fe8ea672f9b8e2e268b264f5c455", "ours": "9b50df102d31971f90d9b34e1f7bf9339eb0203b", "upstream": "0b1014372d2a58a11b86ec2fb4a934c3dfce6fad"},
+    "tests/lanes.py": {"base": "ba2097d5a169c4a5af6eea8632471a64e9aae438", "ours": "410f3144b440b4df933bd351ffca77f044e91aac", "upstream": "381a1b2cea580fe6d6a80d244fe742135e917aea"},
+    "tests/test_door_routes.py": {"base": "9851e7240db6e484751fed727aa52da60678df2c", "ours": "046dc68015752e0c445b0e9541302aa27175a972", "upstream": "78bf364cc445371f663c01057198964882825a05"}
+  },
+  "input_hashes": {
+    "census.json": "2adbabd4a8e9f93dbc1d60b3c1489f611b527e402dc40629597d49f5502c0e16",
+    "conflicts.md": "3c03a417eb6d9a3a52c496b2d919348b0171aa34dfa0ac005f72d2805b312025",
+    "already-upstream.json": "3ec7a337b6f7e13db39b005a711e47272ba056b9a0021feca80cbbb84b7681c9",
+    "census-source-manifest.json": "d4a449ebac4509e3d5cff094d6e69f3ccac7ab8b46ba6fcf3062a7ab2f09b535",
+    "independent-1850-report.md": "570de6aa369fbe559d04657577a6b90cae1f9346d17af3fcc077d2436b6f21cd",
+    "independent-1850-review.json": "9079685af5809474fe9e2655a93fd25e2b339ecebea65eef3cfdd540ba1b9f72",
+    "commit-v2.md": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "operational_route": {
+    "authorized_test_service": "bin/request-test + bin/wait-test, named pytest suites/selectors only",
+    "mktemp_clone_dryrun": "not available through that route",
+    "missing_route": "No existing authorized service operation accepts an arbitrary Git clone, merge-tree resolution, git apply, or delivery wrapper command for a private candidate artifact.",
+    "action": "No clone, service execution, applied proof, or new process framework was created; classification remains provisional.",
+    "delivery_build_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "qualified_d68_wrapper_sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779",
+    "whitespace_flag_check": "delivery-build uses git format-patch then git am -q; D68 wrapper uses git apply --index --3way -. Neither uses --whitespace=error.",
+    "our_addition_whitespace": "not applicable: no --whitespace=error route; scratch resolution patch passes git diff --check."
+  },
+  "preservation": {
+    "frozen_r4_runtime": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+    "d130": "excluded from action; WAL recovery is not in the ten named files",
+    "integration_refs_changed": false
+  }
+}

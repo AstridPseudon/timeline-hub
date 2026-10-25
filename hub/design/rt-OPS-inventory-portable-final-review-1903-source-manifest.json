@@ -1,0 +1,41 @@
+{
+  "schema": "timeline.ops-child-custody.portable-final-review-source.v1",
+  "final_commit": "2fffe593175338ffb8144705bb70c9542fa4459f",
+  "final_tree": "516da69731401037b6845f1e14ea11b4c9135628",
+  "final_parent": "674d13e26ce40ce9a158a7e50b226c247fbc9588",
+  "historical_fixture_input_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "runner_sha256": "f02fdcca8ad7c9484866b1817bb67272212933c4576d2212c2d163a07edf1c96",
+  "support_sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+  "new_portability_test_sha256": "dee7cb8abe05c3855033aa0f30aea623122ad6dc0cf6eef8d7b274c66894a7d2",
+  "fixture_manifest_sha256": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8",
+  "immutable": {
+    "parent_maker_path": "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv",
+    "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "candidate_maker_path": "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv",
+    "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "parent_mode": "100755",
+    "candidate_mode": "100755",
+    "verifier_block_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "bootstrap_artifact_sha256": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548"
+  },
+  "scope": {
+    "diff_674d_to_final": [
+      "ops-child-custody/tests/e2e_inventory.py",
+      "ops-child-custody/tests/test_e2e_inventory.py"
+    ],
+    "scoped_diff_check": "PASS",
+    "raw_full_diff_check": {
+      "status": "FAIL_EXPECTED_IMMUTABLE_INPUT_DIAGNOSTICS",
+      "exit": 2,
+      "diagnostics": [
+        "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv:1224: new blank line at EOF",
+        "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv:1201: new blank line at EOF"
+      ]
+    }
+  },
+  "manifest_source_and_mode_hashes": "PASS",
+  "verifier_block_equality": "PASS",
+  "receiving_setup_order": "suites.conf before unchanged Store.initialize: PASS"
+}
