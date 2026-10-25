@@ -662,3 +662,23 @@ Predicate coverage confirms retained pointer `(368,54)` resolves:
 No semantic fixes or protected-file changes were made. No browser/full-suite/service run was performed.
 
 Normal merge receipt is pending harness finalization; no body or external ledger entry was created.
+test(app): independently review P2 D96 placement scope
+
+PASS f0c47759b9 against clean base 043631dbab: exact three-file delta,
+56 insertions and 8 deletions. The final fixture has 18 direct seed calls:
+17 omitted/default-12 calls and one explicit-14 call in the automatic child
+placement TestType. The same elements-assets spec keeps element and
+registerAsset on default 12; popup, D66, proxy, parent-delete, parent split,
+parent trim, mounted trim, shot name, live edit, readiness, tour, main
+three-products, track label, and both runtimeRestore calls remain default 12
+(runtimeRestore's referenceAt=3 is unrelated). The placement callback body,
+title, assertions, request/reply/canonical/history/reload/nativeUndo logic,
+and waits are unchanged except for the fixture receiver.
+
+Safe review ledger: no browser, Runtime service, full suite, build, install,
+generated file, pin, product, or protected-file mutation was performed.
+Node20 placement/receipt controls passed 3/3; D66 Node22 controls passed
+24/24; embedded Python AST/compile, 21 native seed assertions, locked App/Node
+typechecks, scoped ESLint with zero warnings, diff checks, protected-body
+comparison, and all three final blob hashes passed. Node24 was unavailable in
+the environment; Node22 was the available D66 control runtime.
