@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T16:53:35Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 17 | status age 0m -->
-# app board, 2026-10-25T16:54Z
+<!-- app | 2026-10-25T16:58:45Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
+# app board, 2026-10-25T16:58Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -107,9 +107,9 @@
 
 | D116-current17 | Map shared current word setup | Luna and independent | Agent peer1526; normal20177 | merged | Author1540; independent1548 | Source applicability17/17 PASS; scalar suppliedhash malformed65chars, exact64 reviewerhash published. All selector-specific topology still missing. No behavior credit. | Source unchanged |
 | D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | merged | Author1540; independent1552 | Current file byte-exact captured120d; all16 PASS in30693. Existing7d858 setupfix home; no diff, rerun or current5e9ad behavior credit. | Agent20177 unchanged |
-| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Actual1646 ERROR9 retained | doing | Sol1650; wholepath1650 complete | Independent trace: unallocated item rejected against authenticated empty baseline before first source acceptance. No guard change or original proof. | f53b01690 held |
+| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Qualified D100 source applicability | blocked:agent | Sol1650 and wholepath1650 complete | Both confirm first item birth hits correspondence guard before acceptance. No valid test-only fix; exact D100 dependency assessment sent Agent1655. | f53b01690 held |
 
-| D118d-graph9 | Preserve typed root and tamper purposes | Luna and protected Luna | Recorded D132a approved | doing | app-D132a-graph-schema-enumerate-1653 | Whole seed static schema census before edits; only enumerated setup null object slots may become{}. Protected review then own9. | 134d9787c held |
+| D118d-graph9 | Preserve typed root and tamper purposes | Luna and independent Luna | D132a whole census1 to0 | review | app-D132a-graph-protected-own9-1658 | Author136c full static schema census found one invalid metadata null; changed only that to{}. All90/33 predicates exact claimed; review then own9. | 136c8ae6c held |
 
 | D127-leaf-retention | Retain safe leaf and lifecycle evidence | Luna and protected Luna | App lifecycle validator repair | review | Helper231ddb; independent1630 | Helper4ee and all160 predicate mapping qualified; exact central28551 PASS23. Combined FAIL belongs App lifecycle cross checks. No activation. | 231ddb5 held |
 
@@ -117,7 +117,7 @@
 
 | D127-App-validator | Strictly validate leaf and lifecycle schema | HARD Sol and protected Luna | Second source FAIL1647 retained | doing | app-D127-lifecycle-complete-sol-1654 | Independent1647 found pending/returned dispatch contradictions. Sol enumerates complete frozen-helper truth table; normal and legacy arms exact. | 5a9e0eb523 held |
 
-| D116-native-topology4 | Build four faithful current checkout companions | Luna and protected Luna | First free independent review slot | review | Author1644 b24d99bd3c | Two new files and4 cases collected; static checks PASS. Own4 NOTRUN below5GB; central attempt importERROR before collection. Original17 exact. | b24d99bd3c held |
+| D116-native-topology4 | Build four faithful current checkout companions | Luna and independent Luna | Author1644 source ready | review | app-D116-native-topology4-protected-1653 | Two allowed new files and4 cases; original17 exact. Source/purpose review first, then own new4 only at actual5GB. | b24d99bd3c held |
 
 Integration: App d4e5284dfcc20801977cef12253b12f9cc8798fd, tree5efca939546f30b039cb9cacba7a29d7db690f2a. Entire tree equals tested normal adopter1615. Qualified Runtime ab1e tools adopted; vendor17/artifact3/lint PASS, mappings14/protected8 exact. Agent070dfc and recorded tours unchanged. Receipt design/app-U4p-R2-normal-home-1624.json.
 
@@ -129,7 +129,7 @@ Blockers: Agent core — D128 owns local a4e016/5e9ad core. Latest Agent1626 say
 Blockers: Final render — Farm D77 waits Runtime paired exact source publication; no App input owed. Historical denied acquisition route stays stopped.
 Blockers: Final cut — Current full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
 Next ready: Native4 protected review in first freed source slot; protected finalApp and graph reviews after actual corrected candidates; exact helper/App clean imports only after finalPASS. No tour.
-live 3 / cap 3; ready-undispatched 1; native4 protected review takes next free slot. ProjectionSol1650, full lifecycleSol1654 and graph schemaLuna1653 running or queued. App1647 plus Sol1650 and independent projection wholepath1650 running or queued. Projection own9, graph trace and App strict validator running. Fresh dispatch5418221568 bytes; source floor4.6GB with no heavy, own-node body5GB, ongoing stop4GB. No heavy body.
+live 3 / cap 3; ready-undispatched 0; native4 protected1653, full lifecycleSol1654 and graph protected1658 running or queued. Projection product need assigned peer1655. App1647 plus Sol1650 and independent projection wholepath1650 running or queued. Projection own9, graph trace and App strict validator running. Fresh dispatch5418221568 bytes; source floor4.6GB with no heavy, own-node body5GB, ongoing stop4GB. No heavy body.
 INBOX consumed through2301260 bytes, including recordedD132a approval. H6 checked actual hub/status Agent1626, Runtime1624 and Farm1635. Farm core dropped; Agent normal child custody is active owner. All former App source/publication asks consumed. New Agent1619 companion ask is an explicit row and will start first free slot.
 Safety: D130 remains absolute. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakened tests, credentials or refused-route retry. All current inputs/outputs/branches/reports and historical guarded dirty/orphan targets preserved.
 Later: Parent labels2/native checkout originals4/trackbatch1 retain word-source setup errors; new companion work is separate. D79 waits ZIP; E4 dropped. Current17 applicability17 PASS, pair16 historical30693 source equality PASS, neither is current behavior proof.
@@ -145,3 +145,8 @@ Pass16:50: actualprojection1646 exact9ERROR at identity_conflict/command_state36
 Pass16:53: D132a ownerapproval consumed; cleared orchestratorwaitsamepass and prepared strict WHOLEschemaenumerationbeforeedits. Only allsetupnullobjectslots maychange{}, all90/33predicates andthreeconsumers checked, anyotherinvalidSTOPfulllist. Native4protectedbriefprepared, no unadmittedfourthworkerwhile currentthreeactive.
 
 Pass16:54: two source slots freed. App1647 secondFAIL exactpending/returned dispatchcontradictions -> HARD Sol1654 samebranch, comprehensive helpertruth-tablefirst and mutationmatrix. Independentwholepathprojection1650 complete andsafePublished: no firstacceptance, unallocateditem versus emptybaseline. Sol1650 continuesboundedsetup scope. ApprovedD132a whole-schemaauthor1653 dispatchedimmediately insecondfreedslot, native4reviewnext. No candidate currentlynormalmergequalified.
+
+Blockers: Projection source — Agent existingD100 owner owes qualified normal applicability for exact first item-birth guard. Peer1655 supplies both independent traces; no App workaround or unchanged rerun.
+Pass16:55: Sol1650 no diff; agrees independentreader no test-only correction beforefirstsourceacceptance. ExistingAgentD100sourceowner asked finite qualifieddependencydisposition, notnewescalation. Projectionblocked:agent,9purposesunverified. Native4independentreviewer1653 immediatelyfilledfreedslot at5042094080bytes. Other two sourceauthors active.
+
+Pass16:58: graphauthor1653 exact136c completed WHOLEschema staticcensusbeforeedit: one authoredmetadata:null objectslot, after0. Onlyapprovedslot changed{},90/33predicateexactclaimed, nooriginalbody. Soleprotected1658 dispatchedimmediately inauthorfreedslot; independentmustverifyfullcensus/chronology/threeconsumers/nulldependence beforeexact9. WorkerZIPnotepublishedsafe, no packagingcredit.

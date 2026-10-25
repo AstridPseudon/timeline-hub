@@ -1,0 +1,41 @@
+{
+  "task": "D132a",
+  "base": "134d9787c791b54db695a2332bd352ca1c0a6a78",
+  "source_commit_at_census": "134d9787c791b54db695a2332bd352ca1c0a6a78",
+  "frozen_runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "construction": {
+    "kind": "pure Agent fixture-source construction",
+    "fixture": "tests.sdk.test_timeline_commit_provider_document.document_fixture",
+    "root_author": "tests.editing_conformance.test_recorded_graph_roots.root_values",
+    "operation": "local registration of the existing test.create-roots operation",
+    "steps": [
+      "bundle_from_document(document_fixture())",
+      "commands.execute(bundle, [create_command()])",
+      "document_from_bundle(plan.bundle)",
+      "wrap the actual plan records and canonical document in a schema-shaped PreparedCommit candidate"
+    ],
+    "provider_runtime_pytest_testbody_run": false,
+    "root_count": 2,
+    "created_root_count": 2,
+    "write_count": 2,
+    "document_complete": true
+  },
+  "schema_census": {
+    "before_error_count": 1,
+    "after_error_count": 0,
+    "before_error": {
+      "json_path": "$.canonical_document.shot_revisions[1].payload.metadata",
+      "instance_type": "NoneType",
+      "schema_ref": "#/properties/canonical_document/properties/shot_revisions/items/properties/payload/properties/metadata/type"
+    },
+    "after_valid": true,
+    "changed_slots": ["root_values()[0].value.payload.metadata: null -> {}"]
+  },
+  "conservation": {
+    "shared_graph_predicates": "90 fixture assertions and 33 graph-consumer assertions unchanged",
+    "other_inputs": "byte-exact except the one approved authored metadata slot",
+    "open_object_content_nulls": "preserved exactly",
+    "prior_gain_migration": "retained as base input and not changed by this worker",
+    "prior_six_metadata_lines": "read-only"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "status": "BLOCKED_PRODUCT_DEPENDENCY",
+  "source_changed": false,
+  "first_failing_boundary": {
+    "fixture": "tests/sdk/test_timeline_capture_projection.py:311",
+    "command": "doc.patch",
+    "physical_path": [
+      "items"
+    ],
+    "before": {
+      "state": "present",
+      "value": []
+    },
+    "authored_item_id": "item-1",
+    "route": [
+      "RuntimeService.commit_timeline",
+      "registered astrid provider",
+      "commands.execute",
+      "_doc_patch.patch",
+      "Closure.install",
+      "Recording.assign",
+      "State.set",
+      "State.project_shot_items",
+      "State._item_ids"
+    ],
+    "error": "identity_conflict: shot item correspondence changed",
+    "actual1646": "9 setup errors, 0 test bodies reached"
+  },
+  "missing_dependency": {
+    "commit": "d3b5cfef76b4b3abef5db5f8288abc214a61354f",
+    "path": "astrid/sdk/timeline/_command_state.py",
+    "reason": "Physical source membership replacement remains subject to exact alias correspondence in frozen base; D100 separates authenticated physical IDs from remapped placement aliases."
+  },
+  "decision": "No test-only workaround or speculative product patch. Preserve all authored values and source custody.",
+  "next": "Owner must resolve the missing D100 production dependency before another exact9 run.",
+  "static_checks": {
+    "ruff": "PASS",
+    "mypy_follow_imports_skip_private_cache": "PASS",
+    "python_3_11_17_compile_private_cache": "PASS",
+    "git_diff_check": "PASS",
+    "assertions_original": 43,
+    "test_functions_original": 11,
+    "fixture_original_statements": 54,
+    "all_preserved": true
+  },
+  "source_custody": {
+    "clean1623": "f53b016900c99e46998268e36c7c431ac0eec61e",
+    "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "byte_exact": true,
+    "upstream_absence_rechecked": true
+  },
+  "own9": {
+    "status": "NOTRUN",
+    "reason": "No causally corrected source exists in authorized scope; unchanged rerun forbidden. Capacity alone does not authorize rerunning.",
+    "fresh_capacity_bytes": 4907999232,
+    "required_floor_bytes": 5000000000,
+    "ongoing_stop_bytes": 4000000000,
+    "pytest_started": false,
+    "own_xml_or_log_created": false
+  },
+  "independent_wholepath1650": {
+    "read_only_facts_agree_on_first_boundary": true,
+    "source": "app-D118d-projection-identity-wholepath-1650/evidence/facts.json",
+    "limits": "Independent read-only investigation confirms membership mismatch; it is not a behavioral pass."
+  },
+  "contract_seam": {
+    "C0_section_2": "Patching entity membership inside an existing root is supported generically.",
+    "interpretation": "Current frozen Agent correspondence guard is missing the cited D100 implementation; do not reinterpret the contract as banning this authored item birth."
+  }
+}

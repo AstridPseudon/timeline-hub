@@ -1,0 +1,40 @@
+{
+  "head": "f53b016900c99e46998268e36c7c431ac0eec61e",
+  "expected_head": "f53b016900c99e46998268e36c7c431ac0eec61e",
+  "worktree_status": "",
+  "changed_paths": [],
+  "source": {
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+    "exact_clean1623": true,
+    "exact_independent1616": true
+  },
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit_and_tree": [
+      "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "de2954a0ceadb4455903d9abdfec3b773318a50f"
+    ],
+    "clean": true
+  },
+  "upstream_absence": {
+    "inherited_1616_proof_rechecked": true,
+    "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "git_cat_file_exit_code": 128
+  },
+  "d100_dependency": {
+    "commit": "d3b5cfef76b4b3abef5db5f8288abc214a61354f",
+    "is_ancestor_exit_code": 1,
+    "current_command_state_sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+    "d100_command_state_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+  },
+  "static_preservation": {
+    "original_assertions": 43,
+    "original_test_functions": 11,
+    "all_assertions_and_tests_exact": true,
+    "original_fixture_statements_ordered_subsequence": true
+  },
+  "free_bytes": 5073801216
+}

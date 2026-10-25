@@ -1,0 +1,32 @@
+{
+  "worktree": "/home/user/work/wt/app-D132a-graph-schema-enumerate-1653",
+  "base": "134d9787c791b54db695a2332bd352ca1c0a6a78",
+  "changed_files": [
+    "tests/editing_conformance/test_recorded_graph_roots.py"
+  ],
+  "changed_slot": "root_values()[0].value.payload.metadata",
+  "current_source_sha256": {
+    "tests/editing_conformance/test_recorded_graph_roots.py": "3fbfa95179561a95ac4930cb745f16f2ac636b8755372963730e5cda7466a895",
+    "tests/sdk/test_timeline_commit_graph_roots.py": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21"
+  },
+  "frozen_runtime": {
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "schema_sha256": {
+      "contract/schemas/timeline-commit.json": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
+      "contract/schemas/edit-command.json": "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d",
+      "contract/schemas/shot-composition.json": "aad2684fb916e027da955356078243c4c5f774624c3376809b73ce0ffc39199d",
+      "contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "contract/schemas/document.json": "6d8fe08563eb96504c874c1d3535527371a8a67f54b06bcd324c32f99cb286e3"
+    },
+    "validation_boundary": "PreparedCommit canonical_document -> ShotPayload metadata -> OpenMap"
+  },
+  "read_only_scope": [
+    "tests/sdk/test_timeline_commit_graph_roots.py",
+    "tests/sdk/test_timeline_semantic_reservations.py",
+    "tests/sdk/test_timeline_created_root_stage_redo.py",
+    "Agent production code",
+    "Runtime code and schema"
+  ],
+  "no_raw_payload_auth_keys_urls_exported": true
+}
