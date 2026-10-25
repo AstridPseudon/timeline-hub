@@ -1,6 +1,6 @@
 import { ChevronLeft, Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
-import { CardDisclosure, EditorCard, EditorCardFoot } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
+import { EditorCard, EditorCardFoot } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
 import { EditorCardLayer } from '@/shared/components/RuntimeConnection/EditorCardLayer.tsx';
 import { LOCAL_SETUP, RUNTIME_CONNECTION_COPY, localSetupInstructions, localSetupSteps } from '@/shared/components/RuntimeConnection/copy.ts';
 import { CopyCommandRow, CopyFallback, useCopyAction } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
@@ -27,9 +27,6 @@ export function WelcomeLocalSetup({ onBack }: { readonly onBack: () => void }) {
           </Button>
           {copy.status === 'failed' && <CopyFallback text={instructions} label={RUNTIME_CONNECTION_COPY.agent.copy} />}
         </div>
-        <CardDisclosure label="Show the instructions" openLabel="Hide the instructions">
-          <pre className="max-h-[220px] overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-5 text-foreground">{instructions}</pre>
-        </CardDisclosure>
         <section className="min-w-0 space-y-1.5 text-left">
           <p className="text-[13px] font-medium text-muted-foreground">Or do it yourself</p>
           <ol className="min-w-0 list-decimal space-y-1.5 pl-5 text-[13px] leading-5 text-muted-foreground marker:text-muted-foreground">

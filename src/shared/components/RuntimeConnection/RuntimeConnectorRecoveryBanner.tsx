@@ -105,8 +105,7 @@ export function RuntimeConnectorRecoveryBanner({
   timelineId,
   connectionUrl,
 }: RuntimeConnectorRecoveryBannerProps) {
-  const [showBrief, setShowBrief] = useState(false);
-  const [showManualSteps, setShowManualSteps] = useState(false);
+  const [briefCopyFailed, setBriefCopyFailed] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const safeUrl = safeConnectionUrl(connectionUrl);
   const restartBrief = buildWorkspaceRestartBrief({ error: error.message, connectionUrl: safeUrl, projectId, timelineId });
@@ -114,8 +113,9 @@ export function RuntimeConnectorRecoveryBanner({
     || 'The editor could not complete workspace discovery.';
 
   const copyRestartInstructions = async () => {
-    setShowBrief(true);
     const copied = await writeClipboardTextSafe(restartBrief);
+    // The brief is for the agent; it is shown only as a fallback when copying fails.
+    setBriefCopyFailed(!copied);
     setCopyStatus(copied
       ? 'Restart instructions copied. Paste them into your agent.'
       : 'Clipboard access is unavailable. Copy the brief from the field below.');
@@ -184,8 +184,8 @@ export function RuntimeConnectorRecoveryBanner({
                 {copyStatus.startsWith('Restart instructions copied') ? <Check aria-hidden="true" className="mr-2 h-4 w-4 shrink-0" /> : <Copy aria-hidden="true" className="mr-2 h-4 w-4 shrink-0" />}
                 Copy restart instructions
               </Button>
-              {showBrief && <>
-                <p role="status" className="mt-2 text-xs text-muted-foreground">{copyStatus}</p>
+              {copyStatus && <p role="status" className="mt-2 text-xs text-muted-foreground">{copyStatus}</p>}
+              {briefCopyFailed && <>
                 <label className="mt-2 block text-xs font-medium" htmlFor="workspace-restart-brief">Restart brief</label>
                 <textarea id="workspace-restart-brief" aria-label="Restart brief" readOnly rows={8} value={restartBrief} className="mt-1 w-full resize-y rounded-md border border-border bg-background p-2 text-xs leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onFocus={(event) => event.currentTarget.select()} />
               </>}
@@ -194,14 +194,11 @@ export function RuntimeConnectorRecoveryBanner({
             <section className="min-w-0 rounded-lg border border-border/70 p-3">
               <h2 className="text-sm font-medium">Use your terminal</h2>
               <p className="mt-1 min-h-10 text-xs leading-5 text-muted-foreground">Use the existing startup configuration so the app returns to the same Runtime and data.</p>
-              <Button type="button" variant="outline" className="mt-2 h-auto min-h-10 w-full whitespace-normal py-2 leading-5" aria-expanded={showManualSteps} aria-controls="workspace-manual-restart-steps" onClick={() => setShowManualSteps((visible) => !visible)}>
-                {showManualSteps ? 'Hide restart steps' : 'Show restart steps'}
-              </Button>
-              {showManualSteps && <ol id="workspace-manual-restart-steps" className="mt-3 list-decimal space-y-2 pl-4 text-xs leading-5 text-muted-foreground">
+              <ol id="workspace-manual-restart-steps" className="mt-3 list-decimal space-y-2 pl-4 text-xs leading-5 text-muted-foreground">
                 <li>Return to the same Astrid App checkout and terminal used to start this app. Restart its existing local launcher with <code className="rounded bg-muted px-1 py-0.5 text-foreground">{ASTRID_APP_LOCAL_DEV_COMMAND}</code>.</li>
                 <li>If Astrid Runtime is a separate process, restart that same Runtime with its current command, profile, and data-root configuration. Keep the existing install and data location.</li>
                 <li>Wait for the Runtime to become ready, then choose <strong className="font-medium text-foreground">Retry connection</strong> here and confirm the same project, timeline, and configured agent return.</li>
-              </ol>}
+              </ol>
               <p className="mt-3 text-[11px] leading-4 text-muted-foreground">Do not reset or reinstall the workspace, change its data root, or replace its credentials.</p>
             </section>
           </div>

@@ -51,7 +51,7 @@ describe('RuntimeConnectorRecoveryBanner', () => {
     fireEvent.click(screen.getByText('Show full connection error'));
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).toHaveAttribute('open');
     expect(screen.getByRole('button', { name: 'Copy restart instructions' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Show restart steps' })).toBeInTheDocument();
+    expect(screen.getByText(/Return to the same Astrid App checkout/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry Runtime connection' }));
     expect(onRetry).toHaveBeenCalledOnce();
 
@@ -78,7 +78,7 @@ describe('RuntimeConnectorRecoveryBanner', () => {
     expect(brief).toContain('Do not reset, reinstall, create a new data root');
     expect(brief).toContain('Verify that the same configured Runtime is healthy');
     expect(brief).not.toContain('secret');
-    expect(screen.getByLabelText('Restart brief')).toHaveValue(brief);
+    expect(screen.queryByLabelText('Restart brief')).toBeNull();
     expect(screen.getByRole('status')).toHaveTextContent('Restart instructions copied');
   });
 
@@ -94,25 +94,13 @@ describe('RuntimeConnectorRecoveryBanner', () => {
     expect((screen.getByLabelText('Restart brief') as HTMLTextAreaElement).value).toContain('Bridge timeout.');
   });
 
-  it('reveals manual restart steps that preserve the existing installation and Runtime data', () => {
+  it('shows the manual restart steps that preserve the existing installation and Runtime data', () => {
     render(<RuntimeConnectorRecoveryBanner retrying={false} error={new Error("Runtime is offline.")} onRetry={vi.fn()} />);
-    expect(screen.queryByText(/Return to the same Astrid App checkout/)).toBeNull();
-    const toggle = screen.getByRole('button', { name: 'Show restart steps' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-
+    expect(screen.queryByRole('button', { name: 'Show restart steps' })).toBeNull();
     expect(screen.getByText(/Return to the same Astrid App checkout/)).toBeInTheDocument();
     expect(screen.getByText('npm run dev:local')).toBeInTheDocument();
     expect(screen.getByText(/restart that same Runtime with its current command, profile, and data-root configuration/)).toBeInTheDocument();
     expect(screen.getByText(/Do not reset or reinstall the workspace/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Copy restart instructions' }));
-    expect(screen.getByText(/Return to the same Astrid App checkout/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Hide restart steps' }));
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText(/Return to the same Astrid App checkout/)).toBeNull();
-    expect(screen.getByLabelText('Restart brief')).toBeInTheDocument();
   });
 
   it('builds the agent brief with only a sanitized HTTP(S) target', () => {
