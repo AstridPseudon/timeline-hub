@@ -51,6 +51,18 @@ def shared_editing(request, tmp_path, monkeypatch):
             )
             setup_commands.append(shot_set)
             staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
+        if index == 3:
+            host = copy.deepcopy(staged)
+            host_occurrence = next(
+                occurrence for occurrence in host["parent_revision"]["payload"]["occurrences"]
+                if occurrence["occurrence_id"] == "occurrence-3"
+            )
+            host_occurrence["duration_ms"] = 2000
+            host_parent = host["parent_revision"]["payload"]
+            host["parent_revision"]["content_digest"] = _digest(host_parent)
+            setup_commands.extend(emit_document_commands(
+                bundle_from_document(staged), bundle_from_document(host)))
+            staged = host
         staged_bundle = bundle_from_document(staged)
         shared = capture_occurrence_place_shared(
             staged_bundle, f"occurrence:occurrence-{index}", "repeated-third",
