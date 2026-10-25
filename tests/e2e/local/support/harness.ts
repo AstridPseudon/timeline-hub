@@ -883,11 +883,11 @@ if case['fixture'] == 'three-products':
         'speed': 1,
     }
     add(capture_clip_add_media(bundle, transition, pins['f2-video'], verified_media=verified))
-    add(capture_occurrence_create(bundle, 'f2-occurrence', 'f2-shot', name='F2 agent shot', track='S1', on=0, duration=12))
+    add(capture_occurrence_create(bundle, 'f2-occurrence', 'f2-shot', name='F2 agent shot', track='S1', on=0, duration=case['occurrence_host_window']))
     add(capture_track_create(bundle, 'occurrence:f2-occurrence', {'id': 'plate', 'kind': 'visual', 'label': 'plate'}))
     add(capture_track_create(bundle, 'occurrence:f2-occurrence', {'id': 'V2', 'kind': 'visual', 'label': 'V2'}))
     for row, key in [
-        ({'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'image', 'asset': 'f2-plate', 'hold': 12}, 'f2-plate'),
+        ({'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'image', 'asset': 'f2-plate', 'hold': case['occurrence_host_window']}, 'f2-plate'),
         ({'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'image', 'asset': 'f2-placeholder', 'hold': 3}, 'f2-placeholder'),
         ({'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'image', 'asset': 'f2-clear', 'hold': 3}, 'f2-clear'),
     ]:
@@ -929,7 +929,7 @@ if case['fixture'] == 'three-products':
     expected_internal = {
         'tracks': [{'id': 'plate', 'kind': 'visual', 'label': 'plate'}, {'id': 'V2', 'kind': 'visual', 'label': 'V2'}],
         'clips': [
-        {'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'media', 'asset': 'f2-plate', 'hold': 12},
+        {'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'media', 'asset': 'f2-plate', 'hold': case['occurrence_host_window']},
         {'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-placeholder', 'hold': 3, 'app': {'f2Opaque': case['opaque']['clip']}},
         {'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-clear', 'hold': 3},
         ],
@@ -940,7 +940,7 @@ if case['fixture'] == 'three-products':
         'effects': [], 'audio': [], 'layout': {}, 'assets': [],
     }
     expected_occurrence = {'occurrence_id': 'f2-occurrence', 'shot_id': 'f2-shot',
-        'placement': {'start_ms': 0}, 'source_offset': 0, 'duration_ms': 12000, 'speed': 1,
+        'placement': {'start_ms': 0}, 'source_offset': 0, 'duration_ms': case['occurrence_host_window'] * 1000, 'speed': 1,
         'track': 'S1', 'transform': {}, 'gain': 1, 'mute': False, 'provenance': {}}
     occurrence = document_from_bundle(bundle)['parent_revision']['payload']['occurrences'][0]
     # Author occurrence fields through guarded paths, retaining provider-owned edges.
@@ -1186,10 +1186,10 @@ print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': r
    * Two kinds of clip, because the two products reach different ones. The App edits the parent composition's own clips
    * (`f2-app-clip`, `f2-transition-clip`, track `V1`, drawn as clips). The Astrid CLI addresses only clips inside a placed shot's
    * internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's clips (`f2-agent-clip`, `f2-agent-clear-clip`) live in
-   * the shot `f2-shot` (occurrence on parent track `S1`, 0 s to 12 s), which the App draws as one block, not as its clips. The shot
+   * the shot `f2-shot` (occurrence on parent track `S1`, with the finite host window supplied to the seed), which the App draws as one block, not as its clips. The shot
    * also holds a full-length `f2-plate` so the film stays covered when the agent clears an asset (Astrid refuses to publish a gap).
    */
-  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT, transitions: 'ordinary' | 'native-none' | 'parent-delete' = 'ordinary'): Promise<ThreeProductsSeed> {
+  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT, transitions: 'ordinary' | 'native-none' | 'parent-delete' = 'ordinary', occurrenceHostWindow = 12): Promise<ThreeProductsSeed> {
     if (this.threeProductsSeed) return this.threeProductsSeed;
     const { projectId, timelineId, image, video } = this.seed;
     const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
@@ -1232,7 +1232,8 @@ print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': r
       fixture: 'three-products', initialize: !this.seedInitialized,
       project_id: projectId, timeline_id: timelineId, head_revision_id: bootstrapHead,
       base_publication_id: bootstrapPublication,
-      reference_at: referenceAt, transitions, image: { file: 'f2-image.png', type: image.mediaType, object_id: image.objectId, digest: image.digest },
+      reference_at: referenceAt, transitions, occurrence_host_window: occurrenceHostWindow,
+      image: { file: 'f2-image.png', type: image.mediaType, object_id: image.objectId, digest: image.digest },
       video: { file: `f2-video.${video.mediaType === 'video/webm' ? 'webm' : 'mp4'}`, media_type: video.mediaType, object_id: video.objectId, digest: video.digest },
       media: { 'f2-app': imageMedia, 'f2-plate': imageMedia, 'f2-placeholder': imageMedia, 'f2-clear': imageMedia, 'f2-video': videoMedia },
       opaque: { config: THREE_PRODUCTS_OPAQUE.config, clip: THREE_PRODUCTS_OPAQUE.clip, shot: THREE_PRODUCTS_OPAQUE.shot },
