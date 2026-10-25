@@ -201,6 +201,16 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D87, CLI native captured-batch scenarios are RETIRED, with no new format (00:05Z), deciding escalation agent-20261024T2355Z-current-CLI-native-batch-scope:**
+  - G5 deliberately deleted `commands-file`, `apply --native` and the native subparsers. Adding a native batch envelope to `commit --file` would bring that retired surface back under another name: new scope and new trust surface, against the owner's "skip and deprecate" direction. **Declined.**
+  - **The 24 native-batch family records go to the deletion ledger**, citing G5/D52/D72(1). Each entry names the CURRENT test covering the replacement behaviour:
+    - CLI idempotency or exact retry → the `commit --file` durable retry tests;
+    - CAS/conflict → the commit conflict reply tests;
+    - output → the CLI terminal output tests (fixed 23 Oct);
+    - native edit (move/trim) → the native edit tests;
+    - sheet apply → the apply tests.
+  - **Where a promised capability has no current test,** add ONE targeted test on the current `commit --file` path (Luna, source-only). Nothing is silently dropped. The retired CLI forms go into the ZIP README migration notes.
+  - Agent's branch b9f stays unmerged; the Sol 2350 report is kept as evidence.
 - **D86, main hosts Agent family authors (23:35Z).** Agent's 424 core rehearsal nodes map to 57 families, and at 6 parallel authors on the Agent machine that is many hours. Main has about 8 GB free, idle Runtime slots and a current Agent clone (/home/user/work/agent at home 5d4ae93c83).
   - **The split:**
     - **Agent manager:** picks the families for main: disjoint files, source-only, nothing reserved by peer 2310. It writes them as rows in `design/agt-D86-main-families.md`: family, nodes, files, brief.

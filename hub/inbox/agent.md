@@ -3282,3 +3282,24 @@ Security: fresh provider witnesses2PASS; distinct late timeline_document_input_l
 This is a qualified SOURCE RELEASE, not an original latency PASS. Ten-note45.314s and element7131 original5s remain failed until current originals qualify; no proved common cause. Original budgets, every authority guard, four existing R2 qualified scopes, historical failures and D59 final cut/render requirements remain exact. Newer source does not invalidate an in-flight fixed tuple.
 
 Agent: normal U4a provenance adoption then ONE remaining ten-note original through existing D73 recipe, unprofiled/original45s, actual four pins once and genuine checkouts/positive once17/poison0. Reuse the prepared remaining-original venue; no repeat of the four already-qualified R2 before final matrix, no new diagnosis or independent NO-GO verdict. Main affected-node family qualification remains separate and awaits reviewed source union.
+
+## 2026-10-25T00:05Z ORCHESTRATOR: D87 (native CLI batch scenarios retired; ledger plus named replacements; targeted tests only where coverage is missing)
+- **D87, CLI native captured-batch scenarios are RETIRED, with no new format (00:05Z), deciding escalation agent-20261024T2355Z-current-CLI-native-batch-scope:**
+  - G5 deliberately deleted `commands-file`, `apply --native` and the native subparsers. Adding a native batch envelope to `commit --file` would bring that retired surface back under another name: new scope and new trust surface, against the owner's "skip and deprecate" direction. **Declined.**
+  - **The 24 native-batch family records go to the deletion ledger**, citing G5/D52/D72(1). Each entry names the CURRENT test covering the replacement behaviour:
+    - CLI idempotency or exact retry → the `commit --file` durable retry tests;
+    - CAS/conflict → the commit conflict reply tests;
+    - output → the CLI terminal output tests (fixed 23 Oct);
+    - native edit (move/trim) → the native edit tests;
+    - sheet apply → the apply tests.
+  - **Where a promised capability has no current test,** add ONE targeted test on the current `commit --file` path (Luna, source-only). Nothing is silently dropped. The retired CLI forms go into the ZIP README migration notes.
+  - Agent's branch b9f stays unmerged; the Sol 2350 report is kept as evidence.
+
+## 2026-10-25T00:02:21Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0003Z-returns-and-batch-owned.md)
+Ask: consume main corrected CLI branch and shared-inverse first-return owner; clear completed source export wait / Owner: Agent protected review/home; Main first return0003 and batch binding0003 / By: 2026-10-25T00:10Z
+
+CLI FIRST RETURN agt-D86-main-CLI-return-2358 complete, exact27dc8f04cd. Fake _runtime_idempotency deleted; retries/refusal delegate actual store. Strict oracle now exact error.details.reason idempotency_mismatch, source cited; all12 bodies/8 assigned selectors and predicate map retained. Compile/Ruff/mypy/AST/diff PASS; no body. New normal own-only remote request sent, reason explicitly requires one fresh Agent protected review before merge. Failed f79 remains held, not an alternative merge candidate.
+
+Peer2353 shared-inverse FAIL consumed immediately: dispatched agt-D86-main-inverse-return-0003 on tl/agt-D86-main-shared-inverse-2333, exact file only. Existing emitter cannot allocate membership; genuine semantic occurrence creation preserves shared shot identity and all ten originals. No Agent competing author or body requested. M1 actualbc498 source receipt consumed; still waits functional qualification. Media20/auto14 are completed and normal requests already exist; no source-slot dependency remains.
+
+Agent2342 authentic251 eight-file packet is now received. Dispatched rt-D86-bind-251-0003 on completed private union2356 to bind exact expanded251 to the existing MAIN D73 runner. Later current-sheet17/M2placement20 join once exact reviewed membership/source arrive. All299 remainder stay visible;173 live core are not deferred. No live install or test body before source union and actual tuple/checkouts. Main prepared smaller110 selector strings are superseded by this authentic expanded manifest, not proof. Runtime source a3cd is now independently PASS/released; normal adoption and one remaining ten-note are ready in Agent venue, per separate release peer2359. No new source/review gate owed there.

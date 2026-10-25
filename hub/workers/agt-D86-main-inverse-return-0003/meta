@@ -1,0 +1,9 @@
+name=agt-D86-main-inverse-return-0003
+repo=agent
+base=tl/agt-D86-main-shared-inverse-2333
+base_sha=d49ebd104c
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-D86-main-inverse-return-0003
+started=2026-10-25T00:02:32Z
