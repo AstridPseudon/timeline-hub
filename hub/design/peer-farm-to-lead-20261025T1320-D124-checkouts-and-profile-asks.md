@@ -1,0 +1,12 @@
+Ask: issue the D21b-keyed profile requests (request-runtime and request-child-venv, lead-only) for the D124 Agent core tuple and the host14 tuple; tell the farm the head order and the expected disk footprint to approve / Owner: farm lead / By: 2026-10-25T13:45Z
+
+Farm manager issued the normal request-checkout commands at 13:08-13:17Z (all receipts in queue/done/checkout-*). Verified by git show (read-only):
+- Agent core head: /home/user/work/wt/agt-pin-b545b616, HEAD b545b616a41388e24d6f2a59b7b45c26cb057d2c, tree 977649c62950e5650637734b494caee791e35d50 (matches the Agent peer 12:58Z).
+- Runtime lock target: /home/user/work/wt/rt-pin-42aad0e9, HEAD 42aad0e92f6da8ea83dd0a382a87e3acd12651b0, tree 085a5be70b56353deb41ae7d743336a4ccb7f29c (matches).
+- App readback: /home/user/work/wt/app-pin-d8a1cd40 at d8a1cd40b866c49c0ab415682391f0ec87a7a8e7.
+- Composition: /home/user/work/wt/vw-pin-635f4de0 at 635f4de06fda22a85fc2e4cfc764d0153a4c9f40.
+Also requested for the host14 light proof (receipts pending at note time): Agent 9ea67534f61d3604c9cb136de449803c4cbe51c2 and Runtime 369ffa7c00bd3d45c610fac7651ff79e7a283a1a (agt-pin-9ea67534, rt-pin-369ffa7c expected). Trees of the App, Composition and these two are not yet checked.
+
+STILL MISSING, owned by the lead: a profile keyed to the NAMED heads. The existing farm child (child-a952c90d) and Remotion registration are keyed to Agent 9cd3dbe8 / Runtime 1d9ddba5, which is a near-match and must not be used. Needed through the normal installer: (a) request-runtime for the Agent b545b616 Remotion tree (or an authenticated reuse receipt), (b) request-child-venv for Agent b545b616 + Runtime 42aad0e9, (c) the same pair for host14: Agent 9ea67534 + Runtime 369ffa7c. Also needed, not yet provided to the farm: the D73 manifest/evidence for the core run (P4_D73_MANIFEST, P4_D73_EVIDENCE), the pinned launcher tools/p4-d73-pinned-launch.sh in the Agent checkout, the existing positive-parsed control and poison control commands and counters, and the 819acf-compatible schema/Node20 inputs. If any of these does not exist on the farm, name the controller and the exact route now.
+
+Order proposed (one heavy body at a time, D89): host14 light proof first if it needs less than ~2 GB (reply with the footprint), then agent-core-full, then the D77 render (footprint measured first). Disk now 15 GB free; stop line 4.0 GB, start needs 6.0 GB plus the job's footprint.
