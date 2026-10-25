@@ -5,50 +5,51 @@ real interpreter preflight `NOTRUN`. This directory is private source for the
 normal service owner to review and install. Nothing here installs a suite,
 acquires a dependency, mutates a child, or requests a run.
 
-D139 ends the freeze and supersedes frozen-core attempts. This recipe is the
-separate **own-node Runtime ab1e** route. It is not the future merged-tuple
-child/core recipe, and must not retarget frozen `a4e016b6…`/`5e9ad1c6…`, request
-`18455`, or their receipts. D139 worker `rt-OPS-D139-child-imports-2153` exclusively
-owns the child schema/distribution recipe. Missing genuine interpreter/schema
-source is a finite prerequisite, never grounds to borrow Main's site-packages,
-change guards, or construct an old-venv overlay. Agent 2136's frozen-tuple schema
-binding evidence is input to that owner, not admission for this route.
+D139 ends the freeze and supersedes frozen-core attempts. This recipe now binds
+the **current merged Agent 41ad / Runtime f103** tuple. The historical own-node
+qualification for Agent `2eca…` / Runtime `ab1e…` remains immutable evidence and
+is not retargeted. This route must not use frozen `a4e016b6…`/`5e9ad1c6…`, request
+`18455`, or any old receipt. D139 worker `rt-OPS-D139-child-imports-2153`
+exclusively owns the child schema/distribution recipe. Missing genuine
+interpreter/schema source is a finite prerequisite, never grounds to borrow
+Main's site-packages, change guards, or construct an old-venv overlay.
 
 ## Exact eligible source
 
-The existing receipt
-`$ORCH/queue/done/checkout-agent-2eca9a1da94eb35bb969540e150192ff920ce326`
-records `/home/user/work/wt/agt-pin-2eca9a1d`, commit
-`2eca9a1da94eb35bb969540e150192ff920ce326`, tree
-`888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4`, origin
-`https://github.com/peteromallet/astrid-agent`. This is an immutable older
-snapshot, **not current merged Agent home**. Both independent exact requests
-use this eligible combined source receipt while retaining their separate test
-origins and results. No file overlay or alternate operational launcher is used.
+The current merged Agent source is `/home/user/work/agent`, commit
+`41ad656529fa8489829de9078b1b6e157c7433c8`, tree
+`d29e47fe7be6e55940b42fa1477a23e7925f62fa`, parents
+`41ad656529fa8489829de9078b1b6e157c7433c8 cd63be424d62226e3ee5c26fc5ce03227f5394a5
+4fec53e0b14aea355e51c96c883fd75eef67a17c`, origin
+`https://github.com/peteromallet/astrid-agent`. It is the normal merged
+checkout, not a newly created pin checkout; no receipt is invented here.
 
 The launcher is that checkout's `tools/p4-d73-pinned-launch.sh`, SHA-256
 `9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd`, from
-`d70bb370f396f137933d3b8ae3b194588e96e2b1`, reviewed at
-`375c773449b1c6b477f10c1daff1d9f4704208a2`. The selected-file SHA-256 is
+blob `f1bde17ea107a8b669cb6924fbdbd2f3979da988`. The selected-file SHA-256 is
 `8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86`
-(selected source previously observed at `27140eaafa748eb1d7c0789c8150b5872d1c07ad`).
+(blob `9f75f47b5d0c927d2b758fc395702d4cc9e2b17e`).
 The fork-file SHA-256 is
 `3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4`
-(fork origin `8c41696560fd278705751febdcd32527bc2cdf07`, reviewed 2042).
+(blob `512c806487049c1b86a9d47bcafeb3dcb0ade60c`).
 The immutable focused-control SHA-256 is
-`0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600`.
+`0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600`
+(blob `8746ff6004ce1d49efbaff4408ef37e08714bc7f`). These four files are
+byte-identical to the old `2eca…` source. The only Agent source change relevant
+to this tuple is the runtime-lock provenance below.
 
-Runtime is receipt-backed `/home/user/work/wt/rt-pin-ab1e4f61`, commit
-`ab1e4f6141987706132916e2da16477f5a019464`, tree
-`7d8e77b2f5a4af79305c9212ce5174d3ea9fd657`, origin
-`https://github.com/banodoco/banodoco-workspace-runtime`. Its receipt is
-`$ORCH/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464`.
-The Agent runtime lock binds this commit and all 15 vendored files.
+Runtime is the current normal checkout `/home/user/work/runtime`, commit
+`f103bb46866999c961a8865636f2e66d544e0c9b`, tree
+`5d0cedf2e5134acf895e8d43191cc5fdc09f9883`, parents
+`f103bb46866999c961a8865636f2e66d544e0c9b cf0b82dd47452a7a34fc63eb233e9b1dc0532806
+0bb3bc45cef22bc317398d79e1617da3eb430df2`, origin
+`https://github.com/banodoco/banodoco-workspace-runtime`. No current pin receipt
+is supplied. The Agent runtime lock binds this commit and all 15 canonical
+vendored files; the 15 file bytes, schema/config/client/fixture mappings and
+producer metadata are unchanged from the reviewed `ab1e…` adoption.
 
-Current `/home/user/work/agent` was observed at `547e10456250c1b5bcf63b44a50c90ff0563ce1e`
-(tree `68df11fad2b082fa12d99ca20404e1e40e350cd7`). Its launcher is `cec561…`,
-selected source `6d7ba762…`, and fork source `cd921e3f…`; it is ineligible for
-this own-node recipe. A future merged tuple requires its own review/receipts.
+The old `2eca…` / `ab1e…` receipt-backed qualification remains preserved as
+historical evidence only. Old source aliases are rejected for this new tuple.
 
 ## Manifest and suite installation handoff
 
@@ -63,11 +64,12 @@ original P4 source hash, service versions and JUnit metadata are required.
 Do not render guessed paths or reuse a frozen-core manifest.
 
 [suites.conf](suites.conf) contains the two complete candidate rows in the real
-central registry format. Render `__P4_D73_AGENT_PATH__` to the exact eligible
-Agent path above and `__P4_D73_MANIFEST__` to the genuine manifest's absolute
-path; shell-quote render values if needed. There is no central installation in
-this change. Only the normal owner install after independent review may add
-these rows to `$ORCH/tests/suites.conf`.
+central registry format, named `d73-f103-selected4-exact-nodes` and
+`d73-f103-fork-exact-nodes`. Render `__P4_D73_AGENT_PATH__` to the current Agent
+path above and `__P4_D73_MANIFEST__` to the genuine manifest's absolute path;
+shell-quote render values if needed. There is no central installation in this
+change. Only the normal owner install after independent review may add these
+rows to `$ORCH/tests/suites.conf`.
 
 The immutable launcher still enforces canonical source location, clean four-repo
 commit/tree/parents, original P4 source hash, runtime lock provenance/all 15
@@ -84,8 +86,8 @@ D139 owner supplies a supported dependency recipe for the applicable tuple.
 After those prerequisites and normal installation, the actual caller is:
 
 ```bash
-"$ORCH/bin/request-test" integration:agent d73-ab1e-selected4-exact-nodes --no-cache --files 'tests/sdk/test_timeline_selected_schema_runtime.py::test_native_rebase_after_v2_and_selection_removal_uses_original_object tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin] tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element] tests/sdk/test_timeline_selected_schema_runtime.py::test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart'
-"$ORCH/bin/request-test" integration:agent d73-ab1e-fork-exact-nodes --no-cache --files 'tests/editing_conformance/test_occurrence_fork_source_baseline.py::test_current_runtime_retained_fork_then_emitter'
+"$ORCH/bin/request-test" integration:agent d73-f103-selected4-exact-nodes --no-cache --files 'tests/sdk/test_timeline_selected_schema_runtime.py::test_native_rebase_after_v2_and_selection_removal_uses_original_object tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin] tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element] tests/sdk/test_timeline_selected_schema_runtime.py::test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart'
+"$ORCH/bin/request-test" integration:agent d73-f103-fork-exact-nodes --no-cache --files 'tests/editing_conformance/test_occurrence_fork_source_baseline.py::test_current_runtime_retained_fork_then_emitter'
 ```
 
 `integration:agent` is an existing supported request target. `request-test`
@@ -97,7 +99,7 @@ its existing awk parser, validates and appends the exact selectors, then runs
 invokes the pinned Agent launcher rather than the disposable snapshot launcher;
 the launcher checks its own location against the pinned manifest. The central
 `snap` describes current merged scheduling source; the per-ID launcher manifest
-and source guards identify the older tested own-node source. They must remain
+and source guards identify this exact current merged source. They must remain
 explicitly distinct in the result. Snapshotting does not authorize a different
 product source.
 
@@ -143,13 +145,19 @@ These are source controls, not a real preflight, pytest body or schema admission
 No dry control is relabelled as production mode.
 
 The same command also tests key/value parsing, malformed/duplicate/missing
-inputs, all-missing census, absent schema and multiple missing paths, and refusal
-of an old frozen tuple. `--source-check` prints every source error and receiving
-need together. Without a manifest it reports every required key, both absent
-central rows, both missing fresh result sets and unqualified interpreter/schema
-readiness. With complete valid source inputs it can report `source_ready: true`;
-receiving status remains `NOT_READY` until normal receiving evidence is reviewed.
+inputs, current-tuple lock/source refusal, all-missing census, absent schema and
+multiple missing paths, and refusal of the old frozen tuple. `--source-check`
+prints every source error and receiving need together. Without a manifest it
+reports every required key, current source receipt gaps, both absent central rows,
+both missing fresh result sets and unqualified interpreter/schema readiness.
+Receiving status remains `NOT_READY` until normal receiving evidence is reviewed.
 
-No product, test-provider, central registry, dependency install, generated file,
-pin, contract, or protected assertion is changed. All C0 request/reply fields and
-save behavior remain unchanged and functionally unverified by this source task.
+The C0 wire shape is conserved: request fields are
+`api_version/project_id/timeline_id/base_revision_id/base_publication_id/commands`
+(`schema_version/op/version/select/args`), `label`, `steps` (`id/label/intent/tags/command_ordinals/patch/reads?`),
+`merge/reads/idempotency/dry_run/source/rationale/group_id`; replies retain
+`accepted/merged/canonical/base/landing/receipt/records/bindings/effects/dependencies/history/undo_steps`,
+`conflict.reason/head`, `invalid.code/path/hint/suggested_command`, and
+`preview.would_status/nullreceipt/no_writes`. No DTO or product behavior change is
+made or claimed. All C0 save behavior remains functionally unverified by this
+source task.

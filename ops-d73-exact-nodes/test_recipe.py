@@ -14,16 +14,23 @@ from unittest.mock import patch
 
 from check import (
     AGENT,
+    AGENT_PARENTS,
+    AGENT_SHA,
+    AGENT_TREE,
     FORK,
     ORCH,
     PYTEST,
     REQUIRED,
+    RUNTIME,
+    RUNTIME_SHA,
+    RUNTIME_TREE,
     SELECTED,
     SUITES,
     agent_errors,
     census,
     manifest_errors,
     parse_manifest,
+    tuple_errors,
 )
 
 HERE = Path(__file__).resolve().parent
@@ -115,6 +122,7 @@ class RunControls(unittest.TestCase):
             env={"S": SUITES[0], "F": ""},
             capture_output=True,
             text=True,
+            check=False,
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("need --files", result.stdout)
@@ -130,8 +138,35 @@ class RunControls(unittest.TestCase):
         agent, runtime, profile, manifest, _, preflight = self.fixture["_make_fixture"](root)
         values, errors = parse_manifest(manifest.read_text())
         self.assertEqual(errors, [])
+        # Bind the fixture to the current merged source tuple. The fixture's Git shim remains
+        # private and only supplies the reviewed launcher control's existing Git responses.
+        values.update(
+            agent_sha=AGENT_SHA,
+            agent_tree=AGENT_TREE,
+            agent_parents=AGENT_PARENTS,
+            runtime_sha=RUNTIME_SHA,
+            runtime_tree=RUNTIME_TREE,
+            runtime_path=str(RUNTIME),
+        )
+        manifest.write_text("".join(f"{key}={value}\n" for key, value in values.items()))
+        fake_git = root / "git"
+        git_source = fake_git.read_text()
+        for old, new in (
+            (repr(str(runtime)), repr(str(RUNTIME))),
+            (repr("c" * 40), repr(RUNTIME_SHA)),
+            (repr("d" * 40), repr(RUNTIME_TREE)),
+            (repr("a" * 40 + " " + "3" * 40 + " " + "4" * 40), repr(AGENT_PARENTS)),
+            (repr("a" * 40), repr(AGENT_SHA)),
+            (repr("b" * 40), repr(AGENT_TREE)),
+        ):
+            git_source = git_source.replace(old, new)
+        fake_git.write_text(git_source)
+        values, errors = parse_manifest(manifest.read_text())
+        self.assertEqual(errors, [])
+        self.assertEqual(tuple_errors(values), [])
         stub = root / "python"
         marker = root / "body-calls.jsonl"
+        runtime = Path(values["runtime_path"])
         expected_env = {
             "PYTHONPATH": f"{agent}:{runtime}",
             "ASTRID_RUNTIME_CHECKOUT": str(runtime),
@@ -190,7 +225,9 @@ class RunControls(unittest.TestCase):
             check=True,
         ).stdout
         subprocess.run(["bash", "-n", "-c", parsed], check=True)
-        result = subprocess.run(["bash", "-c", parsed], env=env, capture_output=True, text=True)
+        result = subprocess.run(
+            ["bash", "-c", parsed], env=env, capture_output=True, text=True, check=False
+        )
         (root / "positive.stdout").write_text(result.stdout)
         (root / "positive.stderr").write_text(result.stderr)
         self.assertEqual(result.returncode, 17, result.stdout + result.stderr)
@@ -206,8 +243,23 @@ class RunControls(unittest.TestCase):
         for suffix in ("runmanifest", "command", "preflight.log", "body.log", "xml"):
             self.assertTrue((output / f"{suite}.{suffix}").is_file(), suffix)
         self.assertEqual(preflight.read_text().splitlines(), ["None", "None"])
-        # Poison only source SHA. Both preflight and body must remain unreachable.
         positive = manifest.read_text()
+        # Invalid manifest input is rejected before the supported launcher is invoked.
+        for label, invalid in (
+            ("wrong-source", positive.replace(f"agent_sha={values['agent_sha']}", "agent_sha=" + "0" * 40)),
+            ("wrong-lock", positive.replace(f"runtime_sha={values['runtime_sha']}", "runtime_sha=" + "0" * 40)),
+            ("duplicate", positive + "format=p4-d73-v1\n"),
+            ("malformed", positive + "not-a-key-value-line\n"),
+        ):
+            manifest.write_text(invalid)
+            invalid_values, parse_errors = parse_manifest(invalid)
+            parse_errors.extend(tuple_errors(invalid_values))
+            self.assertTrue(parse_errors, label)
+            invalid_output = root / (suite + "-" + label) / "d66"
+            self.assertFalse(invalid_output.exists())
+            self.assertEqual(len(marker.read_text().splitlines()), 1)
+        manifest.write_text(positive)
+        # Poison only source SHA. Both preflight and body must remain unreachable.
         manifest.write_text(
             positive.replace(f"agent_sha={values['agent_sha']}", "agent_sha=" + "0" * 40)
         )
@@ -217,6 +269,7 @@ class RunControls(unittest.TestCase):
             env={**env, "D66_OUTPUT_DIR": str(poison_output)},
             capture_output=True,
             text=True,
+            check=False,
         )
         (root / "poison.stdout").write_text(poisoned.stdout)
         (root / "poison.stderr").write_text(poisoned.stderr)

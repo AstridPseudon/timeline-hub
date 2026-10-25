@@ -10,17 +10,23 @@ import subprocess
 from pathlib import Path
 
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
-AGENT = Path("/home/user/work/wt/agt-pin-2eca9a1d")
-AGENT_SHA = "2eca9a1da94eb35bb969540e150192ff920ce326"
-AGENT_TREE = "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4"
-RUNTIME = Path("/home/user/work/wt/rt-pin-ab1e4f61")
-RUNTIME_SHA = "ab1e4f6141987706132916e2da16477f5a019464"
-RUNTIME_TREE = "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+AGENT = Path("/home/user/work/agent")
+AGENT_SHA = "41ad656529fa8489829de9078b1b6e157c7433c8"
+AGENT_TREE = "d29e47fe7be6e55940b42fa1477a23e7925f62fa"
+AGENT_PARENTS = (
+    "41ad656529fa8489829de9078b1b6e157c7433c8 "
+    "cd63be424d62226e3ee5c26fc5ce03227f5394a5 "
+    "4fec53e0b14aea355e51c96c883fd75eef67a17c"
+)
+RUNTIME = Path("/home/user/work/runtime")
+RUNTIME_SHA = "f103bb46866999c961a8865636f2e66d544e0c9b"
+RUNTIME_TREE = "5d0cedf2e5134acf895e8d43191cc5fdc09f9883"
 HASHES = {
     "tools/p4-d73-pinned-launch.sh": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
     "tests/sdk/test_timeline_selected_schema_runtime.py": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
     "tests/editing_conformance/test_occurrence_fork_source_baseline.py": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
     "tests/sdk/test_p4_d73_pinned_launcher.py": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600",
+    "runtime.lock.json": "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a",
 }
 ORIGINS = {
     "agent": "https://github.com/peteromallet/astrid-agent",
@@ -28,25 +34,42 @@ ORIGINS = {
     "app": "https://github.com/banodoco/reigh-app",
     "composition": "https://github.com/peteromallet/timeline-composition",
 }
-REQUIRED = (
-    "format agent_sha agent_tree agent_parents agent_path runtime_sha runtime_tree runtime_path "
-    "app_sha app_tree app_path composition_sha composition_tree composition_path python node "
-    "profile schema node_version profile_lock_sha profile_archive_sha profile_registry_sha "
-    "composition_version original_p4_test_hash service_versions junit_paths"
-).split()
+REQUIRED = [
+    "format",
+    "agent_sha",
+    "agent_tree",
+    "agent_parents",
+    "agent_path",
+    "runtime_sha",
+    "runtime_tree",
+    "runtime_path",
+    "app_sha",
+    "app_tree",
+    "app_path",
+    "composition_sha",
+    "composition_tree",
+    "composition_path",
+    "python",
+    "node",
+    "profile",
+    "schema",
+    "node_version",
+    "profile_lock_sha",
+    "profile_archive_sha",
+    "profile_registry_sha",
+    "composition_version",
+    "original_p4_test_hash",
+    "service_versions",
+    "junit_paths",
+]
 SELECTED = (
-    "tests/sdk/test_timeline_selected_schema_runtime.py::"
-    "test_native_rebase_after_v2_and_selection_removal_uses_original_object",
-    "tests/sdk/test_timeline_selected_schema_runtime.py::"
-    "test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
-    "tests/sdk/test_timeline_selected_schema_runtime.py::"
-    "test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]",
-    "tests/sdk/test_timeline_selected_schema_runtime.py::"
-    "test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart",
+    "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+    "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
+    "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]",
+    "tests/sdk/test_timeline_selected_schema_runtime.py::test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart",
 )
 FORK = (
-    "tests/editing_conformance/test_occurrence_fork_source_baseline.py::"
-    "test_current_runtime_retained_fork_then_emitter",
+    "tests/editing_conformance/test_occurrence_fork_source_baseline.py::test_current_runtime_retained_fork_then_emitter",
 )
 PYTEST = (
     "-m",
@@ -60,7 +83,7 @@ PYTEST = (
     "no:cacheprovider",
     "--timeout=45",
 )
-SUITES = ("d73-ab1e-selected4-exact-nodes", "d73-ab1e-fork-exact-nodes")
+SUITES = ("d73-f103-selected4-exact-nodes", "d73-f103-fork-exact-nodes")
 
 
 def digest(path: Path) -> str:
@@ -127,16 +150,47 @@ def checkout_errors(
 
 
 def agent_errors() -> list[str]:
-    errors = checkout_errors("agent", AGENT, AGENT_SHA, AGENT_TREE)
+    errors = checkout_errors("agent", AGENT, AGENT_SHA, AGENT_TREE, AGENT_PARENTS)
     for relative, expected in HASHES.items():
         path = AGENT / relative
         if not path.is_file() or digest(path) != expected:
             errors.append(f"agent: reviewed source hash mismatch: {relative}")
     syntax = subprocess.run(
-        ["bash", "-n", str(AGENT / "tools/p4-d73-pinned-launch.sh")], capture_output=True, text=True
+        ["bash", "-n", str(AGENT / "tools/p4-d73-pinned-launch.sh")],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     if syntax.returncode:
         errors.append("agent: launcher shell syntax failed")
+    return errors
+
+
+def tuple_errors(values: dict[str, str]) -> list[str]:
+    """Reject every source tuple except the current merged qualification."""
+    expected = {
+        "agent_path": str(AGENT),
+        "agent_sha": AGENT_SHA,
+        "agent_tree": AGENT_TREE,
+        "agent_parents": AGENT_PARENTS,
+        "runtime_path": str(RUNTIME),
+        "runtime_sha": RUNTIME_SHA,
+        "runtime_tree": RUNTIME_TREE,
+    }
+    errors = [
+        f"manifest {key}: must bind current merged tuple {wanted}"
+        for key, wanted in expected.items()
+        if values.get(key) != wanted
+    ]
+    if values.get("agent_sha") == AGENT_SHA and values.get("agent_path") == str(AGENT):
+        try:
+            lock = json.loads((AGENT / "runtime.lock.json").read_text())
+            if lock.get("source_commit") != values.get("runtime_sha"):
+                errors.append(
+                    "manifest tuple: runtime_sha does not match Agent runtime.lock.json source_commit"
+                )
+        except (OSError, ValueError):
+            errors.append("manifest tuple: Agent runtime.lock.json unreadable")
     return errors
 
 
@@ -149,7 +203,7 @@ def receipt_errors(repo: str, sha: str, path: Path) -> list[str]:
 
 
 def manifest_errors(values: dict[str, str]) -> list[str]:
-    errors = []
+    errors = tuple_errors(values)
     fixed = {
         "agent_path": str(AGENT),
         "agent_sha": AGENT_SHA,
@@ -269,10 +323,14 @@ def census(environ: dict[str, str]) -> dict:
     ]
     receiving_needs.extend(
         [
+            f"current Agent checkout receipt: {ORCH}/queue/done/checkout-agent-{AGENT_SHA} NOTSUPPLIED",
+            f"current Runtime checkout receipt: {ORCH}/queue/done/checkout-runtime-{RUNTIME_SHA} NOTSUPPLIED",
             "selected4: fresh central per-ID XML/raw logs/submit and end disk witnesses NOTRUN",
             "fork: fresh central per-ID XML/raw logs/submit and end disk witnesses NOTRUN",
-            "manifest interpreter/schema: genuine import/distribution readiness unqualified here; "
-            "D139 owns dependency recipe, no Main-only schema overlay permitted",
+            (
+                "manifest interpreter/schema: genuine import/distribution readiness unqualified here; D139 owns "
+                "dependency recipe, no Main-only schema overlay permitted"
+            ),
         ]
     )
     return {
