@@ -1,0 +1,139 @@
+{
+  "task": "rt-Agent-D100-receipt-correction-1934",
+  "derivative": "D100 corrected evidence hash",
+  "result": "CORRECTED_DERIVATIVE_ONLY",
+  "corrected_at_utc": "2026-10-25",
+  "behavior": "FAIL_BEHAVIOR_PENDING",
+  "functional_go": false,
+  "scope": {
+    "change": "Create a corrected derivative of author1914 evidence only.",
+    "product_or_behavior_work": false,
+    "historical_receipts_rewritten": false,
+    "historical_artifacts_rewritten": false,
+    "source_or_callgraph_changed": false,
+    "new_behavioral_test_run": false,
+    "acceptance_claim": "none"
+  },
+  "historical_defect": {
+    "artifact": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-test-return-1914/evidence/source-manifest.json",
+    "artifact_sha256": "f9e42e82588912099b2117fce5251a873b441c16f73cdd68c78852baef512fd3",
+    "artifact_bytes": 2503,
+    "fields": [
+      "agent.protected_product.sha256",
+      "agent.protected_product.required_exact_blob"
+    ],
+    "recorded_value": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a",
+    "recorded_value_length": 63,
+    "defect": "Both historical protected-product SHA-256 strings omitted the final 3.",
+    "corrected_value": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "corrected_value_length": 64,
+    "impact": "The original receipt remains FAIL exact evidence; this derivative records the Git-verified correction without relabeling it."
+  },
+  "corrected_derivative": {
+    "source_manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-receipt-correction-1934/evidence/source-manifest.json",
+    "source_manifest_sha256": "500b81c1be929f655d220ed8be39dde68f2e513c67530c0634b57816d9f1fe91",
+    "source_manifest_bytes": 6655,
+    "final_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "final_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "product_path": "astrid/sdk/timeline/_command_state.py",
+    "product_git_blob_sha1": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "test_path": "tests/sdk/test_d100_item_birth_boundary.py",
+    "test_git_blob_sha1": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+    "test_sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"
+  },
+  "tree_scope": {
+    "repo": "/home/user/work/agent",
+    "base_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "base_tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "final_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "final_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "changed_paths": [
+      "tests/sdk/test_d100_item_birth_boundary.py"
+    ],
+    "complete_tree_entries_base": 3568,
+    "complete_tree_entries_final": 3568,
+    "complete_tree_changed_entries": 1,
+    "outside_changed_entries": [],
+    "product_unchanged_from_base": true
+  },
+  "source_hashes": {
+    "astrid/core/timeline/authoring_bundle.py": {
+      "git_blob_sha1": "e329c565bbaea9acac81c71929b7f3c3cadd0a17",
+      "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d"
+    },
+    "astrid/sdk/timeline/_doc_patch.py": {
+      "git_blob_sha1": "e55d400c00ed727a244aecdaef95a67205e623fa",
+      "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f"
+    },
+    "astrid/sdk/timeline/_doc_patch_materialize.py": {
+      "git_blob_sha1": "981f1e2ee1ba6209fb4df4fa5e863b9d91d25786",
+      "sha256": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252"
+    },
+    "astrid/sdk/timeline/native_occurrence_shared.py": {
+      "git_blob_sha1": "a439abcdab7bf73931766f1150a6be1b08ebc68e",
+      "sha256": "931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840"
+    },
+    "tests/sdk/test_capture_source_runtime.py": {
+      "git_blob_sha1": "092b212d4708c0a19fa4d183632ca5c64abc4da7",
+      "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48"
+    },
+    "tests/sdk/test_timeline_commit_provider.py": {
+      "git_blob_sha1": "85c7b16316b3f7ba2e5830681d46e6925a5d19db",
+      "sha256": "cde797633e42e21fc7219c2b5288ce8238cdacf92e094450e02e4e746c871434"
+    },
+    "tests/sdk/test_timeline_commit_provider_document.py": {
+      "git_blob_sha1": "1b1d0378e52e10e84549e6f651914dbba0a972eb",
+      "sha256": "bd5c5488279a96693d69dd75c365c84af1bec53516653cbe65c3a99006cc5e12"
+    }
+  },
+  "preserved_original_evidence": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-test-return-1914/evidence/source-manifest.json",
+      "sha256": "f9e42e82588912099b2117fce5251a873b441c16f73cdd68c78852baef512fd3",
+      "bytes": 2503,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-test-return-1914/evidence/predicate-map.json",
+      "sha256": "9ce21e3bbdc7ab1f52af14f247272525d63c1223741b299f39c00d0269f91fbe",
+      "bytes": 3427,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-test-return-1914/evidence/validation.md",
+      "sha256": "fa3198576757d3e145e3f59aa8c988a0cb11dff8aae724ffbafbb2be70f578ee",
+      "bytes": 3268,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-test-review-1919/evidence/review.json",
+      "sha256": "bc680c958f1cb8c268ce6ff13cfdaad1a8b96ac81a0d774ec348cc3c8291992a",
+      "bytes": 2597,
+      "immutable": true,
+      "role": "authoritative independent review; purpose/statics PASS, overall FAIL only exact hash spelling"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-test-review-1919/evidence/validation.md",
+      "sha256": "8e73484630754210e915a7c7c5d7e68de9b322f2b92809d8e81ebd1670a81631",
+      "bytes": 3111,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-test-review-1919/evidence/receiving-recipe.md",
+      "sha256": "629758c9b375a6e03fbb04c73f989c4d81f139b5c7822cbaa98d4abf5159ff02",
+      "bytes": 1152,
+      "immutable": true
+    }
+  ],
+  "validation": {
+    "json_validated": true,
+    "hash_lengths_validated": true,
+    "arithmetic_validated": true,
+    "original_receipt_identity_validated": true,
+    "behavioral_tests": "NOTRUN",
+    "product_acceptance": "NOT_CLAIMED",
+    "later_check": "One independent receipt-only check must consume this derivative against the actual Agent Git data. No new protected body review is authorized."
+  },
+  "next_step": "After the admitted 5,000,000,000-byte floor and corrected Agent queue, run the bounded Agent behavior check; then App remains the sole behavior receiver. D130 remains held."
+}
