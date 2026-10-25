@@ -1,0 +1,43 @@
+{
+  "worker": "agt-OPS-D108b-pin-audit-0826",
+  "service_id": "agt-OPS-D108b-pin-audit-0826-ops-agent-pin-audit-1025082803-15709",
+  "request": "bin/request-test agt-OPS-D108b-pin-audit-0826 ops-agent-pin-audit --no-cache",
+  "suite": "composition ops-agent-pin-audit",
+  "script_sha256": "d8b0815cfdab168e269b3d00f78bc0142b498f94b7b329638dd0877def4a9468",
+  "suites_conf": {
+    "pre_sha256": "209e00c24a97aeb6b3b97cc359314a537eabe2328519b36cf4c8dbcfcd4f8708",
+    "temporary_sha256": "b62baea4e47065c4bc2ed1eec0a7c20289c0d3870b6cb992cf8c136496d7ab77",
+    "backup_sha256": "209e00c24a97aeb6b3b97cc359314a537eabe2328519b36cf4c8dbcfcd4f8708"
+  },
+  "scope": "real host /proc only via outside-sandbox test service",
+  "no_mutation": true,
+  "corrected_service_id": "agt-OPS-D108b-pin-audit-0826-ops-agent-pin-audit-1025082909-27257",
+  "corrected_result": {
+    "status": "LIMIT",
+    "exit": 3,
+    "audit_json_sha256": "8158be5871d3cd82253b7d9cbbb9c26f6097cf0f555e2d891bcf66a3ff3aa4f6",
+    "service_log_sha256": "adc5985778035a910cfe55513736b39a052df83b3c620e7ba42ec3e99685bed5",
+    "process_races": 84,
+    "process_unreadable": 24,
+    "namespace_unreadable": 2,
+    "candidate_process_hits": {"agt-pin-197d780d": [], "agt-pin-21c6f514": [], "agt-pin-c2a63bbe": []},
+    "active_reference_counts": {"agt-pin-197d780d": 0, "agt-pin-21c6f514": 0, "agt-pin-c2a63bbe": 0},
+    "decision": "KEEP"
+  },
+  "result": {
+    "status": "LIMIT",
+    "exit": 3,
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-OPS-D108b-pin-audit-0826-ops-agent-pin-audit-1025082803-15709",
+    "service_log_sha256": "fecf86af812e6a5b5368d69a83e3c88af2d943d7929afa0e3b9fae760f25e812",
+    "audit_json_sha256": "e64d2f8547f93f23fc88992eed1cf46be771ba1209d5110263ce51446b543c48",
+    "candidate_membership": ["agt-pin-197d780d", "agt-pin-21c6f514", "agt-pin-c2a63bbe"],
+    "exact_sha_tree_clean": true,
+    "active_reference_counts": {"agt-pin-197d780d": 0, "agt-pin-21c6f514": 0, "agt-pin-c2a63bbe": 0},
+    "candidate_process_hits": {"agt-pin-197d780d": [], "agt-pin-21c6f514": [], "agt-pin-c2a63bbe": []},
+    "process_races": 83,
+    "process_unreadable": 24,
+    "namespace_unreadable": 2,
+    "decision": "KEEP",
+    "suite_restored_sha256": "209e00c24a97aeb6b3b97cc359314a537eabe2328519b36cf4c8dbcfcd4f8708"
+  }
+}

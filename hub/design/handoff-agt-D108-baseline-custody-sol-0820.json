@@ -1,0 +1,279 @@
+{
+  "D63_rename_rows": [
+    {
+      "basis": "same_function_name",
+      "decision": "counterpart observation only; current PASS unchanged",
+      "normalized_body_equal": false,
+      "old276_order": 129,
+      "selector": "tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup",
+      "upstream_status_observation": "PASSED"
+    },
+    {
+      "basis": "same_function_name_and_body_text",
+      "decision": "counterpart_pending_current_proof; no current PASS or regression closure",
+      "normalization_method": "ast.body_dump_no_attributes_v1",
+      "normalized_body_equal": true,
+      "old276_order": 181,
+      "selector": "tests/test_env_vars_conformance.py::TestNoBareStringAccess::test_no_catalogued_bare_strings_in_core",
+      "source_evidence_refs": [
+        "design/handoff-agt-F-D63-rename-return-1508-d63-rename-correction-1508.tsv#old276_order=181;sha256=e72672c0762c5787f861e818753832f41072282fa53f68cb1339df3073c2f90f",
+        "design/handoff-agt-F-D63-rename-return-1508-d63-rename-correction-1508.json#old276_order=181;sha256=efd7053c59cb5fd0ce918988a145c656ee8478c940089236e928fcde464c52c7"
+      ],
+      "upstream_status_observation": "PASSED"
+    }
+  ],
+  "artifacts": {
+    "author_full_index": {
+      "bytes": 14333556,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-return-0803/evidence/d108-upstream924-full-testcase-index.tsv",
+      "sha256": "d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a"
+    },
+    "author_summary": {
+      "bytes": 5837,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-return-0803/evidence/d108-baseline-return-0803-summary.json",
+      "sha256": "7af40efb74bc171142e5a89f7cc25b17c710001c7dba61bb8e04c971764dbfd7"
+    },
+    "canonical_evidence_copy": {
+      "bytes": 14333556,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-custody-sol-0820/evidence/d108-upstream924-full-testcase-index.tsv",
+      "sha256": "d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a"
+    },
+    "handoff_md": {
+      "bytes": 3604,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-custody-sol-0820.md",
+      "sha256": "a54254609d99c0a3050b3bcaf855dcc5d971255f045382b0fa7651c67d8399c6"
+    },
+    "preimages": {
+      "bytes": 6145,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-custody-sol-0820/evidence/preimages.json",
+      "sha256": "bad3c40ab87630d13430cd1e3ec01b498af61952113c47e5352da4222d8a7fb4"
+    },
+    "prep-0756_json": {
+      "bytes": 5657,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-prep-0756.json",
+      "sha256": "af13a895e0de287c4fc7312955ae5a16dce26d9bb70dbe9e3c904eef6b0cd08a"
+    },
+    "prep-0756_md": {
+      "bytes": 3510,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-prep-0756.md",
+      "sha256": "c256601f55041c535e6ecfed24b056650feedb3de20f8db112cf544166d38bd2"
+    },
+    "published_current_joins": {
+      "bytes": 22511948,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803-current-joins.tsv",
+      "sha256": "0fbcdf46e9272a2a3bd1e3f275cfa09f2887e50bef848f41c68c2c71a8ef12c5"
+    },
+    "published_full_index": {
+      "bytes": 14333556,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803-upstream-index.tsv",
+      "sha256": "d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a"
+    },
+    "return-0803_json": {
+      "bytes": 10884,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803.json",
+      "sha256": "298f309470c07ac74a393cbf2553db03e5ac6a5fc26b46a8827fe23ade90e91b"
+    },
+    "return-0803_md": {
+      "bytes": 3899,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803.md",
+      "sha256": "14fd130c43b7c407c126a0c7ee083fbe57a8585290920d76b5dd69d5d26e92a3"
+    },
+    "source_pairs": {
+      "bytes": 24745,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-custody-sol-0820/evidence/source-pairs-23.json",
+      "sha256": "32ce433728a4ca73c6c72f24cbba295595c4b565287ac1bddf958ba6249af8bd"
+    },
+    "validation_script": {
+      "bytes": 14853,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-custody-sol-0820/evidence/validate-custody.py",
+      "sha256": "f8ef7a721267cfd782e6b1638d5e40f77b9255b4f8e3c29051972611b70eeb5c"
+    }
+  },
+  "boundaries": {
+    "D13_ENV": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+    "D23_DEFERRED": [
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head"
+    ],
+    "D63_order_129": "same_function_name_only; normalized body not equal; upstream PASS observation only",
+    "D63_order_181": "same_function_name_and_body_text; current proof pending; upstream PASS observation only; per-row D63 reference added",
+    "approved_dead_scope_assignments": 0,
+    "current_core_open_count": "WITHHELD_UNTIL_D108_TERMINAL",
+    "current_failure_classification": "WITHHELD_UNTIL_D108_TERMINAL",
+    "existing_276_comparison": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-prep-0756/evidence/d108-upstream924-node-index.tsv",
+    "existing_276_sha256": "72534d6e122d282310f9275952f9711abd73c4a3ff8194e6eb5d56b6867cf917",
+    "no_upstream_pass_claim": true,
+    "runtime_isolation": "UNCERTAIN_FULL_RUN_PER_D54_CUSTODY_CORRECTION"
+  },
+  "canonical_choice": "Unchanged authentic author evidence d6ed...; copied byte-for-byte rather than rewriting source facts.",
+  "current_join_accounting": {
+    "absent_xml_join_rows": 6312,
+    "ambiguous_rows_explicit": 0,
+    "exact_xml_join_rows": 2956,
+    "parameter_policy": "Current selector and parameter strings are retained verbatim. Exact joins include the full raw node ID; absent joins retain every candidate raw XML ID and candidate outcome in JSON columns without collapsing parameterized variants.",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-return-0803/evidence/d108-current-selector-upstream-joins.tsv",
+    "rename_attempted_rows": 6312,
+    "rename_method_counts": {
+      "no_function_name_match": 6230,
+      "same_function_name_and_body": 65,
+      "same_function_name_only": 17
+    },
+    "rename_result_counts": {
+      "exact_body_match": 65,
+      "name_only": 17,
+      "no_match": 6230
+    },
+    "resolution_counts": {
+      "exact_xml_node": 2956,
+      "missing_upstream_selector": 6312
+    },
+    "rows": 9268,
+    "sha256": "0fbcdf46e9272a2a3bd1e3f275cfa09f2887e50bef848f41c68c2c71a8ef12c5",
+    "unique_current_selectors": 9268
+  },
+  "execution_guards": {
+    "body_run": false,
+    "collection_run": false,
+    "fixtures_services_browsers_install_probes": false,
+    "imports_of_product_code": false,
+    "pytest_run": false,
+    "source_or_product_edits": false
+  },
+  "final_readback": "workers/agt-F-D108-baseline-custody-sol-0820/evidence/final-validation.json",
+  "historical_276_comparison": {
+    "exact_xml": 75,
+    "note": "Separate prior evidence; not replaced or silently folded into the full XML index.",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-prep-0756/evidence/d108-upstream924-node-index.tsv",
+    "rows": 276,
+    "sha256": "72534d6e122d282310f9275952f9711abd73c4a3ff8194e6eb5d56b6867cf917",
+    "unknown": 201
+  },
+  "historical_original_bytes_preserved": [
+    "F0756 MD/JSON",
+    "0758 review MD/JSON",
+    "0813 review MD/JSON",
+    "0803 author index/current joins/summary",
+    "historical276 TSV/summary"
+  ],
+  "next_step": "Independent narrow custody review; no baseline/full rerun.",
+  "original_summary_discrepancy": "Original author summary is preserved at 7af40...; its zero ambiguous-source count is stale. Canonical rows 9439 and 9440 retain both definition lines. Actual source ambiguous bases=2; current join ambiguity remains 0.",
+  "product_source_or_test_edits": false,
+  "repaired_rows": {
+    "all_source_pairs_verified": true,
+    "changed_columns": [
+      "file",
+      "line",
+      "source_location_method"
+    ],
+    "count": 23,
+    "current_joins_affected": 0,
+    "git_blob_paths": [
+      "tools/astrid-rename/tests/test_check_zero.py",
+      "tools/astrid-rename/tests/test_rename.py"
+    ],
+    "xml_ordinals": [
+      12309,
+      12310,
+      12311,
+      12312,
+      12313,
+      12314,
+      12315,
+      12316,
+      12317,
+      12318,
+      12319,
+      12320,
+      12321,
+      12322,
+      12323,
+      12324,
+      12325,
+      12326,
+      12327,
+      12328,
+      12329,
+      12330,
+      12331
+    ]
+  },
+  "schema": "timeline.agent.d108.baseline-custody-repair.v1",
+  "source_custody": {
+    "current_agent_commit": "b27ff3449ec4d9b5e14ac25b8f5a18c1999c21f6",
+    "current_agent_tree": "972188c76ed7a9e8f41d1baf6768673de2596efc",
+    "current_inventory": {
+      "aggregate_sha256": "7ac5cdd0bfa2b811f9a0a4fb719d9a28ef6080d2bb879ed29fe54fc1a6882b69",
+      "files": 409,
+      "nodes": 9268,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-core-input-0656/evidence/current-source-inventory.json",
+      "sha256": "a64319f07be3184ddc8af462b8de6e9dffd77660d78f785649a4b30b0eecb8c2"
+    },
+    "current_selectors": {
+      "count": 9268,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-core-input-0656/evidence/current-selectors.txt",
+      "sha256": "1fe99f7c09a5324fbd8c029e07a6c5def2406f1a4274e6448ea3febaba1856b1"
+    },
+    "source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-0656-manifest.json",
+      "sha256": "ef233661a73a7f5697d3a9bee06d635c0393cae6e641820e22477bc161cd11e8"
+    },
+    "upstream_agent_commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "upstream_agent_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b",
+    "upstream_xml": {
+      "bytes": 6732462,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+      "sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f"
+    }
+  },
+  "source_resolution": {
+    "ambiguous_base_rows": 2,
+    "ambiguous_ordinals": [
+      9439,
+      9440
+    ],
+    "exact_base_rows": 12515,
+    "note": "Canonical author index retained byte-for-byte. Both candidate definition lines remain explicit for the two ambiguous AST bases; these are distinct from zero ambiguous current-selector joins.",
+    "rows": 12517,
+    "unresolved_rows": 0
+  },
+  "status": "complete_source_only_custody_repair_pending_independent_review",
+  "task": "agt-F-D108-baseline-custody-sol-0820",
+  "upstream_terminal": {
+    "counts": {
+      "errors": 14,
+      "failed": 91,
+      "passed": 12396,
+      "root_total": 13083,
+      "skipped": 16,
+      "subtests": 566,
+      "testcase_nodes": 12517
+    },
+    "exit_code": 1,
+    "runtime_isolation": "UNCERTAIN_FULL_RUN_PER_D54_CUSTODY_CORRECTION",
+    "service_id": "agt-F-D60-baseline-amend-1336-full-upstream-final-9244377-1024135120-1621",
+    "status": "FAIL",
+    "xml_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f"
+  },
+  "xml": {
+    "interpretation": "The XML has one testcase node per retained testcase result; 566 subtests are not separate XML elements and are represented by testsuite.tests minus testcase-node count. Testcase PASS/FAIL/ERROR/SKIP counts sum to 12517 and agree with the service counts; the root tests total is 13083 after the 566 subtests.",
+    "reported_errors": 14,
+    "reported_failures": 91,
+    "reported_passed_excluding_subtests": 12396,
+    "reported_skipped": 16,
+    "root": "testsuites",
+    "root_total": 13083,
+    "root_total_arithmetic": 13083,
+    "service_subtests_reported": 566,
+    "subtest_elements": 0,
+    "subtests_from_root_delta": 566,
+    "suite": "pytest",
+    "testcase_nodes": 12517,
+    "testcase_outcomes": {
+      "ERROR": 14,
+      "FAILED": 91,
+      "PASSED": 12396,
+      "SKIPPED": 16
+    },
+    "xml_closing_root_verified": true
+  }
+}
