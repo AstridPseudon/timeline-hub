@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import type { AcpModelCatalog } from '@/integrations/astrid/acpRoutes.ts';
@@ -68,6 +68,36 @@ describe('AgentSetupCard choices', () => {
 });
 
 describe('external setup and recovery', () => {
+  it('names an agent that exited during setup and lets it retry immediately', async () => {
+    const error = new BridgeRouteError('Start', 502, { error: 'acp_process_exited', detail: 'ACP process stdio disconnected.' });
+    const startChatWith = vi.fn().mockResolvedValueOnce({ error }).mockResolvedValue(undefined);
+    const view = mount({ startChatWith });
+    choose('Use Codex');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Codex stopped before it was ready. Try again.');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again', exact: true }));
+    await waitFor(() => expect(view.onComplete).toHaveBeenCalledOnce());
+    expect(startChatWith).toHaveBeenCalledTimes(2);
+  });
+  it('lets a slow agent check finish across multiple polling ticks', async () => {
+    vi.useFakeTimers();
+    const agents = ready();
+    agents[2] = { ...agents[2], state: 'not-installed', signIn: 'unknown' };
+    let finish!: (value: LocalAgentChoice[]) => void;
+    const queryFn = vi.fn(() => new Promise<LocalAgentChoice[]>(resolve => { finish = resolve; }));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    clients.push(client);
+    const startChatWith = vi.fn().mockResolvedValue(undefined);
+    function Harness() {
+      const query = useQuery({ queryKey: ['slow-agents'], queryFn, initialData: agents, staleTime: Infinity });
+      return <AgentSetupCard agents={query.data} defaultAgent="astrid" refetchAgents={query.refetch} startChatWith={startChatWith} onComplete={() => {}} />;
+    }
+    render(<QueryClientProvider client={client}><Harness /></QueryClientProvider>);
+    choose('Use Codex');
+    await act(async () => { await vi.advanceTimersByTimeAsync(9000); });
+    expect(queryFn).toHaveBeenCalledTimes(1);
+    await act(async () => { finish(ready()); await vi.advanceTimersByTimeAsync(1); });
+    expect(startChatWith).toHaveBeenCalledExactlyOnceWith('codex', undefined, expect.any(Function));
+  });
   it('does not start a missing agent row', async () => {
     const view = mount({ agents: [] }); choose('Use Codex');
     await act(async () => { window.dispatchEvent(new Event('focus')); });

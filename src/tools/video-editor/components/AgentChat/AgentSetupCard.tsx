@@ -24,7 +24,7 @@ type Props = {
   defaultAgent: LocalAgentId;
   initialAgent?: LocalAgentId;
   initialError?: unknown;
-  refetchAgents: () => Promise<unknown> | unknown;
+  refetchAgents: (options?: { cancelRefetch: boolean }) => Promise<unknown> | unknown;
   startChatWith: (agent: LocalAgentId, model?: string, isCurrent?: () => boolean) => Promise<{ error?: unknown; sessionId?: string | null } | void>;
   onSetup?: (agent: LocalAgentId) => void;
   onComplete: (agent: LocalAgentId, sessionId?: string | null) => void;
@@ -39,6 +39,7 @@ function status(agent: LocalAgentChoice | undefined, id: LocalAgentId) {
 
 /** Inline setup owns its steps; AgentChat owns session creation and recovery. */
 export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialError, refetchAgents, startChatWith, onSetup, onComplete }: Props) {
+  const refreshAgents = useCallback(() => refetchAgents({ cancelRefetch: false }), [refetchAgents]);
   const [selected, setSelected] = useState<LocalAgentId>(() => {
     const last = readNewChatChoice()?.agent ?? defaultAgent;
     return initialAgent ?? (isAgentUsable(agents.find(agent => agent.id === last)) ? last
@@ -92,7 +93,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
       const result = await startChatWith(selected, model, isCurrent);
       if (!isCurrent()) return;
       if (result?.error) throw result.error;
-      await refetchAgents();
+      await refreshAgents();
       if (!isCurrent()) return;
       rememberNewChatChoice({ agent: selected, ...(model ? { model } : {}) });
       onComplete(selected, result?.sessionId);
@@ -102,11 +103,11 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
       setFailedRow({ id: selected, state: setupState(currentAgent.current) });
       if (isAgentSetupError(error) && isAgentSetupError(error) !== 'agent_runtime_missing') {
         setStep('setup');
-        void refetchAgents();
+        void refreshAgents();
         if (selected === 'astrid') void models.refetch();
       } else setStep('failed');
     } finally { inFlight.current = false; }
-  }, [models.refetch, onComplete, refetchAgents, selected, startChatWith]);
+  }, [models.refetch, onComplete, refreshAgents, selected, startChatWith]);
 
   const back = () => { attempt.current += 1; setStep('choose'); };
   useEffect(() => {
@@ -127,12 +128,12 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   }, [step]);
   useEffect(() => {
     if (step !== 'setup') return;
-    const refresh = () => { void refetchAgents(); };
+    const refresh = () => { void refreshAgents(); };
     const focus = () => { refresh(); if (selected === 'astrid') void models.refetch(); };
     const timer = window.setInterval(refresh, 3000);
     window.addEventListener('focus', focus);
     return () => { window.clearInterval(timer); window.removeEventListener('focus', focus); };
-  }, [models.refetch, refetchAgents, selected, step]);
+  }, [models.refetch, refreshAgents, selected, step]);
   useEffect(() => {
     if (failedRow?.id === selected && failedRow.state !== setupState(agent)) setFailedRow(null);
   }, [agent, failedRow, selected]);
@@ -162,7 +163,8 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   </div> : agent?.line ? <p className="text-sm"><CommandLine line={agent.line} /></p> : null;
   const waiting = (text: string) => <p role="status" aria-live="polite" className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0 animate-spin motion-reduce:animate-none" />{text}</p>;
   const alertBox = (text: string) => <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-ink-danger">{text}</p>;
-  const errorMessage = failure instanceof BridgeRouteError ? failure.detail : failure instanceof Error ? failure.message : failure ? String(failure) : null;
+  const errorMessage = failure instanceof BridgeRouteError ? failure.code === 'acp_process_exited' ? copy.agentStopped(setupName(selected)) : failure.detail
+    : failure instanceof Error ? failure.message : failure ? String(failure) : null;
   const credit = (row: LocalAgentChoice | undefined, inRow = false) => row?.creditLine ? <span className="block text-[11px] leading-4 text-muted-foreground">
     {row.creditUrl ? <a href={row.creditUrl} target="_blank" rel="noreferrer" className="underline decoration-border underline-offset-2 hover:text-foreground"
       {...(inRow ? { onClick: (event: React.MouseEvent) => event.stopPropagation(), onKeyDown: (event: React.KeyboardEvent) => event.stopPropagation() } : {})}>{row.creditLine}</a> : row.creditLine}
@@ -254,7 +256,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
             const request = client.acp.saveAstridApiKey('openrouter', keyInput.current.value.trim());
             keyInput.current.value = '';
             setCheckingKey(true); setKeyError(null);
-            void request.then(async () => { setChosenModel(null); await Promise.all([models.refetch(), refetchAgents()]); }).catch(error => {
+            void request.then(async () => { setChosenModel(null); await Promise.all([models.refetch(), refreshAgents()]); }).catch(error => {
               if (!mounted.current) return;
               setKeyError(error.code === 'invalid_key' ? copy.invalidKey : error.code === 'provider_unreachable' ? copy.providerUnreachable : error.detail ?? error.message);
             }).finally(() => { if (mounted.current) setCheckingKey(false); });

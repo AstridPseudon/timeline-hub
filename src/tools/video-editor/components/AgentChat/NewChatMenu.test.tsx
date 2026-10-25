@@ -7,6 +7,7 @@ import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/int
 import { ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
 import { NewChatMenu, type NewChatMenuHandle, type NewChatAgentModels } from './NewChatMenu.tsx';
+import { rememberNewChatChoice } from './newChatThinkingSelection.ts';
 
 beforeAll(() => {
   Element.prototype.scrollIntoView ??= vi.fn();
@@ -46,6 +47,14 @@ function openMenu(props: MenuProps = {}) {
 }
 
 describe('NewChatMenu + button', () => {
+  it('uses the agent and model remembered by setup while the menu is mounted', () => {
+    rememberNewChatChoice({ agent: 'hermes' });
+    const { onNewChat } = renderMenu();
+    expect(screen.getByRole('button', { name: 'New chat · Hermes' })).toBeInTheDocument();
+    act(() => rememberNewChatChoice({ agent: 'astrid', model: 'openrouter/model', modelName: 'Model' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New chat · Astrid · Model' }));
+    expect(onNewChat).toHaveBeenCalledExactlyOnceWith('astrid', 'openrouter/model');
+  });
   it('starts the default agent with its default model when no chat is open', () => {
     const { onNewChat } = renderMenu({ agentModelNames: { 'claude-code': 'Sonnet' } });
     const plus = screen.getByRole('button', { name: 'New chat · Claude Code · Sonnet' });

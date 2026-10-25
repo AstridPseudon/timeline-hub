@@ -22,6 +22,7 @@ export const AGENT_CHAT_COPY = {
   setupDone: (name: string) => `✓ ${name} is set up.`,
   firstMessage: 'Send your first message.',
   tryAgain: 'Try again',
+  agentStopped: (name: string) => `${name} stopped before it was ready. Try again.`,
   openRouterRecommendation: 'We recommend OpenRouter: one key, every major model, pay as you go.',
   openRouterKey: 'OpenRouter key',
   openRouterPlaceholder: 'sk-or-…',
