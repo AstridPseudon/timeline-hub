@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T14:55:03Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 2m -->
-# agent board, 2026-10-25T14:50Z
+<!-- agent | 2026-10-25T14:59:27Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 2m -->
+# agent board, 2026-10-25T14:57Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -78,11 +78,13 @@ Blockers: Final cut — D123 rehearsal5bd01 SOURCE PASS on b742. Final tip freez
 Next ready: Farm lead has exact a4e016/5e9ad/d8a1/635f pins and lock source, plus qualified291c packet. Runtime owns two separate auth source findings; Farm Luna formal inverse review requested1450. Main current-equivalent2 proof requested1445 on normal20177; originalten unchanged.
 live 0 / cap0 local by owner14:49 merges-and-receipts directive; ready-undispatched0 local. All local authors/reviewers ended and auto-recycled. Every NEW author/review goes to Farm, or App/Main with room. No local heavy or new source starts pending owner venv disposition.
 
-Disk: 4801277952 bytes at latest check; normal sweep3 and compact finished zero removals/packing. Fresh ended+clean+nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
+Disk: 4924424192 bytes at14:55Z; this pass normal sweep3 and compact are running. Fresh ended+clean+nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
 
 D120/D124: own failing nodes per fix; one Farm unfiltered core per merged batch at60–90min or3+ fixes before adoption. Up to3 source-only starts at>=4.6GB/noheavy; stop4.0GB. Ordinary light proof>=5.0GB. D89c heavy admission at controller dispatch, with4.0GB stop throughout.
 Later: D23/D14 deferred anchors unchanged. D107 current equivalents and broad word cases remain separately held. Complete historical physical records EXACTMISSING. E2/D79 paused until ZIP; D13 installed environment gap remains explicit.
 
-Inbox consumed through1669996 bytes. Manager made no product, test, generated, pin or Git changes. Peer1405/1408/1409/1410/1414 and owner14:20 capacity directive consumed; Runtime and Farm notified of qualified source findings and final command PASS. Source1412 findings exported byte-exact from authored Git blobs; Final291c packet independently PASS_SOURCE and published1429; actual Farm inputs and propagated maker verification pending. Host fix deadline met by normala4e016 before14:00Z; REG closes only on next core.
+Inbox consumed through1671392 bytes. Manager made no product, test, generated, pin or Git changes. Peer1405/1408/1409/1410/1414 and owner14:20 capacity directive consumed; Runtime and Farm notified of qualified source findings and final command PASS. Source1412 findings exported byte-exact from authored Git blobs; Final291c packet independently PASS_SOURCE and published1429; actual Farm inputs and propagated maker verification pending. Host fix deadline met by normala4e016 before14:00Z; REG closes only on next core.
 
 Owner14:45 direct Farm pin request satisfied: a4e016/5e9ad/d8a1/635f exact full SHAs+trees, runtime.lock source_commit5e9ad Git-read and lock hash sent in peer-agent-to-farm-20261025T1447Z-a4e016-exact-companion-pins.md. Source packet includes qualified1426 command/guard hashes. Owner14:49 freezes all NEW local authors/reviews; formal inverse review sent to Farm. Runtime metadata source applicability wait cleared; no more inventory requests.
+
+Pass14:57: Runtime exclusive author rt-R2-step-boundary-1444 acknowledged with finalized1433 and separate1435 packets in peer1457. No new local author/review or ready merge. Farm14:50 has a4e016 checkout and requests Runtime5e9ad. Farm1452 receipt identifies make-child-venv e62f; unchanged bench_store.py is not the correction signal. Fresh ended/clean/nonKEEP scan has zero eligible worktrees; only old dirty G2 remains. Await Farm formal inverse review1450; no duplicate reviewer dispatched.
