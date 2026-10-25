@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T08:14:11Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 2m -->
-# runtime board, 2026-10-25T08:11:54Z
+<!-- main | 2026-10-25T08:17:51Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
+# runtime board, 2026-10-25T08:16:54Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -367,9 +367,12 @@
 | D108-crosswalk-restore | Restore authentic audit publication | Agent Luna / independent | Independent exact-byte verification | merged | Return0731; review0737 B | Original MD354c2aa0 and JSONcd784758 restored exactly. Agent derivative census stays separate. | Evidence only |
 
 | D111a-profile | Sample whole native element request | Luna | Owner D111a | doing | rt-D111a-element-sample-0811 | Same P4 cross-process method, genuine native sequence and direct stderr; no cache resets or speculative fix. | Runtime1daca / Agent070dfc |
-| D108-Runtime-assertions | Join exact per-assertion purposes | Luna independent | Two author partitions complete | review | rt-F-D108-assertions-review-0813 | Even41 and odd31 removed assertions plus eight raises. Whole partition and exact source hashes under independent challenge. | Applied Runtime a522 |
-| D108-render-prep | Prepare genuine installed rehearsal render | Luna | Actual installed inputs and source audit | doing | rt-F-D108-render-ready-0815 | Concrete existing-route preparation active. Heavy render follows required core/source qualification and main sampler. No ZIP. | Retained applied trees |
-| D108-metric-custody | Return original audit membership inputs | Luna read only | Agent peer0755 | doing | rt-F-D108-metric-custody-0811 | Original manifest and reports published exactly. Worker recovers original parser and membership if retained; absence stays explicit. | Evidence only |
+| D108-Runtime-assertions | Preserve exact assertion purposes | Luna independent | Add three current-path snapshot checks | review | Review0813; author0813 active | Independent source maps verify72 assertions and8raises. Three config/registry/digest predicates need additive coverage; no old assertion removed. | Applied Runtime a522 |
+| D108-render-prep | Prepare genuine installed rehearsal render | Luna / independent | Normal installed deployment inputs | review | Author0815; reviewer0813 active | Author returnedNOTRUN: profile, bindings, schema/site and Remotion missing. Review challenges historical0013 defaults and normal staging route. | Retained applied trees |
+| D108-metric-custody | Return original audit membership inputs | Luna / independent | Original parser recovered | review | Author0811; custody review0816 | Exact parser and aggregates recovered/published. Full original membership EXACTMISSING; separate historical examples not substituted. | b52d3a319 evidence only |
+
+| D108-snapshot-coverage | Restore immutable publication payload proof | Luna | Independent0813 source gap | doing | rt-F-D108-snapshot-coverage-0813 | Add only faithful config/registry/digest predicates through current publication commit. Existing test assertions and legacy410 guards stay exact. | Normalc916 base |
+| D108-custody-review | Verify recovered metric source provenance | Luna independent | Exact authored blobs available | review | rt-F-D108-custody-review-0816 | Checks original parser command/hash and honest missing-membership limit; no new semantic audit. | Evidence only |
 
 Runtime producer: RELEASED1daca2a33 reviewed treea522. Normalc916 adds genuine-provider release tooling only. Agent070dfc D110 released; App04be has reviewed portable capture and normal D110 adoption.
 core open: 1 known Runtime performance issue under D111a measurement. Current Agent count UNKNOWN until remote full core. App reports4 current open gestures; early full P2 actual19078 remains App-owned.
@@ -386,6 +389,6 @@ Venues: D108b full core is Agent-only. Main heavy slot belongs to D111a sampling
 Delivery: Rehearsal0645 applied trees and durable patches retained; exact manifest37e559 and initial applied audit are flat-published. Current D07/Windows additions remain separate later source inputs. No ZIP.
 Later: D107 depends on held2154 and full core. D100new26, R2three, old ten, passed restore controls and P4 are not repeated. Three Remotion copies await owner disposition before retirement.
 Safety: Withdrawn D88 remains stopped; D111 memo withdrawn too. D106 ORCH-only outputs, no denied hub writes retried. No product/test/generated/pin changes by manager.
-Disk: About6.02GB available before the sample. Five remaining finished v1 trees are dirty and retained. compact-scratch touches prohibited Codex sessions, so that script is not invoked; approved targeted cleanup only.
-live 4 / cap 6; ready-undispatched 0. Three workers running and one queued at board write. No main full-core body remains queued.
-INBOX consumed through 1066065 bytes. Updated 2026-10-25T08:11:54Z.
+Disk: About5.93GB available during the sample. sweep-tmp3 removed0 old directories. Five remaining finished v1 trees are dirty and retained. compact-scratch touches prohibited Codex sessions, so that script is not invoked; approved targeted cleanup only.
+live 4 / cap 6; ready-undispatched 0. Four independent workers active or queued at board write. No main full-core body remains queued.
+INBOX consumed through 1066833 bytes. Updated 2026-10-25T08:16:54Z.
