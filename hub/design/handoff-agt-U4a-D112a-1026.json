@@ -1,0 +1,68 @@
+{
+  "schema": "timeline.agent.u4a.d112a.handoff.v1",
+  "task": "agt-U4a-D112a-adopt-1026",
+  "status": "ready_for_normal_manager_merge",
+  "base": {
+    "branch": "tl/integration",
+    "commit": "120d71202a9ebafa99011aec417cfca6d67fafc2",
+    "tree": "9a65a32e4462464825df6cfe4d913408694ad4c5"
+  },
+  "own_source": {
+    "commit": "120d71202a9ebafa99011aec417cfca6d67fafc2",
+    "tree": "9a65a32e4462464825df6cfe4d913408694ad4c5",
+    "working_tree_delta": ["runtime.lock.json"],
+    "product_core_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "product_core_tree": "6056414359ae9fce08d999d54cbecf719fda33c3"
+  },
+  "runtime_release": {
+    "requested_release_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D112a-release-0615.json",
+    "requested_release_packet_present": false,
+    "authoritative_matching_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D112a-release-0952.json",
+    "released_commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "released_tree": "6283b5fbb128447f1b333e0e6af334d35637cf69",
+    "reviewed_candidate": "32c22795de890818eb8abeae6e644685098cbf30",
+    "reviewed_candidate_tree": "6283b5fbb128447f1b333e0e6af334d35637cf69",
+    "tree_exact": true,
+    "producer_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "producer_checkout": "/home/user/work/wt/rt-pin-d23a8e0d",
+    "producer_clean": true,
+    "producer_head_verified": true,
+    "producer_tree_verified": true
+  },
+  "adoption": {
+    "old_source_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "new_source_commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "runtime_lock_mapping_count": 15,
+    "runtime_lock_mapped_bytes_unchanged": true,
+    "canonical_release_hash_count": 15,
+    "canonical_release_hashes_match": true,
+    "schema_client_config_product_test_bytes_unchanged": true,
+    "only_tracked_change": "runtime.lock.json",
+    "generated_or_product_edits": false
+  },
+  "static_caller_trace": [
+    "astrid/sdk/timeline/commit.py:1472 create_runtime_commit_service loads the fixed Runtime provider",
+    "astrid/sdk/timeline/sync.py:119 verifies commitTimeline receipt/request identity",
+    "astrid_runtime_client/generated.py:963 commit_timeline posts the existing route and preserves accepted/rebased/merged plus preview validation",
+    "astrid_runtime_client/timeline_commit_types.py:78-103 preserves the v2 request, replies, records, bindings, dependencies, steps and history types"
+  ],
+  "checks": {
+    "refresh_runtime_client": "PASS",
+    "vendor_lock_check_with_exact_producer": "PASS",
+    "artifact_manifest_check": "PASS",
+    "git_diff_check": "PASS",
+    "ast_bytes_conservation": "PASS",
+    "in_memory_compile": "PASS",
+    "ruff_parent_and_candidate_select_E9_F": "PASS / PASS",
+    "mypy_parent_and_candidate_timeline_commit_types": "PASS / PASS",
+    "behavioral_or_full_suite": "NOT RUN per source-only brief"
+  },
+  "normal_applicability": {
+    "tool_only_provenance_delta": true,
+    "public_replies_and_schema_unchanged": true,
+    "no_policy_or_authority_change": true,
+    "no_downstream_gate_pass_claim": true,
+    "manager_action": "normal merge of this Agent worktree after review"
+  }
+}

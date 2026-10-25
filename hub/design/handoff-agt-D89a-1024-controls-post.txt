@@ -1,0 +1,11 @@
+label=post-install
+root=/tmp/w-e4e38edaae/test-run-controls.0Ys9ut
+central_body_invoked=false
+named-at-floor rc=0 expected=0 setsid_calls=1
+named-below-floor rc=3 expected=3 setsid_calls=0
+light-at-floor rc=0 expected=0 setsid_calls=1
+other-heavy-at-floor rc=3 expected=3 setsid_calls=0
+other-heavy-above-floor rc=0 expected=0 setsid_calls=1
+invalid-df rc=3 expected=3 setsid_calls=0
+named-while-other-heavy-busy rc=3 expected=3 setsid_calls=0
+other-heavy-while-named-busy rc=3 expected=3 setsid_calls=0
