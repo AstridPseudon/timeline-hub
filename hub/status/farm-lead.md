@@ -1,1 +1,1 @@
-2026-10-25T21:41:32Z procs: hub-syncd dispatcher run-manager up; workers: tf-d77-inventory-2140 (D77 step 0, read-only inventory); disk 9G free; D77 child built 21:32Z; union proof waits Runtime's corrected portable gate
+2026-10-25T21:42:48Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; D77 child built; stage/render HELD at step 0: inputs missing (launcher, manifest, browser, roots, stage receipt, footprint bound), relayed to MAIN/Runtime; union proof waits Runtime's corrected gate
