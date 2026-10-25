@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T14:26:35Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 5 | status age 2m -->
-# agent board, 2026-10-25T14:22Z
+<!-- agent | 2026-10-25T14:30:35Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
+# agent board, 2026-10-25T14:28Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -41,7 +41,7 @@
 | D118a numeric3 | Preserve numeric parameter behavior | App Luna / Main proof | Farm batch core | gated:Farm-core | App1204; actual1357; independent1405 | Independent result PASS | All three originals PASS in exact16bb/5e9ad ten-case proof. No full-core count deduction until Farm checkpoint. | 61fefc /16bb |
 | D118a text binding | Preserve genuine rebind and Runtime authority | App Luna / core Luna | Farm batch core before adoption | merged | Author1236; independent1239 and1250 | PASS cumulative source | Genuine rebind1,parent,units56,authority4 and privacy controls PASS at donor. Exact clean import HOME; no core credit. | 225fccb77e |
 | D100 candidate | Preserve sequential shared-item provenance | Sol / protected Luna | Exact current source applicability | review | Author1100; protected1104 | 1104 PASS6 fixture only | Six corrected formerly duplicate-seed controls PASS4.00s; prior20 conserved, TEN unchanged. Product held. | 3aaf held |
-| D107 current equivalent | Preserve legacy archive and current sequence | Sol / protected Luna | Qualified current seed | gated:word-source | Original2e3331; Runtime receiver | Protected source only; behavior owed | SOURCEPASS only; exact ten not effectively retired before replacement behavior qualifies. | 2e3331 held |
+| D107 current equivalent | Prepare approved current word journeys | Luna / protected Luna | Exact seed now HOME | doing | agt-D124-current-word-root-1428 | Prior0715 SOURCE PASS | Source-only current seed adaptation of exact ten approved replacements. Original ten and remaining17 unchanged; no retirement or behavior closure. | 2e3331 donor |
 | D117 installed render | Qualify genuine installed render | Farm / Runtime | Farm stage inputs | blocked:farm | Farm D77; Runtime1253 handoff | Source route qualified | Exact authorized git source and unchanged integrity route now Farm-owned. Historical denial retained; genuine render NOTRUN. | Applied523893 |
 | D59 final cut | Qualify final gates and full delivery | Runtime coordinator | Core and REG zero, D69, render | gated:D59 | Existing final coordinator | Pending or no diff | Final P1–P5, full core, reverse audit and genuine installed render owed. No ZIP claim. | Cut pending |
 
@@ -60,7 +60,7 @@
 | D124 host fallback | Restore upstream host behavior | Runtime Luna | Farm core confirms REG closure | merged | rt-D124-host14-upstream-revert-1338 | Independent1345 PASS | Original14, source73, schema29, security12 PASS. One-line96df merged before14:00Z; current full core still owed. | a4e016b6a9 /96df |
 
 | D124 Farm input command | Publish qualified core and host commands | Luna read only | Actual Farm receipts | merged | agt-D124-Farm-command-final-review-1336 | Independent1336 PASS | Exact worker Git blobs published1342; shell/JSON/source checks PASS. Farm profile and D73 execution inputs remain lead-owned. | Evidence only |
-| D124 next Farm command | Preserve full qualified Farm controls | Luna | First review failed | doing | agt-D124-next-Farm-first-return-1424 | Independent1412 FAIL | Restore old guards and complete parent lists on same e44c branch; source only, then one rereview. Existing Farm packet remains valid. | e44c held |
+| D124 next Farm command | Preserve full qualified Farm controls | Luna | Actual Farm inputs and disposition | merged | First return1424; reviewer1426 | Independent1426 PASS_SOURCE | Exact291c restores all old controls and complete parents. Five source files published with Git/hash receipt1429; no Farm execution. | 291c evidence |
 
 Integration: normal Agent a4e016b6a9 contains reviewed union16bb through61fefc and host fallback96df. Local home SHA confirmed. Runtime lock5e9ad. Binding225fccb, capturedredo0b586, producer82b6, installer/XML and atomic remain. Released Agent070dfc stays unchanged until own-node proof and Farm core. Host9ea and separate Runtimea1 overlay remain excluded.
 
@@ -74,12 +74,12 @@ Blockers: Agent D69 — installed render90 and final upstream-cut audit owed. XM
 Blockers: Farm D117a — normal installer stage and genuine installed render pending after core. Prior denied route stays stopped.
 Blockers: Final cut — D123 rehearsal5bd01 SOURCE PASS on b742. Final tip freezes once at D59; final gates, core, D69, wheel and render owed.
 
-Next ready: first-return Farm packet1424 RUNNING on same e44c after independent1412 FAIL; restore full old controls and complete parent lists, then one independent rereview. Sole shared semantic1417 RUNNING. No new small-file authors under D124. Existing captured Farm tuples remain immutable; current a4e016 is NEXT batch after qualification.
-live 2 / cap3 under D89b; ready-undispatched0. No local heavy. Sol1417 justified by core inverse/materialization semantics after genuine four original failures; Luna owns command repair and reviews.
+Next ready: final Farm packet291c independently PASS1426 and published1429. Shared semantic1417 owns remaining four; current-word-root1428 source author owns disjoint existing D107 replacement setup only. No original retry or new small-file tail. Current a4e016 is NEXT Farm batch, captured inputs immutable.
+live 2 / cap3 under D89b; ready-undispatched0. No local heavy. Sol1417 justified by core inverse/materialization semantics; Luna owns current-word source and independent command review.
 
-Disk: 4892286976 bytes at latest check; normal sweep3 running; compact finished zero packing/removals. Finished clean nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
+Disk: 4658139136 bytes at latest check; normal sweep3 and compact finished zero removals/packing. Finished clean nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
 
 D120/D124: own failing nodes per fix; one Farm unfiltered core per merged batch at60–90min or3+ fixes before adoption. Up to3 source-only starts at>=4.6GB/noheavy; stop4.0GB. Ordinary light proof>=5.0GB. D89c heavy admission at controller dispatch, with4.0GB stop throughout.
 Later: D23/D14 deferred anchors unchanged. D107 current equivalents and broad word cases remain separately held. Complete historical physical records EXACTMISSING. E2/D79 paused until ZIP; D13 installed environment gap remains explicit.
 
-Inbox consumed through1664309 bytes. Manager made no product, test, generated, pin or Git changes. Peer1405/1408/1409/1410 consumed; Runtime and Farm notified of current proof/source and failed next-command review. Source1412 findings exported byte-exact from authored Git blobs; no unqualified packet published as approved. Host fix deadline met by normala4e016 before14:00Z; REG closes only on next core.
+Inbox consumed through1665540 bytes. Manager made no product, test, generated, pin or Git changes. Peer1405/1408/1409/1410/1414 and owner14:20 capacity directive consumed; Runtime and Farm notified of current proof/source and failed next-command review. Source1412 findings exported byte-exact from authored Git blobs; Final291c packet independently PASS_SOURCE and published1429; actual inputs and owner disposition pending. Host fix deadline met by normala4e016 before14:00Z; REG closes only on next core.

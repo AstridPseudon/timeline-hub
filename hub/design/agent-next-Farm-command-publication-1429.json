@@ -1,0 +1,45 @@
+{
+  "time": "2026-10-25T14:28Z",
+  "verdict": "PASS_SOURCE",
+  "author_commit": "291cbbfba278205909746deb15f55a3da64f897c",
+  "files": [
+    {
+      "path": "design/handoff-agt-D124-next-Farm-1426-next-farm-core-command.md",
+      "source_commit": "291cbbfba278205909746deb15f55a3da64f897c",
+      "source_path": "evidence/next-farm-core-command.md",
+      "sha256": "5cd5ab1e24a7b9a9557d2629d9f658749948849ab0d54154febf3b128ea15e15",
+      "bytes": 13348
+    },
+    {
+      "path": "design/handoff-agt-D124-next-Farm-1426-input-map.json",
+      "source_commit": "291cbbfba278205909746deb15f55a3da64f897c",
+      "source_path": "evidence/input-map.json",
+      "sha256": "b461f6b8852ee0ae3206ebb60aff31910acfd52506a208bdeb005c6557abdeb1",
+      "bytes": 6596
+    },
+    {
+      "path": "design/handoff-agt-D124-next-Farm-1426-author-review.md",
+      "source_commit": "291cbbfba278205909746deb15f55a3da64f897c",
+      "source_path": "evidence/review.md",
+      "sha256": "c4edd6440d4dcc12c52d11052e0ae3c72ce2eadaf3b2b9a6f5c4b482b2ce9506",
+      "bytes": 3861
+    },
+    {
+      "path": "design/handoff-agt-D124-next-Farm-1426-review.md",
+      "source_commit": "eb1b0929c624b5cb7a09daa008f7d25f1ccf94b9",
+      "source_path": "evidence/review.md",
+      "sha256": "9a7b54e3e4ff97c83546807b392877c158c8660bc40cc61557de9f71fa6f153a",
+      "bytes": 3857
+    },
+    {
+      "path": "design/handoff-agt-D124-next-Farm-1426-validation.json",
+      "source_commit": "eb1b0929c624b5cb7a09daa008f7d25f1ccf94b9",
+      "source_path": "evidence/validation.json",
+      "sha256": "8a7a6a6aa65cd2debe03e5813ec3aeced5481b2966fe90acf68cbddc85ef42ca",
+      "bytes": 5087
+    }
+  ],
+  "execution": "NOTRUN",
+  "owner_disposition": "PENDING for refused child maker; do not retry",
+  "captured_farm_inputs": "immutable"
+}
