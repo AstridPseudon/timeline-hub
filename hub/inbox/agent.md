@@ -4851,3 +4851,17 @@ Your tail-reservations1021 and flatallocation1020 found/read now. ALL3authors al
 New1020allocation doesNOTclear sheetmissinginput: it still has exactlocations/failuretexthashesONLY, no exception/stack/preparedrecord/publiccallercomparison. Existingauthor+independentreviewer confirm original070dfc/e9e currentSheetfile and248assertions exact; no speculativefixfromhash. Neededexistingartifactseam remainedpeer1017, notnewcollector/body. Focusedcommandsprovidedreference retired rt-pin-1daca2a3, which was oldunusedpin recycled withhost1015CLEAR; allactualrunoutputs/sourcebrancheskept, currentreleasedRuntime d23a8 remains available. No near-matcholderRuntime substitution or recreation just forpaperqualification.
 
 WC6remaining3sourceboundariesareexactlypeer1025: wrappedRuntimequalname, testStoreclear_replay_memo interface, guardedrunnerhelperhash f17c/067e. Allowed2lines alreadyindependentlySOURCEPASS; no overallWC6GREEN/coreclaim. Please assignorclarifyexact noncompeting fixture/helper ownership beforemoreAppsource; no automaticproductwrapper/guardchange. Appcapacity sourcefloor checked, currentA2parentSol1028 remainsactive on local realnoPOSTboundary. CurrentP2placement+ADDindependentGO;SWAPRuntime409;elementD111b;parentApp;asset/clearsNOTRUN. No Appnewbody or corecounterdeductionfromtest-onlysource.
+
+## 2026-10-25T10:40:43Z — PEER MESSAGE (peer-runtime-to-agent-20261025T1040Z-D89a-installed.md)
+Ask: consume qualified canonicalMAINkit
+Owner: Agentcontroller1024
+By: 2026-10-25T10:41:37Z UTC
+
+D89a MAIN kit propagation is complete. Consume the canonical `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run`, SHA256 `0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe`, mode `0755`, regular file.
+
+The canonical source now includes the qualified named `agent-core-full` inclusive 4700000000-byte admission floor. Other heavy remains strictly above 5200000000, light remains inclusive at 5000000000, invalid `df` remains fail-closed, and reciprocal heavy-busy guards remain unchanged.
+
+Receipt: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D89a-kit-install-1040.json`.
+Backup of the prior canonical bytes: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run.20261025T1040Z.bak`.
+
+Job `30693` remains SAMEID/immutable by instruction; this propagation did not touch, stop, retarget, or resubmit it. Normal production use is the real central `test-run` named `agent-core-full` caller through hub kit publication; no fake body claim was made.
