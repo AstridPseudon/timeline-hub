@@ -388,11 +388,13 @@ class CommitPatch:
         ctx.patch_replay_bindings = {key: replay_binding(value) if key[0] == ordinal else value
                                      for key, value in getattr(ctx, 'patch_replay_bindings', {}).items()}
         # Runtime authenticates the next input against the preceding command's observations.
-        if ordinal > step['command_ordinals'][0]:
+        if ordinal > 0:
             previous = self.closures[ordinal - 1]
             current = self.closures[ordinal]
-            for ref in sorted(previous.images.keys() & current.images.keys()):
-                if previous.images[ref]['content_digest'] != current.images[ref]['content_digest']:
+            for ref in sorted(current.images):
+                if (ref not in previous.images
+                        or previous.images[ref]['revision_id'] != current.images[ref]['revision_id']
+                        or previous.images[ref]['content_digest'] != current.images[ref]['content_digest']):
                     binding = current.binding(ref, ref, **boundary)
                     binding.update(key='commit.input', policy='fixed', dependencies=[], path=[])
                     ctx.record['bindings'].append(binding)
@@ -615,8 +617,7 @@ class CommitPatch:
             after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []),
                                     inverse_records=self.inverse_records.get(ordinal, ()))
             record = plan.records[ordinal]
-            if self.v2 or any(self.inverse_stages.get(index)
-                              for index in step['command_ordinals']):
+            if self.active:
                 for index, effect in enumerate(step['patch']):
                     segment = next(((first, second) for source_ordinal in step['command_ordinals']
                         for stage, (first, second) in zip(
@@ -639,10 +640,29 @@ class CommitPatch:
             # effect ranges, not to the outer command's input closure.
             segments = [(first, second) for index in step['command_ordinals']
                         for first, second in self.inverse_stages.get(index, [])]
+            complete_stage = (len(segments) == 1 and segments[0][0].document == before.document
+                              and segments[0][1].document == after.document)
             if not self.v2 or not segments:
                 for first, second in segments or [(before, after)]:
                     self.materializations(record, first, second, self.boundaries[ordinal], step,
                         [write for index in step['command_ordinals'] for write in plan.records[index]['writes']])
+            elif complete_stage:
+                # Only an exclusive paired turnover can become the source of
+                # a later native inverse. Shared restoration stays effect-bound.
+                proposed = {'bindings': []}
+                self.materializations(proposed, before, after, self.boundaries[ordinal], step,
+                    [write for index in step['command_ordinals'] for write in plan.records[index]['writes']])
+                if all(binding['physical_ref'] not in after.images
+                       and binding['successor'] not in before.images
+                       and binding['edge_before'] not in after.images
+                       and binding['edge_after'] not in before.images
+                       and binding['owners'] == [binding['owner']]
+                       and [owner + '/shot' for owner, _ in after.owners[binding['successor']]]
+                           == [binding['owner']]
+                       and before.images[binding['physical_ref']].get('shot_id')
+                           == after.images[binding['successor']].get('shot_id')
+                       for binding in proposed['bindings']):
+                    record['bindings'].extend(proposed['bindings'])
         if self.merge_mode == 'atomic':
             # Effects and materializations can touch roots beyond the authored writes.
             # Build the complete batch union only after their bindings are recorded.
