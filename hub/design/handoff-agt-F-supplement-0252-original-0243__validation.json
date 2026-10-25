@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "commands": {
+    "exact_sets_ast_hashes": "inline Python: TSV/JSON parse; exact set union/intersection; AST selector existence; reviewed blob equals current home; source commit object presence",
+    "json": "python3 -m json.tool evidence/source-manifest.json",
+    "runner_syntax": "bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/inherited-main-recipe.sh"
+  },
+  "results": {
+    "original_0200": 161,
+    "later_0209": 69,
+    "canonical_union": 230,
+    "new_supplement": 24,
+    "new_overlap_original": 0,
+    "new_overlap_later": 0,
+    "source_union": 254,
+    "ast_selector_existence": 24,
+    "reviewed_blob_equals_current_home": 7,
+    "source_commit_objects_present": 6,
+    "review_inventory_rows": 24,
+    "manifest_json": "PASS",
+    "inherited_runner_bash_n": "PASS"
+  },
+  "not_run": [
+    "pytest, collection, helper/fixture execution, service/live sockets, build, browser, render, install, probe, full suite"
+  ],
+  "interpretation": "Static source evidence only; no behavior or final-gate credit. actual10077 remains authentic summary with missing body PENDING."
+}

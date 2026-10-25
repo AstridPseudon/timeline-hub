@@ -1,0 +1,96 @@
+{
+  "schema": "astrid.timeline.d89-d91-d92-successor-supplement/v1",
+  "packet": "F-D89-D91-D92-current-exact-successor-0243",
+  "scope": "private source/static qualification input only; no behavior or final-gate credit",
+  "base": {
+    "branch": "tl/integration",
+    "agent_path": "/home/user/work/agent",
+    "agent_commit": "a836baa3b11208d66bf8d23d6abfb1c8e59257e2",
+    "agent_tree": "9643ec2c3ac752b0d9925ee7e7f287da9a806f86",
+    "runtime_path": "/home/user/work/runtime",
+    "runtime_commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "runtime_tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+    "app_path": "/home/user/work/app",
+    "app_commit": "c101477597a765235d7cbbcd48ce588f0df3de73",
+    "app_tree": "a2b173dd4a6623942ca410c86d9e5546b472649a",
+    "composition_path": "/home/user/work/composition",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "all_captured_homes_clean": true
+  },
+  "immutable_inputs": {
+    "original_0200": {
+      "selector_count": 161,
+      "membership": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/original-0200/membership.tsv",
+      "membership_sha256": "2bc617115617936b91221096882319305d99f40d98a238ae4c3f901da837c790",
+      "receiver": "MAIN161 receiver0226 already proceeding; immutable; no unchanged retry"
+    },
+    "later_0209": {
+      "selector_count": 69,
+      "membership": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/additional-membership.tsv",
+      "membership_sha256": "cf445ed85d689a69da92b1a8a8b03852a03b59eed70663dc4c47800c93d0296d",
+      "eligibility": "immutable and eligible"
+    },
+    "canonical_union": {
+      "selector_count": 230,
+      "membership": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/combined-membership.tsv",
+      "membership_sha256": "f1db17e9ec44a1a8dc56ac1800f698d738e11925fccfad26ccd8f7516b377e64"
+    }
+  },
+  "actual10077": {
+    "selector_count": 268,
+    "xml_testcase_count": 245,
+    "no_junit_case_count": 23,
+    "outcome_counts": {"ERROR": 176, "FAIL": 39, "PASS": 30, "NO_JUNIT_CASE": 23},
+    "xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/actual10077.xml",
+    "xml_sha256": "7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0",
+    "outcomes": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/actual10077-outcomes.tsv",
+    "outcomes_sha256": "57b417b61029fd3934b696d9200b5f51cd88c05d166f9e29558d5c934dc9d98f",
+    "verdict": "authentic service summary only; no independent failure-verdict chain; actual body missing remains PENDING"
+  },
+  "supplement": {
+    "selector_count": 24,
+    "membership": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/evidence/supplement-membership.tsv",
+    "selectors": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/evidence/selectors.tsv",
+    "families": {
+      "D91-shared-inverse10": 10,
+      "core-element-optional1": 1,
+      "netzero1": 1,
+      "livefrontend6": 6,
+      "M2pool6": 6
+    },
+    "membership_rule": "exact canonical selector set; no status-count substitution",
+    "source_union_with_immutable_230": "set union is 254 after exact duplicate check; not a behavior result"
+  },
+  "source_files": [
+    {"family": "D91-shared-inverse10", "path": "tests/editing_conformance/test_commit_runtime_shared_inverse.py", "sha256": "8f920cae425ac3b4bfaaaf1409f0c7a77e18f45e6dafb742590e845560db16d4", "reviewed_blob": "00c1ccc5949ca987b51af9c8cdc741c05ecfb1ec", "review": "rt-D91-protected-review-0223.md", "home": "9f697afcf0"},
+    {"family": "core-element-optional1", "path": "tests/core/test_timeline_element_publication_runtime.py", "sha256": "f03e19caa0b6505a42d17fc0eaca77a4794fafb863619bdc4876b14bd63b0357", "reviewed_blob": "a46bb9e8ab9e4065064017f674cfd848a30d6265", "review": "rt-D86-core-element-review-0222.md", "home": "a836baa3b1"},
+    {"family": "netzero1", "path": "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py", "sha256": "b0e8bfb466fd12f1d4ccbd6b065f8cffc78e41c6a33dfe94245119e16b7434e9", "reviewed_blob": "a6056ae9ee33dbffef7bfec7c2f078135d22543c", "review": "agt-F-netzero-review-0215.md", "home": "a836baa3b1"},
+    {"family": "livefrontend6", "path": "tests/editing_conformance/test_commit_runtime_native_checkout.py", "sha256": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461", "reviewed_blob": "653f4e1010e236c09bb14069bf4be1dd5e4a7b98", "review": "rt-D87-live-review-0202.md", "home": "8d93889e01"},
+    {"family": "livefrontend6", "path": "tests/editing_conformance/test_commit_runtime_native_frontends.py", "sha256": "06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2", "reviewed_blob": "d634341dc5f2cdb136fbf669e4865c6197c557fa", "review": "rt-D87-live-review-0202.md", "home": "8d93889e01"},
+    {"family": "M2pool6", "path": "tests/editing_conformance/test_recipe_m2_shot_pool.py", "sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e", "reviewed_blob": "8f13e7082b6afc7d95ebba4c8d649e7712872acf", "review": "agt-F-M2-pool-final-review-0010.md", "home": "25c1e18261", "dependency": "occurrence48"},
+    {"family": "occurrence48-existing161", "path": "tests/editing_conformance/test_commit_runtime_occurrence_media.py", "sha256": "e177f56a9a26b07e4d074961e5fa78d8941b379b4c3efb241aaca5a03c0c9537", "reviewed_blob": "b42079e3b350212109b63aa86bd0eb145444843b", "review": "agt-F-occurrence48-review-0145.md", "home": "25c1e18261", "membership": "original-0200 occurrence48; applicability only"}
+  ],
+  "preserved_accounting": {
+    "original550_dispositions_sha256": "abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2",
+    "no_junit_23_sha256": "7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca",
+    "original_held_data_rows": 20,
+    "later_held_data_rows": 3,
+    "rule": "preserve original550, 23 NO_JUNIT_CASE, D87 retirements, and all held failures"
+  },
+  "review_gates": {
+    "inverse7_review_log0239": "PENDING until PASS/home and append receipt; reserved, not ready",
+    "D92_review0243": "PENDING until PASS/cleanjoin; reserved, not ready",
+    "actual_body": "PENDING",
+    "D91_D83_append": "existing review-log0239 writer owns append; do not duplicate ledger writer",
+    "ready_policy": "do not hold otherwise ready source rows for future sources"
+  },
+  "c0_contract": {
+    "reference": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/c0-contract-sections1-5.json",
+    "api_version": 1,
+    "required_guards": ["no authority relaxation", "no ABI/ABA relaxation", "no-write", "no-leak", "45s unchanged"],
+    "request_shape": ["project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "mergefields_or_atomic", "optional_declaredreads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "reply_shape": ["accepted", "merged", "base", "landing_pair", "merge_mode", "receipt", "records", "bindings", "effects", "dependencies", "steps", "history", "undo_steps", "conflict", "invalid", "previewwould_status", "previewwould_receipt"]
+  },
+  "evidence_policy": "static only; no pytest, collection, helper, fixture, service, build, browser, render, install, probe, or full suite"
+}

@@ -1,0 +1,40 @@
+{
+  "commands": {
+    "exact_sets_ast_hashes": "inline Python: TSV/JSON parse; 161+69 canonical set; 34 disjoint supplement; AST selector names; normal-home SHA-256 equality; existing evidence path/hash checks",
+    "manifest_json": "/home/user/work/venv-agent/bin/python -m json.tool evidence/source-manifest.json",
+    "runner_syntax": "bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/inherited-main-recipe.sh"
+  },
+  "interpretation": "Static source evidence only; source-ready supplement only; no behavior or final-gate credit. actual10077 body is present at the named design path; service-ID-named XML is exact-missing and remains distinct. Current161 successor body is a different pending request.",
+  "not_run": [
+    "pytest",
+    "collection",
+    "helper/function/fixture execution",
+    "service/live sockets",
+    "build",
+    "browser",
+    "render",
+    "probe",
+    "install",
+    "full suite"
+  ],
+  "packet": "F-D89-supplement-return-0252",
+  "results": {
+    "ast_selector_existence": 34,
+    "authentic_body_xml_exists_and_hash_matches": true,
+    "authentic_outcomes_exists_and_hash_matches": true,
+    "canonical_union": 230,
+    "committed_export_report_exists_and_hash_bound": true,
+    "exact_missing_evidence_paths": 2,
+    "existing_flat_evidence_paths": 14,
+    "inherited_runner_bash_n": "PASS",
+    "later_0209": 69,
+    "manifest_json": "PASS",
+    "new_overlap_canonical": 0,
+    "new_supplement": 34,
+    "normal_home_source_hashes": 8,
+    "original_0200": 161,
+    "review_inventory_rows": 24,
+    "source_union": 264
+  },
+  "status": "PASS"
+}

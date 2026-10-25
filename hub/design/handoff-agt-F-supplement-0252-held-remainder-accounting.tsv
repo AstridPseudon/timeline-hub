@@ -1,0 +1,13 @@
+bucket	count	status	evidence	accounting_rule
+original-0200-immutable	161	IN_FLIGHT_IMMUTABLE	membership sha256 2bc617115617936b91221096882319305d99f40d98a238ae4c3f901da837c790	Receiver161 in flight; no unchanged retry
+later-0209-immutable	69	ELIGIBLE_IMMUTABLE	membership sha256 cf445ed85d689a69da92b1a8a8b03852a03b59eed70663dc4c47800c93d0296d	Keep distinct; union by canonical selector
+canonical-union	230	EXACT_SET_UNION	combined membership sha256 f1db17e9ec44a1a8dc56ac1800f698d738e11925fccfad26ccd8f7516b377e64	Immutable; not rerun authorization
+new-supplement	34	SOURCE_READY_ONLY	supplement-membership.tsv	No behavior/final-gate credit
+provisional-source-union	264	SET_ACCOUNTING_ONLY	230 canonical +34 supplement	No all264 rerun authorization
+actual10077-selected	268	AUTHENTIC_TERMINAL_SUMMARY	design body.xml sha2567d41234f…	FAIL39/PASS30/ERROR176 + NO_JUNIT_CASE23
+actual10077-terminal-xml-cases	245	AUTHENTIC_BODY_PRESENT	design body.xml	Matching body exists; service-ID XML distinct missing
+actual10077-no-junit	23	HELD_UNQUALIFIED	design unexecuted-23.tsv/json	Preserve explicit markers
+original550-dispositions	550	PRESERVED	original550 sha256 abea44db…	Preserve all historical dispositions
+current161-successor-body	PENDING	DIFFERENT_REQUEST	no path asserted	Not actual10077
+zero-body-7872-resume0233	EXCLUDED	NOT_ACTUAL10077_OUTCOME	no path asserted	Not actual10077
+service-id-named-xml	MISSING	EXACT_MISSING	/home/user/work/wt/rt-D86-incremental-submit-0107/evidence/rt-D86-incremental-submit-0107/<ACTUAL_SERVICE_ID>.xml	Do not rename body as actual10077.xml

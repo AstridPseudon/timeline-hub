@@ -1,0 +1,25 @@
+inventory_id	scope	status	evidence	exact_disposition	dispatch_guard
+1	D91 corrected shared-inverse ten	SOURCE_JOINED_MAIN_PROOF_PENDING	rt-D91-protected-review-0223.md; normal 9f697afcf0	Exact ten source-ready; MAIN proof owed	No duplicate review; D91 incompatibility fixed b003/9f697
+2	core-element optional modern literal	SOURCE_JOINED_MAIN_PROOF_PENDING	rt-D86-core-element-review-0222.md; normal a836baa3b1	One exact literal; lost-ACK separate/live	No duplicate review
+3	netzero one	SOURCE_JOINED_MAIN_PROOF_PENDING	agt-F-netzero-review-0215.md; normal a836baa3b1	One source-ready selector; replace-existing separate	No duplicate review
+4	live frontends six	SOURCE_JOINED_MAIN_PROOF_PENDING	rt-D87-live-review-0202.md; normal 8d93889e01	Six exact live selectors; retired parameter excluded	No future-source hold
+5	M2 pool six	SOURCE_JOINED_MAIN_PROOF_PENDING	agt-F-M2-pool-final-review-0010.md; occurrence home25c1e18261	Shared occurrence48 dependency; behavior owed	No six helper reviews
+6	occurrence48 existing in original161	IN_161_IMMUTABLE_SOURCE_APPLICABILITY_ONLY	agt-F-occurrence48-review-0145.md; home25c1e18261	Remain in immutable receiver161; M2 applicability only	No unchanged retry
+7	inverse7 current return	SOURCE_JOINED_MAIN7_PROOF_PENDING	review-log0239 PASS_SOURCE; clean caffef8d93; append-CAS complete	Exact seven source-ready; MAIN7 owed	No new review/append; MAIN7 only
+8	D92 genuine current API compound three	SOURCE_JOINED_MAIN3_PROOF_PENDING	protected0243 PASS_SOURCE; clean0250 57ad7d2987; home562ee30b6e	Only three compound originals source-ready	No new review; atomic/ABA separate/live
+9	parent-media20	MAIN_SOURCE_AUTHOR_FOLLOWUP_REQUIRED	STATUS.md; tl/agt-D86-main-parent-media-2343; reminder0245	Actual 2 PASS/18 ERROR requires new author; prior PASS cannot close	Existing MAIN reservation owns dispatch; no local duplicate
+10	parent-auto14	MAIN_SOURCE_AUTHOR_FOLLOWUP_REQUIRED	STATUS.md; tl/agt-D86-main-parent-auto-2343; reminder0245	Actual 6 PASS/8 FAIL requires new author; prior PASS cannot close	Existing MAIN reservation owns dispatch; no local duplicate
+11	manifest inverse8	SOURCEFACTS_PASS_NO_SOURCE_DIFF_MAIN_PROOF_PENDING	rt-D86-three-families-review-0129.md; peer0129/0152	Independent source-facts PASS; no fresh review	MAIN proof only
+12	parent track3	SOURCEFACTS_PASS_NO_SOURCE_DIFF_MAIN_PROOF_PENDING	rt-D86-three-families-review-0129.md; peer0129/0152	Independent source-facts PASS; no fresh review	MAIN proof only
+13	graph redo2	SOURCE_EXACT_BEHAVIOR_UNKNOWN	STATUS.md; existing source exact	Behavior proof only	Do not invent branch
+14	missing23	HELD_NO_JUNIT_CASE	handoff-rt-D86-10077-unexecuted-23.tsv/json	Explicit NO_JUNIT_CASE; unqualified	Never infer
+15	current-sheet17	SOURCE_PASS_BEHAVIOR_PENDING	review-current-sheet-0203.md; normal3b8f341cf6	Source joined; inverse1/CLI3 held	No duplicate review
+16	NativeSheet11	SOURCE_PASS_BEHAVIOR_PENDING	STATUS.md; normal source home	Behavior proof only	No duplicate review
+17	projection9	SOURCE_PASS_BEHAVIOR_PENDING	STATUS.md; normal source home	Behavior proof only	No duplicate review
+18	numeric9	SOURCE_PASS_BEHAVIOR_PENDING	STATUS.md; normal source home	Behavior proof only	No duplicate review
+19	M1 baseline10	SOURCE_PASS_BEHAVIOR_PENDING	review-M1-0147.md; normal9838f7ca34	Behavior proof only	No duplicate review
+20	inverse10 / D91 original-third	SOURCE_JOINED_MAIN_PROOF_PENDING	b003f3799b protected; normal9f697afcf0	Incompatibility fixed; no owner decision remains; old dispositions preserved	MAIN proof only; no retry
+21	word bootstrap46	SOURCE_PASS_BEHAVIOR_PENDING	review-word-0152.md; normal5dc9f0c898	Behavior proof only; word FAIL9 held	No duplicate review
+22	CLI8	SOURCE_PASS_BEHAVIOR_PENDING	STATUS.md; source review PASS	Behavior proof only	No duplicate review
+23	next cohort11	SOURCE_PASS_BEHAVIOR_PENDING	STATUS.md; source review PASS	Behavior proof only	No duplicate review
+24	immutable packets 0200 plus0209	SOURCE_PACKET_CUSTODY_READY_ONLY	membership2bc617…; latercf445e…; unionf1db17…	230 exact union; receiver161 in flight; later69 eligible	No all254/all264 rerun

@@ -1,0 +1,13 @@
+bucket	count	status	evidence	accounting_rule
+original-0200-immutable	161	IN_FLIGHT_IMMUTABLE	original-0200/membership.tsv sha256 2bc617115617936b91221096882319305d99f40d98a238ae4c3f901da837c790	Preserve receiver0226; no unchanged retry
+later-0209-immutable	69	ELIGIBLE_IMMUTABLE	additional-membership.tsv sha256 cf445ed85d689a69da92b1a8a8b03852a03b59eed70663dc4c47800c93d0296d	Union by canonical selector, not status sum
+canonical-union	230	EXACT_SET_UNION	combined-membership.tsv sha256 f1db17e9ec44a1a8dc56ac1800f698d738e11925fccfad26ccd8f7516b377e64	Original161 plus later69; source packets remain distinct
+new-supplement	24	SOURCE_ONLY_MAIN_PROOF_PENDING	supplement-membership.tsv	Exact new correction set; no behavior or final-gate credit
+provisional-source-union	254	SET_ACCOUNTING_ONLY	230 canonical plus 24 supplement; exact-set validation recorded separately	Not an actual10077 result and not a count-based closure
+actual10077-selector-universe	268	AUTHENTIC_SERVICE_SUMMARY_ONLY	actual10077.xml sha256 7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0	Keep selector count separate from XML case and outcome counts
+actual10077-xml-cases	245	AUTHENTIC_SERVICE_SUMMARY_ONLY	actual10077-outcomes.tsv sha256 57b417b61029fd3934b696d9200b5f51cd88c05d166f9e29558d5c934dc9d98f	245 outcome rows plus 23 marker-only rows; never infer missing bodies
+actual10077-no-junit	23	HELD_UNQUALIFIED	unexecuted-23.tsv sha256 7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca	NO_JUNIT_CASE is preserved, not converted to pass/fail
+original550-dispositions	550	PRESERVED	original550-dispositions.tsv sha256 abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2	Preserve every original disposition and held failure
+original-held	20	PRESERVED_HELD	original-0200/held.tsv (20 data rows)	No closure by source correction or count
+later-held	3	PRESERVED_HELD	additional-held.tsv (3 data rows)	No closure by source correction or count
+actual-unassigned	UNRESOLVED	PENDING	Exact names must remain governed by service evidence; no cardinality inference	Manager input only if a concrete disjoint diff is named

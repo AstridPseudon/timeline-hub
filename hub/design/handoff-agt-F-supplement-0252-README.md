@@ -1,0 +1,13 @@
+# F-D89 supplement return 0252 (corrected private packet)
+
+Private source/static packet only; no repository source, test, fixture, helper, service, registry, build, or generated-file changes. The predecessor packet is preserved byte-for-byte under `original-0243/`.
+
+Immutable canonical membership remains 230 selectors: original-0200 has 161 and remains with receiver161 in flight; later-0209 has 69 and remains eligible. The corrected supplement has 34 newly source-ready selectors: the prior 24, exact inverse7 selectors 25–31, and only D92 compound originals 32–34. The source union is 264 for set accounting only. No unchanged161 retry or all254/all264 rerun is authorized; no behavior/final-gate credit is claimed.
+
+Inverse7 is complete: review-log0239 is PASS_SOURCE, normal merge `caffef8d93` contains exact `b97bd6a6…` / SHA-256 `6c02629f…`, and D91/D83 append-CAS is complete. D72/D83 is complete by that existing append; this packet does not duplicate the ledger write. D92 protected review0243 is PASS_SOURCE and clean join0250 is present at `57ad7d2987` / current home `562ee30b6e`. Only swap[True], swap[False], and compound_inverse enter the source-ready set; atomic and ABA remain separate/live/unqualified. The final helper was unexecuted; the A/B transcript proves reachability only.
+
+Authentic actual10077 terminal body exists at the absolute design path in `source-manifest.json`, with 268 selected nodes and a matching 245-case XML body: FAIL39, PASS30, ERROR176, plus 23 explicit NO_JUNIT_CASE rows. The service-ID-named XML is separately exact-missing; no fake `actual10077.xml` alias is used. Current161 successor body and zero-body7872 resume0233 are different requests and are not actual10077 outcomes. The 51-file export is bound to existing flat design paths/hashes; unavailable worker export directories are marked missing.
+
+The 24-row review inventory is an inventory of scopes, not 24 pending protected diffs. Manifest-inverse8 and parent-track3 have independent `rt-D86-three-families-review-0129` source-facts PASS and no changed source. Parent-media20/parent-auto14 retain actual MAIN failures and require existing MAIN reservations/reminder0245 to obtain new source authors; no local duplicate is opened. D91 original-third incompatibility is fixed in protected `b003f3799b` / current `9f697afcf0`.
+
+Static validation only: JSON/TSV/set accounting, AST selector presence, source/home SHA-256 equality, existing-path/hash verification, and `bash -n` on the inherited runner. No pytest, collection, helper/function/fixture execution, service, build, browser, render, probe, install, credentials, pins, or full suite was run.

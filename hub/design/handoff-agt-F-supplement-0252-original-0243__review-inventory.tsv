@@ -1,0 +1,25 @@
+inventory_id	scope	status	protected_or_normal_evidence	exact_disposition	dispatch_guard
+1	D91 corrected shared-inverse ten	SOURCE_PASS_HOME_RECEIPT_MAIN_PROOF_PENDING	rt-D91-protected-review-0223.md; normal home 9f697afcf0	Eligible supplement only; no behavior credit until MAIN proof	No duplicate protected review
+2	core-element optional modern literal	SOURCE_PASS_HOME_RECEIPT_MAIN_PROOF_PENDING	rt-D86-core-element-review-0222.md; normal home a836baa3b1	Eligible one literal; lost-ACK selector stays separate	Do not wait for or add lost-ACK
+3	netzero one	SOURCE_PASS_HOME_RECEIPT_MAIN_PROOF_PENDING	agt-F-netzero-review-0215.md; normal home a836baa3b1	Eligible one net-zero selector; replace-existing stays separate	No duplicate net-zero review
+4	live frontends six	SOURCE_PASS_HOME_RECEIPT_MAIN_PROOF_PENDING	rt-D87-live-review-0202.md; normal home 8d93889e01	Eligible six exact selectors; retired native parameter excluded	No future-source hold on other ready rows
+5	M2 pool six	SOURCE_PASS_BEHAVIOR_PROOF_PENDING	agt-F-M2-pool-final-review-0010.md; normal occurrence home 25c1e18261	Eligible source dependency; all six use the same occurrence helper	Do not dispatch six helper reviews
+6	occurrence48 existing in original161	NORMAL_JOINED_SOURCE_APPLICABILITY_ONLY	agt-F-occurrence48-review-0145.md; home 25c1e18261	Remain in immutable in-flight161; applicability updated for M2 pool	Do not rerun unchanged originals
+7	inverse7 current return	RESERVED_PENDING_PASS_HOME_AND_APPEND_RECEIPT	inverse7-review-log-0239/report.md; clean-join report exists but user gate remains open	Reserved exact seven; not ready until PASS/home and append receipt	Existing review-log0239 owns append; no duplicate ledger writer
+8	D92 genuine current API	RESERVED_PROTECTED_REVIEW_RUNNING	D92-genuine-unused-0242/report.md; protected-review-0243 worker still running	Reserved exact 26; not ready until review0243 PASS and clean join	No duplicate D92 review
+9	parent-media20	SOURCE_PASS_BEHAVIOR_PROOF_PENDING	manager STATUS row; actual 2 PASS and 18 setup ERROR	Manager input for follow-through; no source re-review claimed	No count-based closure
+10	parent-auto14	SOURCE_PASS_BEHAVIOR_PROOF_PENDING	manager STATUS row; actual 6 PASS and 8 FAIL	Manager input for follow-through; no source re-review claimed	No count-based closure
+11	manifest inverse8	AWAITING_PROTECTED_REVIEW	manager STATUS row says doing; no PASS report found	Do not dispatch until protected review evidence exists	One bounded batch if manager explicitly requests
+12	parent track3	AWAITING_PROTECTED_REVIEW	manager STATUS row says doing; no PASS report found	Do not dispatch until protected review evidence exists	One bounded batch if manager explicitly requests
+13	graph redo2	SOURCE_EXACT_BEHAVIOR_UNKNOWN	manager STATUS row; source exact only	Await behavior proof, not a new protected source review	Do not invent review branch
+14	missing23	HELD_NO_JUNIT_CASE	peer marker disposition 20261025T0205Z; unexecuted-23.tsv	Remain NO_JUNIT_CASE and unqualified	Never infer body from counts
+15	current-sheet17	SOURCE_PASS_BEHAVIOR_PENDING	review-current-sheet-0203.md; normal home 3b8f341cf6	Source joined; inverse1 and retired CLI3 remain held	No duplicate source review
+16	NativeSheet11	SOURCE_PASS_BEHAVIOR_PENDING	manager STATUS row; normal source home	Await behavior proof only	No duplicate source review
+17	projection9	SOURCE_PASS_BEHAVIOR_PENDING	manager STATUS row; normal source home	Await behavior proof only	No duplicate source review
+18	numeric9	SOURCE_PASS_BEHAVIOR_PENDING	manager STATUS row; normal source home	Await behavior proof only	No duplicate source review
+19	M1 baseline10	SOURCE_PASS_BEHAVIOR_PENDING	review-M1-0147.md; normal home 9838f7ca34	Await behavior proof only	No duplicate source review
+20	inverse10	SOURCE_PASS_BEHAVIOR_PENDING	review inverse family; five original-third incompatible inputs remain live	Source eligible but no behavior credit; preserve incompatible held failures	No unchanged retry
+21	word bootstrap46	SOURCE_PASS_BEHAVIOR_PENDING	review-word-0152.md; normal home 5dc9f0c898	Await behavior proof; separate word FAIL9 held	No duplicate source review
+22	CLI8	SOURCE_PASS_BEHAVIOR_PENDING	manager STATUS row; source review PASS	Await behavior proof; preserve CLI scope	No duplicate source review
+23	next cohort11	SOURCE_PASS_BEHAVIOR_PENDING	manager STATUS row; source review PASS	Await behavior proof only	No duplicate source review
+24	immutable packets 0200 plus 0209	SOURCE_PASS_PACKET_CUSTODY_BEHAVIOR_PENDING	original membership SHA 2bc617...; delta membership SHA cf445e...; combined SHA f1db17...	161 receiver0226 remains in flight; later69 remains immutable and eligible	Do not authorize unchanged161 retry or re-count actual service
