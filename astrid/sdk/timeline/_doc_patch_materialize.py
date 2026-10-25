@@ -64,12 +64,13 @@ def project(bundle, publication):
         local = placements[row['occurrence_id']]['shot_id']
         authored = bundle['shots'][local]
         # A later semantic edit is occurrence-owned; its compiler projection wins.
-        if target is None or authored['payload'] != target['payload'] or authored['internal_timeline'] != target['internal_timeline']:
+        if (target is None or _digest(authored['payload']) != _digest(target['payload'])
+                or _digest(authored['internal_timeline']) != _digest(target['internal_timeline'])):
             continue
         origin = bundle['source_mapping']['shots'][local]
         mapping = origin.get('item_id_map', {})
         payload = _remap_known_item_references(authored['payload'], {v: k for k, v in mapping.items()})
-        if authored['internal_timeline'] == authored['base_internal_timeline']:
+        if _digest(authored['internal_timeline']) == _digest(authored['base_internal_timeline']):
             child = source_internals.get(target['source_internal_revision'])
         else:
             group = target['source_internal_revision'], _digest(authored['internal_timeline'])
@@ -87,7 +88,7 @@ def project(bundle, publication):
             continue
         payload['internal_timeline_revision_id'] = child['revision_id']
         old = source_shots.get(target['source_shot_revision'])
-        if old is not None and old['payload'] == payload:
+        if old is not None and _digest(old['payload']) == _digest(payload):
             image = copy.deepcopy(old)
         else:
             image = {'shot_id': target['shot_id'],

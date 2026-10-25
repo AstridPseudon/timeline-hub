@@ -15,11 +15,11 @@ from astrid.sdk.timeline._command_state import CommandError
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.compiler import TimingCompileError
-from tests.editing_conformance import test_timing_retained_inputs as retained_inputs
+from tests.editing_conformance import native_word_anchor_fixture as retained_inputs
 from tests.editing_conformance.word_binding_recipe import OP, authored, compile_authored, install
 
 pytestmark = pytest.mark.integration
-retained = retained_inputs.retained
+retained = retained_inputs.current_retained
 TARGET = retained_inputs.TARGET
 REF = "parent/clip:card"
 KEY = (REF, "on")
