@@ -72,10 +72,11 @@ export function RuntimeConnectionPill({
   }
 
   if (restart === 'stopped') {
+    const pinokioManaged = connection.managedByPinokio === true;
     return (
       <div data-testid="runtime-connection-status" data-state="stopped" role="alert" className={CARD_CLASS} style={CARD_STYLE}>
-        <CardText title={COPY.stopped.title} sentence={withCommandShell(COPY.stopped.sentence)} />
-        <CopyInstallCommand mode="install" />
+        <CardText title={COPY.stopped.title} sentence={pinokioManaged ? COPY.stopped.pinokioSentence : withCommandShell(COPY.stopped.sentence)} />
+        {!pinokioManaged && <CopyInstallCommand mode="install" />}
       </div>
     );
   }

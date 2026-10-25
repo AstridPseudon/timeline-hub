@@ -1638,8 +1638,8 @@ describe('permission and setup evidence matrix', () => {
     await waitFor(() => expect(status()).toBe('connecting'));
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('not_running'));
-    const sentence = screen.getByText((_, element) => element?.tagName === 'P' && element.textContent?.startsWith(CONNECTION_COPY.notRunning.sentence) === true);
-    expect(sentence.textContent?.includes(CONNECTION_COPY.notRunning.pinokioHint)).toBe(shouldMentionPinokio);
+    const expectedSentence = shouldMentionPinokio ? CONNECTION_COPY.notRunning.pinokioHint : CONNECTION_COPY.notRunning.sentence;
+    expect(screen.getByText(expectedSentence)).toBeInTheDocument();
   });
 });
 

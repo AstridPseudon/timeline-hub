@@ -13,6 +13,7 @@ import { EditorCardLayer } from './EditorCardLayer.tsx';
 import { CopyRefusedInstructions } from './CopyRefusedInstructions.tsx';
 import { PINOKIO_INSTALL_COPY, RUNTIME_CONNECTION_COPY as COPY, withBrowser, withOrigin } from './copy.ts';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
+import { linkForSupportedBrowser } from '@/integrations/runtime/autoConnectRequest.ts';
 
 export interface RuntimeConnectionPanelProps {
   /** The gate's value: the screen to show (on the way out, the last one shown). */
@@ -232,7 +233,7 @@ function PhoneCard({ onBack }: { readonly onBack?: () => void }) {
 function UnsupportedCard({ onBack, updateNeeded = false }: { readonly onBack?: () => void; readonly updateNeeded?: boolean }) {
   const { unsupported } = COPY;
   const message = updateNeeded ? COPY.browserUpdateNeeded : unsupported;
-  const link = window.location.href;
+  const link = linkForSupportedBrowser();
   const copy = useCopyAction(link);
   return <Card title={withBrowser(message.title)} sentence={withBrowser(message.sentence)} onBack={onBack} action={<div className="space-y-2">
     <Button type="button" className="h-11 w-full rounded-xl" onClick={() => void copy.copy()}>{copy.status === 'copied' ? unsupported.copied : unsupported.button}</Button>
@@ -309,7 +310,7 @@ function BlockedCard({ onBack }: { readonly onBack?: () => void }) {
 function NotRunningCard({ connection, onBack }: { readonly connection: RuntimeConnectionValue; readonly onBack?: () => void }) {
   const { notRunning } = COPY;
   const pinokioManaged = connection.managedByPinokio === true;
-  return <Card title={notRunning.title} sentence={pinokioManaged ? `${notRunning.sentence} ${notRunning.pinokioHint}` : notRunning.sentence} onBack={onBack} action={<div className="space-y-2">{!pinokioManaged && <CopyInstallCommand mode="install" />}<Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
+  return <Card title={notRunning.title} sentence={pinokioManaged ? notRunning.pinokioHint : notRunning.sentence} onBack={onBack} action={<div className="space-y-2">{!pinokioManaged && <CopyInstallCommand mode="install" />}<Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
 }
 
 /** Astrid answered, but not this page: no install help, because Astrid is already running. Polling continues. */

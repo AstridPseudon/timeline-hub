@@ -36,7 +36,7 @@ function switchableRoute(first: () => Response) {
   return { route, fetchImpl };
 }
 
-const connected = () => connectionFor({ status: 'connected', realm: CONNECTED_REALM });
+const connected = (managedByPinokio = false) => connectionFor({ status: 'connected', realm: CONNECTED_REALM }, { managedByPinokio });
 const status = () => screen.getByTestId('runtime-connection-status');
 
 function onWindows() {
@@ -111,6 +111,18 @@ describe('RuntimeConnectionPill', () => {
       fireEvent.click(screen.getByRole('button', { name: COPY.agent.commandCopy }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
     expect(String(writeText.mock.calls[0][0])).toMatch(/^curl -fsSL https:\/\/astrid\.haus\/install \| sh$/);
+  });
+
+  it('Pinokio stopped card says where to start Astrid and has no installer or coding-agent instructions', async () => {
+    const { route, fetchImpl } = switchableRoute(healthy('instance-1'));
+    render(<RuntimeConnectionPill connection={connected(true)} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />);
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalled());
+    route.answer = unreachable;
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Astrid stopped' })).toBeInTheDocument());
+    expect(screen.getByText(COPY.stopped.pinokioSentence)).toBeInTheDocument();
+    expect(screen.queryByRole('code')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: COPY.agent.commandCopy })).not.toBeInTheDocument();
   });
 
   it('Astrid answers a no-cors request but its CORS read fails: the refused card, with no install line and no "stopped"', async () => {

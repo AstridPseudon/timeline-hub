@@ -56,7 +56,7 @@ describe('local setup card', () => {
     const { container } = render(<WelcomeLocalSetup onBack={vi.fn()} />);
 
     const list = screen.getByRole('list');
-    const link = screen.getByRole('link', { name: 'Or install with Pinokio' });
+    const link = screen.getByRole('link', { name: PINOKIO_INSTALL_COPY.fullyLocalLabel });
     expect(link).toHaveAttribute('href', PINOKIO_INSTALL_COPY.installUrl);
     expect(link).toHaveClass('underline', 'underline-offset-4', 'hover:text-foreground');
     expect(list.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -68,12 +68,12 @@ describe('local setup card', () => {
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh) Firefox/131.0');
     const view = render(<WelcomeLocalSetup onBack={vi.fn()} />);
-    expect(screen.queryByRole('link', { name: 'Or install with Pinokio' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: PINOKIO_INSTALL_COPY.fullyLocalLabel })).not.toBeInTheDocument();
 
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue('iPhone');
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15');
     view.rerender(<WelcomeLocalSetup onBack={vi.fn()} />);
-    expect(screen.queryByRole('link', { name: 'Or install with Pinokio' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: PINOKIO_INSTALL_COPY.fullyLocalLabel })).not.toBeInTheDocument();
   });
 
   it('copies each command row exactly, including the three-line editor setup block', async () => {

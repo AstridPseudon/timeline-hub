@@ -60,6 +60,7 @@ export const LOCAL_SETUP = {
 /** Optional Pinokio route for installing the fully local app. */
 export const PINOKIO_INSTALL_COPY = {
   label: 'Or install with Pinokio',
+  fullyLocalLabel: 'Or install with Pinokio, then choose Install fully local',
   installUrl: 'https://pinokio.co/item?uri=https://github.com/banodoco/astrid-pinokio',
 } as const;
 
@@ -227,7 +228,7 @@ export interface RuntimeConnectionCopy {
   /** Connected, and the health check answers too slowly: Astrid is running under load. The card clears itself. */
   readonly busy: Message;
   /** Connected, and the health check stopped answering. The card clears itself when Astrid is back. */
-  readonly stopped: Message;
+  readonly stopped: Message & { readonly pinokioSentence: string };
   /** Connected, and Astrid restarted (or changed) under the page. */
   readonly restarted: Message & { readonly reload: string };
   /** The timeline (or the engine connection behind it) would not load on the hosted build: replaces every engineer-worded error. */
@@ -289,7 +290,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     title: "Astrid isn't answering on this computer",
     retry: 'Try again',
     sentence: "Your coding agent can start it, or install it if it isn't there yet.",
-    pinokioHint: 'Using Pinokio? Start Astrid there.',
+    pinokioHint: 'Start Astrid in Pinokio.',
   },
 
   refused: {
@@ -301,7 +302,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   updateNeeded: {
     title: 'Update Astrid',
     sentence: 'This page needs a newer Astrid. Give these instructions to your coding agent to update it.',
-    pinokioSentence: 'This page needs a newer Astrid. In Pinokio, open Astrid and choose Update, then Start.',
+    pinokioSentence: 'This page needs a newer Astrid. In Pinokio, choose Stop, then Update, then Start.',
   },
 
   /** Lead-in above the shared update screen when a chat reply from this computer's Astrid is out of date. */
@@ -345,6 +346,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   stopped: {
     title: 'Astrid stopped',
     sentence: 'Give these instructions to your coding agent to start Astrid again. Your changes are kept.',
+    pinokioSentence: 'Start Astrid in Pinokio. Your changes are kept.',
   },
 
   restarted: {

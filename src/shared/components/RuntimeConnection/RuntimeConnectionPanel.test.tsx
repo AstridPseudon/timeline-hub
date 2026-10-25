@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
+import { consumeAutoConnectQuery } from '@/integrations/runtime/autoConnectRequest.ts';
 import { CONNECTED_MIN_MS, LEAVE_MS, RuntimeConnectionPanel, SETTLED_QUIET_MS } from './RuntimeConnectionPanel.tsx';
 import { installCommand, PINOKIO_INSTALL_COPY, RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
 import { CONNECTED_REALM, connectionFor } from './connectionFixture.ts';
@@ -329,8 +330,9 @@ describe('RuntimeConnectionPanel', () => {
   ] as const)('not-running guidance for %s provenance keeps the matching actions', (provenance, managedByPinokio, showsInstaller) => {
     const connect = vi.fn();
     panel(connectionFor({ status: 'not_running' }, { managedByPinokio, connect }));
-    const sentence = screen.getByText((_, element) => element?.tagName === 'P' && element.textContent?.startsWith(COPY.notRunning.sentence) === true);
-    expect(sentence.textContent?.includes(COPY.notRunning.pinokioHint)).toBe(managedByPinokio === true);
+    const expectedSentence = managedByPinokio === true ? COPY.notRunning.pinokioHint : COPY.notRunning.sentence;
+    const sentence = screen.getByText(expectedSentence);
+    expect(sentence).toBeInTheDocument();
     const retry = screen.getByRole('button', { name: COPY.notRunning.retry });
     expect(retry).toBeInTheDocument();
     if (showsInstaller) {
@@ -342,6 +344,14 @@ describe('RuntimeConnectionPanel', () => {
     }
     fireEvent.click(retry);
     expect(connect).toHaveBeenCalledOnce();
+  });
+
+  it('Pinokio update guidance gives the visible Stop, Update, Start sequence without installer steps', () => {
+    panel(connectionFor({ status: 'update_needed' }, { managedByPinokio: true }));
+
+    expect(screen.getByText('This page needs a newer Astrid. In Pinokio, choose Stop, then Update, then Start.')).toBeInTheDocument();
+    expect(screen.queryByRole('code')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: COPY.agent.commandCopy })).not.toBeInTheDocument();
   });
 
   describe('refused', () => {
@@ -396,6 +406,26 @@ describe('RuntimeConnectionPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy link for Chrome or Edge' }));
       await waitFor(() => expect(writeText).toHaveBeenCalledWith(window.location.href));
       expect(await screen.findByRole('button', { name: 'Copied. Open it in Chrome or Edge.' })).toBeInTheDocument();
+    });
+
+    it('keeps connect=1 in the copied link after consuming the installer entry flag', async () => {
+      const previousUrl = new URL(window.location.href);
+      const writeText = vi.fn(async (_text: string) => undefined);
+      stubClipboard(writeText);
+      sessionStorage.clear();
+      window.history.replaceState({}, '', '/tools/video-editor?timeline=first&connect=1#frame=42');
+
+      try {
+        expect(consumeAutoConnectQuery()).toBe(true);
+        expect(window.location.href).not.toContain('connect=1');
+        panel(connectionFor({ status: 'unsupported' }));
+        fireEvent.click(screen.getByRole('button', { name: COPY.unsupported.button }));
+
+        await waitFor(() => expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/tools/video-editor?timeline=first&connect=1#frame=42`));
+      } finally {
+        window.history.replaceState({}, '', `${previousUrl.pathname}${previousUrl.search}${previousUrl.hash}`);
+        sessionStorage.clear();
+      }
     });
 
     it('renders the phone screen from provider state without user-agent detection', () => {

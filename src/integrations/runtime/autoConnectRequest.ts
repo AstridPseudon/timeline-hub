@@ -6,6 +6,7 @@
  * installed-app window shares that phase in localStorage, but cannot rely on the installing tab's sessionStorage.
  */
 const AUTO_CONNECT_KEY = 'astrid.runtime.autoConnect';
+const AUTO_CONNECT_ENTRY_KEY = 'astrid.runtime.autoConnectEntry';
 
 /** Marks that the next time the gate sees the permission still to be asked, it asks at once. Never throws. */
 export function requestAutoConnect(): void {
@@ -20,10 +21,28 @@ export function requestAutoConnect(): void {
 export function consumeAutoConnectQuery(): boolean {
   const url = new URL(window.location.href);
   if (url.searchParams.get('connect') !== '1') return false;
+  try {
+    window.sessionStorage.setItem(AUTO_CONNECT_ENTRY_KEY, '1');
+  } catch {
+    // If storage is blocked, the immediate request still works for this page load.
+  }
   url.searchParams.delete('connect');
   window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
   requestAutoConnect();
   return true;
+}
+
+/** Link to carry into Chrome or Edge, retaining the installer's one-shot entry request. */
+export function linkForSupportedBrowser(): string {
+  const url = new URL(window.location.href);
+  let keepConnect = url.searchParams.get('connect') === '1';
+  try {
+    keepConnect ||= window.sessionStorage.getItem(AUTO_CONNECT_ENTRY_KEY) === '1';
+  } catch {
+    // The current URL is still usable when storage is blocked.
+  }
+  if (keepConnect) url.searchParams.set('connect', '1');
+  return url.href;
 }
 
 /** Whether the flag is set, without using it up. */
