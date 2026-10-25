@@ -104,12 +104,21 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
 
     def submit(commands, key):
         current = head()
+        steps = [{
+            "id": f"bootstrap-{index + 1}", "label": key, "intent": "", "tags": [],
+            "command_ordinals": [index],
+            "patch": copy.deepcopy(command.get("args", {}).get("changes", []))
+            if command["op"] == "doc.patch" else [],
+            "reads": [],
+        } for index, command in enumerate(commands)]
         result = service.commit_timeline(
             project, "film", {
                 "api_version": 1, "project_id": project, "timeline_id": "film",
                 "base_revision_id": current["revision_id"],
                 "base_publication_id": current["publication_id"],
-                "commands": commands,
+                "commands": commands, "label": key, "steps": steps,
+                "merge": "atomic", "reads": [], "dry_run": False,
+                "source": {"via": "python"}, "rationale": key, "group_id": key,
             }, idempotency_key=key, publisher="timing-editor",
             invocation_path=route_path(project, "film"), authorize=lambda: None,
         )
@@ -168,6 +177,7 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
     # authored rational output through the emitter's guarded before/after patch.
     after["parent"]["config"]["output"]["fps"] = copy.deepcopy(FPS)
     after["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": FPS}}}
+    after["shots"]["shot"]["internal_timeline"]["output"]["fps"] = copy.deepcopy(FPS)
     after["shots"]["shot"]["payload"].update(
         {"items": [], **(opaque if opaque_pin_scope == "shot" else {})})
     internal = after["shots"]["shot"]["internal_timeline"]
@@ -185,7 +195,7 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
     placement_start = occurred["placements"][0]["placement"]["start_ms"]
     changes[0]["args"]["changes"].insert(0, {
         "op": "set", "ref": "parent",
-        "path": ["occurrences", "occurrence:occ", "placement", "start_ms"],
+        "path": ["occurrences", "occurrence_id:occ", "placement", "start_ms"],
         "before": {"state": "present", "value": placement_start}, "value": 2000,
     })
     media_admission = {

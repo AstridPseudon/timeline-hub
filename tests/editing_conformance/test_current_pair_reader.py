@@ -21,6 +21,13 @@ PROJECT = "7b6f2bae8ffe42bf925216c38249ed79"
 REVISION = "a3e671256f1c42b8837d3e118c97b21b"
 PUBLICATION = "txn-11c90075be6c4c8bb9e2627366f0fe4f"
 ARCHIVE_HASH = "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3"
+AUTHENTIC_ARCHIVE = Path(
+    os.environ.get(
+        "ASTRID_AUTHENTIC_LEGACY_ARCHIVE",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
+        "scratchpad/orch/design/g5-sdk-authentic-capture-20261023-b6069d1d.tar.gz",
+    )
+)
 
 
 class ServiceTransport:
@@ -57,7 +64,7 @@ def reader(tmp_path, monkeypatch):
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_baseline import verify_baseline
 
-    archive = Path(os.environ["ASTRID_AUTHENTIC_LEGACY_ARCHIVE"])
+    archive = AUTHENTIC_ARCHIVE
     assert hashlib.sha256(archive.read_bytes()).hexdigest() == ARCHIVE_HASH
     backup = _extract_archive(tmp_path / "extract", archive)
     verify_backup(backup, key=FIXTURE_BACKUP_KEY)

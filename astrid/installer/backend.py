@@ -179,7 +179,7 @@ class Backend:
             raise ValueError("staged Agent is missing the local canonical timeline schema")
         lock = read_json(agent / "runtime.lock.json")
         files = lock.get("files") if isinstance(lock, dict) else None
-        pin = files.get(str(relative)) if isinstance(files, dict) else None
+        pin = files.get(relative.as_posix()) if isinstance(files, dict) else None
         if not isinstance(pin, dict) or pin.get("from") != "contract/schemas/timeline-config.schema.json":
             raise ValueError("staged Agent has no approved Runtime source pin for the local timeline schema")
         expected = pin.get("sha256")

@@ -4,7 +4,7 @@ import base64
 import hashlib
 import json
 import tarfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
 
@@ -125,6 +125,31 @@ def test_local_schema_verification_rejects_a_changed_schema(tmp_path):
 
     with pytest.raises(ValueError, match="does not match its Runtime source pin"):
         Backend._verify_local_timeline_schema(agent)
+
+
+@pytest.mark.parametrize("path_type", [PurePosixPath, PureWindowsPath])
+@pytest.mark.parametrize("changed", [False, True])
+def test_local_schema_verification_uses_portable_lock_keys(tmp_path, monkeypatch, path_type, changed):
+    import astrid.installer.backend as backend_module
+
+    relative = "astrid/core/timeline/schema/timeline-config.schema.json"
+    schema = tmp_path / relative
+    schema.parent.mkdir(parents=True)
+    schema.write_bytes((ROOT / relative).read_bytes())
+    (tmp_path / "runtime.lock.json").write_bytes((ROOT / "runtime.lock.json").read_bytes())
+    if changed:
+        schema.write_text("{}\n", encoding="utf-8")
+
+    class LocalTree:
+        def __truediv__(self, path):
+            return tmp_path.joinpath(*path_type(path).parts)
+
+    monkeypatch.setattr(backend_module, "Path", path_type)
+    if changed:
+        with pytest.raises(ValueError, match="does not match its Runtime source pin"):
+            Backend._verify_local_timeline_schema(LocalTree())
+    else:
+        Backend._verify_local_timeline_schema(LocalTree())
 
 
 def test_remotion_lock_pins_the_immutable_composition_public_entry():

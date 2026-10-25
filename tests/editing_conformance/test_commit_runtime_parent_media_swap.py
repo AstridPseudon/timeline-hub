@@ -75,7 +75,7 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
     # publisher and cross-interpreter seed.
     fixture = occurrence_editing.__wrapped__(
         SimpleNamespace(param=request.param), tmp_path, monkeypatch, operation, media_owner,
-        source_bytes.__wrapped__(tmp_path),
+        source_bytes,
     )
     try:
         yield next(fixture)
@@ -102,7 +102,7 @@ def body(editing, commands=None, *, dry_run=False):
 
 
 @pytest.fixture(params=['parent', 'occurrence:occ-a'])
-def http_editing(request, tmp_path, monkeypatch):
+def http_editing(request, tmp_path, monkeypatch, source_bytes):
     """Use one normal image fixture for the bounded parent/occurrence HTTP proof."""
     from tests.editing_conformance.test_commit_runtime_occurrence_media import (
         editing as occurrence_editing,
@@ -110,7 +110,7 @@ def http_editing(request, tmp_path, monkeypatch):
 
     fixture = occurrence_editing.__wrapped__(
         SimpleNamespace(param='image'), tmp_path, monkeypatch, 'swap', request.param,
-        source_bytes.__wrapped__(tmp_path),
+        source_bytes,
     )
     try:
         state = next(fixture)

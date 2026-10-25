@@ -341,3 +341,8 @@ def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_p
     ).stdout
     assert source_frame and output_frame
     assert source_frame == output_frame
+    assert len(source_frame) == len(output_frame)
+    for channel in range(3):
+        source_mean = sum(source_frame[channel::3]) / len(source_frame[channel::3])
+        output_mean = sum(output_frame[channel::3]) / len(output_frame[channel::3])
+        assert abs(source_mean - output_mean) <= 4, (channel, source_mean, output_mean)

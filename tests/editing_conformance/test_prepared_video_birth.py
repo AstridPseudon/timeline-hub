@@ -245,8 +245,8 @@ def test_prepared_video_public_preview_accept_retry_undo_and_no_write(tmp_path, 
     """One new managed-video body, using the exact reviewed Runtime tree."""
     from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 
-    expected_runtime_source = '6634a17f3ffd885567ba3c91b6c7a560df7375a4'
-    expected_runtime_tree = '47b376717ce7a919a697c62133de3e74dc9f6d3a'
+    expected_runtime_source = '369ffa7c00bd3d45c610fac7651ff79e7a283a1a'
+    expected_runtime_tree = '9bf331d68df8c966e8927a3f083ba03687803c99'
     runtime_pin = vendored_runtime_commit()
     assert runtime_pin == expected_runtime_source
     root = use_runtime(commit=runtime_pin)
@@ -297,7 +297,7 @@ def test_prepared_video_public_preview_accept_retry_undo_and_no_write(tmp_path, 
 
         print('VIDEO_ORIGINS ' + json.dumps({'agent': astrid.__file__,
             'client': astrid_runtime_client.__file__, 'runtime': runtime_protocol.__file__,
-            'runtime_tree': '6047ac3033c3594b8f83db3afd8bb2c47cafa6d6', 'request': request}))
+            'runtime_tree': expected_runtime_tree, 'request': request}))
         before = runtime_media.rows(editing)
         preview = runtime_media.commit(editing, dict(request, dry_run=True), 'video-preview')
         validate_commit_value(preview, 'CommitPreviewResponse')

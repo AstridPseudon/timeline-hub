@@ -260,7 +260,8 @@ def historical_sheet_film(tmp_path, request):
             ]
             calls.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
                           'args': {'changes': changes},
-                          'created': ['occurrence:occ/clip:video', 'occurrence:occ/clip:title']})
+                          'created': ['parent/asset:source', 'occurrence:occ/asset:source',
+                                      'occurrence:occ/clip:video', 'occurrence:occ/clip:title']})
             calls.append({'schema_version': 1, 'op': 'media.admit', 'version': '1', 'select': None,
                           'args': {'inputs': [{'pin': {'media_id': media, 'content_digest': media}}]}})
 

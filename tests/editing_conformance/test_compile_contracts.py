@@ -82,8 +82,16 @@ def _audio_clip(vector):
 
 
 @pytest.fixture
-def audio_host_fixture(tmp_path):
+def audio_host_fixture(tmp_path, monkeypatch):
     """Prepare projected audio through the authenticated normal-render producer."""
+    for name in tuple(os.environ):
+        if name.startswith(('DYLD_', 'LD_')) or name in {
+            'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME', 'NODE_OPTIONS',
+            'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF', 'PYTHONUSERBASE',
+            'PYTHONNOUSERSITE', 'PYTHONSAFEPATH', 'PYTHONPLATLIBDIR', 'PYTHONCASEOK',
+            'PYTHONUTF8', 'PYTHONCOERCECLOCALE', 'PYTHONSTARTUP',
+        }:
+            monkeypatch.delenv(name, raising=False)
     pcm = io.BytesIO()
     with wave.open(pcm, 'wb') as writer:
         writer.setparams((2, 2, 30000, 0, 'NONE', 'not compressed'))
