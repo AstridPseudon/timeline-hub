@@ -1,9 +1,13 @@
 """Opt-in, harness-only observation for one mounted timeline commit.
 
 This module is deliberately a test helper, not a Runtime hook.  It uses the
-existing Python trace seam to observe the mounted HTTP handler, coordinator,
-provider and store methods after the harness explicitly enables it.  It keeps
-only a fixed phase vocabulary, relative monotonic times and bounded counts;
+existing Python trace seam to observe the mounted HTTP dispatch, handler,
+coordinator, provider and store methods after the harness explicitly enables it.
+It keeps only a fixed phase vocabulary, relative monotonic times and bounded
+counts.  For timeline commits, the dispatch boundary is
+``RuntimeHandler._dispatch`` entry and the handler boundary is
+``RuntimeHandler._timeline_commit`` entry; socket/client arrival and caller
+receipt are outside this process and remain UNKNOWN.
 request bodies, headers, credentials, URLs, identifiers and exception text
 never cross the observation boundary.
 
@@ -33,6 +37,7 @@ from types import TracebackType
 from typing import Any, Self
 
 PHASES = (
+    "dispatch_queue",
     "handler_entry",
     "authorization",
     "coordinator_admission",
@@ -44,7 +49,7 @@ PHASES = (
 )
 
 DEFAULT_WATCHDOG_SECONDS = 20.0
-DEFAULT_MAX_WATCHDOG_CAPTURES = 1
+DEFAULT_MAX_WATCHDOG_CAPTURES = 2
 
 
 class P2CommitPhaseCapture:
@@ -79,6 +84,10 @@ class P2CommitPhaseCapture:
         self.max_bytes = max_bytes
         self.watchdog_seconds = watchdog_seconds
         self.max_watchdog_captures = max_watchdog_captures
+        # D88 uses one bounded run with a 5-second pending sample and a
+        # request-owned 30-second follow-up. Other existing watchdog values
+        # retain their single-sample behavior.
+        self._followup_watchdog_delay = 25.0 if watchdog_seconds == 5.0 else None
         self._timer_factory = timer_factory or threading.Timer
         self._clock_ns = clock_ns or time.monotonic_ns
         self._dump_traceback = dump_traceback or faulthandler.dump_traceback
@@ -204,11 +213,11 @@ class P2CommitPhaseCapture:
             if (not self.active or request is None
                     or request.get("watchdog_token") is not token
                     or request.get("dispatch_finished")
-                    or request.get("watchdog_fired")
                     or self.watchdog_captures >= self.max_watchdog_captures):
                 return
             request["watchdog_fired"] = True
             request["watchdog_timer"] = None
+            request["watchdog_stage"] += 1
             self.watchdog_captures += 1
         try:
             with self._watchdog_lock:
@@ -227,6 +236,24 @@ class P2CommitPhaseCapture:
                 self._watchdog_stream.flush()
         except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
             self.failures += 1
+        if request.get("watchdog_stage") == 1 and self._followup_watchdog_delay is not None:
+            try:
+                with self._lock:
+                    if (not self.active or request.get("dispatch_finished")
+                            or self.watchdog_captures >= self.max_watchdog_captures):
+                        return
+                    followup_token = object()
+                    timer = self._timer_factory(
+                        self._followup_watchdog_delay,
+                        lambda: self._watchdog_fire(ordinal, followup_token),
+                    )
+                    timer.daemon = True
+                    request["watchdog_token"] = followup_token
+                    request["watchdog_timer"] = timer
+                    timer.start()
+            except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
+                request["watchdog_timer"] = None
+                self.failures += 1
 
     def _write(self, event: dict[str, Any]) -> None:
         if len(self.events) >= self.max_events:
@@ -260,10 +287,12 @@ class P2CommitPhaseCapture:
                 "last_phase": None,
                 "handler": id(handler) if handler is not None else None,
                 "thread": threading.get_ident(),
+                "dispatch_end_ms": None,
                 "dispatch_finished": False,
                 "watchdog_timer": None,
                 "watchdog_token": None,
                 "watchdog_fired": False,
+                "watchdog_stage": 0,
             }
             if handler is not None:
                 self._handler_requests[id(handler)] = ordinal
@@ -328,8 +357,38 @@ class P2CommitPhaseCapture:
             }
             if state["error"]:
                 phases[phase]["status"] = "raised"
+        dispatch_start = phases["dispatch_queue"]["start_ms"]
+        handler_start = phases["handler_entry"]["start_ms"]
+        dispatch_end = request["dispatch_end_ms"]
+        provider = phases["provider"]
+
+        def duration(start: Any, end: Any) -> float | None:
+            if type(start) not in (int, float) or type(end) not in (int, float):
+                return None
+            return round(end - start, 3)
+
+        durations = {
+            # This boundary is RuntimeHandler._dispatch entry, after the
+            # BaseHTTPRequestHandler has accepted the request.  Socket/client
+            # arrival and server accept time are outside this process and stay
+            # UNKNOWN rather than being inferred from the handler span.
+            "dispatch_queue_ms": duration(dispatch_start, handler_start),
+            "handler_ms": duration(handler_start, dispatch_end),
+            "dispatch_total_ms": duration(dispatch_start, dispatch_end),
+            "provider_wall_ms": duration(provider["start_ms"], provider["end_ms"]),
+            "response_write_wall_ms": duration(
+                phases["http_response"]["start_ms"], phases["http_response"]["end_ms"]),
+            "execution_lock_wait_ms": None,
+            "caller_receipt_ms": None,
+        }
         self._write({"schema_version": 1, "request": request["ordinal"], "phase": "summary",
                      "last_phase": request["last_phase"] or "UNKNOWN", "phases": phases,
+                     "durations_ms": durations,
+                     "unknown_boundaries": {
+                         "client_request_to_server_receive": "outside Runtime process",
+                         "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+                         "caller_receipt": "outside Runtime process",
+                     },
                      "truncated": self.truncated})
 
     @staticmethod
@@ -338,6 +397,7 @@ class P2CommitPhaseCapture:
         qualname = frame.f_code.co_qualname
         if module == "runtime_protocol.server":
             return {
+                "RuntimeHandler._dispatch": "dispatch_scope",
                 "RuntimeHandler._timeline_commit": "handler_entry",
                 "RuntimeHandler._authorize_timeline_commit": "authorization",
                 "RuntimeHandler._send": "http_response",
@@ -372,20 +432,32 @@ class P2CommitPhaseCapture:
             if previous is not None and previous.get("phase") == "coordinator_admission":
                 return self._trace
             phase = self._phase(frame)
-            if phase == "handler_entry":
-                ordinal = self._new_request(handler=frame.f_locals.get("self"), emit_handler=True)
+            if phase == "dispatch_scope":
+                handler = frame.f_locals.get("self")
+                path = getattr(handler, "path", "") if handler is not None else ""
+                command = getattr(handler, "command", None) if handler is not None else None
+                if (command != "POST" or not isinstance(path, str)
+                        or "/timelines/" not in path.split("?", 1)[0]
+                        or not path.split("?", 1)[0].endswith("/commit")):
+                    return None
+                ordinal = self._new_request(handler=handler)
                 if ordinal is None:
                     return None
+                self._begin(ordinal, "dispatch_queue")
+                self._arm_watchdog(ordinal)
+                self._frames[id(frame)] = {"phase": "request_scope", "ordinal": ordinal}
+                return self._trace
+            if phase == "handler_entry":
+                handler = frame.f_locals.get("self")
+                ordinal = self._request_for_frame(frame)
+                if ordinal is None:
+                    ordinal = self._new_request(handler=handler, emit_handler=True)
+                if ordinal is None:
+                    return None
+                if self._requests[ordinal]["phases"]["dispatch_queue"]["count"]:
+                    self._end(ordinal, "dispatch_queue")
+                self._begin(ordinal, phase)
                 self._frames[id(frame)] = {"phase": phase, "ordinal": ordinal, "error": False}
-                parent = frame.f_back
-                while parent is not None:
-                    if (parent.f_globals.get("__name__") == "runtime_protocol.server"
-                            and parent.f_code.co_qualname == "RuntimeHandler._dispatch"):
-                        self._frames[id(parent)] = {"phase": "request_scope", "ordinal": ordinal}
-                        parent.f_trace_lines = False
-                        parent.f_trace = self._trace
-                        break
-                    parent = parent.f_back
                 return self._trace
             if (phase is None
                     and frame.f_code.co_qualname != "CommitExecutionCoordinator.execute"
@@ -420,6 +492,9 @@ class P2CommitPhaseCapture:
         if phase == "request_scope":
             if event == "return":
                 request = self._requests[ordinal]
+                request["dispatch_end_ms"] = self._at_ms()
+                if request["phases"]["dispatch_queue"]["end_ms"] is None:
+                    self._end(ordinal, "dispatch_queue", error=state.get("error", False))
                 with self._lock:
                     request["dispatch_finished"] = True
                 self._cancel_watchdog(request)

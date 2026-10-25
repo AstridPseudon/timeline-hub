@@ -118,7 +118,8 @@ def test_capture_allowlist_redacts_by_not_retaining_transport_values(tmp_path):
     assert "not-allowlisted" not in serialized
     assert "error" not in serialized or '"error":true' not in serialized
     assert all(set(event) <= {"schema_version", "request", "phase", "state", "at_ms", "count",
-                              "status", "last_phase", "phases", "truncated"}
+                              "status", "last_phase", "phases", "durations_ms",
+                              "unknown_boundaries", "truncated"}
                for event in capture.events)
 
 
@@ -224,6 +225,8 @@ def test_mounted_http_commit_route_and_provider_are_observed(service, tmp_path):
     summaries = _summary(capture)
     assert len(summaries) == 1
     phases = summaries[0]["phases"]
+    assert phases["dispatch_queue"]["status"] == "observed"
+    assert phases["dispatch_queue"]["end_ms"] is not None
     for phase in ("handler_entry", "authorization", "coordinator_admission", "coordinator_lock",
                   "provider", "accept", "receipt", "http_response"):
         assert phases[phase]["status"] == "observed", (phase, summaries)
@@ -231,6 +234,15 @@ def test_mounted_http_commit_route_and_provider_are_observed(service, tmp_path):
         assert phases[phase]["count"] == 1
         assert phases[phase]["end_ms"] is not None
     assert summaries[0]["last_phase"] == "http_response"
+    durations = summaries[0]["durations_ms"]
+    assert durations["dispatch_queue_ms"] is not None
+    assert durations["handler_ms"] is not None
+    assert durations["dispatch_total_ms"] is not None
+    assert durations["provider_wall_ms"] == pytest.approx(
+        phases["provider"]["end_ms"] - phases["provider"]["start_ms"], abs=0.001)
+    assert durations["execution_lock_wait_ms"] is None
+    assert durations["caller_receipt_ms"] is None
+    assert summaries[0]["unknown_boundaries"]["client_request_to_server_receive"] == "outside Runtime process"
     serialized = (tmp_path / "mounted-phase.jsonl").read_text()
     assert body["project_id"] not in serialized
     assert "mounted-phase" not in serialized
@@ -363,6 +375,40 @@ def test_watchdog_captures_a_genuine_pending_handler_with_all_python_threads(tmp
     assert capture.watchdog_sink.stat().st_mode & 0o777 == 0o600
     assert capture.watchdog_sink.read_text() == "Thread watchdog pending\n"
     assert _summary(capture)[0]["phases"]["handler_entry"]["status"] == "observed"
+
+
+def test_five_second_watchdog_schedules_one_bounded_thirty_second_followup(tmp_path):
+    timers = []
+    dumps = []
+
+    def timer_factory(delay, callback):
+        timer = _FakeTimer(delay, callback)
+        timers.append(timer)
+        return timer
+
+    def dump_traceback(*, file, all_threads):
+        dumps.append(all_threads)
+        file.write("bounded pending\n")
+
+    capture = P2CommitPhaseCapture(
+        tmp_path / "five-thirty.jsonl", enabled=True, watchdog_seconds=5,
+        timer_factory=timer_factory, dump_traceback=dump_traceback,
+    )
+    capture.start()
+    try:
+        ordinal = capture._new_request(handler=object(), emit_handler=True)
+        assert ordinal == 1
+        timers[0].fire()
+        assert len(timers) == 2
+        assert timers[0].delay == 5
+        assert timers[1].delay == 25
+        timers[1].fire()
+    finally:
+        capture.stop()
+
+    assert dumps == [True, True]
+    assert capture.watchdog_captures == 2
+    assert timers[1].cancelled is False
 
 
 def test_watchdog_finish_raised_disabled_and_late_callbacks_are_safe(tmp_path):
