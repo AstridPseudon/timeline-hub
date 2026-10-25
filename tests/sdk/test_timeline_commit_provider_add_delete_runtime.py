@@ -145,8 +145,11 @@ def test_native_add_delete_one_publication_inverse_redo_restart_reservations(tmp
                 break
             if net_zero:
                 inverse_record = history()['items'][-1]['records']['commands'][0]
-                assert inverse_record['writes'] == [{'ref': ref, 'path': [], 'before': ABSENT, 'after': ABSENT}]
-                assert inverse_record['created'] == []
+                assert inverse_record['writes'] == [
+                    {'ref': ref, 'path': [], 'before': ABSENT, 'after': present(row)},
+                    {'ref': ref, 'path': [], 'before': present(row), 'after': ABSENT},
+                ]
+                assert inverse_record['created'] == [created]
         assert next(entry for entry in history()['items'] if entry['publication_id'] == accepted['receipt']['receipt_id'])['records']['commands'] == records
         if net_zero:
             # The authored state never moved, but the accepted absent-to-absent
