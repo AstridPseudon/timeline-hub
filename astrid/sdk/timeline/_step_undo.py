@@ -346,6 +346,16 @@ def inverse_stages(records):
                 if not nested or native_only:
                     # Native-only history predates canonical effect partitions.
                     # Keep its whole native reversal without inventing v2 facts.
+                    if (step is not None and len(chosen) == 1
+                            and chosen[0]['command']['op'] == 'timeline.restore'
+                            and not any(write['ref'].startswith('parent/clip:')
+                                        and write['path'] in (['at'], ['hold'])
+                                        for write in chosen[0].get('derived_writes', []))):
+                        from ._doc_patch import inverse_changes
+
+                        # A fresh diff need not reverse sibling effect order.
+                        # The effect projector checks this against execution.
+                        chosen = [{**chosen[0], '_inverse_effects': inverse_changes(step['patch'])}]
                     yield entry.get('publication_id'), step['id'] if step is not None else None, chosen
                     continue
                 record = chosen[0]
