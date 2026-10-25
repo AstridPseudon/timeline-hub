@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
-import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, configureRuntimeLogEnv, D66_PHASE_CAPTURE_HELPER_ENV, D66_PHASE_CAPTURE_HELPER_SHA256_ENV, diagnosticHelperIdentity, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
+import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, configureRuntimeLogEnv, D66_ELEMENT_VERIFICATION_ENV, D66_PHASE_CAPTURE_HELPER_ENV, D66_PHASE_CAPTURE_HELPER_SHA256_ENV, diagnosticHelperIdentity, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const require = createRequire(import.meta.url);
 const state = (overrides = {}) => ({
@@ -28,6 +28,12 @@ test('D66 full P2 launch retains bounded Runtime phase logs while other suites s
   assert.equal(launch('p2', 'readiness').D66_RUNTIME_PHASE_LAUNCH_ORDINAL, undefined);
   assert.equal(launch('p2-element').D66_RUNTIME_LOG_DIR, path.join('/tmp/d66-p2-element-launch', 'runtime-private'));
   assert.equal(launch('p2-element').D66_RUNTIME_PHASE_LAUNCH_ORDINAL, '2');
+  assert.equal(launch('p2-element').D66_ELEMENT_VERIFICATION_ONLY, undefined);
+  assert.equal(launch('p2-element-verify').D66_RUNTIME_LOG_DIR, path.join('/tmp/d66-p2-element-verify-launch', 'runtime-private'));
+  assert.equal(launch('p2-element-verify').D66_RUNTIME_PHASE_LAUNCH_ORDINAL, '2');
+  assert.equal(launch('p2-element-verify').D66_ELEMENT_VERIFICATION_ONLY, '1');
+  assert.equal(launch('p2-element-verify', 'readiness').D66_ELEMENT_VERIFICATION_ONLY, undefined);
+  assert.throws(() => playwrightLaunchEnv({ suite: suites['p2-element-verify'], suiteName: 'p2-element', output: '/tmp/invalid-verification-route', junit, stage: 'p2-element' }), /only supported for p2-element-verify/);
   assert.equal(launch('p1').D66_RUNTIME_LOG_DIR, undefined);
   assert.equal(launch('p3').D66_RUNTIME_LOG_DIR, undefined);
   assert.notEqual(launch('p2').D66_RUNTIME_LOG_DIR, launch('p2-element').D66_RUNTIME_LOG_DIR);
@@ -247,6 +253,51 @@ test('D102 actual launcher/start/spawn/stop retains startup and native-seed fail
   t.diagnostic(`current launcher SHA256 ${createHash('sha256').update(newSource).digest('hex')}`);
 });
 
+test('D127d verification arm retains private streams while scrubbing inherited Runtime measurement env', async () => {
+  const f = serviceFixture();
+  const launcherSource = readFileSync(new URL('./d66-plain-stack.mjs', import.meta.url), 'utf8');
+  const helper = path.join(f.base, 'inherited-helper.py');
+  writeFileSync(helper, 'inherited helper fixture\n');
+  const helperSha256 = createHash('sha256').update(readFileSync(helper)).digest('hex');
+  const launchEnv = playwrightLaunchEnv({
+    suite: suites['p2-element-verify'], suiteName: 'p2-element-verify', output: path.join(f.base, 'launch-output'),
+    junit: { readiness: path.join(f.base, 'readiness.xml'), original: path.join(f.base, 'verify.xml') }, stage: 'p2-element-verify',
+    baseEnv: { [D66_PHASE_CAPTURE_HELPER_ENV]: helper, [D66_PHASE_CAPTURE_HELPER_SHA256_ENV]: helperSha256 },
+  });
+  const control = await runD102LauncherControl(f, {
+    source: launcherSource,
+    failure: 'native-seed',
+    suiteName: 'p2-element-verify',
+    inheritedEnv: {
+      ...launchEnv,
+      D79_HUNG_STACK_EVIDENCE_DIR: undefined,
+      D79_HUNG_STACK_RUN_ID: undefined,
+      ASTRID_P2_COMMIT_PHASE_CAPTURE: '1',
+      ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK: '/tmp/inherited-phase-sink-must-not-leak',
+      [D66_PHASE_CAPTURE_HELPER_ENV]: helper,
+      [D66_PHASE_CAPTURE_HELPER_SHA256_ENV]: helperSha256,
+      ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS: '2',
+    },
+  });
+  assert.equal(control.children.length, 2);
+  for (const { env } of control.children) {
+    assert.equal(env[D66_ELEMENT_VERIFICATION_ENV], undefined);
+    assert.equal(env.ASTRID_P2_COMMIT_PHASE_CAPTURE, undefined);
+    assert.equal(env.ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK, undefined);
+    assert.equal(env.ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER, undefined);
+    assert.equal(env.ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256, undefined);
+    assert.equal(env.ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS, undefined);
+    assert.equal(env.D66_RUNTIME_LOG_DIR, undefined);
+    assert.equal(env.D66_RUNTIME_PHASE_LAUNCH_ORDINAL, undefined);
+    assert.equal(env.PYTHONPATH.includes('scripts/testing'), false);
+  }
+  assert.equal(statSync(control.runtimeLogDir).mode & 0o777, 0o700);
+  for (const stream of ['stdout', 'stderr']) {
+    assert.equal(statSync(path.join(control.runtimeLogDir, `runtime.${stream}.log`)).mode & 0o777, 0o600);
+  }
+  assert.equal(readFileSync(path.join(control.runtimeLogDir, 'runtime.stderr.log'), 'utf8'), control.stderr);
+});
+
 test('D105 actual two-start production caller keeps independent private evidence', async () => {
   const f = serviceFixture();
   const launcherSource = readFileSync(new URL('./d66-plain-stack.mjs', import.meta.url), 'utf8');
@@ -310,6 +361,11 @@ test('D83 focused P2 descriptors select one exact original test each and retain 
     assert.equal(suites[name].grep, grep);
     assert.equal(suites[name].retainRuntimeLogs, true);
   }
+  assert.deepEqual(suites['p2-element-verify'].files, suites['p2-element'].files);
+  assert.equal(suites['p2-element-verify'].count, suites['p2-element'].count);
+  assert.equal(suites['p2-element-verify'].grep, suites['p2-element'].grep);
+  assert.equal(suites['p2-element-verify'].retainRuntimeLogs, true);
+  assert.equal(suites['p2-element-verify'].verificationOnly, true);
   assert.deepEqual(suites.p2.files, [
     'tests/e2e/local/three-products.p2-popup.spec.ts',
     'tests/e2e/local/three-products.p2-tour.spec.ts',
@@ -424,6 +480,9 @@ test('D78 service recipes select the Runtime watchdog only for the intended P2 r
   assert.equal(watchdog('p2'), '20');
   assert.equal(watchdog('p1'), '');
   assert.equal(watchdog('p3'), '');
+  const verification = serviceRecipe({ name: 'p2-element-verify', pins, checkouts });
+  assert.match(verification, new RegExp(`${D66_ELEMENT_VERIFICATION_ENV}='1'`));
+  assert.match(verification, /ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=''/);
 });
 
 test('D124 requires and carries the reviewed diagnostic helper path and SHA256 without changing the default helper route', () => {

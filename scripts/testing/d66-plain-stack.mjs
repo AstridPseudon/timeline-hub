@@ -23,6 +23,12 @@ export const suites = {
     grep: 'P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$',
     retainRuntimeLogs: true,
   },
+  'p2-element-verify': {
+    files: ['tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 1,
+    grep: 'P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$',
+    retainRuntimeLogs: true,
+    verificationOnly: true,
+  },
   'p2-register-asset': {
     files: ['tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 1,
     grep: 'P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$',
@@ -76,6 +82,7 @@ const checkoutPrefixes = { app: 'app-pin', agent: 'agt-pin', runtime: 'rt-pin', 
 const P2_PHASE_CAPTURE_HELPER = 'tests/helpers/p2_commit_phase_capture.py';
 export const D66_PHASE_CAPTURE_HELPER_ENV = 'D66_P2_COMMIT_PHASE_CAPTURE_HELPER';
 export const D66_PHASE_CAPTURE_HELPER_SHA256_ENV = 'D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256';
+export const D66_ELEMENT_VERIFICATION_ENV = 'D66_ELEMENT_VERIFICATION_ONLY';
 const ASTRID_PHASE_CAPTURE_HELPER_ENV = 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER';
 const ASTRID_PHASE_CAPTURE_HELPER_SHA256_ENV = 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256';
 
@@ -287,6 +294,7 @@ function shellQuote(value) {
 }
 
 export function playwrightLaunchEnv({ suite, suiteName, output, junit, stage, baseEnv = process.env }) {
+  assert(!suite.verificationOnly || suiteName === 'p2-element-verify', 'D66 verification arm is only supported for p2-element-verify');
   const env = configureRuntimeLogEnv({ suite, output, phaseLaunchOrdinal: stage === suiteName ? 2 : 1, env: {
     ...baseEnv,
     PLAYWRIGHT_OUTPUT_DIR: path.join(output, stage),
@@ -298,6 +306,8 @@ export function playwrightLaunchEnv({ suite, suiteName, output, junit, stage, ba
     env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
     env.D66_RUNTIME_PHASE_LAUNCH_ORDINAL = '2';
   }
+  delete env[D66_ELEMENT_VERIFICATION_ENV];
+  if (suite.verificationOnly && stage === suiteName) env[D66_ELEMENT_VERIFICATION_ENV] = '1';
   if (stage === suiteName) {
     env.D79_HUNG_STACK_EVIDENCE_DIR = path.join(output, 'hung-request-stacks');
     env.D79_HUNG_STACK_RUN_ID = `${suiteName}-${stage}`;
@@ -379,6 +389,7 @@ export function serviceRecipe({ name, pins, checkouts, preflight = false, diagno
     env.push(`${D66_PHASE_CAPTURE_HELPER_ENV}=${shellQuote(reviewedHelper.path)}`);
     env.push(`${D66_PHASE_CAPTURE_HELPER_SHA256_ENV}=${shellQuote(reviewedHelper.sha256)}`);
   }
+  if (suites[name].verificationOnly) env.push(`${D66_ELEMENT_VERIFICATION_ENV}='1'`);
   const watchdogSeconds = name === 'p2-element' ? '2' : name === 'p2' ? '20' : '';
   env.push(`ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=${shellQuote(watchdogSeconds)}`);
   return `${env.join(' ')} ${shellQuote(node)} --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs ${shellQuote(name)}${preflight ? ' --preflight' : ''}`;
@@ -703,6 +714,9 @@ export async function main(sourceOptions = {}) {
   const [name, mode = 'run'] = process.argv.slice(2);
   assert(suites[name], 'choose p1, p2, p2-element or p3');
   assert(['run', '--collect', '--launch', '--submit', '--preflight'].includes(mode), 'unknown mode');
+  const verificationOnly = suites[name].verificationOnly === true;
+  assert((process.env[D66_ELEMENT_VERIFICATION_ENV] === '1') === verificationOnly,
+    'D66 element verification requires the explicit p2-element-verify route');
   if (mode === '--submit') return submit(name);
   const suite = suites[name];
   // Collection is a source-independent descriptor check; both service modes verify the same captured inputs.
