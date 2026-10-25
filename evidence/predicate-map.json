@@ -1,0 +1,21 @@
+{
+  "source_review": "PASS",
+  "predicates": {
+    "authored_inputs": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:25-36, 45-161"},
+    "topology_and_opaque_values": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:25-36, 50-88"},
+    "source_pins_and_full_closure": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:60-71, 87-88"},
+    "realm_head_and_auth_boundary": {"status": "source-repaired", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:168-190, 207-215"},
+    "selected_media_and_fork": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:40-42, 218-239"},
+    "cli_and_command_shape": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:196-210"},
+    "inverse_and_undo": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:99-104"},
+    "retry_and_dry_run": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:224-233"},
+    "history_and_receipt_assertions": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:224-240"},
+    "refusal_and_no_write": {"status": "conserved", "evidence": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:91-161"},
+    "ordinary_sheet_four_cases": {"status": "unchanged_unapplied", "evidence": "tests/editing_conformance/test_native_sheet_ordinary_runtime.py:280-286"}
+  },
+  "changed_setup_only": {
+    "normal_daemon_provider": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:168-185",
+    "authenticated_real_client": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:186-190, 215",
+    "authorization": "tests/editing_conformance/test_occurrence_fork_source_baseline.py:207-210"
+  }
+}

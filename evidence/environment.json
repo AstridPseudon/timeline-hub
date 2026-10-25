@@ -1,0 +1,24 @@
+{
+  "agent": {
+    "checkout": "/home/user/work/wt/agt-F-D134-preflight5-review-2042",
+    "commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+    "tree": "b3638fbf9edb2b2104a89a7e7e4400cac707e471",
+    "clean": true
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "module_origins": {
+      "agent": "/home/user/work/wt/agt-F-D134-preflight5-review-2042",
+      "runtime_protocol": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol"
+    }
+  },
+  "disk": {"available_bytes_before_integration_admission": 6142504960, "fresh_requirement_bytes": 5000000000},
+  "central_service": {
+    "active_competing_body": false,
+    "exact_selector_route": "unavailable",
+    "available_matching_suite_runtime": "missing /home/user/work/wt/rt-pin-8ea0766f"
+  }
+}

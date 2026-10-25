@@ -1,0 +1,32 @@
+{
+  "task": "D134 independent protected review",
+  "verdict": "PASS_SOURCE_REVIEW",
+  "functional_outcome": "UNVERIFIED_INTEGRATION_PREREQUISITE_BLOCKED",
+  "candidate": {
+    "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+    "tree": "b3638fbf9edb2b2104a89a7e7e4400cac707e471",
+    "changed_files": [
+      "tests/editing_conformance/test_occurrence_fork_source_baseline.py"
+    ]
+  },
+  "source_review": {
+    "status": "PASS",
+    "ordinary_fixture": "UNCHANGED_UNAPPLIED",
+    "assertion_bodies": "UNCHANGED",
+    "provider_path": "normal RuntimeDaemon authoring_profile=astrid startup",
+    "client_path": "AstridClient.open authenticated daemon connection passed to existing seed helper",
+    "forbidden_authority_changes": "NONE_FOUND"
+  },
+  "integration": {
+    "status": "NOT_RUN",
+    "reason": "central service has no admissible exact-selector suite bound to the required rt-pin-ab1e4f61 checkout; available matching suite names removed rt-pin-8ea0766f",
+    "retry": "REFUSED_BY_GUARD"
+  },
+  "runtime": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "clean": true
+  }
+}
