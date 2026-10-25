@@ -1,0 +1,46 @@
+{
+  "verdict": {
+    "source": "PASS",
+    "security": "PASS",
+    "behavior": "PASS_BOUNDED_TARGETED",
+    "release": "HELD"
+  },
+  "findings": [
+    {
+      "id": "D136a-F1",
+      "severity": "resolved",
+      "title": "Open theme canvas is no longer typed",
+      "resolution": "validation.py no longer calls strict FPS validation for theme_overrides.visual.canvas; open canvas forms pass unchanged. Strict policy remains on typed parent and child output FPS paths."
+    },
+    {
+      "id": "D136a-F2",
+      "severity": "resolved",
+      "title": "Complete open-path JSON form census",
+      "resolution": "The 23-form matrix covers every JSON canvas category requested, including non-object and arbitrary-object canvas values, null/bool/string/arbitrary-map/nonpositive/malformed/rational-pair fps values. All 46 accepted/preview provider cases passed with atomic result handling and retained authored bytes."
+    },
+    {
+      "id": "D136a-F3",
+      "severity": "resolved",
+      "title": "Production timing now preserves upstream fallback result",
+      "resolution": "The registered production timing view uses positive scalar FPS only, otherwise 30, with existing Python bool semantics (true -> 1). Captured compile_timing results matched this effective FPS for every timing row in all 46 matrix cases; [30000,1001] and the rational map compile at 30 on the open path."
+    },
+    {
+      "id": "D136a-F4",
+      "severity": "resolved",
+      "title": "Regression evidence covers the full requested scope",
+      "resolution": "The additive D136a test covers 21 forms in both accepted and dry-run modes; the independent matrix adds canvas number/empty/arbitrary-map forms and captures actual compiled results. Nearest D12, typed validation, refusal, privacy/read/no-write atomic, and rational half-window controls remain green."
+    }
+  ],
+  "retained_controls": [
+    "No authored input conversion or normalization",
+    "No schema/generated/protocol/Runtime/App source changes",
+    "Typed output FPS invalid values remain refused atomically",
+    "Original App f53b projection and nine setup-error result remain unchanged and unclaimed",
+    "No credentials, hub writes, Git internals, livekit, permission writes, fixture bodies, or deletes"
+  ],
+  "qualification_boundary": {
+    "source_security": "qualified bounded PASS",
+    "functional": "qualified bounded PASS on source/provider matrix only",
+    "not_claimed": ["normal Agent intake", "App original9 functional qualification", "genuine batch proof", "full/core/browser/native/P4/collector/acquisition/build/ZIP"]
+  }
+}

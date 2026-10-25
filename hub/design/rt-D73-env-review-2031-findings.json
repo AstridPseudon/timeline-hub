@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.agent.rt_d73_env_independent_findings.v1",
+  "verdict": "PASS_SOURCE_ONLY",
+  "findings": [
+    {
+      "id": "D73-ENV-1",
+      "severity": "pass",
+      "detail": "Both launcher-owned PYTHONNOUSERSITE=1 exports are replaced by unset PYTHONNOUSERSITE. The real Remotion probe rejects the inherited override and accepts the supported clear environment."
+    },
+    {
+      "id": "D73-ENV-2",
+      "severity": "pass",
+      "detail": "Focused controls invoke the actual production launcher path, preserve exact private Runtime/source-root/Remotion/Node/PYTHONPATH/cwd bindings, preserve an unrelated variable, reach the body once, and return exit 17 unchanged."
+    },
+    {
+      "id": "D73-ENV-3",
+      "severity": "pass",
+      "detail": "Poisoned Agent SHA is rejected before the body; body invocation and body evidence files remain zero."
+    },
+    {
+      "id": "D73-ENV-4",
+      "severity": "pass",
+      "detail": "Frozen a4e016 launcher blob equals the base old launcher blob byte-for-byte; candidate applicability is limited to explicit owner adoption and does not retarget captured tuple 18455."
+    },
+    {
+      "id": "D73-ENV-5",
+      "severity": "boundary",
+      "detail": "No frozen tuple body, provider, browser, socket, Remotion build, acquisition/install, full suite, or production request was run; no live qualification is claimed."
+    }
+  ],
+  "not_used": [
+    "source-2000 recipe",
+    "host_bootstrap.py workaround",
+    "remotion_runtime.py guard change",
+    "subprocess_env.py policy change",
+    "manual frozen tuple retarget",
+    "dispatcher or installed-entrypoint change"
+  ]
+}

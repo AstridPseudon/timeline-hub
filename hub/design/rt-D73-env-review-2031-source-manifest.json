@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.agent.rt_d73_env_independent_review.v1",
+  "task": "rt-D73-env-review-2031",
+  "verdict": "PASS_SOURCE_ONLY",
+  "scope": "launcher environment source/control review",
+  "review_source": {
+    "agent_commit": "d70bb370f396f137933d3b8ae3b194588e96e2b1",
+    "agent_tree": "574c11a605d5862d7458cbd49d1a1c59d995b325",
+    "launcher_path": "tools/p4-d73-pinned-launch.sh",
+    "launcher_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "focused_test_path": "tests/sdk/test_p4_d73_pinned_launcher.py",
+    "focused_test_sha256": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600",
+    "source_delta": "Exactly two exports changed to unset PYTHONNOUSERSITE; no uncommitted launcher change."
+  },
+  "base_and_frozen_source": {
+    "base_agent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "base_agent_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "base_launcher_blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "base_launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "frozen_agent_ref": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "frozen_agent_tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+    "frozen_launcher_blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "frozen_launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "frozen_equals_base_launcher": true
+  },
+  "frozen_tuple": {
+    "agent": {"commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186", "tree": "60d45288145414ee4702fcce61af7c7810c2a3df"},
+    "runtime": {"commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "app": {"commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7", "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "applicability": {
+    "normal_current": "Source-applicable to the current launcher owner checkout; production dispatcher and installed entrypoint are unchanged.",
+    "frozen_d73": "Source-applicable only through an explicit Agent-owner adoption of this launcher blob; captured frozen tuple remains unchanged until a new manifest is qualified.",
+    "unsupported_recipe": "source-2000 recipe not used",
+    "captured_request": "18455 not retargeted"
+  }
+}

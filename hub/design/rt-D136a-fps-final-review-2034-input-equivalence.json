@@ -1,0 +1,38 @@
+{
+  "task": "D136a",
+  "path": "parent.config.theme_overrides.visual.canvas",
+  "authority": "captured upstream 886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55 plus current production dispatcher",
+  "all_cases": "Each row was run through the existing provider dispatcher in both accepted and dry-run modes. The actual compile_timing TimingResult was captured; every timing row had the stated effective FPS. Authored canvas JSON was compared byte-for-byte with the input.",
+  "modes": ["accepted", "dry_run/preview"],
+  "matrix": [
+    {"id": "canvas-null", "canvas": null, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "canvas-bool", "canvas": true, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "canvas-number", "canvas": 7, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "canvas-string", "canvas": "canvas", "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "canvas-list", "canvas": [], "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "canvas-map-empty", "canvas": {}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "canvas-map-arbitrary", "canvas": {"arbitrary": 1}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-null", "canvas": {"fps": null}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-true", "canvas": {"fps": true}, "upstream_effective_fps": 1, "candidate_status": "accepted", "compiled_effective_fps": 1},
+    {"id": "fps-false", "canvas": {"fps": false}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-string", "canvas": {"fps": "30"}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-arbitrary-map", "canvas": {"fps": {"arbitrary": 1}}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-zero", "canvas": {"fps": 0}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-negative", "canvas": {"fps": -1}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-empty-array", "canvas": {"fps": []}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-one-array", "canvas": {"fps": [30000]}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-three-array", "canvas": {"fps": [30000, 1001, 1]}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-noninteger-array", "canvas": {"fps": [30000.0, 1001]}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-zero-pair", "canvas": {"fps": [30000, 0]}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-negative-pair", "canvas": {"fps": [-30000, 1001]}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-rational-list", "canvas": {"fps": [30000, 1001]}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-rational-map", "canvas": {"fps": {"numerator": 30000, "denominator": 1001}}, "upstream_effective_fps": 30, "candidate_status": "accepted", "compiled_effective_fps": 30},
+    {"id": "fps-positive-scalar", "canvas": {"fps": 24}, "upstream_effective_fps": 24, "candidate_status": "accepted", "compiled_effective_fps": 24}
+  ],
+  "retention": "true for all 46 cases",
+  "typed_controls": {
+    "parent_config_output_fps": "strict; malformed list, zero rational and other invalid declarations refuse atomically",
+    "child_internal_output_fps": "strict/rational-compatible; nearest D12 controls remain green",
+    "typed_open_path_coercion": "none"
+  }
+}

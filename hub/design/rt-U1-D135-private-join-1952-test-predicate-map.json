@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "targeted_tests_not_run_due_to_disk_threshold",
+  "preserved_upstream_predicates": {
+    "tests/test_process_control.py": ["strict default", "sandbox setting validation", "PID fallback identity check", "member-walk ordering and bounded rescans", "probe/announcement behavior"],
+    "tests/test_platform_signaling.py": ["needs_real_pidfd marks only real Linux pidfd tests", "strict pidfd wrapper fallback and identity refusal tests remain"],
+    "tests/test_dirfd_ancestor_walk.py": ["Linux O_PATH ancestor walk coverage retained"],
+    "tests/test_door_routes.py": ["PUT project selection", "forbidden selection methods", "existing timeline commit/history/auth routes"],
+    "tests/test_managed_output_public_api.py": ["inline settled object uses output filename", "existing logical port behavior remains"],
+    "tests/process_groups.py": ["process-group ownership and cleanup helpers remain"],
+    ".github/workflows/ci.yml": ["sandbox-process-control job", "Windows and worker-handoff families"],
+    "tests/lanes.py": ["needs_real_pidfd", "Linux O_PATH declaration", "existing lane predicates"]
+  },
+  "protected_local_tests": [
+    "tests/test_timeline_commit_contract.py",
+    "tests/test_timeline_legacy_authority.py",
+    "tests/test_door_routes.py",
+    "tests/test_managed_output_public_api.py",
+    "tests/test_platform_signaling.py"
+  ],
+  "no_test_weakening": true,
+  "no_invisible_skips": true
+}

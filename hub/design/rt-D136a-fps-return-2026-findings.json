@@ -1,0 +1,67 @@
+{
+  "task": "D136a",
+  "verdict": {
+    "source": "PASS",
+    "behavior": "PASS_BOUNDED_TARGETED",
+    "evidence": "PASS_BOUNDED",
+    "release": "NOT_CLAIMED"
+  },
+  "resolved_findings": [
+    {
+      "id": "D136a-F1",
+      "status": "resolved",
+      "resolution": "Removed strict collection and object-shape validation from the open theme canvas namespace; typed output and child output FPS remain strict."
+    },
+    {
+      "id": "D136a-F2",
+      "status": "resolved",
+      "resolution": "Finite open-form matrix now accepts non-object canvas and every listed canvas.fps form through the production provider in accepted and dry-run modes."
+    },
+    {
+      "id": "D136a-F3",
+      "status": "resolved",
+      "resolution": "Production timing uses upstream positive-scalar/fallback-30 semantics; True remains the existing positive Python predicate case and resolves to 1."
+    },
+    {
+      "id": "D136a-F4",
+      "status": "resolved",
+      "resolution": "Additive provider tests cover the finite complete open-form table, effective FPS, accepted/dry-run replies, and authored-byte retention."
+    }
+  ],
+  "open_matrix": {
+    "nonobject_canvas": [null, true, "canvas", []],
+    "canvas_fps_fallback_30": [null, false, "30", {"arbitrary": 1}, 0, -1, [], [30000], [30000, 1001, 1], [30000.0, 1001], [30000, 0], [-30000, 1001], [30000, 1001], {"numerator": 30000, "denominator": 1001}],
+    "canvas_fps_scalar": {"true": 1, "24": 24},
+    "production_modes": ["accepted", "dry_run"],
+    "authored_bytes_retained": true
+  },
+  "strict_controls": {
+    "typed_output_fps": "retained and green",
+    "typed_child_output_fps": "retained and green",
+    "read_no_write_previous_value_privacy_guards": "nearest targeted controls green",
+    "original_nine": "not run"
+  },
+  "same_introducing_commit_audit": {
+    "commit": "6f4baa07603776840f0a78cc0cf459831bc026af",
+    "open_path": {
+      "old_rejections": [
+        "non-object canvas values",
+        "null/bool/string/mapping/zero/negative canvas.fps",
+        "wrong-length/non-integer/zero/negative/rational-pair canvas.fps"
+      ],
+      "now": "accepted and upstream fallback behavior tested"
+    },
+    "typed_paths": {
+      "parent.config.output.fps": "strict parser retained",
+      "shots[*].internal_timeline.output.fps": "strict parser retained",
+      "missing_typed_declaration_with_baseline": "strict location guard retained"
+    },
+    "unrelated_paths": "not changed"
+  },
+  "limits": {
+    "five_gb_body": "NOTRUN: free space 4,576,248 KiB below 4.6 GB floor",
+    "full_suite": "NOTRUN by task rule",
+    "app_original_nine": "NOTRUN",
+    "runtime_app_live_browser_socket": "NOTRUN"
+  }
+}

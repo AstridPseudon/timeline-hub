@@ -1,0 +1,54 @@
+{
+  "schema": "timeline.agent.rt_d73_control_protected_review.v1",
+  "task": "rt-D73-control-protected-review-2036",
+  "verdict": "PASS_SOURCE_ONLY",
+  "scope": "Independent protected review of the revised D73 launcher controls; no product-source changes.",
+  "review_head": {
+    "commit": "375c773449b1c6b477f10c1daff1d9f4704208a2",
+    "tree": "11e5430502ff313f298522b1781811abd11ecd50",
+    "changed_path": "tests/sdk/test_p4_d73_pinned_launcher.py"
+  },
+  "author_source": {
+    "commit": "d70bb370f396f137933d3b8ae3b194588e96e2b1",
+    "tree": "574c11a605d5862d7458cbd49d1a1c59d995b325",
+    "launcher_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+  },
+  "pre_d73_base": {
+    "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1"
+  },
+  "source_delta": {
+    "launcher": "Exactly two lines changed: export PYTHONNOUSERSITE=1 became unset PYTHONNOUSERSITE in the preflight and body child shells.",
+    "from_author_source_to_review_head": ["tests/sdk/test_p4_d73_pinned_launcher.py"],
+    "outside_owned_test": "No source path, old predicate, dispatcher, installed entrypoint, host guard, D130 path, or public protocol changed."
+  },
+  "focused_test": {
+    "path": "tests/sdk/test_p4_d73_pinned_launcher.py",
+    "blob": "8746ff6004ce1d49efbaff4408ef37e08714bc7f",
+    "sha256": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600",
+    "actual_caller": "The test invokes the worktree's tools/p4-d73-pinned-launch.sh directly; it does not copy or reimplement the launcher.",
+    "controls": [
+      "Inherited PYTHONNOUSERSITE=1 is absent from both preflight interpreter invocations and the dry-run body shell.",
+      "Private Runtime/source-root/Remotion/Node/PYTHONPATH/cwd bindings and an unrelated variable are preserved.",
+      "Body is reached exactly once and returns exit 17 unchanged.",
+      "Poisoned Agent SHA is rejected before body invocation and body evidence files remain absent."
+    ]
+  },
+  "frozen_source_reference": {
+    "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "agent_tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+    "launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "launcher_equals_pre_d73_base": true
+  },
+  "adoption": {
+    "mode": "Owner-controlled operational adoption only",
+    "plan": [
+      "Adopt the author source launcher blob through the existing Agent dispatcher and installed entrypoint flow.",
+      "Generate a new manifest for the adopted launcher and the exact four-repository source/lock/schema tuple; do not retarget captured request 18455.",
+      "Run the separately authorized live launcher/body qualification before claiming production admission.",
+      "Keep Product host guard, D130, D137 prerequisite status, credentials, and public protocol unchanged."
+    ]
+  }
+}

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T20:39:55Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 3m -->
-# runtime board, 2026-10-25T20:22:52Z
+<!-- main | 2026-10-25T20:44:30Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 0m -->
+# runtime board, 2026-10-25T20:43:37Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -469,28 +469,33 @@
 
 
 | OPS-D137-stderr | Preserve private stderr after rollback | Luna | Actual Agent request result | review | Return2018; review2026 PASS; installer2031 PASS | Source44+1 independentPASS; real Store cleanup retains logs. Installed4435 exact; actual child remains unqualified. | PASS source/security | 0c4170e /4435d44 |
-| OPS-D137-install | Install qualified maker through CAS | Luna | Source/security PASS | merged | rt-OPS-D137-CAS-install-2031 PASS | Installed4435 exact; backup0857 retained, readback and installedlogging PASS. No child acceptance yet. | Independent2026 PASS | Installed4435d44 |
-| OPS-D137-real-child | Build one genuine Agent child | Agent Luna | Installed received kit | ready | Agent sole receiving venue; peer2035 | ONE a4e016/5e9ad request after received4435 check, then ship-grade core if built. Farm follows Agent actual result. | Actual result owed | No real request yet |
-| U1-D135-union-review | Review private upstream source union | Luna | Finished1952 two-parent candidate | review | rt-U1-D135-union-review-2006 | Actual0bb3 includes e319 and dbc. Author tests NOTRUN; union proof still owed. | Independent pending | 0bb3bc45c |
+| OPS-D137-install | Verify installed maker custody | Luna | Actual installed source | merged | Installer2031; independent2036 PASS | Exact4435 regular0755, source and predecessor verified; guards unchanged. Acceptance remains unverified until real request. | Independent2036 PASS | Installed4435d44 |
+| OPS-D137-real-child | Build one genuine Agent child | Agent Luna | Actual received maker | ready | Agent sole receiving venue; peer2035 | Independent installed2036 PASS; exact4435 regular0755. Agent ONE real request then core if built; no fixture gate. | Source and installed PASS | Installed4435d44 |
+| U1-D135-union-review | Prove private Runtime upstream union | Luna and Farm | Farm exact paired checkouts | review | Source2006 PASS; handoff2041 | Recipe and protected hashes published; Agent32dde/tree81ad paired with Runtime0bb3/tree73d. Six-file functional result owed. | Independent2006 source PASS | 0bb3bc45c |
 | F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
-| D136a-fps-regression | Preserve every open canvas input | Luna | Final exact source/security review | review | Return2026; independent2034 | Candidatec992 author126PASS, open fallback30 preserved. Original9 unchanged; formal gate proof owed. | Prior2021 FAIL retained | c99214a held |
+| D136a-fps-regression | Preserve every open canvas input | Luna | Agent normal intake and original nine | merging | Return2026; final2034 PASS | Independent101 target and45 own PASS; open forms preserve upstream fallback. [Review](../../design/rt-D136a-fps-final-review-2034-report.md) | Independent2034 PASS | c99214a held |
 
-| D73-env | Preserve supported launcher environment | Luna | Independent source review | review | Author2026; reviewer2031 | Two child shells clear inherited variable; two launcher controls PASS. No source adoption or D137 dependency. | Independent active | d70bb /9f668e |
+| D73-env | Preserve supported launcher environment | Luna | Host filing and Agent intake | merging | Author2026; protected2036 PASS | Two child shells unset inherited variable; actual launcher positive and poison controls PASS. No live body claim. | Independent2036 PASS | 375c773449 |
 
-Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and fresh dbc, not merged to integration.
-Core: D13418455 measurement8926PASS190FAIL180ERROR173subtests;1937 custody FAIL, XML/disk witness missing. Host14 prelaunch environment cause independently proved1954; current REG UNVERIFIED. 344 partition Agent2003; no ship credit.
+| D134-inverse7 | Preserve historical inverse purposes | Luna | Authentic current source and records | doing | rt-D134-inverse7-source-2045 | Seven exact cases; source only below 5 GB. No silent pin refresh or weakened custody. | Protected review next | Pending |
+| D134-history5 | Preserve word video and archive purposes | Luna | Authentic current source and records | doing | rt-D134-history5-source-2045 | Five exact cases in three exclusive files; source first. Missing authority remains explicit. | Protected review next | Pending |
+| OPS-D137-installed-custody | Verify exact live maker and backup | Luna | Installed2031 | merged | rt-OPS-D137-installed-review-2036 | Source and installed custody PASS. Real child and core acceptance remain unverified. | Independent2036 PASS | Installed4435d44 |
+
+Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and dbc. No integration merge before D59.
+Core: D13418455 measurement8926 PASS190 FAIL180 ERROR173 subtests; raw XML and full disk witness missing. Reviewed own344 split132 setup,0 proved product,212 unknown. Current REG unverified, no ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element/SWAP. No D59 cut, final build or ZIP.
-Blockers: KIT CHANGE make-child-venv4435d44 — actual installer2031 PASS0755,75503bytes; independent2026 PASS; Agent receiving exacthash then ONErealrequest; Agent real request follows received hash/mode. Fixture gate explicitly withdrawn by owner; branches retained.
-Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
-Blockers: Element — App sole D127c final helper368f and App binder1950 await coupled protected review. No cost author or new body before PASS.
-Blockers: D69 and cut — current ship-grade core, REG0, fullP2, installed render90, final tupleP1-P5, wheel, Windows and build/ZIP remain owed.
-Blockers: ZIP correctness — private U joins and D135 builder guard qualification required. No upstream-only revert permitted. Agent/App own private joins; Runtime independent source union review2006 active.
-Next ready: Agent ONE real request after received4435 check; Farm follows actual result. D136a final review2034 then App original9 receiver. D73 revised control independent2036. Runtime six-file union proof Farm receiving pending.
-D100: App actual corrected27PASS; original9 nine setup errors at finite-number fps. Independent1946 owns exact boundary; no normal source release or fixture rewrite.
-D77: Farm changed child request follows Agent actual D137 result; no Farm fixture bodies/core. Exact applied source and lock handoffs remain qualified.
-Delivery: Current cut integration tuple only, no stale547e proof pin. App16 final1941PASS:14 true conflicts,13semantic/1textual. Old Agent halves reference stale proof pin; new actuala30e census1947 qualified.
-Safety: D130 and prior refusals held. Managers write ORCH boards/briefs/peers only; no direct product/test/pin/Git writes or credentials.
-Disk: Fresh4.688GB; source cap3/stop4GB. Sweep3 removed0; compact packed0 andgzipped3 logs. No eligible ended clean unguarded Runtime trees; target5.2GB unmet. Open raw KEEP retained.
-live 1 / cap 3; queued 2; ready-undispatched 0. D136a review2034, D73 protected2036 and installedcustody2036 owned; no ready unassigned row. D135 installed independentPASS; no unassigned ready source row.
-INBOX consumed through1516465bytes including explicit20:13 D137. Updated20:37Z.
+Blockers: Agent real child — installed maker4435d44 independently verified2036; Agent ONE received-kit real request then ship-grade core if built. Farm D77 follows Agent actual result. No fixture gate.
+Blockers: SWAP safety — D130 holds WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
+Blockers: Element — App sole final helper368f and App binder1950 require coupled protected and real Node20 proof. No cost author or body before PASS.
+Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tuple P1-P5, wheel, Windows and ZIP remain owed.
+Blockers: Agent source intake — D136a c992 final2034 PASS and D73 375c protected2036 PASS; remote helpers exit3 D106. Host filing requested in peer2043; no direct hub writes or retry.
+Blockers: Runtime union — Farm sole six-file receiving proof now has flat recipe and exact32dde Agent binding in peer2041. Functional result owed; private source review PASS only.
+Next ready: Host files reviewed D136a and D73 branches; App original nine follows meaningful qualified correction. Agent genuine child/core and Farm union receiver remain separately assigned.
+D100: App corrected27 PASS; original9 nine setup errors. D136a product correction independently source/security PASS and held for Agent intake, unchanged original9 and later batch core. No fixture rewrite.
+D77: Farm changed child follows Agent actual D137 result; no Farm fixture bodies/core. Exact applied source and lock handoffs remain qualified.
+Delivery: D59 integration tuple only; stale547e proof pin excluded. Private Agent32dde review1959 PASS; Runtime0bb3 source PASS, Farm targeted result owed. App private upstream join remains App-owned.
+Safety: All prior refusals held. Managers write ORCH boards/briefs/peers and copy authored handbacks only. No product/test/pin/Git mutation or credentials.
+Disk: Fresh4.547 GB after two source trees; cap3 below5GB, source floor4.6GB, stop4GB. Further dispatch gated on headroom. Sweep3 removed0; compact packed0 and gzipped3 logs; no eligible unguarded Runtime trees identified. Protected raw KEEP retained.
+live 2 / cap 3; ready-undispatched 0. D134 twelve split into two exclusive Luna authors. Other ready tasks have Agent/App/Farm receiving owners. No local heavy body.
+INBOX consumed through1522859 bytes including Agent2032 and App2033. D134 twelve assigned; App helper Node20 bound proof and private menu source remain App-owned. Updated 2026-10-25T20:43:37Z.

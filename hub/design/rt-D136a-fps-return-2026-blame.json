@@ -1,0 +1,17 @@
+{
+  "target": "parent.config.theme_overrides.visual.canvas.fps",
+  "introducing_commit": "6f4baa07603776840f0a78cc0cf459831bc026af",
+  "introducing_file": "astrid/sdk/timeline/validation.py",
+  "production_caller": "astrid/sdk/timeline/commit.py:1399-1418",
+  "first_parent_rejection": "_fps falls through to _validation_number for a list and raises must be a finite number",
+  "candidate_correction": [
+    "astrid/sdk/timeline/validation.py",
+    "astrid/sdk/timeline/_timing_evaluators.py"
+  ],
+  "parent_replay": {
+    "input": [30000, 1001],
+    "result": "RED",
+    "error": "candidate.parent.config.theme_overrides.visual.canvas.fps: must be a finite number"
+  },
+  "runtime_role": "dispatches the registered provider; no Runtime source was changed"
+}

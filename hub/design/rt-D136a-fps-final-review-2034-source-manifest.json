@@ -1,0 +1,80 @@
+{
+  "task": "rt-D136a-fps-final-review-2034",
+  "repository": "Agent",
+  "review_verdict": {
+    "source": "PASS",
+    "security": "PASS",
+    "behavior": "PASS_BOUNDED_TARGETED",
+    "evidence": "PASS_SOURCE_MATRIX_TARGETED",
+    "release": "HELD_PENDING_NORMAL_INTAKE_AND_ORIGINAL9_BATCH"
+  },
+  "candidate": {
+    "commit": "c99214a227154df5fbaf681c2e0fc52c54500025",
+    "tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+    "parent_commit": "ebb32e7598a3ad28fd161332f860f446a21cb3ef",
+    "parent_tree": "e75b8d0739e63dec5908641d7db0b6846cec4905",
+    "worktree_clean_before_review": true,
+    "changed_files_only": [
+      "astrid/sdk/timeline/validation.py",
+      "astrid/sdk/timeline/_timing_evaluators.py",
+      "tests/sdk/test_d136_fps_upstream_compat.py"
+    ],
+    "changed_file_sha256": {
+      "astrid/sdk/timeline/validation.py": "74c14ade6dd564eadaf26f27ff6dc64d5168175f3320029768a3684754e5a0d8",
+      "astrid/sdk/timeline/_timing_evaluators.py": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268",
+      "tests/sdk/test_d136_fps_upstream_compat.py": "570dc2040dd7f8c1eca887c2a22827d5963e67599f3d69df834f854bde34dfc3"
+    }
+  },
+  "source_provenance": {
+    "first_failing_candidate": "ebb32e7598a3ad28fd161332f860f446a21cb3ef",
+    "introducing_blame": "6f4baa07603776840f0a78cc0cf459831bc026af",
+    "upstream_comparator_commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "upstream_comparator_tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+    "upstream_fps_rule": "theme_overrides.visual.canvas.fps uses a positive scalar; all other JSON forms fall back to 30.0, with Python bool True retaining scalar behavior as 1.0",
+    "schema_boundary": "ThemeOverrides.visual is an object with additionalProperties {}, while TimelineOutput.fps is a separate typed number",
+    "production_route": "astrid.sdk.timeline.commit.RuntimeCommitService.commit -> validate_final_candidate -> validate_candidate_timing -> compile_timing"
+  },
+  "scope_controls": {
+    "open_canvas": "validation no longer types or rejects theme_overrides.visual.canvas or canvas.fps; authored JSON is retained",
+    "production_timing": "registered runtime documents mark the open-canvas timing view; positive scalar is used, otherwise Fraction(30), and True is Fraction(1)",
+    "typed_fps": "parent.config.output.fps and shots[*].internal_timeline.output.fps remain strict finite positive scalar or exact positive integer rational mapping",
+    "no_new_coercion": true,
+    "no_generic_validation_removal": true,
+    "no_public_protocol_change": true,
+    "privacy_read_no_write_atomic_controls": "retained and green in nearest targeted controls",
+    "original_app_projection": {
+      "approved_source_commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+      "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "status": "unchanged; nine original setup errors remain visible; no rerun claimed"
+    }
+  },
+  "tests": {
+    "targeted": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD:/home/user/work/runtime\" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/sdk/test_d136_fps_upstream_compat.py tests/editing_conformance/test_commit_v2_validation.py tests/editing_conformance/test_commit_fps_d12.py tests/sdk/test_timing_compiler.py::test_fixed_source_window_and_rational_half_frame_ties",
+      "result": "101 passed in 3.68s"
+    },
+    "own": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD:/home/user/work/runtime\" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/sdk/test_d136_fps_upstream_compat.py",
+      "result": "45 passed in 2.33s"
+    },
+    "production_matrix": {
+      "cases": 44,
+      "forms": 23,
+      "modes": ["accepted", "dry_run/preview"],
+      "result": "all 46 accepted/preview cases; every actual compile_timing result matched expected effective FPS; authored canvas bytes retained"
+    },
+    "static": {
+      "ruff": "All checks passed for validation.py, _timing_evaluators.py, and test_d136_fps_upstream_compat.py",
+      "mypy": "Success: no issues found in 3 source files",
+      "py_compile": "PASS with private PYTHONPYCACHEPREFIX under /tmp",
+      "git_diff_check": "PASS"
+    }
+  },
+  "unverified_or_held": [
+    "Agent normal intake/merge",
+    "App original nine functional qualification on unchanged f53b fixture",
+    "genuine batch proof",
+    "full/core/browser/socket/native/collector/acquisition/build/ZIP suites",
+    "5 GB body admission was not run; source-only review remained bounded"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema": "timeline.agent.rt_d73_control_protected_findings.v1",
+  "task": "rt-D73-control-protected-review-2036",
+  "verdict": "PASS_SOURCE_ONLY",
+  "findings": [
+    {
+      "id": "D73-CPR-1",
+      "result": "PASS",
+      "detail": "The adoptable launcher source is exactly the author commit d70bb370f3: two unset PYTHONNOUSERSITE changes, with no other production-source delta."
+    },
+    {
+      "id": "D73-CPR-2",
+      "result": "PASS",
+      "detail": "Revised controls invoke the actual production launcher path, clear the poisoned outer startup key in both child-shell interpreter calls, preserve private origins/schemas/custody bindings and an unrelated variable, reach the body once, and return exit 17 exactly."
+    },
+    {
+      "id": "D73-CPR-3",
+      "result": "PASS",
+      "detail": "The poisoned-manifest control fails before the body, with zero body invocation and no body log or exit evidence."
+    },
+    {
+      "id": "D73-CPR-4",
+      "result": "PASS",
+      "detail": "The test exercises the real launcher and existing guards rather than mirroring implementation; review-head changes are limited to the focused test file and all old source outside it is unchanged."
+    },
+    {
+      "id": "D73-CPR-5",
+      "result": "PASS",
+      "qualification": "SOURCE_ONLY_BOUNDARY",
+      "detail": "The direct Remotion probe rejects the poisoned environment and accepts the supported clear environment. Live frozen-tuple body/provider/install/browser/full-suite/production-request evidence remains intentionally unclaimed."
+    }
+  ],
+  "not_used": [
+    "source-2000 recipe",
+    "host_bootstrap.py workaround",
+    "remotion_runtime.py guard change",
+    "subprocess_env.py policy change",
+    "manual frozen tuple retarget",
+    "dispatcher or installed-entrypoint change",
+    "D137 prerequisite",
+    "D130 SWAP/WAL/recovery"
+  ]
+}

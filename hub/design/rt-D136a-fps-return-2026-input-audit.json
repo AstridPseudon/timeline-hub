@@ -1,0 +1,42 @@
+{
+  "same_introducing_commit": "6f4baa07603776840f0a78cc0cf459831bc026af",
+  "scope": "All finite forms identified by independent F1-F4 review at the open canvas path",
+  "open_canvas": {
+    "nonobject": {
+      "forms": [null, true, false, 1, "canvas", []],
+      "upstream": "accepted; fallback 30",
+      "candidate": "accepted; fallback 30"
+    },
+    "fps": {
+      "null": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "true": "upstream accepted/effective 1.0; candidate accepted/effective 1",
+      "false": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "string": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "arbitrary_mapping": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "positive_scalar": "upstream accepted/used; candidate accepted/used",
+      "zero_negative_scalar": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "wrong_length_arrays": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "noninteger_arrays": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "zero_negative_pairs": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "exact_list_pair": "upstream accepted/fallback 30; candidate accepted/fallback 30",
+      "exact_mapping_pair": "upstream accepted/fallback 30; candidate accepted/fallback 30"
+    }
+  },
+  "typed_paths": {
+    "parent.config.output.fps": {
+      "policy": "strict positive scalar or exact positive integer numerator/denominator mapping",
+      "malformed_controls": "refused atomically"
+    },
+    "shots[*].internal_timeline.output.fps": {
+      "policy": "strict positive scalar or exact positive integer numerator/denominator mapping",
+      "location_presence": "baseline retention guard preserved"
+    }
+  },
+  "preservation": {
+    "authored_bytes": true,
+    "privacy": true,
+    "declared_reads": true,
+    "no_write_previous_value": true,
+    "original_nine_fixture_bodies": "untouched"
+  }
+}

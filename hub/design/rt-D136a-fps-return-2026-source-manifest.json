@@ -1,0 +1,43 @@
+{
+  "task": "rt-D136a-fps-return-2026",
+  "repo": "agent",
+  "base": {
+    "commit": "ebb32e7598a3ad28fd161332f860f446a21cb3ef",
+    "branch": "tl/rt-D136a-fps-regression-2014",
+    "parent_pristine": "a30e74e901a28b39c28facba3deb00d76f186e23"
+  },
+  "changed_paths": [
+    "astrid/sdk/timeline/validation.py",
+    "astrid/sdk/timeline/_timing_evaluators.py",
+    "tests/sdk/test_d136_fps_upstream_compat.py"
+  ],
+  "working_tree_sha256": {
+    "astrid/sdk/timeline/validation.py": "74c14ade6dd564eadaf26f27ff6dc64d5168175f3320029768a3684754e5a0d8",
+    "astrid/sdk/timeline/_timing_evaluators.py": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268",
+    "tests/sdk/test_d136_fps_upstream_compat.py": "570dc2040dd7f8c1eca887c2a22827d5963e67599f3d69df834f854bde34dfc3"
+  },
+  "upstream_evidence": {
+    "qualified_app_tip": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "schema": "astrid/core/timeline/schema/timeline-config.schema.json",
+    "validator": "astrid/core/timeline/validators/timeline.py:_timeline_fps",
+    "qualified_source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136-upstream-fps-review-2007-source-manifest.json",
+    "review_findings": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D136a-fps-review-2021-findings.json"
+  },
+  "module_origins": {
+    "astrid.sdk.timeline.validation": "/home/user/work/wt/rt-D136a-fps-return-2026/astrid/sdk/timeline/validation.py",
+    "astrid.sdk.timeline._timing_evaluators": "/home/user/work/wt/rt-D136a-fps-return-2026/astrid/sdk/timeline/_timing_evaluators.py",
+    "astrid.sdk.timeline.commit": "/home/user/work/wt/rt-D136a-fps-return-2026/astrid/sdk/timeline/commit.py"
+  },
+  "scope": {
+    "product_repo": "Agent only",
+    "runtime_app_composition_schema_generated_pin_fixture_changes": false,
+    "public_protocol_changes": false,
+    "authored_data_rewrite": false,
+    "new_typed_theme_field": false
+  },
+  "disk": {
+    "free_kib": 4576248,
+    "five_gb_body_admission": "NOTRUN: below 4.6 GB source-only floor",
+    "full_suite": "NOTRUN by task rule"
+  }
+}
