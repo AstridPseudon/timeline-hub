@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-25T12:48:26Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 5m -->
+<!-- farm | 2026-10-25T12:51:08Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 8m -->
 # farm board, 2026-10-25T12:45Z. Active (D124) for ONE purpose: host Agent's heavy runs. No worker running.
 
 D124 (lead, 12:41Z) un-stands-down the farm for Agent's `agent-core-full` runs only. Everything else stays stood down (D56.3). Disk 15 GB free (floor 14).
