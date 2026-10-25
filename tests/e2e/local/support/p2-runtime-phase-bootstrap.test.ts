@@ -240,6 +240,32 @@ function assertSampling(value: unknown, newSchema = false): void {
 
 type CaptureValidatorArm = 'normal' | 'reviewed' | 'reviewed-new';
 
+function assertReviewedNewLifecycle(
+  event: Record<string, unknown>,
+  phases: Record<string, unknown>,
+  durations: Record<string, unknown>,
+): void {
+  const lifecycle = event.lifecycle as string;
+  const dispatch = record(phases.dispatch_queue, 'dispatch_queue phase');
+  const response = record(phases.http_response, 'http_response phase');
+  assertInteger(dispatch.count, 'dispatch_queue.count', { minimum: 1, maximum: MAX_PHASE_COUNT });
+  if (lifecycle === 'completed') {
+    assert.ok((response.count as number) > 0, 'completed requires an observed response');
+    assert.notEqual(durations.dispatch_total_ms, null, 'completed requires an ended dispatch');
+    assert.notEqual(durations.dispatch_to_completion_wall_ms, null, 'completed requires a completion wall duration');
+  } else if (lifecycle === 'returned_without_response') {
+    assert.equal(response.count, 0, 'returned_without_response forbids an observed response');
+    assert.notEqual(durations.dispatch_total_ms, null, 'returned_without_response requires an ended dispatch');
+    assert.notEqual(durations.dispatch_to_completion_wall_ms, null, 'returned_without_response requires a completion wall duration');
+  } else if (lifecycle === 'raised') {
+    assert.equal(dispatch.status, 'raised', 'raised requires a raised dispatch phase');
+    assert.equal(response.count, 0, 'raised forbids an observed response');
+  } else {
+    assert.equal(durations.dispatch_total_ms, null, 'pending_at_stop cannot have an ended dispatch');
+    assert.equal(durations.dispatch_to_completion_wall_ms, null, 'pending_at_stop cannot have a completion wall duration');
+  }
+}
+
 function assertCaptureEvent(event: Record<string, unknown>, arm: CaptureValidatorArm): void {
   const reviewed = arm !== 'normal';
   const newSchema = arm === 'reviewed-new';
@@ -278,8 +304,19 @@ function assertCaptureEvent(event: Record<string, unknown>, arm: CaptureValidato
         assert.equal(durations.dispatch_to_completion_wall_ms, null);
       }
       assert.equal(durations.dispatch_to_completion_wall_ms, durations.dispatch_total_ms);
+      assertReviewedNewLifecycle(event, event.phases as Record<string, unknown>, durations);
     }
     assertRetention(event.retention, newSchema);
+    if (newSchema) {
+      const finalRequest = record(event.retention, 'retention').final_request;
+      if (finalRequest === null) {
+        assert.equal(event.lifecycle, 'completed', 'a non-completed summary must be retained as final_request');
+      } else {
+        const final = record(finalRequest, 'retention.final_request');
+        assert.notEqual(final.outcome, 'completed', 'final_request selects a non-completed request');
+        if (final.request === event.request) assert.equal(final.outcome, event.lifecycle, 'final_request outcome matches its summary');
+      }
+    }
     const unknown = record(event.unknown_boundaries, 'unknown_boundaries');
     exactKeys(unknown, reviewed
       ? ['client_request_to_server_receive', 'request_body_receive', 'execution_lock_wait', 'caller_receipt']
@@ -369,7 +406,9 @@ function readCapture(sink: string, helperSha256: string): string {
 function newValidatorSummaryFixture(): Record<string, unknown> {
   const phases = Object.fromEntries(REVIEWED_PHASES.map((phase) => [phase, phase === 'arrival'
     ? { status: 'unsupported', count: 0, start_ms: null, end_ms: null, reason: 'no earlier socket/server-accept hook' }
-    : { status: 'UNKNOWN', count: 0, start_ms: null, end_ms: null }]));
+    : phase === 'dispatch_queue'
+      ? { status: 'observed', count: 1, start_ms: 0, end_ms: null }
+      : { status: 'UNKNOWN', count: 0, start_ms: null, end_ms: null }]));
   const frame = {
     file: '<runtime>/provider.py',
     function: 'commit',
@@ -398,7 +437,7 @@ function newValidatorSummaryFixture(): Record<string, unknown> {
     schema_version: CAPTURE_SCHEMA_VERSION,
     request: 1,
     phase: 'summary',
-    last_phase: 'UNKNOWN',
+    last_phase: 'dispatch_queue',
     phases,
     lifecycle: 'pending_at_stop',
     durations_ms: {
@@ -479,6 +518,14 @@ test('D127 reviewed-new validator rejects field, lifecycle, phase, truncation, a
     event.durations_ms.dispatch_total_ms = 1;
     event.durations_ms.dispatch_to_completion_wall_ms = 1;
   });
+  rejects('completed lifecycle requires response and ended dispatch state', (event) => { event.lifecycle = 'completed'; });
+  rejects('returned lifecycle requires no response and ended dispatch state', (event) => {
+    event.lifecycle = 'returned_without_response';
+    event.durations_ms.dispatch_total_ms = 1;
+    event.durations_ms.dispatch_to_completion_wall_ms = 1;
+    event.phases.http_response.count = 1;
+  });
+  rejects('raised lifecycle requires a raised dispatch phase', (event) => { event.lifecycle = 'raised'; });
   rejects('dispatch denominator cannot contradict unknown duration', (event) => {
     event.sampling.dispatch_wall_denominator_ms = 20;
   });
@@ -486,6 +533,7 @@ test('D127 reviewed-new validator rejects field, lifecycle, phase, truncation, a
     event.phases.arrival = { status: 'observed', count: 1, start_ms: 0, end_ms: 1, reason: 'no earlier socket/server-accept hook' };
   });
   rejects('retention outcome uses the new lifecycle enum', (event) => { event.retention.final_request.outcome = 'pending'; });
+  rejects('summary and final retention lifecycle must agree', (event) => { event.retention.final_request.outcome = 'returned_without_response'; });
   rejects('buffer completeness must agree with complete', (event) => { event.retention.final_request.buffer_complete = false; });
 });
 
