@@ -150,6 +150,7 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, 
     root = tmp_path / 'realm'
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
     project = service.create_project({'slug': 'clip-scalars', 'name': 'Clip scalars'})['id']
     service.create_timeline(project, 'film', idempotency_key='create-film')
     media = service.ingest(project, b'clip scalar fixture', media_type='image/png',
@@ -167,7 +168,6 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, 
     for row in [parent, *shots, *internals]:
         row['content_digest'] = _digest(row['payload'])
     document['dependency_manifest'] = _manifest(shots, internals, [{'media_id': media, 'content_digest': media}], [])
-    service.register_timeline_commit_provider(create_runtime_commit_service())
     _seed_current_app_document(service, project, {
         'schema_version': 1, 'project_id': project, 'timeline_id': 'film',
         'parent_revision': parent, 'shot_revisions': shots,
@@ -186,7 +186,17 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, 
         pin = head()
         return {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
                 'base_revision_id': pin['revision_id'], 'base_publication_id': pin['publication_id'],
-                'commands': calls, 'dry_run': False}
+                'commands': calls, 'label': 'App scalar fixture',
+                'steps': [{'id': str(index), 'label': 'App scalar fixture',
+                           'intent': 'Apply current scalar fields', 'tags': ['fixture'],
+                           'command_ordinals': [index],
+                           'patch': (copy.deepcopy(command['args']['changes'])
+                                     if command['op'] == 'doc.patch' else []),
+                           'reads': []}
+                          for index, command in enumerate(calls)],
+                'merge': 'fields', 'reads': [], 'dry_run': False,
+                'source': {'via': 'python'}, 'rationale': 'Current scalar fixture',
+                'group_id': 'app-scalar-fixture'}
 
     def submit(body, key):
         return service.commit_timeline(project, 'film', body, idempotency_key=key,
