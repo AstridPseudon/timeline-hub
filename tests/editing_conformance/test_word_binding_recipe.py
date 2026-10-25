@@ -15,11 +15,11 @@ from astrid.sdk.timeline._command_state import CommandError
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.compiler import TimingCompileError
-from tests.editing_conformance import test_timing_retained_inputs as retained_inputs
+from tests.editing_conformance import native_word_anchor_fixture as retained_inputs
 from tests.editing_conformance.word_binding_recipe import OP, authored, compile_authored, install
 
 pytestmark = pytest.mark.integration
-retained = retained_inputs.retained
+retained = retained_inputs.current_retained
 TARGET = retained_inputs.TARGET
 REF = "parent/clip:card"
 KEY = (REF, "on")
@@ -28,12 +28,28 @@ KEY = (REF, "on")
 @pytest.fixture
 def recipe(retained, monkeypatch):
     install(monkeypatch)
+    from astrid.sdk.timeline._recording import Recording
+
+    compiled = Recording.compile_inputs
+
+    def compile_with_current_mirror(ctx):
+        parent = ctx.state.bundle["parent"]
+        config = parent.get("config")
+        if isinstance(config, dict) and isinstance(parent.get("clips"), list):
+            config["clips"] = copy.deepcopy(parent["clips"])
+        return compiled(ctx)
+
+    monkeypatch.setattr(Recording, "compile_inputs", compile_with_current_mirror)
     retained.submit(retained.create("recipe-initial"), "recipe-initial")
     return retained
 
 
 def bundle(case):
     result = bundle_from_document(case.documents[case.head()["revision_id"]])
+    result["parent"]["config"].pop("clips", None)
+    astrid = result["parent"]["clips"][0].get("app", {}).get("astrid", {})
+    if astrid.get("word_anchors") == {}:
+        astrid.pop("word_anchors")
     # This is the same authorized capture observed from the real provider,
     # handed to the frontend picker, not an inline command/source authority.
     result["source_mapping"]["pinned_documents"] = copy.deepcopy(

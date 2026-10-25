@@ -19,7 +19,7 @@ from astrid.sdk.timeline.native_word_anchor import OP, authored, compile_authore
 from tests.editing_conformance import native_word_anchor_fixture as retained_inputs
 
 pytestmark = pytest.mark.integration
-retained = retained_inputs.retained
+retained = retained_inputs.current_retained
 TARGET = retained_inputs.TARGET
 REF = "parent/clip:card"
 KEY = (REF, "on")
@@ -33,6 +33,10 @@ def recipe(retained, monkeypatch):
 
 def bundle(case):
     result = bundle_from_document(case.documents[case.head()["revision_id"]])
+    result["parent"]["config"].pop("clips", None)
+    astrid = result["parent"]["clips"][0].get("app", {}).get("astrid", {})
+    if astrid.get("word_anchors") == {}:
+        astrid.pop("word_anchors")
     # This is the same authorized capture observed from the real provider,
     # handed to the frontend picker, not an inline command/source authority.
     result["source_mapping"]["pinned_documents"] = copy.deepcopy(
@@ -131,7 +135,13 @@ def test_native_acceptance_refuses_review_source_counterexamples_before_writes(r
     assert error.value.details['status'] == 'invalid'
     assert case.service.get_project_timeline(case.project, 'film') == head
     assert history(case) == accepted
-    ctx = Recording(bundle(case), call, 0)
+    negative = bundle(case)
+    if 'duration_ms' in getattr(case, 'negative_options', {}):
+        negative['placements'][0]['duration_ms'] = case.negative_options['duration_ms']
+    if 'source_window' in getattr(case, 'negative_options', {}):
+        negative['shots']['shot']['internal_timeline']['clips'][0]['source_window'] = copy.deepcopy(
+            case.negative_options['source_window'])
+    ctx = Recording(negative, call, 0)
     before = copy.deepcopy(ctx.state.bundle)
     with pytest.raises(CommandError, match=match):
         declare(ctx, call)
@@ -635,7 +645,7 @@ def test_first_use_retains_v1_before_producer_removes_words_and_exact_retry_afte
 
     case = recipe
     initial = case.documents[case.head()['revision_id']]
-    assert initial['dependency_manifest']['documents'] == []
+    assert initial['dependency_manifest']['documents'] == [case.pin]
     request = case.request([pick(case, 1)])
     accepted = case.submit(request, 'first-use')
     canonical = accepted['data']['canonical_document']
@@ -735,7 +745,7 @@ def test_provider_resolves_exact_first_use_pin_and_refuses_unavailable_source(re
     with pytest.raises(RuntimeErrorBase):
         case.submit(case.request([call]), 'unavailable-' + damage)
     assert case.head() == head
-    assert case.documents[head['revision_id']]['dependency_manifest']['documents'] == []
+    assert case.documents[head['revision_id']]['dependency_manifest']['documents'] == [case.pin]
 
 
 def test_source_read_revocation_is_atomic_before_first_use_retention(recipe, monkeypatch):
@@ -761,4 +771,4 @@ def test_source_read_revocation_is_atomic_before_first_use_retention(recipe, mon
     with pytest.raises(AuthorizationError, match='source authority revoked'):
         case.submit(case.request([call]), 'revoked-first-use', authorize=authorize)
     assert case.head() == current
-    assert case.documents[current['revision_id']]['dependency_manifest']['documents'] == []
+    assert case.documents[current['revision_id']]['dependency_manifest']['documents'] == [case.pin]
