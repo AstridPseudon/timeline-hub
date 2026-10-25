@@ -170,7 +170,9 @@ def _prove_birth(tmp_path, monkeypatch, grouped):
         head_before_invalid = service.get_project_timeline(project, 'film')
         with pytest.raises(RuntimeErrorBase) as error:
             commit(body([invalid_birth]), 'invalid-birth-quantizer')
-        assert error.value.status == 409
+        assert error.value.status == 422
+        assert error.value.details['status'] == 'invalid'
+        assert error.value.details['code'] == 'unsupported_timing'
         assert error.value.details['reason'] == 'unsupported_timing'
         assert 'retry the exact request' not in str(error.value)
         assert service.get_project_timeline(project, 'film') == head_before_invalid
