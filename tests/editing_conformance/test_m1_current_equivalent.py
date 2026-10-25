@@ -304,8 +304,12 @@ def test_new_ours_current_equivalent_preserves_m1_commit_journey(
 
     # Preserve the original CLI write and exact canonical readback first.
     base_history = history(client)
-    # Current bootstrap + seed + retained track + word binding + music setup.
-    assert len(base_history["items"]) == 5
+    # The current retained seed has three genuine bootstrap-phase entries:
+    # the Runtime bootstrap, initial document admission, and first-use word
+    # anchor. The remaining five rows are authored scenario setup: clear and
+    # correct the current seed, retain the initial track, bind the word, and
+    # add the independent music fixture. Keep their exact order and labels.
+    assert len(base_history["items"]) == 8
     assert base_history["items"][0]["intent"] == "bootstrap"
     assert base_history["items"][0]["records"] is None
     assert base_history["items"][-1]["receipt"] == added["receipt"]
