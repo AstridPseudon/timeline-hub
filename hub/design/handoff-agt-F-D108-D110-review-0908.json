@@ -1,0 +1,24 @@
+{
+  "verdict": "PASS",
+  "candidate_commit": "ae2704cb305dc20e972d1a94eea7eac71ee2d2f8",
+  "parent_commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+  "file": "tests/sdk/test_inverse_removed_shot_owners_runtime.py",
+  "candidate_sha256": "d4309b77ab5c4593928ecee738ca426a064ed821191d2d6ad5a9800f86d56a30",
+  "parent_sha256": "a325f2706e3d5c8c8b5b34e4fec6975206d7217a55e04dd4454a8cd39166ecdb",
+  "diff_sha256": "7994a99c4c66279cbb22645b3aaea47d69c41f680e7ab128139b7fa25607ca85",
+  "runtime_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+  "runtime_tree": "a522511414947e48e317a5e5c2103483b121a750",
+  "test": {
+    "result": "2 passed in 6.42s",
+    "cases": ["[add]", "[swap]"],
+    "xml": "workers/agt-F-D108-D110-review-0908/evidence/review.xml",
+    "xml_sha256": "bc242642a3e13780bf03d7cd3b81a66b578464c5b695c01e1da0dc498eddad14"
+  },
+  "static_checks": {
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "d72_disposition": "Retain WC3 OPEN — explicit branch lifecycle and caller cuts pending"
+}
