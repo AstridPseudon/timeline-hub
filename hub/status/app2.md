@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T10:47:45Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-25T10:47Z
+<!-- app2 | 2026-10-25T10:50:20Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T10:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -136,7 +136,7 @@
 
 | P2-D118-current-placement | Qualify complete native placement | App independent Luna | Same15203 and verdict1019 | merged | app-D118-P2-15203-pass-review-1019 | GO: D113,canonical,history,reload and complete scoped guarded inverse qualified. Original retry also PASS. Current tuple only. | App96d475 |
 | P2-D118-current-ADD | Qualify complete current popup ADD | App independent Luna | Same15203 and verdict1019 | merged | Same sole1019 reviewer | GO36.819s: exact request,canonical,history,reload and complete guarded inverse. Full tour still NO-GO. | App96d475 |
-| P2-D118-current-parent | Admit parent gesture after connection panel exit | App HARD Sol; independent Luna | Existing App scope escalation1036 | review | Sol1028; independent1036 | Nine retained snapshots show inert at mouse down and panel exit during move. Exact one line readiness proposal awaits decision and review. No product or protected edit. | Base App96d475 |
+| P2-D118-current-parent | Admit parent gesture after panel exit | App HARD Sol; independent Luna | D119 approved; normal source application | review | Sol1028; independent1036 SOURCE PASS | Exact one line panel gone assertion qualified154/types/lint. D119 clears scope hold; App confirms helper ownership and ledger before normal merge. Next full tour supplies browser proof. | Proposal c9a6 / base96d475 |
 
 | P2-D118-current-SWAP | Attribute current initial history refusal | Runtime and App Luna | Correlated App evidence | review | Runtime1033; App1019 | Source facts PASS; exact lower predicate and producer record UNKNOWN. Runtime row exists; App owns retained request and parent attribution. No duplicate collector. | Actual15203 / Runtime d23a8 |
 
@@ -148,7 +148,7 @@ core open: 4 transferred App-owned P2 gestures remain without current GO: SWAP, 
 regressions: 14 newly proved in Runtime D118 pristine-upstream23 comparison; independent1001 reports PRE0/REG14/NEW8/UNKN1. These are host-bootstrap identical-body failures in that bounded scope, assigned to Agent. Prior general zero-regression wording is superseded. D102 and D110 source repairs remain qualified; current P2 result is separate.
 
 Blockers: Runtime element D111b — Sol1016 actual generic-read path shows early read wall gain but growth criterion still fails. Held02b remains native FAIL with source calls0; no release.
-Blockers: App current P2 — Full15203 NO-GO; placement and ADD GO. Parent zeroPOST has App readiness proposal awaiting existing scope decision1036 and review. Runtime1033 source facts complete; SWAP correlated predicate/producer evidence belongs App1019. Element awaits qualified D111b; asset and clears NOTRUN.
+Blockers: App current P2 — Full15203 NO-GO; placement and ADD GO. Parent readiness proposal has independent1036 SOURCE PASS and D119 approval; App normal application, helper ownership and ledger remain. Runtime1033 source facts complete; SWAP correlated predicate/producer evidence belongs App1019. Element awaits qualified D111b; asset and clears NOTRUN.
 Blockers: Final cut — Current full P2, Agent core437, fourteen newly proved D54a regressions, D69, final tuple gates/core and genuine installed render remain owed. D117 acquisition stays stopped.
 
 Next ready: None for Proof under D56.4. App parent Sol1028 active; Runtime current SWAP owner note sent, generic-read Sol1016 separate. Agent core30693 running and D69 reviews active; App tail source packets normally requested.
@@ -172,6 +172,8 @@ Current gate evidence:
 - D77a: consumerdfea above2a163 is normally HOME; both D76 and D77 remote receipts visibly say MERGED831df. Agent1837 actual34 adversarial+2positive PASS, exactdfea and197 dependencies. Fixture1841 passes canonical file with13 test bodies unchanged. Final genuine installed render remains cut-blocking; D67 genuine environment gap stays explicit. [Source security and remaining render seam](../../design/peer-runtime-to-agent-orchestrator-20261024T1825-D77-security-PASS.md).
 
 Decisions retained:
+
+- D11910:42 approves exactly the existing panel gone web-first assertion before the parent gesture, with default timeout. App confirms helper is ours, upstream panel behavior, independent1036 and ledger, then normal merge and next full tour. Independent1036 SOURCE PASS154/types/lint; existing runner-config failure disclosed. Scope decision wait is cleared; no Proof dispatch.
 - D89a10:16 permits Agent core-full at4.7GB or more and stops it at4.0GB, one heavy body only; every other D89 floor unchanged. No Proof assignment.
 - D11809:50 removes D111b from next full-P2 dependencies: App runs full tour after D112 release/adoption, then element after D111b. Agent reruns core after reviewed test batches and groups product releases; word54/recipe41/validation27 share D116 root. App may help Agent tail clusters on Agent assignment. Runtime checks actual source-read wall gain and pristine upstream23; no Proof dispatch.
 
@@ -252,6 +254,6 @@ Pass 2026-10-25T10:44Z: Observation continues. INBOX795002 unchanged; all1313 Pr
 
 Evidence: [App current owners](/home/user/timeline-hub/hub/status/app.md), [Runtime current owners](/home/user/timeline-hub/hub/status/runtime.md), [Agent current owners](/home/user/timeline-hub/hub/status/agent.md), [D113 author](../../design/app-P2-D113-modal-dismissal-0832.md), [D111a independent review](/home/user/timeline-hub/hub/design/rt-D111a-profile-review-0819-report.md), [D112 author scope](/home/user/timeline-hub/hub/design/rt-D112-identity-fallback-0819-report.md).
 
-Next watch: App parent existing scope decision1036 and independent review; currentSWAP retained attribution handback [20261025T1047Z](../../design/peer-app2-to-app-20261025T1047Z-current-SWAP-source-handback.md); Runtime actual generic-read Sol1016 and output projection1037; Agent core30693 terminal count/D116/D69/host14. D117 owner access decision remains. D115 normal369ffa is released; future proof remains separate. Full15203 NO-GO; placement/ADD GO. D56.4 persists.
+Next watch: App D119 normal parent source application/ledger and SWAP retained attribution; Runtime actual generic-read Sol1016 and output projection1037; Agent core30693 terminal/D116/D69/host14. Parent decision wait cleared and relayed [20261025T1050Z](../../design/peer-app2-to-app-20261025T1050Z-D119-decision-cleared.md). D117 access refusal remains stopped. D115 normal369ffa released; no current SWAP repair inferred. Full15203 NO-GO; placement/ADD GO. D56.4 persists.
 
 Inbox read through795002 bytes. STATUS is restart point; [D83 handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md), [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remain binding.
