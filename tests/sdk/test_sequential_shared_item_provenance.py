@@ -57,10 +57,11 @@ def runtime_realm(monkeypatch):
     seed = roots.seed_trusted_parent
 
     def registered_seed(service, publication, *, idempotency_key):
-        # Keep film and chapter-1 distinct; register the existing child scope
-        # before the shared helper seeds its exact immutable closure.
+        # Consume the registered child root created by RuntimeRealm, adding
+        # only a genuinely missing scope through the normal timeline API.
         scopes = {image['timeline_id'] for image in publication['internal_timeline_revisions']}
-        for timeline in sorted(scopes - {publication['timeline_id']}):
+        existing = {row['timeline_id'] for row in service.list_timelines(publication['project_id'])['items']}
+        for timeline in sorted(scopes - {publication['timeline_id']} - existing):
             service.create_timeline(publication['project_id'], timeline,
                                     idempotency_key='shared-internal-' + timeline)
         return seed(service, publication, idempotency_key=idempotency_key)
