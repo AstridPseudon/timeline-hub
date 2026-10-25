@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T07:41:06Z | dispatcher heartbeat 6s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 15m -->
-# runtime board, 2026-10-25T07:25:31Z
+<!-- main | 2026-10-25T07:44:43Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 14 | status age 2m -->
+# runtime board, 2026-10-25T07:42:40Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Resolve element applied-status latency | Luna / independent review | D111 measured source fix | doing | rt-D111-validation-memo-0653 | Actual29218 watchdog names recursive Recorder validation in historical replay. Measure before bounded positive memo; no original repeat. | Runtime1daca baseline |
+| R-P2-element-docpatch-hang | Resolve element applied-status latency | Sol / independent Luna | D111 measured source qualification | doing | rt-D111-measured-return-sol-0744 | Replay schema stack is real; exact cache miss cause remains unknown. New measured continuation preserves actual process lifecycle and strict tests. | Runtime1daca baseline |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -334,7 +334,7 @@
 | D86-script13-follow | Preserve four script scenarios | Luna / Luna | D108 full core | gated:D108-core | Author0627; review0629; Agent dac3 | Exact badfe S3 setup is normally merged. Twelve assertions retained; functional coverage comes from D108. Three other seams remain open. | Agent dac3df399f |
 | D86-13-wholepath | Compare current failures with passing callers | Luna read only | Source assessment complete | merged | rt-D86-17724-wholepath-0627 | Ten actual outcomes stay UNKNOWN_UNAPPLIED; exact missing provider records identified. [Report](../../design/rt-D86-17724-wholepath-0627-report.md) | Evidence only |
 | D103-17724-follow | Preserve genuine CLI setup metadata | Agent Luna / Luna | D108 full core | gated:D108-core | Author0635; review0639; Agent217035 | Genuine MP4 dimensions and 42s duration independently bound. All 38 assertions exact; actual functional proof remains owed. | d588 / Agent217035 |
-| D107-M1-replacement | Cover combined current word sequence | Agent Luna / Luna | Correct protected source | blocked:agent | Agent current-equivalent0647 | Exact archive-read source is normal b27ff. Combined current sequence failed review; first return restores all original purposes. | Agent79c94 read |
+| D107-M1-replacement | Cover combined current word sequence | Agent Sol / Luna | Held 2154 and full core | gated:D108-core | Sol0659; independent0715 PASS | Exact 2e3331 is source reviewed; normal read source b27ff remains. Current equivalent stays held on 2154; no functional or retirement closure. | 2e3331 held |
 
 | OPS-stale-six-0628 | Release unused main source pins | Manager route | Active paths and registrations audited | merged | bin/recycle six exact stale pins | No active worker, queue, service, lease, process or registration users. Clean sources; about 0.5 GB freed. All branches and evidence retained. | No source change |
 | D86-next21 | Qualify reviewed lane sheet and graph delta | Luna / service | Full current Agent core first under D108 | gated:D108-core | Private prep0632; WIP0640 | Exact 21 selectors are source-qualified. Normal-source functional coverage now comes from D108 full core before any extra family body. | Original proof pending |
@@ -344,38 +344,43 @@
 
 | R2-choice-three-prep | Prepare remaining inverse and word originals | Luna source only | Full core first under D108 | gated:D108-core | Prep0638 complete; rebound44cf | Exact three source recipe prepared with reviewed blobs and normal 1daca lock. No actual originals run; prior four PASS controls excluded. | Held candidate |
 
-| D108-Agent-core | Measure current Agent core outcomes | Luna / service | Canonical D89 floor update | doing | Resume0726 from0711 | Final547e/c916/f720/635f captured once; strict preflight0. No body yet. Add missing promised scene root; canonical8G margin being corrected. | Exact manifest retained |
+| D108-Agent-core | Measure current Agent core outcomes | Luna / service | Reviewed named heavy runner | doing | Controller0738 prepared; continuation next | D108a fixes 070dfc/1daca/f7201/635f. Old unstarted6897 queue request archived as superseded. Owner command has22 actual roots; no body yet. | Exact D108a tuple |
 | D108-reverse-audit | Preserve upstream and live predicates | Luna independent | Exact applied trees | review | rt-F-D108-reverse-audit-0645 | Source identities checked. Final initial audit: Agent96 cited and8 unresolved; Runtime10 unresolved. Citation crosswalk and TS audit assigned. | Source only |
 
-| D111-validation-memo | Avoid repeated successful schema validation | Luna / independent review | Actual element-path measurement | doing | Author0653; curve return0706 | Author79 PASS and smoke2 PASS. Native N=1 wall2754/2755ms proves no gain; missing finite N gate returned once, source stays held. | 1171212ce held |
-| D108-python-citations | Reconcile Python predicate signals | Luna / independent Luna | Independent result review | review | Author0700; reviewer0715 | Runtime10 mapped by exact source. Agent three D07 gaps and Windows/D18 census discrepancy sent to Agent. Changed assertion signals still need exact review. | Source evidence only |
-| D108-typescript-audit | Audit applied App and Composition tests | Luna / independent Luna | Independent result review | review | Author0700; reviewer0715 | Composition source accounting PASS. App D01 revision and three label/signature gaps sent to App. Fresh onboarding suites retained;77 lexical limits explicit. | Source evidence only |
+| D111-validation-memo | Measure actual element validation cost | Sol / Luna | Honest native sequence and review | doing | Security0729 FAIL; wholepath0729; Sol0744 | Memo1171212 held: protected tests fail and schema cache unbounded. Forced-reset curve is not production scaling; measured continuation owns next result. | 1171212 held |
+| D108-python-citations | Reconcile Python predicate signals | Luna / independent Luna | Applied source audit0742 | review | Original0700; result0715; review0742 | Runtime10 removed units mapped. Runtime changed assertion signals now audited separately; Agent owns D07, census and113 remaining signals. | Source evidence only |
+| D108-typescript-audit | Audit applied App and Composition tests | Luna / independent Luna | Applied source audit0742 | review | Original0700; App0726; review0742 | Composition scoped PASS. App returned canonical and label mappings; independent applied-tree check active.77 lexical limits stay explicit. | Source evidence only |
 
 
-| D108-Agent-source-gaps | Preserve D07 and installer predicates | Agent source owner | Existing exact scope and source | blocked:agent | Peer0715; Runtime reviewer0715 | Three D07 purposes and Windows/D18 census need exact replacement or restoration. D107 current-combination gap stays separately owned. | No source change |
-| D108-App-source-gaps | Preserve revision and label predicates | App source owner | Existing exact scope and source | blocked:app | Peer0715; Runtime reviewer0715 | D01 project history/restore/CAS and three label/signature predicates need exact approval or faithful source repair. No weakening authorized. | No source change |
-| D108-route-prep | Prepare the sole full-core route | Luna / independent Luna | Exact23-root argv correction | review | Prep0707; review0715; resume0726 | Private controls PASS, but argv22 versus promised23 roots FAIL. Missing live-scene-composition root restored by existing controller before body. | Private candidate |
+| D108-Agent-source-gaps | Preserve D07 and installer predicates | Agent Luna | Exact source and independent review | blocked:agent | D07coverage0732; census0731; peer0742 | D07 source active; census restores accidental foreign crosswalk amendment. Agent asked to own changed assertion signals. | No Runtime source change |
+| D108-App-source-gaps | Preserve revision and label predicates | Luna independent | Actual applied source check | review | App0726 returned; Runtime0742 | Both App mappings returned with exact approvals and production callers. Current-source mapping is not yet applied-tree qualification. | Source only |
+| D108-route-prep | Prepare the named full-core route | Luna | Corrected D89 runner | doing | D108a0738 prepared | Author command source confirms22 actual selectors including live scene. Genuine fixed tuple checked; central row and body wait reviewed runner. | Private preparation |
 
-| OPS-D89-service-floor | Align central heavy admission with D89 | Luna / independent review | Exact owner5.2GB policy | doing | rt-OPS-D89-service-floor-0725 | Canonical test-run still demands8G. Private candidate and boundary tests assigned; no bypass or live edit before review. | Source pending |
+| OPS-D89-service-floor | Align central heavy admission with D89 | Sol / independent Luna | Corrected candidate review | doing | Author0729; review0736 FAIL; Sol0740 | Heavy boundaries and slot controls passed. Exact light5GB regression assigned narrow fix; live runner remains unchanged. | Private candidate |
 
 | OPS-stale-d629-v1-log | Restore safe MAIN run headroom | Manager route | Fresh route and process audit | merged | Recycle d629; remove named v1 archive | Unreferenced clean pin and one121.8MB v1 log archive removed. Four registered old pins retained. Branches and current proof outputs preserved. | No source change |
 
-Runtime producer: RELEASED 1daca2a33, reviewed product tree a522. Normal c916 adds the required genuine-provider release check only. Agent d629 and App0b6cee fixed-producer adoption are complete.
-core open: 1 known Runtime P2 performance issue, D111. Agent current core count UNKNOWN until D108. Agent D110 independently owns the named inverse KeyError; no guessed shared cause.
-regressions: D102 shared-context request_id regression is closed on normal1daca. D111 performance qualification is pending; original D100 failures remain held and visible.
-Gates: P1/P3 historical GO; P4 independent GO28.101s with per-note durations UNKNOWN. Four isolated P2 GO retain recorded tuples. Current tour and final D59 gates/core/render remain owed.
+| OPS-D108a-disk | Preserve main run headroom | Manager route | Fresh host audit before retirement | doing | Prior host audit0730; named profiles reported | Available6.07GB at07:41 exceeds6GB target. Three376MB Remotion copies reported for owner approval; no hand deletion or sandbox-only host-use claim. | No source change |
+| D108a-agent-core-full | Run exact named Agent full core | Luna / central service | D89 reviewed installation | doing | rt-D108a-agent-core-full-0738 prepared | Fixed tuple validated. Old unstarted6897 pending request archived; stop route could not cancel queued work. No central body submitted. | 070dfc/1daca/f7201/635f |
+| D111-security | Review validation memo and actual path | Luna / independent Sol | Measured continuation | review | Security0729 FAIL; wholepath0729 complete | Protected validation counters fail; schema graph cache unbounded. D94 already covers verified history. Prior forced resets invalidate production curve claim. | Candidate held |
+| D108-applied-audit | Verify retained applied predicates | Luna independent | Exact original source evidence | doing | rt-F-D108-applied-audit-review-0742 | Runtime changed assertions and App returned mappings against exact rehearsal trees; no product, test, ledger or tuple changes. | Read only |
+| D108-crosswalk-restore | Restore authentic audit publication | Agent Luna | Original0700 evidence | blocked:agent | Census return0731; peer0742 | Agent restores mistaken foreign crosswalk amendment only from authentic preimage. Original0700 worker evidence remains authoritative. | No Runtime source change |
 
-Blockers: Agent D107 — Current combined word sequence failed protected review; Agent first return0647 owns it. Exact legacy read source is normally merged.
-Blockers: Runtime D111 — Genuine element-path profile, bounded positive validation memo if confirmed, strict controls, flat curve, real-provider smoke and review before release.
-Blockers: Agent D69 — Three D07 predicate gaps and exact Windows/D18 census discrepancy need Agent source disposition; peer0715 sent.
-Blockers: App D69 — D01 project revision and three label/signature predicates need exact approved mapping or faithful repair; peer0715 sent.
-Blockers: KIT CHANGE — bin/test-run pending reviewed SHA; implement owner D89 heavy5.2GB rule. Canonical8G margin blocks current full-core. No bypass.
-Blockers: Final cut — D69 source qualification, all-lane core, final P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
-Safety: Withdrawn D88 stays stopped. D106 ORCH-only publication rule applies; nobody retries denied hub writes. Every brief names exact own ORCH output paths.
-Next ready: D108 full-core0711 dispatched immediately on D110 release. Private route prep0707 and two source audits active. D111 finite-curve first return0706 active; family bodies paused.
-Venues: D1080711 owns next sole MAIN heavy body, exact current source capture and real central ID pending. App exclusively owns current P1/P3 and future full P2; no duplicate browser body.
-Delivery: D108 source apply complete with durable receipts. Audit has unresolved predicate signals. D77 genuine installed render follows core and source qualification; no ZIP publication.
-Later: No unchanged family repeats, original ten D100, four passed restore controls or P4 repeats. New26 and three-original candidates remain held under D108.
-Disk: About5.31GB free after unused d629 pin recycling and one stale v1 log archive removal. Fresh audit receipts retained. Compact gzipped3 old logs; registered pins and active evidence retained.
-live 3 / cap 6; ready-undispatched 0 eligible local starts. D111 finite-curve return, D89 private kit author and full-core continuation0726. Audit-result reviewer0715 finished finite FAIL.
-INBOX consumed through 1037115 bytes. Updated 2026-10-25T07:16:03Z. Latest D110/D111 decisions consumed; D109 ADD replay cancelled, element measurement belongs to D111.
+Runtime producer: RELEASED1daca2a33 reviewed treea522. Normalc916 adds genuine-provider release tooling only. Agent070dfc D110 is released; App6e21 normally adopted it.
+core open: 1 known Runtime performance issue, D111. Agent current full-core count remains UNKNOWN until the exact D108a body; App reports4 current open gestures.
+regressions: D102 shared-context request_id closed on1daca. D110 inverse KeyError source fix released with real-provider RED2/GREEN2 and independent44 controls; full P2 proof remains owed.
+Gates: Current P1/P3 independently GO on recordedf7201/d629/c916/635f. P4 independent GO28.101s with per-note durations UNKNOWN. Final tuple/core/P2/render still required.
+
+Blockers: Runtime D111 — Security0729 FAIL; genuine unforced existing-native measurement0744 before any next optimization.1171212 held; no release/adoption claim.
+Blockers: KIT CHANGE — bin/test-run baseline7e857; named candidate42b6 failed exact light5GB preservation. Sol0740 fixes boundary, independent review and atomic install required.
+Blockers: Agent D69 — D07coverage0732, census0731 and remaining changed-assertion ownership peer0742. Exact audit evidence only; no weakening or guessed retirement.
+Blockers: Runtime applied D69 — Independent0742 checks Runtime assertion signals and returned App mappings against retained applied trees;77 lexical limits remain explicit.
+Blockers: Final cut — D69, full Agent core, final pinned P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
+Next ready: D89 boundary author -> independent review/install -> resume prepared D108a controller and submit sole agent-core-full. D111 measured continuation and applied audit active.
+Venues: D108a exact070dfc/1daca/f7201/635f owns NEXT MAIN heavy. Old unstarted6897 request removed from pending queue with evidence retained; no duplicate. No new family body.
+Delivery: Rehearsal applied trees and patches retained. Source audit qualification pending; D77 installed render follows full core. No ZIP publication.
+Later: D107 sourcePASS held on2154 and D108. Held D100new26, R2three, old ten, passed restore controls and P4 are not repeated. Remotion profiles need owner disposition before retirement.
+Safety: Withdrawn D88 remains stopped. D106 ORCH-only outputs; no denied hub writes retried. No product/test/generated/pin changes by manager.
+Disk:6.07GB free at07:41; above D108a6.0 target. Prior host audit0730 retained. No ~/.codex touches; existing compact-scratch includes forbidden session writes, so it is not run in this pass.
+live 3 / cap 6; ready-undispatched 0 eligible starts. D89Sol0740, D111Sol0744 and applied auditLuna0742. Full-core continuation becomes ready after runner passes review.
+INBOX consumed through 1049721 bytes. Updated 2026-10-25T07:42:40Z.
