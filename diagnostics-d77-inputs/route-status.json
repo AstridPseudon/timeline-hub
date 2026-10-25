@@ -1,0 +1,28 @@
+{
+  "child_maker": {
+    "applied_tuple": "UNKNOWN",
+    "evidence": "No qualified venv-agent-child-d124-applied receipt exists.",
+    "maker_sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "d131_scope": "reserve selection only; no ownership or registration proof",
+    "prior_a4e016": {
+      "status": "REFUSED_AND_DROPPED",
+      "reason": "unowned retained source directory",
+      "receipt": "design/farm-childvenv-a4e016-REFUSED-unowned-retained-source-directory-20261025T1452Z.txt"
+    },
+    "source_route_applicability": "UNKNOWN",
+    "unproved_seam": "normal maker retained-source ownership/allowlist validation for the applied tuple"
+  },
+  "normal_installer": {
+    "supported_route": "astrid/run-astrid -> Installer.run -> Backend.stage -> service declaration -> generic_host --service -> run_pack_host_foreground -> ensure_pack_host",
+    "launcher_source": "/home/user/work/agent/astrid/installer/launcher.py",
+    "required_prerequisites": [
+      "exact Agent and Runtime checkouts and receipts",
+      "normal Runtime and child-venv receipts",
+      "authenticated installer manifest",
+      "normal uv executable",
+      "actual installed profile, service declaration, origins, and seven-key custody from stage receipt"
+    ],
+    "current_status": "NOT_READY; exact applied checkouts were refused as unknown commits on Farm"
+  }
+}

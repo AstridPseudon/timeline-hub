@@ -1,0 +1,34 @@
+{
+  "mode": "read_only_source_reconciliation",
+  "composition": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "requested_sources": {
+    "agent": {
+      "commit": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+      "tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+      "lock_path": "remotion/package-lock.json",
+      "commit_status": "EXACTMISSING",
+      "blob_sha256": "EXACTMISSING"
+    },
+    "runtime": {
+      "commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "commit_status": "EXACTMISSING"
+    }
+  },
+  "checked_repositories": [
+    "/home/user/work/agent",
+    "/home/user/work/runtime",
+    "/home/user/peteromallet/astrid-agent",
+    "/home/user/banodoco/banodoco-workspace-runtime"
+  ],
+  "handoff_lock": {
+    "reported": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18e",
+    "earlier_near_match": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "comparison": "UNVERIFIED_EXACTMISSING",
+    "correction_written": false
+  },
+  "source_policy": "No fetch, reconstruction, near-match, pin, or handoff correction."
+}
