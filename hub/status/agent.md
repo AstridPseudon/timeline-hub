@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T05:19:48Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 3m -->
-# agent board, 2026-10-25T05:02:00Z
+<!-- agent | 2026-10-25T05:22:56Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 1m -->
+# agent board, 2026-10-25T05:21:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -153,7 +153,7 @@
 | F remaining core | Keep live family repairs moving | Luna / Sol | Named source and exact MAIN proof | merging | Existing57-family map; actual6058 | Actual6058 fourteen PASS,7FAIL,75ERROR retained. Opaque6/script4 returned to MAIN0502; word46 local0502; no unchanged batch. | Existing source map |
 | F native batch24 | Ledger retired native CLI batches | Luna / Main Luna | Protected coverage review complete | merged | Ledger0007; review0033 PASS | Exact24 plus separate1 mapped; zero current coverage gaps. Exact worker appendix published in Agent ledger; six other cases remain live. | Evidence only |
 | F NativeSheet11 | Preserve ordinary sheet behavior | Luna / independent Luna | Meaningful MAIN new11source proof | merging | Author0451; review0500 A PASS | Narrow lifecycle and consumed media.admit correction queued normal. Actual6058 errors remain historical until meaningful proof. | ccfe0a354a |
-| F projection9 | Preserve genuine opaque captured sources | Luna source | Reviewed D100 candidate applicability | doing | agt-F-projection-D100-source-0517 | Narrow real doc.patch membership setup check on NEW358eb source; product readonly and held. All9 assertions/input purposes retained; no body. | Normal source unchanged |
+| F projection9 | Preserve genuine opaque captured sources | Luna / independent Luna | D100 normal product and MAIN9 | review | Source0517; review0520 | Candidate07f37 uses real shared birth/doc.patch/canonical reload. All43 assertions retained; strict review checks original physical topology and item authority. | 07f37 held |
 | F numeric9 | Preserve numeric revision fixtures | Luna | Main affected-node batch | merging | Source2328; review2342 PASS | Independent audit PASS after author merge; nine cases and exact test ASTs retained. Functional batch owed. | 3edc45cb26 |
 | D86 main M1 10 | Preserve outbox and restart scenarios | Luna | Meaningful MAIN source proof | merging | Author0355; review0400 PASS | Actual11789 errors retained; normalbc3d common fixture reviewed. Dependent23 exact map published. | bc3d53695f |
 | D86 main inverse10 | Preserve shared inverse scenarios | Main Luna | Actual corrected-source proof | merging | Host0158; review0204 PASS; home8dad | Restores original authored-first13s host. Five original-third incompatible inputs live. Unqualified local5FAIL5ERROR retained without acceptance credit. | 8dadab251a |
@@ -181,7 +181,7 @@
 | D86-provider-custody4 | Preserve remaining provider behavior | Sol / Luna / Runtime | Exact later named proofs | merging | D90 actual36; netzerocef8 | Two redo originals qualified by D90; netzero oracle source joined and needs MAIN. Replace-existing remains live Runtime seam. No extra diagnosis. | Homebd3c / cef8 |
 | D86-docpatch5 / D92 | Preserve genuine unused managed pin | HARD Sol / independent Luna | Meaningful MAIN corrected three | merging | Sol0451; independent PASS; normalef6d | Genuine catalog consumption and A/B preserve207 original predicates. Actual6058 phase UNKNOWN; safe artifact ask0504. Source-only cure unproved. | Homeef6db3be0f |
 | D86-owned-move8 | Preserve owned move and video birth | Luna source | Exact historical-source findings | doing | Shared source0329 | Actual9211 6ERROR2FAIL. Full original text/source/topology preserved; exact correction scope pending. | Actualcef8 /6634 |
-| D86-cli-trim3 | Preserve current CLI trim behavior | Luna / independent Luna | Approved media input disposition | blocked:orchestrator | Author0451; independent0500 C | Original PNG and authored source window conflict. [Decision](../../escalations/agent-20261025T0506Z-CLItrim-three-media-scope.md) asks genuine video setup or ledger. | Originals unchanged |
+| D86-cli-trim3 | Preserve current CLI trim behavior | Luna | D103 exact containment and source review | doing | agt-F-D103-CLItrim-video-0520 | D103 approves genuine video setup with all authored windows/timing/assertions unchanged. Author lists full exact bounds and shared-seed caller audit before review. | Source pending |
 | D86-occurrence-recipe3 | Preserve occurrence recipe behavior | MAIN private harness | D98a fail-closed startup control | gated:D98a-control | Runtime control0505; replacement approved | D98a approves one same-three replacement only after real startup controls PASS. Spent15239 had no observer evidence; D82class remains UNKNOWN. | Original assertions retained |
 | D86-graph-redo2 | Preserve authenticated graph roots | Luna | Exact MAIN failing original | merging | Review0354 PASS; cleanimport0403 | Normalcbc0 exact reviewed blob9215. Actual Runtime acceptance replaces synthetic setup; sibling PASS not repeated. | cbc0b6947e |
 | D86-publication1 | Preserve remaining live behavior | Main Luna requested | Later MAIN functional qualification | merging | Main0127; review0133 PASS; home258d | Genuine publication/render-task source path reviewed and normal joined. Original one remains behaviorally unqualified until MAIN proof. | 258d2cccdf |
@@ -225,7 +225,7 @@
 
 | F9211 command identity | Preserve strict executed command equality | MAIN private harness | D98a fail-closed startup control | gated:D98a-control | Runtime control0505; replacement approved | D98a approves one same-three replacement only after real startup controls PASS. Spent15239 had no observer evidence; D82class remains UNKNOWN. | Originals unchanged |
 | F9211 ordinary sheet | Preserve ordinary sheet caller and inputs | Luna / independent Luna | Meaningful MAIN new11source proof | merging | Author0451; review0500 A PASS | Exactccfe three-line real service-close and media admission correction queued normal merge. Original7tests/150assertions/21predicates conserved. | ccfe0a354a |
-| F9211 projection | Preserve opaque captured fixture | Luna source | Reviewed D100 candidate applicability | doing | Projection0517; Runtime inventory0506 | Newphysicalmembership source may supply genuine item-1; exact guarded API route only. No fabricated item map or unchanged current-source retry. | Source pending |
+| F9211 projection | Preserve opaque captured fixture | Luna / independent Luna | D100 normal product and MAIN9 | review | Source0517; review0520 | New realmembership setup depends on reviewed D100d3b5. No merge/body before product proof and normal merge; no fabricated source mapping. | 07f37 held |
 | F9211 numeric six | Preserve numeric move invocation | Luna / MAIN | Exact recorded6058 proof complete | merged | Actual6058 PASS6 | All six corrected numeric originals PASS on dc909/6634/043631/635f. Three numeric inverse cases remain separate with missing complete records. | 595464fd1c |
 
 
@@ -251,6 +251,7 @@
 | F6058 opaque6 | Preserve exact step patch claims | MAIN Luna requested | Exact source followthrough | blocked:runtime | Existing opaque family owner; peer0502 | Actual6058 six ERROR mismatch submitted step patch. Faithful source correction requested from exclusive MAIN owner; no local duplicate. | Source eb5c |
 | F6058 script4 | Preserve script promotion and command claims | MAIN Luna requested | Exact source followthrough | blocked:runtime | Existing script family owner; peer0502 | Actual6058 two physical-promotion failures, one command mismatch, one assertion. Separate exact source causes requested; no unchanged retry. | Source b4a |
 
+| F D72 current source log | Record reviewed fixture migrations | Luna | Existing independent source PASS | doing | agt-F-D72-reviewed-source-log-0520 | Appends exact D99/D92/sheet/word source receipts to existing log. Behavior pending; D100 valid-fixture phrase withheld until actual proof. | Existing log only |
 Integration: Actual normal6aefd11766 includes D97lock0c62,D99role0a955,D92catalog9b46,ordinarysheetccfe,D100host010d and currentword Runtime selectiona8bf. Productcandidate d3b5 remains held; canonical15 unchanged.
 core open: P4actual22560 independentGO0450, PASS28.101s versus45 on786/0c62/1e34/635f. Existing-only timing0454: eachnote01–10 UNKNOWN, no retained per-call timestamps. Header recording requested0510.
 Gates: P1/P3 historical GO; remaining P4 currenttuple independentGO0450 at28.101s. Header recording requestedonce0510. D59 finalP1-P5/core,D69 and genuine installed render required; no finaltuple/fullsuite/ZIP claim.
@@ -264,8 +265,8 @@ Safety: Withdrawn D88 denied action/prototype remain stopped. D93 original fixtu
 Disk: D89 source/review6 above5.0GB; heavy1 above5.2GB; nothing below4.5GB. Free5.870GB. Sweep3 removed0; compact packed0/gzipped2logs. Ended trees auto-recycled; KEEP/current and old refused targets untouched.
 Blockers: Runtime D101 — Actual paired HARD Sol0450 owns both sides. Required security/protected reviews and MAINsix proof precede normal merge; old decision wait cleared.
 Blockers: MAIN proof — Current61owner0505, reviewed restore8aa672 and reviewed D100d3b5 need actual serialMAINproof. P4 is independentlyGO; no P4blocker or duplicate body remains.
-Blockers: Source inputs — CLItrim3 media scope escalated0506. D98a control0505 PASS still required; decision cleared. Existing-artifact D92phase/wordinnerexception asks retained. Projection0517 checks reviewed NEWD100 source.
+Blockers: Source inputs — CLItrim decision cleared byD103; author0520 active. D98a control0505 PASS required. Artifact-only D92phase/wordinnerexception limits retained. Projection source depends on D100actualproof/normalmerge.
 Blockers: Final cut — D59 pinned P1-P5/core,D69 and genuine installed render required.
-Next ready: MAIN reviewedcandidate proofs are handed back; no localsource approval remains for D100. Projection0517 realmembership applicability runs independently. Runtime exclusive opaque6/script4 followthrough requested0502.
-live1 / cap6; ready-undispatched0 eligible local starts. ProjectionD100source0517 active. MAIN source/proof owners retain D101, current61, restore and D100; no source task waits for an extra review.
-Inbox consumed through1406748 bytes. Updated 2026-10-25T05:14:04Z. No manager product/test/generated/pin edits or test bodies.
+Next ready: D103CLItrim author0520, projection protectedreview0520 and D72log worker0520 run independently. D100d3b5 and restore8aa672 reviewed candidates are ready for existing serialMAIN proof.
+live3 / cap6; ready-undispatched0 eligible local starts. Active D103author, projectionreview and precise reviewed-source D72log0520. All independent ready work dispatched.
+Inbox consumed through1411680 bytes. Updated 2026-10-25T05:21:54Z. No manager product/test/generated/pin edits or test bodies.
