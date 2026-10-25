@@ -1,7 +1,7 @@
 """Ordinary parent media edits through managed custody and the real Agent provider.
 
 No daemon, schema substitution, prepared provider, or synthetic accepted history.
-Existing-film tests restore Runtime's approved pre-cut film backup.
+Existing-film variants build their baseline through current native commits.
 Generation settlement qualifies selection custody, not the assembler proposal lifecycle.
 """
 from __future__ import annotations
@@ -16,6 +16,8 @@ from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
 from astrid.sdk.timeline.native_parent_media_commands import (
     capture_clip_replace_media,
 )
@@ -30,10 +32,18 @@ def call(op, args, select='parent'):
 
 def body(editing, calls, *, dry_run=False):
     head = editing.service.get_project_timeline(editing.project, 'film')
+    label = 'Parent media edit'
+    changes = [change for command in calls if command['op'] == 'doc.patch'
+               for change in command['args']['changes']]
+    step = {'id': 'parent-media', 'label': label, 'intent': 'Parent media edit',
+            'tags': ['parent-media'], 'command_ordinals': list(range(len(calls))),
+            'patch': changes, 'reads': []}
     return {'api_version': 1, 'project_id': editing.project, 'timeline_id': 'film',
             'base_revision_id': head['head_revision_id'],
             'base_publication_id': head['head_publication_id'], 'commands': calls,
-            'dry_run': dry_run, 'source': {'via': 'python'}}
+            'label': label, 'steps': [step], 'merge': 'fields', 'reads': [],
+            'dry_run': dry_run, 'source': {'via': 'python'},
+            'rationale': 'Apply an authored parent media edit.', 'group_id': 'D86-parent-media'}
 
 
 def commit(editing, request, key):
@@ -67,7 +77,10 @@ def row(editing, identity='reserved-row', *, asset=None, track='visual'):
 
 
 def birth(editing, value=None, pin=None):
-    return call('clip.add-media', {'row': value or row(editing), 'media': pin or editing.pins['new']})
+    command = call('clip.add-media', {'row': value or row(editing), 'media': pin or editing.pins['new']})
+    command['created'] = ['parent/asset:' + command['args']['row']['asset'],
+                          'parent/clip:' + command['args']['row']['id']]
+    return command
 
 
 def undo(editing, result, key):
@@ -89,12 +102,10 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
     runtime = use_runtime()
     monkeypatch.syspath_prepend(str(runtime / 'tests'))
     from runtime_protocol.auth import CredentialStore
-    from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_port import RequestCommitPort
     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
     from runtime_protocol.timeline_commit_validation import validate_commit_value
     from test_generation_publish_v1_settlement import (
-        CAPABILITY,
         _effect,
         _fixture,
         _output,
@@ -109,24 +120,8 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
                                        'params': {'duration_seconds': 6} if kind == 'video' else {}}
         return value
 
-    if historical:
-        from timeline_commit_film_fixture import build_film_fixture
-
-        film = build_film_fixture(tmp_path)
-        root = film.duplicate_root
-        service = RuntimeService(root)
-        project = {'id': film.project_id}
-        service.register_executor({'executor_id': 'publish-worker', 'capabilities': [CAPABILITY]},
-                                  idempotency_key='publish-executor')
-        admitted = effect(project['id'])
-        task = service.create_task({
-            'capability_id': CAPABILITY, 'capability_digest': 'sha256:' + hashlib.sha256(CAPABILITY.encode()).hexdigest(),
-            'project': project['id'], 'settlement_effect': admitted, 'idempotency_key': 'publish-task'})
-        attempt = service.claim_next({'executor_id': 'publish-worker', 'capability_ids': [CAPABILITY],
-            'runtime_epoch': service.health()['runtime_epoch']}, idempotency_key='publish-claim')
-    else:
-        service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
-        root = tmp_path / 'publish'
+    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
+    root = tmp_path / 'publish'
     credentials = CredentialStore(tmp_path / 'credentials')
     token, _ = credentials.provision('parent-editor', ['projects:read', 'projects:write'])
     editing = SimpleNamespace(service=service, project=project['id'], root=root,
@@ -158,16 +153,39 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
             'version': association['lifecycle']['version']}, authorize=editing.authorize)
             for association in editing.associations}
         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
-        if not historical:
-            service.create_timeline(editing.project, 'film', idempotency_key='empty-film')
-        else:
-            # Install only the verified legacy baseline from the committed,
-            # authenticated pre-cut backup, through the normal history read.
-            service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
+        service.create_timeline(editing.project, 'film', idempotency_key='empty-film')
         if not pristine:
             tracked = capture_track_create(bundle_from_document(current(editing)), 'parent', {
                 'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
             commit(editing, body(editing, [tracked]), 'visual-track')
+        if historical:
+            music_pin = service.get_project_media_selection(editing.project, {
+                'asset': 'music-bed', 'generation_id': editing.pins['old']['generation_id'],
+                'variant_id': editing.pins['old']['variant_id']}, authorize=editing.authorize)
+            commit(editing, body(editing, [birth(editing, row(editing, 'music-bed', asset='music-bed'),
+                                                  music_pin)]), 'music-bed')
+            occurrence = capture_occurrence_create(
+                bundle_from_document(current(editing)), 'occurrence-2', 'shot-2',
+                name='Transition', track='visual', on=0, duration=8)
+            commit(editing, body(editing, [occurrence]), 'occurrence-2')
+            child_track = capture_track_create(bundle_from_document(current(editing)),
+                                                'occurrence:occurrence-2', {
+                                                    'id': 'visual', 'kind': 'visual', 'role': 'output',
+                                                    'opaque': [None, False]})
+            commit(editing, body(editing, [child_track]), 'occurrence-2-track')
+            child = row(editing, 'clip-2', asset='music-bed')
+            child_preview = call('occurrence.add-media', {
+                'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
+            child_preview['intent'] = {'ownership': 'occurrence'}
+            commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
+            child_command = capture_occurrence_add_media(
+                bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
+                music_pin, verified_media=editing.selected)
+            commit(editing, body(editing, [child_command]), 'occurrence-2-clip')
+            transition = capture_clip_set(
+                bundle_from_document(current(editing)), 'occurrence:occurrence-2/clip:clip-2',
+                values={'transition': {'type': 'crossfade', 'duration': 0.5}})
+            commit(editing, body(editing, [transition]), 'occurrence-2-transition')
         editing.selected.clear()
         editing.candidates.clear()
         yield editing
