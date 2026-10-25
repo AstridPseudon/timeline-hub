@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T09:11:35Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
-# app board, 2026-10-25T09:10Z
+<!-- app | 2026-10-25T09:15:58Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
+# app board, 2026-10-25T09:14Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -292,6 +292,7 @@ Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine
 Next ready: D115 independent reviewer0910 on exacte744; PASS then normalmerge and existingledger. No isolated body; correction rides next fullP2 after Runtime D111b/D112 release/adoption. D111b/D112 qualified releases then normal adoption/fullP2; no isolated placement.
 live 1 / cap 6; ready-undispatched 0; core open: 4. Latest dispatcher live count 1; protected reviewer0910 assigned after source0904 finalized. No App heavy body live.
 Capacity: Free5.59GB after asset15712 terminal. No eligible ended clean non-KEEP worktree; old dirty and refused targets untouched. Preserve15712 and all other run outputs through source disposition and verdict. Current tuple protected. D115 permits only exact field-union oracle correction; no product change or isolated successor.
-Inbox consumed through2039362 bytes. D114 asset15712 terminal FAIL236s after preflight9872 and readiness PASS on explicit04be/070dfc/1daca/635f; exact native reply equality source0904 assigned. Delayed selfpeer0837 superseded by normalD113HOMEdc8c. Runtime D112 native firstreturn and D111a distribution correction remain unqualified. No refusal.
+Inbox consumed through2042959 bytes. D114 asset15712 terminal FAIL236s after preflight9872 and readiness PASS on explicit04be/070dfc/1daca/635f; exact native reply equality source0904 assigned. Delayed selfpeer0837 superseded by normalD113HOMEdc8c. Runtime D112 native firstreturn and D111a distribution correction remain unqualified. No refusal.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).
+Retained run: app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712. Preserve every output through D55 disposition; no compact, sweep or raw cleanup of this run.
