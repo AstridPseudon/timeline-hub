@@ -355,3 +355,4 @@ def test_windows_restore_does_not_restrict_retained_unsafe_directory(
         backend.restore(version, data, identity, backup)
 
     assert unsafe not in windows_permissions
+

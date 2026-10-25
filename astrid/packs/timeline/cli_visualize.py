@@ -357,6 +357,35 @@ def _seconds(value: Any) -> str:
     return f"{float(value):.0f} s" if isinstance(value, (int, float)) and not isinstance(value, bool) else "?"
 
 
+def _visualization_revision_lines(outputs: Mapping[str, Any]) -> list[str]:
+    """Describe the revision the returned view actually consumed.
+
+    The request is only a selector.  Native views prove identity with their
+    Runtime inspection; rendered views prove it with the admission-owned
+    snapshot label.  Keep a missing label visible instead of guessing from
+    the requested revision or current head.
+    """
+    inspection = outputs.get("inspection")
+    if isinstance(inspection, Mapping):
+        actual = inspection.get("revision_id")
+        if isinstance(actual, str) and actual:
+            lines = [f"  committed revision {actual}"]
+            head = inspection.get("head_revision_id") or outputs.get("head_revision_id")
+            if isinstance(head, str) and head:
+                lines.append(f"  known head {head}")
+            return lines
+
+    snapshot_label = outputs.get("snapshot_label")
+    if isinstance(snapshot_label, Mapping):
+        label = snapshot_label.get("label")
+        if isinstance(label, str) and label:
+            return [f"  {label}"]
+        if snapshot_label.get("status") == "candidate":
+            return ["  unsaved candidate (committed base unavailable)"]
+        return ["  revision unavailable"]
+    return ["  revision unavailable"]
+
+
 def _visualization_summary(outputs: Mapping[str, Any], *, parsed: argparse.Namespace, inputs: Mapping[str, Any]) -> str:
     """The human result: where the picture is, what it holds, how long it took, what to run next."""
     view = str(inputs.get("view") or "filmstrip")
@@ -386,6 +415,7 @@ def _visualization_summary(outputs: Mapping[str, Any], *, parsed: argparse.Names
                    + (f" (window {float(window_info.get('end', 0)) - float(window_info.get('start', 0)):.2f} s: "
                       f"--window S widens it, up to {_preset_max()[str(preset)]:g} s)" if str(preset) in _preset_max() else "")),
     }.get(view, f"{frames} frames")
+    lines.extend(_visualization_revision_lines(outputs))
     lines.append(f"  {what}" + (f" · frames {resolution}" if resolution else ""))
     if timing.get("capture_s") is not None:
         lines.append(
@@ -640,6 +670,7 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
         head = _head_revision(parsed)
         if head:
             parsed.after_revision_id = head
+    view_was_explicit = getattr(parsed, "view", None) is not None
     try:
         at_note = _resolve_visualize_addresses(parsed)
     except ValueError as exc:
@@ -739,6 +770,13 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
         mode = "inputs"
     else:
         mode = getattr(parsed, "mode", "auto")
+    if mode == "inputs" and not view_was_explicit:
+        # Native input inspection only admits the filmstrip view.  Keep the
+        # ordinary contact default for composed/auto requests, but do not let
+        # it leak into an inputs request assembled from --show/--hide either.
+        inputs["view"] = "filmstrip"
+        if not getattr(parsed, "resolution", None) and not getattr(parsed, "size", None):
+            inputs.pop("resolution", None)
 
     validation_error = None
     revision_selectors = ("before_revision_id", "after_revision_id")

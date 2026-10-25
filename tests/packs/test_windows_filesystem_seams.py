@@ -206,3 +206,4 @@ def test_frozen_cleanup_preserves_replaced_root(tmp_path, windows_filesystem):
     (root / "foreign").write_bytes(b"keep")
     frozen._discard_rehydrated_root(root)
     assert (root / "foreign").read_bytes() == b"keep"
+

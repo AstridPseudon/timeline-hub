@@ -36,3 +36,4 @@ export function currentRuntime(discoveryPath: string, { credentialFile: credenti
   return { endpoint, token: readToken(credentialFile) };
 }
 
+

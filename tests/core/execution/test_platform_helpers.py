@@ -262,3 +262,4 @@ def test_windows_scope_dies_when_owner_process_exits(tmp_path):
     while platform.process_identity(child) is not None and time.monotonic() < deadline:
         time.sleep(0.02)
     assert platform.process_identity(child) is None
+

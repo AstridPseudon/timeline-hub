@@ -14,3 +14,4 @@ export function processHasExited(pid: number): boolean {
     throw error;
   }
 }
+

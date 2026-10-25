@@ -458,3 +458,4 @@ def test_retired_remotion_child_never_reuses_failed_pipe_workers(children, monke
         assert manager._exchange({"type": "render"}, timeout=10) == {"ok": True}
     finally:
         own(manager._stdin_writer)
+

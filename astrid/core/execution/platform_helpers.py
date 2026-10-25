@@ -67,3 +67,4 @@ def signal_observed_group(pgid: int, signum: int, *, leader_birth: str | None) -
             platform.signal_process(identity, signum)
         except ProcessLookupError:
             pass
+

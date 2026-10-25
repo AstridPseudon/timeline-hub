@@ -22,3 +22,4 @@ test('terminal paths remain inside their host root on POSIX and Windows', () => 
     for (const value of [outside, sibling, traversal, 'relative']) expect(isPathWithin(root, value, paths)).toBe(false);
   }
 });
+

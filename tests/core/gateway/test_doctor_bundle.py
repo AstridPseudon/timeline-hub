@@ -276,3 +276,4 @@ def test_doctor_bundle_survives_unavailable_support_root(tmp_path, monkeypatch, 
         status = json.loads(archive.read("status.json"))
     assert status["state"] == "runtime_unavailable"
     assert "Astrid doctor bundle:" in capsys.readouterr().out
+

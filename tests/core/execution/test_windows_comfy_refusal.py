@@ -38,3 +38,4 @@ def test_windows_host_only_preparation_keeps_its_existing_route(monkeypatch):
     monkeypatch.setattr(service, "_prepare_host_only", lambda received: calls.append(received) or {"status": "prepared"})
     assert service.prepare_local_execution(request) == {"status": "prepared"}
     assert calls == [request]
+

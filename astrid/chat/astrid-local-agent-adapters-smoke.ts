@@ -73,3 +73,4 @@ async function initialize(adapterId: AdapterId, packageName: string): Promise<vo
 for (const [adapterId, packageName] of Object.entries(LOCAL_AGENT_ADAPTERS) as Array<[AdapterId, string]>) {
   await initialize(adapterId, packageName);
 }
+

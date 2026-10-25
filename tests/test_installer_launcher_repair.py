@@ -300,3 +300,4 @@ def test_repair_restart_decision_preserves_or_replaces_real_processes(tmp_path, 
             assert backend.service.poll() is None
     finally:
         backend.close()
+

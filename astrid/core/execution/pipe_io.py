@@ -189,3 +189,4 @@ class PipeWriter:
         self._thread.join(timeout=timeout)
         if self._thread.is_alive():
             raise RuntimeError("pipe writer remains live after close")
+

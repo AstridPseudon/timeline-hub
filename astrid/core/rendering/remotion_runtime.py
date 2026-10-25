@@ -17,10 +17,11 @@ import subprocess
 import sys
 import tempfile
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterator, Mapping
 
 from runtime_protocol import platform
 
@@ -36,6 +37,7 @@ from astrid.core.env_vars import (
 )
 from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.foundation.paths import REPO_ROOT
+from astrid.core.rendering import _local_schema, _registry_origin, _remotion_package
 
 REMOTION_PROJECT_DIR_ENV = ASTRID_REMOTION_PROJECT_DIR
 NODE_EXECUTABLE_ENV = ASTRID_NODE_EXECUTABLE
@@ -45,40 +47,47 @@ _NODE_PROBE_TIMEOUT_SECONDS = 5
 _REGISTRY_PROBE_TIMEOUT_SECONDS = 90
 _REQUIRED_PACKAGES = (
     "timeline-composition",
-    "timeline-schema",
-    "timeline-theme-2rp",
 )
-_REQUIRED_SCHEMA_FILES = (
-    "__init__.py",
-    "generated.py",
-    "materialize.py",
-    "theme.py",
-    "timeline.schema.json",
-    "validate.py",
-)
-
+_COMPOSITION_PACKAGE_NAME = _remotion_package._COMPOSITION_PACKAGE_NAME
+_COMPOSITION_PACKAGE_VERSION = _remotion_package._COMPOSITION_PACKAGE_VERSION
+_REQUIRED_COMPOSITION_EXPORTS = _remotion_package._REQUIRED_COMPOSITION_EXPORTS
+_composition_package_problem = _remotion_package.composition_package_problem
 _SCHEMA_PROBE = """
+import importlib.machinery
 import json
 import pathlib
 import sys
 
-root = pathlib.Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(root))
-import banodoco_timeline_schema as schema
-from banodoco_timeline_schema import (
-    AssetEntry,
-    Theme,
-    ThemeOverrides,
-    TimelineClip,
-    TimelineConfig,
-    TimelineOutput,
-    materialize_output,
-    resolve_theme,
-)
-origin = pathlib.Path(schema.__file__).resolve()
-if not origin.is_relative_to(root / "banodoco_timeline_schema"):
-    raise RuntimeError(f"schema origin escaped trusted root: {origin}")
-contract = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+root = pathlib.Path(sys.argv[2])
+if sys.argv[3] == 'source':
+    sys.path.insert(0, str(root))
+elif sys.argv[3] != 'installed' or not sys.flags.isolated:
+    raise RuntimeError('schema validation requires an isolated installed interpreter')
+# Check the selected reader before executing any of its package initializers.
+# Installed mode uses the interpreter's distribution; source mode uses only
+# the launch-selected checkout, never the configured schema as an import root.
+specs = {}
+for name in ('astrid', 'astrid.core', 'astrid.core.rendering',
+             'astrid.core.rendering._local_schema', 'astrid.core.timeline',
+             'astrid.core.timeline.banodoco_schema'):
+    parent = name.rpartition('.')[0]
+    search = specs[parent].submodule_search_locations if parent else sys.path
+    spec = importlib.machinery.PathFinder.find_spec(name.rsplit('.', 1)[-1], search)
+    path = root.joinpath(*name.split('.'))
+    expected = path / '__init__.py' if path.is_dir() else path.with_suffix('.py')
+    if (spec is None or not expected.is_file()
+            or any(p.is_symlink() for p in (expected, *expected.parents))
+            or spec.origin != str(expected)
+            or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
+            or (spec.submodule_search_locations is not None
+                and list(spec.submodule_search_locations) != [str(path)])):
+        raise RuntimeError('canonical schema reader origin differs from selected Agent source')
+    specs[name] = spec
+from astrid.core.rendering import _local_schema
+if pathlib.Path(_local_schema.__file__) != root / 'astrid/core/rendering/_local_schema.py':
+    raise RuntimeError('canonical schema helper has a foreign origin')
+contract = _local_schema.load_verified_schema(root, sys.argv[1])
+origin = pathlib.Path(sys.argv[1])
 import jsonschema
 jsonschema.validate(
     {"tracks": [{"id": "source", "kind": "visual", "label": "Source", "role": "source"}],
@@ -111,6 +120,19 @@ class RemotionRuntimeTools:
 
 class RemotionValidationError(RuntimeError):
     """Validation failed; uncertain original child handles remain attached."""
+
+
+@contextmanager
+def remotion_render_lock() -> Iterator[None]:
+    """Expose the renderer lock through the server-owned runtime boundary."""
+
+    from astrid.packs.rendering.rendering.renderers.remotion import lock
+
+    if lock.remotion_render_lock_held():
+        yield
+        return
+    with lock.remotion_render_lock():
+        yield
 
 
 def _validation_timing(phase: str):
@@ -218,6 +240,7 @@ def probe_context(*, environment: Mapping[str, str], python_executable: str) -> 
     if any(not isinstance(environment[k], str) for k in _NODE_ENV_KEYS if k in environment):
         raise RemotionValidationError("runtime probe environment values must be strings")
     return {"policy": "clean-schema-env/v1", "python_executable": str(python),
+            "schema_profile": 'installed' if _installed_registry_profile(environment) else 'source',
             "node_env": {k: (_dedupe_path(environment[k]) if k == "PATH" else environment[k])
                          for k in _NODE_ENV_KEYS if k in environment},
             "schema_env": {k: environment[k] for k in _SCHEMA_ENV_KEYS if k in environment}}
@@ -332,21 +355,23 @@ def _runtime_inputs(project_dir: Path, environment: Mapping[str, str], python: s
     node = Path(configured)
     if not os.access(node, os.X_OK):
         raise RemotionValidationError("configured Node is not executable")
-    schema = Path(schema_raw).resolve(strict=True)
+    try:
+        schema = _local_schema.verified_schema_path(REPO_ROOT, schema_raw)
+    except (OSError, ValueError) as exc:
+        raise RemotionValidationError(f"runtime schema inputs changed or invalid identity: {exc}") from exc
     cli = project / REMOTION_CLI_RELATIVE_PATH
     cli.resolve(strict=True).relative_to(project)
-    for name in _REQUIRED_PACKAGES:
-        if not (project / "node_modules" / "@banodoco" / name / "package.json").is_file():
-            raise RemotionValidationError("installed Remotion package is missing")
-    for name in _REQUIRED_SCHEMA_FILES:
-        if not (schema / "banodoco_timeline_schema" / name).is_file():
-            raise RemotionValidationError("installed timeline schema is incomplete")
-    roots = [project / "node_modules", schema / "banodoco_timeline_schema"]
+    composition_problem = _composition_package_problem(project)
+    if composition_problem:
+        raise RemotionValidationError(composition_problem)
+    roots = [project / "node_modules", schema.parent]
     if (project / "src").is_dir():
         roots.append(project / "src")
     roots.extend(Path(p) for p in closure.get("package_roots", []))
     paths = [node, Path(python), cli, project / "package.json", project / "package-lock.json", Path(__file__),
-             REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json"]
+             Path(_remotion_package.__file__), Path(_local_schema.__file__),
+             REPO_ROOT / "runtime.lock.json", schema,
+             *(REPO_ROOT / p for p in _local_schema.READER_INPUTS)]
     paths.extend(p for p in project.iterdir() if p.is_file() and p.suffix in {".ts", ".js", ".mjs", ".cjs", ".json"})
     cfg = Path(python).parent.parent / "pyvenv.cfg"
     if cfg.is_file():
@@ -415,6 +440,8 @@ _INTERACTIVE_GIT_ENV = frozenset({
 
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
     from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
+    if _installed_registry_profile(environment) and any(environment.get(name) for name in ('PYTHONPATH', ASTRID_PACKS_PATH)):
+        raise RemotionValidationError('installed registry discovery refuses explicit import or pack roots')
     probe_context(environment=environment, python_executable=sys.executable)
     if any((k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV) or k in {'PYTHONSTARTUP'}
            for k in environment):
@@ -538,15 +565,20 @@ def _registry_observation() -> dict[str, Any]:
     from astrid.core.element.registry import clear_default_registry_cache
     from astrid.core.pack.source_setup import active_source_inventory, source_state_path
     from astrid.core.pack.discovery import discover_pack_metadata
-    from astrid.packs.rendering.rendering.renderers.remotion import lock
+    from astrid.packs.rendering.rendering.renderers.remotion import lock, run
+    # run is imported from the same selected product tree as this probe.
+    # Its existing carrier is the only installed generator authority; never
+    # recover a generator from the launch checkout.
+    generator = run.gen_effect_registry
+    if generator is None:
+        raise RemotionValidationError(
+            'installed registry generator carrier is unavailable: '
+            'the selected Astrid package does not carry gen_effect_registry'
+        )
     config_files = _registry_config_files(os.environ)
     _refuse_git_config_indirection(config_files)
     managed_git_roots, managed_config_files = _managed_registry_configuration()
     clear_default_registry_cache()
-    from astrid.core.foundation.paths import load_checkout_script
-    generator = load_checkout_script('gen_effect_registry')
-    if generator is None:
-        raise RemotionValidationError('registry generator script is unavailable in this checkout')
     state = generator.compute_generated_registry_state()  # include_local=True
     inventory = active_source_inventory(verify=True)
     packs = discover_pack_metadata(project_root=generator.TOOLS_DIR)
@@ -571,13 +603,19 @@ def _registry_observation() -> dict[str, Any]:
         raise RemotionValidationError('managed registry corpus requires the selected Git executable')
     if git:
         files.append(str(Path(git).resolve()))
+    from astrid.core.source_identity import installed_runtime_origins
+    dependency_origins = (
+        {'runtime_dependency_origins': installed_runtime_origins(_registry_origin.selected_root(__file__))}
+        if _installed_registry_profile(os.environ) else {}
+    )
     return {'state': state, 'roots': roots, 'optional_files': optional_files,
             'module_files': files, 'package_roots': package_roots,
             'search_paths': [str(Path(value or '.').absolute()) for value in sys.path],
             'search_path_spellings': sys.path, 'probe_cwd': os.getcwd(),
-            'generator_origin': str(Path(generator.__file__).resolve()),
-            'astrid_origin': str(Path(astrid.__file__).resolve()),
-            'runtime_origin': str(Path(__file__).resolve()),
+            'generator_origin': generator.__file__,
+            'astrid_origin': astrid.__file__,
+            'runtime_origin': __file__,
+            **dependency_origins,
             'managed_inventory_identity': inventory.identity,
             'lock_path': str(lock._resolved_lock_path()),
             'startup': {'executable': sys.executable, 'prefix': sys.prefix, 'base_prefix': sys.base_prefix}}
@@ -701,18 +739,40 @@ def _owned_registry_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
         raise error from primary
 
 
-def _registry_probe(environment: Mapping[str, str], python: str, *, generator: bool = False) -> tuple[dict[str, Any], dict[str, Any]]:
+def _installed_registry_profile(environment: Mapping[str, str]) -> bool:
+    """Use the existing installed/source discriminator for registry children."""
+    return (environment.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed'
+            or os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed')
+
+
+def _registry_probe(environment: Mapping[str, str], python: str, *, generator: bool = False,
+                    installed_source: tuple[str, str] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     from astrid.packs.rendering.rendering.renderers.remotion import run
-    script_directory = REPO_ROOT / 'scripts' if generator else Path(run.__file__).resolve().parents[2]
-    # Match both real script launchers: replace -c's cwd search entry with
-    # the script directory, and insert checkout only when not already present.
-    source = ('import sys,json; sys.path[0]=sys.argv[2]; '
-              'sys.path.insert(0,sys.argv[1]) if sys.argv[1] not in sys.path else None; '
-              'from astrid.core.rendering.remotion_runtime import _registry_observation; '
-              'print(json.dumps(_registry_observation(),sort_keys=True))')
-    cwd = REPO_ROOT if generator else script_directory
-    result, receipt = _owned_registry_probe([python, '-c', source, str(REPO_ROOT), str(script_directory)], cwd=cwd,
-                                           env=environment, phase='registry_discovery')
+    installed = installed_source is not None or _installed_registry_profile(environment)
+    if installed and environment.get('PYTHONPATH'):
+        raise RemotionValidationError('installed registry discovery refuses PYTHONPATH')
+    if installed and environment.get(ASTRID_PACKS_PATH):
+        raise RemotionValidationError('installed registry discovery refuses explicit pack roots')
+    if installed:
+        cwd = Path(tempfile.gettempdir()).resolve()
+        try:
+            argv = _registry_origin.installed_argv(python, __file__, installed_source=installed_source)
+        except FileNotFoundError as exc:
+            raise RemotionValidationError('installed registry generator carrier is unavailable') from exc
+        except (OSError, ValueError) as exc:
+            raise RemotionValidationError('installed registry launch source binding is unavailable') from exc
+        environment = {**environment, 'ASTRID_HOST_EXECUTION_PROFILE': 'installed'}
+    else:
+        script_directory = REPO_ROOT / 'scripts' if generator else Path(run.__file__).resolve().parents[2]
+        # Match both real script launchers: replace -c's cwd search entry with
+        # the script directory, and insert checkout only when not already present.
+        source = ('import sys,json; sys.path[0]=sys.argv[2]; '
+                  'sys.path.insert(0,sys.argv[1]) if sys.argv[1] not in sys.path else None; '
+                  'from astrid.core.rendering.remotion_runtime import _registry_observation; '
+                  'print(json.dumps(_registry_observation(),sort_keys=True))')
+        cwd = REPO_ROOT if generator else script_directory
+        argv = [python, '-c', source, str(REPO_ROOT), str(script_directory)]
+    result, receipt = _owned_registry_probe(argv, cwd=cwd, env=environment, phase='registry_discovery')
     try:
         _require_completed_probe(receipt, phase='registry_discovery')
     except RemotionValidationError as error:
@@ -720,14 +780,17 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
         raise
     try:
         observation = json.loads(result.stdout)
-        if (result.returncode or observation['runtime_origin'] != str(Path(__file__).resolve())
-                or observation['startup']['executable'] != python):
+        if result.returncode or observation['startup']['executable'] != python:
+            raise ValueError('registry source/interpreter differs')
+        if installed:
+            _registry_origin.validate_observation(observation, __file__, cwd, installed_source)
+        elif observation['runtime_origin'] != str(Path(__file__).resolve()):
             raise ValueError('registry source/interpreter differs')
         hashes = observation['state']['content_hashes']
         if (set(hashes) != set(_REGISTRY_KINDS) or not observation['state'].get('hash')
                 or any(not re.fullmatch('[0-9a-f]{64}', value) for value in hashes.values())):
             raise ValueError('registry state is incomplete')
-    except (ValueError, KeyError, TypeError) as exc:
+    except (OSError, ValueError, KeyError, TypeError) as exc:
         error = RemotionValidationError('owned registry discovery failed')
         error.probe_receipt = receipt
         raise error from exc
@@ -735,20 +798,24 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
 
 
 @_validation_timing("registry_settle")
-def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, *, expected_state: Any = None) -> dict[bytes, Any]:
-    from astrid.packs.rendering.rendering.renderers.remotion import run, lock
+def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, *, expected_state: Any = None,
+                       installed_source: tuple[str, str] | None = None) -> dict[bytes, Any]:
+    from astrid.packs.rendering.rendering.renderers.remotion import lock, run
     if not lock.remotion_render_lock_held():
         raise RemotionValidationError('registry settling requires the original held Remotion lock')
-    if run._timeline_composition_src(project) is None:
-        raise RemotionValidationError('launch validation needs the installed composition output directory')
     output_paths = run._registry_output_paths(project)
     selected: dict[bytes, Any] = {}
+    installed = installed_source is not None or _installed_registry_profile(os.environ) or any(
+        _installed_registry_profile(env) for paths in contexts.values()
+        for env in ([paths] if isinstance(paths, Mapping) else paths))
     if run.gen_effect_registry is None:
-        # Installed wheel: only the provisioned executable outputs are claimed.
+        if installed:
+            raise RemotionValidationError('installed registry generator carrier is unavailable')
+        # Preserve source-only provisioned output bindings without a generator.
         for paths in contexts.values():
             for environment in ([paths] if isinstance(paths, Mapping) else paths):
                 context = _registry_context(environment, generator=False)
-                context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
+                context[REMOTION_PROJECT_DIR_ENV] = str(project)
                 key = _canonical(context)
                 selected[key] = {'mode': 'provisioned_only', 'outputs': [_file_binding(p) for p in output_paths],
                                  'state_file': _file_binding(project / run._REGISTRY_STATE_PATH)
@@ -757,23 +824,27 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     probes: dict[bytes, Any] = {}
     expected = expected_state
     generator_env = None
+    generator_origin = None
     digest_memo: dict = {}  # One launch only; never persisted or shared.
     for paths in contexts.values():
         for environment in ([paths] if isinstance(paths, Mapping) else paths):
             renderer = _registry_context(environment, generator=False)
-            renderer['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(run._timeline_composition_src(project))
+            renderer[REMOTION_PROJECT_DIR_ENV] = str(project)
             # The generator is only run (below) to repair outputs, which are then
             # hash-checked against the expected state; it is not probed separately.
             generator_env = _registry_context(environment, generator=True)
-            generator_env['ASTRID_TIMELINE_COMPOSITION_SRC'] = renderer['ASTRID_TIMELINE_COMPOSITION_SRC']
+            generator_env[REMOTION_PROJECT_DIR_ENV] = str(project)
             key = _canonical({'environment': renderer, 'generator_startup': False})
             if key not in probes:
                 started_ns = time.time_ns()
-                observation, discovery_wait = _registry_probe(renderer, python, generator=False)
+                probe_environment = {**renderer, 'ASTRID_HOST_EXECUTION_PROFILE': 'installed'} if installed else renderer
+                observation, discovery_wait = _registry_probe(probe_environment, python, generator=False,
+                    **({'installed_source': installed_source} if installed_source is not None else {}))
                 _require_completed_probe(discovery_wait, phase='registry_discovery')
                 bound = _registry_inputs(observation, digest_memo=digest_memo, changed_after_ns=started_ns)
                 if observation['lock_path'] != str(lock._resolved_lock_path()):
                     raise RemotionValidationError('registry generator selected another Remotion lock')
+                generator_origin = observation.get('generator_origin')
                 probes[key] = {'observation': observation, 'inputs': bound,
                                'original_waits': {'discovery': discovery_wait}}
             state = probes[key]['observation']['state']
@@ -787,8 +858,22 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     generator_wait = None
     if cached != expected or current_hashes != expected['content_hashes']:
         generator_env = {**generator_env, **lock.remotion_render_lock_child_env()}
-        result, generator_wait = _owned_registry_probe([python, str(REPO_ROOT / 'scripts/gen_effect_registry.py')],
-                                                      cwd=REPO_ROOT, env=generator_env, phase='registry_generator')
+        if installed:
+            if not generator_origin:
+                raise RemotionValidationError(
+                    'installed registry generator carrier is unavailable: '
+                    'registry discovery returned no generator origin'
+                )
+            generator_argv = _registry_origin.installed_argv(python, __file__, generate=True,
+                                                            installed_source=installed_source)
+            generator_env['ASTRID_HOST_EXECUTION_PROFILE'] = 'installed'
+            generator_cwd = Path(tempfile.gettempdir()).resolve()
+        else:
+            generator_argv = [python, str(REPO_ROOT / 'scripts/gen_effect_registry.py')]
+            generator_cwd = REPO_ROOT
+        result, generator_wait = _owned_registry_probe(generator_argv,
+                                                       cwd=generator_cwd, env=generator_env,
+                                                       phase='registry_generator')
         _require_completed_probe(generator_wait, phase='registry_generator')
         if result.returncode:
             error = RemotionValidationError('owned registry generator failed')
@@ -819,7 +904,8 @@ def _prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
 
 def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_environment: Mapping[str, str],
                                 python_executable: str, launch_id: str,
-                                contexts: Mapping[str, Mapping[str, str] | list[Mapping[str, str]]]) -> dict[str, str]:
+                                contexts: Mapping[str, Mapping[str, str] | list[Mapping[str, str]]],
+                                installed_source: tuple[str, str] | None = None) -> dict[str, str]:
     """Explicit launch-owner transaction; ordinary resolver calls never spawn."""
     project_raw = host_environment.get(REMOTION_PROJECT_DIR_ENV, "")
     if not project_raw or not Path(project_raw).is_absolute():
@@ -833,7 +919,8 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
     contexts = {role: [candidate for environment in ([values] if isinstance(values, Mapping) else values)
                        for candidate in (dict(environment), build_child_subprocess_env(base=environment, parent=environment))]
                 for role, values in contexts.items()}
-    registries = _settle_registries(project, contexts, python_executable)
+    registries = _settle_registries(project, contexts, python_executable,
+        **({'installed_source': installed_source} if installed_source is not None else {}))
     entries: dict[str, Any] = {}
     validated: dict[bytes, dict[str, Any]] = {}
     # Registry selectors remain qualified independently. The owned Node and
@@ -846,7 +933,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
     def validate_context(environment: Mapping[str, str]) -> dict[str, Any]:
         context = probe_context(environment=environment, python_executable=python_executable)
         registry_context = _registry_context(environment, generator=False)
-        registry_context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(project / 'node_modules/@banodoco/timeline-composition/typescript/src')
+        registry_context[REMOTION_PROJECT_DIR_ENV] = str(project)
         context['registry_context'] = registry_context
         context['configuration'] = {k: environment.get(k) for k in
                                     (NODE_EXECUTABLE_ENV, REMOTION_PROJECT_DIR_ENV, TIMELINE_SCHEMA_PYTHONPATH_ENV)}
@@ -860,7 +947,8 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             # project) are in proof_key, so this context repeats a proven binding;
             # the final fresh per-proof check below still brackets publication.
             return qualify_registry(context, registry_context, environment, key, proof)
-        schema_root = Path(environment[TIMELINE_SCHEMA_PYTHONPATH_ENV]).resolve(strict=True)
+        schema_root = Path(environment[TIMELINE_SCHEMA_PYTHONPATH_ENV])
+        schema_profile = 'installed' if _installed_registry_profile(environment) else 'source'
         node = Path(environment[NODE_EXECUTABLE_ENV]).resolve(strict=True)
         baseline = _runtime_inputs(project, environment, python_executable, {}, digest_memo=digest_memo)
         probe, node_wait = _owned_probe([str(node), '--version'], cwd=project,
@@ -872,7 +960,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             raise error
         schema_probe, schema_wait = _owned_probe(
             [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root),
-             str(REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json")],
+             str(REPO_ROOT), schema_profile],
             cwd=schema_root.parent, env=context['schema_env'], timeout=5)
         if schema_probe.returncode:
             error = RemotionValidationError("clean timeline schema validation failed")
@@ -880,7 +968,8 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             raise error
         try:
             closure = json.loads(schema_probe.stdout)
-            Path(closure['origin']).relative_to(schema_root / 'banodoco_timeline_schema')
+            if closure['origin'] != str(schema_root):
+                raise RemotionValidationError("clean schema validation returned invalid identity")
             executable = closure['startup']['executable']
             if (not isinstance(executable, str) or not Path(executable).is_absolute()
                     or Path(executable).resolve(strict=True) != Path(python_executable).resolve(strict=True)):
@@ -902,7 +991,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
         complete_before = _runtime_inputs(project, environment, python_executable, closure, digest_memo=digest_memo)
         qualifying, qualifying_wait = _owned_probe(
             [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root),
-             str(REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json")],
+             str(REPO_ROOT), schema_profile],
             cwd=schema_root.parent, env=context['schema_env'], timeout=5)
         try:
             qualifying_closure = json.loads(qualifying.stdout)
@@ -1031,7 +1120,7 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
     python = sys.executable if python_executable is None else python_executable
     context = probe_context(environment=env, python_executable=python)
     registry_context = _registry_context(env, generator=False)
-    registry_context['ASTRID_TIMELINE_COMPOSITION_SRC'] = str(project_dir / 'node_modules/@banodoco/timeline-composition/typescript/src')
+    registry_context[REMOTION_PROJECT_DIR_ENV] = str(project_dir)
     context['registry_context'] = registry_context
     context['configuration'] = {k: env.get(k) for k in
                                 (NODE_EXECUTABLE_ENV, REMOTION_PROJECT_DIR_ENV, TIMELINE_SCHEMA_PYTHONPATH_ENV)}
@@ -1195,15 +1284,15 @@ def remotion_install_problem(project: Path) -> str | None:
     fix = f"run `npm ci` in {project} with {f'Node {pin}' if pin else 'the pinned Node'} on PATH"
     if not node_modules.is_dir():
         return f"Remotion node_modules is missing: {node_modules}; {fix}"
-    missing = [
-        f"@banodoco/{name}"
-        for name in _REQUIRED_PACKAGES
-        if not (node_modules / "@banodoco" / name / "package.json").is_file()
-    ]
+    missing = [f"@banodoco/{name}" for name in _REQUIRED_PACKAGES
+               if not (node_modules / "@banodoco" / name / "package.json").is_file()]
     if missing:
         return "required Remotion package(s) missing: " + ", ".join(missing) + f"; {fix}"
     if not (project / REMOTION_CLI_RELATIVE_PATH).is_file():
         return f"locked Remotion CLI is missing: {project / REMOTION_CLI_RELATIVE_PATH}; {fix}"
+    composition_problem = _composition_package_problem(project)
+    if composition_problem:
+        return f"{composition_problem}; {fix}"
     return None
 
 
@@ -1258,17 +1347,13 @@ def remotion_runtime_status(
             project_dir,
             f"{TIMELINE_SCHEMA_PYTHONPATH_ENV} must be an absolute path",
         )
-    schema_root = schema_root.resolve()
-    schema_package = schema_root / "banodoco_timeline_schema"
-    missing_schema_files = [
-        name for name in _REQUIRED_SCHEMA_FILES if not (schema_package / name).is_file()
-    ]
-    if missing_schema_files:
+    try:
+        _local_schema.verified_schema_path(REPO_ROOT, schema_root_raw)
+    except (OSError, ValueError) as exc:
         return RemotionRuntimeStatus(
             False,
             project_dir,
-            "installed timeline schema is incomplete under "
-            f"{schema_root}: {', '.join(missing_schema_files)}",
+            f"installed timeline schema is incomplete or invalid: {exc}",
         )
     runtime_tools, tools_error = resolve_remotion_runtime_tools(project_dir)
     if tools_error:
@@ -1288,6 +1373,33 @@ def remotion_runtime_status(
     )
 
 
+@contextmanager
+def prepared_scene_root(*args: Any, **kwargs: Any) -> Iterator[Any]:
+    """Yield the existing prepared Root under the renderer's shared lock.
+
+    Scene observers use this neutral runtime seam so they do not import a
+    concrete renderer. The backend preparation context remains the single
+    owner of Root admission and cleanup; this helper only preserves its
+    existing lock-and-lifetime boundary.
+    """
+    from astrid.packs.rendering.rendering.renderers.remotion import lock
+    from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (
+        _prepared_remotion_root,
+    )
+
+    with lock.remotion_render_lock(), _prepared_remotion_root(*args, **kwargs) as prepared:
+        yield prepared
+
+
+def default_composition_id() -> str:
+    """Return the backend-owned default without exposing the backend to callers."""
+    from astrid.packs.rendering.rendering.renderers.remotion.run import (
+        DEFAULT_COMPOSITION_ID,
+    )
+
+    return DEFAULT_COMPOSITION_ID
+
+
 __all__ = [
     "NODE_EXECUTABLE_ENV",
     "REMOTION_CLI_RELATIVE_PATH",
@@ -1295,6 +1407,8 @@ __all__ = [
     "RemotionRuntimeTools",
     "TIMELINE_SCHEMA_PYTHONPATH_ENV",
     "RemotionRuntimeStatus",
+    "default_composition_id",
+    "prepared_scene_root",
     "resolve_remotion_project_dir",
     "resolve_remotion_runtime_tools",
     "remotion_install_problem",

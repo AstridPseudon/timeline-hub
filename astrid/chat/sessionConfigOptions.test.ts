@@ -46,3 +46,4 @@ describe('ACP session config options', () => {
     expect(sessionConfigModels({ configOptions: [model] })?.thoughtLevel).toBeUndefined();
   });
 });
+

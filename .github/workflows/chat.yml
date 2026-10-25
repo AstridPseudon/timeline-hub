@@ -20,3 +20,4 @@ jobs:
           bun-version: "1.3.14"
       - run: bun run test:chat
       - run: bun run astrid/chat/astrid-local-agent-adapters-smoke.ts
+

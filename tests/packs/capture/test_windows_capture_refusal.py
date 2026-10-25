@@ -19,3 +19,4 @@ def test_windows_capture_refuses_before_admission_browser_or_output_preparation(
     with pytest.raises(web_page.AstridError, match="Browser capture is not available on Windows yet[.]"):
         web_page.capture(url="https://example.com/", out_dir=destination)
     assert not destination.exists()
+
