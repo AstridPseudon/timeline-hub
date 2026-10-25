@@ -1,0 +1,12 @@
+agent_receipt=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-0ae146e1b0acc6e4a82ba6b4f905d88bad48320c
+created=/home/user/work/wt/agt-pin-0ae146e1 (detached at 0ae146e1b0acc6e4a82ba6b4f905d88bad48320c, KEEP)
+receipt_sha256=820a23ea25f1e3e77d6b97fc6eb20ba2bb91bf3bf3ba1b066950cd1dcf4c3edd
+runtime_receipt=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-a3cd1a3214fa1632879c21d82d1abb9ea720b1de
+created=/home/user/work/wt/rt-pin-a3cd1a32
+receipt_sha256=76fd2c40f7ae868d0c59fd2c87bf8b494cf7a5e012a7329f887442b6d29bdd9d
+app_receipt=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-913686448cafbb63dfba5d8053cb725e1140bb07
+created=/home/user/work/wt/app-pin-91368644 (detached at 913686448cafbb63dfba5d8053cb725e1140bb07, KEEP)
+receipt_sha256=a5d95cf9e058bce54ea126c1c2c13b1c68dbce0f38363a51c0e57aa0490a3153
+composition_receipt=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+created=/home/user/work/wt/vw-pin-635f4de0
+receipt_sha256=ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1

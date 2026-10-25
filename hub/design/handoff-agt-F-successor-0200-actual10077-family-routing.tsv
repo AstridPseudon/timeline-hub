@@ -1,0 +1,18 @@
+family	selector_count	pass	fail	error	no_junit_case	skip
+F-M2-placement	20	0	0	16	4	0
+F-M2-pool	6	0	0	6	0	0
+F-current-sheet	17	0	17	0	0	0
+F-inverse-stage	7	0	0	7	0	0
+NativeSheet ordinary-runtime fixture	4	0	0	4	0	0
+cli-document-commit	8	0	0	0	8	0
+commitTimeline provider / M1 outbox/restart	10	0	0	10	0	0
+commitTimeline provider / occurrence-media	48	0	0	48	0	0
+commitTimeline provider / shared inverse	10	0	5	5	0	0
+native-word-binding	46	0	9	37	0	0
+saved capture/projection source fixture	9	0	0	9	0	0
+test-commit-runtime-parent-auto-completion	14	6	8	0	0	0
+test-commit-runtime-parent-media	20	2	0	18	0	0
+test-native-sheet-ordinary-runtime	7	0	0	7	0	0
+test-next-command-cohort-runtime	11	2	0	9	0	0
+timeline commit provider ABI / contract validation	20	20	0	0	0	0
+wc6-completion-capture	11	0	0	0	11	0

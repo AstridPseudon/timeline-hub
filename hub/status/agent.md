@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T02:05:08Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 0m -->
-# agent board, 2026-10-25T02:00:08Z
+<!-- agent | 2026-10-25T02:08:06Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 1m -->
+# agent board, 2026-10-25T02:06:26Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -156,10 +156,10 @@
 | F projection9 | Preserve genuine captured sources | Luna | MAIN successor qualification | merging | BatchE0151 PASS; homeb0ac | Exact4a8ec protected PASS, original9 predicates retained. Normal home blob qualifies source only; behavior owed. | b0ac6891b2 |
 | F numeric9 | Preserve numeric revision fixtures | Luna | Main affected-node batch | merging | Source2328; review2342 PASS | Independent audit PASS after author merge; nine cases and exact test ASTs retained. Functional batch owed. | 3edc45cb26 |
 | D86 main M1 10 | Preserve outbox and restart scenarios | Main Luna | MAIN meaningful successor proof | merging | Functional0145; review0147 PASS | Exact4f4f predicate/source PASS peer0152; normalhome9838 source exact. All10 actual setup errors retained until body. | 9838f7ca34 |
-| D86 main inverse10 | Preserve shared inverse scenarios | Main Luna | MAIN source successor proof | merging | Functional0145; review0150 PASS | Exactbc569 title correction normalb270; all10 retained. Five original-third finite interval inputs remain open, no clamp or guard change. | b27024efe1 |
+| D86 main inverse10 | Preserve shared inverse scenarios | Main Luna | Actual corrected-source proof | doing | Titlehomeb270; host0158 | Title correction source joined. Five original-third interval inputs remain live; MAIN host comparison0158 preserves exact timing and all predicates. | b27024efe1 |
 | D86 main word46 | Preserve native word binding behavior | Main Luna | MAIN source successor proof | merging | Functional0145; review0152 PASS | Exact9e88 supported init then original rational fps; normal5dc9. Nine semantic failures remain separate; no body. | 5dc9f0c898 |
 | D86 main CLI8 | Preserve real CLI idempotency | Main Luna | Main affected-node batch | merging | Runtime0022 PASS; home a0b8a3c078 | Real store retries and exact mismatch reason verified; eight assigned scenarios and twelve tests conserved. Functional proof pending. | Home a0b8a3c078 |
-| F next cohort11 | Preserve next-command scenarios | Luna | Main shared word fixture correction | blocked:runtime | Main request0133; actual2PASS9ERROR | Two observed PASS;9 setup errors share genuine word fixture. Exact2 scope only, not all11 closure. | Home0e59 |
+| F next cohort11 | Preserve next-command scenarios | Luna | MAIN meaningful successor proof | merging | Word9e88; normal5dc9; inputs0200 | Exact2 historical PASS retained;9 prior setup errors now eligible via reviewed shared word fps correction. Actual behavior owed. | 5dc9f0c898 |
 | D86 main media20 | Preserve parent-media scenarios | Main / Agent Luna | Main affected-node batch | merging | Review0001 PASS; home0d14 | Twenty original cases and exact native claims reviewed; source merged. Functional proof pending main batch. | 0d142f7951 |
 | D86 main auto14 | Preserve parent auto-completion | Main / Agent Luna | Main affected-node batch | merging | Review0000 PASS; homedcda | Fourteen original cases and all3 bodies exact; genuine current provider source merged. Functional proof pending. | dcdae41b56 |
 | F current sheet17 | Preserve current sheet scenarios | Luna | Protected review and MAIN proof | review | Author0157; review0203 | Init/emitter baseline corrected; inverse coverage and three retired CLI findings remain live. No body. | tl/agt-F-current-sheet17-actual-0157 |
@@ -212,4 +212,4 @@ Blockers: MAIN proof — Sole next P4 exactd407/6634 and D90 exact8964/a3cd cand
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
 Next ready: Finish current sheet17, protected ordinarysheet11 review and exact successor mapping. MAIN P4 then D90 candidate proof serially. Merge only actual protected PASS sources.
 live 2 / cap 6; ready-undispatched 0 eligible source starts. Current-sheet review0203 requested at5586976768 bytes and successor0200 live. Ordinary-sheet independent PASS merged; no duplicate MAIN body.
-Inbox consumed through1276631 bytes. Updated 2026-10-25T02:00:08Z: normal M2/projection/opaque joins verified, ordinary-sheet reviewer and exact successor input worker assigned. All behavior proof limits retained; no manager product/test/pin edits or bodies.
+Inbox consumed through1278429 bytes. Updated 2026-10-25T02:00:08Z: normal M2/projection/opaque joins verified, ordinary-sheet reviewer and exact successor input worker assigned. All behavior proof limits retained; no manager product/test/pin edits or bodies.

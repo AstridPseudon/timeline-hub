@@ -1,0 +1,187 @@
+{
+  "captured_source_tuple_0118": {
+    "branch": "tl/integration",
+    "commit": "219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b",
+    "parents": [
+      "0ae146e1b0acc6e4a82ba6b4f905d88bad48320c",
+      "fa81e23749d7a7c58a386dc0ce11ce058d359047"
+    ],
+    "path": "/home/user/work/agent",
+    "source_hashes_are_preserved": true,
+    "tree": "9d26efc30836abb7ae3a19882e6e917405db2f89"
+  },
+  "current_normal_home": {
+    "branch": "tl/integration",
+    "clean_worktree": true,
+    "commit": "c6c3158d333dca1158683757cfe92101262a2b74",
+    "merge_subject": "Merge tl/agt-F-cli-trim-return-0122",
+    "parents": [
+      "103ea403e3ea0cb5ddb8023df12a6afc1cfecb2b",
+      "c13c74678e317fe537f75996a2936bd1f6dad3b6"
+    ],
+    "path": "/home/user/work/agent",
+    "source_tuple_note": "Current head is a later normal integration head; relevant six source contents remain byte-identical to captured 0118 commit 219b.",
+    "tree": "d0b26805fade4371c5936de08e60803141eb708c"
+  },
+  "dependencies": {
+    "captured_0118_dependency_count": 1932,
+    "captured_0118_dependency_hashes_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-delta-0118/evidence/dependency-hashes.tsv",
+    "captured_0118_dependency_hashes_sha256": "af4e0aeaab05f6c3a7a891ca76d8787fd92876f510abc02bac0b1bd873da5485",
+    "no_install_or_dynamic_execution": true
+  },
+  "eligibility_rule": {
+    "first_subset": "0055 exact 298 minus numeric9 exact exclusion",
+    "first_subset_count": 289,
+    "held_later_delta": "scalar11 due to Runtime0110 FAIL_SOURCE",
+    "later_delta_count": 11,
+    "successor_count": 2,
+    "successor_new_delta": "graph-redo2 only"
+  },
+  "generated_at_utc": "2026-10-25T01:29:29.959762Z",
+  "historical_0118": {
+    "historical_eligibility": "SUPERSEDED_BY_D89_CORRECTION; original evidence untouched",
+    "membership_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-delta-0118/evidence/membership-delta.tsv",
+    "membership_sha256": "377e01b56c9bdc2fa6777796182e18a25eb126b29a10fa5025e17d728c8f32b9",
+    "record_count": 13,
+    "source_manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-delta-0118/evidence/source-manifest.json",
+    "source_manifest_sha256": "78b81e861dce06de84190a353db554a86a4c66a4260b2c7b2244a25f5602fca8"
+  },
+  "original550": {
+    "historical_0118_dispositions_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-delta-0118/evidence/dispositions.tsv",
+    "historical_0118_dispositions_sha256": "b63090839ef9b454016f5af756b5414d4172849e2f0ec330ba204affdf75f6f4",
+    "record_count": 550,
+    "rollup_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-delta-0118/evidence/original550-rollup.tsv",
+    "rollup_sha256": "5fdefc7f09ec13f2cdf16f3c870a114e9c7097a224afd6127ea8b2f370d87722"
+  },
+  "prior_0055": {
+    "membership_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-inputs-0055/evidence/membership.tsv",
+    "membership_sha256": "ec662bc73d6b81dbacef792e45cc21585d58942de30ee7ea3d0b0a3457186910",
+    "record_count": 298,
+    "source_manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-inputs-0055/evidence/source-manifest.json",
+    "source_manifest_sha256": "d97942eabf0f713ce64deb18422981f11ceb68fd2e8b232142ffed843c91d713"
+  },
+  "readonly_context": {
+    "app_commit": "18de74bd43bab71d11188054bd3035016b37ceaa",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "review_and_merge_receipts": {
+    "current_normal_home_receipt": {
+      "merge_commit": "2050221347a536d0fd698817c4a200004f960564",
+      "merge_subject": "Merge tl/agt-F-occurrence-recipe3-0112",
+      "parents": [
+        "7c94e9d2d753fc8f082877ef3de50b3a55a18689",
+        "6762f691d3f7d1f12237cffa639334a38f8f6edb"
+      ],
+      "status": "CURRENT_NORMAL_HOME_CAPTURED"
+    },
+    "graph_source_exact": {
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-graph-redo2-0112/report.md",
+      "source_head": "219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b",
+      "status": "SOURCE_EXACT_BEHAVIOR_PENDING",
+      "worker": "tl/agt-F-graph-redo2-0112"
+    },
+    "prior_0055_packet": {
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-inputs-0055/report.md",
+      "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-inputs-0055/evidence/source-manifest.json",
+      "status": "SOURCE_READY_PENDING_MAIN_RECEIPTS"
+    },
+    "scalar_agent_source_review_and_normal_merge": {
+      "candidate_commit": "fa81e23749d7a7c58a386dc0ce11ce058d359047",
+      "merge_receipt": "tl/agt-F-scalar-first-return-0100 into agent tl/integration -> 219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b",
+      "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-review-batchA-0107/evidence/verdictscalar.md",
+      "status": "SOURCE_HOME219B_BUT_OVERRIDDEN_BY_RUNTIME_FAIL_SOURCE"
+    },
+    "scalar_runtime_fail_source": {
+      "candidate_commit": "7adb3f16",
+      "finding": "seed patches newly ingested media without verified_media or genuine media.admit; verify_media rejects empty-bootstrap manifest before acceptance",
+      "report": "/home/user/timeline-hub/hub/design/rt-D86-scalar-word-review-0110.md",
+      "source_sha256": "3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee",
+      "status": "FAIL_SOURCE_HELD"
+    }
+  },
+  "runtime_input": {
+    "harness_commit": "766fd6700c3128ea9fc833086a517de2acb535e2",
+    "harness_note": "product-identical harness only; not the release identity",
+    "release_commit": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de",
+    "status": "released"
+  },
+  "schema": "astrid.timeline.incremental-successor-input/v2",
+  "source_files": [
+    {
+      "captured_0118_manifest_sha256": "3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee",
+      "captured_0118_manifest_sha256_valid": true,
+      "content_sha256_at_captured_219b": "3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee",
+      "content_unchanged_from_captured_219b": true,
+      "current_sha256": "3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee",
+      "family": "scalar11",
+      "hash_matches_captured_0118_manifest_literal": true,
+      "path": "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py",
+      "qualification_input": "HELD_FAIL_SOURCE"
+    },
+    {
+      "captured_0118_manifest_sha256": "691046ff5ac6919746c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+      "captured_0118_manifest_sha256_valid": false,
+      "content_sha256_at_captured_219b": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+      "content_unchanged_from_captured_219b": true,
+      "current_sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+      "family": "scalar11",
+      "hash_matches_captured_0118_manifest_literal": false,
+      "path": "tests/editing_conformance/test_commit_runtime_scalar.py",
+      "qualification_input": "HELD_FAIL_SOURCE"
+    },
+    {
+      "captured_0118_manifest_sha256": "1428644d1f81787cbb283f5bfe8eab0b717970928ab46ccd3ccf5ae109e1888c",
+      "captured_0118_manifest_sha256_valid": true,
+      "content_sha256_at_captured_219b": "1428644d1f81787cbb283f5bfe8eab0b717970928ab46ccd3ccf5ae109e1888c",
+      "content_unchanged_from_captured_219b": true,
+      "current_sha256": "1428644d1f81787cbb283f5bfe8eab0b717970928ab46ccd3ccf5ae109e1888c",
+      "family": "scalar11",
+      "hash_matches_captured_0118_manifest_literal": true,
+      "path": "tests/sdk/test_timeline_clip_scalar_provider.py",
+      "qualification_input": "HELD_FAIL_SOURCE"
+    },
+    {
+      "captured_0118_manifest_sha256": "15b731bc8598c83639e12110a042b1b2ac9f31ba44cf25883a18a0bbe7b656ea",
+      "captured_0118_manifest_sha256_valid": true,
+      "content_sha256_at_captured_219b": "15b731bc8598c83639e12110a042b1b2ac9f31ba44cf25883a18a0bbe7b656ea",
+      "content_unchanged_from_captured_219b": true,
+      "current_sha256": "15b731bc8598c83639e12110a042b1b2ac9f31ba44cf25883a18a0bbe7b656ea",
+      "family": "scalar11",
+      "hash_matches_captured_0118_manifest_literal": true,
+      "path": "tests/sdk/test_timeline_commit_provider_scalar.py",
+      "qualification_input": "HELD_FAIL_SOURCE"
+    },
+    {
+      "captured_0118_manifest_sha256": "10030e11d52cce3ce93ebf15ebeec202c0855c375e61083a33754915d4beedb2",
+      "captured_0118_manifest_sha256_valid": true,
+      "content_sha256_at_captured_219b": "10030e11d52cce3ce93ebf15ebeec202c0855c375e61083a33754915d4beedb2",
+      "content_unchanged_from_captured_219b": true,
+      "current_sha256": "10030e11d52cce3ce93ebf15ebeec202c0855c375e61083a33754915d4beedb2",
+      "family": "graph-redo2",
+      "hash_matches_captured_0118_manifest_literal": true,
+      "path": "tests/editing_conformance/test_historical_shared_redo_authority.py",
+      "qualification_input": "SUCCESSOR_SOURCE_EXACT_BEHAVIOR_PENDING"
+    },
+    {
+      "captured_0118_manifest_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "captured_0118_manifest_sha256_valid": true,
+      "content_sha256_at_captured_219b": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "content_unchanged_from_captured_219b": true,
+      "current_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "family": "graph-redo2",
+      "hash_matches_captured_0118_manifest_literal": true,
+      "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+      "qualification_input": "SUCCESSOR_SOURCE_EXACT_BEHAVIOR_PENDING"
+    }
+  ],
+  "source_hash_discrepancies": [
+    {
+      "captured_commit_verified_sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+      "captured_manifest_value": "691046ff5ac6919746c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+      "current_verified_sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+      "path": "tests/editing_conformance/test_commit_runtime_scalar.py",
+      "reason": "historical 0118 manifest literal is not the current valid SHA-256"
+    }
+  ],
+  "task": "F-D89-private-correction"
+}

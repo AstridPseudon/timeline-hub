@@ -1,0 +1,516 @@
+{
+  "actual10077": {
+    "automatic_verdict": "NO-GO; service summary only; no independent failure-verdict chain",
+    "known_outcomes": {
+      "ERROR": 176,
+      "FAIL": 39,
+      "NO_JUNIT_CASE": 23,
+      "PASS": 30
+    },
+    "request_id": "d86-incremental-main-0107-body",
+    "selector_count": 268,
+    "service_id": "agent-d86-incremental-main-1025011156-10077",
+    "xml_sha256": "7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0",
+    "xml_testcase_count": 245
+  },
+  "base": "current tl/integration; four-repo MAIN run and preflight PENDING",
+  "current_captured_homes": {
+    "agent": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "parents": [
+        "b27024efe13352ec7fef5b0341ee6c74985eff5d",
+        "9e88f5ba09f5c996367859ab990a8ff738378507"
+      ],
+      "path": "/home/user/work/agent",
+      "subject": "Merge tl/agt-D86-word-functional-0145",
+      "tree": "2dc4afdecc0db062a65d620d215f9272dd1db586"
+    },
+    "app": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "24865fa212148e9bc149a1285936372656037e55",
+      "parents": [
+        "4b98436552bf30f5fb28bbb958b1817430b12e34",
+        "c8e689fd5d7725c6d2fd3ed7e6cac83d2ab7326e"
+      ],
+      "path": "/home/user/work/app",
+      "subject": "Merge tl/app-U4p-D88b-adoption-0150",
+      "tree": "741333cebfb2b6505a080507bb6c9789df494d43"
+    },
+    "composition": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "parents": [
+        "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+        "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+      ],
+      "path": "/home/user/work/composition",
+      "subject": "Merge tl/vw-V1-composition-meta",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "parents": [
+        "766fd6700c3128ea9fc833086a517de2acb535e2",
+        "b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0"
+      ],
+      "path": "/home/user/work/runtime",
+      "subject": "Merge tl/rt-D88b-replay-memo-sol-0109",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a"
+    }
+  },
+  "dependencies": {
+    "app_captured": "913686448cafbb63dfba5d8053cb725e1140bb07",
+    "composition_captured": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "m2_helper_blob": "b42079",
+    "note": "shared dependency facts are source evidence only; no custody or behavior claimed",
+    "occurrence_home": "25c1e182614145c54decb07afc384180cc8e7e34",
+    "occurrence_source": "095177db7903075eaa9cae35308b28492a74a008",
+    "runtime_release": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de"
+  },
+  "families": [
+    {
+      "family": "occurrence48",
+      "files": [
+        {
+          "home_sha256": "e177f56a9a26b07e4d074961e5fa78d8941b379b4c3efb241aaca5a03c0c9537",
+          "path": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "e177f56a9a26b07e4d074961e5fa78d8941b379b4c3efb241aaca5a03c0c9537",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-occurrence48-review-0145/report.md"
+      ],
+      "selector_count": 48,
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "source_reason": "10077 ERROR rows: occurrence media source/fingerprint bootstrap seam corrected in 095177; protected review and normal home receipt 25c1; no unchanged retry."
+    },
+    {
+      "family": "M2placement20",
+      "files": [
+        {
+          "home_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+          "path": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+          "path": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+          "path": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "536bb82153b7c83ce55da18f3a6f069733c90d81",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-review-batchE-0151/evidence/verdictM2.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-review-batchE-0151/evidence/source-only-review.txt"
+      ],
+      "selector_count": 20,
+      "source_commit": "85e04640c6ce33319b1679324499a16c9b201236",
+      "source_reason": "10077 has 16 ERROR and 4 authentic NO_JUNIT_CASE rows: mirrored M2 placement dependency/caller correction in 85e046; protected PASS and home receipt 536bb; four rows are never-executed, not inferred pass."
+    },
+    {
+      "family": "projection9",
+      "files": [
+        {
+          "home_sha256": "91047638576673c9cbb65780d7364b9a4d5245ec40b19cbd52af5c3381a41105",
+          "path": "tests/sdk/test_timeline_capture_projection.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "91047638576673c9cbb65780d7364b9a4d5245ec40b19cbd52af5c3381a41105",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "b0ac6891b22f57b2f9744832563556ad5a7cca05",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-review-batchE-0151/evidence/verdictprojection.md"
+      ],
+      "selector_count": 9,
+      "source_commit": "4a8ecdf7d747969244dd0a277da1dfe0498f6544",
+      "source_reason": "10077 ERROR rows: opaque_timeline projection/source join corrected in 4a8ec; protected PASS and home receipt b0ac; no unchanged retry."
+    },
+    {
+      "family": "opaque9",
+      "files": [
+        {
+          "home_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+          "path": "tests/editing_conformance/test_commit_runtime_occurrence_create.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "f9b84bd22f48f5b13aab734eda50c725c11747de41e27cac8cc85471b3668de7",
+          "path": "tests/editing_conformance/test_commit_runtime_occurrence_fork.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "f9b84bd22f48f5b13aab734eda50c725c11747de41e27cac8cc85471b3668de7",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "5ae20ab0a747a16debdd5415516a07f1e6f35118a16a2afdcfbdf1b4716ea770",
+          "path": "tests/editing_conformance/test_commit_runtime_opaque_items.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "5ae20ab0a747a16debdd5415516a07f1e6f35118a16a2afdcfbdf1b4716ea770",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "1d17edc64a56100e981e14e7f9c6381f2634b6e2",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-opaque-core-review-0145.md"
+      ],
+      "selector_count": 9,
+      "source_commit": "32fcef2954110c353e79db448a3536118a0d0824",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; exact protected source/dependency join and current normal home receipt are recorded; no behavior credit."
+    },
+    {
+      "family": "numeric9",
+      "files": [
+        {
+          "home_sha256": "1de81ce9485b5ee2492da5ca88f413c980ab6302c3d3c10cc57e20635f485ae1",
+          "path": "tests/editing_conformance/test_commit_runtime_numeric_move.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "1de81ce9485b5ee2492da5ca88f413c980ab6302c3d3c10cc57e20635f485ae1",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "1ced4d39f8c2da4972863500b20aa67da1ee458f20ee9f4c86be152fd716b5d6",
+          "path": "tests/editing_conformance/test_commit_runtime_numeric_params.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "1ced4d39f8c2da4972863500b20aa67da1ee458f20ee9f4c86be152fd716b5d6",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "103ea403e3ea0cb5ddb8023df12a6afc1cfecb2b",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-numeric9-review-0056.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-numeric-review-2342.md"
+      ],
+      "selector_count": 9,
+      "source_commit": "ec76fa69e6cc8af424ec397512b9422968b7eaf5",
+      "source_reason": "Explicitly excluded from actual10077 (historical numeric9 exclusion): never executed in this bounded run; protected numeric source join ec76 is landed at 103ea; no historical289 reuse."
+    },
+    {
+      "family": "word11",
+      "files": [
+        {
+          "home_sha256": "fe7fab9f3f23a103b1c185cc74c4afe47c8b0183cd6dfcacef4796b92a3f61f0",
+          "path": "tests/editing_conformance/test_commit_runtime_text_binding.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "fe7fab9f3f23a103b1c185cc74c4afe47c8b0183cd6dfcacef4796b92a3f61f0",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "4475d1ac60f18ffaafc8bbc93b6b057c6cce2745277dca72dea3eeed159c69c4",
+          "path": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "4475d1ac60f18ffaafc8bbc93b6b057c6cce2745277dca72dea3eeed159c69c4",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "058d82106471efe8d586007f78784775622d962ce551e882fb65d95a62f4b60c",
+          "path": "tests/editing_conformance/test_timing_retained_inputs.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "058d82106471efe8d586007f78784775622d962ce551e882fb65d95a62f4b60c",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "7c94e9d2d753fc8f082877ef3de50b3a55a18689",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-word11-review-0022-report.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-scalar-word-review-0110.md"
+      ],
+      "selector_count": 11,
+      "source_commit": "32619f8656d0ab481c1486ee6cea23969bd7a788",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; retained-word production/dependency correction 32619 and protected review are present at 7c94; main native-word46 remains held."
+    },
+    {
+      "family": "video12",
+      "files": [
+        {
+          "home_sha256": "3a59a67cd47c94c169255e1cea64d3be4ead8ccbb1b324af7f00233deb8618e1",
+          "path": "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "3a59a67cd47c94c169255e1cea64d3be4ead8ccbb1b324af7f00233deb8618e1",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "11a68fba0142e044f6550456c51126e4d14e41021cc8f7d6f1fd55d34d23b70b",
+          "path": "tests/editing_conformance/test_recipe_m2_video_unplace.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "11a68fba0142e044f6550456c51126e4d14e41021cc8f7d6f1fd55d34d23b70b",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "27c68177c1f587acec0d2b615d1b8bb95c4a4fde",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D86-video12-review-0010.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D86-video12-rereview-0039.md"
+      ],
+      "selector_count": 12,
+      "source_commit": "9c149b0201f6cbca096064f5b516a673e8eb0a59",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; exact protected source/dependency join and current normal home receipt are recorded; no behavior credit."
+    },
+    {
+      "family": "scalar11",
+      "files": [
+        {
+          "home_sha256": "1428644d1f81787cbb283f5bfe8eab0b717970928ab46ccd3ccf5ae109e1888c",
+          "path": "tests/sdk/test_timeline_clip_scalar_provider.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "1428644d1f81787cbb283f5bfe8eab0b717970928ab46ccd3ccf5ae109e1888c",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "15b731bc8598c83639e12110a042b1b2ac9f31ba44cf25883a18a0bbe7b656ea",
+          "path": "tests/sdk/test_timeline_commit_provider_scalar.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "15b731bc8598c83639e12110a042b1b2ac9f31ba44cf25883a18a0bbe7b656ea",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "52c63fa1a59d4ac08ca9077b97e6facfe7947cc36fde2795d1538df31a14cfed",
+          "path": "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "52c63fa1a59d4ac08ca9077b97e6facfe7947cc36fde2795d1538df31a14cfed",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+          "path": "tests/editing_conformance/test_commit_runtime_scalar.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "1793b8e900b5c84a405fb93d44f1cd252fdb8080",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-review-batchD-0135/evidence/verdictscalar.md"
+      ],
+      "selector_count": 11,
+      "source_commit": "721189cbc8aeab7fed64643ca625e505e52b8d54",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; genuine media.admit dependency correction 721189 resolves prior FAIL_SOURCE; protected PASS and home receipt 1793."
+    },
+    {
+      "family": "ownedmove8",
+      "files": [
+        {
+          "home_sha256": "09b95319e6f261341cfb9d11a671f8e2c72b5ac16c12c446e8a987334c5aa673",
+          "path": "tests/editing_conformance/test_owned_move_publish_runtime.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "09b95319e6f261341cfb9d11a671f8e2c72b5ac16c12c446e8a987334c5aa673",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "4ca2388ca0b9fc5e814e8fc3707d04c36cf660d914aba74faa8e1b9e918d47ce",
+          "path": "tests/editing_conformance/test_prepared_video_birth.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "4ca2388ca0b9fc5e814e8fc3707d04c36cf660d914aba74faa8e1b9e918d47ce",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-review-batchD-0135-verdictowned.md"
+      ],
+      "selector_count": 8,
+      "source_commit": "73998ac446ea2e4bceed1e0df2c5e2c68c558e82",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; exact protected source/dependency join and current normal home receipt are recorded; no behavior credit."
+    },
+    {
+      "family": "CLItrim3",
+      "files": [
+        {
+          "home_sha256": "13048d0bedfa98ecf7c79959413eedc0c7587153f9df4b3561c00abb961b6a1d",
+          "path": "tests/editing_conformance/test_cli_trim_runtime.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "13048d0bedfa98ecf7c79959413eedc0c7587153f9df4b3561c00abb961b6a1d",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "c6c3158d333dca1158683757cfe92101262a2b74",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-review-cli-trim-preflight-final.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-cli-trim-return-0122/report.md"
+      ],
+      "selector_count": 3,
+      "source_commit": "c13c74678e317fe537f75996a2936bd1f6dad3b6",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; prior output-fps source finding is corrected by c13c and landed at c6c; behavior remains unverified."
+    },
+    {
+      "family": "recipe3",
+      "files": [
+        {
+          "home_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+          "path": "tests/editing_conformance/test_recipe_occurrence_media.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "2050221347a536d0fd698817c4a200004f960564",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-review-batchB-0122/evidence/verdictrecipe.md"
+      ],
+      "selector_count": 3,
+      "source_commit": "6762f691d3f7d1f12237cffa639334a38f8f6edb",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; exact protected source/dependency join and current normal home receipt are recorded; no behavior credit."
+    },
+    {
+      "family": "graph2",
+      "files": [
+        {
+          "home_sha256": "10030e11d52cce3ce93ebf15ebeec202c0855c375e61083a33754915d4beedb2",
+          "path": "tests/editing_conformance/test_historical_shared_redo_authority.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "10030e11d52cce3ce93ebf15ebeec202c0855c375e61083a33754915d4beedb2",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+          "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "d265112485cd499ea7cc26dae113af47165e8601",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-graph-redo2-0112/report.md"
+      ],
+      "selector_count": 2,
+      "source_commit": "219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; source-exact graph files remain byte-identical under 219b dependency facts and current home; no behavior credit."
+    },
+    {
+      "family": "ordinaryscript4",
+      "files": [
+        {
+          "home_sha256": "506a9afd3894bdaadda63e369f34aec04c5085320fd66a6d22f4893ab81c160d",
+          "path": "tests/editing_conformance/test_s3_reviewed_cohort_runtime.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "506a9afd3894bdaadda63e369f34aec04c5085320fd66a6d22f4893ab81c160d",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "3b37bc8a3f3faec06ddce4651cf68808553dc6e9fc8f634729d889016b47c8a0",
+          "path": "tests/editing_conformance/test_next_ordinary_union_runtime.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "3b37bc8a3f3faec06ddce4651cf68808553dc6e9fc8f634729d889016b47c8a0",
+          "static_ast_exists": true
+        },
+        {
+          "home_sha256": "8b1d68f15fb69c0883db28e039e7be198238c9f0a554132e4332bbc907395697",
+          "path": "tests/sdk/test_timeline_script.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "8b1d68f15fb69c0883db28e039e7be198238c9f0a554132e4332bbc907395697",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "f67bc19086b79fa674829648d072db6fe5b6020f",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-20261025T0152Z-M1-script-opaque-PASS.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/log-tail.txt"
+      ],
+      "selector_count": 4,
+      "source_commit": "96dbc670143159f35415115beef9e2ef2964660a",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; exact protected source/dependency join and current normal home receipt are recorded; no behavior credit."
+    },
+    {
+      "family": "publication1",
+      "files": [
+        {
+          "home_sha256": "efeb3dc4d02dc133831283e2c1e60b258da85e2dfe8f716a1627cd9d6260e361",
+          "path": "tests/packs/video_editing/test_runtime_publication_chain.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "efeb3dc4d02dc133831283e2c1e60b258da85e2dfe8f716a1627cd9d6260e361",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "258d2cccdff1e2fc69537614768ea8443e9e9ccb",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-publication-0127.md"
+      ],
+      "selector_count": 1,
+      "source_commit": "e9aef832580453564b7995091bdffe1a1298217a",
+      "source_reason": "Not in actual10077 selector set: never executed in this bounded run; exact protected source/dependency join and current normal home receipt are recorded; no behavior credit."
+    },
+    {
+      "family": "ordinarysheet11",
+      "files": [
+        {
+          "home_sha256": "9f80d4ee3c1e5d76781ac32a5c4e330f8c3ba76ef733a94d88515ca13d50f7ed",
+          "path": "tests/editing_conformance/test_native_sheet_ordinary_runtime.py",
+          "reviewed_home_equal": true,
+          "reviewed_merge_sha256": "9f80d4ee3c1e5d76781ac32a5c4e330f8c3ba76ef733a94d88515ca13d50f7ed",
+          "static_ast_exists": true
+        }
+      ],
+      "merge_receipt": "d265112485cd499ea7cc26dae113af47165e8601",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-sheet11-review-0159/evidence/source-review.txt",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-sheet11-review-0159/report.md"
+      ],
+      "selector_count": 11,
+      "source_commit": "2b843b27da5936ce7c61eaff65b11c80e46f066e",
+      "source_reason": "10077 ERROR rows: ordinary-sheet fractional-fps setup correction 2b843 is protected and landed at current home receipt d265; no unchanged retry."
+    }
+  ],
+  "future_main": {
+    "four_repo_checkouts": "PENDING",
+    "functional_results": "PENDING",
+    "preflight": "PENDING",
+    "receipt": "PENDING",
+    "service_id": "PENDING"
+  },
+  "held_families": [
+    {
+      "count": 10,
+      "disposition": "MAIN_M1_FIXTURES_HELD",
+      "family": "D86-M1-outbox",
+      "reason": "settled plan hold until actual qualified source and candidate proof"
+    }
+  ],
+  "historical_preservation": {
+    "d87_exact24_plus_separate1_retired": true,
+    "original550_dispositions": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-inputs-0200/evidence/historical-dispositions.tsv",
+    "original550_rollup": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-inputs-0200/evidence/historical-original550-rollup.tsv",
+    "six_live_frontends_visible": true
+  },
+  "main_eligibility": "NEW_ELIGIBLE_D89_INCREMENTAL_ONLY; Main M1/inverse/word fixtures held; never authorize unchanged268 retry; do not reuse historical289 eligibility",
+  "packet": "F-D89-successor-inputs-0200",
+  "schema": "astrid.timeline.d89-successor-main-qualification-input/v1",
+  "scope": "private source/static qualification input only; no behavior or final gate credit",
+  "set_counts": {
+    "actual10077_remainder": 180,
+    "actual10077_total": 268,
+    "never_executed_reviewed_joins": 73,
+    "new_membership": 161,
+    "observed_10077_new_membership": 88,
+    "observed_error_new_membership": 84,
+    "observed_no_junit_new_membership": 4,
+    "original550_preserved": 550
+  },
+  "static_checks": {
+    "bash_n_inherited_recipe": "PASS",
+    "reviewed_home_sha256_equal": true,
+    "selector_unique": true,
+    "static_ast": "PASS"
+  }
+}
