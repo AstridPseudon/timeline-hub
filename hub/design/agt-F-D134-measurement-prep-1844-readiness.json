@@ -1,0 +1,31 @@
+{
+  "task": "F/D134",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "measurement_condition": {
+    "decision_time": "20:00Z",
+    "required_custody_e2e_at_decision": "NOT_GREEN",
+    "current_worker_clock_gate": "not_passed",
+    "ship_credit": false,
+    "existing_environment_only": true,
+    "no_body_run_here": true
+  },
+  "source_tuple": {
+    "agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "app": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "source_audit": "PASS_STATIC",
+  "ordinary_preflight": "NOT_RUN_BY_DESIGN",
+  "measurement_body": "NOT_RUN_BY_DESIGN",
+  "request_test": "NOT_RUN_BY_DESIGN",
+  "first_guard_disposition": {
+    "custody_green_at_20z": "REFUSE_MEASUREMENT_NO_ALTERNATE_ROUTE",
+    "missing_binding_or_guard_refusal": "STOP_AND_REPORT",
+    "d128_child_maker_refusal": "PRESERVE_EXISTING_REFUSAL_NO_RETRY"
+  },
+  "free_bytes_observed": 6669877248,
+  "minimum_start_free_bytes": 4700000000,
+  "ongoing_stop_free_bytes": 4000000000,
+  "baseline_30693": "reference_only_no_deduction_or_ship_credit"
+}
