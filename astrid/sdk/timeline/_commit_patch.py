@@ -391,8 +391,9 @@ class CommitPatch:
         if ordinal > step['command_ordinals'][0]:
             previous = self.closures[ordinal - 1]
             current = self.closures[ordinal]
-            for ref in sorted(previous.images.keys() & current.images.keys()):
-                if previous.images[ref]['content_digest'] != current.images[ref]['content_digest']:
+            for ref in sorted(current.images):
+                if (ref not in previous.images
+                        or previous.images[ref]['content_digest'] != current.images[ref]['content_digest']):
                     binding = current.binding(ref, ref, **boundary)
                     binding.update(key='commit.input', policy='fixed', dependencies=[], path=[])
                     ctx.record['bindings'].append(binding)
@@ -615,8 +616,8 @@ class CommitPatch:
             after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []),
                                     inverse_records=self.inverse_records.get(ordinal, ()))
             record = plan.records[ordinal]
-            if self.v2 or any(self.inverse_stages.get(index)
-                              for index in step['command_ordinals']):
+            # Synthesized ABI-1 steps need the same immutable effect pins for undo.
+            if self.active:
                 for index, effect in enumerate(step['patch']):
                     segment = next(((first, second) for source_ordinal in step['command_ordinals']
                         for stage, (first, second) in zip(
