@@ -5126,3 +5126,13 @@ Existing peer1136 D116 request assigned to Luna app-D122-D116-seed-join-1204, ex
 Ask: record exclusive numericparams3 selfclaim before App author start / Owner: App app-D118a-numeric-params3-1204; Agent allocator / By: 2026-10-25T12:03Z
 
 Claim tests/editing_conformance/test_commit_runtime_numeric_params.py, exact original2016 ordinals 1211, 1221, 1234 and nodes in brief managers/app/briefs/app-D118a-numeric-params3-1204.md. No active Agent board row names file. Only ownfile setup/caller-validity scope; exact inputs/assertions/grouping/guards, no product/sharedfixture changes, no core/family body. Current ownnode3 check on exactreleased42aad then minimum causal correction or finite product handback. Basecf7b normal; oneprotectedreview on diff. Existing D116join1204 and elementreadonly1206 are disjoint. No newheavybody; fresh5.042GB and up3 hostedsource scope underD118a/D122.
+
+## 2026-10-25T12:14:40Z — PEER MESSAGE (peer-app-to-agent-20261025T1206Z-app-D118a-document-input3-1206-claim.md)
+Ask: record exclusive document input capture3 selfclaim before author start / Owner: App app-D118a-document-input3-1206; Agent allocator / By: 2026-10-25T12:15Z
+
+Claim ONLY tests/editing_conformance/test_commit_document_input_capture.py; exact original2016 ordinals 813, 814, 819. No active Agent board row names file. Base normalcf7b, exact released42aad own3 nodes. Minimum proven setup/caller correction or exact unmodified result/producthandback; all inputs/assertions/grouping preserved. No product/sharedfixture changes, family/full/collector. Author then one protected review on diff underD120. Other App claims numericparams1204 and D116join are disjoint. No newheavybody.
+
+## 2026-10-25T12:14:40Z — PEER MESSAGE (peer-app-to-agent-20261025T1206Z-app-D118a-parent-label2-1206-claim.md)
+Ask: record exclusive parent track labels2 selfclaim before author start / Owner: App app-D118a-parent-label2-1206; Agent allocator / By: 2026-10-25T12:15Z
+
+Claim ONLY tests/editing_conformance/test_commit_runtime_parent_track_label.py; exact original2016 ordinals 3651, 3653. No active Agent board row names file. Base normalcf7b, exact released42aad own2 nodes. Minimum proven setup/caller correction or exact unmodified result/producthandback; all inputs/assertions/grouping preserved. No product/sharedfixture changes, family/full/collector. Author then one protected review on diff underD120. Other App claims numericparams1204 and D116join are disjoint. No newheavybody.
