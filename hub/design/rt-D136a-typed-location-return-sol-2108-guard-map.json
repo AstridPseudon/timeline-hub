@@ -1,0 +1,69 @@
+{
+  "task": "rt-D136a-typed-location-return-sol-2108",
+  "all_changed_typed_open_comparisons": [
+    {
+      "file": "astrid/sdk/timeline/validation.py",
+      "function": "_validate_fps",
+      "before": "typed_fps_paths(candidate) == typed_fps_paths(baseline)",
+      "after": "typed_fps_paths(baseline) <= typed_fps_paths(candidate)",
+      "reason": "Preserve existing locations without forbidding new authored declarations; not open-path equivalence.",
+      "permitted": "timeline.init adds parent.config.output.fps to an empty canonical baseline",
+      "still_refused": [
+        "any missing baseline typed location",
+        "move typed output to open canvas",
+        "changed typed rate violating parity",
+        "malformed typed rate"
+      ],
+      "regressions": [
+        "test_capture_source_initialization_adds_typed_fps_without_normalization",
+        "test_existing_typed_fps_cannot_be_removed_moved_or_changed",
+        "test_initialization_still_requires_the_exact_base_pair"
+      ]
+    }
+  ],
+  "all_other_typed_open_comparisons_touched": [],
+  "audited_unchanged": [
+    {
+      "function": "validation._fps_values / _fps",
+      "predicate": "Typed parent.config.output.fps and shots[*].internal_timeline.output.fps must be finite positive numbers or strict positive-integer rational maps. Open canvas is not typed output."
+    },
+    {
+      "function": "validation._typed_fps_paths",
+      "predicate": "Same exact parent and child address strings; no location normalization, aliasing or omission."
+    },
+    {
+      "function": "validation._fps_basis",
+      "predicate": "Exact authored FPS/clock-owner fingerprint for D12 exemption; new declarations or changed physical owners cannot use unchanged legacy mismatch exemption."
+    },
+    {
+      "function": "validation._validate_fps parity",
+      "predicate": "Candidate typed rates still must agree exactly unless unchanged D12 fingerprint."
+    },
+    {
+      "function": "validation._timing_parent_view",
+      "predicate": "Detached null-clip/open-canvas timing adaptation only; canonical data unchanged."
+    },
+    {
+      "function": "_timing_evaluators._fps",
+      "predicate": "Production marker plus authored open canvas retains positive-scalar-or-30, including True->1. Direct detached exact-rational callers unchanged."
+    },
+    {
+      "function": "_commit_timing_validation.validate_candidate_timing",
+      "predicate": "Read-only: projection fills missing canvas fps from typed output via setdefault; no canonical rewrite. Real compile_timing still executes."
+    },
+    {
+      "function": "commit.RuntimeCommitService.commit",
+      "predicate": "Read-only: evaluated baseline/head/restoration closure, exact revision/publication authority, candidate validation before document persistence, accepted/preview result boundary retained."
+    }
+  ],
+  "evidence": {
+    "own_original45": "All original AST function/decorator nodes unchanged and tests pass",
+    "d12_and_nearest_typed_controls": "81 passed within combined138",
+    "new_controls": "12 passed within own57",
+    "no_protocol_or_auth_changes": true,
+    "no_guard_disabled": true,
+    "open_canvas_authored_json": "original40 accepted/preview forms still exact",
+    "wrong_pair": "new initialization test refuses unknown publication with no prepared/accepted writes"
+  },
+  "qualification": "Source-unit only; full original9 and actual Runtime coordinator/Store remain App sole gate after independent review and admission."
+}

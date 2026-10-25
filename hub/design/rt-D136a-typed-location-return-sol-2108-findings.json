@@ -1,0 +1,74 @@
+{
+  "task": "rt-D136a-typed-location-return-sol-2108",
+  "status": "PASS_BOUNDED_SOURCE_AND_INDEPENDENT_REVIEW_RELEASE_HELD",
+  "causality": {
+    "original_open_path_regression": "6f4baa07603776840f0a78cc0cf459831bc026af (prior D136 evidence)",
+    "current_first_seam_regression": "c99214a227154df5fbaf681c2e0fc52c54500025 introduced strict typed-location equality",
+    "independent_input": "app-D136a-original9-review-2100 source/custody qualified; no duplicate reader/body",
+    "actual_command": "capture-source-init / timeline.init",
+    "source": "tests/sdk/test_capture_source_runtime.py:262-268 -> native_initialize.py:18-20 -> commit.py:1410-1417 -> validation._validate_fps",
+    "baseline_locations": [],
+    "candidate_locations": [
+      "parent.config.output.fps"
+    ],
+    "removed_authored_location": false,
+    "open_canvas_or_semantic_default_involved": false,
+    "root": "Set equality conflates new typed declarations with removal; FPS=30 is explicitly authored."
+  },
+  "repair": "Require all baseline typed locations to be retained; allow new locations to pass existing strict value/parity checks.",
+  "proof": {
+    "parent_red": 2,
+    "candidate_green": 2,
+    "actual_registered_loader": true,
+    "actual_compile_timing": true,
+    "read_accept_port": "DetachedRealm/DetachedPort, no Store or HTTP coordinator/body credit",
+    "fixture_output_ast_equal": true,
+    "own_tests": 57,
+    "combined_targeted": 138,
+    "original45_unchanged": true
+  },
+  "preserved_historical_original9": {
+    "passed": 0,
+    "setup_errors": 9,
+    "failed": 0,
+    "skipped": 0,
+    "source": "app-D136a-joined-original9-2056",
+    "result": "NO-GO remains until sole App proof"
+  },
+  "scope": {
+    "actual_changed_files": 2,
+    "timing_evaluators_unchanged": true,
+    "D100_held_product_imported": false,
+    "protected_fixture_modified": false,
+    "schema_generated_pins_kit_other_helpers_modified": false
+  },
+  "missing_actual_input": null,
+  "limits": [
+    "5GB actual body admission NOTRUN: below floor; source-unit only",
+    "No original9/27/full/core/P4/browser/child/Store/profile/acquisition/socket/D130 run",
+    "No normal merge-to-run or source-release"
+  ],
+  "next_steps": [
+    "App sole unchanged original9 once after genuine >=5GB admission on reviewed joined source/D100/f53b/Runtime ab1e",
+    "Keep release held pending original9 qualification; no unchanged retries"
+  ],
+  "independent_review": {
+    "status": "PASS_SOURCE_SECURITY_PROTECTED",
+    "reviewer": "/root/d136a_security_review_isolated",
+    "mode": "Independent read-only exact-delta review; no tests/body/Store/socket or redispatch",
+    "diff_sha256": "1f3f7af792722507c9d61ad7f4c6f13468424fb75b7a5fe60daa3b44e9cdde91",
+    "validation_sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae",
+    "test_sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042",
+    "findings": [],
+    "conclusions": [
+      "Baseline subset permits new canonical typed output while rejecting removal/relocation of existing declarations.",
+      "Strict FPS parsing precedes guard; exact rational parity and D12 clock-owner fingerprints unchanged.",
+      "New declarations cannot acquire unchanged-legacy exemption.",
+      "Final validation still precedes canonical materialization and preview/acceptance.",
+      "No auth/base identity/persistence/compiler fallback/schema/privacy boundary changes.",
+      "12 additive accepted/preview cases; original assertions untouched; observer delegates to real compiler.",
+      "Two authorized files changed; timing evaluator unchanged."
+    ],
+    "limits": "Source delta only; supplied tests not independently rerun. Original9 and release admission outstanding."
+  }
+}

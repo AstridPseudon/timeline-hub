@@ -1,0 +1,46 @@
+{
+  "proof_kind": "bounded source-unit through actual profile loader and RuntimeCommitService; detached read/accept port",
+  "not_claimed": [
+    "RuntimeService/coordinator HTTP admission",
+    "Store/body/original9 qualification"
+  ],
+  "provider_factory": "astrid.sdk.timeline.commit.create_runtime_commit_service",
+  "registration_module": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_provider.py",
+  "registration_sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+  "runtime_pin": "ab1e4f6141987706132916e2da16477f5a019464",
+  "regression_fixture_source": "/home/user/work/wt/rt-D136a-typed-location-return-sol-2108/tests/sdk/test_capture_source_runtime.py",
+  "fixture_sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48",
+  "fixture_output_ast_equal": true,
+  "before_typed_fps_paths": [],
+  "after_typed_fps_paths": [
+    "parent.config.output.fps"
+  ],
+  "results": [
+    {
+      "source": "c99214a227154df5fbaf681c2e0fc52c54500025",
+      "dry_run": false,
+      "result": "RED",
+      "reason": "candidate: all authored fps declarations must retain their typed locations"
+    },
+    {
+      "source": "working-tree",
+      "dry_run": false,
+      "result": "GREEN",
+      "authored_output_unchanged": true,
+      "compile_timing_executed": true
+    },
+    {
+      "source": "c99214a227154df5fbaf681c2e0fc52c54500025",
+      "dry_run": true,
+      "result": "RED",
+      "reason": "candidate: all authored fps declarations must retain their typed locations"
+    },
+    {
+      "source": "working-tree",
+      "dry_run": true,
+      "result": "GREEN",
+      "authored_output_unchanged": true,
+      "compile_timing_executed": true
+    }
+  ]
+}

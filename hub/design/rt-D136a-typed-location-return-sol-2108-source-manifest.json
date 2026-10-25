@@ -1,0 +1,93 @@
+{
+  "task": "rt-D136a-typed-location-return-sol-2108",
+  "repo": "/home/user/work/wt/rt-D136a-typed-location-return-sol-2108",
+  "base_commit": "c99214a227154df5fbaf681c2e0fc52c54500025",
+  "base_tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+  "changed_paths": [
+    "astrid/sdk/timeline/validation.py",
+    "tests/sdk/test_d136_fps_upstream_compat.py"
+  ],
+  "allowed_paths": [
+    "astrid/sdk/timeline/validation.py",
+    "astrid/sdk/timeline/_timing_evaluators.py",
+    "tests/sdk/test_d136_fps_upstream_compat.py"
+  ],
+  "files": [
+    {
+      "path": "astrid/sdk/timeline/validation.py",
+      "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae",
+      "git_blob": "e39103bab6f293cb6b078cbe0bdd9c1739302c3a",
+      "base_sha256": "74c14ade6dd564eadaf26f27ff6dc64d5168175f3320029768a3684754e5a0d8",
+      "changed": true
+    },
+    {
+      "path": "astrid/sdk/timeline/_timing_evaluators.py",
+      "sha256": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268",
+      "git_blob": "7b2937887351251594137628cfbfb58f86cb059e",
+      "base_sha256": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268",
+      "changed": false
+    },
+    {
+      "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+      "sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042",
+      "git_blob": "32cf9e15a13fb4bf16a45184789bb3431f01ef0c",
+      "base_sha256": "570dc2040dd7f8c1eca887c2a22827d5963e67599f3d69df834f854bde34dfc3",
+      "changed": true
+    }
+  ],
+  "existing45_ast_unchanged": true,
+  "protected_files": [
+    {
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+      "unchanged": true
+    },
+    {
+      "path": "astrid/sdk/timeline/commit.py",
+      "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "unchanged": true
+    },
+    {
+      "path": "astrid/sdk/timeline/native_initialize.py",
+      "sha256": "9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82",
+      "unchanged": true
+    },
+    {
+      "path": "tests/sdk/test_capture_source_runtime.py",
+      "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48",
+      "unchanged": true
+    },
+    {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+      "unchanged": true
+    }
+  ],
+  "original_f53b_projection": {
+    "commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+    "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "modified": false
+  },
+  "runtime_pin": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "mutable_runtime_used_for_body": false
+  },
+  "input_evidence": [
+    "/home/user/timeline-hub/hub/design/app-D136a-joined-original9-2056-report.md",
+    "/home/user/timeline-hub/hub/design/app-D136a-joined-original9-2056-findings.json",
+    "/home/user/timeline-hub/hub/design/app-D136a-joined-original9-2056-source-manifest.json",
+    "/home/user/timeline-hub/hub/design/app-D136a-joined-original9-2056-submission-facts.json",
+    "/home/user/timeline-hub/hub/design/app-D136a-joined-original9-2056-validation.md",
+    "/home/user/timeline-hub/hub/design/app-D136a-original9-review-2100-report.md",
+    "/home/user/timeline-hub/hub/design/app-D136a-original9-review-2100-findings.md",
+    "/home/user/timeline-hub/hub/design/app-D136a-original9-review-2100-first-seam.json",
+    "/home/user/timeline-hub/hub/design/app-D136a-original9-review-2100-wholepath.md",
+    "/home/user/timeline-hub/hub/design/app-D136a-original9-review-2100-source-manifest.json"
+  ],
+  "disk_free_bytes": 4712398848,
+  "body_admission": "NOTRUN: below genuine 5 GB admission; bounded source-unit only",
+  "diff_sha256": "1f3f7af792722507c9d61ad7f4c6f13468424fb75b7a5fe60daa3b44e9cdde91",
+  "independent_review": "PASS: exact diff and source/test hashes recorded in findings.json"
+}
