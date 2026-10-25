@@ -1,0 +1,27 @@
+{
+  "cwd": "/home/user/work/wt/rt-D124-host14-core-review-1345",
+  "env_python_no_user_site": "1",
+  "executable": "/home/user/work/venv-agent/bin/python",
+  "origins": {
+    "astrid": "/home/user/work/wt/rt-D124-host14-core-review-1345/astrid/__init__.py",
+    "astrid.core.rendering._local_schema": "/home/user/work/wt/rt-D124-host14-core-review-1345/astrid/core/rendering/_local_schema.py",
+    "astrid.core.rendering.remotion_runtime": "/home/user/work/wt/rt-D124-host14-core-review-1345/astrid/core/rendering/remotion_runtime.py",
+    "astrid.core.timeline.banodoco_schema": "/home/user/work/wt/rt-D124-host14-core-review-1345/astrid/core/timeline/banodoco_schema.py",
+    "astrid.sdk.host_bootstrap": "/home/user/work/wt/rt-D124-host14-core-review-1345/astrid/sdk/host_bootstrap.py",
+    "astrid_runtime": "/home/user/work/runtime/astrid_runtime/__init__.py",
+    "astrid_runtime_client": "/home/user/work/wt/rt-D124-host14-core-review-1345/astrid_runtime_client/__init__.py",
+    "runtime_protocol": "/home/user/work/runtime/runtime_protocol/__init__.py",
+    "runtime_protocol.canonical_schema": "/home/user/work/runtime/runtime_protocol/canonical_schema.py",
+    "runtime_protocol.contract_metadata": "/home/user/work/runtime/runtime_protocol/contract_metadata.py"
+  },
+  "python_no_user_site": true,
+  "sys_path": [
+    "/home/user/work/wt/rt-D124-host14-core-review-1345",
+    "/home/user/work/runtime",
+    "/home/user/work/runtime/packages/python",
+    "/usr/lib/python313.zip",
+    "/usr/lib/python3.13",
+    "/usr/lib/python3.13/lib-dynload",
+    "/home/user/work/venv-agent/lib/python3.13/site-packages"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "base": "0b586e4b56cffbcd066ea8792adf46b660f5395a",
+  "base_tree": "bb23455ea5f38120c251a91f4a4afeeb1ea3d5ce",
+  "candidate": "96df3f5b4862b1c267e3816237bae8a64b5dc31f",
+  "candidate_parent": "0b586e4b56cffbcd066ea8792adf46b660f5395a",
+  "candidate_tree": "a3a37c09ed071879d92a51d963ca3fe65616115f",
+  "changed_files": [
+    "astrid/sdk/host_bootstrap.py"
+  ],
+  "host_bootstrap_sha256": "0c3c8ae829991a22b7cda06cf08b3f4d089df46f5a4ea4f1af8e4c6dab07ec25",
+  "outside_host_bootstrap_unchanged": true,
+  "remotion_runtime_sha256": "0284b17ab0cb3adbfbfd5875c3655cb50e8f85348e93e011fdb2817585647ea2",
+  "runtime_head": "453b3e6f92045980219ec4948419ee5ad25c817d",
+  "runtime_lock_source_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+  "runtime_source_pin": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5"
+}
