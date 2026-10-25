@@ -6,7 +6,7 @@ import type { AgentThoughtLevel, LocalAgentId } from '@/integrations/astrid/loca
 import { AgentIcon, agentNames } from './agentIdentity.tsx';
 import { ThinkingLevelOptions } from './ThinkingLevelOptions.tsx';
 
-const LINE = 'flex h-4 min-w-0 max-w-full items-center gap-1 rounded px-1.5 text-[11px] leading-4 text-muted-foreground [@media(pointer:coarse)]:h-6';
+const LINE = 'flex h-4 min-w-0 max-w-full items-center gap-1 rounded px-1.5 text-[11px] leading-4 text-muted-foreground [@media(pointer:coarse)]:h-6 [@media(pointer:coarse)]:text-xs';
 
 interface AgentChatModelLineProps {
   agent: LocalAgentId;

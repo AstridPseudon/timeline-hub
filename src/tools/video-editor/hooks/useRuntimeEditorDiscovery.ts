@@ -70,6 +70,7 @@ export function chooseRuntimeTimeline(
 export const RUNTIME_DISCOVERY_RETRY_COUNT = 3;
 export const RUNTIME_DISCOVERY_RETRY_DELAY_CAP_MS = 8_000;
 export const RUNTIME_DISCOVERY_RECOVERY_POLL_MS = 15_000;
+const TIMELINE_METADATA_POLL_MS = 6_000;
 const runtimeDiscoveryRetryDelay = (attempt: number) =>
   Math.min(500 * 2 ** attempt, RUNTIME_DISCOVERY_RETRY_DELAY_CAP_MS);
 const runtimeDiscoveryRecoveryPoll = (query: { state: { status: string } }) =>
@@ -171,7 +172,8 @@ export function useRuntimeEditorDiscovery({
     select: (rows) => normalizeRuntimeEditorTimelines(project!, rows),
     retry,
     retryDelay: runtimeDiscoveryRetryDelay,
-    refetchInterval: runtimeDiscoveryRecoveryPoll,
+    // Terminal edits can rename a timeline without changing its saved head.
+    refetchInterval: (query) => runtimeDiscoveryRecoveryPoll(query) || TIMELINE_METADATA_POLL_MS,
     staleTime: 0,
   });
   const timelineEditQueries = useQueries({

@@ -19,8 +19,12 @@ export interface AgentAvailability {
   line: string | null;
 }
 
-/** Unknown sign-in is represented by the service as ready so the agent can report its own auth need. */
 export function agentAvailability(choice: LocalAgentChoice | undefined): AgentAvailability {
-  const state = choice?.state ?? 'ready';
-  return { usable: state === 'ready', state, line: choice?.line ?? null };
+  const state = choice?.signIn === 'signed-out' ? 'sign-in' : choice?.state ?? 'sign-in';
+  return { usable: isAgentUsable(choice), state, line: choice?.line ?? null };
+}
+
+/** Setup requires an advertised ready row; older services omit signIn. */
+export function isAgentUsable(choice: LocalAgentChoice | undefined): boolean {
+  return choice?.state === 'ready' && choice.signIn !== 'signed-out';
 }

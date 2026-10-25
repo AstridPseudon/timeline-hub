@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type CSSProperties, type RefObject } from 'react';
+import { useCallback, useLayoutEffect, useRef, type CSSProperties, type RefObject } from 'react';
 import type { PublicAstridAudience } from './publicAstridMotion';
 import { readPublicAstridPlayerHeight } from './usePublicAstridPlayerHeight';
 import {
@@ -130,18 +130,19 @@ const APP_CALLOUTS: readonly CalloutDefinition[] = [
   {
     id: 'effects',
     title: 'Live vibe code effects and visuals',
-    body: 'Describe a look and edit the effect’s code live.',
-    // The public preview contains hidden Outline/Inspector tablists before the
-    // visible inspector tabs. Geometry resolution below skips zero-sized tabs.
-    target: '.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]',
-    at: [0.5, 0],
-    // The mobile inspector has a full-width tab row beneath the clip name. Aim
-    // at Position so the curve points back toward the inspector's centre.
-    phoneTarget: '.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]:nth-child(3)',
-    phoneAt: [0.5, 0],
+    body: 'Describe a look; its code is edited live.',
+    // Target the whole card so the connector also works with no clip selected.
+    target: '.astrid-inspector-surface',
+    at: [0.5, 0.5],
     side: 'bottom',
     phoneSide: 'bottom',
-    phoneAnchor: 0.88,
+    // On phones the inspector is a compact strip right under this card: drop straight down from the
+    // card's middle onto the inspector's top edge (the card's centre sits ~76% across the inspector)
+    // rather than landing on whichever tab happens to sit at the inspector's centre.
+    phoneAt: [0.76, 0],
+    // Tablets draw the inspector small and zoomed out, with the label just above it: land on its top
+    // edge there too, instead of on the clip title in the middle of the card.
+    tabletAt: [0.5, 0],
   },
   {
     id: 'timeline',
@@ -176,6 +177,41 @@ const APP_CALLOUTS: readonly CalloutDefinition[] = [
     phoneSide: 'top',
   },
 ];
+
+/** Which cards hang over the stage's top and bottom edges on phones. Keep in step with PublicAstridShell.css. */
+const PHONE_RAILS: Record<PublicAstridAudience, { top: readonly string[]; bottom: readonly string[] }> = {
+  agent: { top: ['tools'], bottom: ['community', 'workflows'] },
+  app: { top: ['timeline', 'effects'], bottom: ['models'] },
+};
+
+/** A card's settled height, read from its content so a card that is still morphing reports its destination. */
+function settledCardHeight(card: HTMLElement) {
+  const content = card.querySelector<HTMLElement>(':scope > .astrid-callout-content');
+  if (!content) return card.offsetHeight;
+  const style = getComputedStyle(card);
+  return content.offsetHeight + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+    + parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+}
+
+/**
+ * Phone stage sizing inputs: the tallest card on each rail and, in Agent, the conversation's own height.
+ * The stylesheet turns them into the stage height and the composition's insets, so the demo sits the same
+ * gap below the top cards as above the bottom ones however the copy wraps. Reads only.
+ */
+function readPhoneStageFit(stage: HTMLElement, cards: ReadonlyMap<string, HTMLElement>, audience: PublicAstridAudience) {
+  const fit: Array<[string, string]> = [];
+  const rail = (name: string, ids: readonly string[]) => {
+    const height = Math.max(0, ...ids.map(id => { const card = cards.get(id); return card ? settledCardHeight(card) : 0; }));
+    if (height > 0) fit.push([name, `${Math.ceil(height)}px`]);
+  };
+  rail('--astrid-phone-rail-top', PHONE_RAILS[audience].top);
+  rail('--astrid-phone-rail-bottom', PHONE_RAILS[audience].bottom);
+  if (audience === 'agent') {
+    const chat = stage.querySelector<HTMLElement>('.astrid-chat-surface');
+    if (chat?.offsetHeight) fit.push(['--astrid-agent-chat-height', `${Math.ceil(chat.offsetHeight)}px`]);
+  }
+  return fit;
+}
 
 const PARALLAX_EASE = 0.1;
 const CALLOUT_RESTING_BEND_MIN_PX = 2;
@@ -438,6 +474,7 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active
       const phone = phoneQuery.matches;
       const tablet = !phone && tabletQuery.matches;
       setStyle(stageElement, '--astrid-player-height', readPublicAstridPlayerHeight(stageElement, phone));
+      if (phone) for (const [name, value] of readPhoneStageFit(stageElement, cardRefs.current, audience)) setStyle(stageElement, name, value);
       const tilt = stageElement.querySelector<HTMLElement>('.astrid-editor-tilt');
       if (pointer) {
         if (pointer.leaving) {
@@ -945,8 +982,17 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active
     };
   }, [active, appView, audience, callouts, reducedMotion, stageRef]);
 
+  // Runs after the new audience is committed but before the morph measures where the cards land, so
+  // the first switch to a phone layout lands them on the fitted stage rather than on its fallback size.
+  const fitPhoneStage = useCallback(() => {
+    const stage = stageRef.current ?? svgRef.current?.closest<HTMLElement>('.astrid-editor-stage, [data-testid="stage"]');
+    if (!stage || typeof window.matchMedia !== 'function' || !window.matchMedia(PHONE_MEDIA_QUERY).matches) return;
+    const fit = readPhoneStageFit(stage, cardRefs.current, audience);
+    for (const [name, value] of fit) stage.style.setProperty(name, value);
+  }, [audience, stageRef]);
+
   return (
-    <PublicAstridCalloutLayout audience={audience} reducedMotion={reducedMotion} active={active} move={moveRef}>
+    <PublicAstridCalloutLayout audience={audience} reducedMotion={reducedMotion} active={active} move={moveRef} prepareLayout={fitPhoneStage}>
       <svg ref={svgRef} className="astrid-callout-connectors" aria-hidden="true">
         {callouts.map((callout, index) => (
             <g key={index} style={calloutTiming(index, audience, callout.id)}>

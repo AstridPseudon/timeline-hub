@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
+import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, UPDATE_ROUTES, withCommandShell, type CommandMode } from './copy.ts';
 
 export interface CopyInstallCommandProps {
@@ -70,7 +71,8 @@ export function CopyCommandRow({ command, label, copiedLabel = label }: { readon
  */
 export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps) {
   const copy = RUNTIME_CONNECTION_COPY.agent;
-  const instructions = agentInstructions(mode, window.location.origin);
+  const localBuild = runtimeOrigin() === '';
+  const instructions = agentInstructions(mode, window.location.origin, localBuild);
   const command = installCommand(mode);
   const agentCopy = useCopyAction(instructions);
   const agentCopied = agentCopy.status === 'copied';
@@ -87,7 +89,7 @@ export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps
       <div className="space-y-1.5 text-left">
         <p className="text-xs text-muted-foreground">{withCommandShell(mode === 'update' ? copy.terminalAlternativeUpdate : copy.terminalAlternative)}</p>
         <CopyCommandRow command={command} label={copy.commandCopy} copiedLabel={copy.commandCopied} />
-        {mode === 'update' && <p className="pt-1 text-xs text-muted-foreground">{UPDATE_ROUTES.source}</p>}
+        {mode === 'update' && localBuild && <p className="pt-1 text-xs text-muted-foreground">{UPDATE_ROUTES.source}</p>}
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { TourCard } from './TourCard';
 import { TOUR_CARD_ENTRANCE_MS } from './useTourCardEntrance';
 import { TOUR_FINALE_ENTRANCE_MS } from './TourStrip';
 import { EDITOR_TOUR_SCRIPT as SCRIPT } from '../tourScript';
+import { EDITOR_TOUR_MEDIA } from '../tourMedia';
 import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import {
   exitEditorTour,
@@ -94,8 +95,9 @@ describe('TourCard', () => {
     expect(screen.getByText(body)).toBeInTheDocument();
     for (const label of labels) expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     for (const step of SCRIPT.strip) expect(screen.getAllByText(step).length).toBeGreaterThan(0);
-    // The strip fills act by act: one thumbnail per step reached.
+    // The strip fills act by act; at rest the video step shows where the flight ends, as a still.
     expect(container.querySelectorAll('ol img, ol video')).toHaveLength(tourAct);
+    if (tourAct === 3) expect(container.querySelectorAll('ol img')[2]).toHaveAttribute('src', EDITOR_TOUR_MEDIA.stills[3].url);
 
     expect(container.querySelector('.editor-tour-card-playing')).not.toBeNull();
     advance(TOUR_CARD_ENTRANCE_MS - 1);
@@ -115,7 +117,7 @@ describe('TourCard', () => {
     const { onPrimary, container } = renderAt(3, 'finale');
     expect(screen.getByRole('heading')).toHaveTextContent(SCRIPT.finale.title);
     for (const recap of SCRIPT.finale.recap) expect(screen.getByText(recap)).toBeInTheDocument();
-    expect(container.querySelectorAll('ol img, ol video')).toHaveLength(3);
+    expect(container.querySelectorAll('ol img, ol video')).toHaveLength(4);
     expect(screen.queryByRole('button', { name: /Skip tour/ })).toBeNull();
     advance(TOUR_FINALE_ENTRANCE_MS);
     expect(cardReady()).toBe(true);
@@ -292,6 +294,21 @@ describe('TourCard', () => {
     renderAt(1, 'compose', { coarsePointer: true });
     expect(screen.queryByText('Esc')).not.toBeInTheDocument();
     expect(screen.queryByText('↵')).not.toBeInTheDocument();
+  });
+
+  it('on a phone leaves the picture to the spotlit preview, sizes controls for a finger and ends the tour toward a computer', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('iPhone');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)');
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+    startEditorTour();
+    setEditorTourBeat(1, 'land');
+    const { container, rerender } = render(<TourCard act={1} beat="land" device="phone" onPrimary={vi.fn()} onBack={vi.fn()} onSkip={vi.fn()} />);
+    expect(container.querySelector('[aria-hidden="true"].h-32')).toBeNull();
+    expect(screen.getByRole('button', { name: SCRIPT.controls.next })).toHaveClass('h-11');
+    expect(screen.getByRole('button', { name: /Skip tour/ })).toHaveClass('min-h-11');
+    setEditorTourBeat(3, 'feedback');
+    rerender(<TourCard act={3} beat="feedback" device="phone" onPrimary={vi.fn()} onBack={vi.fn()} onSkip={vi.fn()} />);
+    expect(screen.getByRole('button', { name: SCRIPT.feedback.mobileAction })).toBeInTheDocument();
   });
 
   it('a card still showing the previous beat never reports ready for the new one', () => {

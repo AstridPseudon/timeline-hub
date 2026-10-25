@@ -277,6 +277,23 @@ function clientFor(fixture: ReturnType<typeof createTransport>, options: { token
 }
 
 describe('AstridRuntimeClient project creation', () => {
+  it('selects the project through the workspace mutation route with the requested scope', async () => {
+    const fixture = createTransport();
+    let selection: { headers: Record<string, string>; body: unknown } | undefined;
+    const transport: Transport = async (method, path, headers, body) => {
+      if (method === 'PUT' && path === '/v1/projects/selection') {
+        selection = { headers, body: JSON.parse(new TextDecoder().decode(body as Uint8Array)) };
+        return { status: 200, headers: {}, body: json({ data: { project: PROJECT_ID, scope: 'workspace' }, receipt: receipt('project.select', headers['Idempotency-Key'] ?? '') }) };
+      }
+      return fixture.transport(method, path, headers, body);
+    };
+    const client = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', expectedIdentity: EXPECTED_IDENTITY, transport });
+
+    await expect(client.selectProject(PROJECT_ID, 'workspace')).resolves.toMatchObject({ project: PROJECT_ID });
+    expect(selection?.body).toEqual({ project: PROJECT_ID, scope: 'workspace' });
+    expect(selection?.headers['Idempotency-Key']).toBeTruthy();
+  });
+
   it('sends the caller’s stable retry key through the authenticated mutation path', async () => {
     const fixture = createTransport();
     let creation: { headers: Record<string, string>; body: unknown } | undefined;

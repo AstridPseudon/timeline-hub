@@ -743,11 +743,11 @@ export function PublicAstridShell({ onOpenVision, lifecycle = 'active', environm
             </a>
           </div>
           <nav className="astrid-audience-switch" aria-label="Explore Astrid">
-            <button type="button" data-audience="agent" aria-pressed={state.audience === 'agent'} onClick={() => updateState({ audience: 'agent' })}>
-              Agent
-            </button>
             <button type="button" data-audience="app" aria-pressed={state.audience === 'app'} onClick={() => updateState({ audience: 'app' })}>
               App
+            </button>
+            <button type="button" data-audience="agent" aria-pressed={state.audience === 'agent'} onClick={() => updateState({ audience: 'agent' })}>
+              Agent
             </button>
           </nav>
           <h1 id="astrid-hero-title">Push local AI to its <span className="astrid-hero-emphasis">creative limits.</span></h1>

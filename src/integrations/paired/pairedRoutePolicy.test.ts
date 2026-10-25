@@ -21,6 +21,7 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['PUT', runtime('/v1/app-state/user/editor-tour'), 'runtime'],
   ['GET', runtime('/v1/projects?limit=50&cursor=c1'), 'runtime'],
   ['POST', runtime('/v1/projects'), 'runtime'],
+  ['PUT', runtime('/v1/projects/selection'), 'runtime'], // selectProject: the open project, for terminal agents
   ['GET', runtime(`/v1/projects/${P}`), 'runtime'],
   ['PATCH', runtime(`/v1/projects/${P}`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines?limit=50`), 'runtime'],
@@ -74,6 +75,7 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['PATCH', astrid(`/v1/projects/${P}`), 'astrid'],
   // ACP agent chat (acpRoutes.ts)
   ['POST', astrid('/acp/connect'), 'acp'],
+  ['POST', astrid('/acp/astrid/api-key'), 'acp'], // saveAstridApiKey: the OpenRouter key goes to the local chat service only
   ['GET', astrid('/acp/models'), 'acp'],
   ['GET', astrid('/acp/agents'), 'acp'],
   ['GET', astrid('/acp/conn-1/models?sessionId=codex%3Aabc-123'), 'acp'],

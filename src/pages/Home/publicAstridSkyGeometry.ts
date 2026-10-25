@@ -22,8 +22,15 @@ export interface PublicAstridSkyGeometry {
   subscribe: (listener: () => void) => () => void;
   mount: () => void;
   destroy: () => void;
-  setViewport: (columns: number, rows: number) => void;
+  setViewport: (columns: number, rows: number, frame?: PublicAstridSkyFrame) => void;
   registerRoot: (root: HTMLElement | null, selector: string, owner: string) => () => void;
+}
+
+/** Where the sky canvases sit: their art-pixel size and how far they start above and left of the window. */
+export interface PublicAstridSkyFrame {
+  pixel: number;
+  left: number;
+  top: number;
 }
 
 /**
@@ -67,18 +74,20 @@ export function readingLineBoxes(root: HTMLElement, selector: string): PublicAst
 
 export const QUIET_LEVELS = 3;
 
-export function quietField(boxes: readonly PublicAstridSkyRect[], columns: number, rows: number, artPixel = 4, margin = 24): Uint8Array {
+export function quietField(boxes: readonly PublicAstridSkyRect[], columns: number, rows: number, artPixel = 4, margin = 24, marginTop = margin): Uint8Array {
   if (columns <= 0 || rows <= 0) return new Uint8Array(0);
   const field = new Uint8Array(columns * rows);
-  // Viewport px to art pixels on the fixed sky canvases, which start margin px above and left of the window.
-  const toArt = (px: number) => (px + margin) / artPixel;
+  // Viewport px to art pixels on the fixed sky canvases, which start margin px left of the window and
+  // marginTop px above it (more on touch screens, where the sky also runs under the browser's bars).
+  const toArtX = (px: number) => (px + margin) / artPixel;
+  const toArtY = (px: number) => (px + marginTop) / artPixel;
   for (const box of boxes) {
     if (!box.width || !box.height) continue;
     // The text's own pixels and one more all round.
-    const x0 = Math.max(0, Math.floor(toArt(box.left)) - 1);
-    const x1 = Math.min(columns - 1, Math.ceil(toArt(box.right)));
-    const y0 = Math.max(0, Math.floor(toArt(box.top)) - 1);
-    const y1 = Math.min(rows - 1, Math.ceil(toArt(box.bottom)));
+    const x0 = Math.max(0, Math.floor(toArtX(box.left)) - 1);
+    const x1 = Math.min(columns - 1, Math.ceil(toArtX(box.right)));
+    const y0 = Math.max(0, Math.floor(toArtY(box.top)) - 1);
+    const y1 = Math.min(rows - 1, Math.ceil(toArtY(box.bottom)));
     for (let y = y0; y <= y1; y++) field.fill(QUIET_LEVELS, y * columns + x0, y * columns + x1 + 1);
   }
   // Each further ring steps down one level (square rings, as pixel art steps).
@@ -125,6 +134,7 @@ export function createPublicAstridSkyGeometry(): PublicAstridSkyGeometry {
   let target: { root: HTMLElement; selector: string; owner: string; generation: number } | null = null;
   let columns = 0;
   let rows = 0;
+  let frameLayout: PublicAstridSkyFrame = { pixel: 4, left: 24, top: 24 };
   let snapshot: PublicAstridSkyGeometrySnapshot = { quiet: null, columns, rows, revision: 0, owner: null, root: null };
   const listeners = new Set<() => void>();
   const cleanups: Array<() => void> = [];
@@ -156,7 +166,7 @@ export function createPublicAstridSkyGeometry(): PublicAstridSkyGeometry {
     frame = window.requestAnimationFrame(() => {
       frame = 0;
       if (!mounted || !target || target.generation !== expectedGeneration || generation !== expectedGeneration) return;
-      const next = quietField(readingLineBoxes(target.root, target.selector), columns, rows);
+      const next = quietField(readingLineBoxes(target.root, target.selector), columns, rows, frameLayout.pixel, frameLayout.left, frameLayout.top);
       if (sameField(snapshot.quiet, next) && snapshot.columns === columns && snapshot.rows === rows && snapshot.owner === target.owner) return;
       snapshot = { quiet: next, columns, rows, revision: snapshot.revision + 1, owner: target.owner, root: target.root };
       notify();
@@ -234,11 +244,13 @@ export function createPublicAstridSkyGeometry(): PublicAstridSkyGeometry {
     snapshot = { quiet: null, columns, rows, revision: snapshot.revision + 1, owner: null, root: null };
     listeners.clear();
   };
-  const setViewport = (nextColumns: number, nextRows: number) => {
+  const setViewport = (nextColumns: number, nextRows: number, nextFrame: PublicAstridSkyFrame = frameLayout) => {
     const next = { columns: Math.max(0, nextColumns), rows: Math.max(0, nextRows) };
-    if (next.columns === columns && next.rows === rows) return;
+    const sameFrame = nextFrame.pixel === frameLayout.pixel && nextFrame.left === frameLayout.left && nextFrame.top === frameLayout.top;
+    if (next.columns === columns && next.rows === rows && sameFrame) return;
     columns = next.columns;
     rows = next.rows;
+    frameLayout = { ...nextFrame };
     clearSnapshot();
     if (target) schedule(target.generation);
   };

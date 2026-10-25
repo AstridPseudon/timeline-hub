@@ -113,6 +113,31 @@ describe('RuntimeConnectionPill', () => {
     expect(String(writeText.mock.calls[0][0])).toMatch(/^curl -fsSL https:\/\/astrid\.haus\/install \| sh$/);
   });
 
+  it('Astrid answers a no-cors request but its CORS read fails: the refused card, with no install line and no "stopped"', async () => {
+    const fetchImpl = vi.fn(async (_input: string, init?: RequestInit) => {
+      if (init?.mode === 'no-cors') return new Response(null, { status: 200 });
+      throw new TypeError('Failed to fetch');
+    });
+    render(<RuntimeConnectionPill connection={connected()} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />);
+    await waitFor(() => expect(screen.getByRole('heading', { name: COPY.refused.title })).toBeInTheDocument());
+    expect(status()).toHaveAttribute('data-state', 'refused');
+    expect(screen.queryByRole('heading', { name: 'Astrid stopped' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('code')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy agent instructions' })).toBeInTheDocument();
+  });
+
+  it('when the permission is gone the pill blames nothing: it asks the permission first', async () => {
+    const fetchImpl = vi.fn(async (_input: string, init?: RequestInit) => {
+      if (init?.mode === 'no-cors') return new Response(null, { status: 200 });
+      throw new TypeError('Failed to fetch');
+    });
+    const confirmPermission = vi.fn(async () => false);
+    render(<RuntimeConnectionPill connection={{ ...connected(), confirmPermission }} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />);
+    await waitFor(() => expect(confirmPermission.mock.calls.length).toBeGreaterThanOrEqual(3));
+    expect(status()).toHaveAttribute('data-state', 'connected');
+    expect(fetchImpl.mock.calls.every(([, init]) => init?.mode !== 'no-cors')).toBe(true);
+  });
+
   it('names PowerShell on the stopped card on Windows', async () => {
     onWindows();
     const { route, fetchImpl } = switchableRoute(healthy('instance-1'));
@@ -246,10 +271,10 @@ describe('RuntimeConnectionPill', () => {
     expect(document.body.textContent).not.toMatch(/Runtime|workspace|realm|gateway|127\.0\.0\.1|npm run/);
   });
 
-  it('renders nothing while not connected, and asks Astrid nothing', () => {
+  it.each(['not_running', 'refused'] as const)('renders nothing while %s, and asks Astrid nothing', (status) => {
     const fetchImpl = healthRoute(healthy('instance-1'));
     const { container } = render(
-      <RuntimeConnectionPill connection={connectionFor({ status: 'not_running' })} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />,
+      <RuntimeConnectionPill connection={connectionFor({ status })} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />,
     );
     expect(container).toBeEmptyDOMElement();
     expect(fetchImpl).not.toHaveBeenCalled();

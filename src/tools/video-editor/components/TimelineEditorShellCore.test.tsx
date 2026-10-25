@@ -567,6 +567,19 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(screen.getByTestId('timeline-editor')).toBeTruthy();
   });
 
+  it('keeps the shared shell when a host supplies an observed timeline body', () => {
+    const renderTimeline = vi.fn(() => <div data-testid="host-observed-timeline" />);
+    render(<TimelineEditorShellCore timelineId="test-timeline" renderTimeline={renderTimeline} />);
+
+    expect(screen.getByTestId('host-observed-timeline')).toBeInTheDocument();
+    expect(renderTimeline).toHaveBeenCalledWith(expect.objectContaining({
+      onOpenSequenceCreator: expect.any(Function),
+      onOpenElementCreationPrompt: expect.any(Function),
+      onOpenExtensionManager: expect.any(Function),
+    }));
+    expect(screen.getByTestId('preview-panel')).toBeInTheDocument();
+  });
+
   // ---- navigationControls placement ----------------------------------------
   it('renders navigationControls in the editor chrome above the time', () => {
     render(

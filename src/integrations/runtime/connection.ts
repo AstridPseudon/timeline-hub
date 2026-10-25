@@ -114,6 +114,8 @@ export type RuntimeConnectionState =
   | { status: 'connected'; realm: Pick<Realm, 'realm_id' | 'display_name'> }
   /** Granted permission and at least two unanswered probes. */
   | { status: 'not_running' }
+  /** Granted permission, at least two unreadable readings, and a `no-cors` probe still got an answer: Astrid refuses this origin. */
+  | { status: 'refused' }
   /** This device cannot run Astrid locally. */
   | { status: 'phone' }
   /** This browser cannot request local-network access. */

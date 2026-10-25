@@ -55,6 +55,32 @@ describe('placeCard', () => {
     });
   });
 
+  it('docks a phone card along the bottom when nothing is spotlighted', () => {
+    const phone = { width: 375, height: 667 };
+    expect(placeCard([], { width: 351, height: 240 }, phone, { edge: 12, dock: 'bottom' })).toEqual({ left: 12, top: 415 });
+  });
+
+  it('when no side of the whole area fits, takes the spot that covers the least of the targets', () => {
+    // A tablet in landscape: a centred preview with a short track row under its left half.
+    const viewport = { width: 1180, height: 820 };
+    const card = { width: 520, height: 330 };
+    const preview: SpotlightRect = { x: 278, y: 143, width: 616, height: 362 };
+    const track: SpotlightRect = { x: 6, y: 582, width: 510, height: 60 };
+    const position = placeCard([preview, track], card, viewport);
+    const covers = (r: SpotlightRect) => position.left < r.x + r.width && position.left + card.width > r.x
+      && position.top < r.y + r.height && position.top + card.height > r.y;
+    expect(covers(track)).toBe(false);
+    expect(position.left + card.width).toBeLessThanOrEqual(viewport.width - EDGE);
+    expect(position.top + card.height).toBeLessThanOrEqual(viewport.height - EDGE);
+  });
+
+  it('can prefer the spot below the area, over a roomier side', () => {
+    const transcript: SpotlightRect = { x: 732, y: 40, width: 448, height: 380 };
+    const viewport = { width: 1180, height: 820 };
+    expect(placeCard([transcript], CARD, viewport).left + CARD.width).toBeLessThanOrEqual(transcript.x);
+    expect(placeCard([transcript], CARD, viewport, { preferBelow: true }).top).toBeGreaterThanOrEqual(transcript.y + transcript.height);
+  });
+
   it('always keeps the card inside the viewport', () => {
     const layouts: SpotlightRect[][] = [
       [{ x: 0, y: 0, width: 10, height: 10 }],

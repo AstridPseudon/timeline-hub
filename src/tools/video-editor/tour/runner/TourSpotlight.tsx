@@ -52,6 +52,21 @@ export function TourSpotlight({ rects, clickable, reducedMotion }: TourSpotlight
           </mask>
         </defs>
         <rect width="100%" height="100%" fill="rgb(0 0 0 / 0.6)" mask="url(#editor-tour-dim)" />
+        {/* On a dark page the dimmed edge alone barely shows, so each cutout gets a thin ring there. */}
+        {rects.slice(0, MAX_CUTOUTS).map((rect, i) => (
+          <rect
+            key={i}
+            data-editor-tour-ring
+            rx={CORNER_RADIUS}
+            x={rect.x}
+            y={rect.y}
+            width={rect.width}
+            height={rect.height}
+            className="fill-none stroke-transparent dark:stroke-primary/70"
+            strokeWidth={1.5}
+            style={{ transition }}
+          />
+        ))}
       </svg>
     </div>
   );

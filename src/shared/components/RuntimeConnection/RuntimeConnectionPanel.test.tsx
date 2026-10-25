@@ -34,6 +34,7 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
   ['permission pending', () => connectionFor({ status: 'needs_permission' }, { isChecking: true })],
   ['blocked', () => connectionFor({ status: 'blocked' })],
   ['not running', () => connectionFor({ status: 'not_running' })],
+  ['refused', () => connectionFor({ status: 'refused' })],
   ['phone', () => connectionFor({ status: 'phone' })],
   ['unsupported browser', () => connectionFor({ status: 'unsupported' })],
 ];
@@ -62,6 +63,18 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
     expect(screen.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeInTheDocument();
     expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
+  });
+
+  it('places an optional onboarding Back action in the card corner only for its caller', () => {
+    const onBack = vi.fn();
+    const view = render(<RuntimeConnectionPanel connection={connectionFor({ status: 'not_running' })} onBack={onBack} />);
+    const back = screen.getByRole('button', { name: 'Back' });
+    expect(back.closest(CARD)).not.toBeNull();
+    fireEvent.click(back);
+    expect(onBack).toHaveBeenCalledOnce();
+
+    view.rerender(<RuntimeConnectionPanel connection={connectionFor({ status: 'not_running' })} />);
+    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
   });
 
   it.each(ALL_SCREENS)('%s: speaks of Astrid and never names a Runtime, workspace, port or command', (_name, connection) => {
@@ -101,7 +114,7 @@ describe('RuntimeConnectionPanel', () => {
     expect(card).toHaveClass('border-border', 'bg-card', 'text-center');
     expect(card.parentElement).toHaveClass('max-w-[576px]');
     expect(screen.getByRole('heading', { level: 1 })).toHaveClass('font-theme-heading', 'text-[25px]', 'text-foreground');
-    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getAllByRole('button')).toHaveLength(3);
     expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: COPY.agent.copy })).toHaveClass('w-full');
     // The waiting line is the card's last line, not a banner above it.
@@ -182,6 +195,15 @@ describe('RuntimeConnectionPanel', () => {
     expect(connect).toHaveBeenCalledOnce();
   });
 
+  it('connect pending: stays centred on a phone, while the other cards rest along the bottom', () => {
+    panel(connectionFor({ status: 'needs_permission' }, { isChecking: true }));
+    const layer = screen.getByTestId('runtime-not-connected');
+    expect(layer.querySelector('.max-sm\\:items-end')).toBeNull();
+    cleanup();
+    panel(connectionFor({ status: 'needs_permission' }));
+    expect(screen.getByTestId('runtime-not-connected').querySelector('.max-sm\\:items-end')).not.toBeNull();
+  });
+
   it('connect pending: tells the person to choose Allow, says where, and draws the install dialog\'s arrow outside the card, aimed top left', () => {
     const view = panel(connectionFor({ status: 'needs_permission' }, { isChecking: true }));
 
@@ -237,7 +259,7 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeInTheDocument();
     const sentence = screen.getByText("Your coding agent can start it, or install it if it isn't there yet.");
     expect(sentence).toHaveClass('text-sm', 'text-muted-foreground');
-    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getAllByRole('button')).toHaveLength(3);
     expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: COPY.agent.commandCopy })).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
@@ -260,14 +282,55 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeInTheDocument();
     expect(screen.getByText("Your coding agent can start it, or install it if it isn't there yet.")).toBeInTheDocument();
     expect(screen.getByText(COPY.waiting)).toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getAllByRole('button')).toHaveLength(3);
     expect(screen.getByRole('button', { name: COPY.agent.commandCopy })).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
     expect(shownText()).not.toMatch(/reload/i);
     expect(screen.queryByText('Set up Astrid on this computer')).not.toBeInTheDocument();
   });
 
+  describe('refused', () => {
+    it('says Astrid is running, names this page, and offers no install command', () => {
+      panel(connectionFor({ status: 'refused' }));
+      expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'refused');
+      expect(screen.getByRole('heading', { name: "Astrid is running but won't connect to this page" })).toBeInTheDocument();
+      expect(screen.getByText(`Astrid on this computer answered, but refused requests from ${window.location.origin}. Open astrid.haus, or update Astrid if this keeps happening.`)).toBeInTheDocument();
+      expect(screen.queryByRole('code')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: COPY.agent.commandCopy })).not.toBeInTheDocument();
+      expect(shownText()).not.toMatch(/isn't answering|install|curl -fsSL|irm /i);
+      expect(screen.getByRole('button', { name: 'Copy agent instructions' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+      expect(screen.getByText(COPY.waiting)).toBeInTheDocument();
+    });
+
+    it('copies the refusal brief, not the install brief, and Try again reconnects', async () => {
+      const writeText = vi.fn(async (_text: string) => undefined);
+      stubClipboard(writeText);
+      const connect = vi.fn();
+      panel(connectionFor({ status: 'refused' }, { connect }));
+      fireEvent.click(screen.getByRole('button', { name: 'Copy agent instructions' }));
+      await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
+      const text = writeText.mock.calls[0]![0];
+      expect(text).toContain(`refuses requests from the page at ${window.location.origin}`);
+      expect(text).toContain(`curl -s -H "Origin: ${window.location.origin}"`);
+      expect(text).toContain('/api/runtime/v1/health');
+      expect(text).not.toMatch(/set up or restart Astrid/);
+      fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+      expect(connect).toHaveBeenCalledOnce();
+    });
+  });
+
   describe('unsupported browser', () => {
+    it.each(['Chrome', 'Edge'])('asks to update %s when its permission API is unsupported and keeps copy fallback', async (browser) => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(browser === 'Edge' ? 'Windows NT 10.0 Chrome/100.0 Edg/100.0' : 'Windows NT 10.0 Chrome/100.0');
+      stubClipboard(vi.fn(async () => { throw new Error('Clipboard denied'); }));
+      panel(connectionFor({ status: 'browser_update_needed' }));
+      expect(screen.getByRole('heading', { name: `Update ${browser} to connect` })).toBeInTheDocument();
+      expect(screen.getByText(`This version of ${browser} can't reach Astrid on this computer. Update it, then come back.`)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: COPY.unsupported.button }));
+      expect(await screen.findByRole('textbox')).toHaveValue(window.location.href);
+    });
+
     it('offers a copyable link for Chrome or Edge', async () => {
       const writeText = vi.fn(async (_text: string) => undefined);
       stubClipboard(writeText);
@@ -300,6 +363,13 @@ describe('RuntimeConnectionPanel', () => {
       expect(screen.getByRole('button', { name: 'Link copied' }).querySelector('svg.lucide-check')).not.toBeNull();
       const previous = new URL(previousUrl);
       window.history.replaceState({}, '', `${previous.pathname}${previous.search}${previous.hash}`);
+    });
+
+    it('shows a selectable link when neither sharing nor clipboard is available', () => {
+      Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+      panel(connectionFor({ status: 'phone' }));
+      expect(screen.getByRole('textbox', { name: 'Send the link to your computer' })).toHaveValue(window.location.href);
     });
   });
 
@@ -387,7 +457,9 @@ describe('RuntimeConnectionPanel', () => {
 
       expect(within(card.lastElementChild as HTMLElement).getByRole('status')).toHaveTextContent(COPY.connected.sentence);
       expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeInTheDocument();
+      expect(screen.queryByRole('heading')).toBeNull();
+      expect(screen.queryByRole('button')).toBeNull();
+      expect(card.textContent).toBe(COPY.connected.sentence);
 
       act(() => { vi.advanceTimersByTime(CONNECTED_MIN_MS + LEAVE_MS); });
       expect(section).not.toHaveAttribute('data-leaving');
@@ -405,6 +477,15 @@ describe('RuntimeConnectionPanel', () => {
       expect(left).not.toHaveBeenCalled();
       act(() => { vi.advanceTimersByTime(LEAVE_MS); });
       expect(left).toHaveBeenCalledOnce();
+    });
+
+    it.each(ALL_SCREENS)('%s: shows only the connected line during the exit hold', (_name, connection) => {
+      vi.useFakeTimers();
+      render(<RuntimeConnectionPanel connection={connection()} exit={{ left: vi.fn() }} onBack={vi.fn()} />);
+      expect(screen.getByRole('status')).toHaveTextContent(COPY.connected.sentence);
+      expect(screen.queryByRole('heading')).toBeNull();
+      expect(screen.queryByRole('button')).toBeNull();
+      expect(screen.queryByRole('link')).toBeNull();
     });
 
     it('shows "Connected" for its moment even when the editor is already there', () => {

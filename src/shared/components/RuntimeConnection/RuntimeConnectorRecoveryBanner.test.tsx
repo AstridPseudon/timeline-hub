@@ -1,8 +1,22 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { RuntimeAuthenticationError, RuntimeUnavailableError } from '@/integrations/runtime/client.ts';
+import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
 import { RuntimeConnectorRecoveryBanner, buildWorkspaceRestartBrief } from './RuntimeConnectorRecoveryBanner';
 
+const harness = vi.hoisted(() => ({ origin: '' }));
+vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/integrations/runtime/connection.ts')>()),
+  runtimeOrigin: () => harness.origin,
+}));
+
+beforeEach(() => { harness.origin = ''; });
+
 afterEach(() => {
+  harness.origin = '';
+  setRecoveryCardShowing(false);
+  vi.useRealTimers();
   cleanup();
   vi.restoreAllMocks();
 });
@@ -51,7 +65,7 @@ describe('RuntimeConnectorRecoveryBanner', () => {
     fireEvent.click(screen.getByText('Show full connection error'));
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).toHaveAttribute('open');
     expect(screen.getByRole('button', { name: 'Copy restart instructions' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Show restart steps' })).toBeInTheDocument();
+    expect(screen.getByText(/Return to the same Astrid App checkout/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry Runtime connection' }));
     expect(onRetry).toHaveBeenCalledOnce();
 
@@ -78,7 +92,7 @@ describe('RuntimeConnectorRecoveryBanner', () => {
     expect(brief).toContain('Do not reset, reinstall, create a new data root');
     expect(brief).toContain('Verify that the same configured Runtime is healthy');
     expect(brief).not.toContain('secret');
-    expect(screen.getByLabelText('Restart brief')).toHaveValue(brief);
+    expect(screen.queryByLabelText('Restart brief')).toBeNull();
     expect(screen.getByRole('status')).toHaveTextContent('Restart instructions copied');
   });
 
@@ -94,25 +108,13 @@ describe('RuntimeConnectorRecoveryBanner', () => {
     expect((screen.getByLabelText('Restart brief') as HTMLTextAreaElement).value).toContain('Bridge timeout.');
   });
 
-  it('reveals manual restart steps that preserve the existing installation and Runtime data', () => {
+  it('shows the manual restart steps that preserve the existing installation and Runtime data', () => {
     render(<RuntimeConnectorRecoveryBanner retrying={false} error={new Error("Runtime is offline.")} onRetry={vi.fn()} />);
-    expect(screen.queryByText(/Return to the same Astrid App checkout/)).toBeNull();
-    const toggle = screen.getByRole('button', { name: 'Show restart steps' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-
+    expect(screen.queryByRole('button', { name: 'Show restart steps' })).toBeNull();
     expect(screen.getByText(/Return to the same Astrid App checkout/)).toBeInTheDocument();
     expect(screen.getByText('npm run dev:local')).toBeInTheDocument();
     expect(screen.getByText(/restart that same Runtime with its current command, profile, and data-root configuration/)).toBeInTheDocument();
     expect(screen.getByText(/Do not reset or reinstall the workspace/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Copy restart instructions' }));
-    expect(screen.getByText(/Return to the same Astrid App checkout/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Hide restart steps' }));
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText(/Return to the same Astrid App checkout/)).toBeNull();
-    expect(screen.getByLabelText('Restart brief')).toBeInTheDocument();
   });
 
   it('builds the agent brief with only a sanitized HTTP(S) target', () => {
@@ -131,5 +133,40 @@ describe('RuntimeConnectorRecoveryBanner', () => {
 
     expect(brief).toContain('project newblanktimeline3, timeline timeline-a');
     expect(brief).toContain('Timeline lookup timed out.');
+  });
+});
+
+
+describe('hosted typed recovery', () => {
+  it.each([
+    [new RuntimeAuthenticationError('/api/runtime'), COPY.connectorFailure.authentication],
+    [new RuntimeUnavailableError(new Error('No space left on device'), '/api/runtime'), COPY.connectorFailure.storage],
+    [new RuntimeUnavailableError(new Error('startup admission failed'), '/api/runtime'), COPY.connectorFailure.admission],
+    [new Error('internal failure details'), COPY.loadFailed.title],
+  ])('shows the failure kind for %s', (error, title) => {
+    harness.origin = 'http://127.0.0.1:17340';
+    const onRetry = vi.fn();
+    render(<RuntimeConnectorRecoveryBanner error={error} onRetry={onRetry} />);
+    expect(screen.getByRole('alert')).toHaveTextContent(title);
+    expect(screen.queryByText('internal failure details')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: COPY.loadFailed.button }));
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('stops quiet retries when a hosted failure becomes authentication and retries only on click', async () => {
+    harness.origin = 'http://127.0.0.1:17340';
+    vi.useFakeTimers();
+    const onRetry = vi.fn();
+    const view = render(<RuntimeConnectorRecoveryBanner error={new Error('down')} onRetry={onRetry} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    view.rerender(<RuntimeConnectorRecoveryBanner error={new RuntimeAuthenticationError('/api/runtime')} onRetry={onRetry} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(9000); });
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(onRetry).toHaveBeenCalledTimes(2);
+    view.rerender(<RuntimeConnectorRecoveryBanner error={new Error('down')} onRetry={onRetry} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    expect(onRetry).toHaveBeenCalledTimes(3);
   });
 });

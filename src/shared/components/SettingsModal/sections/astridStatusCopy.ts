@@ -10,6 +10,7 @@ export const ASTRID_STATUS_COPY = {
   checking: 'Reading details…',
   unavailable: "Astrid's details aren't available right now.",
   notRunning: "Astrid isn't answering on this computer",
+  refused: 'Running, but refused this page',
   updateNeeded: 'Needs an update',
   chatUpdateNeeded: 'Connected. Chat needs an update',
   blocked: "Blocked by your browser's settings",
@@ -46,6 +47,7 @@ export function connectionStatusCopy(status: string): string {
     case 'phone': return RUNTIME_CONNECTION_COPY.phone.title;
     case 'unsupported': return RUNTIME_CONNECTION_COPY.unsupported.title;
     case 'not_running': return ASTRID_STATUS_COPY.notRunning;
+    case 'refused': return ASTRID_STATUS_COPY.refused;
     case 'update_needed': return ASTRID_STATUS_COPY.updateNeeded;
     case 'blocked': return ASTRID_STATUS_COPY.blocked;
     default: return ASTRID_STATUS_COPY.unavailable;

@@ -43,7 +43,7 @@ it('keeps the clock paused until the real visible world acknowledges its opening
     <div data-editor-tour-track={EDITOR_TOUR_TRACK_IDS.scene} />
     <EditorTourTimelineDriver />
   </TimelineStoreProvider>);
-  await waitFor(() => expect(view.container.querySelectorAll('iframe')).toHaveLength(2));
+  await waitFor(() => expect(view.container.querySelectorAll('iframe')).toHaveLength(3));
   const thumbnail = view.container.querySelector<HTMLIFrameElement>('[data-testid="thumbnail"] iframe')!;
   const visible = view.container.querySelector<HTMLIFrameElement>('[data-editor-tour="preview"] iframe')!;
   await waitFor(() => expect(messages(thumbnail).length).toBeGreaterThan(0));

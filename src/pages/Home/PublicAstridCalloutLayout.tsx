@@ -58,9 +58,26 @@ interface Props {
   reducedMotion: boolean;
   active: boolean;
   move: MutableRefObject<CalloutMove | null>;
+  /** Called once the new audience is committed, before the cards' destinations are measured. */
+  prepareLayout?: () => void;
   children: ReactNode;
 }
-interface Snapshot { epoch: number; boxes: DOMRect[]; curves: number[][]; content: HTMLElement[][] }
+/** Keep in step with the phone breakpoint in PublicAstridShell.css. */
+const PHONE_QUERY = '(max-width: 640px)';
+interface Snapshot {
+  epoch: number;
+  origin: DOMRect;
+  boxes: DOMRect[];
+  curves: number[][];
+  content: HTMLElement[][];
+  /** Static copies of each card and its connector, for a slot that fades in place instead of moving. */
+  cardCopies: HTMLElement[];
+  connectorCopies: SVGGElement[];
+}
+/** The live connector paths, never a fading copy's. */
+const CONNECTOR_PATHS = ':scope > .astrid-callout-connectors:not([data-callout-ghost]) path';
+const GHOST_FADE_MS = 280;
+const GHOST_SCALE = .94;
 
 function primeRetractedCurve(curve: number[]) {
   if (curve.length !== 8) return curve;
@@ -113,8 +130,12 @@ export class PublicAstridCalloutLayout extends Component<Props> {
     };
     const snapshot: Snapshot = {
       epoch,
+      origin,
       boxes: cards.map(card => card.getBoundingClientRect()),
-      curves: [...root.querySelectorAll('path')].map((path, index) => {
+      cardCopies: cards.map(card => card.cloneNode(true) as HTMLElement),
+      connectorCopies: [...root.querySelectorAll<SVGPathElement>(CONNECTOR_PATHS)]
+        .map(path => path.parentElement!.cloneNode(true) as SVGGElement),
+      curves: [...root.querySelectorAll(CONNECTOR_PATHS)].map((path, index) => {
         const current = (path.getAttribute('d')?.match(/-?\d+(?:\.\d+)?/g) ?? []).map((value, coordinate) => Number(value) + (coordinate % 2 ? origin.top : origin.left));
         // A target can briefly be unavailable during a reversal. Preserve that slot's
         // last known curve so the next move still has a real retract origin.
@@ -152,7 +173,7 @@ export class PublicAstridCalloutLayout extends Component<Props> {
       card.style.removeProperty('height');
       for (const property of ['left', 'top', 'right', 'bottom']) card.style.removeProperty(property);
     });
-    this.root.current?.querySelectorAll('.astrid-callout-outgoing').forEach(layer => layer.remove());
+    this.root.current?.querySelectorAll('.astrid-callout-outgoing, [data-callout-ghost]').forEach(layer => layer.remove());
     this.root.current?.querySelectorAll<HTMLElement>('article > .astrid-callout-content').forEach(layer => layer.style.removeProperty('width'));
     this.root.current?.querySelectorAll<SVGCircleElement>('.astrid-callout-ping').forEach((ping) => {
       ping.removeAttribute('data-astrid-reconnect-pulse');
@@ -160,6 +181,7 @@ export class PublicAstridCalloutLayout extends Component<Props> {
   };
 
   componentDidUpdate(previous: Props, _state: unknown, snapshot: Snapshot | null) {
+    if (previous.audience !== this.props.audience) this.props.prepareLayout?.();
     if (!this.props.active || this.props.reducedMotion) { this.stop(); return; }
     if (previous.audience === this.props.audience || !snapshot) return;
     this.stop(false);
@@ -170,14 +192,29 @@ export class PublicAstridCalloutLayout extends Component<Props> {
     const destinations = cards.map(card => card.getBoundingClientRect());
     const move = this.props.move.current;
     if (!move || move.epoch !== snapshot.epoch) return;
-    // Agent's visual order should enter counterclockwise from App. App -> Agent
-    // deliberately pairs Effects -> Community, Models -> Tools, Timeline ->
-    // Workflows; the reverse direction keeps the established Agent -> App path.
-    const sourceOrder = previous.audience === 'app' && this.props.audience === 'agent'
+    // Which old card each slot morphs from. Desktop: Agent's visual order enters counterclockwise from App,
+    // so App -> Agent pairs Effects -> Community, Models -> Tools, Timeline -> Workflows, and the reverse
+    // keeps the established Agent -> App path. Phones hang the cards over the demo's top and bottom edges
+    // (Agent: Tools on top, Workflows and Community below; App: Timeline and Effects on top, Models below),
+    // so there each slot keeps its own card both ways: Tools <-> Effects shrinks or grows along the top,
+    // Workflows <-> Models stays below. The one slot whose cards sit on opposite sides of the demo
+    // (Community <-> Timeline) never crosses it: the old card fades out where it was while the new one
+    // fades in where it lands.
+    const phone = typeof window.matchMedia === 'function' && window.matchMedia(PHONE_QUERY).matches;
+    const sourceOrder = !phone && previous.audience === 'app' && this.props.audience === 'agent'
       ? [1, 2, 0]
       : snapshot.boxes.map((_, index) => index);
     const sourceBoxes = sourceOrder.map(index => snapshot.boxes[index]);
-    const sourceCurves = sourceOrder.map(index => snapshot.curves[index]);
+    const above = (box: DOMRect, stage: DOMRect) => box.top + box.height / 2 < stage.top + stage.height / 2;
+    const fadesInPlace = cards.map((_, index) => phone && !!sourceBoxes[index] && !!destinations[index]
+      && above(sourceBoxes[index], snapshot.origin) !== above(destinations[index], origin));
+    // A fading slot's connector grows out from under its new card instead of retracting across the demo.
+    const sourceCurves = sourceOrder.map((index, slot) => {
+      if (!fadesInPlace[slot]) return snapshot.curves[index];
+      const to = destinations[slot];
+      const centre = [to.left + to.width / 2, to.top + to.height / 2];
+      return [...centre, ...centre, ...centre, ...centre];
+    });
     const sourceContent = sourceOrder.map(index => snapshot.content[index]);
     move.boxes = sourceBoxes;
     move.destinations = destinations;
@@ -194,7 +231,7 @@ export class PublicAstridCalloutLayout extends Component<Props> {
     // A mobile audience change can shift the stage origin. Rebase the captured SVG before paint;
     // synchronously prime every path into a visibly retracted state so the new audience
     // cannot paint beside a fully extended old connector.
-    root.querySelectorAll('path').forEach((path, index) => {
+    root.querySelectorAll(CONNECTOR_PATHS).forEach((path, index) => {
       const curve = primeRetractedCurve(sourceCurves[index]).map((value, coordinate) => value - (coordinate % 2 ? origin.top : origin.left));
       if (curve.length !== 8) return;
       move.primedCurves[index] = curve;
@@ -207,7 +244,48 @@ export class PublicAstridCalloutLayout extends Component<Props> {
         dot.setAttribute('cy', String(curve[i ? 7 : 1]));
       });
     });
+    const ghostConnectors = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    ghostConnectors.setAttribute('class', 'astrid-callout-connectors');
+    ghostConnectors.setAttribute('aria-hidden', 'true');
+    ghostConnectors.setAttribute('data-callout-ghost', '');
+    // The copied connector was drawn against the old stage origin.
+    ghostConnectors.style.translate = `${snapshot.origin.left - origin.left}px ${snapshot.origin.top - origin.top}px`;
+    const fadeInPlace = (card: HTMLElement, index: number): Animation[] => {
+      const from = sourceBoxes[index];
+      const source = sourceOrder[index];
+      const ghost = document.createElement('div');
+      ghost.className = card.className;
+      ghost.setAttribute('aria-hidden', 'true');
+      ghost.setAttribute('inert', '');
+      ghost.setAttribute('data-callout-ghost', '');
+      ghost.append(...snapshot.cardCopies[source].childNodes);
+      Object.assign(ghost.style, {
+        left: `${from.left - origin.left}px`, top: `${from.top - origin.top}px`, right: 'auto', bottom: 'auto',
+        width: `${from.width}px`, height: `${from.height}px`, margin: '0', animation: 'none', pointerEvents: 'none',
+      });
+      root.append(ghost);
+      const connector = snapshot.connectorCopies[source];
+      if (connector) {
+        connector.querySelectorAll<SVGElement>('path, circle').forEach(part => { part.style.animation = 'none'; });
+        ghostConnectors.append(connector);
+        if (!ghostConnectors.isConnected) root.prepend(ghostConnectors);
+      }
+      const fadeOut = { duration: GHOST_FADE_MS, easing: 'ease-in', fill: 'forwards' } as const;
+      const out = ghost.animate([{ opacity: 1, scale: '1' }, { opacity: 0, scale: `${GHOST_SCALE}` }], fadeOut);
+      const outConnector = connector?.animate([{ opacity: 1 }, { opacity: 0 }], fadeOut);
+      out.onfinish = () => {
+        if (!this.animations.includes(out)) return;
+        ghost.remove();
+        connector?.remove();
+        if (!ghostConnectors.childElementCount) ghostConnectors.remove();
+      };
+      const fadeIn = card.animate([{ opacity: 0, scale: `${GHOST_SCALE}` }, { opacity: 1, scale: '1' }], {
+        duration: CALLOUT_MOVE_MS - GHOST_FADE_MS / 2, delay: GHOST_FADE_MS / 2, easing: 'cubic-bezier(.2, .6, .35, 1)', fill: 'backwards',
+      });
+      return outConnector ? [out, outConnector, fadeIn] : [out, fadeIn];
+    };
     this.animations = cards.flatMap((card, index) => {
+      if (fadesInPlace[index]) return fadeInPlace(card, index);
       const from = sourceBoxes[index];
       const to = destinations[index];
       const content = card.querySelector<HTMLElement>(':scope > .astrid-callout-content')!;

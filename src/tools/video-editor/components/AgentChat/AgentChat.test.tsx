@@ -7,6 +7,7 @@ import type { ComponentProps } from 'react';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
 import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
+import type { LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat';
 import { RuntimeConnectionProvider, useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
@@ -175,6 +176,8 @@ function createState() {
     },
     createSession: {
       isPending: false,
+      error: null as Error | null,
+      reset: vi.fn(),
       mutate: vi.fn(),
       mutateAsync: vi.fn().mockResolvedValue({ id: 'session-2' }),
     },
@@ -182,6 +185,8 @@ function createState() {
       mutateAsync: vi.fn().mockResolvedValue(undefined),
       isPending: false,
       localError: null as string | null,
+      error: null as Error | null,
+      clearLocalError: vi.fn(),
     },
     cancelSession: {
       mutate: vi.fn(),
@@ -265,6 +270,13 @@ function rerenderAgentChat(rerender: ReturnType<typeof render>['rerender'], isEx
   rerender(<AgentChatPanel isExpanded={isExpanded} />);
 }
 
+function renderSetupChat() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const panel = () => <QueryClientProvider client={client}><AgentChatPanel /></QueryClientProvider>;
+  const view = render(panel());
+  return { ...view, refresh: () => view.rerender(panel()) };
+}
+
 async function getInput() {
   const textbox = await screen.findByRole('textbox');
   await waitFor(() => expect(textbox).not.toBeDisabled());
@@ -315,6 +327,259 @@ describe('AgentChat', () => {
   });
 
   it('shows the fixed agent and model with its thinking level in an info tooltip', async () => {
+    const state = createState();
+    const sessionId = 'codex:session-1';
+    const projectId = 'project-1';
+    state.projectChats[projectId].selected_session_id = sessionId;
+    state.projectChats[projectId].sessions = [{ id: sessionId }];
+    state.sessionsData = [{ id: sessionId, status: 'waiting_user' }];
+    state.activeSessionData.id = sessionId;
+    mockFromState(state);
+    mocks.useAgentModels.mockImplementation(() => ({
+      data: {
+        currentModel: 'openai/gpt-5',
+        providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-5', name: 'GPT 5' }] }],
+        localModels: {
+          currentModelId: 'vendor/codex-current',
+          thoughtLevel: { configId: 'reasoning_effort', name: 'Reasoning effort', currentValue: 'high', options: [{ value: 'high', name: 'High' }] },
+          availableModels: [
+            { modelId: 'vendor/codex-current', name: 'Codex Current' },
+            { modelId: 'vendor/codex-target', name: 'Codex Target', description: 'For focused coding' },
+          ],
+        },
+      },
+      isLoading: false,
+      error: null,
+      refetch: mocks.modelRefetch,
+    }));
+
+    renderAgentChat();
+    const identity = await screen.findByTestId('agent-chat-identity');
+    expect(identity).toHaveTextContent('Codex · Codex Current · High');
+    expect(screen.queryByText('Codex Current', { exact: true })).toBeNull();
+    const user = userEvent.setup();
+    await user.click(identity);
+    const panel = await screen.findByRole('dialog', { name: 'Model and thinking level' });
+    expect(within(panel).getByText('Codex · Codex Current')).toBeInTheDocument();
+    expect(within(panel).getByText('A chat keeps its model.')).toBeInTheDocument();
+    expect(within(panel).getByRole('option', { name: /High/ })).toHaveAttribute('aria-current', 'true');
+    expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
+
+    await waitFor(() => {
+      expect(mocks.useAgentModels).toHaveBeenCalledWith(true, sessionId, projectId);
+    });
+  });
+
+  describe('setup recovery', () => {
+    const agents = (): LocalAgentChoice[] => ['astrid', 'codex', 'hermes'].map(id => ({ id: id as LocalAgentChoice['id'], name: id, state: 'ready', signIn: 'signed-in', line: null, models: [], defaultModel: null }));
+    function setupState() {
+      const state = createState();
+      state.projectChats['project-1'].selected_session_id = 'codex:session-1';
+      state.projectChats['project-1'].sessions = [{ id: 'codex:session-1' }];
+      state.activeSessionData.id = 'codex:session-1';
+      state.sessionsData = [{ id: 'codex:session-1', status: 'waiting_user' }];
+      mockFromState(state);
+      const localAgents = { data: { defaultAgent: 'codex', agents: agents() }, refetch: vi.fn().mockResolvedValue(undefined), error: null };
+      mocks.useLocalAgents.mockImplementation(() => localAgents);
+      return { state, localAgents };
+    }
+    it('shows only the fix and Set up for a broken agent, with the setup placeholder', async () => {
+      const { state, localAgents } = setupState();
+      const view = renderSetupChat();
+      await getInput();
+      state.activeSessionData.status = 'error';
+      localAgents.data.agents[1] = { ...localAgents.data.agents[1], signIn: 'signed-out', line: 'Run `codex login`.' };
+      view.refresh();
+      expect(screen.getByRole('textbox')).toBeDisabled();
+      expect(screen.getByRole('textbox')).toHaveAttribute('placeholder', 'Set up Codex to keep chatting');
+      expect(screen.getByText('codex login')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Set up', exact: true })).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.queryByText(/Agent error\. Try again/)).toBeNull();
+    });
+    it('opens setup for an unready agent chosen from the new chat menu', async () => {
+      const { state, localAgents } = setupState();
+      localAgents.data.agents[2] = { ...localAgents.data.agents[2], state: 'not-installed', line: 'Install with `hermes install`.' };
+      const view = renderSetupChat();
+      await getInput();
+
+      fireEvent.click(screen.getByRole('button', { name: /^Chat:/ }));
+      fireEvent.click(screen.getByRole('option', { name: /Hermes/ }));
+
+      const card = screen.getByRole('region', { name: 'How do you want Astrid to think?' });
+      expect(within(card).getByRole('heading', { name: 'Hermes' })).toBeInTheDocument();
+      expect(within(card).getByText('hermes install')).toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'New chat' })).toBeNull();
+      expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
+    });
+    it.each(['broken', 'setup-error', 'both'] as const)('shows one muted host line for a follower with %s', async kind => {
+      const { state, localAgents } = setupState();
+      const view = renderSetupChat();
+      await getInput();
+      state.activeSessionData.control = { role: 'follower', active: false, activeRequestId: null };
+      state.activeSessionData.status = 'error';
+      if (kind !== 'setup-error') localAgents.data.agents[1].signIn = 'signed-out';
+      if (kind !== 'broken') {
+        state.sendMessage.localError = 'Agent needs sign-in';
+        state.sendMessage.error = new BridgeRouteError('Prompt', 502, { error: 'agent_sign_in_required', detail: 'Agent needs sign-in', next_action: 'codex login' });
+      }
+      view.refresh();
+      const line = screen.getByText('Codex needs setting up on the computer running this chat.');
+      expect(line).toHaveClass('text-muted-foreground');
+      expect(screen.queryAllByText('Codex needs setting up on the computer running this chat.')).toHaveLength(1);
+      expect(screen.queryByRole('region', { name: 'How do you want Astrid to think?' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Set up', exact: true })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Copy command' })).toBeNull();
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.getByRole('textbox')).toBeDisabled();
+    });
+    it.each(['codex', 'hermes'])('does not carry a setup error into another %s chat or reopen it on return', async nextAgent => {
+      const { state } = setupState();
+      const view = renderSetupChat();
+      await getInput();
+      state.sendMessage.localError = 'Old setup error';
+      state.sendMessage.error = new BridgeRouteError('Prompt', 502, { error: 'agent_sign_in_required', detail: 'Old setup error', next_action: 'codex login' });
+      view.refresh();
+      await screen.findByText('Old setup error');
+      const nextId = `${nextAgent}:session-2`;
+      state.projectChats['project-1'].selected_session_id = nextId;
+      state.projectChats['project-1'].sessions = [{ id: nextId }];
+      state.sessionsData = [{ id: nextId, status: 'waiting_user' }];
+      state.activeSessionData.id = nextId;
+      view.refresh();
+      await waitFor(() => expect(screen.queryByText('Old setup error')).toBeNull());
+      expect(screen.queryByRole('region', { name: 'How do you want Astrid to think?' })).toBeNull();
+      expect(screen.getByRole('textbox')).toBeEnabled();
+      state.projectChats['project-1'].selected_session_id = 'codex:session-1';
+      state.projectChats['project-1'].sessions = [{ id: 'codex:session-1' }];
+      state.sessionsData = [{ id: 'codex:session-1', status: 'waiting_user' }];
+      state.activeSessionData.id = 'codex:session-1';
+      view.refresh();
+      await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('codex:session-1', 'project-1'));
+      expect(screen.queryByText('Old setup error')).toBeNull();
+      expect(screen.getByRole('textbox')).toBeEnabled();
+    });
+    it('resets createSession and dismisses its setup error when setup completes', async () => {
+      const { state, localAgents } = setupState();
+      const view = renderSetupChat();
+      await getInput();
+      state.createSession.error = new BridgeRouteError('Create', 502, { error: 'agent_sign_in_required', detail: 'Create needs sign-in', next_action: 'codex login' });
+      view.refresh();
+      await screen.findByText('Create needs sign-in');
+      localAgents.data.agents = localAgents.data.agents.map(row => row.id === 'codex' ? { ...row, steps: [] } : row);
+      view.refresh();
+      await screen.findByText('✓ Codex is set up.');
+      expect(state.createSession.reset).toHaveBeenCalledOnce();
+      expect(state.sendMessage.clearLocalError).toHaveBeenCalledOnce();
+      view.refresh();
+      expect(screen.queryByText('Create needs sign-in')).toBeNull();
+      expect(screen.queryByRole('region', { name: 'How do you want Astrid to think?' })).toBeNull();
+      expect(screen.getByRole('textbox')).toBeEnabled();
+    });
+    describe('terminal nudge', () => {
+      const NUDGE_KEY = 'astrid.setting.device.agentTerminalNudgeSeen';
+      const nudge = () => screen.queryByRole('region', { name: 'You can also talk to Astrid from your terminal' });
+      beforeEach(() => { localStorage.removeItem(NUDGE_KEY); });
+      async function setUpCodex(terminal: LocalAgentChoice['terminal'], projectName: string | null = 'My first project') {
+        const { state, localAgents } = setupState();
+        localAgents.data.agents = localAgents.data.agents.map(row => ({ ...row, terminal: row.id === 'codex' ? terminal : { command: row.id, skillSynced: true } }));
+        mocks.useAgentChatBridge.mockImplementation(() => ({
+          timelineId: state.timelineId,
+          editorContext: { tool: 'video-editor', projectId: 'project-1', projectSlug: 'project-one', projectName, timelineId: state.timelineId, timelineName: null },
+        }));
+        const view = renderSetupChat();
+        await getInput();
+        state.createSession.error = new BridgeRouteError('Create', 502, { error: 'agent_sign_in_required', detail: 'Create needs sign-in', next_action: 'codex login' });
+        view.refresh();
+        await screen.findByText('Create needs sign-in');
+        localAgents.data.agents = localAgents.data.agents.map(row => row.id === 'codex' ? { ...row, steps: [] } : row);
+        view.refresh();
+        await screen.findByText('✓ Codex is set up.');
+        return { state, localAgents, view };
+      }
+      function reply(state: ReturnType<typeof createState>, view: { refresh: () => void }) {
+        state.activeSessionData.turns = [createUserTurn('hi', 1_000), { role: 'assistant', content: "Hi! I'm ready.", timestamp: iso(2_000) }];
+        view.refresh();
+      }
+
+      it('shows once, after the first reply, with the agent command and the open project', async () => {
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: true });
+        expect(nudge()).toBeNull();
+        reply(state, view);
+        const region = await waitFor(() => { const found = nudge(); expect(found).not.toBeNull(); return found!; });
+        expect(within(region).getByText('codex')).toBeInTheDocument();
+        expect(within(region).getByText('make the intro two seconds shorter')).toBeInTheDocument();
+        expect(within(region).getByText('Updated "My first project"')).toBeInTheDocument();
+        expect(within(region).getByText('Edits, tasks and generations show up right here.')).toBeInTheDocument();
+        expect(within(region).queryByText('Uses the same OpenRouter key and model as here.')).toBeNull();
+        expect(localStorage.getItem(NUDGE_KEY)).toBe('true');
+      });
+
+      it('copies the agent command', async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: true });
+        reply(state, view);
+        fireEvent.click(await screen.findByRole('button', { name: 'Copy terminal command' }));
+        await waitFor(() => expect(writeText).toHaveBeenCalledWith('codex'));
+      });
+
+      it('closes, and reopens from the chat menu as Use from your terminal', async () => {
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: true });
+        reply(state, view);
+        await waitFor(() => expect(nudge()).not.toBeNull());
+        fireEvent.click(within(nudge()!).getByRole('button', { name: 'Close' }));
+        expect(nudge()).toBeNull();
+        view.refresh();
+        expect(nudge()).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: /^Chat:/ }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Use from your terminal' }));
+        await waitFor(() => expect(nudge()).not.toBeNull());
+        expect(nudge()).toHaveFocus();
+      });
+
+      it('does not show by itself again once it has been shown in this browser', async () => {
+        localStorage.setItem(NUDGE_KEY, 'true');
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: true });
+        reply(state, view);
+        await screen.findByText("Hi! I'm ready.");
+        expect(nudge()).toBeNull();
+      });
+
+      it('stays hidden, with no menu entry, when the skill did not sync', async () => {
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: false });
+        reply(state, view);
+        await screen.findByText("Hi! I'm ready.");
+        expect(nudge()).toBeNull();
+        expect(localStorage.getItem(NUDGE_KEY)).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: /^Chat:/ }));
+        await screen.findByRole('button', { name: /Attach an existing chat/ });
+        expect(screen.queryByRole('button', { name: 'Use from your terminal' })).toBeNull();
+      });
+    });
+    it('ignores a start error that arrives after switching chats', async () => {
+      const { state } = setupState();
+      let reject!: (error: Error) => void;
+      state.createSession.mutateAsync.mockImplementation(() => new Promise((_resolve, fail) => { reject = fail; }));
+      const view = renderSetupChat();
+      await getInput();
+      fireEvent.click(screen.getByRole('button', { name: /^Chat:/ }));
+      fireEvent.click(screen.getByRole('option', { name: /^Codex/ }));
+      await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledOnce());
+      state.projectChats['project-1'].selected_session_id = 'hermes:session-2';
+      state.projectChats['project-1'].sessions = [{ id: 'hermes:session-2' }];
+      state.sessionsData = [{ id: 'hermes:session-2', status: 'waiting_user' }];
+      state.activeSessionData.id = 'hermes:session-2';
+      view.refresh();
+      await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('hermes:session-2', 'project-1'));
+      await act(async () => { reject(new BridgeRouteError('Create', 502, { error: 'agent_sign_in_required', detail: 'Late setup error' })); });
+      expect(screen.queryByText('Late setup error')).toBeNull();
+      expect(screen.queryByRole('region', { name: 'How do you want Astrid to think?' })).toBeNull();
+      expect(screen.getByRole('textbox')).toBeEnabled();
+    });
+  });
+
+  it('shows the fixed agent and model with its thinking level in the model line', async () => {
     const state = createState();
     const sessionId = 'codex:session-1';
     const projectId = 'project-1';
@@ -452,7 +717,7 @@ describe('AgentChat', () => {
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise((yes, no) => { resolve = yes; reject = no; }));
     mockFromState(state);
     mocks.useLocalAgents.mockReturnValue({
-      data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'sol', name: 'Sol', thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }], defaultModel: 'sol' }], defaultAgent: 'astrid' },
+      data: { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null, models: [], defaultModel: null }, { id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'sol', name: 'Sol', thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }], defaultModel: 'sol' }], defaultAgent: 'astrid' },
       isLoading: false, error: null, refetch: vi.fn(),
     });
     renderAgentChat();
@@ -1365,7 +1630,7 @@ describe('project draft consumer ownership', () => {
     const key = ['project-agent-chat', 'project-1'];
     client.setQueryData(key, state.projectChats['project-1']);
     mocks.useProjectChat.mockImplementation(() => useQuery({ queryKey: key, queryFn: async () => state.projectChats['project-1'], enabled: false }));
-    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'codex-default', name: 'Codex Default' }], defaultModel: 'codex-default' }], defaultAgent: 'astrid' }, refetch: vi.fn() });
+    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null, models: [], defaultModel: null }, { id: 'codex', name: 'Codex', state: 'ready', line: null, models: choice === 'plain' ? [] : [{ modelId: 'codex-default', name: 'Codex Default' }], defaultModel: choice === 'plain' ? null : 'codex-default' }], defaultAgent: 'astrid' }, refetch: vi.fn() });
     let finish!: (session: { id: string }) => void;
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     const newId = choice === 'plain' ? 'session-2' : 'codex:session-2';

@@ -7,6 +7,7 @@ const NOT_FOUND_BODY = 'Not found';
 
 export const INSTALLER_ASSETS = {
   '/install': { file: 'install', contentType: 'text/plain; charset=utf-8' },
+  '/install.sh': { file: 'install.sh', contentType: 'text/plain; charset=utf-8' },
   '/install.ps1': { file: 'install.ps1', contentType: 'text/plain; charset=utf-8' },
   '/install-manifest.json': { file: 'install-manifest.json', contentType: 'application/json; charset=utf-8' },
 } as const;

@@ -60,9 +60,15 @@ function cycle(...steps: Step[]) {
   });
 }
 
-function watch(fetchImpl: (input: string, init?: RequestInit) => Promise<Response>, enabled = true) {
+/** The refusal check (a `no-cors` follow-up to a network failure) is answered by `noCors`, not by the scripted health steps. */
+function watch(
+  fetchImpl: (input: string, init?: RequestInit) => Promise<Response>,
+  enabled = true,
+  { noCors = async () => { throw new TypeError('Failed to fetch'); }, confirmPermission }: { noCors?: () => Promise<Response>; confirmPermission?: () => Promise<boolean> } = {},
+) {
+  const routed = (input: string, init?: RequestInit) => init?.mode === 'no-cors' ? noCors() : fetchImpl(input, init);
   return renderHook(
-    ({ on }: { on: boolean }) => useRuntimeRestartWatch(on, { intervalMs: TICK_MS, fetchImpl }),
+    ({ on }: { on: boolean }) => useRuntimeRestartWatch(on, { intervalMs: TICK_MS, fetchImpl: routed, confirmPermission }),
     { initialProps: { on: enabled } },
   );
 }
@@ -227,5 +233,49 @@ describe('useRuntimeRestartWatch: failed readings', () => {
     await run(3, result);
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(result.current).toBe('ok');
+  });
+});
+
+describe('useRuntimeRestartWatch: evidence for a failed CORS read', () => {
+  const opaque = async () => new Response(null, { status: 200 });
+
+  it('a no-cors request that still answers is refused, not stopped', async () => {
+    const fetchImpl = sequence(networkError);
+    const { result } = watch(fetchImpl, true, { noCors: opaque });
+    const seen = await until(result, 'refused');
+    expect(seen).not.toContain('stopped');
+  });
+
+  it('nothing answering the no-cors request either is stopped', async () => {
+    const { result } = watch(sequence(networkError), true);
+    const seen = await until(result, 'stopped');
+    expect(seen).not.toContain('refused');
+  });
+
+  it('refused clears itself when the door accepts the page again', async () => {
+    const { route, fetchImpl } = switchable(healthy('instance-1'));
+    const { result } = watch(fetchImpl, true, { noCors: opaque });
+    await tick();
+    route.step = networkError;
+    await until(result, 'refused');
+    route.step = healthy('instance-1');
+    await until(result, 'ok');
+  });
+
+  it('without the permission nothing is blamed on Astrid, and no no-cors request is sent', async () => {
+    const noCors = vi.fn(opaque);
+    const confirmPermission = vi.fn(async () => false);
+    const { result } = watch(sequence(networkError), true, { noCors, confirmPermission });
+    const seen = await run(6, result);
+    expect(confirmPermission).toHaveBeenCalled();
+    expect(noCors).not.toHaveBeenCalled();
+    expect(seen.every((status) => status === 'ok')).toBe(true);
+  });
+
+  it('asks the permission again before each failed reading becomes stopped', async () => {
+    const confirmPermission = vi.fn(async () => true);
+    const { result } = watch(sequence(networkError), true, { confirmPermission });
+    await until(result, 'stopped');
+    expect(confirmPermission.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 });

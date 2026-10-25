@@ -9,7 +9,6 @@ import { SettingsModal } from '@/shared/components/SettingsModal/SettingsModal';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents';
 
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
-import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
 import { SocialIcons } from './components/SocialIcons';
 
@@ -22,7 +21,7 @@ import { useReplayEditorTour } from './hooks/useReplayEditorTour';
 import { useResetCurrentShotOnRouteChange } from './hooks/useResetCurrentShotOnRouteChange';
 import { LayoutMainContent } from './components/LayoutMainContent';
 import { usePanesStore } from '@/shared/state/panesStore';
-import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
+import { AppFrame } from './components/AppFrame';
 
 // Scroll to top component
 function ScrollToTop() {
@@ -106,9 +105,8 @@ const LayoutShell: React.FC = () => {
   );
 
   return (
-    <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-dvh min-h-0 overflow-hidden')}>
+    <AppFrame fullEditor={isVideoEditorShellActive}>
       <ScrollToTop />
-      <AppSkyBackground />
 
       {/* When in mobile split view, wrap header + content in a scroll container */}
       {isMobileSplitView ? (
@@ -147,6 +145,6 @@ const LayoutShell: React.FC = () => {
           initialTab={settingsInitialTab}
         />
 
-    </div>
+    </AppFrame>
   );
 };

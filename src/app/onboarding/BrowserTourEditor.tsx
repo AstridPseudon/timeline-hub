@@ -1,45 +1,48 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { AppFrame } from '@/app/components/AppFrame.tsx';
+import { AppMainContent } from '@/app/components/AppMainContent.tsx';
 import { TasksPaneSurface, TasksPaneChatSlot } from '@/features/tasks/components/TasksPane/components/TasksPaneSurface';
 import { usePanesStore } from '@/shared/state/panesStore';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
+import { useDeviceInfo } from '@/shared/hooks/mobile';
+import { useEditorTour, startEditorTour, exitEditorTour } from '@/shared/state/editorTourStore.ts';
+import { UI_Z_LAYERS } from '@/shared/lib/uiLayers.ts';
+import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { ASTRID_EDITOR_EXTENSIONS } from '@astrid/packs/rendering/editor/catalog';
 import { EditorRuntimeProvider } from '@/tools/video-editor/contexts/EditorRuntimeProvider.tsx';
 import { PUBLIC_ASTRID_ELEMENT_HOST } from '@/pages/Home/astrid-public-host.tsx';
+import { ProjectHeaderControls } from '@/shared/components/ProjectHeaderControls.tsx';
+import { ProjectTimelinePicker } from '@/shared/components/ProjectTimelineSelectors.tsx';
+import { tourHeaderProps } from '@/tools/video-editor/tour/timeline/tourHeaderProps.ts';
 import { PUBLIC_TIMELINE_SERVICE_HOOKS } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 import { PUBLIC_TIMELINE_OBSERVATIONS } from '@/tools/video-editor/runtime/editorHostObservations.ts';
 import { createVideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import { createVideoEditorSequenceComponentCatalog } from '@/tools/video-editor/lib/sequence-component-catalog.ts';
 import { createEditorTourDataProvider } from '@/tools/video-editor/tour/timeline/tourDataProvider.ts';
+import { EDITOR_TOUR_TIMELINE_ID } from '@/tools/video-editor/tour/timeline/tourStages.ts';
 import { EditorTourTimelineDriver } from '@/tools/video-editor/tour/timeline/EditorTourTimelineDriver.tsx';
 import { EditorTourRunner } from '@/tools/video-editor/tour/runner/EditorTourRunner.tsx';
-import { registerBrowserTourFinish } from '@/tools/video-editor/tour/runner/tourBeats.ts';
-import { startEditorTour, exitEditorTour } from '@/shared/state/editorTourStore.ts';
+import { registerBrowserTourFinish, returnToEditorTourEnd } from '@/tools/video-editor/tour/runner/tourBeats.ts';
+import { useEditorDeviceClass } from '@/tools/video-editor/tour/runner/useIsDesktopEditor.ts';
 import { TourChatPanel } from '@/tools/video-editor/components/AgentChat/TourChatPanel.tsx';
-import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
+import { TimelineEditorShellCore } from '@/tools/video-editor/components/TimelineEditorShellCore.tsx';
 import { TimelineEditorCoreBody } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx';
-import { useTimelineDataSelector, useTimelineEditorData, useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { VideoEditorRightPanelDock } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
+import { useTimelineEditorOps, useTimelineDataSelector } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { HOST_EXTENSIONS_PANEL_KEY, HOST_PROPERTIES_PANEL_KEY } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorPanelDisplayControl.tsx';
-import { AppHeader } from '@/shared/components/AppHeader.tsx';
-import { ProjectHeaderControls } from '@/shared/components/ProjectHeaderControls.tsx';
-import { ProjectTimelinePicker } from '@/shared/components/ProjectTimelineSelectors.tsx';
-import { tourHeaderProps } from '@/tools/video-editor/tour/timeline/tourHeaderProps.ts';
 
 export const BROWSER_TOUR_EXTENSIONS = Object.freeze(ASTRID_EDITOR_EXTENSIONS.filter(extension => extension.manifest.id === 'haus.astrid.threejs-live-editor'));
 if (BROWSER_TOUR_EXTENSIONS.length !== 1) throw new Error('The bundled Lantern Valley world renderer is missing.');
 const EFFECTS = createVideoEditorEffectCatalog();
 const SEQUENCES = createVideoEditorSequenceComponentCatalog();
+const HEADER = tourHeaderProps();
 const noOp = () => undefined;
 
-function Preview() {
-  const { resolvedConfig } = useTimelineEditorData();
-  const { currentTime, previewRef, playerContainerRef, onPreviewTimeUpdate } = useTimelinePlaybackContext();
-  return resolvedConfig ? <RemotionPreview ref={previewRef} config={resolvedConfig}
-    initialTime={currentTime} currentTime={currentTime} onTimeUpdate={onPreviewTimeUpdate}
-    playerContainerRef={playerContainerRef} compact touchChrome /> : null;
-}
+const TOUR_PICKER_PROPS = {
+  projects: [], timelines: [], ...HEADER,
+  onSelectProject: noOp, onSelectTimeline: noOp,
+} as const;
 
-function BrowserTourEditorSurface({ header }: { header: ReturnType<typeof tourHeaderProps> }) {
+function BrowserTourEditorSurface() {
   const ops = useTimelineEditorOps();
   const opsRef = useRef(ops);
   opsRef.current = ops;
@@ -48,79 +51,102 @@ function BrowserTourEditorSurface({ header }: { header: ReturnType<typeof tourHe
   ) ?? false);
 
   useLayoutEffect(() => {
-    // The tour runs on an in-memory timeline, so nothing here is saved. The dock shows Inspector while the demo timeline is empty, then Extensions once the world lands.
+    // The in-memory demo starts with the Inspector and switches to the world extension when it lands.
     opsRef.current.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, 'dock');
+    opsRef.current.setRightPanelLayoutSlot(HOST_EXTENSIONS_PANEL_KEY, 'dock');
     opsRef.current.setSelectedRightPanelId(hasWorld ? HOST_EXTENSIONS_PANEL_KEY : HOST_PROPERTIES_PANEL_KEY);
   }, [hasWorld]);
 
-  return <div className="grid min-h-0 min-w-0 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,.8fr)_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_minmax(220px,min(calc(32vw_+_12px),432px))] md:grid-rows-[minmax(0,1fr)_minmax(180px,35%)]">
-    <section className="relative min-h-0 min-w-0" data-editor-tour="preview">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start px-3 py-3">
-        <div className="pointer-events-auto flex min-w-0 max-w-[min(75%,32rem)] flex-col items-start gap-1" data-testid="video-editor-preview-navigation-controls">
-          <ProjectTimelinePicker
-            projects={[]}
-            timelines={[]}
-            {...header}
-            onSelectProject={noOp}
-            onSelectTimeline={noOp}
-            showProjectSelector={false}
-          />
-        </div>
-      </div>
-      <Preview />
-    </section>
-    <section className="min-h-0 min-w-0" data-editor-tour="extensions">
-      <VideoEditorRightPanelDock leftPanelPresent={false} />
-    </section>
-    <section className="min-h-0 min-w-0 md:col-span-2 md:row-start-2" data-editor-tour="timeline">
-      <TimelineEditorCoreBody hostObservations={PUBLIC_TIMELINE_OBSERVATIONS} />
-    </section>
-  </div>;
+  return <TimelineEditorShellCore
+    timelineId={EDITOR_TOUR_TIMELINE_ID}
+    isOnEditorPage
+    showHeader={false}
+    previewNavigationControls={<ProjectTimelinePicker {...TOUR_PICKER_PROPS} showProjectSelector={false} showProjectLabel={false} />}
+    renderTimeline={actions => <TimelineEditorCoreBody hostObservations={PUBLIC_TIMELINE_OBSERVATIONS} {...actions} />}
+  />;
 }
 
-function BrowserTourEditorHeader({ header }: { header: ReturnType<typeof tourHeaderProps> }) {
-  const projectControls = (
-    <ProjectHeaderControls
-      projects={[]}
-      projectId={header.projectId}
-      projectName={header.projectName}
-      onSelectProject={noOp}
-      selectedProject={null}
-      pickerDisabled={header.disabled}
-      actionsDisabled={header.disabled}
-      showDialogs={false}
-    />
-  );
-
-  return <AppHeader navigationControls={projectControls} settingsDisabled={header.disabled} />;
-}
-
-/** Bundled media, in-memory operations and the bundled world renderer; no workspace services. */
-export function BrowserTourEditor({ onFinish }: { onFinish: () => void }) {
-  const [dataProvider] = useState(createEditorTourDataProvider);
-  const header = tourHeaderProps();
+function BrowserTourFrame() {
   const tasksPaneWidth = usePanesStore(state => state.tasksPaneWidth);
+  const touchPane = usePaneControlsHosted();
+  const beat = useEditorTour(state => state.beat);
+  // The demo editor is a picture behind the tour: the spotlight already takes every pointer, so keep focus and
+  // assistive tech on the card (and the chat's Send) too.
+  const touring = useEditorTour(state => state.status === 'running');
+  const device = useEditorDeviceClass();
+  const phone = device === 'phone';
+  // A tablet held upright gets the chat as a sheet from the bottom, under a full-width preview, not a drawer that
+  // narrows the editor to a sliver.
+  const { orientation } = useDeviceInfo();
+  const sheet = device === 'tablet' && orientation === 'portrait';
+  const chatVisible = !touchPane || beat === 'compose' || beat === 'respond';
+  const tasksPaneReserve = touchPane ? '0px' : `${tasksPaneWidth}px`;
+  const contentStyle = { marginRight: tasksPaneReserve, willChange: 'margin, padding' } as CSSProperties;
+  const projectControls = <ProjectHeaderControls
+    projects={[]}
+    projectId={HEADER.projectId}
+    projectName={HEADER.projectName}
+    onSelectProject={noOp}
+    selectedProject={null}
+    pickerDisabled={HEADER.disabled}
+    actionsDisabled={HEADER.disabled}
+    showDialogs={false}
+  />;
+
+  return <AppFrame fullEditor>
+    <div className="contents" {...(touring ? { inert: '' } : {})}><AppMainContent
+      headerContent={projectControls}
+      tasksPaneReserve={tasksPaneReserve}
+      contentStyle={contentStyle}
+      isEditorRoute
+      isFullEditorSurface
+      navigationMode="tools"
+      showProjectControls={false}
+      settingsDisabled={HEADER.disabled}
+      nonEditorMainClassName=""
+      mainLabel="Lantern Valley guided demo"
+    >
+      <BrowserTourEditorSurface />
+    </AppMainContent></div>
+    <div className="pointer-events-none" style={sheet ? {
+      position: 'fixed', left: 0, right: 0, bottom: 0, height: 'min(52dvh, 44rem)',
+      zIndex: UI_Z_LAYERS.TASKS_PANE_CONTENT,
+    } : {
+      position: 'fixed', right: 0, top: 0, bottom: 0,
+      // A phone's chat takes the whole screen while it has the spotlight, rather than leaving a sliver of editor.
+      width: phone ? '100vw' : touchPane ? 'min(28rem, calc(100vw - 3rem))' : `${tasksPaneWidth}px`,
+      zIndex: UI_Z_LAYERS.TASKS_PANE_CONTENT,
+    }}>
+      <TasksPaneSurface role="complementary" aria-label="Task and chat pane" aria-hidden={!chatVisible}
+        {...(!chatVisible ? { inert: '' } : {})}
+        className={cn('absolute right-0 transform transition-transform duration-300 ease-smooth',
+          sheet ? cn('bottom-0 rounded-t-2xl border-l-0 border-t', chatVisible ? 'translate-y-0' : 'translate-y-full') : cn('top-0', chatVisible ? 'translate-x-0' : 'translate-x-full'))}>
+        <TasksPaneChatSlot><TourChatPanel /></TasksPaneChatSlot>
+      </TasksPaneSurface>
+    </div>
+  </AppFrame>;
+}
+
+/**
+ * The shared app/editor shell backed by bundled media and in-memory operations. `atEnd` opens it on its last card,
+ * for Back from the screen that follows it.
+ */
+export function BrowserTourEditor({ onFinish, atEnd = false }: { onFinish: () => void; atEnd?: boolean }) {
+  const [dataProvider] = useState(createEditorTourDataProvider);
+  const [startAtEnd] = useState(atEnd);
   useLayoutEffect(() => {
     const unregister = registerBrowserTourFinish(onFinish);
     startEditorTour();
+    if (startAtEnd) returnToEditorTourEnd();
     return () => { exitEditorTour(); unregister(); };
-  }, [onFinish]);
+  }, [onFinish, startAtEnd]);
   return <EditorRuntimeProvider astridElementHost={PUBLIC_ASTRID_ELEMENT_HOST}
-    dataProvider={dataProvider} timelineId={header.timelineId} timelineName={header.timelineName}
+    dataProvider={dataProvider} timelineId={HEADER.timelineId} timelineName={HEADER.timelineName}
     timelineServices={PUBLIC_TIMELINE_SERVICE_HOOKS} effectCatalog={EFFECTS} sequenceComponentCatalog={SEQUENCES}
     extensions={BROWSER_TOUR_EXTENSIONS} extensionStateRepository={null}
     runtime={{ assetResolver: dataProvider, exporter: null, hostContext: null }}
     enableMutationServices enableLiveServices={false} enableRenderExport={false}>
-    <div className="flex h-dvh min-h-0 w-full flex-col overflow-hidden bg-background text-foreground">
-      <BrowserTourEditorHeader header={header} />
-      <main className="grid min-h-0 w-full flex-1 grid-rows-[minmax(0,1fr)_45%] overflow-hidden md:grid-rows-1 md:grid-cols-[minmax(0,1fr)_var(--tasks-pane-width)]"
-      style={{ '--tasks-pane-width': `${tasksPaneWidth}px` } as CSSProperties} aria-label="Lantern Valley guided demo">
-      <BrowserTourEditorSurface header={header} />
-      <TasksPaneSurface role="complementary" aria-label="Task and chat pane" className="relative min-h-0 min-w-0">
-        <TasksPaneChatSlot><TourChatPanel /></TasksPaneChatSlot>
-      </TasksPaneSurface>
-      </main>
-    </div>
+    <BrowserTourFrame />
     <EditorTourTimelineDriver />
     <EditorTourRunner />
   </EditorRuntimeProvider>;
