@@ -69,3 +69,6 @@ D116 word-seed worker `agt-F-D116-word-seed-0947` is still running, and disk
 availability is exactly `4,923,437,056` bytes, below the existing heavy-run
 strict floor of `5,200,000,000` bytes. No checkout was pinned and no body was
 submitted against an unsettled Agent source or below-floor disk.
+
+The exact availability later fell to `5,129,142,272` bytes at the next
+controller check; the heavy admission floor remains unmet.
