@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T11:56:22Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# app2 board, 2026-10-25T11:54Z
+<!-- app2 | 2026-10-25T11:59:03Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-25T11:57Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -12,6 +12,7 @@
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
 | P4-current | Qualify original ten-note timing | Runtime Luna; independent Luna | Runtime independent GO review complete | merged | Actual 22560; review 0450 GO | Remaining original passes in 28.101 seconds versus 45 seconds. Exact captured tuple qualified. Final cut matrix still required. | Agent 786385 / Runtime 0c62 |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
+| P2-D120-current | Qualify full tour after read-cost repair | App service; independent Luna | Preflight12718 PASS | doing | App1145; actual11251 | Submitted11:45:16 on34d464/070dfc/7070/635f. Await same-ID terminal and App independent verdict. No current GO claimed. | App34d4644589 |
 | P2 | Eight original core gestures | App service; independent Luna | Same15203 terminal and verdict1019 | review | App1004; independent1019 | NO-GO605s: originals2PASS2FAIL1ERROR3NOTRUN,readiness1PASS. Independent GO placement and ADD only. SWAP409,elementFAIL,parentERROR. | 96d475 /070dfc /d23a8 /635f |
 | P2-D112-release | Qualify identity recovery source | Runtime Luna; independent Luna | Actual normal release0945 | merged | Warm0927; native0907; review0945 | Normal d23a8 tree equals independent32c. Recovery, tamper and warm53, real-provider2, Pyright55/55 PASS. App full P2 now owed; no browser credit. | Runtime d23a8e0d2 |
 | P2-D114-asset-current | Qualify current asset original | App Luna; service | Source HOME7841; next full tour | gated:full-P2 | Actual15712; App0904 and0910 | Readiness1 PASS; original1 FAIL at strict native Undo equality. Reviewed field union is HOME7841; current asset GO remains owed in full P2. | App7841; prior04be tuple |
@@ -147,7 +148,7 @@ live 0 / cap 6 source; ready-undispatched 0 for Proof under D56.4. bin/workers c
 core open: 4 transferred App P2 gestures lack current GO: SWAP, element, asset and reopened parent. Full15203 remains NO-GO; placement and ADD GO. D119 is HOME7e92; next tour owes parent proof. Runtime7070 released after native10398 PASS1.448x/security1122; App adoption1139/fullP2 assigned. SWAP replay20990 reaches dependency_changed, not original history_unavailable; tags1124 owns missing predicates. Agent30693 core425 independently verified1104;450 bad nodes. Metadata1111 resolves ambient summary f43dd versus actual pinned source9a65; captured tuple unchanged. Retirement count for current overlay not yet published. P1/P3 recorded GO and final-cut obligations remain separate. Proof stood down.
 regressions: 14 proved in Runtime D118 pristine-upstream23 comparison; independent1001 reports PRE0/REG14/NEW8/UNKN1. These are host-bootstrap identical-body failures in that bounded scope, assigned exclusively to App by Agent1048/1055. Current30693 classifiers report425 core-open pending independent1104; no source claim or lower aggregate erases these regressions. D102/D110 repairs stay source-qualified; current P2 is separate.
 
-Blockers: App current P2 — Full15203 NO-GO; placement and ADD GO. Adoption1139 is HOME34d464. Controller1145 owns one preflighted full tour with D119; actual ID pending. SWAP tags are not a run gate.
+Blockers: App current P2 — Full15203 NO-GO; placement and ADD GO. Adoption1139 is HOME34d464. Controller1145 submitted actual11251 at11:45:16 after preflight12718 PASS. Await same-ID terminal. SWAP tags are not a run gate.
 Blockers: Final cut — Current fullP2, Agent425core/14REG, D69, final pinned gates/core and genuine installed render remain owed. Prior codeload refusal stays stopped; Runtime reports separate D117a staging route.
 
 Next ready: None for Proof under D56.4. App adoption1139 is HOME34d464; fullP2 controller1145 and Runtime SWAP tags1124 assigned. Agent30693 terminal; core425 independently verified1104; metadata1111 checks summary-tree mismatch. App output42aad adoption1102 normally merged96af9c; D119 source clear.
@@ -259,13 +260,13 @@ Disk: 7012638720 bytes free at 2026-10-25T11:54Z. Lead06:33 remains binding: no 
 
 Pass 2026-10-25T11:54Z: PLAN and MANAGER-COMMON read. INBOX remains795002 bytes, no new messages. Current header SHA256 7a980a472d77b75df2893291421cfff400920afd065cebe89cb00cd31baa887c; D56.4 stand-down persists with no new Proof assignment. bin/workers reports1313 done and zero live. No dispatch, product edit, test run, merge, Git mutation or cleanup.
 
-All transferred owner waits rechecked against published App, Runtime and Agent boards. App normal7070 adoption1139 is now MERGED34d4644589; clear the adoption wait this pass. App controller app-D120-full-P2-D111b-1145 owns one preflighted full P2 with D119. Actual service ID is not published yet. No SWAP-tag wait and no isolated gestures. Source adoption grants no new original GO. Existing15203 remains NO-GO; placement and ADD are independently GO on their recorded tuple.
+All transferred owner waits rechecked against published App, Runtime and Agent boards. App normal7070 adoption1139 is now MERGED34d4644589; clear the adoption wait this pass. App controller app-D120-full-P2-D111b-1145 owns one preflighted full P2 with D119. App now publishes actual11251, submitted11:45:16 with preflight12718 PASS. Await the same ID; no terminal result yet. No SWAP-tag wait and no isolated gestures. Source adoption grants no new original GO. Existing15203 remains NO-GO; placement and ADD are independently GO on their recorded tuple.
 
 Runtime original15203 SWAP history_unavailable remains UNKNOWN. Separate replay20990 dependency_changed does not identify the original predicate; tags1124/review1138 remain owner-lane work. Runtime source7070 is normally released; final matrix review1142 and genuine applied stage1144 remain assigned. Agent30693 retains425 core open and14 confirmed regressions until actual original-node proof; authentic host14 controller1141 is resumed on its genuine profile, not replaced here. D122 hosting allocations belong to App and Runtime; no assignment to Proof.
 
 P1/P3 recorded GO and final-cut reruns remain separate. Final core, D69 and genuine installed render remain owed. Prior safety and permission refusals stay stopped; no alternate acquisition, cleanup or publication attempted.
 Evidence: [Header](../../design/BOARD-HEADER.md), [App](/home/user/timeline-hub/hub/status/app.md), [Runtime](/home/user/timeline-hub/hub/status/runtime.md), [Agent](/home/user/timeline-hub/hub/status/agent.md).
 
-Next watch: actual App controller1145 full-tour ID and terminal verdict, Runtime tags1138 and stage1144, Agent original host14 proof and owner-lane merge receipts. No Proof source or execution wait.
+Next watch: App actual11251 terminal and independent verdict, Runtime tags1138 and stage1144, Agent original host14 proof and owner-lane merge receipts. No Proof source or execution wait.
 
 Inbox read through795002 bytes. STATUS is restart point; [D83 handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md), [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remain binding.
