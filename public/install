@@ -26,8 +26,29 @@ fetch() {
 }
 fail() { echo "Astrid couldn't finish. Your work is kept." >&2; echo "Details: $log" >&2; exit 1; }
 echo 'Getting Astrid ready. The first time takes a few minutes.'
-manifest_url=${ASTRID_INSTALL_MANIFEST_URL:-https://astrid.haus/install-manifest.json}
-fetch "$manifest_url" "$tmp/manifest.json" 2>>"$log" || fail
+manifest="$tmp/manifest.json"
+manifest_next=0
+manifest_provided=0
+for arg in "$@"; do
+    if [ "$manifest_next" -eq 1 ]; then
+        manifest=$arg
+        manifest_provided=1
+        manifest_next=0
+        continue
+    fi
+    case "$arg" in
+        --manifest) manifest_next=1; manifest_provided=1 ;;
+        --manifest=*) manifest=${arg#--manifest=}; manifest_provided=1 ;;
+    esac
+done
+if [ "$manifest_next" -eq 1 ] || [ -z "$manifest" ]; then
+    echo 'A path is required after --manifest.' >&2
+    exit 2
+fi
+if [ "$manifest_provided" -ne 1 ]; then
+    manifest_url=${ASTRID_INSTALL_MANIFEST_URL:-https://astrid.haus/install-manifest.json}
+    fetch "$manifest_url" "$manifest" 2>>"$log" || fail
+fi
 uv="$bootstrap/uv"
 uv_matches=0
 if [ -x "$uv" ]; then
@@ -87,9 +108,12 @@ python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 runtime = git_requirement("runtime")
 client = runtime + "#subdirectory=packages/python"
 subprocess.run([uv, "pip", "install", "--python", str(python), "--no-deps", runtime, client, agent_requirement], check=True)
-args = [uv, "run", "--no-project", "--python", str(python), "python", "-u", "-I", "-m", "astrid", "install", "--manifest", manifest, *flags]
+has_manifest = any(flag == "--manifest" or flag.startswith("--manifest=") for flag in flags)
+args = [uv, "run", "--no-project", "--python", str(python), "python", "-u", "-I", "-m", "astrid", "install"]
+if not has_manifest: args.extend(["--manifest", manifest])
+args.extend(flags)
 os.execv(args[0], args)
-' "$tmp/manifest.json" "$@" <&3 >"$tmp/progress" 2>>"$log"; then status=0; else status=$?; fi
+' "$manifest" "$@" <&3 >"$tmp/progress" 2>>"$log"; then status=0; else status=$?; fi
 wait "$progress_pid"
 if [ "$status" -ne 0 ]; then
     if ! grep -Fq "Astrid couldn't finish. Your work is kept." "$tmp/core.out"; then

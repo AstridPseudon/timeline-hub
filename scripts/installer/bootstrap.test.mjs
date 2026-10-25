@@ -28,14 +28,14 @@ test('POSIX uses developer manifest, the per-OS data layout (HOME-based on macOS
   const committedSource = '# committed source\n';
   context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedSource);
   await writeFile(path.join(context.manifest.agent.repo, 'source-marker.txt'), '# changed checkout source\n');
-  const result = await run(context, ['--update', '--data-root', '/a path/with spaces']);
+  const result = await run(context, ['--update', '--data-root', '/a path/with spaces', '--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid']);
   assert.equal(result.code, 0, result.stderr);
   assert.equal(result.stdout.trim(), `${preparation}\nAstrid is ready.`);
   assert.equal(await readFile(context.env.MOCK_FETCHED, 'utf8'), context.env.ASTRID_INSTALL_MANIFEST_URL);
   const calls = await context.calls();
   assert.deepEqual(calls.find((args) => args[0] === 'python'), ['python', 'install', '3.11.13', '--no-bin']);
   const core = calls.at(-1);
-  assert.deepEqual(core.slice(-3), ['--update', '--data-root', '/a path/with spaces']);
+  assert.deepEqual(core.slice(-7), ['--update', '--data-root', '/a path/with spaces', '--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid']);
   assert.equal(calls.filter((args) => args[0] === 'pip').length, 1, 'bootstrap installs first-party packages once');
   assert.ok(calls.every((args) => !args.includes('--require-hashes')), 'bootstrap must not install third-party dependencies');
   const localInstall = calls.find((args) => args[0] === 'pip' && args.includes('--no-deps'));
@@ -46,6 +46,21 @@ test('POSIX uses developer manifest, the per-OS data layout (HOME-based on macOS
   assert.ok(localInstall.some((arg) => arg.endsWith('#subdirectory=packages/python')), JSON.stringify(localInstall));
   assert.ok(!core.includes('--with'));
 }));
+
+for (const manifestFlag of ['--manifest', '--manifest=']) {
+  test(`POSIX uses a supplied local manifest (${manifestFlag}) for bootstrap pins and core without downloading`, () => scenario(async (context) => {
+    const localManifest = path.join(context.root, 'local manifest.json');
+    await writeFile(localManifest, JSON.stringify(context.manifest));
+    const supplied = manifestFlag === '--manifest' ? [manifestFlag, localManifest] : [`${manifestFlag}${localManifest}`];
+    const managerArgs = ['--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid'];
+    const result = await run(context, [...managerArgs, ...supplied]);
+    assert.equal(result.code, 0, result.stderr);
+    await assert.rejects(readFile(context.env.MOCK_FETCHED), { code: 'ENOENT' });
+    const core = (await context.calls()).at(-1);
+    assert.deepEqual(core.slice(-managerArgs.length - supplied.length), [...managerArgs, ...supplied]);
+    assert.equal(core.filter((argument) => argument === '--manifest' || argument.startsWith('--manifest=')).length, 1);
+  }));
+}
 
 test('POSIX defaults to hosted manifest and pinned source archive URLs', () => scenario(async (context) => {
   const result = await run(context, [], { ASTRID_INSTALL_MANIFEST_URL: '' });

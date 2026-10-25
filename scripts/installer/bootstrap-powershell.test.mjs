@@ -191,7 +191,7 @@ test('PowerShell tolerates native stderr, forwards arguments and avoids Python s
   const committedSource = '# committed source\n';
   context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedSource);
   await writeFile(path.join(context.manifest.agent.repo, 'source-marker.txt'), '# changed checkout source\n');
-  const flags = ['--update', '--data-root', '/a path/with spaces', 'embedded"quote', 'trailing slash\\'];
+  const flags = ['--update', '--data-root', '/a path/with spaces', 'embedded"quote', 'trailing slash\\', '--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid'];
   const result = await run(flags);
   alive(result);
   assert.match(result.stdout, /Astrid is ready\./);
@@ -211,6 +211,44 @@ test('PowerShell tolerates native stderr, forwards arguments and avoids Python s
   assert.ok(localInstall.some((arg) => arg.endsWith('#subdirectory=packages/python')), JSON.stringify(localInstall));
   assert.ok(!core.includes('--with'));
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /native progress on stderr/);
+}));
+
+for (const manifestFlag of ['--manifest', '--manifest=']) {
+  test(`PowerShell uses a supplied local manifest (${manifestFlag}) for bootstrap pins and core without downloading`, () => scenario(async (context, run) => {
+    const localManifest = path.join(context.root, 'local manifest.json');
+    await writeFile(localManifest, JSON.stringify(context.manifest));
+    const supplied = manifestFlag === '--manifest' ? [manifestFlag, localManifest] : [`${manifestFlag}${localManifest}`];
+    const managerArgs = ['--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid'];
+    const result = await run([...managerArgs, ...supplied]);
+    alive(result);
+    await assert.rejects(readFile(context.env.MOCK_FETCHED), { code: 'ENOENT' });
+    const core = (await context.calls()).at(-1);
+    assert.deepEqual(core.slice(-managerArgs.length - supplied.length), [...managerArgs, ...supplied]);
+    assert.equal(core.filter((argument) => argument === '--manifest' || argument.startsWith('--manifest=')).length, 1);
+  }));
+}
+
+test('PowerShell scriptblock invocation forwards --update and Pinokio root arguments without binding them as bootstrap parameters', () => scenario(async (context) => {
+  const harness = await context.powershell();
+  await writeFile(harness, `
+$ErrorActionPreference = 'Continue'
+function Invoke-WebRequest {
+    param([switch]$UseBasicParsing, [Parameter(Position=0)][string]$Uri, [string]$OutFile)
+    Copy-Item $env:MOCK_MANIFEST $OutFile
+}
+function irm { param([string]$Uri) [IO.File]::ReadAllText($env:MOCK_INSTALL_SCRIPT) }
+try {
+    & ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update --managed-by pinokio --root '/Pinokio Apps/Astrid'
+} catch { [Console]::WriteLine('CAUGHT: ' + $_.Exception.Message) }
+[Console]::WriteLine('SHELL-ALIVE')
+[Console]::WriteLine('PREFERENCE: ' + $ErrorActionPreference)
+[Console]::WriteLine('NATIVE-STATUS: ' + $global:LASTEXITCODE)
+`);
+  const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', harness]);
+  alive(result);
+  assert.doesNotMatch(result.stdout, /CAUGHT:/);
+  const core = (await context.calls()).at(-1);
+  assert.deepEqual(core.slice(-5), ['--update', '--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid']);
 }));
 
 test('PowerShell defaults to hosted manifest and exact hosted source pins', () => scenario(async (context, run) => {

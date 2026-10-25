@@ -1,7 +1,7 @@
 # Astrid's bootstrap, PowerShell 5.1+. Run with -NoProfile -ExecutionPolicy Bypass.
 # A child scope keeps irm | iex from changing the caller's error preference.
+$FileInvocation = [bool]$PSCommandPath -and $MyInvocation.MyCommand -is [Management.Automation.ExternalScriptInfo]
 & {
-    param([bool]$FileInvocation)
     $InstallerArgs = @($args)
     $ErrorActionPreference = 'Stop'
     $UvVersion = '0.11.32'
@@ -186,8 +186,24 @@ public sealed class AstridInstallerProcessV4 {
 '@
         }
         $Manifest = Join-Path $Temp 'manifest.json'
-        $ManifestUrl = if ($env:ASTRID_INSTALL_MANIFEST_URL) { $env:ASTRID_INSTALL_MANIFEST_URL } else { 'https://astrid.haus/install-manifest.json' }
-        Invoke-WebRequest -UseBasicParsing $ManifestUrl -OutFile $Manifest
+        $ManifestProvided = $false
+        for ($Index = 0; $Index -lt $InstallerArgs.Count; $Index++) {
+            $Argument = [string]$InstallerArgs[$Index]
+            if ($Argument -ceq '--manifest') {
+                if ($Index + 1 -ge $InstallerArgs.Count -or [string]::IsNullOrEmpty([string]$InstallerArgs[$Index + 1])) { throw 'A path is required after --manifest.' }
+                $Manifest = [string]$InstallerArgs[$Index + 1]
+                $ManifestProvided = $true
+                $Index++
+            } elseif ($Argument.StartsWith('--manifest=', [StringComparison]::Ordinal)) {
+                $Manifest = $Argument.Substring('--manifest='.Length)
+                if (-not $Manifest) { throw 'A path is required after --manifest.' }
+                $ManifestProvided = $true
+            }
+        }
+        if (-not $ManifestProvided) {
+            $ManifestUrl = if ($env:ASTRID_INSTALL_MANIFEST_URL) { $env:ASTRID_INSTALL_MANIFEST_URL } else { 'https://astrid.haus/install-manifest.json' }
+            Invoke-WebRequest -UseBasicParsing $ManifestUrl -OutFile $Manifest
+        }
         $Pins = Get-Content -Raw -Encoding UTF8 $Manifest | ConvertFrom-Json
         if ($Pins.tools.uv.version -ne $UvVersion -or $Pins.tools.python.version -ne $PythonVersion) {
             throw 'The bootstrap and manifest tool pins disagree.'
@@ -251,7 +267,8 @@ public sealed class AstridInstallerProcessV4 {
         $ClientRequirement = $RuntimeRequirement + '#subdirectory=packages/python'
         $Result = Invoke-InstallerCommand $Uv @('pip','install','--python',$VenvPython,'--no-deps',$RuntimeRequirement,$ClientRequirement,$AgentRequirement) -LogOutput
         if ($Result.ExitCode -ne 0) { throw 'The pinned Astrid packages could not be installed.' }
-        $RunArgs = @('run', '--no-project', '--python', $VenvPython, 'python','-u','-I','-X','utf8','-m','astrid','install','--manifest',$Manifest)
+        $RunArgs = @('run', '--no-project', '--python', $VenvPython, 'python','-u','-I','-X','utf8','-m','astrid','install')
+        if (-not $ManifestProvided) { $RunArgs += @('--manifest', $Manifest) }
         $RunArgs += $InstallerArgs
         $Result = Invoke-InstallerCommand $Uv $RunArgs -StreamOutput
         $NativeExitCode = $Result.ExitCode
@@ -305,4 +322,4 @@ public sealed class AstridInstallerProcessV4 {
     } finally {
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $Temp
     }
-} ([bool]$PSCommandPath -and $MyInvocation.MyCommand -is [Management.Automation.ExternalScriptInfo]) @args
+} @args
