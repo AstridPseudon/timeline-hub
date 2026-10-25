@@ -1,0 +1,4 @@
+# Candidate rows only. The private installer renders absolute Agent paths
+# after both reviewed checkout receipts exist; this file is never registered.
+runtime full-d141-cut <frozen-runtime-source-guard> && env ASTRID_CHECKOUT=<qualified-agent-cut> /home/user/work/venv-runtime/bin/python -m pytest -q -n3 --junitxml="$D66_OUTPUT_DIR/runtime-full.xml"
+runtime full-d141-pristine <frozen-pristine-source-guard> && env ASTRID_CHECKOUT=<qualified-agent-pristine> /home/user/work/venv-runtime/bin/python -m pytest -q -n3 --junitxml="$D66_OUTPUT_DIR/runtime-full.xml"

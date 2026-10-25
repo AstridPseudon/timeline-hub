@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "routes": [
+    {
+      "name": "full-d141-cut",
+      "kind": "cut",
+      "runtime": {
+        "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+      },
+      "agent": {
+        "status": "pending",
+        "commit": null,
+        "tree": null,
+        "checkout": null,
+        "receipt": null,
+        "provider_origin": null,
+        "client_origin": null,
+        "schema_digest": null,
+        "lock_values": null
+      }
+    },
+    {
+      "name": "full-d141-pristine",
+      "kind": "pristine",
+      "runtime": {
+        "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+        "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+      },
+      "agent": {
+        "status": "pending",
+        "commit": null,
+        "tree": null,
+        "checkout": null,
+        "receipt": null,
+        "provider_origin": null,
+        "client_origin": null,
+        "schema_digest": null,
+        "lock_values": null
+      }
+    }
+  ],
+  "pytest": {
+    "interpreter": "/home/user/work/venv-runtime/bin/python",
+    "arguments": ["-m", "pytest", "-q", "-n3"],
+    "junit_name": "runtime-full.xml"
+  },
+  "required": [
+    "runtime checkout with the frozen commit and tree",
+    "final Agent cut checkout receipt with commit, tree, clean status, and real provider/client origins",
+    "pristine Agent request-checkout receipt for the frozen upstream Agent tip",
+    "runtime protocol/client schema and lock values from the actual bound checkouts"
+  ]
+}
