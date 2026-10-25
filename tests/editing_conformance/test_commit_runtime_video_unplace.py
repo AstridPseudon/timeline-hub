@@ -37,6 +37,7 @@ def editing(request, tmp_path, monkeypatch):
     from astrid.sdk.timeline.commands import execute
     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
     from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+    from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
 
     kind = request.param
 
@@ -98,29 +99,36 @@ def editing(request, tmp_path, monkeypatch):
             bundle = execute(bundle, [command]).bundle
 
         append(capture_track_create(bundle, 'parent', input_parent['config']['tracks'][0]))
-        for index, occurrence in enumerate(input_occurrences):
-            shot_id = occurrence['shot_id'] if index == 0 else 'chapter-shot-b'
-            append(capture_occurrence_create(
-                bundle, occurrence['occurrence_id'], shot_id, name='Chapter One',
-                track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
-                duration=occurrence['duration_ms'] / 1000,
+        occurrence = input_occurrences[0]
+        append(capture_occurrence_create(
+            bundle, occurrence['occurrence_id'], occurrence['shot_id'], name='Chapter One',
+            track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
+            duration=occurrence['duration_ms'] / 1000,
+        ))
+        for track in input_internal['tracks']:
+            append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
+        for row in input_internal['clips']:
+            old_row = copy.deepcopy(row)
+            old_row['asset'] = old['asset']
+            append(capture_occurrence_add_media(
+                bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
+                verified_media=[old_verified],
             ))
-            for track in input_internal['tracks']:
-                append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
-            for row in input_internal['clips'] if index == 0 else input_internal['clips'][:1]:
-                old_row = copy.deepcopy(row)
-                old_row['asset'] = old['asset']
-                append(capture_occurrence_add_media(
-                    bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
-                    verified_media=[old_verified],
-                ))
+        source = commit(state, body(state, commands), 'setup-source')
+        bundle = bundle_from_document(source['data']['canonical_document'])
+        shared = capture_occurrence_place_shared(
+            bundle, OWNER, input_occurrences[1]['occurrence_id'],
+            on=input_occurrences[1]['placement']['start_ms'] / 1000,
+        )
+        shared_setup = commit(state, body(state, [shared]), 'setup-shared')
+        bundle = bundle_from_document(shared_setup['data']['canonical_document'])
         placed = {'id': 'placed', 'clipType': kind, 'track': 'picture', 'asset': state.new['asset'],
                   'at': 1, 'hold': 4, 'opaque': {'clear': None},
                   **({'from': 0, 'to': 4, 'speed': 1} if kind == 'video' else {})}
-        append(capture_occurrence_add_media(
+        placed_command = capture_occurrence_add_media(
             bundle, OWNER, placed, state.new, verified_media=[state.verified],
-        ))
-        setup = commit(state, body(state, commands), 'setup')
+        )
+        setup = commit(state, body(state, [placed_command]), 'setup')
         state.baseline = setup['data']['canonical_document']
         real_selected = RequestCommitPort.selected_media
 
