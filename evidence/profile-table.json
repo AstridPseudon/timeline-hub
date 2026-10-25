@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "status": "PARTIAL_EXACTMISSING",
+  "exact_cprofile_top40": [],
+  "missing_fields": ["file", "line", "function", "ncalls", "tottime", "cumtime"],
+  "missing_reason": "actual run produced no private pstats artifact",
+  "sample_projection": {
+    "not_cprofile": true,
+    "sample_total": 737,
+    "lost_samples": 17,
+    "sampling_interval_ms": 20.0,
+    "rows": [
+      {"file": "<runtime>/server.py", "line": 1229, "function": "_dispatch", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<runtime>/server.py", "line": 547, "function": "_route", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<runtime>/server.py", "line": 332, "function": "_timeline_commit", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<runtime>/server.py", "line": 1264, "function": "do_POST", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<runtime>/server.py", "line": 99, "function": "handle_one_request", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<runtime>/service.py", "line": 438, "function": "wrapped", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<stdlib>/server.py", "line": 451, "function": "handle", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<stdlib>/server.py", "line": 439, "function": "handle_one_request", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<stdlib>/socketserver.py", "line": 766, "function": "__init__", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402},
+      {"file": "<stdlib>/socketserver.py", "line": 362, "function": "finish_request", "sample_count": 737, "sample_total": 737, "sample_share": 1.0, "dispatch_wall_share": 0.7536230402}
+    ]
+  },
+  "privacy": {"safe_fields_only": true, "raw_paths_identifiers_payload_args_locals_auth_headers_urls_stacks": false}
+}

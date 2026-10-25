@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "status": "PARTIAL_EXACTMISSING",
+  "selection": {
+    "request_ordinal": 1,
+    "selection": "first traced mounted App element doc.patch/list.insert request",
+    "binding": "lower-UTF8 Idempotency-Key SHA-256, private helper namespace/PID birth, and UTC verified; private namespace/PID birth redacted"
+  },
+  "cprofile": {"status": "EXACTMISSING", "top40": [], "ncalls": null, "tottime_ms": null, "cumtime_ms": null},
+  "sampling": {
+    "sample_total": 737,
+    "lost_samples": 17,
+    "sampling_interval_ms": 20.0,
+    "sampler_errors": [],
+    "retained_events": 57,
+    "events_seen": 57,
+    "capacity_dropped_events": 0,
+    "truncated": false,
+    "observer_cpu_ms": 501.308,
+    "observer_cpu_scope": "capture-wide",
+    "observer_cpu_attribution": "not attributed to this request"
+  },
+  "runtime_durations_ms": {
+    "dispatch_queue": 1.129,
+    "handler": 19557.721,
+    "provider": 12290.285,
+    "response_write": 3.428,
+    "dispatch_wall_denominator": 19558.85,
+    "caller_receipt": null,
+    "network_arrival": null,
+    "request_body_receive": null,
+    "execution_lock_wait": null
+  },
+  "math": {
+    "inclusive_ancestor_rows_must_not_be_summed": true,
+    "sample_share_formula": "sample_count / sample_total",
+    "wall_share_formula": "sample_count * sampling_interval_ms / dispatch_wall_denominator",
+    "absolute_profile_time_is_not_original_gate_latency": true
+  },
+  "privacy": {"safe_fields_only": true}
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "source_status": "IMMUTABLE_TUPLE_VERIFIED",
+  "app": {
+    "commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "tree": "8e10af0976b012205f27a18a432c750a27de0725",
+    "clean": true,
+    "source_guard_sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef"
+  },
+  "agent": {
+    "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "clean": true
+  },
+  "runtime": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true
+  },
+  "composition": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "clean": true
+  },
+  "helper": {
+    "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "mode": "0600",
+    "directory_mode": "0700",
+    "external_only": true,
+    "activation": "explicit helper path and exact accepted hash"
+  },
+  "plan": {
+    "sha256": "793495d5f586a40414e17598616f86dc6f3bbd56bc81de634ae6242ab62a4013",
+    "status": "verified"
+  },
+  "runtime_normal_home_receipt": {
+    "status": "MERGED",
+    "receipt_commit": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "role": "normal-home dispatch gate only"
+  },
+  "raw_custody": {
+    "status": "VERIFIED_PRIVATE_KEEP",
+    "directory_mode": "0700",
+    "raw_files_mode": "0600",
+    "payload_args_locals_auth_headers_urls_raw_stacks_published": false,
+    "private_namespace_pid_birth": "verified in private capture; redacted from publication"
+  },
+  "source_changes": false,
+  "tuple_changes": false
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "verdict": "NO_GO_ORIGINAL_ELEMENT",
+  "actual_pass_scopes": [
+    "source_preflight",
+    "mounted_readiness"
+  ],
+  "actual_fail_scopes": [
+    "original_mounted_element_body"
+  ],
+  "source_preflight": "PASS",
+  "readiness": "PASS",
+  "original_element": "FAIL_ORIGINAL_ELEMENT_PREDICATE",
+  "one_body_terminal": true,
+  "body_submissions": 1,
+  "retries": 0,
+  "resubmissions": 0,
+  "first_failed_predicate": {
+    "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "line": 1052,
+    "assertion": "dialog.getByRole('status').toContainText('applied')",
+    "timeout_ms": 5000
+  },
+  "normal_counts": {
+    "passed": 1,
+    "failed": 1,
+    "skipped": 0,
+    "exit": 1
+  },
+  "runtime_boundary": {
+    "lifecycle": "completed",
+    "http_status": 200,
+    "handler_completion": "PROVED_AT_RUNTIME_BOUNDARY",
+    "provider_outcome": "UNKNOWN",
+    "app_response": "UNKNOWN",
+    "caller_receipt": "UNKNOWN",
+    "browser_wall_outcome": "UNKNOWN"
+  },
+  "profile": {
+    "cprofile": "EXACTMISSING",
+    "sampled_projection": "PARTIAL_ONLY",
+    "call_edges": "EXACTMISSING"
+  },
+  "go_credit": false,
+  "source_changed": false,
+  "tuple_changed": false,
+  "privacy": {
+    "raw_capture": "private custody only",
+    "published_payload_args_locals_auth_headers_urls_raw_stacks": false,
+    "private_identifiers_redacted": true
+  }
+}

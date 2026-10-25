@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "source_tuple": {
+    "app": {"commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881", "tree": "8e10af0976b012205f27a18a432c750a27de0725"},
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"commit": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "source_receipts": {
+    "preflight_manifest_sha256": "43e5b105998165aa2bb66eaeaa7d061c91c52048cb51766703a66ab667bce4d0",
+    "normal_manifest_sha256": "b0930d62db04b679e6d65be2073458c6fdbbdf44384f16f08a6adc4b0806df1f",
+    "readiness_junit_sha256": "61b399b8b3ca2a4365b5df69c2424cdd97edf80a4832dfac3768a9ae7863d183",
+    "original_junit_sha256": "a7551f2f5fc929465ffaa776f7fba9e3fe10270199f1a506505086417200812e",
+    "element_diagnostic_sha256": "5af30bde8f87ec928addb0d484fdf10794e4589fe25b090c929e5633acfe3382",
+    "preflight_service_source": {"commit": "c4ec089c37685c3aac54b85ab6e9b339362a3677", "tree": "8e10af0976b012205f27a18a432c750a27de0725", "clean": true},
+    "normal_service_source": {"commit": "75a2fcd3722bd223360ca4f13c09974b76130659", "tree": "8e10af0976b012205f27a18a432c750a27de0725", "clean": true}
+  },
+  "registered_provider": {
+    "provider": "astrid-v1",
+    "protocol": "workspace.v1",
+    "compiler": "authoring-bundle-1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "module_origins": {
+    "astrid": {"origin": "agent", "version": "0.1.0"},
+    "astrid_runtime": {"origin": "runtime", "version": "0.1.0"},
+    "astrid_runtime_client": {"origin": "agent", "version": null},
+    "runtime_protocol": {"origin": "runtime", "version": null}
+  },
+  "helper_and_guard": {
+    "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "app_guard_sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef"
+  },
+  "test_source_hashes_unchanged": {
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+  },
+  "source_preflight": "PASS",
+  "readiness": "PASS",
+  "original_element": "FAIL",
+  "result_receipts": {
+    "preflight_exit": 0,
+    "readiness_exit": 0,
+    "original_exit": 1,
+    "original_counts": {"passed": 1, "failed": 1, "skipped": 0}
+  }
+}

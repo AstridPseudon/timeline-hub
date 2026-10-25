@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "status": "EXACTMISSING",
+  "reason": "No cProfile call graph or pstats artifact exists; caller-to-callee edges are not reconstructed from samples.",
+  "edges": [],
+  "sampled_edges": [],
+  "privacy": {"safe_fields_only": true}
+}

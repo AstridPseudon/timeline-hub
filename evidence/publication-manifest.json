@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "publication_status": "SAFE_REVIEW_COMPLETE",
+  "artifacts": [
+    "verdict.json",
+    "findings.md",
+    "source-custody.json",
+    "source-manifest.json",
+    "profile-table.md",
+    "profile-table.json",
+    "profile-edges.json",
+    "profile-totals.json",
+    "publication-manifest.json"
+  ],
+  "safe_fields_only": true,
+  "private_paths_identifiers_payload_args_locals_auth_headers_urls_raw_stacks_published": false,
+  "exact_profile_status": "EXACTMISSING",
+  "actual_verdict": "NO_GO_ORIGINAL_ELEMENT",
+  "verified_inputs": {
+    "source_preflight": "PASS",
+    "readiness": "PASS",
+    "original_element": "FAIL",
+    "one_body_terminal": true,
+    "raw_keep_custody": true
+  },
+  "no_source_changes": true,
+  "no_test_rerun": true
+}
