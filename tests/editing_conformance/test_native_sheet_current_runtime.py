@@ -283,8 +283,8 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     if prepare is not None:
         prepare(parent, shots, internals)
 
-    # First create the source occurrence with the semantic birth command.  The
-    # following authoring publication only changes authored fields; Runtime
+    # First create the source occurrence with the semantic birth command.  Its
+    # one-occurrence authoring publication only changes authored fields; Runtime
     # keeps the occurrence/child identities and the immutable source authority.
     source_timeline = f'native-sheet-source-{runtime.project}'
     runtime.service().create_timeline(project, source_timeline, idempotency_key='native-sheet-source-bootstrap')
@@ -374,22 +374,21 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     )
 
     current, _head = _public_document(runtime.service(), project, 'film')
-    target_parent = copy.deepcopy(parent['payload'])
-    current_rows = {row['occurrence_id']: row for row in current['parent_revision']['payload']['occurrences']}
-    target_parent['occurrences'] = []
-    for row in parent['payload']['occurrences']:
-        target = copy.deepcopy(row)
-        target.update({key: current_rows[row['occurrence_id']][key]
-                      for key in ('shot_id', 'shot_revision_id') if key in current_rows[row['occurrence_id']]})
-        target_parent['occurrences'].append(target)
-    current_shots = copy.deepcopy(current['shot_revisions'])
-    current_internals = copy.deepcopy(current['internal_timeline_revisions'])
-    publication = _publish_current_candidate(
-        runtime, 'film', target_parent, current_shots, current_internals,
-        key=(f'{identity_scope}-seed' if identity_scope is not None
-             else 'native-sheet-connected-occurrence-authoring'),
+    # Parent authored fields must be committed after the semantic placements,
+    # without reopening the shared closure through authoring compilation.  The
+    # derived occurrence rows stay at their authenticated semantic identities.
+    before_bundle = bundle_from_document(current)
+    authored_bundle = copy.deepcopy(before_bundle)
+    authored_bundle['parent'] = copy.deepcopy(parent['payload'])
+    authored_bundle['parent'].pop('occurrences')
+    authored_commands = emit_document_commands(before_bundle, authored_bundle)
+    publication = destination.commit_many(
+        authored_commands, idempotency_key=(
+            f'{identity_scope}-seed' if identity_scope is not None
+            else 'native-sheet-connected-occurrence-authoring'),
+        via='python', label='NativeSheet shared occurrence authored fields', merge='atomic',
     )
-    final_document = publication['canonical_document']
+    final_document = copy.deepcopy(publication['data']['canonical_document'])
     document = {
         'project_id': project, 'timeline_id': 'film', 'expected_head': None,
         'parent_revision_id': final_document['parent_revision']['revision_id'],
