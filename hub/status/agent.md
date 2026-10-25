@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T14:34:25Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 4m -->
-# agent board, 2026-10-25T14:28Z
+<!-- agent | 2026-10-25T14:38:18Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 1m -->
+# agent board, 2026-10-25T14:35Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -41,7 +41,7 @@
 | D118a numeric3 | Preserve numeric parameter behavior | App Luna / Main proof | Farm batch core | gated:Farm-core | App1204; actual1357; independent1405 | Independent result PASS | All three originals PASS in exact16bb/5e9ad ten-case proof. No full-core count deduction until Farm checkpoint. | 61fefc /16bb |
 | D118a text binding | Preserve genuine rebind and Runtime authority | App Luna / core Luna | Farm batch core before adoption | merged | Author1236; independent1239 and1250 | PASS cumulative source | Genuine rebind1,parent,units56,authority4 and privacy controls PASS at donor. Exact clean import HOME; no core credit. | 225fccb77e |
 | D100 candidate | Preserve sequential shared-item provenance | Sol / protected Luna | Exact current source applicability | review | Author1100; protected1104 | 1104 PASS6 fixture only | Six corrected formerly duplicate-seed controls PASS4.00s; prior20 conserved, TEN unchanged. Product held. | 3aaf held |
-| D107 current equivalent | Prepare approved current word journeys | Luna / protected Luna | Exact seed now HOME | doing | agt-D124-current-word-root-1428 | Prior0715 SOURCE PASS | Source-only current seed adaptation of exact ten approved replacements. Original ten and remaining17 unchanged; no retirement or behavior closure. | 2e3331 donor |
+| D107 current equivalent | Prepare approved current word journeys | Luna / protected Luna | Independent source review | review | Author1428; reviewer1437 | Author source-only PASS | Exacta0eacc imports reviewed donor with seven-line current fixture adapter;131 assertions and5raises conserved. No behavior or retirement credit. | a0eacc held |
 | D117 installed render | Qualify genuine installed render | Farm / Runtime | Farm stage inputs | blocked:farm | Farm D77; Runtime1253 handoff | Source route qualified | Exact authorized git source and unchanged integrity route now Farm-owned. Historical denial retained; genuine render NOTRUN. | Applied523893 |
 | D59 final cut | Qualify final gates and full delivery | Runtime coordinator | Core and REG zero, D69, render | gated:D59 | Existing final coordinator | Pending or no diff | Final P1–P5, full core, reverse audit and genuine installed render owed. No ZIP claim. | Cut pending |
 
@@ -51,7 +51,8 @@
 | D118a track batch1 | Preserve parent track batch inverse | App Luna | Genuine current word seed | gated:word-source | app-D118a-track-batch1-1215 | Pending or no diff | No diff. Exact own1 setup ERROR at shared m1.film missing legacy word anchor. Inputs and grouping unchanged. | Source unchanged |
 
 | D124 shared product roots | Join producer inverse and word seed repairs | HARD Sol / Luna | Farm core before release | merged | agt-D124-union-custody-sol-1327 | Independent1339 SOURCE PASS | Strict53 PASS; Main exact5e9ad native5 PASS; original10 sixPASS fourFAIL. Shared source continuation1417 active; Farm core owed. | 61fefc6983 /16bb |
-| D124 remaining shared four | Repair grouped and scalar materialization | HARD Sol / Luna | Independent actual ten6 PASS4 FAIL | doing | agt-D124-shared-four-return-sol-1417 | Wholepath1405 complete | Sole source continuation; exact Runtime5e9ad received. Four originals only after meaningful source change; six passing originals conserved. | Source pending |
+| D124 remaining shared four | Repair grouped and scalar materialization | HARD Sol / Luna | Runtime source and grouped inverse | blocked:runtime | Author1417; reviewer1433; Runtime peer1433 | New minimum1 PASS1 FAIL | No Agent product delta. Runtime step-source versus command-input mismatch isolated; independent review1433 active. Other roots remain separate. | 8d2d regression held |
+| D124 grouped inverse alias | Repair grouped inverse boundary custody | HARD Sol | Genuine True original failure | doing | agt-D124-inverse-alias-sol-1435 | Pending source result | Sole Agent product author; inverse/step/recorder scope only. Runtime step-edge root disjoint; exact original grouping and guards unchanged. | Source pending |
 | D124 Farm core | Measure reviewed merged batch | Farm service | Lead keyed inputs | blocked:farm | Farm lead and controller | Command1336 PASS | Current captured0b586/42aad/d8a1/635f stays fixed. Union61fefc is next batch after own-node proof. | 0b586 current |
 | D124 upstream host14 | Recheck pristine b742 behavior | Runtime Luna / independent | Actual26621 source and XML | merged | Runtime1300; independent1307 | PASS14 in2.29s | Actual b742/d4f module origins and all14 XML verified. Rendered receipt path mismatch retained. Current REG14 remains open. | Pristine b742 |
 
@@ -68,18 +69,18 @@ core open: 425 on immutable30693. Confirmed regressions:14 until next full core;
 Current full checkpoint:8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips on120d/1daca/96d475/635f. Exact450 bad IDs and categories retained in classification1055 and terminal-review1104; metadata1111 resolves ambient-tree discrepancy.
 New bounded proof: exact16bb/5e9ad native5 PASS; originalten6 PASS4 FAIL independently1405. Both word recipes, occurrenceFalse and numeric3 PASS. OccurrenceTrue and scalar/compound/separate stay live failures. No unchanged repeat or full-count deduction.
 
-Blockers: Agent core425 and REG14 — Farm full core owed. Remaining shared four have sole source1417; Main wholepath1405 complete with paired records missing.
-Blockers: Farm child — final store verification refused unowned distribution metadata. Existing Runtime metadata and Farm retained-inventory owners continue; no retry or substitution.
+Blockers: Agent core425 and REG14 — Farm full core owed. Step-edge source1433 is Runtime-owned pending independent review; sole Agent inverse1435 active. Main1405 paired records remain missing.
+Blockers: Farm child — refused metadata remains stopped. Farm inventory is EXACTMISSING after cleanup; Runtime1423 final reason-path delta, review and kit install own next action. No further inventory request.
 Blockers: Agent D69 — installed render90 and final upstream-cut audit owed. XML107 source is home; genuine platform proof remains separate.
 Blockers: Farm D117a — normal installer stage and genuine installed render pending after core. Prior denied route stays stopped.
 Blockers: Final cut — D123 rehearsal5bd01 SOURCE PASS on b742. Final tip freezes once at D59; final gates, core, D69, wheel and render owed.
 
-Next ready: final Farm packet291c independently PASS1426 and published1429. Shared semantic1417 owns remaining four; current-word-root1428 source author owns disjoint existing D107 replacement setup only. No original retry or new small-file tail. Current a4e016 is NEXT Farm batch, captured inputs immutable.
-live 2 / cap3 under D89b; ready-undispatched0. No local heavy. Sol1417 justified by core inverse/materialization semantics; Luna owns current-word source and independent command review.
+Next ready: Runtime receives exact step-source mismatch and genuine RED regression; Agent independent1433 challenges source claim. Sol1435 owns disjoint grouped inverse alias after1417 ended. Word1428 finished source; independent1437 queued. Existing captured Farm tuples unchanged; next packet291c qualified and published1429.
+live 2 plus queued1 / cap3 under D89b; ready-undispatched0. No local heavy. Sol1435 justified by core R2 guarded inverse custody; both other current roles Luna.
 
-Disk: 4658139136 bytes at latest check; normal sweep3 and compact finished zero removals/packing. Finished clean nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
+Disk: 4880592896 bytes at latest check; normal sweep3 and compact finished zero removals/packing. Finished clean nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
 
 D120/D124: own failing nodes per fix; one Farm unfiltered core per merged batch at60–90min or3+ fixes before adoption. Up to3 source-only starts at>=4.6GB/noheavy; stop4.0GB. Ordinary light proof>=5.0GB. D89c heavy admission at controller dispatch, with4.0GB stop throughout.
 Later: D23/D14 deferred anchors unchanged. D107 current equivalents and broad word cases remain separately held. Complete historical physical records EXACTMISSING. E2/D79 paused until ZIP; D13 installed environment gap remains explicit.
 
-Inbox consumed through1665540 bytes. Manager made no product, test, generated, pin or Git changes. Peer1405/1408/1409/1410/1414 and owner14:20 capacity directive consumed; Runtime and Farm notified of current proof/source and failed next-command review. Source1412 findings exported byte-exact from authored Git blobs; Final291c packet independently PASS_SOURCE and published1429; actual inputs and owner disposition pending. Host fix deadline met by normala4e016 before14:00Z; REG closes only on next core.
+Inbox consumed through1668140 bytes. Manager made no product, test, generated, pin or Git changes. Peer1405/1408/1409/1410/1414 and owner14:20 capacity directive consumed; Runtime and Farm notified of current proof/source and failed next-command review. Source1412 findings exported byte-exact from authored Git blobs; Final291c packet independently PASS_SOURCE and published1429; actual inputs and owner disposition pending. Host fix deadline met by normala4e016 before14:00Z; REG closes only on next core.
