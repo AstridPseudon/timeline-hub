@@ -123,7 +123,7 @@ export class SharedAcpSessions {
     private readonly beforeReplay?: (client: SharedAcpSessionClient, sessionId: string) => void,
   ) {}
 
-  async request(client: SharedAcpSessionClient, method: string, params?: unknown): Promise<unknown> {
+  async request(client: SharedAcpSessionClient, method: string, params?: unknown, beforePrompt?: () => Promise<void>): Promise<unknown> {
     const id = sessionId(params);
     const session = id ? this.sessions.get(id) : undefined;
     if (method === 'session/set_model' || method === 'session/set_config_option') {
@@ -133,7 +133,7 @@ export class SharedAcpSessions {
     // must remain available during a turn. All native non-prompt RPCs share the
     // physical connection's queue, including writes forwarded by another tab.
     if (method === 'session/prompt' || ((method === 'session/load' || method === 'session/resume') && session)) {
-      return this.dispatch(client, method, params);
+      return this.dispatch(client, method, params, beforePrompt);
     }
     return this.enqueue(session?.host ?? client.host, () => this.dispatch(client, method, params));
   }
@@ -165,7 +165,7 @@ export class SharedAcpSessions {
     return result;
   }
 
-  private async dispatch(client: SharedAcpSessionClient, method: string, params?: unknown): Promise<unknown> {
+  private async dispatch(client: SharedAcpSessionClient, method: string, params?: unknown, beforePrompt?: () => Promise<void>): Promise<unknown> {
     if (method === 'session/new') {
       const result = await client.host.request(method, params);
       const id = sessionId(result);
@@ -180,7 +180,7 @@ export class SharedAcpSessions {
     const id = sessionId(params);
     if (!id) return client.host.request(method, params);
     const session = this.requireSession(client, id);
-    if (method === 'session/prompt') return this.prompt(client, session, params);
+    if (method === 'session/prompt') return this.prompt(client, session, params, beforePrompt);
     if (method === 'session/close' || method === 'session/fork' || method === 'session/set_config_option' || method === 'session/set_model') {
       this.requireWriter(session, client);
       if (method === 'session/set_config_option' || method === 'session/set_model') this.requireNoPrompt(session);
@@ -301,7 +301,7 @@ export class SharedAcpSessions {
     return withControl(result, session, client);
   }
 
-  private async prompt(client: SharedAcpSessionClient, session: Session, params: unknown): Promise<unknown> {
+  private async prompt(client: SharedAcpSessionClient, session: Session, params: unknown, beforePrompt?: () => Promise<void>): Promise<unknown> {
     const requestId = editorRequestId(params) ?? `astrid-${randomUUID()}`;
     const forwarded = stripRequestId(params);
     const key = requestId ? `${session.id}\0${requestId}` : null;
@@ -317,12 +317,18 @@ export class SharedAcpSessions {
     this.requireIdle(session);
     session.activeRequestId = requestId;
     this.broadcastControl(session);
-    if (requestId) {
-      const live: AcpRpcNotification = { jsonrpc: '2.0', method: 'session/update', params: { sessionId: session.id, update: { sessionUpdate: 'user_message_chunk', messageId: `astrid-live:${requestId}`, content: { type: 'text', text: payloadText(params) }, live: true, requestId } } };
-      for (const subscriber of session.subscribers) if (subscriber !== client) this.emit(subscriber, live);
-      session.journal.push(live);
-    }
-    const operation = session.host.request('session/prompt', forwarded).finally(() => {
+    const operation = (async () => {
+      // Persist the conservative dispatch boundary only after attachment and
+      // writer checks. Reserve the turn while awaiting it, so concurrent sends
+      // dedupe and reconnects retain this host even before native forwarding.
+      if (beforePrompt) await beforePrompt();
+      if (requestId) {
+        const live: AcpRpcNotification = { jsonrpc: '2.0', method: 'session/update', params: { sessionId: session.id, update: { sessionUpdate: 'user_message_chunk', messageId: `astrid-live:${requestId}`, content: { type: 'text', text: payloadText(params) }, live: true, requestId } } };
+        for (const subscriber of session.subscribers) if (subscriber !== client) this.emit(subscriber, live);
+        session.journal.push(live);
+      }
+      return session.host.request('session/prompt', forwarded);
+    })().finally(() => {
       session.activeRequestId = null;
       this.broadcastControl(session);
     });

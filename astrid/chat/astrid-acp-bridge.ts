@@ -889,8 +889,13 @@ export class AstridAcpBridge {
         if (typeof body.session_id !== 'string' || !Array.isArray(body.prompt)) throw new ChatError(400, 'invalid_body', 'session_id and prompt are required');
         await registry.assertOwned(projectId, body.session_id);
         if (body.request_id !== undefined && (typeof body.request_id !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(body.request_id))) throw new ChatError(400, 'invalid_body', 'request_id must be a submission identifier');
-        await registry.markSessionStarted(projectId, body.session_id);
-        const result = await this.sharedSessions.request(connection, 'session/prompt', { sessionId: body.session_id, prompt: body.prompt, ...(body.request_id ? { _astridRequestId: body.request_id } : {}) });
+        const sessionId = body.session_id;
+        const result = await this.sharedSessions.request(connection, 'session/prompt', { sessionId, prompt: body.prompt, ...(body.request_id ? { _astridRequestId: body.request_id } : {}) }, () => {
+          // A missing attachment has not dispatched anything and remains safe
+          // to recover. Once native forwarding is possible, preserve the chat
+          // even if the adapter fails before returning the end-of-turn reply.
+          return registry.markSessionStarted(projectId, sessionId);
+        });
         jsonResponse(response, 200, { result });
       }
       return;

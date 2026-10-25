@@ -35,6 +35,49 @@ function failures() {
   };
 }
 
+test('prompt dispatch reserves and deduplicates the turn while persisting its start marker', async () => {
+  const marker = deferred<void>();
+  const turn = deferred<unknown>();
+  const dispatched = deferred<void>();
+  const native = fakeHost(method => {
+    if (method === 'session/new') return { sessionId: 'claude-code:reserved' };
+    dispatched.resolve();
+    return turn.promise;
+  });
+  const shared = new SharedAcpSessions(() => {});
+  const writer = client('writer', 'claude-code', native.host);
+  await shared.request(writer, 'session/new');
+  const params = { sessionId: 'claude-code:reserved', _astridRequestId: 'first', prompt: [] };
+  let marks = 0;
+  const beforePrompt = async () => { marks++; await marker.promise; };
+  const first = shared.request(writer, 'session/prompt', params, beforePrompt);
+  const retry = shared.request(writer, 'session/prompt', params, beforePrompt);
+  assert.equal(marks, 1);
+  assert.equal(native.requests.filter(item => item.method === 'session/prompt').length, 0);
+  await failures()(shared.request(writer, 'session/prompt', { ...params, _astridRequestId: 'other' }), 'session_busy');
+  shared.detach(writer);
+  assert.equal(shared.retainsHost(writer), true);
+  marker.resolve();
+  await dispatched.promise;
+  assert.equal(native.requests.filter(item => item.method === 'session/prompt').length, 1);
+  turn.resolve({ stopReason: 'end_turn' });
+  assert.deepEqual(await Promise.all([first, retry]), [{ stopReason: 'end_turn' }, { stopReason: 'end_turn' }]);
+  shared.close();
+});
+
+test('a failed start marker prevents native forwarding and releases the prompt reservation', async () => {
+  const native = fakeHost(method => method === 'session/new' ? { sessionId: 'claude-code:marker-failed' } : {});
+  const shared = new SharedAcpSessions(() => {});
+  const writer = client('writer', 'claude-code', native.host);
+  await shared.request(writer, 'session/new');
+  const params = { sessionId: 'claude-code:marker-failed', _astridRequestId: 'first', prompt: [] };
+  await assert.rejects(shared.request(writer, 'session/prompt', params, async () => { throw new Error('Registry unavailable'); }), /Registry unavailable/);
+  assert.equal(native.requests.filter(item => item.method === 'session/prompt').length, 0);
+  await shared.request(writer, 'session/prompt', params, async () => {});
+  assert.equal(native.requests.filter(item => item.method === 'session/prompt').length, 1);
+  shared.close();
+});
+
 test('concurrent session loads share one native load, keep its full result, and replay journal once per client', async () => {
   const load = deferred<unknown>();
   const firstHost = fakeHost(method => method === 'session/load' ? load.promise : {});

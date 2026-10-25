@@ -208,6 +208,37 @@ test('targeted reload reuses an empty chat when its ACP session still resumes', 
   }
 });
 
+for (const startedDuring of ['verification', 'creation'] as const) {
+  test(`recovery preserves a chat that starts during ${startedDuring}`, async () => {
+    const oldId = 'claude-code:empty';
+    const { registry, cleanup } = registryFor({
+      project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', version: 1, created_at: '', updated_at: '',
+      metadata: { astrid_agent_chat_v1: { test: {
+        revision: 1, selected_session_id: oldId, main_session_id: oldId,
+        sessions: [{ id: oldId, pending_first_message: true }],
+        draft: { text: '', revision: 1, queued_messages: [{ id: 'q', text: 'Keep me', session_id: oldId }] },
+      } } },
+    });
+    try {
+      let creates = 0;
+      await assert.rejects(registry.create('p', 'ensure', 'recover', async () => {
+        creates++;
+        if (startedDuring === 'creation') await registry.markSessionStarted('p', oldId);
+        return { sessionId: 'claude-code:replacement' };
+      }, async () => {
+        if (startedDuring === 'verification') await registry.markSessionStarted('p', oldId);
+        return false;
+      }, oldId), /chat started/);
+      assert.equal(creates, startedDuring === 'creation' ? 1 : 0);
+      const state = await registry.get('p');
+      assert.equal(state.selected_session_id, oldId);
+      assert.equal(state.main_session_id, oldId);
+      assert.deepEqual(state.sessions, [{ id: oldId, pending_first_message: false, missing: true }]);
+      assert.deepEqual(state.draft.queued_messages, [{ id: 'q', text: 'Keep me', session_id: oldId }]);
+    } finally { cleanup(); }
+  });
+}
+
 test('empty marker and model metadata writes preserve the chat selection revision', async () => {
   const project: Project = {
     project_id: 'p', realm_id: 'r', slug: 'p', name: 'p', version: 1,
