@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+// @vitest-environment-options {"url":"https://astrid.haus"}
 /**
  * AuthContext on the hosted build: the Runtime boot gate is the session, not the bridge probe.
  */
