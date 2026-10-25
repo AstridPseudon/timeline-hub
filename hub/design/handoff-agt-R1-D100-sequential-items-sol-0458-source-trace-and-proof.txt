@@ -1,0 +1,114 @@
+R1 / G3 D100, F-D86 — SOURCE ONLY, HELD FOR REVIEW AND MAIN PROOF
+
+Base Agent: 6cd767b6afd157b3f12e14dde5e9ef50dcb1f70a.
+Runtime read-only caller trace: 0c62dfa63db9ff608ac9338388431e31a814e080.
+Candidate product/test SHA256: final-static-audit.json.
+Original D91 SHA256: 9a44e345bef8de79e66d8ff23626863434b8038ba57b2e7cd6ed3287f7d35097;
+byte-identical to base, 29 assertions. No original executed.
+
+C0 decision and bounded correction
+C0 sections 1-3 require sequential operands, physical image binding, generic
+membership inside an existing payload root, and refusal of unknown/ambiguous
+or unrelated bindings. D100(3)/D90 allocate the disagreeing Agent canonical side.
+A shared placement is a newly born occurrence of an existing verified shot image,
+not a new shot image, item remap or allocation of foreign authority. Its absence
+from the original parent's occurrence array must not invalidate that image.
+The exact physical source is authenticated against immutable shot/internal pins,
+digests, IDs and the empty physical item correspondence. A pre-existing owner
+must additionally retain its exact original image lineage. Missing/duplicate
+owners and missing/changed source pins still refuse. Original placement-local
+alias maps remain exact and are not extended or retargeted. The physical branch
+uses literal current item IDs; guarded aggregate membership changes need no
+placement ID translation. Duplicate/missing item IDs and unknown item-token
+lookups still refuse. The source map and runtime input are never mutated here.
+The existing native fork branch and all other State methods are AST-identical.
+Source-free shot births and foreign-source installation have no new authority.
+
+Whole production call trace, read statically
+1. RuntimeService.commit_timeline (service.py:2448) detaches/validates the full
+   envelope and canonical scope/path; _execute_timeline_commit binds publisher,
+   key and request hash, authenticates scope, then invokes the registered provider.
+2. load_timeline_commit_provider('astrid') imports the fixed zero-argument Agent
+   factory, validates ABI/digest; registration is startup-only. The coordinator
+   authenticates invocation, looks up exact retries, binds RequestCommitPort,
+   calls provider.commit and verifies the returned outcome.
+3. RuntimeCommitService.commit (commit.py:1160) loads the exact base closure,
+   verifies its publication pair, hydrates verified inputs/history and calls
+   commands.execute. Current-head replay, CAS retries, reservation checks,
+   no-write rejection and historical exact-retry handling are unchanged.
+4. execute (commands.py:201) deep-copies the input bundle and executes registered
+   operations in order. Each Recording.command_input snapshots that command's
+   actual sequential input. No synthetic/test operation is registered by the
+   new controls.
+5. occurrence.place-shared -> occurrence_place_shared (:295) reads/binds the
+   exact source owner. reopen_shared_source (:230) requires unchanged published
+   content and installs the exact physical compiler input and empty physical map.
+   Recording.create_entity validates/reserves a genuinely new occurrence and
+   records its creation. It does not append an owner into immutable source data.
+6. Following doc.patch -> Closure resolves the compiled reachable physical
+   revision; Closure.native_sites (:183) includes every current owner, including
+   the newly created occurrence. patch (:478) checks submitted guards/media/
+   allocations before recording reads and installing each native site.
+7. Recording.read/assign -> State.get -> shot_item_map (:316). Old code required
+   the new owner in the immutable original parent. New physical branch verifies
+   its exact source image and existing-owner lineage; ordinary aliases retain
+   the old exact correspondence. project_shot_items (:395) validates physical
+   membership without changing IDs; alias projection remains fixed.
+8. Closure.install -> Recording.assign -> State.set preserves all sibling sites;
+   remember/project in _doc_patch_materialize retain physical shared projection.
+   CommitPatch and command finish retain sequential bindings, effects and steps.
+9. Provider checks reservations and final structure/timing/media, compiles the
+   canonical document, captures original/landing execution and submits the same
+   prepared object to port.preview/accept. RequestCommitPort validates execution;
+   the existing store owns authenticated history, allocations, CAS and receipt.
+   No Runtime validator or acceptance code changes.
+
+Controls added (8 functions, 22 parameter-expanded source cases; NOT collected)
+- Native registered birth from single/shared input: fixed expected map item-1 ->
+  item-1; exact source immutable images and original mappings retained.
+- Native birth then doc.patch consumption in one batch: empty and populated
+  published item lists replaced using a fixed literal physical item ID.
+- Already-shared physical input: third owner plus same-batch item metadata edit,
+  all three owners retained and one resulting physical image expected.
+- Unknown item, duplicate owner, changed/ambiguous map, changed/missing/malformed
+  source, duplicate/missing item IDs and unrelated genuine image retarget guards.
+- RuntimeRealm registers the production provider. runtime_commit submits the full
+  v2 envelope with exact base pair, ordered per-command step patches, label,
+  reads, merge, publisher and key to RuntimeService.commit_timeline. A genuine
+  source shot.set is accepted before the same-batch shared birth/item consumer.
+- Failing consumers assert exact head/history/SQLite dump conservation.
+Expected physical IDs/maps are literal input/output assertions, never outputs
+from _identity, shot_item_map, or a compiler used as an expected-value oracle.
+
+Old RED / new GREEN recipe — NOT EXECUTED, no service requested
+Retained old RED is MAIN request 2966 documented in the D91 source handback:
+5 failures / 5 errors. Authored-first fails at shot_item_map -> one because
+repeated-third is absent from the original input. This is retained historical
+evidence, not a new baseline result on the current Agent tuple.
+The added selectors predicted to fail on the old product include:
+tests/sdk/test_sequential_shared_item_provenance.py::test_registered_shared_birth_reads_original_physical_item_map
+tests/sdk/test_sequential_shared_item_provenance.py::test_registered_birth_then_item_consumer_in_one_batch
+tests/sdk/test_sequential_shared_item_provenance.py::test_registered_runtime_shared_birth_and_consumer_keep_one_physical_image
+No observed RED/GREEN claim is made for these new selectors.
+
+After independent core-path review, MAIN must assemble ONE candidate containing
+this reviewed source, the independently reviewed Agent exact-time0458 correction,
+and Runtime rt-D100-host-fixture-0447's reviewed fixture migration. Keep all D91
+original inputs/assertions except the specifically approved host-only setup;
+record any D100 owner-classified legacy-only case explicitly rather than treating
+a refusal as a pass. Freeze and record actual Agent/Runtime heads, tree/source
+hashes, exact-time selector(s) from that owner's report, Runtime source location,
+and recipe before requesting any body. Do not run this worker's source-only tree
+as if it contained the other two corrections.
+
+One combined MAIN candidate body (authorized test-service venue only):
+ASTRID_RUNTIME_CHECKOUT=<reviewed-runtime-tree> PYTHONPATH=<combined-agent-tree>:<reviewed-runtime-tree> /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_sequential_shared_item_provenance.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_doc_patch_v2.py::test_shot_item_replacement_records_physical_before_and_after_values tests/editing_conformance/test_occurrence_shared_historical.py <exact-time0458-reviewed-selector(s)>
+Use the central service's registered MAIN combined-candidate recipe, once; do not
+execute this body locally or request a full suite. The explicit addopts override
+includes both the new source controls and real integration controls. Append the
+exact-time owner's real selectors before registering the recipe; none are guessed
+here. Require all live original D91 cases, all new controls and existing strict
+provenance/no-write controls to pass with zero skips/xfails. Preserve raw XML/logs.
+If the physical membership reaches a later verifier/allocator seam, hand back
+that exact failure for the owning source review; never relax the verifier or
+manufacture created facts/maps. This candidate has no behavioral qualification.
