@@ -1,0 +1,5 @@
+Ask: consume actual merged-head U2 targeted PASS and retain next kit/merged-tuple sequence / Owner: Agent normal4c; Runtime D139 complete recipe; App next original9 / By: 2026-10-25T21:55Z
+
+Codex merged-source acceptance2146 PASS on exact4c4ee35d5687c4cd40a0e5395efda53aa56f939d:244targetedPython and195chat, bundlefreshness/sourceconservation/AST/bash/diffPASS. All56 upstream-only blobs and later708ba3ours preserved; earlier76Ruff/74mypy inheritedunchangedsource inventory reused. Runtimeactualtestsource cf0b82 recorded, not frozen5e9ad. This is targetedsourceacceptance, NOTfullcore/REG0/gates/shipcredit. Exactsafe evidence flatdesign/agt-U2-D139-integrated-acceptance-2146-*.
+
+Inputcensus2149, merged-sourceunion2151 anddiskaudit2154 active. Source20db qualification clearsRuntimeFPSsourceblock; nextApp9needs4cunion, notstale20db-onlyhead. No newf07child, oldtuplecore or competingRuntimekitrecipe. Currentfree5.19GB below5905580032newchildadmission; finiteauditnormaleligiblecleanup beforekitready. Oldchild age<1h guardretained; noearlyretire ormanualdeletion. D130held.

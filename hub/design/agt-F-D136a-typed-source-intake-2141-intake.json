@@ -1,0 +1,23 @@
+{
+  "task": "agt-F-D136a-typed-source-intake-2141",
+  "repo": "agent",
+  "base_head": "708ba3fbc1b802d45e766d9c3e6899835a15ca78",
+  "base_tree": "5bd437c77539d0e50bac4c2a34953c1dc556c283",
+  "donor_commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+  "donor_tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+  "donor_parent": "c99214a227154df5fbaf681c2e0fc52c54500025",
+  "donor_parent_tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+  "donor_diff_sha256": "1f3f7af792722507c9d61ad7f4c6f13468424fb75b7a5fe60daa3b44e9cdde91",
+  "preimage_gate": "PASS",
+  "exact_donor_import": "PASS",
+  "outside_scope_preserved": "PASS",
+  "behavior_tests": "NOTRUN",
+  "behavior_test_reason": "Source-only intake; App is the exclusive receiver for original9/current9 proof.",
+  "source_scope": [
+    "astrid/sdk/timeline/validation.py",
+    "tests/sdk/test_d136_fps_upstream_compat.py"
+  ],
+  "protected_unchanged": [
+    "astrid/sdk/timeline/_timing_evaluators.py"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "task": "D136a",
+  "scope": "source-only intake",
+  "predicates": [
+    {
+      "predicate": "open-input behavior",
+      "result": "preserved",
+      "basis": "Exact donor import; _timing_evaluators.py unchanged from base."
+    },
+    {
+      "predicate": "newly authored valid typed FPS",
+      "result": "included",
+      "basis": "Exact donor validation.py and additive D136a compatibility test blobs."
+    },
+    {
+      "predicate": "typed-valued rejects",
+      "result": "preserved",
+      "basis": "Exact reviewed donor; independent final-review packet reports protected negative controls."
+    },
+    {
+      "predicate": "protected assertions",
+      "result": "preserved",
+      "basis": "Only the two authorized paths differ; timing evaluator and outside-scope files are unchanged."
+    }
+  ],
+  "donor_evidence_only": [
+    "rt-D136a-typed-location-final-review-2119: PASS, 57 own and 138 nearest targeted tests",
+    "rt-D136a-fps-final-review-2034: PASS, 101 targeted tests and 46/46 production matrix"
+  ],
+  "receiver_boundary": "No behavior suite or App original9/current9 proof run by this worker."
+}

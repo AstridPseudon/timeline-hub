@@ -1,0 +1,68 @@
+{
+  "task": "agt-F-D136a-typed-source-intake-2141",
+  "base": {
+    "commit": "708ba3fbc1b802d45e766d9c3e6899835a15ca78",
+    "tree": "5bd437c77539d0e50bac4c2a34953c1dc556c283"
+  },
+  "donor": {
+    "commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+    "parent": "c99214a227154df5fbaf681c2e0fc52c54500025",
+    "parent_tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+    "diff_sha256": "1f3f7af792722507c9d61ad7f4c6f13468424fb75b7a5fe60daa3b44e9cdde91"
+  },
+  "preimage_check": [
+    {
+      "path": "astrid/sdk/timeline/validation.py",
+      "base_blob": "edda2e123a5907ddf1671c705e17fd3aee0cabe6",
+      "donor_parent_blob": "edda2e123a5907ddf1671c705e17fd3aee0cabe6",
+      "current_preimage_sha256": "74c14ade6dd564eadaf26f27ff6dc64d5168175f3320029768a3684754e5a0d8",
+      "donor_parent_sha256": "74c14ade6dd564eadaf26f27ff6dc64d5168175f3320029768a3684754e5a0d8",
+      "equal": true
+    },
+    {
+      "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+      "base_blob": "b80b771236ab181d9e84bb96187a5b17e329a4f3",
+      "donor_parent_blob": "b80b771236ab181d9e84bb96187a5b17e329a4f3",
+      "current_preimage_sha256": "570dc2040dd7f8c1eca887c2a22827d5963e67599f3d69df834f854bde34dfc3",
+      "donor_parent_sha256": "570dc2040dd7f8c1eca887c2a22827d5963e67599f3d69df834f854bde34dfc3",
+      "equal": true
+    }
+  ],
+  "final_files": [
+    {
+      "path": "astrid/sdk/timeline/validation.py",
+      "donor_blob": "e39103bab6f293cb6b078cbe0bdd9c1739302c3a",
+      "working_tree_blob": "e39103bab6f293cb6b078cbe0bdd9c1739302c3a",
+      "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae",
+      "bytes": 36065,
+      "equal": true
+    },
+    {
+      "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+      "donor_blob": "32cf9e15a13fb4bf16a45184789bb3431f01ef0c",
+      "working_tree_blob": "32cf9e15a13fb4bf16a45184789bb3431f01ef0c",
+      "sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042",
+      "bytes": 10234,
+      "equal": true
+    }
+  ],
+  "changed_paths": [
+    "astrid/sdk/timeline/validation.py",
+    "tests/sdk/test_d136_fps_upstream_compat.py"
+  ],
+  "outside_scope": {
+    "worktree_changed_paths": [
+      "astrid/sdk/timeline/validation.py",
+      "tests/sdk/test_d136_fps_upstream_compat.py"
+    ],
+    "status": "PASS"
+  },
+  "protected_unchanged": {
+    "astrid/sdk/timeline/_timing_evaluators.py": {
+      "base_blob": "7b2937887351251594137628cfbfb58f86cb059e",
+      "working_tree_blob": "7b2937887351251594137628cfbfb58f86cb059e",
+      "equal": true
+    }
+  }
+}
