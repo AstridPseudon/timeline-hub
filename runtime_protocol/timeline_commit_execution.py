@@ -8,12 +8,14 @@ import secrets
 import sys
 import threading
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 
 from .errors import ProtocolError, RuntimeErrorBase
 from .timeline_commit_store import detached, reject, request_identity, scope
 
 _REQUEST_ID_RE = re.compile(r"^[a-f0-9]{32}$")
+_PUBLIC_REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$")
 _MAX_EXCEPTION_CLASSES = 8
 _MAX_FRAMES = 32
 _MAX_DIAGNOSTIC_BYTES = 4096
@@ -23,6 +25,7 @@ _SAFE_CLASS_RE = re.compile(
 )
 _SAFE_FILENAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+|<[^<>\r\n]{1,64}>)$")
 _SAFE_REASON_RE = re.compile(r"^(?:[a-z_]+|catchall:[A-Za-z0-9_.<>:-]{1,256})$")
+_PUBLIC_REQUEST_ID = ContextVar("timeline_public_request_id", default=None)
 
 
 def _new_request_id():
@@ -40,6 +43,26 @@ def _metadata_digest(value):
     if not isinstance(value, str):
         return "sha256:invalid"
     return "sha256:" + hashlib.sha256(value.encode("utf-8", "surrogatepass")).hexdigest()
+
+
+def _public_request_id_hash(value):
+    """Return a bounded, one-way correlation value for the HTTP request id."""
+    if not isinstance(value, str) or not _PUBLIC_REQUEST_ID_RE.fullmatch(value):
+        return None
+    return "sha256:" + hashlib.sha256(value.encode("ascii")).hexdigest()
+
+
+@contextmanager
+def public_request_id_scope(value):
+    token = _PUBLIC_REQUEST_ID.set(value)
+    try:
+        yield
+    finally:
+        _PUBLIC_REQUEST_ID.reset(token)
+
+
+def current_public_request_id():
+    return _PUBLIC_REQUEST_ID.get()
 
 
 def _safe_metadata(value, pattern):
@@ -145,7 +168,7 @@ def _diagnostic_reason(error, reason):
     return "catchall:invalid"
 
 
-def _emit_redacted_diagnostic(request_id, error=None, *, reason=None):
+def _emit_redacted_diagnostic(request_id, error=None, *, reason=None, public_request_id=None):
     """Write one bounded, source-only diagnostic without inspecting exception data."""
     try:
         payload = {
@@ -155,6 +178,11 @@ def _emit_redacted_diagnostic(request_id, error=None, *, reason=None):
             "exception_class_chain": _exception_class_chain(error),
             "frames": _exception_frames(error),
         }
+        public_hash = _public_request_id_hash(
+            public_request_id if public_request_id is not None else _PUBLIC_REQUEST_ID.get()
+        )
+        if public_hash is not None:
+            payload["public_request_id_hash"] = public_hash
         sys.stderr.write(_diagnostic_line(payload) + "\n")
     except BaseException:  # noqa: BLE001, S110 - diagnostics cannot affect the result
         # Diagnostics must never replace the original commit outcome.
@@ -175,6 +203,7 @@ _HISTORY_SOURCE_TAGS = frozenset({
     "history_baseline_corrupt_publication_facts",
     "history_baseline_source_publication_missing",
     "history_baseline_unretained_document_dependency",
+    "provider_history_guard",
     "history_provider_or_store_guard",
     "port_ancestor_pin_mismatch",
     "port_ancestor_outside_request",
@@ -289,7 +318,7 @@ class CommitExecutionCoordinator:
                 if entry.users == 0:
                     del self._entries[key]
 
-    def _lookup(self, context, authorize, *, diagnostic_request_id=None):
+    def _lookup(self, context, authorize, *, diagnostic_request_id=None, public_request_id=None):
         from .errors import AuthorizationError, ForbiddenError
         from .timeline_commit import CommitRejected
 
@@ -298,22 +327,26 @@ class CommitExecutionCoordinator:
         except (CommitRejected, AuthorizationError, ForbiddenError):
             raise
         except Exception as exc:
-            _emit_redacted_diagnostic(diagnostic_request_id, exc)
+            _emit_redacted_diagnostic(diagnostic_request_id, exc, public_request_id=public_request_id)
             raise CommitOutcomeUnknown() from exc
 
-    def execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None):
+    def execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None,
+                public_request_id=None):
         with self.commit_store.verification_scope():
             return self._execute(context, provider, port_factory, authorize=authorize,
-                                 diagnostic_request_id=diagnostic_request_id)
+                                 diagnostic_request_id=diagnostic_request_id,
+                                 public_request_id=public_request_id)
 
-    def _execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None):
+    def _execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None,
+                 public_request_id=None):
         context = detached(context)
         if request_identity(context) != context["request_hash"]:
             reject("invocation_mismatch", status=422)
         # There is intentionally no optimistic dependency/head read here. Even
         # callers with an earlier cache miss repeat this lookup after waiting.
         with self._execution(context) as acquired:
-            replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id)
+            replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id,
+                                  public_request_id=public_request_id)
             if replay is not None:
                 return replay
             if not acquired:
@@ -324,7 +357,12 @@ class CommitExecutionCoordinator:
                 provider_context = detached(port._provider_context()) if hasattr(port, "_provider_context") else detached(context)
                 if any(provider_context[k] != context[k] for k in ("invocation", "idempotency_key", "request_hash", "realm_id", "publisher")):
                     raise ProtocolError("request port changed invocation identity")
-                outcome = detached(provider.commit(provider_context, port))
+                try:
+                    outcome = detached(provider.commit(provider_context, port))
+                except BaseException as exc:
+                    if _is_unattributed_history_refusal(exc):
+                        exc.__dict__["_diagnostic_reason"] = "provider_history_guard"
+                    raise
                 if hasattr(port, "verify_outcome"):
                     port.verify_outcome(outcome)
             except BaseException as exc:
@@ -338,7 +376,8 @@ class CommitExecutionCoordinator:
                             error = exc
             # No provider completion, including a close/hook exception, can
             # supersede a committed winner. A failed read is an unknown outcome.
-            replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id)
+            replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id,
+                                  public_request_id=public_request_id)
             if replay is not None:
                 return replay
             if error is not None:
@@ -355,3 +394,17 @@ class CommitExecutionCoordinator:
             else:
                 self.commit_store.clear_replay_memo()
             return outcome
+
+
+def _is_unattributed_history_refusal(error):
+    """Recognize a provider-owned history refusal without inspecting its text."""
+    if getattr(error, "_diagnostic_reason", None) is not None:
+        return False
+    failure = getattr(error, "failure", None)
+    details = failure.get("details") if isinstance(failure, dict) else getattr(error, "details", None)
+    return isinstance(details, dict) and details.get("reason") == "history_unavailable"
+
+
+def _is_history_failure(failure):
+    details = failure.get("details") if isinstance(failure, dict) else None
+    return isinstance(details, dict) and details.get("reason") == "history_unavailable"

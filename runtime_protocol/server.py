@@ -310,15 +310,17 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         def authorize():
             return self._authorize_timeline_commit(publisher)
 
-        return self._send(200, commit(
-            project_id,
-            timeline_id,
-            body,
-            idempotency_key=key,
-            publisher=publisher,
-            invocation_path=self._timeline_path(project_id, timeline_id, "commit"),
-            authorize=authorize,
-        ))
+        from .timeline_commit_execution import public_request_id_scope
+        with public_request_id_scope(self._request_id()):
+            return self._send(200, commit(
+                project_id,
+                timeline_id,
+                body,
+                idempotency_key=key,
+                publisher=publisher,
+                invocation_path=self._timeline_path(project_id, timeline_id, "commit"),
+                authorize=authorize,
+            ))
 
     def _send(self, status, payload=None, *, headers=None, body=None, error=None, receipt=None, idempotency_key=None):
         if getattr(self, "_defer_response", False):
@@ -623,16 +625,18 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     raise AuthorizationError("authenticated publisher changed during restore")
                 return current
 
-            return self._send(200, restore(
-                path[2], path[4], path[6], body,
-                idempotency_key=self._commit_idempotency_key(),
-                publisher=identity["actor"],
-                invocation_path=self._timeline_path(
-                    path[2], path[4],
-                    f"composition-revisions/{quote(path[6], safe='')}/restore",
-                ),
-                authorize=authorize,
-            ))
+            from .timeline_commit_execution import public_request_id_scope
+            with public_request_id_scope(self._request_id()):
+                return self._send(200, restore(
+                    path[2], path[4], path[6], body,
+                    idempotency_key=self._commit_idempotency_key(),
+                    publisher=identity["actor"],
+                    invocation_path=self._timeline_path(
+                        path[2], path[4],
+                        f"composition-revisions/{quote(path[6], safe='')}/restore",
+                    ),
+                    authorize=authorize,
+                ))
         if len(path) == 7 and path[:2] == ["v1", "projects"] and path[5] == "revisions" and method == "GET":
             self._identity("projects:read")
             if path[3] == "shots":

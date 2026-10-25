@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import hashlib
 import json
 from pathlib import Path
 
@@ -14,9 +15,11 @@ from test_timeline_commit_port import prepared as port_prepared
 
 from runtime_protocol.contract_metadata import SCHEMA_DIGEST
 from runtime_protocol.errors import RuntimeErrorBase
+from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_execution import (
     _HISTORY_SOURCE_TAGS,
     _history_diagnostic_reason,
+    public_request_id_scope,
 )
 from runtime_protocol.timeline_commit_port import digest
 from runtime_protocol.timeline_commit_store import request_identity
@@ -34,7 +37,7 @@ class Provider:
         return self.action(commit_context, port)
 
 
-def _commit(service, project, request):
+def _commit(service, project, request, *, public_request_id=None):
     return service.commit_timeline(
         project,
         "main",
@@ -43,6 +46,7 @@ def _commit(service, project, request):
         publisher=request["publisher"],
         invocation_path=request["invocation"]["path"],
         authorize=lambda: None,
+        public_request_id=public_request_id,
     )
 
 
@@ -119,6 +123,39 @@ def test_real_store_history_refusal_emits_source_tag_without_public_change(realm
     _assert_history_refusal(caught)
     diagnostic = _diagnostic(capsys.readouterr().err)
     assert diagnostic["reason"] == "store_history_entry_missing"
+    assert diagnostic["exception_class_chain"] == []
+    assert diagnostic["frames"] == []
+
+
+def test_provider_history_refusal_has_distinct_tag_and_one_way_public_correlation(realm, capsys):
+    service, _, project, head, _ = realm
+    request = context(service, project, head, "history-diagnostic-provider")
+    public_request_id = "61c84a4e"
+
+    def refuse(_, __):
+        raise CommitRejected({
+            "http_status": 409,
+            "code": "conflict",
+            "message": "history_unavailable",
+            "details": {
+                "status": "refused",
+                "reason": "history_unavailable",
+                "base": None,
+                "current": None,
+                "conflicts": [],
+            },
+        })
+
+    service.register_timeline_commit_provider(Provider(refuse))
+    with pytest.raises(RuntimeErrorBase) as caught, public_request_id_scope(public_request_id):
+        _commit(service, project, request)
+
+    _assert_history_refusal(caught)
+    diagnostic = _diagnostic(capsys.readouterr().err)
+    assert diagnostic["reason"] == "provider_history_guard"
+    assert diagnostic["request_id"] != public_request_id
+    assert diagnostic["public_request_id_hash"] == "sha256:" + hashlib.sha256(public_request_id.encode()).hexdigest()
+    assert public_request_id not in json.dumps(diagnostic)
     assert diagnostic["exception_class_chain"] == []
     assert diagnostic["frames"] == []
 

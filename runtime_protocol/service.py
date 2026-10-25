@@ -2467,7 +2467,7 @@ class RuntimeService:
 
     @_clear_replay_on_refusal
     def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key,
-                        publisher, invocation_path, authorize):
+                        publisher, invocation_path, authorize, public_request_id=None):
         from .timeline_commit_port import detached, route_path, validate_request
         body = detached(body)
         validate_request(body)
@@ -2479,14 +2479,19 @@ class RuntimeService:
             project_id, timeline_id, body, body, operation="commitTimeline",
             idempotency_key=idempotency_key, publisher=publisher,
             invocation_path=invocation_path, authorize=authorize,
+            public_request_id=public_request_id,
         )
 
     @_clear_replay_on_refusal
     def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
-                                 operation, idempotency_key, publisher, invocation_path, authorize):
+                                 operation, idempotency_key, publisher, invocation_path, authorize,
+                                 public_request_id=None):
         from .timeline_commit import CommitRejected
         from .timeline_commit_execution import (
             _emit_redacted_diagnostic,
+            current_public_request_id,
+            _is_history_failure,
+            _history_diagnostic_reason,
             _new_request_id,
         )
         from .timeline_commit_port import (
@@ -2496,6 +2501,8 @@ class RuntimeService:
             public_failure,
         )
         from .timeline_commit_reference_projection import ReferenceProjectionError
+        if public_request_id is None:
+            public_request_id = current_public_request_id()
         if not isinstance(publisher, str) or not publisher:
             raise AuthorizationError("authenticated publisher is required")
         idempotency_key = require_idempotency_key(idempotency_key)
@@ -2541,12 +2548,17 @@ class RuntimeService:
                 if replay is not None:
                     return replay
                 require_active()
-                _emit_redacted_diagnostic(request_id, reason="provider_none")
+                _emit_redacted_diagnostic(request_id, reason="provider_none",
+                                           public_request_id=public_request_id)
                 raise CommitUnavailable()
             outcome = coordinator.execute(context, provider, port_factory, authorize=check,
-                                          diagnostic_request_id=request_id)
+                                          diagnostic_request_id=request_id,
+                                          public_request_id=public_request_id)
             if "http_status" in outcome:
-                raise public_failure(outcome)
+                failure = public_failure(outcome)
+                if _is_history_failure(outcome):
+                    failure.__dict__["_diagnostic_reason"] = "provider_history_guard"
+                raise failure
             return outcome
         except CommitRejected as exc:
             from .timeline_commit_execution import (
@@ -2557,7 +2569,8 @@ class RuntimeService:
                 exc.failure, source_reason=getattr(exc, "_diagnostic_reason", None)
             )
             if reason is not None:
-                _emit_redacted_diagnostic(request_id, reason=reason)
+                _emit_redacted_diagnostic(request_id, reason=reason,
+                                           public_request_id=public_request_id)
             raise public_failure(exc.failure) from exc
         except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError) as exc:
             if isinstance(exc, ConflictError) and isinstance(exc.details, dict):
@@ -2565,20 +2578,30 @@ class RuntimeService:
                     _emit_redacted_diagnostic,
                     _history_diagnostic_reason,
                 )
-                reason = _history_diagnostic_reason({"details": exc.details})
+                reason = _history_diagnostic_reason(
+                    {"details": exc.details}, source_reason=getattr(exc, "_diagnostic_reason", None)
+                )
                 if reason is not None:
-                    _emit_redacted_diagnostic(request_id, reason=reason)
+                    _emit_redacted_diagnostic(request_id, reason=reason,
+                                               public_request_id=public_request_id)
             raise
         except ReferenceProjectionError as exc:
             if exc.reason == "history_unavailable":
-                _emit_redacted_diagnostic(request_id, reason="store_reference_projection_apply_history")
+                _emit_redacted_diagnostic(request_id, reason="store_reference_projection_apply_history",
+                                           public_request_id=public_request_id)
             else:
-                _emit_redacted_diagnostic(request_id, exc)
+                _emit_redacted_diagnostic(request_id, exc, public_request_id=public_request_id)
             raise CommitUnavailable() from exc
-        except RuntimeErrorBase:
+        except RuntimeErrorBase as exc:
+            reason = _history_diagnostic_reason(
+                {"details": exc.details}, source_reason=getattr(exc, "_diagnostic_reason", None)
+            )
+            if reason is not None:
+                _emit_redacted_diagnostic(request_id, reason=reason,
+                                           public_request_id=public_request_id)
             raise
         except Exception as exc:
-            _emit_redacted_diagnostic(request_id, exc)
+            _emit_redacted_diagnostic(request_id, exc, public_request_id=public_request_id)
             raise CommitUnavailable() from exc
 
     def _ensure_timeline_commit_baseline(self, commits, project_id, timeline_id, authorize):
@@ -2690,7 +2713,8 @@ class RuntimeService:
 
     def restore_project_parent_composition_revision(self, project_id, timeline_id, revision, body, *,
                                                     idempotency_key=None, publisher=None,
-                                                    invocation_path=None, authorize=None):
+                                                    invocation_path=None, authorize=None,
+                                                    public_request_id=None):
         from .timeline_commit_port import detached, route_path
         body = detached(body)
         if not isinstance(body, dict) or set(body) != {"expected_head", "expected_publication_id"}:
@@ -2710,6 +2734,7 @@ class RuntimeService:
             project_id, timeline_id, request, body, operation="restoreProjectParentCompositionRevision",
             idempotency_key=idempotency_key, publisher=publisher,
             invocation_path=invocation_path, authorize=authorize,
+            public_request_id=public_request_id,
         )
 
     def inspect_timeline(self, project, timeline_id, options=None):
