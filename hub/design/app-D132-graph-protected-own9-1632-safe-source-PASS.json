@@ -1,0 +1,56 @@
+{
+  "task": "D132",
+  "status": "PASS",
+  "source": {
+    "worktree": "/home/user/work/wt/app-D132-graph-protected-own9-1632",
+    "head": "134d9787c791b54db695a2332bd352ca1c0a6a78",
+    "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "files": {
+      "tests/editing_conformance/test_recorded_graph_roots.py": "624ad7ff3522ca8cfb14c8bf79e20d22fdacf95c9123989b699ad573b89c724e",
+      "tests/sdk/test_timeline_commit_graph_roots.py": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21"
+    },
+    "diff_scope": [
+      "tests/editing_conformance/test_recorded_graph_roots.py",
+      "tests/sdk/test_timeline_commit_graph_roots.py"
+    ],
+    "approved_changes": [
+      "six v2 metadata lines in the RuntimeRealm request body",
+      "one authored occurrence:new-occ gain input: null to numeric 1"
+    ]
+  },
+  "hash_checks": {
+    "fixture_non_gain_source_equal": true,
+    "fixture_test_bodies_equal": true,
+    "fixture_assertions_equal": true,
+    "fixture_parametrization_equal": true,
+    "graph_test_bodies_equal": true,
+    "graph_assertions_equal": true,
+    "graph_parametrization_equal": true,
+    "fixture_counts": {"test_bodies": 22, "assertions": 90, "parametrize_decorators": 6},
+    "graph_counts": {"test_bodies": 11, "assertions": 33, "parametrize_decorators": 7}
+  },
+  "absence_checks": {
+    "actual_agent_repo": "/home/user/peteromallet/astrid-agent",
+    "actual_d60_commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "actual_d60_object_present": true,
+    "actual_d60_fixture_path_absent": true,
+    "actual_d60_graph_path_absent": true,
+    "frozen_r4_sdk_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "frozen_r4_fixture_path_absent": true,
+    "frozen_r4_graph_path_absent": true,
+    "owner_named_d11417a59_object": "unavailable; not treated as absence proof",
+    "fixture_introduction": "84db8bde88f695fede81f32a2fddb30622c6781f adds the path; its parent lacks it"
+  },
+  "purpose_checks": {
+    "consumer_files_checked": [
+      "tests/sdk/test_timeline_commit_graph_roots.py",
+      "tests/sdk/test_timeline_semantic_reservations.py",
+      "tests/sdk/test_timeline_created_root_stage_redo.py"
+    ],
+    "consumer_gain_or_null_handling_assertions": 0,
+    "registered_provider_caller_preserved": true,
+    "no_generic_normalizer_or_null_support": true,
+    "no_product_runtime_schema_change": true
+  },
+  "static_checks": {"ruff": "PASS", "mypy": "PASS", "python_3_11_compile": "PASS", "git_diff_check": "PASS"}
+}

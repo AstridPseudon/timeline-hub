@@ -1,0 +1,46 @@
+{
+  "task": "D132",
+  "reviewer_worktree": "/home/user/work/wt/app-D132-graph-protected-own9-1632",
+  "current_commit": "134d9787c791b54db695a2332bd352ca1c0a6a78",
+  "comparison_baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "repo_mapping": {
+    "review_repo": "Agent/Astrid",
+    "review_repo_root": "/home/user/work/wt/app-D132-graph-protected-own9-1632",
+    "actual_d60_repo": "/home/user/peteromallet/astrid-agent",
+    "frozen_r4_sdk_repo": "/home/user/peteromallet/astrid-agent"
+  },
+  "actual_agent_d60": {
+    "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "object_present": true,
+    "subject": "Merge origin/main into merge/local-generation",
+    "fixture_path_absent": true,
+    "graph_consumer_path_absent": true,
+    "absence_interpretation": "meaningful tree-path absence because the commit object is present"
+  },
+  "frozen_r4_candidate": {
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "resolved_commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "fixture_path_absent": true,
+    "graph_consumer_path_absent": true
+  },
+  "unavailable_reference": {
+    "object": "d11417a59",
+    "result": "not present in the actual Agent object database",
+    "used_as_absence_proof": false
+  },
+  "fixture_history": {
+    "introduction_commit": "84db8bde88f695fede81f32a2fddb30622c6781f",
+    "introduction_parent": "3bf9e5368a956ef562c77e1beb0a745addf23daf",
+    "parent_path_absent": true,
+    "introduction_path_present": true,
+    "authored_gain_at_introduction": true
+  },
+  "source_change_custody": {
+    "graph_metadata_lines": 6,
+    "fixture_gain_lines": 1,
+    "all_other_authored_inputs_equal": true,
+    "all_graph_predicates_equal": true,
+    "consumer_purpose_census_complete": true,
+    "runtime_agent_product_schema_changed": false
+  }
+}

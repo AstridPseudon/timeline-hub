@@ -1,0 +1,27 @@
+{
+  "app_candidate": {
+    "commit": "f9fa634aa9a547ade4ae545129dce8e75f1afe06",
+    "worktree_clean": true,
+    "changed_files": ["tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"],
+    "candidate_file_sha256": "6da7cec350976101ce9fe064405757cb137c1b04b9f87a5c9f04515bd6ca93bd",
+    "parent_file_sha256": "9b255149cf3821e9fd6a9e688cc0a4e74b353e7d059feeb56993f20d4140c7d8"
+  },
+  "runtime_candidate": {
+    "commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "helper_sha256_recomputed_from_git_show": true
+  },
+  "qualified_runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "head": "ab1e4f6141987706132916e2da16477f5a019464",
+    "normal_helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "candidate_helper_used_only_from_private_tmp": true
+  },
+  "immutability": {
+    "app_source_modified": false,
+    "runtime_source_modified": false,
+    "shared_dependency_modified": false,
+    "generated_files_created": false,
+    "git_write_or_push": false
+  }
+}

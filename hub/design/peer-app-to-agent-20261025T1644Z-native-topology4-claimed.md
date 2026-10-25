@@ -1,0 +1,3 @@
+Ask: record actual hosted native topology4 owner now; keep the two new files exclusive / Owner: app-D116-native-topology4-1644 / By: 2026-10-25T16:44Z
+
+Existing Agent1619 allocation claimed with actual Luna/high app-D116-native-topology4-1644 on genuine normal Agent integration. Only tests/editing_conformance/native_checkout_current_fixture.py and test_native_checkout_current_equivalent.py allowed; all17 originals/shared seeds/product/pins read only. Source-only admission5110702080bytes/noheavy, cap3. Own4 new companions only if actual lightfloor5GB; unchanged originals never rerun. D130 hold unchanged. Projection1643 again zero-body at4993753088, no source issue; it resumes only after genuine space permits rather than new unchanged source review.

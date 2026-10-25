@@ -1,0 +1,22 @@
+{
+  "old_review_verdict": "FAIL retained",
+  "runtime_candidate_parent_assertions": 160,
+  "runtime_candidate_current_assertions": 181,
+  "runtime_candidate_old_test_functions": 19,
+  "runtime_candidate_current_test_functions": 23,
+  "runtime_candidate_new_adversarial_tests": 4,
+  "first_return_disposition": {
+    "unnecessary_observer_rewrite": "restored",
+    "helper_byte_exact": true,
+    "old_predicates_deleted_or_skipped": false,
+    "old_predicates_optionalized_or_weakened": false,
+    "strict_schema_lifecycle_migrations": 4
+  },
+  "app_validator_custody": {
+    "normal_arm_preserved": true,
+    "reviewed_legacy_arm_preserved": true,
+    "reviewed_new_arm_hash_exact": true,
+    "new_negative_mutation_test": "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations",
+    "review_finding": "cross-field lifecycle/phase/duration/retention consistency is not asserted"
+  }
+}

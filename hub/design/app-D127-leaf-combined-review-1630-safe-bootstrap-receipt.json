@@ -1,0 +1,24 @@
+{
+  "qualified_runtime_checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+  "qualified_runtime_head": "ab1e4f6141987706132916e2da16477f5a019464",
+  "product_source_only": true,
+  "external_helper": {
+    "basename": "p2_commit_phase_capture.py",
+    "sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "source_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "path_scope": "private temporary directory only"
+  },
+  "normal_path_hash_hook": true,
+  "positive_control": {
+    "test": "P2 Runtime observer bootstrap is opt-in, source-pinned, bounded, and flushed on exit paths",
+    "result": "1 passed, 3 skipped",
+    "duration": "14.59s",
+    "endpoint_commit": "accepted",
+    "capture_validator": "passed"
+  },
+  "offline_controls": {
+    "new_validator_and_D105": "2 passed, 2 skipped",
+    "qualified_D78": "1 passed, 3 skipped",
+    "runtime_observer_focus": "1 passed, 18 deselected"
+  }
+}

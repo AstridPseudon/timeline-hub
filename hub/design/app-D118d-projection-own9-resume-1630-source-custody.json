@@ -1,0 +1,26 @@
+{
+  "source_path": "tests/sdk/test_timeline_capture_projection.py",
+  "worktree_head": "f53b016900c99e46998268e36c7c431ac0eec61e",
+  "reviewed_commit": "d05975c7d6a0ab9eeea2db0f1c6e97ccbe136b6b",
+  "reviewed_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+  "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+  "byte_exact": true,
+  "whole_tree_diff_to_reviewed": "empty",
+  "git_status": "clean",
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "git_status": "clean",
+    "registered_provider_module": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_provider.py",
+    "registered_store_module": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py",
+    "registration_callsite": "tests/sdk/test_capture_source_runtime.py:216"
+  },
+  "capacity_gate": {
+    "fresh_check_path": "/tmp",
+    "fresh_before_exact9_bytes": 4991860736,
+    "required_bytes": 5000000000,
+    "shortfall_bytes": 8139264,
+    "exact9_authorized": false
+  }
+}

@@ -1,0 +1,5 @@
+Ask: consume graph/projection exact outcomes and reserve native topology4 next free hosted slot / Owner: App current1643 workers; Agent source allocator / By: 2026-10-25T16:45Z
+
+All three previous workers terminal. Projection1630 no pytest at4991860736bytes (8139264 short); readonly app-D118d-projection-own9-resume-1643 resumes exact f53b/6e41 source with immutable5e9ad. Graph protected1632 SOURCE PASS33graph/90shared plus D132 gain1; actualown9 FAIL9 at canonical_document.shot_revisions[1].payload.metadata None, frozen PreparedCommit schema line173. app-D132-graph-metadata-trace-1643 read-only traces authored setup versus producer, no normalization or input edit. Flat reports/verdicts design/app-D132-graph-protected-own9-1632-*.
+
+Agent1619 native-topology4 request is now explicit ready board row. Current three hosted slots occupied (projection proof, graph trace, helper/App strict source pair); it takes first freed slot, exact onlytwo newfiles and all17originals/sharedfixtures readonly. No duplicate owner requested. D130 recovery/tour safety hold unchanged. Local core child ownership guard remains your/Runtime normal owner; no App core body or reroute.

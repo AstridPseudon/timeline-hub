@@ -1,0 +1,27 @@
+{
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "head": "134d9787c791b54db695a2332bd352ca1c0a6a78",
+  "fixture": {
+    "path": "tests/editing_conformance/test_recorded_graph_roots.py",
+    "current_sha256": "624ad7ff3522ca8cfb14c8bf79e20d22fdacf95c9123989b699ad573b89c724e",
+    "test_bodies": {"current": 22, "baseline": 22, "ast_equal": true, "sha256": "76d28c34155fdddf7f3f0222e12e56f1701ef665c4c1553a0666b749a50df308"},
+    "assertions": {"current": 90, "baseline": 90, "ast_equal": true, "sha256": "9852d5d33566f5f0b74b8fb009edb18c85b48a4e2ee89351a7acb4dde230797a"},
+    "parametrize_decorators": {"current": 6, "baseline": 6, "ast_equal": true, "sha256": "20c7934cdecf565aab280e2e256a1a60c33a9db94dfbcc84b0b0e4b94b2a8803"},
+    "approved_input_delta": {"path": "root_values occurrence:new-occ value gain", "before": null, "after": 1},
+    "non_gain_source_canonicalized_equal": true
+  },
+  "graph_consumer": {
+    "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+    "current_sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+    "test_bodies": {"current": 11, "baseline": 11, "ast_equal": true, "sha256": "59fc8f5e09ce48a91173340660addb2ca60c3179ae35f4de9c361331368f160c"},
+    "assertions": {"current": 33, "baseline": 33, "ast_equal": true, "sha256": "f8fb4e82742c742e21a7c2372241de396112a53477b6102e4e1c348936c7d28d"},
+    "parametrize_decorators": {"current": 7, "baseline": 7, "ast_equal": true, "sha256": "7d858ef56777b53c2c81f85e5866093b9493c3f598e929910963762aefba0881"},
+    "metadata_delta": {"lines": 6, "fields": ["label", "steps", "merge", "reads"], "predicates_changed": false},
+    "caller": {"registered_provider": "astrid", "route": "RuntimeService.commit_timeline", "auth_preserved": true, "previous_values_preserved": true, "ABA_preserved": true, "no_write_preserved": true}
+  },
+  "other_consumers": {
+    "paths": ["tests/sdk/test_timeline_semantic_reservations.py", "tests/sdk/test_timeline_created_root_stage_redo.py"],
+    "gain_or_null_handling_assertions": 0,
+    "grouping_and_reads_unchanged": true
+  }
+}

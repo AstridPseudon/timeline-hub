@@ -1,0 +1,28 @@
+{
+  "task": "D127 independent combined leaf review",
+  "verdict": "FAIL",
+  "pass_source": "PARTIAL",
+  "pass_proof": "PARTIAL",
+  "findings": [
+    {
+      "id": "D127-APP-001",
+      "severity": "blocking",
+      "owner": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts:257-280",
+      "title": "reviewed-new lifecycle is not cross-checked against phases, durations, or retention",
+      "detail": "The arm enforces the lifecycle enum and only forces null handler/dispatch durations for raised and pending_at_stop. It does not require completed to have a truthful completed response/duration state, returned_without_response to have no observed http_response, or retention.final_request.outcome to equal summary.lifecycle. A summary can therefore carry contradictory lifecycle, phase, duration, and final-retention values while passing the strict validator. The frozen handoff explicitly defines lifecycle derivation and retention as the same request outcome."
+    }
+  ],
+  "source_scope": {
+    "app_head": "f9fa634aa9a547ade4ae545129dce8e75f1afe06",
+    "runtime_candidate": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "qualified_runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+    "app_changed_files": ["tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"],
+    "source_edits_made": false
+  },
+  "central_receipt": {
+    "request": "app-D127-leaf-retention-author-1606-targeted-1025160952-28551",
+    "result": "23 passed in 3.46s",
+    "reused": true,
+    "duplicate_submitted": false
+  }
+}

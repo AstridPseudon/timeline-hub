@@ -1,0 +1,42 @@
+{
+  "task": "D132",
+  "review": "independent protected source review",
+  "source_verdict": "PASS",
+  "overall_verdict": "SOURCE_PASS_OWN9_FAIL",
+  "base": "134d9787c791b54db695a2332bd352ca1c0a6a78",
+  "comparison_baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "source_changes": {
+    "tests/sdk/test_timeline_commit_graph_roots.py": "six approved v2 metadata lines only",
+    "tests/editing_conformance/test_recorded_graph_roots.py": "one approved authored fixture input: gain None to 1"
+  },
+  "source_checks": {
+    "all_other_inputs_byteexact": true,
+    "fixture_test_bodies": 22,
+    "fixture_assertions": 90,
+    "fixture_parametrize_decorators": 6,
+    "graph_test_bodies": 11,
+    "graph_assertions": 33,
+    "graph_parametrize_decorators": 7,
+    "graph_caller_and_registration_unchanged": true,
+    "consumer_gain_or_null_purpose_assertions": 0,
+    "runtime_agent_product_schema_changes": false,
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "python_3_11_compile": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "own9": {
+    "status": "FAIL",
+    "nodes": 9,
+    "failed_nodes": 9,
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "registered_provider": "astrid",
+    "failure_class": "frozen PreparedCommit schema refusal",
+    "failure_path": "canonical_document.shot_revisions[1].payload.metadata",
+    "failure_detail": "None is not of type object",
+    "failure_frame": "runtime_protocol/timeline_commit_validation.py:173",
+    "source_fix_after_pass": false,
+    "raw_evidence": ["own9.xml", "own9.log"]
+  }
+}
