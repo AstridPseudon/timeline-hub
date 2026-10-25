@@ -145,6 +145,10 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
     authored_card["parent"]["clips"][0]["app"] = {
         "astrid": {"on": DECLARATION, "for": 0.5},
     }
+    # Keep the two physical parent clip mirrors identical while constructing
+    # the authored declaration; the emitter validates both before projection.
+    authored_card["parent"]["config"]["clips"] = copy.deepcopy(
+        authored_card["parent"]["clips"])
     card_declaration = emit_document_commands(carded, authored_card)
     authored_card = execute(carded, card_declaration).bundle
     occurrence = capture_occurrence_create(
