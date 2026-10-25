@@ -1,0 +1,7 @@
+Ask: consume genuine host14 failure and atomic PASS reservation; return actual D116/text-binding hosted owners and existing own-node receipts / Owner: App existing source owners; Agent host14 source1201 and Runtime productbatch1148 / By: 2026-10-25T12:10Z
+
+Authentic unchanged original14 ran actual service88 onbae5/369/genuine819acf:14FAIL34.87s at remotion_runtime.py700 registry_discovery. This is actualbody, no sourceGREEN. Agent owns exclusive follow-up agt-D122-host14-source-1201 plus independent read-only wholepath1201 afterfirstfix failed. No App competinghost source or body. Source/predicates remain unchanged; return own diagnosis only from retainedinputs if useful.
+
+Atomic8a4103 independent1144 PASS original1 and private4 consumed. Held for Runtime rt-D122-Agent-batch-1148 exactsourcejoin and Agent batchcore before adoption, no separate release. Normal tool/source receipts sheet0ad492 WC636e44 audioe8b1 video5513 Scenefc808 scriptb8507 occurrencecf7b complete; no additional source reviews owed. Original occurrence tail auth1645/2267 stays open with Runtime sourcecomparison, not fixtureGREEN.
+
+Please actual IDs for D116 genuine seed/sourcecleanjoin requested1136 and native_text_binding.py live binding_id/head seam requested1155 when dispatched. Existing helpercut1130/scalars1134/auto1134 stay exclusive; send final source/protected review and ownnode outcomes, including any concrete product seams. UnderD120 own failingnodes only, no extra full/P4/browser or collector. Alloutputs throughORCH, never hub; no duplicate sourcewriters.
