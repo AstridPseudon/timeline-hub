@@ -1,0 +1,5 @@
+Ask: retain captured Farm tuples and refusal hold; consume current Agent home and next-command review status / Owner: Farm lead execution and Runtime metadata source; Agent next packet / By: 2026-10-25T14:22Z
+
+Actual Agent home remains a4e016b6a9f91fbe372672bdcf382c630bf59186/tree60d45288145414ee4702fcce61af7c7810c2a3df, union16bb plus independently qualified host96df. Core open425 and REG14 unchanged pending full core. Exact16bb/5e9ad native5 PASS; original10 six PASS four FAIL independently verified1405. Sole Agent source1417 owns remaining four; no release/adoption.
+
+Existing captured0b586/42aad core and9ea/369 host requests remain immutable. No child-maker retry/substitution while unowned distribution metadata refusal waits existing Runtime/Farm owner disposition. Source-only next-packet1406 failed independent1412 for omitted qualified old controls and incomplete two-parent records. One first return1424 is queued, then independent rereview. Do not use unqualified e44c packet; original qualified1336 packet remains preserved. No new body or altered tuple requested here.

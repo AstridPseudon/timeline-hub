@@ -1,0 +1,81 @@
+{
+  "schema": "timeline.d124.next-farm-core-command.review.v1",
+  "verdict": "FAIL",
+  "packet": {
+    "commit": "e44c381062d36afe9ff0d285f5b14c05f4f987f",
+    "tree": "cad65b21899eff6718544419023ee15a4d61129b",
+    "base_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "base_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "checks": {
+    "json_tool": "PASS",
+    "shell_blocks": {
+      "count": 1,
+      "bash_n": "PASS"
+    },
+    "git_diff_check": "PASS",
+    "selector_body_roots_flags_timeout_no_cache": "PASS",
+    "selector_root_count": 22,
+    "inventory_metadata_count": 23,
+    "live_scene_root_present": true,
+    "agent_runtime_tuple": "PASS",
+    "agent_source_invariance": {
+      "old_tree_path_count": 3563,
+      "new_tree_path_count": 3565,
+      "changed_path_count": 10,
+      "non_target_blob_invariant_count": 3555,
+      "result": "PASS"
+    },
+    "launcher_maker_schema_lock_identities": "PASS",
+    "qualified_publication_1342_blobs": "PASS",
+    "farm_execution": "NOT_RUN"
+  },
+  "findings": [
+    {
+      "id": "D124-FARM-REVIEW-1",
+      "severity": "blocking",
+      "file": "evidence/next-farm-core-command.md",
+      "lines": "20-21",
+      "detail": "App and Composition parent lists omit their second Git parents, and the shell command has no parent guards for either source.",
+      "actual_app_parents": [
+        "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+        "331a58363d1dc6ade1db2d2fa9d58688520c51bd"
+      ],
+      "actual_composition_parents": [
+        "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+        "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+      ]
+    },
+    {
+      "id": "D124-FARM-REVIEW-2",
+      "severity": "blocking",
+      "file": "evidence/next-farm-core-command.md",
+      "detail": "Qualified positive/poison preflight controls and launcher SHA-256, Node-version, and stale-manifest guards are absent.",
+      "qualified_controls": [
+        "MAIN_POSITIVE_CONTROL",
+        "MAIN_POSITIVE_COUNTER",
+        "MAIN_POISON_CONTROL",
+        "MAIN_POISON_COUNTER",
+        "positive exit 17 and one counter line",
+        "poison nonzero exit and zero counter lines",
+        "launcher SHA-256",
+        "Node v20.19.4",
+        "reject 070dfc and b545b616 manifest values"
+      ]
+    },
+    {
+      "id": "D124-FARM-REVIEW-3",
+      "severity": "blocking",
+      "file": "evidence/next-farm-core-command.md",
+      "lines": "11-12",
+      "detail": "The refusal is preserved and no retry/substitution/overlay/bypass is allowed, but the packet does not explicitly require the existing owner disposition for unowned distribution metadata."
+    }
+  ],
+  "pending_not_claimed": [
+    "Farm checkout receipts",
+    "profiles and child environment",
+    "D73 manifest and evidence",
+    "positive and poison counters",
+    "Farm execution result"
+  ]
+}
