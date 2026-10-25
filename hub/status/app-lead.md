@@ -1,1 +1,1 @@
-app-lead 00:12Z: daemons up (uptime 2291m, machine up 38h, no restart), disk 7.1G free (after owner-approved m3 deletion), wt 45 dirs; board 'live 2 / cap 2; ready-undispatched 1'; codex sizes unchanged since 17:12Z; no blockers, no LEAD FETCH, no new refusals; P1/P3 GO, P2 isolated 0 PASS (ADD/asset NO-GO, main four on Runtime)
+app-lead 00:42Z: daemons up (uptime ~2320m, no restart), disk ~6.2G (floor 5.2G, stop 4.5G), no blockers, no LEAD FETCH, no new refusals; codex unchanged; P1/P3 GO, P2 isolated 0 PASS (element 8897 NO-GO, ADD 17228 NO-GO, asset geometry body queued)

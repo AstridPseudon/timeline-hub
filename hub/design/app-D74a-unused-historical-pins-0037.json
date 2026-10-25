@@ -1,0 +1,43 @@
+{
+  "time": "2026-10-25T00:36:41.582121+00:00",
+  "preserved_new_main_tuple": "fd2f/0d142/a3cd/635f",
+  "all_outputs": "retained",
+  "rows": [
+    {
+      "worker": "app-pin-3c29d553",
+      "head": "3c29d553a7af0b0e0876760052855818ea834658",
+      "guards": [],
+      "process_hits": 0,
+      "unreadable_processes": 0,
+      "exit": 0,
+      "result": "recycled app-pin-3c29d553\n"
+    },
+    {
+      "worker": "app-pin-587316e3",
+      "head": "587316e37891f1b474c2c3734e19044246b62285",
+      "guards": [],
+      "process_hits": 0,
+      "unreadable_processes": 0,
+      "exit": 0,
+      "result": "recycled app-pin-587316e3\n"
+    },
+    {
+      "worker": "app-pin-83025232",
+      "head": "830252327fc37b9c68fb7fa9e3d09ad560624fb8",
+      "guards": [],
+      "process_hits": 0,
+      "unreadable_processes": 0,
+      "exit": 0,
+      "result": "recycled app-pin-83025232\n"
+    },
+    {
+      "worker": "app-pin-f6a21c28",
+      "head": "f6a21c285267d6475816adbda74233907ac93911",
+      "guards": [],
+      "process_hits": 0,
+      "unreadable_processes": 0,
+      "exit": 0,
+      "result": "recycled app-pin-f6a21c28\n"
+    }
+  ]
+}
