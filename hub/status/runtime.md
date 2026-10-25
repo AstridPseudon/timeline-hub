@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T18:37:11Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
+<!-- main | 2026-10-25T18:42:03Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 3m -->
 # runtime board, 2026-10-25T18:37:17Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -460,7 +460,7 @@ Delivery: Private100Python+TS/41matrix and D123 current patch source qualified; 
 Safety: All D130 and prior D88/D111/retirement refusals stay held. D106 ORCH-only output; no hub writes, Git mutations, credentials, upstream push, M5 or permission-file changes by manager.
 Disk: Sweep3 removed0; compact packed0 scratch/test directories and losslessly gzipped2 old logs. Free5.052GB. Three finished current workers already auto-recycled; no dirty, KEEP or refused targets retried.
 live 1 / cap 6 at5.05GB; ready-undispatched 0. Luna1836 sole portable fixture source author. App1826 D100 behavior and Sol1824 recipe active. No Main heavy or production child; no Agent unchanged repeat.
-INBOX consumed through1415193bytes. Updated 2026-10-25T18:37:17Z.
+INBOX consumed through1417179bytes. Updated 2026-10-25T18:37:17Z.
 Later: OriginalTrue redo-birth still fails on d4ba/ab1e. Independent1712 verified custody and traced full path; exact authenticated redo records and stage pairs absent, owner UNKNOWN. No unchanged retry or guard author.
 Later: Graph applicability1744 and independent1749 PASS source assessment; ab1e track-only correction does not cover clip aliases. Accepted/stage/physical pairs EXACTMISSING; owner UNKNOWN, no auth author.
 Later: Main diagnostic reproduction remains unrun with original Store and8GiB gate intact. Agent owns admitted genuine fixture E2E; Main venue limits are not an extra installation gate.
