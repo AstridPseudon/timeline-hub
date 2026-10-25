@@ -77,6 +77,13 @@ describe('run-mode choice', () => {
     expect(link).toHaveClass('underline', 'underline-offset-4', 'hover:text-foreground');
   });
 
+  it('shows no Astrid icon on the run-mode card', () => {
+    const { container } = mount(() => undefined, 'hosted');
+
+    expect(screen.getByRole('heading', { name: 'How do you want to run the app?' })).toBeInTheDocument();
+    expect(container.querySelector('img[src="/astrid-app-icon-192.png"]')).toBeNull();
+  });
+
   it('pictures each option with its own decorative mink, moving only for the chosen option', () => {
     const { container, rerender } = mount(() => undefined, 'hosted');
     const beach = () => container.querySelector('[data-scene="beach"]');

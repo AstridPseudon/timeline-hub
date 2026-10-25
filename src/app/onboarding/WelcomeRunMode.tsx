@@ -85,7 +85,7 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
 
   return <main aria-label="How to run Astrid">
     <EditorCardLayer cardKey="choose">
-      <EditorCard title="How do you want to run the app?">
+      <EditorCard title="How do you want to run the app?" icon={false}>
         <div className="space-y-4">
           <RadioGroup aria-label="How to run Astrid" value={runMode} onValueChange={value => setRunMode(value as RunMode)} className="space-y-2.5">
             <div className={`@container rounded-xl border transition-colors ${runMode === 'hosted' ? 'border-primary/70 bg-primary/[0.06]' : 'border-border hover:border-foreground/25 hover:bg-muted/40'}`}>

@@ -16,7 +16,7 @@ export function WelcomeLocalSetup({ onBack }: { readonly onBack: () => void }) {
       <EditorCard
         scrollContent
         title="Have your agent set it up"
-        sentence={<>Paste these instructions into Claude Code, Codex or another agent. It installs Astrid, gets the editor from <a className="underline underline-offset-4 hover:text-foreground" href={LOCAL_SETUP.repoUrl} target="_blank" rel="noreferrer">github.com/banodoco/astrid-app</a> and starts both on your computer.</>}
+        sentence={<>Paste these instructions into Claude Code, Codex or another agent. It installs Astrid, gets the editor from <a className="underline underline-offset-4 hover:text-foreground" href={LOCAL_SETUP.repoUrl} target="_blank" rel="noreferrer">GitHub</a> and starts both on your computer.</>}
         topLeft={<Button type="button" variant="ghost" className="inline-flex h-auto items-center gap-0.5 rounded-md py-1 pl-1 pr-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground" onClick={onBack}><ChevronLeft aria-hidden="true" className="h-4 w-4" />Back</Button>}
         foot={<EditorCardFoot>When it&apos;s done, Astrid opens from your own computer.</EditorCardFoot>}
       >
