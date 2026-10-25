@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "review_status": "FAIL",
+  "read_only": true,
+  "execution": {
+    "browser_started": false,
+    "native_started": false,
+    "backend_started": false,
+    "preflight_executed": false,
+    "service_submitted": false,
+    "body_executed": false,
+    "collector_started": false,
+    "sampler_started": false,
+    "profile_or_build_run": false,
+    "d130_scope_touched": false
+  },
+  "app": {
+    "checkout": "/home/user/work/wt/app-D127-element-route-review-1813",
+    "head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "selector_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "selector_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "launcher_sha256": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def",
+    "harness_sha256": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e",
+    "runtime_lock_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_lock_qualified_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+  },
+  "agent": {
+    "head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "exact_checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+    "receipt": "present and exact",
+    "source_role": "accepted Agent source"
+  },
+  "runtime": {
+    "normal_head_observed": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "normal_tree_observed": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "recipe_head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "recipe_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "qualified_head": "ab1e4f6141987706132916e2da16477f5a019464",
+    "qualified_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "qualified_exact_checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "qualified_receipt": "present and exact",
+    "recipe_exact_checkout": "/home/user/work/wt/rt-pin-e319fdbd",
+    "recipe_receipt": "missing",
+    "recipe_path_is_source_derived": false,
+    "e319_source_derived_path": "/home/user/work/wt/rt-pin-e319fdbc",
+    "helper_4ee_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "helper_4ee_current_external_file": false,
+    "qualified_checkout_helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  },
+  "composition": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "exact_checkout": "/home/user/work/wt/vw-pin-635f4de0",
+    "receipt": "present and exact"
+  },
+  "receipts": {
+    "app_d5a1d1ab": "missing",
+    "agent_070dfc5e": "present and exact",
+    "runtime_e319fdbc": "missing",
+    "runtime_ab1e4f61": "present and exact",
+    "composition_635f4de0": "present and exact",
+    "app_pin_d5a1d1ab_target_metadata": "missing"
+  },
+  "helper_source": {
+    "reviewed_source_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "source_path": "tests/helpers/p2_commit_phase_capture.py",
+    "source_blob": "6984ac1da77f1b499703cfac45d27149eddcbdae",
+    "sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "raw_external_copy_custodied": false,
+    "basename": "p2_commit_phase_capture.py",
+    "symlink_allowed": false
+  },
+  "historical_bootstrap": {
+    "source_status": "PASS_FOR_SOURCE_AND_SELECTOR_INVOCATION; RAW_CAPTURE_NOT_CUSTODIED",
+    "raw_capture_present": false,
+    "request": 3,
+    "lifecycle": "pending_at_stop",
+    "samples": 352,
+    "lost_samples": 3,
+    "key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+    "capture_namespace": "pid-12960-birth-19014785-capture-1",
+    "provider_response_wall_denominator": "UNKNOWN"
+  },
+  "source_guards": {
+    "selected_checkout_rules": "D66 requires detached clean exact checkouts; the current normal App/Runtime homes are not substitutes",
+    "observed_normal_homes": {
+      "app": "attached clean d5a1d1ab",
+      "runtime": "attached clean e319fdbd"
+    },
+    "full_sha_and_tree": true,
+    "receipt_binding": "implemented by D66; current required App receipt/target evidence is incomplete",
+    "mutable_home_rejection": true,
+    "wrong_tree_rejection": true,
+    "helper_regular_file_and_sha_rejection": true,
+    "normal_caller": "d66-plain-stack.mjs --submit -> request-checkout/wait receipts -> preflightSources -> registry rows -> preflight wait -> one normal request",
+    "normal_caller_recipe_published": false
+  }
+}

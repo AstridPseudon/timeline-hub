@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "result": "FAIL",
+  "verdict": "FAIL",
+  "review_scope": "read-only source, Git/hash, JSON and published-evidence review; no tests, preflight, sockets, browser, native/backend process, collector, sampler, profile or build",
+  "app_source": {
+    "head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "selector_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "selector": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo",
+    "selector_count": 1,
+    "selector_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "launcher_sha256": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def",
+    "harness_sha256": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e",
+    "selector_source_unchanged": true,
+    "original_lifecycle_source_verified": true,
+    "original_expect_timeout_ms": 5000,
+    "single_element_route": true,
+    "legacy_write_guard_present": true,
+    "request_oracle_source_verified": true,
+    "reply_history_reload_undo_source_verified": true
+  },
+  "accepted_dependencies": {
+    "agent": {
+      "head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "runtime_provenance": {
+    "recipe_head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "recipe_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "app_runtime_lock_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "qualified_runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "d66_guard_behavior": "D66 validates the caller-supplied detached tuple, tree, receipt and App target; it does not prove that a Runtime pin is the App runtime.lock qualified release.",
+    "decision": "The e319 helper-only source is not acceptable as the stated normal App Runtime. Use the already qualified ab1e Runtime checkout and an explicit reviewed external helper with SHA 4ee0424b...; do not invent an approval exception or adoption pin."
+  },
+  "watchdog": {
+    "p2_element_recipe_seconds": 2,
+    "p2_full_recipe_seconds": 20,
+    "source_guard_result": "PASS: serviceRecipe intentionally selects 2 seconds only for p2-element; sitecustomize forwards the value to the existing helper. The 2-versus-20 difference is not a blocker."
+  },
+  "historical_limits": {
+    "raw_capture_custodied": false,
+    "historical_request": 3,
+    "historical_lifecycle": "pending_at_stop",
+    "historical_key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+    "historical_samples": 352,
+    "historical_lost_samples": 3,
+    "provider_response_wall_denominator": "UNKNOWN",
+    "request_2_substitution": false,
+    "twenty_second_element_claim": false,
+    "performance_or_go_claim": false
+  },
+  "finite_corrections": [
+    {
+      "id": "C1",
+      "blocker": "Runtime provenance and path",
+      "smallest_correction": "Bind D66_RUNTIME_SHA to qualified ab1e4f6141987706132916e2da16477f5a019464, D66_RUNTIME_TREE to 7d8e77b2f5a4af79305c9212ce5174d3ea9fd657, and use /home/user/work/wt/rt-pin-ab1e4f61. Do not use the recipe's e319 tuple; its guessed rt-pin-e319fdbd spelling is not the source-derived eight-character path (e319fdbc)."
+    },
+    {
+      "id": "C2",
+      "blocker": "Reviewed helper custody",
+      "smallest_correction": "Restore/access the previously reviewed external regular non-symlink p2_commit_phase_capture.py with SHA-256 4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e, and pass its absolute path plus D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256 explicitly. The recorded 4ee helper copy is currently absent; the qualified ab1e checkout's own helper is a different hash (6c9daef2...). Do not use a mutable normal Runtime home or create a new helper."
+    },
+    {
+      "id": "C3",
+      "blocker": "Detached checkout admission",
+      "smallest_correction": "Obtain and retain genuine D66 receipts and target metadata for app d5a1d1ab, agent 070dfc5e, qualified runtime ab1e4f61, and composition 635f4de0. Current read-only state has exact agent/runtime-ab1e/composition receipts, but no app-d5a1d1ab receipt or app-pin-d5a1d1ab target metadata; the author packet also records App/Runtime receipt gaps for its e319 tuple. No body is authorized until all four receipts resolve to clean detached checkouts."
+    },
+    {
+      "id": "C4",
+      "blocker": "Submit recipe completeness",
+      "smallest_correction": "Add the exact controller invocation using the complete corrected environment and ending `.../node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2-element --submit`; this is the normal caller that requests checkouts, verifies receipts/target, registers distinct preflight/normal rows, waits for preflight PASS, then submits the one normal body. The published recipe currently gives only the service registry argv and prose about a later controller. Include the fixed private D66 output/submit-plan locations so the submit artifact, manifests, JUnit and runtime-private output persist under the intended D66 tree."
+    },
+    {
+      "id": "C5",
+      "blocker": "Published Markdown syntax",
+      "smallest_correction": "Remove the backslashes before the Markdown code fences in the published recipe; they currently render literal escaped fences. This is documentation-only but must be corrected before treating the recipe as executable handoff text."
+    }
+  ],
+  "authorization": {
+    "d130": "absolute hold retained",
+    "element_only": true,
+    "full_tour": false,
+    "swap_wal_recovery": false,
+    "execution_credit": false,
+    "result_is_source_ready": false
+  }
+}
