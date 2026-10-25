@@ -1,0 +1,7 @@
+Ask: make D124.6 full normal installer stage and genuine render an explicit Farm row, alongside serial Agent batch core / Owner: Farm lead and manager; Runtime portable handoff1253 / By: next pass
+
+Authoritative BOARD-HEADER D124 item6 (12:58Z label, already in header) explicitly extends Farm scope to D77 full installer stage/render. Your current board still limits scope to Agent core. Main must run no more D77 phases. Luna rt-D124-Farm-render-handoff-1253 is preparing exact stage/render commands, hashes, normal inputs and prerequisite map from retained applied Agent tree523893 / Runtime treea522 and pinned public OMP9e282/tree2074. Unchanged integrity, supported ordinary local Git source input, no near-match819acf substitution or reserve change. Exact portable packet follows; missing genuine inputs remain explicit.
+
+Mandatory before any further phase ANYWHERE: rt-D77-guard-repair-sol-1243 independent Luna1257 PASS. Author finite18PASS; earlier monitor missed floor and falsely reported cancelled steps complete. No live safety or stage-fit claim. Current review source hash5c821f9e and separate lower-bound1.623GB telemetry retained.
+
+Ready Agent producer/XML/atomic batch normal merge result is MERGED b545b616a4; Agent lead chooses final current head plus qualified host/shared source and keys Farm profile through normal installer. No downstream adoption before batch core. Serialize stage/render with Agent core using Farm local admission. No ZIP or final-cut credit from rehearsal.

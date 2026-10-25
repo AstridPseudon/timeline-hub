@@ -1,0 +1,58 @@
+[
+  {
+    "source_commit": "3c73dd148192e0eaa9cb5c7cf55ba3f62b86ac63",
+    "source_path": "diagnostics/measure_d111a_native_element.mjs",
+    "sha256": "7f5a9f3363beb2466f4c398a1536930cfd792798816f453a7faad5247e7f329a",
+    "published_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-sampler-1253-qualified-measure_d111a_native_element.mjs",
+    "label": "qualified"
+  },
+  {
+    "source_commit": "3c73dd148192e0eaa9cb5c7cf55ba3f62b86ac63",
+    "source_path": "diagnostics/sitecustomize_d111a.py",
+    "sha256": "30b345f07bec70cefdd44c9b8eb57fceda6482dd9e24b1f42df5d4f1b72a0ae7",
+    "published_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-sampler-1253-qualified-sitecustomize_d111a.py",
+    "label": "qualified"
+  },
+  {
+    "source_commit": "3c73dd148192e0eaa9cb5c7cf55ba3f62b86ac63",
+    "source_path": "diagnostics/test_d111a_native_sample.py",
+    "sha256": "f3ce5c3a3544be335e58b21a0c40bcccb5dcdc1f6ad6a89db4460fd9b311ede9",
+    "published_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-sampler-1253-qualified-test_d111a_native_sample.py",
+    "label": "qualified"
+  },
+  {
+    "source_commit": "4b24028b405c0f18ed9f63ee240e6e252393d26e",
+    "source_path": "diagnostics/measure_d111a_native_element.mjs",
+    "sha256": "2bf07b830d6d29f0f233bab62dd74b11f43e08b107b11cbd04ef3a6c006f18cc",
+    "published_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-sampler-1253-held-dedup-measure_d111a_native_element.mjs",
+    "label": "held-dedup"
+  },
+  {
+    "source_commit": "4b24028b405c0f18ed9f63ee240e6e252393d26e",
+    "source_path": "diagnostics/sitecustomize_d111a.py",
+    "sha256": "fc7ec3267514b1532cfdb9c5decf39970564ae4939b371d0c25dc0f782d94e5c",
+    "published_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-sampler-1253-held-dedup-sitecustomize_d111a.py",
+    "label": "held-dedup"
+  },
+  {
+    "source_commit": "4b24028b405c0f18ed9f63ee240e6e252393d26e",
+    "source_path": "diagnostics/test_d111a_sampler_controls.py",
+    "sha256": "1762154f3f7c341884c1c0a9fb427f9f2f27cb7bf134a7bc50339bb5b80d4c62",
+    "published_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-sampler-1253-held-dedup-test_d111a_sampler_controls.py",
+    "label": "held-dedup"
+  },
+  {
+    "source_commit": "26cc086284133729619a7d35cf2579a7a4dae47e",
+    "source_path": "diagnostics/p4_sample_0233.py",
+    "sha256": "61572d4a0f83101030ab97188c72c8c7a365bf3b656c5b046d901e5d69297196",
+    "published_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-sampler-1253-p4-p4_sample_0233.py",
+    "label": "p4"
+  },
+  {
+    "source_commit": "26cc086284133729619a7d35cf2579a7a4dae47e",
+    "source_path": "diagnostics/test_p4_observer.py",
+    "sha256": "0253e2943872cdfc80a12a1d492a52c1e5e0c4378f478c034e1fb5334314a396",
+    "published_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-sampler-1253-p4-test_p4_observer.py",
+    "label": "p4"
+  }
+]

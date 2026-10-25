@@ -1,0 +1,177 @@
+{
+  "handoff": "D124.6/D77 Farm stage-render",
+  "status": "SOURCE_ONLY_PREPARED_NO_PHASE_RUN",
+  "base": {
+    "repository": "composition",
+    "branch": "tl/integration",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "main_phase_run": false
+  },
+  "guard_dependency": {
+    "required_before_any_phase": true,
+    "name": "Sol1243 D77 whole-path guard repair",
+    "required_status": "PASS",
+    "retained_worker_done": true,
+    "retained_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D77-guard-repair-sol-1243/report.md",
+    "retained_report_sha256": "43f8e8c3c9de01e1f76dc6d0f72bd8c4d5c08be30ccdcf0d2e8044b19b5325ac",
+    "helper_sha256": "5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386",
+    "recorded_test": "PYTHONDONTWRITEBYTECODE=1 python3 diagnostics/test_d77_phase_guard.py --record — 18 passed",
+    "farm_rule": "Farm must independently verify and record this PASS before running request-runtime, child creation, installer, stage, or render."
+  },
+  "exact_sources": {
+    "agent": {
+      "repo": "agent",
+      "commit": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+      "tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+      "patch": "../workers/rt-F-D108-rehearsal-source-0645/evidence/agent.base-to-capture.patch",
+      "patch_sha256": "f5d49d5e63ddc0e7a0fb85966280024af70e498eb4f75bd6595bfb59a52a204a"
+    },
+    "runtime": {
+      "repo": "runtime",
+      "commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "patch": "../workers/rt-F-D108-rehearsal-source-0645/evidence/runtime.base-to-capture.patch",
+      "patch_sha256": "c93c3a1d00ddd9bb44ca51af3fdc71ab8311051846b07465d76183457f1b38b0"
+    },
+    "vibecomfy": {
+      "commit": "31f90bb03d330283b76e7dbdda51197be787090d",
+      "tree": "101744f0d87eebe5ddf6752c10f01f52dc94e3e9",
+      "source_mode": "normal requester/installer source; no new acquisition in this handoff"
+    },
+    "omp": {
+      "public_repo": "peteromallet/oh-my-pi",
+      "commit": "9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+      "tree": "2074d7a2e26cc954b5cf3d77e91f3efbb25ad34f",
+      "archive_bytes": 166266880,
+      "archive_sha256": "a7673f9f9b77d24989a5a84b70380f77af3dd869a7be2b94c8d56de404065ecb",
+      "source_tree_sha256": "3a84ac8be7d11434de8b22f4f0f1d643582ecc01c644e347bb0e056401da7b2e",
+      "bun_lock_sha256": "f08eab1fd7e0519e8b131697d6a35815fd71d9b0a61a8d70cc57b499bcba53ee",
+      "package_version": "17.4.0",
+      "bun_version": "1.3.14",
+      "input_status": "supported local Git source PASS; one retained authorized shallow fetch; no new fetch here"
+    },
+    "remotion_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18e",
+    "forbidden_substitutions": [
+      "profile819acf",
+      "old f4ed/0013 carriers",
+      "D123 candidate commit b742893426a46a99a2f30583a54faeebe2bd98b7"
+    ]
+  },
+  "normal_requesters": {
+    "checkout": {
+      "command": "$ORCH/bin/request-checkout REPO SHA reason",
+      "argv": [
+        ["request-checkout", "agent", "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4", "D124.6 exact applied Agent source"],
+        ["request-checkout", "runtime", "62040eeab98747dfb65abb6366236bf213109d6c", "D124.6 exact applied Runtime source"]
+      ],
+      "expected_paths": {
+        "agent": "/home/user/work/wt/agt-pin-cd3f5480",
+        "runtime": "/home/user/work/wt/rt-pin-62040eea"
+      },
+      "acceptance": "receipt plus git commit/tree and clean status; path alone is not proof"
+    },
+    "runtime": {
+      "argv": [
+        "request-runtime",
+        "agent-remotion-d124-applied",
+        "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+        "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18e",
+        "AGENT_CHECKOUT",
+        "RUNTIME_CHECKOUT",
+        "62040eeab98747dfb65abb6366236bf213109d6c",
+        "remotion-env-nodes",
+        "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin"
+      ],
+      "environment": "env -u RUNTIME_AGENT_CHECKOUT -u RUNTIME_RUNTIME_CHECKOUT -u RUNTIME_RUNTIME_SHA -u RUNTIME_TEMPLATE_SUITE -u RUNTIME_NODE_BIN",
+      "acceptance": "normal runtime receipt; exact source identities and Remotion lock must match"
+    },
+    "child": {
+      "argv": [
+        "request-child-venv",
+        "venv-agent-child-d124-applied",
+        "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+        "--source-carrier",
+        "AGENT_CHECKOUT",
+        "RUNTIME_CHECKOUT",
+        "62040eeab98747dfb65abb6366236bf213109d6c"
+      ],
+      "acceptance": "normal child receipt validates exact Agent/Runtime carrier; no shared venv or overlay"
+    }
+  },
+  "stage": {
+    "order": ["guard-pass", "farm-admission", "checkout-receipts", "runtime-and-child-receipts", "ordinary-installer", "profile-custody", "render"],
+    "ordinary_route": [
+      "astrid installer gateway",
+      "Installer.run",
+      "Backend.stage",
+      "service declaration",
+      "generic_host --service",
+      "run_pack_host_foreground",
+      "ensure_pack_host"
+    ],
+    "command": [
+      "ASTRID_RUN",
+      "install",
+      "--root",
+      "PROGRAM_ROOT",
+      "--data-root",
+      "DATA_ROOT",
+      "--manifest",
+      "INSTALL_MANIFEST",
+      "--uv",
+      "UV"
+    ],
+    "manifest_rule": "Farm supplies an authenticated manifest carrying exact local Agent/Runtime/VibeComfy source pins; do not author a guessed manifest here.",
+    "admission": {
+      "fresh_heavy_start_strictly_greater_than_bytes": 5200000000,
+      "phase_cancel_at_or_below_bytes": 4500000000,
+      "overall_stop_bytes": 4000000000,
+      "observed_lower_bound_bytes": 1623728128,
+      "observed_lower_bound_is_complete_peak": false,
+      "decision_owner": "Farm local storage admission"
+    }
+  },
+  "custody": {
+    "seven_keys": ["agent_commit", "agent_tree", "agent_wheel", "agent_wheel_sha256", "source_checkout", "source_digest", "runtime_environment"],
+    "profile": "actual normal-stage installed profile only",
+    "bindings": "actual seven-key JSON carrier only",
+    "private_results": "keep profile, bindings, receipts, logs, and render outputs under Farm-private RESULT_ROOT; do not send private bytes through ordinary sync",
+    "safe_transport": [
+      "retained small source/hash manifests and this handoff",
+      "public immutable source identity strings",
+      "normal requester receipts after Farm approves their transport"
+    ]
+  },
+  "render": {
+    "preflight_selector": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+    "genuine_render_selector": "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render",
+    "required_environment": "the exact installed profile, seven-key bindings, Node/browser/ffmpeg/ffprobe hashes, Remotion lock, Runtime checkout, and paths supplied by the normal stage receipt",
+    "order": "preflight PASS, then daemon-backed authoring and final render; durable private results"
+  },
+  "v2_contract": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "Idempotency-Key"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "accepted_reply_fields": ["accepted", "merged", "canonical_document", "receipt", "head", "effects", "bindings", "dependencies"],
+    "conflict_reply_fields": ["head", "reason"],
+    "invalid_reply_fields": ["code", "path", "hint"],
+    "dry_run": "writes nothing",
+    "contract_status": "unchanged"
+  },
+  "exactmissing": [
+    "independent Farm-verifiable Sol1243 PASS receipt/path",
+    "Farm free-space admission and complete finite peak bound",
+    "normal request-checkout receipts for exact Agent and Runtime pins",
+    "normal request-runtime receipt and installed runtime origin",
+    "normal child-venv receipt or equivalent installer-supplied child provenance",
+    "authenticated Farm installer manifest and ordinary installer receipt",
+    "actual installed profile path/content and service declaration/argv",
+    "seven-key carrier values, including agent_wheel and agent_wheel_sha256",
+    "source_checkout, source_digest, runtime_environment installed origins",
+    "actual installed Python/site/Remotion/Node/browser/ffmpeg/ffprobe paths and verified hashes",
+    "preflight result, genuine render result, durable result paths",
+    "any rendered media or private payload bytes"
+  ],
+  "recipe": "../workers/rt-D124-Farm-render-handoff-1253/evidence/farm-stage-render-recipe.sh",
+  "no_actions_taken": ["no fetch", "no archive duplication", "no materialization", "no installer", "no stage", "no render", "no new collector", "no Main phase"]
+}

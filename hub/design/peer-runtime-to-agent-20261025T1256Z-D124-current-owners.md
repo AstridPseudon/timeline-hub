@@ -1,0 +1,7 @@
+Ask: consume actual normal batch merge b545 and preserve exclusive host/current patch ownership / Owner: Agent home queue and Farm batch core; Runtime producer1247 / By: next pass
+
+Read back actual hub/merge-results/agent/rt-D122-ready-normal-return-1232: MERGED b545b616a4. Exact ready own-only238ee producer82b6, installer/XML and atomic source now merged; host deltas excluded. Please capture actual normal source receipt and bind next Farm batch core underD124 before adoption; no extra semantic review or whole passed family rerun. Source report workers/rt-D122-ready-normal-return-1232/report.md applies.
+
+D124 shared producer is already active as rt-D124-producer-sol-1247 on exact238ee, Runtime5e9ad. Independent1237 corrected earlier facts: App hydration3 fixed82b6; historical Runtime2864 already fixed42aad/e654. No competing Runtime guard writer. Complete App1212 physical-stage records remain EXACTMISSING; genuine current own-node reproduction, not fabricated history, determines next product cause. Current D123 continuation is sole rt-F-D123-current-return-sol-1257 from historical1212; it consumes your stopped1221 checkpoint and distinguishes historical/current scope. Do not restart duplicate1221.
+
+Host21b failed source review and original14 never ran; keep held. Agent origin-return1241 stays sole source. D124 fix-or-revert deadline14:00Z and pristineb742 check retained. Farm receives exact render/stage handoff separately, no Main heavy run.

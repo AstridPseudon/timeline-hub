@@ -1,0 +1,29 @@
+{
+  "task": "D124.4",
+  "status": "source_only_handoff_complete",
+  "composition_base": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "qualified_source_commit": "3c73dd148192e0eaa9cb5c7cf55ba3f62b86ac63",
+  "dedup_repaired_source_commit": "4b24028b405c0f18ed9f63ee240e6e252393d26e",
+  "p4_observer_commit": "26cc08628c4a36a0c2ad5c0fcd4f5f1d7a6e7d1b",
+  "actual_service_attach": "EXACTMISSING",
+  "native_synthetic_launcher": "available_but_not_actual_attach_capable",
+  "whole_request": {
+    "sample_count": 235,
+    "lost_samples": 0,
+    "sampling_interval_ms": 20.0,
+    "runtime_elapsed_ms": 6179.286447,
+    "nominal_sample_wall_ms": 4700.0,
+    "nominal_coverage_fraction": 0.7606056201330198,
+    "observer_cpu_ms": 141.65898
+  },
+  "limits": [
+    "Retained qualified profile lacks a per-sample frame matrix; exact membership is EXACTMISSING.",
+    "No actual App PID, lifecycle, arrival UTC, request correlation, or 11251 outcome is claimed.",
+    "Native synthetic timing does not explain actual 11251 timing.",
+    "App owns the actual tour launch and PID/lifecycle binding."
+  ],
+  "outputs": {
+    "markdown": "design/rt-D124-App-sampler-handoff-1253.md",
+    "evidence": "workers/rt-D124-App-sampler-handoff-1253/evidence/"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "task": "D124.4",
+  "purpose": "Hash-locked handoff of retained D111a/P4 diagnostic sources; no product or test source change.",
+  "source_repository": "/home/user/work/runtime",
+  "qualified_d111a_run_source": {
+    "commit": "3c73dd148192e0eaa9cb5c7cf55ba3f62b86ac63",
+    "parent": "86e3ca8c70e9b9d77e104e8261108c88e7ff30f9",
+    "attribution": "Claude; test(runtime): scope D111a native request diagnostics",
+    "paths": {
+      "diagnostics/measure_d111a_native_element.mjs": {
+        "blob": "9d7bdb29d8f505dcdbd9398d7bbbc5e0ccd668c0",
+        "sha256": "7f5a9f3363beb2466f4c398a1536930cfd792798816f453a7faad5247e7f329a"
+      },
+      "diagnostics/sitecustomize_d111a.py": {
+        "blob": "502c0bb4e4d6319d60a53733dceb207539cd6dcb",
+        "sha256": "30b345f07bec70cefdd44c9b8eb57fceda6482dd9e24b1f42df5d4f1b72a0ae7"
+      },
+      "diagnostics/test_d111a_native_sample.py": {
+        "blob": "9a414bf240e04595394929b372dbf09020bebc8e",
+        "sha256": "f3ce5c3a3544be335e58b21a0c40bcccb5dcdc1f6ad6a89db4460fd9b311ede9"
+      }
+    },
+    "matching_retained_artifact": "rt-D111a-scope-return-0827 run-1792917417224776367-32439"
+  },
+  "dedup_repaired_existing_source": {
+    "commit": "4b24028b405c0f18ed9f63ee240e6e252393d26e",
+    "parent": "3c73dd148192e0eaa9cb5c7cf55ba3f62b86ac63",
+    "attribution": "Claude; tl/rt-D111a-sample-custody-sol-0853: D111a exact sample-custody repair",
+    "paths": {
+      "diagnostics/measure_d111a_native_element.mjs": {
+        "blob": "5a7a718007dd729004b9483bf99ddd0edaa2ec66",
+        "sha256": "2bf07b830d6d29f0f233bab62dd74b11f43e08b107b11cbd04ef3a6c006f18cc"
+      },
+      "diagnostics/sitecustomize_d111a.py": {
+        "blob": "ab29518b4d1c9cd9dda9f6566cb437c683592e2e",
+        "sha256": "fc7ec3267514b1532cfdb9c5decf39970564ae4939b371d0c25dc0f782d94e5c"
+      },
+      "diagnostics/test_d111a_sampler_controls.py": {
+        "blob": "9cb2960e691d3053fe696780f5d67ea39fcb8a8e",
+        "sha256": "1762154f3f7c341884c1c0a9fb427f9f2f27cb7bf134a7bc50339bb5b80d4c62"
+      }
+    },
+    "run_status": "EXACTMISSING: retained custody-repair source has no matching completed D111a result; do not mix its bytes with the qualified 3c73 run.",
+    "relevant_behavior": "Samples a request at server._dispatch, collapses recursive frame identity once per sample, and caps the deepcopy/finite_json union once per sample."
+  },
+  "p4_existing_observer": {
+    "commit": "26cc086284133729619a7d35cf2579a7a4dae47e",
+    "paths": {
+      "diagnostics/p4_sample_0233.py": {
+        "blob": "f88d5e0ab6777cfd6db33876b8ffa6ef10b5e961",
+        "sha256": "61572d4a0f83101030ab97188c72c8c7a365bf3b656c5b046d901e5d69297196"
+      },
+      "diagnostics/test_p4_observer.py": {
+        "blob": "c38260a483cacdbd4758fa93bbf9e85403483826",
+        "sha256": "0253e2943872cdfc80a12a1d492a52c1e5e0c4378f478c034e1fb5334314a396"
+      },
+      "diagnostics/p4_sample_0242_results.json": {
+        "blob": "21fc5deaf2294cad6460fff8dead06aca134f8ed",
+        "sha256": "2e43672e1b689660c4af2aae78ef953a46c1edf5a93d8acbfd43fa8e825360a8"
+      }
+    },
+    "matching_retained_artifact": "agt-P4-crossprocess-sample-0242; 432 samples, 10/25/40 checkpoints, zero sampler errors"
+  },
+  "recovery": {
+    "launcher": "git -C /home/user/work/runtime show 4b24028b4:diagnostics/measure_d111a_native_element.mjs",
+    "profiler": "git -C /home/user/work/runtime show 4b24028b4:diagnostics/sitecustomize_d111a.py",
+    "qualified_run_pair": "Use 3c73dd148 for byte-for-byte reproduction of the retained 0827 result; use 4b24028b4 only when the per-sample dedup repair is explicitly desired and label any result as new/unqualified."
+  },
+  "actual_attach_capability": {
+    "status": "EXACTMISSING",
+    "reason": "Both retained D111a launchers call startDirectHarness and create a Runtime child; the profiler is loaded by Python startup sitecustomize and samples in-process. Neither attaches to an already-running App service PID."
+  }
+}

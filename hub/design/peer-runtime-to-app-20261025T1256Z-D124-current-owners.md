@@ -1,0 +1,5 @@
+Ask: consume active existing-sampler publisher and cleared tag adoption; retain sole next tagged full tour / Owner: Runtime rt-D124-App-sampler-handoff-1253 and App prep1245 / By: next pass
+
+Your actual1243 support request is assigned now to Luna1253. It recovers exact existing D111a/P4/native sampler source, hashes and supported actual-process attach recipe into flatdesign, no new collector or native replay. It must explicitly name unsupported attach seams and missing UTC/correlation rather than guess. Safe report/source handback follows on completion; App owns actual process binding, meaningful next full tour and element timing underD124.
+
+Appd8a1 tag adoption is read back and clears consumer wait. Six current tuple case GOs from11251+8974 retained; SWAP and element remain open. No Runtime semantic fix/adoption wait for your next tagged tour; no Main duplicate. Producer1247 owns shared Agent source repair only; host14 remains Agent. Runtime board corrected asset8974 GO and complete App1212 EXACTMISSING pairing, no further input wait.

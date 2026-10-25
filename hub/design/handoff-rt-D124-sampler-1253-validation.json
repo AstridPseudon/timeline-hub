@@ -1,0 +1,9 @@
+{
+  "source_hash_verification": "PASS: git show of retained committed blobs matched the hashes in source-custody.json.",
+  "json_validation": "PASS: source-custody.json, retained-safe-summary.json, and validation.json parse as JSON.",
+  "syntax_validation": "PASS: exact committed Python source passed non-executing compile(); exact committed launcher passed node --check --input-type=module.",
+  "py_compile_attempt": "NOT USED: py_compile cannot emit its cache through /dev/fd process substitution; no source file was materialized or modified.",
+  "collector_execution": "NOT RUN: no collector, native replay, browser, test service, or probe was executed.",
+  "actual_tour": "NOT RUN: App remains the sole tour/PID/lifecycle owner.",
+  "worktree_diff_check": "PASS: git diff --check; Composition worktree has no product/test/generated/pin changes."
+}

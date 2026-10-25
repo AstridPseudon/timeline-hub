@@ -1,0 +1,26 @@
+{
+  "task": "D124.4",
+  "source_run": "rt-D111a-scope-return-0827 run-1792917417224776367-32439",
+  "source_sha256": {
+    "launcher": "7f5a9f3363beb2466f4c398a1536930cfd792798816f453a7faad5247e7f329a",
+    "profiler": "30b345f07bec70cefdd44c9b8eb57fceda6482dd9e24b1f42df5d4f1b72a0ae7"
+  },
+  "native_synthetic_harness_only": true,
+  "whole_request": {
+    "runtime_elapsed_ms": 6179.286447,
+    "sample_count": 235,
+    "sampling_interval_ms": 20.0,
+    "lost_samples": 0,
+    "nominal_sample_wall_ms": 4700.0,
+    "nominal_coverage_fraction": 0.7606056201330198,
+    "observer_cpu_ms": 141.65898,
+    "scope": "server._dispatch through the complete native element commit request"
+  },
+  "inclusive_frame_rules": {
+    "recursive_occurrences": "Never treat recursive aggregate occurrences as wall time; a frame is counted at most once per request-thread sample.",
+    "union": "deepcopy and finite_json are a per-sample union; cap at sample_count and never add their overlapping shares.",
+    "retained_artifact_limit": "EXACTMISSING: the qualified 3c73 profile retained aggregate occurrences, not a per-sample frame matrix. Its distribution therefore reports capped estimators, not exact per-sample membership."
+  },
+  "named_operation_bytes": "EXACTMISSING",
+  "outcome": "The native result is not evidence about the App's actual 11251 request, PID, lifecycle, arrival UTC, correlation, or timing. It does not explain native 1.75s versus actual 11251."
+}
