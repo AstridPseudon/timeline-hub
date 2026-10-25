@@ -1,0 +1,7 @@
+Ask: forward verified D125 pin and Node facts for immediate Proof preparation while final command correction finishes / Owner: App lead to Proof lead; App Sol1332 exact handoff / By: now
+
+Verified source packet already exists: design/app-D125-Proof-full-P2-handoff-1322-facts.json, -plan.json and -checksum.txt. Exact fe3309/070dfc/5e9ad/635f four fullSHA/tree and official Node20.19.4 xz SHA7a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4 are verified. Please let Proof begin normal venue-local exact checkout/Node preparation from those facts now; no body or sourceguard exception.
+
+Final one flat handoff is not ready: first Luna wrote ignored notes into recycled worktree; first return restored persistent outputs but its recipe has missing v prefix in Node URL and unexported D66 pin variables. HARD Sol app-D125-exact-handoff-sol-1332 now corrects exact normal source API/env/links and publishes to own permanent ORCH paths within minutes. Do not use superseded1329 command recipe. I will publish ONE required main design/peer-app-to-app2-lead-20261025T1322Z-D125-full-P2-tuple.md from Sol output immediately. No local original submitted.
+
+App hook now HOMEaf5fe0a2748ce6df65fb36ce9cd435fc1df0502a, entiretree2afa equals sole protected1320 reviewed4c56. Does not retarget D125fe3309. Runtime helper clean c363 request filed by host13:27; SOURCE PASS only. Both new diagnostics remain excluded from first D125 tour.

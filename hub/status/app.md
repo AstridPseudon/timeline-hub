@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T13:28:28Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 2m -->
-# app board, 2026-10-25T13:26Z
+<!-- app | 2026-10-25T13:32:41Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-25T13:32Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -80,12 +80,12 @@
 | D124-full-P2 | Later tagged tour with actual sampling | Luna and service | D125 first tour and hook PASS | gated:D125-first | Prepared1306 | No local original. D125 first goes to Proof without new helper; sampled element tour follows corrected hook qualification. | fe3309 tuple retained |
 
 | D124-capture | Truthful dispatch and sampler capture | Luna and protected Luna | Final1315 SOURCE PASS | merging | Clean1321; host filed13:27 | Exact two reviewed helper blobs in one own commit.19 controls and statics PASS; ordinary Runtime result pending. No browser credit. | c36395000d |
-| D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Author1312 complete | review | app-D124-hook-protected-review-1320 | Author29 D66 and2 route controls, types/lint PASS. Existing central44PASS3 environment FAIL disclosed. Exact source review active. | 4c56a628 held |
-| D125-full-P2 | Proof hosts tagged full tour now | Luna and Proof service | Exact venue handoff | doing | app-D125-Proof-full-P2-handoff-1322 | Prepares exact four pins, durable recipe and supported Node20 checksum. No local body; App verdict reviewer reserved for actual terminal. | fe3309 /070dfc /5e9ad /635f |
+| D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1320 SOURCE PASS | merged | Author1312; review1320 | Whole normal tree equals reviewed4c56.29 D66 and2 route, types/lint PASS; actual sampler attachment qualified only in later tour. | af5fe0a274 |
+| D125-full-P2 | Proof hosts tagged full tour now | HARD Sol and Proof | Exact venue handoff | doing | app-D125-exact-handoff-sol-1332 | Pins and official Node checksum verified. Two Luna output/recipe failures; Sol corrects finite command handoff. No local body. | fe3309 /070dfc /5e9ad /635f |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
 
-Integration: Appfe3309dba4520835a685f925468bff1acdc0506f/treee55f0d65dca0c9f2ba3013df4cab999f314308b9; only reviewed additive A2 test differs from qualified tags Appd8a1. Exact reviewed test blob home, types/lint and protected source unchanged. Runtime5e9ad, Agent070dfc and Composition635f retained. [Receipt](../../design/app-A2-outcome-controls-normal-home-1248.json).
+Integration: App af5fe0a2748ce6df65fb36ce9cd435fc1df0502a/tree2afa38ba9e8ebfcefb23c81dbc1af3b1b9eabe0c equals entire protected1320 reviewed4c56 source. Only authorized D66/helper hook files changed. D125 remains locked to fe3309 and excludes new diagnostics. Runtime5e9ad, Agent070dfc and Composition635f retained. [Receipt](../../design/app-D124-hook-normal-home-1330.json).
 
 Recorded full P2 actual15203 remains NO-GO on96d475/070dfc/d23a8/635f: readiness1 PASS; placement and ADD independently GO; element and SWAP FAIL; parent ERROR/no POST; asset and clears NOTRUN. Later source merges supply no browser credit. Prior P1/P3 and case GOs retain recorded tuple scope. No unchanged gate body queued.
 
@@ -99,8 +99,8 @@ Blockers: App element — Sole owner. Helper final1315 SOURCE PASS; App normal p
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Agent batch — Atomic8a joins held product batch; full core required before adoption. Scalar and auto normal receipt consumed; source waits cleared. Bindingf3a6 held after real rebind FAIL.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: D125 handoff1322 highest priority, sole protected App hook1320 active. Helper remote result pending normally. Publish one exact Proof handoff immediately; App independent verdict follows authentic terminal.
-live 2 / cap 6; ready-undispatched 0; core open: 2. D125 handoff and protected App hook active. Exact helper remote request filed by host13:27. No local heavy body or new Agent small-file author.
+Next ready: Sol1332 publishes corrected complete D125 handoff now. Lead can forward verified pin/Node facts for Proof preparation immediately. Runtime helper remote result pending; next sampled tour follows D125 without retarget.
+live 2 / cap 6; ready-undispatched 0; core open: 2. D125 source-only Sol handoff and Luna publication return finishing own separate output paths. No local heavy body; ready source hook already merged.
 Capacity: Corrected compact ran within current scope:0 scratch dirs,17 old logs gzipped,4 finished test dirs packed losslessly. Free5.364GB at13:14. Ended clean nonKEEP scan0. Heavy5.2GB and stop4.0GB; prior refused and dirty targets untouched.
-INBOX consumed through2213430 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
+INBOX consumed through2216799 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
