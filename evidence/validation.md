@@ -1,78 +1,81 @@
-# R2 graph child-boundary applicability validation
+# R2 graph boundary independent source assessment
 
-Verdict: the qualified `ab1e` grouped inverse/redo correction does not cover the
-App graph child alias seam. The exact causal owner of the admitted graph failure
-remains `UNKNOWN`; the only proved missing applicability is the Runtime auth
-validation exception's child-alias scope.
+Verdict: `PASS_SOURCE_ASSESSMENT`.
 
-## Source trace
+The source claim is supported in its narrow syntactic scope: the `ab1e`
+correction adds an inverse-only exception for an empty-path
+`occurrence:<id>/collection:track` read. It does not match the graph's
+`occurrence:new-occ/collection:clip` selection or
+`occurrence:new-occ/clip:title` leaf reads. This is a proven applicability
+limit, not a causal proof that Runtime or Agent emitted the wrong record.
 
-- Runtime `validate()` computes per-command sequential inputs, then computes
-  authenticated inverse stage boundaries, and calls `validate_step` with those
-  boundaries (`runtime_protocol/timeline_commit_auth.py:2891-2950`).
-- `validate_step` validates each native read against that command's
-  `command_boundary` (`:393-426`). `native_site` delegates occurrence child
-  aliases to `site` (`:213-218`); `site` requires exactly one matching occurrence
-  row before following its shot/internal edges (`:150-162`).
-- The `ab1e` exception is exact-source limited to
-  `owner + "/collection:track"`, with empty path, `timeline.inverse`, a created
-  owner, an absent parent occurrence at that command boundary, and one matching
-  root restoration (`:400-421`). It does not cover `collection:clip` or
-  `clip:title`.
-- Runtime effect bindings use computed inverse stage boundaries, and
-  materialization edge checks use the bound step input (`:515-522`, `:590-605`).
-  Those corrections do not broaden native read alias applicability.
-- The Agent graph fixture's child operation selects `collection.clips` for
-  `occurrence:new-occ`, reads/binds/writes `occurrence:new-occ/clip:title`, and
-  repeats child reads. The graph test imports that fixture; the root-only test
-  does not enable `child_ops`.
+## Exact source trace
 
-## Evidence reconciliation
+- The reviewed branch `cd236` has no production-source delta from its parent
+  `ab1e`; `runtime_protocol/timeline_commit_auth.py` is blob
+  `75c290ed...`, and the store is unchanged from `5e9ad`.
+- On `5e9ad`, `validate_step` proceeds from each native read to
+  `native_site` (`:382-419`, especially `:403`). On `ab1e`, the inserted
+  branch at `:400-421` requires all of: inverse stage context, operation
+  `timeline.inverse`, a slash-bearing ref, exact
+  `owner + "/collection:track"`, empty path, occurrence owner in `created`,
+  authenticated owner absence at the command boundary, and one matching root
+  restoration.
+- `native_site` delegates ordinary occurrence child aliases to `site`
+  (`:213-218`). `site` resolves collection families through the owner/source
+  path (`:119-131`) and leaf aliases through the occurrence row and its
+  authenticated shot/internal images (`:150-172`); it requires exactly one
+  matching occurrence at `:156`.
+- `validate()` computes inverse stage boundaries and passes them to
+  `validate_step` (`:2938-2950`). `validate_bindings` uses those boundaries for
+  effect bindings (`:506-522`) and the bound step input for materialization
+  edge checks (`:588-605`). Neither change alters the native-read branch's
+  `collection:track`-only predicate.
+- Agent `160c`'s `child_ops` selects `collection.clips`, reads and binds
+  `occurrence:new-occ/clip:title`, and repeats child writes/reads
+  (`tests/editing_conformance/test_recorded_graph_roots.py:112-123`). The
+  child comparator enables that fixture, while the root comparator does not
+  (`tests/sdk/test_timeline_commit_graph_roots.py:297-338`). The two Agent
+  graph files are byte-identical at `224de`.
 
-The safe App packet reports the exact graph source as PASS and the admitted
-graph-nine result as 8 PASS / 1 FAIL. The sole failure is
+## Evidence boundary
+
+The retained graph execution is `8 PASS / 1 FAIL` on `5e9ad`; the sole failing
+selector is
 `test_authenticated_created_child_stages_reload_inverse_redo_exact_closure`,
 with `invalid_records: provider occurrence alias is outside its boundary` at
-Runtime auth line 156. The root-only create/inverse/redo comparator passes, but
-it lacks the graph child aliases and therefore cannot qualify them.
+Runtime auth line `156`. The root-only comparator passes, but it has no child
+selection, child alias read/bind, or child writes and therefore cannot qualify
+the child seam. The retained original `[True]` run fails on `ab1e` during
+redo-birth with the same alias message. It does not expose the exact graph
+read, command ordinal, stage partition, or physical binding, so the shared
+line/message is not treated as proof of a shared cause.
 
-The separate original `[True]` run on Agent `d4ba9916` plus Runtime `ab1e4f61`
-fails during `redo-birth` through `validate_step:426 -> native_site:218 ->
-site:156`. Its exact records and physical closure packet are unavailable. The
-shared line/message is not treated as proof of a shared cause.
+The exact causal owner remains `UNKNOWN`. Accepted `records.commands` and
+`records.steps`, the failing read ref/path/state, ordinal and undo/redo phase,
+per-ordinal closure images, inverse stage ranges, effect/materialization
+bindings, continuations, and paired accepted history receipts are
+`EXACTMISSING`. Current accepted/stage/physical records are therefore not
+asserted.
 
-## EXACTMISSING
-
-The following are not present in the safe graph packet and prevent causal
-ownership attribution:
-
-- accepted `records.commands`/`records.steps`, failing read ref/path/state,
-  command ordinal, and exact graph undo/redo phase;
-- per-ordinal sequential input/output closures;
-- inverse-stage native/effect ranges and before/after closure pins;
-- `commit.effect` and `commit.materialization` bindings with physical refs,
-  owners, edge refs, ordinals, and phases;
-- source/landing closures, authenticated continuations, and paired accepted
-  history receipts.
-
-Therefore this report records a Runtime R2 applicability gap only. It does not
-authorize a Runtime fix, Agent change, App guard, test change, retry, or new
-record collector. D130 SWAP/WAL recovery remains held and was not inspected.
+D130 SWAP/WAL remains held and untouched. No guard, retry, body, collector,
+test, qualifier, or protocol change was authored.
 
 ## Checks run
 
 All checks were read-only and passed:
 
 ```text
-python AST parse of runtime_protocol/timeline_commit_auth.py and the Agent graph/fixture sources: PASS
-Python source predicate check: Runtime exception is collection:track-only; effect-boundary and bound-materialization hooks present: PASS
-Python graph source check: root-only caller, child caller, collection selection, clip leaf read, and child binding present: PASS
-Python JSON parse of the four safe App evidence JSON files: PASS (4)
+AST parse/compile of runtime_protocol/timeline_commit_auth.py: PASS
+AST parse/compile of Agent 160c graph fixture and graph test sources: PASS (2)
+Python source predicates: PASS (track-only exception; no clip or clip:title exception; inverse boundaries passed to validate_step; effect/materialization boundary hooks present)
+Python graph source predicates: PASS (collection.clips selection; clip:title read; child bind; repeated child writes/reads; root comparator excludes child_ops)
+Python JSON parse of evidence/applicability.json and evidence/source-manifest.json: PASS (2)
 git diff --check 5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 ab1e4f6141987706132916e2da16477f5a019464 -- runtime_protocol/timeline_commit_auth.py runtime_protocol/timeline_commit_store.py: PASS
 git diff --quiet 5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 ab1e4f6141987706132916e2da16477f5a019464 -- runtime_protocol/timeline_commit_store.py: PASS (store unchanged)
 git diff --quiet 160c675a2d58ab9ec2dde7517860075ad85e41d2 224de4697c -- Agent graph/fixture test files: PASS (unchanged)
+Review branch production source equals ab1e: PASS
 ```
 
-No product test/body/retry was run in this read-only applicability task. The
-8-pass/1-fail graph result and original `[True]` failure above are retained
-results from the named safe evidence packets.
+No product/provider tests were run or requested. The retained `8 PASS / 1
+FAIL` and original `[True]` failure are prior evidence, not new execution.
