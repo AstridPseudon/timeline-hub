@@ -1,0 +1,691 @@
+bringing up nodes...
+bringing up nodes...
+
+EEEE.EEEEEEE.EEEEEE..E                                                   [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-False] _
+[gw1] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-False]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw1/test_ordinary_birth_or_ordered0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f26e05688a0>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-False] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-False]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw2/test_ordinary_birth_or_ordered0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd6132348a0>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-True] _
+[gw1] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-True]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw1/test_ordinary_birth_or_ordered0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f26e064b490>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-True] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-True]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw2/test_ordinary_birth_or_ordered0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd61317b490>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[image] _
+[gw1] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[image]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw1/test_stale_explicit_replacemen0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f26e0380cb0>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[video] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[video]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw2/test_stale_explicit_replacemen0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd612ec4cb0>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-False] _
+[gw1] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-False]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw1/test_actual_accepted_dependent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f26db733bd0>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-True] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-True]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw2/test_actual_accepted_dependent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd61231fbd0>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-True] _
+[gw1] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-True]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw1/test_actual_accepted_dependent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f26db478050>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-False] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-False]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw2/test_actual_accepted_dependent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd612f20050>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-True] _
+[gw1] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-True]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw1/test_actual_accepted_dependent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f26db352050>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-False] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-False]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw2/test_actual_accepted_dependent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd611f9e050>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-False] _
+[gw0] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-False]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw0/test_actual_accepted_dependent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f58b02f3350>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-True] _
+[gw1] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-True]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw1/test_actual_accepted_dependent0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f26db351050>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[image] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[image]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw2/test_exact_old_source_tuple_su0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd611f9d050>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[video] _
+[gw1] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[video]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw1/test_exact_old_source_tuple_su0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f26db4689b0>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_ordered_replacement_preserves_unrelated_historical_transition[image] _
+[gw0] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_ordered_replacement_preserves_unrelated_historical_transition[image]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw0/test_ordered_replacement_prese0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f58ab34fd40>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+_ ERROR at setup of test_ordered_replacement_preserves_unrelated_historical_transition[video] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+request = <SubRequest 'editing' for <Function test_ordered_replacement_preserves_unrelated_historical_transition[video]>>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6/popen-gw2/test_ordered_replacement_prese0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd6120949b0>
+
+    @pytest.fixture(params=['image', 'video'])
+    def editing(request, tmp_path, monkeypatch):
+>       yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
+
+tests/editing_conformance/test_commit_runtime_parent_media.py:206: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/test_commit_runtime_parent_media.py:188: in media_realm
+    transition = capture_clip_set(
+astrid/sdk/timeline/_clip_scalar_commands.py:115: in capture_clip_set
+    return _capture(bundle, 'clip.set', select, values, clear)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_scalar_commands.py:162: in _capture
+    return execute(bundle, [{'schema_version': 1, 'op': op, 'version': '1',
+astrid/sdk/timeline/commands.py:223: in execute
+    validate_command(supplied)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+command = {'args': {'clear': [], 'values': {'transition': {'duration': 0.5, 'type': 'crossfade'}}}, 'op': 'clip.set', 'schema_version': 1, 'select': 'occurrence:occurrence-2/clip:clip-2', ...}
+
+    def validate_command(command):
+        try:
+            json.dumps(command, allow_nan=False)
+        except (ValueError, TypeError) as exc:
+            raise CommandError("command must be finite JSON") from exc
+        errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+        if errors:
+>           raise CommandError(errors[0].message)
+E           astrid.sdk.timeline._command_state.CommandError: Additional properties are not allowed ('transition' was unexpected)
+
+astrid/sdk/timeline/commands.py:139: CommandError
+=========================== short test summary info ============================
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-False]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-False]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-True]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-True]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[image]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[video]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-False]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-True]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-True]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-False]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-True]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-False]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-False]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-True]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[image]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[video]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordered_replacement_preserves_unrelated_historical_transition[image]
+ERROR tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordered_replacement_preserves_unrelated_historical_transition[video]
+4 passed, 18 errors in 22.86s

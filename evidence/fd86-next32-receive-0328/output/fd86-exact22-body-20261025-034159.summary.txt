@@ -1,0 +1,16 @@
+request_id=fd86-exact22-body-20261025-034159
+route=existing-main-D73
+manifest=fd86-exact22-body-20261025-034159.manifest
+preflight_exit=0
+body_exit=1
+tests=22
+passed=4
+failures=0
+errors=18
+skipped=0
+duration_seconds=22.854
+automatic_disposition=NO-GO
+automatic_disposition_reason=18 setup errors; no independent NO-GO review performed
+common_error=CommandError: Additional properties are not allowed ('transition' was unexpected)
+controls=bash-n:0;positive:exit17,stub_calls1;poison:exit1,stub_calls0
+prior_actuals_not_repeated=1619211,10211789,20service18575

@@ -1,0 +1,4 @@
+agent: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-657bc2e8dba066df1c7d21851315bdb6b0f16a3a -> /home/user/work/wt/agt-pin-657bc2e8 at 657bc2e8dba066df1c7d21851315bdb6b0f16a3a
+runtime: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-6634a17f3ffd885567ba3c91b6c7a560df7375a4 -> /home/user/work/wt/rt-pin-6634a17f at 6634a17f3ffd885567ba3c91b6c7a560df7375a4
+app: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-5465100844483f4299825816b0fba66e5e5d3b24 -> /home/user/work/wt/app-pin-54651008 at 5465100844483f4299825816b0fba66e5e5d3b24
+composition: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40 -> /home/user/work/wt/vw-pin-635f4de0 at 635f4de06fda22a85fc2e4cfc764d0153a4c9f40
