@@ -46,7 +46,7 @@ def root_values():
         {'ref': 'occurrence:new-occ', 'kind': 'occurrence', 'owner': 'parent', 'value': {
             'occurrence_id': 'new-occ', 'shot_id': 'new-shot', 'track': 'picture',
             'placement': {'start_ms': 20000, 'track': 'picture'}, 'duration_ms': 2000,
-            'source_offset': 0, 'speed': 1, 'gain': None,
+            'source_offset': 0, 'speed': 1, 'gain': 1,
             'provenance': {'group_migration': {'opaque': [None, {'clipType': 'shot'}]}},
         }},
     ]
