@@ -1,0 +1,57 @@
+{
+  "acceptance_curve": [
+    {
+      "operation": "ten_note_commit",
+      "note": null,
+      "accepted_at": "2026-10-25T02:56:37.733+00:00",
+      "seconds_since_ten_note_commit": 0.0,
+      "seconds_since_previous_acceptance": 0.0
+    },
+    {
+      "operation": "undo",
+      "note": 1,
+      "accepted_at": "2026-10-25T02:56:40.561+00:00",
+      "seconds_since_ten_note_commit": 2.828,
+      "seconds_since_previous_acceptance": 2.828
+    },
+    {
+      "operation": "redo",
+      "note": 1,
+      "accepted_at": "2026-10-25T02:56:43.081+00:00",
+      "seconds_since_ten_note_commit": 5.348,
+      "seconds_since_previous_acceptance": 2.52
+    },
+    {
+      "operation": "undo",
+      "note": 2,
+      "accepted_at": "2026-10-25T02:56:48.089+00:00",
+      "seconds_since_ten_note_commit": 10.356,
+      "seconds_since_previous_acceptance": 5.008
+    },
+    {
+      "operation": "redo",
+      "note": 2,
+      "accepted_at": "2026-10-25T02:56:51.924+00:00",
+      "seconds_since_ten_note_commit": 14.191,
+      "seconds_since_previous_acceptance": 3.835
+    },
+    {
+      "operation": "undo",
+      "note": 3,
+      "accepted_at": "2026-10-25T02:57:02.243+00:00",
+      "seconds_since_ten_note_commit": 24.51,
+      "seconds_since_previous_acceptance": 10.319
+    },
+    {
+      "operation": "redo",
+      "note": 3,
+      "accepted_at": "2026-10-25T02:57:06.994+00:00",
+      "seconds_since_ten_note_commit": 29.261,
+      "seconds_since_previous_acceptance": 4.751
+    }
+  ],
+  "pending_operation": {
+    "operation": "undo",
+    "note": 4
+  }
+}

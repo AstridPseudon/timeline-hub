@@ -1,400 +1,400 @@
-{"file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/workspace_client.py", "function": "commit_timeline", "line": 494, "origin": "Agent", "module": "astrid.sdk.workspace_client", "samples": 378}
-{"file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py", "function": "commit_timeline", "line": 2457, "origin": "Runtime", "module": "runtime_protocol.service", "samples": 378}
-{"file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py", "function": "_dispatch", "line": 1206, "origin": "Runtime", "module": "runtime_protocol.server", "samples": 378}
+s['limits_and_interpretation']={'sample_frequency':'nominal 0.1 s, actual intervals include scheduling, collection, serialization and fsync','leaf_samples_runtime_digest':121,'leaf_samples_runtime_SQL_execute_fetch_recheck':198,'all_samples':432,'interpretation':'Runtime history verification/replay key and repeated SQL are dominant sampled locations. Agent callers on inclusive stacks do not establish Agent exclusive work. No exact function CPU attribution, SQL query counts, digest bytes, or cache-hit rates inferred.','native_children_stacks':'git children exited before 10s; cleanup ps born after 40s; no native stack capture','polling':'90 background serve_forever polls at fixed 0.5s totaled 45.468 overlapping wall seconds; not additive main-thread delay; subprocess pipe polls 791 calls totaling 0.081s','guard_scope':'Original fixture/session/granted scopes/calls and 45s guard unchanged. Provider/Runtime/import hashes verified. Fresh guard suites were not rerun.'}
+# Every private artifact remains private, including the wait summary.
+for p in E.rglob('*'):
+    if p.is_file():p.chmod(0o600)
+    elif p.is_dir():p.chmod(0o700)
+E.chmod(0o700)
+s['private_hashes']={str(p.relative_to(E)):hashlib.sha256(p.read_bytes()).hexdigest() for p in E.rglob('*') if p.is_file() and p.name"'!='"'safe-results.json'}
+(E/'safe-results.json').write_text(json.dumps(s,indent=2)+'\\n');Path('diagnostics/p4_sample_0242_results.json').write_text(json.dumps(s,indent=2)+'\\n')
+size=sum(p.stat().st_size for p in E.rglob('*') if p.is_file())
+scratch=sum(p.stat().st_size for p in Path(os.environ['TMPDIR']).rglob('*') if p.is_file())
+assert size<50_000_000 and scratch<1_000_000_000
+(E/'final-checks.json').write_text(json.dumps(dict(evidence_bytes=size,scratch_bytes=scratch,raw_modes_0600=all(p.stat().st_mode&0o777==0o600 for p in (E/'raw-private').iterdir() if p.is_file()),sampler_errors=[],checkpoints=[10,25,40],observer_unchanged=True,registry_owned_row_restored=True),indent=2)+'\\n')
+print(json.dumps({'evidence_bytes':size,'scratch_bytes':scratch,'checkpoint_main_cpu_delta':[[r['target'],r['main_cpu_since_test_start']] for r in s['checkpoints']]}))
+PY
+git status --short
+git diff --check" in /home/user/work/wt/agt-P4-crossprocess-sample-0242
+ succeeded in 105ms:
+{"evidence_bytes": 3561874, "scratch_bytes": 1554621, "checkpoint_main_cpu_delta": [[10, 8.430000000000001], [25, 22.620000000000005], [40, 36.64]]}
+ M diagnostics/p4_sample_0233.py
+?? diagnostics/p4_sample_0242_results.json
+?? diagnostics/test_p4_observer.py
 
 exec
-/bin/bash -lc "nl -ba /home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py | sed -n '125,225p'; nl -ba /home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py | sed -n '30,65p'; nl -ba /home/user/work/wt/agt-pin-d407b877/tests/editing_conformance/test_p4_ten_note_v2_runtime.py | sed -n '426,460p'; python3 - <<'PY'
+/bin/bash -lc "git diff -- diagnostics/p4_sample_0233.py; python3 - <<'PY'
+import json
 from pathlib import Path
-import json, collections
-E=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-crossprocess-sample-0242/evidence')
-rows=[json.loads(l) for l in (E/'raw-private/events.jsonl').read_text().splitlines()]
-print('inverse entries:',json.dumps([r for r in rows if r['kind']=='inverse_start']))
-for name in ('digest','__init__','_read','check'):
-    counts=collections.Counter()
-    for r in rows:
-        if r['kind']=='sample' and r['main_stack'] and r['main_stack'][0][1]==name:
-            counts.update(tuple(f) for f in r['main_stack'][1:6])
-    print(name,'immediate ancestors',json.dumps(counts.most_common(8)))
-print('fixture roots:', [str(p) for p in Path('/tmp/w-f95c2d1a96').glob('pytest-*/*/test_http_ten_note_commit_per_0/realm/realm.sqlite3')])
+p=Path('diagnostics/p4_sample_0242_results.json');s=json.loads(p.read_text())
+for r in s['inverse_intervals']:
+    print(r['note'],r['operation'],round(r['wall'],3),round(r['main_cpu'],3),r['outcome'],[(f['function'],f['origin'],f['samples']) for f in r['top_frames']])
 PY" in /home/user/work/wt/agt-P4-crossprocess-sample-0242
- succeeded in 14ms:
-   125	    """True when nothing is authored under the timeline or its legacy document."""
-   126	    if project_id is not None:
-   127	        document = conn.execute("SELECT content_json FROM project_documents WHERE id=? AND project_id=?",
-   128	                                (f"timeline:{timeline_id}", project_id)).fetchone()
-   129	        if document is not None:
-   130	            # Baseline verification already rejects duplicate/non-finite JSON.
-   131	            # Use the same parser here so corrupt legacy bytes cannot hide
-   132	            # authored content behind a last-key-wins decode.
-   133	            from .timeline_commit_baseline import _json
-   134	            try:
-   135	                content = _json(document["content_json"])
-   136	            except (TypeError, ValueError):
-   137	                return False
-   138	            if has_authored_content(content):
-   139	                return False
-   140	    # Any row keyed to the timeline is authored data.
-   141	    for table in _SHELL_SCOPE_TABLES:
-   142	        if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone() and \
-   143	                conn.execute(f"SELECT 1 FROM {table} WHERE timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
-   144	            return False
-   145	    # create_timeline snapshots the empty shell as timeline_revisions v1; only a non-empty snapshot is authored.
-   146	    if conn.execute("SELECT 1 FROM timeline_revisions WHERE timeline_id=? AND (shots_json!='[]' OR references_json!='[]') LIMIT 1",
-   147	                    (timeline_id,)).fetchone():
-   148	        return False
-   149	    for child in ("composition_revision_occurrences", "composition_revision_dependencies"):
-   150	        if conn.execute(f"SELECT 1 FROM {child} c JOIN parent_composition_revisions r ON r.id=c.parent_revision_id "
-   151	                        "WHERE r.timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
-   152	            return False
-   153	    return True
-   154	
-   155	
-   156	def _evaluation(method):
-   157	    @wraps(method)
-   158	    def evaluate(self, *args, **kwargs):
-   159	        try:
-   160	            if getattr(self._verification, "current", None) is not None:
-   161	                return method(self, *args, **kwargs)
-   162	            with self.verification_scope():
-   163	                return method(self, *args, **kwargs)
-   164	        except BaseException:
-   165	            self.clear_replay_memo()
-   166	            raise
-   167	    return evaluate
-   168	
-   169	
-   170	class _HistoryReadCursor:
-   171	    def __init__(self, inputs, query, parameters):
-   172	        self.inputs, self.query, self.parameters = inputs, query, parameters
-   173	        self.cursor = inputs.connection.execute(query, parameters)
-   174	
-   175	    def _read(self, method):
-   176	        value = getattr(self.cursor, method)()
-   177	        rows = [value] if method == "fetchone" else value
-   178	        snapshot = tuple(None if row is None else tuple(row) for row in rows)
-   179	        key = (self.query, self.parameters, method)
-   180	        if key in self.inputs.rows and self.inputs.rows[key] != snapshot:
-   181	            raise ProtocolError("accepted commit inputs changed during verification")
-   182	        self.inputs.rows[key] = snapshot
-   183	        return value
-   184	
-   185	    def fetchone(self):
-   186	        return self._read("fetchone")
-   187	
-   188	    def fetchall(self):
-   189	        return self._read("fetchall")
-   190	
-   191	    def __iter__(self):
-   192	        return iter(self.fetchall())
-   193	
-   194	
-   195	class _HistoryReadInputs:
-   196	    """Exact consumed SQL results and CAS bytes for one authoritative read."""
-   197	    def __init__(self, connection, cas_root):
-   198	        self.connection, self.cas_root = connection, cas_root
-   199	        self.rows, self.objects = {}, {}
-   200	
-   201	    def execute(self, query, parameters=()):
-   202	        return _HistoryReadCursor(self, query, tuple(parameters))
-   203	
-   204	    def check(self):
-   205	        from .cas import ContentAddressedStore
-   206	
-   207	        for object_id, expected in self.objects.items():
-   208	            data = ContentAddressedStore(self.cas_root).read(object_id)
-   209	            if (len(data), hashlib.sha256(data).digest()) != expected:
-   210	                raise ProtocolError("accepted commit object changed during verification")
-   211	        for (query, parameters, method), expected in self.rows.items():
-   212	            value = getattr(self.connection.execute(query, parameters), method)()
-   213	            rows = [value] if method == "fetchone" else value
-   214	            if tuple(None if row is None else tuple(row) for row in rows) != expected:
-   215	                raise ProtocolError("accepted commit inputs changed during verification")
-   216	
-   217	
-   218	class TimelineCommitStore:
-   219	    def __init__(self, store, *, validate_prepared, validate_event=None):
-   220	        self.store = store
-   221	        # Validation uses the wire worker's authoritative schema, including
-   222	        # Agent-owned leaves. It must raise on invalid data, never normalize it.
-   223	        self.validate_prepared = validate_prepared
-   224	        self.validate_event = validate_event
-   225	        self._verification = threading.local()
-    30	                raise ValidationError("commit value must contain only finite JSON")
-    31	            if id(item) in active:
-    32	                raise ValidationError("commit value must not contain cycles")
-    33	            if kind is dict and any(type(key) is not str for key in item):
-    34	                raise ValidationError("commit JSON object keys must be strings")
-    35	            active.add(id(item))
-    36	            # Keep only container frames; scalar children need no pending tuples.
-    37	            parents.append((item, children))
-    38	            # Capture sibling references when entering a container, matching
-    39	            # the eager pending stack without allocating one tuple per child.
-    40	            children = reversed(tuple(item.values() if kind is dict else item))
-    41	            break
-    42	        else:
-    43	            if not parents:
-    44	                return
-    45	            parent, children = parents.pop()
-    46	            active.remove(id(parent))
-    47	
-    48	
-    49	def detached(value):
-    50	    finite_json(value)
-    51	    return copy.deepcopy(value)
-    52	
-    53	
-    54	def digest(value):
-    55	    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
-    56	
-    57	
-    58	class _ValidatorWithResolver(Protocol):
-    59	    _resolver: object
-    60	
-    61	
-    62	def _validator_resolver(validator):
-    63	    return cast(_ValidatorWithResolver, validator)._resolver
-    64	
-    65	
-   426	    )
-   427	    assert "_runtime_document" not in reloaded.bundle["source_mapping"]
-   428	    for note in _notes():
-   429	        step_id = f"step-{note['ordinal'] + 1}"
-   430	        session = reloaded.session
-   431	        undo = session.undo(
-   432	            [receipt["receipt_id"]],
-   433	            steps={receipt["receipt_id"]: [step_id]},
-   434	            idempotency_key=f"p4-ten-note-undo-{note['id']}",
-   435	        )
-   436	        undo_data = undo["data"]
-   437	        assert undo_data["status"] == "accepted"
-   438	        inverse_request = json.loads(runtime.calls[-1][0])
-   439	        assert inverse_request["commands"][0]["op"] == "timeline.inverse"
-   440	        assert inverse_request["commands"][0]["args"]["steps"] == {
-   441	            receipt["receipt_id"]: [step_id]
-   442	        }
-   443	        undone = bundle_from_document(undo_data["canonical_document"])
-   444	        expected = {item["id"]: item["text"] for item in _notes() if item != note}
-   445	        assert _note_values(undone) == expected
-   446	        assert _without_notes(undone) == _without_notes(original)
-   447	
-   448	        redo = session.undo(
-   449	            [undo["receipt"]["receipt_id"]],
-   450	            idempotency_key=f"p4-ten-note-redo-{note['id']}",
-   451	        )
-   452	        assert redo["data"]["status"] == "accepted"
-   453	        redone = bundle_from_document(redo["data"]["canonical_document"])
-   454	        assert _note_values(redone) == {item["id"]: item["text"] for item in _notes()}
-   455	        assert _without_notes(redone) == _without_notes(original)
-   456	
-inverse entries: [{"stage": "undo", "line": 431, "note": 0, "elapsed": 5.898615750993486, "kind": "inverse_start", "pid": 13309}, {"stage": "undo", "line": 448, "note": 0, "elapsed": 7.326878003994352, "kind": "inverse_start", "pid": 13309}, {"stage": "undo", "line": 431, "note": 1, "elapsed": 9.843594272999326, "kind": "inverse_start", "pid": 13309}, {"stage": "undo", "line": 448, "note": 1, "elapsed": 14.850384808989475, "kind": "inverse_start", "pid": 13309}, {"stage": "undo", "line": 431, "note": 2, "elapsed": 18.723185949987965, "kind": "inverse_start", "pid": 13309}, {"stage": "undo", "line": 448, "note": 2, "elapsed": 29.011766537994845, "kind": "inverse_start", "pid": 13309}, {"stage": "undo", "line": 431, "note": 3, "elapsed": 33.853028578989324, "kind": "inverse_start", "pid": 13309}]
-digest immediate ancestors [[["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "evaluate", 161], 184], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted", 410], 121], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "history_entry", 760], 94], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted_record", 548], 57], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted_record", 532], 48], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_accepted_replay", 572], 31], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_history_chain", 602], 26], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_accepted_replay", 575], 26]]
-__init__ immediate ancestors [[["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "execute", 202], 106], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "evaluate", 161], 105], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_accepted_replay", 566], 29], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted", 410], 28], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "history_entry", 760], 25], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_membership", 328], 25], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "revision_closure", 885], 21], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted_record", 502], 20]]
-_read immediate ancestors [[["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "evaluate", 161], 53], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "fetchone", 186], 30], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "fetchall", 189], 23], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted", 410], 21], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "history_entry", 760], 21], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted_record", 503], 16], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_accepted_replay", 566], 15], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted_record", 548], 15]]
-check immediate ancestors [[["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "evaluate", 161], 66], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "history_entry", 760], 33], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py", "_ancestor", 234], 30], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted", 447], 17], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "_verify_accepted", 434], 16], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py", "history_read_scope", 294], 6], [["/usr/lib/python3.13/contextlib.py", "__exit__", 148], 6], [["/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py", "_read", 215], 6]]
-fixture roots: ['/tmp/w-f95c2d1a96/pytest-of-root/pytest-0/test_http_ten_note_commit_per_0/realm/realm.sqlite3', '/tmp/w-f95c2d1a96/pytest-of-root/pytest-current/test_http_ten_note_commit_per_0/realm/realm.sqlite3']
+ succeeded in 0ms:
+diff --git a/diagnostics/p4_sample_0233.py b/diagnostics/p4_sample_0233.py
+index 68deb5dd9..f88d5e0ab 100644
+--- a/diagnostics/p4_sample_0233.py
++++ b/diagnostics/p4_sample_0233.py
+@@ -4,6 +4,7 @@ import faulthandler
+ import hashlib
+ import json
+ import os
++import selectors
+ from pathlib import Path
+ import subprocess
+ import sys
+@@ -11,26 +12,29 @@ import threading
+ import time
+ 
+ 
+-os.umask(0o077)
+-OUT = Path(os.environ['P4_SAMPLE_OUTPUT'])
+-OUT.mkdir(parents=True, exist_ok=True)
++OUT = None
++EVENTS = None
++DUMPS = None
+ START = time.monotonic()
+ MAIN = threading.get_ident()
+ HZ = os.sysconf('SC_CLK_TCK')
+-EVENTS = (OUT / 'events.jsonl').open('w', buffering=1)
+-DUMPS = (OUT / 'faulthandler.txt').open('w', buffering=1)
+ LOCK = threading.RLock()
+ CHILDREN = {}
+ STOP = threading.Event()
+ TEST_START = None
+ COUNTS = collections.Counter()
+ SAMPLES = []
++ERRORS = []
++ORIGINAL_POLLS = {}
+ 
+ 
+ def event(kind, **data):
+     with LOCK:
+-        EVENTS.write(json.dumps(dict(kind=kind, elapsed=time.monotonic() - START,
+-                                     pid=os.getpid(), **data)) + '\n')
++        row = dict(data)
++        row.setdefault('elapsed', time.monotonic() - START)
++        row.update(kind=kind, pid=os.getpid())
++        EVENTS.write(json.dumps(row) + '\n')
++        EVENTS.flush()
+ 
+ 
+ def stat(pid, tid=None):
+@@ -72,14 +76,14 @@ def observed_init(self, *args, **kwargs):
+     before = time.monotonic()
+     ORIGINAL_INIT(self, *args, **kwargs)
+     argv = args[0] if args else kwargs.get('args')
+-    entry = dict(process=self, argv=argv, start=before, last=stat(self.pid), ended=False)
++    entry = dict(process=self, executable=Path(str(argv[0])).name if isinstance(argv, (list, tuple)) else 'UNKNOWN',
++                 start=before, last=stat(self.pid), ended=False)
+     with LOCK:
+         CHILDREN[self.pid] = entry
+-    event('spawn', child=self.pid, argv=argv, spawn_wall=time.monotonic() - before,
++    event('spawn', child=self.pid, executable=entry['executable'], spawn_wall=time.monotonic() - before,
+           process_stat=entry['last'])
+ 
+ 
+-subprocess.Popen.__init__ = observed_init
+ ORIGINAL_SLEEP = time.sleep
+ 
+ 
+@@ -94,7 +98,36 @@ def observed_sleep(seconds):
+               tid=threading.get_native_id(), caller=where)
+ 
+ 
+-time.sleep = observed_sleep
++
++
++ORIGINAL_WAIT = subprocess.Popen.wait
++
++
++def observed_wait(self, *args, **kwargs):
++    before = time.monotonic()
++    try:
++        return ORIGINAL_WAIT(self, *args, **kwargs)
++    finally:
++        entry = CHILDREN.get(self.pid)
++        if entry is not None and self.returncode is not None and not entry['ended']:
++            entry['ended'] = True
++            event('child_exit_observed', child=self.pid, code=self.returncode,
++                  lifespan_upper_bound=time.monotonic() - entry['start'],
++                  wait_wall=time.monotonic() - before, last_process_stat=entry['last'],
++                  cpu_limit='last observed proc stat; final CPU UNKNOWN after reap')
++
++
++def observed_poll(original):
++    def poll(self, timeout=None):
++        before = time.monotonic()
++        caller = sys._getframe(1)
++        try:
++            return original(self, timeout)
++        finally:
++            event('poll', timeout=timeout, wall=time.monotonic() - before,
++                  caller=[caller.f_code.co_filename, caller.f_code.co_name, caller.f_lineno],
++                  tid=threading.get_native_id())
++    return poll
+ 
+ 
+ def child_snapshot():
+@@ -107,7 +140,7 @@ def child_snapshot():
+             entry['last'] = current
+         code = entry['process'].poll()
+         if code is None:
+-            live.append(dict(pid=pid, process_stat=current, main_cpu=stat(pid, pid)))
++            live.append(dict(pid=pid, executable=entry['executable'], process_stat=current, main_cpu=stat(pid, pid)))
+         elif not entry['ended']:
+             entry['ended'] = True
+             event('child_exit_observed', child=pid, code=code,
+@@ -132,7 +165,7 @@ def child_snapshot():
+     return live
+ 
+ 
+-def sample_loop():
++def collect_samples():
+     next_dump = 0
+     previous_phase = None
+     sampler_cpu = 0.0
+@@ -153,20 +186,32 @@ def sample_loop():
+             event('phase', **current_phase)
+             previous_phase = current_phase
+         event('sample', **row)
+-        if TEST_START is not None and next_dump < 3 and now - TEST_START >= (10, 25, 40)[next_dump]:
++        while TEST_START is not None and next_dump < 3 and now - TEST_START >= (10, 25, 40)[next_dump]:
+             target = (10, 25, 40)[next_dump]
+             DUMPS.write(f'\nTARGET {target} ACTUAL {now - TEST_START:.6f} PID {os.getpid()} MAIN_IDENT {MAIN}\n')
+             DUMPS.flush()
+             faulthandler.dump_traceback(file=DUMPS, all_threads=True)
++            DUMPS.flush()
++            os.fsync(DUMPS.fileno())
+             event('checkpoint', target=target, test_elapsed=now - TEST_START,
+                   process=stat(os.getpid()), main_cpu=stat(os.getpid(), os.getpid()),
+                   threads=[dict(ident=ident, stack=stack(frame)) for ident, frame in frames.items()],
+                   children=row['children'])
++            os.fsync(EVENTS.fileno())
+             next_dump += 1
+         sampler_cpu += time.thread_time() - cpu_before
+     event('sampler_end', cpu=sampler_cpu)
+ 
+ 
++def sample_loop():
++    try:
++        collect_samples()
++    except BaseException as error:
++        ERRORS.append(type(error).__name__)
++        event('sampler_error', error_type=type(error).__name__)
++        os.fsync(EVENTS.fileno())
++
++
+ def origins():
+     result = []
+     for name, module in list(sys.modules.items()):
+@@ -182,6 +227,35 @@ class Diagnostic:
+     def pytest_collection_finish(self, session):
+         event('collection_finished', items=[item.nodeid for item in session.items],
+               modules=len(sys.modules), process=stat(os.getpid()))
++        module = sys.modules.get('tests.editing_conformance.test_p4_ten_note_v2_runtime')
++        if module is not None:
++            original = module._run_cli
++
++            def inline_cli(*args, **kwargs):
++                before = time.monotonic()
++                event('inline_cli_start')
++                try:
++                    return original(*args, **kwargs)
++                finally:
++                    event('inline_cli_end', wall=time.monotonic() - before)
++
++            module._run_cli = inline_cli
++        sync = sys.modules.get('astrid.sdk.timeline.sync')
++        if sync is not None:
++            original_undo = sync.TimelineSession.undo
++
++            def inverse(*args, **kwargs):
++                before = time.monotonic()
++                cpu = time.thread_time()
++                position = phase(sys._getframe(1))
++                event('inverse_start', **position)
++                try:
++                    return original_undo(*args, **kwargs)
++                finally:
++                    event('inverse_end', wall=time.monotonic() - before,
++                          cpu=time.thread_time() - cpu, **position)
++
++            sync.TimelineSession.undo = inverse
+ 
+     def pytest_runtest_logstart(self, nodeid, location):
+         global TEST_START
+@@ -194,21 +268,47 @@ class Diagnostic:
+               process=stat(os.getpid()), main_cpu=stat(os.getpid(), os.getpid()))
+ 
+ 
+-event('bootstrap', argv=sys.argv, executable=sys.executable, process=stat(os.getpid()),
+-      main_cpu=stat(os.getpid(), os.getpid()), modules=len(sys.modules))
+-sampler = threading.Thread(target=sample_loop, name='p4-private-sampler', daemon=True)
+-sampler.start()
+-try:
+-    import pytest
+-    event('pytest_imported', modules=len(sys.modules), process=stat(os.getpid()))
+-    result = pytest.main(sys.argv[1:], plugins=[Diagnostic()])
+-finally:
+-    STOP.set()
+-    sampler.join(timeout=2)
+-    child_snapshot()
+-    origins()
+-    event('diagnostic_end', process=stat(os.getpid()), main_cpu=stat(os.getpid(), os.getpid()),
+-          samples=len(SAMPLES), observed_children=len(CHILDREN))
+-    EVENTS.close()
+-    DUMPS.close()
+-raise SystemExit(result)
++def main():
++    global OUT, EVENTS, DUMPS, START
++    os.umask(0o077)
++    OUT = Path(os.environ['P4_SAMPLE_OUTPUT'])
++    OUT.mkdir(parents=True, exist_ok=True)
++    EVENTS = (OUT / 'events.jsonl').open('w', buffering=1)
++    DUMPS = (OUT / 'faulthandler.txt').open('w', buffering=1)
++    START = time.monotonic()
++    subprocess.Popen.__init__ = observed_init
++    subprocess.Popen.wait = observed_wait
++    time.sleep = observed_sleep
++    for cls in {selectors.SelectSelector, selectors.PollSelector, selectors.EpollSelector}:
++        ORIGINAL_POLLS[cls] = cls.select
++        cls.select = observed_poll(cls.select)
++    event('bootstrap', executable=sys.executable, process=stat(os.getpid()),
++          main_cpu=stat(os.getpid(), os.getpid()), modules=len(sys.modules))
++    sampler = threading.Thread(target=sample_loop, name='p4-private-sampler', daemon=True)
++    sampler.start()
++    try:
++        import pytest
++        event('pytest_imported', modules=len(sys.modules), process=stat(os.getpid()))
++        result = pytest.main(sys.argv[1:], plugins=[Diagnostic()])
++    finally:
++        STOP.set()
++        sampler.join(timeout=2)
++        if sampler.is_alive():
++            ERRORS.append('sampler_join_timeout')
++        child_snapshot()
++        origins()
++        event('diagnostic_end', process=stat(os.getpid()), main_cpu=stat(os.getpid(), os.getpid()),
++              samples=len(SAMPLES), observed_children=len(CHILDREN), sampler_errors=ERRORS)
++        os.fsync(EVENTS.fileno())
++        subprocess.Popen.__init__ = ORIGINAL_INIT
++        subprocess.Popen.wait = ORIGINAL_WAIT
++        time.sleep = ORIGINAL_SLEEP
++        for cls, original in ORIGINAL_POLLS.items():
++            cls.select = original
++        EVENTS.close()
++        DUMPS.close()
++    return 3 if ERRORS else result
++
++
++if __name__ == '__main__':
++    raise SystemExit(main())
+1 undo 1.426 1.354 accepted [('digest', 'Runtime', 5), ('__init__', 'Runtime', 4), ('check', 'Runtime', 1)]
+1 redo 2.514 2.389 accepted [('__init__', 'Runtime', 9), ('check', 'Runtime', 4), ('digest', 'Runtime', 2)]
+2 undo 5.003 4.711 accepted [('_read', 'Runtime', 11), ('digest', 'Runtime', 10), ('__init__', 'Runtime', 9)]
+2 redo 3.869 3.641 accepted [('digest', 'Runtime', 13), ('__init__', 'Runtime', 8), ('_read', 'Runtime', 7)]
+3 undo 10.286 9.763 accepted [('digest', 'Runtime', 33), ('__init__', 'Runtime', 32), ('check', 'Runtime', 10)]
+3 redo 4.839 4.466 accepted [('digest', 'Runtime', 19), ('__init__', 'Runtime', 10), ('_read', 'Runtime', 7)]
+4 undo 12.393 11.723 timeout unwind; partial operation [('digest', 'Runtime', 38), ('__init__', 'Runtime', 34), ('_read', 'Runtime', 16)]
 
 exec
 /bin/bash -lc "python3 - <<'PY'
-import collections,datetime,hashlib,json,os,sqlite3
 from pathlib import Path
+import hashlib,json,os
 os.umask(0o077)
-E=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-crossprocess-sample-0242/evidence')
-root=Path('/tmp/w-f95c2d1a96/pytest-of-root/pytest-0/test_http_ten_note_commit_per_0')
-conn=sqlite3.connect('file:'+str(root/'realm/realm.sqlite3')+'?mode=ro',uri=True)
-cases=json.loads(Path('/home/user/work/wt/agt-pin-d407b877/tests/sdk/fixtures/p4_commit_cases/cases.json').read_text())
-notes=next(c for c in cases['cases'] if c['id']=='ten-notes-one-commit')['notes']
-key_map={f\"p4-ten-note-{op}-{note['id']}\":(op,note['ordinal']+1) for note in notes for op in ('undo','redo')}
-curve=[]
-for key,ts in conn.execute(\"select idempotency_key,created_at from command_idempotency where idempotency_key like 'p4-ten-note-%' order by created_at\"):
-    if key=='p4-ten-note-commit': curve.append(dict(operation='ten_note_commit',note=None,accepted_at=ts))
-    elif key in key_map:
-        op,note=key_map[key];curve.append(dict(operation=op,note=note,accepted_at=ts))
-conn.close()
-base=datetime.datetime.fromisoformat(curve[0]['accepted_at'].replace('Z','+00:00'));prev=base
-for r in curve:
-    t=datetime.datetime.fromisoformat(r['accepted_at'].replace('Z','+00:00'))
-    r['seconds_since_ten_note_commit']=(t-base).total_seconds();r['seconds_since_previous_acceptance']=(t-prev).total_seconds();prev=t
-flight=json.loads((root/'ten-note-reloaded.json').read_text()).get('flight') or {}
-pending=key_map.get(flight.get('key'))
-pending=None if pending is None else dict(operation=pending[0],note=pending[1])
-(E/'retained-acceptance-curve.json').write_text(json.dumps(dict(acceptance_curve=curve,pending_operation=pending),indent=2)+'\\n')
-s=json.loads((E/'safe-results.json').read_text())
-rows=[json.loads(l) for l in (E/'raw-private/events.jsonl').read_text().splitlines()]
-starts=[r for r in rows if r['kind']=='inverse_start']
-for span,raw in zip(s['inverse_intervals'],starts):
-    assert raw['line'] in (431,448)
-    span['operation']='undo' if raw['line']==431 else 'redo'
-    span['observed_caller_line']=raw['line']
-    span['durable_acceptance']=any(r['operation']==span['operation'] and r['note']==span['note'] for r in curve)
-    span['outcome']='accepted' if span['durable_acceptance'] else 'timeout unwind; partial operation'
-s['acceptance_curve']=curve;s['pending_operation']=pending
-s['limitations'].append('Inherited phase helper labels caller line448 as undo; raw caller line is retained. Report maps 431=undo,448=redo against unchanged test source; no post-run observer edits.')
-# Aggregate functions rather than separate source lines; count once per sample.
-inc=collections.Counter();top=collections.Counter();nearest=collections.Counter();layers=collections.Counter()
-for r in rows:
-    if r['kind']"'!='"'sample': continue
-    frames=r['main_stack']; funcs=set()
-    for path,fun,line in frames:
-        if '/astrid/' in path: layer='Agent'
-        elif '/runtime_protocol/' in path: layer='Runtime'
-        else: continue
-        funcs.add((layer,path,fun))
-    inc.update(funcs)
-    product=next(((p,f,l) for p,f,l in frames if '/astrid/' in p or '/runtime_protocol/' in p),None)
-    if product:
-        layer='Runtime' if '/runtime_protocol/' in product[0] else 'Agent';layers[layer]+=1;nearest[(layer,product[0],product[1])]+=1
-s['nearest_product_layer_counts']=dict(layers)
-s['inclusive_function_counts']=[dict(origin=k[0],file=k[1],function=k[2],samples=v) for k,v in inc.most_common()]
-s['observed_cli_spawn_wall']=0.0
-s['all_spawn_construction_wall']=sum(r['spawn_wall'] for r in s['children'])
-s['private_hashes']={str(p.relative_to(E)):hashlib.sha256(p.read_bytes()).hexdigest() for p in E.rglob('*') if p.is_file() and p.name not in ('safe-results.json',)}
-(E/'safe-results.json').write_text(json.dumps(s,indent=2)+'\\n')
-Path('diagnostics/p4_sample_0242_results.json').write_text(json.dumps(s,indent=2)+'\\n')
-print(json.dumps(dict(acceptance_curve=curve,pending_operation=pending,inverse_spans=s['inverse_intervals'],nearest_product_layers=dict(layers)),indent=2))
-print('Agent functions:',json.dumps([(k[2],v) for k,v in inc.most_common() if k[0]=='Agent'][:25]))
-print('Runtime replay key funcs:',json.dumps([(k[2],v) for k,v in inc.most_common() if k[0]=='Runtime' and k[2] in ('_accepted_replay','_verify_accepted','_verify_accepted_record','_history_chain','history_entry','check','_read','digest','__init__')]))
+W=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-crossprocess-sample-0242')
+s=json.loads(Path('diagnostics/p4_sample_0242_results.json').read_text())
+assert s['validation']['observer_unchanged_after_submission']
+assert hashlib.sha256(Path('diagnostics/p4_sample_0233.py').read_bytes()).hexdigest()==s['observer_sha256']
+assert s['service_status']=='fail' and s['sample_count']==432
+assert [r['target'] for r in s['checkpoints']]==[10,25,40]
+assert s['validation']['registry_restored']['owned_row_restored']
+(W/'commit-msg').write_text('chore(diagnostics): repair P4 sampler for agt-P4-crossprocess-sample-0242\\n\\nFix duplicate elapsed serialization and surface sampler failures. Add private\\nfake-clock controls for durable 10/25/40 captures, subprocess and poll events,\\nand the prior writer regression.\\n\\nRetain one corrected original sample on the fixed four-checkout service route:\\nFAIL at 45.557s with 432 samples, complete checkpoints, and zero Python CLI\\nspawns. Record Runtime history verification and SQL stack occupancy, per-note\\nrequest spans, process origins, observer overhead, and remaining limits.\\nNo product implementation, original test, dependency, or pin changes.\\n')
+(W/'DONE').touch()
+print('Commit message and DONE written; one corrected body retained; service row restored; no product changes.')
 PY" in /home/user/work/wt/agt-P4-crossprocess-sample-0242
- succeeded in 141ms:
-{
-  "acceptance_curve": [
-    {
-      "operation": "ten_note_commit",
-      "note": null,
-      "accepted_at": "2026-10-25T02:56:37.733+00:00",
-      "seconds_since_ten_note_commit": 0.0,
-      "seconds_since_previous_acceptance": 0.0
-    },
-    {
-      "operation": "undo",
-      "note": 1,
-      "accepted_at": "2026-10-25T02:56:40.561+00:00",
-      "seconds_since_ten_note_commit": 2.828,
-      "seconds_since_previous_acceptance": 2.828
-    },
-    {
-      "operation": "redo",
-      "note": 1,
-      "accepted_at": "2026-10-25T02:56:43.081+00:00",
-      "seconds_since_ten_note_commit": 5.348,
-      "seconds_since_previous_acceptance": 2.52
-    },
-    {
-      "operation": "undo",
-      "note": 2,
-      "accepted_at": "2026-10-25T02:56:48.089+00:00",
-      "seconds_since_ten_note_commit": 10.356,
-      "seconds_since_previous_acceptance": 5.008
-    },
-    {
-      "operation": "redo",
-      "note": 2,
-      "accepted_at": "2026-10-25T02:56:51.924+00:00",
-      "seconds_since_ten_note_commit": 14.191,
-      "seconds_since_previous_acceptance": 3.835
-    },
-    {
-      "operation": "undo",
-      "note": 3,
-      "accepted_at": "2026-10-25T02:57:02.243+00:00",
-      "seconds_since_ten_note_commit": 24.51,
-      "seconds_since_previous_acceptance": 10.319
-    },
-    {
-      "operation": "redo",
-      "note": 3,
-      "accepted_at": "2026-10-25T02:57:06.994+00:00",
-      "seconds_since_ten_note_commit": 29.261,
-      "seconds_since_previous_acceptance": 4.751
-    }
-  ],
-  "pending_operation": {
-    "operation": "undo",
-    "note": 4
-  },
-  "inverse_spans": [
-    {
-      "note": 1,
-      "operation": "undo",
-      "start": 5.898615750993486,
-      "end": 7.324375252996106,
-      "wall": 1.4257910110027296,
-      "main_cpu": 1.3539749529999998,
-      "outcome": "accepted",
-      "observed_caller_line": 431,
-      "durable_acceptance": true
-    },
-    {
-      "note": 1,
-      "operation": "redo",
-      "start": 7.326878003994352,
-      "end": 9.841307586990297,
-      "wall": 2.514462745995843,
-      "main_cpu": 2.3894123249999994,
-      "outcome": "accepted",
-      "observed_caller_line": 448,
-      "durable_acceptance": true
-    },
-    {
-      "note": 2,
-      "operation": "undo",
-      "start": 9.843594272999326,
-      "end": 14.846614802998374,
-      "wall": 5.003039315997739,
-      "main_cpu": 4.710937612999999,
-      "outcome": "accepted",
-      "observed_caller_line": 431,
-      "durable_acceptance": true
-    },
-    {
-      "note": 2,
-      "operation": "redo",
-      "start": 14.850384808989475,
-      "end": 18.71970249399601,
-      "wall": 3.869332262009266,
-      "main_cpu": 3.6412549509999987,
-      "outcome": "accepted",
-      "observed_caller_line": 448,
-      "durable_acceptance": true
-    },
-    {
-      "note": 3,
-      "operation": "undo",
-      "start": 18.723185949987965,
-      "end": 29.009364329991513,
-      "wall": 10.286223025992513,
-      "main_cpu": 9.762879629,
-      "outcome": "accepted",
-      "observed_caller_line": 431,
-      "durable_acceptance": true
-    },
-    {
-      "note": 3,
-      "operation": "redo",
-      "start": 29.011766537994845,
-      "end": 33.85038128399174,
-      "wall": 4.83864314800303,
-      "main_cpu": 4.466239257000002,
-      "outcome": "accepted",
-      "observed_caller_line": 448,
-      "durable_acceptance": true
-    },
-    {
-      "note": 4,
-      "operation": "undo",
-      "start": 33.853028578989324,
-      "end": 46.24599394098914,
-      "wall": 12.39299500999914,
-      "main_cpu": 11.723320789999999,
-      "outcome": "timeout unwind; partial operation",
-      "observed_caller_line": 431,
-      "durable_acceptance": false
-    }
-  ],
-  "nearest_product_layers": {
-    "Agent": 11,
-    "Runtime": 402
-  }
-}
-Agent functions: [["_typed", 381], ["_call_generated", 381], ["commit_timeline", 378], ["commit", 378], ["_flush", 378], ["commit", 373], ["undo", 373], ["load_boundary", 293], ["select_at", 155], ["inverse_address_resolver", 155], ["_load", 125], ["_history", 107], ["execute", 96], ["document_from_bundle", 66], ["_inverse_media_removals", 64], ["__init__", 54], ["inverse_closure", 52], ["validate_nested_history", 37], ["apply_inverse", 33], ["finish", 28], ["after", 25], ["_validate_materializations", 13], ["resolve", 9], ["_historical_sources", 9], ["restore_root_baselines", 7]]
-Runtime replay key funcs: [["_read", 359], ["history_entry", 351], ["_verify_accepted", 330], ["_verify_accepted_record", 278], ["_accepted_replay", 166], ["history_entry", 126], ["digest", 124], ["__init__", 106], ["check", 53], ["_read", 53], ["_history_chain", 32], ["__init__", 10], ["check", 9], ["__init__", 3], ["__init__", 3]]
+ succeeded in 0ms:
+Commit message and DONE written; one corrected body retained; service row restored; no product changes.
 
+codex
+Repaired the private observer and completed **one corrected sample**: `agent-p4-current-becfe-http-3legs-1025025625-25257`.
+
+The unchanged original **failed at 45.557s**. Capture succeeded: **432 samples, all 10/25/40 checkpoints, zero sampler errors**. Main-thread CPU was **42.63s over 46.32s wall**, including failure reporting.
+
+| Checkpoint | Actual elapsed | Main CPU since start | Main stack top |
+|---|---:|---:|---|
+| 10s | 10.050s | 8.43s | Runtime `digest` |
+| 25s | 25.087s | 22.62s | stdlib JSON decoder |
+| 40s | 40.002s | 36.64s | Runtime `digest` |
+
+Runtime was the nearest product frame in **402/432 samples**; digesting and SQL execute/fetch/recheck accounted for **319 leaf observations**. Agent rules/duplicate-validation frames were absent. This establishes sampled locations, not exact function CPU attribution.
+
+| Note | Undo wall / CPU | Redo wall / CPU |
+|---|---:|---:|
+| 1 | 1.426 / 1.354s | 2.514 / 2.389s |
+| 2 | 5.003 / 4.711s | 3.869 / 3.641s |
+| 3 | 10.286 / 9.763s | 4.839 / 4.466s |
+| 4 | 12.393 / 11.723s, interrupted | Not reached |
+| 5–10 | Not reached | Not reached |
+
+The test, Agent provider, and real Runtime HTTP handler shared **PID 13309**. There were **zero Python CLI spawns** and two inline CLI calls totaling **0.202s**.
+
+| Native child PID | Executable | Observed lifespan upper bound | Final CPU |
+|---|---|---:|---|
+| 13795 | git | 0.0027s | UNKNOWN |
+| 13797 | git | 0.1049s | UNKNOWN; last observed 0.02s |
+| 1264 | ps | 0.0134s | UNKNOWN |
+
+Startup through collection took 1.199s. Background server polls overlapped execution; no explicit sleeps were observed. Sampler CPU was **1.365s**; other observer overhead remains unisolated.
+
+Validation:
+
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python diagnostics/test_p4_observer.py` — **4 passed**. Fake-clock checkpoints and durable serialization passed before the original; the prior writer reproduced its `TypeError`.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache diagnostics/p4_sample_0233.py diagnostics/test_p4_observer.py` — **passed**.
+- `git diff --check` — **passed**.
+- `request-test integration:agent p4-current-becfe-http-3legs --no-cache`, then `wait-test agent-p4-current-becfe-http-3legs-1025025625-25257 1` — **exit 1**, original timeout.
+
+Fixed d407/6634/4b984/635f checkouts, original hashes, profile, positive-once/17 and poison-zero controls passed. Raw artifacts are private `0600`; the service row was restored. Retained caller lines corrected inherited redo phase labels during analysis.
+
+[Detailed results and origins](/home/user/work/wt/agt-P4-crossprocess-sample-0242/diagnostics/p4_sample_0242_results.json). No product fix or repeat body ran. Prior 30057 facts remain preserved. Commit message and `DONE` written. Manager should assign the next bounded investigation around Runtime history verification/replay-key and SQL work while preserving authority guards.
+tokens used
+109,696
+Repaired the private observer and completed **one corrected sample**: `agent-p4-current-becfe-http-3legs-1025025625-25257`.
+
+The unchanged original **failed at 45.557s**. Capture succeeded: **432 samples, all 10/25/40 checkpoints, zero sampler errors**. Main-thread CPU was **42.63s over 46.32s wall**, including failure reporting.
+
+| Checkpoint | Actual elapsed | Main CPU since start | Main stack top |
+|---|---:|---:|---|
+| 10s | 10.050s | 8.43s | Runtime `digest` |
+| 25s | 25.087s | 22.62s | stdlib JSON decoder |
+| 40s | 40.002s | 36.64s | Runtime `digest` |
+
+Runtime was the nearest product frame in **402/432 samples**; digesting and SQL execute/fetch/recheck accounted for **319 leaf observations**. Agent rules/duplicate-validation frames were absent. This establishes sampled locations, not exact function CPU attribution.
+
+| Note | Undo wall / CPU | Redo wall / CPU |
+|---|---:|---:|
+| 1 | 1.426 / 1.354s | 2.514 / 2.389s |
+| 2 | 5.003 / 4.711s | 3.869 / 3.641s |
+| 3 | 10.286 / 9.763s | 4.839 / 4.466s |
+| 4 | 12.393 / 11.723s, interrupted | Not reached |
+| 5–10 | Not reached | Not reached |
+
+The test, Agent provider, and real Runtime HTTP handler shared **PID 13309**. There were **zero Python CLI spawns** and two inline CLI calls totaling **0.202s**.
+
+| Native child PID | Executable | Observed lifespan upper bound | Final CPU |
+|---|---|---:|---|
+| 13795 | git | 0.0027s | UNKNOWN |
+| 13797 | git | 0.1049s | UNKNOWN; last observed 0.02s |
+| 1264 | ps | 0.0134s | UNKNOWN |
+
+Startup through collection took 1.199s. Background server polls overlapped execution; no explicit sleeps were observed. Sampler CPU was **1.365s**; other observer overhead remains unisolated.
+
+Validation:
+
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python diagnostics/test_p4_observer.py` — **4 passed**. Fake-clock checkpoints and durable serialization passed before the original; the prior writer reproduced its `TypeError`.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache diagnostics/p4_sample_0233.py diagnostics/test_p4_observer.py` — **passed**.
+- `git diff --check` — **passed**.
+- `request-test integration:agent p4-current-becfe-http-3legs --no-cache`, then `wait-test agent-p4-current-becfe-http-3legs-1025025625-25257 1` — **exit 1**, original timeout.
+
+Fixed d407/6634/4b984/635f checkouts, original hashes, profile, positive-once/17 and poison-zero controls passed. Raw artifacts are private `0600`; the service row was restored. Retained caller lines corrected inherited redo phase labels during analysis.
+
+[Detailed results and origins](/home/user/work/wt/agt-P4-crossprocess-sample-0242/diagnostics/p4_sample_0242_results.json). No product fix or repeat body ran. Prior 30057 facts remain preserved. Commit message and `DONE` written. Manager should assign the next bounded investigation around Runtime history verification/replay-key and SQL work while preserving authority guards.
