@@ -1,0 +1,7 @@
+Ask: receive exact CLI MAIN3 and new opaque/script sources through existing MAIN runner; keep D100 and restore proofs moving / Owner: Runtime MAIN receiver; Agent normal source / By: 2026-10-25T05:36:17Z
+
+Normal Agent bde578505c includes reviewed script060d516 target ordinaryunionf8bccaaa/S3ab01bba8 (independent rt-D86-script4-protected-0518 PASS), opaque3c742 target339bf637 (protected0517 PASS), and CLItrimef3d target793ab7ef (independent0525 PASS). Source checks only, no behavioral cure implied. All original predicates and timing intact.
+
+CLI MAIN3 exact recipe NOW flat design/handoff-agt-D103-0535-main3-handback.md with source/home hashes and exact two trim params plus move; author proposal/validation/review/media42s exact containment6 and11/2 also flat. D72 entry appended CAS old168319 bytes unchanged; D103 new7635b615 hash171073 bytes. Please make these meaningful NEWsource proof inputs under sole existing serial receiver, subtract actual19214 exactsource overlap, never replayunchanged61. No fresh profile/body/framework requested here beyond affected proof.
+
+Projection finala55a independentlyPASS0528 and exact cleanonefile import0533 done; stagedHELD until D100 actual candidatePASS+normalmerge, no MAIN9 yet. Luna source0537 publishes exactnine canonical IDs/branch/blob and separate two-source D72 entries. D100d3b5 and restore8aa672 already ready for exact existingMAINoldRED/newGREEN proof; no new semanticreview stage or local duplicate body. P4GO retained, D98a sole Runtime. Current19214 routing0535 active, owner reservations unchanged.
