@@ -445,7 +445,7 @@ describe('AgentChat', () => {
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise((yes, no) => { resolve = yes; reject = no; }));
     mockFromState(state);
     mocks.useLocalAgents.mockReturnValue({
-      data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'sol', name: 'Sol', thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }], defaultModel: 'sol' }], defaultAgent: 'astrid' },
+      data: { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null, models: [], defaultModel: null }, { id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'sol', name: 'Sol', thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }], defaultModel: 'sol' }], defaultAgent: 'astrid' },
       isLoading: false, error: null, refetch: vi.fn(),
     });
     renderAgentChat();
@@ -507,7 +507,7 @@ describe('AgentChat', () => {
     expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid · GPT 5');
     fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
-    fireEvent.click(await screen.findByRole('option', { name: 'Use the agent’s default model' }));
+    fireEvent.click(await screen.findByRole('option', { name: "Use the agent's default model" }));
     expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByRole('button', { name: /^New chat ·/ }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledWith({ operationId: expect.any(String), agent: 'codex' }));
@@ -1323,7 +1323,7 @@ describe('project draft consumer ownership', () => {
     const key = ['project-agent-chat', 'project-1'];
     client.setQueryData(key, state.projectChats['project-1']);
     mocks.useProjectChat.mockImplementation(() => useQuery({ queryKey: key, queryFn: async () => state.projectChats['project-1'], enabled: false }));
-    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: choice === 'plain' ? [] : [{ modelId: 'codex-default', name: 'Codex Default' }], defaultModel: choice === 'plain' ? null : 'codex-default' }], defaultAgent: 'astrid' }, refetch: vi.fn() });
+    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null, models: [], defaultModel: null }, { id: 'codex', name: 'Codex', state: 'ready', line: null, models: choice === 'plain' ? [] : [{ modelId: 'codex-default', name: 'Codex Default' }], defaultModel: choice === 'plain' ? null : 'codex-default' }], defaultAgent: 'astrid' }, refetch: vi.fn() });
     let finish!: (session: { id: string }) => void;
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     const newId = choice === 'plain' ? 'session-2' : 'codex:session-2';
@@ -1335,7 +1335,7 @@ describe('project draft consumer ownership', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
     if (choice === 'plain') {
       fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
-      fireEvent.click(await screen.findByRole('option', { name: 'Use the agent’s default model' }));
+      fireEvent.click(await screen.findByRole('option', { name: "Use the agent's default model" }));
     }
     else {
       fireEvent.click(await screen.findByRole('button', { name: 'Choose a Codex model' }));

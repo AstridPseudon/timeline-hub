@@ -24,3 +24,8 @@ export function agentAvailability(choice: LocalAgentChoice | undefined): AgentAv
   const state = choice?.state ?? 'ready';
   return { usable: state === 'ready', state, line: choice?.line ?? null };
 }
+
+/** Setup requires an advertised ready row; older services omit signIn. */
+export function isAgentUsable(choice: LocalAgentChoice | undefined): boolean {
+  return choice?.state === 'ready' && choice.signIn !== 'signed-out';
+}

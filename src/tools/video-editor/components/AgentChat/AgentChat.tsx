@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, Loader2, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
-import { isAcpUnavailable } from '@/integrations/astrid/acpRoutes.ts';
+import { isAcpUnavailable, isAgentSetupError } from '@/integrations/astrid/acpRoutes.ts';
 import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -43,7 +43,9 @@ import { AgentChatMenu } from './AgentChatMenu';
 import { NewChatMenu, type NewChatAgentModels, type NewChatMenuHandle } from './NewChatMenu';
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
-import { AgentIcon, agentNames } from './agentIdentity';
+import { AgentSetupCard } from './AgentSetupCard';
+import { CommandLine } from './CommandLine';
+import { AgentIcon, agentNames, isAgentUsable } from './agentIdentity';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 import { AgentChatComposer } from './AgentChatComposer';
 import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
@@ -244,8 +246,10 @@ function AvailableAgentChatPanel({
   const pausedQueuedIdsRef = useRef(new Set<string>());
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
+  const [setupRequest, setSetupRequest] = useState<{ agent: LocalAgentId; error?: unknown } | null>(null);
+  const [setupDone, setSetupDone] = useState<{ agent: LocalAgentId; sessionId: string | null } | null>(null);
   const [startingAgent, setStartingAgent] = useState<LocalAgentId | null>(null);
-  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string; updateNeeded: boolean } | null>(null);
+  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; error: unknown; details: string; updateNeeded: boolean } | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
@@ -451,9 +455,11 @@ function AvailableAgentChatPanel({
   const isCancelled = activeStatus === 'cancelled';
   const isProcessing = activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active);
   const showKillSwitch = !isFollower && (activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active));
+  const activeAgentRow = localAgents.data?.agents.find(agent => agent.id === chatAgent);
+  const agentBroken = Boolean(activeSessionId && localAgents.data && !isAgentUsable(activeAgentRow));
   const composerLockedRef = useRef(false);
   const configurationFailed = Boolean(startFailure?.sessionId && startFailure.sessionId === activeSessionId);
-  composerLockedRef.current = isFollower || startingAgent !== null || configurationFailed;
+  composerLockedRef.current = isFollower || startingAgent !== null || configurationFailed || agentBroken || setupRequest !== null;
   useEffect(() => {
     if (isFollower || startingAgent) voiceRef.current.cancelRecording();
   }, [isFollower, startingAgent]);
@@ -478,11 +484,23 @@ function AvailableAgentChatPanel({
           : idlePlaceholder;
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
-  const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, sessions.error, projectChat.error];
+  const promptFailure = sendMessage.localError && isAgentSetupError(sendMessage.error) ? sendMessage.error : sendMessage.localError;
+  const chatFailures = [activeSession.error, promptFailure, createSession.error, sessions.error, projectChat.error];
   // No chat service on this computer is a state, not a failure: the pane says so in one plain line, with no alert or retry.
   const chatUnavailable = chatFailures.some(isAcpUnavailable);
   const showEmptyState = !startingAgent && !activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending;
   const turnFailure = chatFailures.find(Boolean);
+  const writableChat = hasProject && !isFollower && !chatUnavailable && !sessions.isError && !projectChat.isError;
+  const defaultAgentRow = localAgents.data?.agents.find(agent => agent.id === defaultAgent);
+  const defaultAgentReady = isAgentUsable(defaultAgentRow) && defaultAgentRow?.signIn !== 'unknown';
+  const hasAvailableProjectSession = Boolean(projectChat.data?.sessions.some(session => !session.missing));
+  const showSetupCard = writableChat && (setupRequest !== null || (!activeSessionId && !hasAvailableProjectSession && Boolean(localAgents.data) && !defaultAgentReady));
+  useEffect(() => {
+    if (!writableChat || !isAgentSetupError(turnFailure)) return;
+    setSetupDone(null);
+    setSetupRequest({ agent: chatAgent, error: turnFailure });
+    void localAgents.refetch();
+  }, [turnFailure, writableChat, chatAgent, localAgents.refetch]);
   // One update flow: a reply from the local chat service this page can't read also puts Settings on Update Astrid
   // (it never gates the app). The next chat read that comes back readable clears it.
   const chatServiceOutOfDate = startFailure?.updateNeeded === true
@@ -600,11 +618,10 @@ function AvailableAgentChatPanel({
   // An empty engaged project gets one session. Existing project chats remain
   // selectable when Main is unset, and the host CAS claim arbitrates tabs.
   const isEngaged = userEngaged || isTasksPaneLocked || voice.isRecording || voice.isProcessing;
-  const hasAvailableProjectSession = Boolean(projectChat.data?.sessions.some(session => !session.missing));
   useEffect(() => {
     if (hasAutoCreatedSessionRef.current || !projectChat.data || projectChat.isLoading || projectChat.isError
       || createSession.isPending || !hasProject
-      || hasAvailableProjectSession || !isEngaged) return;
+      || hasAvailableProjectSession || !isEngaged || !defaultAgentReady || setupRequest) return;
     hasAutoCreatedSessionRef.current = true;
     autoCreateOperationIdRef.current ??= createMessageId();
     createSession.mutate(autoCreateOperationIdRef.current, {
@@ -615,7 +632,7 @@ function AvailableAgentChatPanel({
         if (sessionId) setActiveSessionId(current => current ?? sessionId);
       },
     });
-  }, [createSession, hasProject, hasAvailableProjectSession, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
+  }, [createSession, hasProject, hasAvailableProjectSession, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged, defaultAgentReady, setupRequest]);
 
   useEffect(() => {
     sendingRef.current = false;
@@ -793,6 +810,8 @@ function AvailableAgentChatPanel({
       sendingRef.current
       || startingAgent !== null
       || configurationFailed
+      || agentBroken
+      || setupRequest !== null
       || isFollower
       || isProcessing
       || sendMessage.isPending
@@ -817,7 +836,7 @@ function AvailableAgentChatPanel({
         // Leave the failed head in place; pausedQueueHeadId will prevent further drains.
       }
     })();
-  }, [queue, pausedQueueHeadId, startingAgent, configurationFailed, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
+  }, [queue, pausedQueueHeadId, startingAgent, configurationFailed, agentBroken, setupRequest, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
   /** A saved row that is waiting for the person: not the one in flight, and never auto-sent. */
   const notSent = (item: QueuedMessage) => pausedQueuedIdsRef.current.has(item.id)
@@ -854,12 +873,15 @@ function AvailableAgentChatPanel({
       // Join this chat's initial options read before validating its fixed model
       // and applying the selected thinking level.
       if (sessionId) await configureSession.mutateAsync({ sessionId, model, thoughtLevel });
+      return { sessionId };
     } catch (error) {
-      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error), updateNeeded: isChatUpdateError(error) });
+      if (isAgentSetupError(error) && hasProject && !isFollower) { setSetupDone(null); setSetupRequest({ agent: chosen, error }); void localAgents.refetch(); }
+      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, error, details: error instanceof Error ? error.message : String(error), updateNeeded: isChatUpdateError(error) });
+      return { error };
     } finally {
       setStartingAgent(null);
     }
-  }, [defaultAgent, handleNewSession, configureSession]);
+  }, [defaultAgent, handleNewSession, configureSession, hasProject, isFollower, localAgents.refetch]);
 
   // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
   useEffect(() => {
@@ -948,7 +970,7 @@ function AvailableAgentChatPanel({
             describeSession={describeSession}
             onSelectSession={(sessionId) => {
               if (!projectId || !projectChat.data) return;
-              void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => setActiveSessionId(sessionId)).catch(() => undefined);
+              void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => { setSetupRequest(null); setSetupDone(null); setActiveSessionId(sessionId); }).catch(() => undefined);
             }}
             onSetMainSession={hasMainContract
               ? (sessionId) => void handleSetMainSession(sessionId).catch(() => undefined)
@@ -994,7 +1016,7 @@ function AvailableAgentChatPanel({
             newChatDisabled={createNewSession.isPending}
             onBrowseAgent={setBrowseAgent}
             agentModels={newChatModels}
-            onNewChat={(agent, model, thoughtLevel) => void startChatWith(agent, model, thoughtLevel)}
+            onNewChat={(agent, model, thoughtLevel) => { setSetupRequest(null); setSetupDone(null); void startChatWith(agent, model, thoughtLevel); }}
             onOpenChange={(open) => {
               if (open) void localAgents.refetch();
               setHeaderOverlayOpen('newChat', open);
@@ -1022,7 +1044,7 @@ function AvailableAgentChatPanel({
           )}
         </div>
       </div>
-      {startFailure && (
+      {startFailure && !showSetupCard && !isAgentSetupError(startFailure.error) && (
         <div role="alert" className="border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {startFailure.updateNeeded
             ? <ChatUpdateNeeded detail={startFailure.details} />
@@ -1084,20 +1106,46 @@ function AvailableAgentChatPanel({
             </div>
           </div>
         )}
-        {startingAgent && (
+        {startingAgent && !showSetupCard && (
           <div role="status" className="flex min-h-full items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Starting {agentNames[startingAgent]}…
           </div>
         )}
-        {!startingAgent && activeSession.isLoading && (
+        {!startingAgent && !showSetupCard && activeSession.isLoading && (
           <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading...
           </div>
         )}
 
-        {showEmptyState && (
+        {showSetupCard && <AgentSetupCard
+          agents={localAgents.data?.agents ?? []}
+          defaultAgent={defaultAgent}
+          initialAgent={setupRequest?.agent}
+          initialError={setupRequest?.error}
+          refetchAgents={localAgents.refetch}
+          onSetup={agent => setSetupRequest({ agent })}
+          startChatWith={async (agent, model) => {
+            setSetupRequest(current => current ?? { agent });
+            hasAutoCreatedSessionRef.current = true;
+            const recovery = startFailure?.agent === agent && (!model || model === startFailure.model) ? startFailure : null;
+            return startChatWith(agent, model ?? recovery?.model, recovery?.thoughtLevel, recovery ? recovery.sessionId
+              : !startFailure && activeSessionId && sessionAgentId(activeSessionId) === agent && (!model || model === chatModelId) ? activeSessionId : undefined);
+          }}
+          onComplete={(agent, sessionId) => {
+            setSetupRequest(null);
+            setStartFailure(null);
+            sendMessage.clearLocalError?.();
+            setSetupDone({ agent, sessionId: sessionId ?? currentSessionRef.current });
+            requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
+          }}
+        />}
+        {!showSetupCard && !agentBroken && setupDone && setupDone.sessionId === activeSessionId && <div role="status" className="space-y-1 py-3 text-sm">
+          <p>{AGENT_CHAT_COPY.setupDone(setupDone.agent === 'astrid' ? AGENT_CHAT_COPY.astridAgent : agentNames[setupDone.agent])}</p>
+          <p className="text-muted-foreground">{AGENT_CHAT_COPY.firstMessage}</p>
+        </div>}
+        {showEmptyState && !showSetupCard && setupDone?.sessionId !== activeSessionId && (
           <div className="flex min-h-full flex-col items-center justify-center py-8 text-center text-sm text-muted-foreground">
             {chatUnavailable ? (
               <p>{CHAT_UNAVAILABLE}</p>
@@ -1317,7 +1365,7 @@ function AvailableAgentChatPanel({
           <p className="mb-2 px-1 text-xs text-muted-foreground">{CHAT_UNAVAILABLE}</p>
         )}
 
-        {!isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && (turnFailure || activeStatus === 'error') && (
+        {!isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && !isAgentSetupError(turnFailure) && (turnFailure || (activeStatus === 'error' && setupDone?.sessionId !== activeSessionId)) && (
           <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
             {isChatUpdateError(turnFailure) ? <ChatUpdateNeeded detail={turnFailure.message} /> : turnFailureMessage}
             {(sessions.error || projectChat.error) && (
@@ -1340,6 +1388,10 @@ function AvailableAgentChatPanel({
           </div>
         )}
 
+        {writableChat && agentBroken && <p className="mb-2 text-xs text-muted-foreground">
+          {activeAgentRow?.line && <CommandLine line={activeAgentRow.line} />}{' '}
+          <button type="button" className="underline" onClick={() => { setSetupDone(null); setSetupRequest({ agent: chatAgent }); }}>{AGENT_CHAT_COPY.setUp}</button>
+        </p>}
         <AgentChatComposer
           inputRef={inputRef}
           value={startingAgent ? '' : draft}
@@ -1352,15 +1404,15 @@ function AvailableAgentChatPanel({
           }}
           rows={isExpanded ? 8 : 4}
           placeholder={inputPlaceholder}
-          inputDisabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+          inputDisabled={agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
           voice={CHAT_VOICE_ENABLED ? {
             isRecording: voice.isRecording,
             onToggle: () => voice.isRecording ? voice.stopRecording() : voice.startRecording(),
             onCancel: () => voice.cancelRecording(),
-            micDisabled: startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending,
+            micDisabled: agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending,
           } : undefined}
           onSend={() => void handleSend()}
-          sendDisabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
+          sendDisabled={agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
         />
       </div>
 

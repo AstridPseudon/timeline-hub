@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, configure, fireEvent, getConfig, render, screen, waitFor, within } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext';
+import type { LocalAgentChoice } from '@/integrations/astrid/localAgents';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes';
 
 // Waits here are hang ceilings, not timing assertions: on an oversubscribed
@@ -41,6 +42,9 @@ class HostTransport {
   readonly chats = new Map<string, ProjectChatState>();
   readonly transcripts = new Map<string, Array<{ role: 'user' | 'assistant'; text: string; messageId?: string }>>();
   readonly events: unknown[] = [];
+  agents: LocalAgentChoice[] = ['astrid', 'codex'].map(id => ({ id: id as 'astrid' | 'codex', name: id === 'astrid' ? 'Astrid' : 'Codex', state: 'ready', line: null, models: [{ modelId: 'openai/model-a', name: 'Model A' }, { modelId: 'openai/model-b', name: 'Model B' }], defaultModel: 'openai/model-a' }));
+  modelReadFailure: { error: string; detail: string; next_action?: string } | null = null;
+  promptSetupFailure: { error: string; detail: string; next_action?: string } | null = null;
   connectFailure: Error | null = null;
   loadFailure: Error | null = null;
   promptFailure: Error | null = null;
@@ -73,8 +77,10 @@ class HostTransport {
     const route = String(url).replace('/api/astrid', '');
     const body = JSON.parse(String(init?.body ?? '{}'));
     this.calls.push({ route, body });
-    if (route === '/acp/agents') return response({ defaultAgent: 'astrid', agents: ['astrid', 'codex'].map(id => ({ id, name: id === 'astrid' ? 'Astrid' : 'Codex', state: 'ready', line: null, models: [{ modelId: 'openai/model-a', name: 'Model A' }, { modelId: 'openai/model-b', name: 'Model B' }], defaultModel: 'openai/model-a' })) });
+    if (route === '/acp/models') return response({ providers: [], currentModel: null });
+    if (route === '/acp/agents') return response({ defaultAgent: 'astrid', agents: this.agents });
     if (route.includes('/models?sessionId=')) {
+      if (this.modelReadFailure) return response(this.modelReadFailure, 502);
       const session = [...this.chats.values()].flatMap(chat => chat.sessions).find(session => session.id === decodeURIComponent(route.split('sessionId=')[1]));
       const model = session?.model_id ?? 'openai/model-a';
       return response({ models: { currentModelId: model, availableModels: [{ modelId: model, name: model.endsWith('model-b') ? 'Model B' : 'Model A' }] } });
@@ -127,6 +133,7 @@ class HostTransport {
       return response(chat);
     }
     if (action === 'prompt') {
+      if (this.promptSetupFailure) return response(this.promptSetupFailure, 502);
       if (!chat.sessions.some(s => s.id === body.session_id)) return response({ error: 'session_not_owned', detail: 'Unowned session' }, 403);
       const assistantReply = this.assistant;
       if (this.onPrompt) await this.onPrompt();
@@ -194,6 +201,100 @@ afterEach(async () => {
 });
 
 describe('real panel → real hooks → owned ACP transport', () => {
+  it('shows setup instead of auto-creating with an unready default, then finishes and focuses the composer', async () => {
+    fixture.agents[0] = { ...fixture.agents[0], state: 'sign-in', signIn: 'signed-out', line: 'Run `astrid`, then `/login`.' };
+    fixture.agents[1].signIn = 'signed-in';
+    mount();
+    await screen.findByRole('listbox', { name: 'How do you want Astrid to think?' });
+    expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(0);
+    expect(screen.getByRole('textbox')).toBeDisabled();
+    fireEvent.click(screen.getByRole('option', { name: /Use Codex/ }));
+    await screen.findByText('✓ Codex is set up.');
+    expect(screen.getByText('Send your first message.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveFocus());
+    expect(screen.getByRole('textbox')).toBeEnabled();
+    expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(1);
+    await send('First message after setup');
+    await screen.findByText('Done.');
+    expect(screen.queryByRole('listbox', { name: 'How do you want Astrid to think?' })).toBeNull();
+  });
+
+  it.each([undefined, 'signed-in'] as const)('keeps auto-create for a ready default (signIn: %s)', async signIn => {
+    fixture.agents[0].signIn = signIn;
+    mount();
+    await waitFor(() => expect(screen.getByRole('textbox')).toBeEnabled());
+    expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(1);
+    expect(screen.queryByRole('listbox', { name: 'How do you want Astrid to think?' })).toBeNull();
+  });
+
+  it('locks a broken active agent and opens its setup instructions', async () => {
+    fixture.seed('p1');
+    mount();
+    await waitFor(() => expect(screen.getByRole('textbox')).toBeEnabled());
+    fixture.agents[0] = { ...fixture.agents[0], state: 'sign-in', signIn: 'signed-out', line: 'Run `astrid`, then `/login`.' };
+    await act(async () => { await clients[0].invalidateQueries({ queryKey: ['local-agents'] }); });
+    await waitFor(() => expect(screen.getByRole('textbox')).toBeDisabled());
+    expect(screen.getByText('/login')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Copy command' })).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Set up', exact: true }));
+    // The card uses the dedicated, session-free model query for Astrid.
+    await waitFor(() => expect(fixture.calls.some(call => call.route === '/acp/models')).toBe(true));
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+  });
+
+  it('routes prompt setup errors to the card, preserving the failed message for retry', async () => {
+    fixture.seed('p1');
+    fixture.promptSetupFailure = { error: 'agent_not_installed', detail: 'Agent is missing', next_action: 'install-agent' };
+    mount();
+    await send('Keep this message');
+    expect(await screen.findByText('install-agent')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+    expect(screen.queryByText(/Astrid bridge .* failed/)).toBeNull();
+    expect(screen.getByRole('textbox')).toBeDisabled();
+    expect(fixture.chat('p1').draft.queued_messages).toEqual([expect.objectContaining({ text: 'Keep this message' })]);
+  });
+
+  it('resumes a broken agent in its existing chat and explicitly retries its retained message', async () => {
+    fixture.seed('p1', 'codex:session-p1');
+    fixture.promptSetupFailure = { error: 'agent_sign_in_required', detail: 'Sign-in expired', next_action: 'codex login' };
+    mount();
+    await send('Retry after sign-in');
+    expect(await screen.findByText('codex login')).toBeVisible();
+    fixture.promptSetupFailure = null;
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await screen.findByText('✓ Codex is set up.');
+    expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(0);
+    expect(screen.queryByRole('alert')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Send now' }));
+    await screen.findByText('Done.');
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(2);
+  });
+
+  it.each(['generic', 'setup'] as const)('recovers a %s warm-up failure without creating another session', async kind => {
+    fixture.agents[0] = { ...fixture.agents[0], state: 'sign-in', signIn: 'signed-out' };
+    fixture.agents[1].signIn = 'signed-in';
+    fixture.modelReadFailure = kind === 'setup'
+      ? { error: 'agent_sign_in_required', detail: 'Sign-in expired', next_action: 'codex login' }
+      : { error: 'acp_bridge_error', detail: 'Adapter exited' };
+    mount();
+    await screen.findByRole('listbox', { name: 'How do you want Astrid to think?' });
+    fireEvent.click(screen.getByRole('option', { name: /Use Codex/ }));
+    if (kind === 'setup') {
+      await screen.findByText('codex login');
+      expect(screen.getByText('Waiting for you to sign in…')).toBeInTheDocument();
+    } else {
+      await screen.findByRole('button', { name: 'Try again' });
+      expect(screen.getByRole('alert')).toHaveTextContent('Adapter exited');
+    }
+    expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(1);
+    fixture.modelReadFailure = null;
+    if (kind === 'setup') await act(async () => { window.dispatchEvent(new Event('focus')); });
+    else fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await screen.findByText('✓ Codex is set up.');
+    expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(1);
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveFocus());
+  });
+
   it.each(['main', 'agent', 'model'] as const)('New (%s) opens the created Main chat and reopens it after remount', async (choice) => {
     const firstId = fixture.seed('p1');
     fixture.chat('p1').main_session_id = firstId;

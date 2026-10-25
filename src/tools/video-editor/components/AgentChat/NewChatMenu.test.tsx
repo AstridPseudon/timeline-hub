@@ -229,7 +229,7 @@ describe('NewChatMenu model list', () => {
     const { onNewChat, onBrowseAgent, rerender } = openMenu();
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Codex model' }));
     rerender({ agentModels: { agent: 'codex', models: [], loading: false } });
-    fireEvent.click(screen.getByRole('option', { name: 'Use the agent’s default model' }));
+    fireEvent.click(screen.getByRole('option', { name: "Use the agent's default model" }));
     expect(onBrowseAgent).toHaveBeenCalledWith('codex');
     expect(onNewChat).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
@@ -558,7 +558,7 @@ describe('NewChatMenu model list', () => {
     const { onNewChat } = openMenu({ agentModels: { agent: 'claude-code', models: [], loading: false, note: 'Start one first.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
     expect(screen.getByText('Start one first.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('option', { name: 'Use the agent’s default model' }));
+    fireEvent.click(screen.getByRole('option', { name: "Use the agent's default model" }));
     expect(onNewChat).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', undefined);
