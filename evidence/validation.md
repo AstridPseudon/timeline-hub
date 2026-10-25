@@ -42,3 +42,35 @@ The corrected candidate is not evidence that the current launcher can admit
 the environment: the two launcher-owned exports are the exact finite blocker.
 An independent review must verify any authorized launcher correction before a
 meaningful own-14 or ship-grade/full-core run.
+
+## Independent source review
+
+Commands and results:
+
+```text
+bash -n evidence/next-core-command.sh                         PASS
+python3 -m json.tool evidence/environment-contract.json        PASS
+python3 -m json.tool evidence/source-manifest.json             PASS
+git diff --check                                               PASS
+```
+
+Read-only source checks against Agent commit
+`a4e016b6a9f91fbe372672bdcf382c630bf59186`:
+
+```text
+launcher SHA-256 and blob ID                                  PASS
+launcher exports at lines 128 and 149                         PASS
+AST parse of host_bootstrap.py, remotion_runtime.py,           PASS
+  and subprocess_env.py
+Agent/Runtime/App/Composition commit/tree tuple                PASS
+candidate body comparison with author measurement              PASS
+selector-root count                                            PASS: 22
+flags and D73 bindings                                         PASS
+```
+
+The candidate body SHA-256 from the static comparison is
+`e5455f5a9a1b5b89837301e542f245f70d3b18892507fa7c16f399d2cc6ea3aa`.
+No launcher, preflight, body, test, provider, browser, socket, render, or
+service command was run. This is source evidence only; it does not establish
+a working fix, launch admission, child reachability, registration, custody,
+or final-core state.
