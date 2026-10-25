@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T09:35:56Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 3m -->
-# app board, 2026-10-25T09:30Z
+<!-- app | 2026-10-25T09:39:48Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# app board, 2026-10-25T09:38Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -283,18 +283,20 @@
 
 | D74-D115-stale-pin | Recycle recreated completed App pin | Manager; host input | Fresh host0921 and static guards | merged | Normal recycle0922 | Old04be removed; zero refusals. All15712 outputs and branches retained. [Receipt](../../design/app-pin-guarded-release-0922.md). | No source change |
 
+| U4p-D112 | Adopt verified identity recovery | Luna normal tools | Normal Runtime 8b389; D112a warm PASS53 | doing | app-U4p-D112-normal-adoption-0938 | Exact reviewed store pair; normal provenance tools and focused checks underway. No D111b candidate. | Runtime 8b3895cf14 |
+
 Integration: App7841a94619 normal merge equals independently tested e744 whole tree. D115 corrects only the exact native asset field-union expectation; D113 modal dismissal and all other source remain exact. Runtime lockc916 is production-equivalent to released1daca; no D111 memo or unreleased D111b/D112 candidate adopted.
 core open: 4 — SWAP, element, placement and current asset lack GO. ADD, parent, single and bulk have independent full-tail caseGO in19078. Older asset27438 GO is a separate tuple; current full tour and current asset proof remain owed.
 regressions: D102 context and D110 inverse KeyError source repairs released. Current SWAP initial409 is Runtime D112; placement error is a protected original modal sequence, not a demonstrated product defect.
 
 Decision: D113 conditions satisfied and source merged normally: upstream modal exact, real Close, meaningful dialog-gone assertion, all pre-existing bytes preserved, independent139/types/lint PASS and existing ledger paragraph. No isolated placement body; next proof full P2.
 Blockers: Runtime D111b — review0905 FAIL: cold-read control also passes parent. Native16269 accepts with identical bytes and no leaks, but cost grows. Firstreturn and independent path0923 active.
-Blockers: Runtime D112 — recovery and tamper controls PASS; baseline and candidate literal flat flags false. Runtime owns scope escalation0923 before release; no App decision duplicated.
+Blockers: App U4p D112 — normal Runtime 8b389 is merged, warm0927 PASS53. Worker0938 owns tool adoption and actual source receipt; full P2 still waits qualified D111b.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
-Next ready: Runtime D111b/D112 qualified releases, normal adoption then FULL P2. D115 source HOME7841 and ledger complete. No isolated successor. D111b/D112 qualified releases then normal adoption/fullP2; no isolated placement.
-live 0 / cap 6; ready-undispatched 0; core open: 4. Dispatcher09:20 confirms zero App workers. No App heavy body live; ready work awaits qualified Runtime releases.
+Next ready: Merge D112 adoption0938 on tool checks PASS. Adopt qualified D111b then FULL P2; D113 and D115 already home. No isolated successor.
+live 1 / cap 6; ready-undispatched 0; core open: 4. D112 tool adoption0938 queued; no App heavy body. D111b remains owned by Runtime0923.
 Capacity: Free5.95GB after normal recycle of recreated old04be pin. Fresh static guards and host0921 CLEAR; zero refusals. All15712 and historical outputs/branches/reports retained. Current inputs and old dirty/refused targets untouched.
-Inbox consumed through2046656 bytes. D114 asset15712 terminal FAIL236s after preflight9872 and readiness PASS on explicit04be/070dfc/1daca/635f; exact native reply equality source0904 assigned. Delayed selfpeer0837 superseded by normalD113HOMEdc8c. Runtime D112 scope question and D111b firstreturn0923 remain unqualified on owner board09:23. No ready release to adopt. No refusal.
+Inbox consumed through2049748 bytes. D114 asset15712 terminal FAIL236s after preflight9872 and readiness PASS on explicit04be/070dfc/1daca/635f; exact native reply equality source0904 assigned. Delayed selfpeer0837 superseded by normalD113HOMEdc8c. D112a answers the scope question and warm0927 PASS53 is published; peer requests actual normal release. D111b firstreturn0923 remains active. Normal D1128b389 is now visible and adopter0938 queued; no D111b candidate adopted. No refusal.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).
 Retained run: app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712. Preserve every output through D55 disposition; no compact, sweep or raw cleanup of this run.
