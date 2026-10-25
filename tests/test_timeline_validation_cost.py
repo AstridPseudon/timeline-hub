@@ -21,6 +21,7 @@ def _packet():
 
 def test_retained_capture_boundaries_call_the_shared_validator_once_each(monkeypatch):
     packet = _packet()
+    validation.clear_validation_memo()
     boundaries = [
         document
         for side in ("original", "landing")
@@ -39,12 +40,13 @@ def test_retained_capture_boundaries_call_the_shared_validator_once_each(monkeyp
     for document in boundaries:
         auth._capture_document_images(copy.deepcopy(document))
 
-    assert len(calls) == len(boundaries)
+    assert len(calls) == len({validation.digest(document) for document in boundaries})
     assert len(boundaries) == 8
 
 
 def test_validation_does_not_reuse_a_previous_result_after_mutation(monkeypatch):
     packet = _packet()
+    validation.clear_validation_memo()
     value = copy.deepcopy(packet["capture"]["original"]["commands"][0]["input"])
     original_validator = validation._validator("CanonicalDocument")
     calls = 0

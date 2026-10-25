@@ -9,6 +9,7 @@ import math
 from collections import OrderedDict
 from functools import cache, lru_cache
 from importlib.resources import files
+from threading import RLock
 from typing import Protocol, cast
 
 from .errors import ValidationError
@@ -64,7 +65,7 @@ def _validator_resolver(validator):
 
 
 @cache
-def _schema_resources():
+def _load_schema_resources():
     from referencing import Registry, Resource
     from referencing.exceptions import NoSuchResource
     from referencing.jsonschema import DRAFT202012
@@ -88,8 +89,28 @@ def _schema_resources():
     return bundle, registry
 
 
+_schema_source_digest = None
+
+
+def _schema_resources():
+    global _schema_source_digest
+    source = (
+        files("runtime_protocol")
+        .joinpath("schemas/timeline-commit-bundle.json")
+        .read_bytes()
+    )
+    source_digest = hashlib.sha256(source).digest()
+    if source_digest != _schema_source_digest:
+        _load_schema_resources.cache_clear()
+        _schema_source_digest = source_digest
+    return _load_schema_resources()
+
+
+_schema_resources.cache_clear = _load_schema_resources.cache_clear  # type: ignore[attr-defined]
+
+
 @cache
-def _validator(definition: str):
+def _validator_for_bundle(definition: str, bundle_digest: str):
     from jsonschema import Draft202012Validator
 
     bundle, registry = _schema_resources()
@@ -101,6 +122,16 @@ def _validator(definition: str):
     return validator.evolve(
         _resolver=_reuse_schema_resolution(_validator_resolver(validator))
     )
+
+
+def _active_schema_bundle():
+    bundle, registry = _schema_resources()
+    return bundle, registry, digest(bundle)
+
+
+def _validator(definition: str):
+    _, _, bundle_digest = _active_schema_bundle()
+    return _validator_for_bundle(definition, bundle_digest)
 
 
 def _reuse_schema_validators(base):
@@ -159,6 +190,17 @@ def _reuse_schema_resolution(resolver):
     return Resolver(resolver)
 
 
+_VALIDATION_MEMO_MAXSIZE = 256
+_validation_memo: OrderedDict[tuple[str, str, str], None] = OrderedDict()
+_validation_memo_lock = RLock()
+
+
+def clear_validation_memo() -> None:
+    """Clear process-local validation successes, primarily for lifecycle tests."""
+    with _validation_memo_lock:
+        _validation_memo.clear()
+
+
 def validate_commit_value(value, definition: str) -> None:
     """Raise Runtime ValidationError without changing the submitted JSON value.
 
@@ -166,14 +208,30 @@ def validate_commit_value(value, definition: str) -> None:
     this module or the provider ABI requires only the standard library.
     """
     finite_json(value)
-    from jsonschema.exceptions import ValidationError as SchemaValidationError
-    from referencing.exceptions import Unresolvable
+    snapshot = copy.deepcopy(value)
+    finite_json(snapshot)
+    _, _, bundle_digest = _active_schema_bundle()
+    value_digest = digest(snapshot)
+    memo_key = (bundle_digest, definition, value_digest)
+    with _validation_memo_lock:
+        if memo_key in _validation_memo:
+            _validation_memo.move_to_end(memo_key)
+            return
 
-    try:
-        _validator(definition).validate(value)
-    except SchemaValidationError as exc:
-        raise ValidationError(f"invalid {definition}: {exc.message}") from exc
-    except (Unresolvable, RecursionError) as exc:
-        raise ValidationError(
-            f"cannot validate {definition} against the installed contract"
-        ) from exc
+        from jsonschema.exceptions import ValidationError as SchemaValidationError
+        from referencing.exceptions import Unresolvable
+
+        try:
+            _validator(definition).validate(snapshot)
+            if digest(snapshot) != value_digest:
+                raise ValidationError("commit value changed during validation")
+        except SchemaValidationError as exc:
+            raise ValidationError(f"invalid {definition}: {exc.message}") from exc
+        except (Unresolvable, RecursionError) as exc:
+            raise ValidationError(
+                f"cannot validate {definition} against the installed contract"
+            ) from exc
+        _validation_memo[memo_key] = None
+        _validation_memo.move_to_end(memo_key)
+        while len(_validation_memo) > _VALIDATION_MEMO_MAXSIZE:
+            _validation_memo.popitem(last=False)
