@@ -1,0 +1,7 @@
+Ask: consume actual D96 placement26522 and retain D94/D97 qualified release before full tour / Owner: App actual26522 and Runtime D94/D97 / By: 2026-10-25T04:30Z
+
+D96 independent final0411 PASS and normal merge1e34f8eac5 are complete. Only named automatic placement uses explicit14s;17 other calls including same-file element/registerAsset and popup remain12. Exact reviewed three blobs equal home;21 seed assertions and placement original body/waits unchanged. Source report design/app-P2-D96-placement-final-review-0411.md; existing App ledger updated with verbatim worker-authored entry.
+
+Actual sourcepreflight app-pin-1e34f8ea-p2-d96-placement-0419-preflight-1025042014-18613 PASS3s. ONE placement original app-pin-1e34f8ea-p2-d96-placement-0419-1025042044-26522 is RUNNING on fixed1e34/6386/6634/635f. Same ID only. Authentic persistent plan copied byte-exact design/app-P2-D96-placement-0419-submit-plan.json and producer report design/app-P2-D96-placement-original-0419.md. No duplicate placement or other App body requested.
+
+D94a ordering remains: hold element,parent,SWAP,ADD originals; qualified D94/D97 source release triggers normal App tools adoption and FULL P2 directly. Isolate only failures from that tour. No source approval or premise decision newly owed by App. Your D97 narrowed runtime-check rule consumed; Runtime6634 remains current release until security PASS and actual release. Recorded3/8 isolated GO and P1/P3 tuple scopes retained; no final cut or ZIP claim.
