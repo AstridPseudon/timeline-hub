@@ -1,0 +1,49 @@
+{
+  "candidate": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+  "base": "453b3e6f92045980219ec4948419ee5ad25c817d",
+  "central": {
+    "id": "app-D127-leaf-retention-author-1606-targeted-1025160952-28551",
+    "status": "pass",
+    "tree": "4fc171c1639d52df2fe0996f34311fa43ae42654",
+    "tests": "23 passed in 3.46s"
+  },
+  "ast": {
+    "parent_test_functions": 19,
+    "candidate_test_functions": 23,
+    "parent_assert_nodes": 160,
+    "candidate_assert_nodes": 181,
+    "retained_parent_names": 19,
+    "retained_parent_assert_nodes": 163,
+    "exact_assertion_ast_equality": false,
+    "author_claim_169_parent_assertions_reproduced": false
+  },
+  "candidate_semantics": {
+    "new_tests": [
+      "test_nearest_safe_leaf_is_projected_separately_from_routing_frames",
+      "test_leaf_projection_counter_and_output_remain_bounded",
+      "test_return_without_response_is_not_buffer_completion_or_request_completion",
+      "test_raised_dispatch_is_labeled_without_inventing_a_duration"
+    ],
+    "lifecycle_values": [
+      "completed",
+      "raised",
+      "returned_without_response",
+      "pending_at_stop"
+    ],
+    "buffer_complete_is_distinct_from_lifecycle": true,
+    "pending_10721_remains_unknown": true
+  },
+  "app_validator_delta_required": [
+    "summary.lifecycle",
+    "sampling.top_leaf_frames",
+    "sampling frame lost_samples",
+    "final_request.buffer_complete",
+    "completed/raised/returned_without_response/pending_at_stop outcomes",
+    "candidate helper SHA256 4ee0424b..."
+  ],
+  "safety": {
+    "safety_refusal": false,
+    "swap_recovery_inspected": false,
+    "product_source_changed": false
+  }
+}

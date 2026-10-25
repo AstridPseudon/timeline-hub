@@ -1,0 +1,64 @@
+{
+  "task": "U4p qualified R2 redo and diagnostic adoption",
+  "status": "PASS",
+  "app": {
+    "base_commit": "84857c45347539c7820bb054b69e2e5ad4079081",
+    "base_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+    "changed_files": ["runtime.lock.json", "public/install-manifest.json"],
+    "runtime_lock_sha256": "cb6c9b01d5c06cecf4257dece098bf477da9c11b5967a8b0c7e9e00783b57cee",
+    "install_manifest_sha256": "02a0cf29ac24ec5c18bf04e7e3540aada60854cd68f02f634ae5fd90eb6de1a1"
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "parents": [
+      "00ede8c3fac7f607a14a1bf74182e87a3dcb523a",
+      "a5fc9ddf3ac7c9e120e22df5b3c4093d60759f3b"
+    ],
+    "auth_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+    "auth_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+    "redo_test_blob": "0cbf2318ae70fc7d35b3e1dedbe38b8a730002b3",
+    "redo_test_sha256": "83ace65bd00081b3ff3928972c0d83c08e00c902768fa8f00900e09d69bd6a89",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "diagnostic_parent": "00ede8c3fac7f607a14a1bf74182e87a3dcb523a",
+    "r2_receipts": {
+      "genuine": "3 passed",
+      "native": "2 passed",
+      "paths": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-R2-redo-home-1550-genuine3.xml",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-R2-redo-home-1550-native.xml"
+      ]
+    }
+  },
+  "qualified_reference": {
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "checkout": "/home/user/work/wt/rt-pin-42aad0e9"
+  },
+  "agent": {
+    "checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+    "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "manifest_pin_preserved": true
+  },
+  "composition": {
+    "artifact": "vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+    "sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"
+  },
+  "comparisons": {
+    "producer_mappings": "14/14",
+    "canonical_runtime_files_vs_qualified42aad": "15/15",
+    "protected_app_files_base_vs_worktree": "8/8",
+    "app_diff_scope": ["public/install-manifest.json", "runtime.lock.json"],
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "scope": {
+    "d130_recovery": "excluded and safety-held",
+    "full_browser_native_service_body_tour": "not run",
+    "package_install": "not run",
+    "manual_generated_edit": false,
+    "wire_or_product_change": false
+  }
+}

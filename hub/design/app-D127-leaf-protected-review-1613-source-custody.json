@@ -1,0 +1,65 @@
+{
+  "candidate_commit": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+  "candidate_tree": "4fc171c1639d52df2fe0996f34311fa43ae42654",
+  "base_commit": "453b3e6f92045980219ec4948419ee5ad25c817d",
+  "files": {
+    "tests/helpers/p2_commit_phase_capture.py": {
+      "candidate_blob": "6984ac1da77f1b499703cfac45d27149eddcbdae",
+      "base_blob": "e0e239ea9ef6bb99be5f3e1e0819842a779afb50",
+      "sha256_candidate": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "sha256_base": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+    },
+    "tests/test_p2_commit_phase_capture.py": {
+      "candidate_blob": "5319d1073b86e76f8b7e21cb12d87c3701a9c986",
+      "base_blob": "aa586f3b9c984a2ce7771e7b097d694b090f3896",
+      "sha256_candidate": "fe3842291d1271e8291ce121e57343d35f84bc70a8bbb12b5464fe81d0a6f9ef",
+      "sha256_base": "1a1b475e8095a8a70cd5d7f5c884b6d68a37d19d62807d70d982f5224025aff9"
+    }
+  },
+  "diff": {
+    "files_changed": 2,
+    "insertions": 158,
+    "deletions": 20,
+    "unauthorized_files": []
+  },
+  "central_receipt": {
+    "request_id": "app-D127-leaf-retention-author-1606-targeted-1025160952-28551",
+    "status": "pass",
+    "snapshot_tree": "4fc171c1639d52df2fe0996f34311fa43ae42654",
+    "snapshot_head": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+    "source_hashes_match_candidate": true
+  },
+  "app84857": {
+    "head": "84857c45347539c7820bb054b69e2e5ad4079081",
+    "tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+    "strict_validator": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts:101-300",
+    "accepted_helper_hashes": [
+      "a17a92115661fcef13b49169504ad8726e6f0cdce66b195128b14477fa76a4",
+      "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+    ],
+    "candidate_helper_hash": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e"
+  },
+  "caller_chain": [
+    "App commitOutbox.ts:464-530 persisted outbox",
+    "App commitSession.ts:218-249 canonical POST and transmit",
+    "App dataProvider.ts:751-767 registered commitTimeline provider",
+    "App generated.ts:202-204 canonical POST with Idempotency-Key",
+    "Runtime server.py:1176-1234 _dispatch -> _timeline_commit -> commit provider -> response"
+  ],
+  "privacy_custody": {
+    "safe_frame_allowlist": "unchanged _safe_frame; runtime/agent/stdlib only",
+    "raw_payloads": false,
+    "raw_keys": false,
+    "credentials": false,
+    "private_urls": false,
+    "sink_creation": "O_EXCL mode 0600 under TMPDIR; watchdog sink likewise",
+    "budgets": {
+      "max_requests": 8,
+      "max_events": 128,
+      "max_bytes": 65536,
+      "sampling_interval_ms": 20,
+      "top_frames": 10,
+      "phase_count_cap": 32
+    }
+  }
+}

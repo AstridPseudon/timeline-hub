@@ -1,0 +1,50 @@
+{
+  "task": "D127",
+  "candidate": {
+    "commit": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+    "tree": "4fc171c1639d52df2fe0996f34311fa43ae42654",
+    "base_commit": "453b3e6f92045980219ec4948419ee5ad25c817d",
+    "changed_files": [
+      "tests/helpers/p2_commit_phase_capture.py",
+      "tests/test_p2_commit_phase_capture.py"
+    ]
+  },
+  "verdict": "FAIL",
+  "source": "FAIL",
+  "proof": "PASS_PROOF",
+  "source_findings": [
+    {
+      "id": "D127-AST-EXACTNESS",
+      "severity": "blocker",
+      "fact": "The parent has 19 test functions and 160 ast.Assert nodes, not 169. All 19 names remain, but exact assertion AST equality is false: five existing tests change assertion ASTs and the retained-original count is 163.",
+      "impact": "The mandated exact original-assertion custody gate is not met. The changes are not skips or obvious weakening, but they are not exact preservation."
+    },
+    {
+      "id": "D127-APP-VALIDATOR",
+      "severity": "blocker",
+      "owner": "App",
+      "fact": "App84857 strict validator p2-runtime-phase-bootstrap.test.ts still expects the old reviewed helper hash 6c9d..., old lifecycle values complete/failed/pending, no summary.lifecycle, no sampling.top_leaf_frames or row.lost_samples, and no final_request.buffer_complete.",
+      "impact": "The candidate helper's new output and hash 4ee0424b... will be rejected by the existing strict readCapture/assertRetention/assertSampling validator before a reviewed App attachment can qualify."
+    }
+  ],
+  "source_checks": {
+    "scope": "PASS",
+    "safe_leaf_projection": "PASS",
+    "lifecycle_and_buffer_semantics": "PASS_SOURCE_SEMANTICS",
+    "privacy_allowlist": "PASS",
+    "bounds": "PASS_SOURCE",
+    "caller_custody": "PASS_SOURCE_TRACE",
+    "no_product_edits": true,
+    "no_safety_or_permission_refusal": true
+  },
+  "proof_checks": {
+    "central_request_id": "app-D127-leaf-retention-author-1606-targeted-1025160952-28551",
+    "central_status": "pass",
+    "central_tree": "4fc171c1639d52df2fe0996f34311fa43ae42654",
+    "central_command": "/home/user/work/venv-runtime/bin/python -m pytest -q tests/test_p2_commit_phase_capture.py",
+    "central_result": "23 passed in 3.46s",
+    "central_receipt_consumed_without_duplicate": true,
+    "central_result_is_full_file": true
+  },
+  "recommendation": "Do not promote as fully qualified. App must update its strict validator for the candidate schema/hash, and the author/orchestrator must resolve the exact assertion-custody requirement or explicitly amend that settled gate."
+}

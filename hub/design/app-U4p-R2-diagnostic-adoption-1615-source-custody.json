@@ -1,0 +1,85 @@
+{
+  "runtime": {
+    "released": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "clean": true,
+      "auth": {
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+        "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47"
+      },
+      "redo_test": {
+        "path": "tests/test_timeline_redo_restoration_boundary.py",
+        "blob": "0cbf2318ae70fc7d35b3e1dedbe38b8a730002b3",
+        "sha256": "83ace65bd00081b3ff3928972c0d83c08e00c902768fa8f00900e09d69bd6a89"
+      }
+    },
+    "qualified_reference": {
+      "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+      "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c"
+    },
+    "canonical15": {
+      "all_equal_released_vs_qualified": true,
+      "paths": [
+        "contract/schemas/timeline-commit.json",
+        "runtime_protocol/schemas/timeline-commit-bundle.json",
+        "runtime_protocol/timeline_commit_types.py",
+        "packages/python/astrid_runtime_client/__init__.py",
+        "packages/python/astrid_runtime_client/contract_metadata.py",
+        "packages/python/astrid_runtime_client/generated.py",
+        "packages/python/astrid_runtime_client/timeline_commit_types.py",
+        "packages/typescript/src/contract-metadata.ts",
+        "packages/typescript/src/generated.ts",
+        "packages/typescript/src/index.ts",
+        "packages/typescript/src/timeline-commit-types.ts",
+        "conformance/second-client-core-v1.yaml",
+        "conformance/typescript/generated.ts",
+        "contract/schemas/document.json",
+        "contract/schemas/edit-command.json"
+      ]
+    },
+    "mappings14": {
+      "all_equal_app_vs_released_vs_qualified": true,
+      "paths": [
+        "src/integrations/runtime/fixtures/responses/commit_conflict_409.json",
+        "src/integrations/runtime/fixtures/responses/events_page_1_200.json",
+        "src/integrations/runtime/fixtures/responses/events_page_2_200.json",
+        "src/integrations/runtime/fixtures/responses/invalid_cursor_400.json",
+        "src/integrations/runtime/fixtures/responses/managed_outputs_200.json",
+        "src/integrations/runtime/fixtures/responses/not_found_404.json",
+        "src/integrations/runtime/fixtures/responses/retired_route_410.json",
+        "src/integrations/runtime/fixtures/responses/task_admission_201.json",
+        "src/integrations/runtime/fixtures/responses/task_read_200.json",
+        "src/integrations/runtime/fixtures/responses/validation_error_422.json",
+        "src/integrations/runtime/generated-contract-metadata.ts",
+        "src/integrations/runtime/generated.ts",
+        "src/integrations/runtime/timeline-commit-types.ts",
+        "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json"
+      ]
+    }
+  },
+  "agent": {
+    "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "clean": true
+  },
+  "app_protected8": {
+    "base_equals_worktree": true,
+    "note": "The inherited D115 receipt's p2-tour hash was stale for this newer App base; the valid preservation assertion is current base-to-worktree equality.",
+    "hashes": {
+      "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+      "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+      "tests/e2e/local/three-products.p2-tour.spec.ts": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "tests/e2e/local/three-products.spec.ts": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+      "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "tests/e2e/local/support/p2-placement-seed-window.test.mjs": "1e9b93e3ab9889729ab72a7b7c54728fa37d8a5ead6b8023a60e5111bb6c2c00",
+      "tests/e2e/local/support/p2-placement-receipt.test.mjs": "2172aa3ea6cc09fa804ea6f5611b03d25ad80b99e6c6ff6b2eb090e462e6c05c"
+    }
+  },
+  "composition": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "artifact_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"
+  }
+}
