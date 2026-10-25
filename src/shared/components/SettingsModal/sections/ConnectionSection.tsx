@@ -54,6 +54,10 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
       return { title: COPY.phone.title, detail: COPY.phone.sentence };
     case 'unsupported':
       return { title: COPY.unsupported.title, detail: COPY.unsupported.sentence };
+    case 'browser_update_needed':
+      return { title: withBrowser(COPY.browserUpdateNeeded.title), detail: withBrowser(COPY.browserUpdateNeeded.sentence) };
+    case 'restart':
+      return { title: COPY.restarted.title, detail: COPY.restarted.sentence, checks: LOOKING };
     case 'update_needed':
       return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: LOOKING, outOfDate: 'runtime' };
     case 'not_running':
