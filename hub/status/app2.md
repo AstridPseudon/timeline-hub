@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T14:54:14Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-25T14:53:39Z
+<!-- app2 | 2026-10-25T14:57:29Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T14:56:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -168,12 +168,14 @@ EPERM on an extra Node-git step I added; refused, not retried.
 Blockers: Final cut — Runtime owns SWAP 3250 correlation and root; App owns element follow-through. Agent and Farm owe core and regression confirmation. D69, final pinned gates and installed render remain owner-lane work. No Proof action is authorized.
 Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Pass 2026-10-25T14:53:39Z: INBOX remains consumed through 817752 bytes, with no new items. Current header and owner boards checked. D56.4 and MAIN stand-down remain in force. Fresh bin/workers check found all 1313 ap2 records done, zero live. Free disk is 6,246,240,256 bytes (5.82 GiB). No Proof action is authorized; no cleanup under the explicit preservation instruction.
+Pass 2026-10-25T14:56:20Z: INBOX remains consumed through 817752 bytes, with no new items. PLAN, MANAGER-COMMON, current header and App, Runtime, Agent and Farm boards checked. D56.4 and MAIN stand-down remain in force. Fresh bin/workers check found all 1313 ap2 records done, zero live. Free disk is 6,244,388,864 bytes (5.82 GiB). No Proof action is authorized; no cleanup under the explicit preservation instruction.
 
-App's published [independent verdict](/home/user/timeline-hub/hub/design/app-D125-P2-Proof-GO-review-verdict.md) now qualifies actual 3250 as overall NO-GO, with complete GO tails for ADD, parent move, single clear, bulk clear and automatic placement. Readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. SWAP first fails expected HTTP 200 versus actual 409 history unavailable; exact lower phase correlation is UNKNOWN. Element applied status is absent and HTTP outcome UNKNOWN. RegisterAsset is serially NOTRUN. Exact pinned tuple, clean checkouts and durable submitted plan were independently qualified. No result is borrowed from another tuple.
+App's published [independent verdict](/home/user/timeline-hub/hub/design/app-D125-P2-Proof-GO-review-verdict.md) qualifies actual 3250 as overall NO-GO, with complete GO tails for ADD, parent move, single clear, bulk clear and automatic placement. Readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. SWAP first fails expected HTTP 200 versus actual 409 history unavailable; exact lower phase correlation is UNKNOWN. Element applied status is absent and HTTP outcome UNKNOWN. RegisterAsset is serially NOTRUN. Exact pinned tuple, clean checkouts and durable submitted plan were independently qualified. No result is borrowed from another tuple.
 
-Runtime's R-P2-SWAP-3250 author1426 returned source changes for public correlation and refusal tags with 210 targeted tests PASS; independent1441 reviews them. Native1440 prepares exact-sequence replay. Actual3250 lower root remains UNKNOWN. App's startup root is proved; Luna1435 actual activation controls PASS on normal84857 and exact reviewed helper. App's sole sampled controller1440 is admitted. These are owner-lane preparations, with no new original result or full-tour credit. Proof issues no duplicate work or verdict.
+App's board14:48 publishes sole sampled actual10721 RUNNING after preflight30400 PASS, owned by controller1440. Its exact84857/070dfc/5e9ad/635f tuple includes the reviewed helper and is separate from tagged3250. Activation1435 actual normal2 and reviewed2 controls PASS; no new original outcome is published. Proof issues no duplicate run or verdict.
 
-Agent retains core 425 and REG 14 pending Farm confirmation; original host14 independently passes after normal fallback a4e016. Runtime's original ten retain six PASS and four FAIL with Agent sole source owner. Final cut, D69 and genuine installed render remain separate.
+Runtime's source review1441 for SWAP3250 FAIL found request lifetime and raw-ID leakage. Same-branch return1444 owns correction; native1440 prepares genuine replay inputs. Actual3250 lower root stays UNKNOWN. Runtime's installed maker review1440 independently passes exacte62f custody and controls; Farm owns propagation and its one authorized child reissue. These source results confer no browser or core credit.
+
+Agent retains core425 and REG14 pending Farm confirmation; original host14 independently passes after normal fallbacka4e016. Runtime's original ten retain six PASS and four FAIL, with Agent inverse1435 and Runtime step-source1444 owning disjoint repairs. Farm14:50 records next Agenta4e016 checkout created and Runtime5e9ad checkout requested; old captured tuples stay immutable. Final cut, D69 and genuine installed render remain separate.
 
 D125 receipt unchanged: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. No dispatch, preflight, run, retry, provisioning, cleanup, Node/checkout/receipt/source/test/pin change or Git mutation. Existing venue-release and stop notes remain the handoff; summaries only.
