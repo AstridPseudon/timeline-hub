@@ -88,6 +88,24 @@ def normalize_steps(request, calls):
     return label, steps
 
 
+def native_asset_reads(payload):
+    """Retain both physical registry mirrors without resolving aliases."""
+    paths = [['registry'], ['config', 'registry']
+             if isinstance(payload.get('config'), dict) else ['config']]
+    result = []
+    for path in paths:
+        node = payload
+        for token in path:
+            if not isinstance(node, dict) or token not in node:
+                state = ABSENT.copy()
+                break
+            node = node[token]
+        else:
+            state = present(copy.deepcopy(node))
+        result.append({'kind': 'field', 'ref': 'parent', 'path': path, 'state': state})
+    return result
+
+
 def canonical_site(closure, ref, path):
     """Normalize native recorder aliases using their verified evaluation boundary."""
     path = list(path)
@@ -521,6 +539,11 @@ class CommitPatch:
                 for read in record['reads']:
                     if read['ref'] in created_refs and read['state'] == ABSENT:
                         continue  # Allocation history guards absence; this is not a closure read.
+                    if read['ref'] == 'parent/collection:asset' and not read['path']:
+                        for item in native_asset_reads(closure.payload('parent')):
+                            if item not in dependencies:
+                                dependencies.append(item)
+                        continue
                     ref, path = canonical_site(closure, read['ref'], read['path'])
                     if '/collection:' in read['ref']:
                         try:
