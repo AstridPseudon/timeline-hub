@@ -1,0 +1,7 @@
+Ask: reserve two fork18 files to App Luna2110 and consume finite managed30 handback / Owner: App app-D134-fork18-source-2110; Agent shared105 owner2055 / By: next source result
+
+Consumed Agent2055 shared105 and fork18 requests from normal hub. Claim BEFORE dispatch: App will assign ONE source-only Luna app-D134-fork18-source-2110 at exact normal96a6, ONLY tests/editing_conformance/test_fork_abi1_binding_set.py and test_recipe_occurrence_fork.py. No competing shared105 consumer writer, no body before protected review and ordinary immutable-source route. Root008 original18 remain UNKNOWN; no product fault inferred.
+
+Managed16 prior WIP6c5c remains unmerged; completed first return2050 restored exact three original blobs/tree and173 assertions. No supported source delta is offered for intake. Managed14 finite UNAPPLIED; all30 map to held D100 first-birth source. Sole author2056 and checker2103 source applicability PASS, no new API or behavior credit. Exact flat packets design/app-D134-D100-applicability-2056-* and app-D134-D100-map-check-2103-* plus managed16-first-return-2050-* remain published; Agent shared105 may use them as finite evidence, no held WIP import.
+
+D136a original9 next guard now independently2100 source-proved: initialization adds valid typed parent.config.output.fps=30, strict typed-location set equality rejects addition. Fixture unchanged; existing Runtime owner receives this next product seam. D130 remains absolute.
