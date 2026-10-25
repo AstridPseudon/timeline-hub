@@ -1767,7 +1767,28 @@ class RuntimeService:
             raise ConflictError("timeline already exists", details={"timeline_id": timeline_id})
         try:
             publication_event_id = commits.adopt_empty_shell(project_id, timeline_id, authorize=self._assert_mutation_admitted)
-        except (CommitRejected, ConflictError) as exc:
+        except CommitRejected as exc:
+            from .timeline_commit_execution import (
+                _emit_redacted_diagnostic,
+                _history_diagnostic_reason,
+                _new_request_id,
+            )
+            reason = _history_diagnostic_reason(
+                exc.failure, source_reason=getattr(exc, "_diagnostic_reason", None)
+            )
+            if reason is not None:
+                _emit_redacted_diagnostic(_new_request_id(), reason=reason)
+            raise ConflictError("timeline already exists", details={"timeline_id": timeline_id}) from exc
+        except ConflictError as exc:
+            if isinstance(exc.details, dict):
+                from .timeline_commit_execution import (
+                    _emit_redacted_diagnostic,
+                    _history_diagnostic_reason,
+                    _new_request_id,
+                )
+                reason = _history_diagnostic_reason({"details": exc.details})
+                if reason is not None:
+                    _emit_redacted_diagnostic(_new_request_id(), reason=reason)
             raise ConflictError("timeline already exists", details={"timeline_id": timeline_id}) from exc
         resource = self._timeline_resource(timeline_id)
         self._command_record("timeline.create", "timelines", idempotency_key, request_hash, resource,
@@ -2474,6 +2495,7 @@ class RuntimeService:
             detached,
             public_failure,
         )
+        from .timeline_commit_reference_projection import ReferenceProjectionError
         if not isinstance(publisher, str) or not publisher:
             raise AuthorizationError("authenticated publisher is required")
         idempotency_key = require_idempotency_key(idempotency_key)
@@ -2527,9 +2549,32 @@ class RuntimeService:
                 raise public_failure(outcome)
             return outcome
         except CommitRejected as exc:
+            from .timeline_commit_execution import (
+                _emit_redacted_diagnostic,
+                _history_diagnostic_reason,
+            )
+            reason = _history_diagnostic_reason(
+                exc.failure, source_reason=getattr(exc, "_diagnostic_reason", None)
+            )
+            if reason is not None:
+                _emit_redacted_diagnostic(request_id, reason=reason)
             raise public_failure(exc.failure) from exc
-        except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError):
+        except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError) as exc:
+            if isinstance(exc, ConflictError) and isinstance(exc.details, dict):
+                from .timeline_commit_execution import (
+                    _emit_redacted_diagnostic,
+                    _history_diagnostic_reason,
+                )
+                reason = _history_diagnostic_reason({"details": exc.details})
+                if reason is not None:
+                    _emit_redacted_diagnostic(request_id, reason=reason)
             raise
+        except ReferenceProjectionError as exc:
+            if exc.reason == "history_unavailable":
+                _emit_redacted_diagnostic(request_id, reason="store_reference_projection_apply_history")
+            else:
+                _emit_redacted_diagnostic(request_id, exc)
+            raise CommitUnavailable() from exc
         except RuntimeErrorBase:
             raise
         except Exception as exc:
@@ -2564,7 +2609,28 @@ class RuntimeService:
                 self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
                 return commits._read_history(project_id, timeline_id, cursor=cursor, limit=limit)
         except CommitRejected as exc:
+            from .timeline_commit_execution import (
+                _emit_redacted_diagnostic,
+                _history_diagnostic_reason,
+                _new_request_id,
+            )
+            reason = _history_diagnostic_reason(
+                exc.failure, source_reason=getattr(exc, "_diagnostic_reason", None)
+            )
+            if reason is not None:
+                _emit_redacted_diagnostic(_new_request_id(), reason=reason)
             raise public_failure(exc.failure) from exc
+        except ConflictError as exc:
+            if isinstance(exc.details, dict):
+                from .timeline_commit_execution import (
+                    _emit_redacted_diagnostic,
+                    _history_diagnostic_reason,
+                    _new_request_id,
+                )
+                reason = _history_diagnostic_reason({"details": exc.details})
+                if reason is not None:
+                    _emit_redacted_diagnostic(_new_request_id(), reason=reason)
+            raise
 
     @_clear_replay_on_refusal
     def _verified_read(self, project_id, authorize, read):
@@ -2576,7 +2642,28 @@ class RuntimeService:
                 check()
                 return read()
         except CommitRejected as exc:
+            from .timeline_commit_execution import (
+                _emit_redacted_diagnostic,
+                _history_diagnostic_reason,
+                _new_request_id,
+            )
+            reason = _history_diagnostic_reason(
+                exc.failure, source_reason=getattr(exc, "_diagnostic_reason", None)
+            )
+            if reason is not None:
+                _emit_redacted_diagnostic(_new_request_id(), reason=reason)
             raise public_failure(exc.failure) from exc
+        except ConflictError as exc:
+            if isinstance(exc.details, dict):
+                from .timeline_commit_execution import (
+                    _emit_redacted_diagnostic,
+                    _history_diagnostic_reason,
+                    _new_request_id,
+                )
+                reason = _history_diagnostic_reason({"details": exc.details})
+                if reason is not None:
+                    _emit_redacted_diagnostic(_new_request_id(), reason=reason)
+            raise
 
     def get_project_media_selection(self, project_id, selectors, *, authorize):
         from .timeline_commit_port import MediaReads, detached
