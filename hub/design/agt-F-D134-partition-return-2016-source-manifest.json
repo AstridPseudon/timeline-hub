@@ -1,0 +1,57 @@
+{
+  "schema": "timeline.agent.f_d134_source_manifest.v1",
+  "review_id": "F-D134-partition-return-2016",
+  "tuple": {
+    "agent": {"commit":"a4e016b6a9f91fbe372672bdcf382c630bf59186","tree":"60d45288145414ee4702fcce61af7c7810c2a3df"},
+    "runtime": {"commit":"5e9ad1c6f74241d8771d3284fdd2ce7a214fd344","tree":"de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "app": {"commit":"d8a1cd40b866c49c0ab415682391f0ec87a7a8e7","tree":"dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"},
+    "composition": {"commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "named_upstream": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "terminal_reference": "92443771676ef2bbb547d0a103d708fa8bec4c63"
+  },
+  "actual": {"service":"agent-agent-core-full-1025191128-18455","log_sha256":"65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e","xml":"EXACTMISSING"},
+  "test_file_provenance": {"selected_ids":344,"unique_files":58,"current_source":"present","at_named_upstream":"absent for all 344 IDs","interpretation":"file provenance only; not causal classification"},
+  "per_id_fields": ["nodeid","actual_status","failure_type","failure_file","failure_line","test_file","current_source_blob","test_file_provenance","cluster","causal_category","source_evidence"],
+  "derivation": {
+    "author_packet": "F-D134-own344-partition-2003",
+    "author_packet_unchanged": true,
+    "author_evidence_sha256": {
+      "partition.json": "cf7c3117a140d9f8d9a232132d2a122c94f9a794067572016b4d13c378b2403c",
+      "per-id.tsv": "f98a97e4f9dd9773acd18f85d7ae649c95f1c970a213680d9324c573c9d2b97a",
+      "clusters.json": "c7f841bd0196165e6b669450f2a34339a9fd1bda3a8bd4a169428cf3d7538443",
+      "source-manifest.json": "bb840f4501a16bf276eacdeaf45a5576c8d2709f91a58d96b5da05945da41517",
+      "findings.md": "fe229d6eac36d5220e56fdf4082c0a2ecf75361b7b5f2ae2fbcadf9e4c48b390",
+      "validation.md": "6bcbff5de717073a92f1c88da472f3c20ef3b820eb6c66bf96ea495dc053fc29",
+      "progress.md": "a23fd3cdc297840a323b57e4bbcbc1d14b879a85d6740aad66f0ed15b395da02"
+    },
+    "review": "F-D134-own344-review-2011",
+    "review_evidence_sha256": {
+      "review.json": "88e1cb3bd5f2bea8c15da777bd23e23c1dd97c0e90550117cf516d4e377d0d21",
+      "findings.md": "06d3b2e2cb0a0eb400eba1d5496e8e2485a7ae44458d770c57166b8060cb1b1e",
+      "classification-bounds.json": "e8e651f4da5e898f0d5c8bc96a8eb94076ee0fca02c48d07598f1062f1c40bb5"
+    },
+    "membership_delta": {
+      "author_member_count": 344,
+      "reviewed_member_count": 344,
+      "added_nodeids": [],
+      "removed_nodeids": [],
+      "category_changed_count": 9,
+      "changed_cluster": "projection_fixture_missing_item",
+      "changed_from": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "changed_to": "UNKNOWN"
+    },
+    "finite_equation": {
+      "TEST_SETUP_OR_EXPECTATION_PROVED": 132,
+      "PRODUCT_FAULT_PROVED": 0,
+      "UNKNOWN": 212,
+      "sum": 344
+    },
+    "reg14": {
+      "status": "UNVERIFIED_CURRENT_REG",
+      "count": 14,
+      "prior_unknown_count": 12,
+      "missing_xml_and_final_count": "UNKNOWN",
+      "retirement": 0
+    }
+  }
+}

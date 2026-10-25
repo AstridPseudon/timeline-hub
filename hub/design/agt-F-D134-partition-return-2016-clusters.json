@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.agent.f_d134_clusters.v1",
+  "membership_source": "per-id.tsv cluster column; exact 344 retained nodeids",
+  "clusters": [
+    {"id":"managed_edge_fixture","count":102,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"producer/inverse","membership_rule":"doc.patch setup reaches managed-edge closure rejection","source_evidence":"astrid/sdk/timeline/_doc_patch.py:359-376,450-456"},
+    {"id":"stale_source_pin_or_hash_expectation","count":11,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"D100","membership_rule":"source/hash or runtime pin expectation fails before a product behavior frame","source_evidence":"tests/editing_conformance/test_inverse_stage_runtime_regressions.py:78-90; test_gate1_fresh_word_transcript_frontends.py:64-70; test_prepared_video_birth.py:248-256"},
+    {"id":"fixture_call_missing_required_args","count":2,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"D100","membership_rule":"fixture wrapper is called without required operation/media inputs","source_evidence":"tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py:20-32"},
+    {"id":"projection_fixture_missing_item","count":9,"category":"UNKNOWN","owner_scope":"D100","membership_rule":"projection fixture has no source item before product assertion; protected D100 first-birth/source authority is missing","source_evidence":"tests/sdk/test_timeline_capture_projection.py:309-317"},
+    {"id":"detached_fixture_preflight","count":4,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"D100","membership_rule":"detached fixture preflight indexes an absent fixture element","source_evidence":"tests/editing_conformance/test_native_sheet_ordinary_runtime.py:280-286"},
+    {"id":"fixture_missing_client","count":1,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"D100","membership_rule":"fixture helper receives no client attribute","source_evidence":"tests/editing_conformance/test_occurrence_fork_source_baseline.py:207-215"},
+    {"id":"retired_save_route_expectation","count":1,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"producer/inverse","membership_rule":"new test calls retired publish_parent_composition route","source_evidence":"tests/sdk/test_timeline_selected_schema_runtime.py:227-249; contract/commit-v2.md:1-8"},
+    {"id":"v2_status_label_expectation","count":3,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"D100","membership_rule":"new test expects historical rebased label where current v2 contract uses merged","source_evidence":"tests/sdk/test_timeline_selected_schema_runtime.py:735-750,972-983; contract/commit-v2.md:1-8"},
+    {"id":"clip_mirror_fixture_guard","count":7,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"wordsource","membership_rule":"invalid one-sided clips/config.clips fixture is rejected by mirror guard","source_evidence":"astrid/sdk/timeline/lookup.py:354; astrid/sdk/timeline_restructure.py:209"},
+    {"id":"legacy_archive_shape_expectation","count":1,"category":"TEST_SETUP_OR_EXPECTATION_PROVED","owner_scope":"wordsource","membership_rule":"legacy archive assertion expects removed on-shaped field","source_evidence":"tests/editing_conformance/test_m1_legacy_archive_read.py:118-145"},
+    {"id":"unresolved_causal_boundary","count":203,"category":"UNKNOWN","owner_scope":"D100; producer/inverse; wordsource (route by source file)","membership_rule":"no proved setup/expectation boundary and no accepted-record plus legitimate-caller proof","source_evidence":"retained actual log first boundary only; private accepted records/caller trace unavailable"}
+  ],
+  "finite_equation": {
+    "TEST_SETUP_OR_EXPECTATION_PROVED": 132,
+    "PRODUCT_FAULT_PROVED": 0,
+    "UNKNOWN": 212,
+    "sum": 344
+  },
+  "derivation": {
+    "author_packet_unchanged": true,
+    "author_per_id_sha256": "f98a97e4f9dd9773acd18f85d7ae649c95f1c970a213680d9324c573c9d2b97a",
+    "review_id": "F-D134-own344-review-2011",
+    "category_delta_count": 9,
+    "added_nodeids": [],
+    "removed_nodeids": []
+  }
+}
