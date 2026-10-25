@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T23:22:51Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# app board, 2026-10-25T23:19Z
+<!-- app | 2026-10-25T23:27:25Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 0m -->
+# app board, 2026-10-25T23:27Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -29,7 +29,7 @@
 | D118-tail-audio2 | Preserve prepared audio vectors | Luna and independent Luna | Independent1017 PASS_SOURCE | merged | Author1015; remote normal receipt | Normal Agent e8b1a517f6. Only fixture env cleanup;52 assertion ASTs exact. Functional core proof still owed. | Agent e8b1a517f6 |
 | D118-tail-sheet15 | Correct verified-media fixture caller | Luna and independent | Normal Agent receipt1134 | merged | Clean import1111; Agent0ad492 | Exact reviewed afba blob home;248 assertions retained. Two later live failures remain; no functional GO. | 0ad49261 |
 | D118-tail-WC6three | Preserve completion capture coverage | Luna and independent | Independent1054 PASS15 offline | merged | Author1050; normal remote receipt36e44 | Genuine fake protocol, original not_ready and current helper/source guards home. Protected59 assertions exact; no real service/core credit. | Agent36e44e1c0e |
-| D118c-host14 | Confirm upstream host fallback | Luna and Farm core | Agent local core | blocked:agent | Agent D128 controller; normal a4e016 | Original14 independently PASS. Normal fallback home; REG closure waits Agent local core under D128, Farm core dropped. | Agent a4e016 |
+| D118c-host14 | Confirm upstream host fallback | Luna and Farm core | D140 merged tuple Farm core | blocked:farm | Farm F-core-D140 | Original14 independently PASS. Normal fallback home; REG closure waits new ship core. Agent local core superseded by D140. | Agent a4e016 |
 | D118c-occurrence2 | Preserve occurrence birth conformance | Luna and protected Luna | Normal Agent cf7b receipt | merged | Author1132; review1135 | Exact invalid422 migration home; both later inverse auth guards remain live failures. No whole-case GO. | cf7b8d7c |
 | D118c-video1 | Preserve prepared video conformance | Luna and protected Luna | Normal remote home receipt | merged | Author1105; independent1111; Agentb850 | Strict369 fixture guard and52 assertions preserved at home. Actual original functional proof still owed. | b8507e946a |
 | D74-two-15203-pins | Release completed tuple worktrees | Manager and lead | Host1103 and fresh guards | merged | Guarded recycle1105 | Both96d475 andd23a pins recycled normally, zero refusal. Net187105280 bytes; all outputs/branches/reports kept. | No source edits |
@@ -117,21 +117,21 @@
 
 | D136b | Classify observation producer consistency | HARD Sol and independent Luna | Final independent2240 PASS | merged | App2231 and independent2240 | Finite evidence only:135UNKNOWN,0 proved product/setup;25 hashes,52 nodes,43 edges and predicates PASS. Actual9 remains NO-GO. | No source change |
 
-| D136c | Read safe original nine refusal facts | Runtime Luna and security Luna; App later Luna | Reviewed diagnostics candidate and fresh 5 GB | blocked:runtime | Runtime author2305 complete; security2312 active | Owner approved diagnostics only. Actual2136 remains nine setup errors. One unchanged body after security PASS. | No new source or body |
+| D136c | Read safe original nine refusal facts | Luna and independent Luna | Runtime 2f1f security 2312 PASS | doing | app-D136c-original9-controller-2331 | Exact candidate tree and three hashes verified. Sole unchanged nine queued on ab1e plus diagnostics. Result review follows. | Agent d133; Runtime 2f1f delta |
 
 Integration: App 5696769dfca056676cde1ab46d8bc94354b3a44a/tree0748df404125114a0f68b701fa76f43abd3fc79a. Entire tree equals reviewed/tested79699 no-measurement route;30Node20 controls/types/lint PASS. Predecessor b5c9 retained for historical15200 only. U3 sourcehome2f362/tree687e4c equals reviewedeba8;127 affected and warmup2/types/lint PASS. Qualified bootstrap59a4 normalHOME atop U3. Existing manifest Runtimeab1e/Agent070dfc/Composition635f. D139 requested U3 join already HOME; fresh ancestor36e1 check PASS. Latest lead150a19 deferred to small live-tip cut merge-forward. Producer-first final cut pins/proofs still owed.
 
 Current P2 NO-GO. Historical six complete tails qualified on recorded tuples; full original tour/final tuple still owed. Actual2136 finalFPS20db+D10042040+f53b original9 failed9setupERROR at intermediate authenticated physical observation. Independent2144 custody/source/counts PASS and actualNO_GO; no next9 until owner all-boundary inventory and meaningful qualified repair.
 
 Blockers: SWAP safety — D130 holds recovery, acceptance, release, adoption and related tours after automatic classifier refusal1537. No retry, alternate route, transfer or rollback. Existing Runtime escalation owns decision.
-Blockers: Projection9 — Runtime author2305 complete with focused3/scoped8/atomic4/native1 PASS; security2312 active. App waits exact candidate, ab1e proof source and security PASS before one original nine.
+Blockers: Projection9 — Runtime exact2f1f/tree37cf and independent security2312 PASS received. Sole controller2331 queued on ab1e plus exact diagnostics; actual facts and independent result remain owed.
 Blockers: Element cost — D127e census2153 and independent2202 complete: D112 path statically reachable, actual waits UNKNOWN. Header22:16 records D130 hold and combined owner decision pending. No fix or verify body. App route HOME5696769 retained.
 Blockers: Graph child birth — Runtime1814/final1821 C0 sequential operands defined. Authentic intermediate physical bindings/stages absent; causalownerUNKNOWN. No invented guardwriter or unchangedrerun.
 Blockers: Agent core and render — Runtime D139 recipe2153 and Agent input census2149/reviewer2210 own missing child imports. No ship core started. Farm step0 remains held for complete final merged tuple inputs; no App duplicate.
 Blockers: Final cut — ship-grade core, REG0, full P2, final P1-P5/D69, installed render, platform and ZIP remain owed. No final gate or ZIP claim.
-Next ready: D136c sole original-nine controller after Runtime exact diagnostics candidate and independent security PASS; not dispatched early. No admitted App source/body. Element safety/repair and final cut gates remain.
-live 0 / cap 6; ready-undispatched 0. D136c readiness sent Runtime and lead. Candidate/security prerequisites not yet available; no body or profiling.
-INBOX consumed through2540676 bytes. H6 Runtime22:02, Agent22:10 and Farm22:00 boards plus D139/H72 and D127e header consumed. All cross-lane asks have existing rows or later entries.
+Next ready: D136c independent result/privacy/custody review immediately after sole controller2331 terminal. No other admitted App source or body.
+live 1 / cap 6; ready-undispatched 0. Sole D136c controller2331 queued; independent review ready only on actual terminal.
+INBOX consumed through 2540676 bytes. H6 Runtime23:12, Agent23:15 and Farm23:10 read. D136c handoff read directly from normal hub/design then byte-preserved locally.
 
 Safety: Manager edits only ORCH briefs/board/peers and byte-publishes authored SAFE artifacts. No manager product/test/generated/pin changes, direct Git writes, upstream push, M5, credentials or refused-route retry. Dirty U3/orphan guards and exact1.107GB orphan graph remain untouched.
 Later: D133 correctedB Gate3 DEFERRED, existing worker1853 paragraph installed Runtime1911; no optionA author/review/body. Word/native originals and originalTrue/graph require authentic records; no unchangedrerun. D79 ZIP-held; E4 dropped; helpercut D23; D14 retained. Agent shared105 sole2055 propagation waits D100/FPS qualification; managed30 source exact/restored. Agent CLI22 proof waits Runtime2104 route, no Appduplicate. D127e waiter census belongs Runtime/Agent owner; App only verification.
@@ -146,32 +146,6 @@ Retained raw inputs: keep complete directories, rawbytes/private modes and KEEP 
 - app-U3-D135-upstream-merge-1958-targeted-1025200053-30876
 - app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856
 Custody: compact-scratch SHA1f6926c6164e73dd9c0c36556fa4897a933f7a742b5a8acfc26c58bdfc5695af honors testKEEP; all8 verified. Historical32016 packing restored all396 files byteexact/modes exact in receipt design/app-32016-compaction-restoration-1925.json; no invented rawcustody. Actual15200 planSHA793495d5f586a40414e17598616f86dc6f3bbd56bc81de634ae6242ab62a4013.
-Disk: fresh4925755392bytes. Ended nonKEEP worktree scan0; sweep3 removed0 despite noisybrokenpipe; compact packed0scratch/0testdirs, gzipped2oldlogs. Prior guardedpin/v1 releases in design receipts; no further unsafe cleanup or refused-route retry.
+Disk: fresh 5347082240 bytes before exact receiving prep. No protected raw/KEEP or refused target cleanup. New ended nonKEEP worktree scan follows.
 
-Pass 2026-10-25T22:51Z: PLAN/common/contract and full current header read. NEW D136c owner ruling consumed; Runtime diagnostics source/security prerequisite mapped to explicit row and peers 20261025T2251Z. Source-only D136b2240 already independently PASS, no duplicate reader. H6 Runtime22:40/Agent22:40/Farm22:45 checked; child/core/schema/render still owner-held. No newly ready App source or body. App5696769 unchanged.
-
-Disk pass: compact kit exact1f6926c6 verified, all8 raw testKEEP plus original2136 workerKEEP/private0700 intact. Ended nonKEEP existing worktree scan ZERO; no dirty/orphan/refused target retried. Fresh free5508386816bytes. Normal sweep3/compact may proceed preserving these guards.
-
-Source readiness 2026-10-25T22:52Z: exact Agent d133 named branch ref is absent locally; normal host receive requested in peer STATUS.md. Existing reviewed source only, no new author or body. This is a concrete transport input for later D136c, not a decision escalation.
-
-Source correction 2026-10-25T22:54Z: host confirms exact Agent d133 object/tree already local; missing named branch was mistaken for missing object. Use ordinary request-checkout by exactSHA only after D136c security PASS, as lead instructed. No source delivery, worker or earlycheckout needed; transport blocker cleared.
-
-Prepared 2026-10-25T22:56Z: unbound D136c controller brief only, no worker dispatch or earlycheckout. Safe evidence recipe reuses exact2136 nine selectors and unchanged predicate/input hashes. Runtime candidate/security receipt still required. Normal maintenance terminal: sweep3 removed0, compact packed0scratch/0testdirs and gzipped4oldlogs; receipt design/app-disk-maintenance-2254.json.
-
-Ownership 2026-10-25T22:57Z: Runtime2233 actualSTART22:31:10 precedes App2231 START22:31:16 by6seconds; Runtime is first source owner. App2231/2240 had already ended and stay independently qualified supporting evidence. Existing Runtime2247 finishes claim review; no new App author/reviewer/body. Peers 20261025T2257Z reconcile exact chronology and current135UNKNOWN limits.
-
-Header check22:58: recorded D136c22:59 now present in BOARD-HEADER; prior lead-relayed authority confirmed. Runtime owns diagnostics plus security review; App exact source and unchanged-nine recipe prepared. No candidate source/security packet yet, no new ready row or early dispatch.
-
-H6 pass 2026-10-25T23:00Z: Runtime latest publishedboard, Agent latest publishedboard and Farm22:45 rechecked. Existing blocked:agent host14 still awaits local core; blocked:runtime render still awaits final inputs. D136c candidate/security not yet published; no newly admitted App body. Exactd133 object/tree verified local; branch-name absence corrected, no earlycheckout. PendingApp0/runningApp0. Source admission fresh5503811584bytes, cap6/ready0.
-
-Pass 2026-10-25T23:02Z: Runtime2250 conditional producer assessment independently2247 PASS_SOURCE received. It proves only conditional grouping risk, not actual2136 cause; no Agent producer or Runtime guard author authorized from it. Runtime board now records D136c gated on higher-priority D139a combined recipe source; join2300 actual active. App unchanged-nine recipe remains prepared, no controller/checkout/body before diagnostics securityPASS. Earlier6second timestamp reconciliation handed Runtime/lead; later recorded owner routing can retain App completed source packet as primary with no new work.
-
-Pass23:06: delayed Agent2249 and own2243/2244 notes consumed; superseded by completed App2240/final2248 plus Runtime2247 source review and recorded D136c. Existing rows cover all asks, no new author/reviewer/body. Runtime sole recipejoin2300 and Store2253 active; diagnostics brief prepared behind final recipe review.
-
-H6 2026-10-25T23:10Z: Runtime23:03, Agent current and Farm22:45 boards read. D139a joined maker independent2305 and requestcarrier2305 now active; D136c follows qualified source. No current App ready row. Ended nonKEEP worktrees0; rawKEEP intact; free5496528896bytes. No unsafe cleanup or unnecessary repeat compact. Delayed own2248/2251 messages acknowledged; already closed/readiness rows cover them.
-
-Pass 2026-10-25T23:15Z: Runtime2305 peer confirms D139a source gate CLEAR independent63PASS and canonical1146census. Sole Luna rt-D136c-safe-observation-diagnostics-2305 ACTIVE from normalf103; independent security review next. App blocker updated same pass, no stale recipe wait. Originalnine controller remains not dispatched before qualified diagnostics source. Delayed source-transport2252 note superseded by verified locald133 exactobject/tree; no source delivery needed.
-
-H6 2026-10-25T23:19Z: Runtime23:12 and current Agent/Farm blocked rows rechecked; no newly ready App source/body. Sole Runtime diagnostics2305 remains active after recipe SOURCE PASS. ab1e/f103 authpreimage blob75c290edb identical (metadata only, not full candidate qualification). All8 named rawtestKEEP and original2136 workerKEEP/private0700 reverified; no alteration. Freshfree5502435328bytes; no cleanup target or refused-route retry. Delayed own2257 reconciliation consumed.
-
-Source progress 2026-10-25T23:20Z: latest Runtime23:12 board records diagnostics author2305 COMPLETE and sole security/privacy reviewer2312 ACTIVE. No App source review duplicates or early body. Farm now owns D140 shipcore after one complete Runtime recipe note; D77 render stays held behind it. App blocked owner checks updated without a duplicate child/core.
+Current pass 2026-10-25T23:27Z: exact Runtime2f1f/tree37cf/source hashes match security2312 zero findings. ab1e preimages exact. Ordinary exact Agentd133 checkout requested after security PASS; no moving normal tuple substitution. Controller2331 receives only three reviewed files into its own ab1e worktree, then original nine once at fresh5GB. Source carrier remains held; no normal adoption or new guard author. D130 and final cut unchanged.
