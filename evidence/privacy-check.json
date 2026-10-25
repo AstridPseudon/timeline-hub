@@ -26,6 +26,6 @@
     "sample share",
     "dispatch share"
   ],
-  "hashes": "Artifact and retained lowercase SHA-256 hashes only; no key preimage is present.",
-  "join_result": "Browser/helper key-hash join UNKNOWN; no operation assigned."
+  "hashes": "Artifact, retained lowercase SHA-256, and locally computed lowercase-UTF-8 header SHA-256 hashes only; no key preimage is present.",
+  "join_result": "Element browser/runtime key-hash join EXACT_JOIN; SWAP join UNKNOWN. No header, body, auth, or raw key preimage is present."
 }
