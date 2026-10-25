@@ -1,1 +1,1 @@
-2026-10-25T22:04:47Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D77 held at step 0 (MAIN 21:59Z: Runtime to produce the complete input list; no downloads/installs until it arrives); union proof dropped
+2026-10-25T22:36:21Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D77 HELD at step 0: Runtime 22:28Z complete input list published but run NOT_READY (final launcher/manifest/browser/roots/receipts absent, footprint unbounded); core has priority; no piecemeal run
