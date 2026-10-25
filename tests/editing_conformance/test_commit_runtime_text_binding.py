@@ -242,23 +242,37 @@ def test_stale_disjoint_key_rebases_but_changed_guard_and_aba_refuse(editing):
     assert error.value.details['reason'] == 'intervening_write'
 
 
-def test_rebind_existing_main_descriptor_undo_is_exact(editing):
+@pytest.mark.parametrize('action', ['rebind', 'clear'])
+def test_bound_main_descriptor_invalidating_set_and_clear_refuse_without_writes(editing, action):
+    from runtime_protocol.errors import RuntimeErrorBase
+
     binding = {'kind': 'transcript', 'slot': None}
-    pin = put(editing, b'replacement transcript')
-    accepted = submit(editing, body(editing, [call(binding, pin)]), 'replace-main-transcript')
-    baseline = editing.closures[0]
-    original = baseline['shot_revisions'][0]['payload']['text_bindings'][0]
-    assert original['mime_type'] == 'text/plain'
-    before_bytes = editing.service.object(original['media_id'])[1]
-    assert len(before_bytes) == original['byte_size']
-    restart(editing)
-    undone = submit(editing, body(editing, [inverse(accepted)]), 'undo-main-transcript')
-    assert undone['data']['canonical_document'] == baseline
-    assert live(editing, binding)['mime_type'] == 'text/plain'
-    assert len(editing.selected) == 1
-    assert editing.service.object(original['media_id'])[1] == before_bytes
-    redone = submit(editing, body(editing, [inverse(undone)]), 'redo-main-transcript')
-    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+    replacement = b'legitimate replacement transcript'
+    pin = put(editing, replacement)
+    submit(editing, body(editing, [call(text=pin)], dry_run=True), 'bound-main-baseline')
+    canonical_before = copy.deepcopy(editing.closures[-1])
+    head_before = editing.service.get_project_timeline(editing.project, editing.timeline)
+    history_before = editing.service.list_timeline_commits(editing.project, editing.timeline,
+                                                           authorize=lambda: None)
+    binding_before = copy.deepcopy(live(editing, binding))
+    source_bytes = editing.service.object(binding_before['media_id'])[1]
+    request = body(editing, [call(binding, pin) if action == 'rebind' else call(binding, clear=True)])
+    with pytest.raises(RuntimeErrorBase) as error:
+        submit(editing, request, 'bound-main-' + action)
+
+    assert error.value.code == 'validation_error'
+    details = error.value.details
+    assert details['reason'] == details['code'] == 'invalid_document'
+    assert details['path'] == []
+    assert error.value.message.endswith(
+        'elementRef: historical text binding requires an unchanged declaration and source')
+    assert editing.service.get_project_timeline(editing.project, editing.timeline) == head_before
+    assert editing.service.list_timeline_commits(editing.project, editing.timeline,
+                                                 authorize=lambda: None) == history_before
+    assert editing.closures and all(closure == canonical_before for closure in editing.closures)
+    assert live(editing, binding) == binding_before
+    assert editing.service.object(binding_before['media_id'])[1] == source_bytes
+    assert editing.service.object(pin['object_id'])[1] == replacement
 
 
 def test_retained_v1_after_v2_clear_restart_group_inverse_is_exact(editing):
@@ -340,28 +354,3 @@ def test_disjoint_first_birth_rebase_keeps_captured_intent_and_actual_order(edit
     selected = next(row for row in record['selections'] if row['key'].endswith('.append'))
     assert selected['order'] == [OWNER + '/text-binding:transcript', OWNER + '/text-binding:prompt:hero']
     assert prompt['data']['canonical_document'] != accepted['data']['canonical_document']
-
-
-def test_clear_existing_main_descriptor_and_inverse_are_exact(editing):
-    from runtime_protocol.errors import NotFoundError
-
-    binding = {'kind': 'transcript', 'slot': None}
-    prior = live(editing, binding)
-    assert prior['mime_type'] == 'text/plain'
-    data = editing.service.object(prior['media_id'])[1]
-    assert len(data) == prior['byte_size']
-    request = body(editing, [call(binding, clear=True)])
-    cleared = submit(editing, request, 'clear-main-transcript')
-    original = editing.closures[0]
-    assert not editing.service.list_project_shot_text_bindings(editing.project, kind='transcript')['items']
-    with pytest.raises(NotFoundError):
-        editing.service.get_project_shot_text_binding(editing.project, prior['binding_id'])
-    restart(editing)
-    assert submit(editing, request, 'clear-main-transcript') == cleared
-    restored = submit(editing, body(editing, [inverse(cleared)]), 'undo-clear-main-transcript')
-    assert restored['data']['canonical_document'] == original
-    assert live(editing, binding)['mime_type'] == 'text/plain'
-    assert editing.service.object(prior['media_id'])[1] == data
-    assert editing.selected == []
-    redone = submit(editing, body(editing, [inverse(restored)]), 'redo-clear-main-transcript')
-    assert redone['data']['canonical_document'] == cleared['data']['canonical_document']
