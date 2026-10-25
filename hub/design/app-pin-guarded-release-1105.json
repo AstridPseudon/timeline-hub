@@ -1,0 +1,40 @@
+{
+  "utc": "2026-10-25T11:04:33.037313+00:00",
+  "current_heads": {
+    "app": "7e92cd9468b883b009e8840786e832301479c3ed",
+    "agent": "942855e56e774d83b3930bbfd87df22dbcd94ad1",
+    "runtime": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "before": 5469179904,
+  "after": 5656285184,
+  "rows": [
+    {
+      "name": "app-pin-96d4754b",
+      "sha": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+      "path": "/home/user/work/wt/app-pin-96d4754b",
+      "clean": true,
+      "current_head": false,
+      "refs": [],
+      "host_CLEAR": "design/app-pin-host-process-use-1103.md",
+      "fresh_guards": true,
+      "returncode": 0,
+      "output": "recycled app-pin-96d4754b\n"
+    },
+    {
+      "name": "rt-pin-d23a8e0d",
+      "sha": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+      "path": "/home/user/work/wt/rt-pin-d23a8e0d",
+      "clean": true,
+      "current_head": false,
+      "refs": [],
+      "host_CLEAR": "design/app-pin-host-process-use-1103.md",
+      "fresh_guards": true,
+      "returncode": 0,
+      "output": "recycled rt-pin-d23a8e0d\n"
+    }
+  ],
+  "zero_refusals": true,
+  "all_outputs_branches_reports_kept": true,
+  "old_dirty_refused_targets_untouched": true
+}

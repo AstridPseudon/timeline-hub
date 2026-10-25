@@ -1,0 +1,1 @@
+Both host-cleared old15203 pins recycled normally after fresh static guards. Zero refusals. Free 5656285184 bytes; net 187105280 bytes. All15203/15712 and historical outputs/branches/reports, current inputs, dirty/refused targets preserved. Exact machine receipt: app-pin-guarded-release-1105.json.
