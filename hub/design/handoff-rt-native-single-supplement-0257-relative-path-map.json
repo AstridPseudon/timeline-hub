@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "map_kind": "P2 single5678 supplementary relative-path reconstruction",
+  "producer_request_id": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678",
+  "entries": [
+    {
+      "relative_path": "supplement/source-preflight.log",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/source-preflight/preflight.log",
+      "kind": "exact_unmodified_artifact",
+      "bytes": 215,
+      "sha256": "a80cba95a1089ef543c117abd274df35276d7d655d0a835c3b764dec4657a8ad",
+      "source_lines": "1",
+      "redaction": "none"
+    },
+    {
+      "relative_path": "supplement/source-preflight-manifest.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/source-preflight/manifest.json",
+      "kind": "exact_unmodified_artifact",
+      "bytes": 4965,
+      "sha256": "81b417ba0fc363882341d20002b7f77029d419b2a122b26b54735bd1ff4a85d1",
+      "source_lines": "entire JSON file",
+      "redaction": "none"
+    },
+    {
+      "relative_path": "supplement/selected-case.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/service/collection.txt",
+      "kind": "exact_unmodified_artifact",
+      "bytes": 172,
+      "sha256": "37a02fa87c289e3aa95d9a0d7d3b93c99e4251f3b25d89fdf9a82ca935dcb7a3",
+      "selection_fact": "Total: 1 test in 1 file",
+      "source_lines": "1-3",
+      "redaction": "none"
+    },
+    {
+      "relative_path": "supplement/submission-plan.command.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-native-single-export-0235/evidence/central/command.txt",
+      "original_source_reference": "central summary line 2; safe command extraction already published by worker0235",
+      "kind": "exact_unmodified_artifact",
+      "bytes": 1589,
+      "sha256": "3994d06b651aa53f1ccb513bcb9a4ac659014e85221893bfce4b1e4615dfffb3",
+      "source_lines": "1",
+      "redaction": "none; the source command is the prior packet's safe extraction, not the private full summary"
+    },
+    {
+      "relative_path": "supplement/submission-request.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/request",
+      "kind": "exact_unmodified_artifact",
+      "bytes": 138,
+      "sha256": "60e0003a94fac8798b37d201ed5301b76d87acd33536479d6734fe6d0caedaea",
+      "source_lines": "1-5",
+      "redaction": "none"
+    },
+    {
+      "relative_path": "supplement/test-tail.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678/log.txt",
+      "kind": "bounded_sanitized_excerpt",
+      "source_bytes": 30245,
+      "source_sha256": "74d008f3a134349d36678e7df9b7a9dd22b1a0195dbf7403eafee45a07dc7d779",
+      "source_lines": "115-129",
+      "redaction": "line 129 absolute manifest path replaced with [REDACTED_SOURCE_PATH]; test status text is unchanged"
+    }
+  ],
+  "private_sources_not_exported": [
+    "central log full contents",
+    "central full summary",
+    "private runtime stacks and private runtime stdout",
+    "request/response bodies, auth, keys, tokens, and URLs"
+  ]
+}

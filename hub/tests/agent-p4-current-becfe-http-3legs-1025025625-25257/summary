@@ -1,0 +1,64 @@
+test agent-p4-current-becfe-http-3legs-1025025625-25257: fail exit=1 in 50s — p4-current-becfe-http-3legs on integration:agent (agent tree e27d8d45f02b99ea85d38e3735814d8c5782a4a8)
+cmd: umask 077; exec env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 TMPDIR=/tmp/w-f95c2d1a96 P4_D73_MANIFEST=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-crossprocess-sample-0242/evidence/input.manifest P4_D73_EVIDENCE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-crossprocess-sample-0242/evidence P4_D73_REQUEST_ID=p4-allprocess-0242 P4_SAMPLE_OUTPUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-crossprocess-sample-0242/evidence/raw-private /bin/bash /home/user/work/wt/agt-pin-d407b877/tools/p4-d73-pinned-launch.sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-crossprocess-sample-0242/evidence/input.manifest run -- -X importtime /home/user/work/wt/agt-P4-crossprocess-sample-0242/diagnostics/p4_sample_0233.py -q -o addopts= -p no:cacheprovider --timeout=45 -m integration --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-crossprocess-sample-0242/evidence/p4-profile.xml tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo
+counts: 1 failed in 47.51s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1025025625-25257/log.txt ---
+import time:       637 |        637 | astrid.sdk.timeline.rebase
+import time:       692 |        692 |       astrid.core.foundation.paths
+import time:      1380 |       1380 |       astrid.core.pack.alias_resolver
+import time:      4267 |       4267 |       astrid.core.pack.discovery
+import time:      1479 |       1479 |         astrid.core.registry.base
+import time:       368 |       1847 |       astrid.core.registry
+import time:      2967 |       2967 |         astrid.core.contracts.capability_schema
+import time:      1385 |       1385 |         astrid.core.pack.manifest
+import time:      1807 |       1807 |         astrid.core.element.metadata
+import time:     10023 |      16181 |       astrid.core.element.schema
+import time:      5865 |      30229 |     astrid.core.element.registry
+import time:       608 |      30836 |   astrid.core.element
+import time:      3339 |       3339 |   astrid.core.element.catalog
+import time:     15582 |      49756 | astrid.core.element.project_packs
+import time:      6829 |       6829 | astrid.sdk.timeline.validation
+import time:     14272 |      14272 | astrid.sdk.timeline_address
+import time:      1324 |       1324 |     astrid.sdk.timeline_checkout
+import time:      6116 |       7439 |   astrid.sdk.timeline._timing_evaluators
+import time:      5380 |      12818 | astrid.sdk.timeline._commit_timing_validation
+import time:      1742 |       1742 | astrid.sdk.timeline._commit_preview
+import time:     31247 |      31247 | runtime_protocol.timeline_commit_auth
+import time:      1995 |       1995 | runtime_protocol.timeline_commit_producer_checkpoint
+import time:       774 |        774 |     astrid.packs
+import time:       535 |       1309 |   astrid.packs.timeline
+import time:       453 |        453 |     astrid.core.cli
+import time:      1738 |       2190 |   astrid.core.cli.domain_output
+import time:      1480 |       1480 |   astrid.core.cli.registration
+import time:      3360 |       3360 |   astrid.core.cli.task_progress
+import time:       508 |        508 |   astrid.core.timeline.clip_names
+import time:      9660 |       9660 |   astrid.packs.timeline.cli_visualize
+import time:      2379 |       2379 |   astrid.packs.timeline.cli_common
+import time:     40124 |      61006 | astrid.packs.timeline.cli
+import time:       253 |        253 | astrid.packs.shots
+import time:      1703 |       1703 | astrid.packs.shots.cli
+import time:       875 |        875 | astrid.packs.timeline.cli_parser
+import time:      2858 |       2858 | astrid.core.cli.domain_product
+import time:      4285 |       4285 | astrid.packs.timeline.cli_native
+import time:      1579 |       1579 | astrid.packs.timeline.cli_look
+import time:       398 |        398 | astrid.packs.timeline.cli_film
+import time:       487 |        487 | astrid.packs.timeline.cli_verify
+import time:       349 |        349 | astrid.packs.timeline.cli_music
+import time:       764 |        764 | astrid.packs.timeline.cli_sweep
+import time:      1062 |       1062 | astrid.packs.timeline.cli_find
+import time:      6586 |       6586 | astrid.packs.timeline.cli_working
+import time:      3505 |       3505 | astrid.packs.timeline.cli_show
+import time:       984 |        984 | astrid.packs.timeline.cli_log
+import time:       163 |        163 |       astrid.packs.rendering
+import time:       188 |        350 |     astrid.packs.rendering.actions
+import time:       703 |        703 |     astrid.packs.rendering.actions.timeline_visualize.validate
+import time:       272 |       1324 |   astrid.packs.rendering.actions.timeline_visualize
+import time:      1700 |       1700 |   astrid.packs.rendering.actions.timeline_visualize.provenance
+import time:     17318 |      20341 | astrid.packs.rendering.actions.timeline_visualize.inspection_contract
+import time:      4464 |       4464 |   astrid.sdk.timeline.revisions
+import time:       983 |       5446 | astrid.packs.timeline.cli_history
+import time:     10399 |      10399 | astrid.sdk.timeline_cuts
+import time:      6360 |       6360 | astrid.sdk.timeline_views
+import time:      3573 |       3573 | astrid.sdk.timeline._selected_param_authority
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo
+1 failed in 47.51s

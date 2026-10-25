@@ -1,0 +1,3 @@
+Listing tests:
+  three-products.p2-tour.spec.ts:777:1 › P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo
+Total: 1 test in 1 file

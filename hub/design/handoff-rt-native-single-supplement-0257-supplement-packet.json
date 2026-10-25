@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "packet_kind": "P2 mechanical safe5678 supplementary artifact export",
+  "consumer": "App sole independentGOreview0247",
+  "producer": "rt-P2-native-reply-resume-0217",
+  "base": "tl/rt-native-single-export-0235",
+  "request_id": "rt-P2-native-reply-resume-0217-p2-native-reply-resume-0217-single-1025022644-5678",
+  "producer_record": {
+    "status": "pass",
+    "exit_code": 0,
+    "request_sha256": "60e0003a94fac8798b37d201ed5301b76d87acd33536479d6734fe6d0caedaea",
+    "central_log_sha256": "74d008f3a134349d36678e7df9b7a9dd22b1a0195dbf7403eafee45a07dc7d779",
+    "central_summary_sha256": "c0fb66e5e68ca2de8662996fcf6f536583a4c7a40b8bc73cc70d031fc1f5d975",
+    "central_status": "pass",
+    "central_exit": "0"
+  },
+  "exact_unmodified_artifacts": [
+    "supplement/source-preflight.log",
+    "supplement/source-preflight-manifest.json",
+    "supplement/selected-case.txt",
+    "supplement/submission-plan.command.txt",
+    "supplement/submission-request.txt"
+  ],
+  "bounded_sanitized_excerpt": "supplement/test-tail.txt",
+  "selection_and_completion": {
+    "selection_source": "supplement/selected-case.txt",
+    "selection_count": 1,
+    "selected_case": "tests/e2e/local/three-products.p2-tour.spec.ts:777:1",
+    "readiness_case": "tests/e2e/local/three-products.mounted-readiness.spec.ts:268:1",
+    "completion_source": "supplement/test-tail.txt",
+    "completion_source_lines": [115, 116, 118, 120, 122, 124, 126, 128, 129],
+    "completion_status": "D66 PASS; readiness 1 passed; selected original 1 passed"
+  },
+  "prior_packet": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-native-single-export-0235/evidence/packet.json",
+    "sha256": "906b347f62f809e8895d2377fc3a428bedf35a3e5d78903395075be59ee145a2",
+    "use": "authoritative source for original XML, tuple, source hashes, service versions, and prior safe packet; not regenerated or rewritten"
+  },
+  "parent12208_reference": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent12208-facts-0245/evidence/parent12208-safe-handback.json",
+    "sha256": "40076afb39cbf88e8452231543753d2a9c0a8db7722e1ed3c27b9b480f457b58",
+    "use": "refer only; intended POST absent handback already published; no second diagnosis"
+  },
+  "boundary": {
+    "new_verdict": false,
+    "new_body": false,
+    "current_mutable_heads_used": false,
+    "test_execution": false,
+    "reconstruction_or_fabrication": false,
+    "relative_path_map": "supplement/relative-path-map.json"
+  }
+}
