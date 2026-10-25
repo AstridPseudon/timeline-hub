@@ -406,11 +406,13 @@ def _main(args):
         stop = True
     restore = platform.install_stop_handlers(handle)
     try:
-        while not stop:
-            time.sleep(0.2)
+        try:
+            while not stop:
+                time.sleep(0.2)
+        finally:
+            daemon.stop()
     finally:
         restore()
-        daemon.stop()
     return 0
 
 
