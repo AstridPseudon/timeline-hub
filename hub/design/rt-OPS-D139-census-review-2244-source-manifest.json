@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.ops.d139.census-review-source-manifest/v1",
+  "candidate_commit": "bae2ba5ec66e6fb4115c2f79299f82f535e68bb1",
+  "candidate_tree": "c440fd303957f9b3dad8f8a1aa1980efc8fb56e0",
+  "base_commit": "4e0fa7afeeee5ee380c6e063c09bc1c63aa98aee",
+  "product_source_manifest": {
+    "path": "ops-child-custody/source-manifest.json",
+    "sha256": "8f0d1200a1f96d3ebb0d61d2c49dba849bc9d98f3cd9230870dfccc676b19663"
+  },
+  "source_identity": {
+    "ops-child-custody/make-child-venv": {
+      "sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+      "bytes": 93300,
+      "mode": "0755",
+      "unchanged_to_base": true
+    },
+    "ops-child-custody/install-prep/apply-reviewed-maker.sh": {
+      "sha256": "344747ec7cd7e81aee2087f658be67fd3a9250a4441da2701f7f91415092757f",
+      "bytes": 10258,
+      "mode": "0755",
+      "unchanged_to_base": true
+    },
+    "ops-child-custody/install-prep/install_atomic.py": {
+      "sha256": "81eb0818809cccf52c95fb4a536f2c86f29ad47e8395a8d5a725b8c3fb560ef9",
+      "unchanged_to_base": true
+    },
+    "ops-child-custody/install-prep/verify_gate_artifacts.py": {
+      "sha256": "7ce56a7586c81707a9ad1eae8c884762722da36850ded508b650a78f14a2fd5a",
+      "unchanged_to_base": true
+    }
+  },
+  "protected_external_hashes": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "canonical_packet_sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30",
+  "no_live_actions": true
+}

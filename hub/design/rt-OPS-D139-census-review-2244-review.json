@@ -1,0 +1,66 @@
+{
+  "schema": "timeline.ops.d139.census-review/v1",
+  "task": "rt-OPS-D139-census-review-2244",
+  "verdict": "PASS_SOURCE",
+  "candidate": {
+    "commit": "bae2ba5ec66e6fb4115c2f79299f82f535e68bb1",
+    "tree": "c440fd303957f9b3dad8f8a1aa1980efc8fb56e0",
+    "parent": "4e0fa7afeeee5ee380c6e063c09bc1c63aa98aee",
+    "changed_paths": [
+      "ops-child-custody/check-child-imports",
+      "ops-child-custody/source-manifest.json",
+      "ops-child-custody/tests/test_canonical_census.py"
+    ]
+  },
+  "finding": {
+    "id": "CENSUS-005",
+    "status": "resolved",
+    "resolution": "The checker authenticates and adapts the exact Agent 2149 JSON packet instead of accepting its module/category rows as legacy name rows."
+  },
+  "canonical_packet": {
+    "path": "design/agt-F-D139-import-input-census-2149-input-census.json",
+    "sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30",
+    "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "rows": 1146,
+    "occurrence_records": 17642,
+    "required_probe_rows": 10,
+    "diagnostic_missing_rows": 12,
+    "classifications": {
+      "internal_source_carrier": 990,
+      "stdlib": 108,
+      "optional_manual": 17,
+      "missing": 12,
+      "unconditional_required": 10,
+      "tested_conditional": 9
+    },
+    "all_input_fields_preserved": true,
+    "row_order_preserved": true,
+    "distribution_and_occurrence_evidence_preserved": true,
+    "ordered_modules_sha256": "4665b5b19f94a14659d7fc391e7e053b99608b4c27c4827d28f9a63df9d54541"
+  },
+  "missing_classification": {
+    "total": 17,
+    "registered_child": 12,
+    "optional_or_plugin": 5,
+    "unconditional_blockers_inferred": 0
+  },
+  "identity": {
+    "maker_sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+    "maker_bytes": 93300,
+    "maker_mode": "0755",
+    "installer_unchanged_to_4e0fa7": true,
+    "protected_source_unchanged_to_4e0fa7": true,
+    "protected_bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "protected_dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "scope": {
+    "source_edits": false,
+    "installation": false,
+    "preflight_provider_or_child": false,
+    "store_or_registration": false,
+    "package_acquisition": false,
+    "full_suite": false,
+    "system_probe_supporting_only": true
+  }
+}

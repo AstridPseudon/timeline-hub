@@ -1,0 +1,80 @@
+{
+  "schema": "timeline.ops.d139-store-retirement-final-review/v1",
+  "task": "D139",
+  "candidate_commit": "2ab240fcdcdae0db60497bb7a355cbfe6e53b5a8",
+  "candidate_tree": "1a0056c3b1f163b1a45c87f280fe0cfcd085a854",
+  "candidate_ref": "tl/rt-OPS-store-retire-return-2235",
+  "result": "FAIL",
+  "verdict": "FAIL_SOURCE",
+  "scope": "Independent read-only source review with private temporary fixtures; no live Store, root, installation, child, provider, suite, cleanup, acquisition, browser, or full suite.",
+  "fixed_original_attacks": {
+    "D139-1_age_clock": "PASS_SOURCE",
+    "D139-2_caller_claim_schema": "PASS_SOURCE for extra caller fields, but authoritative activity provenance remains unresolved",
+    "D139-3_pre_quarantine_process_scan": "PASS_SOURCE for the supplied race fixture, but post-final-scan admission remains open",
+    "D139-4_receipt_member_types": "PASS_SOURCE for malformed member/type matrix, but cross-consistency remains unresolved"
+  },
+  "findings": [
+    {
+      "id": "D139-F1",
+      "severity": "critical",
+      "status": "FAIL",
+      "title": "Activity/reference authority is a mutable self-hashed file",
+      "locations": ["ops-d131/bench_store.py:191-206", "ops-d131/bench_store.py:725-740"],
+      "evidence": "The only worker, queue, service, KEEP and ACTIVE source is activity.json. Its hash authenticates only the file's current contents; a same-inode in-place rewrite with a recomputed hash is accepted. Each of workers, queues, services, keep and active refused while containing the entry and then retired after the reference was erased. No real worker/queue/service registry source is opened or bound to the entry generation.",
+      "impact": "A caller with the Store-owned file access can erase lifecycle references without changing the owner inode, and the empty default activity source can authorize an entry without an authoritative external audit.",
+      "required_fix": "Bind retirement to actual Store-owned worker/queue/service/lease/registry state, or refuse when that source is unavailable. A self-asserted JSON audit/hash is not sufficient evidence."
+    },
+    {
+      "id": "D139-F2",
+      "severity": "critical",
+      "status": "FAIL",
+      "title": "Process cwd/fd/cmdline admission remains open after the final scan",
+      "locations": ["ops-d131/bench_store.py:621-682", "ops-d131/bench_store.py:790-796", "ops-d131/bench_store.py:534-617"],
+      "evidence": "A private hook started a process only after the third process scan, the scan inside _delete_owned, returned. Separate cwd, open-fd and cmdline fixtures all returned retired and deleted the quarantined entry; scan count was three in each case.",
+      "impact": "A live process reference can be admitted between the last audit and destructive deletion. Repeated process scans are not exclusive admission.",
+      "required_fix": "Use a real supported exclusion/admission guard that covers process cwd/fd/cmdline references through deletion, or refuse with UNAPPLIED when no such guard exists."
+    },
+    {
+      "id": "D139-F3",
+      "severity": "critical",
+      "status": "FAIL",
+      "title": "Lifecycle marker and activity races after audit are not closed",
+      "locations": ["ops-d131/bench_store.py:725-761", "ops-d131/bench_store.py:790-796"],
+      "evidence": "A private checkpoint created KEEP after the quarantine marker audit and final process scan; retirement still returned retired and removed KEEP during ordinary deletion. A private quarantine hook added a valid self-hashed worker reference after _retirement_audit; retirement still returned retired.",
+      "impact": "A late KEEP/ACTIVE or lifecycle reference can be introduced after admission checks and is then ignored or deleted.",
+      "required_fix": "Make marker/reference state part of an exclusive Store-owned admission lease, revalidate under that guard immediately before deletion, and restore/refuse on any late change."
+    },
+    {
+      "id": "D139-F4",
+      "severity": "high",
+      "status": "FAIL",
+      "title": "Receipt validation does not prove node/sequence/registration association",
+      "locations": ["ops-d131/bench_store.py:290-321"],
+      "evidence": "The strict malformed receipt matrix refused path, null node, string lock, string sequence, null/duplicate registration members, and null/duplicate suite members. However, a private receipt with a valid-shaped but wrong node, another retired entry's sequence, and another retired entry's registration was accepted by _load(). Node is type-checked but not tied to retirement history; registration membership is only checked against the global retired list.",
+      "impact": "Corrupted or cross-associated historical evidence can be accepted as authoritative despite passing the field/member-type checks.",
+      "required_fix": "Persist and validate exact retirement-history association for node, sequence, registrations and suites; reject valid-shaped but unrelated receipt values."
+    },
+    {
+      "id": "D139-F5",
+      "severity": "high",
+      "status": "FAIL",
+      "title": "Return evidence has a changed-source hash mismatch",
+      "locations": ["return-2235/evidence/source-manifest.json:changed_source", "ops-d131/bench_store.py"],
+      "evidence": "The return manifest records changed_source bench_store.py SHA-256 5af33a48e76c7cbd94ef2948d1b7bb6225a318bb0715762e98087b93c970b747. The exact candidate HEAD blob and worktree source both hash to 5504746d7348611878bb75128e20c1df22a9f237ad1b5a135fa40992c868758b; current mode is 0755.",
+      "impact": "The claimed source custody packet is not byte-exact for the reviewed candidate.",
+      "required_fix": "Regenerate the source manifest from the exact candidate commit/tree and recertify all dependent evidence before any installation."
+    }
+  ],
+  "preserved_or_passed": [
+    "Age is persisted on new entries; caller registered_at/not_before fields and API/CLI --now are refused.",
+    "Owner/path/inode/no-follow/hardlink/lease guards and the supplied pre-quarantine process refusal pass private controls.",
+    "Strict receipt primitive field/member type matrix passes.",
+    "Journal forward recovery and eligible private retirement pass the author suite.",
+    "Fixed-two retention private fixture leaves exactly two active entries after three admissions."
+  ],
+  "unverified": [
+    "No live Store or actual manager operation was run by instruction.",
+    "No installation or real cleanup was run by instruction.",
+    "No full suite was requested or run."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "timeline.ops.d139-store-retirement-final-review-source/v1",
+  "task": "D139",
+  "candidate": {
+    "ref": "tl/rt-OPS-store-retire-return-2235",
+    "commit": "2ab240fcdcdae0db60497bb7a355cbfe6e53b5a8",
+    "tree": "1a0056c3b1f163b1a45c87f280fe0cfcd085a854",
+    "original_candidate_commit": "02b6a412a47bd2f884b823271b8ddd0de544539d",
+    "original_candidate_tree": "2d56c8fc5a89909e2cbac97016da00eecbbd8c73"
+  },
+  "source": {
+    "path": "ops-d131/bench_store.py",
+    "candidate_sha256": "5504746d7348611878bb75128e20c1df22a9f237ad1b5a135fa40992c868758b",
+    "candidate_mode": "0755",
+    "installed_preimage_ref": "tl/rt-OPS-D131-kind-reserve-1558",
+    "installed_preimage_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "installed_preimage_mode": "0755",
+    "cas_script": "ops-d131/install-prep/check-cas.sh",
+    "cas_mode": "0755"
+  },
+  "candidate_files": {
+    "ops-d131/retire_entry.py": {"sha256": "260a4f6bce5ac0057ca2a825869ab1d51dadd702d5ea7c40d0ddde333babf6c0", "mode": "0755"},
+    "ops-d131/test_retire_entry.py": {"sha256": "9031bd9711edf4b98b821bd3ec0ee3b16e18d9236ec1e81dce564971fa9000a1", "mode": "0644"},
+    "ops-d131/install-prep/check-cas.sh": {"sha256": "5c2c67c84140eeacad068b713f13bbc8c5d063568d76bfe12e489b5bbf1cac7f", "mode": "0755"}
+  },
+  "prior_evidence": {
+    "original_review_2228": "eda58d8172993a01fa1c4f18dc5c517fc930e6728b446d7aad80c822cf62f678",
+    "return_validation": "03bd5bcb850f53042e982b6cf2ac765ac3f6255e1a04d8ab0cde06c94eb9603e",
+    "return_findings": "180367d1de0804f1222827fa051ac98edba9bdaea373f6eb8b80fbe0272701f8",
+    "return_red_green": "b61e0424df4a430539d4bea36f48c51fb93d735e76907fcf9a731feb805382e4",
+    "return_manifest": "1d5ad5017b13a8379b5841739b7341ce26c17c17c56acd14b31d80cf5d2016f3",
+    "agent_2202_2205_2210_final": "87b85d6155b33ea795ff64a1d6d77672296e1bd3f9a7364db550a79e98999dba"
+  },
+  "custody_note": "Return changed_source hash does not match the exact candidate source; this review records the exact candidate hash and marks custody FAIL."
+}
