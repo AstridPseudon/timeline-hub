@@ -1,0 +1,14 @@
+contract=contract/commit-v2.md
+contract_sha256=4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7
+request_required=api_version,project_id,timeline_id,base_revision_id,base_publication_id,commands,label,steps,merge,source,rationale,group_id,dry_run
+command_shape=schema_version,op,version,select,args,created
+step_shape=id,label,intent,tags,command_ordinals,patch,optional reads
+merge_values=fields|atomic
+idempotency=HTTP Idempotency-Key required for mutation; exact retry replays original receipt
+success=accepted|merged with data/receipt, canonical closure/digest, id_map, commands, steps, dependencies, effects, bindings, history, base/previous/accepted pairs, versions, publisher, receipt_id
+preview=would_status and null receipt
+conflict=reason and head
+invalid=code,path,hint,suggested_command
+preserved_guards=fresh authority, ABI, ABA, no-write/no-leak, original45s, opaque graph, reads, C0 request path
+authority=Runtime commitTimeline and registered Agent SDK/provider only
+scope=source preparation; no implementation, schema, generated, pin, product, or test change

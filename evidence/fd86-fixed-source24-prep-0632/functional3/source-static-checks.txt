@@ -1,0 +1,16 @@
+D98a functional original source-only prerequisites
+selector_count=3 exact lines from handoff-agt-D98-0427-selectors.txt
+agent_source_commit=01d51620a6f92288bd6b90a38ad4f69f5dfadef5
+agent_source_tree=c06b8fc2854a68642b8f46dfd39ca5e0a59320ca
+agent_source_blob=c4f54e34536dabbf196fd9a17c337b78394506e3
+agent_source_sha256=cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1
+normal_capture_receipt=a90bc7f9e1653e94384c094aaa87adf32239f5bc
+independent_review=reviewbatch0550 PASS_SOURCE
+registered_capture=capture_occurrence_create
+exact_inputs=chapter-shot,occ-a,Chapter One,picture,on=8,duration=10
+conservation=all original topology, opaque values, assertions, refusal, retry, inverse, ABA, no-write, and original45s guards
+dependency=placement imports/calls _create_fixture; recipe imports runtime_occurrence and calls genuine editing wrapper
+actual32278=three errors with observer active; immutable and not reopened
+future_runtime=D102c-fixed Runtime plus Agent-normal adoption receipt required
+checks=packet hash/JSON/TSV/AST static checks PASS
+execution=pytest/imports/collection/fixture/provider/preflight/body/CLI/browser/observer/collector/route install/live request NOT RUN

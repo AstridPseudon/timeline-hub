@@ -1,0 +1,50 @@
+{
+  "packet": "fd86-fixed-source24-prep-0632",
+  "mode": "private source-only receiving preparation",
+  "d86_selector_file": "inputs/selectors.txt",
+  "d86_selector_count": 21,
+  "d86_lanes": {
+    "parentmedia": 18,
+    "sheetCLI": 2,
+    "graph": 1
+  },
+  "d98a_functional_selector_file": "functional3/selectors.txt",
+  "d98a_functional_selector_count": 3,
+  "canonical_rule": "exact selector membership plus meaningful source dependency; never family-count addition",
+  "comparators": {
+    "actual19214": {
+      "receipt": "rt-D86-next61-main-0505-rt-D86-next61-main-0505-1025050954-19214",
+      "d86_membership": "18 parent-media FAIL, 2 semantic-batch rows FAIL/PASS, 1 graph FAIL",
+      "use": "prior per-ID dispositions only; no behavior credit"
+    },
+    "actual17724": {
+      "receipt": "rt-D86-new13-body-0611-fd86-new13-body-0611-1025061304-17724",
+      "d86_overlap": 0,
+      "use": "immutable NEW13 result; not reselected"
+    },
+    "actual32278": {
+      "receipt": "rt-D98a-route-submit-0517-rt-D98a-route-submit-0517-1025052025-32278",
+      "d98a_prior_result": "three errors with observer active",
+      "use": "immutable observer context; no observer or diagnostic allocation reopened"
+    }
+  },
+  "normal_source_prerequisites": {
+    "parentmedia": "1a97728baafcef69ed3d081b03902ad3d5ac2032",
+    "sheetCLI": "b9484befcadb9427ebac65de938dfa10217edb4f",
+    "graph": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+    "d98a_capture": "a90bc7f9e1653e94384c094aaa87adf32239f5bc"
+  },
+  "preserved_boundaries": [
+    "actual550",
+    "23noXML",
+    "passed13",
+    "old13errors",
+    "currentheldID5",
+    "word2",
+    "D10022/ten",
+    "D86 NEW13 source packet",
+    "D98a prior 32278 observer packet"
+  ],
+  "status": "SOURCE_READY_BEHAVIOR_PENDING",
+  "body": "not run"
+}

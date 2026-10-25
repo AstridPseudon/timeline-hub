@@ -1,0 +1,12 @@
+command=PYTHONDONTWRITEBYTECODE=1 python3 -B static/validate_packet.py
+result=PASS
+selectors=21 exact; functional3=3 exact; disjoint=PASS
+actual17724_overlap=0; actual19214_membership=21; source_receipts=4
+json_tsv_hash_set_parse=PASS; runtime_ast_compile=PASS; route_hash=PASS
+command=bash -n existing D73 main-affected-batch-recipe.sh
+result=PASS
+command=PYTHONDONTWRITEBYTECODE=1 python3 -B in-memory ast.parse validation
+result=PASS
+command=git diff --check
+result=PASS
+execution=No pytest, collection, imports, fixtures, providers, browser, CLI, CAS, registry, route, or HTTP request.

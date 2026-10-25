@@ -1,0 +1,16 @@
+# Existing D73 targeted route; do not execute during preparation.
+# The later body controller must first materialize fresh values for every angle-bracket field.
+MAIN_BATCH_SELECTOR_FILE=<THIS_PACKET>/inputs/selectors.txt \
+MAIN_BATCH_EXPECTED_SELECTOR_COUNT=21 \
+P4_LAUNCHER=<FRESH_AGENT_CHECKOUT>/tools/p4-d73-pinned-launch.sh \
+P4_D73_MANIFEST=<FRESH_RENDERED_FOUR_REPO_D73_MANIFEST> \
+P4_D73_EVIDENCE=<FRESH_MAIN_EVIDENCE_DIRECTORY> \
+P4_D73_REQUEST_ID=<FRESH_MAIN_AFFECTED_BATCH_REQUEST_ID> \
+/bin/bash --noprofile --norc -c 'set -eu; exec /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-later-delta-prep-0236/evidence/fd86-later-delta/route/main-affected-batch-recipe.sh'
+
+# D98a remains a separate later targeted body request using its own exact
+# functional3/selectors.txt and the same existing D73 checkout/receipt order.
+# Before either body: consume the genuine D102c normal-adopter receipt, capture
+# the adopted four-repository tuple once, verify checkout/import/source/schema/
+# profile receipts, run parsed17 exactly once and poison1 exactly zero, then
+# use the existing central service serially with capacity above 5.2GB.
