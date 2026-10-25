@@ -2126,9 +2126,32 @@ def _following_read_observes(boundary, following, physical_ref):
     return False
 
 
-def command_output(boundary, record, following, *, accepted=None, identity_scope=None, manifest=None):
+def _command_manifest(manifest, record):
+    """Project only the dependencies consumed by one authenticated command."""
+    result = copy.deepcopy(manifest)
+    for dependency in record.get("dependencies", []):
+        pin = dependency.get("pin", {})
+        if dependency.get("kind") == "media":
+            media_id = pin.get("object_id", pin.get("media_id"))
+            if media_id is not None:
+                media = {row["media_id"]: row for row in result["media"]}
+                media[media_id] = {"media_id": media_id, "content_digest": media_id}
+                result["media"] = sorted(media.values(), key=lambda row: row["media_id"])
+        elif dependency.get("kind") in {"source", "transcript"} and pin not in result["documents"]:
+            result["documents"].append(copy.deepcopy(pin))
+            result["documents"].sort(
+                key=lambda row: (row["document_id"], row["version"], row["content_digest"]))
+    return result
+
+
+def command_output(boundary, record, following, *, accepted=None, identity_scope=None,
+                   manifest=None, previous_manifest=None):
     """Project full recorder observations needed by a subsequent input binding."""
     result = copy.deepcopy(boundary)
+    if previous_manifest is not None:
+        require(manifest is not None and value_equal(
+            manifest, _command_manifest(previous_manifest, record)),
+                "provider command manifest differs from its authenticated dependencies")
     projected_roots = (_project_created_child(result, record, following, accepted, identity_scope)
                        if accepted is not None else set())
     created_roots = {item.get("ref") for item in record.get("created", [])
@@ -2254,6 +2277,18 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
                                    and pin.get("content_digest") == result["parent"]["content_digest"]
                                    for pin in parent_pins),
                 "provider created parent differs from its sequential allocation")
+        result["parent"]["revision_id"] = expected_parent
+    if (previous_manifest is not None and manifest != previous_manifest
+            and identity_scope is not None
+            and result["parent"]["content_digest"] == boundary["parent"]["content_digest"]):
+        expected_parent = _authoring_parent_identity(result, identity_scope, manifest)
+        parent_pins = [binding for binding in following["bindings"]
+                       if binding.get("physical_ref") == "parent"
+                       and binding.get("boundary", {}).get("phase") == "input"]
+        require(parent_pins and all(pin.get("revision_id") == expected_parent
+                                    and pin.get("content_digest") == result["parent"]["content_digest"]
+                                    for pin in parent_pins),
+                "provider consumed manifest differs from its sequential parent allocation")
         result["parent"]["revision_id"] = expected_parent
     return result
 
@@ -2815,21 +2850,13 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
         command_inputs = {step["command_ordinals"][0]: boundary}
         input_manifest = copy.deepcopy(manifest)
         command_manifests = {}
+        command_input_manifests = {}
         for ordinal in step["command_ordinals"]:
             # Consumed input pins are checked by the request-private port at
             # acceptance. Only earlier commands contribute to this boundary;
             # a following binding cannot allocate a physical identity.
-            for dependency in records["commands"][ordinal]["dependencies"]:
-                pin = dependency.get("pin", {})
-                if dependency.get("kind") == "media":
-                    media_id = pin.get("object_id", pin.get("media_id"))
-                    if media_id is not None:
-                        media = {row["media_id"]: row for row in manifest["media"]}
-                        media[media_id] = {"media_id": media_id, "content_digest": media_id}
-                        manifest["media"] = sorted(media.values(), key=lambda row: row["media_id"])
-                elif dependency.get("kind") in {"source", "transcript"} and pin not in manifest["documents"]:
-                    manifest["documents"].append(copy.deepcopy(pin))
-                    manifest["documents"].sort(key=lambda row: (row["document_id"], row["version"], row["content_digest"]))
+            command_input_manifests[ordinal] = copy.deepcopy(manifest)
+            manifest = _command_manifest(manifest, records["commands"][ordinal])
             command_manifests[ordinal] = copy.deepcopy(manifest)
         # Hydrated documents consumed by the first command can rekey the
         # unchanged effect-before parent. Later commands cannot allocate it.
@@ -2842,7 +2869,8 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
             command_inputs[next_ordinal] = command_output(
                 command_inputs[ordinal], records["commands"][ordinal], records["commands"][next_ordinal],
                 accepted=accepted, identity_scope=(source["project_id"], source["timeline_id"]),
-                manifest=command_manifests[ordinal])
+                manifest=command_manifests[ordinal],
+                previous_manifest=command_input_manifests[ordinal])
         if records["merge_mode"] == "atomic":
             # Resolve aliases only after earlier commands establish their input
             # images; the complete batch union is checked against every step below.
