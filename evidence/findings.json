@@ -1,0 +1,35 @@
+{
+  "schema": "timeline.d139a.findings/v1",
+  "status": "PASS_SOURCE_JOIN_WITH_REAL_CHILD_NOTRUN",
+  "findings": [],
+  "disclosed": [
+    {
+      "id": "D137-WITHDRAWN",
+      "severity": "decision-boundary",
+      "detail": "The D137 whole-make fixture gate remains WITHDRAWN/NOTRUN; no synthetic fixture is real-child acceptance."
+    },
+    {
+      "id": "D139-INPUT-CARRIER",
+      "severity": "accepted-by-D139a-route",
+      "detail": "The earlier 2214/2218 physical source/carrier result was EXACTMISSING. The approved D139a route admits only the authenticated installed banodoco-timeline-schema RECORD closure with the pinned direct URL and exact hashes."
+    },
+    {
+      "id": "FINAL-REVIEW-RECEIPT-NOTYET",
+      "severity": "not-tested",
+      "detail": "The future genuine D139a combined kit receipt and manager D137 decision input are not present and were not invented."
+    },
+    {
+      "id": "REAL-CHILD-CORE-NOTRUN",
+      "severity": "not-tested",
+      "detail": "No install, child request, Store publication, registration, provider, or core run was authorized."
+    }
+  ],
+  "preserved": [
+    "verifier and source admission",
+    "ownership, D131, stderr closure, provenance and snapshot guards",
+    "CAS, backup, target identity and helper invariance controls",
+    "canonical 1146-row checker and all existing tests",
+    "C0 request/reply shapes and existing operational caller"
+  ],
+  "next_reviewer": "Use the same commands, /home/user/work/venv-agent/bin/python, /home/user/work/venv-agent/bin/ruff --no-cache, and config recorded in validation.md."
+}

@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.d139a.reviewed-join-source-manifest/v1",
+  "base_commit": "bae2ba5ec66e6fb4115c2f79299f82f535e68bb1",
+  "maker_review_commit": "e9fdcfe299a20f1a137e0c87d2c0bf2de49f9e45",
+  "final_product_manifest": {
+    "path": "ops-child-custody/source-manifest.json",
+    "sha256": "7e4b00e6ea1034e5594436035a06b87ccc726915a47e0c1e2dd8fa29935aaa75"
+  },
+  "candidate": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "bytes": 111171,
+    "mode": "0755",
+    "byte_identical_to": "e9fdcfe299a20f1a137e0c87d2c0bf2de49f9e45"
+  },
+  "required_preimage": {
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bytes": 75541,
+    "mode": "0755"
+  },
+  "checker_and_support": {
+    "ops-child-custody/check-child-imports": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c",
+    "ops-child-custody/tests/test_canonical_census.py": "3c13d042b06373c27bd99bd44a7c842f32d1f658e9edc6736dc79586ec5e271c",
+    "ops-child-custody/install-prep/apply-reviewed-maker.sh": "4e4f88e92b90faedafcfdad6caeb8ab89e7d8bd16a0dfdadbf22a2479e714b27",
+    "ops-child-custody/install-prep/dry_run_controls.py": "8bde415fb283ad73630baf605e66f9dcf5ad7082976d457f33261ae7930950ea",
+    "ops-child-custody/install-prep/verify_gate_artifacts.py": "849dbb49643d2e807f2598d52ddd43cb9e95524e71aab3235be11dc15dc036f5",
+    "ops-child-custody/tests/test_schema_distribution.py": "e692c2fd3275775124feebd31765f4eebf535dce6d4ad20f5ae7581eff1d53e1"
+  },
+  "support_helpers": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "d139a_input_route": {
+    "flag": "--schema-installed-distribution",
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "repository": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "record_sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
+    "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "tree_tie": "UNAVAILABLE",
+    "acquisition": false
+  },
+  "real_acceptance": "NOTRUN"
+}

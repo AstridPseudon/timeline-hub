@@ -1,12 +1,12 @@
 {
-  "task": "rt-OPS-D139-first-return-2217",
-  "base_commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
-  "observed_utc": "2026-10-25T21:00:00Z",
+  "task": "rt-OPS-D139a-reviewed-join-2300",
+  "base_commit": "bae2ba5ec66e6fb4115c2f79299f82f535e68bb1",
+  "observed_utc": "2026-10-25T22:57:07Z",
   "live_sources_read_only": {
     "make-child-venv": {
       "path": "ops-child-custody/make-child-venv",
-      "sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
-      "bytes": 93300,
+      "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+      "bytes": 111171,
       "mode": "0o755"
     },
     "bench_store.py": {
@@ -24,8 +24,8 @@
   },
   "candidate": {
       "path": "ops-child-custody/make-child-venv",
-      "sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
-      "bytes": 93300,
+      "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+      "bytes": 111171,
     "mode": "0o755"
   },
   "blocks": {
@@ -112,11 +112,23 @@
       "sha256": "217685e8a09341b706bbc84b1ebda2375e43809075c2d0818d670c0665c3076e",
       "bytes": 11152,
       "mode": "0o644"
+    },
+    {
+      "path": "ops-child-custody/tests/test_canonical_census.py",
+      "sha256": "3c13d042b06373c27bd99bd44a7c842f32d1f658e9edc6736dc79586ec5e271c",
+      "bytes": 8393,
+      "mode": "0o644"
+    },
+    {
+      "path": "ops-child-custody/tests/test_schema_distribution.py",
+      "sha256": "e692c2fd3275775124feebd31765f4eebf535dce6d4ad20f5ae7581eff1d53e1",
+      "bytes": 11299,
+      "mode": "0o644"
     }
   ],
   "existing_controls_preserved": true,
-  "new_controls": 7,
-  "total_unittest_tests": 51,
+  "new_controls": 13,
+  "total_unittest_tests": 63,
   "embedded_python_blocks_compiled_in_memory": 7,
   "admission": {
     "free_bytes": 5027573760,
@@ -142,16 +154,48 @@
     "network_acquisition": false,
     "new_fixture_Store_initialized": false
   },
-  "e2e_result": "NOTRUN / WITHDRAWN by D137 owner; D139 schema carrier sourceNOT_READY",
+  "e2e_result": "NOTRUN / WITHDRAWN by D137 owner; real child/core remain NOTRUN",
   "installer_route": {
     "reviewed_reference": "a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4",
     "gate": "D137 decision input; no E2E PASS fabricated",
     "cas": "descriptor-bound lock, no-follow/no-clobber backup, identity CAS, atomic rename",
-    "candidate_sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
-    "candidate_bytes": 93300,
+    "candidate_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "candidate_bytes": 111171,
     "preimage_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
     "preimage_bytes": 75541,
-    "source_commit": "bound exactly by the later D137 decision input"
+    "source_commit": "D139a installed-distribution source admission; future final-review receipt required before install",
+    "input_route": "--schema-installed-distribution",
+    "schema_input": {
+      "package": "banodoco-timeline-schema",
+      "version": "0.0.2",
+      "repository": "ArtAgents",
+      "url": "https://github.com/banodoco/ArtAgents.git",
+      "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+      "subdirectory": "packages/timeline-schema/python",
+      "record_rows": 18,
+      "hashed_rows": 12,
+      "record_sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
+      "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+      "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+      "tree_tie": "UNAVAILABLE",
+      "acquisition": false
+    }
+  },
+  "joined_review_sources": {
+    "census_review": "bae2ba5ec66e6fb4115c2f79299f82f535e68bb1",
+    "maker_review": "e9fdcfe299a20f1a137e0c87d2c0bf2de49f9e45",
+    "checker_sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c",
+    "canonical_test_sha256": "3c13d042b06373c27bd99bd44a7c842f32d1f658e9edc6736dc79586ec5e271c",
+    "maker_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "maker_bytes": 111171,
+    "preimage_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "preimage_bytes": 75541,
+    "support_sha256": {
+      "apply-reviewed-maker.sh": "4e4f88e92b90faedafcfdad6caeb8ab89e7d8bd16a0dfdadbf22a2479e714b27",
+      "dry_run_controls.py": "8bde415fb283ad73630baf605e66f9dcf5ad7082976d457f33261ae7930950ea",
+      "verify_gate_artifacts.py": "849dbb49643d2e807f2598d52ddd43cb9e95524e71aab3235be11dc15dc036f5",
+      "test_schema_distribution.py": "e692c2fd3275775124feebd31765f4eebf535dce6d4ad20f5ae7581eff1d53e1"
+    }
   },
   "protected_unchanged": {
     "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
