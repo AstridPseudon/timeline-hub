@@ -1,0 +1,80 @@
+{
+  "schema": "astrid.timeline.d89-successor-continuation-accounting/v1",
+  "packet": "F-D89-bounded-successor-continuation-0209",
+  "original_0200": {
+    "published_ready_on_main": true,
+    "bytes_preserved_under": "original-0200/",
+    "unique_selectors": 161,
+    "disjoint_family_keys": 15,
+    "observed_actual10077": 88,
+    "observed_error": 84,
+    "observed_no_junit_case": 4,
+    "reviewed_not_selected": 73,
+    "unchanged_artifacts_edited": false
+  },
+  "additional_delta": {
+    "unique_selectors": 69,
+    "disjoint_family_keys": 3,
+    "family_counts": {
+      "current-sheet13": 13,
+      "M1-baseline10": 10,
+      "word-bootstrap46": 46
+    },
+    "actual10077_status_counts": {
+      "FAIL": 13,
+      "ERROR": 56
+    },
+    "source_authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+    "held_outside_delta": {
+      "current_sheet_native_inverse_coverage": 1,
+      "current_sheet_retired_cli": 3,
+      "native_word_semantic_failures": 9
+    },
+    "overlap_with_original_0200": 0
+  },
+  "combined_union": {
+    "unique_selectors": 230,
+    "disjoint_family_keys": 18,
+    "original_0200_plus_additional": true,
+    "actual10077_total": 268,
+    "observed_combined": 157,
+    "observed_status_counts": {
+      "ERROR": 140,
+      "FAIL": 13,
+      "NO_JUNIT_CASE": 4
+    },
+    "combined_remainder": 111,
+    "original_0200_remainder_preserved_under": "original-0200/remainder.tsv",
+    "unexecuted_unknowns_preserved": 23
+  },
+  "original550": {
+    "rows": 550,
+    "dispositions_preserved": true,
+    "disposition_path": "original550-dispositions.tsv",
+    "rollup_path": "original550-rollup.tsv"
+  },
+  "c0_contract": {
+    "api_version": 1,
+    "request_reply_shape": "c0-contract-sections1-5.json",
+    "caller": "registered Runtime commitTimeline/provider",
+    "guards": "authority/ABI/ABA/no-write/no-leak/45s unchanged",
+    "preview_receipt": null
+  },
+  "set_checks": {
+    "original_0200_bytes_preserved": true,
+    "additional_unique": true,
+    "combined_unique": true,
+    "combined_disjoint_from_original": true,
+    "selectors_exist_in_current_source": true,
+    "source_hashes_equal_reviewed_home": true,
+    "actual10077_accounting": true,
+    "authentic_xml_hash_recorded": true,
+    "all550_unchanged": true,
+    "unexecuted23_unchanged": true
+  },
+  "execution_policy": {
+    "permitted": "static JSON/TSV exact sets, unique IDs, AST selector existence, hash equality, bash -n inherited recipe",
+    "forbidden_run": "pytest/collection/helper/function/fixture execution/service/build/browser/render/probe/install/registry/pins/checkouts",
+    "behavior_credit": "none; MAIN four-SHA custody/preflight/service remain PENDING"
+  }
+}

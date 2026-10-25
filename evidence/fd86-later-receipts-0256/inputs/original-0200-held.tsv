@@ -1,0 +1,21 @@
+scope	count	disposition	reason
+D86-native-word	46	MAIN_WORD_FIXTURES_HELD	preserved by settled plan; no authorization in this packet
+D86-M1-outbox	10	MAIN_M1_FIXTURES_HELD	settled plan hold until actual qualified source and candidate proof
+D86-shared-inverse	10	MAIN_INVERSE_FIXTURES_HELD	preserved by settled plan; no authorization in this packet
+F-current-sheet17	17	HELD_NOT_LANDED	preserved by settled plan; no authorization in this packet
+D86-CLI-document	8	HELD_NO_JUNIT_CASE	preserved by settled plan; no authorization in this packet
+WC6	11	HELD_NO_JUNIT_CASE	preserved by settled plan; no authorization in this packet
+D86-M2-pool	6	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D86-parent-media	20	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D86-parent-auto	14	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D86-parent-swap12	12	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D86-provider-custody	4	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D86-docpatch	5	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D86-manifest-inverse	8	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D86-parent-track	3	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D86-core-element	2	HELD_REMAINDER	preserved by settled plan; no authorization in this packet
+D87-live-frontends	6	LEDGERED_LIVE_FRONTENDS	preserved by settled plan; no authorization in this packet
+D87-retirements	25	LEDGERED_RETIREMENTS	preserved by settled plan; no authorization in this packet
+D90-product-candidate	0	HELD	preserved by settled plan; no authorization in this packet
+P4	0	EXCLUDED	preserved by settled plan; no authorization in this packet
+actual10077-remainder	180	HELD_REMAINDER	preserved by settled plan; no authorization in this packet

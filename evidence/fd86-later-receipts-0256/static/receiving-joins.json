@@ -1,0 +1,40 @@
+{
+  "agent_commit": "a836baa3b11208d66bf8d23d6abfb1c8e59257e2",
+  "core_element_reply_literal": {
+    "behavior_claim": false,
+    "count": 1,
+    "home_receipt": "a836baa3b11208d66bf8d23d6abfb1c8e59257e2",
+    "review": "rt-D86-core-element-review-0222.md",
+    "selectors": [
+      "tests/core/test_timeline_element_publication_runtime.py::test_public_helper_optional_session_rebases_over_disjoint_edit"
+    ],
+    "source_commit": "f643a5e12a88bb533f372248485525793f2368e8",
+    "source_file": "tests/core/test_timeline_element_publication_runtime.py",
+    "source_sha256": "f03e19caa0b6505a42d17fc0eaca77a4794fafb863619bdc4876b14bd63b0357"
+  },
+  "held": {
+    "D92": true,
+    "inverse7": true,
+    "lost_ack_metadata_original": true,
+    "replace_existing": true
+  },
+  "pool6": {
+    "behavior_claim": false,
+    "count": 6,
+    "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+    "review": "handoff-agt-F-pool6-actual-0223-source-exact.md",
+    "selectors": [
+      "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-first]",
+      "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-second]",
+      "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[remove-middle]",
+      "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_provider_accepts_add_and_remove_with_exact_undo_and_redo",
+      "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[image]",
+      "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[video]"
+    ],
+    "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+    "source_file": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+    "source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e"
+  },
+  "runtime_commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+  "schema": "astrid.timeline.fd86-later-receiving-joins/v1"
+}

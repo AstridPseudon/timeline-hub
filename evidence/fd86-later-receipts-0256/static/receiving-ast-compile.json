@@ -1,0 +1,50 @@
+{
+  "all_selected_functions_exist": true,
+  "selected_nodes": 102,
+  "source_files": [
+    {
+      "ast_compile": "PASS",
+      "path": "tests/core/test_timeline_element_publication_runtime.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_commit_runtime_m1.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_commit_runtime_native_checkout.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_commit_runtime_native_frontends.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_native_sheet_current_runtime.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_native_word_anchor.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_next_command_cohort_runtime.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_recipe_m2_shot_pool.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/packs/timeline/test_cli_document_commit.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/sdk/test_wc6_completion_capture.py"
+    }
+  ]
+}

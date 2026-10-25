@@ -1,0 +1,46 @@
+{
+  "captured_once_utc": "2026-10-25T02:30:45Z",
+  "repos": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "sha": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9",
+      "tree": "b0c7de33744c89afa5f34394f92debb6498a1c9f",
+      "parents": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9 8dadab251a9b9c1a0d31655125d62338f1ee4482 f32a890e3b949557bd0677cbe6b448d195dce3aa",
+      "status": ""
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "sha": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+      "parents": "6634a17f3ffd885567ba3c91b6c7a560df7375a4 766fd6700c3128ea9fc833086a517de2acb535e2 b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0",
+      "status": ""
+    },
+    "app": {
+      "path": "/home/user/work/app",
+      "sha": "c101477597a765235d7cbbcd48ce588f0df3de73",
+      "tree": "a2b173dd4a6623942ca410c86d9e5546b472649a",
+      "parents": "c101477597a765235d7cbbcd48ce588f0df3de73 24865fa212148e9bc149a1285936372656037e55 40966da4730e9aeaa0b4367c01895ee587714579",
+      "status": ""
+    },
+    "composition": {
+      "path": "/home/user/work/composition",
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a",
+      "status": ""
+    }
+  },
+  "profile": {
+    "path": "/home/user/work/runtimes/agent-remotion-0013",
+    "realpath": "/home/user/work/runtimes/agent-remotion-0013",
+    "node_modules_symlink": false,
+    "package_archive": "/home/user/work/runtimes/agent-remotion-0013/artifacts/banodoco-timeline-composition-0.0.13.tgz",
+    "package_archive_sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "package_version": "0.0.13",
+    "lock_sha256": "c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24",
+    "registry_sha256": "b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d"
+  },
+  "schema": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+  "source_packet_agent": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+  "selected_source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-successor161-prep-0218/evidence/fd86-successor161/inputs/source-manifest.json"
+}

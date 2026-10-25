@@ -1,0 +1,18 @@
+[set/accounting]
+PASS
+[JSON/TSV parse]
+PASS
+[selector hash]
+selector-argv.txt: OK
+[source hashes]
+PASS
+[AST checks]
+PASS
+[recipe syntax]
+PASS
+[route marker guard]
+PASS
+[byte preservation]
+PASS
+[worktree]
+## tl/rt-D86-later-delta-prep-0236

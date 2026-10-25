@@ -1,0 +1,123 @@
+{
+  "agent": {
+    "branch": "tl/integration",
+    "commit": "a836baa3b11208d66bf8d23d6abfb1c8e59257e2",
+    "path": "/home/user/work/agent",
+    "tree": "9643ec2c3ac752b0d9925ee7e7f287da9a806f86"
+  },
+  "first161_boundary": {
+    "captured_agent": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9",
+    "owner_task": "rt-D86-successor161-exact-home-0254",
+    "receiving_packet_must_not_rebind": true
+  },
+  "reviewed_normal_ancestry": [
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "095177db7903075eaa9cae35308b28492a74a008"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "4f4f26c706c784612a373523722c92b44b082aaf"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "64166f709dd86cf4998d5c66dedf305f1989d867"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "7e0ac7b242cf9492ef4fbdd12676ba9cbe8a7347"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "9e88f5ba09f5c996367859ab990a8ff738378507"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "b003f3799b198c206126c430ac31ea7200372ab5"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "f32a890e3b949557bd0677cbe6b448d195dce3aa"
+    },
+    {
+      "ancestor_of_agent_a836": true,
+      "commit": "f643a5e12a88bb533f372248485525793f2368e8"
+    }
+  ],
+  "runtime": {
+    "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a"
+  },
+  "schema": "astrid.timeline.fd86-later-receiving-source-profile/v1",
+  "scope": "source/static packet only; no behavior or final-gate credit",
+  "source_files": [
+    {
+      "ast_compile": "PASS",
+      "path": "tests/core/test_timeline_element_publication_runtime.py",
+      "sha256": "f03e19caa0b6505a42d17fc0eaca77a4794fafb863619bdc4876b14bd63b0357"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/native_word_anchor_fixture.py",
+      "sha256": "3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_commit_runtime_m1.py",
+      "sha256": "aad40f65c3fec32468bbe99f4b328d02a4cd9497e59debdd138265bc0a042545"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_commit_runtime_native_checkout.py",
+      "sha256": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+      "sha256": "06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_native_sheet_current_runtime.py",
+      "sha256": "f8b994ff51c972e1fad821f61713ad9010866505e237c07357f71e8daea5e6fc"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_next_command_cohort_runtime.py",
+      "sha256": "d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/packs/timeline/test_cli_document_commit.py",
+      "sha256": "a169b1616ed65e0865b2dd06aa962d34c618e57cc87bd0589110c6a05e9dcef4"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py",
+      "sha256": "b0e8bfb466fd12f1d4ccbd6b065f8cffc78e41c6a33dfe94245119e16b7434e9"
+    },
+    {
+      "ast_compile": "PASS",
+      "path": "tests/sdk/test_wc6_completion_capture.py",
+      "sha256": "d4888723f78c2e37f5a22c7584decc57d16e81c155c429943a3eed38a5c1d0ec"
+    }
+  ]
+}

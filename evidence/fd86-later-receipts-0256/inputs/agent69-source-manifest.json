@@ -1,0 +1,183 @@
+{
+  "schema": "astrid.timeline.d89-successor-continuation-source-manifest/v1",
+  "packet": "F-D89-bounded-successor-continuation-0209",
+  "scope": "private source/static qualification input only; no behavior or final gate credit",
+  "branch": "tl/integration",
+  "current_captured_homes": {
+    "agent": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "tree": "333587bbfc505b63c7e0ac63c79d263197b52590",
+      "parents": [
+        "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+        "64166f709dd86cf4998d5c66dedf305f1989d867"
+      ],
+      "path": "/home/user/work/agent"
+    },
+    "runtime": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+      "parents": [
+        "766fd6700c3128ea9fc833086a517de2acb535e2",
+        "b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0"
+      ],
+      "path": "/home/user/work/runtime"
+    },
+    "app": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "24865fa212148e9bc149a1285936372656037e55",
+      "tree": "741333cebfb2b6505a080507bb6c9789df494d43",
+      "parents": [
+        "4b98436552bf30f5fb28bbb958b1817430b12e34",
+        "c8e689fd5d7725c6d2fd3ed7e6cac83d2ab7326e"
+      ],
+      "path": "/home/user/work/app"
+    },
+    "composition": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": [
+        "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+        "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+      ],
+      "path": "/home/user/work/composition"
+    }
+  },
+  "actual10077": {
+    "automatic_verdict": "NO-GO; authentic service summary only; no independent failure-verdict chain",
+    "request_id": "d86-incremental-main-0107-body",
+    "service_id": "agent-d86-incremental-main-1025011156-10077",
+    "selector_count": 268,
+    "xml_testcase_count": 245,
+    "counts": {
+      "ERROR": 176,
+      "FAIL": 39,
+      "PASS": 30,
+      "NO_JUNIT_CASE": 23
+    },
+    "xml_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/actual10077.xml",
+    "xml_sha256": "7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0",
+    "outcomes_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/actual10077-outcomes.tsv",
+    "outcomes_sha256": "57b417b61029fd3934b696d9200b5f51cd88c05d166f9e29558d5c934dc9d98f"
+  },
+  "original_0200": {
+    "membership_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/original-0200/membership.tsv",
+    "membership_sha256": "2bc617115617936b91221096882319305d99f40d98a238ae4c3f901da837c790",
+    "source_manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/original-0200/source-review-merge-dependency-manifest.json",
+    "historical_dispositions_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/original550-dispositions.tsv",
+    "historical_dispositions_sha256": "abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2",
+    "unexecuted_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/unexecuted-23.tsv",
+    "unexecuted_sha256": "7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca"
+  },
+  "families": [
+    {
+      "family": "current-sheet13",
+      "selector_count": 13,
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "merge_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/review-current-sheet-0203.md"
+      ],
+      "files": [
+        {
+          "path": "tests/editing_conformance/test_native_sheet_current_runtime.py",
+          "role": "corrected init/emitter source",
+          "home_sha256": "f8b994ff51c972e1fad821f61713ad9010866505e237c07357f71e8daea5e6fc",
+          "reviewed_merge_sha256": "f8b994ff51c972e1fad821f61713ad9010866505e237c07357f71e8daea5e6fc",
+          "reviewed_home_equal": true,
+          "static_ast_exists": true
+        }
+      ],
+      "source_reason": "The 13 selected rows fail at the corrected init/emitter seam; the inverse-coverage row and three CLI-scope rows remain held."
+    },
+    {
+      "family": "M1-baseline10",
+      "selector_count": 10,
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "merge_receipt": "9838f7ca340dfd733e2078de639c849bb72f2614",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/review-M1-0147.md"
+      ],
+      "files": [
+        {
+          "path": "tests/editing_conformance/test_commit_runtime_m1.py",
+          "role": "semantic-step assertion source",
+          "home_sha256": "aad40f65c3fec32468bbe99f4b328d02a4cd9497e59debdd138265bc0a042545",
+          "reviewed_merge_sha256": "aad40f65c3fec32468bbe99f4b328d02a4cd9497e59debdd138265bc0a042545",
+          "reviewed_home_equal": true,
+          "static_ast_exists": true
+        }
+      ],
+      "source_reason": "All ten authentic ERROR rows share the exact semantic-step assertion mismatch corrected by 4f4f26c; source review preserves all selectors and claims."
+    },
+    {
+      "family": "word-bootstrap46",
+      "selector_count": 46,
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "merge_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "review_refs": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-successor-delta-0209/evidence/review-word-0152.md"
+      ],
+      "files": [
+        {
+          "path": "tests/editing_conformance/native_word_anchor_fixture.py",
+          "role": "corrected seed dependency",
+          "home_sha256": "3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db",
+          "reviewed_merge_sha256": "3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db",
+          "reviewed_home_equal": true,
+          "static_ast_exists": true
+        },
+        {
+          "path": "tests/editing_conformance/test_native_word_anchor.py",
+          "role": "37 selector caller",
+          "home_sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f",
+          "reviewed_merge_sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f",
+          "reviewed_home_equal": true,
+          "static_ast_exists": true
+        },
+        {
+          "path": "tests/editing_conformance/test_next_command_cohort_runtime.py",
+          "role": "9 selector caller",
+          "home_sha256": "d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0",
+          "reviewed_merge_sha256": "d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0",
+          "reviewed_home_equal": true,
+          "static_ast_exists": true
+        }
+      ],
+      "source_reason": "The corrected fixture is the exact first-exception dependency for 37 native-word ERROR rows and 9 next-cohort ERROR rows; the separate native-word FAIL9 remain held."
+    }
+  ],
+  "dependencies": {
+    "occurrence_0200": {
+      "selectors": 48,
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "source_file": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "helper": "_create_fixture: occurrence.create -> popup-birth -> rehydrate exact Runtime source mapping",
+      "first_exception": "missing or ambiguous identity 'occ-a'",
+      "status": "already in original 0200; not re-added"
+    },
+    "m2_pool6": {
+      "status": "HELD; no NEW reviewed dependency after authentic10077 causally fixes exact first exception"
+    },
+    "inverse_stage7": {
+      "status": "HELD; no NEW reviewed dependency after authentic10077 causally fixes exact first exception"
+    },
+    "parent_media_auto": {
+      "status": "HELD; no NEW reviewed dependency after authentic10077 causally fixes exact first exception"
+    }
+  },
+  "future_main": {
+    "four_repo_checkouts": "PENDING",
+    "preflight": "PENDING",
+    "service_custody": "PENDING",
+    "receipts": "PENDING",
+    "functional_results": "PENDING"
+  }
+}

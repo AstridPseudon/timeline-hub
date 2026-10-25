@@ -1,0 +1,22 @@
+[set/accounting]
+PASS: prior95 + 7 additions = 102 unique; current161 disjoint; D91 ten separate scheduled set
+[JSON/TSV parse]
+PASS
+[selector hash]
+PASS: selector-argv.txt sha256 b2265a32c2c931616a8430d774fbb8ad71a38d5d590dd528079d9e9a9627a5f9
+[source hashes]
+PASS: captured Agent a836 source hashes, including pool6 and core-element files
+[reviewed ancestry]
+PASS: all selected source commits are ancestors of Agent a836
+[AST/in-memory compile]
+PASS: 102 selected functions exist; 12 source files compile in memory
+[recipe syntax]
+PASS: inherited main-affected-batch-recipe.sh bash -n
+[route marker guard]
+PASS: inherited route has no -m integration marker filter
+[byte preservation]
+PASS: original550 rollups/dispositions, unexecuted23, D87 retirements, current161 boundary retained
+[behavior]
+NOT RUN: no pytest, collection, service, body, helper execution, or full suite
+[manager proposal]
+MAIN_BATCH_EXPECTED_SELECTOR_COUNT=102; manager supplies fresh D73 tuple and publishes route

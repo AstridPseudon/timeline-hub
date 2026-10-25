@@ -1,0 +1,25 @@
+{
+  "combined230_unique": 230,
+  "current161_unique": 161,
+  "d91_actual_results_present": false,
+  "d91_exact10_scheduled_elsewhere": 10,
+  "lost_ack_core_held": true,
+  "new_additions_disjoint_from_prior95_and_current161": true,
+  "new_additions_unique": 7,
+  "new_scope_counts": {
+    "D86-core-element-reply-literal1": 1,
+    "F-M2-pool6": 6
+  },
+  "no_behavior_credit": true,
+  "original550_rows_preserved": 550,
+  "prior95_disjoint_from_current161": true,
+  "prior95_unique": 95,
+  "replace_existing_held": true,
+  "result_definition": "SETUNION(prior95, pool6[6], core-element-reply-literal[1])",
+  "result_is_set_union_not_count_sum": true,
+  "result_unique": 102,
+  "reviewed_normal_ancestry": true,
+  "schema": "astrid.timeline.fd86-later-receiving-set-accounting/v1",
+  "source_files_ast_compile": true,
+  "unexecuted23_preserved": true
+}
