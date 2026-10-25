@@ -28,7 +28,7 @@ const SAFE_SEGMENT = /^[A-Za-z0-9._~:-]+$/;
 const ID_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._~:-]{0,255}$/;
 const CONNECTION_SEGMENT = /^[A-Za-z0-9_-]{1,128}$/;
 
-const RESERVED_ACP = new Set(['health', 'connect', 'projects', 'models', 'model', 'agents']);
+const RESERVED_ACP = new Set(['health', 'connect', 'projects', 'models', 'model', 'agents', 'astrid']);
 const MAX_PATH_LENGTH = 4096;
 
 interface RouteEntry {
@@ -102,6 +102,7 @@ const acpRoutes: readonly RouteEntry[] = [
   entry('GET', '/acp/models'),
   entry('GET', '/acp/agents'),
   entry('POST', '/acp/connect'),
+  entry('POST', '/acp/astrid/api-key'),
   entry('GET', '/acp/:conn/models'),
   entry('POST', '/acp/:conn/rpc'),
   entry('POST', '/acp/:conn/cancel'),

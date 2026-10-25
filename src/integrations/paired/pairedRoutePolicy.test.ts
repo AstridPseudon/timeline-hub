@@ -75,6 +75,7 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['PATCH', astrid(`/v1/projects/${P}`), 'astrid'],
   // ACP agent chat (acpRoutes.ts)
   ['POST', astrid('/acp/connect'), 'acp'],
+  ['POST', astrid('/acp/astrid/api-key'), 'acp'], // saveAstridApiKey: the OpenRouter key goes to the local chat service only
   ['GET', astrid('/acp/models'), 'acp'],
   ['GET', astrid('/acp/agents'), 'acp'],
   ['GET', astrid('/acp/conn-1/models?sessionId=codex%3Aabc-123'), 'acp'],
