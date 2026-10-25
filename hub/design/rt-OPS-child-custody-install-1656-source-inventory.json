@@ -1,0 +1,113 @@
+{
+  "actual_layout": "UNVERIFIED / EXACTMISSING",
+  "admission": {
+    "body_admitted": false,
+    "build": "NOTRUN",
+    "child_normal_reserve_bytes": 5905580032,
+    "diagnostic_gap_bytes": 3368525824,
+    "diagnostic_reserve_bytes": 8589934592,
+    "free_bytes": 5221408768,
+    "normal_gap_bytes": 684171264,
+    "observed_at_utc": "2026-10-25T16:48:06.359866+00:00"
+  },
+  "author_manifest_sha256": "a6e3dcf53c3a7ce6c52fbefe300a824de2e84393580d7dca1095ed2bc259ca45",
+  "backup": {
+    "bytes": 68506,
+    "is_symlink": false,
+    "mode": "0755",
+    "sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b"
+  },
+  "backup_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/make-child-venv.20261025T165744Z.bak",
+  "embedded_blocks": {
+    "DIST_METADATA_SCRIPT": {
+      "byte_equal": true,
+      "candidate_sha256": "54ea91773be42a9f5a513cb10cc1706ab89d2c061a0d0a4c3ba2c392153b8d67",
+      "live_sha256": "54ea91773be42a9f5a513cb10cc1706ab89d2c061a0d0a4c3ba2c392153b8d67"
+    },
+    "IDENTITY_SCRIPT": {
+      "byte_equal": true,
+      "candidate_sha256": "05f8c82c7ea9b28f6f12ac8cad3557a08b0885e455ee22719c9e3ddebc3ccf77",
+      "live_sha256": "05f8c82c7ea9b28f6f12ac8cad3557a08b0885e455ee22719c9e3ddebc3ccf77"
+    },
+    "PROVENANCE_SCRIPT": {
+      "byte_equal": true,
+      "candidate_sha256": "6ab4e64766e6df6996035fdf984b3c50efa169ffa982c5f4df6633964a0781cf",
+      "live_sha256": "6ab4e64766e6df6996035fdf984b3c50efa169ffa982c5f4df6633964a0781cf"
+    },
+    "RELOCATE": {
+      "byte_equal": true,
+      "candidate_sha256": "cf189024a79d12481c0629d3815c794c805dcd3fb4de6e9c3640ec242693cd98",
+      "live_sha256": "cf189024a79d12481c0629d3815c794c805dcd3fb4de6e9c3640ec242693cd98"
+    },
+    "STAGING_INVENTORY": {
+      "byte_equal": true,
+      "candidate_sha256": "4c98ffcf6de7bd0314cc0e4790d4ffaeb206c03fb905f143e013cc57f631c6f1",
+      "live_sha256": "4c98ffcf6de7bd0314cc0e4790d4ffaeb206c03fb905f143e013cc57f631c6f1"
+    },
+    "STORE_BUILD": {
+      "byte_equal": true,
+      "candidate_sha256": "a3d9b63f5b99ce4e3ae5b72be93e5140000f99dc4e50e954a00777e420d09409",
+      "live_sha256": "a3d9b63f5b99ce4e3ae5b72be93e5140000f99dc4e50e954a00777e420d09409"
+    },
+    "STORE_PY": {
+      "byte_equal": true,
+      "candidate_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+      "live_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c"
+    },
+    "STORE_VERIFY": {
+      "byte_equal": true,
+      "candidate_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+      "live_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209"
+    }
+  },
+  "live": {
+    "bytes": 68351,
+    "is_symlink": false,
+    "mode": "0755",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39"
+  },
+  "maker": {
+    "bytes": 68351,
+    "is_symlink": false,
+    "mode": "0755",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39"
+  },
+  "protected_live": {
+    "bench_store.py": {
+      "bytes": 43403,
+      "is_symlink": false,
+      "mode": "0755",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2"
+    },
+    "verify_dependency_seed.py": {
+      "bytes": 52731,
+      "is_symlink": false,
+      "mode": "0755",
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+    }
+  },
+  "reserves": {
+    "normal_child_bytes": 5905580032,
+    "runtime_and_diagnostic_bytes": 8589934592
+  },
+  "review_manifest_sha256": "e40955202708cccb84ed433a0a85cc4e695ec97eb85a1ddcb69f38369f1fb8e3",
+  "source_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+  "source_tests": {
+    "support.py": {
+      "bytes": 12409,
+      "is_symlink": false,
+      "mode": "0644",
+      "sha256": "8e61d99631e417e39e95b845f5433525ec25a26f190cd433380ebc75f830ec42"
+    },
+    "test_custody.py": {
+      "bytes": 23845,
+      "is_symlink": false,
+      "mode": "0644",
+      "sha256": "d6be27f90288a00880eefbe1873200e4bb688d26aa1a493aeb0692685a2a5a55"
+    }
+  },
+  "source_tree_note": "review artifact tree string is 38 characters and does not equal the commit-resolved 40-character tree; candidate commit and maker hash match exactly",
+  "source_tree_recorded": "7952f3e9e155320720664ea9d151fe79114bd6",
+  "source_tree_resolved": "7952f3e9e15532072066474ea9d151fe79114bd6",
+  "task": "rt-OPS-child-custody-install-1656"
+}

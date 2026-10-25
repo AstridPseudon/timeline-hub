@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T16:55:08Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 3m -->
+<!-- main | 2026-10-25T16:59:55Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
 # runtime board, 2026-10-25T16:36:46Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -426,7 +426,7 @@
 | D77-Runtime-source | Publish captured Runtime tree | Luna | Independent exact tree review passed | review | Author 1620; review 1624 PASS | Portable 1daca tree equals captured a522; all 528 paths and modes exact. Lead publication requested 1635. | Independent 1624 PASS | 1daca2a33 |
 
 | U4a-inverse-batch | Adopt released Runtime provenance | Luna | Host filing and Agent home queue | merging | Author 1614; independent 1634 PASS | Only lock provenance changes to ab1e; all 15 mappings exact. Author and independent 24 tool tests PASS. | Independent 1634 PASS | cec01ed66 |
-| OPS-child-custody | Correct retained source ownership | HARD Sol / Luna | Exact independent custody review | review | Sol 1643 complete; Luna 1651 active | Archive-install root fix; author 29 PASS. Verifier and reserves exact. Actual Main layout unverified under 8 GiB diagnostic gate. | Independent 1651 active | Candidate 0857a5e0 |
+| OPS-child-custody | Correct retained source ownership | HARD Sol / Luna | Agent receiving hash and actual child | review | Source 1651 PASS; installed 1656; custody 1659 | Actual installed 0857 regular 0755; 29 controls PASS. Old bytes backed up. Agent one changed request next; no actual child PASS yet. | Independent 1651 source PASS | Installed 0857a5e0 |
 | D128-custody-wholepath | Challenge maker ownership path | Luna read only | Complete source comparison | merged | rt-Agent-D128-custody-wholepath-1637 | Direct source pip can generate retained egg-info. Actual offending path and layout EXACTMISSING. Source facts only; no child retry. | Independent source reader | Evidence only |
 | D107-transcript-wholepath | Trace persisted transcript authority | Luna read only | Genuine private records absent | later | Reader 1634; final review 1646 PASS | Source map verified. Owner UNKNOWN; persisted record EXACTMISSING; both behavior failures stay open. No rerun or guard author. | Independent 1646 evidence PASS | Source unchanged |
 | D77-portable-handoff | Correct source refs and lock hash | Luna independent | Exact captured source trees | merged | rt-D77-source-review-handoff-1624 | Source review and corrected handoff PASS; safe exact bytes published 1635. Stage and render remain unrun. | Independent 1624 PASS | 86c306ed6 |
@@ -436,22 +436,22 @@ Runtime producer: Normal ab1e includes independently qualified step, inverse/red
 core open: 425 on immutable30693; 450 bad and REG14 retained. Agent same-WIP1610 child passed D131 reserve, then refused unowned retained source directory. Zero core body. Farm core is dropped; Farm keeps D77 only.
 regressions: Normal Agent a4e016 has reviewed upstream host fallback and bounded original14 PASS; REG14 remains until actual current full core.
 Gates: P1/P3 recorded GO; P4 independent GO 28.101 seconds. Full P2 remains NO-GO for element and SWAP; no cut or ZIP.
-Blockers: Agent core — deterministic maker retained-source ownership refusal. Sol1643 completed root correction with 29 controls; Luna1651 independent review active; independent Luna1637 challenges whole path. No child retry before reviewed kit publication.
+Blockers: Agent core — deterministic maker retained-source ownership refusal. Sol1643 completed root correction with 29 controls; Luna1651 source PASS; installer1656 PASS; installed custody1659 active; independent Luna1637 challenges whole path. No child retry before reviewed kit publication.
 Blockers: Main reproduction — free about 5.3 GB versus child reserve 5905580032 bytes. Guarded sweep and compact active; no ended clean nonKEEP worktree eligible. Five historical dirty trees remain held.
 Blockers: SWAP safety — automatic classifier refused scoped recovery tests1537. D130 holds all related work; no review, retry, rephrase, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
 Blockers: Agent roots — scalar and compound remain UNKNOWN. Qualified grouped inverse/redo source does not close all four originals.
 Blockers: Element profile — request3 binding exact, but retained outer frames show no specific provider leaf or wall denominator. App1606 with first return1619 owns bounded existing-helper retention change; no speculative cost author or new body.
-Blockers: Final render — corrected portable source refs and exact lock end18d independently PASS1624. Lead normal source publication requested1635. Applied-tuple child maker unqualified; Farm must receive refs and qualified route before stage.
+Blockers: Final render — corrected portable source refs and exact lock end18d independently PASS1624. Normal hub code refs verified1657; Farm receiving checkouts next. Applied-tuple child still unqualified; installer1656 PASS; installed custody1659 active before new normal maker request.
 Blockers: D69 — genuine installed render90 and normal XML applicability/full core remain. No whole-audit PASS.
 Blockers: Final cut — current core, REG0, full P2, D69, final tuple P1-P5, wheel, Windows and genuine installed render remain. No build or ZIP.
-Next ready: Luna1651 independent exact root review, independent1637 source diagnosis, U4a1634 review and D1071634 wholepath are assigned. On U4a PASS, host publication and Agent home queue. On kit source return, independent Luna custody review then exact installer and publication.
+Next ready: Agent normal kit receipt and one authorized changed child request, independent1637 source diagnosis, U4a1634 review and D1071634 wholepath are assigned. On U4a PASS, host publication and Agent home queue. On kit source return, independent Luna custody review then exact installer and publication.
 Ready for host filing: U4a Agent tl/rt-U4a-Agent-inverse-adopt-1614 cec01ed6612f2b56e8d170a5d066dc7a4882805f, independent1634 PASS; lead1638 note sent. D107 source intake cleared: normal Agent9350 contains exact reviewed b4b380 setup correction; both behaviors remain failed. No D107 host filing remains.
-Ready for host publication, NO integration merge: Agent tl/rt-D77-Agent-applied-source-1620 91398e9de4500ce16c8e55741209ba3609cb1694, Runtime tl/rt-D77-Runtime-applied-source-1620 1daca2a33f6d7b10053e07c539a54843e3984e19. Exact original applied trees 523893/a522 verified1624. Corrected flat handoff design/handoff-rt-D77-portable-1624-*.
+Published to normal hub refs1657, NO integration merge: Agent tl/rt-D77-Agent-applied-source-1620 91398e9de4500ce16c8e55741209ba3609cb1694, Runtime tl/rt-D77-Runtime-applied-source-1620 1daca2a33f6d7b10053e07c539a54843e3984e19. Exact original applied trees 523893/a522 verified1624. Corrected flat handoff design/handoff-rt-D77-portable-1624-*.
 Venues: No Main heavy body. Agent exact a4e016/5e9ad/d8a1/635f core capture unchanged and zero-body blocked. Farm keeps only D77. D131 actual Agent local receiving hash123bb0755 qualified; reserve wait cleared. App ab1e adopter normal d4e528 actual tree equals tested author; tool checks PASS.
 Delivery: Private100Python plus TS and41matrix qualified; D1235bd01/b0ff source PASS. No final cut installation or build.
 Later: R2c81b/D116 seed source PASS; D126 App owns migration paragraph/ZIP line. No D79 or small-file competing product authors. Native topology4 stays App-owned. Historical physical records remain EXACTMISSING.
 Safety: D130 SWAP hold and historical D88/D111/retirement refusals remain stopped. D106 ORCH-only output. Farm approval refusals are never rerouted. No permission-file changes.
-live 1 / cap 6; ready-undispatched 0. Luna1651 root review active; source author complete. D107 final custody1646 PASS. U4a host filing requested. Source floor and 4.0 GB stop retained; child reserve unchanged.
+live 1 / cap 6; ready-undispatched 0. Installer1656 PASS; independent installed review1659 active. D107 final custody1646 PASS. U4a host filing requested. Source floor and 4.0 GB stop retained; child reserve unchanged.
 INBOX consumed through 1340094 bytes. Updated 2026-10-25T16:36:46Z
 
 D107 review1640: source PASS, custody FAIL because historical1550 protected hash has62 characters. Derivative correction1644 assigned; original evidence retained. Both real behaviors remain failed and owner UNKNOWN.
@@ -461,3 +461,7 @@ Agent peer1632 consumed: exact D107 source home9350 received; intake wait cleare
 D107 finite handback1649 published: source mapping and corrected derivative custody independently PASS1646. Both behavior failures stay open; owner UNKNOWN, private records EXACTMISSING. No ready source writer inferred.
 
 Critical1652: maker candidate0857 source complete with29PASS; independent1651 now active. Actual layout remains unverified, no live Main store or build. Next exact installer only after source review PASS, then normal Agent received hash and one authorized changed request.
+
+Critical1656: independent1651 PASS_SOURCE,29 controls. Exact installer1656 queued immediately; no semantic edit, verifier/store/dependency/reserves remain exact. Actual child/layout acceptance remains unverified.
+
+Critical1700: exact0857 maker installed0755,29controlsPASS, published safe source/receipts and ready note. Agent receives actualkit hash then ONE changed normal request under owner16:41. No Runtime source/install wait; actual child acceptance remains unverified. Independent installed custody1659 active.

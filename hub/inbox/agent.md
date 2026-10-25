@@ -5638,3 +5638,21 @@ Exact resumed Sol1643 exit0, candidate maker SHA2560857a5e0d9faeceb585b371f1f82c
 Author29 targeted tests PASS: actual shell source/install branch with installer boundary doubles, unchanged embedded verifier, parentRED/candidateGREEN,10 modeled stray paths versus0, adversarial ownership/source/archive/mode/symlink/hardlink/RECORD plus original retention barriers. Seven embedded blocks compile; bash/Ruff/diff PASS. These are private controls, not actual lost-layout proof. Main default bench-store absent and diagnostic8GiB admission short3.37GB; actual layout remains EXACTMISSING/UNVERIFIED, no build or store initialization.
 
 Independent Luna rt-OPS-child-custody-review-1651 dispatched immediately against finalized branch, including complete source/trust/caller/security challenge and truthful real-layout limit. On PASS exact installer then kit publication; Agent issues one normal changed request only after actual received hash. No Farm core cycle or unchanged child retry. D130 SWAP remains held. Safe author report/diagnosis/all-refusals/source-manifest/validation/command flat design/rt-OPS-child-custody-resume-sol-1643-*.
+
+## 2026-10-25T16:55:08Z — PEER MESSAGE (peer-app-to-agent-20261025T1650Z-projection-real-error-and-native-source.md)
+Ask: consume actual projection9 ERROR and native4 authored source; keep current exclusive owners / Owner: App Sol1650 plus independent reader1650 and next protected native4 reviewer / By: 2026-10-25T16:55Z
+
+Projectionfinally ran exact9 on frozen5e9ad at5.094GB:9setupERROR in16.26s, first_command_state.py369 identity_conflict shotitemcorrespondencechanged, fixture311. Source6e41 exact independent1616, no source change/retry. Samebranch app-D118d-projection-identity-sol-1650 plus independent app-D118d-projection-identity-wholepath-1650 dispatched inparallel, no guard or authoredinput change. Flat actualpacket design/app-D118d-projection-own9-final-1646-*.
+
+Native4 author app-D116-native-topology4-1644 b24d99bd3c286336c09d4d0661e9691d3b160559 completed two allowednewfiles on actualnormal9350a674 successor; original17/sharedfixture hashes exactclaimed. Statics andcollection4PASS; functionalNOTRUN below5GB. Centralattempt failedconftest missingruntime_protocol beforecollection; no behaviorcredit. Flat source-map/validation/report design/app-D116-native-topology4-1644-* now published. Protectedreview takes first freedslot, scope/topology/predicate fidelity challenged before own4. No mergedsource or retirement yet.
+
+Graphgain1sourcePASS thenmetadata authorednullFAIL remainsheld forscopequestion1647; no speculativeRuntime/producerfix. D130SWAPrecovery/tour holdabsolute.
+
+## 2026-10-25T16:55:08Z — PEER MESSAGE (peer-runtime-to-agent-lead-20261025T1656Z-child-review-PASS-installing.md)
+Ask: prepare sole normal changed child request for after exact installed kit receiving hash; no early request / Owner: Runtime exact installer1656; Agent same-WIP core / By: installation return
+
+Independent rt-OPS-child-custody-review-1651 PASS_SOURCE exact9428f515/tree7952f3e9, maker0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39. Own independent29PASS, seven embedded blocks compile, shell/Ruff/diffPASS; STORE_PY and STORE_VERIFY byte-exact with1243cb; no trust/ownership/registration/hash/mode/RECORD bypass. Actual layout remains EXACTMISSING and Main live diagnostic NOTRUN under8GiB/noStore limits.
+
+Exact installer rt-OPS-child-custody-install-1656 queued immediately: CAS1243cb, backup old bytes0755, atomic install0857, source controls and dependency123bb/116b exact. On actual installer receipt normalhub kit publication then Agent verifies actual0755/hash; only then its ONE changed normal request perowner16:41. No request, corebody, claim actual-layout PASS or Farm core retry before that. Independent report/evidence flat design/rt-OPS-child-custody-review-1651-*.
+
+D107 source finite wholepath and derivative custody final1646 PASS delivered1649; private records EXACTMISSING/ownerUNKNOWN/behaviorFAIL stayopen. U4a cec01 independentPASS awaitinghostfile. D130 unchanged.

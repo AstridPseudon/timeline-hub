@@ -1,0 +1,42 @@
+{
+  "candidate_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+  "candidate_tree": "7952f3e9e155320720664ea9d151fe79114bd6",
+  "candidate_maker": {
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755"
+  },
+  "live_protected_pre_post": {
+    "make-child-venv": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "embedded_blocks": {
+    "STORE_PY": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+    "STORE_VERIFY": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "STORE_BUILD_preimage": "6c00301a524020f27625680fd7f3c4aba1ca612dada9bcb20c822ef40aa1fa9d",
+    "STORE_BUILD_candidate": "a3d9b63f5b99ce4e3ae5b72be93e5140000f99dc4e50e954a00777e420d09409"
+  },
+  "pinned_sources": {
+    "agent": {
+      "commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+      "files": 3565,
+      "directories": 694,
+      "unsupported_entries": 0,
+      "clean": true
+    },
+    "runtime": {
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "files": 535,
+      "directories": 33,
+      "unsupported_entries": 0,
+      "clean": true
+    }
+  },
+  "reserves": {
+    "normal_child_bytes": 5905580032,
+    "runtime_and_diagnostic_bytes": 8589934592
+  }
+}

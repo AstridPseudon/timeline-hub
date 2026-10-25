@@ -623,23 +623,22 @@ run_stage archive-runtime "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' \
   _ "$R" "$RUNTIME_SHA" "$RUNTIME_SRC"
 
+# Install from authenticated archives so packaging never writes build outputs
+# into the retained, committed-only source snapshots.
+BUILD_INPUT=$T/.source-inputs
+run_stage build-input-directory "$LOCAL_TIMEOUT_SECONDS" mkdir "$BUILD_INPUT"
+run_stage build-agent-input "$LOCAL_TIMEOUT_SECONDS" git -C "$A" archive --format=tar --output="$BUILD_INPUT/agent.tar" "$S"
+run_stage build-runtime-input "$LOCAL_TIMEOUT_SECONDS" git -C "$R" archive --format=tar --output="$BUILD_INPUT/runtime.tar" "$RUNTIME_SHA"
 if [ -n "$DEPENDENCY_SEED" ]; then
-  BUILD_INPUT=$T/.source-inputs
-  run_stage build-input-directory "$LOCAL_TIMEOUT_SECONDS" mkdir "$BUILD_INPUT"
-  run_stage build-agent-input "$LOCAL_TIMEOUT_SECONDS" git -C "$A" archive --format=tar --output="$BUILD_INPUT/agent.tar" "$S"
-  run_stage build-runtime-input "$LOCAL_TIMEOUT_SECONDS" git -C "$R" archive --format=tar --output="$BUILD_INPUT/runtime.tar" "$RUNTIME_SHA"
   if [ "$FARM_REQUIRED" = 1 ]; then
     run_stage retain-farm-inputs "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --prepare-farm "$T" "$FARM_SCHEMA_SOURCE" "$FARM_AUTHORITY"
     run_stage install-farm-test2 "$PIP_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --install-python "$P" "$T/.farm-test-wheelhouse" "$T/.farm-test-wheelhouse/requirements.txt" --install "${PIP_ARGS[@]}"
     run_stage verify-farm-before-schema "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --verify-farm "$T" "$FARM_AUTHORITY"
     run_stage install-farm-schema "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/schema.tar"
   fi
-  run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/agent.tar"
-  run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/runtime.tar"
-else
-  run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$AGENT_SRC"
-  run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$RUNTIME_SRC"
 fi
+run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/agent.tar"
+run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/runtime.tar"
 printf '%s\n' "$S" > "$T/.astrid-source-commit"
 printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
 printf '%s\n' "$CLIENT_IDENTITY" > "$T/.astrid-runtime-client-identity"

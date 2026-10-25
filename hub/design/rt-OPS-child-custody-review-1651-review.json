@@ -1,0 +1,63 @@
+{
+  "task": "rt-OPS-child-custody-review-1651",
+  "candidate_task": "rt-OPS-child-custody-resume-sol-1643",
+  "verdict": "PASS_SOURCE",
+  "candidate": {
+    "commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+    "tree": "7952f3e9e155320720664ea9d151fe79114bd6",
+    "maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "maker_bytes": 68351,
+    "maker_mode": "0755",
+    "base_wip": "ad120ae330b94b1fd53e34227fb0e1f71ec15a61"
+  },
+  "scope": {
+    "source_only": true,
+    "live_child_build": false,
+    "live_install_or_acquisition": false,
+    "live_diagnostic": "NOTRUN",
+    "actual_layout": "EXACTMISSING",
+    "d130_sources_read": false
+  },
+  "independent_diagnosis": {
+    "worker": "rt-Agent-D128-custody-wholepath-1637",
+    "finding": "no-seed direct source installation can leave setuptools egg_info and build outputs in retained source snapshots",
+    "actual_offending_path": "EXACTMISSING"
+  },
+  "protected_sources": {
+    "live_maker_sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "live_pre_post_unchanged": true,
+    "normal_child_reserve_bytes": 5905580032,
+    "runtime_and_diagnostic_reserve_bytes": 8589934592
+  },
+  "embedded_blocks": {
+    "STORE_PY": {"preimage_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c", "candidate_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c"},
+    "STORE_VERIFY": {"preimage_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209", "candidate_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209"},
+    "STORE_BUILD": {"preimage_sha256": "6c00301a524020f27625680fd7f3c4aba1ca612dada9bcb20c822ef40aa1fa9d", "candidate_sha256": "a3d9b63f5b99ce4e3ae5b72be93e5140000f99dc4e50e954a00777e420d09409"}
+  },
+  "candidate_behavior": {
+    "changed_production_scope": "STORE_BUILD source archive input branch only",
+    "seeded_route_preserved": true,
+    "unseeded_route_uses_authenticated_archives": true,
+    "retained_source_snapshots_are_not_install_targets": true,
+    "metadata_allowlist_or_record_grant_added": false,
+    "hash_mode_symlink_hardlink_owner_bypass_added": false,
+    "trust_or_public_protocol_changed": false,
+    "diagnostic_default_off_and_registration_barriers_retained": true
+  },
+  "tests": {
+    "bash_n": "PASS",
+    "embedded_python_compile": "PASS via test_every_embedded_python_compiles_in_memory; 7 blocks",
+    "unittest": "PASS; 29 tests",
+    "ruff": "PASS",
+    "typecheck": "N/A; no configured Python mypy/pyright baseline and no product TypeScript changed",
+    "git_diff_check": "PASS",
+    "parent_red_candidate_green": "PASS in private modeled source/install shell branch with unmodified embedded verifier",
+    "modeled_parent_refusals": "PASS; exhaustive 10 fixture paths",
+    "real_package_build": "NOTRUN",
+    "real_retained_layout_rows": "UNVERIFIED"
+  },
+  "environment_note": "The prescribed worker tmpdir is a regular file; the first test attempt failed before fixture creation with NotADirectoryError. The exact suite then passed using /tmp/rt-OPS-child-custody-review-1651-tmp; candidate files were unchanged.",
+  "worktree_clean": true
+}
