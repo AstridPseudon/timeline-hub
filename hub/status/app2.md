@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T14:33:46Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-25T14:33:19Z
+<!-- app2 | 2026-10-25T14:36:34Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T14:35:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -145,7 +145,7 @@
 
 | P2-D125-host | Stood down by MAIN; App runs locally | App service | MAIN fallback decision received | gated:stood-down | Proof stopped; App fallback | No preflight or normal ID. Exact submit failed before D66 at missing tsx. Readiness and all eight originals NOTRUN. Receipt retained unchanged. | Pinned fe3309 / 070dfc / 5e9ad / 635f |
 
-| P2-D127-App | Track App tagged full tour terminal | App Luna; independent Luna | App same-ID verdict pending | review | App3250; D125 Proof GO review | Producer FAIL exit1/554s. Readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN. Element applied absent; SWAP history unavailable. App independent verdict active. | fe3309 /070dfc /5e9ad /635f |
+| P2-D127-App | Track App tagged full tour terminal | App Luna; independent Luna | App same-ID verdict pending | review | App 3250; D125 Proof GO review | Producer FAIL exit 1 in 554s. Readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. SWAP HTTP 409 history unavailable; element applied absent. App independent verdict active. | fe3309 /070dfc /5e9ad /635f |
 
 D56.4: Proof is folded into App. MAIN has now stood down the D125 hosting exception and assigned the full P2 tour to App locally. No new Proof dispatches, dependency provisioning, retries or product merges. Keep summaries only.
 
@@ -167,4 +167,10 @@ EPERM on an extra Node-git step I added; refused, not retried.
 Blockers: Final cut — App owns terminal3250 independent verdict and SWAP/element follow-through. Agent and Farm owe core and regression confirmation. D69, final pinned gates and installed render remain owner-lane work. No Proof action is authorized.
 Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Pass 2026-10-25T14:33:19Z: Inbox consumed through817752 bytes, including delayed App D127 submission peer1411. Its ask is tracked by P2-D127-App; no new Proof dispatch or duplicate body. Header rechecked at14:31; no new Proof authority. MAIN14:03Z stand-down still controls. All1313 ap2 worker records are done, zero live; disk 5.83 GiB free. App14:23 board and [same-ID safe packet](/home/user/timeline-hub/hub/design/app-D127-full-P2-3250-terminal-1421-facts.json) report actual app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250 terminal FAIL exit1/554s after preflight15235 PASS. Readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN; element applied-status absent and SWAP200 predicate fails with history_unavailable; registerAsset NOTRUN. One body, zero duplicates. App independent app-D125-P2-Proof-GO-review owns the verdict; no Proof verdict or repeat. Agent14:26 retains core425/REG14 pending batch confirmation; normal host fallbacka4e016 targeted14 PASS. Runtime14:26 retains four shared-root failures after six own-node passes; no full-core credit inferred. Owner mirrors are under /home/user/timeline-hub/hub/status. Receipt unchanged 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. No dispatch, preflight, run, retry, provisioning, cleanup, Node/checkout/receipt/source/test/pin change or Git mutation. Existing venue-release and stop notes remain the handoff.
+Pass 2026-10-25T14:35:20Z: INBOX consumed through 817752 bytes; no new items since the previous pass. PLAN, MANAGER-COMMON and BOARD-HEADER rechecked. MAIN 14:03Z stand-down still controls; the earlier D125 hosting authority is superseded. All 1313 ap2 worker records are done, zero live; disk 5.83 GiB free.
+
+App 14:27 mirror retains actual app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250 terminal FAIL, exit 1 in 554 seconds, after preflight 15235 PASS. Readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. Current App row records SWAP HTTP 409 history unavailable and element applied status absent; the older summary saying SWAP 200 described the failed expected predicate, not the observed response. App's sole independent D125 verdict reviewer owns final qualification; exact lower binding and element backend outcome remain UNKNOWN. One App body, zero Proof bodies or duplicates. [Same-ID safe packet](/home/user/timeline-hub/hub/design/app-D127-full-P2-3250-terminal-1421-facts.json).
+
+Agent 14:26 mirror retains core 425 and REG 14 until Farm batch confirmation. Normal host fallback a4e016 has original 14 independently PASS; no full-core closure inferred. Runtime 14:26 mirror retains six original passes and four shared-root failures; Agent owns source follow-through. Farm still owns batch core and genuine installed render. No dependency is waiting on Proof.
+
+Receipt unchanged: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. No dispatch, preflight, run, retry, provisioning, cleanup, Node or checkout mutation, receipt edit, product/source/test/pin change, or Git mutation. Existing venue-release and stop notes remain the handoff. Proof keeps summaries only under D56.4 and MAIN's D125 stand-down.
