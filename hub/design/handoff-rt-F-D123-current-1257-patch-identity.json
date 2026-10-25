@@ -1,0 +1,9 @@
+{
+  "base": "b742893426a46a99a2f30583a54faeebe2bd98b7",
+  "current_normal": "b545b616a41388e24d6f2a59b7b45c26cb057d2c",
+  "patch_sha256": "fae8eff9df2d7d57b19fe203d1d3669c5b59bcce7a8809b61e5559bcd8bb9dd9",
+  "patch_bytes": 12072336,
+  "reverse_check": "PASS",
+  "metadata_excluded": "D123-REVIEW.md",
+  "file_count": 3571
+}

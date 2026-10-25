@@ -1,0 +1,1057 @@
+{
+  "upstream_paths": 75,
+  "overlaps": 39,
+  "checkpoint_reported_rejects": 7,
+  "paths": [
+    {
+      "path": "astrid/chat/acpProcessHost.test.ts",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "4fef09d77e2655de84f90e5265d6a8bb3cdeb8cf"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "85a60d2d952fe8009f794c0565ebeba43632ce2e"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/acpProcessHost.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "4aa1d7de8c7e123c7b327c4e6201b0a3e842eb2c"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "762f42d6f16fd0edfb5ba96c8e6ec6f7239ab4a4"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-acp-bridge.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "455d13f34b4b1c3aa121afbc79066d73163ae3e9"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "e8509a8e8ec2ca407e4503de21ed28b404339c34"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-acp-models.test.ts",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "6bc1c1b8c90ba5bc415e4857159b1df116aaaeca"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "2cf228e627fbdf892bda172758f1b21f8545f027"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-agent-key.test.ts",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "dc169f62d09f77e21057219efb1a0b7458dd12f6"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "dc169f62d09f77e21057219efb1a0b7458dd12f6"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/chat/astrid-agent-key.ts",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "428c56c26f4cd899ed79fec6e76ce6dda7194fe2"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "428c56c26f4cd899ed79fec6e76ce6dda7194fe2"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/chat/astrid-agent-models.test.ts",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "21fa3c0c168a49d7c5464032c0539063b97ccedf"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "8919ae50cf8571bda8e3d3b5f459930657fa1056"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-agent-models.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "6223a477ec1e36750c29034abeefc564ad322fb8"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "07dd33f42c9c675e93e538b660114d37fa46134c"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agent-host.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "aa938dd6765c2c752c468d4353858a0f3066a2a0"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "8a488cb6400caf09ef90bea8fc3a02148945fb73"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agent-readiness.test.ts",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "ba1e5916b1fa1ad520573e0d4441cb2ede11627f"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "ba1e5916b1fa1ad520573e0d4441cb2ede11627f"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agent-skills.test.ts",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "817b066fba00ff629cae1888ccd0febfc35c071f"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "817b066fba00ff629cae1888ccd0febfc35c071f"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agent-skills.ts",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "2a7e3cc1714f61a245fd12b5d21f3e9e8a076fdf"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "2a7e3cc1714f61a245fd12b5d21f3e9e8a076fdf"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agents.test.ts",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "6e614214b69905a65999f6c0048fc6124d8582e8"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "6e614214b69905a65999f6c0048fc6124d8582e8"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agents.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "2344c0dafdf56b6baa75b3079aacf92885618d1c"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "93787a7b5563e9830dc09501f72c71697d8d912a"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-project-chat.test.ts",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "f399a7c64eb802f9a1bb118072f2e5039dd3e12c"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "8a0180f8e0495cfa72ff408380bfa36e89794d33"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-project-chat.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "c8efeaf87a403c3056b9870a3ac701588c4499ad"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "c8efeaf87a403c3056b9870a3ac701588c4499ad"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/chat/astrid-shared-acp-sessions.test.ts",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "790c31642a30321273d428d92059aad445e13196"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "c3109f8d3b3bb96d053025f7481dd21c46b629dd"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/astrid-shared-acp-sessions.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "8e6c944bff0feeff1fb41f0b57904957a233c765"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "f23b3482bb4cf90bf7b8d1ff27d256d15288bd4c"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/discoveryProbe.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "ade24dfe88bc54254fdb8dc581b63229e4dec875"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "fef7a458a1958672b24644591700aded58cbaf7b"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/localAgents.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "7bd7d4d419d6ce55f8edafe91c214369af781896"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "eb0d421de52dacbf823b6db3c8f749cd2a72efe3"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/modelCatalog.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "7c650c0c4415ceb56387f83f6c149ba8c901eebd"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "feab4e354e389578262e79cfa83a305cdae456e6"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/service.mjs",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "011689ea7756036fe71dd725e64de7f0f68a03d9"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "011689ea7756036fe71dd725e64de7f0f68a03d9"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/chat/service.test.ts",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "4cc86ad0985733d8776294a6e0c6bc2b45842d1c"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "b71f5e3c3223c62672606e81a817bc4ff628cc11"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/chat/service.ts",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "ec6b9ca21483b242fb0c50f55a8309e907644904"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "e26bd00cb40b077400c7767a410d65150bdfb31a"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/core/env_vars.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "896496e05f5be7053caa73666d4aeb412a9a80eb"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "896496e05f5be7053caa73666d4aeb412a9a80eb"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/core/gateway/dispatch.py",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "402362763963c5858bd1003bce5b26c0cf42fbbd"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "f08cfbf4af109fe26e90959d16d83eab03307970"
+      },
+      "resolution": "retained C0/gate source delta; see D123-REVIEW.md"
+    },
+    {
+      "path": "astrid/installer/backend.py",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "eb9597f962c5db638eea78403454a1d39c1ce8a0"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "60172d82b4f129ee1e4dc8dbab437191240f7008"
+      },
+      "resolution": "retained C0/gate source delta; see D123-REVIEW.md"
+    },
+    {
+      "path": "astrid/installer/core.py",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "8b7c68acd64654d46309046c0c3c69d7266d7cf7"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "cd191b1dc7df774e5da69a31bdbe9c82311b3f18"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/installer/launcher.py",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "512945b3f63b58f3735292640de49a8ef4998170"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "68517ac901856acc457b85da0e070225db1ff31f"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/installer/omp/recipe.json",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "0cbf40c60a51b5d62e0db80dfb7030ee6a1e7299"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "13ea9a2fd83f49cf753bf9b4f587fe7b521319af"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/installer/service.py",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "a3aa8e5ba45e98e3f124b909541ce8683a68fd22"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "aaa5c8cb524a385cdb7b9b811d5ab9e5e9d84853"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/installer/tools.py",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "3efcc8dfd64b24eb7e79023ed95886af86466252"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "44b3208124e0807728993fb0aa5fce0ec109d2ce"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "astrid/omp_agent.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "9ce2fea8d31c958f59c5e1663cb8db873807624a"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "9ce2fea8d31c958f59c5e1663cb8db873807624a"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/omp_extensions/astrid-models.ts",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "8bca98c82f8efb31dd72d8e8102389bed25eb0c0"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "8bca98c82f8efb31dd72d8e8102389bed25eb0c0"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/packs/_core/docs/SKILL.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "99bbb00ac23da4e7533d7e6612270683c8ac8bbb"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "99bbb00ac23da4e7533d7e6612270683c8ac8bbb"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/packs/chiptune/docs/SKILL.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "f2303e0e86e432a092dfad2367d399446b5c221f"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "f2303e0e86e432a092dfad2367d399446b5c221f"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/packs/generation/docs/generate-image.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "fa7a92b5f9dece6d2826206821d2421694be4788"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "fa7a92b5f9dece6d2826206821d2421694be4788"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/packs/rendering/docs/SKILL.md",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "715b37ce9b3d10dda3fd0a1c048967e86ffd3249"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "3ce6f1d684e0d365adf3902198d7c612625cd0c6"
+      },
+      "resolution": "retained C0/gate source delta; see D123-REVIEW.md"
+    },
+    {
+      "path": "astrid/packs/rendering/docs/references/placeholder-voiceover.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "c274fc0d0bf67a12959218467993dffb1ec640c9"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "c274fc0d0bf67a12959218467993dffb1ec640c9"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/packs/rendering/docs/references/visualize-extend.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "49d8884ddc612708b57d72e74ab175f27782325a"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "49d8884ddc612708b57d72e74ab175f27782325a"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/packs/vibecomfy/docs/SKILL.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "229cd4ced73cb3803c26031bd4ffe58232270f57"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "229cd4ced73cb3803c26031bd4ffe58232270f57"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/packs/video_editing/docs/SKILL.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "7e3c72951c4a1d42caaf79e700d5f0febb771322"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "7e3c72951c4a1d42caaf79e700d5f0febb771322"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/packs/wan2gp/docs/SKILL.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "a2b0f3f8f82a25c022842a39ff78325f45e96e96"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "a2b0f3f8f82a25c022842a39ff78325f45e96e96"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/skills/__init__.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "99bd7b8ff826453d7692f76a7426437f1a509e27"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "99bd7b8ff826453d7692f76a7426437f1a509e27"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/skills/cli.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "925e95b95f0fee4fea00ef18c9483e820a49c9c0"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "925e95b95f0fee4fea00ef18c9483e820a49c9c0"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/skills/commands.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "3cd76fe08678a37d5061deea9a4fed707db417a9"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "3cd76fe08678a37d5061deea9a4fed707db417a9"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/skills/harnesses/claude.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "81956ece8ee46e4b0138b5da61ea7212dc9afe00"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "81956ece8ee46e4b0138b5da61ea7212dc9afe00"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/skills/harnesses/codex.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "8504749580bdc545c1f528f58582854061ec125f"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "8504749580bdc545c1f528f58582854061ec125f"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/skills/registry.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "7fe7e6a26e0908e5a9df6687cbf81719a7ffe159"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "7fe7e6a26e0908e5a9df6687cbf81719a7ffe159"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/skills/state.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "158e7e5ba24c16030da0754b922128e39ba0f3fd"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "158e7e5ba24c16030da0754b922128e39ba0f3fd"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "astrid/skills/view.py",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "d02de49f8486dfcffdae1b63fa563b22c3172e5b"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "d02de49f8486dfcffdae1b63fa563b22c3172e5b"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "docs/guides/skills-install.md",
+      "overlap": false,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "0fd2514a81bddbbc8c2a56b62c8c6226e6e1b50c"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "0fd2514a81bddbbc8c2a56b62c8c6226e6e1b50c"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "docs/install/OMP-LANDING.md",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "e4ade615a2b8cd010884248a6acb61ec8eac64d7"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "e4ade615a2b8cd010884248a6acb61ec8eac64d7"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "docs/reference/services.md",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "24ebff2bab996fd09401b5cd3bcc0bdfffff7273"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "f0a1021896b6e8b2f021801de4ebc9b2a1a6bdc9"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "docs/testing/TESTING.md",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "df416ca4ed5f82bf30251191239e26834ce1dd5e"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "e99619e345ce6e6fc1173ee9b756872018a44a68"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "scripts/refresh_omp_recipe.py",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "3a88b9d0116e0d2666f4269eb4855ccaa5dcf57a"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "tests/fixtures/installer/task.xml",
+      "overlap": true,
+      "test": false,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "d7c4b0998ecb01af6ac5db279637f93567823960"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "d7c4b0998ecb01af6ac5db279637f93567823960"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/packs/test_vibecomfy_ir_bridge.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "c9b733e56db76cbeed60f2de994f45d8cb9cc7eb"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "c9b733e56db76cbeed60f2de994f45d8cb9cc7eb"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_installer_acl.py",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "88dd45748db6677ed9dd9f602c060cb4de68a219"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "ec5e3a31d7414b9dc49c29cb9f443cc26ab07c75"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "tests/test_installer_cleanup.py",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "f030558f1aa47eed8e896116ce7bc296c05e232c"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "62367e141466f0f245d4ce5046a66c0da8d4928e"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "tests/test_installer_lifecycle.py",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "1a3f380da12b658be843c62d1cea8ffc15685004"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "tests/test_installer_omp_source.py",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_installer_platforms.py",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "94a7e05012357ba4d906cc611716e8f18b38d250"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "a536fd4759895bef93588098e7eada8f97020359"
+      },
+      "resolution": "retained C0/gate source delta; see D123-REVIEW.md"
+    },
+    {
+      "path": "tests/test_installer_shim.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "7f40a9faadfc1a81e9d03f2b91d6a3ed5cc599a2"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "7f40a9faadfc1a81e9d03f2b91d6a3ed5cc599a2"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_installer_wheel.py",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "549e079eb4fcbac9cea9ebb7324dc86e20e6f012"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "7e8c98565b45f56d028b399926c8bab0a131707e"
+      },
+      "resolution": "upstream content with retained EOF whitespace"
+    },
+    {
+      "path": "tests/test_installer_windows_tasks.py",
+      "overlap": true,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "ef1b2ca9d7b95056826baf1323394dbf15f2a913"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "ef1b2ca9d7b95056826baf1323394dbf15f2a913"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_m5b_end_state_regression.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "b16a660981e4797a801ffa61b42a7616c5c580ac"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "b16a660981e4797a801ffa61b42a7616c5c580ac"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_omp_agent.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "20e2230d89625d81765b05bd074e6083c55cbe20"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "20e2230d89625d81765b05bd074e6083c55cbe20"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_omp_agent_key.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "e0cab8060e800c142414d07ef6cdc85b0bee2cf3"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "e0cab8060e800c142414d07ef6cdc85b0bee2cf3"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_omp_agent_models.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "c90f735e286c8ac8646c34e60a485c3d9c0bebdf"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "c90f735e286c8ac8646c34e60a485c3d9c0bebdf"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_omp_invoke_extension.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "77f1e0bf189008fcf0c64ba5221ba7595c76a21e"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "77f1e0bf189008fcf0c64ba5221ba7595c76a21e"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_skills.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "7692783b9664d49aa1a13a992267faec40562673"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "7692783b9664d49aa1a13a992267faec40562673"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_skills_b06.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "2340e8ceeeb871109cbe6f49a19c4a422872216d"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "2340e8ceeeb871109cbe6f49a19c4a422872216d"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_skills_commands.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "48fc4fb15b51740af2b2268688a69abf0051bca4"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "48fc4fb15b51740af2b2268688a69abf0051bca4"
+      },
+      "resolution": "upstream exact"
+    },
+    {
+      "path": "tests/test_skills_sync_registry.py",
+      "overlap": false,
+      "test": true,
+      "upstream_blob": {
+        "mode": "100644",
+        "blob": "2beb628d14c4fee59368765e021f9d63d20d1359"
+      },
+      "current_blob": {
+        "mode": "100644",
+        "blob": "2beb628d14c4fee59368765e021f9d63d20d1359"
+      },
+      "resolution": "upstream exact"
+    }
+  ]
+}
