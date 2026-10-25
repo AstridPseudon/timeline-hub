@@ -1,0 +1,3 @@
+Ask: consume D125c and preparation-only local fallback owner / Owner: App Luna1356, Proof sole actual tour / By: next pass
+
+D125c received. Proof keeps the sole original and normal recipe. Luna app-D125-local-fallback-prep-1356 prepares exact genuine local receipts/Node/one-command env and PREPARATION_ONLY artifact; no preflight, no submit, no local body. Fresh5.320GB before admission; source-only worktree expected0.15GB and existing4.0GB stop remains. Local submission remains prohibited until explicit lead MAIN/Proof report. Independent App D125 verdict reserved. Parallel protected1354 reviews two-control4b4e source; upstream fixture method migration scope escalated concretely under D120. No delay to Proof original.
