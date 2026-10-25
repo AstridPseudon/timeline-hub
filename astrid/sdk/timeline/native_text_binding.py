@@ -10,6 +10,7 @@ TEXT_INTENT = {'ownership': 'occurrence'}
 TEXT_MEDIA_TYPE = 'text/plain; charset=utf-8'
 DERIVED_FIELDS = {'binding_id', 'project_id', 'shot_id', 'head', 'event_stream_id',
                   'created_at', 'updated_at', 'text'}
+AUTHORITY_FIELDS = {'binding_id', 'head', 'event_stream_id'}
 
 
 def binding_key(row):
@@ -43,6 +44,14 @@ def text_binding_set(ctx, command):
         raise CommandError('text binding requires an exclusive occurrence', kind='unsupported_ownership')
     ref = owner + '/text-binding:' + binding_key(args['binding'])
     old = ctx.read(ref)
+    authority = AUTHORITY_FIELDS & set(old or ())
+    if authority and authority != AUTHORITY_FIELDS:
+        raise CommandError('text binding authority is incomplete', kind='unsupported_shape', ref=ref)
+    if authority and (
+            not isinstance(old['binding_id'], str) or not old['binding_id']
+            or type(old['head']) is not int or old['head'] < 1
+            or not isinstance(old['event_stream_id'], str) or not old['event_stream_id']):
+        raise CommandError('text binding authority is malformed', kind='unsupported_shape', ref=ref)
     if 'clear' in args:
         if ctx.state.get(ref, []) == ABSENT:
             raise CommandError('cannot clear an absent text binding', kind='absent_binding', ref=ref)
@@ -54,6 +63,11 @@ def text_binding_set(ctx, command):
         raise CommandError('text object id must equal its content digest', ref=ref)
     if not any(equal(value, {**pin, 'utf8': True}) for value in ctx.verified_media):
         raise CommandError('text binding requires exact Runtime-verified UTF-8 input', kind='dependency_changed')
+    if authority and any(old.get(key) != pin_value for key, pin_value in (
+            ('media_id', pin['object_id']), ('content_hash', pin['digest']),
+            ('byte_size', pin['size']), ('mime_type', pin['media_type']))):
+        raise CommandError('authenticated text binding pin does not match the new text',
+                           kind='dependency_changed', ref=ref)
     if old is None:
         path = ['payload', 'text_bindings']
         if ctx.state.get(owner + '/shot', path) == ABSENT:
@@ -61,7 +75,8 @@ def text_binding_set(ctx, command):
             ctx.write(owner + '/shot', path, [])
         ctx.select('collection.text-bindings.append', owner)
     ctx.dependency('text:' + pin['digest'], 'media', pin)
-    row = {key: copy.deepcopy(value) for key, value in (old or {}).items() if key not in DERIVED_FIELDS}
+    row = {key: copy.deepcopy(value) for key, value in (old or {}).items()
+           if key not in DERIVED_FIELDS or key in AUTHORITY_FIELDS}
     row.update(args['binding'], media_id=pin['object_id'], content_hash=pin['digest'],
                byte_size=pin['size'], mime_type=pin['media_type'])
     ctx.write(ref, [], row)
