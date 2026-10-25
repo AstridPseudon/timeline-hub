@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "task": "D139",
+  "candidate": {
+    "commit": "c84d1dcd3e7d6c77a17a97bdb4771ba1114ca68b",
+    "tree": "3d6dddc70905f3313e84c39d777272122b650fe1",
+    "parent": "2ab240fcdcdae0db60497bb7a355cbfe6e53b5a8",
+    "parent_tree": "1a0056c3b1f163b1a45c87f280fe0cfcd085a854",
+    "worktree_clean_before_review": true
+  },
+  "source_files": {
+    "ops-d131/bench_store.py": {"git_blob": "f93e3d550f5af334b9e062bb2d36ed15d967f572", "sha256": "d1cdb35cec0ba7a9a27ee97652e185d06169fffdb11b3e0ee4b4a64d71e3391b", "mode": "0755"},
+    "ops-d131/retire_entry.py": {"git_blob": "3b74f6aba139dc18012a527133cee24923e87809", "sha256": "260a4f6bce5ac0057ca2a825869ab1d51dadd702d5ea7c40d0ddde333babf6c0", "mode": "0755"},
+    "ops-d131/test_reserve.py": {"git_blob": "7ff67593ec7e9fb70ec46982317148f285dd87c4", "sha256": "2ef195185e61684cad446e93931aba06678e1b4613c9484f5c38b0bba238ef08", "mode": "0644"},
+    "ops-d131/test_retire_entry.py": {"git_blob": "b2cd8da67069da1f57ad7cea8591ddecb6bebb98", "sha256": "f46aa55ef47e4876e1f0852c896559d449ed28f8a3f9ef21fe5d107eed875c73", "mode": "0644"},
+    "ops-d131/install-prep/check-cas.sh": {"git_blob": "419752721e471df6bf2112c7c67eb24916a61ab3", "sha256": "5c2c67c84140eeacad068b713f13bbc8c5d063568d76bfe12e489b5bbf1cac7f", "mode": "0755"},
+    "ops-d131/install-prep/README.md": {"sha256": "3114c0b772495c35501842b8b41af4fc3a0100f9ce14896337545b4a4bc22327", "mode": "0644"}
+  },
+  "cas_preimage": {
+    "ref": "tl/rt-OPS-D131-kind-reserve-1558",
+    "path": "ops-d131/bench_store.py",
+    "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "mode": "0755"
+  },
+  "prior_evidence": {
+    "author_report": "fdfbaf59fb6ed8f52c767f6463813494f9a899927ce258dcfeb88db004ed4425",
+    "author_findings": "e5918af7423b0435521f47f758ef0978aa88d11b167258959c25a044ef755020",
+    "author_applicability": "2ef63c854faa7a4257ae142c17ccdf87e4671202ade418ae44f2f5e7c58f4fef",
+    "author_validation": "87ff8e4939f1b676a9c902cd14b840b9b6adb21cbcbfa083ab153e247ccfed09",
+    "independent_review": "672fe27d1069adc840dd791476cb1759a28209e7cd490c810cca71ac633abe52",
+    "independent_findings": "d51ec3d5bb73e6cea68631edbc1e0ebe235bc17b8b8576c06dff05454bdfb9e4",
+    "independent_applicability": "6ba2e767e0eb2f31803a91298ee76009d12186df7986891342d9ed79dce85175"
+  },
+  "custody": "Current source hashes and modes were recomputed from the exact candidate tree; no historical source mismatch was overwritten."
+}

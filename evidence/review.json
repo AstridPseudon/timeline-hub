@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "review": "rt-OPS-store-disposition-review-2304",
+  "assessment": "PASS_ASSESSMENT",
+  "disposition": "UNAPPLIED_HOLD",
+  "source_status": "FAIL_SOURCE/NOTREADY",
+  "candidate_commit": "c84d1dcd3e7d6c77a17a97bdb4771ba1114ca68b",
+  "candidate_tree": "3d6dddc70905f3313e84c39d777272122b650fe1",
+  "reviewed_base_commit": "2ab240fcdcdae0db60497bb7a355cbfe6e53b5a8",
+  "reviewed_base_tree": "1a0056c3b1f163b1a45c87f280fe0cfcd085a854",
+  "findings": [
+    {"id": "D139-F1", "severity": "critical", "status": "UNAPPLIED", "assessment": "confirmed"},
+    {"id": "D139-F2", "severity": "critical", "status": "UNAPPLIED", "assessment": "confirmed"},
+    {"id": "D139-F3", "severity": "critical", "status": "UNAPPLIED", "assessment": "confirmed"},
+    {"id": "D139-F4", "severity": "high", "status": "FIXED_ORDINARY_CROSS_ASSOCIATION", "assessment": "qualified"},
+    {"id": "D139-F5", "severity": "high", "status": "FIXED_CURRENT_TREE_CUSTODY", "assessment": "qualified"},
+    {"id": "D139-S1", "severity": "high", "status": "FIXED", "assessment": "qualified"}
+  ],
+  "historical_child_3e163": {
+    "status": "SOURCEONLY/NOTREADYforcleanup",
+    "compatibility": "separate and unresolved",
+    "actual_disk_fix": false,
+    "basis": "exact 123bb source plus qualified Agent 2202/2205/2210 evidence"
+  },
+  "controls": {
+    "author_controls_py": "missing; exact author RED harness not re-executed",
+    "independent_private_probes": "F1 authority rewrite, F2 post-final-scan cwd, F3 late activity and KEEP",
+    "live_store": false,
+    "installation": false,
+    "real_cleanup": false,
+    "acquisition": false,
+    "child_or_body": false,
+    "full_suite": false,
+    "metadata_mutation": false,
+    "tests_weakened": false
+  },
+  "decision": "The assessment passes because the corrected ordinary fixes and custody are qualified and every open guard is explicitly retained. The source is not qualified for installation, admission, or cleanup while F1-F3 remain open."
+}
