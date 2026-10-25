@@ -1,0 +1,59 @@
+import { strict as assert } from 'node:assert';
+import { createHash } from 'node:crypto';
+import { test } from 'node:test';
+import {
+  assertNormalizedCatalogueEntry,
+  assertRawMediaImportEntry,
+  mediaImportEvidence,
+} from './p2-media-import-oracle.ts';
+
+const file = {
+  name: 'p2-mounted-image.png',
+  type: 'image/png',
+  bytesBase64: Buffer.from('genuine image fixture bytes').toString('base64'),
+};
+const source = {
+  objectId: `sha256:${'a'.repeat(64)}`,
+  digest: `sha256:${createHash('sha256').update(Buffer.from(file.bytesBase64, 'base64')).digest('hex')}`,
+  mediaType: 'image/png',
+};
+
+test('raw import oracle accepts the actual ABI and refuses the old normalized claim', () => {
+  const evidence = mediaImportEvidence(file, source);
+  const actualRawEntry = {
+    object_id: source.objectId,
+    media_type: file.type,
+    size: evidence.bytes.byteLength,
+    filename: file.name,
+  };
+  assertRawMediaImportEntry(actualRawEntry, evidence.rawEntry);
+  assert.throws(
+    () => assertRawMediaImportEntry({ ...actualRawEntry, content_sha256: evidence.source.digest }, evidence.rawEntry),
+  );
+  assert.throws(() => assertRawMediaImportEntry({ ...actualRawEntry, object_id: 'sha256:wrong-object' }, evidence.rawEntry));
+  assert.throws(() => assertRawMediaImportEntry({ ...actualRawEntry, media_type: 'image/jpeg' }, evidence.rawEntry));
+  assert.throws(() => assertRawMediaImportEntry({ ...actualRawEntry, size: actualRawEntry.size + 1 }, evidence.rawEntry));
+  assert.throws(() => assertRawMediaImportEntry({ ...actualRawEntry, filename: 'wrong.png' }, evidence.rawEntry));
+  assert.throws(() => assertRawMediaImportEntry({ ...actualRawEntry, extra: true }, evidence.rawEntry));
+  const { filename: _filename, ...missingFilename } = actualRawEntry;
+  assert.throws(() => assertRawMediaImportEntry(missingFilename, evidence.rawEntry));
+});
+
+test('normalized catalogue oracle preserves original identity and refuses wrong fields', () => {
+  const evidence = mediaImportEvidence(file, source);
+  const normalized = {
+    file: `/v1/objects/${encodeURIComponent(evidence.source.objectId)}`,
+    media_id: evidence.source.objectId,
+    content_sha256: evidence.source.digest,
+    type: evidence.source.mediaType,
+    generationId: 'generation-actual',
+    variantId: 'variant-actual',
+  };
+  assertNormalizedCatalogueEntry(normalized, evidence.source);
+  assert.throws(() => assertNormalizedCatalogueEntry(evidence.rawEntry, evidence.source));
+  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, media_id: 'sha256:wrong-object' }, evidence.source));
+  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, content_sha256: 'sha256:wrong-digest' }, evidence.source));
+  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, type: 'image/jpeg' }, evidence.source));
+  const { content_sha256: _contentSha256, ...missingDigest } = normalized;
+  assert.throws(() => assertNormalizedCatalogueEntry(missingDigest, evidence.source));
+});
