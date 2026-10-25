@@ -1,0 +1,52 @@
+{
+  "task": "app-D118a-binding-final-import-review-1250",
+  "verdict": "PASS_D118A_EXACT_REVIEWED_IMPORT_FINAL",
+  "base": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+  "head": "9d75ec2603944df5c201de9e1f453a26247a437e",
+  "donor": "74e1961abb9efd0b79e6b1d9842364dca110a9f6",
+  "donor_parent": "f3a6a3884d6b7c3190d83b70c76afee55ff8d592",
+  "changed_paths": [
+    "astrid/sdk/timeline/native_text_binding.py",
+    "tests/sdk/test_native_text_binding_authority_fields.py"
+  ],
+  "scope": {
+    "current_normal_exact": true,
+    "working_tree_clean": true,
+    "original_current_normal_tests_unchanged": true
+  },
+  "production": {
+    "sha256": "3ef9a6b49cb1624ac5a5fe6a163c89c13a50f73fea591f6c19745bd0616d3782",
+    "byte_equal_to_donor": true
+  },
+  "additive_test": {
+    "sha256": "87324e0ada9aa93bd358400fa8d1d2480b2e6b8184d1579a86561d16ccb9e23c",
+    "ast_equal_to_donor": true,
+    "inputs_equal_to_donor": true,
+    "only_difference": "one blank line removed for Ruff I001"
+  },
+  "checks": {
+    "ruff_production_normal": "pass",
+    "ruff_explicit_isolated_I001_both_files": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "tiny_smoke": "7 passed in 1.56s"
+  },
+  "retained_from_core_review_1239": {
+    "verdict": "PASS_INDEPENDENT_CORE_PRIVACY_REVIEW",
+    "genuine_runtime_integration": "1 passed in 1.89s",
+    "parent_same_node": "pass",
+    "focused_units": "56 passed, 2 deselected",
+    "candidate_authority_nodes": "4 passed",
+    "wrong_pair_no_write": "pass",
+    "forged_authority_no_write": "pass",
+    "privacy_and_scope": "pass",
+    "agent_batch_full_qualification": "held"
+  },
+  "notes": [
+    "No source or test changes were made by this review.",
+    "No second semantic, family, body, full, browser, native, or Runtime qualification suite was run.",
+    "The default interpreter lacked jsonschema for the first smoke collection; the existing read-only Agent venv rerun passed.",
+    "Candidate remains held for Agent batch/full qualification; this is not a release or GO decision."
+  ]
+}
