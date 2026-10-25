@@ -1,54 +1,3 @@
-index 0593bef363cf2aaf0ed7ba120d444533bafb422c..653f4e1010e236c09bb14069bf4be1dd5e4a7b98
---- a/tests/editing_conformance/test_commit_runtime_native_checkout.py
-+++ b/tests/editing_conformance/test_commit_runtime_native_checkout.py
-@@ -224,29 +224,10 @@
-     captured = json.loads(path.read_bytes())
-     commands_file = tmp_path / 'params.json'
-     commands_file.write_text(json.dumps(captured['pending']))
--    # G5 retired ``edit commands-file``.  Keep the exact captured command input,
--    # then use the supported detached-document commit CLI for the same Runtime
--    # commitTimeline ingress and provenance.
--    from astrid.packs.timeline.cli import build_parser
--    from astrid.sdk.timeline.commands import execute
--
--    original = client.timelines.open_bundle(
--        fixture.project_id, fixture.timeline_id, revision_id=captured['base']['revision_id'])
--    plan = execute(original.data['bundle'], captured['pending'])
--    detached = commands_file.with_name(commands_file.name + '.detached.json')
--    candidate = Checkout(plan.bundle).document()
--    candidate['base_parent'] = {**candidate['base_parent'], **captured['base']}
--    detached.write_text(json.dumps(candidate))
--    parsed = build_parser(client).parse_args([
--        'commit', fixture.timeline_id, '--project', fixture.project_id,
--        '--file', str(detached), '--message', 'Timeline edit',
--        '--idempotency-key', 'params-cli', '--json',
--    ])
--    code = parsed.handler(parsed)
--    output = capsys.readouterr()
--    accepted = json.loads(output.out)
--    assert code == 0 and accepted['ok'] and accepted['data']['commands'] == captured['pending'], (
--        code, accepted, output.err)
-+    accepted = m1.cli(client, fixture, capsys, 'edit', 'commands-file', fixture.timeline_id,
-+                      str(commands_file), '--base-revision-id', captured['base']['revision_id'],
-+                      '--base-publication-id', captured['base']['publication_id'])
-+    assert accepted['data']['commands'] == captured['pending']
-     # Reopen on a separate empty outbox: an unchanged public setter is still an
-     # authored write, so it prevents undoing the earlier publication.
-     other = Checkout.attach(TimelineSession.open(fixture.project_id, fixture.timeline_id,
-
-exec
-/bin/bash -lc "git diff -- tests/editing_conformance/test_commit_runtime_native_checkout.py tests/editing_conformance/test_commit_runtime_native_frontends.py && printf '%s\\n' '--- diff check ---' && git diff --check && printf '%s\\n' '--- status ---' && git status --short" in /home/user/work/wt/agt-D87-live-frontends-return-0148
- succeeded in 316ms:
-diff --git a/tests/editing_conformance/test_commit_runtime_native_checkout.py b/tests/editing_conformance/test_commit_runtime_native_checkout.py
-index 0593bef363..653f4e1010 100644
---- a/tests/editing_conformance/test_commit_runtime_native_checkout.py
-+++ b/tests/editing_conformance/test_commit_runtime_native_checkout.py
-@@ -224,29 +224,10 @@ def test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_hist
-     captured = json.loads(path.read_bytes())
-     commands_file = tmp_path / 'params.json'
-     commands_file.write_text(json.dumps(captured['pending']))
--    # G5 retired ``edit commands-file``.  Keep the exact captured command input,
--    # then use the supported detached-document commit CLI for the same Runtime
 -    # commitTimeline ingress and provenance.
 -    from astrid.packs.timeline.cli import build_parser
 -    from astrid.sdk.timeline.commands import execute
@@ -398,3 +347,54 @@ index 0593bef363cf2aaf0ed7ba120d444533bafb422c..653f4e1010e236c09bb14069bf4be1dd
      # authored write, so it prevents undoing the earlier publication.
      other = Checkout.attach(TimelineSession.open(fixture.project_id, fixture.timeline_id,
 
+exec
+/bin/bash -lc 'test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/DONE && echo DONE-empty; sed -n '"'1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D87-live-frontends-return-0148/commit-msg; git status --short --branch; git diff --stat" in /home/user/work/wt/agt-D87-live-frontends-return-0148
+ succeeded in 294ms:
+DONE-empty
+test(timeline): restore native parameter CLI ingress coverage
+
+Restore the separately retired parameter checkout case to its original
+commands-file ingress while retaining the current provider-backed fixtures and
+the six live frontend assertions.
+## tl/agt-D87-live-frontends-return-0148...hub/timeline/agent/tl/agt-F-native-frontends-2355
+ M tests/editing_conformance/test_commit_runtime_native_checkout.py
+ .../test_commit_runtime_native_checkout.py         | 27 ++++------------------
+ 1 file changed, 4 insertions(+), 23 deletions(-)
+
+codex
+## Report
+
+- Restored only the separately retired parameter CLI function to its exact original `commands-file` implementation.
+- Preserved provider-backed fixtures and all six live selectors/assertions.
+- Held base recorded: `95fe9d2e90913bb1ff0b8c5979b372fa87c34ef1`.
+- Changed only `tests/editing_conformance/test_commit_runtime_native_checkout.py`; frontends file unchanged.
+
+Checks:
+
+- AST parse/in-memory compile: PASS.
+- Exact original-function comparison: PASS.
+- Ruff baseline and candidate: PASS.
+- Mypy baseline and candidate: PASS.
+- `git diff --check`: PASS.
+- Pytest, collection, runtime/service/browser/build execution: not run per brief.
+
+Commit message written and `DONE` marker created. Next step: fresh protected review, then normal Agent merge queue and later integrated functional proof.
+tokens used
+88,005
+## Report
+
+- Restored only the separately retired parameter CLI function to its exact original `commands-file` implementation.
+- Preserved provider-backed fixtures and all six live selectors/assertions.
+- Held base recorded: `95fe9d2e90913bb1ff0b8c5979b372fa87c34ef1`.
+- Changed only `tests/editing_conformance/test_commit_runtime_native_checkout.py`; frontends file unchanged.
+
+Checks:
+
+- AST parse/in-memory compile: PASS.
+- Exact original-function comparison: PASS.
+- Ruff baseline and candidate: PASS.
+- Mypy baseline and candidate: PASS.
+- `git diff --check`: PASS.
+- Pytest, collection, runtime/service/browser/build execution: not run per brief.
+
+Commit message written and `DONE` marker created. Next step: fresh protected review, then normal Agent merge queue and later integrated functional proof.
