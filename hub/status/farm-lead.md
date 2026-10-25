@@ -1,1 +1,1 @@
-2026-10-25T23:23:10Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D140: waiting for Runtime's D139a recipe-kit note for the ship-grade Agent core (census first); D77 render held behind the core
+2026-10-25T23:43:03Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D141 morning cut: D77 render CUT; farm's one job = ship-grade Agent core on the cut tuple, waiting for the cut tuple + Runtime's corrected recipe (kit fd83c9e2 received)
