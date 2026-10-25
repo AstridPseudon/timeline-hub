@@ -1,0 +1,56 @@
+{
+  "status": "PASS",
+  "review": "OPS Farm installed custody review",
+  "composition": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "worktree_clean": true
+  },
+  "artifacts": {
+    "candidate": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-Farm-metadata-return-1423/evidence/make-child-venv.candidate",
+      "sha256": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3",
+      "mode": "0755",
+      "size": 62091
+    },
+    "installed": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "sha256": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3",
+      "mode": "0755",
+      "size": 62091,
+      "equals_candidate": true
+    },
+    "predecessor_backup": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv.20261025T143328Z.bak",
+      "sha256": "ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8",
+      "mode": "0755",
+      "size": 60881,
+      "matches_installer_preimage": true
+    }
+  },
+  "installation": {
+    "atomic_rename_recorded_by_installer": true,
+    "historical_syscall_independently_observable": false
+  },
+  "controls": {
+    "bash_n_candidate": "PASS",
+    "bash_n_installed": "PASS",
+    "bash_n_predecessor": "PASS",
+    "embedded_store_verify_compile": "PASS",
+    "installed_production_store_verify_callsite": "PASS",
+    "installed_ownership_microcontrol": "PASS",
+    "installed_diagnostic_microcontrol": "PASS",
+    "c0_inventory": "PASS"
+  },
+  "boundary": {
+    "farm_root": "INFERRED",
+    "genuine_refused_layout": "ABSENT",
+    "maker_process_observed": false,
+    "fullmaker_execution": false,
+    "child_reissue": false,
+    "package_installation": false,
+    "metadata_inventory": false,
+    "live_mutation": false,
+    "pending_unrelated_test_markers": true
+  },
+  "decision": "This is custody evidence, not an extra approval stage; the authorized normal Farm reissue remains downstream of propagated hash verification."
+}
