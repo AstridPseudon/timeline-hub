@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T05:29:49Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 22 | status age 2m -->
-# runtime board, 2026-10-25T05:27:54Z
+<!-- main | 2026-10-25T05:33:18Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 24 | status age 1m -->
+# runtime board, 2026-10-25T05:31:46Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -284,40 +284,42 @@
 | D98-observer | Preserve active three-case diagnostic | Luna / service | Safe evidence published | merged | Actual32278; rt-D98a-route-submit-0517 | Active real pytest observer;3ERROR5.505s,three records. First command.authorship differs;29paths each. Exact D82 owner UNKNOWN. | Diagnostic only |
 | D86-6058-export | Return exact current96 outcomes | Luna read only | Safe export complete | merged | rt-D86-6058-safe-export-0428 | 96 unique:14PASS7FAIL75ERROR. Exact authored safe packet published. [Report](../../design/rt-D86-6058-safe-export-0428-report.md) | Evidence only |
 | D97-consumer-adoption | Adopt released source in both callers | Agent / App Luna | Normal tool receipts complete | merged | Agent0435; App0438 | Agent786 lock7c16 source0c62; App319911 strict8/vendor15/mappings14 PASS. Caller adoption blockers cleared. | Agent49f66 / App319911 |
-| R1-asset-normalization | Preserve lossless asset read union | HARD Sol / Luna | Security PASS then protected review and MAIN6 | review | Security0514 PASS; protected0525; join0525 | Exact381178/Agent76224 passes99+23+14 controls. Both sides held;lossless raw/config union and explicit scopes retained. | Candidate381178 held |
+| R1-asset-normalization | Preserve lossless asset read union | HARD Sol / Luna | Static test fix then protected recheck | review | Security0514 PASS; testreturn0530 | Semantic protected reviewPASS;one newtestmypyerror. Auth002c9 andAgent76224 remain exact;no repeated securitycycle for test-only fix. |381178 /Agent e021 held |
 | D95-refusal-two | Qualify two bound refusal originals | Luna / service | Exact per-ID19214 handback | review | Included actual19214 | Both NEW identities stay separate from original550. Exact safe outcomes await exporter0514. | ef6d/0c62/9cb56/635f |
 | P4-undo-times | Return retained per-note Undo intervals | Luna read only | Finite artifact check complete | merged | rt-P4-undo-times-0454 | Allten intervals UNKNOWN; original records have no per-call timestamps. [Limit](../../design/runtime-P4-undo-times-0454.md); no rerun. | Recorded786/0c62 |
 
 | D98-startup-control | Fail closed before diagnostic originals | Luna private harness | Actual control PASS | merged | rt-D98-fail-closed-control-0505 | Real binding witness,positive17;missing vars and wrong hook poison1,zero original bodies. Private route only. | Harness only |
 
-| D102-error-diagnostics | Record redacted unexpected causes | Luna / independent | Corrected final source review | review | Return0518; rereview0525 | Candidateca4df36PASS;oldRED331KB leak,newGREEN one line at most4096B. Public503 equal;firstFAIL retained. | Candidateca4df held |
+| D102-error-diagnostics | Record redacted unexpected causes | Luna / independent | Normal home exact reviewed tree | merged | Author0518; review0525 PASS; home689352 | Actual689 treea821 equals reviewedca4df.36PASS,public503 unchanged,one boundedredactedline. [Release](../../design/runtime-D102-release-0531.json) | 689352013 / ca4df |
 
 | D86-19214-export | Publish exact terminal61 outcomes | Luna read only | Safe publication complete | merged | rt-D86-19214-safe-export-0514 | Nine exact safe files published.13 PASS,21 FAIL,27 ERROR;traceback locations UNKNOWN. [Packet](../../design/handoff-rt-D86-19214-0514-README.md) | Evidence only |
-| F6058-word-D92-input | Return retained inner errors and phases | Luna read only | Existing same6058 evidence | doing | rt-F6058-retained-inputs-0522 | Word46 inner exception and three D92 phases only. Exact missing data stays UNKNOWN;no collector or body. | Existing artifacts |
+| F6058-word-D92-input | Return retained inner errors and phases | Luna read only | Finite safe handback complete | merged | rt-F6058-retained-inputs-0522 | Wordinner DocumentPatchError/emitter.py;functionlineUNKNOWN. D92 catalog refusal in popup-birth beforeA/B. Exact sourcefacts published. | Existing6058 only |
 | F-projection-item-input | Inventory authentic item carrier | Luna read only | Finite source assessment complete | merged | rt-F-projection-item-input-0522 | Reusable current carrier EXACTMISSING;legacy fixture is not current valid history. Agent D100-dependency source0517 owns possible genuine setup. | Source facts only |
 | R2-restore-candidate-proof | Prove reviewed restore order | Luna / main service | Sole active MAIN body owner | doing | rt-R2-restore-candidate-main-0525 | Exact8aa672 held;oldRED/newGREEN plus originalID5 and strict controls. No product merge before actualPASS. | Agent8aa672 held |
-| D86-new11-D92-source | Qualify newly corrected sources | Luna / main service | Exact canonical receiving map | ready | Manager owns after critical proofs | Ordinarysheet ccfe and D92 ef6d normally merged;only meaningful newly changed originals,subtract19214 and prior exact sets. | Source only |
+| D86-new11-D92-source | Qualify newly corrected family sources | Luna / main service | Restore and D100 terminal | doing | rt-D86-new-source-main-0530 | Source-preps ordinary11,D92three,word46,opaque6,script4 realreceipts;canonical exclusions beforeonebody. No source-only behaviorclaim. | Source only |
 
 | OPS-stale6058-pins | Release unused captured source worktrees | Manager route | Full live path audit clear | merged | bin/recycle dc909 and043631 pins | Both ended clean;zero process,queue,worker,active service,registry or lease users. KEEP removed under D74a;all branches and evidence retained. | No source change |
 
 | D100-joined-proof | Qualify exact arithmetic and shared items | Luna / MAIN service | Restore0525 terminal then sole heavy | doing | rt-D100-candidate-main-0527 | Source-prep now;reviewed d3b5 exact4files. Genuine oldRED/newGREEN,new regressions,originalten and strict neighbors required. | Candidate d3b5 held |
 
-Runtime producer: RELEASED normal0c62dfa63db9ff608ac9338388431e31a814e080/treee22 equals reviewedfec6. Canonical15/schema867f unchanged. Agent786 and App319911 normally adopted.
-core open: Runtime D101 asset-read correctness and D102 silent mapped exceptions open. CurrentP4 independentlyGO28.101s on786/0c62/1e34/635f. Agent candidate8 remains held6FAIL2ERROR; other Agent originals remain open. D91latest2966 stays5FAIL5ERROR.
+| R-P2-element10643-runtime | Bound current provider outcome seam | Luna read only | Existing App0503/0515 facts and source | doing | rt-P2-element10643-runtime-source-0531 | Appsource defect unproved. Finite Runtimeprovider-to-reply comparison only;no body,collector or unattributedstackcause. | Actual0c62 source |
+
+Runtime producer: RELEASED normal689352013ef516a224033ba58820759a96504e68/treea821 exactly equals independentreviewedca4df. D10236PASS;public503 unchanged;canonical15/schema867f unchanged. Normalconsumeradoption requested0531.
+core open: D102 silent exception diagnostic defect CLOSED on normal689;actual App Undo cause stillUNKNOWN pendingoneADD. D101 protectedteststaticfix/MAINsix open. CurrentP4 independentGO28.101s;Agent/D100/corefamilies open.
 regressions: No newly established Runtime regression. Current96actual6058 remains14PASS7FAIL75ERROR; exact safe per-ID packet published. No unchanged repeat or historical result relabeling.
 Gates: P1/P3 historicalGO;current P4 independentGO28.101s. App parent20481 now independentGO:four ofeight isolated qualified. Current fulltour and finalD59 proofs still owed.
 
-Blockers: Runtime D101 — Independent security0514PASS. Protected0525 and exact Agent join0525 active;MAINsix before either side merges.
-Blockers: Runtime D102 — First privacyFAIL corrected on ca4df with36PASS and oldRED/newGREEN. Independent rereview0525 before normalrelease/ApponeADD.
+Blockers: Runtime D101 — SecurityPASS and protectedsemanticPASS;testonlymypy fix0530 then protectedrecheck. ExactAgentjoin e021 held;MAINsix beforemergebothsides.
+Blockers: App D102 adoption — Runtime normal689 treea821 released with independent36PASS. Normaltooladoption thenAppsoleADDdiagnostic;no cause inferred beforeactualrun.
 Blockers: Agent D100 — Exact d3b5 candidate independently sourcePASS. MAIN0527 prepares now and waits restore0525 terminal before oldRED/newGREEN and ten originals.
 Blockers: Final cut — D59 all-lane core0/regressions0,current finalP1-P5/core,D69 and genuine installed render still required. No tuple or ZIP.
 Safety: Withdrawn D88 denied action/prototype remain stopped. D93 original fixture/session/granted scopes/calls only. D98 private observer is passive and fails closed.
-Next ready: D101 sixproof after protected/joinPASS;meaningful new-family proof after critical bodies. Six slots full;D1000527 prepares at source level until restore completes.
+Next ready: D101 protectedrecheck/sixproof afterstaticreturn;Appnormal689adoption thenoneADD. Maincriticalbodiesrestore0525->D1000527->newfamilies0530,allcontrollersassigned.
 Venues: One actual mainheavy above5.2GB. D98a32278 terminal with active witness;restore0525 owns body now,D1000527 source-prepares and waits its terminal/restoration.
 Delivery: Existing-clone candidate0358 held for D59 cut. No final install/build or original rehearsal before final proofs.
 Source ownership: Manager process files only. D101 exact paired author is done/unmerged. D102 source done/unmerged. Opaque6 and script4 have distinct source workers0514.
 Later: No unchanged161/102/20/22/96/61 or passedinverse7/fourR2/P4 repeats. Source and integrated functional credit remain distinct.
 Disk: Main6.11GB before new requests. Verified no live process,worker,queue,service,registry or lease uses two stale6058 pins; removed KEEP then bin/recycle. About0.35GB freed; records retained.
-live 6 / cap 6; ready-undispatched 1 at capacity. D102rereview,D101protected/Agentjoin,restoremain,retained6058 input andD100prep active.
-Dispatcher: D98a0514 has zero originals; sole continuation0517 fixes ordinary missing own row. D102 first privacy FAIL retained and first source return0518 active.
-INBOX consumed through942759 bytes. Updated 2026-10-25T05:27:54Z. New D100ready,projectiondependency and App D102 scope clarification consumed;App owns placement and element independently.
+live 5 / cap 6; ready-undispatched 0 eligible starts. Restore0525,D100prep0527,D101static0530,newfamiliesprep0530 andfiniteelementRuntime0531 active.
+Dispatcher: D102mergecompleted689exactreviewedtree;normaladoptionpeer0531published. D101staticfirstreturnonlytest typing;source/securitybytesunchanged. No ready source task unowned.
+INBOX consumed through944957 bytes. Updated 2026-10-25T05:31:46Z. NewApp elementRuntime handback hasfiniteworker0531;D103/D104sourceownership remainsAgent.

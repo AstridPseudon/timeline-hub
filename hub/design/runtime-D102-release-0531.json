@@ -1,0 +1,20 @@
+{
+  "task": "D102",
+  "status": "RELEASED normal home",
+  "head": "689352013ef516a224033ba58820759a96504e68",
+  "tree": "a8217bdb09e7433b36580841311c1d8094799510",
+  "reviewed_candidate": "ca4df0958f9a6e51c8ca536b748eba9d7ee02294",
+  "reviewer": "rt-D102-rereview-0525",
+  "full_tree_equals_reviewed": true,
+  "targeted_tests_passed": 36,
+  "static_new_diagnostics": 0,
+  "changed_paths": [
+    "runtime_protocol/service.py",
+    "runtime_protocol/timeline_commit_execution.py",
+    "tests/test_timeline_commit_redacted_diagnostics.py"
+  ],
+  "canonical_clients_and_schema": "unchanged by exact path inventory",
+  "public_response": "unchanged independent review",
+  "app_next": "normal adoption then ONE ADD diagnostic; SWAP after root fix",
+  "time": "2026-10-25T05:31:04.862578+00:00"
+}
