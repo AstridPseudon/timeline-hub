@@ -1,0 +1,20 @@
+{
+  "agent_worktree": "/home/user/work/wt/app-D132a-graph-created-claim-1713",
+  "base_commit": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+  "worktree_diff_names": ["tests/editing_conformance/test_recorded_graph_roots.py"],
+  "target_file": {
+    "base_sha256": "3fbfa95179561a95ac4930cb745f16f2ac636b8755372963730e5cda7466a895",
+    "after_sha256": "10abe08639878ee746884736368977e5302f06a6db8ab6d0ac7198125d9f89a8"
+  },
+  "shared_consumers_unchanged": {
+    "tests/sdk/test_timeline_commit_graph_roots.py": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+    "tests/sdk/test_timeline_semantic_reservations.py": "6112aa1743b0958da91eaec8354a2861a7189b43b3c5bfab2f91c5a82c13e6f0",
+    "tests/sdk/test_timeline_created_root_stage_redo.py": "2cb071c3b51207433649fff5ca04fe5e470272057b30bceb8657718ae91f3305"
+  },
+  "runtime": {
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "status_clean": true
+  },
+  "diff_stat": "3 insertions, 1 deletion"
+}

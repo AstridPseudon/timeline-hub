@@ -1,0 +1,34 @@
+{
+  "status": "source-preserved",
+  "base": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+  "fixture": {
+    "path": "tests/editing_conformance/test_recorded_graph_roots.py",
+    "test_bodies": 22,
+    "assertions": 90,
+    "parametrize_decorators": 6,
+    "predicate_change": false,
+    "authored_root_values_change": false
+  },
+  "graph_consumer": {
+    "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+    "test_bodies": 11,
+    "assertions": 33,
+    "parametrize_decorators": 7,
+    "predicate_change": false
+  },
+  "other_consumers_audited": [
+    "tests/sdk/test_timeline_semantic_reservations.py",
+    "tests/sdk/test_timeline_created_root_stage_redo.py",
+    "tests/editing_conformance/test_recorded_graph_roots.py"
+  ],
+  "preservation": {
+    "all_other_authored_inputs": true,
+    "previous_values": true,
+    "ABA": true,
+    "atomic_no_write": true,
+    "C0_graph_assertions": true,
+    "consumer_absence_assertions": false
+  },
+  "claim_source": "[root['ref'] for root in roots]",
+  "record_source": "Recording.create_entity appends root refs in handler order; Recording.finish serializes record.created refs"
+}

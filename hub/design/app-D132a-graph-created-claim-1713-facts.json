@@ -1,0 +1,28 @@
+{
+  "task": "D132a/G3",
+  "base_commit": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+  "change": "create_command declares created from the same ordered roots list consumed by test.create-roots",
+  "command_shape": {
+    "created": ["shot:new-shot", "occurrence:new-occ"],
+    "matches_args_root_refs": true,
+    "core_fields_changed": false
+  },
+  "source_trace": {
+    "prior_report": "app-D132a-graph-records-trace-1705",
+    "first_mismatch": "request.commands[0].created absent/effective [] versus authoritative recorded command.created list[string] length 2",
+    "runtime_missing_claim_refusal": "runtime_protocol/timeline_commit_auth.py:337",
+    "independent_source_verdict": "SOURCE_PASS"
+  },
+  "tests": {
+    "recorded_graph_roots": "47 passed",
+    "protected_own9": "8 passed, 1 failed",
+    "remaining_failure": "provider occurrence alias is outside its boundary",
+    "remaining_failure_location": "runtime_protocol/timeline_commit_auth.py native_site boundary resolution"
+  },
+  "scope_preserved": [
+    "authored roots, order, values, gain 1, metadata {}, and open-object nulls",
+    "90 fixture assertions and 33 graph-consumer assertions",
+    "previous values, ABA, atomic/no-write, inverse and redo predicates",
+    "all original request metadata and Runtime authentication"
+  ]
+}

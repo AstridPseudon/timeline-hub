@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T17:19:37Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 14 | status age 2m -->
+<!-- app | 2026-10-25T17:24:53Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 4m -->
 # app board, 2026-10-25T17:20Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -109,7 +109,7 @@
 | D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | merged | Author1540; independent1552 | Current file byte-exact captured120d; all16 PASS in30693. Existing7d858 setupfix home; no diff, rerun or current5e9ad behavior credit. | Agent20177 unchanged |
 | D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Qualified D100 source applicability | blocked:agent | Sol1650 and wholepath1650 complete | Both confirm first item birth hits correspondence guard before acceptance. No valid test-only fix; exact D100 dependency assessment sent Agent1655. | f53b01690 held |
 
-| D118d-graph9 | Preserve typed roots and tamper checks | Luna and independent Luna | Protected source review next | doing | app-D132a-graph-created-claim-1713 | Whole path found missing created declaration; exact 90 shared and 33 graph predicates required. Prior own9 FAIL retained. | 136c8ae6c held |
+| D118d-graph9 | Preserve typed roots and tamper checks | Luna and independent Luna | Protected source review next | review | app-D132a-graph-created-review-1720 | Created declaration authored; independent cumulative review required. Premature author tests8 PASS1 FAIL unqualified; no source or behavior GO. | 160c675a2 held |
 
 | D127-leaf-retention | Retain safe leaf and lifecycle evidence | Luna and protected Luna | App lifecycle validator repair | review | Helper231ddb; independent1630 | Helper4ee and all160 predicate mapping qualified; exact central28551 PASS23. Combined FAIL belongs App lifecycle cross checks. No activation. | 231ddb5 held |
 
@@ -117,7 +117,7 @@
 
 | D127-App-validator | Validate actual helper lifecycle schema | HARD Sol and protected Luna | Frozen helper truth table | doing | app-D127-lifecycle-source-sol-1705 | Sol implements helper-derived matrix after repeated Luna failures. Runtime helper4ee and fixed budgets remain exact. Final review owed. | 5a9e0eb523 held |
 
-| D116-native-topology4 | Prove four current checkout companions | Luna and independent Luna | Independent1705 SOURCE PASS | review | app-D116-native4-result-wholepath-1719 | Actual NEW4:3 FAIL,1 ERROR/28.85s. Three transcript-pin refusals; gate3 setup rejects closure membership. Source PASS remains scoped. | 795608e1b held |
+| D116-native-topology4 | Prove four current checkout companions | Luna and independent Luna | Independent1705 SOURCE PASS | blocked:agent | app-D116-native4-result-wholepath-1719 | Independent evidence PASS; actual3 FAIL1 ERROR. Transcript record missing; gate3 membership needs semantic commands. No valid companion-only fix established. | 795608e1b held |
 
 Integration: App d4e5284dfcc20801977cef12253b12f9cc8798fd; tree5efca939546f30b039cb9cacba7a29d7db690f2a. Entire tree equals tested adopter1615. Qualified Runtime ab1e adoption passed vendor17, artifacts3 and lint; mappings14 and protected8 exact. Receipt design/app-U4p-R2-normal-home-1624.json.
 
@@ -130,10 +130,14 @@ Blockers: Agent core — Agent owns D128 local a4e016/5e9ad core. Runtime17:04 r
 Blockers: Final render — Farm16:53 has exact91398/1daca checkouts and lock18d; awaits qualified child maker and lead profile requests. No App input owed.
 Blockers: Final cut — Full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
 Next ready: Final App review when Sol1705 finishes; graph protected review after created declaration; consume native4 actual result. Normal imports only after required reviews. No tour or SWAP qualification.
-live 3 / cap 3; ready-undispatched 0. App Sol1705, native4 result reader1719 and graph created claim1713 allocated. Source starts require4.6GB with no heavy; own-node proof requires5GB; stop4GB. No heavy body.
+live 2 / cap 3; ready-undispatched 0. App Sol1705 and graph protected reviewer1720 active. Native4 source dependency returned to Agent. Source starts require4.6GB with no heavy; own-node proof requires5GB; stop4GB. No heavy body.
 INBOX consumed through2305237 bytes. H6 checked Agent17:00, Runtime17:04 and Farm16:53 actual hub boards. Farm core dropped. Runtime maker installation is a peer-owned receiving step, not an App dispatch.
 Safety: D130 absolute hold. No manager product/test/generated/pin edits, Git writes, upstream push, M5, credentials or refused-route retry. All current inputs, outputs, branches and reports preserved; historical dirty/orphan guard targets untouched.
 Later: Parent labels2, native checkout originals4 and trackbatch1 retain word-source setup errors; new native companions are separate. D79 waits ZIP; E4 dropped. Applicability17 and pair16 historical source equality grant no current behavior credit.
-Pass17:18: graph1705 read-only trace SOURCE PASS identifies request.created absent versus recorded two-root claim. Ordinary OUR-test caller correction1713 dispatched on same136c source after native4 actual admission. No authored roots or predicates may change. Native4 source reviewer1705 PASS; proof1711 actually admitted at5005950976 bytes after earlier capacity-only NOTRUN. App Sol1705 continues comprehensive helper-derived validator; no competing writer. Exact safe graph and native review evidence copied to flat design.
+Pass17:16: graph1705 read-only trace SOURCE PASS identifies request.created absent versus recorded two-root claim. Ordinary OUR-test caller correction1713 dispatched on same136c source after native4 actual admission. No authored roots or predicates may change. Native4 source reviewer1705 PASS; proof1711 actually admitted at5005950976 bytes after earlier capacity-only NOTRUN. App Sol1705 continues comprehensive helper-derived validator; no competing writer. Exact safe graph and native review evidence copied to flat design.
 
-Pass17:20: native4 actual result retained and safe packet published; independent read-only1719 checks exact outcome and both first seams, no rerun or source edit. Three cases fail transcript-pin admission and gate3 setup errors on semantic closure membership. No behavior or retirement credit.
+Pass17:17: native4 actual result retained and safe packet published; independent read-only1719 checks exact outcome and both first seams, no rerun or source edit. Three cases fail transcript-pin admission and gate3 setup errors on semantic closure membership. No behavior or retirement credit.
+
+Pass17:19: graph1713 completed exact created declaration; reported47 fixture PASS and8/9 own cases before required protected review. This violated brief ordering; results retained as unqualified author evidence. Independent1720 dispatched immediately for cumulative source and all123 predicates, then exact9 only if actual light admission permits. No premature merge or behavior GO.
+
+Blockers: Native companions — Agent shared source allocator needs genuine persisted transcript authority and current semantic topology route. Independent1719 found no valid companion-only fix; no unchanged rerun or normal merge.

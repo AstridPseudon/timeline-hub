@@ -1,0 +1,49 @@
+{
+  "schema": "app-d116-native4-result-review-source-custody-v1",
+  "agent_head": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "base": "tl/app-D116-native-topology-first-return-1700",
+  "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "source_review": {
+    "worker": "app-D116-native-topology-final-review-1705",
+    "verdict": "PASS",
+    "published_base": "9350a674a85b9328e7ac1e8192e66dcc65cfbf77",
+    "first_return_parent": "b24d99bd3c286336c09d4d0661e9691d3b160559",
+    "authorized_delta": [
+      "tests/editing_conformance/native_checkout_current_fixture.py",
+      "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+    ],
+    "first_return_stat": "13 insertions(+), 3 deletions(-)",
+    "protected_originals_match": true
+  },
+  "module_origins_verified": {
+    "astrid.sdk.timeline.commit": "worktree/astrid/sdk/timeline/commit.py",
+    "astrid.sdk.timeline.emitter": "worktree/astrid/sdk/timeline/emitter.py",
+    "astrid.sdk.timeline.native_word_anchor": "worktree/astrid/sdk/timeline/native_word_anchor.py",
+    "runtime_protocol.timeline_commit_provider": "runtime-pin/runtime_protocol/timeline_commit_provider.py",
+    "runtime_protocol.service": "runtime-pin/runtime_protocol/service.py"
+  },
+  "registered_provider": {
+    "factory": "astrid.sdk.timeline.commit.create_runtime_commit_service",
+    "type": "astrid.sdk.timeline.commit.RuntimeCommitService",
+    "registration": "case.service.register_timeline_commit_provider(agent.create_runtime_commit_service())",
+    "runtime_dispatch": "RuntimeService._execute_timeline_commit -> coordinator.execute -> provider.commit"
+  },
+  "clean_after_review": {
+    "agent_worktree": true,
+    "runtime_worktree": true
+  },
+  "raw_artifacts": {
+    "xml_sha256": "373b641a79231cc6ee0ee89088545857914e9493b7bc257aaf138ae9ccbc281d",
+    "log_sha256": "586bd0a66488db7e0701148b249ba2f3a13317cd208521d86b63ea03710d3f09",
+    "location": "private retained own4 evidence; not copied"
+  },
+  "published_prior_diagnosis": {
+    "reports": [
+      "design/rt-Agent-D107-pin-wholepath-1634-report.md",
+      "design/rt-D107-custody-final-review-1646-report.md"
+    ],
+    "owner": "UNKNOWN",
+    "record": "EXACTMISSING"
+  }
+}

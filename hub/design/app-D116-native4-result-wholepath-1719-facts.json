@@ -1,0 +1,79 @@
+{
+  "schema": "app-d116-native4-result-review-v1",
+  "task": "D116 independent review of retained exact NEW4 result",
+  "source_verdict": "PASS_EVIDENCE_FIDELITY",
+  "functional_verdict": "FAIL",
+  "agent_head": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "admission_available_bytes_decimal": 5005950976,
+  "admission_floor_bytes_decimal": 5000000000,
+  "exact_nodes": [
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[disjoint-peer]",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[touching-peer-conflict]",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_commands_file_preserves_opaque_unchanged_write_and_undo",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable"
+  ],
+  "raw_outcome": {
+    "tests": 4,
+    "passed": 0,
+    "failed": 3,
+    "errors": 1,
+    "skipped": 0,
+    "duration_seconds": 28.85,
+    "launches": 1,
+    "retries": 0
+  },
+  "failure_boundaries": {
+    "three_word_cases": {
+      "caller": "Checkout.attach/TimelineSession public outbox path; commands-file uses the registered CLI caller",
+      "trace": [
+        "current fixture prepare -> registered Runtime provider",
+        "Checkout or commands-file caller -> commit request",
+        "Runtime service commit_timeline -> provider RuntimeCommitService.commit",
+        "Agent _hydrate -> RequestCommitPort.transcript_source for exact declared pins",
+        "native_word_anchor.run -> compile_authored -> binding"
+      ],
+      "first_observed_guard": "astrid/sdk/timeline/native_word_anchor.py:100",
+      "wrapper": "astrid/sdk/timeline/native_word_anchor.py:381",
+      "message": "exact transcript pin is missing or revoked or ambiguous",
+      "public_error": "CommandError kind=invalid_anchor",
+      "root_owner": "UNKNOWN per published Agent D107 reports; do not infer ownership from the consumer guard",
+      "missing_record": "EXACTMISSING: accepted pre-restart head commit_manifest_json, immutable transcript input content/binding/link rows, or restarted provider private capture for the same DocumentPin was not retained"
+    },
+    "gate3": {
+      "caller": "tests/editing_conformance/native_checkout_current_fixture.py:90-93 -> emit_document_commands -> registered provider",
+      "first_observed_guard": "tests/editing_conformance/native_checkout_current_fixture.py:90",
+      "message": "closure membership and edges require semantic commands",
+      "public_error": "RuntimeErrorBase: CommitRejected during fixture setup",
+      "unsafe_requested_change": "parent.occurrences membership is changed to [] while adding gate3-title",
+      "safe_paths": [
+        "parent/config/tracks via list.insert/list.move",
+        "parent/clips via list.insert/list.move and parent/config/clips mirror",
+        "parent/registry/assets/<asset-id> object fields when media is Runtime-verified",
+        "non-edge fields below parent/occurrences/occurrence_id:<id>"
+      ],
+      "managed_paths_refused": [
+        "parent/occurrences membership at path [occurrences]",
+        "parent/occurrences/occurrence_id:<id> edge fields occurrence_id, shot_id, shot_revision_id, revision_id"
+      ]
+    }
+  },
+  "source_files": {
+    "native_checkout_current_fixture.py": "777e566993c8424b7b1c364a2d67598e2fa10865697fcee4e1e6e5a35c9897f1",
+    "test_native_checkout_current_equivalent.py": "999c1848c59254db7fd75a3a741685bbfa979a4b6864b85bd2b29c8eb87cb395",
+    "native_word_anchor_fixture.py": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+    "current_word_baseline_fixture.py": "c219e1a2bd5e04e7e68825552cbb1e85e12b3d77f4124609ce1942b1679b40d5",
+    "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "astrid/sdk/timeline/native_word_anchor.py": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744",
+    "astrid/sdk/timeline/emitter.py": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a"
+  },
+  "policy": {
+    "source_edits": false,
+    "product_edits": false,
+    "test_rerun": false,
+    "collection_rerun": false,
+    "retry": false,
+    "raw_xml_or_log_published": false
+  }
+}
