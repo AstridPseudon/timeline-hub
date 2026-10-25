@@ -1,0 +1,89 @@
+{
+  "schema": "timeline.d118c.tail-safe-inputs.v1",
+  "scope": "existing-artifact input reader only",
+  "production_changes": false,
+  "new_acquisition": false,
+  "raw_payloads_commands_auth_keys_urls": false,
+  "runs": {
+    "original_2016": {
+      "run_id": "agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016",
+      "xml_sha256": "72872c77087719a692bff4b48b8d85ea62b9931d59a502c8e246daee0c81c18a",
+      "body_log_sha256": "0f34700508bfe35c94d2811d502b442cc36d4db4c4643303d8ca5dfd8f5af001",
+      "agent": {"commit":"070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2","tree":"6056414359ae9fce08d999d54cbecf719fda33c3"},
+      "runtime": {"commit":"1daca2a33f6d7b10053e07c539a54843e3984e19","tree":"a522511414947e48e317a5e5c2103483b121a750"},
+      "app": {"commit":"04beedcd18b8abb49502f65cd3facaafbe93db4e","tree":"300d186a45d3d0b96ef2ae39582f1e9b4a760e7d"},
+      "composition": {"commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "pinned_30693": {
+      "run_id": "agent-agent-core-full-1025102421-30693",
+      "xml_sha256": "483e5c13c3443147488da436acc49d0c0f322f7e4d3f020fbd656a548459139c",
+      "body_log_sha256": "7bae40c4091d95ada10ea4c91980941acb06310ff5761004b6c8d66828565805",
+      "agent": {"commit":"120d71202a9ebafa99011aec417cfca6d67fafc2","tree":"9a65a32e4462464825df6cfe4d913408694ad4c5"},
+      "runtime": {"commit":"1daca2a33f6d7b10053e07c539a54843e3984e19","tree":"a522511414947e48e317a5e5c2103483b121a750"},
+      "app": {"commit":"96d4754b4eef0591a208d6b51b60c30fc44b6915","tree":"3f9da34c4f116026ec21022421850e0608ba653b"},
+      "composition": {"commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    }
+  },
+  "nodes": [
+    {
+      "scope":"occurrence-create-false",
+      "original_ordinal":1286,
+      "current_ordinal":1455,
+      "selector":"tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]",
+      "source_sha256":"26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+      "outcome":"failed",
+      "classification":"UNCLASSIFIED_NO_UPSTREAM_EXACT_NODE",
+      "failure_type":"AssertionError / assertion_failure",
+      "failure_location":"tests/editing_conformance/test_commit_runtime_occurrence_create.py:70",
+      "helper_frame":"_prove_birth at line 173",
+      "observed":"subprocess return code 1 where expected status was 409",
+      "product_frame":null,
+      "no_write_status":"UNKNOWN"
+    },
+    {
+      "scope":"occurrence-create-true",
+      "original_ordinal":1289,
+      "current_ordinal":1460,
+      "selector":"tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+      "source_sha256":"26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+      "outcome":"failed",
+      "classification":"UNCLASSIFIED_NO_UPSTREAM_EXACT_NODE",
+      "failure_type":"AssertionError / assertion_failure",
+      "failure_location":"tests/editing_conformance/test_commit_runtime_occurrence_create.py:70",
+      "helper_frame":"_prove_birth at line 173",
+      "observed":"subprocess return code 1 where expected status was 409",
+      "product_frame":null,
+      "no_write_status":"UNKNOWN",
+      "failure_text_sha256":"1b6fb40635fb3d07dad7f056e30744f0e369b4b09429261177ec7f762ab425a9"
+    },
+    {
+      "scope":"prepared-video",
+      "original_ordinal":3116,
+      "current_ordinal":3171,
+      "selector":"tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+      "source_sha256":"4cc89a0a7bbc4e1020e3ca9c676e7125113ee60c517bfdf5e3cd0821620cdc2c",
+      "outcome":"failed",
+      "classification":"UNCLASSIFIED_NO_UPSTREAM_EXACT_NODE",
+      "failure_type":"AssertionError / assertion_failure",
+      "failure_location":"tests/editing_conformance/test_prepared_video_birth.py:251",
+      "boundary":"stale Runtime identity assertion before behavioral path",
+      "product_frame":null,
+      "no_write_status":"UNKNOWN",
+      "d118c_candidate_source_sha256":"ba4acbcdee2a42c85ab7070a26983a59915ddcdfc395214761feb727c8e44476",
+      "retained_failure_text_sha256":"8b471510787bc3c5c1ab572e71368d50af920ac7b3e11b3f9a1803d1c59fdf4e"
+    }
+  ],
+  "d102_redacted_chain": {
+    "status":"already captured only",
+    "shape":"Runtime catch-all -> bounded redacted diagnostic -> source file/line/function plus opaque correlation",
+    "target_specific_product_chain_present":false,
+    "inference_allowed":false
+  },
+  "ownership": {
+    "occurrence_author":"App",
+    "prepared_video_author":"App",
+    "competing_source_edit":false,
+    "candidate_occurrence_2f9c56":"failed review; unapplied"
+  },
+  "validation": {"tests":"N/A","typecheck":"N/A","lint":"N/A"}
+}
