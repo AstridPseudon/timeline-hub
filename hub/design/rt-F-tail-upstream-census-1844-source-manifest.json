@@ -1,0 +1,279 @@
+{
+  "D123_reference": {
+    "current_normal_capture": "b545b616a41388e24d6f2a59b7b45c26cb057d2c",
+    "live_source_not_substituted": true,
+    "normal_tree": "977649c62950e5650637734b494caee791e35d50",
+    "patch_sha256": "b0ff420595441fccb3d0a37b70715e5b2bff373cecd9d2e51c82be51cbe58f6b",
+    "product_source_tree": "2b16085a4984ee6965036dea5e2af6882a95de05",
+    "protected_predicates": 173,
+    "reference_only": true
+  },
+  "D68_reference": {
+    "builder_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "preservation_rule": "preserve source refs/status and apply frozen upstream_base -> gated_tip delta; no reverse patching",
+    "reviewed_commit": "fda54be4fd6e855682f2bb1ca567e7172ec71fcd",
+    "wrapper_sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779"
+  },
+  "captured_at_utc": "2026-10-25T18:47:50.824772Z",
+  "frozen_candidate_refs": {
+    "agent": {
+      "ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "root": "/home/user/peteromallet/astrid-agent",
+      "sha": "11caf1d9de291d76f491cf69f7942606b7471d7a"
+    },
+    "app": {
+      "ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+      "root": "/home/user/banodoco/reigh-app",
+      "sha": "8f0c2484463e9b666d184a744d52e252984e551a"
+    },
+    "composition": {
+      "ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-composition",
+      "root": "/home/user/peteromallet/timeline-composition",
+      "sha": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a"
+    },
+    "runtime": {
+      "ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+      "root": "/home/user/banodoco/banodoco-workspace-runtime",
+      "sha": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd"
+    }
+  },
+  "git_version": "git version 2.43.0",
+  "integration_source": {
+    "agent": {
+      "branch": "tl/integration",
+      "captured_head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "captured_tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+      "frozen_candidate": {
+        "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+        "date": "2026-10-19T14:13:38+02:00",
+        "object_type": "commit",
+        "parents": [
+          "a05304e4564136e9ac8986ecf2e191dfbc068560"
+        ],
+        "subject": "Preserve legacy optional track labels in canonical film views",
+        "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"
+      },
+      "frozen_candidate_ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "merge_base": {
+        "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+        "date": "2026-10-24T15:31:07+02:00",
+        "object_type": "commit",
+        "parents": [
+          "39dda14913702e572197d511ad483ae0f20bf5b1",
+          "0d5d16af6f83d595144d21ea1cef2b5a468b9836"
+        ],
+        "subject": "Merge origin/main into merge/local-generation",
+        "tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"
+      },
+      "ours": {
+        "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+        "date": "2026-10-25T07:16:53+00:00",
+        "object_type": "commit",
+        "parents": [
+          "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+          "39b9587c0801c23ccb7b8a93a438e1dbb564b710"
+        ],
+        "subject": "Merge tl/agt-D108-runtime-c916-adoption",
+        "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7"
+      },
+      "root": "/home/user/work/agent",
+      "status_clean": true,
+      "status_porcelain": "",
+      "upstream": {
+        "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+        "date": "2026-10-25T16:51:50+01:00",
+        "object_type": "commit",
+        "parents": [
+          "b565ea8dd8252e41bb802140ed2df3a1a4efd68b"
+        ],
+        "subject": "Fail loudly when the VibeComfy pin cannot be read",
+        "tree": "f53cc8426ccef8760021ef6207303bce7b80e777"
+      },
+      "upstream_prefix_requested": "886a3183bd",
+      "upstream_ref": "refs/remotes/origin/main"
+    },
+    "app": {
+      "branch": "tl/integration",
+      "captured_head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+      "captured_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+      "frozen_candidate": {
+        "commit": "8f0c2484463e9b666d184a744d52e252984e551a",
+        "date": "2026-10-19T13:14:27+02:00",
+        "object_type": "commit",
+        "parents": [
+          "cb8e024095adbcd114e9cc469dcdaed46bfbebe2"
+        ],
+        "subject": "Expose occurrence-scoped media Add and swap in shot popup",
+        "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"
+      },
+      "frozen_candidate_ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+      "merge_base": {
+        "commit": "3881e9440688f774878e18806da2dc5c993a9b00",
+        "date": "2026-10-24T16:19:39+02:00",
+        "object_type": "commit",
+        "parents": [
+          "3e4aaec6f6c1a9c5f5e1111fc99a120871f4464d"
+        ],
+        "subject": "Connection: a slow Astrid still connects",
+        "tree": "210e5739b838ef7655f87238c711704301d12846"
+      },
+      "ours": {
+        "commit": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+        "date": "2026-10-25T17:36:50+00:00",
+        "object_type": "commit",
+        "parents": [
+          "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+          "9bf465285ccf57be31570c800d4a1f86855ebc4e"
+        ],
+        "subject": "Merge tl/app-D127-reviewed-clean-bootstrap-1731",
+        "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20"
+      },
+      "root": "/home/user/work/app",
+      "status_clean": true,
+      "status_porcelain": "",
+      "upstream": {
+        "commit": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+        "date": "2026-10-25T16:49:57+01:00",
+        "object_type": "commit",
+        "parents": [
+          "c27957dcfd429c0e585bfa73ec53d961d0b6743b"
+        ],
+        "subject": "Show the connection step in place in the editor; never navigate",
+        "tree": "591327d499ea162dd2ccb4620e577480aa305fae"
+      },
+      "upstream_prefix_requested": "213318f1ec",
+      "upstream_ref": "refs/remotes/origin/main"
+    },
+    "composition": {
+      "branch": "tl/integration",
+      "captured_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "captured_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "frozen_candidate": {
+        "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+        "date": "2026-10-17T19:38:39+02:00",
+        "object_type": "commit",
+        "parents": [
+          "5947abc0f5d6c0f5ca20bb478521e010e76be039",
+          "dfc14e43451979198e5821175edf2b4fdb8d9375"
+        ],
+        "subject": "Compose stable145 scene evaluation with admitted I144 modifier source",
+        "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"
+      },
+      "frozen_candidate_ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-composition",
+      "merge_base": {
+        "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+        "date": "2026-05-07T14:05:54+02:00",
+        "object_type": "commit",
+        "parents": [
+          "bd1011bce5fb4f172269911555568d18e6b22f3c"
+        ],
+        "subject": "v0.0.6",
+        "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120"
+      },
+      "ours": {
+        "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "date": "2026-10-22T23:41:19+00:00",
+        "object_type": "commit",
+        "parents": [
+          "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+          "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+        ],
+        "subject": "Merge tl/vw-V1-composition-meta",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      },
+      "root": "/home/user/work/composition",
+      "status_clean": true,
+      "status_porcelain": "",
+      "upstream": {
+        "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+        "date": "2026-05-07T14:05:54+02:00",
+        "object_type": "commit",
+        "parents": [
+          "bd1011bce5fb4f172269911555568d18e6b22f3c"
+        ],
+        "subject": "v0.0.6",
+        "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120"
+      },
+      "upstream_prefix_requested": "67b8aa3d0d",
+      "upstream_ref": "refs/remotes/origin/main"
+    },
+    "runtime": {
+      "branch": "tl/integration",
+      "captured_head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "captured_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+      "frozen_candidate": {
+        "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+        "date": "2026-10-19T11:59:17+02:00",
+        "object_type": "commit",
+        "parents": [
+          "3b2350723f1681a0484df5c43f9642194c02222e"
+        ],
+        "subject": "Preserve host cleanup restart fence when marker persistence fails",
+        "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"
+      },
+      "frozen_candidate_ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+      "merge_base": {
+        "commit": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+        "date": "2026-10-24T14:20:43+02:00",
+        "object_type": "commit",
+        "parents": [
+          "6ce4f026ca1b115debb8d5fbd72d882290f0b345",
+          "9960caca5125695265b56ac8f4b346dc0a4d088c"
+        ],
+        "subject": "Merge fix/windows-realm-104: Windows realm ownership and admission fixes (issue 104)",
+        "tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075"
+      },
+      "ours": {
+        "commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+        "date": "2026-10-25T17:54:32+00:00",
+        "object_type": "commit",
+        "parents": [
+          "ab1e4f6141987706132916e2da16477f5a019464",
+          "8faff00d412521ba4b004858e1290250dcdfe0dc"
+        ],
+        "subject": "Merge tl/app-D127-helper-clean-import-1734",
+        "tree": "d5cb9335a03bf4764548e379ce180a66bf966910"
+      },
+      "root": "/home/user/work/runtime",
+      "status_clean": true,
+      "status_porcelain": "",
+      "upstream": {
+        "commit": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+        "date": "2026-10-25T16:33:41+01:00",
+        "object_type": "commit",
+        "parents": [
+          "2b632c68e3547db073e21c6adaa8bc5db4c0360a"
+        ],
+        "subject": "tests: declare the O_PATH ancestor-walk skips (PR #6 follow-up)",
+        "tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210"
+      },
+      "upstream_prefix_requested": "dbcdb97c50",
+      "upstream_ref": "refs/remotes/origin/main"
+    }
+  },
+  "live_vs_reference_note": "D123 b0ff and D68 evidence are preservation references only. Census comparisons use the live integration heads captured once above.",
+  "requested_named_upstream": {
+    "agent": {
+      "ref": "refs/remotes/origin/main",
+      "requested_prefix": "886a3183bd",
+      "sha": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55"
+    },
+    "app": {
+      "ref": "refs/remotes/origin/main",
+      "requested_prefix": "213318f1ec",
+      "sha": "213318f1ec6ea5c324787bbd1c30a73072d1151a"
+    },
+    "composition": {
+      "ref": "refs/remotes/origin/main",
+      "requested_prefix": "67b8aa3d0d",
+      "sha": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+    },
+    "runtime": {
+      "ref": "refs/remotes/origin/main",
+      "requested_prefix": "dbcdb97c50",
+      "sha": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"
+    }
+  },
+  "schema_version": 1,
+  "task": "rt-F-tail-upstream-census-1844"
+}

@@ -1,0 +1,98 @@
+{
+  "manifest_version": 1,
+  "purpose": "source/object/tree/command provenance for a future pristine-upstream core comparison",
+  "capture": {
+    "read_only": true,
+    "worker": "rt-F-tail-pristine-core-prep-1844",
+    "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "upstream_census": "pending",
+    "final_D59_tuple": "pending"
+  },
+  "bench_provenance": {
+    "route_id": "agent-core-full",
+    "command_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-core-full-command.md",
+    "environment": "env -i; PYTHONNOUSERSITE=1; MAIN-bound D73 manifest/profile/schema/node",
+    "timeout_seconds": 45,
+    "output": "$P4_D73_EVIDENCE/agent-core-full.xml",
+    "execution_status": "not run by this worker",
+    "historical_30693_status": "classification provenance only",
+    "final_D59_status": "pending"
+  },
+  "named_upstream_objects": [
+    {
+      "role": "Agent",
+      "repository": "/home/user/peteromallet/astrid-agent",
+      "selector": "codex/candidate-sdk",
+      "frozen_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+      "parent": "b565ea8dd8252e41bb802140ed2df3a1a4efd68b",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "exact_source_checks": {
+        "tools/p4-d73-pinned-launch.sh": "missing",
+        "tests/core/test_timeline_element_orphan_cleanup.py": "missing",
+        "tests/core/test_timeline_element_publication_runtime.py": "missing",
+        "tests/core/rendering/test_local_schema.py": "missing",
+        "tests/packs/rendering/test_composition_package.py": "missing",
+        "tests/test_installer_bootstrap_schema.py": "missing",
+        "tests/packs/video_editing/test_runtime_publication_chain.py": "present; requested D54a node absent"
+      }
+    },
+    {
+      "role": "Runtime",
+      "repository": "/home/user/banodoco/banodoco-workspace-runtime",
+      "selector": "codex/candidate-runtime",
+      "frozen_ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+      "commit": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+      "tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210",
+      "parent": "2b632c68e3547db073e21c6adaa8bc5db4c0360a",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
+    },
+    {
+      "role": "App",
+      "repository": "/home/user/banodoco/reigh-app",
+      "selector": "codex/candidate-app-qualified",
+      "frozen_ref": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+      "commit": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+      "tree": "591327d499ea162dd2ccb4620e577480aa305fae",
+      "parent": "c27957dcfd429c0e585bfa73ec53d961d0b6743b",
+      "origin": "https://github.com/banodoco/reigh-app"
+    },
+    {
+      "role": "Composition",
+      "repository": "/home/user/peteromallet/timeline-composition",
+      "selector": "origin/main",
+      "authentic_local_origin": true,
+      "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "parent": "bd1011bce5fb4f172269911555568d18e6b22f3c",
+      "origin": "https://github.com/peteromallet/timeline-composition"
+    }
+  ],
+  "current_integration_objects": [
+    {"role":"Agent","repository":"/home/user/work/agent","branch":"tl/integration","commit":"547e10456250c1b5bcf63b44a50c90ff0563ce1e","tree":"68df11fad2b082fa12d99ca20404e1e40e350cd7","parents":["070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2","39b9587c0801c23ccb7b8a93a438e1dbb564b710"],"origin":"https://github.com/peteromallet/astrid-agent","status":"clean"},
+    {"role":"Runtime","repository":"/home/user/work/runtime","branch":"tl/integration","commit":"e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9","tree":"d5cb9335a03bf4764548e379ce180a66bf966910","parents":["ab1e4f6141987706132916e2da16477f5a019464","8faff00d412521ba4b004858e1290250dcdfe0dc"],"origin":"https://github.com/banodoco/banodoco-workspace-runtime","status":"clean"},
+    {"role":"App","repository":"/home/user/work/app","branch":"tl/integration","commit":"d5a1d1ab6550187e377fd7387d300102b8b82ece","tree":"7be73e2cbbcf89d627bf7b9da940b4ce17968c20","parents":["d4e5284dfcc20801977cef12253b12f9cc8798fd","9bf465285ccf57be31570c800d4a1f86855ebc4e"],"origin":"https://github.com/banodoco/reigh-app","status":"clean"},
+    {"role":"Composition","repository":"/home/user/work/composition","branch":"tl/integration","commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148","parents":["7a95a40b07ea0d273e17afb69dbc3456b603f2bc","c05fdb171fe37c1d5817a060ecb716a329ee821a"],"origin":"https://github.com/peteromallet/timeline-composition","status":"clean"}
+  ],
+  "current_agent_source_blobs": {
+    "tools/p4-d73-pinned-launch.sh": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "tests/editing_conformance/test_provider_occurrence_fork.py": "601101d7cf0074514fa3bca4ade5ec1133380b01",
+    "tests/editing_conformance/test_recipe_occurrence_fork.py": "1ad7b6c1b1b1190152270b7f106d449ac8aa4479",
+    "tests/packs/video_editing/test_runtime_publication_chain.py": "38884ae901955ce59a949daaf788936812c4dd45"
+  },
+  "named_upstream_comparable_source_blobs": {
+    "tests/packs/video_editing/test_runtime_publication_chain.py": "b17c8d1b622a84eda1a076c00ffd17697f1260a9",
+    "tests/editing_conformance/test_provider_occurrence_fork.py": "missing",
+    "tests/editing_conformance/test_recipe_occurrence_fork.py": "missing"
+  },
+  "retained_source_records": [
+    {"path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-core-full-command.md","sha256":"8cd8300a4d1e4f43dc7895907f858f6f2989e964ba38cc017a6a5fbe4cfd2637","role":"published normal route and exact 22-root argv"},
+    {"path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D118-core-D89a-1024-manifest.json","sha256":"cedead2abfba280fa9bd190f277b094d0a5f704d6f6fd02ad182502a1c5f9f25","role":"historical 30693 classification provenance"},
+    {"path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D54-core-classify-1230.md","sha256":"bdb1e3eb8d7d7cdc52c18360c9dd2b4fb64087f72c5a70765d53ba70524e9f67","role":"original D54a classification"},
+    {"path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D54-current-rollup-1254.json","sha256":"ac14855e5d8337194960d424726352c6343ca3b2f705654e9f4fc498e574a43a","role":"retained current rollup"},
+    {"path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D60-1452-d54a-comparison-summary.json","sha256":"32629d74606a8cfb30cae48c306110219713fcd16080371fc6c58a2b6010c531","role":"historical D60 comparison"},
+    {"path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-7070-inventory-1144.json","sha256":"3edb8afd7d56a78ddda3311360b0f51e4bd4406c237388cf76caa6a7baca035b","role":"private 100 Python plus TypeScript matrix provenance"},
+    {"path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-7070-inventory-1144/evidence/candidate/core-inventory.json","sha256":"1bf6b9ab77c72c644cf6d8f9cafdaff31ce8dd2f9e0ec04693567641f30c9d0d","role":"private selector and source_hashes authority"}
+  ]
+}

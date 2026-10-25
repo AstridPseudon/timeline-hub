@@ -1,0 +1,168 @@
+{
+  "task": "rt-F-tail-pristine-core-prep-1844",
+  "scope": "F-final ZIP tail(b), D54a pristine upstream core preparation only",
+  "base_composition_integration": {
+    "repo": "/home/user/work/wt/rt-F-tail-pristine-core-prep-1844",
+    "branch": "tl/rt-F-tail-pristine-core-prep-1844",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "parents": [
+      "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+      "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+    ],
+    "status": "clean at snapshot"
+  },
+  "named_upstream": {
+    "Agent": {
+      "repo": "/home/user/peteromallet/astrid-agent",
+      "ref": "codex/candidate-sdk",
+      "frozen_r4_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+      "parent": "b565ea8dd8252e41bb802140ed2df3a1a4efd68b",
+      "origin": "https://github.com/peteromallet/astrid-agent"
+    },
+    "Runtime": {
+      "repo": "/home/user/banodoco/banodoco-workspace-runtime",
+      "ref": "codex/candidate-runtime",
+      "frozen_r4_ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+      "commit": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+      "tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210",
+      "parent": "2b632c68e3547db073e21c6adaa8bc5db4c0360a",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
+    },
+    "App": {
+      "repo": "/home/user/banodoco/reigh-app",
+      "ref": "codex/candidate-app-qualified",
+      "frozen_r4_ref": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+      "commit": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+      "tree": "591327d499ea162dd2ccb4620e577480aa305fae",
+      "parent": "c27957dcfd429c0e585bfa73ec53d961d0b6743b",
+      "origin": "https://github.com/banodoco/reigh-app"
+    },
+    "Composition": {
+      "repo": "/home/user/peteromallet/timeline-composition",
+      "authentic_local_origin_ref": "origin/main",
+      "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "parent": "bd1011bce5fb4f172269911555568d18e6b22f3c",
+      "origin": "https://github.com/peteromallet/timeline-composition"
+    }
+  },
+  "current_integration_snapshot": {
+    "captured_once": true,
+    "Agent": {
+      "repo": "/home/user/work/agent",
+      "branch": "tl/integration",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+      "parents": ["070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "39b9587c0801c23ccb7b8a93a438e1dbb564b710"],
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "status": "clean"
+    },
+    "Runtime": {
+      "repo": "/home/user/work/runtime",
+      "branch": "tl/integration",
+      "commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+      "parents": ["ab1e4f6141987706132916e2da16477f5a019464", "8faff00d412521ba4b004858e1290250dcdfe0dc"],
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "status": "clean"
+    },
+    "App": {
+      "repo": "/home/user/work/app",
+      "branch": "tl/integration",
+      "commit": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+      "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+      "parents": ["d4e5284dfcc20801977cef12253b12f9cc8798fd", "9bf465285ccf57be31570c800d4a1f86855ebc4e"],
+      "origin": "https://github.com/banodoco/reigh-app",
+      "status": "clean"
+    },
+    "Composition": {
+      "repo": "/home/user/work/composition",
+      "branch": "tl/integration",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": ["7a95a40b07ea0d273e17afb69dbc3456b603f2bc", "c05fdb171fe37c1d5817a060ecb716a329ee821a"],
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "status": "clean"
+    }
+  },
+  "retained_evidence": {
+    "route": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-core-full-command.md",
+      "sha256": "8cd8300a4d1e4f43dc7895907f858f6f2989e964ba38cc017a6a5fbe4cfd2637"
+    },
+    "historical_30693_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D118-core-D89a-1024-manifest.json",
+      "sha256": "cedead2abfba280fa9bd190f277b094d0a5f704d6f6fd02ad182502a1c5f9f25",
+      "use": "classification provenance only; no current credit"
+    },
+    "original_D54a": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D54-core-classify-1230.md",
+      "sha256": "bdb1e3eb8d7d7cdc52c18360c9dd2b4fb64087f72c5a70765d53ba70524e9f67",
+      "use": "original 276-node classification; unchanged"
+    },
+    "current_rollup": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D54-current-rollup-1254.json",
+      "sha256": "ac14855e5d8337194960d424726352c6343ca3b2f705654e9f4fc498e574a43a",
+      "use": "retained rollup; not reclassified"
+    },
+    "D60_summary": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D60-1452-d54a-comparison-summary.json",
+      "sha256": "32629d74606a8cfb30cae48c306110219713fcd16080371fc6c58a2b6010c531",
+      "use": "historical 9244377 comparison; not current upstream"
+    },
+    "private_current_matrix": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-7070-inventory-1144.json",
+      "sha256": "3edb8afd7d56a78ddda3311360b0f51e4bd4406c237388cf76caa6a7baca035b",
+      "use": "private qualification inventory only; not imported as pristine upstream"
+    },
+    "private_current_matrix_detail": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-7070-inventory-1144/evidence/candidate/core-inventory.json",
+      "sha256": "1bf6b9ab77c72c644cf6d8f9cafdaff31ce8dd2f9e0ec04693567641f30c9d0d",
+      "python_target_count": 100,
+      "typescript_target": "packages/typescript: npm test",
+      "matrix_file_count": 41,
+      "body_changes": false,
+      "use": "membership/body-hash authority for private candidate only"
+    },
+    "upstream_census": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-upstream-census-1844",
+      "status": "pending/no evidence available at preparation time",
+      "use": "must be obtained by final cut; no census result is claimed here"
+    }
+  },
+  "prerequisites": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "venv": "/home/user/work/venv-agent",
+    "schema_root": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "composition_version": "0.0.14",
+    "profile": "existing immutable profile bound by MAIN; no provisioning",
+    "d73_manifest": "existing MAIN-bound manifest; path not guessed",
+    "d73_evidence": "existing MAIN-bound evidence directory; path not guessed",
+    "budgets": {"pytest_timeout_seconds": 45, "policy": "no heavy run"}
+  },
+  "bench_provenance": {
+    "normal_route": "agent-core-full",
+    "selector_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-core-full-command.md",
+    "output_layout": "$P4_D73_EVIDENCE/agent-core-full.xml",
+    "environment": "env -i with PYTHONNOUSERSITE=1; existing manifest-bound profile/schema/node",
+    "budget_seconds": 45,
+    "historical_bench": "30693 retained as historical classification only; no current credit",
+    "current_bench": "not run",
+    "final_D59_bench": "pending",
+    "zip_tail_bench": "not run"
+  },
+  "decision_boundary": {
+    "current_upstream_census": "pending",
+    "final_D59_tuple": "pending",
+    "D130_paths": "excluded completely",
+    "absent_upstream_selectors": "unknown; never PASS",
+    "source_install_or_alternate_route": "prohibited",
+    "execution": "not performed"
+  }
+}

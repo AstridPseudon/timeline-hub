@@ -1,0 +1,2820 @@
+{
+  "captured_at_utc": "2026-10-25T18:47:50.824772Z",
+  "captured_integration_heads": {
+    "agent": {
+      "branch": "tl/integration",
+      "head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "status_clean": true,
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7"
+    },
+    "app": {
+      "branch": "tl/integration",
+      "head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+      "status_clean": true,
+      "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20"
+    },
+    "composition": {
+      "branch": "tl/integration",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "status_clean": true,
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "branch": "tl/integration",
+      "head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "status_clean": true,
+      "tree": "d5cb9335a03bf4764548e379ce180a66bf966910"
+    }
+  },
+  "comparisons": {
+    "agent": {
+      "both_touched_files": 40,
+      "clean_trivial_merge": false,
+      "conflict_count": 40,
+      "conflicts": [
+        {
+          "base": {
+            "blob": "c1e9602b23b1f46ef4b8c089916cff28e3e2a90d",
+            "mode": "100644",
+            "path": "astrid/chat/acpProcessHost.test.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -124,6 +124,27 @@"
+          ],
+          "ours": {
+            "blob": "8619d6ebdefd8c6f259b53002a6c6a452dc9e3eb",
+            "mode": "100644",
+            "path": "astrid/chat/acpProcessHost.test.ts"
+          },
+          "ours_hunks": [
+            "@@ -341,0 +342 @@ describe('AcpProcessHost', () => {"
+          ],
+          "path": "astrid/chat/acpProcessHost.test.ts",
+          "upstream": {
+            "blob": "4fef09d77e2655de84f90e5265d6a8bb3cdeb8cf",
+            "mode": "100644",
+            "path": "astrid/chat/acpProcessHost.test.ts"
+          },
+          "upstream_hunks": [
+            "@@ -126,0 +127,21 @@ describe('AcpProcessHost', () => {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "c410008357d85b695896f0ccb4ae4baeac4b6851",
+            "mode": "100644",
+            "path": "astrid/chat/acpProcessHost.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -58,11 +58,15 @@",
+            "@@ -70,6 +74,7 @@",
+            "@@ -78,6 +83,7 @@",
+            "@@ -449,8 +455,12 @@"
+          ],
+          "ours": {
+            "blob": "971388aa835af637972501e7666a41450b66d1fd",
+            "mode": "100644",
+            "path": "astrid/chat/acpProcessHost.ts"
+          },
+          "ours_hunks": [
+            "@@ -512,0 +513 @@ export class AcpProcessHost {"
+          ],
+          "path": "astrid/chat/acpProcessHost.ts",
+          "upstream": {
+            "blob": "4aa1d7de8c7e123c7b327c4e6201b0a3e842eb2c",
+            "mode": "100644",
+            "path": "astrid/chat/acpProcessHost.ts"
+          },
+          "upstream_hunks": [
+            "@@ -60,0 +61,3 @@ export class AcpProcessHostError extends Error {",
+            "@@ -65,0 +69 @@ export class AcpProcessHostError extends Error {",
+            "@@ -72,0 +77 @@ export class AcpProcessHostError extends Error {",
+            "@@ -80,0 +86 @@ export class AcpProcessHostError extends Error {",
+            "@@ -451,0 +458,4 @@ export class AcpProcessHost {",
+            "@@ -453 +463 @@ export class AcpProcessHost {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "6b7329a3f6d807305fea46434c68812cbb377cf8",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-acp-bridge.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -7,12 +7,14 @@",
+            "@@ -105,6 +107,7 @@",
+            "@@ -346,7 +349,7 @@",
+            "@@ -380,11 +383,13 @@",
+            "@@ -429,8 +434,11 @@",
+            "@@ -438,7 +446,8 @@",
+            "@@ -450,6 +459,19 @@",
+            "@@ -705,6 +727,8 @@"
+          ],
+          "ours": {
+            "blob": "90818a91e509a270899dcfff11be7343fee5d06a",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-acp-bridge.ts"
+          },
+          "ours_hunks": [
+            "@@ -1032,0 +1033 @@ export function startAcpBridge(config: AstridAcpBridgeConfig): ReturnType<typeof"
+          ],
+          "path": "astrid/chat/astrid-acp-bridge.ts",
+          "upstream": {
+            "blob": "455d13f34b4b1c3aa121afbc79066d73163ae3e9",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-acp-bridge.ts"
+          },
+          "upstream_hunks": [
+            "@@ -9,0 +10 @@ import { getAstridAgentModelCatalog } from './astrid-agent-models.ts';",
+            "@@ -12,0 +14 @@ import { discoverLocalAgents } from './astrid-local-agents.ts';",
+            "@@ -15 +17 @@ import { SharedAcpSessions, sharedSessionModels } from './astrid-shared-acp-sess",
+            "@@ -107,0 +110 @@ type BridgeOptions = {",
+            "@@ -349 +352 @@ function hostError(error: unknown): { status: number; body: JsonRecord } {",
+            "@@ -382,0 +386 @@ export class AstridAcpBridge {",
+            "@@ -387,0 +392 @@ export class AstridAcpBridge {",
+            "@@ -432,2 +437,5 @@ export class AstridAcpBridge {",
+            "@@ -441 +449,2 @@ export class AstridAcpBridge {",
+            "@@ -452,0 +462,13 @@ export class AstridAcpBridge {",
+            "@@ -707,0 +730,2 @@ export class AstridAcpBridge {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "ab398a8f5e6ba1525039b3f93df110f91b6369c0",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-acp-models.test.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -4,7 +4,7 @@",
+            "@@ -126,6 +126,11 @@",
+            "@@ -214,11 +219,14 @@"
+          ],
+          "ours": {
+            "blob": "63d5b69eb9b979debac8c371ee2b81e59e59e49b",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-acp-models.test.ts"
+          },
+          "ours_hunks": [
+            "@@ -299,0 +300 @@ test('catalog levels belong only to the model that advertised them and stale sup"
+          ],
+          "path": "astrid/chat/astrid-acp-models.test.ts",
+          "upstream": {
+            "blob": "6bc1c1b8c90ba5bc415e4857159b1df116aaaeca",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-acp-models.test.ts"
+          },
+          "upstream_hunks": [
+            "@@ -7 +7 @@ import { bridgeTestClient } from './bridge-test-client.ts';",
+            "@@ -128,0 +129,5 @@ test('agents lazily share one bootstrap per ready agent, hide native sessions, a",
+            "@@ -217 +222,4 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'",
+            "@@ -219 +227 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'",
+            "@@ -221 +229 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'"
+          ]
+        },
+        {
+          "base": {
+            "blob": "1599b6c98a1f9df64ba15f5cdafed383a23f0213",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-agent-models.test.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -18,6 +18,7 @@",
+            "@@ -26,8 +27,13 @@",
+            "@@ -62,6 +68,17 @@",
+            "@@ -71,9 +88,15 @@",
+            "@@ -144,7 +167,7 @@"
+          ],
+          "ours": {
+            "blob": "ec407f3cc8514253042d40632f2be4838de835e7",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-agent-models.test.ts"
+          },
+          "ours_hunks": [
+            "@@ -288,0 +289 @@ if (args[0] === '--agent-profile-file') {"
+          ],
+          "path": "astrid/chat/astrid-agent-models.test.ts",
+          "upstream": {
+            "blob": "21fa3c0c168a49d7c5464032c0539063b97ccedf",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-agent-models.test.ts"
+          },
+          "upstream_hunks": [
+            "@@ -20,0 +21 @@ const catalog = {",
+            "@@ -28,0 +30 @@ const catalog = {",
+            "@@ -30,0 +33,4 @@ const catalog = {",
+            "@@ -64,0 +71,11 @@ function readCalls(path: string): unknown[] {",
+            "@@ -73,0 +91 @@ test('agent model catalog maps the CLI response to the safe ACP projection and p",
+            "@@ -76 +94,6 @@ test('agent model catalog maps the CLI response to the safe ACP projection and p",
+            "@@ -147 +170 @@ setInterval(() => {}, 1000);"
+          ]
+        },
+        {
+          "base": {
+            "blob": "82ae8f42a1cdeaa26b88285c9bbcb24727b15838",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-agent-models.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -12,6 +12,10 @@",
+            "@@ -29,7 +33,8 @@",
+            "@@ -51,6 +56,10 @@"
+          ],
+          "ours": {
+            "blob": "3888b90d8fae241f1752f8a833948a25c0fed2c4",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-agent-models.ts"
+          },
+          "ours_hunks": [
+            "@@ -74,0 +75 @@ export async function getAstridAgentModelCatalog(options: AstridModelOptions): P"
+          ],
+          "path": "astrid/chat/astrid-agent-models.ts",
+          "upstream": {
+            "blob": "6223a477ec1e36750c29034abeefc564ad322fb8",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-agent-models.ts"
+          },
+          "upstream_hunks": [
+            "@@ -14,0 +15,4 @@ type AstridModelSnapshot = {",
+            "@@ -32 +36,2 @@ async function runAstrid(options: AstridModelOptions, args: string[]): Promise<s",
+            "@@ -53,0 +59,4 @@ function modelCatalog(output: string): AcpModelCatalog {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "f4258dd781697032459928e1c8b8d732d904d16d",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agent-host.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -2,7 +2,7 @@",
+            "@@ -101,8 +101,8 @@"
+          ],
+          "ours": {
+            "blob": "e223c10ac00986c5a9a6a3ef58ee23f4ab85cb0f",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agent-host.ts"
+          },
+          "ours_hunks": [
+            "@@ -121,0 +122 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio"
+          ],
+          "path": "astrid/chat/astrid-local-agent-host.ts",
+          "upstream": {
+            "blob": "aa938dd6765c2c752c468d4353858a0f3066a2a0",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agent-host.ts"
+          },
+          "upstream_hunks": [
+            "@@ -5 +5 @@ import { ASTRID_ACP_COMMAND, ASTRID_ACP_CONTEXT_SYSTEM_PROMPT, resolveAstridAcpS",
+            "@@ -104,2 +104,2 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio"
+          ]
+        },
+        {
+          "base": {
+            "blob": "31c8f3fe305e134b1362c880b58568e632c4f775",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agents.test.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -3,7 +3,7 @@",
+            "@@ -43,7 +43,7 @@",
+            "@@ -53,6 +53,7 @@",
+            "@@ -85,7 +86,7 @@",
+            "@@ -106,12 +107,14 @@",
+            "@@ -131,7 +134,7 @@",
+            "@@ -257,11 +260,13 @@",
+            "@@ -297,11 +302,11 @@",
+            "@@ -310,6 +315,7 @@",
+            "@@ -364,3 +370,62 @@"
+          ],
+          "ours": {
+            "blob": "0fcbe2999d13bf0590644067cbf9fe3aa71b2df1",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agents.test.ts"
+          },
+          "ours_hunks": [
+            "@@ -365,0 +366 @@ test('mixed external-agent authentication states stay associated with their agen"
+          ],
+          "path": "astrid/chat/astrid-local-agents.test.ts",
+          "upstream": {
+            "blob": "6e614214b69905a65999f6c0048fc6124d8582e8",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agents.test.ts"
+          },
+          "upstream_hunks": [
+            "@@ -6 +6 @@ import { join } from 'node:path';",
+            "@@ -46 +46 @@ test('reports Not installed when external CLIs are absent and has no adapter fie",
+            "@@ -55,0 +56 @@ test('reports Not installed when external CLIs are absent and has no adapter fie",
+            "@@ -88 +89 @@ test('Windows discovery finds a user CLI .cmd shim from the registry PATH', asyn",
+            "@@ -109 +110 @@ test('Windows Claude npm shims resolve to the JavaScript entrypoint used by auth",
+            "@@ -114,0 +116,2 @@ test('Windows Claude npm shims resolve to the JavaScript entrypoint used by auth",
+            "@@ -134 +137 @@ test('Windows Codex npm shims run the package entrypoint for auth status and ret",
+            "@@ -259,0 +263 @@ test('reads Claude JSON login status and falls back to text only when JSON is in",
+            "@@ -264,0 +269 @@ test('reads Claude JSON login status and falls back to text only when JSON is in",
+            "@@ -300 +305 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+            "@@ -304 +309 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+            "@@ -312,0 +318 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+            "@@ -365,0 +372,57 @@ test('mixed external-agent authentication states stay associated with their agen"
+          ]
+        },
+        {
+          "base": {
+            "blob": "9fe3e410c3d968404a5782f38d38489b889cad3d",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agents.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -3,7 +3,8 @@",
+            "@@ -229,13 +230,13 @@",
+            "@@ -260,7 +261,7 @@",
+            "@@ -285,9 +286,9 @@"
+          ],
+          "ours": {
+            "blob": "e7b15de9f5add03f5432efa5737cd918a0e56758",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agents.ts"
+          },
+          "ours_hunks": [
+            "@@ -297,0 +298 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce"
+          ],
+          "path": "astrid/chat/astrid-local-agents.ts",
+          "upstream": {
+            "blob": "2344c0dafdf56b6baa75b3079aacf92885618d1c",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-local-agents.ts"
+          },
+          "upstream_hunks": [
+            "@@ -6 +6,2 @@ import { delimiter, dirname, join, win32 as win32Path } from 'node:path';",
+            "@@ -232 +233 @@ async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?",
+            "@@ -238 +239 @@ function choice(id: LocalAgentId, state: LocalAgentChoice['state'], platform: No",
+            "@@ -263 +264 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA",
+            "@@ -288 +289 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce",
+            "@@ -290 +291 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce"
+          ]
+        },
+        {
+          "base": {
+            "blob": "42c112ac990bc9a65029f84da0f1774012898807",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-project-chat.test.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -73,6 +73,27 @@"
+          ],
+          "ours": {
+            "blob": "e1fe377ff8af99d9de11ec7694c7ea76b1c1d896",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-project-chat.test.ts"
+          },
+          "ours_hunks": [
+            "@@ -262,0 +263 @@ test('parallel identical drafts survive project version retries without advancin"
+          ],
+          "path": "astrid/chat/astrid-project-chat.test.ts",
+          "upstream": {
+            "blob": "f399a7c64eb802f9a1bb118072f2e5039dd3e12c",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-project-chat.test.ts"
+          },
+          "upstream_hunks": [
+            "@@ -75,0 +76,21 @@ test('New assigns Main when the project has no previous Main chat', async () =>"
+          ]
+        },
+        {
+          "base": {
+            "blob": "f33578bc20b21df3d356e881b1b149bdb0631ad7",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-project-chat.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -279,46 +279,53 @@"
+          ],
+          "ours": {
+            "blob": "13f1b6c0113202ad79242d8d79938f7539069639",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-project-chat.ts"
+          },
+          "ours_hunks": [
+            "@@ -323,0 +324 @@ export class ProjectChatRegistry {"
+          ],
+          "path": "astrid/chat/astrid-project-chat.ts",
+          "upstream": {
+            "blob": "c8efeaf87a403c3056b9870a3ac701588c4499ad",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-project-chat.ts"
+          },
+          "upstream_hunks": [
+            "@@ -282,40 +282,47 @@ export class ProjectChatRegistry {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "fa469335d2bd4636032e1d7b0a643cc358733fa5",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-shared-acp-sessions.test.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -175,6 +175,29 @@"
+          ],
+          "ours": {
+            "blob": "c3bc7b16d52302212e46470c33adf5219a766001",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-shared-acp-sessions.test.ts"
+          },
+          "ours_hunks": [
+            "@@ -345,0 +346 @@ test('queued validation receives metadata accepted by the previous setter', asyn"
+          ],
+          "path": "astrid/chat/astrid-shared-acp-sessions.test.ts",
+          "upstream": {
+            "blob": "790c31642a30321273d428d92059aad445e13196",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-shared-acp-sessions.test.ts"
+          },
+          "upstream_hunks": [
+            "@@ -175,0 +176,23 @@ test('writer takeover is atomic around turns, retries dedupe, and detach retains"
+          ]
+        },
+        {
+          "base": {
+            "blob": "aacf7ffe99c4f9ce4f21edbfabc5f67b48be1be2",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-shared-acp-sessions.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -326,7 +326,13 @@"
+          ],
+          "ours": {
+            "blob": "f31f2fc92f7990ad480796316e1f502704c779a1",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-shared-acp-sessions.ts"
+          },
+          "ours_hunks": [
+            "@@ -427,0 +428 @@ export class SharedAcpSessions {"
+          ],
+          "path": "astrid/chat/astrid-shared-acp-sessions.ts",
+          "upstream": {
+            "blob": "8e6c944bff0feeff1fb41f0b57904957a233c765",
+            "mode": "100644",
+            "path": "astrid/chat/astrid-shared-acp-sessions.ts"
+          },
+          "upstream_hunks": [
+            "@@ -329 +329,7 @@ export class SharedAcpSessions {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "a328096587b3a850011906dcdcb6eb32f37b9eac",
+            "mode": "100644",
+            "path": "astrid/chat/discoveryProbe.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -2,11 +2,11 @@",
+            "@@ -44,6 +44,10 @@"
+          ],
+          "ours": {
+            "blob": "09ba9f0b007097bae3b5e36fdf4182f508fb2d49",
+            "mode": "100644",
+            "path": "astrid/chat/discoveryProbe.ts"
+          },
+          "ours_hunks": [
+            "@@ -58,0 +59 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil"
+          ],
+          "path": "astrid/chat/discoveryProbe.ts",
+          "upstream": {
+            "blob": "ade24dfe88bc54254fdb8dc581b63229e4dec875",
+            "mode": "100644",
+            "path": "astrid/chat/discoveryProbe.ts"
+          },
+          "upstream_hunks": [
+            "@@ -5 +5 @@ import { join } from 'node:path';",
+            "@@ -9 +9 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil",
+            "@@ -46,0 +47,4 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil"
+          ]
+        },
+        {
+          "base": {
+            "blob": "adc3829fb0332ea5f60f4b2d404170df6d088654",
+            "mode": "100644",
+            "path": "astrid/chat/localAgents.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,4 +1,5 @@",
+            "@@ -6,7 +7,8 @@",
+            "@@ -15,19 +17,24 @@",
+            "@@ -37,7 +44,7 @@",
+            "@@ -58,6 +65,28 @@",
+            "@@ -80,17 +109,22 @@"
+          ],
+          "ours": {
+            "blob": "5f3dbcb908121958983a3bc3b78d67555246d538",
+            "mode": "100644",
+            "path": "astrid/chat/localAgents.ts"
+          },
+          "ours_hunks": [
+            "@@ -114,0 +115 @@ export function isExternalAgentSession(sessionId: string, agent?: typeof EXTERNA"
+          ],
+          "path": "astrid/chat/localAgents.ts",
+          "upstream": {
+            "blob": "7bd7d4d419d6ce55f8edafe91c214369af781896",
+            "mode": "100644",
+            "path": "astrid/chat/localAgents.ts"
+          },
+          "upstream_hunks": [
+            "@@ -1,0 +2 @@ import { z } from 'zod';",
+            "@@ -9 +10,2 @@ export const EXTERNAL_AGENT_IDS = LOCAL_AGENT_IDS.filter((id): id is Exclude<Loc",
+            "@@ -18,5 +20,6 @@ export function formatAstridSignInLine(root: string, platform = process.platform",
+            "@@ -24,5 +27,5 @@ function astridSignInLine(): string {",
+            "@@ -30 +33,5 @@ function astridSignInLine(): string {",
+            "@@ -40 +47 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {",
+            "@@ -60,0 +68,22 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {",
+            "@@ -83 +112 @@ export const localAgentCatalogSchema = z.object({",
+            "@@ -88,0 +118,5 @@ export const localAgentCatalogSchema = z.object({",
+            "@@ -93 +127 @@ export const localAgentCatalogSchema = z.object({"
+          ]
+        },
+        {
+          "base": {
+            "blob": "c01412c65eee7ecba641f2ae6f61f22d4b73cc65",
+            "mode": "100644",
+            "path": "astrid/chat/modelCatalog.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -12,6 +12,8 @@"
+          ],
+          "ours": {
+            "blob": "5de3f13200a72ecbaa5d071af0fc774ac7b09764",
+            "mode": "100644",
+            "path": "astrid/chat/modelCatalog.ts"
+          },
+          "ours_hunks": [
+            "@@ -20,0 +21 @@ export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;"
+          ],
+          "path": "astrid/chat/modelCatalog.ts",
+          "upstream": {
+            "blob": "7c650c0c4415ceb56387f83f6c149ba8c901eebd",
+            "mode": "100644",
+            "path": "astrid/chat/modelCatalog.ts"
+          },
+          "upstream_hunks": [
+            "@@ -14,0 +15,2 @@ export const modelCatalogSchema = z.strictObject({"
+          ]
+        },
+        {
+          "base": {
+            "blob": "c04a5c992684d30378f07c09c977f4af869fe13e",
+            "mode": "100644",
+            "path": "astrid/chat/service.mjs"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,4 +1,5 @@",
+            "@@ -7,10 +8,21 @@",
+            "@@ -81,3 +93,50 @@"
+          ],
+          "ours": {
+            "blob": "945a9bcf8d0dd7ba0237afc0229ac31b3f816f23",
+            "mode": "100644",
+            "path": "astrid/chat/service.mjs"
+          },
+          "ours_hunks": [
+            "@@ -2 +2 @@",
+            "@@ -4,4 +4,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -9 +9 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -14,3 +14,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -19 +19 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -22,3 +22,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -26 +27,25 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -30,3 +55,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -35 +60 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -38 +63 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -40 +65 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -42,7 +67,7 @@ Set the \\`cycles\\` parameter to \\`\"ref\"\\` to resolve cyclical schemas with defs.",
+            "@@ -51 +76 @@ ${c}`;if(/Not logged in|Run `?claude auth login/i.test(a))return\"signed-out\";if(",
+            "@@ -54 +79 @@ ${this.context}",
+            "@@ -56,3 +81,3 @@ ${this.context}"
+          ],
+          "path": "astrid/chat/service.mjs",
+          "upstream": {
+            "blob": "011689ea7756036fe71dd725e64de7f0f68a03d9",
+            "mode": "100644",
+            "path": "astrid/chat/service.mjs"
+          },
+          "upstream_hunks": [
+            "@@ -2 +2 @@",
+            "@@ -4,4 +4,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -9 +9 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -14,3 +14,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -19 +19 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -22,3 +22,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -26 +26 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -30,3 +30,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -35 +35 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -38 +38 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -40 +40 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "@@ -42,7 +42,7 @@ Set the \\`cycles\\` parameter to \\`\"ref\"\\` to resolve cyclical schemas with defs.",
+            "@@ -51 +51 @@ ${c}`;if(/Not logged in|Run `?claude auth login/i.test(a))return\"signed-out\";if(",
+            "@@ -54 +54 @@ ${this.context}",
+            "@@ -56,3 +56,3 @@ ${this.context}"
+          ]
+        },
+        {
+          "base": {
+            "blob": "a498d3e9124331cc00b4e962db82c33462bde225",
+            "mode": "100644",
+            "path": "astrid/chat/service.test.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -51,15 +51,16 @@",
+            "@@ -68,6 +69,7 @@"
+          ],
+          "ours": {
+            "blob": "f88e5e44a24981d8ad6a7a4191234b1d8ea15d96",
+            "mode": "100644",
+            "path": "astrid/chat/service.test.ts"
+          },
+          "ours_hunks": [
+            "@@ -143,0 +144 @@ for (const alreadyEnded of [false, true]) {"
+          ],
+          "path": "astrid/chat/service.test.ts",
+          "upstream": {
+            "blob": "4cc86ad0985733d8776294a6e0c6bc2b45842d1c",
+            "mode": "100644",
+            "path": "astrid/chat/service.test.ts"
+          },
+          "upstream_hunks": [
+            "@@ -54 +54 @@ for (const bindFails of [false, true]) {",
+            "@@ -55,0 +56 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste",
+            "@@ -62 +63 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste",
+            "@@ -70,0 +72 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste"
+          ]
+        },
+        {
+          "base": {
+            "blob": "fc30a4eef1dca949e5d09283366bb6a71ac4f651",
+            "mode": "100644",
+            "path": "astrid/chat/service.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,4 +1,5 @@",
+            "@@ -13,6 +14,7 @@"
+          ],
+          "ours": {
+            "blob": "3b6dfa004bcc452d1c55712aa760d81dae85367c",
+            "mode": "100644",
+            "path": "astrid/chat/service.ts"
+          },
+          "ours_hunks": [
+            "@@ -68,0 +69 @@ if (import.meta.main) await runChatService();"
+          ],
+          "path": "astrid/chat/service.ts",
+          "upstream": {
+            "blob": "ec6b9ca21483b242fb0c50f55a8309e907644904",
+            "mode": "100644",
+            "path": "astrid/chat/service.ts"
+          },
+          "upstream_hunks": [
+            "@@ -1,0 +2 @@ import { randomBytes } from 'node:crypto';",
+            "@@ -15,0 +17 @@ export async function runChatService(env = process.env, createServer = createAst"
+          ]
+        },
+        {
+          "base": {
+            "blob": "faee0ff3e1a1c400e8bdaca212b88fe966ef31cd",
+            "mode": "100644",
+            "path": "astrid/core/gateway/dispatch.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -72,6 +72,11 @@",
+            "@@ -551,6 +556,7 @@"
+          ],
+          "ours": {
+            "blob": "239587646b1cb0b259d454bc2cc1faa7922b2c7a",
+            "mode": "100644",
+            "path": "astrid/core/gateway/dispatch.py"
+          },
+          "ours_hunks": [
+            "@@ -189,0 +190,2 @@ def _dispatch_doctor(args: list[str]) -> int:",
+            "@@ -192 +193,0 @@ def _dispatch_doctor(args: list[str]) -> int:"
+          ],
+          "path": "astrid/core/gateway/dispatch.py",
+          "upstream": {
+            "blob": "402362763963c5858bd1003bce5b26c0cf42fbbd",
+            "mode": "100644",
+            "path": "astrid/core/gateway/dispatch.py"
+          },
+          "upstream_hunks": [
+            "@@ -74,0 +75,5 @@ def _dispatch_media(args: list[str]) -> int:",
+            "@@ -552,0 +558 @@ _TOP_LEVEL_HANDLERS = {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "da1b528d46e3504e54b3024c16a84a04336986f9",
+            "mode": "100644",
+            "path": "astrid/core/generation/gpu_environment.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -18,6 +18,8 @@",
+            "@@ -104,7 +106,10 @@"
+          ],
+          "ours": {
+            "blob": "f42e84cce1a9dccf50dadd2f53b3c193890b5f4f",
+            "mode": "100644",
+            "path": "astrid/core/generation/gpu_environment.py"
+          },
+          "ours_hunks": [
+            "@@ -279,0 +280 @@ if __name__ == \"__main__\":"
+          ],
+          "path": "astrid/core/generation/gpu_environment.py",
+          "upstream": {
+            "blob": "9bccdf3fdeb510c687e971930c8f96ec0729f4c3",
+            "mode": "100644",
+            "path": "astrid/core/generation/gpu_environment.py"
+          },
+          "upstream_hunks": [
+            "@@ -20,0 +21,2 @@ from typing import Any",
+            "@@ -107 +109,4 @@ def _description(pack: str) -> tuple[Path, dict[str, Any]]:"
+          ]
+        },
+        {
+          "base": {
+            "blob": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+            "mode": "100644",
+            "path": "astrid/installer/backend.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -30,6 +30,7 @@",
+            "@@ -510,6 +511,26 @@",
+            "@@ -591,6 +612,7 @@",
+            "@@ -599,6 +621,9 @@",
+            "@@ -640,8 +665,26 @@"
+          ],
+          "ours": {
+            "blob": "73930778510cb08d5a50f86767ffea0098fc2007",
+            "mode": "100644",
+            "path": "astrid/installer/backend.py"
+          },
+          "ours_hunks": [
+            "@@ -171,0 +172,17 @@ class Backend:",
+            "@@ -382,0 +400 @@ class Backend:",
+            "@@ -399,6 +416,0 @@ class Backend:",
+            "@@ -634,0 +647 @@ class Backend:"
+          ],
+          "path": "astrid/installer/backend.py",
+          "upstream": {
+            "blob": "a609940892e8d2507fe77e661a4018f6e9fd5c1e",
+            "mode": "100644",
+            "path": "astrid/installer/backend.py"
+          },
+          "upstream_hunks": [
+            "@@ -32,0 +33 @@ from .core import (",
+            "@@ -500,0 +502,20 @@ class Backend:",
+            "@@ -581,0 +603 @@ class Backend:",
+            "@@ -589,0 +612,3 @@ class Backend:",
+            "@@ -630,0 +656,13 @@ class Backend:",
+            "@@ -634,0 +673,2 @@ class Backend:"
+          ]
+        },
+        {
+          "base": {
+            "blob": "2db5d9f8b16f058cd728596e15542653d01c2c10",
+            "mode": "100644",
+            "path": "astrid/installer/core.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -204,16 +204,16 @@",
+            "@@ -271,6 +271,10 @@",
+            "@@ -300,8 +304,8 @@"
+          ],
+          "ours": {
+            "blob": "15feb564a12299642b168c3aa6bf9a555bee0716",
+            "mode": "100644",
+            "path": "astrid/installer/core.py"
+          },
+          "ours_hunks": [
+            "@@ -309,0 +310 @@ def new_version_id(manifest: dict) -> str:"
+          ],
+          "path": "astrid/installer/core.py",
+          "upstream": {
+            "blob": "8b7c68acd64654d46309046c0c3c69d7266d7cf7",
+            "mode": "100644",
+            "path": "astrid/installer/core.py"
+          },
+          "upstream_hunks": [
+            "@@ -207 +206,0 @@ class Installer:",
+            "@@ -208,0 +208 @@ class Installer:",
+            "@@ -215 +214,0 @@ class Installer:",
+            "@@ -216,0 +216 @@ class Installer:",
+            "@@ -273,0 +274,4 @@ class Installer:",
+            "@@ -303 +306,0 @@ class Installer:",
+            "@@ -304,0 +308 @@ class Installer:"
+          ]
+        },
+        {
+          "base": {
+            "blob": "c803aadda87f7e9f9b0dd59d6eb020d1993c3d0a",
+            "mode": "100644",
+            "path": "astrid/installer/launcher.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -2,11 +2,121 @@"
+          ],
+          "ours": {
+            "blob": "2d9b58ea07588c5058b213ee99da9a03926fea5e",
+            "mode": "100644",
+            "path": "astrid/installer/launcher.py"
+          },
+          "ours_hunks": [
+            "@@ -63,0 +64 @@ def install(root: Path) -> tuple[Path, ...]:"
+          ],
+          "path": "astrid/installer/launcher.py",
+          "upstream": {
+            "blob": "6537e27183aee0d09c8c03f10c057b0e307dd415",
+            "mode": "100644",
+            "path": "astrid/installer/launcher.py"
+          },
+          "upstream_hunks": [
+            "@@ -4,0 +5,2 @@ from __future__ import annotations",
+            "@@ -5,0 +8 @@ import os",
+            "@@ -6,0 +10 @@ from pathlib import Path",
+            "@@ -9,0 +14,106 @@ from ..core.util import process as _process"
+          ]
+        },
+        {
+          "base": {
+            "blob": "3a3c3290ba1fd0a2c68d78b19afab9ab1a8b4359",
+            "mode": "100644",
+            "path": "astrid/installer/omp/recipe.json"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,46 +1,46 @@"
+          ],
+          "ours": {
+            "blob": "e1ac1cfe00bcad6a40daf1a015b77c4a43548031",
+            "mode": "100644",
+            "path": "astrid/installer/omp/recipe.json"
+          },
+          "ours_hunks": [
+            "@@ -49,0 +50 @@"
+          ],
+          "path": "astrid/installer/omp/recipe.json",
+          "upstream": {
+            "blob": "0cbf40c60a51b5d62e0db80dfb7030ee6a1e7299",
+            "mode": "100644",
+            "path": "astrid/installer/omp/recipe.json"
+          },
+          "upstream_hunks": [
+            "@@ -3 +3 @@",
+            "@@ -5 +5 @@",
+            "@@ -8,3 +8,3 @@",
+            "@@ -17,3 +17,3 @@",
+            "@@ -25,3 +25,3 @@",
+            "@@ -33,3 +33,3 @@",
+            "@@ -41,3 +41,3 @@"
+          ]
+        },
+        {
+          "base": {
+            "blob": "2974b81ddc0f7213d1a30a1e3354b5e577dc32b6",
+            "mode": "100644",
+            "path": "astrid/installer/service.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -110,8 +110,10 @@"
+          ],
+          "ours": {
+            "blob": "a916575d476a7dc60501151ad824aa778683cb5b",
+            "mode": "100644",
+            "path": "astrid/installer/service.py"
+          },
+          "ours_hunks": [
+            "@@ -299,0 +300 @@ class Service:"
+          ],
+          "path": "astrid/installer/service.py",
+          "upstream": {
+            "blob": "a3aa8e5ba45e98e3f124b909541ce8683a68fd22",
+            "mode": "100644",
+            "path": "astrid/installer/service.py"
+          },
+          "upstream_hunks": [
+            "@@ -113,2 +113,4 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str ="
+          ]
+        },
+        {
+          "base": {
+            "blob": "868f7179bc673e67484180c76ae065316c2ce051",
+            "mode": "100644",
+            "path": "astrid/installer/tools.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -20,7 +20,7 @@",
+            "@@ -317,7 +317,7 @@",
+            "@@ -388,7 +388,7 @@"
+          ],
+          "ours": {
+            "blob": "8a456b340050be5eff7678cbd5db9645f79e4fb9",
+            "mode": "100644",
+            "path": "astrid/installer/tools.py"
+          },
+          "ours_hunks": [
+            "@@ -517,0 +518 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str"
+          ],
+          "path": "astrid/installer/tools.py",
+          "upstream": {
+            "blob": "3efcc8dfd64b24eb7e79023ed95886af86466252",
+            "mode": "100644",
+            "path": "astrid/installer/tools.py"
+          },
+          "upstream_hunks": [
+            "@@ -23 +23 @@ FILTERS = {\"ebur128\", \"silencedetect\", \"astats\", \"signalstats\", \"blackdetect\",",
+            "@@ -320 +320 @@ def load_omp_recipe() -> dict:",
+            "@@ -391 +391 @@ def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, r"
+          ]
+        },
+        {
+          "base": {
+            "blob": "f5c18de30093a3013dcf8c9951445f25d55e7ef2",
+            "mode": "100644",
+            "path": "astrid/packs/rendering/docs/SKILL.md"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -535,8 +535,8 @@"
+          ],
+          "ours": {
+            "blob": "7dee1d8c84afc9a1f8b15150f55db0642d2be142",
+            "mode": "100644",
+            "path": "astrid/packs/rendering/docs/SKILL.md"
+          },
+          "ours_hunks": [
+            "@@ -176,27 +176,28 @@ lane.",
+            "@@ -212,2 +213 @@ Use `timelines log <timeline> --project <project> --verify --json` to verify the",
+            "@@ -216,7 +216,16 @@ SDK checkout operations:",
+            "@@ -225,9 +234,47 @@ python3 -m astrid timelines publish <timeline> --project <project> -m \"<what cha",
+            "@@ -287,11 +334,16 @@ Use this loop for every inspection or edit:",
+            "@@ -307,4 +359,6 @@ The short agent preamble is:",
+            "@@ -345,2 +399,2 @@ unregistered top-level `config.structure` is invalid. These maps are retained",
+            "@@ -353,4 +407,4 @@ shared shot metadata.",
+            "@@ -359 +413,3 @@ coordinator-issued target as a detached bundle. The target's",
+            "@@ -361,24 +417,2 @@ assert shown.ok",
+            "@@ -387,6 +421,5 @@ receipt = bound.publish(work, idempotency_key=frozen[\"candidate_digest\"])",
+            "@@ -396,2 +429,2 @@ report = []",
+            "@@ -407,5 +440 @@ for placement in work[\"placements\"]:",
+            "@@ -414,3 +443,3 @@ bound.validate(work)",
+            "@@ -654 +683 @@ that import/runtime capability as unavailable rather than inventing it.",
+            "@@ -657,5 +686,2 @@ Use the same pinned parent composition for direct edits and code-driven batch",
+            "@@ -664,5 +690 @@ supported edits, use ordinary Python against the detached same-schema bundle:",
+            "@@ -670,3 +692,5 @@ from astrid.sdk.authoring_bundle import (",
+            "@@ -674,6 +697,0 @@ candidate = open_authoring_bundle(",
+            "@@ -682,21 +700,21 @@ publication = publish_authoring_candidate(candidate, writer, idempotency_key=run",
+            "@@ -714,5 +732,5 @@ Do not reconstruct or save a legacy whole-document `config`/`registry` payload",
+            "@@ -736,2 +754,6 @@ project-level shot records. They do not rewrite a timeline document or replace",
+            "@@ -764,3 +786,4 @@ Inspect its detached plan and diff before deciding whether to apply it. It does",
+            "@@ -779 +802,2 @@ reconciliation, never substitution of the latest text.",
+            "@@ -786 +810 @@ python3 scripts/timeline_document.py check --file /tmp/edit.json",
+            "@@ -788 +812 @@ python3 -m astrid timelines script <timeline> --project <project> --json",
+            "@@ -791,0 +816,5 @@ python3 -m astrid timelines script <timeline> --project <project> --revision <pa",
+            "@@ -920,4 +949,4 @@ composition without requiring a video render; use `rendering.render` when an"
+          ],
+          "path": "astrid/packs/rendering/docs/SKILL.md",
+          "upstream": {
+            "blob": "715b37ce9b3d10dda3fd0a1c048967e86ffd3249",
+            "mode": "100644",
+            "path": "astrid/packs/rendering/docs/SKILL.md"
+          },
+          "upstream_hunks": [
+            "@@ -509,2 +509,2 @@ crop, effects, or appearance in the composition. Use the installed Astrid"
+          ]
+        },
+        {
+          "base": {
+            "blob": "e553ad26f259f64b9723b7c35551b5dc539ee7b6",
+            "mode": "100644",
+            "path": "astrid/packs/vibecomfy/environment.windows-nvidia.json"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -12,8 +12,7 @@"
+          ],
+          "ours": {
+            "blob": "3242b3bedb504c636b1486943aef7626fe5986c4",
+            "mode": "100644",
+            "path": "astrid/packs/vibecomfy/environment.windows-nvidia.json"
+          },
+          "ours_hunks": [
+            "@@ -30,0 +31 @@"
+          ],
+          "path": "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+          "upstream": {
+            "blob": "1eb15b7c4b5ba5c92a1882953d0f728d8d928880",
+            "mode": "100644",
+            "path": "astrid/packs/vibecomfy/environment.windows-nvidia.json"
+          },
+          "upstream_hunks": [
+            "@@ -15,2 +15 @@"
+          ]
+        },
+        {
+          "base": {
+            "blob": "726609bfa437190c051e9023a645160b5fb0310e",
+            "mode": "100644",
+            "path": "docs/install/OMP-LANDING.md"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,67 +1,161 @@"
+          ],
+          "ours": {
+            "blob": "7e425adf1c8eb666a462d4961927ddd6ce64be68",
+            "mode": "100644",
+            "path": "docs/install/OMP-LANDING.md"
+          },
+          "ours_hunks": [
+            "@@ -66,0 +67 @@ The live installer qualification also used this exact producer commit locally. I"
+          ],
+          "path": "docs/install/OMP-LANDING.md",
+          "upstream": {
+            "blob": "e4ade615a2b8cd010884248a6acb61ec8eac64d7",
+            "mode": "100644",
+            "path": "docs/install/OMP-LANDING.md"
+          },
+          "upstream_hunks": [
+            "@@ -3,3 +3,18 @@",
+            "@@ -9 +24 @@ The fixed commit is `9e282751c0059e37d2f6fbc14ffa0b450710bd23`, based on `9962a4",
+            "@@ -12,3 +27,5 @@ Use a clean clone of `peteromallet/oh-my-pi` that contains base commit `9962a46d",
+            "@@ -17 +34,3 @@ git show -s --format='%H%n%T' 9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+            "@@ -20 +39 @@ The first command must show `9e282751c0059e37d2f6fbc14ffa0b450710bd23 refs/heads",
+            "@@ -23 +42,3 @@ git push origin 9e282751c0059e37d2f6fbc14ffa0b450710bd23:refs/heads/astrid-acp-s",
+            "@@ -27 +48,3 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+            "@@ -30,4 +53,8 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+            "@@ -38 +65,11 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+            "@@ -42 +79,5 @@ Keep the app deployment gate closed until GitHub serves that commit and the app",
+            "@@ -45 +86 @@ Use Bun **1.3.14**. The reviewed fork uses the unchanged frozen Bun lock with SH",
+            "@@ -50 +91,3 @@ sha256sum bun.lock",
+            "@@ -54,2 +97,2 @@ native_scratch=\"$(mktemp -d)\"",
+            "@@ -60 +103,2 @@ rm -rf \"$native_scratch\"",
+            "@@ -64 +108,11 @@ sha256sum bun.lock",
+            "@@ -66 +120,37 @@ The latest run passed **67 tests, 0 failed, 316 assertions across two files in 1"
+          ]
+        },
+        {
+          "base": {
+            "blob": "99f72358b32f7caad7732714f0a8c6bfabe61381",
+            "mode": "100644",
+            "path": "docs/reference/services.md"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -25,8 +25,10 @@"
+          ],
+          "ours": {
+            "blob": "1cd0d382bdc335c17d63a18f1a91a8ab3981e66b",
+            "mode": "100644",
+            "path": "docs/reference/services.md"
+          },
+          "ours_hunks": [
+            "@@ -71,0 +72 @@ The app launcher no longer owns a chat process or its credential."
+          ],
+          "path": "docs/reference/services.md",
+          "upstream": {
+            "blob": "24ebff2bab996fd09401b5cd3bcc0bdfffff7273",
+            "mode": "100644",
+            "path": "docs/reference/services.md"
+          },
+          "upstream_hunks": [
+            "@@ -28,2 +28,4 @@ manifest field. It names either an exact npm package and version or a fork"
+          ]
+        },
+        {
+          "base": {
+            "blob": "c54152de6586cbf60daebb83264a9dfb4d66def8",
+            "mode": "100644",
+            "path": "docs/testing/TESTING.md"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -396,7 +396,7 @@",
+            "@@ -585,15 +585,18 @@"
+          ],
+          "ours": {
+            "blob": "fbcfcddc4c0276b8f3418180ebe4f31e8f693c26",
+            "mode": "100644",
+            "path": "docs/testing/TESTING.md"
+          },
+          "ours_hunks": [
+            "@@ -649,0 +650 @@ These are known. Report what you see, but don't stop testing for them."
+          ],
+          "path": "docs/testing/TESTING.md",
+          "upstream": {
+            "blob": "df416ca4ed5f82bf30251191239e26834ce1dd5e",
+            "mode": "100644",
+            "path": "docs/testing/TESTING.md"
+          },
+          "upstream_hunks": [
+            "@@ -399 +399 @@ Record its title and a sentence you can find again.",
+            "@@ -588,9 +588,12 @@ These are known. Report what you see, but don't stop testing for them."
+          ]
+        },
+        {
+          "base": {
+            "blob": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+            "mode": "100644",
+            "path": "scripts/refresh_omp_recipe.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,38 +1,24 @@",
+            "@@ -45,6 +31,8 @@",
+            "@@ -56,40 +44,19 @@",
+            "@@ -109,10 +76,8 @@"
+          ],
+          "ours": {
+            "blob": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+            "mode": "100644",
+            "path": "scripts/refresh_omp_recipe.py"
+          },
+          "ours_hunks": [
+            "@@ -119,0 +120 @@ if __name__ == \"__main__\":"
+          ],
+          "path": "scripts/refresh_omp_recipe.py",
+          "upstream": {
+            "blob": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d",
+            "mode": "100644",
+            "path": "scripts/refresh_omp_recipe.py"
+          },
+          "upstream_hunks": [
+            "@@ -2 +2 @@",
+            "@@ -5 +5 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+            "@@ -7,2 +7,2 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+            "@@ -15 +14,0 @@ import base64",
+            "@@ -19 +17,0 @@ import subprocess",
+            "@@ -21 +18,0 @@ import tarfile",
+            "@@ -25,11 +21,0 @@ from pathlib import Path",
+            "@@ -47,0 +34,2 @@ def main() -> None:",
+            "@@ -59,26 +47,5 @@ def main() -> None:",
+            "@@ -87 +54 @@ def main() -> None:",
+            "@@ -90 +57 @@ def main() -> None:",
+            "@@ -92 +59 @@ def main() -> None:",
+            "@@ -112 +78,0 @@ def main() -> None:",
+            "@@ -114,2 +80 @@ def main() -> None:"
+          ]
+        },
+        {
+          "base": {
+            "blob": "bac871fb2f2f25d7643921dbbed47d5599cdc721",
+            "mode": "100644",
+            "path": "tests/core/generation/test_gpu_environment.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -52,11 +52,9 @@"
+          ],
+          "ours": {
+            "blob": "f1b0783bb2badb5b094a3ed0bdbc058bd33c5ae9",
+            "mode": "100644",
+            "path": "tests/core/generation/test_gpu_environment.py"
+          },
+          "ours_hunks": [
+            "@@ -289,0 +290 @@ def test_solver_version_must_match_before_environment_creation(tmp_path, monkeyp"
+          ],
+          "path": "tests/core/generation/test_gpu_environment.py",
+          "upstream": {
+            "blob": "76f2ec69264eb03b4ad843ddead8d8bf091eed7c",
+            "mode": "100644",
+            "path": "tests/core/generation/test_gpu_environment.py"
+          },
+          "upstream_hunks": [
+            "@@ -55 +54,0 @@ def test_environment_source_pins_match_existing_admission():",
+            "@@ -59 +57,0 @@ def test_environment_source_pins_match_existing_admission():"
+          ]
+        },
+        {
+          "base": {
+            "blob": "ca328ec1ee9f25d35f22ce52a2593a0a6ce04889",
+            "mode": "100644",
+            "path": "tests/test_installer_acl.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -128,8 +128,9 @@"
+          ],
+          "ours": {
+            "blob": "67bb7505c0f270ad55952360f11bb12962f83806",
+            "mode": "100644",
+            "path": "tests/test_installer_acl.py"
+          },
+          "ours_hunks": [
+            "@@ -217,0 +218 @@ def test_unix_installer_retains_original_per_user_lock(tmp_path, monkeypatch, sy"
+          ],
+          "path": "tests/test_installer_acl.py",
+          "upstream": {
+            "blob": "88dd45748db6677ed9dd9f602c060cb4de68a219",
+            "mode": "100644",
+            "path": "tests/test_installer_acl.py"
+          },
+          "upstream_hunks": [
+            "@@ -131 +131 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path",
+            "@@ -132,0 +133 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path"
+          ]
+        },
+        {
+          "base": {
+            "blob": "e5ea5450114e2b96700368a992e2ea1f47f581c3",
+            "mode": "100644",
+            "path": "tests/test_installer_cleanup.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -25,6 +25,7 @@"
+          ],
+          "ours": {
+            "blob": "c4381c3140282cce74a94cb9e5d09de04c3cc62b",
+            "mode": "100644",
+            "path": "tests/test_installer_cleanup.py"
+          },
+          "ours_hunks": [
+            "@@ -307,0 +308 @@ def test_windows_program_cleanup_includes_retained_ownership_marker(tmp_path, mo"
+          ],
+          "path": "tests/test_installer_cleanup.py",
+          "upstream": {
+            "blob": "f030558f1aa47eed8e896116ce7bc296c05e232c",
+            "mode": "100644",
+            "path": "tests/test_installer_cleanup.py"
+          },
+          "upstream_hunks": [
+            "@@ -27,0 +28 @@ def installation(tmp_path, monkeypatch, system=None):"
+          ]
+        },
+        {
+          "base": {
+            "blob": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+            "mode": "100644",
+            "path": "tests/test_installer_lifecycle.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -39,6 +39,7 @@",
+            "@@ -65,6 +66,16 @@",
+            "@@ -78,6 +89,11 @@",
+            "@@ -98,10 +114,6 @@",
+            "@@ -116,13 +128,81 @@",
+            "@@ -164,7 +244,7 @@"
+          ],
+          "ours": {
+            "blob": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+            "mode": "100644",
+            "path": "tests/test_installer_lifecycle.py"
+          },
+          "ours_hunks": [
+            "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+          ],
+          "path": "tests/test_installer_lifecycle.py",
+          "upstream": {
+            "blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283",
+            "mode": "100644",
+            "path": "tests/test_installer_lifecycle.py"
+          },
+          "upstream_hunks": [
+            "@@ -41,0 +42 @@ class LifecycleBackend:",
+            "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+            "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+            "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+            "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+            "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+            "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+          ]
+        },
+        {
+          "base": {
+            "blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+            "mode": "100644",
+            "path": "tests/test_installer_omp_source.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -38,11 +38,11 @@",
+            "@@ -90,13 +90,13 @@",
+            "@@ -104,9 +104,9 @@",
+            "@@ -185,7 +185,7 @@",
+            "@@ -199,7 +199,7 @@",
+            "@@ -252,12 +252,12 @@",
+            "@@ -268,7 +268,7 @@",
+            "@@ -384,3 +384,60 @@"
+          ],
+          "ours": {
+            "blob": "18b560d48889ca6462778a49282413196b9e6488",
+            "mode": "100644",
+            "path": "tests/test_installer_omp_source.py"
+          },
+          "ours_hunks": [
+            "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+          ],
+          "path": "tests/test_installer_omp_source.py",
+          "upstream": {
+            "blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4",
+            "mode": "100644",
+            "path": "tests/test_installer_omp_source.py"
+          },
+          "upstream_hunks": [
+            "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+            "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+            "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+            "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+            "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+            "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+            "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+            "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+            "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+            "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+            "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+            "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+          ]
+        },
+        {
+          "base": {
+            "blob": "791311144204eec7d33d73fda7b89dc38502c669",
+            "mode": "100644",
+            "path": "tests/test_installer_platforms.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -134,7 +134,10 @@"
+          ],
+          "ours": {
+            "blob": "55d0bbfd4200756d1a5322ed63e52ada32a44560",
+            "mode": "100644",
+            "path": "tests/test_installer_platforms.py"
+          },
+          "ours_hunks": [
+            "@@ -596,0 +597 @@ def test_chat_declaration_failure_can_retry_without_claiming_fresh_workspace(tmp"
+          ],
+          "path": "tests/test_installer_platforms.py",
+          "upstream": {
+            "blob": "94a7e05012357ba4d906cc611716e8f18b38d250",
+            "mode": "100644",
+            "path": "tests/test_installer_platforms.py"
+          },
+          "upstream_hunks": [
+            "@@ -137 +137,4 @@ def test_windows_task_settings_and_no_console_executable():"
+          ]
+        },
+        {
+          "base": {
+            "blob": "a21f3238ccb2071c9955b3980272ed51600f94ea",
+            "mode": "100644",
+            "path": "tests/test_installer_wheel.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -65,7 +65,7 @@"
+          ],
+          "ours": {
+            "blob": "cfe1729e4188eecfc14387e07e4abf7a7bb96880",
+            "mode": "100644",
+            "path": "tests/test_installer_wheel.py"
+          },
+          "ours_hunks": [
+            "@@ -72,0 +73 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,"
+          ],
+          "path": "tests/test_installer_wheel.py",
+          "upstream": {
+            "blob": "549e079eb4fcbac9cea9ebb7324dc86e20e6f012",
+            "mode": "100644",
+            "path": "tests/test_installer_wheel.py"
+          },
+          "upstream_hunks": [
+            "@@ -68 +68 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,"
+          ]
+        }
+      ],
+      "merge_base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "merge_base_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b",
+      "merge_preview": {
+        "command": "git merge-tree --trivial-merge 92443771676ef2bbb547d0a103d708fa8bec4c63 547e10456250c1b5bcf63b44a50c90ff0563ce1e 886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+        "method_is_read_only": true,
+        "output_bytes": 588285,
+        "output_sha256": "3a9566673df762ca978b1dd920b6db5b0d95766854771c07a88043b214c95141"
+      },
+      "ours": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "ours_changed_files": 919,
+      "ours_tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+      "upstream": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "upstream_changed_files": 98,
+      "upstream_tree": "f53cc8426ccef8760021ef6207303bce7b80e777"
+    },
+    "app": {
+      "both_touched_files": 18,
+      "clean_trivial_merge": false,
+      "conflict_count": 16,
+      "conflicts": [
+        {
+          "base": {
+            "blob": "a91b81dbbba7c2e00a1e0a22b57e9da91abeca87",
+            "mode": "100644",
+            "path": "package.json"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -9,6 +9,9 @@"
+          ],
+          "ours": {
+            "blob": "84e4f6e61ae28f094f159c4869a5b20899b98e8c",
+            "mode": "100644",
+            "path": "package.json"
+          },
+          "ours_hunks": [
+            "@@ -16 +16 @@",
+            "@@ -22,0 +23 @@",
+            "@@ -24,0 +26 @@",
+            "@@ -25,0 +28,4 @@",
+            "@@ -32,0 +39,3 @@",
+            "@@ -33,0 +43 @@",
+            "@@ -35 +45 @@",
+            "@@ -37 +47,6 @@",
+            "@@ -40,0 +56 @@",
+            "@@ -83 +99,4 @@",
+            "@@ -85,0 +105 @@",
+            "@@ -93 +113 @@",
+            "@@ -98 +117,0 @@",
+            "@@ -111 +130 @@",
+            "@@ -120,0 +140 @@",
+            "@@ -132,0 +153 @@"
+          ],
+          "path": "package.json",
+          "upstream": {
+            "blob": "5bdc5b0aaab190884feea72120b3d9d12ab926f4",
+            "mode": "100644",
+            "path": "package.json"
+          },
+          "upstream_hunks": [
+            "@@ -11,0 +12,3 @@"
+          ]
+        },
+        {
+          "base": {
+            "blob": "52f4898421560448a383afd516c1c6b9a3828565",
+            "mode": "100644",
+            "path": "public/install-manifest.json"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,11 +1,22 @@",
+            "@@ -42,7 +53,7 @@"
+          ],
+          "ours": {
+            "blob": "47df36d127f0b04517e24756cd87147512bbda94",
+            "mode": "100644",
+            "path": "public/install-manifest.json"
+          },
+          "ours_hunks": [
+            "@@ -4 +4 @@",
+            "@@ -7,2 +7,2 @@"
+          ],
+          "path": "public/install-manifest.json",
+          "upstream": {
+            "blob": "4ba29b084df42dc1dfa41d2b23549b05752568e2",
+            "mode": "100644",
+            "path": "public/install-manifest.json"
+          },
+          "upstream_hunks": [
+            "@@ -4 +4 @@",
+            "@@ -7 +7 @@",
+            "@@ -9,0 +10,3 @@",
+            "@@ -45 +48 @@"
+          ]
+        },
+        {
+          "base": {
+            "blob": "30fdfd9527f2da15bbaced1c792f44f1ec96ee41",
+            "mode": "100644",
+            "path": "src/app/onboarding/WelcomeConnection.test.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -18,6 +18,11 @@",
+            "@@ -154,7 +159,7 @@"
+          ],
+          "ours": {
+            "blob": "26df345b4496372cc93d2e805976e89ccca4bb56",
+            "mode": "100644",
+            "path": "src/app/onboarding/WelcomeConnection.test.tsx"
+          },
+          "ours_hunks": [
+            "@@ -181 +180,0 @@ it.each(["
+          ],
+          "path": "src/app/onboarding/WelcomeConnection.test.tsx",
+          "upstream": {
+            "blob": "b685a48015b52de2e382d710e21de4725b80a587",
+            "mode": "100644",
+            "path": "src/app/onboarding/WelcomeConnection.test.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -20,0 +21,5 @@ vi.mock('@/shared/hooks/platformInstall/signals.ts', () => ({",
+            "@@ -157 +162 @@ it('keeps the full local choice outside the hosted Runtime permission gate', asy"
+          ]
+        },
+        {
+          "base": {
+            "blob": "7cb0a23ec932716eef4e99f8dad6eaf1e769ec10",
+            "mode": "100644",
+            "path": "src/integrations/astrid/localAgents.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -32,20 +32,66 @@",
+            "@@ -57,11 +103,18 @@"
+          ],
+          "ours": {
+            "blob": "d0e540ea595be85c644c2273942a05a76624fcb2",
+            "mode": "100644",
+            "path": "src/integrations/astrid/localAgents.ts"
+          },
+          "ours_hunks": [
+            "@@ -68 +67,0 @@ export function isExternalAgentSession(sessionId: string, agent?: typeof EXTERNA"
+          ],
+          "path": "src/integrations/astrid/localAgents.ts",
+          "upstream": {
+            "blob": "4dd520e91bafce42277ba859b92bc37933ea440f",
+            "mode": "100644",
+            "path": "src/integrations/astrid/localAgents.ts"
+          },
+          "upstream_hunks": [
+            "@@ -34,0 +35 @@ const localAgentModelSchema = z.object({",
+            "@@ -36,11 +37,31 @@ const localAgentModelSchema = z.object({",
+            "@@ -48 +69,26 @@ export const localAgentCatalogSchema = z.object({",
+            "@@ -60 +106 @@ export type LocalAgentModels = z.infer<typeof localAgentModelsSchema>;",
+            "@@ -61,0 +108 @@ export function sessionAgentId(sessionId: string): LocalAgentId {",
+            "@@ -64,0 +112,6 @@ export function sessionAgentId(sessionId: string): LocalAgentId {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "ba560ef0f59d65ac034933ef111419aed2fbd755",
+            "mode": "100644",
+            "path": "src/integrations/paired/pairedRoutePolicy.test.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -21,6 +21,7 @@",
+            "@@ -74,6 +75,7 @@"
+          ],
+          "ours": {
+            "blob": "3e920fffa81bd88877f66bd60d5b81fda96810ce",
+            "mode": "100644",
+            "path": "src/integrations/paired/pairedRoutePolicy.test.ts"
+          },
+          "ours_hunks": [
+            "@@ -396,0 +397,7 @@ describe('paired route policy vs the App\\'s Workspace v1 calls', () => {",
+            "@@ -407,0 +415,2 @@ describe('paired route policy vs the App\\'s Workspace v1 calls', () => {",
+            "@@ -410 +419 @@ describe('paired route policy vs the App\\'s Workspace v1 calls', () => {",
+            "@@ -417,0 +427,9 @@ describe('paired route policy vs the App\\'s Workspace v1 calls', () => {"
+          ],
+          "path": "src/integrations/paired/pairedRoutePolicy.test.ts",
+          "upstream": {
+            "blob": "f66fdbaf5a700b0eb0eac1082aa8578b4ba923e6",
+            "mode": "100644",
+            "path": "src/integrations/paired/pairedRoutePolicy.test.ts"
+          },
+          "upstream_hunks": [
+            "@@ -23,0 +24 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [",
+            "@@ -76,0 +78 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = ["
+          ]
+        },
+        {
+          "base": {
+            "blob": "35f523c35ed8fd56f0a42da5a484e029aa881564",
+            "mode": "100644",
+            "path": "src/integrations/runtime/client.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -620,6 +620,10 @@"
+          ],
+          "ours": {
+            "blob": "9f1050799bd86a46d35cf5c07daa4ed05187e6b5",
+            "mode": "100644",
+            "path": "src/integrations/runtime/client.ts"
+          },
+          "ours_hunks": [
+            "@@ -21,0 +22,7 @@ import {",
+            "@@ -23,0 +31 @@ import {",
+            "@@ -71 +79 @@ function configuredRuntimeIdentity(): RuntimeIdentityBinding | undefined {",
+            "@@ -192,0 +201,2 @@ export function isRuntimeConflict(error: unknown): error is ApiError {",
+            "@@ -201,0 +212,24 @@ export function isRuntimeConflict(error: unknown): error is ApiError {",
+            "@@ -278 +312,3 @@ export class AstridRuntimeClient {",
+            "@@ -327,0 +364 @@ export class AstridRuntimeClient {",
+            "@@ -333,2 +370,5 @@ export class AstridRuntimeClient {",
+            "@@ -457,0 +498,9 @@ export class AstridRuntimeClient {",
+            "@@ -632,0 +682,30 @@ export class AstridRuntimeClient {",
+            "@@ -655,0 +735,41 @@ export class AstridRuntimeClient {",
+            "@@ -686 +806 @@ export class AstridRuntimeClient {",
+            "@@ -688 +808 @@ export class AstridRuntimeClient {"
+          ],
+          "path": "src/integrations/runtime/client.ts",
+          "upstream": {
+            "blob": "126ef1d1cbc6fb71b301b6c0f6e0f213e3f24174",
+            "mode": "100644",
+            "path": "src/integrations/runtime/client.ts"
+          },
+          "upstream_hunks": [
+            "@@ -573,0 +574,4 @@ export class AstridRuntimeClient {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "7f36f6c12c64e523324dfb7eecbdb76b66ef8e98",
+            "mode": "100644",
+            "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,7 +1,7 @@",
+            "@@ -54,8 +54,14 @@"
+          ],
+          "ours": {
+            "blob": "d3b24fdccbed282fd63f5aaaa8a3dfe3393328d6",
+            "mode": "100644",
+            "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx"
+          },
+          "ours_hunks": [
+            "@@ -63 +62,0 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection"
+          ],
+          "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx",
+          "upstream": {
+            "blob": "9e7f4f342491110ccdfafe8bd82ab6a590aef07a",
+            "mode": "100644",
+            "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -4 +4 @@ import { type SetupChecks } from '@/shared/components/RuntimeConnection/SetupSta",
+            "@@ -56,0 +57,4 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection",
+            "@@ -58,0 +63,2 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection"
+          ]
+        },
+        {
+          "base": {
+            "blob": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -4,6 +4,7 @@",
+            "@@ -33,6 +34,9 @@",
+            "@@ -43,6 +47,7 @@",
+            "@@ -65,8 +70,10 @@",
+            "@@ -103,6 +110,7 @@",
+            "@@ -119,6 +127,7 @@",
+            "@@ -186,6 +195,121 @@"
+          ],
+          "ours": {
+            "blob": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx"
+          },
+          "ours_hunks": [
+            "@@ -4,2 +4,2 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+            "@@ -9,8 +8,0 @@ import type { ProjectChatState } from '@/integrations/astrid/acpRoutes';",
+            "@@ -202,0 +195 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -204 +197 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -206 +198,0 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -215,2 +206,0 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -233 +223 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -461 +451,2 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -490 +481 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -492 +483 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -574,6 +565 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -583,2 +568,0 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -586 +570 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -638 +622,2 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {",
+            "@@ -660 +645,2 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {"
+          ],
+          "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+          "upstream": {
+            "blob": "aff454f75905cbe6eb01314ec02504844a445810",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -6,0 +7 @@ import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext'",
+            "@@ -43,0 +45,3 @@ class HostTransport {",
+            "@@ -53,0 +58 @@ class HostTransport {",
+            "@@ -76 +81,2 @@ class HostTransport {",
+            "@@ -77,0 +84 @@ class HostTransport {",
+            "@@ -113,0 +121 @@ class HostTransport {",
+            "@@ -129,0 +138 @@ class HostTransport {",
+            "@@ -196,0 +206,115 @@ describe('real panel \u2192 real hooks \u2192 owned ACP transport', () => {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -6,7 +6,11 @@",
+            "@@ -175,6 +179,8 @@",
+            "@@ -182,6 +188,8 @@",
+            "@@ -265,6 +273,13 @@",
+            "@@ -314,7 +329,219 @@",
+            "@@ -452,7 +679,7 @@",
+            "@@ -513,6 +740,12 @@",
+            "@@ -1365,7 +1598,11 @@",
+            "@@ -1374,8 +1611,16 @@"
+          ],
+          "ours": {
+            "blob": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx"
+          },
+          "ours_hunks": [
+            "@@ -8,0 +9 @@ import { BridgeRouteError } from '@/integrations/astrid/transport.ts';",
+            "@@ -36,0 +38 @@ const mocks = vi.hoisted(() => ({",
+            "@@ -37,0 +40 @@ const mocks = vi.hoisted(() => ({",
+            "@@ -43 +45,0 @@ const mocks = vi.hoisted(() => ({",
+            "@@ -53,0 +56 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({",
+            "@@ -84,0 +88,3 @@ vi.mock('@/shared/state/panesStore', () => ({",
+            "@@ -188,0 +195,8 @@ function createState() {",
+            "@@ -237,0 +252 @@ function mockFromState(state: ReturnType<typeof createState>) {",
+            "@@ -269,5 +283,0 @@ function getQueuedTexts() {",
+            "@@ -277,0 +288 @@ describe('AgentChat', () => {",
+            "@@ -306 +317 @@ describe('AgentChat', () => {",
+            "@@ -373 +384 @@ describe('AgentChat', () => {",
+            "@@ -377,2 +387,0 @@ describe('AgentChat', () => {",
+            "@@ -418 +427 @@ describe('AgentChat', () => {",
+            "@@ -425,2 +433,0 @@ describe('AgentChat', () => {",
+            "@@ -455 +462 @@ describe('AgentChat', () => {",
+            "@@ -458,2 +464,0 @@ describe('AgentChat', () => {",
+            "@@ -469,0 +475 @@ describe('AgentChat', () => {",
+            "@@ -472,0 +479 @@ describe('AgentChat', () => {",
+            "@@ -498 +505 @@ describe('AgentChat', () => {",
+            "@@ -501 +507,0 @@ describe('AgentChat', () => {",
+            "@@ -503 +509 @@ describe('AgentChat', () => {",
+            "@@ -508 +514 @@ describe('AgentChat', () => {",
+            "@@ -510,3 +515,0 @@ describe('AgentChat', () => {",
+            "@@ -526 +529 @@ describe('AgentChat', () => {",
+            "@@ -529,2 +531,0 @@ describe('AgentChat', () => {",
+            "@@ -566,0 +568,17 @@ describe('AgentChat', () => {",
+            "@@ -583 +601 @@ describe('AgentChat', () => {",
+            "@@ -667 +685 @@ describe('AgentChat', () => {",
+            "@@ -862 +880 @@ describe('AgentChat', () => {",
+            "@@ -900,0 +919,35 @@ describe('AgentChat', () => {",
+            "@@ -1078,0 +1132 @@ describe('AgentChat', () => {",
+            "@@ -1203 +1257 @@ describe('AgentChat', () => {",
+            "@@ -1207 +1261 @@ describe('AgentChat', () => {",
+            "@@ -1209 +1262,0 @@ describe('AgentChat', () => {",
+            "@@ -1212 +1265 @@ describe('AgentChat', () => {",
+            "@@ -1225,12 +1277,0 @@ describe('AgentChat', () => {",
+            "@@ -1264,0 +1306 @@ describe('project draft consumer ownership', () => {",
+            "@@ -1326 +1368 @@ describe('project draft consumer ownership', () => {",
+            "@@ -1335,5 +1377,2 @@ describe('project draft consumer ownership', () => {",
+            "@@ -1344,2 +1382,0 @@ describe('project draft consumer ownership', () => {",
+            "@@ -1364 +1401 @@ describe('project draft consumer ownership', () => {",
+            "@@ -1390 +1427,2 @@ describe('project draft consumer ownership', () => {",
+            "@@ -1411 +1449,2 @@ describe('project draft consumer ownership', () => {"
+          ],
+          "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+          "upstream": {
+            "blob": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -8,0 +9 @@ import { BridgeRouteError } from '@/integrations/astrid/transport.ts';",
+            "@@ -171,0 +173,2 @@ function createState() {",
+            "@@ -178,0 +182,2 @@ function createState() {",
+            "@@ -252,0 +258,7 @@ function rerenderAgentChat(rerender: ReturnType<typeof render>['rerender'], isEx",
+            "@@ -305,0 +318,208 @@ describe('AgentChat', () => {",
+            "@@ -448 +668 @@ describe('AgentChat', () => {",
+            "@@ -510 +730 @@ describe('AgentChat', () => {",
+            "@@ -1326 +1546 @@ describe('project draft consumer ownership', () => {",
+            "@@ -1338 +1558 @@ describe('project draft consumer ownership', () => {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -3,7 +3,7 @@",
+            "@@ -45,7 +45,12 @@",
+            "@@ -315,8 +320,15 @@",
+            "@@ -521,9 +533,11 @@",
+            "@@ -534,7 +548,17 @@",
+            "@@ -546,11 +570,69 @@",
+            "@@ -657,6 +739,7 @@",
+            "@@ -668,11 +751,10 @@",
+            "@@ -683,7 +765,7 @@",
+            "@@ -882,6 +964,8 @@",
+            "@@ -906,49 +990,57 @@",
+            "@@ -1017,7 +1109,7 @@",
+            "@@ -1038,10 +1130,17 @@",
+            "@@ -1057,7 +1156,36 @@",
+            "@@ -1080,7 +1208,7 @@",
+            "@@ -1142,20 +1270,48 @@",
+            "@@ -1185,7 +1341,8 @@",
+            "@@ -1201,7 +1358,8 @@",
+            "@@ -1373,7 +1531,7 @@",
+            "@@ -1396,6 +1554,7 @@",
+            "@@ -1461,6 +1620,35 @@"
+          ],
+          "ours": {
+            "blob": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx"
+          },
+          "ours_hunks": [
+            "@@ -2 +2 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';",
+            "@@ -14,0 +15 @@ import {",
+            "@@ -31,0 +33,2 @@ import {",
+            "@@ -42,2 +45 @@ import { AgentTaskResults } from './AgentTaskResults';",
+            "@@ -48,7 +49,0 @@ import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraf",
+            "@@ -56 +51,8 @@ import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video",
+            "@@ -147,0 +150,57 @@ function readSessionId(value: unknown): string | undefined {",
+            "@@ -165 +223,0 @@ export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange",
+            "@@ -167,2 +225,16 @@ export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange",
+            "@@ -222,4 +293,0 @@ function AvailableAgentChatPanel({",
+            "@@ -227,3 +295,6 @@ function AvailableAgentChatPanel({",
+            "@@ -298,4 +369,4 @@ function AvailableAgentChatPanel({",
+            "@@ -303,2 +374 @@ function AvailableAgentChatPanel({",
+            "@@ -467,3 +536,0 @@ function AvailableAgentChatPanel({",
+            "@@ -473,6 +540,7 @@ function AvailableAgentChatPanel({",
+            "@@ -619,0 +688,21 @@ function AvailableAgentChatPanel({",
+            "@@ -864,22 +952,0 @@ function AvailableAgentChatPanel({",
+            "@@ -887 +954 @@ function AvailableAgentChatPanel({",
+            "@@ -889 +956,2 @@ function AvailableAgentChatPanel({",
+            "@@ -894 +962 @@ function AvailableAgentChatPanel({",
+            "@@ -940 +1008 @@ function AvailableAgentChatPanel({",
+            "@@ -943,0 +1012 @@ function AvailableAgentChatPanel({",
+            "@@ -960,0 +1030,10 @@ function AvailableAgentChatPanel({",
+            "@@ -962 +1041,4 @@ function AvailableAgentChatPanel({",
+            "@@ -978,25 +1060 @@ function AvailableAgentChatPanel({",
+            "@@ -1059 +1117 @@ function AvailableAgentChatPanel({",
+            "@@ -1117,6 +1175,4 @@ function AvailableAgentChatPanel({",
+            "@@ -1343,22 +1399,65 @@ function AvailableAgentChatPanel({"
+          ],
+          "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+          "upstream": {
+            "blob": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -6 +6 @@ import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionPr",
+            "@@ -46 +46,6 @@ import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';",
+            "@@ -246,0 +252,7 @@ function AvailableAgentChatPanel({",
+            "@@ -248 +260 @@ function AvailableAgentChatPanel({",
+            "@@ -453,0 +466,2 @@ function AvailableAgentChatPanel({",
+            "@@ -456 +470 @@ function AvailableAgentChatPanel({",
+            "@@ -470 +484,4 @@ function AvailableAgentChatPanel({",
+            "@@ -481 +498,7 @@ function AvailableAgentChatPanel({",
+            "@@ -485,0 +509,52 @@ function AvailableAgentChatPanel({",
+            "@@ -591,0 +667 @@ function AvailableAgentChatPanel({",
+            "@@ -603 +678,0 @@ function AvailableAgentChatPanel({",
+            "@@ -607 +682 @@ function AvailableAgentChatPanel({",
+            "@@ -618 +693 @@ function AvailableAgentChatPanel({",
+            "@@ -795,0 +871,2 @@ function AvailableAgentChatPanel({",
+            "@@ -820 +897 @@ function AvailableAgentChatPanel({",
+            "@@ -827 +904 @@ function AvailableAgentChatPanel({",
+            "@@ -834 +911 @@ function AvailableAgentChatPanel({",
+            "@@ -840,0 +918 @@ function AvailableAgentChatPanel({",
+            "@@ -847 +925 @@ function AvailableAgentChatPanel({",
+            "@@ -848,0 +927,2 @@ function AvailableAgentChatPanel({",
+            "@@ -853 +933,2 @@ function AvailableAgentChatPanel({",
+            "@@ -856,0 +938 @@ function AvailableAgentChatPanel({",
+            "@@ -858 +940,4 @@ function AvailableAgentChatPanel({",
+            "@@ -862 +947 @@ function AvailableAgentChatPanel({",
+            "@@ -951 +1036 @@ function AvailableAgentChatPanel({",
+            "@@ -962,0 +1048,3 @@ function AvailableAgentChatPanel({",
+            "@@ -997 +1085,2 @@ function AvailableAgentChatPanel({",
+            "@@ -1025 +1114 @@ function AvailableAgentChatPanel({",
+            "@@ -1087 +1176 @@ function AvailableAgentChatPanel({",
+            "@@ -1093 +1182 @@ function AvailableAgentChatPanel({",
+            "@@ -1100 +1189,29 @@ function AvailableAgentChatPanel({",
+            "@@ -1132 +1249,2 @@ function AvailableAgentChatPanel({",
+            "@@ -1148 +1266,2 @@ function AvailableAgentChatPanel({",
+            "@@ -1320 +1439 @@ function AvailableAgentChatPanel({",
+            "@@ -1342,0 +1462,5 @@ function AvailableAgentChatPanel({",
+            "@@ -1355 +1479 @@ function AvailableAgentChatPanel({",
+            "@@ -1360 +1484 @@ function AvailableAgentChatPanel({",
+            "@@ -1363 +1487 @@ function AvailableAgentChatPanel({"
+          ]
+        },
+        {
+          "base": {
+            "blob": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,3 +1,4 @@",
+            "@@ -9,6 +10,14 @@",
+            "@@ -55,6 +64,8 @@",
+            "@@ -84,9 +95,14 @@",
+            "@@ -299,6 +315,7 @@",
+            "@@ -365,6 +382,26 @@"
+          ],
+          "ours": {
+            "blob": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx"
+          },
+          "ours_hunks": [
+            "@@ -1,5 +1,11 @@",
+            "@@ -6,0 +13,6 @@ import { AgentIcon, agentNames } from './agentIdentity.tsx';",
+            "@@ -10,0 +23,5 @@ export interface AgentChatMenuSession { id: string; title?: string; chatNumber?:",
+            "@@ -23,0 +41,14 @@ interface AgentChatMenuProps {",
+            "@@ -29,2 +60,26 @@ interface AgentChatMenuProps {",
+            "@@ -32,2 +87,3 @@ export function AgentChatMenu({",
+            "@@ -34,0 +91,7 @@ export function AgentChatMenu({",
+            "@@ -35,0 +99,7 @@ export function AgentChatMenu({",
+            "@@ -43,0 +114,5 @@ export function AgentChatMenu({",
+            "@@ -44,0 +120,10 @@ export function AgentChatMenu({",
+            "@@ -46,0 +132,2 @@ export function AgentChatMenu({",
+            "@@ -48,0 +136,81 @@ export function AgentChatMenu({",
+            "@@ -52,0 +221 @@ export function AgentChatMenu({",
+            "@@ -57,7 +226,71 @@ export function AgentChatMenu({",
+            "@@ -69,11 +302,66 @@ export function AgentChatMenu({",
+            "@@ -82 +370 @@ export function AgentChatMenu({"
+          ],
+          "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+          "upstream": {
+            "blob": "9305a1690c661242812032fc950eefa7105aaf43",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -2 +2 @@ import { useRef, useState } from 'react';",
+            "@@ -4,0 +5 @@ import type { LocalAgentId } from '@/integrations/astrid/localAgents.ts';",
+            "@@ -26,0 +28,2 @@ interface AgentChatMenuProps {",
+            "@@ -32 +35 @@ export function AgentChatMenu({",
+            "@@ -71,6 +74,13 @@ export function AgentChatMenu({"
+          ]
+        },
+        {
+          "base": {
+            "blob": "bafb8fdc879b10da663a90a70b8a6be925771e74",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChatModelLine.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -6,7 +6,7 @@"
+          ],
+          "ours": {
+            "blob": "a851a9bc80d20f2ef3ed28792dfbe9fc312388ca",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChatModelLine.tsx"
+          },
+          "ours_hunks": [
+            "@@ -24 +24 @@ interface AgentChatModelLineProps {",
+            "@@ -51 +51 @@ export function AgentChatModelLine({ agent, modelName, thoughtLevel = null, thou",
+            "@@ -102,2 +101,0 @@ export function AgentChatModelLine({ agent, modelName, thoughtLevel = null, thou",
+            "@@ -106 +104,2 @@ export function AgentChatModelLine({ agent, modelName, thoughtLevel = null, thou",
+            "@@ -108 +107 @@ export function AgentChatModelLine({ agent, modelName, thoughtLevel = null, thou"
+          ],
+          "path": "src/tools/video-editor/components/AgentChat/AgentChatModelLine.tsx",
+          "upstream": {
+            "blob": "831f3bb0144b9d1eeb8aee1b974c155560f5396c",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/AgentChatModelLine.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -9 +9 @@ import { ThinkingLevelOptions } from './ThinkingLevelOptions.tsx';"
+          ]
+        },
+        {
+          "base": {
+            "blob": "cba152e0a30c55dd0f62aa756497095838382317",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -152,8 +152,18 @@"
+          ],
+          "ours": {
+            "blob": "3d8001013ad1a70253fe28f251f0376f5373e4a7",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx"
+          },
+          "ours_hunks": [
+            "@@ -15 +14,0 @@ import { AgentChatMenu } from './AgentChatMenu';",
+            "@@ -27 +25,0 @@ const BUSY_PLACEHOLDER = 'Type to queue next message...';",
+            "@@ -32 +29,0 @@ const NO_PROGRESS: TourChatProgress = { typed: 0, replyChars: 0, cards: 0 };",
+            "@@ -41 +37,0 @@ const CARD_STEP_MS = 220;",
+            "@@ -47,4 +43 @@ function typingDelayMs(typed: number, previous: string): number {",
+            "@@ -66 +58,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -70 +61,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -73 +63,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -81,2 +71 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -85,3 +74 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -89,2 +75,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -105 +89,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -110,2 +94,2 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -115,2 +99 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -128 +111,2 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -131 +115 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -140,8 +124,2 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -150 +127,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -158,4 +135 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -165 +138,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -167 +139,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -173 +144,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -176,15 +147,2 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -193,7 +151 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -203,7 +155,2 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -212 +158,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -216,10 +162,3 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -227,6 +166 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -235 +168,0 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })",
+            "@@ -237,11 +170 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })"
+          ],
+          "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+          "upstream": {
+            "blob": "d4c5e76ff7c6b54365f9c6537337e97cf0acaf18",
+            "mode": "100644",
+            "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -206 +206 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean })"
+          ]
+        },
+        {
+          "base": {
+            "blob": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+            "mode": "100644",
+            "path": "src/tools/video-editor/hooks/useAgentSession.ts"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1,4 +1,4 @@",
+            "@@ -13,7 +13,7 @@",
+            "@@ -71,6 +71,7 @@",
+            "@@ -91,7 +92,9 @@",
+            "@@ -352,7 +355,7 @@",
+            "@@ -363,7 +366,7 @@",
+            "@@ -388,6 +391,10 @@",
+            "@@ -416,7 +423,7 @@",
+            "@@ -430,7 +437,7 @@",
+            "@@ -443,7 +450,7 @@",
+            "@@ -464,14 +471,14 @@",
+            "@@ -497,18 +504,18 @@",
+            "@@ -536,7 +543,7 @@",
+            "@@ -550,7 +557,7 @@",
+            "@@ -589,6 +596,7 @@",
+            "@@ -616,7 +624,7 @@",
+            "@@ -651,9 +659,11 @@",
+            "@@ -784,7 +794,7 @@",
+            "@@ -1324,7 +1334,7 @@"
+          ],
+          "ours": {
+            "blob": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+            "mode": "100644",
+            "path": "src/tools/video-editor/hooks/useAgentSession.ts"
+          },
+          "ours_hunks": [
+            "@@ -965,0 +966,8 @@ if (typeof window !== 'undefined') {",
+            "@@ -987 +995 @@ export function useAgentModels(enabled = true, sessionId?: string | null, projec",
+            "@@ -1034 +1042 @@ export function useAgentSessions(timelineId: string | null | undefined, projectI"
+          ],
+          "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+          "upstream": {
+            "blob": "2f250db12d21659166c6243939f5f911fbb3a160",
+            "mode": "100644",
+            "path": "src/tools/video-editor/hooks/useAgentSession.ts"
+          },
+          "upstream_hunks": [
+            "@@ -1 +1 @@",
+            "@@ -16 +16 @@ import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../",
+            "@@ -73,0 +74 @@ type CapturedAgentRequest = {",
+            "@@ -94 +95,3 @@ function cloneAgentRequest(input: SendMessageInput, sessionId: string, context:",
+            "@@ -355 +358 @@ export class AstridAgentSessionStore {",
+            "@@ -366 +369 @@ export class AstridAgentSessionStore {",
+            "@@ -390,0 +394,4 @@ export class AstridAgentSessionStore {",
+            "@@ -419 +426 @@ export class AstridAgentSessionStore {",
+            "@@ -433 +440 @@ export class AstridAgentSessionStore {",
+            "@@ -446 +453 @@ export class AstridAgentSessionStore {",
+            "@@ -467 +474 @@ export class AstridAgentSessionStore {",
+            "@@ -470 +477 @@ export class AstridAgentSessionStore {",
+            "@@ -474 +481 @@ export class AstridAgentSessionStore {",
+            "@@ -500 +507 @@ export class AstridAgentSessionStore {",
+            "@@ -504 +511 @@ export class AstridAgentSessionStore {",
+            "@@ -511 +518 @@ export class AstridAgentSessionStore {",
+            "@@ -539 +546 @@ export class AstridAgentSessionStore {",
+            "@@ -553 +560 @@ export class AstridAgentSessionStore {",
+            "@@ -591,0 +599 @@ export class AstridAgentSessionStore {",
+            "@@ -619 +627 @@ export class AstridAgentSessionStore {",
+            "@@ -654 +662,3 @@ export class AstridAgentSessionStore {",
+            "@@ -656 +666 @@ export class AstridAgentSessionStore {",
+            "@@ -787 +797 @@ export class AstridAgentSessionStore {",
+            "@@ -1319 +1329 @@ export function useSendMessage("
+          ]
+        },
+        {
+          "base": {
+            "blob": "f7546db6121de17afebe7eb972489105bc4ebfb5",
+            "mode": "100644",
+            "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -1212,9 +1212,7 @@",
+            "@@ -1542,6 +1540,21 @@"
+          ],
+          "ours": {
+            "blob": "9cb4d5da89cf82258f17bca96175f06342c3ff38",
+            "mode": "100644",
+            "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx"
+          },
+          "ours_hunks": [
+            "@@ -583,0 +584,2 @@ const L04_NEXT_HEAD = \"l04-head-2\";",
+            "@@ -656,0 +659,19 @@ function makeL04Transport() {"
+          ],
+          "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx",
+          "upstream": {
+            "blob": "7565bdcfd6db01c3e3feee2f85d4f7bd68d158f9",
+            "mode": "100644",
+            "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx"
+          },
+          "upstream_hunks": [
+            "@@ -1194,3 +1194 @@ describe(\"VideoEditorPage\", () => {",
+            "@@ -1523,0 +1522,15 @@ describe(\"VideoEditorPage\", () => {"
+          ]
+        },
+        {
+          "base": {
+            "blob": "d519e7437e73b3a465a989e97555946d48ad12bc",
+            "mode": "100644",
+            "path": "tests/e2e/fake-runtime/server.contract.test.mjs"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -103,7 +103,7 @@",
+            "@@ -335,6 +335,23 @@",
+            "@@ -584,8 +601,11 @@"
+          ],
+          "ours": {
+            "blob": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+            "mode": "100644",
+            "path": "tests/e2e/fake-runtime/server.contract.test.mjs"
+          },
+          "ours_hunks": [
+            "@@ -188,2 +188,2 @@ describe('identity and auth', () => {"
+          ],
+          "path": "tests/e2e/fake-runtime/server.contract.test.mjs",
+          "upstream": {
+            "blob": "ab92ec3028eb4a94d163469f3e44b48efaca6cce",
+            "mode": "100644",
+            "path": "tests/e2e/fake-runtime/server.contract.test.mjs"
+          },
+          "upstream_hunks": [
+            "@@ -106 +106 @@ describe('identity and auth', () => {",
+            "@@ -337,0 +338,17 @@ describe('projects, timelines and the seed', () => {",
+            "@@ -587,2 +604,5 @@ describe('ACP chat reads', () => {"
+          ]
+        }
+      ],
+      "merge_base": "3881e9440688f774878e18806da2dc5c993a9b00",
+      "merge_base_tree": "210e5739b838ef7655f87238c711704301d12846",
+      "merge_preview": {
+        "command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a",
+        "method_is_read_only": true,
+        "output_bytes": 769114,
+        "output_sha256": "6c7cf7073a554a81ddbfe9aca90da2a192e73bed90245e137e030998c4439535"
+      },
+      "ours": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+      "ours_changed_files": 565,
+      "ours_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+      "upstream": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+      "upstream_changed_files": 154,
+      "upstream_tree": "591327d499ea162dd2ccb4620e577480aa305fae"
+    },
+    "composition": {
+      "both_touched_files": 0,
+      "clean_trivial_merge": true,
+      "conflict_count": 0,
+      "conflicts": [],
+      "merge_base": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "merge_base_tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "merge_preview": {
+        "command": "git merge-tree --trivial-merge 67b8aa3d0d6831d3e3504a340ff583c3da253707 635f4de06fda22a85fc2e4cfc764d0153a4c9f40 67b8aa3d0d6831d3e3504a340ff583c3da253707",
+        "method_is_read_only": true,
+        "output_bytes": 0,
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ours": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "ours_changed_files": 118,
+      "ours_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "upstream": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "upstream_changed_files": 0,
+      "upstream_tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120"
+    },
+    "runtime": {
+      "both_touched_files": 10,
+      "clean_trivial_merge": false,
+      "conflict_count": 10,
+      "conflicts": [
+        {
+          "base": {
+            "blob": "741e027678a38d0c17cc74b83f8b1e8479085508",
+            "mode": "100644",
+            "path": ".github/workflows/ci.yml"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -89,6 +89,14 @@"
+          ],
+          "ours": {
+            "blob": "94ffdaf70b7b44d12c9f41a67d6632b0e07d7531",
+            "mode": "100644",
+            "path": ".github/workflows/ci.yml"
+          },
+          "ours_hunks": [
+            "@@ -26,0 +27,2 @@ jobs:",
+            "@@ -30 +32 @@ jobs:",
+            "@@ -40,0 +43,3 @@ jobs:",
+            "@@ -91 +96 @@ jobs:",
+            "@@ -100,0 +106,11 @@ jobs:",
+            "@@ -120,0 +137,17 @@ jobs:"
+          ],
+          "path": ".github/workflows/ci.yml",
+          "upstream": {
+            "blob": "80517dd88d253b921bf463e585ba4753e371bdb2",
+            "mode": "100644",
+            "path": ".github/workflows/ci.yml"
+          },
+          "upstream_hunks": [
+            "@@ -86,0 +87,8 @@ jobs:"
+          ]
+        },
+        {
+          "base": {
+            "blob": "57289e7cc1a9f3a532a1d9d6d9553f85c5ec43ad",
+            "mode": "100644",
+            "path": "docs/runtime-portability-testing.md"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -52,6 +52,27 @@"
+          ],
+          "ours": {
+            "blob": "6c490e2bcc9e95e0ac7528474f49fe3b4a098941",
+            "mode": "100644",
+            "path": "docs/runtime-portability-testing.md"
+          },
+          "ours_hunks": [
+            "@@ -4,2 +4,2 @@ The portability CI job runs the platform boundary, native process custody,"
+          ],
+          "path": "docs/runtime-portability-testing.md",
+          "upstream": {
+            "blob": "0e5fa5426b98fd3c640d4c0cd90a232fef653250",
+            "mode": "100644",
+            "path": "docs/runtime-portability-testing.md"
+          },
+          "upstream_hunks": [
+            "@@ -54,0 +55,21 @@ sequence. The syscall fallback accepts only `None` for siginfo."
+          ]
+        },
+        {
+          "base": {
+            "blob": "31ca7eeef3deb7401edd7bc4d69b122273faaa5e",
+            "mode": "100644",
+            "path": "runtime_protocol/daemon.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -5,6 +5,7 @@",
+            "@@ -243,7 +244,14 @@"
+          ],
+          "ours": {
+            "blob": "725d4386c2e2690ddd10a233a028ac2f9d48c96c",
+            "mode": "100644",
+            "path": "runtime_protocol/daemon.py"
+          },
+          "ours_hunks": [
+            "@@ -56 +56 @@ class RuntimeDaemon:",
+            "@@ -73,0 +74,3 @@ class RuntimeDaemon:",
+            "@@ -235,0 +239,5 @@ class RuntimeDaemon:",
+            "@@ -237,0 +246 @@ class RuntimeDaemon:",
+            "@@ -239,0 +249,12 @@ class RuntimeDaemon:"
+          ],
+          "path": "runtime_protocol/daemon.py",
+          "upstream": {
+            "blob": "d406ef24cff8676f5c4a78ba60facf2af5db9c7f",
+            "mode": "100644",
+            "path": "runtime_protocol/daemon.py"
+          },
+          "upstream_hunks": [
+            "@@ -7,0 +8 @@ from . import cancellation",
+            "@@ -237,0 +239,4 @@ class RuntimeDaemon:"
+          ]
+        },
+        {
+          "base": {
+            "blob": "b352613ffad3b9f6cd738738f0f5a4c02edbb7c8",
+            "mode": "100644",
+            "path": "runtime_protocol/door.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -139,7 +139,7 @@",
+            "@@ -154,6 +154,7 @@",
+            "@@ -199,6 +200,8 @@",
+            "@@ -236,6 +239,13 @@"
+          ],
+          "ours": {
+            "blob": "674d8b55865dfdffa66c20cb51d7331fab18c4cd",
+            "mode": "100644",
+            "path": "runtime_protocol/door.py"
+          },
+          "ours_hunks": [
+            "@@ -158 +158 @@ WORKSPACE_ROUTES = (",
+            "@@ -159,0 +160,2 @@ WORKSPACE_ROUTES = (",
+            "@@ -164,0 +167,4 @@ WORKSPACE_ROUTES = (",
+            "@@ -581 +587,4 @@ class DoorHandler(RuntimeHandler):",
+            "@@ -582,0 +592,5 @@ class DoorHandler(RuntimeHandler):",
+            "@@ -587 +601 @@ class DoorHandler(RuntimeHandler):",
+            "@@ -591 +605 @@ class DoorHandler(RuntimeHandler):"
+          ],
+          "path": "runtime_protocol/door.py",
+          "upstream": {
+            "blob": "1c5ef0337a2f49fbc290f908d5898078f18e4773",
+            "mode": "100644",
+            "path": "runtime_protocol/door.py"
+          },
+          "upstream_hunks": [
+            "@@ -142 +142 @@ _ENCODED_SEGMENT = re.compile(r\"(?:[^%]|%[0-9A-Fa-f]{2})*\")",
+            "@@ -156,0 +157 @@ WORKSPACE_ROUTES = (",
+            "@@ -195,0 +197,2 @@ ACP_ROUTES = (",
+            "@@ -232,0 +236,7 @@ def _find(table, method: str, segments: list[str]) -> bool:"
+          ]
+        },
+        {
+          "base": {
+            "blob": "9f0d8b21582162d48cf1e646a2cd49aedf680184",
+            "mode": "100644",
+            "path": "runtime_protocol/platform.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -8,6 +8,9 @@",
+            "@@ -978,7 +981,15 @@",
+            "@@ -1060,8 +1071,192 @@",
+            "@@ -1110,7 +1305,13 @@"
+          ],
+          "ours": {
+            "blob": "70049865a0c11d1f874339259884dd5102350cb7",
+            "mode": "100644",
+            "path": "runtime_protocol/platform.py"
+          },
+          "ours_hunks": [
+            "@@ -25,0 +26 @@ import time",
+            "@@ -564,0 +566,8 @@ def process_identity(pid: int, *, timeout: float = 1.0):",
+            "@@ -568,0 +578,2 @@ def process_identity(pid: int, *, timeout: float = 1.0):",
+            "@@ -570 +581 @@ def process_identity(pid: int, *, timeout: float = 1.0):",
+            "@@ -1027 +1038,5 @@ def pidfd_open(pid: int, flags: int = 0) -> int:"
+          ],
+          "path": "runtime_protocol/platform.py",
+          "upstream": {
+            "blob": "9f5cd8aa6cafcb024515a47e28939b55110d3141",
+            "mode": "100644",
+            "path": "runtime_protocol/platform.py"
+          },
+          "upstream_hunks": [
+            "@@ -10,0 +11,3 @@ Callers using these low-level helpers own identity checks and fd closure.",
+            "@@ -970 +973,9 @@ def _signal_linux_group(process, signum):",
+            "@@ -1047,0 +1059,180 @@ def pidfd_send_signal(fd: int, signum: int, siginfo=None, flags: int = 0) -> Non",
+            "@@ -1049 +1240,5 @@ def signal_process(expected, signum):",
+            "@@ -1098 +1293,7 @@ def signal_process(expected, signum):"
+          ]
+        },
+        {
+          "base": {
+            "blob": "13537c0cda2fb8975d4560488218e227f6beeea5",
+            "mode": "100644",
+            "path": "runtime_protocol/server.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -5,6 +5,7 @@",
+            "@@ -421,7 +422,12 @@"
+          ],
+          "ours": {
+            "blob": "65aa761a3187486d4847ef063192a06434b24d91",
+            "mode": "100644",
+            "path": "runtime_protocol/server.py"
+          },
+          "ours_hunks": [
+            "@@ -3,0 +4 @@ import json",
+            "@@ -9 +10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer",
+            "@@ -15,0 +17,49 @@ from .cas import IO_CHUNK_BYTES",
+            "@@ -38,0 +89 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -43,0 +95,6 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -134 +191 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -137 +194 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -143 +200 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -153 +210 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -157 +214 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -163 +220 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -171,0 +229,22 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -192,0 +272,70 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -254,0 +404,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -255,0 +416,3 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -382,0 +546,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -386,0 +552,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -401,0 +569,41 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -404,4 +612 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -410 +615 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -421,2 +626,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -425 +630 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -430,4 +635,22 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -448 +671 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -451 +674 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -519 +742,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -522,4 +746 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -535 +756,4 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -860,2 +1084 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -1001 +1224 @@ class RuntimeHandler(BaseHTTPRequestHandler):",
+            "@@ -1003,0 +1227,2 @@ class RuntimeHandler(BaseHTTPRequestHandler):"
+          ],
+          "path": "runtime_protocol/server.py",
+          "upstream": {
+            "blob": "5c2b62737dedf8b4d77ee2ffc0f29c4e55da082a",
+            "mode": "100644",
+            "path": "runtime_protocol/server.py"
+          },
+          "upstream_hunks": [
+            "@@ -6,0 +7 @@ import sys",
+            "@@ -261 +262,6 @@ class RuntimeHandler(BaseHTTPRequestHandler):"
+          ]
+        },
+        {
+          "base": {
+            "blob": "be200b27f228e3526d5cd7cd3129d477012719aa",
+            "mode": "100644",
+            "path": "runtime_protocol/service.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -7955,9 +7955,11 @@"
+          ],
+          "ours": {
+            "blob": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144",
+            "mode": "100644",
+            "path": "runtime_protocol/service.py"
+          },
+          "ours_hunks": [
+            "@@ -41 +41,2 @@ from pathlib import Path",
+            "@@ -43,0 +45 @@ from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain",
+            "@@ -431,0 +434,12 @@ def _page_rows(rows, *, scope, cursor, limit, key_fn, resource_fn, skip_after=No",
+            "@@ -461,0 +476,4 @@ def _durable_mutation(function):",
+            "@@ -490,0 +509,4 @@ class RuntimeService:",
+            "@@ -809 +831 @@ class RuntimeService:",
+            "@@ -1372,12 +1394,2 @@ class RuntimeService:",
+            "@@ -1448 +1460 @@ class RuntimeService:",
+            "@@ -1508 +1520 @@ class RuntimeService:",
+            "@@ -1522,0 +1535,2 @@ class RuntimeService:",
+            "@@ -1650,39 +1663,0 @@ class RuntimeService:",
+            "@@ -1690,9 +1665,8 @@ class RuntimeService:",
+            "@@ -1700 +1673,0 @@ class RuntimeService:",
+            "@@ -1702,51 +1675 @@ class RuntimeService:",
+            "@@ -1754 +1676,0 @@ class RuntimeService:",
+            "@@ -1756,122 +1678 @@ class RuntimeService:",
+            "@@ -1926 +1727,3 @@ class RuntimeService:",
+            "@@ -1934 +1737 @@ class RuntimeService:",
+            "@@ -1938,0 +1742,14 @@ class RuntimeService:",
+            "@@ -1940,22 +1757,10 @@ class RuntimeService:",
+            "@@ -1963,6 +1768,25 @@ class RuntimeService:",
+            "@@ -1970,6 +1794,8 @@ class RuntimeService:",
+            "@@ -2047 +1873 @@ class RuntimeService:",
+            "@@ -2161 +1987 @@ class RuntimeService:",
+            "@@ -2543 +2369,8 @@ class RuntimeService:",
+            "@@ -2579,3 +2412,96 @@ class RuntimeService:",
+            "@@ -2583,17 +2509,61 @@ class RuntimeService:",
+            "@@ -2601,5 +2571,2 @@ class RuntimeService:",
+            "@@ -2607,35 +2574,36 @@ class RuntimeService:",
+            "@@ -2643,11 +2611,10 @@ class RuntimeService:",
+            "@@ -2655,5 +2622 @@ class RuntimeService:",
+            "@@ -2661,30 +2624,6 @@ class RuntimeService:",
+            "@@ -2692,20 +2631,43 @@ class RuntimeService:",
+            "@@ -2713,30 +2675,80 @@ class RuntimeService:",
+            "@@ -2751 +2763,2 @@ class RuntimeService:",
+            "@@ -2752,0 +2766 @@ class RuntimeService:",
+            "@@ -2753,0 +2768,6 @@ class RuntimeService:",
+            "@@ -2780 +2800 @@ class RuntimeService:",
+            "@@ -2786,0 +2807 @@ class RuntimeService:",
+            "@@ -2788 +2808,0 @@ class RuntimeService:",
+            "@@ -2790,210 +2810 @@ class RuntimeService:",
+            "@@ -3132 +2942,0 @@ class RuntimeService:",
+            "@@ -3134,347 +2944 @@ class RuntimeService:",
+            "@@ -3498,0 +2963 @@ class RuntimeService:",
+            "@@ -3507,0 +2973,3 @@ class RuntimeService:",
+            "@@ -3509,54 +2977,15 @@ class RuntimeService:",
+            "@@ -3566 +2995,2 @@ class RuntimeService:",
+            "@@ -3572,17 +3002,25 @@ class RuntimeService:",
+            "@@ -3595,4 +3033,6 @@ class RuntimeService:",
+            "@@ -3600,20 +3040,35 @@ class RuntimeService:",
+            "@@ -3623 +3078,2 @@ class RuntimeService:",
+            "@@ -3629 +3084,0 @@ class RuntimeService:",
+            "@@ -3632,13 +3087,22 @@ class RuntimeService:",
+            "@@ -3650,5 +3114,4 @@ class RuntimeService:",
+            "@@ -3656,14 +3119,29 @@ class RuntimeService:",
+            "@@ -3781,3 +3259,40 @@ class RuntimeService:",
+            "@@ -3795,0 +3311,52 @@ class RuntimeService:",
+            "@@ -3851,12 +3418,3 @@ class RuntimeService:",
+            "@@ -3874 +3432,3 @@ class RuntimeService:",
+            "@@ -3882,0 +3443,17 @@ class RuntimeService:",
+            "@@ -3888,0 +3466,2 @@ class RuntimeService:",
+            "@@ -3902,2 +3481,5 @@ class RuntimeService:",
+            "@@ -3907,4 +3489,2 @@ class RuntimeService:",
+            "@@ -3912,2 +3492,2 @@ class RuntimeService:",
+            "@@ -3916,4 +3496,12 @@ class RuntimeService:",
+            "@@ -3921,0 +3510,16 @@ class RuntimeService:",
+            "@@ -3923 +3527,4 @@ class RuntimeService:",
+            "@@ -3927,2 +3534,9 @@ class RuntimeService:",
+            "@@ -3934,4 +3547,0 @@ class RuntimeService:",
+            "@@ -3939 +3549,4 @@ class RuntimeService:",
+            "@@ -3943 +3556,4 @@ class RuntimeService:",
+            "@@ -3945,2 +3561,8 @@ class RuntimeService:",
+            "@@ -3948 +3570,4 @@ class RuntimeService:",
+            "@@ -3955,2 +3580,8 @@ class RuntimeService:",
+            "@@ -3958,0 +3590,9 @@ class RuntimeService:",
+            "@@ -3963 +3603,2 @@ class RuntimeService:",
+            "@@ -3965 +3606,2 @@ class RuntimeService:",
+            "@@ -3966,0 +3609,9 @@ class RuntimeService:",
+            "@@ -3968,8 +3619,2 @@ class RuntimeService:",
+            "@@ -3978,6 +3623,17 @@ class RuntimeService:",
+            "@@ -3985 +3641,4 @@ class RuntimeService:",
+            "@@ -3989,2 +3648,7 @@ class RuntimeService:",
+            "@@ -3992 +3656,3 @@ class RuntimeService:",
+            "@@ -3995 +3661 @@ class RuntimeService:",
+            "@@ -3998,5 +3664,15 @@ class RuntimeService:",
+            "@@ -4006,2 +3682,4 @@ class RuntimeService:",
+            "@@ -4009,3 +3687,2 @@ class RuntimeService:",
+            "@@ -4013,2 +3690,8 @@ class RuntimeService:",
+            "@@ -4016,2 +3699,21 @@ class RuntimeService:",
+            "@@ -4019,6 +3721,18 @@ class RuntimeService:",
+            "@@ -4030 +3744,3 @@ class RuntimeService:",
+            "@@ -4041 +3757 @@ class RuntimeService:",
+            "@@ -4145,2 +3861,7 @@ class RuntimeService:",
+            "@@ -4150,9 +3871,23 @@ class RuntimeService:",
+            "@@ -4165,2 +3900,2 @@ class RuntimeService:",
+            "@@ -4169,2 +3904,69 @@ class RuntimeService:",
+            "@@ -4174,45 +3976,3 @@ class RuntimeService:",
+            "@@ -4220,9 +3980,19 @@ class RuntimeService:",
+            "@@ -4237,25 +4007 @@ class RuntimeService:",
+            "@@ -4509,0 +4256,3 @@ class RuntimeService:",
+            "@@ -4519,0 +4269,5 @@ class RuntimeService:",
+            "@@ -4527,0 +4282,6 @@ class RuntimeService:",
+            "@@ -4534 +4293,0 @@ class RuntimeService:",
+            "@@ -4568,0 +4328,11 @@ class RuntimeService:",
+            "@@ -4573 +4342,0 @@ class RuntimeService:",
+            "@@ -4594,3 +4362,0 @@ class RuntimeService:",
+            "@@ -4600,8 +4365,0 @@ class RuntimeService:",
+            "@@ -4863,31 +4620,0 @@ class RuntimeService:",
+            "@@ -4900,27 +4627 @@ class RuntimeService:",
+            "@@ -5895 +5596,4 @@ class RuntimeService:",
+            "@@ -6510 +6214 @@ class RuntimeService:",
+            "@@ -6528 +6232 @@ class RuntimeService:",
+            "@@ -6531 +6235 @@ class RuntimeService:",
+            "@@ -6598 +6302 @@ class RuntimeService:",
+            "@@ -6639 +6343 @@ class RuntimeService:",
+            "@@ -6660 +6364 @@ class RuntimeService:",
+            "@@ -7506,0 +7211,2 @@ class RuntimeService:",
+            "@@ -7649,0 +7356 @@ class RuntimeService:",
+            "@@ -7658 +7364,0 @@ class RuntimeService:",
+            "@@ -7660,169 +7366 @@ class RuntimeService:",
+            "@@ -7908,0 +7447 @@ class RuntimeService:",
+            "@@ -8127,0 +7667,7 @@ class RuntimeService:",
+            "@@ -8146 +7692,9 @@ class RuntimeService:"
+          ],
+          "path": "runtime_protocol/service.py",
+          "upstream": {
+            "blob": "63c944106eaf729afb424c078fcc1019550fa769",
+            "mode": "100644",
+            "path": "runtime_protocol/service.py"
+          },
+          "upstream_hunks": [
+            "@@ -8403,0 +8404,2 @@ class RuntimeService:",
+            "@@ -8406 +8408 @@ class RuntimeService:"
+          ]
+        },
+        {
+          "base": {
+            "blob": "68b75310a620fe8ea672f9b8e2e268b264f5c455",
+            "mode": "100644",
+            "path": "tests/conftest.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -14,6 +14,38 @@",
+            "@@ -76,7 +108,9 @@",
+            "@@ -85,7 +119,7 @@"
+          ],
+          "ours": {
+            "blob": "9b50df102d31971f90d9b34e1f7bf9339eb0203b",
+            "mode": "100644",
+            "path": "tests/conftest.py"
+          },
+          "ours_hunks": [
+            "@@ -122,0 +123,16 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path",
+            "@@ -140,0 +157,5 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path",
+            "@@ -142 +163 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path",
+            "@@ -143,0 +165 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path"
+          ],
+          "path": "tests/conftest.py",
+          "upstream": {
+            "blob": "0b1014372d2a58a11b86ec2fb4a934c3dfce6fad",
+            "mode": "100644",
+            "path": "tests/conftest.py"
+          },
+          "upstream_hunks": [
+            "@@ -16,0 +17,32 @@ from tests.process_groups import ProcessGroups",
+            "@@ -79 +111,3 @@ def pytest_sessionfinish(session, exitstatus):",
+            "@@ -88 +122 @@ def pytest_sessionfinish(session, exitstatus):"
+          ]
+        },
+        {
+          "base": {
+            "blob": "ba2097d5a169c4a5af6eea8632471a64e9aae438",
+            "mode": "100644",
+            "path": "tests/lanes.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -32,6 +32,7 @@",
+            "@@ -283,6 +284,10 @@"
+          ],
+          "ours": {
+            "blob": "410f3144b440b4df933bd351ffca77f044e91aac",
+            "mode": "100644",
+            "path": "tests/lanes.py"
+          },
+          "ours_hunks": [
+            "@@ -25 +24,0 @@ import pytest",
+            "@@ -57,4 +56,5 @@ LANE_MARKERS = {",
+            "@@ -87 +87 @@ class DeclaredSkip:",
+            "@@ -103 +103,111 @@ SKIP_REGISTRY: dict[str, DeclaredSkip] = {}",
+            "@@ -114 +224 @@ requires_windows_security = _declare(",
+            "@@ -138 +248 @@ requires_windows_token_process_times = _declare(",
+            "@@ -146 +256 @@ requires_windows_job_object = _declare(",
+            "@@ -150 +260 @@ requires_windows_dirfd_adapter = _declare(",
+            "@@ -154 +264 @@ requires_windows_reparse_point_rejection = _declare(",
+            "@@ -158 +268 @@ requires_windows_sqlite_backup = _declare(",
+            "@@ -162 +272 @@ requires_windows_process_and_lock_apis = _declare(",
+            "@@ -181 +291 @@ _WINDOWS_SYMLINKS = _declare(",
+            "@@ -226,0 +337,6 @@ _DECLARED_TAG = re.compile(r\"\\[declared:([a-z0-9-]+)\\]\")",
+            "@@ -232,2 +348,4 @@ class _SkipGuard:",
+            "@@ -237,0 +356 @@ class _SkipGuard:",
+            "@@ -238,0 +358,29 @@ class _SkipGuard:",
+            "@@ -241,3 +388,0 @@ class _SkipGuard:",
+            "@@ -251,2 +396,2 @@ class _SkipGuard:",
+            "@@ -255,5 +400 @@ class _SkipGuard:",
+            "@@ -266,0 +408,15 @@ class _SkipGuard:",
+            "@@ -275,0 +432,4 @@ class _SkipGuard:",
+            "@@ -278 +438 @@ class _SkipGuard:",
+            "@@ -286 +446 @@ class _SkipGuard:",
+            "@@ -291 +451 @@ class _SkipGuard:"
+          ],
+          "path": "tests/lanes.py",
+          "upstream": {
+            "blob": "381a1b2cea580fe6d6a80d244fe742135e917aea",
+            "mode": "100644",
+            "path": "tests/lanes.py"
+          },
+          "upstream_hunks": [
+            "@@ -35,0 +36 @@ LANE_MARKERS = {",
+            "@@ -175,0 +177,4 @@ requires_posix_fork = _declare("
+          ]
+        },
+        {
+          "base": {
+            "blob": "9851e7240db6e484751fed727aa52da60678df2c",
+            "mode": "100644",
+            "path": "tests/test_door_routes.py"
+          },
+          "kind": "changed in both",
+          "merge_tree_hunks": [
+            "@@ -37,6 +37,7 @@",
+            "@@ -110,6 +111,8 @@"
+          ],
+          "ours": {
+            "blob": "046dc68015752e0c445b0e9541302aa27175a972",
+            "mode": "100644",
+            "path": "tests/test_door_routes.py"
+          },
+          "ours_hunks": [
+            "@@ -42,0 +43 @@ PRODUCT_CALLS = ["
+          ],
+          "path": "tests/test_door_routes.py",
+          "upstream": {
+            "blob": "78bf364cc445371f663c01057198964882825a05",
+            "mode": "100644",
+            "path": "tests/test_door_routes.py"
+          },
+          "upstream_hunks": [
+            "@@ -39,0 +40 @@ PRODUCT_CALLS = [",
+            "@@ -111,0 +113,2 @@ FORBIDDEN = ["
+          ]
+        }
+      ],
+      "merge_base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+      "merge_base_tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+      "merge_preview": {
+        "command": "git merge-tree --trivial-merge d4f496ec4fbcae7a1f3a51d47ed5147c561117ad e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9 dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+        "method_is_read_only": true,
+        "output_bytes": 71105,
+        "output_sha256": "2d341b37bafebc1feb09d4e69971bcde5ed12b729dcdc6e1c041838e7142540e"
+      },
+      "ours": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "ours_changed_files": 323,
+      "ours_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+      "upstream": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+      "upstream_changed_files": 29,
+      "upstream_tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210"
+    }
+  },
+  "method": {
+    "clone": {
+      "attempted": false,
+      "reason": "exact read-only merge-tree facts succeeded; df reported 4,777,416 KB free, near the 4 GB stop line, so no fresh clone/payload was started"
+    },
+    "merge_preview": "git merge-tree --trivial-merge BASE OURS THEIRS",
+    "network_or_fetch": false,
+    "ref_movement": false,
+    "source_repositories": "current /home/user/work/{runtime,agent,app,composition} integration worktrees"
+  },
+  "schema_version": 1,
+  "scope": "read-only source census; no conflict resolutions or integration writes",
+  "source_preservation_references": {
+    "D123": {
+      "current_normal_capture": "b545b616a41388e24d6f2a59b7b45c26cb057d2c",
+      "live_source_not_substituted": true,
+      "normal_tree": "977649c62950e5650637734b494caee791e35d50",
+      "patch_sha256": "b0ff420595441fccb3d0a37b70715e5b2bff373cecd9d2e51c82be51cbe58f6b",
+      "product_source_tree": "2b16085a4984ee6965036dea5e2af6882a95de05",
+      "protected_predicates": 173,
+      "reference_only": true
+    },
+    "D68": {
+      "builder_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+      "preservation_rule": "preserve source refs/status and apply frozen upstream_base -> gated_tip delta; no reverse patching",
+      "reviewed_commit": "fda54be4fd6e855682f2bb1ca567e7172ec71fcd",
+      "wrapper_sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779"
+    }
+  },
+  "task": "rt-F-tail-upstream-census-1844",
+  "upstream_tips": {
+    "agent": {
+      "ref": "refs/remotes/origin/main",
+      "requested_prefix": "886a3183bd",
+      "sha": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55"
+    },
+    "app": {
+      "ref": "refs/remotes/origin/main",
+      "requested_prefix": "213318f1ec",
+      "sha": "213318f1ec6ea5c324787bbd1c30a73072d1151a"
+    },
+    "composition": {
+      "ref": "refs/remotes/origin/main",
+      "requested_prefix": "67b8aa3d0d",
+      "sha": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+    },
+    "runtime": {
+      "ref": "refs/remotes/origin/main",
+      "requested_prefix": "dbcdb97c50",
+      "sha": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"
+    }
+  }
+}
