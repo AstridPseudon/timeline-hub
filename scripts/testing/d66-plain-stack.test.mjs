@@ -2,14 +2,15 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmodSync, closeSync, existsSync, fsyncSync, mkdtempSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync, realpathSync } from 'node:fs';
-import { createServer as hostCreateServer } from 'node:net';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
-import { tsImport } from 'tsx/esm/api';
+import { pathToFileURL } from 'node:url';
+import ts from 'typescript';
 import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, configureRuntimeLogEnv, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
-const { DirectHarness, startDirectHarness: actualStartDirectHarness } = await tsImport('../../tests/e2e/local/support/harness.ts', import.meta.url);
+const require = createRequire(import.meta.url);
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
@@ -47,112 +48,200 @@ test('D102 configures the existing Runtime sink before native seed and preserves
   assert.equal(disabledEnv.D66_RUNTIME_LOG_DIR, undefined);
 });
 
-async function runD102LauncherControl(f, { oldWiring }) {
-  const sourceFile = path.join(f.snapshot, 'scripts/testing/d66-plain-stack.mjs');
-  const source = readFileSync(sourceFile, 'utf8');
-  const wiring = '  configureRuntimeLogEnv({ suite, output });\n';
-  assert.equal(source.split(wiring).length, 2, 'D102 launcher wiring must have one construction-boundary call');
-  const rootLine = "const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');";
-  let launcherSource = oldWiring ? source.replace(wiring, '') : source;
-  assert.equal(launcherSource.split(rootLine).length, 2, 'D102 control must execute the production launcher source');
-  launcherSource = launcherSource.replace(/^import .*;\n/gm, '').replace(rootLine, 'const root = injectedRoot;')
-    .replace(/^export /gm, '').replaceAll('await import(', 'await __dynamicImport(')
-    .replace(/\nif \(process\.argv\[1\].*$/s, '');
-  const output = path.join(f.base, oldWiring ? 'd102-old-output' : 'd102-new-output');
-  const runtimeLogDir = path.join(output, 'runtime-private');
-  const tempRoot = mkdtempSync(path.join(f.base, oldWiring ? 'd102-old-harness-' : 'd102-new-harness-'));
-  const stderr = 'runtime stderr: not_ready runtime_unavailable request_id=offline-control\n';
-  const fakePython = path.join(f.base, 'd102-probe-python');
-  writeFileSync(fakePython, [
-    '#!/bin/sh',
-    `printf '%s\\n' '${JSON.stringify({
-      astrid: { file: path.join(f.checkouts.agent, 'astrid/__init__.py'), version: null },
-      astrid_runtime: { file: path.join(f.checkouts.runtime, 'astrid_runtime/__init__.py'), version: null },
-      astrid_runtime_client: { file: path.join(f.checkouts.agent, 'astrid_runtime_client/__init__.py'), version: null },
-      runtime_protocol: { file: path.join(f.checkouts.runtime, 'runtime_protocol/__init__.py'), version: null },
-    }).replaceAll("'", "'\\''")}'`,
-  ].join('\n'));
-  chmodSync(fakePython, 0o700);
+async function loadD102Module(source, sourceUrl, { modules, controlProcess, fetch }) {
+  // Transpile whole production modules; substitute imports, never start/spawn/buffer/stop bodies.
+  const { outputText } = ts.transpileModule(source.replaceAll('import.meta.url', JSON.stringify(sourceUrl)), {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true, allowJs: true },
+  });
+  const controlRequire = (specifier) => {
+    if (Object.hasOwn(modules, specifier)) return modules[specifier];
+    if (specifier.startsWith('node:')) return require(specifier);
+    throw new Error(`unexpected D102 import: ${specifier}`);
+  };
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  const module = { exports: {} };
+  return new AsyncFunction('require', 'module', 'exports', 'process', 'fetch', `${outputText}\nreturn module.exports;`)(
+    controlRequire, module, module.exports, controlProcess, fetch);
+}
 
+async function runD102LauncherControl(f, { source, failure, suiteName = 'p2', inheritedEnv = {} }) {
+  const sourceFile = path.join(f.snapshot, 'scripts/testing/d66-plain-stack.mjs');
+  const output = mkdtempSync(path.join(f.base, `d102-${failure}-`));
+  const runtimeLogDir = path.join(output, 'runtime-private');
+  const stderr = 'runtime stderr: not_ready runtime_unavailable request_id=offline-control\n';
+  const shutdown = 'runtime stderr: offline-control stopped\n';
+  const children = [];
+  let tempRoot;
+  let seedEnv;
+  let hostedClosed = false;
   const controlProcess = {
-    env: { ...process.env, ...f.env, D66_OUTPUT_DIR: output, D66_NORMAL_AGENT_HOME: f.homes.agent,
+    ...process,
+    env: { PATH: process.env.PATH, ...f.env, ...inheritedEnv, D66_OUTPUT_DIR: output, D66_NORMAL_AGENT_HOME: f.homes.agent,
       D66_NORMAL_RUNTIME_HOME: f.homes.runtime, D66_NORMAL_COMPOSITION_HOME: f.homes.composition,
-      ASTRID_PYTHON: fakePython, ASTRID_RUNTIME_PYTHON: fakePython, TMPDIR: '/tmp' },
+      ASTRID_PYTHON: process.execPath, ASTRID_RUNTIME_PYTHON: process.execPath, TMPDIR: os.tmpdir() },
     argv: [process.execPath, path.join(f.snapshot, 'not-the-launcher.mjs')],
     exitCode: undefined,
     cwd: () => f.snapshot,
-    version: process.version,
+    on() { return this; },
   };
-  if (!oldWiring) controlProcess.env.D66_RUNTIME_LOG_DIR = path.join(f.base, 'inherited-observer-must-not-leak');
-  let callerLogDir;
-  const dynamicImport = async (specifier) => {
-    if (specifier.endsWith('/hosted-build-origin.mjs')) return { resolveHostedRuntimeOrigin: () => 'https://offline.invalid' };
-    if (specifier === 'vite') return { build: async () => {} };
-    if (specifier === '@playwright/test') return { expect: () => ({}) };
-    if (specifier.endsWith('/astrid.ts')) return { AstridCli: class {} };
-    if (specifier.endsWith('/harness.ts')) return { startDirectHarness: async (options) => {
-      callerLogDir = controlProcess.env.D66_RUNTIME_LOG_DIR;
-      return actualStartDirectHarness(options);
-    } };
-    throw new Error(`unexpected D102 dynamic import: ${specifier}`);
-  };
-  const childProcess = { execFileSync: (command, args, options) => {
-    if (args?.includes?.('--list')) return 'P2 offline control\nTotal: 8 tests in 3 files\n';
-    return execFileSync(command, args, options);
-  } };
   const net = () => ({
     once() { return this; },
-    listen(_port, _host, callback) { this.address = () => ({ port: 45454 }); callback(); return this; },
+    listen(_port, _host, callback) { callback(); return this; },
+    address() { return { port: 45454 }; },
     close(callback) { callback?.(); },
   });
-  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-  const runner = new AsyncFunction('deps', '__dynamicImport', [
-    'const { assert, execFileSync, spawn, createHash, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync, realpathSync, createServer, path, fileURLToPath, injectedRoot, process, fetch, URL, Buffer, setTimeout, clearTimeout } = deps;',
-    launcherSource,
-    'return { main };',
-  ].join('\n'));
-  const namespace = await runner({ assert, ...childProcess, createHash, closeSync, existsSync, fsyncSync, mkdirSync,
-    openSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync, realpathSync,
-    createServer: net, path, fileURLToPath: () => sourceFile, injectedRoot: f.snapshot, process: controlProcess,
-    fetch: async () => ({ status: 503, headers: { get: () => 'offline-control' }, json: async () => ({}) }),
-    URL, Buffer, setTimeout, clearTimeout, spawn }, dynamicImport);
-
-  const originalStart = DirectHarness.prototype.start;
-  const originalHostLogDir = process.env.D66_RUNTIME_LOG_DIR;
-  DirectHarness.prototype.start = async function () {
-    this.tmp = tempRoot;
-    this.runtimePort = 45455;
-    this.runtime = { stdout: '', stderr, closed: Promise.resolve(), child: { pid: 0 } };
-    this.attachment = null;
-    this.stopped = false;
-    return this;
+  const objects = new Map();
+  const response = (status, body) => ({ status, ok: status < 400, headers: { get: () => 'offline-control' },
+    json: async () => body, arrayBuffer: async () => Buffer.from('offline media') });
+  const fetch = async (url, init = {}) => {
+    const { pathname, searchParams } = new URL(url);
+    if (pathname === '/v1/health') return response(200, { runtime_instance_id: 'offline-instance' });
+    if (pathname === '/v1/credentials') return response(201, {});
+    if (pathname === '/v1/projects') return response(201, { data: { project_id: 'offline-project' } });
+    if (pathname === '/v1/projects/offline-project') return response(200, { slug: 'offline-project' });
+    if (pathname === '/v1/projects/offline-project/timelines') return response(201, {});
+    if (/^\/v1\/projects\/offline-project\/timelines\/[^/]+$/.test(pathname)) {
+      return response(200, { head_revision_id: 'offline-revision', head_publication_id: 'offline-publication' });
+    }
+    if (pathname === '/v1/projects/offline-project/objects') {
+      const objectId = init.headers['X-Original-Name'];
+      objects.set(objectId, { object_id: objectId, digest: `sha256:${createHash('sha256').update(init.body).digest('hex')}` });
+      return response(201, { data: objects.get(objectId) });
+    }
+    if (pathname.startsWith('/v1/objects/')) return response(200, {});
+    if (pathname === '/v1/projects/offline-project/media-imports') {
+      return response(201, { variant_id: init.headers['X-Original-Name'], generation_id: 'offline-generation' });
+    }
+    if (pathname.startsWith('/v1/projects/offline-project/media-selection')) {
+      return response(200, { object_id: searchParams.get('asset') === 'f2-image.png' ? 'gradient.png' : 'clip.webm',
+        asset: searchParams.get('asset'), generation_id: 'offline-generation', variant_id: searchParams.get('asset') });
+    }
+    throw new Error(`unexpected D102 fetch: ${pathname}`);
   };
-  if (oldWiring) delete process.env.D66_RUNTIME_LOG_DIR;
-  else process.env.D66_RUNTIME_LOG_DIR = runtimeLogDir;
+  const childProcess = {
+    execFileSync(command, args, options) {
+      if (command === 'git') return execFileSync(command, args, options);
+      if (args.includes('--list')) return `offline collection control\nTotal: ${suites[suiteName].count} tests in 3 files\n`;
+      if (path.basename(command) === 'npm') { assert.deepEqual(args, ['--version']); return 'offline-npm\n'; }
+      if (command === 'openssl') {
+        for (const flag of ['-keyout', '-out']) writeFileSync(args[args.indexOf(flag) + 1], 'offline TLS');
+        return '';
+      }
+      if (command === 'ffmpeg') { writeFileSync(args.at(-1), 'offline video'); return ''; }
+      assert.equal(command, process.execPath, 'only fixture Python invocations may be substituted');
+      if (args[1] === 'runtime_protocol.cli') {
+        assert.equal(args[2], 'create');
+        return JSON.stringify({ realm_id: 'offline-realm' });
+      }
+      assert.equal(args[0], '-c');
+      if (args[1].includes('from astrid.sdk.client import AstridClient')) {
+        assert.equal(JSON.parse(args[2]).fixture, 'three-products');
+        seedEnv = options.env;
+        throw new Error('offline native seed refusal: not_ready runtime_unavailable');
+      }
+      assert.match(args[1], /^import astrid, astrid_runtime, astrid_runtime_client, runtime_protocol, json;/);
+      return JSON.stringify(Object.fromEntries(['astrid', 'astrid_runtime', 'astrid_runtime_client', 'runtime_protocol'].map((name) =>
+        [name, { file: path.join(f.checkouts[name === 'astrid' || name === 'astrid_runtime_client' ? 'agent' : 'runtime'], name, '__init__.py'), version: null }])));
+    },
+    spawn(command, args, options) {
+      assert.equal(command, process.execPath);
+      assert.deepEqual(args.slice(0, 3), ['-m', 'runtime_protocol.cli', 'start']);
+      assert.equal(options.cwd, tempRoot);
+      mkdirSync(path.join(tempRoot, 'support/credentials'), { recursive: true });
+      writeFileSync(path.join(tempRoot, 'support/credentials/owner.token'), 'offline-owner');
+      // A stdio-only child supplies the real spawnGroup streams and exit/close events. No listener is opened.
+      const script = [
+        `process.stderr.write(${JSON.stringify(stderr)});`,
+        ...(failure === 'startup' ? [] : [
+          `process.stdout.write('${JSON.stringify({ endpoint: 'http://127.0.0.1:45455' })}\\n');`,
+          `process.on('SIGTERM', () => process.stderr.write(${JSON.stringify(shutdown)}, () => process.exit(0)));`,
+          'setInterval(() => {}, 1000);',
+        ]),
+      ].join('\n');
+      const child = spawn(command, ['-e', script], options);
+      children.push({ child, env: options.env });
+      return child;
+    },
+  };
+  const modules = {
+    'node:child_process': childProcess,
+    'node:net': { createServer: net },
+    'node:https': { createServer: () => ({ ...net(), close(callback) { hostedClosed = true; callback(); } }) },
+    'node:http': { request() { throw new Error('D102 must not open HTTP sockets'); } },
+    'node:os': { tmpdir: () => controlProcess.env.TMPDIR },
+    'node:crypto': { ...require('node:crypto'), X509Certificate: class {
+      publicKey = { export: () => Buffer.from('offline SPKI') };
+    } },
+    'node:fs': { ...require('node:fs'), mkdtempSync(prefix) { tempRoot = mkdtempSync(prefix); return tempRoot; } },
+    '../../../../config/testing/skipConditions.mjs': { RUNTIME_CHECKOUT: f.checkouts.runtime, DIST_DIR: output, ffmpegUnavailableReason: () => null },
+    '../../../../src/shared/lib/editorTourVersion.ts': { EDITOR_TOUR_VERSION: 1 },
+    './quick-descriptor.ts': {},
+    './hung-request-stack.ts': {},
+    '../hosted-build-origin.mjs': { resolveHostedRuntimeOrigin: () => 'https://offline.invalid' },
+    vite: { build: async () => {} },
+    '../../tests/e2e/local/support/astrid.ts': { AstridCli: class {} },
+    '@playwright/test': { expect() { assert.fail('D102 must stop before original assertions'); } },
+  };
+  const harnessUrl = new URL('../../tests/e2e/local/support/harness.ts', import.meta.url);
+  modules['../../tests/e2e/local/support/harness.ts'] = await loadD102Module(readFileSync(harnessUrl, 'utf8'), harnessUrl.href,
+    { modules, controlProcess, fetch });
+  const namespace = await loadD102Module(source, pathToFileURL(sourceFile).href, { modules, controlProcess, fetch });
   try {
-    controlProcess.argv = [process.execPath, sourceFile, 'p2', '--launch'];
+    controlProcess.argv = [process.execPath, sourceFile, suiteName, '--launch'];
     await namespace.main({ receiptRoot: f.receiptRoot, workerRoot: f.workerRoot });
+    assert.equal(controlProcess.exitCode, 1);
+    assert.equal(children.length, failure === 'startup' ? 1 : 2, 'real startRuntime must spawn each Runtime incarnation');
+    assert(children.every(({ child }) => child.exitCode !== null), 'actual stop must reap every child');
+    assert.equal(hostedClosed, true);
+    assert.equal(existsSync(tempRoot), false, 'actual stop must remove the harness temporary directory');
   } finally {
-    DirectHarness.prototype.start = originalStart;
-    if (originalHostLogDir === undefined) delete process.env.D66_RUNTIME_LOG_DIR;
-    else process.env.D66_RUNTIME_LOG_DIR = originalHostLogDir;
+    for (const { child } of children) if (child.exitCode === null) process.kill(-child.pid, 'SIGKILL');
   }
-  return { callerLogDir, output, runtimeLogDir, tempRoot, stderr, exitCode: controlProcess.exitCode };
+  const manifest = JSON.parse(readFileSync(path.join(output, 'manifest.json'), 'utf8'));
+  assert.equal(manifest.failure.stage, failure === 'startup' ? 'normal-service-start' : 'native-seed');
+  assert.match(manifest.failure.message, failure === 'startup' ? /Runtime exited before endpoint readiness/ : /offline native seed refusal/);
+  assert.equal(seedEnv === undefined, failure === 'startup');
+  assert.equal(existsSync(path.join(output, 'readiness.xml')), false);
+  assert.equal(existsSync(path.join(output, 'p2.xml')), false);
+  return { runtimeLogDir, stderr: stderr + (failure === 'startup' ? '' : shutdown), children, seedEnv, env: controlProcess.env };
 }
 
-test('D102 old-red/new-green control runs the production caller and existing teardown persistence offline', async () => {
+test('D102 actual old-red/new-green launcher/start/spawn/stop retains startup and native-seed failures offline', async (t) => {
   const f = serviceFixture();
-  const oldControl = await runD102LauncherControl(f, { oldWiring: true });
-  assert.equal(oldControl.callerLogDir, undefined);
-  assert.equal(oldControl.exitCode, 1);
-  assert.equal(existsSync(path.join(oldControl.runtimeLogDir, 'runtime.stderr.log')), false,
-    'old caller must lose Runtime stderr when setup fails before native seed');
-
-  const newControl = await runD102LauncherControl(f, { oldWiring: false });
-  assert.equal(newControl.callerLogDir, newControl.runtimeLogDir);
-  assert.equal(newControl.exitCode, 1);
-  assert.equal(readFileSync(path.join(newControl.runtimeLogDir, 'runtime.stderr.log'), 'utf8'), newControl.stderr);
-  assert.equal(existsSync(newControl.tempRoot), false, 'the harness temp directory must still be cleaned up');
+  const beforeEnv = { ...process.env };
+  const oldSource = execFileSync('git', ['show', 'f0fcdce17841a6b4bb09521c52610010745325d4:scripts/testing/d66-plain-stack.mjs'], { encoding: 'utf8' });
+  const newSource = readFileSync(new URL('./d66-plain-stack.mjs', import.meta.url), 'utf8');
+  const retained = (control) => {
+    assert.equal(readFileSync(path.join(control.runtimeLogDir, 'runtime.stderr.log'), 'utf8'), control.stderr);
+    assert.equal(statSync(control.runtimeLogDir).mode & 0o777, 0o700);
+    for (const stream of ['stdout', 'stderr']) assert.equal(statSync(path.join(control.runtimeLogDir, `runtime.${stream}.log`)).mode & 0o777, 0o600);
+  };
+  for (const failure of ['startup', 'native-seed']) {
+    const oldControl = await runD102LauncherControl(f, { source: oldSource, failure });
+    assert.equal(oldControl.env.D66_RUNTIME_LOG_DIR, undefined);
+    assert(oldControl.children.every(({ env }) => env.D66_RUNTIME_LOG_DIR === undefined));
+    assert.throws(() => retained(oldControl), { code: 'ENOENT' }, 'the same retention assertion must be RED on actual old source');
+    const newControl = await runD102LauncherControl(f, { source: newSource, failure });
+    assert.equal(newControl.env.D66_RUNTIME_LOG_DIR, newControl.runtimeLogDir);
+    assert(newControl.children.every(({ env }) => env.D66_RUNTIME_LOG_DIR === newControl.runtimeLogDir));
+    retained(newControl);
+    t.diagnostic(`${failure}: actual old source retention RED (ENOENT); current source GREEN (private streams survive real cleanup)`);
+  }
+  const canary = path.join(f.base, 'inherited-sink-must-not-exist');
+  const disabled = await runD102LauncherControl(f, { source: newSource, failure: 'startup', suiteName: 'p1',
+    inheritedEnv: { D66_RUNTIME_LOG_DIR: canary } });
+  assert.equal(disabled.env.D66_RUNTIME_LOG_DIR, undefined);
+  assert.equal(existsSync(disabled.runtimeLogDir), false);
+  assert.equal(existsSync(canary), false);
+  const unsafeInherited = await runD102LauncherControl(f, { source: newSource, failure: 'startup',
+    inheritedEnv: { D66_RUNTIME_LOG_DIR: 'relative-unsafe-canary' } });
+  assert.equal(unsafeInherited.env.D66_RUNTIME_LOG_DIR, unsafeInherited.runtimeLogDir);
+  retained(unsafeInherited);
+  assert.equal(JSON.stringify({ ...process.env }) === JSON.stringify(beforeEnv), true,
+    'controls must not configure or leak the host environment');
+  for (const [label, source] of [['old', oldSource], ['new', newSource]]) {
+    t.diagnostic(`${label} launcher SHA256 ${createHash('sha256').update(source).digest('hex')}`);
+  }
 });
 
 test('D83 focused P2 descriptors select one exact original test each and retain the full eight-test tour', () => {
