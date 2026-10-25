@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T06:07:19Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
+<!-- app | 2026-10-25T06:11:04Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
 # app board, 2026-10-25T06:05Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -232,19 +232,19 @@
 | P2-D102-seed-caller | Attribute native setup and stderr retention | Luna read only | Audit0553 complete | merged | app-P2-D102-seed-caller-retention-0553 | Native-seed existing Runtime logs lost because retention env is set only in later Playwright stage. Source-only wiring0559 owns exact gap. | No source change |
 | P2-D102-seed-handler | Attribute current native-seed refusal | Runtime source requested | Safe packets peer0553 | blocked:runtime | Runtime owner requested | Both requests not_ready before readiness/original; HTTP cause and unexpected exception unknown. App0553 owns caller seam only. | Exact Runtime689 |
 | A3-D105-DOM | Preserve canonical DOM and physical action identities | Luna source only | Exact selector scope decision | blocked:orchestrator | app-A3-D105-canonical-DOM-identity-0558 | No source changes. Protected helper requires prefixed id; reload requires raw. [Decision](../../escalations/app-20261025T0607Z-D105-selector-contract.md) | Base f0fcd |
-| P2-D102-retention-wiring | Retain existing Runtime logs before native seed | Luna; independent | Author0559 complete | review | app-P2-D102-retention-review-0607 | Author25 Node controls and lint PASS; protected six unchanged. Independent review checks real launch and failure teardown, not only env helper. | Author branch0559 |
+| P2-D102-retention-wiring | Retain existing Runtime logs before native seed | Luna first return | Independent0607 FAIL | doing | app-P2-D102-retention-return-0609 | Wiring plausible; real offline launch-to-teardown persistence proof missing. First return on0559 must prove early-failure stderr survives cleanup. | Author branch0559 |
 | P2-D102-seed-packet | Return existing safe native setup facts | Luna authored; manager links | Runtime peer0555 | merged | Controller0544; return0606 | Existing ADD12031 and element4757 JSON/MD republished by exact paths and SHA256; no new body or collector. | Evidence only |
 Integration: App f0fcdce178 retains reviewed preview provenance and normal c97 ring adoption. Runtime home now7463 is a D101 merge, not a fixed D102c release; no App adoption or body on that basis.
-core open: Four isolated gestures retain GO on recorded tuples. Placement31499 label/canonical child pass but raw DOM row locator fails. D105 author0558 proves initial protected helper and reload locator require incompatible data-clip-id values. Exact minimum helper adaptation awaits orchestrator scope decision; no source edits or duplicate actions. Existing stderr retention wiring0559 has independent0607 review active. ADD12031 and element4757 failed before tests on689; no Runtime outcome inferred from absent unretained stderr.
+core open: Four isolated gestures retain GO on recorded tuples. Placement31499 label/canonical child pass but raw DOM row locator fails. D105 author0558 proves initial protected helper and reload locator require incompatible data-clip-id values. Exact minimum helper adaptation awaits orchestrator scope decision; no source edits or duplicate actions. Existing stderr retention wiring0559 failed independent0607 for missing real teardown proof; first-return0609 owns that proof. ADD12031 and element4757 failed before tests on689; no Runtime outcome inferred from absent unretained stderr.
 regressions: Runtime owns the possible689 native-seed regression and same-sequence comparison. App has no proven new regression. P1 actual31083 and P3 actual15493 retain GO only on recorded tuples.
 
 Blockers: Final cut — Four recorded isolated GO; current full P2 and final pinned P1–P5/core plus genuine installed render still required before ZIP.
 Blockers: D102c — Runtime owns fixed qualified tagged release and689 versus0c62 comparison. Hold all new bodies; normal adoption then ONE ADD. New D101 home7463 does not clear this hold.
 Blockers: D105 — Orchestrator scope decision on exact before-drop helper adaptation; original raw reload/inverse locators retained. [Reviewable proposal](../../escalations/app-20261025T0607Z-D105-selector-contract.md).
-Next ready: Retention0607 independent PASS -> normal merge; FAIL -> one source return on0559. D105 decision -> existing product continuation. Fixed D102c release -> normal adoption -> ONE ADD.
-live 1 / cap 6; ready-undispatched 0. Retention review0607 active; D105 product awaits exact scope decision. No App service body.
+Next ready: Retention0609 actual failure-teardown proof -> independent rereview then normal merge. D105 decision -> existing product continuation. Fixed D102c release -> normal adoption -> ONE ADD.
+live 1 / cap 6; ready-undispatched 0. Retention first-return0609 active after independent FAIL; D105 awaits exact scope decision. No App service body.
 Capacity: Free6.15GB after review checkout. Every ended clean non-KEEP App tree scanned, zero eligible; normal recycle0558 reports already absent. Current tuple, all outputs and prior dirty/refused targets preserved. Source cap6 above5.0GB; heavy1 above5.2GB; no new start below4.5GB.
-Inbox consumed through1964449 bytes. D105 exact scope escalation and peer0607 written in this pass; no safety or permission refusal.
+Inbox consumed through1967262 bytes. D105 exact scope escalation and peer0607 written in this pass; no safety or permission refusal.
 
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59 and Agent08e6 applied-result suites belong to Runtime final coordinator. Gating stays frozen upstream3881. Withdrawn D88 and denied actions stay held.
 Evidence: [Bulk GO](../../design/app-P2-bulk21852-GO-return-0339.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md), [Single GO](../../design/app-P2-single5678-GO-resume-0255.md), [Parent GO](../../design/app-P2-parent20481-GO-review-0507.md).
