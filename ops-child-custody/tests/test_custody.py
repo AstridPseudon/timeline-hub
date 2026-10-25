@@ -1,5 +1,6 @@
 import ast
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -7,7 +8,7 @@ import re
 import shutil
 import stat
 import subprocess
-import sys
+import tarfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -24,16 +25,61 @@ from support import (
     put,
     record_row,
     scratch,
+    source_census,
     store_module,
     store_python,
 )
 
 
 class SourceCallerTests(unittest.TestCase):
+    def test_real_source_state_requires_exact_clean_checkout(self):
+        text = MAKER.read_text()
+        function = text[text.index('source_state() {'):text.index('\nsource_state "$A" "$S"')]
+        for head, status, accepted in ((AGENT, '', True), ('0' * 40, '', False),
+                                       (AGENT, '?? foreign-file', False)):
+            env = {**os.environ, 'FIXTURE_HEAD': head, 'FIXTURE_STATUS': status,
+                   'FIXTURE_WANTED': AGENT}
+            prefix = '''git() {
+  test "$1" = -C && test "$2" = /fixture/agent || return 2
+  case "$3" in
+    rev-parse) printf '%s\\n' "$FIXTURE_HEAD" ;;
+    status) printf '%s' "$FIXTURE_STATUS" ;;
+    *) return 2 ;;
+  esac
+}
+'''
+            result = subprocess.run(['bash', '-c', prefix + function +
+                                     '\nsource_state /fixture/agent "$FIXTURE_WANTED"'],
+                                    env=env, capture_output=True, text=True, timeout=5)
+            self.assertEqual(result.returncode == 0, accepted)
+
+    def test_parent_census_lists_all_generated_paths_in_one_read_only_walk(self):
+        fixture = Layout(kind='directory')
+        inventory = fixture.verify()
+        target, _ = caller_sources(PARENT.read_text(), fixture)
+        for role in ('agent', 'runtime'):
+            shutil.copytree(target / '.child-venv-source-caller' / role,
+                            fixture.snapshot / role, dirs_exist_ok=True)
+        before = {p.relative_to(fixture.root).as_posix(): (p.lstat(), p.read_bytes() if p.is_file() else None)
+                  for p in fixture.root.rglob('*')}
+        refused = source_census(fixture, inventory)
+        self.assertEqual({row['path'] for row in refused}, {
+            f'{fixture.snapshot.name}/{role}/{rel}' for role in ('agent', 'runtime')
+            for rel in ('build', 'build/lib', 'build/lib/generated.py',
+                        'fixture.egg-info', 'fixture.egg-info/PKG-INFO')})
+        self.assertEqual(len(refused), 10)
+        for p in fixture.root.rglob('*'):
+            info, data = before[p.relative_to(fixture.root).as_posix()]
+            after = p.lstat()
+            self.assertEqual((info.st_ino, info.st_mode, info.st_uid, info.st_nlink, info.st_mtime_ns),
+                             (after.st_ino, after.st_mode, after.st_uid, after.st_nlink, after.st_mtime_ns))
+            if data is not None:
+                self.assertEqual(p.read_bytes(), data)
+
     def test_exact_parent_red_candidate_green_through_real_build_and_verifier(self):
         for maker, accepted in ((PARENT, False), (MAKER, True)):
             with self.subTest(maker=maker.name):
-                fixture = Layout()
+                fixture = Layout(kind='archive' if accepted else 'directory')
                 target, calls = caller_sources(maker.read_text(), fixture)
                 for role in ('agent', 'runtime'):
                     shutil.copytree(target / '.child-venv-source-caller' / role,
@@ -81,6 +127,53 @@ class SourceCallerTests(unittest.TestCase):
 
 
 class VerifierTests(unittest.TestCase):
+    def test_missing_committed_source_file_is_refused(self):
+        for role in ('agent', 'runtime'):
+            fixture = Layout()
+            path = fixture.snapshot / role / 'docs/deep/nested/readme.txt'
+            path.rename(fixture.base / 'withheld-committed-file')
+            with self.assertRaisesRegex(SystemExit, 'retained source differs from requested commit'):
+                fixture.verify()
+
+    def test_symlink_replacement_of_each_complete_source_ancestor_refuses(self):
+        for role in ('agent', 'runtime'):
+            for rel in ('', role, role + '/docs', role + '/docs/deep', role + '/docs/deep/nested'):
+                with self.subTest(role=role, rel=rel):
+                    fixture = Layout()
+                    path = fixture.snapshot / rel
+                    outside = fixture.base / 'displaced'
+                    path.rename(outside)
+                    path.symlink_to(outside, target_is_directory=True)
+                    with self.assertRaisesRegex(SystemExit, 'unsafe or writable retained path'):
+                        fixture.verify()
+
+    def test_symlink_replacement_of_carrier_and_metadata_refuses(self):
+        for rel in ('.source-inputs', '.source-inputs/agent.tar',
+                    'lib/python3.13/site-packages/astrid-0.1.0.dist-info',
+                    'lib/python3.13/site-packages/astrid-0.1.0.dist-info/RECORD'):
+            fixture = Layout()
+            path = fixture.root / rel
+            directory = path.is_dir()
+            outside = fixture.base / 'displaced'
+            path.rename(outside)
+            path.symlink_to(outside, target_is_directory=directory)
+            with self.assertRaisesRegex(SystemExit, 'unsafe or writable retained path'):
+                fixture.verify()
+
+    def test_extra_snapshot_and_editable_provenance_refuse(self):
+        fixture = Layout()
+        (fixture.root / '.child-venv-source-foreign').mkdir()
+        with self.assertRaisesRegex(SystemExit, 'ambiguous retained source snapshot'):
+            fixture.verify()
+        fixture = Layout(kind='directory')
+        path = fixture.dist_paths['agent'] / 'direct_url.json'
+        direct = json.loads(path.read_text())
+        direct['dir_info']['editable'] = True
+        path.write_text(json.dumps(direct))
+        fixture.refresh_record('agent')
+        with self.assertRaisesRegex(SystemExit, 'source is not a noneditable directory install'):
+            fixture.verify()
+
     def test_archive_ownership_and_complete_ancestry(self):
         fixture = Layout()
         inventory = fixture.verify()
@@ -127,6 +220,18 @@ class VerifierTests(unittest.TestCase):
         fixture = Layout()
         with self.assertRaisesRegex(AssertionError, 'Unexpected source identity'):
             fixture.verify(argv_change=lambda argv: argv.__setitem__(4, '0' * 40))
+
+    def test_unsupported_committed_symlink_is_refused(self):
+        fixture = Layout()
+        output = io.BytesIO()
+        with tarfile.open(fileobj=output, mode='w') as stream:
+            entry = tarfile.TarInfo('malicious-link')
+            entry.type = tarfile.SYMTYPE
+            entry.linkname = '/outside'
+            stream.addfile(entry)
+        fixture.archives['agent'] = output.getvalue()
+        with self.assertRaisesRegex(SystemExit, 'unsupported committed source file'):
+            fixture.verify()
 
     def test_archive_bytes_hash_and_location_are_authenticated(self):
         for change in ('bytes', 'hash', 'url'):
@@ -301,6 +406,8 @@ class RetentionLifecycleTests(unittest.TestCase):
                   subprocess=subprocess, identity={}, client=fixture.client,
                   checkout='/fixture/agent', agent=AGENT, runtime_checkout='/fixture/runtime',
                   backend=RUNTIME, work=str(fixture.base), python=str(fixture.interpreter),
+                  requirements='requirements/proof.lock',
+                  lock=hashlib.sha256(fixture.files['agent']['requirements/proof.lock']).hexdigest(),
                   dependency_seed='', source=MAKER.read_text(),
                   verifier=block(MAKER.read_text(), 'STORE_VERIFY'), verified_reports={})
         functions(MAKER.read_text(), ['verify', 'report_bytes'], ns)

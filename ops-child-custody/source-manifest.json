@@ -1,0 +1,130 @@
+{
+  "task": "rt-OPS-child-custody-resume-sol-1643",
+  "base_wip": "ad120ae33 (tl/rt-OPS-child-custody-sol-1633)",
+  "candidate_maker_preserved_byte_exact_from_wip": true,
+  "live_preimages_and_unchanged_dependencies": {
+    "make-child-venv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+      "bytes": 68506,
+      "mode": "0755"
+    },
+    "bench_store.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "bytes": 43403,
+      "mode": "0755"
+    },
+    "verify_dependency_seed.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "bytes": 52731,
+      "mode": "0755"
+    }
+  },
+  "candidate": {
+    "path": "/home/user/work/wt/rt-OPS-child-custody-resume-sol-1643/ops-child-custody/make-child-venv",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755"
+  },
+  "test_sources": [
+    {
+      "path": "/home/user/work/wt/rt-OPS-child-custody-resume-sol-1643/ops-child-custody/tests/support.py",
+      "sha256": "8e61d99631e417e39e95b845f5433525ec25a26f190cd433380ebc75f830ec42",
+      "bytes": 12409,
+      "mode": "0644"
+    },
+    {
+      "path": "/home/user/work/wt/rt-OPS-child-custody-resume-sol-1643/ops-child-custody/tests/test_custody.py",
+      "sha256": "d6be27f90288a00880eefbe1873200e4bb688d26aa1a493aeb0692685a2a5a55",
+      "bytes": 23845,
+      "mode": "0644"
+    }
+  ],
+  "embedded_blocks": {
+    "STORE_PY": {
+      "preimage_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+      "postimage_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+      "unchanged": true
+    },
+    "STORE_VERIFY": {
+      "preimage_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+      "postimage_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+      "unchanged": true
+    },
+    "STORE_BUILD": {
+      "preimage_sha256": "6c00301a524020f27625680fd7f3c4aba1ca612dada9bcb20c822ef40aa1fa9d",
+      "postimage_sha256": "a3d9b63f5b99ce4e3ae5b72be93e5140000f99dc4e50e954a00777e420d09409",
+      "unchanged": false
+    }
+  },
+  "exact_source_inventories": [
+    {
+      "role": "agent",
+      "checkout": "/home/user/work/wt/agt-pin-a4e016b6",
+      "commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "clean_exact_checkout": true,
+      "tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+      "git_ls_tree_sha256": "33fc0dd428bd816b8bca3c5dae5ddd1a749858ccccc3a04e502e9d2746f56342",
+      "git_entries": 3565,
+      "git_modes": [
+        "100644",
+        "100755"
+      ],
+      "archive_sha256": "506ccb04a37f49ff78c2d7cd7edba11159477085e2ccfba60662e5270c9b7d4f",
+      "archive_bytes": 120104960,
+      "archive_files": 3565,
+      "archive_directories": 694,
+      "directories_outside_committed_file_ancestry": [],
+      "unsupported_entries": [],
+      "committed_file_inventory_sha256": "2cdb8f63fa0a5ac95b829313eb3cdd4953b7d9896ea74ad0898f8d1ef5ce2517"
+    },
+    {
+      "role": "runtime",
+      "checkout": "/home/user/work/wt/rt-pin-5e9ad1c6",
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "clean_exact_checkout": true,
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "git_ls_tree_sha256": "bd19a66ca43ac158be1a98beaf1336ec45e70f3bbccb1227fda0b15e593e3693",
+      "git_entries": 535,
+      "git_modes": [
+        "100644",
+        "100755"
+      ],
+      "archive_sha256": "763ef7e9232ce4ccc8fd482b85c2af044124144856e0a03e0188dfb596d641dc",
+      "archive_bytes": 20449280,
+      "archive_files": 535,
+      "archive_directories": 33,
+      "directories_outside_committed_file_ancestry": [],
+      "unsupported_entries": [],
+      "committed_file_inventory_sha256": "1a0d1db527c7d672a370adf693f37458d654773cbd7f78c86405798e9327b162"
+    }
+  ],
+  "reserves_unchanged": {
+    "normal_child_bytes": 5905580032,
+    "runtime_and_diagnostic_bytes": 8589934592
+  },
+  "source_identity": {
+    "agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344"
+  },
+  "actual_layout": "UNVERIFIED / EXACTMISSING",
+  "admission": {
+    "observed_at_utc": "2026-10-25T16:48:06.359866+00:00",
+    "free_bytes": 5221408768,
+    "child_normal_reserve_bytes": 5905580032,
+    "diagnostic_reserve_bytes": 8589934592,
+    "normal_gap_bytes": 684171264,
+    "diagnostic_gap_bytes": 3368525824,
+    "build": "NOTRUN",
+    "body_admitted": false
+  },
+  "typecheck": "N/A: Composition has no configured Python mypy/pyright baseline; no product TypeScript changed.",
+  "missing_actual_diagnostic_inputs": [
+    "Main default /home/user/work/bench-store absent; authenticated Store custody not supplied",
+    "disk below unchanged 8589934592-byte diagnostic reserve",
+    "manager disk/body resource admission not supplied",
+    "no-acquisition constraint remains; no alternate package/bootstrap inputs introduced"
+  ]
+}

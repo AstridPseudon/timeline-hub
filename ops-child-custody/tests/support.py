@@ -18,7 +18,7 @@ import tempfile
 from unittest.mock import patch
 
 ORCH = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
-WORKER = ORCH / 'workers/rt-OPS-child-custody-sol-1633'
+WORKER = ORCH / 'workers/rt-OPS-child-custody-resume-sol-1643'
 MAKER = Path(__file__).resolve().parents[1] / 'make-child-venv'
 PARENT = WORKER / 'evidence/make-child-venv.preimage'
 AGENT = 'a4e016b6a9f91fbe372672bdcf382c630bf59186'
@@ -71,6 +71,26 @@ def record_row(rel, data):
     return [rel, 'sha256=' + base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('='), str(len(data))]
 
 
+def source_census(fixture, inventory):
+    """One bounded read-only walk of a private fixture's entire source tree."""
+    expected_files = {fixture.root / rel for rel in inventory['__root__']}
+    expected_dirs = set().union(*(set(path.parents) for path in expected_files))
+    paths = sorted(fixture.snapshot.rglob('*'))
+    assert len(paths) < 1000
+    refused = []
+    for path in paths:
+        mode = path.lstat().st_mode
+        if stat.S_ISDIR(mode):
+            reason = 'unowned retained source directory' if path not in expected_dirs else None
+        elif stat.S_ISREG(mode):
+            reason = 'unowned retained source file' if path not in expected_files else None
+        else:
+            reason = 'unsafe or writable retained path'
+        if reason:
+            refused.append({'path': path.relative_to(fixture.root).as_posix(), 'reason': reason})
+    return refused
+
+
 class Layout:
     def __init__(self, kind='archive'):
         self.base = scratch()
@@ -85,6 +105,7 @@ class Layout:
         self.kind = kind
         self.interpreter = self.base / 'maker-python'
         self.interpreter.write_bytes(b'private interpreter identity fixture\n')
+        self.interpreter.chmod(0o755)
         put(self.root / 'bin/python', self.interpreter.read_bytes())
         self.client = 'packages/python/astrid_runtime_client/__init__.py=' + hashlib.sha256(b'CLIENT = 1\n').hexdigest()
         for name, role, packages in (
@@ -174,7 +195,8 @@ class Layout:
 
         def git_output(args, **kwargs):
             for role, sha in (('agent', AGENT), ('runtime', RUNTIME)):
-                if args == ['git', '-C', '/fixture/' + role, 'archive', sha]:
+                if args in (['git', '-C', '/fixture/' + role, 'archive', sha],
+                            ['git', '-C', '/fixture/' + role, 'archive', '--format=tar', sha]):
                     return self.archives[role]
             raise AssertionError('Unexpected source identity: ' + repr(args))
 
