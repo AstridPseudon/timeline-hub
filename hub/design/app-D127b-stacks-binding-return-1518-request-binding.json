@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "browser_trace": {
+    "header_artifact_present": true,
+    "idempotency_key_hash_available": true,
+    "element_join": "EXACT_JOIN",
+    "swap_join": "UNKNOWN",
+    "element_trace": {
+      "trace_zip_archive_member": "d66/p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/trace.zip",
+      "trace_zip_sha256": "5a02e3b56c2b25d9953d1703cb87651444896df91acaf6860c8e4e7faeed5b44",
+      "trace_zip_size_bytes": 2355391,
+      "network_member": "0-trace.network",
+      "network_member_sha256": "80185ed64fa3e9f33160806d7352e31994d7f115cf6f07f64dec605af2ac7291",
+      "network_member_size_bytes": 221127,
+      "network_record_line": 105,
+      "request_header_path": "snapshot/request/headers/3"
+    },
+    "swap_trace": {
+      "trace_zip_archive_member": "d66/p2/three-products.p2-popup-P2-12bf5-ed-old-new-media-selections/trace.zip",
+      "trace_zip_sha256": "c15d86028234121cf91fd06e22dcdb80f975ce191c461efa0673a077f9804e26",
+      "trace_zip_size_bytes": 2284315,
+      "network_member": "0-trace.network",
+      "network_member_sha256": "dba9918942f09dde3f2ab906f0cc8c8b9e70efa5745b180d9a71210e96512e56",
+      "network_member_size_bytes": 334662
+    },
+    "reason": "The retained Playwright element network member contains the header record whose locally computed lowercase-UTF-8 SHA-256 matches Runtime launch d22 request 3. The retained SWAP trace is present, but no SWAP header hash matches a retained Runtime key hash."
+  },
+  "runtime_candidates": [
+    {
+      "operation": "element",
+      "status": "exact_join",
+      "idempotency_key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+      "capture_namespace": "pid-12960-birth-19014785-capture-1",
+      "pid": 12960,
+      "birth_ticks": 19014785,
+      "request": 3,
+      "utc": "2026-10-25T14:49:25.626Z",
+      "last_phase": "authorization",
+      "sample_total": 352,
+      "lost_samples": 3,
+      "dispatch_wall_denominator_ms": null,
+      "response": "UNKNOWN",
+      "backend_outcome": "UNKNOWN",
+      "browser_join": "EXACT_JOIN",
+      "trace_record_line": 105,
+      "trace_request_header_path": "snapshot/request/headers/3",
+      "trace_zip_sha256": "5a02e3b56c2b25d9953d1703cb87651444896df91acaf6860c8e4e7faeed5b44",
+      "trace_network_member_sha256": "80185ed64fa3e9f33160806d7352e31994d7f115cf6f07f64dec605af2ac7291"
+    }
+  ],
+  "exact_joins": [
+    {
+      "operation": "element",
+      "browser_trace": "d66/p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/trace.zip:0-trace.network:105",
+      "runtime_trace": "exact10721-resultdir/launch-d22e9a6e-f0c4-46ea-a6b2-3567bdccc62c/p2-commit-phase-2.jsonl",
+      "namespace": "pid-12960-birth-19014785-capture-1",
+      "pid": 12960,
+      "birth_ticks": 19014785,
+      "request": 3,
+      "utc": "2026-10-25T14:49:25.626Z",
+      "key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+      "header_preimage_published": false
+    }
+  ],
+  "swap": {
+    "status": "UNKNOWN",
+    "reason": "No retained SWAP browser header hash matches a retained Runtime key hash."
+  },
+  "policy": "Use exact browser-key-hash plus namespace/PID birth/request/UTC joins only. Do not infer from timing, order, constructor, source shape, or the earlier request 2. Runtime outcome, handler end, response, and request-wall denominator remain UNKNOWN for the exact element join."
+}

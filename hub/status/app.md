@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T15:22:13Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 3m -->
-# app board, 2026-10-25T15:19Z
+<!-- app | 2026-10-25T15:27:08Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 0m -->
+# app board, 2026-10-25T15:27Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -90,7 +90,7 @@
 | D124-activation | Prove correct helper startup route | HARD Sol | Repeated Luna startup failures | merged | app-D124-activation-wholepath-sol-1425 | Configuration root proved: required helper basename with exact6c9 bytes. No source repair. Actual socket control pending Luna1435; no activation GO yet. | Source unchanged |
 
 | D124-activation-proof | Preserve actual helper startup proof | Luna independent | Normal84857 and canonical6c9 source | merged | app-D124-protected-activation-1435 | Fresh normal2 and reviewed2 PASS. Exact6c9,102 rows/30754B,0600,bounded phases/sampler/privacy PASS. No original body or source edits. | App84857 |
-| D124-correlation | Join safe attempt and refusal diagnostic | Runtime Luna; App retained review | Existing key hash convention | blocked:runtime | Runtime1450; App1455 complete | App finite answer: browser key presence only, no retained per-attempt join. Runtime existing diagnostic adds key hash before final review. | Source unchanged |
+| D124-correlation | Join safe attempt and refusal diagnostic | Runtime Luna; App retained review | Qualified Runtime diagnostic release | blocked:runtime | Runtime1450; App1512 complete | App exact element key join proved and delivered. SWAP helper key join remains UNKNOWN. Runtime owns existing diagnostic continuation and D112 repair. | Source unchanged |
 
 | D74-fe3309-pin | Release completed tagged tuple pin | Manager and host audit | Host1446 and fresh static guards | merged | Guarded recycle1448 | Only oldfe3309 recycled; zero refusal. Current84857 tuple and all3250 outputs, branches and reports kept. [Receipt](../../design/app-pin-guarded-release-1448.json). | No source edits |
 | D127-Runtime-inputs | Hand retained tagged tour source facts | Existing producer and review | Runtime1426 peer ask | merged | Controller1407; independent D125 verdict | Safe facts and source sequence published. No standalone native package or lower private binding in handback; UNKNOWN stays explicit. | Source unchanged |
@@ -103,7 +103,7 @@
 
 | D124-10721-review | Qualify full tails and actual timing | Luna independent | Actual10721 terminal packet | merged | Independent1455; binding review1512 | Five complete tails GO, full NO-GO. Later1512 proves exact element key join to d22 request3; pending outcome and duration UNKNOWN. | Evidence only |
 
-| D127b-stacks | Publish retained safe sampler frames | Luna and independent Luna | D127b and independent1455 | doing | Review1512; binding return1518 | Privacy and frames PASS, sent now. Exact element key join found; final tuple typo and binding metadata return active. Element stack file absent; summaries kept. | Evidence only |
+| D127b-stacks | Publish retained safe sampler frames | Luna and HARD Sol review | D127b and exact element join | merged | Binding1518; durable review1524 | Privacy, content and durable custody PASS. All safe frames and summaries published to Runtime; element d22 request3 matched. No outcome or timing claim. | Evidence only |
 
 Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals the entire independently1414 reviewed candidate tree. Only exact two D126 and strict bootstrap test blobs imported. Targeted normal2, mutations, types and lint PASS. [Normal receipt](../../design/app-D126-normal-home-1437.json). Actual3250 remains frozenfe3309/070dfc/5e9ad/635f and excludes new helper/hook. No result retarget.
 
@@ -115,13 +115,13 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 
 Blockers: App current SWAP — Actual3250 independent five-case GO; SWAP409 history_unavailable with lower private binding UNKNOWN. MAIN assigned Runtime root and correlation14:29; no App duplicate.
-Blockers: App element — Actual10721 FAIL. Independent1512 matches element key to d22 request3; final outcome UNKNOWN. Safe frames sent; final summaries and corrected custody1518 follow. No new tour before fixes ship.
+Blockers: Element cost — App exact element join and complete safe frames/summaries delivered; final1524 privacy/content/custody PASS. Runtime owns current cost analysis. Final backend outcome UNKNOWN. D127b holds new tours.
 Blockers: Farm host14 and batch — Agent upstream fallback is normal a4e016 and original14 independently PASS. REG closure awaits core; Farm retained source directory refusal remains stopped; Runtime kit owner handles the new guard after metadata correction.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Binding return1518, then independent delta review. Privacy-PASS safe frames and exact element binding already sent to Runtime. D127b holds new tours until fixes ship.
-live 0 / cap 3; queued 1; ready-undispatched 0; core open: 2. Bounded binding return1518 queued. No heavy body, no new original and no source author waiting. No heavy body, new small Agent author or speculative source fix.
-Capacity: Free5.039GB at15:15Z with one reviewer; no heavy body. Sweep3 removed0; compact packed0 scratch dirs, gzipped1 old log and packed0 test dirs. Prior guarded oldfe3309 recycle remains scoped. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
-INBOX consumed through2272227 bytes, including Runtime1448, D127b and delayed old pin note1444. Pin release already complete; no repeated action. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled10721 independent NO-GO; timing UNKNOWN. Safe stack packet active. No source/adoption wait.
+Next ready: None in App. D127b complete safe packet and finite SWAP source recipe both independently PASS and delivered to Runtime. Await qualified owner fixes; no new tour before those ship.
+live 0 / cap 6; ready-undispatched 0; core open: 2. All App authors and reviews finished; no heavy body or source task waiting. Agent small-file pause and D127b body hold remain in force. No heavy body, new small Agent author or speculative source fix.
+Capacity: Free5.236GB at15:26Z after all current workers recycled normally; no heavy body. Sweep3 removed0; compact packed0 scratch dirs, gzipped1 old log and packed0 test dirs. Prior guarded oldfe3309 recycle remains scoped. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
+INBOX consumed through2273818 bytes, including Runtime1448, D127b and delayed old pin note1444. Pin release already complete; no repeated action. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled10721 independent NO-GO; exact element identity proved, final timing UNKNOWN. Safe packet final PASS and delivered. No App source or publication wait.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 

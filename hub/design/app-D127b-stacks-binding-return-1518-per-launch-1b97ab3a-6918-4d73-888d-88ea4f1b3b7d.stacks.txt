@@ -1,0 +1,54 @@
+safe_stack_schema: 1
+source_pointer: exact10721-resultdir/launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d/p2-commit-phase-2.stacks.txt
+linked_trace: launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d/p2-commit-phase-2.jsonl
+source_sha256: e387fbffb41850c5cdc3ca1b9d127fb32d329983cf104593b6be66a9d57a3013
+source_size_bytes: 5600
+source_line_count: 72
+thread_snapshot_count: 1
+raw_file_frame_count: 60
+raw_invalid_frame_count: 1
+privacy: absolute paths, private URLs, keys, auth, payloads, locals, and raw stack text are not retained
+frames: count | relative_source | line | function
+4 | <stdlib>/copy.py | 137 | deepcopy
+4 | <stdlib>/threading.py | 1015 | _bootstrap
+4 | <stdlib>/threading.py | 1044 | _bootstrap_inner
+3 | <stdlib>/copy.py | 222 | _deepcopy_dict
+3 | <stdlib>/threading.py | 995 | run
+2 | <runtime>/service.py | 438 | wrapped
+2 | <runtime>/timeline_commit_store.py | 182 | evaluate
+2 | <stdlib>/selectors.py | 398 | select
+2 | <stdlib>/socketserver.py | 235 | serve_forever
+1 | <builtin>/__init__ | ??? | __init__
+1 | <capture>/p2_commit_phase_capture.py | 326 | _sample_stack
+1 | <capture>/p2_commit_phase_capture.py | 422 | <lambda>
+1 | <capture>/p2_commit_phase_capture.py | 458 | _watchdog_fire
+1 | <capture>/p2_commit_phase_capture.py | 860 | _trace
+1 | <frozen>/runpy | 203 | _run_module_as_main
+1 | <frozen>/runpy | 88 | _run_code
+1 | <runtime>/cli.py | 155 | main
+1 | <runtime>/cli.py | 411 | _main
+1 | <runtime>/cli.py | 419 | <module>
+1 | <runtime>/server.py | 1208 | _dispatch
+1 | <runtime>/server.py | 1243 | do_POST
+1 | <runtime>/server.py | 313 | _timeline_commit
+1 | <runtime>/server.py | 528 | _route
+1 | <runtime>/service.py | 2478 | commit_timeline
+1 | <runtime>/service.py | 2546 | _execute_timeline_commit
+1 | <runtime>/timeline_commit_auth.py | 2902 | validate
+1 | <runtime>/timeline_commit_auth.py | 845 | step_output
+1 | <runtime>/timeline_commit_execution.py | 297 | _lookup
+1 | <runtime>/timeline_commit_execution.py | 306 | execute
+1 | <runtime>/timeline_commit_execution.py | 341 | _execute
+1 | <runtime>/timeline_commit_store.py | 178 | evaluate
+1 | <runtime>/timeline_commit_store.py | 597 | lookup
+1 | <runtime>/timeline_commit_store.py | 609 | _lookup
+1 | <runtime>/timeline_commit_store.py | 693 | _verify_accepted
+1 | <runtime>/timeline_commit_store.py | 887 | _verify_accepted_replay
+1 | <stdlib>/copy.py | 119 | deepcopy
+1 | <stdlib>/copy.py | 197 | _deepcopy_list
+1 | <stdlib>/http/server.py | 439 | handle_one_request
+1 | <stdlib>/http/server.py | 451 | handle
+1 | <stdlib>/socketserver.py | 766 | __init__
+1 | <stdlib>/threading.py | 1345 | run
+1 | <stdlib>/threading.py | 363 | wait
+1 | <stdlib>/threading.py | 660 | wait

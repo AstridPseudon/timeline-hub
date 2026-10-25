@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "task": "D127b final bounded corrected1518 review",
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "parent_done": true,
+  "corrected_ref": "tl/app-D127b-stacks-binding-return-1518",
+  "corrected_commit": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320",
+  "packet_privacy": "PASS",
+  "packet_content_custody": "PASS",
+  "required_absolute_input_persistence": "FAIL",
+  "packet_custody": "FAIL",
+  "request_binding": "UNKNOWN",
+  "element_binding": "EXACT_JOIN",
+  "swap_binding": "UNKNOWN",
+  "runtime_outcome": "UNKNOWN",
+  "handler_end": "UNKNOWN",
+  "response": "UNKNOWN",
+  "safe_frame_hashes_unchanged_from_original1503": true,
+  "tracked_delta_only_metadata": true,
+  "composition_sha_everywhere_tracked": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "missing_absolute_input": true,
+  "missing_paths": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/handoff.md"
+  ],
+  "manifest": {
+    "app": {"commit": "84857c45347539c7820bb054b69e2e5ad4079081", "tree": "7feb5b12a1ad9629f096700c40c393d5b3998217"},
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  },
+  "element_join": {
+    "key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+    "namespace": "pid-12960-birth-19014785-capture-1",
+    "request": 3,
+    "utc": "2026-10-25T14:49:25.626Z",
+    "sample_total": 352,
+    "lost_samples": 3,
+    "preimage_published": false
+  },
+  "tests": "N/A: read-only artifact review"
+}

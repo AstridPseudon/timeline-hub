@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "task": "D127b recovered durable exact worker custody",
+  "verified_at_utc": "2026-10-25T15:25:23.276359+00:00",
+  "base_commit": "84857c45347539c7820bb054b69e2e5ad4079081",
+  "recovered_commit": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320",
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "manifest": {
+    "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+    "app_commit": "84857c45347539c7820bb054b69e2e5ad4079081",
+    "app_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+    "agent_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  },
+  "recovered_files": [
+    {
+      "name": "facts.json",
+      "recovered_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/facts.json",
+      "git_source": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320:evidence/facts.json",
+      "git_blob_sha1": "d4c8df13f051f8568b3895cfc4a1de53b0ec001c",
+      "sha256": "76103f7c4521e7bfebe62abcc903a1ff16e06606f6626b4bdb137704938f734f",
+      "size_bytes": 94295,
+      "byte_identical": true
+    },
+    {
+      "name": "p2-commit-phase.stacks.txt",
+      "recovered_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/p2-commit-phase.stacks.txt",
+      "git_source": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320:evidence/p2-commit-phase.stacks.txt",
+      "git_blob_sha1": "ee46a190c8cefb1ec66b75aaf0500f4b9547e8ce",
+      "sha256": "7d5d143cab62b79a6e239b8e5b51090f208fadef271a03149d831acbfdf46ea0",
+      "size_bytes": 2359,
+      "byte_identical": true
+    },
+    {
+      "name": "per-launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d.stacks.txt",
+      "recovered_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/per-launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d.stacks.txt",
+      "git_source": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320:evidence/per-launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d.stacks.txt",
+      "git_blob_sha1": "df79987cadb548c22c771f67588f3928c52b3f83",
+      "sha256": "5f07fda1b7d2591f167669e43f3f14ede0428d35aa6cadf3b07962b0de379f2c",
+      "size_bytes": 2665,
+      "byte_identical": true
+    },
+    {
+      "name": "per-launch-d15d840a-f5ce-447f-8e06-e3b003792872.stacks.txt",
+      "recovered_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/per-launch-d15d840a-f5ce-447f-8e06-e3b003792872.stacks.txt",
+      "git_source": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320:evidence/per-launch-d15d840a-f5ce-447f-8e06-e3b003792872.stacks.txt",
+      "git_blob_sha1": "4900d333628d6cc535ee6207171b381922f70550",
+      "sha256": "e8e0824d711ca0110afab9a523ae70255dcd35cdc89bfd72ba60855c081d7f54",
+      "size_bytes": 2700,
+      "byte_identical": true
+    },
+    {
+      "name": "privacy-check.json",
+      "recovered_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/privacy-check.json",
+      "git_source": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320:evidence/privacy-check.json",
+      "git_blob_sha1": "d7df439eac981c8c421d4363d40b939d649157df",
+      "sha256": "9747d3494e262a3138800805fbc8e74129104d8d8c3cd0932540279c8d0c429a",
+      "size_bytes": 1079,
+      "byte_identical": true
+    },
+    {
+      "name": "request-binding.json",
+      "recovered_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/request-binding.json",
+      "git_source": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320:evidence/request-binding.json",
+      "git_blob_sha1": "c88debe887542a9fc3d3e0512ce0544a47ca0252",
+      "sha256": "2fc585e2ce174d67b6b7b36270e467417bc7d29b6e8767e0e7ecb3a5d07d2877",
+      "size_bytes": 3489,
+      "byte_identical": true
+    },
+    {
+      "name": "stack-index.json",
+      "recovered_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/stack-index.json",
+      "git_source": "b48fa11ab5eb1c3ce523c9d70caefb48b84ad320:evidence/stack-index.json",
+      "git_blob_sha1": "4891002f9eb615c196cc399f007a8e1cf5d77478",
+      "sha256": "900f27b9e7a9d709ca08a24f9d8d75f5e87f29f3b2a5043e05acd7c98bf1ff6f",
+      "size_bytes": 5239,
+      "byte_identical": true
+    }
+  ],
+  "handoff": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/evidence/handoff.md",
+    "author_report_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stacks-binding-return-1518/report.md",
+    "sha256": "8816685ce3b942249bd4ea9ceb0f99e868f47ea3304aacb1207047c64d594b36",
+    "size_bytes": 1760,
+    "byte_identical": true,
+    "provenance": "Manager copied the author1518 report verbatim; not a Git blob."
+  },
+  "prior_reviews": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stack-packet-review-1512/evidence/verdict.json",
+      "sha256": "d8a9baa1e5f304e60c7297ea6e5fc37dd7d3cbe6581396731172a19b967c9e40"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127b-stack-final-review-1521/evidence/verdict.json",
+      "sha256": "99b28c3fb3331c2959e16c2fcc2ee8209d83c37bb9c6d22d93d2fe65c0772e4e"
+    }
+  ],
+  "direct_checks": [
+    "Seven JSON/TXT files byte-identical to git show b48fa11ab5eb1c3ce523c9d70caefb48b84ad320:evidence/<name>; Git blob SHA-1 and full SHA-256 recorded.",
+    "Four JSON files parse; tuple/helper/actual10721 agree with independently reviewed manifest; four repository commit trees resolve exactly.",
+    "Three safe-stack byte streams and full SHA-256 match original1503; six JSONL hash/size records agree across recovered metadata.",
+    "Exact element key/namespace/PID/birth/request/UTC binding and pending 352 samples/3 lost retained; unknown fields remain unknown.",
+    "Author handoff and author report are byte-identical; required absolute input/output paths are present; App status/diff clean."
+  ],
+  "inherited_checks": {
+    "basis": "1512/1521 independent review plus exact recovered-byte identity; no repeated raw-source investigation.",
+    "privacy": "PASS",
+    "available_stack_artifacts": 3,
+    "absent_stack_artifacts": 3,
+    "jsonl_sources": 6,
+    "source_hash_sizes_and_frame_sample_conservation": "PASS",
+    "trace_zip_and_network_member_source_hashes": "PASS (author1518 verification preserved by exact byte identity; independent1521 corrected-content PASS)"
+  },
+  "historical_failures_retained": {
+    "1512": "FAIL: stale Composition SHA in original facts.json; corrected1518 content independently passed1521.",
+    "1521": "FAIL: required absolute evidence and handoff missing at that review; current manager recovery now verified."
+  },
+  "scope": "Custody receipt only; no product readiness, runtime success, timing, or performance claim."
+}

@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "packet": "D127b-retained10721-safe-stacks",
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "resultdir_pointer": "exact10721-resultdir/d66/runtime-private",
+  "source_custody": {
+    "app": "84857c45347539c7820bb054b69e2e5ad4079081",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "source_mutation": false,
+    "raw_sources_retained_in_place": true
+  },
+  "sources": [
+    {
+      "kind": "stack_artifact",
+      "source_pointer": "exact10721-resultdir/p2-commit-phase.stacks.txt",
+      "source_sha256": "544c1590aade24c082f6d2a4130671ecfbd4eadef3b1fd283b8f156590c023ce",
+      "source_size_bytes": 4856,
+      "safe_output": "evidence/p2-commit-phase.stacks.txt",
+      "safe_output_sha256": "7d5d143cab62b79a6e239b8e5b51090f208fadef271a03149d831acbfdf46ea0",
+      "safe_output_size_bytes": 2359,
+      "raw_published": false,
+      "linked_jsonl": "p2-commit-phase.jsonl"
+    },
+    {
+      "kind": "stack_artifact",
+      "source_pointer": "exact10721-resultdir/launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d/p2-commit-phase-2.stacks.txt",
+      "source_sha256": "e387fbffb41850c5cdc3ca1b9d127fb32d329983cf104593b6be66a9d57a3013",
+      "source_size_bytes": 5600,
+      "safe_output": "evidence/per-launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d.stacks.txt",
+      "safe_output_sha256": "5f07fda1b7d2591f167669e43f3f14ede0428d35aa6cadf3b07962b0de379f2c",
+      "safe_output_size_bytes": 2665,
+      "raw_published": false,
+      "linked_jsonl": "launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d/p2-commit-phase-2.jsonl"
+    },
+    {
+      "kind": "stack_artifact",
+      "source_pointer": "exact10721-resultdir/launch-d15d840a-f5ce-447f-8e06-e3b003792872/p2-commit-phase-2.stacks.txt",
+      "source_sha256": "cd1f4659e4be13822ccdb4cade23e18fa4c9d7b825330353a868011179c64666",
+      "source_size_bytes": 6209,
+      "safe_output": "evidence/per-launch-d15d840a-f5ce-447f-8e06-e3b003792872.stacks.txt",
+      "safe_output_sha256": "e8e0824d711ca0110afab9a523ae70255dcd35cdc89bfd72ba60855c081d7f54",
+      "safe_output_size_bytes": 2700,
+      "raw_published": false,
+      "linked_jsonl": "launch-d15d840a-f5ce-447f-8e06-e3b003792872/p2-commit-phase-2.jsonl"
+    },
+    {
+      "kind": "trace_jsonl",
+      "source_pointer": "exact10721-resultdir/p2-commit-phase.jsonl",
+      "source_sha256": "5fb123e055fbfb36dcbf8d7b5ed5dc37c42800170ba504d539dc1c84c6ecbd74",
+      "source_size_bytes": 16705,
+      "safe_output": "evidence/facts.json",
+      "raw_published": false
+    },
+    {
+      "kind": "trace_jsonl",
+      "source_pointer": "exact10721-resultdir/launch-038600ed-c08a-417f-a7ab-fe32440bad44/p2-commit-phase-2.jsonl",
+      "source_sha256": "d3d3c3e99792fe07f347303e6692ae25e0485bc93e83cb94d76b56c872553d5f",
+      "source_size_bytes": 43834,
+      "safe_output": "evidence/facts.json",
+      "raw_published": false
+    },
+    {
+      "kind": "trace_jsonl",
+      "source_pointer": "exact10721-resultdir/launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d/p2-commit-phase-2.jsonl",
+      "source_sha256": "da98c3a1ca13416709303e8eaa507f38dcebc2de93c3bceb9670d27526b36d84",
+      "source_size_bytes": 43835,
+      "safe_output": "evidence/facts.json",
+      "raw_published": false
+    },
+    {
+      "kind": "trace_jsonl",
+      "source_pointer": "exact10721-resultdir/launch-70f545dd-c366-443f-86fa-5f77dc39e04c/p2-commit-phase-2.jsonl",
+      "source_sha256": "fa6675aa39407799fbb0158b8dee644e81c7b8d3ff326b4894d41c3308d0e24c",
+      "source_size_bytes": 61101,
+      "safe_output": "evidence/facts.json",
+      "raw_published": false
+    },
+    {
+      "kind": "trace_jsonl",
+      "source_pointer": "exact10721-resultdir/launch-d15d840a-f5ce-447f-8e06-e3b003792872/p2-commit-phase-2.jsonl",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_size_bytes": 0,
+      "safe_output": "evidence/facts.json",
+      "raw_published": false
+    },
+    {
+      "kind": "trace_jsonl",
+      "source_pointer": "exact10721-resultdir/launch-d22e9a6e-f0c4-46ea-a6b2-3567bdccc62c/p2-commit-phase-2.jsonl",
+      "source_sha256": "eea2a7de954dd422ef5bbb3c07ef3d5dd71072e41ee49ad4a17cb5ad015fbaf0",
+      "source_size_bytes": 40763,
+      "safe_output": "evidence/facts.json",
+      "raw_published": false
+    }
+  ],
+  "missing_stack_artifacts": [
+    {"source_pointer": "exact10721-resultdir/launch-038600ed-c08a-417f-a7ab-fe32440bad44/p2-commit-phase-2.stacks.txt", "safe_output": null, "reason": "source artifact absent; JSONL retained and represented in facts.json"},
+    {"source_pointer": "exact10721-resultdir/launch-70f545dd-c366-443f-86fa-5f77dc39e04c/p2-commit-phase-2.stacks.txt", "safe_output": null, "reason": "source artifact absent; JSONL retained and represented in facts.json"},
+    {"source_pointer": "exact10721-resultdir/launch-d22e9a6e-f0c4-46ea-a6b2-3567bdccc62c/p2-commit-phase-2.stacks.txt", "safe_output": null, "reason": "source artifact absent; JSONL retained and represented in facts.json"}
+  ]
+}
