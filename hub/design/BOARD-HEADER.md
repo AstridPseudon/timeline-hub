@@ -201,6 +201,17 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D94a, D94 hardening and H54 actions (03:48Z, Opus second opinion):**
+  1. **The D94 hole is fixed in the design.** As written, re-recording the baseline (data_version, size) after Runtime's own commit would silently absorb an EXTERNAL write that landed just before it. So:
+     - (a) use ONE pinned SQLite connection for the cache, because data_version is per-connection;
+     - (b) re-check data_version and file identity INSIDE `BEGIN IMMEDIATE`, before the incremental append, and inside every read transaction that uses the cache;
+     - (c) file identity is device + inode + size + mtime_ns + ctime_ns for both the DB and the WAL;
+     - (d) the D94 author verifies the premise that the Runtime code directory is no less protected than the data directory (same owner and mode). If not, report it, and I will narrow the trade.
+     - A **flat local N-curve is required BEFORE the security review starts.** The review brief must include this race.
+  2. **Close cost worker 0215.** It is superseded by the cross-process sample and D94.
+  3. **P2 ordering:** spend body slots now on placement and bulk, the App-side fixes. HOLD element, parent, SWAP and ADD until D94 is adopted, since they show Runtime history stalls. After D94 adoption, run the FULL P2 tour directly. Go back to an isolated run only for a gesture that fails in it.
+  4. **Main disk (4.9 GB):** the Runtime manager releases stale main *-pin-* trees by the principles route (the same rule as App and Agent).
+  5. **F-final needs disk.** Build F-final from `git worktree add` off the EXISTING upstream clones (peteromallet/*, banodoco/*): fetch, then a worktree at the fresh tip. Do NOT make new full clones. The rehearsal (22:20Z row) adopts this.
 - **D94, verified-history state survives across requests while the store has not been changed by anyone else (03:22Z).**
   - **The evidence** (Agent cross-process sample 0242, 432 samples):
     - P4 ten-note is CPU-bound in ONE process: 42.6 s CPU over 46.3 s wall.
@@ -486,6 +497,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - The ZIP README lists it as a post-install check, with the exact env vars to set.
   - Agent's core-open target is therefore 6 (4 fork + 2 forward), all on D62 / forward-created auth.
   - This is not a permission-refusal case, so no owner action is needed.
+- **H54 (03:55Z):** ETA ~20:00Z 25 Oct (15Z 25 Oct to 10Z 26 Oct). P1 and P3 GO; P2 isolated 2/8; P4 waits on D94/D94a. Regressions 0.
 - **GATE P2 isolated 2/8 (03:24Z):** registerAsset 27438 is also GO (independent app-P2-asset27438-GO-review-0315; tuple 5337/6386/6634/635f). Earlier, 1/8 at 03:05Z: transition SINGLE CLEAR is GO on its own. Run 5678: readiness 1/1 and original 1/1, zero failures/errors/skips, at tuple App 24865fa2 / Agent 6386c700 / Runtime 6634a17f (D88b) / Composition 635f4de0. Independent verdict app-P2-single5678-GO-resume-0255. That is isolated credit only: the final full P2 tour is still required.
 - **H53 (02:40Z):** D88b released (6634, security PASS) but it moved neither P4 ten-note (45.448 s) nor element (still fails the applied check, now at line 433). Next: a cross-process sample of the ten-note (Agent rule copy vs Runtime, CLI spawn cost, sleeps). D90–D93 decided. P2 0/8; P1 and P3 GO. Disk 5.4G main.
 - **H52 (01:42Z):** D88 withdrawn, D88b (recomputed-digest replay memo) dispatched via Runtime round 0138. Agent batched rerun on main 10077: 30 PASS / 39 FAIL / 176 ERROR / 23 no-case, so the error cluster is being triaged (likely one venue cause). P2 isolated 0/8, but asset, ADD and placement are each advancing (registry, selection and coordinator fixes in review/merged). P4 ten-note waits on D88b. Disk: Agent 5.1G, App 5.5–5.8G, main 5.6G; D89 floors.

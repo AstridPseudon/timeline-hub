@@ -3911,3 +3911,25 @@ Both protected candidate requests0326/0327 consumed. SOURCEONLY Luna rt-Agent-ca
 Existing immutable20 ALREADY ACTUAL:18575 D91ten ERROR, inverse7 sevenPASS, D92threeFAIL. No missingbodywait or repeatedinverse7/D92. Exact22 media20/auto2 controller0333 preparing nextmeaningfulbody, oneheavyabove5.2; currentfree5.03GB aftersixsourcepreparations limits newstarts, existingtaskscontinue. D91 actualsetup source0331 returned nowneedsoneprotectedreviewatnextlegalfree slot, not another unchangedbody. MainCLI8/M1ten source0333 and authfourSol0333 actualrunning, ownershipexclusive. Your local occurrence/M2/recipe, sheet11/projection9/numeric6 reservations respected.
 
 D94 soleRuntimeauthor0320 finitewarmrequests currentlyflat inN (authorcontrolonly; notindependentprooforgatecredit). Finalcandidate/security/releasestillpending. No other P4/Apporiginal or sample. All old D88denials held.
+
+## 2026-10-25T03:48Z ORCHESTRATOR: D94a (D94 race hole plus H54 actions); act on the items naming your lane
+- **D94a, D94 hardening and H54 actions (03:48Z, Opus second opinion):**
+  1. **The D94 hole is fixed in the design.** As written, re-recording the baseline (data_version, size) after Runtime's own commit would silently absorb an EXTERNAL write that landed just before it. So:
+     - (a) use ONE pinned SQLite connection for the cache, because data_version is per-connection;
+     - (b) re-check data_version and file identity INSIDE `BEGIN IMMEDIATE`, before the incremental append, and inside every read transaction that uses the cache;
+     - (c) file identity is device + inode + size + mtime_ns + ctime_ns for both the DB and the WAL;
+     - (d) the D94 author verifies the premise that the Runtime code directory is no less protected than the data directory (same owner and mode). If not, report it, and I will narrow the trade.
+     - A **flat local N-curve is required BEFORE the security review starts.** The review brief must include this race.
+  2. **Close cost worker 0215.** It is superseded by the cross-process sample and D94.
+  3. **P2 ordering:** spend body slots now on placement and bulk, the App-side fixes. HOLD element, parent, SWAP and ADD until D94 is adopted, since they show Runtime history stalls. After D94 adoption, run the FULL P2 tour directly. Go back to an isolated run only for a gesture that fails in it.
+  4. **Main disk (4.9 GB):** the Runtime manager releases stale main *-pin-* trees by the principles route (the same rule as App and Agent).
+  5. **F-final needs disk.** Build F-final from `git worktree add` off the EXISTING upstream clones (peteromallet/*, banodoco/*): fetch, then a worktree at the fresh tip. Do NOT make new full clones. The rehearsal (22:20Z row) adopts this.
+
+## 2026-10-25T03:39:12Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0338Z-M1-validation-seam.md)
+Ask: assign bounded Agent duplicate/bootstrap historical text-binding validation follow-through from actual11789 M1ten; retain D87six dependent setup / Owner: Agent validation product owner; Runtime M1source0333 complete unapplied / By: 2026-10-25T03:38:34Z
+
+rt-D86-M1-11789-return-0333 completed readonly, no source change. Genuine original transcriptword-1/historicalelementRef/binding andmediapins/fullopaquegraph preserved. Actual11789 allM1tenERROR at historical text-binding guard; source traces supported timeline.duplicate birth against emptybootstrap to astrid/sdk/timeline/validation.py::_validate_element_reference. Exact worker report design/rt-D86-M1-11789-return-0333-report.md; source/evidenceunderworker. No attempt to stripbinding/pins/opaquegraph or weakenassertions. Sourceonlydoesnotestablishfunctionalfix.
+
+This is an ordinary narrow Agent source ownership handback underPLAN3V2/G3/R1, not a contractdecision or Runtimeguardrelaxation. Your word-choice2154 candidate touchesotherfiles; maintain singlefileownership and compareactualpassingduplicate vsfailedbootstrap source beforefix. If evidence instead proves genuineRuntimecause return exactrecordboundary, terminalguardaloneisnotcause. Independentprotectedreview+neededMAINcandidateproof beforecoreproductmerge. D87frontends6 transitivelyshareM1film buthave no newfunctionalcredit. Runtime no competingAgentvalidationwriter.
+
+D910331fixture returned; independent rt-D91-actual20-review-0338 queuednextslot. Candidate13cleanjoin0336active; ready22controller0333 waitingactualheavyfloor5.2GB (current~5.02), no testbody yet. All oldD88denials held; D94soleauthor0320continues.

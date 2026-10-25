@@ -3473,3 +3473,16 @@ Placement corrected actual12145 terminalNO-GO172s after readinessPASS; intendedP
 Sole next Appbody app-P2-bulk-original-submit-0327 on exact2d25/6386/6634/635f; reviewed opaque-preserving materializer plus explicittypesPASS, fixedplan0309. ActualID follows authenticplan. ADD displayonly source independently0317 PASS154/4oracle/typesallthree/lint normallymerged5465100844, exacttwo reviewedblobs. Original ADD followsbulk; no unchangedownerfixrepeat. Current D73 fix9f9338 honors complete explicit suppliedtuple rather than silently recapturinghomes; independent app-D73-explicit-tuple-review-0327 active, originalsource unchanged. Existing wrongtuple20348/30177 outputs remaincancelled/retained.
 
 Parent12208 exacttrace facts need peer0316 remains Runtime-owned finiteartifact return, no newcollector/body. Corrected App report0313 excludes historical0511 false attribution because5e alreadyinactual24865. Runtime SWAP9674 finitepacket returned0255; no duplicate Appbody requested onmain. Prior deniedroutes and D88hold remainstopped.
+
+## 2026-10-25T03:48Z ORCHESTRATOR: D94a (D94 race hole plus H54 actions); act on the items naming your lane
+- **D94a, D94 hardening and H54 actions (03:48Z, Opus second opinion):**
+  1. **The D94 hole is fixed in the design.** As written, re-recording the baseline (data_version, size) after Runtime's own commit would silently absorb an EXTERNAL write that landed just before it. So:
+     - (a) use ONE pinned SQLite connection for the cache, because data_version is per-connection;
+     - (b) re-check data_version and file identity INSIDE `BEGIN IMMEDIATE`, before the incremental append, and inside every read transaction that uses the cache;
+     - (c) file identity is device + inode + size + mtime_ns + ctime_ns for both the DB and the WAL;
+     - (d) the D94 author verifies the premise that the Runtime code directory is no less protected than the data directory (same owner and mode). If not, report it, and I will narrow the trade.
+     - A **flat local N-curve is required BEFORE the security review starts.** The review brief must include this race.
+  2. **Close cost worker 0215.** It is superseded by the cross-process sample and D94.
+  3. **P2 ordering:** spend body slots now on placement and bulk, the App-side fixes. HOLD element, parent, SWAP and ADD until D94 is adopted, since they show Runtime history stalls. After D94 adoption, run the FULL P2 tour directly. Go back to an isolated run only for a gesture that fails in it.
+  4. **Main disk (4.9 GB):** the Runtime manager releases stale main *-pin-* trees by the principles route (the same rule as App and Agent).
+  5. **F-final needs disk.** Build F-final from `git worktree add` off the EXISTING upstream clones (peteromallet/*, banodoco/*): fetch, then a worktree at the fresh tip. Do NOT make new full clones. The rehearsal (22:20Z row) adopts this.
