@@ -1,0 +1,64 @@
+test app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061: fail exit=1 in 242s — d73-transition-none-bulk-profile-2250-v2-fd2f843a on app-pin-fd2f843a (app tree 9fd43cb9b47d64c747508ed2436d275019bc2599)
+cmd: D66_APP_SHA='fd2f843a6957deef0a059a97d36671cee9d39e91' D66_APP_TREE='9fd43cb9b47d64c747508ed2436d275019bc2599' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-fd2f843a' D66_AGENT_SHA='0d142f79518ba4ec20eb195657ccc7eb6e903fc3' D66_AGENT_TREE='f490451a3fa92f847a9ff2d26daac9e1157925e3' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-0d142f79' D66_RUNTIME_SHA='a3cd1a3214fa1632879c21d82d1abb9ea720b1de' D66_RUNTIME_TREE='64bb0caf0b7b950e02c4075077868a3dcd12ee06' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-a3cd1a32' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx '/home/user/work/wt/rt-P2-SWAP-bulk-submit-0039/scripts/testing/d66-plain-stack-profile.mjs' 'p2-transition-none-bulk'
+counts:   1 passed (22.3s)   1 failed 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/log.txt ---
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/EditorCardLayer-CALDv1Nj.js                          275.92 kB │ gzip:  82.96 kB │ map:    931.13 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/mediabunny-mp3-encoder-C4LN6SLM.js                   311.25 kB │ gzip: 131.63 kB │ map:    324.42 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/mediabunny-flac-encoder-CGCE9GMF.js                  322.73 kB │ gzip:  83.15 kB │ map:    664.02 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/vendor-react-D2L5FdBO.js                             554.38 kB │ gzip: 179.44 kB │ map:  2,286.83 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/sample-BOVUGsH5.js                                   635.43 kB │ gzip: 165.24 kB │ map:    670.86 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/metadata-5C-YPJsi.js                                 707.70 kB │ gzip: 201.53 kB │ map:  2,794.05 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/mediabunny-aac-encoder-Bh3tb8Uy.js                   991.69 kB │ gzip: 256.70 kB │ map:  1,922.28 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/bootstrap-CykZXxdC.js                              1,631.56 kB │ gzip: 460.13 kB │ map:  6,574.67 kB
+../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/dist/assets/overhang-DUV5hEg9.js                               2,836.24 kB │ gzip: 804.28 kB │ map: 12,111.26 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1m
+D66 normal launch, native seed, Agent identity and authoritative history PASS
+
+Running 1 test using 1 worker
+
+  ✓  1 tests/e2e/local/three-products.mounted-readiness.spec.ts:268:1 › D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture (8.9s)
+
+  1 passed (22.3s)
+
+Running 1 test using 1 worker
+
+  ✘  1 tests/e2e/local/three-products.p2-tour.spec.ts:791:1 › P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo (1.7m)
+
+
+  1) tests/e2e/local/three-products.p2-tour.spec.ts:791:1 › P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo 
+
+    TimeoutError: page.waitForResponse: Timeout 90000ms exceeded while waiting for event "response"
+
+      123 |
+      124 | async function commitFromGesture(page: Page, wire: TourWire, action: () => Promise<void>): Promise<CommitPost> {
+    > 125 |   const responsePromise = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
+          |                                ^
+      126 |   await action();
+      127 |   const response = await responsePromise;
+      128 |   const request = response.request();
+        at commitFromGesture (/home/user/work/wt/rt-P2-SWAP-bulk-submit-0039/tests/e2e/local/three-products.p2-tour.spec.ts:125:32)
+        at proveGestureAndUndo (/home/user/work/wt/rt-P2-SWAP-bulk-submit-0039/tests/e2e/local/three-products.p2-tour.spec.ts:690:22)
+        at /home/user/work/wt/rt-P2-SWAP-bulk-submit-0039/tests/e2e/local/three-products.p2-tour.spec.ts:803:9
+
+    Error Context: ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/p2-transition-none-bulk/three-products.p2-tour-P2--917c4-elds-order-and-guarded-Undo/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/p2-transition-none-bulk/three-products.p2-tour-P2--917c4-elds-order-and-guarded-Undo/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/p2-transition-none-bulk/three-products.p2-tour-P2--917c4-elds-order-and-guarded-Undo/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/local/three-products.p2-tour.spec.ts:791:1 › P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo 
+
+No test passed in this run: a run where everything was skipped or failed is not a green run.
+
+Declare each skip in config/testing/skipRegistry.mjs and use tests/e2e/support/declaredSkip.ts; fix the earlier failure for NOT RUN tests.
+D66 manifest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-fd2f843a-d73-transition-none-bulk-profile-2250-v2-fd2f843a-1025004656-21061/d66/manifest.json
