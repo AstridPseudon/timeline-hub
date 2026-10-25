@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T19:33:08Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
-# agent board, 2026-10-25T19:21Z
+<!-- agent | 2026-10-25T19:37:29Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 5 | status age 0m -->
+# agent board, 2026-10-25T19:36Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -92,9 +92,9 @@
 | D107 transcript root | Trace persisted pin after restart | Luna read only | Genuine private authority record | later | Reader1634; final1646 PASS | Source map and corrected custody PASS | Whole path source traced. Owner UNKNOWN; persisted/private record missing. Both317 failures live; no unchanged body or speculative guard author. | Evidence only |
 | D128 fixture result | Review first actual parent failure | Independent Luna | Source1747 fixture correction | blocked:runtime | Reviewer1829 complete; Runtime first return requested1833 | FAIL with exact source cause | Private tests/suites.conf baseline is absent before Store.ensure. No body repeated. [Review](../../design/agt-OPS-inventory-E2E-failure-review-1829-report.md) | Evidence only |
 
-| D134 interim measurement | Measure frozen full core now | Luna / service | Superseding START NOW decision | doing | agt-F-D134-measurement-1909 | Independent1857 and DRY controls PASS | Service18455 submitted19:11:28Z. MEASUREMENT only, no ship credit. Earlier29996 exited126 before launcher; one actual body. E2E waits. | Frozen a4e016 /5e9ad |
-| F Agent conflicts A | Classify first20 frozen Agent paths | Luna read only | Main source slot after critical reviews | blocked:runtime | Hosted allocation peer1920 | Census1844/review1850 PASS | Exact sorted first20; all hunk classifications owed. No source patch or clone proof. | Frozen upstream886a |
-| F Agent conflicts B | Classify last20 frozen Agent paths | Luna read only | Main source slot after critical reviews | blocked:runtime | Hosted allocation peer1920 | Census1844/review1850 PASS | Exact sorted last20; disjoint from A. No source patch or clone proof. | Frozen upstream886a |
+| D134 interim measurement | Measure frozen full core | Luna / service | Exact independent classification | review | Operator1909; result reviewer1937 | Terminal8926PASS190FAIL180ERROR | 173subtestsPASS in1379.05s. Core and REG UNKNOWN pending independent per-ID review. MEASUREMENT only; no ship credit. | Frozen a4e016 /5e9ad |
+| F Agent conflicts A | Classify first20 frozen Agent paths | Luna | Core heavy body terminal | doing | agt-F-Agent-conflicts-A-1936 | Census1844/review1850 PASS | Exact first20 paths; all hunks source-only. No normal merge or clone proof. | Frozen547e /886a |
+| F Agent conflicts B | Classify last20 frozen Agent paths | Luna | Core heavy body terminal | doing | agt-F-Agent-conflicts-B-1936 | Census1844/review1850 PASS | Exact last20 paths, disjoint from A. No normal merge or clone proof. | Frozen547e /886a |
 | F Runtime review | Review Runtime10 conflict classification | Luna read only | Narrow Runtime evidence first return | blocked:runtime | Review1926 complete; peer1932 | FAIL evidence only; full source partition PASS | Hash typo and three anchors need correction. Exact two-file patch checks PASS; no product change or clone proof. | Evidence only |
 Integration: Agent a30e74e901a28b39c28facba3deb00d76f186e23, tree ece8e0887e48e45cb1fce85b1256c49a0f6126c0; clean at 18:27Z. Native companions HOME78db and graph callers HOMEa30e have exact independently reviewed blobs. Runtime ab1e lock remains qualified. Released Agent070dfc stays unchanged until proper batch core. Frozen D128 tuple a4e016 /5e9ad /d8a1 /635f stays exact. Held9ea, D100 product and D130 SWAP source excluded.
 
@@ -109,7 +109,7 @@ Blockers: SWAP safety — D130 holds recovery and related qualification after au
 Blockers: D69 and D59 — genuine installed render90, platform proof, final upstream audit, fullP2, final tupleP1-P5, wheel and ZIP still owed. Farm remains D77 only, after qualified maker kit.
 
 Next ready: Runtime Sol1908 and independent wholepath1909 complete the second portable return after review1903 FAIL, then exact final review and target check-only, then exact changed fixture at Agent sole venue. Successful parent RED/candidate GREEN needs one independent result review, reviewed CAS kit install, actual received hash/mode, and same-WIP controller1722 ONE changed normal child request/core. Local production request and core remain unspent.
-live 1 / cap 1 heavy plus 1 expressly allowed read-only; ready-undispatched 0 local. D134 controller1909 queued under superseding START NOW decision. D128 fixture waits for independent portable PASS and core terminal. No other body.
+live 4 / cap 6 source; ready-undispatched 0 local. Core terminal; operator1909, result1937 and disjoint Agent conflicts1936A/B. No heavy body. D134 controller1909 queued under superseding START NOW decision. D128 fixture waits for independent portable PASS and core terminal. No other body.
 
 Disk:6.684GB at18:29Z; fresh scan found0 ended clean nonKEEP worktrees. Sweep3 removed0; compact packed0 and gzipped2 old logs. Protected d22/f1012 and all branches/evidence retained. Six-pin guard receipt remains design/agent-D128-six-pin-guards-1557.json.
 
@@ -159,3 +159,7 @@ Pass19:26Z: lead19:25 explicit disjointreadreview permission consumed; Luna1926 
 Pass19:30Z: core70percent/free6177083392bytes. Runtime1916 delayedreviewhold reconciled with laterlead19:25explicitpermission and actual1926started19:26:19; peer1930 avoidsMainrevisionduplicate. Runtimewholepath1909fivefindingsreceived; Sol1908soleauthor. No fixturebody beforefinalPASS/coreterminal.
 
 Pass19:32Z: Runtimeconflictreview1926 terminalFAIL_EVIDENCE_ONLY. Source10/22/30 and patchchecksPASS; SHAtypo+3anchorsneedderivativecorrection. Exactpacketcopiedpermanentworker evidence (branch unchanged) and peer1932 sendsonefirstreturntoRuntime. No new productreview/body. Core74percentat19:31.
+
+Pass19:36Z: D13418455 terminalFAIL exit1/100percent, no guardrefusal. Disk6393032704bytes. Controllerpreservesfinitecounts; independentreviewnext. Heavyfreezecleared; twoindependentreadyAgent20pathrowsCLAIMED+queuedimmediately, peer1936cancelsunstartedhostingrequest. Sourceonlycompositiontreeskeepreserve. No bodyrepeat or sourcecountdeduction.
+
+Pass19:37Z: operator summary8926PASS190FAIL180ERROR173subtestsPASS1379.05s, preflight0/body1. Immediate independentLuna1937 parsesactualperID/source/D54a; core/regUNKNOWN untilverified. Exactsource/packetfinalization parallel; no bodyrepeat. Peer1937 tellsleadactualterminal and safeprovisionalcounts.
