@@ -1,0 +1,12 @@
+{
+  "task": "D128",
+  "suite": "agent-core-full",
+  "service_id": null,
+  "submitted": false,
+  "body_testcases": 0,
+  "core_open": "UNKNOWN",
+  "unresolved_classification": "UNKNOWN",
+  "retirement_count": 0,
+  "status": "setup_refused",
+  "refusal": "bench store: free-space reserve unavailable"
+}

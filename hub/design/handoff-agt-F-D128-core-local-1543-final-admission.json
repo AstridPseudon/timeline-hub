@@ -1,0 +1,13 @@
+{
+  "task": "D128",
+  "suite": "agent-core-full",
+  "admission": "captured-before-dispatch",
+  "captured_free_bytes": 4893683712,
+  "minimum_start_free_bytes": 4700000000,
+  "stop_free_bytes": 4000000000,
+  "d89c_prep_does_not_retrigger_floor": true,
+  "current_free_bytes_after_refusal": 5996836,
+  "current_free_bytes_units": "KiB",
+  "body_submitted": false,
+  "service_id": null
+}

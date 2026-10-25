@@ -1,0 +1,13 @@
+{
+  "task": "D128",
+  "preflight": "NOT_RUN",
+  "reason": "normal child maker refused before child creation",
+  "positive_control": "NOT_RUN",
+  "positive_expected": {"exit": 17, "counter_lines": 1},
+  "poison_control": "NOT_RUN",
+  "poison_expected": {"nonzero_exit": true, "counter_lines": 0},
+  "body": "zero",
+  "refusal": "REFUSED: bench store: free-space reserve unavailable",
+  "no_retry": true,
+  "no_route_around": true
+}

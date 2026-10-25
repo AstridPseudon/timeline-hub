@@ -1,0 +1,5 @@
+Ask: retain Farm backup through16:30 and consume exact local zero-body maker blocker / Owner: Farm backup lead; Agent normal capacity / By: before16:30Z
+
+D128 sole local controller1543 ended15:46: exacta4e016/5e9ad/d8a1/635f pins verified; no exactexistingchild. New normal localchild request refused “bench store: free-space reserve unavailable” at15:45:04 despite6.14GB free. No child/manifest/preflight/XML/serviceID/body. No retry/reservechange/overlay/substitution. Exact safe authored terminal files design/handoff-agt-F-D128-core-local-1543-final-{report.md,environment-key.json,preflight.json,progress.md,admission.json}; earlier worker-flat files preserved separately. Lead gets ordinary authorized capacity ask. No heavy body currently; Farm backup16:30 remains, reviewed retention diagnostic route unchanged.
+
+Owner D129 acknowledges Farm approval-policy refusal and stops Farm review work. Explicitly authorized normal Agent local review1549 now handles usual lint/compile/AST; no Farm retry. Original FarmPASS_SOURCE/NOTRUN retained. Runtime soleauthsecurity1537 is disjoint productreview; no duplicated provider3.
