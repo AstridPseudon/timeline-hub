@@ -60,11 +60,11 @@ const ENGINE_STOPPED = pinokioManaged
   : `Astrid's engine isn't running. Start it first: ${runtimeUpCommand}`;
 const DEFAULT_HOSTED_ORIGIN = 'https://astrid.haus';
 const engineWithoutDoor = (origin) => pinokioManaged
-  ? `Astrid's engine is running without a door for ${origin}. Restart Astrid in Pinokio.`
+  ? `Astrid's engine isn't accepting ${origin}. Stop and start Astrid in Pinokio.`
   : `Astrid's engine is running without a door for ${origin}. Restart it: ${runtimeCli('restart')}${origin === DEFAULT_HOSTED_ORIGIN ? '' : ` --hosted-origin ${origin}`}`;
 const BAD_HOSTED_ORIGIN = '--hosted-origin must be an https:// address, like https://astrid.haus';
 const ENGINE_CHANGED = pinokioManaged
-  ? 'Astrid changed on this computer. Restart Astrid in Pinokio.'
+  ? 'Astrid changed on this computer. Stop and start Astrid in Pinokio.'
   : `Astrid changed on this computer. Restart its engine: ${runtimeUpCommand}`;
 const CANT_START = "Astrid can't start with the setup on this computer.";
 
@@ -437,7 +437,7 @@ async function verifyRuntime(endpoint, token, expectedIdentity, allowStart = fal
       const selected = runtimeCommand('restart');
       const quote = (value) => /^[A-Za-z0-9_./:=+-]+$/.test(value) ? value : `'${value.replaceAll("'", "'\"'\"'")}'`;
       const invocation = [selected.command, ...selected.args.filter((value) => value !== '--json')].map(quote).join(' ');
-      const restart = pinokioManaged ? 'Restart Astrid in Pinokio' : `${selected.cwd ? `cd ${quote(selected.cwd)} && ` : ''}${invocation}`;
+      const restart = pinokioManaged ? 'Stop and start Astrid in Pinokio' : `${selected.cwd ? `cd ${quote(selected.cwd)} && ` : ''}${invocation}`;
       console.error(`Astrid: Runtime ${actual?.protocol ?? 'unknown'} schema ${actual?.schema_digest ?? 'unknown'} is incompatible with App workspace.v1 schema ${expectedSchemaDigest}; ${reason}; restart: ${restart}`);
       process.exitCode = 1;
       return null;

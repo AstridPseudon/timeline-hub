@@ -728,7 +728,7 @@ test('a running Runtime without a door for this hosted page is not attached: it 
       assert.equal(result.code, 1, label);
       assert.deepEqual(result.stderr.split('\n').slice(0, 2), [
         env
-          ? "Astrid's engine is running without a door for https://hosted.test. Restart Astrid in Pinokio."
+          ? "Astrid's engine isn't accepting https://hosted.test. Stop and start Astrid in Pinokio."
           : "Astrid's engine is running without a door for https://hosted.test. Restart it: astrid-runtime restart --profile astrid --hosted-origin https://hosted.test",
         `Details: ${details}`,
       ], label);
@@ -883,7 +883,7 @@ test('a Pinokio Runtime that changed points back to Pinokio', async () => {
   try {
     const result = await launcherEnds({ fixture, env: { ASTRID_INSTALL_MANAGED_BY: 'pinokio' } });
     assert.equal(result.code, 1);
-    assert.equal(result.stderr.split('\n')[0], 'Astrid changed on this computer. Restart Astrid in Pinokio.');
+    assert.equal(result.stderr.split('\n')[0], 'Astrid changed on this computer. Stop and start Astrid in Pinokio.');
     assert.equal(result.stderr.split('\n')[1], 'Details: Runtime health instance does not match the selected Astrid profile');
   } finally { await fixture.close(); }
 });
@@ -893,7 +893,7 @@ test('a Pinokio Runtime with an incompatible schema points to a Pinokio restart'
   try {
     const result = await launcherEnds({ fixture, env: { ASTRID_INSTALL_MANAGED_BY: 'pinokio' } });
     assert.equal(result.code, 1);
-    assert.match(result.stderr.split('\n')[0], /; restart: Restart Astrid in Pinokio$/);
+    assert.match(result.stderr.split('\n')[0], /; restart: Stop and start Astrid in Pinokio$/);
   } finally { await fixture.close(); }
 });
 

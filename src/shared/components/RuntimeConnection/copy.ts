@@ -289,7 +289,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     title: "Astrid isn't answering on this computer",
     retry: 'Try again',
     sentence: "Your coding agent can start it, or install it if it isn't there yet.",
-    pinokioHint: 'Installed with Pinokio? Start Astrid in Pinokio.',
+    pinokioHint: 'Using Pinokio? Start Astrid there.',
   },
 
   refused: {
@@ -301,7 +301,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   updateNeeded: {
     title: 'Update Astrid',
     sentence: 'This page needs a newer Astrid. Give these instructions to your coding agent to update it.',
-    pinokioSentence: 'Update Astrid in Pinokio: open Pinokio, choose Astrid, then Update.',
+    pinokioSentence: 'This page needs a newer Astrid. In Pinokio, open Astrid and choose Update, then Start.',
   },
 
   /** Lead-in above the shared update screen when a chat reply from this computer's Astrid is out of date. */
