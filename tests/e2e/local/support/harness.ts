@@ -55,8 +55,16 @@ const D66_PHASE_CAPTURE_HELPER_ENV = 'D66_P2_COMMIT_PHASE_CAPTURE_HELPER';
 const D66_PHASE_CAPTURE_HELPER_SHA256_ENV = 'D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256';
 const ASTRID_PHASE_CAPTURE_HELPER_ENV = 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER';
 const ASTRID_PHASE_CAPTURE_HELPER_SHA256_ENV = 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256';
+const D66_ELEMENT_VERIFICATION_ENV = 'D66_ELEMENT_VERIFICATION_ONLY';
 export const P2_PHASE_CAPTURE_FILE = 'p2-commit-phase.jsonl';
 const P2_PHASE_LAUNCH_ORDINAL_ENV = 'D66_RUNTIME_PHASE_LAUNCH_ORDINAL';
+const runtimeMeasurementEnvKeys = [
+  D66_ELEMENT_VERIFICATION_ENV,
+  'D66_RUNTIME_LOG_DIR', P2_PHASE_LAUNCH_ORDINAL_ENV,
+  'ASTRID_P2_COMMIT_PHASE_CAPTURE', 'ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK',
+  'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER', 'ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256',
+  'ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS',
+] as const;
 
 /** Selected-parameter child processes receive a private credential path, never its bearer value. */
 export function selectedParamCliEnv(base: NodeJS.ProcessEnv, credentialFile: string): NodeJS.ProcessEnv {
@@ -147,32 +155,42 @@ function p2PhaseLaunchOrdinal(runtimeLogDir: string | undefined): number {
   return launchOrdinal;
 }
 
+function prepareRuntimeLogDirectory(runtimeLogDir: string | undefined, launchOrdinal: number): string | undefined {
+  const raw = runtimeLogDir?.trim();
+  if (!raw) return undefined;
+  if (!path.isAbsolute(raw)) throw new Error('D66 Runtime log directory must be an absolute path under TMPDIR');
+  const directory = path.resolve(raw);
+  const temporary = path.resolve(tmpdir());
+  const relative = path.relative(temporary, directory);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('D66 Runtime log directory must be a private child of TMPDIR');
+  if (!Number.isInteger(launchOrdinal) || launchOrdinal < 1) throw new Error('P2 Runtime phase launch ordinal must be positive');
+  mkdirSync(directory, { recursive: true, mode: 0o700 });
+  const rootDirectory = lstatSync(directory);
+  if (!rootDirectory.isDirectory() || rootDirectory.isSymbolicLink()) throw new Error(`D66 Runtime log directory is not a private directory: ${directory}`);
+  chmodSync(directory, 0o700);
+  if (launchOrdinal === 1) return directory;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const candidate = path.join(directory, `launch-${randomUUID()}`);
+    try {
+      mkdirSync(candidate, { mode: 0o700 });
+      const candidateStat = lstatSync(candidate);
+      if (!candidateStat.isDirectory() || candidateStat.isSymbolicLink()) {
+        throw new Error(`D66 Runtime launch directory is not a private directory: ${candidate}`);
+      }
+      chmodSync(candidate, 0o700);
+      return candidate;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      if (attempt === 7) throw new Error('D66 Runtime launch directory allocation collided repeatedly');
+    }
+  }
+  throw new Error('D66 Runtime launch directory allocation failed');
+}
+
 function prepareP2CommitPhaseCapture(runtimeLogDir: string | undefined, launchOrdinal: number): string | undefined {
   const config = p2CommitPhaseCaptureConfig(runtimeLogDir, launchOrdinal);
   if (!config) return undefined;
-  mkdirSync(config.directory, { recursive: true, mode: 0o700 });
-  const rootDirectory = lstatSync(config.directory);
-  if (!rootDirectory.isDirectory() || rootDirectory.isSymbolicLink()) throw new Error(`D66 Runtime log directory is not a private directory: ${config.directory}`);
-  chmodSync(config.directory, 0o700);
-  let allocatedDirectory = config.directory;
-  if (launchOrdinal > 1) {
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      const candidate = path.join(config.directory, `launch-${randomUUID()}`);
-      try {
-        mkdirSync(candidate, { mode: 0o700 });
-        const candidateStat = lstatSync(candidate);
-        if (!candidateStat.isDirectory() || candidateStat.isSymbolicLink()) {
-          throw new Error(`D66 Runtime launch directory is not a private directory: ${candidate}`);
-        }
-        chmodSync(candidate, 0o700);
-        allocatedDirectory = candidate;
-        break;
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-        if (attempt === 7) throw new Error('D66 Runtime launch directory allocation collided repeatedly');
-      }
-    }
-  }
+  const allocatedDirectory = prepareRuntimeLogDirectory(runtimeLogDir, launchOrdinal)!;
   const launchConfig = p2CommitPhaseCaptureConfig(allocatedDirectory, launchOrdinal);
   try {
     const sink = lstatSync(launchConfig.sink);
@@ -612,6 +630,7 @@ export class DirectHarness {
   private threeProductsSeed?: ThreeProductsSeed;
   private renderSeed?: RenderSeed;
   private timelineAuthoring = false;
+  private verificationOnly = false;
   private authoringPython?: string;
   private runtimeLifecycle?: RuntimeLifecycleObservation;
   private phaseCaptureDirectory?: string;
@@ -662,6 +681,7 @@ export class DirectHarness {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
       const configuredRuntimeLogDirectory = process.env.D66_RUNTIME_LOG_DIR?.trim() || undefined;
+      this.verificationOnly = process.env[D66_ELEMENT_VERIFICATION_ENV] === '1';
       this.runtimeLogLaunchOrdinal = p2PhaseLaunchOrdinal(configuredRuntimeLogDirectory);
       this.phaseCaptureLaunchOrdinal = this.runtimeLogLaunchOrdinal - 1;
       const descriptorText = process.env.ASTRID_QUICK_DESCRIPTOR;
@@ -694,8 +714,13 @@ export class DirectHarness {
         this.seed = { ...this.quickSeed, image: undefined, video: undefined, big: undefined } as unknown as Seed;
       } else {
         mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
-        this.phaseCaptureDirectory = prepareP2CommitPhaseCapture(configuredRuntimeLogDirectory, this.runtimeLogLaunchOrdinal);
-        this.runtimeLogDirectory = this.phaseCaptureDirectory;
+        if (this.verificationOnly) {
+          if (!configuredRuntimeLogDirectory) throw new Error('D66 element verification requires private Runtime stream retention');
+          this.runtimeLogDirectory = prepareRuntimeLogDirectory(configuredRuntimeLogDirectory, this.runtimeLogLaunchOrdinal);
+        } else {
+          this.phaseCaptureDirectory = prepareP2CommitPhaseCapture(configuredRuntimeLogDirectory, this.runtimeLogLaunchOrdinal);
+          this.runtimeLogDirectory = this.phaseCaptureDirectory;
+        }
         this.realmId = await this.createRealm();
         const hungEvidence = process.env.D79_HUNG_STACK_EVIDENCE_DIR?.trim();
         if (hungEvidence) {
@@ -719,7 +744,10 @@ export class DirectHarness {
   private runtimeEnv(captureSink?: string): NodeJS.ProcessEnv {
     const agent = path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
     const env: NodeJS.ProcessEnv = { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
-    if (captureSink) {
+    if (this.verificationOnly) {
+      for (const key of runtimeMeasurementEnvKeys) env[key] = undefined;
+    }
+    if (captureSink && !this.verificationOnly) {
       const config = p2CommitPhaseCaptureConfig(this.phaseCaptureDirectory, this.phaseCaptureLaunchOrdinal);
       if (!config) throw new Error('P2 Runtime phase capture sink requested without its private directory');
       env.PYTHONPATH = [P2_PHASE_BOOTSTRAP_DIR, RUNTIME_CHECKOUT, agent].join(path.delimiter);
@@ -773,7 +801,7 @@ export class DirectHarness {
     };
     this.runtimeLifecycle = lifecycle;
     let captureSink: string | undefined;
-    if (this.timelineAuthoring && this.phaseCaptureDirectory) {
+    if (!this.verificationOnly && this.timelineAuthoring && this.phaseCaptureDirectory) {
       this.phaseCaptureLaunchOrdinal += 1;
       const config = p2CommitPhaseCaptureConfig(this.phaseCaptureDirectory, this.phaseCaptureLaunchOrdinal);
       captureSink = config?.sink;
