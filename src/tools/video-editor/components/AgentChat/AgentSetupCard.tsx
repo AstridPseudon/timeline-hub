@@ -65,7 +65,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
       setAgentFailure({ agent: initialAgent, error: initialError });
       setFailedRow({ id: initialAgent, state: setupState(agents.find(row => row.id === initialAgent)) });
     }
-    setStep('setup');
+    setStep(isAgentSetupError(initialError) === 'agent_runtime_missing' ? 'failed' : 'setup');
   }, [initialAgent, initialError]);
   const agent = agents.find(row => row.id === selected);
   const currentAgent = useRef(agent);
@@ -96,7 +96,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
       if (!isCurrent()) return;
       setAgentFailure({ agent: selected, error });
       setFailedRow({ id: selected, state: setupState(currentAgent.current) });
-      if (isAgentSetupError(error)) {
+      if (isAgentSetupError(error) && isAgentSetupError(error) !== 'agent_runtime_missing') {
         setStep('setup');
         void refetchAgents();
         if (selected === 'astrid') void models.refetch();
@@ -141,8 +141,8 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   const setupError = isAgentSetupError(failure);
   const steps = agent?.steps?.length ? agent.steps.filter(item => agent.state === 'not-installed' || item.kind === 'sign-in') : [];
   const instructions = <div className="space-y-2">
-    {steps.length ? steps.map((item, index) => <CommandStep key={index} {...item} />)
-      : failure instanceof BridgeRouteError && failure.nextAction ? <CommandStep command={failure.nextAction} label={copy.setUp} />
+    {failure instanceof BridgeRouteError && failure.nextAction ? <CommandStep command={failure.nextAction} label={copy.setUp} />
+      : steps.length ? steps.map((item, index) => <CommandStep key={index} {...item} />)
       : agent?.line ? <p><CommandLine line={agent.line} /></p> : null}
   </div>;
   const waiting = (text: string) => <p role="status" aria-live="polite" className="flex items-center gap-2 text-muted-foreground"><Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />{text}</p>;
@@ -175,8 +175,9 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
     </> : <>
       <button type="button" className="text-xs underline" onClick={back}>{copy.back}</button>
       <h2 className="font-medium">{setupName(selected)}</h2>
+      {selected === 'astrid' && agent?.creditLine && <p className="text-xs text-muted-foreground">{agent.creditUrl ? <a href={agent.creditUrl} target="_blank" rel="noreferrer" className="underline">{agent.creditLine}</a> : agent.creditLine}</p>}
       {errorMessage && <p role="alert">{errorMessage}</p>}
-      {step === 'setup' && selected === 'astrid' && setupError && instructions}
+      {setupError && (selected === 'astrid' || step === 'failed') && instructions}
       {step === 'failed' ? <Button onClick={() => void begin(selected === 'astrid' ? modelId : undefined)}>{copy.tryAgain}</Button>
         : selected !== 'astrid' ? <>{instructions}{waiting(agent?.state === 'not-installed' && setupError !== 'agent_sign_in_required' ? copy.waitingForAgent(agentNames[selected]) : copy.waitingForSignIn)}</>
         : models.isLoading ? waiting(copy.loadingModels)

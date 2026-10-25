@@ -521,6 +521,13 @@ function AvailableAgentChatPanel({
       setStartFailure(null);
     }
   }, [activeSessionId, setupRequest, startFailure]);
+  const focusedSetupRef = useRef<typeof setupDone>(null);
+  useEffect(() => {
+    if (!setupDone || focusedSetupRef.current === setupDone || setupDone.sessionId !== activeSessionId
+      || showSetupCard || agentBroken || startingAgent || configurationFailed || isFollower || isCancelled) return;
+    inputRef.current?.focus({ preventScroll: true });
+    focusedSetupRef.current = setupDone;
+  }, [setupDone, activeSessionId, showSetupCard, agentBroken, startingAgent, configurationFailed, isFollower, isCancelled]);
   useEffect(() => {
     if (!writableChat || !isAgentSetupError(turnFailure)) return;
     setSetupDone(null);
@@ -1173,7 +1180,6 @@ function AvailableAgentChatPanel({
             createSession.reset();
             sendMessage.clearLocalError?.();
             setSetupDone({ agent, sessionId: sessionId ?? currentSessionRef.current });
-            requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
           }}
         />}
         {!showSetupCard && !agentBroken && setupDone && setupDone.sessionId === activeSessionId && <div role="status" className="space-y-1 py-3 text-sm">

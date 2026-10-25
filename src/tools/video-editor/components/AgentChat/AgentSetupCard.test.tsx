@@ -204,6 +204,26 @@ describe('external setup and recovery', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(view.startChatWith).not.toHaveBeenCalled();
   });
+  it('shows the runtime fix over agent sign-in steps and retries immediately', async () => {
+    const error = new BridgeRouteError('Start', 502, { error: 'agent_runtime_missing', detail: 'Bun is missing', next_action: 'install-bun' });
+    const startChatWith = vi.fn().mockResolvedValueOnce({ error }).mockResolvedValue(undefined);
+    const agents = ready();
+    agents[2].steps = [{ kind: 'sign-in', command: 'codex login', label: 'Sign in' }];
+    const view = mount({ agents, startChatWith }); choose('Use Codex');
+    expect(await screen.findByText('install-bun')).toBeVisible();
+    expect(screen.queryByText('codex login')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(view.onComplete).toHaveBeenCalledOnce());
+    expect(startChatWith).toHaveBeenCalledTimes(2);
+  });
+  it('offers retry for a runtime error supplied by the parent', async () => {
+    const error = new BridgeRouteError('Start', 502, { error: 'agent_runtime_missing', detail: 'Bun is missing', next_action: 'install-bun' });
+    const view = mount({ initialAgent: 'codex', initialError: error });
+    expect(await screen.findByText('install-bun')).toBeVisible();
+    expect(view.startChatWith).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(view.onComplete).toHaveBeenCalledOnce());
+  });
   it('shows generic failures and retries the same start callback', async () => {
     const startChatWith = vi.fn().mockResolvedValueOnce({ error: new Error('Warm-up failed') }).mockResolvedValue(undefined);
     const view = mount({ startChatWith }); choose('Use Codex');
@@ -239,6 +259,13 @@ describe("Astrid's setup", () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Paste your OpenRouter key first.');
     expect(input).toHaveFocus();
     expect(mocks.saveKey).not.toHaveBeenCalled();
+  });
+  it('keeps the linked credit on the OpenRouter key step', async () => {
+    const agents = ready();
+    agents[0] = { ...agents[0], state: 'sign-in', signIn: 'signed-out', creditLine: 'Built on oh-my-pi', creditUrl: 'https://github.com/can1357/oh-my-pi' };
+    mount({ agents }); choose("Astrid's agent");
+    expect(await screen.findByLabelText('OpenRouter key')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Built on oh-my-pi' })).toHaveAttribute('href', 'https://github.com/can1357/oh-my-pi');
   });
   it('groups and searches the full catalog, selects currentModel and starts with the selected model', async () => {
     const data = catalog();

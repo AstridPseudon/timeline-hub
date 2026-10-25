@@ -103,7 +103,7 @@ describe('identity and auth', () => {
   test('everything else needs the bearer token: /v1, ACP and reset answer 401 without it', async () => {
     for (const [method, path] of [
       ['GET', '/v1/health'], ['GET', '/v1/projects'], ['GET', '/v1/events'], ['POST', '/__test/reset'],
-      ['GET', `/projects/${SLUG}/chat`], ['POST', '/connect'], ['GET', '/health'],
+      ['GET', `/projects/${SLUG}/chat`], ['POST', '/connect'], ['GET', '/health'], ['POST', '/__test/agent-setup'],
     ]) {
       const none = await call(path, { method, token: null });
       assert.equal(none.status, 401, `${method} ${path} without a token`);
@@ -584,8 +584,11 @@ describe('ACP chat reads', () => {
     assert.deepEqual([cleared.revision, cleared.selected_session_id, cleared.sessions], [0, null, []]);
   });
 
-  test('the agent and model catalogs are canned: one ready Astrid, no providers; setting a model is not served', async () => {
-    assert.deepEqual(await json('/agents'), { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null }] });
+  test('the default catalogs have one ready Astrid and no providers; setting a model is not served', async () => {
+    const catalog = await json('/agents');
+    assert.equal(catalog.defaultAgent, 'astrid');
+    assert.equal(catalog.agents.length, 4);
+    assert.equal(catalog.agents[0].state, 'ready');
     assert.deepEqual(await json('/models'), { providers: [], currentModel: null });
     assert.equal((await postJson('/model', { model: 'any' })).status, 404);
   });
