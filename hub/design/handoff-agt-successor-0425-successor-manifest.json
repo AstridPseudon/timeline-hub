@@ -1,0 +1,40 @@
+{
+  "task": "F-D86",
+  "receiver": "rt-D86-current-delta-bind-0407",
+  "qualification": "SOURCE_ONLY",
+  "preserved_inputs": {
+    "canonical_selectors": "immutable76-canonical-selectors.json",
+    "function_and_helper_hashes": "immutable76-source-exact-hashes.json",
+    "reviews_and_normal_receipts": "immutable76-reviews-normal-receipts.tsv",
+    "prior_result": "immutable76-current-readiness.json",
+    "delta_disposition": "delta-disposition.tsv"
+  },
+  "base": {
+    "commit": "68404b8484749d1d8ec2bdaef34faa004ad87dbe",
+    "tree": "bc0eaa245fe5ec6f16b17b3b64c2b499f85e82f2",
+    "immutable_ready": 76,
+    "main_overlap": 20,
+    "held_existing": 10,
+    "held_shared_timing": 2,
+    "original": 550,
+    "no_case": 23
+  },
+  "successor": {
+    "revision": "b8064a3dae903f395c2b0bc671b863a25aa338b1",
+    "m1_merge": "bc3d53695f",
+    "m1_dependent_canonical_ids": 23,
+    "d91_import": "b8064a3dae",
+    "d91_blob_sha1": "19ad54ba92b989590e3f257741e2d6ae3ba7e9e6",
+    "owned_oracle_source": ["9dc6128d5e", "b8a48a91b0"],
+    "graph_import": "cbc0b6947e",
+    "graph_policy": "prior_failed_original_only"
+  },
+  "normal_receipts": {
+    "word46": "f51844083737a484422bb07a9d6679f489bbcd78",
+    "d92_compound3": "b7c5ce47fd6b1bdc3ae84b4de6b7734acfb4991b"
+  },
+  "original_actuals": ["9211", "11789", "18575", "17648"],
+  "held": ["media369_pending_clean_import", "d95_two_retirements_plus_newtest", "restore72a", "parent4dcb_word2154_failedcandidateb415", "video4_numeric3_missing_exact_artifacts"],
+  "behavior": "not run and not claimed",
+  "ownership": "receiver0407 retains proof-controller ownership; sole D91 owner0409 spends D91 source/proof"
+}

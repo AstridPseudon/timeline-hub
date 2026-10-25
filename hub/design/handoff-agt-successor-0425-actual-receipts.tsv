@@ -1,0 +1,8 @@
+actual	role	receipt_or_source	disposition
+9211	original source run	actual9211; immutable current packet; source receipts retained in immutable76-current-readiness.json and immutable76-original-run-outcome.tsv	preserved; no replay
+11789	word bootstrap source run	actual11789; normal receipt f51844083737a484422bb07a9d6679f489bbcd78	ready source receipt; not spent by older actual tuple
+18575	D92 compound source run	actual18575; normal receipt b7c5ce47fd6b1bdc3ae84b4de6b7734acfb4991b	ready source receipt; not spent by older actual tuple
+17648	D91 central proof	central report rt-D91-wholepath-0409-report.md; 10 errors all step patch omits doc.patch changes; original-third/edit/ordinal0/path occurrences/occurrence_id:occurrence-3/duration_ms 1800->2000	MAIN sole D91 owner0409 spends new source/proof; no duplicate D91 body
+bc3d53695f	M1 normal source receipt	merge of 11d043cd48; candidate blob 23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041	23 dependent selectors source-only after helper dependency trace
+9dc6128d5e / b8a48a91b0	owned oracle source receipts	protected review source 9dc6128d5e; current integration merge b8a48a91b0	preserved source only; two originals, no behavior claim
+cbc0b6947e	graph clean import receipt	priorfailedoriginal graph source imported at e358b67de3; merge cbc0b6947e	one prior failed original only; siblingPASS not repeated

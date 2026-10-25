@@ -1,0 +1,12 @@
+{
+  "mode": "source-only",
+  "commands": [
+    {"command": "venv-agent/bin/python in-memory ast.parse + compile selected current source files", "result": "PASS", "note": "M1, D91 shared inverse, owned move, prepared video, graph"},
+    {"command": "/home/user/work/venv-agent/bin/python -m ruff check tests/editing_conformance/test_commit_runtime_m1.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_owned_move_publish_runtime.py tests/editing_conformance/test_prepared_video_birth.py tests/sdk/test_timeline_commit_graph_roots.py", "result": "PASS", "output": "All checks passed!"},
+    {"command": "/home/user/work/venv-agent/bin/python -m mypy --show-error-codes --no-incremental tests/editing_conformance/test_commit_runtime_m1.py", "result": "PASS", "output": "Success: no issues found in 1 source file"},
+    {"command": "git diff --check", "result": "PASS"}
+  ],
+  "not_run": ["pytest", "collection", "fixture/helper/function execution", "probes", "services", "full suites", "browsers", "render", "package install"],
+  "baseline_comparison": "Existing protected M1 review recorded parent Ruff PASS and parent mypy PASS; current candidate also passes. Existing protected owned and D91/graph reviews recorded their respective static checks. No candidate product diff was made in this refresh.",
+  "qualification": "Static source evidence only; no behavior or acceptance claim."
+}

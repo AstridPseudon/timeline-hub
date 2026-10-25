@@ -1,0 +1,5 @@
+HEAD b8064a3dae903f395c2b0bc671b863a25aa338b1 already contains the authorized shared-inverse import from 28cff4dde6.
+File: tests/editing_conformance/test_commit_runtime_shared_inverse.py
+SHA-1 blob: 19ad54ba92b989590e3f257741e2d6ae3ba7e9e6
+SHA-256: 81c780b575b852f5011cc3a0c5bb910f933293d8cbff77343bddcbb63778ae8e
+Central source finding: actual 17648 reports ten setup errors because a mixed edit step omits doc.patch changes; original-third/edit/ordinal 0, duration_ms 1800 -> 2000. The source correction is already owned by MAIN sole D91 owner0409. This refresh records identity and disposition only; it does not duplicate the body or claim behavior.

@@ -1,0 +1,8 @@
+Current caller trace (static source inspection only):
+
+1. `astrid/sdk/workspace_client.py:485-496` exposes `commit_timeline(project_id, timeline_id, body, idempotency_key)` and forwards the unchanged body to `_call_generated("commit_timeline", ...)`.
+2. `astrid/sdk/remote.py`'s registered authoring writer implements `commit_timeline(project_id, timeline_id, body, *, idempotency_key)` and forwards the unchanged body through `_typed("commit_timeline", ..., key=idempotency_key, idempotency_key=idempotency_key)`; accepted results return data and receipt.
+3. `astrid/sdk/timeline/outbox.py:13-15` serializes request bytes with compact JSON and preserves insertion order for the generated commit_timeline serializer.
+4. M1's source trace reaches the registered `load_timeline_commit_provider("astrid")` and `service.commit_timeline`; the production route remains the registered commitTimeline/provider path. No caller was executed.
+
+Conservation boundary: this packet does not alter the C0 v2 request or response contract. Exact base revision/publication, commands, steps, merge mode, reads, dry_run, source, Idempotency-Key, refusal/retry/inverse/ABA/no-write predicates remain inputs/assertions in the source packet; source presence is not behavior proof.

@@ -1,0 +1,12 @@
+scope	status	disposition	evidence_or_owner
+M1 baseline bc3d	SOURCE_ONLY_23_DEPENDENTS	23 exact canonical IDs listed; helper dependency trace recorded; no behavior qualification	m1-dependent-canonical.tsv; review-M1-0147; merge bc3d53695f
+D91 import b806	MAIN_0409_OWNS_SOURCE_AND_PROOF	file already imported with exact source blob 19ad54ba; no duplicate D91 body	current-source-identities.tsv; rt-D91-wholepath-0409-report.md
+owned oracle 9dc/b8a	SOURCE_ONLY_TWO_ORIGINALS	protected source review retained; no behavior execution or new body	current-source-identities.tsv; protected-review.md
+graph cbc0	SOURCE_ONLY_PRIORFAILEDORIGINAL	record only the prior failed original; sibling PASS is not repeated	current-source-identities.tsv; graph clean-import report
+media transition 369b	PENDING_CLEAN_IMPORT	not normal yet; exact media transition remains pending clean import and exact artifacts	peer media-next-source-and-safe-pairs; peer media-PASS-numeric-facts
+D95	HELD_PENDING_REVIEW_PROOF	two retirements plus one new test remain held; restore72a is also held pending review/proof	D95 current-binding-return-0405; D95 ledger-coverage-0415; BOARD-HEADER D72
+restore72a	HELD_PENDING_REVIEW_PROOF	ordinary restore only; no Runtime guard/store change and no proof spend	BOARD-HEADER D72
+parent4dcb + word2154	HELD_FAILED_CANDIDATE	failed candidate b415 remains held; no adoption or normalization	BOARD-HEADER D83/D89; existing candidate records
+word f518 / D92 b7c5	READY_SOURCE_RECEIPTS	earlier normal receipts remain ready and are not spent by older actual tuple	actual-receipts.tsv; immutable76-current-readiness.json
+current 76	IMMUTABLE_PREDECESSOR	preserve 76 ready, 20 overlap, 10 existing held, 2 shared timing held; do not count-sum with successor	immutable76-accounting.tsv; immutable76-current-readiness.json
+video4 / numeric3	HELD_NOT_ELIGIBLE	missing exact artifacts; no new body or eligibility inferred	immutable76-accounting.tsv; current input handback

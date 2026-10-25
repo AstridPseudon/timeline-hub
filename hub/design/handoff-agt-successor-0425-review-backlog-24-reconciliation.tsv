@@ -1,0 +1,25 @@
+inventory_id	scope	classification	concise_status	evidence_ref
+1	D91 corrected shared-inverse ten	scope joined MAIN proof	Exact ten source-ready; MAIN sole owner0409 spends proof; no duplicate review	review-inventory-24.tsv; d91-static-trace.txt
+2	core-element optional modern literal	scope joined MAIN proof	One exact literal; lost-ACK remains separate/live; no duplicate review	review-inventory-24.tsv
+3	netzero one	scope joined MAIN proof	One source-ready selector; replace-existing remains separate	review-inventory-24.tsv
+4	live frontends six	scope joined MAIN proof	Six exact source selectors; retired parameter excluded	review-inventory-24.tsv; m1-dependent-canonical.tsv
+5	M2 pool six	scope joined MAIN proof	Shared occurrence48 dependency; behavior still owed	review-inventory-24.tsv
+6	occurrence48 existing original161	applicability scope	Immutable receiver applicability only; no unchanged retry	review-inventory-24.tsv
+7	inverse7 current return	scope joined MAIN proof	Seven source-ready; MAIN7 proof owed; no new review	review-inventory-24.tsv
+8	D92 genuine current API compound three	scope joined MAIN proof	Three originals source-ready; atomic/ABA remains separate/live	review-inventory-24.tsv; actual-receipts.tsv
+9	parent-media20	actual author follow-up	Actual 2 PASS/18 ERROR requires clean new author; existing MAIN reservation owns dispatch	review-inventory-24.tsv; delta-disposition.tsv
+10	parent-auto14	actual author follow-up	Actual 6 PASS/8 FAIL requires clean new author; existing MAIN reservation owns dispatch	review-inventory-24.tsv
+11	manifest inverse8	scope joined MAIN proof	Source-facts pass; MAIN proof only	review-inventory-24.tsv
+12	parent track3	scope joined MAIN proof	Source-facts pass; MAIN proof only	review-inventory-24.tsv
+13	graph redo2	actual diff scope	Source exact, behavior unknown; do not invent branch; only prior failed original recorded	review-inventory-24.tsv; current-source-identities.tsv
+14	missing23	unqualified scope	Explicit NO_JUNIT_CASE; held unqualified and never inferred	review-inventory-24.tsv
+15	current-sheet17	actual diff scope	Source pass; behavior pending; inverse1/CLI3 held	review-inventory-24.tsv
+16	NativeSheet11	actual diff scope	Source pass; behavior pending; no duplicate review	review-inventory-24.tsv
+17	projection9	actual diff scope	Source pass; behavior pending; no duplicate review	review-inventory-24.tsv
+18	numeric9	actual diff scope	Source pass; behavior pending; no duplicate review	review-inventory-24.tsv
+19	M1 baseline10	actual diff scope	Source pass in bc3d; behavior pending; dependent rows separately enumerated	review-inventory-24.tsv; m1-dependent-canonical.tsv
+20	inverse10 / D91 original-third	scope joined MAIN proof	Incompatibility fixed; MAIN proof only; no retry	review-inventory-24.tsv; d91-static-trace.txt
+21	word bootstrap46	actual diff scope	Source pass; behavior pending; word FAIL9 held	review-inventory-24.tsv; actual-receipts.tsv
+22	CLI8	actual diff scope	Source pass; behavior pending; no duplicate review	review-inventory-24.tsv
+23	next cohort11	actual diff scope	Source pass; behavior pending; no duplicate review	review-inventory-24.tsv
+24	immutable packets 0200 plus 0209	custody scope	230 exact union; receiver161 immutable, later69 eligible; no all254/all264 rerun	review-inventory-24.tsv
