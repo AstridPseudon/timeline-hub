@@ -1,0 +1,101 @@
+{
+  "task": "app-D100-final-result-review-1946",
+  "source": {
+    "main_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "main_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "receiving_commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+    "receiving_tree": "84e9d485a7ee8fdf2969eaf19d159e400f0ca1d4",
+    "receiving_parent": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "receiving_diff_paths": ["tests/sdk/test_timeline_capture_projection.py"],
+    "approved_projection_commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+    "approved_projection_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "approved_projection_matches_receiving": true
+  },
+  "agent_files": {
+    "product": {
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "mode": "100644",
+      "git_blob_sha1": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "sha256_length": 64
+    },
+    "d100_test": {
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "mode": "100644",
+      "git_blob_sha1": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "sha256_length": 64
+    },
+    "projection": {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "mode": "100644",
+      "git_blob_sha1": "16954294f9f70018e4bbd1012083f51594f6cb19",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436"
+    }
+  },
+  "runtime": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "module_origins": {
+      "provider_loader": {"path": "runtime_protocol/timeline_commit_provider.py", "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"},
+      "http_commit_route": {"path": "runtime_protocol/server.py", "sha256": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc"},
+      "provider_execution": {"path": "runtime_protocol/timeline_commit_execution.py", "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"},
+      "agent_provider": {"path": "astrid/sdk/timeline/commit.py", "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"},
+      "registered_provider_test": {"path": "tests/sdk/test_capture_source_runtime.py", "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48"}
+    }
+  },
+  "actual_receipts": {
+    "manager_cleanup": {
+      "utc": "2026-10-25T19:40:44.662481Z",
+      "free_before": 4787437568,
+      "free_after": 5280329728,
+      "scope": "finished recycled pre-22-Oct App v1 compressed worker-log archives only"
+    },
+    "candidate27": {
+      "xml_sha256": "77117fa11c638142efc89c1bf6a497fb5d7dd8c73b37e27114bfd4d393726aa8",
+      "xml_timestamp": "2026-10-25T19:41:31.070462Z",
+      "tests": 27,
+      "passed": 27,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 2.86,
+      "exit_code": 0,
+      "admission_gate": "PASS at the real 5,000,000,000-byte floor immediately before the command; the numeric 5,280,329,728 cleanup receipt precedes this run",
+      "source_log_numeric_gate": "The later own9 command logged 5,113,278,464 bytes; this value is not used as candidate27 admission evidence."
+    },
+    "own9": {
+      "xml_sha256": "dfdfa1868a7d79bdd94af5484fefa9fb915832a8f88848117b1f6b44e87d8fa0",
+      "xml_timestamp": "2026-10-25T19:42:07.597584Z",
+      "tests": 9,
+      "passed": 0,
+      "errors": 9,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 27.585,
+      "exit_code": 1,
+      "first_failed_seam": "Agent/provider final-candidate validation",
+      "first_failure": "candidate.parent.config.theme_overrides.visual.canvas.fps: must be a finite number"
+    }
+  },
+  "mounted_app_route": {
+    "reference": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+    "commit": "8f0c2484463e9b666d184a744d52e252984e551a",
+    "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178",
+    "route": "durable timeline persistence -> RuntimeDataProvider.saveTimelineAtHead/saveCommitAtHead -> client.commitTimeline",
+    "source_hashes": {
+      "runtime_data_provider": "82a6b5d299125567964a8b716470c4b8e2de6c93313d10a084da71d4bcfb568a",
+      "timeline_persistence": "284a38132698a8fced75052dee76de788169cb84c2d66caf4e43c0f9681eb017",
+      "commit_session": "b21c49e0d044d1a56aac527cd2ac419c0437673d73159b4d8aa97a967d8d1242",
+      "runtime_client": "7cc1ea77cfb2269c7bc1644f408cc4e084e51f3a6013c0f4440bd81bc28737e9"
+    },
+    "d66_diagnostic_hook": "not relevant; no credit claimed"
+  },
+  "privacy": {
+    "private_xml_read_in_place": true,
+    "raw_xml_copied": false,
+    "raw_logs_or_payloads_published": false,
+    "credentials_keys_urls_private_paths_or_stacks_published": false
+  }
+}

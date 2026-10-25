@@ -1,0 +1,79 @@
+{
+  "task": "app-D100-final-result-review-1946",
+  "verdict": "FAIL",
+  "classification": "D104_AUTHORED_INPUT_STOP",
+  "disposition": "NO-GO",
+  "review_scope": "one independent actual-result plus metadata/source/custody review",
+  "source": {
+    "author_branch": "tl/app-D100-final-receiving-proof-1939",
+    "author_commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+    "author_parent_main": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "author_tree": "84e9d485a7ee8fdf2969eaf19d159e400f0ca1d4",
+    "main_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4"
+  },
+  "stages": [
+    {
+      "stage": "corrected_identity_and_metadata",
+      "status": "QUALIFIED_PASS",
+      "basis": "Derivative of the original 1914 manifest changes exactly the two permitted protected-product metadata hash fields; product and additive test hashes are exact 64-character values. Original 1914 and 1919 FAIL artifacts remain untouched."
+    },
+    {
+      "stage": "source_purpose_static_security",
+      "status": "QUALIFIED_PASS_REUSED",
+      "basis": "1919 purpose/static review and 1803 product-security review are reused exactly as authorized; no semantic review or product repair was performed."
+    },
+    {
+      "stage": "candidate27_registered_provider",
+      "status": "QUALIFIED_PASS",
+      "result": "27 tests, 27 passed, 0 failed, 0 errors, 0 skipped, 2.860 seconds, exit 0",
+      "basis": "Private XML and source log show the exact bounded command against Runtime ab1e4f61 with the startup-registered Astrid provider. A real 5 GB admission gate passed before launch; no alternate acceptance route was used."
+    },
+    {
+      "stage": "approved_projection_source_receive",
+      "status": "QUALIFIED_PASS",
+      "result": "Sole receiving delta matches approved f53b0169 source byte-for-byte; 11 test functions; source SHA-256 6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "basis": "Final source diff contains only tests/sdk/test_timeline_capture_projection.py; product, D100 test, modes, and outside paths remain exact."
+    },
+    {
+      "stage": "projection9_actual_result",
+      "status": "NO-GO",
+      "result": "9 tests, 0 passed, 0 failed, 9 errors, 0 skipped, 27.585 seconds, exit 1",
+      "first_failed_seam": "Agent final-candidate validation during the authored projection publish setup",
+      "error": "candidate.parent.config.theme_overrides.visual.canvas.fps: must be a finite number",
+      "basis": "All nine selectors failed at the same setup boundary; no projection acceptance claim is made."
+    },
+    {
+      "stage": "projection_acceptance",
+      "status": "NOTRUN",
+      "reason": "Stopped at the first common setup seam; no adaptation, numeric conversion, ratio approximation, fixture change, retry, or alternate pin was permitted."
+    },
+    {
+      "stage": "production_caller_and_custody",
+      "status": "QUALIFIED_PASS",
+      "basis": "Frozen qualified App route uses durable save persistence into RuntimeDataProvider.saveTimelineAtHead/saveCommitAtHead and client.commitTimeline; Runtime startup loads and registers the Astrid provider, and the registered-provider Agent test calls RuntimeService.commit_timeline. D66 is not relevant and receives no credit."
+    }
+  ],
+  "finding": {
+    "id": "D104",
+    "status": "STOP",
+    "owner": "Agent/provider final-candidate validator",
+    "path": "tests/sdk/test_timeline_capture_projection.py:418-420",
+    "authored_value_shape": "[30000, 1001]",
+    "typed_semantics": "Known FPS parameter consumed by validation._fps; not an opaque open field",
+    "contract_basis": "C0 preserves unknown open fields but requires finite JSON and provider validation of known parameter schemas",
+    "owner_seam": "astrid/sdk/timeline/validation.py:_fps and _fps_values; Runtime only surfaces the provider rejection",
+    "required_decision": "Source owner must decide whether the authored input is corrected upstream or intentionally retained as a protected invalid-input boundary. This review makes no correction."
+  },
+  "credit": {
+    "core": "NONE",
+    "release": "NONE",
+    "source_release": "HELD",
+    "d130": "HELD",
+    "nine_behavior_qualification": "NONE"
+  },
+  "privacy": {
+    "raw_xml_published": false,
+    "raw_logs_published": false,
+    "payloads_auth_keys_urls_private_paths_stacks_published": false
+  }
+}

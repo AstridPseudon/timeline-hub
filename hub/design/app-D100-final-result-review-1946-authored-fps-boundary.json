@@ -1,0 +1,44 @@
+{
+  "task": "app-D100-final-result-review-1946",
+  "verdict": "D104_AUTHORED_INPUT_STOP",
+  "authored_source": {
+    "commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+    "file": "tests/sdk/test_timeline_capture_projection.py",
+    "lines": [418, 420],
+    "path": "parent.config.theme_overrides.visual.canvas.fps",
+    "value_shape": "array of two integers",
+    "value_summary": "[30000, 1001]"
+  },
+  "classification": {
+    "field_kind": "known typed parameter",
+    "predicate_relevant": true,
+    "opaque_open_field": false,
+    "producer_introduced_data": false,
+    "reason": "The value is read by the provider's authored FPS validator before projection publication. It is not merely carried through an unknown extension field."
+  },
+  "c0_semantics": {
+    "contract_source": "runtime/contract/commit-v2.md",
+    "open_fields": "Unknown document fields are preserved.",
+    "known_parameters": "Provider validates final candidate parameter schemas and requires finite JSON.",
+    "relevant_rule": "No implicit numeric or ratio interpretation is authorized for a typed known parameter."
+  },
+  "validator": {
+    "source": "astrid/sdk/timeline/validation.py",
+    "functions": ["_fps_values", "_fps", "_validation_number"],
+    "behavior": "_fps accepts a positive finite scalar or an object with exactly positive integer numerator/denominator; an array is rejected as not a finite number.",
+    "first_failed_seam": "Agent/provider final-candidate validation during publish setup",
+    "surfacing_layer": "Runtime registered provider route",
+    "causal_owner": "Agent/provider validator"
+  },
+  "decision": {
+    "status": "STOP",
+    "required": "Source owner decision on authored input/protected purpose",
+    "forbidden_in_this_review": [
+      "numeric conversion",
+      "ratio approximation",
+      "fixture edit",
+      "validator relaxation",
+      "retry of the nine selectors"
+    ]
+  }
+}
