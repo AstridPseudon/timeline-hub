@@ -30,14 +30,43 @@ def item_patch(before, after, *, ref='shot-revision:shot-1'):
 
 def source_document(*, empty=False, shared=False):
     document = document_fixture(shared=shared)
+    # The full host window has no source shift. Express the existing clip
+    # spans as internal trims so a new placement uses supported source timing.
+    parent = document['parent_revision']
+    for occurrence in parent['payload']['occurrences']:
+        occurrence['source_offset'] = 0
+    parent['content_digest'] = _digest(parent['payload'])
+    for internal in document['internal_timeline_revisions']:
+        for clip in internal['payload']['clips']:
+            clip.update({'from': 0, 'to': clip['hold']})
+        internal['content_digest'] = _digest(internal['payload'])
     if empty:
         shot = document['shot_revisions'][0]
         shot['payload']['items'] = []
         shot['content_digest'] = _digest(shot['payload'])
-        document['dependency_manifest'] = _manifest(
-            document['shot_revisions'], document['internal_timeline_revisions'],
-            document['dependency_manifest']['media'], [])
+    document['dependency_manifest'] = _manifest(
+        document['shot_revisions'], document['internal_timeline_revisions'],
+        document['dependency_manifest']['media'], [])
     return document
+
+
+@pytest.fixture
+def runtime_realm(monkeypatch):
+    from tests.sdk import test_timeline_commit_graph_roots as roots
+
+    seed = roots.seed_trusted_parent
+
+    def registered_seed(service, publication, *, idempotency_key):
+        # Keep film and chapter-1 distinct; register the existing child scope
+        # before the shared helper seeds its exact immutable closure.
+        scopes = {image['timeline_id'] for image in publication['internal_timeline_revisions']}
+        for timeline in sorted(scopes - {publication['timeline_id']}):
+            service.create_timeline(publication['project_id'], timeline,
+                                    idempotency_key='shared-internal-' + timeline)
+        return seed(service, publication, idempotency_key=idempotency_key)
+
+    monkeypatch.setattr(roots, 'seed_trusted_parent', registered_seed)
+    return roots.RuntimeRealm
 
 
 def runtime_commit(realm, commands, key):
@@ -183,10 +212,8 @@ def test_existing_alias_correspondence_remains_strict(damage):
 
 @pytest.mark.integration
 @pytest.mark.parametrize('empty', [False, True])
-def test_registered_runtime_shared_birth_and_consumer_keep_one_physical_image(empty):
-    from tests.sdk.test_timeline_commit_graph_roots import RuntimeRealm
-
-    realm = RuntimeRealm(source_document(empty=empty))
+def test_registered_runtime_shared_birth_and_consumer_keep_one_physical_image(empty, runtime_realm):
+    realm = runtime_realm(source_document(empty=empty))
     # Prepare through the registered provider, then use its canonical source.
     prepared = runtime_commit(realm, [{'schema_version': 1, 'op': 'shot.set', 'version': '1',
                                      'select': 'occurrence:occ-a/shot',
@@ -218,10 +245,8 @@ def test_registered_runtime_shared_birth_and_consumer_keep_one_physical_image(em
 
 @pytest.mark.integration
 @pytest.mark.parametrize('damage', ['before', 'unknown-ref', 'duplicate-item', 'missing-item-id'])
-def test_registered_runtime_failed_consumer_rolls_back_shared_birth(damage):
-    from tests.sdk.test_timeline_commit_graph_roots import RuntimeRealm
-
-    realm = RuntimeRealm(source_document())
+def test_registered_runtime_failed_consumer_rolls_back_shared_birth(damage, runtime_realm):
+    realm = runtime_realm(source_document())
     from runtime_protocol.errors import RuntimeErrorBase
 
     source = copy.deepcopy(realm.document)
