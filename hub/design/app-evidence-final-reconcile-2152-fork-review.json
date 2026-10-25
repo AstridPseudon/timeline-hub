@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "task": "D134/R2",
+  "review_kind": "finite cumulative delayed-peer reconciliation",
+  "verdict": "PASS_FINITE_UNAPPLIED",
+  "behavior_status": "NOTRUN",
+  "inputs": {
+    "app_final_check_2119": "PASS_FINITE_UNAPPLIED",
+    "app_return_2114": "CORRECTED_EVIDENCE",
+    "agent_supporting_packet_2114": "UNAPPLIED",
+    "exact_root": "root-008",
+    "exact_member_count": 18,
+    "exact_member_ids": true,
+    "exact_multiset": true,
+    "duplicates": 0,
+    "omissions": 0,
+    "normalization": null
+  },
+  "abi1_comparison": {
+    "exact_native_bindings": [
+      "collection.owner:collection.clips",
+      "collection.owner:collection.tracks",
+      "fork.source",
+      "fork.owner"
+    ],
+    "current_commit_effect_observation": "_commit_patch.finish appends physical commit.effect bindings whenever the active request is present.",
+    "comparison": "The current physical commit.effect enrichment is distinct from the exact four native ABI-1 bindings; the active caller therefore cannot supply the exact ABI-1 record required by root-008.",
+    "abi_normalization": false,
+    "fabricated_history": false,
+    "retirement_claim": false
+  },
+  "cumulative_conclusion": {
+    "classification": "UNKNOWN_UNAPPLIED",
+    "product_fault_proved": false,
+    "causal_product_fault": false,
+    "authenticated_historical_abi1_record": "ABSENT_FROM_RETAINED_EVIDENCE",
+    "canonical_predecessor_output_closures": "ABSENT_FROM_RETAINED_EVIDENCE",
+    "before_output_closure_absence": true,
+    "existing_unknown_conclusion_changed": false,
+    "wholepath_or_body_repeated": false,
+    "new_authentic_records_added": false
+  },
+  "source_compatibility": {
+    "source_author": "agt-F-D134-fork18-source-2114",
+    "existing_agent_owner": "sourceauthor2055/shared105 remains sole existing Agent owner",
+    "agent_sources": {
+      "tests/editing_conformance/test_fork_abi1_binding_set.py": "901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2",
+      "tests/editing_conformance/test_recipe_occurrence_fork.py": "19b1e47a89604803d0f0f90964db48788d0bfc82955eb229949d9dee158ade2a",
+      "astrid/sdk/timeline/_recording.py": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+      "astrid/sdk/timeline/_commit_patch.py": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+      "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+    },
+    "runtime_product_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "current_runtime_trace_commit": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+    "unsupported_categorical_claim": null
+  },
+  "preserved_boundaries": [
+    "authenticated historical ABI-1 record remains unavailable",
+    "predecessor/output closure remains unavailable",
+    "original authored inputs and negative predicates remain unchanged",
+    "no causal product fault, ABI normalization, fabricated history, or retirement is claimed",
+    "no source, product, test, fixture, pin, or generated file was changed"
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "task": "D127c/R1",
+  "review_kind": "finite independent evidence reconciliation",
+  "verdict": "PASS_CORRECTED_BOUNDED_CLAIMS",
+  "inputs": {
+    "evidence_firstreturn_2150": "IMMUTABLE",
+    "independent_trace_2143": "IMMUTABLE",
+    "original_15200_result": "NO_GO_ORIGINAL_ELEMENT",
+    "original_15200_result_changed": false
+  },
+  "findings": {
+    "F001": {
+      "status": "CORRECTED_BOUNDED",
+      "safe_cprofile_projection": "EXACTMISSING",
+      "actual_summary_omitted_cprofile": "UNKNOWN",
+      "actual_profile_eligibility": "UNKNOWN",
+      "actual_profile_eligibility_gate": "UNKNOWN",
+      "actual_profile_eligibility_subgate": "UNKNOWN",
+      "actual_selector_predicate": "UNKNOWN",
+      "actual_selector_operand": "UNKNOWN",
+      "bounded_source_statement": "If an actual retained helper summary for this request was emitted and lacked cprofile, the helper source makes profile_eligible relevant; the retained safe evidence establishes neither premise.",
+      "runtime_cause_claim": false,
+      "optimization_claim": false,
+      "raw_pstats": "OPTIONAL_AND_UNCONFIGURED",
+      "raw_pstats_is_selection_result": false
+    },
+    "F002": {
+      "status": "CORRECTED_BOUNDED",
+      "product_runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "product_runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "product_helper": {
+        "path": "tests/helpers/p2_commit_phase_capture.py",
+        "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+      },
+      "external_reviewed_helper": {
+        "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+        "runtime_commit": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+        "runtime_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+        "path": "tests/helpers/p2_commit_phase_capture.py",
+        "role": "separate external reviewed helper; not product Runtime source"
+      },
+      "actual_selected_helper_path": "UNKNOWN",
+      "actual_selected_helper_source_commit": "UNKNOWN",
+      "normal_home_receipt_role": "dispatch gate only"
+    }
+  },
+  "static_path_boundary": {
+    "caller": "App outbox/save funnel through the public Agent API",
+    "runtime": "registered Runtime commit service",
+    "behavior_credit": false,
+    "acceptance_claim": false,
+    "source_refs": [
+      "src/tools/video-editor/components/ElementsLibraryPanel.tsx",
+      "src/tools/video-editor/runtime/element-adapter.ts",
+      "src/tools/video-editor/commands/localSaveSession.ts",
+      "src/integrations/runtime/generated.ts"
+    ]
+  },
+  "c0v2_request_shape": {
+    "api_version": true,
+    "project_id": true,
+    "timeline_id": true,
+    "base_revision_id": true,
+    "base_publication_id": true,
+    "commands": [
+      "schema_version",
+      "op",
+      "version",
+      "select",
+      "args",
+      "created_when_required"
+    ],
+    "label": true,
+    "steps": [
+      "id",
+      "label",
+      "intent",
+      "tags",
+      "command_ordinals",
+      "patch",
+      "optional_reads"
+    ],
+    "merge": ["fields", "atomic"],
+    "reads": true,
+    "idempotency_key": true,
+    "dry_run": true,
+    "source": true,
+    "rationale": true,
+    "group_id": true
+  },
+  "reply_forms": [
+    "accepted",
+    "merged",
+    "conflict(reason, head)",
+    "invalid(code, path, hint, suggested_command)",
+    "preview(would_status, null_receipt)"
+  ],
+  "controls": {
+    "new_inference": false,
+    "new_pstats": false,
+    "new_table": false,
+    "new_cost": false,
+    "qualified_raw_custody_overridden": false,
+    "new_trace_or_profiling": false,
+    "provider_outcome": "UNKNOWN",
+    "app_response": "UNKNOWN",
+    "caller_receipt": "UNKNOWN",
+    "browser_wall_outcome": "UNKNOWN"
+  }
+}

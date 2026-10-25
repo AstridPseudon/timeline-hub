@@ -1,0 +1,40 @@
+{
+  "schema": "timeline.app.d136a.whole-path-review.v1",
+  "task": "D136a-all-boundaries-return-2150",
+  "verdict": "NO_GO",
+  "decision_basis": "The exact final20db original9 run is retained as the only dynamic evidence. All nine selectors stopped in setup at the same Runtime C0 authenticated-observation guard; no selector body reached. The static table enumerates every guard and observation boundary on the genuine path through the final predicates without claiming dynamic exhaustiveness.",
+  "source_change": "none",
+  "dynamic_evidence": {
+    "source_commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "source_tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+    "selectors": 9,
+    "setup_errors": 9,
+    "failures": 0,
+    "passes": 0,
+    "skips": 0,
+    "exit_code": 1,
+    "first_common_seam": "Runtime runtime_protocol/timeline_commit_auth.py:2209: provider intermediate command lacks an authenticated physical observation",
+    "later_selector_bodies_reached": false,
+    "evidence_provenance": "reused exact SAFE harness evidence from the prior D136a result review; no run was repeated"
+  },
+  "classification": {
+    "proven_product_boundary": "REG",
+    "proven_product_owner": "Runtime C0 sequential observation guard at immutable pin ab1e4f6141987706132916e2da16477f5a019464",
+    "setup_boundary": "The source-runtime fixture and registered provider are setup prerequisites, but existing evidence reached the first real authoring publish and failed at the Runtime guard, so this is not classified as setup.",
+    "agent_core_contract_fault": "UNKNOWN: the withheld record/ref/path/ordinal that should authenticate the intermediate observation is not present in safe evidence; do not attribute it to Agent core or Runtime beyond the proven refusing guard.",
+    "d54a": "No D54a proven upstream REG is imported into this path. The located D54a paired-cause report qualifies zero rows and says open/unproven cause; it cannot convert this absence of an authenticated record into setup or upstream attribution."
+  },
+  "release": {
+    "held": true,
+    "required_next": "Runtime must address every proved product item in one pass after review of this complete qualified table; then obtain a new qualified source and dynamic run before release/next body.",
+    "forbidden_done_here": ["source change", "fixture conversion", "retry", "alternate qualification", "full suite", "new pytest execution", "raw XML/log publication"]
+  },
+  "artifacts": [
+    "review.json",
+    "boundaries.md",
+    "table.json",
+    "source-manifest.json",
+    "validation.md",
+    "findings.md"
+  ]
+}

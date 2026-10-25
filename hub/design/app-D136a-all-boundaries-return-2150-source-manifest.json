@@ -1,0 +1,66 @@
+{
+  "schema": "timeline.app.d136a.source-manifest.v1",
+  "task": "D136a-all-boundaries-return-2150",
+  "purpose": "Read-only custody and source comparison for the static whole-path review.",
+  "agent": {
+    "review_head": "8b13a9829989150ac0387c31559c5d54d386cc57",
+    "review_tree": "0b66c7a0c1b1af0400055cce16827e42a2908dd9",
+    "joined_source_commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+    "joined_source_tree": "0b66c7a0c1b1af0400055cce16827e42a2908dd9",
+    "final20db_commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "final20db_tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+    "d100_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "d100_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "projection_f53b_commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+    "projection_f53b_tree": "6b7bc811f07abb169dcf8858f316af3fea589b4f",
+    "working_tree_status_at_review": "clean",
+    "source_diff_from_joined_to_review_head": "evidence-only; no source changes"
+  },
+  "pristine_upstream": {
+    "ref": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+    "comparison_rule": "Absence of the D136 timeline files at 886a is recorded as source absence, not as behavioral evidence. No upstream failure is inferred from that absence.",
+    "relevant_file_observation": "The joined D136 Agent timeline files are not present at 886a; the existing authoring_bundle.py is the only overlapping named source noted in the prior custody review."
+  },
+  "runtime": {
+    "pin_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "pin_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "files": [
+      {"path": "runtime_protocol/timeline_commit_auth.py", "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47"},
+      {"path": "runtime_protocol/timeline_commit_port.py", "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"},
+      {"path": "runtime_protocol/timeline_commit_store.py", "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"},
+      {"path": "runtime_protocol/timeline_commit_execution.py", "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"},
+      {"path": "runtime_protocol/timeline_commit_provider.py", "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"},
+      {"path": "runtime_protocol/service.py", "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b"}
+    ]
+  },
+  "agent_files": [
+    {"path": "astrid/core/timeline/authoring_bundle.py", "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d"},
+    {"path": "astrid/sdk/timeline/authoring_commit.py", "sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac"},
+    {"path": "astrid/sdk/timeline/commit.py", "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"},
+    {"path": "astrid/sdk/timeline/_commit_preview.py", "sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36"},
+    {"path": "astrid/sdk/timeline/validation.py", "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae"},
+    {"path": "astrid/sdk/timeline/_timing_evaluators.py", "sha256": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268"},
+    {"path": "tests/sdk/test_timeline_capture_projection.py", "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436"},
+    {"path": "tests/sdk/test_d100_item_birth_boundary.py", "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"},
+    {"path": "tests/sdk/test_d136_fps_upstream_compat.py", "sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042"}
+  ],
+  "dynamic_evidence": {
+    "run": "final20db original9 exact harness run, retained from prior D136a review",
+    "result": "9 collected; 9 setup errors; 0 failures, 0 passes, 0 skips; exit 1",
+    "private_artifacts": {
+      "xml_sha256": "bf6b273e5747804ad2d5675704b2395661f488fcdfbae00750fc386687695fdc",
+      "log_sha256": "1cca4d88094de9022219b0be0a9e4e432a2a1bcaef6cec0519c6b08d8b675351",
+      "metadata_sha256": "3efd96b9217532e6ccfc50a2ee14979c3e7bfd0c48172f417252168b05898b56",
+      "mode": "0600",
+      "publication": "hashes and safe source paths only; raw XML/log/private payload withheld"
+    },
+    "first_seam": "runtime_protocol/timeline_commit_auth.py:2209",
+    "first_message": "provider intermediate command lacks an authenticated physical observation"
+  },
+  "scope_limits": [
+    "No new actual body, pytest, collection, static fixture execution, browser, collector, profile, benchmark, child, acquisition, or full suite run.",
+    "No dynamic exhaustiveness claim beyond statically reached branches.",
+    "No credentials, hub writes, merge requests, Git writes, upstream mutation, or M5 activity."
+  ]
+}
