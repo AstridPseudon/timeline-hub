@@ -1,0 +1,1567 @@
+{
+  "task": "D136b",
+  "nodes": [
+    {
+      "id": "public-python",
+      "role": "Public authoring API delegates the validated candidate to the common publisher.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/authoring_remote.py",
+        "qualified_name": "TargetBoundAuthoringBundle.publish",
+        "start_line": 230,
+        "end_line": 314,
+        "source_sha256": "5e00d7c53464120d623770f2321385c52ca34496f362e80edcc1da81b86655f7",
+        "span_start": 298,
+        "span_end": 308,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "publisher",
+      "role": "Compile candidate, build C0 request, call writer; only accepted/merged response can be projected.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/core/timeline/authoring_bundle.py",
+        "qualified_name": "publish_authoring_candidate",
+        "start_line": 1833,
+        "end_line": 1914,
+        "source_sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+        "span_start": 1833,
+        "span_end": 1914,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "request",
+      "role": "Read exact base, materialize duplicates/forks, emit commands and contiguous steps, conservative atomic request.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/authoring_commit.py",
+        "qualified_name": "authoring_commit_request",
+        "start_line": 84,
+        "end_line": 187,
+        "source_sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac",
+        "span_start": 84,
+        "span_end": 187,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "sdk-transport",
+      "role": "Generated commitTimeline transport; wire authority remains Runtime.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/workspace_client.py",
+        "qualified_name": "WorkspaceClient.commit_timeline",
+        "start_line": 485,
+        "end_line": 500,
+        "source_sha256": "ba2366493cbcad2524f0704247b9811c78f4c7c8b2d689683c5b60aa478a5814",
+        "span_start": 485,
+        "span_end": 500,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "fixture-register",
+      "role": "Exact original9 fixture registers loaded production provider before genuine initialization commits.",
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_capture_source_runtime.py",
+        "qualified_name": "open_source_runtime",
+        "start_line": 155,
+        "end_line": 301,
+        "source_sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48",
+        "span_start": 216,
+        "span_end": 293,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "fixture-publish",
+      "role": "Shared fixture calls common publisher before every original9 test body.",
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "saved_closure",
+        "start_line": 280,
+        "end_line": 441,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 280,
+        "span_end": 441,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "fixture-writer",
+      "role": "Thin writer delegates to real Runtime service, with canonical route/publisher/idempotency handling.",
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "_RuntimeAuthoringWriter.commit_timeline",
+        "start_line": 270,
+        "end_line": 276,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 270,
+        "span_end": 276,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "service-entry",
+      "role": "Validate C0 request and canonical invocation path.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/service.py",
+        "qualified_name": "RuntimeService.commit_timeline",
+        "start_line": 2469,
+        "end_line": 2483,
+        "source_sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+        "span_start": 2469,
+        "span_end": 2483,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "registration",
+      "role": "Validate provider ABI and install on service.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/service.py",
+        "qualified_name": "RuntimeService.register_timeline_commit_provider",
+        "start_line": 2412,
+        "end_line": 2432,
+        "source_sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+        "span_start": 2412,
+        "span_end": 2432,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "load-provider",
+      "role": "Resolve factory, validate sync interface and provider identity.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_provider.py",
+        "qualified_name": "load_timeline_commit_provider",
+        "start_line": 70,
+        "end_line": 93,
+        "source_sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+        "span_start": 70,
+        "span_end": 93,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "factory",
+      "role": "Production RuntimeCommitService factory supplies Runtime contract digest.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/commit.py",
+        "qualified_name": "create_runtime_commit_service",
+        "start_line": 1472,
+        "end_line": 1476,
+        "source_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "span_start": 1472,
+        "span_end": 1476,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "service-dispatch",
+      "role": "Authorize, bind invocation identity, construct request-private port, dispatch registered provider.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/service.py",
+        "qualified_name": "RuntimeService._execute_timeline_commit",
+        "start_line": 2486,
+        "end_line": 2622,
+        "source_sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+        "span_start": 2486,
+        "span_end": 2559,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "coordinator",
+      "role": "Call registered provider with detached context and private port; verify outcome and close port.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_execution.py",
+        "qualified_name": "CommitExecutionCoordinator._execute",
+        "start_line": 373,
+        "end_line": 431,
+        "source_sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+        "span_start": 373,
+        "span_end": 431,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "provider",
+      "role": "Load base, execute original; conditionally replay/rebase; construct prepared canonical document and records; attach capture before preview/accept.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/commit.py",
+        "qualified_name": "RuntimeCommitService.commit",
+        "start_line": 1160,
+        "end_line": 1469,
+        "source_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "span_start": 1160,
+        "span_end": 1469,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "load-base",
+      "role": "Load authorized canonical closure through port, verify required publication, then convert to bundle.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/commit.py",
+        "qualified_name": "_load",
+        "start_line": 432,
+        "end_line": 439,
+        "source_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "span_start": 432,
+        "span_end": 439,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "port-base",
+      "role": "Request-private revision closure read captures result and authorized input provenance.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_port.py",
+        "qualified_name": "RequestCommitPort.revision_closure",
+        "start_line": 282,
+        "end_line": 322,
+        "source_sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+        "span_start": 282,
+        "span_end": 322,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "store-base",
+      "role": "Build canonical physical images from immutable stored revisions/pins and validate closure and retained inputs.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "qualified_name": "TimelineCommitStore.revision_closure",
+        "start_line": 1149,
+        "end_line": 1193,
+        "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "span_start": 1149,
+        "span_end": 1193,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "bundle",
+      "role": "Verify exact canonical document and retain runtime source mapping in authoring bundle.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/commit.py",
+        "qualified_name": "bundle_from_document",
+        "start_line": 154,
+        "end_line": 166,
+        "source_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "span_start": 154,
+        "span_end": 166,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "execute",
+      "role": "For each command: before -> handler -> final-command compilation -> mirrors -> recorder finish -> after; finish metadata returns Plan.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/commands.py",
+        "qualified_name": "execute",
+        "start_line": 201,
+        "end_line": 308,
+        "source_sha256": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+        "span_start": 201,
+        "span_end": 308,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "recorder",
+      "role": "Generated native reads/writes/bindings are authority; caller recorder fields remain checked claims.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_recording.py",
+        "qualified_name": "Recording.finish",
+        "start_line": 249,
+        "end_line": 283,
+        "source_sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+        "span_start": 249,
+        "span_end": 283,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "physical-producer",
+      "role": "Canonical source construction compiles authored bundle and projects retained physical materializations; verifies final document.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/commit.py",
+        "qualified_name": "document_from_bundle",
+        "start_line": 302,
+        "end_line": 420,
+        "source_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "span_start": 302,
+        "span_end": 420,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "materialize",
+      "role": "Preserve/project physical child and shot revisions and generated identity transitions.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_doc_patch_materialize.py",
+        "qualified_name": "project",
+        "start_line": 48,
+        "end_line": 108,
+        "source_sha256": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252",
+        "span_start": 48,
+        "span_end": 108,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "closure",
+      "role": "Build canonical document and index parent/shot/internal physical images, with occurrence owners.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_doc_patch.py",
+        "qualified_name": "Closure.__init__",
+        "start_line": 120,
+        "end_line": 140,
+        "source_sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+        "span_start": 120,
+        "span_end": 140,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "binding",
+      "role": "Bind submitted operand to actual physical revision/digest/boundary/owners.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_doc_patch.py",
+        "qualified_name": "Closure.binding",
+        "start_line": 174,
+        "end_line": 181,
+        "source_sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+        "span_start": 174,
+        "span_end": 181,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "metadata-init",
+      "role": "v2 active for doc.patch or control fields; normalize C0 steps and preserve atomic fallback.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_commit_patch.py",
+        "qualified_name": "CommitPatch.__init__",
+        "start_line": 278,
+        "end_line": 306,
+        "source_sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+        "span_start": 278,
+        "span_end": 306,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "before",
+      "role": "Capture canonical input closure before the current handler; bind command/step/head identity.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_commit_patch.py",
+        "qualified_name": "CommitPatch.before",
+        "start_line": 354,
+        "end_line": 409,
+        "source_sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+        "span_start": 354,
+        "span_end": 409,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "after",
+      "role": "After generated record and compilation, capture canonical input/output documents for v2 multi-command/inverse-stage execution.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_commit_patch.py",
+        "qualified_name": "CommitPatch.after",
+        "start_line": 459,
+        "end_line": 512,
+        "source_sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+        "span_start": 459,
+        "span_end": 512,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "metadata-finish",
+      "role": "Build authoritative steps/effects/materialization/atomic bindings and attach private sequential execution to Plan.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_commit_patch.py",
+        "qualified_name": "CommitPatch.finish",
+        "start_line": 514,
+        "end_line": 698,
+        "source_sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+        "span_start": 514,
+        "span_end": 698,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "materialization-bindings",
+      "role": "Generate successor bindings for genuine changed physical images.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_commit_patch.py",
+        "qualified_name": "CommitPatch.materializations",
+        "start_line": 701,
+        "end_line": 718,
+        "source_sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+        "span_start": 701,
+        "span_end": 718,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "capture-attachment",
+      "role": "Build original/landing/replay/context/prepared-digest proof and call port capture method; empty-boundary path returns without proof.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_commit_preview.py",
+        "qualified_name": "capture_sequential_execution",
+        "start_line": 25,
+        "end_line": 90,
+        "source_sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+        "span_start": 25,
+        "span_end": 90,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "port-custody",
+      "role": "Validate exact shape/context; detach private proof; replace prior attempt proof.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_port.py",
+        "qualified_name": "RequestCommitPort.capture_sequential_execution",
+        "start_line": 182,
+        "end_line": 209,
+        "source_sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+        "span_start": 182,
+        "span_end": 209,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "port-preview",
+      "role": "Prepare and pass to store preview.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_port.py",
+        "qualified_name": "RequestCommitPort.preview",
+        "start_line": 677,
+        "end_line": 686,
+        "source_sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+        "span_start": 677,
+        "span_end": 686,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "port-accept",
+      "role": "Prepare and pass to store accept.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_port.py",
+        "qualified_name": "RequestCommitPort.accept",
+        "start_line": 688,
+        "end_line": 700,
+        "source_sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+        "span_start": 688,
+        "span_end": 700,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "store-validate",
+      "role": "Verify source/base, continuations/history and sequential proof, then authorize records and materializations.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "qualified_name": "TimelineCommitStore._validate",
+        "start_line": 1491,
+        "end_line": 1565,
+        "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "span_start": 1491,
+        "span_end": 1565,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "consume-capture",
+      "role": "Consume and clear private capture; validate sequential proof and retain validated proof for authorization.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_port.py",
+        "qualified_name": "RequestCommitPort._validate_sequential_execution",
+        "start_line": 702,
+        "end_line": 712,
+        "source_sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+        "span_start": 702,
+        "span_end": 712,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "envelope",
+      "role": "Check original and landing envelope shape/order/input-output equality, validate original records, then compare replay bindings.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "qualified_name": "validate_sequential_capture",
+        "start_line": 2563,
+        "end_line": 2870,
+        "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "span_start": 2563,
+        "span_end": 2870,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "proof-images",
+      "role": "Validate canonical boundary document and physical payload digests; index physical images.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "qualified_name": "_capture_document_images",
+        "start_line": 2338,
+        "end_line": 2362,
+        "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "span_start": 2338,
+        "span_end": 2362,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "auth",
+      "role": "Reconstruct from source physical images and generated command records, not from public assertions alone.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "qualified_name": "validate",
+        "start_line": 2873,
+        "end_line": 2975,
+        "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "span_start": 2873,
+        "span_end": 2975,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "images",
+      "role": "Index exact parent/shot/internal physical image revisions.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "qualified_name": "images",
+        "start_line": 24,
+        "end_line": 27,
+        "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "span_start": 24,
+        "span_end": 27,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "creation-projection",
+      "role": "Install only authenticated created/fork child closure with matched following reads, accepted images and generated allocations.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "qualified_name": "_project_created_child",
+        "start_line": 1896,
+        "end_line": 2153,
+        "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "span_start": 1896,
+        "span_end": 2153,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "output",
+      "role": "For each non-exempt write, resolve physical site, require observation, compare before, project after; validate identity/ownership promotion.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "qualified_name": "command_output",
+        "start_line": 2189,
+        "end_line": 2335,
+        "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "span_start": 2189,
+        "span_end": 2335,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "site",
+      "role": "Resolve public aliases to authenticated physical images at this boundary.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "qualified_name": "native_site",
+        "start_line": 213,
+        "end_line": 218,
+        "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "span_start": 213,
+        "span_end": 218,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "continuations",
+      "role": "Read authenticated accepted-history successor bindings; no invented fallback.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "qualified_name": "TimelineCommitStore._binding_continuations",
+        "start_line": 1460,
+        "end_line": 1477,
+        "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "span_start": 1460,
+        "span_end": 1477,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "durable-accept",
+      "role": "Validate inside acceptance transaction, persist closure, publish event/history/receipt; then return.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "qualified_name": "TimelineCommitStore.accept",
+        "start_line": 1832,
+        "end_line": 1915,
+        "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "span_start": 1832,
+        "span_end": 1915,
+        "identity_reused": true
+      }
+    },
+    {
+      "id": "transaction",
+      "role": "Acceptance context uses existing store transaction and verification state guards.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "qualified_name": "TimelineCommitStore._accepting",
+        "start_line": 453,
+        "end_line": 489,
+        "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "span_start": 453,
+        "span_end": 489,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "persist",
+      "role": "Persist validated physical closure revisions and links.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "qualified_name": "TimelineCommitStore._persist_closure",
+        "start_line": 2008,
+        "end_line": 2056,
+        "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "span_start": 2008,
+        "span_end": 2056,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "publish-durable",
+      "role": "Append event and authoritative command receipt; return canonical envelope.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "qualified_name": "TimelineCommitStore._publish",
+        "start_line": 2058,
+        "end_line": 2089,
+        "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "span_start": 2058,
+        "span_end": 2089,
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "port-read",
+      "role": "Retain detached store result as authorized captured input before returning it to provider.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_port.py",
+        "qualified_name": "RequestCommitPort._read",
+        "start_line": 217,
+        "end_line": 232,
+        "span_start": 217,
+        "span_end": 232,
+        "source_sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "inverse-closure",
+      "role": "Restore authenticated inverse baselines only when present, then construct physical Closure; ordinary path has no inverse sources.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_commit_patch.py",
+        "qualified_name": "inverse_closure",
+        "start_line": 271,
+        "end_line": 274,
+        "span_start": 271,
+        "span_end": 274,
+        "source_sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "rebase-patch",
+      "role": "Resolve authenticated prior materialization successors and command-boundary operands for changed-head replay.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/_commit_patch.py",
+        "qualified_name": "rebase_patch",
+        "start_line": 850,
+        "end_line": 996,
+        "span_start": 850,
+        "span_end": 996,
+        "source_sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "hydrate",
+      "role": "Capture verified media/document/schema inputs before original or landing execution.",
+      "source": {
+        "repo": "agent",
+        "path": "astrid/sdk/timeline/commit.py",
+        "qualified_name": "_hydrate",
+        "start_line": 442,
+        "end_line": 525,
+        "span_start": 442,
+        "span_end": 525,
+        "source_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "identity_reused": false
+      }
+    },
+    {
+      "id": "store-preview",
+      "role": "Validate candidate and return preview without receipt/persistence.",
+      "source": {
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "qualified_name": "TimelineCommitStore.preview",
+        "start_line": 1790,
+        "end_line": 1808,
+        "span_start": 1790,
+        "span_end": 1808,
+        "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "identity_reused": false
+      }
+    }
+  ],
+  "call_edges": [
+    {
+      "from": "public-python",
+      "to": "publisher",
+      "callee": "publish_authoring_candidate",
+      "line": 298,
+      "end_line": 300,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 297,
+          "arm": "body",
+          "ast_sha256": "3f28d86ed7e339ee1626c7ccb681ff9df74ba7b283791c80ef447d52b9098176"
+        }
+      ]
+    },
+    {
+      "from": "publisher",
+      "to": "request",
+      "callee": "authoring_commit_request",
+      "line": 1883,
+      "end_line": 1883,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "fixture-publish",
+      "to": "publisher",
+      "callee": "publish_authoring_candidate",
+      "line": 395,
+      "end_line": 398,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "fixture-register",
+      "to": "registration",
+      "callee": "service.register_timeline_commit_provider",
+      "line": 216,
+      "end_line": 216,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "fixture-writer",
+      "to": "service-entry",
+      "callee": "self.service.commit_timeline",
+      "line": 271,
+      "end_line": 276,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "service-entry",
+      "to": "service-dispatch",
+      "callee": "self._execute_timeline_commit",
+      "line": 2478,
+      "end_line": 2483,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "service-dispatch",
+      "to": "coordinator",
+      "callee": "coordinator.execute",
+      "line": 2556,
+      "end_line": 2559,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 2545,
+          "arm": "body",
+          "ast_sha256": "b289ffab86b96044e6d77df237fb0e8bafe6de766e90d6cc31eb18300815f95d"
+        }
+      ]
+    },
+    {
+      "from": "coordinator",
+      "to": "provider",
+      "callee": "provider.commit",
+      "line": 395,
+      "end_line": 395,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 394,
+          "arm": "body",
+          "ast_sha256": "07000f7ceac4b616886a189c2dc1c32b55309b55994f90319e64d66bc2c74549"
+        },
+        {
+          "kind": "Try",
+          "line": 389,
+          "arm": "body",
+          "ast_sha256": "bcfbc0dd875044dd3056a8b7999212cf883abb947caee07201f6d120f8a28fca"
+        },
+        {
+          "kind": "With",
+          "line": 380,
+          "arm": "body",
+          "ast_sha256": "64014c3a66068a6843d90481fe7178705e26e0a80f0e47d7d19ab8bbac4ea28b"
+        }
+      ]
+    },
+    {
+      "from": "provider",
+      "to": "load-base",
+      "callee": "_load",
+      "line": 1227,
+      "end_line": 1227,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 1177,
+          "arm": "body",
+          "ast_sha256": "869a43d683dac814457e1413cda733418821fe77909a32df7126f55f68c0baea"
+        }
+      ]
+    },
+    {
+      "from": "load-base",
+      "to": "port-base",
+      "callee": "port.revision_closure",
+      "line": 433,
+      "end_line": 433,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "port-base",
+      "to": "store-base",
+      "callee": "self.__store.revision_closure",
+      "line": 318,
+      "end_line": 318,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "load-base",
+      "to": "bundle",
+      "callee": "bundle_from_document",
+      "line": 439,
+      "end_line": 439,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "provider",
+      "to": "execute",
+      "callee": "execute",
+      "line": 1331,
+      "end_line": 1335,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 1177,
+          "arm": "body",
+          "ast_sha256": "869a43d683dac814457e1413cda733418821fe77909a32df7126f55f68c0baea"
+        }
+      ]
+    },
+    {
+      "from": "execute",
+      "to": "before",
+      "callee": "metadata.before",
+      "line": 236,
+      "end_line": 236,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "For",
+          "line": 230,
+          "arm": "body",
+          "ast_sha256": "ba954f69731eb448e88158b149f6dc253c25888d1680b7e9c43295c28dd8c22e"
+        }
+      ]
+    },
+    {
+      "from": "execute",
+      "to": "recorder",
+      "callee": "ctx.finish",
+      "line": 278,
+      "end_line": 278,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "For",
+          "line": 230,
+          "arm": "body",
+          "ast_sha256": "ba954f69731eb448e88158b149f6dc253c25888d1680b7e9c43295c28dd8c22e"
+        }
+      ]
+    },
+    {
+      "from": "execute",
+      "to": "after",
+      "callee": "metadata.after",
+      "line": 279,
+      "end_line": 279,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "For",
+          "line": 230,
+          "arm": "body",
+          "ast_sha256": "ba954f69731eb448e88158b149f6dc253c25888d1680b7e9c43295c28dd8c22e"
+        }
+      ]
+    },
+    {
+      "from": "execute",
+      "to": "metadata-finish",
+      "callee": "metadata.finish",
+      "line": 308,
+      "end_line": 308,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "before",
+      "to": "closure",
+      "callee": "Closure",
+      "line": 364,
+      "end_line": 364,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "closure",
+      "to": "physical-producer",
+      "callee": "document_from_bundle",
+      "line": 124,
+      "end_line": 125,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "physical-producer",
+      "to": "materialize",
+      "callee": "project",
+      "line": 311,
+      "end_line": 311,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "provider",
+      "to": "capture-attachment",
+      "callee": "capture_sequential_execution",
+      "line": 1437,
+      "end_line": 1437,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 1436,
+          "arm": "body",
+          "ast_sha256": "44e23f2efbb03079f09ec24be3dc5a04909b7a208a1427d079b93e782733463f"
+        },
+        {
+          "kind": "For",
+          "line": 1336,
+          "arm": "body",
+          "ast_sha256": "4241912b60a5c9e545d0edc2603b1e5b39eb68b74367413cee0770d78603cf1a"
+        },
+        {
+          "kind": "Try",
+          "line": 1177,
+          "arm": "body",
+          "ast_sha256": "869a43d683dac814457e1413cda733418821fe77909a32df7126f55f68c0baea"
+        }
+      ]
+    },
+    {
+      "from": "capture-attachment",
+      "to": "port-custody",
+      "callee": "capture",
+      "line": 85,
+      "end_line": 90,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "provider",
+      "to": "port-preview",
+      "callee": "port.preview",
+      "line": 1443,
+      "end_line": 1443,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "If",
+          "line": 1438,
+          "arm": "body",
+          "ast_sha256": "8637d14c98831e5675f054106ef8291a7b8fb3cfb193d0dad3f02d17c80eb79a"
+        },
+        {
+          "kind": "Try",
+          "line": 1436,
+          "arm": "body",
+          "ast_sha256": "44e23f2efbb03079f09ec24be3dc5a04909b7a208a1427d079b93e782733463f"
+        },
+        {
+          "kind": "For",
+          "line": 1336,
+          "arm": "body",
+          "ast_sha256": "4241912b60a5c9e545d0edc2603b1e5b39eb68b74367413cee0770d78603cf1a"
+        },
+        {
+          "kind": "Try",
+          "line": 1177,
+          "arm": "body",
+          "ast_sha256": "869a43d683dac814457e1413cda733418821fe77909a32df7126f55f68c0baea"
+        }
+      ]
+    },
+    {
+      "from": "provider",
+      "to": "port-accept",
+      "callee": "port.accept",
+      "line": 1444,
+      "end_line": 1444,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 1436,
+          "arm": "body",
+          "ast_sha256": "44e23f2efbb03079f09ec24be3dc5a04909b7a208a1427d079b93e782733463f"
+        },
+        {
+          "kind": "For",
+          "line": 1336,
+          "arm": "body",
+          "ast_sha256": "4241912b60a5c9e545d0edc2603b1e5b39eb68b74367413cee0770d78603cf1a"
+        },
+        {
+          "kind": "Try",
+          "line": 1177,
+          "arm": "body",
+          "ast_sha256": "869a43d683dac814457e1413cda733418821fe77909a32df7126f55f68c0baea"
+        }
+      ]
+    },
+    {
+      "from": "port-accept",
+      "to": "durable-accept",
+      "callee": "self.__store.accept",
+      "line": 694,
+      "end_line": 694,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 690,
+          "arm": "body",
+          "ast_sha256": "f6175b314d28914f8c38e48be7c077f7b8605cc025f9cebc60ae2a3203f67c1e"
+        }
+      ]
+    },
+    {
+      "from": "store-validate",
+      "to": "consume-capture",
+      "callee": "inputs._validate_sequential_execution",
+      "line": 1530,
+      "end_line": 1532,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "If",
+          "line": 1529,
+          "arm": "body",
+          "ast_sha256": "0600db81633d933f0281f927991f2f0d6966ec1feeceecdf98bba07e860cd55a"
+        },
+        {
+          "kind": "If",
+          "line": 1510,
+          "arm": "body",
+          "ast_sha256": "9578b2e4e7cb0032b68be0efece60efdf2f21697408066edc03540b98cb59216"
+        }
+      ]
+    },
+    {
+      "from": "consume-capture",
+      "to": "envelope",
+      "callee": "validate_sequential_capture",
+      "line": 708,
+      "end_line": 710,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "envelope",
+      "to": "auth",
+      "callee": "validate",
+      "line": 2640,
+      "end_line": 2641,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "auth",
+      "to": "images",
+      "callee": "images",
+      "line": 2877,
+      "end_line": 2877,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "auth",
+      "to": "output",
+      "callee": "command_output",
+      "line": 2911,
+      "end_line": 2915,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "For",
+          "line": 2910,
+          "arm": "body",
+          "ast_sha256": "da517e637e13d98e0b8b3918a0c05c17ebefa1b76af3a36be0375c9818efc511"
+        },
+        {
+          "kind": "For",
+          "line": 2891,
+          "arm": "body",
+          "ast_sha256": "bff6af0c0deae39d2aeba4132ed290eea3d8a5ec90fc4fd4f152c5057ddf8f8d"
+        }
+      ]
+    },
+    {
+      "from": "output",
+      "to": "creation-projection",
+      "callee": "_project_created_child",
+      "line": 2197,
+      "end_line": 2197,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "output",
+      "to": "site",
+      "callee": "native_site",
+      "line": 2208,
+      "end_line": 2208,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "For",
+          "line": 2201,
+          "arm": "body",
+          "ast_sha256": "b98c1958b92585aeaf596f3ccefd57c8a280a7a15ae64391bb48eecae2bc6b05"
+        }
+      ]
+    },
+    {
+      "from": "durable-accept",
+      "to": "store-validate",
+      "callee": "self._validate",
+      "line": 1847,
+      "end_line": 1847,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "With",
+          "line": 1837,
+          "arm": "body",
+          "ast_sha256": "f4f3cd46e43d671efd84c44f215930cc2023f4575002fcc759ea23dc04b88879"
+        },
+        {
+          "kind": "With",
+          "line": 1834,
+          "arm": "body",
+          "ast_sha256": "c30c3070d169ececc382ea4ca39e233ccc8a1dee3cf2dd355daa1f81b3b84f09"
+        }
+      ]
+    },
+    {
+      "from": "durable-accept",
+      "to": "persist",
+      "callee": "self._persist_closure",
+      "line": 1894,
+      "end_line": 1894,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "With",
+          "line": 1837,
+          "arm": "body",
+          "ast_sha256": "f4f3cd46e43d671efd84c44f215930cc2023f4575002fcc759ea23dc04b88879"
+        },
+        {
+          "kind": "With",
+          "line": 1834,
+          "arm": "body",
+          "ast_sha256": "c30c3070d169ececc382ea4ca39e233ccc8a1dee3cf2dd355daa1f81b3b84f09"
+        }
+      ]
+    },
+    {
+      "from": "durable-accept",
+      "to": "publish-durable",
+      "callee": "self._publish",
+      "line": 1895,
+      "end_line": 1896,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge; registration and instance binding required for method target",
+      "lexical_control_ancestors": [
+        {
+          "kind": "With",
+          "line": 1837,
+          "arm": "body",
+          "ast_sha256": "f4f3cd46e43d671efd84c44f215930cc2023f4575002fcc759ea23dc04b88879"
+        },
+        {
+          "kind": "With",
+          "line": 1834,
+          "arm": "body",
+          "ast_sha256": "c30c3070d169ececc382ea4ca39e233ccc8a1dee3cf2dd355daa1f81b3b84f09"
+        }
+      ]
+    },
+    {
+      "from": "port-base",
+      "to": "port-read",
+      "callee": "self._read",
+      "line": 322,
+      "end_line": 322,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge with condition/custody limits retained",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "after",
+      "to": "inverse-closure",
+      "callee": "inverse_closure",
+      "line": 510,
+      "end_line": 511,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge with condition/custody limits retained",
+      "lexical_control_ancestors": [
+        {
+          "kind": "If",
+          "line": 506,
+          "arm": "body",
+          "ast_sha256": "f32fe3cc6450b47f8adcd695bf5ca9779713fcb32ed2c1b8c3c6245089e9dedf"
+        }
+      ]
+    },
+    {
+      "from": "inverse-closure",
+      "to": "closure",
+      "callee": "Closure",
+      "line": 274,
+      "end_line": 274,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge with condition/custody limits retained",
+      "lexical_control_ancestors": []
+    },
+    {
+      "from": "provider",
+      "to": "rebase-patch",
+      "callee": "rebase_patch",
+      "line": 1370,
+      "end_line": 1371,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge with condition/custody limits retained",
+      "lexical_control_ancestors": [
+        {
+          "kind": "If",
+          "line": 1361,
+          "arm": "body",
+          "ast_sha256": "67f867350ddf17471101f78da37b173b07a7aaf58892c61cce86050a53f9567c"
+        },
+        {
+          "kind": "If",
+          "line": 1345,
+          "arm": "orelse",
+          "ast_sha256": "dda85384548169accb8c5fb40e372323d9d1e174a55e38f5a65913357a628d14"
+        },
+        {
+          "kind": "For",
+          "line": 1336,
+          "arm": "body",
+          "ast_sha256": "4241912b60a5c9e545d0edc2603b1e5b39eb68b74367413cee0770d78603cf1a"
+        },
+        {
+          "kind": "Try",
+          "line": 1177,
+          "arm": "body",
+          "ast_sha256": "869a43d683dac814457e1413cda733418821fe77909a32df7126f55f68c0baea"
+        }
+      ]
+    },
+    {
+      "from": "provider",
+      "to": "hydrate",
+      "callee": "_hydrate",
+      "line": 1325,
+      "end_line": 1326,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge with condition/custody limits retained",
+      "lexical_control_ancestors": [
+        {
+          "kind": "If",
+          "line": 1324,
+          "arm": "body",
+          "ast_sha256": "b89190114c93901b4ba3bca4183b96e6064dacdf59097598d7cab8e5918b3b5b"
+        },
+        {
+          "kind": "Try",
+          "line": 1177,
+          "arm": "body",
+          "ast_sha256": "869a43d683dac814457e1413cda733418821fe77909a32df7126f55f68c0baea"
+        }
+      ]
+    },
+    {
+      "from": "provider",
+      "to": "physical-producer",
+      "callee": "document_from_bundle",
+      "line": 1419,
+      "end_line": 1420,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge with condition/custody limits retained",
+      "lexical_control_ancestors": [
+        {
+          "kind": "For",
+          "line": 1336,
+          "arm": "body",
+          "ast_sha256": "4241912b60a5c9e545d0edc2603b1e5b39eb68b74367413cee0770d78603cf1a"
+        },
+        {
+          "kind": "Try",
+          "line": 1177,
+          "arm": "body",
+          "ast_sha256": "869a43d683dac814457e1413cda733418821fe77909a32df7126f55f68c0baea"
+        }
+      ]
+    },
+    {
+      "from": "store-validate",
+      "to": "auth",
+      "callee": "validate",
+      "line": 1536,
+      "end_line": 1536,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge with condition/custody limits retained",
+      "lexical_control_ancestors": [
+        {
+          "kind": "If",
+          "line": 1510,
+          "arm": "body",
+          "ast_sha256": "9578b2e4e7cb0032b68be0efece60efdf2f21697408066edc03540b98cb59216"
+        }
+      ]
+    },
+    {
+      "from": "port-preview",
+      "to": "store-preview",
+      "callee": "self.__store.preview",
+      "line": 682,
+      "end_line": 682,
+      "ast_call_verified": true,
+      "dispatch": "syntactic edge with condition/custody limits retained",
+      "lexical_control_ancestors": [
+        {
+          "kind": "Try",
+          "line": 678,
+          "arm": "body",
+          "ast_sha256": "13326e51e36011afb868f16f69469de8fcabe88c002f84633846c20638486c39"
+        }
+      ]
+    }
+  ],
+  "dispatch_bindings": [
+    {
+      "from": "publisher",
+      "to": "fixture-writer",
+      "condition": "Exact saved_closure explicitly supplies _RuntimeAuthoringWriter(runtime.service); public SDK supplies its generated client instead."
+    },
+    {
+      "from": "registration",
+      "to": "provider",
+      "condition": "Fixture loads provider factory; registered instance is passed by service to coordinator; RuntimeCommitService factory identity is byte-pinned. No App execution inferred."
+    },
+    {
+      "from": "after",
+      "to": "physical-producer",
+      "condition": "inverse_closure calls Closure -> document_from_bundle; not raw authored recorder authority."
+    },
+    {
+      "from": "capture-attachment",
+      "to": "port-custody",
+      "condition": "getattr resolves capture_sequential_execution on RequestCommitPort; public request never carries this private proof."
+    }
+  ],
+  "b022_trace": {
+    "a_producer": "Stored source closure: TimelineCommitStore.revision_closure -> port._read -> _load -> bundle_from_document. Intermediate images: document_from_bundle -> project -> Closure; CommitPatch.before/after creates command input/output documents and bindings. Attachment: CommitPatch.finish Plan attribute -> _commit_preview.capture_sequential_execution -> RequestCommitPort.capture_sequential_execution -> _validate_sequential_execution -> validate_sequential_capture.",
+    "b_reachability": "All original9 share saved_closure and genuine registered Runtime path. Retained B003/B004 facts include successful initial canonical setup and source patch/reload: stored-source and canonical-document producers are necessary on that path. For the refused candidate, v2 multi-command execution calls before/after per command and attaches proof before preview/accept, provided compilation/handler/final validation succeed, v2 is active, >1 calls (or inverse stages) creates boundaries, and port/proof shape/context pass. Original/landing/history verification branch and refused ordinal/ref/path are not in the SAFE packet. Thus specific refused-image construction/attachment and actual promotion branch remain UNKNOWN, distinct from the proved existence/reach of earlier canonical source production.",
+    "c_required_step": "No demonstrated public supported setup step is omitted. Real registration/initialization/source mutation/canonical reload/publisher path is present. C0 allows sequential commands in one transaction and requires provider-generated physical observations; it does not require the caller to inject raw records or precommit future operands. Exact skipped-step/D104 applicability is NOT_PROVED.",
+    "reconstruction_distinction": "Guard boundary starts at images(source), then command_output projects authenticated earlier generated writes and creation allocations. Sequential private proof is checked separately; capture existence alone cannot establish that reconstructed result contains the refused ref.",
+    "unknown": "Need existing safe identification of verification phase (original/landing/history), request/step and preceding/following command ordinal, submitted ref/path -> native_site physical ref, input physical image membership, created/derived-write attribution, binding/owner/successor and manifest conditions. No new record acquisition or execution authorized."
+  },
+  "comparators": [
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_d100_item_birth_boundary.py",
+        "qualified_name": "test_registered_runtime_first_source_item_birth_and_no_write_refusal",
+        "start_line": 206,
+        "end_line": 246,
+        "source_sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+        "span_start": 206,
+        "span_end": 246,
+        "identity_reused": false
+      },
+      "status": "Source expresses genuine registered service single-command accepted-path expectation and later refusal; not executed here. It lacks original9 intermediate command adjacency and cannot resolve B022."
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+        "qualified_name": "test_production_caller_accepts_and_retains_upstream_fps_list",
+        "start_line": 61,
+        "end_line": 78,
+        "source_sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042",
+        "span_start": 61,
+        "span_end": 78,
+        "identity_reused": false
+      },
+      "status": "Source uses DetachedRealm production-provider path, not an authenticated original9 physical-observation comparator. No passing result newly inferred."
+    }
+  ],
+  "app_scope": "App outbox and full public request/reply contract retained from approved inputs. No exact App source identity is supplied by the 16-file manifest; no mutable App tree or independent App qualification used. Exact source-backed production trace here is the public Agent publisher and original9 real Runtime caller.",
+  "ordering_limits": [
+    "Initialization/setup commands read current canonical pairs; an uncommitted future image is not an earlier operand.",
+    "Original execution: metadata.before precedes handler; compilation runs at final command; generated recorder finish precedes metadata.after canonical output capture.",
+    "Changed-head rebase_patch/replay uses authenticated history/continuations; actual refused branch remains unknown.",
+    "Prepared document/records and capture attachment precede preview/accept. Port detaches and consumes proof once. Nested original-envelope validation can reach B022 before later replay checks.",
+    "Store checks source/base/history, proof and materializations inside acceptance transaction before persistence/publication; retained refusal does not locate exact nested verification phase.",
+    "Public operands and asserted step patches do not carry raw recorder or physical-image authority."
+  ]
+}

@@ -1,0 +1,4061 @@
+{
+  "schema": "timeline.d136b.internal-consistency.v1",
+  "task": "app-D136b-observation-producer-sol-2231",
+  "verdict": "FINITE_UNKNOWN_COMPLETE_STATIC_TRACE",
+  "basis": "Internal product/guard consistency only; pristine absence and guard refusal are not causal proof. No comparison run or product execution.",
+  "counts": {
+    "original_cases": 9,
+    "boundaries": 15,
+    "case_boundary_classifications": 135,
+    "PRODUCT_GAP": 0,
+    "SETUP": 0,
+    "UNKNOWN": 135,
+    "conserved_predicates": 43,
+    "conserved_test_bodies": 11,
+    "historical_fixture_statements": 54
+  },
+  "dynamic_evidence_retained": {
+    "first_message": "provider intermediate command lacks an authenticated physical observation",
+    "first_seam": "runtime_protocol/timeline_commit_auth.py:2209",
+    "private_artifacts": {
+      "log_sha256": "1cca4d88094de9022219b0be0a9e4e432a2a1bcaef6cec0519c6b08d8b675351",
+      "metadata_sha256": "3efd96b9217532e6ccfc50a2ee14979c3e7bfd0c48172f417252168b05898b56",
+      "mode": "0600",
+      "publication": "hashes and safe source paths only; raw XML/log/private payload withheld",
+      "xml_sha256": "bf6b273e5747804ad2d5675704b2395661f488fcdfbae00750fc386687695fdc"
+    },
+    "result": "9 collected; 9 setup errors; 0 failures, 0 passes, 0 skips; exit 1",
+    "run": "final20db original9 exact harness run, retained from prior D136a review"
+  },
+  "rows": [
+    {
+      "boundary": "B022",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Physical image producer and request-private attachment exist; reconstructed membership at the exact refused site is undecidable.",
+      "required_missing_facts": "Verification phase, step id, preceding/following ordinal, capture ref/path and native_site result; boundary image membership, creation exemptions and authenticated bindings.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "refused",
+      "purpose": "Require a physical observation at the authenticated ref before projecting an intermediate command.",
+      "input_purpose": "provider intermediate result, capture ref/path and physical payload",
+      "condition": "native_site(result, capture[ref], capture[path]); require(ref in result, 'provider intermediate command lacks an authenticated physical observation').",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2209,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2209
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 21,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "require",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 18
+            },
+            {
+              "end_line": 27,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 24
+            },
+            {
+              "end_line": 33,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 30
+            },
+            {
+              "end_line": 43,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_key",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 42
+            },
+            {
+              "end_line": 56,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_members",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 46
+            },
+            {
+              "end_line": 97,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 59
+            },
+            {
+              "end_line": 172,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 100
+            },
+            {
+              "end_line": 198,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "location",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 175
+            },
+            {
+              "end_line": 205,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "stored_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 201
+            },
+            {
+              "end_line": 210,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 208
+            },
+            {
+              "end_line": 218,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 213
+            },
+            {
+              "end_line": 229,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "covers",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 221
+            },
+            {
+              "end_line": 242,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_asset_reads",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 232
+            },
+            {
+              "end_line": 264,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_read",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 245
+            }
+          ],
+          "end_line": 264,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 18
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 642,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "project_observation",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 608
+            },
+            {
+              "end_line": 656,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_physical_owner",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 645
+            },
+            {
+              "end_line": 698,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_coherent_materialization",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 659
+            },
+            {
+              "end_line": 726,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_materialization_input",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 701
+            },
+            {
+              "end_line": 753,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_align_materialized_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 729
+            },
+            {
+              "end_line": 775,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_parent_materialization_reconciles",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 756
+            },
+            {
+              "end_line": 795,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_reconcile_materialized_owner_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 778
+            }
+          ],
+          "end_line": 795,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 608
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1847,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_authoring_parent_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1833
+            },
+            {
+              "end_line": 1893,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_fork_owner_before",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1850
+            },
+            {
+              "end_line": 2153,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_project_created_child",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1896
+            },
+            {
+              "end_line": 2168,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_following_read_observes",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2156
+            },
+            {
+              "end_line": 2186,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_command_manifest",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2171
+            },
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2335,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 1833
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B023",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Recorder and canonical projection supply before/after observations and recompute digests; exact location equality is value-dependent.",
+      "required_missing_facts": "Same identified command plus physical before image, normalized stored path, recorder before/after, mirror state and projected digest equality.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Require the input observation to equal the captured before image and project the result with matching mirror/digest.",
+      "input_purpose": "before payload at authenticated path and projected input observation",
+      "condition": "location(before_payload,path)==capture[before]; projection/mirror/digest checks must pass.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2221,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2213
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 21,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "require",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 18
+            },
+            {
+              "end_line": 27,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 24
+            },
+            {
+              "end_line": 33,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 30
+            },
+            {
+              "end_line": 43,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_key",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 42
+            },
+            {
+              "end_line": 56,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_members",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 46
+            },
+            {
+              "end_line": 97,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 59
+            },
+            {
+              "end_line": 172,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 100
+            },
+            {
+              "end_line": 198,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "location",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 175
+            },
+            {
+              "end_line": 205,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "stored_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 201
+            },
+            {
+              "end_line": 210,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 208
+            },
+            {
+              "end_line": 218,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 213
+            },
+            {
+              "end_line": 229,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "covers",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 221
+            },
+            {
+              "end_line": 242,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_asset_reads",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 232
+            },
+            {
+              "end_line": 264,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_read",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 245
+            }
+          ],
+          "end_line": 264,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 18
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 642,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "project_observation",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 608
+            },
+            {
+              "end_line": 656,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_physical_owner",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 645
+            },
+            {
+              "end_line": 698,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_coherent_materialization",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 659
+            },
+            {
+              "end_line": 726,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_materialization_input",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 701
+            },
+            {
+              "end_line": 753,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_align_materialized_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 729
+            },
+            {
+              "end_line": 775,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_parent_materialization_reconciles",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 756
+            },
+            {
+              "end_line": 795,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_reconcile_materialized_owner_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 778
+            }
+          ],
+          "end_line": 795,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 608
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1847,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_authoring_parent_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1833
+            },
+            {
+              "end_line": 1893,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_fork_owner_before",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1850
+            },
+            {
+              "end_line": 2153,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_project_created_child",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1896
+            },
+            {
+              "end_line": 2168,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_following_read_observes",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2156
+            },
+            {
+              "end_line": 2186,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_command_manifest",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2171
+            },
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2335,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 1833
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B024",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Canonical materialization and generated bindings have promotion paths; selection/uniqueness cannot be decided from file identity.",
+      "required_missing_facts": "Changed-image input pin, revision/parent equality, alias set, physical kind/id/non-overlap and identity_scope allocation at that ordinal.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Prevent ambiguous aliasing and require unique revision/parent/identity ownership during promotion.",
+      "input_purpose": "changed existing image, binding input pin, aliases, physical kind/id and identity scope",
+      "condition": "Changed-image binding, unique revision/ref parent, alias uniqueness, physical kind/id/non-overlap and identity allocation checks must hold.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2255,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2222
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 21,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "require",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 18
+            },
+            {
+              "end_line": 27,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 24
+            },
+            {
+              "end_line": 33,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 30
+            },
+            {
+              "end_line": 43,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_key",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 42
+            },
+            {
+              "end_line": 56,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_members",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 46
+            },
+            {
+              "end_line": 97,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 59
+            },
+            {
+              "end_line": 172,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 100
+            },
+            {
+              "end_line": 198,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "location",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 175
+            },
+            {
+              "end_line": 205,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "stored_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 201
+            },
+            {
+              "end_line": 210,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 208
+            },
+            {
+              "end_line": 218,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 213
+            },
+            {
+              "end_line": 229,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "covers",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 221
+            },
+            {
+              "end_line": 242,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_asset_reads",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 232
+            },
+            {
+              "end_line": 264,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_read",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 245
+            }
+          ],
+          "end_line": 264,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 18
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 642,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "project_observation",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 608
+            },
+            {
+              "end_line": 656,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_physical_owner",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 645
+            },
+            {
+              "end_line": 698,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_coherent_materialization",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 659
+            },
+            {
+              "end_line": 726,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_materialization_input",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 701
+            },
+            {
+              "end_line": 753,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_align_materialized_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 729
+            },
+            {
+              "end_line": 775,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_parent_materialization_reconciles",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 756
+            },
+            {
+              "end_line": 795,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_reconcile_materialized_owner_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 778
+            }
+          ],
+          "end_line": 795,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 608
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1847,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_authoring_parent_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1833
+            },
+            {
+              "end_line": 1893,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_fork_owner_before",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1850
+            },
+            {
+              "end_line": 2153,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_project_created_child",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1896
+            },
+            {
+              "end_line": 2168,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_following_read_observes",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2156
+            },
+            {
+              "end_line": 2186,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_command_manifest",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2171
+            },
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2335,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 1833
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B025",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Created-child/owner/pin/manifest promotion is guarded and conditional, with no proved impossible original9 branch.",
+      "required_missing_facts": "Owner/edge/shot/internal allocation, following command reads, accepted physical children, root projection and manifest-parent allocation at exact transition.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Require exactly-one ownership and parent/manifest allocations before accepting the projected command output.",
+      "input_purpose": "internal owner, authoring identity, parent pins, projected roots and manifest changes",
+      "condition": "Owner/identity/edge/digest/shot promotion, parent pin, next-command read, root and manifest parent allocations must pass.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2335,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2259
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 21,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "require",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 18
+            },
+            {
+              "end_line": 27,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 24
+            },
+            {
+              "end_line": 33,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 30
+            },
+            {
+              "end_line": 43,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_key",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 42
+            },
+            {
+              "end_line": 56,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_members",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 46
+            },
+            {
+              "end_line": 97,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 59
+            },
+            {
+              "end_line": 172,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 100
+            },
+            {
+              "end_line": 198,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "location",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 175
+            },
+            {
+              "end_line": 205,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "stored_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 201
+            },
+            {
+              "end_line": 210,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 208
+            },
+            {
+              "end_line": 218,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 213
+            },
+            {
+              "end_line": 229,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "covers",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 221
+            },
+            {
+              "end_line": 242,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_asset_reads",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 232
+            },
+            {
+              "end_line": 264,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_read",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 245
+            }
+          ],
+          "end_line": 264,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 18
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 642,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "project_observation",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 608
+            },
+            {
+              "end_line": 656,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_physical_owner",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 645
+            },
+            {
+              "end_line": 698,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_coherent_materialization",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 659
+            },
+            {
+              "end_line": 726,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_materialization_input",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 701
+            },
+            {
+              "end_line": 753,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_align_materialized_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 729
+            },
+            {
+              "end_line": 775,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_parent_materialization_reconciles",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 756
+            },
+            {
+              "end_line": 795,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_reconcile_materialized_owner_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 778
+            }
+          ],
+          "end_line": 795,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 608
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1847,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_authoring_parent_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1833
+            },
+            {
+              "end_line": 1893,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_fork_owner_before",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1850
+            },
+            {
+              "end_line": 2153,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_project_created_child",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1896
+            },
+            {
+              "end_line": 2168,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_following_read_observes",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2156
+            },
+            {
+              "end_line": 2186,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_command_manifest",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2171
+            },
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2335,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 1833
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B026",
+      "classification": "UNKNOWN",
+      "internal_consistency": "CommitPatch produces sequential envelopes and Runtime checks shapes and adjacency; actual complete-envelope equalities unavailable.",
+      "required_missing_facts": "Original/landing evaluated heads and full ordered canonical input/output document hashes; initial/base, adjacent and final/prepared equality outcomes.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Validate the complete sequential envelope after individual command observations.",
+      "input_purpose": "original and landing envelopes, evaluated head and command records",
+      "condition": "Original/landing shape and exact initial-input, previous-output/next-input, and final-output/prepared equalities must hold.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2870,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_sequential_capture",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2563
+            }
+          ],
+          "end_line": 2629,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2563
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 2362,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_document_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2338
+            },
+            {
+              "end_line": 2377,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_projection_equal",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2365
+            },
+            {
+              "end_line": 2396,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_binding_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2380
+            },
+            {
+              "end_line": 2427,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_source_chain",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2399
+            },
+            {
+              "end_line": 2455,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "sequential_proof_required",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2430
+            },
+            {
+              "end_line": 2461,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_head",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2458
+            },
+            {
+              "end_line": 2529,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_records",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2464
+            },
+            {
+              "end_line": 2540,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_binding_image",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2532
+            },
+            {
+              "end_line": 2554,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_owners",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2543
+            },
+            {
+              "end_line": 2560,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_step",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2557
+            }
+          ],
+          "end_line": 2560,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2338
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B027",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Generated claims and physical bindings are compared by exact identity; no original9 correspondence record is published.",
+      "required_missing_facts": "Original/landing claims, one-to-one physical binding identities, uniqueness and source-chain records.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Require claims and bindings to correspond exactly and uniquely to source and landing images.",
+      "input_purpose": "claims and source/landing binding correspondence",
+      "condition": "Claims, exact binding correspondence, unique source/landing bindings and source chain must pass.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2870,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_sequential_capture",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2563
+            }
+          ],
+          "end_line": 2699,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2631
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 2362,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_document_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2338
+            },
+            {
+              "end_line": 2377,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_projection_equal",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2365
+            },
+            {
+              "end_line": 2396,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_binding_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2380
+            },
+            {
+              "end_line": 2427,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_source_chain",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2399
+            },
+            {
+              "end_line": 2455,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "sequential_proof_required",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2430
+            },
+            {
+              "end_line": 2461,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_head",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2458
+            },
+            {
+              "end_line": 2529,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_records",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2464
+            },
+            {
+              "end_line": 2540,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_binding_image",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2532
+            },
+            {
+              "end_line": 2554,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_owners",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2543
+            },
+            {
+              "end_line": 2560,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_step",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2557
+            }
+          ],
+          "end_line": 2560,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2338
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B028",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Replay, materialization and history-continuation code exists; branch requires authenticated phase and transition facts.",
+      "required_missing_facts": "Replay map ordinals/read correspondence, owner/owners, source-step chain, original/landing materialization transitions, destination/terminal and history successor facts.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Prove replayable attribution, owner/image/destination/terminal/cross-history consistency.",
+      "input_purpose": "replay bindings, read correspondence, source-chain step ordering and materialization transitions",
+      "condition": "Replay binding shape/ordinals/read correspondence, source chain, owner attribution, destination, terminal and cross-history checks must pass.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2870,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_sequential_capture",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2563
+            }
+          ],
+          "end_line": 2867,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2701
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 2362,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_document_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2338
+            },
+            {
+              "end_line": 2377,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_projection_equal",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2365
+            },
+            {
+              "end_line": 2396,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_binding_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2380
+            },
+            {
+              "end_line": 2427,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_source_chain",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2399
+            },
+            {
+              "end_line": 2455,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "sequential_proof_required",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2430
+            },
+            {
+              "end_line": 2461,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_head",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2458
+            },
+            {
+              "end_line": 2529,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_records",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2464
+            },
+            {
+              "end_line": 2540,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_binding_image",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2532
+            },
+            {
+              "end_line": 2554,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_owners",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2543
+            },
+            {
+              "end_line": 2560,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_capture_step",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2557
+            }
+          ],
+          "end_line": 2560,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2338
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B029",
+      "classification": "UNKNOWN",
+      "internal_consistency": "C0 step partition, dependencies, command manifests and ordered reconstruction are produced/checked; no step-value proof retained.",
+      "required_missing_facts": "Exact base reads/claims, contiguous command partition, per-command dependency manifests, atomic touched scopes and step input/output equalities.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Validate submitted C0 steps and their relationship to the captured sequential execution.",
+      "input_purpose": "base batch reads/claims, per-step manifest evolution, atomic touched scope and sequential equality",
+      "condition": "Base reads/claims, manifest evolution, atomic dependencies and sequential input/output equalities must pass.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2975,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2873
+            }
+          ],
+          "end_line": 2947,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2873
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 21,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "require",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 18
+            },
+            {
+              "end_line": 27,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 24
+            },
+            {
+              "end_line": 33,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 30
+            },
+            {
+              "end_line": 43,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_key",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 42
+            },
+            {
+              "end_line": 56,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_members",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 46
+            },
+            {
+              "end_line": 97,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 59
+            },
+            {
+              "end_line": 172,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 100
+            },
+            {
+              "end_line": 198,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "location",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 175
+            },
+            {
+              "end_line": 205,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "stored_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 201
+            },
+            {
+              "end_line": 210,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 208
+            },
+            {
+              "end_line": 218,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 213
+            },
+            {
+              "end_line": 229,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "covers",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 221
+            },
+            {
+              "end_line": 242,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_asset_reads",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 232
+            },
+            {
+              "end_line": 264,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_read",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 245
+            }
+          ],
+          "end_line": 264,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 18
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 642,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "project_observation",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 608
+            },
+            {
+              "end_line": 656,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_physical_owner",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 645
+            },
+            {
+              "end_line": 698,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_coherent_materialization",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 659
+            },
+            {
+              "end_line": 726,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_materialization_input",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 701
+            },
+            {
+              "end_line": 753,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_align_materialized_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 729
+            },
+            {
+              "end_line": 775,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_parent_materialization_reconciles",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 756
+            },
+            {
+              "end_line": 795,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_reconcile_materialized_owner_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 778
+            }
+          ],
+          "end_line": 795,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 608
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1847,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_authoring_parent_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1833
+            },
+            {
+              "end_line": 1893,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_fork_owner_before",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1850
+            },
+            {
+              "end_line": 2153,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_project_created_child",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1896
+            },
+            {
+              "end_line": 2168,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_following_read_observes",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2156
+            },
+            {
+              "end_line": 2186,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_command_manifest",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2171
+            },
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2335,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 1833
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B030",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Provider finish supplies authoritative effects/step patches/bindings and guard validates coverage.",
+      "required_missing_facts": "Step input/output physical images, effect ordinals, patch binding coverage and validation outcome for each original9 step.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Require each step's effects and submitted patch to be covered by validated bindings.",
+      "input_purpose": "step_output, validate_step, patch coverage and bindings",
+      "condition": "step_output, validate_step, patch binding coverage and validate_bindings must pass.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2975,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2873
+            }
+          ],
+          "end_line": 2961,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2943
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 871,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "step_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 798
+            }
+          ],
+          "end_line": 871,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 798
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B031",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Provider-derived dependencies and semantic effects are authority; submitted assertions are checked claims.",
+      "required_missing_facts": "Submitted read assertions and patch versus generated reads/dependencies/effects; actual inverse or asset branch when applicable.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Validate each step's declared reads, dependencies, effects and commands.",
+      "input_purpose": "submitted read assertions, dependency coverage, record reads, inverse/asset checks and submitted patch",
+      "condition": "Reads/dependencies, inverse/asset special cases and submitted patch assertions/effects must match.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 487,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_step",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 382
+            }
+          ],
+          "end_line": 487,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 382
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B032",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Physical binding and successor producers exist; exact phase/owner/digest attribution is not a source-only fact.",
+      "required_missing_facts": "Binding phase/base/head/step/command/change/effect ordinal, aliases, image revisions/digests, owners, change range, dependencies and authenticated successor rows.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Validate exact binding identity and successor materialization for every effect.",
+      "input_purpose": "binding phase/base/head/step/ordinal, effect attribution, physical aliases, input images, owners and successors",
+      "condition": "Phase/base/head/step/ordinal, effect attribution, alias resolution, image revision/digest, owners, change path/range, dependency and successor checks must pass.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 605,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_bindings",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 490
+            }
+          ],
+          "end_line": 588,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 490
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 21,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "require",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 18
+            },
+            {
+              "end_line": 27,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 24
+            },
+            {
+              "end_line": 33,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 30
+            },
+            {
+              "end_line": 43,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_key",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 42
+            },
+            {
+              "end_line": 56,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_members",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 46
+            },
+            {
+              "end_line": 97,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_text_binding_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 59
+            },
+            {
+              "end_line": 172,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 100
+            },
+            {
+              "end_line": 198,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "location",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 175
+            },
+            {
+              "end_line": 205,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "stored_path",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 201
+            },
+            {
+              "end_line": 210,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "normalized",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 208
+            },
+            {
+              "end_line": 218,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_site",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 213
+            },
+            {
+              "end_line": 229,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "covers",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 221
+            },
+            {
+              "end_line": 242,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "native_asset_reads",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 232
+            },
+            {
+              "end_line": 264,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate_read",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 245
+            }
+          ],
+          "end_line": 264,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 18
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 642,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "project_observation",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 608
+            },
+            {
+              "end_line": 656,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_physical_owner",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 645
+            },
+            {
+              "end_line": 698,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_coherent_materialization",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 659
+            },
+            {
+              "end_line": 726,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_materialization_input",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 701
+            },
+            {
+              "end_line": 753,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_align_materialized_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 729
+            },
+            {
+              "end_line": 775,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_parent_materialization_reconciles",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 756
+            },
+            {
+              "end_line": 795,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_reconcile_materialized_owner_images",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 778
+            }
+          ],
+          "end_line": 795,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 608
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1847,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_authoring_parent_identity",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1833
+            },
+            {
+              "end_line": 1893,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_fork_owner_before",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1850
+            },
+            {
+              "end_line": 2153,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_project_created_child",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 1896
+            },
+            {
+              "end_line": 2168,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_following_read_observes",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2156
+            },
+            {
+              "end_line": 2186,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "_command_manifest",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2171
+            },
+            {
+              "end_line": 2335,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "command_output",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2189
+            }
+          ],
+          "end_line": 2335,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 1833
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B033",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Guard requires all effects to reach accepted closure through actual continuations; no final transition result is retained.",
+      "required_missing_facts": "Accepted physical closure plus every step effect terminal and authenticated continuation/coverage comparison.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Final C0 predicate: all provider step effects must reach the accepted closure.",
+      "input_purpose": "accepted closure and provider step effects",
+      "condition": "Continuations and final accepted closure must match; line 2975 rejects when provider step effects do not reach accepted closure.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 2975,
+              "path": "runtime_protocol/timeline_commit_auth.py",
+              "qualified_name": "validate",
+              "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+              "start_line": 2873
+            }
+          ],
+          "end_line": 2975,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_auth.py",
+          "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+          "start_line": 2962
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B034",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Existing transaction validates before persistence and publish; store has closure/event/receipt/history producers.",
+      "required_missing_facts": "Successful preview/accept branch, validated materializations, canonical projection, committed event/dependencies/receipt/history/undo and response shape.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Complete preview/accept and return canonical/base/landing/merge/receipt/records/bindings/effects/dependencies/history/undo fields.",
+      "input_purpose": "validated materializations, event/dependency inputs, canonical projection and durable receipt/history/undo state",
+      "condition": "Store validation, projection, durable event, dependency, receipt/history/undo and coordinator response-shape checks must pass.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 1565,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._validate",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1491
+            }
+          ],
+          "end_line": 1565,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1491
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1808,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore.preview",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1790
+            }
+          ],
+          "end_line": 1808,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1790
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1915,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore.accept",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1832
+            }
+          ],
+          "end_line": 1885,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1832
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 431,
+              "path": "runtime_protocol/timeline_commit_execution.py",
+              "qualified_name": "CommitExecutionCoordinator._execute",
+              "source_sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+              "start_line": 373
+            }
+          ],
+          "end_line": 431,
+          "kind": "cited_region_ast_intersection",
+          "path": "runtime_protocol/timeline_commit_execution.py",
+          "source_sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+          "start_line": 375
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1565,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._validate",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1491
+            }
+          ],
+          "end_line": 1565,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1491
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1574,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._materializations",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1567
+            },
+            {
+              "end_line": 1597,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._same_materialization_slot",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1577
+            }
+          ],
+          "end_line": 1597,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1567
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1761,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._check_shot_destinations",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1599
+            }
+          ],
+          "end_line": 1761,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1599
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1772,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._reservation_identity",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1764
+            },
+            {
+              "end_line": 1787,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._check_birth_destinations",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1774
+            }
+          ],
+          "end_line": 1787,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1764
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1808,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore.preview",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1790
+            },
+            {
+              "end_line": 1818,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._check_context",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1810
+            },
+            {
+              "end_line": 1829,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore._check_head",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1820
+            }
+          ],
+          "end_line": 1829,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1790
+        },
+        {
+          "ast_owners": [
+            {
+              "end_line": 1915,
+              "path": "runtime_protocol/timeline_commit_store.py",
+              "qualified_name": "TimelineCommitStore.accept",
+              "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+              "start_line": 1832
+            }
+          ],
+          "end_line": 1915,
+          "kind": "helper_group",
+          "path": "runtime_protocol/timeline_commit_store.py",
+          "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+          "start_line": 1832
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B035",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Publisher explicitly handles accepted/merged and extracts canonical data; current attempt did not return success.",
+      "required_missing_facts": "Accepted/merged canonical reply and exact document/head/manifest used by publisher projection.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Reject any non-accepted/merged status and extract canonical document/head/manifest for projection.",
+      "input_purpose": "canonical accepted/merged response returned to publish_authoring_candidate",
+      "condition": "Response status must be accepted or merged and canonical fields must be present.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 1914,
+              "path": "astrid/core/timeline/authoring_bundle.py",
+              "qualified_name": "publish_authoring_candidate",
+              "source_sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+              "start_line": 1833
+            }
+          ],
+          "end_line": 1914,
+          "kind": "cited_region_ast_intersection",
+          "path": "astrid/core/timeline/authoring_bundle.py",
+          "source_sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+          "start_line": 1883
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    },
+    {
+      "boundary": "B036",
+      "classification": "UNKNOWN",
+      "internal_consistency": "Later fixture reload/duplicate/remove/final publication exists after first publish; those later calls remain unobserved.",
+      "required_missing_facts": "Canonical images and responses from post-first-publication reload, duplicate/remove mutations, final publication and SDK bundle construction.",
+      "product_gap": "NOT_PROVED",
+      "setup": "NOT_PROVED",
+      "actual_status_retained": "not dynamically reached",
+      "purpose": "Exercise the later exact saved-image transformations used by the original9 fixture.",
+      "input_purpose": "saved closure reload and post-publication duplicate/remove/final candidate mutation sequence",
+      "condition": "Reload, duplicate/remove mutations and final publication must return usable canonical images before assertions.",
+      "source_spans": [
+        {
+          "ast_owners": [
+            {
+              "end_line": 441,
+              "path": "tests/sdk/test_timeline_capture_projection.py",
+              "qualified_name": "saved_closure",
+              "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+              "start_line": 280
+            }
+          ],
+          "end_line": 441,
+          "kind": "cited_region_ast_intersection",
+          "path": "tests/sdk/test_timeline_capture_projection.py",
+          "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+          "start_line": 407
+        }
+      ],
+      "cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-001",
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "source": {
+        "end_line": 463,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 445
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    },
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-002",
+      "purpose": "Require entire expansion output to equal the saved golden.",
+      "source": {
+        "end_line": 477,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_entire_expansion_golden",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 467
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    },
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-003",
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "source": {
+        "end_line": 529,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 481
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    },
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-004",
+      "purpose": "Require parent candidate projection to match SDK opener exactly.",
+      "source": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    },
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-005",
+      "purpose": "Require child candidate projection to match SDK opener exactly.",
+      "source": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    },
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-006",
+      "purpose": "Require new_shot candidate projection to match SDK opener exactly.",
+      "source": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    },
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-007",
+      "purpose": "Require duplicate candidate projection to match SDK opener exactly.",
+      "source": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    },
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-008",
+      "purpose": "Require remove candidate projection to match SDK opener exactly.",
+      "source": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    },
+    {
+      "selector": "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]",
+      "classification": "UNKNOWN",
+      "boundaries": {
+        "B022": "UNKNOWN",
+        "B023": "UNKNOWN",
+        "B024": "UNKNOWN",
+        "B025": "UNKNOWN",
+        "B026": "UNKNOWN",
+        "B027": "UNKNOWN",
+        "B028": "UNKNOWN",
+        "B029": "UNKNOWN",
+        "B030": "UNKNOWN",
+        "B031": "UNKNOWN",
+        "B032": "UNKNOWN",
+        "B033": "UNKNOWN",
+        "B034": "UNKNOWN",
+        "B035": "UNKNOWN",
+        "B036": "UNKNOWN"
+      },
+      "prior_result": "setup ERROR; body not reached",
+      "final_predicate": "B-FINAL-009",
+      "purpose": "Require sdk_bundle candidate projection to match SDK opener exactly.",
+      "source": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "later_outcome": "UNKNOWN/unreached"
+    }
+  ],
+  "original_predicates": [
+    {
+      "ordinal": 1,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_capture_candidate_inputs_exact_pure_detached_golden",
+        "start_line": 36,
+        "end_line": 58,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 53,
+        "span_end": 54,
+        "identity_reused": false
+      },
+      "purpose": "Exact pure detached base/preview capture and golden equality.",
+      "predicate_ast_sha256": "c25ccf33b0151eb2bc1d1f0677ab6c2439e456b3e0adffd974cd25fad9458957",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "expected",
+        "json",
+        "result"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 2,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_capture_candidate_inputs_exact_pure_detached_golden",
+        "start_line": 36,
+        "end_line": 58,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 57,
+        "span_end": 57,
+        "identity_reused": false
+      },
+      "purpose": "Exact pure detached base/preview capture and golden equality.",
+      "predicate_ast_sha256": "7aa57cd685d855a2d9de7c76617222dd1218859326b7e4905c0baff588fad9ec",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "candidate",
+        "document",
+        "expected",
+        "provider"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 3,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_capture_candidate_inputs_exact_pure_detached_golden",
+        "start_line": 36,
+        "end_line": 58,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 58,
+        "span_end": 58,
+        "identity_reused": false
+      },
+      "purpose": "Exact pure detached base/preview capture and golden equality.",
+      "predicate_ast_sha256": "2de3f5053f1400ba09e7d3b78630ae2b5ea0e696d80691f9a8b414ac982314db",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "before",
+        "candidate",
+        "document"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 4,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 87,
+        "span_end": 88,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "c25ccf33b0151eb2bc1d1f0677ab6c2439e456b3e0adffd974cd25fad9458957",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "expected",
+        "json",
+        "result"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 5,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 90,
+        "span_end": 90,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "09c3ce7d98322eeccbc0138a4ef5c54f59471cdc7ab12f47680d2d7e44cd3a1d",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "calls",
+        "len"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 6,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 91,
+        "span_end": 91,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "dd8dafad96703cd92532d7d6b4f6adf8b3192cc2cce0c00a58ec76f8d1f643d4",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "before",
+        "document",
+        "preview"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 7,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 92,
+        "span_end": 92,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "a68b6ba25d795cd5a0323b9b497b984cc04d770dfc901dbdcf48ba8c1283be25",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "expected"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 8,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 93,
+        "span_end": 93,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "5dc699f8aa683349dfb4ecfb4b112a4919bdf566da921ae18c2f8b55f095bcff",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "expected"
+      ],
+      "comparison_operators": [
+        "Is"
+      ]
+    },
+    {
+      "ordinal": 9,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 94,
+        "span_end": 94,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "3a8f3063838c247ff31afab0f9b1b356c5e69a4d1316dfdf78ff05ffdadc4f91",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "expected",
+        "set"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 10,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 97,
+        "span_end": 97,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "d5326811a4656b4bdab12db96b4c166357f095c152231591f4e57f16a8e523f6",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "marker",
+        "preview"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 11,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 98,
+        "span_end": 98,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "433d0fe29a5cd62c11dd4cfe657e1ab18324e59c20977d7c90d50687890c38d1",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "marker",
+        "preview"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 12,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 99,
+        "span_end": 99,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "9ca5712e258df6f0f377718b87dd962ac01938a8cfa83d74ee3c900262a36fb9",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "marker",
+        "preview"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 13,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 100,
+        "span_end": 100,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "predicate_ast_sha256": "d030d9ae3d120f6a9b9d0efd202dc45764efbcf8ea70e7492cb52ad38a0b2de0",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "document",
+        "marker"
+      ],
+      "comparison_operators": [
+        "NotEq"
+      ]
+    },
+    {
+      "ordinal": 14,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_capture_method_imports_and_runs_without_renderer_or_runtime",
+        "start_line": 181,
+        "end_line": 205,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 205,
+        "span_end": 205,
+        "identity_reused": false
+      },
+      "purpose": "Pure capture can import/run without renderer or Runtime dependency.",
+      "predicate_ast_sha256": "26f44094348772966caed95da19674841079be8544e962489d3cfb74aa8f3e88",
+      "original9_cases": [],
+      "classification": "OUTSIDE_ORIGINAL9; unchanged",
+      "input_symbols": [
+        "result"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 15,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "start_line": 445,
+        "end_line": 463,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 453,
+        "span_end": 453,
+        "identity_reused": true
+      },
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "predicate_ast_sha256": "d2751204ab8ff3d1e81ce5e124fb1395e8db185b33c9397910814f2d4e4aa4f3",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "expected",
+        "result"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 16,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "start_line": 445,
+        "end_line": 463,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 454,
+        "span_end": 454,
+        "identity_reused": true
+      },
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "predicate_ast_sha256": "65cb1c97676ccb961da523ddeae1f3af584ad1962c6f2e9d81282488f621e493",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "expected",
+        "result"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 17,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "start_line": 445,
+        "end_line": 463,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 455,
+        "span_end": 455,
+        "identity_reused": true
+      },
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "predicate_ast_sha256": "0e966a5e41fe4bd659158d6c0039194c228d7b66c6bd610a404cfdd16425b94f",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "parent",
+        "result"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 18,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "start_line": 445,
+        "end_line": 463,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 457,
+        "span_end": 457,
+        "identity_reused": true
+      },
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "predicate_ast_sha256": "e295d5af5edcd1b12dd288ca2b3f29159fc1704297c0765afecbee79629bed77",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "expansion",
+        "key",
+        "result"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 19,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "start_line": 445,
+        "end_line": 463,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 458,
+        "span_end": 458,
+        "identity_reused": true
+      },
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "predicate_ast_sha256": "cdf9fecad835f8690eca30e4dda90e0e15b0f62ba62295373e2b7b8d2e484af6",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "result",
+        "row"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 20,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "start_line": 445,
+        "end_line": 463,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 459,
+        "span_end": 460,
+        "identity_reused": true
+      },
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "predicate_ast_sha256": "78216b7afd06c5024ab2b7e5ed268ce036787243fbd872fd1afa6809d1631927",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "document",
+        "next",
+        "result",
+        "row"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 21,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "start_line": 445,
+        "end_line": 463,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 461,
+        "span_end": 463,
+        "identity_reused": true
+      },
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "predicate_ast_sha256": "51a7e17cf06ba890b62c349a53d974ab29dcd16d1389707679ab3581fd34ccf7",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "document",
+        "next",
+        "result",
+        "row",
+        "runtime"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 22,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_entire_expansion_golden",
+        "start_line": 467,
+        "end_line": 477,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 474,
+        "span_end": 477,
+        "identity_reused": true
+      },
+      "purpose": "Require entire expansion output to equal the saved golden.",
+      "predicate_ast_sha256": "bfbc36ba7515004d615930432d13dfe1d3ad47b6c09876c12eacfe8035b8f423",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "document",
+        "expansion",
+        "parent",
+        "project",
+        "projected"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 23,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 504,
+        "span_end": 504,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "f5aab1bedb1cd2b3332376343e08938cedff8eb261150a37fdd4162925dcc16f",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "document",
+        "graph",
+        "project"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 24,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 505,
+        "span_end": 505,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "27661f651e0444a246b9b0daf32579c94825e09d821a743bd5f52eb111f8a832",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "manifest",
+        "returned"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 25,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 506,
+        "span_end": 506,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "fc22e75f872f3382844cdcab0c67e033502b41b7a6ae659219961c2659f8d9ef",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "document",
+        "manifest"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 26,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 507,
+        "span_end": 507,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "3ff1e038ab0c86e027db81b0a7a27107fd96e4c497aa7461dfba5c383e3675e7",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "document",
+        "manifest"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 27,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 508,
+        "span_end": 508,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "99344b79fb51c892c8f9d5b1b73fe616bcd43fad20e62cbe59c5ab4cf0d49f7d",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "document",
+        "manifest"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 28,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 509,
+        "span_end": 509,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "23581b952ff09807c1bc7bbbc392413cadb86c4eb5405b1f4e0c8e315cd8b15a",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "manifest"
+      ],
+      "comparison_operators": []
+    },
+    {
+      "ordinal": 29,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 510,
+        "span_end": 510,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "462089583d764b4cbb0fc7e2223054de350aa96e95b9b9f24f53d8f33a0c2681",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "document",
+        "graph"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 30,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 511,
+        "span_end": 511,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "31680dc93f5c1861338d6af965ff3a34be4c11779b86a746e1f5d9f904bd9df2",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "graph"
+      ],
+      "comparison_operators": [
+        "NotIn"
+      ]
+    },
+    {
+      "ordinal": 31,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 512,
+        "span_end": 512,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "5486c32336dcef111ee7faf2249b15071108543c39f7451980dba1e9c7921a1f",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "graph",
+        "row"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 32,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 513,
+        "span_end": 514,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "f25002059e0b06fa23863219696d87278dd27df90bdac1c522962672b2a6d189",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "graph",
+        "row",
+        "runtime"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 33,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 517,
+        "span_end": 517,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "05d92c566ec371a8735d370c666beefbe508d5b7d296fa223775b78311fb7b86",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "row"
+      ],
+      "comparison_operators": [
+        "NotIn"
+      ]
+    },
+    {
+      "ordinal": 34,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 518,
+        "span_end": 518,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "3bb99a9aab4113912210e5d58edc2dc08bcc664f8757be52e5addfd1ac8376cc",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "row"
+      ],
+      "comparison_operators": []
+    },
+    {
+      "ordinal": 35,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 519,
+        "span_end": 519,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "52300cd0cdc3847004fb190b13e0ad571fc29fb92a8aecbe4fdbecd77fbcd46a",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "graph",
+        "parent"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 36,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 521,
+        "span_end": 521,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "8377602494214716bcaac10648c0229cdff85dbad5df7c43216265d3e3dd97e3",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "row",
+        "shots"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 37,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 523,
+        "span_end": 523,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "3cd926babf58669b09485a637135661ecf90ac1e78322a3ad1c44fe555a81c99",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "internals",
+        "row"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 38,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 524,
+        "span_end": 524,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "1b58ba0481e0290e845219f37750cbb6f5c690d0fd0292718240685fafba4562",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "all",
+        "internals",
+        "parent",
+        "row",
+        "shots"
+      ],
+      "comparison_operators": [
+        "In"
+      ]
+    },
+    {
+      "ordinal": 39,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 525,
+        "span_end": 525,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "b2a88469601035ca87e5196fc0fa4d758c0ecc8770c148978812b918ec71b08e",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "before",
+        "document",
+        "internals",
+        "parent",
+        "shots"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 40,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 527,
+        "span_end": 527,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "b2a88469601035ca87e5196fc0fa4d758c0ecc8770c148978812b918ec71b08e",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "before",
+        "document",
+        "internals",
+        "parent",
+        "shots"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 41,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 528,
+        "span_end": 529,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "predicate_ast_sha256": "0e27567467308b6d9b3cd9a4de0d90714801712971053a4e18e93598047fdd4f",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "before",
+        "runtime"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 42,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "start_line": 534,
+        "end_line": 569,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 567,
+        "span_end": 567,
+        "identity_reused": true
+      },
+      "purpose": "Each of six exact candidate variants must match SDK opener projection.",
+      "predicate_ast_sha256": "04a1b981ec27f9d6593f446eecb412404548daa1a7fab70cba7d5baac615a320",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "config",
+        "document",
+        "expansion",
+        "preview",
+        "project",
+        "registry"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    },
+    {
+      "ordinal": 43,
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "start_line": 534,
+        "end_line": 569,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 568,
+        "span_end": 569,
+        "identity_reused": true
+      },
+      "purpose": "Each of six exact candidate variants must match SDK opener projection.",
+      "predicate_ast_sha256": "a286bd72204f34f2073a387c2661b11929f0f6980d0f487668eb1e133d82f72f",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ],
+      "classification": "UNKNOWN",
+      "input_symbols": [
+        "runtime"
+      ],
+      "comparison_operators": [
+        "Eq"
+      ]
+    }
+  ],
+  "test_bodies": [
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_capture_candidate_inputs_exact_pure_detached_golden",
+        "start_line": 36,
+        "end_line": 58,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 36,
+        "span_end": 58,
+        "identity_reused": false
+      },
+      "purpose": "Exact pure detached base/preview capture and golden equality.",
+      "original9_cases": [],
+      "outcome": "outside original9; no new execution/outcome",
+      "body_ast_sha256": "aae777c4a0dc3300947d3cf15ac8f657eeb0f28dd9c661785b526e97b13382f9"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_projection_is_detached_json_deterministic_without_io",
+        "start_line": 62,
+        "end_line": 100,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 62,
+        "span_end": 100,
+        "identity_reused": false
+      },
+      "purpose": "Detached deterministic JSON projection without I/O.",
+      "original9_cases": [],
+      "outcome": "outside original9; no new execution/outcome",
+      "body_ast_sha256": "6889e0b0b892ae3086d62b8936b8c46925eaebb1a6f47af04abdfbaae2a02ba9"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_inconsistent_saved_closure_refuses",
+        "start_line": 105,
+        "end_line": 125,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 105,
+        "span_end": 125,
+        "identity_reused": false
+      },
+      "purpose": "Fail closed on inconsistent authenticated saved closure.",
+      "original9_cases": [],
+      "outcome": "outside original9; no new execution/outcome",
+      "body_ast_sha256": "cc08cfce9c0721600c8d15dc16728abaec91fba99bd9b60c235a2681d29c420c"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_inconsistent_candidate_refuses_even_with_recomputed_preview",
+        "start_line": 132,
+        "end_line": 159,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 132,
+        "span_end": 159,
+        "identity_reused": false
+      },
+      "purpose": "Fail closed on inconsistent candidate even with recomputed preview.",
+      "original9_cases": [],
+      "outcome": "outside original9; no new execution/outcome",
+      "body_ast_sha256": "036e9ffefb7aa9d5ddc73c08dd2abd875fcd6b6ba10091c00c244974d565519f"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_json_distinct_base_values_are_not_equal",
+        "start_line": 163,
+        "end_line": 169,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 163,
+        "span_end": 169,
+        "identity_reused": false
+      },
+      "purpose": "Preserve JSON type distinctions in base comparisons.",
+      "original9_cases": [],
+      "outcome": "outside original9; no new execution/outcome",
+      "body_ast_sha256": "4b2d191839c0c2dc775147fdbac7f7cf77bd2f50869ba4635c041dc35db77d3c"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_reused_candidate_pin_is_compared_with_verified_image",
+        "start_line": 172,
+        "end_line": 178,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 172,
+        "span_end": 178,
+        "identity_reused": false
+      },
+      "purpose": "Compare reused pin against verified physical image.",
+      "original9_cases": [],
+      "outcome": "outside original9; no new execution/outcome",
+      "body_ast_sha256": "b2b5e6af9750cc58ab948be1c53122385ba701f2771c0321248692282bc692a1"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_capture_method_imports_and_runs_without_renderer_or_runtime",
+        "start_line": 181,
+        "end_line": 205,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 181,
+        "span_end": 205,
+        "identity_reused": false
+      },
+      "purpose": "Pure capture can import/run without renderer or Runtime dependency.",
+      "original9_cases": [],
+      "outcome": "outside original9; no new execution/outcome",
+      "body_ast_sha256": "61b3c0f7303abea678f0b81eee56764d0563a038acf51b61e442b0bc0c898bde"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "start_line": 445,
+        "end_line": 463,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 445,
+        "span_end": 463,
+        "identity_reused": true
+      },
+      "purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden"
+      ],
+      "outcome": "UNKNOWN; original9 fixture stopped before body",
+      "body_ast_sha256": "525e27a239cf5497482b9c0fcac39796b6c99f448b48867fc52db509310edfd4"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_entire_expansion_golden",
+        "start_line": 467,
+        "end_line": 477,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 467,
+        "span_end": 477,
+        "identity_reused": true
+      },
+      "purpose": "Require entire expansion output to equal the saved golden.",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden"
+      ],
+      "outcome": "UNKNOWN; original9 fixture stopped before body",
+      "body_ast_sha256": "bb333c2eab7bd794f50c0af3780198715a94f2e9c14675b8cb5d4835cd7851c3"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "start_line": 481,
+        "end_line": 529,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 481,
+        "span_end": 529,
+        "identity_reused": true
+      },
+      "purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ],
+      "outcome": "UNKNOWN; original9 fixture stopped before body",
+      "body_ast_sha256": "6f89f13d8b028b226d0fac2bb3ab7e1eefbb80206511821f94acb534768e8138"
+    },
+    {
+      "source": {
+        "repo": "agent",
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "start_line": 534,
+        "end_line": 569,
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "span_start": 534,
+        "span_end": 569,
+        "identity_reused": true
+      },
+      "purpose": "Each of six exact candidate variants must match SDK opener projection.",
+      "original9_cases": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+      ],
+      "outcome": "UNKNOWN; original9 fixture stopped before body",
+      "body_ast_sha256": "dde9819d20bb30d47725ad98814226a621eb12528f05a12e2d9611c83e37bc68"
+    }
+  ],
+  "conservation": {
+    "held_projection": {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "predicates": 43,
+      "test_bodies": 11,
+      "fixture_statements": 54,
+      "preserved": true
+    },
+    "method": "Exact full source-file SHA-256 and equality to joined source conserve every predicate/body/fixture statement, including historical 54-statement input identity; no claim that 54 is a fresh AST top-level count.",
+    "fixture": {
+      "repo": "agent",
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "qualified_name": "saved_closure",
+      "start_line": 280,
+      "end_line": 441,
+      "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "span_start": 280,
+      "span_end": 441,
+      "identity_reused": true
+    },
+    "all_inputs_and_purposes": "Boundary input/condition/purpose columns retained for B022-B036; original9 final purposes and each of 43 assertion identities mapped above.",
+    "d100": "Exact held D100 source hash retained in source-manifest; no source or expected behavior changed."
+  },
+  "setup_assessment": {
+    "verdict": "NOT_PROVED",
+    "reason": "Exact fixture uses real provider registration, initialization, source mutation, canonical reload and public publisher; no required supported omitted step demonstrated.",
+    "d104": "NOT_APPLICABLE_ON_CURRENT_PROOF: all prerequisites for a setup-only correction are not established; no edit authorized.",
+    "public_operand_rule": "Caller supplies ordered public operands and checked assertions; generated native records/physical-image custody remain provider/Runtime responsibility. No synthetic proof or premature future creation is a supported caller step."
+  },
+  "limits": [
+    "No exact authenticated original9 phase/ordinal/ref/path/physical image/attachment evidence supplied; actual traversal cannot be inferred from static branches.",
+    "B023-B036 and all final predicates retain UNKNOWN/unobserved outcomes; structural validation call order is not a new dynamic observation.",
+    "No genuine passing same-boundary comparator is established by the supplied source/SAFE results. Existing registered single-command source expectation does not resolve multi-command reconstruction.",
+    "No App source version or App behavior newly qualified; retained App/outbox contract remains controlling.",
+    "Agent D133 union/source custody does not establish behavior; prior2205 findings remain closed by final2220 PASS."
+  ],
+  "holds": "All D130 holds including D127e, private0600/KEEP, original inputs, guards and no-next9/no-release/no-retry remain in force."
+}

@@ -1,0 +1,48 @@
+{
+  "time": "2026-10-25T22:44:29.034464+00:00",
+  "scope": "Exact author-nominated SAFE finite static trace; independent2240 pending; dynamic NO_GO",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-observation-producer-sol-2231/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-observation-producer-sol-2231-report.md",
+      "sha256": "b9bd46c8628ecf74fdc53f08b7133f2de4ccef58b7399a7243887782161aeaeb",
+      "bytes": 1146
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-observation-producer-sol-2231/evidence/classification.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-observation-producer-sol-2231-classification.json",
+      "sha256": "0d25065a7a6e05684b1048c4c62291b7f56739c79d8f682dfe1630758d7a63da",
+      "bytes": 179076
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-observation-producer-sol-2231/evidence/producer-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-observation-producer-sol-2231-producer-map.json",
+      "sha256": "0822a57b553abc1c60088304093d920229f84debf510bb8105edd286096baf79",
+      "bytes": 55787
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-observation-producer-sol-2231/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-observation-producer-sol-2231-source-manifest.json",
+      "sha256": "2e0dfb92b0780f549c3e0eaf9b9f33a1a57d44ebeedc09abc2e9f89c08497e87",
+      "bytes": 21949
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-observation-producer-sol-2231/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-observation-producer-sol-2231-validation.md",
+      "sha256": "7310d9bab7b3df3b9f610a8215999561d76b60335bd71de705c21bac505bfaae",
+      "bytes": 6262
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-observation-producer-sol-2231/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-observation-producer-sol-2231-findings.md",
+      "sha256": "fdb73bd3630c6148a4af741f195c3e8f3a35567f62bfbf45a6650b96df09dc84",
+      "bytes": 9059
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-observation-producer-sol-2231/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-observation-producer-sol-2231-handoff.md",
+      "sha256": "b32ccae410b2c4688dadf6bc9bfbdb4819a2b37c2d5c6ec8ddae90195063d281",
+      "bytes": 1478
+    }
+  ]
+}

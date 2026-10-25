@@ -1,0 +1,444 @@
+{
+  "schema": "timeline.d136b.source-manifest.v1",
+  "task": "D136b",
+  "agent": {
+    "head": "8b13a9829989150ac0387c31559c5d54d386cc57",
+    "joined_source_commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+    "source_identity": {
+      "agent_20db": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+      "d100_42040": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+      "projection_f53b": "f53b016900c99e46998268e36c7c431ac0eec61e",
+      "runtime_immutable_ab1e": "ab1e4f6141987706132916e2da16477f5a019464",
+      "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+    },
+    "source_only_diff_empty": true,
+    "evidence_only_differences": [
+      "evidence/findings.md",
+      "evidence/review.json",
+      "evidence/source-manifest.json",
+      "evidence/validation.md",
+      "evidence/wholepath.md"
+    ]
+  },
+  "runtime": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "read_method": "git show immutable commit:path; no checkout/import/execution",
+    "repository": "/home/user/banodoco/banodoco-workspace-runtime",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+  },
+  "files": [
+    {
+      "repo": "agent",
+      "path": "astrid/core/timeline/authoring_bundle.py",
+      "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+      "line_count": 1934,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/authoring_commit.py",
+      "sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac",
+      "line_count": 325,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/commit.py",
+      "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "line_count": 1476,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/_commit_preview.py",
+      "sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+      "line_count": 115,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/validation.py",
+      "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae",
+      "line_count": 686,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/_timing_evaluators.py",
+      "sha256": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268",
+      "line_count": 616,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "line_count": 569,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "line_count": 246,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+      "sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042",
+      "line_count": 254,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "runtime",
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "line_count": 2975,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "runtime",
+      "path": "runtime_protocol/timeline_commit_port.py",
+      "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "line_count": 1190,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "runtime",
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+      "line_count": 2205,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "runtime",
+      "path": "runtime_protocol/timeline_commit_execution.py",
+      "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+      "line_count": 445,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "runtime",
+      "path": "runtime_protocol/timeline_commit_provider.py",
+      "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+      "line_count": 93,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "runtime",
+      "path": "runtime_protocol/service.py",
+      "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+      "line_count": 8532,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "tests/sdk/test_capture_source_runtime.py",
+      "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48",
+      "line_count": 454,
+      "identity": "reused verified D136a identity",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/commands.py",
+      "sha256": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+      "line_count": 308,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "line_count": 689,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/_recording.py",
+      "sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+      "line_count": 290,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+      "line_count": 1274,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/_doc_patch.py",
+      "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+      "line_count": 566,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/timeline/_doc_patch_materialize.py",
+      "sha256": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252",
+      "line_count": 108,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/authoring_remote.py",
+      "sha256": "5e00d7c53464120d623770f2321385c52ca34496f362e80edcc1da81b86655f7",
+      "line_count": 314,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "agent",
+      "path": "astrid/sdk/workspace_client.py",
+      "sha256": "ba2366493cbcad2524f0704247b9811c78f4c7c8b2d689683c5b60aa478a5814",
+      "line_count": 1262,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "PASS"
+    },
+    {
+      "repo": "runtime",
+      "path": "contract/commit-v2.md",
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+      "line_count": 5275,
+      "identity": "new span; immutable Runtime or byte-equal joined Agent",
+      "ast_parse": "not Python"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-boundaries.md",
+      "sha256": "6c359efa340be14193bef4472a1da46bc05b37c3d4a5cb30be50bdfbaabe5383"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-table.json",
+      "sha256": "22b6a94523098092aa4eed93d37953a0963794db4c96231c8e1ff0f20966d337"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-source-manifest.json",
+      "sha256": "c820174ec267ed4d43c33cd442e4b596967737c00aa50e4bc4fad28ece217b25"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-span-validation.json",
+      "sha256": "b78efc1333d39fddb65742fe88487953a8f4f1a4ff409ed7c457f03dcab21cf6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-correction.json",
+      "sha256": "b6f31ca3c3b5d51dd28a3021c04750d8411b22512b4ba03b02efb995864d0d0d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-review.json",
+      "sha256": "fa9523f51b438aec05c26ffb601bff7be9e4f06a1fb0b0b08b38704d49d3dfc4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-report.md",
+      "sha256": "ea5d05fe0392d808dc814f68784ae77552ac42b19f45a149d31f8083b8f8ce16"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-review.json",
+      "sha256": "9b65ad3997a8a0b2fcb5c5db9848e25604c3fa4ae9d443e07ee0537724f3b009"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-findings.md",
+      "sha256": "38ae25709b5435aff190dfb9ba5adab44a5fd3a194d03a1ffce4634240e9190e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-validation.md",
+      "sha256": "fc0f494377667f73ce8bac55e28f8194bb765cce961ae8dc71df9c29eba969c3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-handoff.md",
+      "sha256": "dc139b520971e0c75b4d8ccc29ba7123ad1fb4e5440559a489ef55f6b5315f2e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136/evidence/predicate-map.json",
+      "sha256": "fae25907043a2a790ce47d9eac5c25fb644ec6363225e3d84ba9905bcdff1908"
+    }
+  ],
+  "prior_safe_packets_hash_verified": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/boundaries.md",
+      "sha256": "565ee23f72523f20444151687ea5d39ca998e6baf2760c3839402c55fff5fb5c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/findings.md",
+      "sha256": "03bd94fa9c244bb42112d11f4fde21f499837f1215ad87dbfdcb6ebfefaa20eb"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/review.json",
+      "sha256": "211a91a81b1867afdf3154cf118e37e69b013d614b80e5c15e4e628ebd133d30"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/source-manifest.json",
+      "sha256": "c9502a9330c4edde74f5df9fa0efa1d18ab35df6e15e50d7a663d467a7a712f9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/table.json",
+      "sha256": "060790bd5814446d6edc14afff497341bfbac491fea7ae613950e16a7ce07b6e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/validation.md",
+      "sha256": "8272ad26a44055b5e06e970aaf6484f913b796f7d8aa0eee613c4dbf910cecff"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-review-2155/evidence/coverage.json",
+      "sha256": "2c3dd8a66b4fcbe8f098d20953b065d806cc84a264fc18f8952a87757f0184a1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-review-2155/evidence/findings.md",
+      "sha256": "bed4892a958c50a11114656a14e65474d1015211c9706be260fa71e8daeb1a54"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-review-2155/evidence/review.json",
+      "sha256": "0e144f1b1189236c0b4e9ea9d1ca32e4877b2bab962c6f95b41ab0f5d39f05b8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-review-2155/evidence/source-manifest.json",
+      "sha256": "59b83fe3883107d5e9bea9a4cec32ede093a8358c91abdbcf2686a1a0c6bdb7b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-review-2155/evidence/validation.md",
+      "sha256": "045118b829ecd4fed8c6e8cabf220b6b2a827b0fd0cb6bdfd44caf8f32c14ff3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/boundaries.md",
+      "sha256": "7e133b5d4a8f58b700a2f111914266c01870be68c97db4bca6de07082d6f173c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/correction.json",
+      "sha256": "e36e3679b9e8facabf5c877a41e76d69c431e93e10453891b2203af139e38d8f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/findings.md",
+      "sha256": "10db45dc56cc637e000145c4daeb8df74e0bb9d3a127554bee7ba53f5868b2e5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/review.json",
+      "sha256": "3bb3dd54b5e4eceaa1babeb042a52cbf09cc4970b08cffba5962f92b93349bb3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/source-manifest.json",
+      "sha256": "ee99b4545ae770660e96b8ca1233dfb08d4357621a04d901dede8698be166f18"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/table.json",
+      "sha256": "5516b30c72e2140bb5c3ccfcd00288f6f7a00b729ad7da41f88ac5a85da3cecf"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/validation.md",
+      "sha256": "3e1275336a485b2a19e1aa616e4c603fac0f3de2178fce30098b5491bc4988fc"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-final-review-2205/evidence/coverage.json",
+      "sha256": "43df8a3446a55e52dcf0b6ce015124278281ea05f7aad4a4bf5bbcbfb3058b2b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-final-review-2205/evidence/findings.md",
+      "sha256": "381a583cee2605f707f84ba3ac84131b0cdf3eb31cd4099a4736e069dd941706"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-final-review-2205/evidence/handoff.md",
+      "sha256": "a7699e28127ca6feca7124ed161e371e208b5299aa498504ab7ce097d6699dfd"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-final-review-2205/evidence/review.json",
+      "sha256": "7ab3a93c1ec1ced37e8697b79cad1f98123433db4fb8e3953b2b7f6b23f1a33c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-final-review-2205/evidence/source-manifest.json",
+      "sha256": "c1548aab28ddae2aaf01154745b921519ed5fec3a4253d08c0bdbbfa7cd9b245"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-final-review-2205/evidence/validation.md",
+      "sha256": "a3b7dddd97b4c8276007283a86ed17aabf2ed3b8731336660f7a986e1261082e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136/evidence/commands-results.md",
+      "sha256": "1ccc01bdc697fe0c83c36ca2387fb26f8c1e9a2ecf8bda7e9da39c89651627c8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136/evidence/findings.json",
+      "sha256": "3da2f3c278d99cdffe564e16b14e6578904fa1434f783076c4b35e5e738f5fce"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136/evidence/predicate-map.json",
+      "sha256": "fae25907043a2a790ce47d9eac5c25fb644ec6363225e3d84ba9905bcdff1908"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136/evidence/source-manifest.json",
+      "sha256": "628e50b820c1f3170d995c5fe912137458f8a6362ed9a2bae358882f66599fe7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136/evidence/submission-facts.json",
+      "sha256": "116c620dbf53e43218c0e847a52bb34d50f423d4253349f374e6fc42a85dd702"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136/evidence/validation.md",
+      "sha256": "2f6a30f8ae4184546d2b731defbedafa6f7e52b449645d8cce0f1859aeacc75e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136/evidence/verdict.json",
+      "sha256": "4c20ea13ae92aaa6de02b1a11ac71b7c9ac0819012b9c1cf55d7eb03c0670ee8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-2136-result-wholepath-review-2144/evidence/findings.md",
+      "sha256": "90f0641d0cf4686358a64fe8cd6339dabe89f1371e47f5a102bc2be9a3fbafef"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-2136-result-wholepath-review-2144/evidence/review.json",
+      "sha256": "4adcaa1644933a64081fe204bc65ec3021efb35252696b233f703c7727ccd862"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-2136-result-wholepath-review-2144/evidence/source-manifest.json",
+      "sha256": "7e1729f130aa07c4f3b996ad08d73779a6dd176efd844b2b348c7bda5578245b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-2136-result-wholepath-review-2144/evidence/validation.md",
+      "sha256": "c1dcad02b33ea3aca6e1ddc5d3a16c3a767dee0d2a6cc3850df16b347bb413de"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-2136-result-wholepath-review-2144/evidence/wholepath.md",
+      "sha256": "df8192b517e9616af49316399afe12acbda5dacdb2f704c7cb2ffa34053c5c00"
+    }
+  ],
+  "private_artifacts": "No private artifact opened, changed or republished; existing hashes/mode claims retained only.",
+  "source_read_method": "Agent bytes equal immutable joined commit; Runtime git show exact immutable ab1e; stdlib AST only, no product imports.",
+  "ast_identity_counts": {
+    "producer_nodes": 52,
+    "verified_call_edges": 43,
+    "reused_prior_node_identities": 21,
+    "new_node_identities": 31
+  },
+  "source_nochange": "No product/test/fixture/pin/generated/schema/guard edits; no Git mutations."
+}
