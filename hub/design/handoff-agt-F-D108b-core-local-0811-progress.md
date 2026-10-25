@@ -44,3 +44,20 @@ At `2026-10-25T08:21Z`, available space was `5,042,421,760` bytes while the
 retry body continued and its log was growing. This is the latest exact
 below-floor figure reported to the manager; no recycling, cache deletion, or
 interruption was performed.
+
+## Terminal
+
+Retry terminal status is `fail`, exit `1`, after `1456s` / `24:11`:
+
+```text
+159 failed, 8763 passed, 86 warnings, 347 errors, 173 subtests passed
+```
+
+The JUnit XML, body log, manifest, complete outcomes TSV/JSON, and terminal
+report are retained under the worker evidence/design paths. XML SHA-256 is
+`72872c77087719a692bff4b48b8d85ea62b9931d59a502c8e246daee0c81c18a`.
+Coverage is 9269 unique nodes over all 22 roots, with explicit outcomes and
+no absent-case PASS. Existing D63/upstream-924 matching produced 2940 same
+status, 15 different status/cause, and 6311 current-only unclassified nodes;
+D13_ENV and D23_DEFERRED boundaries remain preserved, and no numeric core-open
+or independent NO-GO verdict was issued.

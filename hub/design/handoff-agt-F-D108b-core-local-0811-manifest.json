@@ -1,0 +1,239 @@
+{
+  "schema": "timeline.agent.d108b.full-terminal-manifest.v1",
+  "worker": "agt-F-D108b-core-local-0811",
+  "service_id": "agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016",
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016",
+  "status": "fail",
+  "exit_code": 1,
+  "duration_seconds": 1456,
+  "terminal_summary": "159 failed, 8763 passed, 86 warnings, 347 errors, 173 subtests passed in 1451.66s (0:24:11)",
+  "counts": {
+    "passed": 8763,
+    "failed": 159,
+    "error": 347
+  },
+  "subtests_reported": 173,
+  "selector_root_count": 22,
+  "selector_roots": [
+    "tests/editing_conformance",
+    "tests/sdk",
+    "tests/timeline",
+    "tests/core/timeline",
+    "tests/core/test_timeline_element_orphan_cleanup.py",
+    "tests/core/test_timeline_element_publication.py",
+    "tests/core/test_timeline_element_publication_runtime.py",
+    "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+    "tests/core/rendering/test_local_schema.py",
+    "tests/packs/timeline",
+    "tests/packs/rendering/test_composition_package.py",
+    "tests/packs/rendering/test_live_scene_composition.py",
+    "tests/packs/rendering/test_render_export_task_adapter.py",
+    "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+    "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+    "tests/packs/video_editing/test_runtime_publication_chain.py",
+    "tests/stage1/test_cold_launch_autobootstrap.py",
+    "tests/test_installer_schema.py",
+    "tests/test_installer_sources.py",
+    "tests/test_installer_bootstrap_schema.py",
+    "tests/test_timeline_clip_replacement.py",
+    "tests/v10/test_timelines_create.py"
+  ],
+  "coverage": {
+    "root_count": 22,
+    "roots": [
+      "tests/editing_conformance",
+      "tests/sdk",
+      "tests/timeline",
+      "tests/core/timeline",
+      "tests/core/test_timeline_element_orphan_cleanup.py",
+      "tests/core/test_timeline_element_publication.py",
+      "tests/core/test_timeline_element_publication_runtime.py",
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+      "tests/core/rendering/test_local_schema.py",
+      "tests/packs/timeline",
+      "tests/packs/rendering/test_composition_package.py",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_render_export_task_adapter.py",
+      "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+      "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+      "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "tests/stage1/test_cold_launch_autobootstrap.py",
+      "tests/test_installer_schema.py",
+      "tests/test_installer_sources.py",
+      "tests/test_installer_bootstrap_schema.py",
+      "tests/test_timeline_clip_replacement.py",
+      "tests/v10/test_timelines_create.py"
+    ],
+    "xml_testcase_count": 9269,
+    "xml_nodeids_unique": true,
+    "all_nodes_have_outcome": true,
+    "unmapped_root_count": 0,
+    "missing_upstream_exact_node_count": 6311,
+    "absent_case_pass_claim": false,
+    "root_counts": {
+      "tests/editing_conformance": {
+        "passed": 4002,
+        "failed": 87,
+        "error": 323
+      },
+      "tests/sdk": {
+        "passed": 3008,
+        "failed": 61,
+        "error": 11
+      },
+      "tests/timeline": {
+        "passed": 563,
+        "failed": 4
+      },
+      "tests/core/timeline": {
+        "passed": 304
+      },
+      "tests/core/test_timeline_element_orphan_cleanup.py": {
+        "passed": 48
+      },
+      "tests/core/rendering/test_local_schema.py": {
+        "passed": 29
+      },
+      "tests/packs/timeline": {
+        "passed": 354,
+        "error": 11
+      },
+      "tests/core/test_timeline_element_publication_runtime.py": {
+        "passed": 56,
+        "failed": 4
+      },
+      "tests/core/test_timeline_element_publication.py": {
+        "passed": 45
+      },
+      "tests/packs/rendering/test_composition_package.py": {
+        "passed": 7
+      },
+      "tests/packs/rendering/test_live_scene_composition.py": {
+        "passed": 19,
+        "error": 1
+      },
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py": {
+        "passed": 11
+      },
+      "tests/packs/rendering/test_render_export_task_adapter.py": {
+        "passed": 135,
+        "failed": 2
+      },
+      "tests/packs/rendering/test_timeline_filmstrip_cards.py": {
+        "passed": 39
+      },
+      "tests/packs/rendering/test_timeline_filmstrip_execution.py": {
+        "passed": 28
+      },
+      "tests/packs/video_editing/test_runtime_publication_chain.py": {
+        "passed": 12,
+        "error": 1,
+        "failed": 1
+      },
+      "tests/stage1/test_cold_launch_autobootstrap.py": {
+        "passed": 30
+      },
+      "tests/test_installer_schema.py": {
+        "passed": 4
+      },
+      "tests/test_installer_sources.py": {
+        "passed": 44
+      },
+      "tests/test_timeline_clip_replacement.py": {
+        "passed": 8
+      },
+      "tests/v10/test_timelines_create.py": {
+        "passed": 16
+      },
+      "tests/test_installer_bootstrap_schema.py": {
+        "passed": 1
+      }
+    }
+  },
+  "classification_counts": {
+    "UNCLASSIFIED_NO_UPSTREAM_EXACT_NODE": 6311,
+    "D63_UPSTREAM924_MATCHED_STATUS_SAME": 2940,
+    "D63_UPSTREAM924_MATCHED_STATUS_DIFFERENT_CAUSE_OR_RESULT": 15,
+    "D23_DEFERRED": 2,
+    "D13_ENV": 1
+  },
+  "source_hashes_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/test-source-hashes.txt",
+  "source_hashes_file_sha256": "1efa8d8be77dad5b11d3e0237beb9d3ec11104417cda93fe7450ac1d77282a56",
+  "runtime_provider_origins": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/runtime-provider-origins.txt",
+  "runtime_provider_origins_sha256": "74e007e44869e9ef2695864a172be9a3710f08649416e5905276ef29ac5adbbf",
+  "current_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.xml",
+  "current_xml_sha256": "72872c77087719a692bff4b48b8d85ea62b9931d59a502c8e246daee0c81c18a",
+  "current_body_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.body.log",
+  "current_body_log_sha256": "0f34700508bfe35c94d2811d502b442cc36d4db4c4643303d8ca5dfd8f5af001",
+  "current_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.command",
+  "current_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.manifest",
+  "suite_config_sha256": "209e00c24a97aeb6b3b97cc359314a537eabe2328519b36cf4c8dbcfcd4f8708",
+  "upstream_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+  "upstream_xml_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+  "upstream_counts": {
+    "passed": 12396,
+    "failed": 91,
+    "skipped": 16,
+    "error": 14
+  },
+  "upstream_reference": "D63/upstream924 existing baseline; runtime isolation UNCERTAIN_FULL_RUN_PER_D54_CUSTODY_CORRECTION",
+  "known_boundaries": {
+    "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight": "D13_ENV",
+    "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]": "D23_DEFERRED",
+    "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head": "D23_DEFERRED"
+  },
+  "approved_dead_scope_assignments": [],
+  "classification_rule": "Existing D63/upstream924 matching only; exact status differences are retained as different cause/result, current-only nodes remain unclassified; no independent core-open or NO-GO numeric verdict.",
+  "zero_body_setup_failure": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-F-D108b-core-local-0811-agent-core-full-1025081708-25132/summary",
+  "terminal_artifacts": {
+    "agent-core-full.xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.xml",
+      "sha256": "72872c77087719a692bff4b48b8d85ea62b9931d59a502c8e246daee0c81c18a",
+      "bytes": 14745105
+    },
+    "agent-core-full.body.log": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.body.log",
+      "sha256": "0f34700508bfe35c94d2811d502b442cc36d4db4c4643303d8ca5dfd8f5af001",
+      "bytes": 9128584
+    },
+    "agent-core-full.command": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.command",
+      "sha256": "70addd63c350298d0de570d6d1ece62cde136c4479a76a9331742080b0f482cb",
+      "bytes": 1132
+    },
+    "agent-core-full.preflight.exit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.preflight.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "agent-core-full.body.exit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.body.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2
+    },
+    "agent-core-full.preflight.log": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.preflight.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "agent-core-full.runmanifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.runmanifest",
+      "sha256": "54886c1850fb5d1253b357adc9ed4cf629b333b48771569e4631c52272253efb",
+      "bytes": 603
+    }
+  },
+  "published_outputs": {
+    "handoff-agt-F-D108b-core-local-0811-outcomes.tsv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D108b-core-local-0811-outcomes.tsv",
+      "sha256": "2d484ec57a24830c9fdedaa22e5d3991487c782f5cd7bdd406ec6a9912e2a740",
+      "bytes": 6756719
+    },
+    "handoff-agt-F-D108b-core-local-0811-outcomes.json": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D108b-core-local-0811-outcomes.json",
+      "sha256": "c180c1c153264d09e2ae79e0ad63007d9551e43e7b72e87973f0927140a6e2eb",
+      "bytes": 10977837
+    }
+  },
+  "final_available_bytes": 5262004224,
+  "result_summary_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016/summary"
+}
