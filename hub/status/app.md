@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T02:58:01Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 0m -->
-# app board, 2026-10-25T02:57Z
+<!-- app | 2026-10-25T03:01:42Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 2m -->
+# app board, 2026-10-25T02:59Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -10,12 +10,12 @@
 | P2-metadata-element | Qualify applied status on metadata fix | Luna; Service | Recorded older tuple | gated:superseded-tuple | App2136; actual11589 | Readiness1PASS; original1FAIL same applied-status assertion412 after5s. Finite producer returns safe phases; remaining bodies held. | App245742; Runtimebc04 |
 | U4p-current | Current popup provenance | Luna | Runtime2c1 | merged | Author1711; return1714 | Normal tools, eight strict controls and 14 mappings PASS. | 92414037c7 |
 | A2 | Production dependent save funnel | HARD Sol; Luna | C0 and U3 | merged | Source authors and reviews | Mounted save/outbox and authoritative replies integrated; original gates below. | Current home |
-| A3 | Popup placement element asset saves | Luna; core Sol | A2 | merged | Source authors and reviews | Mounted routes integrated; all eight original gestures remain core and unqualified. | Current home |
+| A3 | Popup placement element asset saves | Luna; core Sol | A2 | merged | Source authors and reviews | Mounted routes integrated. Single-clear5678 independently GO on recorded tuple; seven isolated gestures and full tour remain open. | Current home |
 | A4 | Retire reachable legacy executor | Luna; review | Historical P1 GO | merged | Census0438; review0444 | Zero reachable legacy writers; behavioral tests retained. | Current home |
 | A4-D52 | Proven dormant deletion | Luna; review | Caller census | merged | Authors1118/1210; reviews1121/1232 | Parent/track and exclusive transcript pairs removed; live session retained. | 2e3c8f/cca3deb |
 | D69 | Restore and audit upstream behavior | Luna; placement Sol | Frozen upstream3881 | merged | Final1704; reviews1633/1636/1657 | 1403 cleared, 67 cited, four restored, zero remaining. 41 placement plus113 controls/types PASS. | c3d79ef88a |
 | P1 | Current plain original control | Service; Luna | App1540 tuple | merged | Actual26312; verdict1616 | Exit0/237s, readiness1 and original2 PASS. Recorded tuple only. | App1540b3f12e |
-| P2 | Eight original core gestures | Service; Luna | Reviewed current source corrections | doing | App0033/0038; Runtime main | Zero of eight isolated PASS. Element8897 failed5s; asset20057 reached raw import ABI; ADD5211 reaches reloaded edited clip. Main parent/single shared Undo finding owned. | Current source |
+| P2 | Eight original core gestures | Service; Luna | Reviewed current source corrections | doing | App and Runtime service owners | One of eight isolated qualified: single-clear5678 GO0255. Seven remain open; full serial App tour follows all eight. | Recorded tuples |
 | P2-parent-reads | Exact declared history reads | Luna; review | Contract C0 | merged | Author1625; review1636; integrated1643 | 13 Node and7 semantic controls, four types/lint PASS. | a2a6e4abbd |
 | P2-popup-runtime | Fork-created physical observation | Runtime Luna; security | Actual422 | merged | Author1643; security1658; home1704 | b318 tree equals reviewed88b9; 228 auth,18 Agent,13 RequestPort PASS. | Runtime b318a8ec4 |
 | P2-element-observer | Actual CLI safe phase capture | Luna | Runtime helper2c1 | merged | Author1715; return1722 | Real normal CLI accepted HTTP commit proves provider,receipt,response; focused controls/types/lint PASS. | 255f9f1218 |
@@ -180,21 +180,21 @@
 | P2-D88b-SWAP | Qualify SWAP on replay release | Luna; App service | Actual9674 terminal | gated:source-fix | App0235; actual9674 | NO-GO283s. Save/canonical/history/reload/selected label PASS; Undo503 at accepted495 via902. Later inverse tail NOTRUN. | Appc101/Runtime6634 |
 | P2-0234-duplicates | Stop duplicate source assignments | Luna | Earlier0230 owners discovered | gated:cancelled | Two0234 workers stopped | Both normal stop receipts and recycled trees. Findings retained; no integration merge. | No merge |
 
-| P2-ADD-owner-current | Qualify reviewed direct owner handoff | Luna; App service | Normal06014 owner fix | doing | app-P2-ADD-fixed-input-resume-0256 | Wrong Agent capture30177 cancelled normally. Existing fixed-input API return must verify tuple before requesting; no source guard bypass. | App06014 |
-| P2-single5678-GO | Qualify service PASS independently | Luna read only | Portable packet0235 ready | review | app-P2-single5678-GO-resume-0255 | Same sole review resumes after missing input. Real XML/manifest/source/versions/command now present. No extra body or raw-log custody stage. | App24865 |
-| P2-SWAP9674-facts | Return retained inverse phase boundary | Luna producer return | Exact original9674 terminal | doing | app-P2-SWAP9674-retained-return-0255 | Save/reload/selection pass; inverse503. Return current request/ordinal/phase boundary from retained artifacts only. | No source change |
+| P2-ADD-owner-current | Qualify reviewed direct owner handoff | Luna; App service | Normal06014 owner fix | doing | App0256; actual27885 | Fixed-input preflight8772 PASS; original submitted02:58:28 on06014/6386/6634/635f. Wait SAMEID, no result yet. | App06014 |
+| P2-single5678-GO | Qualify single-clear original | Luna read only | Portable packet0235 qualified | merged | Actual5678; GOreview0255 | Independent GO: readiness1/original1 PASS, exact source/tuple/XML/manifest/profile and complete strict tail qualified. No body repeat. | 24865/6386/6634/635f |
+| P2-SWAP9674-facts | Return retained inverse phase boundary | Luna producer return | Exact original9674 terminal | merged | app-P2-SWAP9674-retained-return-0255 | InitialSWAP200; Undo POST503/no receipt. Schema1 cap128, ordinals1–3; action correlation and eventual Undo outcome UNKNOWN. | Evidence only |
 | D74-current-pins | Retire every truly unused pin | Manager; lead host input | Full host audit0255 clear | merged | Guarded release0252 | All35 recycled normally, zero refusals. Net2.727GB freed;8.313GB free. All run outputs/branches/reports and protected tuple retained. | No source change |
 
 | P2-native-next | Prepare asset and placement originals | Luna source only | Strict native5337 reviewed home | doing | app-P2-native-asset-placement-prep-0257 | Fixed5337/6386/6634/635f; prepare two plans only. Asset follows current ADD terminal; placement follows asset. | App5337 |
 
 Integration: App5337b439b9 normally merges strict native oracle after independent0242 PASS over reviewed Core06014. Exact reviewed native blobs home. Canonical client/schema unchanged; bulk6ef70 remains held in review0255.
 
-core open: Zero of eight independently qualified isolated P2 gestures PASS; single5678 servicePASS awaits sole GO review. Element3111 fails applied433 after5s on6634. ADD3964 reaches selected label892. Asset15897 needs strict native Undo oracle. Main pair terminal: parent12208 response90s; single5678 servicePASS. Bulk21061 sent no intended POST; exact mounted fixture return0230 active.
+core open: One of eight isolated P2 gestures independently qualified: single-clear5678 GO0255 on24865/6386/6634/635f. Seven remain open; no final full-tour credit. Element3111 fails applied433 after5s on6634. ADD3964 reaches selected label892. Asset15897 needs strict native Undo oracle. Main pair terminal: parent12208 response90s; single5678 independently GO0255. Bulk21061 sent no intended POST; exact mounted fixture return0230 active.
 regressions: No new proven regression. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Final cut — Runtime coordinates current eight isolated P2, full App tour, final pinned P1–P5/core and genuine installed render before ZIP.
-Next ready: Bulk fresh0255, single5678 same GOreview0255, SWAP9674 finite return0255. Corrected ADD fixedinput0256 owns sole next App body; native asset/placement preparation0257 owns later serial plans.
-live 4 source plus 1 launcher / cap 6 source and 1 App body; ready-undispatched 0. D89 amended02:45: source6>5.0GB; heavy1>5.2GB; nothingnew4.5GB; stopnewestnongate4.0GB.
+Next ready: Bulk fresh0255 and native asset/placement preparation0257. Corrected ADD27885 is sole current Appbody; asset follows its terminal using reviewed native5337. Single5678 GO and SWAP safe return complete, no extra review/body.
+live 2 source plus 1 finishing launcher / cap 6 source and 1 App body; ready-undispatched 0. Bulk review0255, nativeprep0257; sole Appbody27885 pending. D89 amended02:45: source6>5.0GB; heavy1>5.2GB; nothingnew4.5GB; stopnewestnongate4.0GB.
 Capacity: Full host0255 audit plus fresh current-head/queue/lease/test/live-brief checks clear all35 stale pins. Normal namedKEEP release/bin/recycle succeeded all35; no refusals. Net2,727,251,968 bytes freed,8.313GB after. Protected06014/24865/6386/6634/635f and all outputs/branches/reports kept. Old dirty/prior-refused targets untouched.
 Inbox consumed through1878992 bytes. Host cleanup and single packet needs cleared same pass; no stale Blockers line. Runtime cost0215 permission refusal remains orchestrator-owned and stopped. WrongtupleADD30177 cancelled with outputs preserved; no retarget or proof credit.
 

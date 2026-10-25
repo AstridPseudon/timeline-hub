@@ -1,0 +1,103 @@
+{
+  "scope": "readonly retained D66 artifacts",
+  "packet_window": {
+    "started_at": "2026-10-25T02:36:47.732Z",
+    "finished_at": "2026-10-25T02:41:25.939Z"
+  },
+  "source": {
+    "path": "tests/e2e/local/three-products.p2-popup.spec.ts",
+    "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "relevant_flow": {
+      "gesture_commit_capture": "commitFromGesture:365-380",
+      "swap_case": "runPopupCase:920-938",
+      "undo_button_and_inverse_assertion": "assertReloadUndo:897-902",
+      "first_failed_predicate": "accepted:495"
+    }
+  },
+  "readiness": {
+    "status": "pass",
+    "tests": 1,
+    "failures": 0,
+    "exit": 0,
+    "time_seconds": 36.34824
+  },
+  "original": {
+    "status": "fail",
+    "tests": 1,
+    "failures": 1,
+    "exit": 1,
+    "first_failed_predicate": {
+      "name": "accepted(inverse)",
+      "source": "three-products.p2-popup.spec.ts:495",
+      "called_from": "three-products.p2-popup.spec.ts:902",
+      "expected_http_status": 200,
+      "observed_http_status": 503,
+      "response_code": "not_ready",
+      "response_reason": "runtime_unavailable",
+      "receipt": "absent"
+    },
+    "eventual_outcome": "unknown; restored canonical and final history assertions were not reached"
+  },
+  "browser_commit_posts": {
+    "count": 2,
+    "initial_swap": {
+      "intended_action": "popup SWAP A2 initial commit",
+      "post_presence": "proved",
+      "started_at": "2026-10-25T02:40:46.359Z",
+      "ended_at": "2026-10-25T02:41:04.922371Z",
+      "elapsed_ms": 18563.371,
+      "response_status": 200,
+      "response_envelope": ["data", "receipt"],
+      "data_status": "accepted",
+      "provider_version": "astrid-v1",
+      "compiler_version": "authoring-bundle-1",
+      "receipt": "present",
+      "pre_undo_assertions": "passed through reload/readback and selected-label checks before the Undo request"
+    },
+    "undo_intended": {
+      "intended_action": "native Undo inverse commit",
+      "post_presence": "proved",
+      "started_at": "2026-10-25T02:41:16.044Z",
+      "ended_at": "2026-10-25T02:41:22.674725Z",
+      "elapsed_ms": 6630.725,
+      "response_status": 503,
+      "response_code": "not_ready",
+      "response_reason": "runtime_unavailable",
+      "receipt": "absent",
+      "response_classification": "source-linked service response; no later accepted/merged outcome retained"
+    }
+  },
+  "runtime_phase": {
+    "artifact": "runtime-private/p2-commit-phase.jsonl",
+    "sha256": "13082b6f9ba0a128bf02f70a5dcfb704fe37e6b9eaed09e06ae358d65dd37398",
+    "schema_versions": [1],
+    "event_count": 128,
+    "first_event_at_ms": 2382.455,
+    "last_event_at_ms": 39361.401,
+    "request_ordinals": [1, 2, 3],
+    "ordinal_action_correlation": "unknown; retained stream has no action labels or ordinal header",
+    "bounded_counts": {
+      "ordinal_1": 46,
+      "ordinal_2": 64,
+      "ordinal_3": 18
+    },
+    "terminal_events": {
+      "ordinal_1": "http_response status 200 present",
+      "ordinal_2": "http_response status 200 present",
+      "ordinal_3": "absent after provider start"
+    },
+    "truncation": "not declared; stream is incomplete for ordinal 3 and cannot close the Undo outcome"
+  },
+  "retained_artifacts": {
+    "manifest.json": {"bytes": 6373, "sha256": "94ef3dd7301671acb5eb2f2c2115062f0ce0c307eb6ad3b68eac9ab405362e33"},
+    "readiness.xml": {"bytes": 1692, "sha256": "dd2be87dc3a0c0455985839e356f173094681c5f6c8cfd69f6e8f7ee6a459eea"},
+    "p2-popup-swap.xml": {"bytes": 3971, "sha256": "57adea6afa38cfab8d1688ea094930cf21edbead783e06061f6c444b95711a0f"},
+    "error-context.md": {"bytes": 14713, "sha256": "45db77ee2debbd664d24e7f4d4e3f70e8a59845b6481bbf66dd62ade9bfd5d0d"},
+    "trace.zip": {"bytes": 4093468, "sha256": "15e5e09ba0340db1f5b3a0786711a62ca18c3ce91a841f3d9f9e346c1f788093"}
+  },
+  "redaction_limits": [
+    "No raw authorization, request body, idempotency key, URL, project/timeline/revision/publication/receipt/request IDs, or private frame data exported.",
+    "No phase ordinal was attributed to SWAP or Undo without an independent action label.",
+    "No closure is claimed for restored canonical, final history, or eventual Undo acceptance."
+  ]
+}
