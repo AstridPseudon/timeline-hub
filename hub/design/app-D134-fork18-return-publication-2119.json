@@ -1,0 +1,31 @@
+{
+  "source": "exact harness Git blobs; worker wrote relative evidence, worktree already recycled",
+  "worker": "app-D134-fork18-return-2114",
+  "files": [
+    {
+      "file": "source-manifest.json",
+      "sha256": "cbddb84c6f21a4567a9d6482d8d25bda534e288a01943675456d6e9cd42fcc50"
+    },
+    {
+      "file": "predicate-map.json",
+      "sha256": "c6da8bbeed2468e6453e2e3f4144437b962510307334db6ab38ed3850652c6fc"
+    },
+    {
+      "file": "findings.json",
+      "sha256": "9855dbc63ffbefa4a82e522a983394983c348c5de57cd77de91bcd77128c362e"
+    },
+    {
+      "file": "validation.md",
+      "sha256": "94461b5678505cb1917f6008c589aa831bc6ba73e15780112917a0c83d8e3868"
+    },
+    {
+      "file": "correction.json",
+      "sha256": "c715be4f4c1666882a71fe80c09d4a561ed9332db94cbdc90650c2028dd903da"
+    },
+    {
+      "file": "wholepath.md",
+      "sha256": "d716b0a37e980a092d2cbb38d308ed2353c426ada51d968ed77fb612f00cfa18"
+    }
+  ],
+  "recreated": false
+}

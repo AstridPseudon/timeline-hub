@@ -1,0 +1,22 @@
+{
+  "task": "D134 root-008 FIRST RETURN",
+  "return": 1,
+  "base": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "source_author": "app-D134-fork18-source-2110",
+  "retained_original_review": {
+    "worker": "app-D134-fork18-review-2111",
+    "result": "FAIL",
+    "findings": ["F-001", "F-002"],
+    "immutable": true
+  },
+  "derivative": {
+    "result": "CORRECTED_EVIDENCE",
+    "F-001": "full root-008 node IDs and exact multiset are restored",
+    "F-002": "whole current caller/provider/authority path is traced",
+    "behavior_status": "NOTRUN",
+    "historical_records": "not retained; not invented or collected",
+    "classification": "UNKNOWN_UNAPPLIED"
+  },
+  "owned_source_delta": "none",
+  "D130_safety_hold": "unchanged"
+}

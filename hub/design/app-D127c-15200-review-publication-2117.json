@@ -1,0 +1,45 @@
+{
+  "reviewer": "app-D127c-element15200-review-2113",
+  "published": [
+    {
+      "file": "verdict.json",
+      "sha256": "f61175aadd9dcff9fa77cdd14e36001a2ee3ebecbf25788cdb5a4bb8f4951f1b",
+      "origin": "exact harness committed Git blob"
+    },
+    {
+      "file": "source-custody.json",
+      "sha256": "f593bbff4a24a5554e15b7e7666b142dd7fe92057889f4b953104891e0ddfb1e",
+      "origin": "exact harness committed Git blob"
+    },
+    {
+      "file": "source-manifest.json",
+      "sha256": "c7cb342d49602e1b2b8dfe5d8403415ab50c8f9b35e6eef2426143eabc4c843d",
+      "origin": "exact harness committed Git blob"
+    },
+    {
+      "file": "profile-table.json",
+      "sha256": "9fea5e64390cade6cf4d9e833958ad1f85a0d48a1e1ee783c413c7dc708bef86",
+      "origin": "exact harness committed Git blob"
+    },
+    {
+      "file": "profile-edges.json",
+      "sha256": "a2d03625215055547eb08b7f42ddefc8912f05f0c5b66571acd8f52aeb3991fd",
+      "origin": "exact harness committed Git blob"
+    },
+    {
+      "file": "profile-totals.json",
+      "sha256": "bf57f4cfbdbfbc43bb6a4be8e53a640e777b2b7eac00da1909ec4750dfb9708b",
+      "origin": "exact harness committed Git blob"
+    },
+    {
+      "file": "publication-manifest.json",
+      "sha256": "cc3997ce8de363ac5a6b4ada8a56936f83c534b8442d21b65c2f39a3a6e93d49",
+      "origin": "exact harness committed Git blob"
+    }
+  ],
+  "missing_promised_files": [
+    "findings.md",
+    "profile-table.md"
+  ],
+  "limit": "report.md links to lost relative Markdown findings/table; seven original JSON evidence blobs are preserved via exact committed source. No files recreated or new review credit."
+}
