@@ -1,0 +1,45 @@
+{
+  "verdict": "PASS",
+  "qualification": "bounded source diagnosis; not product-green and not merge authorization",
+  "candidate_commit": "8d2d58828a9b03ea6868c339e45369bb5f96adad",
+  "candidate_parent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+  "candidate_tree": "98c75e6cda5686fc8ef6f445d65e85a34d563c0e",
+  "candidate_delta": [
+    "tests/sdk/test_d124_sequential_materialization.py"
+  ],
+  "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "runtime_clean": true,
+  "regression": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-D124-boundary-core-review-1433:/home/user/work/wt/rt-pin-5e9ad1c6:/home/user/work/agent-runtime-projection-0856/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-5e9ad1c6 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --tb=short --basetemp=/tmp/agt-D124-boundary-core-review-1433/sequential-final --junitxml=/tmp/agt-D124-boundary-core-review-1433/regression.xml tests/sdk/test_d124_sequential_materialization.py",
+    "result": "1 failed, 1 passed in 2.97s",
+    "passing_test": "test_materialization_keeps_step_source_and_complete_successor_edges",
+    "failing_test": "test_grouped_child_materialization_uses_the_complete_step_input",
+    "failure": "Runtime timeline_commit_auth.py:577: provider successor differs from its authenticated physical edges",
+    "provider": "real RuntimeService with registered create_runtime_commit_service; no mock validator"
+  },
+  "static_checks": {
+    "targeted_ruff": "PASS: All checks passed",
+    "ruff_baseline": "PASS: current=2143 baseline=2143",
+    "mypy_baseline": "PASS: current=1902 baseline=1902",
+    "python311_compile": "PASS",
+    "diff_check": "PASS"
+  },
+  "module_origins": {
+    "agent": "/home/user/work/wt/agt-D124-boundary-core-review-1433/astrid/sdk/timeline/commit.py",
+    "runtime_auth": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_auth.py",
+    "runtime_service": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/service.py"
+  },
+  "runtime_readonly_sha256": {
+    "runtime_protocol/timeline_commit_auth.py": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+    "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+    "contract/commit-v2.md": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "scope": {
+    "agent_product_changes": false,
+    "runtime_changes": false,
+    "originals_replayed": false,
+    "all_four_closure": false,
+    "missing_original_pairs": "UNKNOWN"
+  }
+}
