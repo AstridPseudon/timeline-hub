@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.d139a.combined-install-findings/v1",
+  "status": "PASS_INSTALL_COMBINED_WITH_ACCEPTANCE_LIMITS",
+  "findings": [],
+  "disclosed": [
+    {
+      "id": "D137-E2E",
+      "status": "WITHDRAWN",
+      "detail": "The genuine fixture E2E gate remains withdrawn; e2e_result is NOTRUN and e2e_pass is false."
+    },
+    {
+      "id": "REAL-CHILD-NOTRUN",
+      "status": "not-tested",
+      "detail": "No live request, dispatcher, Store publication, child, venv, registration, package acquisition, or production acceptance ran."
+    },
+    {
+      "id": "CHECKER-DIAGNOSTIC",
+      "status": "expected",
+      "detail": "Canonical checker returned exit 1 with 1,146 census rows, 12 expected missing canonical names, 12 failures, and zero missing installed distributions; this is a diagnostic, not a child claim."
+    },
+    {
+      "id": "MAKER-ROLLBACK",
+      "status": "not-tested",
+      "detail": "The installed-byte serialized maker smoke covered nonzero/timeout status, private 0600 stderr retention, and bounded public markers without initializing Store; full Store rollback cleanup was not run because Store execution is out of scope."
+    },
+    {
+      "id": "SOURCE-CUSTODY",
+      "status": "disclosed",
+      "detail": "Joined review custody says the original author evidence used relative paths; exact reviewed blobs and manifests were independently consumed before installation."
+    }
+  ],
+  "claims_not_made": [
+    "No real child or core was run.",
+    "No Store was initialized or reused.",
+    "No package or network acquisition occurred.",
+    "No live queue was mutated by an actual request.",
+    "No production acceptance, publication, or E2E pass was claimed."
+  ]
+}

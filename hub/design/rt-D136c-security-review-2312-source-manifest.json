@@ -1,0 +1,47 @@
+{
+  "task": "rt-D136c-security-review-2312",
+  "base": {
+    "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883"
+  },
+  "author_manifest": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D136c-safe-observation-diagnostics-2305/evidence/source-manifest.json",
+    "working_tree_is_uncommitted": true,
+    "truthful_as": "pre-commit working-tree snapshot",
+    "not_release_identity": true
+  },
+  "final": {
+    "commit": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+    "tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+    "parent": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "worktree_clean_at_review": true
+  },
+  "files": [
+    {
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "role": "safe detail construction at the existing missing-observation guard",
+      "git_blob": "b2b238a716b55276e63d23d2886ef8542a382faa",
+      "sha256": "6e227fe16740aa93c1880beea0ff741275a195c0e0d460e9b3d186aed6392598",
+      "line_count": 3047
+    },
+    {
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "role": "minimal refusal serializer helper extension",
+      "git_blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7",
+      "sha256": "fce6c3ebe916d3a5f6be48125d3214d7cf15b1e51a6f276681a825d0e3925f99",
+      "line_count": 2208
+    },
+    {
+      "path": "tests/test_timeline_missing_observation_diagnostics.py",
+      "role": "focused production serializer, no-write, bounds and privacy tests",
+      "git_blob": "15c35c662480d98443b66210a823e3f00967d6db",
+      "sha256": "e2c82f375397a7bc64c198b61b06561e2d11e7fda205ed4aeb2f721af117dc4e",
+      "line_count": 145
+    }
+  ],
+  "scope_check": {
+    "changed_paths_exact": true,
+    "source_tests_generated_pins_hub_git_internal_edited": false,
+    "protected_test_preimages_preserved": true
+  }
+}

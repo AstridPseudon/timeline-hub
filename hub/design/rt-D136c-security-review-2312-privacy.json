@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "allowlisted_keys": [
+    "verification_phase",
+    "step_ordinal",
+    "command_ordinal",
+    "captured_ref_present",
+    "captured_path_present",
+    "native_site_present",
+    "physical_digest_present",
+    "physical_digest_hash",
+    "creation_exemption",
+    "creation_exemption_outcome",
+    "ownership_state",
+    "binding_state",
+    "continuation_state"
+  ],
+  "types": {
+    "verification_phase": "fixed enum",
+    "step_ordinal": "integer 0..1000000 or UNKNOWN",
+    "command_ordinal": "integer 0..1000000 or UNKNOWN",
+    "*_present": "boolean",
+    "physical_digest_hash": "UNKNOWN or sha256:<64 lowercase hex>",
+    "creation_exemption": "fixed enum",
+    "creation_exemption_outcome": "fixed enum",
+    "*_state": "fixed enum"
+  },
+  "privacy_controls": {
+    "raw_digest_echo": false,
+    "identifiers_echo": false,
+    "path_echo": false,
+    "key_or_user_content_echo": false,
+    "url_or_private_path_echo": false,
+    "maximum_string_length": 71,
+    "physical_digest_hash_only_when_input_matches_sha256_shape": true
+  },
+  "adversarial_check": "PASS: sentinel identifiers, path tokens, payload, owner, continuation, URL and private-path text were not present in the returned diagnostic.",
+  "authority": "Diagnostic detail is non-authoritative and is not consumed by authorization or persistence."
+}

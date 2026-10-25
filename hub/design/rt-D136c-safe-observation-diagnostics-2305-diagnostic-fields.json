@@ -1,0 +1,22 @@
+{
+  "wire_key": "details.safe_diagnostic",
+  "allowlist": {
+    "verification_phase": "fixed enum: command_output or UNKNOWN",
+    "step_ordinal": "bounded integer 0..1000000 or UNKNOWN",
+    "command_ordinal": "bounded integer 0..1000000 or UNKNOWN",
+    "captured_ref_present": "boolean",
+    "captured_path_present": "boolean",
+    "native_site_present": "boolean",
+    "physical_digest_present": "boolean",
+    "physical_digest_hash": "sha256:<64 lowercase hex> of a validated physical digest, or UNKNOWN",
+    "creation_exemption": "fixed enum: created_root_or_projected_site or UNKNOWN",
+    "creation_exemption_outcome": "fixed enum: APPLIED, NOT_APPLIED or UNKNOWN",
+    "ownership_state": "fixed enum: PRESENT, ABSENT or UNKNOWN",
+    "binding_state": "fixed enum: PRESENT, ABSENT or UNKNOWN",
+    "continuation_state": "fixed enum: PRESENT, ABSENT or UNKNOWN"
+  },
+  "excluded": [
+    "raw ref IDs", "step labels", "arbitrary path components", "payloads", "images",
+    "user text", "URLs", "stack/private paths", "credentials", "idempotency keys"
+  ]
+}

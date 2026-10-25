@@ -1,0 +1,20 @@
+{
+  "task": "D136c",
+  "source_finding": "The existing missing-observation guard now reports bounded safe local facts; actual cause remains UNKNOWN.",
+  "decision_change": false,
+  "producer_change": false,
+  "collector_change": false,
+  "schema_change": false,
+  "original9": {
+    "status": "NO_GO",
+    "prior_state": "9 collected, 9 setup errors, 0 pass/fail/skip, exit 1",
+    "this_task_effect": "none; no original-nine body was run"
+  },
+  "full_suite": "not run by task instruction",
+  "blocked": [],
+  "notes": [
+    "The Runtime store file carries 52 pre-existing Pyright diagnostics on a targeted run; changed auth source and new test have zero diagnostics.",
+    "The venv has no Ruff module/binary; host /root/.local/bin/ruff passed changed auth source and new test, while store Ruff matches the 10-error HEAD baseline exactly.",
+    "No installation, merge, push, credential read, WAL/reconnect/recovery/SWAP/D130 action or original-nine run was performed."
+  ]
+}

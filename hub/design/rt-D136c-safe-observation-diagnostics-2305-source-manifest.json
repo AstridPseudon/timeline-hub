@@ -1,0 +1,27 @@
+{
+  "task": "D136c",
+  "base_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+  "base_tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+  "working_tree_is_uncommitted": true,
+  "files": [
+    {
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "git_blob": "b2b238a716b55276e63d23d2886ef8542a382faa",
+      "sha256": "6e227fe16740aa93c1880beea0ff741275a195c0e0d460e9b3d186aed6392598",
+      "role": "safe detail construction at the existing missing-observation guard"
+    },
+    {
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "git_blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7",
+      "sha256": "fce6c3ebe916d3a5f6be48125d3214d7cf15b1e51a6f276681a825d0e3925f99",
+      "role": "minimal refusal serializer helper extension"
+    },
+    {
+      "path": "tests/test_timeline_missing_observation_diagnostics.py",
+      "git_blob": "15c35c662480d98443b66210a823e3f00967d6db",
+      "sha256": "e2c82f375397a7bc64c198b61b06561e2d11e7fda205ed4aeb2f721af117dc4e",
+      "role": "focused production-serializer, no-write, bounds and privacy tests"
+    }
+  ],
+  "other_product_files_changed": false
+}

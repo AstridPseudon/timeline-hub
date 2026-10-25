@@ -1,0 +1,21 @@
+{
+  "authorization": "D137",
+  "fixture_e2e_gate": "WITHDRAWN",
+  "e2e_result": "NOTRUN",
+  "e2e_pass": false,
+  "install_route": "CAS_MANAGER_ONLY",
+  "production_install": false,
+  "candidate_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+  "candidate_bytes": 111171,
+  "preimage_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+  "preimage_bytes": 75541,
+  "source_commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+  "reviewed_installer": "installer1826",
+  "decision_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D139a-combined-CAS-install-2309/evidence/d137-decision.json",
+  "d139a": {
+    "source_review": "PASS_SOURCE",
+    "carrier_review": "PASS_PRIVATE_SOURCE_CONTROLS_REAL_CHILD_NOTRUN",
+    "source_commit_pinned": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+    "fixture_decision_remains_withdrawn": true
+  }
+}

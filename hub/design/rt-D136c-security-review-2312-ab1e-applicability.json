@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "immutable_app_requested_base": "ab1e4f6141987706132916e2da16477f5a019464",
+  "immutable_app_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+  "comparison_base": "f103bb46866999c961a8865636f2e66d544e0c9b",
+  "preimages": {
+    "runtime_protocol/timeline_commit_auth.py": {
+      "ab1e_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "f103_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "same_exact_preimage": true
+    },
+    "runtime_protocol/timeline_commit_store.py": {
+      "ab1e_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "f103_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "same_exact_preimage": true
+    }
+  },
+  "focused_semantic_delta_applicability": "PASS: the same exact auth/store preimages mean the three-file diagnostics delta applies without retargeting or whole-source replacement.",
+  "backport": "Not authored or applied here; App body ownership and normal Runtime integration merge remain manager-owned.",
+  "read_only_git_objects": true
+}

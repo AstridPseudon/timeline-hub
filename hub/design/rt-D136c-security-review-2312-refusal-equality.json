@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "base_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+  "candidate_commit": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+  "path": "command_output -> CommitRejected.failure -> public_failure(...).as_dict()",
+  "dropped_fields": ["details.safe_diagnostic"],
+  "base_serialized_refusal": "{\"code\":\"validation_error\",\"details\":{\"base\":null,\"conflicts\":[],\"current\":null,\"reason\":\"invalid_records\",\"status\":\"refused\"},\"message\":\"provider intermediate command lacks an authenticated physical observation\"}",
+  "candidate_serialized_refusal_after_drop": "{\"code\":\"validation_error\",\"details\":{\"base\":null,\"conflicts\":[],\"current\":null,\"reason\":\"invalid_records\",\"status\":\"refused\"},\"message\":\"provider intermediate command lacks an authenticated physical observation\"}",
+  "byte_equal_after_drop": true,
+  "candidate_production_no_write": "PASS: tests/test_timeline_missing_observation_diagnostics.py observed rows(service) unchanged after the real service commit_timeline refusal.",
+  "guard_and_authority": "PASS: no decision, auth, CAS, SQL, materialization, recorder, or rollback authority changed."
+}

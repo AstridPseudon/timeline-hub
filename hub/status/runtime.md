@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T23:13:02Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 0m -->
+<!-- main | 2026-10-25T23:17:38Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 0m -->
 # runtime board, 2026-10-25T23:12:23Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -514,32 +514,32 @@
 | F-final-D139a-notes | Record installed schema provenance | Luna | Actual delivery rendering verified | merged | rt-F-D139a-schema-notes-2255 | Two actual documents installed; outside bytes, backups, CAS, modes and real renderer PASS. [Receipt](../../design/rt-F-D139a-schema-notes-2255-receipt.json). | D56 author prose proof | Installed docs |
 
 | D139a-source-join | Join exact reviewed recipe components | Luna / Luna | Caller and combined installation | review | Join2300; review2305 PASS | Independent63 PASS; five maker and two checker blobs exact. Relative review evidence recovered from committed Git; caller still pending. | Independent2305 PASS_SOURCE | f304bfc97 / makerfd83 |
-| D136c-safe-refusal | Add safe physical-observation diagnostics | Luna / independent Luna | Exact privacy and refusal review | review | Author2305; security2312 | Author focused3/scoped8/atomic4/native1 PASS; safe serializer detail only. Refusal and privacy review active; original9 still NO_GO. | Independent2312 active | Candidate held |
+| D136c-safe-refusal | Add safe physical-observation diagnostics | Luna / independent Luna | Normal merge and App original9 | merging | Author2305; security2312 PASS | Focused3/scoped8/atomic4/native1 PASS; refusal equality and privacy PASS. Exact ab1e preimages match; App sole9 handoff2316. | Independent2312 PASS | 2f1fbb1fc held for merge |
 
 | D139a-request-carrier | Carry schema input through normal queue | Luna / Luna | Actual installation and receiving | review | Author2305; carrierreview2305 PASS | Exact0921 source PASS; five queue plus33custody and6schema PASS. Live wrapper waits CAS; maker parser exact. | Independent2305 PASS_SOURCE | 0921ec1c8 /60d223 |
 
-| D139a-kit-install | Install reviewed complete child kit | Luna / independent next | Source and caller reviews PASS | doing | rt-OPS-D139a-combined-CAS-install-2309 | Exact makerfd83,wrapper60d223,checker8215; guarded backups and installed controls required. No child or core. | Installed review next | Live receipt pending |
+| D139a-kit-install | Install reviewed complete child kit | Luna / independent Luna | Actual installed review and publication | review | Installer2309; independent2314 | All three reviewed files installed0755; exact backups, shell/schema/queue controls PASS. No child or core; remote receipt pending. | Independent2314 active | fd83 /60d223 /8215 installed |
 
-| D140-Farm-recipe | Bind complete merged-tuple Farm core | Luna | Received qualified kit and genuine Farm inputs | doing | rt-F-D140-Farm-recipe-2307 | Complete check-only prerequisite census and22-root/control packet being prepared; no body or child. | Review next | Source only |
+| D140-Farm-recipe | Bind complete merged-tuple Farm core | Luna / independent Luna | Exact source and stage-order review | review | Author2307; protected2316 | Private4 PASS,94 prerequisite checks/66nonPASS on Main. Actual Farm inputs unknown; no child/body. Relative evidence recovered exactly. | Independent2316 active | Source only |
 
 Runtime producer: Normal f103bb46866999c961a8865636f2e66d544e0c9b. Actual9082 targeted1571 PASS70.60s, independent2219 PASS; Agent4c source scope only, no full/core/gate credit. Future Agent home41ad and App569 provenance receipts consumed; Main local Agent547e is stale and excluded.
 Core venue: D140 Farm. Agent remains source/author lane; old child3e163 retained. No new Agent child/core. Farm complete prerequisite --check-only before ONE merged child, in-child imports, D134 dry controls and exact22-root core.
 Core: D134 measurement8926 PASS190 FAIL180 ERROR173 subtests. XML/full disk witness absent. Own344 split132 setup,0 proved product,212 unknown. Ship-grade core NEVER started; old child built but schema preflight failed.
 Gates: Historical P1/P3/P4/P5 GO. Full P2 NO-GO element and SWAP. No final cut, wheel, Windows, installed render90 or ZIP.
-Blockers: Child/core — Makerfd83 and checker8215 exact joined source63PASS independent2305; wrapper60d223 independent44PASS. Combined installer2309 active. Actual kitpublication, Farm prerequisite inputs/admission, child/import/core still owed. No Store retirement prerequisite.
+Blockers: Child/core — Makerfd83 and checker8215 exact joined source63PASS independent2305; wrapper60d223 independent44PASS. Combined installer2309 PASS; installed review2314 active. Actual kitpublication, Farm prerequisite inputs/admission, child/import/core still owed. No Store retirement prerequisite.
 Schema input: D139a installed-distribution route approved under five strict conditions. Authentic18RECORD/12hash/sixunhashed/directURL/RECORD-exact ownership only. Physical source tie remains UNAVAILABLE; prior403 stopped, no new acquisition.
 Blockers: D73 receiving — afda independent2209 PASS7 historical; Agent current adaptation2259 owns receipts/manifests/origins/dependencies/central rows. No own-node functional credit or duplicate source author.
-Blockers: D136c — Author2305 focused3/scoped8/atomic4/native1 PASS; independent security/privacy2312 active. App sole unchanged original9 follows exact reviewed candidate. No guard repair or body before PASS.
+D136c: Independent security/privacy2312 PASS. Normal merge queued; exact immutable source and ab1e applicability handed to App sole original9 receiver2316. No guard repair; original9 result still owed.
 Blockers: SWAP safety — D130 automatic classifier refusal1537 holds WAL/recovery and all related qualification. No retry, transfer, alternate test or rollback. Existing escalation retained.
 Blockers: D69 and cut — Ship-grade core, current REG0, full P2, installed render90, final tuple P1-P5, wheel, Windows and ZIP remain owed.
-Next ready: Kit installer2309 terminal -> independent installed custody. Farm recipe2307 terminal -> one protected source review and complete handoff after kitpublication. D136c security2312 terminal -> normal merge and sole App nine.
+Next ready: Kit installed review2314 terminal -> exact publication/receiving. Farm protected review2316 terminal -> complete handoff after kitpublication. D136c normal merge -> integrated focused receipt; App sole nine now source ready.
 D100: Candidate27 PASS; exact original2136 on20db has9setupERROR at missing authenticated physical observation. Complete App45-boundary inventory final2220 and135UNKNOWN classification final2240 PASS consumed. No cause proved; Runtime2233 supporting only. Diagnostics now owns next runtime facts.
 Element: D127d UNAPPLIED; offline123ms/synthetic267ms did not reproduce live delay. D127e source2153/independent2202 reaches D112 statically; actual waiter UNKNOWN and D130 held. Actual32016/15200 are element boundaries;10721 request2 is not. No further profile body.
 Delivery: All D139 joins landed; final D59 cut gets second fresh upstream merge. Farm old union STOPPED. D77 complete24-input source inventory qualified but actual sources/launcher/manifest/roots/finite peak and installed render still owed.
 Staging: Main2303 DEFERRED until post ZIP; source held and uninstalled, no more rounds or cleanup. Resolved escalation2250 consumed.
 Store retirement: Main D140 DEFERRED; independent2304 PASS_ASSESSMENT confirms F1-F3 UNAPPLIED/F4-F5 fixed. Child3e163 retained; source uninstalled, no further author or cleanup. Resolved escalation2304 consumed.
 Disk: Fresh5047771136 bytes. Sweep3 removed0; compact packed0 worker/test dirs and compressed2 logs. Three remaining old V1 trees are dirty/unreferenced, total19MB, retained; no unsafe recycle attempted. Prior five clean pins released with guarded audits; all branches/evidence/registeredpins/testKEEP preserved. Source cap6 above5GB, cap3 above4.6GB; stop4GB.
-live3 / cap6; ready-undispatched0. Kit installer2309, diagnostics security2312 and Farm recipe2307 active. No heavy body.
+live3 / cap6; ready-undispatched0. Kit installed review2314 and Farm recipe review2316 active; D136c merge queued, App handoff2316 sent. No heavy body.
 Safety: All prior refusals held. Manager writes board/briefs/peers and exact handbacks only; Codex workers own product/tests/generated/pins and kit replacement. No direct Git mutation or credential access.
-INBOX consumed through1670712 bytes. D140 venue/source-only Agent2254 prep consumed; Farm2307 new venue packet is sole Runtime coordinator. Source and wrapper independent reviews qualified; publication follows installation.
+INBOX consumed through1674208 bytes. D140 venue/source-only Agent2254 prep consumed; Farm2307 new venue packet is sole Runtime coordinator. Source and wrapper independent reviews qualified; publication follows installation.
 Model rule: Every new worker this pass Luna/high/default180. Any Sol needs actual HARD reason recorded in meta; no new Sol dispatched. Staging and Store have no further round.

@@ -1,0 +1,11 @@
+{
+  "guard": "timeline_commit_auth.py missing physical observation",
+  "message": "provider intermediate command lacks an authenticated physical observation",
+  "decision": "unchanged; ref in result remains the guard predicate",
+  "status_code": "unchanged: 422 validation_error",
+  "refusal_reason": "unchanged: invalid_records",
+  "rollback_no_write": "unchanged; production test compares all captured Runtime rows before/after",
+  "envelope_comparison": "focused test removes only details.safe_diagnostic, then requires exact equality of code, message, status, reason, base, current and conflicts",
+  "public_caller": "service._execute_timeline_commit -> public_failure(exc.failure)",
+  "result": "PASS"
+}

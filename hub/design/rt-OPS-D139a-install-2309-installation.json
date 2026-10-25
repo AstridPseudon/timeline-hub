@@ -1,0 +1,78 @@
+{
+  "schema": "timeline.d139a.combined-install/v1",
+  "task": "rt-OPS-D139a-combined-CAS-install-2309",
+  "result": "PASS_INSTALL_COMBINED",
+  "observed_utc": "2026-10-25T23:12:28Z",
+  "source_commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+  "source_tree": "577a3cca4e23c94d051e839eb47d7b1bd7a1c9c3",
+  "decision": {
+    "authorization": "D137",
+    "fixture_e2e_gate": "WITHDRAWN",
+    "e2e_result": "NOTRUN",
+    "e2e_pass": false,
+    "install_route": "CAS_MANAGER_ONLY",
+    "production_install": false,
+    "reviewed_installer": "installer1826",
+    "decision_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D139a-combined-CAS-install-2309/evidence/d137-decision.json"
+  },
+  "targets": {
+    "maker": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "candidate_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+      "candidate_bytes": 111171,
+      "mode": "0755",
+      "regular_single_link": true,
+      "backup": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/make-child-venv.20261025T231036Z.bak",
+        "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+        "bytes": 75541,
+        "mode": "0755",
+        "regular_single_link": true,
+        "no_clobber": true
+      },
+      "installer": "ops-child-custody/install-prep/apply-reviewed-maker.sh"
+    },
+    "wrapper": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+      "candidate_sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504",
+      "candidate_bytes": 18066,
+      "mode": "0755",
+      "regular_single_link": true,
+      "backup": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/request-child-venv.20261025T231055Z.bak",
+        "sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
+        "bytes": 15435,
+        "mode": "0755",
+        "regular_single_link": true,
+        "no_clobber": true
+      },
+      "installer": "install_atomic.py copy + rename"
+    },
+    "checker": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/check-child-imports",
+      "candidate_sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c",
+      "candidate_bytes": 14033,
+      "mode": "0755",
+      "regular_single_link": true,
+      "initial_target": "ABSENT",
+      "backup": "NONE",
+      "installer": "install_atomic.py copy with O_EXCL/O_NOFOLLOW"
+    }
+  },
+  "protected_helpers": {
+    "bench_store.py": {
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "unchanged": true
+    },
+    "verify_dependency_seed.py": {
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "unchanged": true
+    }
+  },
+  "receiving_controls": {
+    "maker": ["nofollow", "exclusive", "no-clobber backup", "descriptor identity CAS", "atomic rename", "readback", "lock"],
+    "wrapper": ["private wrong-preimage refusal", "private symlink refusal", "private existing-backup refusal", "nofollow", "exclusive", "no-clobber backup", "descriptor identity CAS", "atomic rename", "readback", "lock"],
+    "checker": ["absent-target boundary", "nofollow", "exclusive", "no-clobber", "readback", "lock"]
+  },
+  "previous_backups_untouched": true
+}

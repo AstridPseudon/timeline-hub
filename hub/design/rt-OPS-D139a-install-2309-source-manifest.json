@@ -1,0 +1,81 @@
+{
+  "schema": "timeline.d139a.combined-install-source-manifest/v1",
+  "task": "rt-OPS-D139a-combined-CAS-install-2309",
+  "observed_utc": "2026-10-25T23:12:28Z",
+  "source_checkout": "/home/user/work/wt/rt-OPS-D139a-combined-CAS-install-2309",
+  "source_commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+  "source_tree": "577a3cca4e23c94d051e839eb47d7b1bd7a1c9c3",
+  "reviews": {
+    "joined_source": {
+      "task": "rt-OPS-D139a-join-review-2305",
+      "verdict": "PASS_SOURCE",
+      "commit": "f304bfc97be7319c7a69272a4c9311ff5c1b3d08",
+      "tests": "63/63 PASS",
+      "real_child": "NOTRUN"
+    },
+    "request_carrier": {
+      "task": "rt-OPS-D139a-request-carrier-2305",
+      "verdict": "PASS_PRIVATE_SOURCE_CONTROLS_REAL_CHILD_NOTRUN",
+      "candidate": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504",
+      "tests": "5+33+6 PASS",
+      "real_child": "NOTRUN"
+    }
+  },
+  "reviewed_sources": {
+    "maker": {
+      "path": "ops-child-custody/make-child-venv",
+      "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+      "bytes": 111171,
+      "mode": "0755"
+    },
+    "wrapper": {
+      "path": "ops-child-custody/request-child-venv",
+      "sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504",
+      "bytes": 18066,
+      "mode": "0755"
+    },
+    "checker": {
+      "path": "ops-child-custody/check-child-imports",
+      "sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c",
+      "bytes": 14033,
+      "mode": "0755",
+      "source_commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00"
+    },
+    "generic_helper": {
+      "path": "ops-child-custody/install-prep/install_atomic.py",
+      "sha256": "81eb0818809cccf52c95fb4a536f2c86f29ad47e8395a8d5a725b8c3fb560ef9",
+      "bytes": 3673,
+      "mode": "0644"
+    }
+  },
+  "protected_helpers": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "schema_input": {
+    "route": "strict installed distribution",
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "tree_tie": "UNAVAILABLE",
+    "acquisition": false
+  },
+  "live_actions": {
+    "maker_install": true,
+    "wrapper_install": true,
+    "checker_initial_install": true,
+    "request": false,
+    "store": false,
+    "child": false,
+    "venv": false,
+    "registration": false,
+    "network_acquisition": false,
+    "publication": false,
+    "git_mutation": false
+  }
+}
