@@ -33,7 +33,7 @@ pytestmark = pytest.mark.integration
 
 def _patch(bundle, ref, path, value):
     physical = Closure(bundle).resolve(ref)
-    before = value_at(Closure(bundle).payload(physical), path)
+    before = value_at(Closure(bundle).payload(physical), physical, path)
     return execute(bundle, [{
         'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
         'args': {'changes': [{'op': 'set', 'ref': ref, 'path': list(path),
