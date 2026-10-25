@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T03:27:28Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 1m -->
+<!-- agent | 2026-10-25T03:30:30Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 21 | status age 3m -->
 # agent board, 2026-10-25T03:12:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -213,9 +213,9 @@
 
 | F held thirteen | Route exact word and sheet inputs | Luna read only | Named owner follow-through | merged | Source disposition0301 complete | Zero eligible unchanged retries. Ten live seams and three retired CLI setup routes mapped. Five receiving source/input workers0314 assigned. | 562ee source facts |
 
-| F parent guard six | Fix asset collection guard projection | HARD Sol | Exact source finding0314 | review | AuthorSol0317; review0323 | Exact registry.assets tagged field projection static PASS. Candidate held for independent source review and MAIN six before merge. | Source0317 held |
+| F parent guard six | Fix asset collection guard projection | HARD Sol | Exact source finding0314 | blocked:runtime | AuthorSol0317; review0323 PASS | Candidate4dcb held. MAIN clean join and exact six proof requested, coalescing reviewed word two if unsubmitted. | 4dcb5a5e8a |
 | F sheet CLI three | Migrate current-sheet retired CLI setup | Luna | Independent protected source review | merging | Author0314; independent0317 PASS | Normalac9a has exact reviewed691c blob; all three original scenarios need meaningful MAIN proof. | ac9a00f18e |
-| F word source four | Preserve exact choice and current C0 tests | Luna | Exact source disposition0314 | review | Choice0317; review0321; oracle0320 | Candidate exact-choice preservation has static PASS. Independent source review and meaningful originals remain owed. | Choice0317 held |
+| F word source four | Preserve exact choice and current C0 tests | Luna | Exact source disposition0314 | blocked:runtime | Choice0317; review0321 PASS | Candidate2154 held for exact MAIN two, optionally coalesced parent six. Oracle source separately normal657. | 2154168d30 |
 | F inverse source six | Bind inverse failures to exact owner | Luna read only | Exact source disposition complete | merged | Source0314 complete | Two exact D14 positives remain deferred. Four live auth seams handed to Runtime with conditional Agent producer follow-up. No body. | Current7e237 |
 | F next exact input | Join new source receipts to later delta | Luna / MAIN receiver | Existing next10 extends to32 | merging | Inputs0314; receiving Runtime0306 | Exact32 published; four source hashes match7e237, zero161 overlap. Receiver subtracts later102 and coalesces inverse7/D92. Behavior owed. | Current7e237 |
 
@@ -226,7 +226,7 @@
 | F9211 command identity | Trace exact executed-command mismatches | Luna read only | Actual68 error records | doing | agt-F-command-identity-source-0325 | Occurrence48, M2placement16 and recipe3 share outer message; exact common cause not assumed. No body. | Actual9211 |
 | F9211 ordinary sheet | Correct truthful bootstrap source caller | Luna | Actual11 setup errors | doing | agt-F-sheet11-source-0325 | Exact source.via test-bootstrap violates enum. Original data and eleven predicates preserved. | Actual9211 |
 | F9211 projection | Restore original opaque source fixture | Luna | Actual9 setup errors | doing | agt-F-projection9-source-0325 | Exact opaque_timeline loss traced before faithful source correction. No default to hide missing original fields. | Actual9211 |
-| F9211 numeric six | Preserve numeric move invocation | Luna | Local source floor | ready | Brief0325 prepared | Six invalid app/at command calls; inverse three separately live. Next source slot above5GB. | Actual9211 |
+| F9211 numeric six | Preserve numeric move invocation | Luna | Local source floor | doing | agt-F-numeric9-actual-0325 | Six invalid app/at command calls; inverse three separately live. Source-only correction, all original numeric values retained. | Actual9211 |
 
 Integration: Agentac9a00f18e includes media0240, auto0241 and protected current-sheet CLI3 migration. All target blobs match independent reviews. D90 remains qualified by actual28969 PASS36; final tuple separate.
 core open: P4 historical14151 FAIL45.448s; corrected diagnostic25257 FAIL45.557s. All requested timed stacks captured. One Runtime cost0301 owns evidence-directed repair; no Agent diagnosis or duplicate original.
@@ -240,6 +240,6 @@ Blockers: Runtime source — P4 measured correction0301 requires one independent
 Blockers: MAIN proof — Actual161 then D91 and exact later delta must qualify merged scenarios. All no-case and held live scenarios remain visible.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
 Next ready: Assigned parent guardSol, word choiceLuna, word oracleLuna and protected sheet review0317. Source findings need one review; exact MAIN bodies stay serialized.
-live 2 plus queued2 / cap6; ready-undispatched1 held by post-dispatch source floor; ready-undispatched0 eligible source starts. Current pending review inventory is24 scopes, not24 unresolved diffs.
+live 3 plus queued1 / cap6; ready-undispatched0 eligible starts; source floor rechecked before next dispatch; ready-undispatched0 eligible source starts. Current pending review inventory is24 scopes, not24 unresolved diffs.
 
-Inbox consumed through1326922 bytes; normaldesign0315 owner note consumed. Updated 2026-10-25T03:17:50Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.
+Inbox consumed through1329754 bytes; normaldesign0315 owner note consumed. Updated 2026-10-25T03:17:50Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.
