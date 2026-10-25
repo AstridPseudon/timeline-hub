@@ -33,6 +33,9 @@ def mirrored_parent_clip_apps(bundle):
     mirror = next(clip for clip in mirrors if clip["id"] == "card")
     assert primary == mirror
     bundle["parent"]["config"]["clips"] = clips
+    current_mirrors = bundle["parent"]["config"]["clips"]
+    primary = next(clip for clip in clips if clip["id"] == "card")
+    mirror = next(clip for clip in current_mirrors if clip["id"] == "card")
     return [primary["app"]["astrid"], mirror["app"]["astrid"]]
 
 
@@ -45,10 +48,6 @@ def recipe(retained, monkeypatch):
 
 def bundle(case):
     result = bundle_from_document(case.documents[case.head()["revision_id"]])
-    clips = result["parent"]["clips"]
-    mirrors = result["parent"]["config"]["clips"]
-    assert clips == mirrors
-    result["parent"]["config"]["clips"] = clips
     # This is the same authorized capture observed from the real provider,
     # handed to the frontend picker, not an inline command/source authority.
     result["source_mapping"]["pinned_documents"] = copy.deepcopy(
@@ -348,6 +347,12 @@ def test_reference_is_authoritative_and_kernel_never_searches_echo(recipe, monke
     current = bundle(case)
     sources = current["source_mapping"]["pinned_documents"]
     expected = compile_authored(current, sources)
+    if echo is not None:
+        case.submit(case.request([{"schema_version": 1, "op": OP, "version": "1", "select": REF,
+            "args": {"field": "on", "declaration": echo,
+                     "choice": authored(current)[KEY]["choice"]}}]), "change-echo")
+        case.restart()
+        current = bundle(case)
     apps = mirrored_parent_clip_apps(current)
     if echo is None:
         for app in apps:

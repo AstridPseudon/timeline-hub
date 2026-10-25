@@ -33,6 +33,9 @@ def mirrored_parent_clip_apps(bundle):
     mirror = next(clip for clip in mirrors if clip["id"] == "card")
     assert primary == mirror
     bundle["parent"]["config"]["clips"] = clips
+    current_mirrors = bundle["parent"]["config"]["clips"]
+    primary = next(clip for clip in clips if clip["id"] == "card")
+    mirror = next(clip for clip in current_mirrors if clip["id"] == "card")
     return [primary["app"]["astrid"], mirror["app"]["astrid"]]
 
 
@@ -44,10 +47,6 @@ def recipe(retained, monkeypatch):
 
 def bundle(case):
     result = bundle_from_document(case.documents[case.head()["revision_id"]])
-    clips = result["parent"]["clips"]
-    mirrors = result["parent"]["config"]["clips"]
-    assert clips == mirrors
-    result["parent"]["config"]["clips"] = clips
     # This is the same authorized capture observed from the real provider,
     # handed to the frontend picker, not an inline command/source authority.
     result["source_mapping"]["pinned_documents"] = copy.deepcopy(
