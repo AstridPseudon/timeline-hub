@@ -392,6 +392,121 @@ def test_observer_failure_does_not_replace_original_exception():
     assert "original exception text" not in json.dumps(capture.events)
 
 
+def _element_request_body(project="project-element", *, dry_run=False):
+    body = {
+        "api_version": 1,
+        "project_id": project,
+        "timeline_id": "timeline-element",
+        "base_revision_id": "revision-1",
+        "base_publication_id": "publication-1",
+        "commands": [{
+            "schema_version": 1,
+            "op": "clip.set-element",
+            "version": "1",
+            "select": "parent/clip:clip-1",
+            "args": {"elementRef": {"id": "element", "kind": "effect", "revision": "r1"}},
+        }],
+    }
+    if dry_run:
+        body["dry_run"] = True
+    return body
+
+
+def test_mounted_element_handler_profiles_only_the_selected_request(tmp_path):
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    body = _element_request_body()
+    raw_sink = tmp_path / "element.prof"
+    capture = P2CommitPhaseCapture(
+        tmp_path / "element.jsonl", enabled=True, raw_pstats_sink=raw_sink)
+    handler = _handler(Runtime(), body, key="element-profile")
+    capture.start()
+    try:
+        handler._dispatch()
+    finally:
+        capture.stop()
+
+    assert handler.sent_status == 200
+    summary = _summary(capture)[0]
+    profile = summary["cprofile"]
+    assert profile["status"] == "captured"
+    assert profile["scope"] == "RuntimeHandler._timeline_commit"
+    assert len(profile["functions"]) <= 40
+    assert len(profile["edges"]) <= 1600
+    assert profile["rank_meaning"].startswith("functions sorted descending cumtime")
+    assert "original budget" in profile["timing_note"]
+    assert all(set(row) == {
+        "rank", "file", "line", "function", "ncalls", "primitive_calls", "tottime", "cumtime"
+    } for row in profile["functions"])
+    assert all(set(edge) == {"caller", "callee", "ncalls"} for edge in profile["edges"])
+    assert all(not name.startswith("/") for row in profile["functions"] for name in (row["file"],))
+    serialized = json.dumps(capture.events)
+    assert body["project_id"] not in serialized
+    assert "element-profile" not in serialized
+    assert raw_sink.exists()
+    assert os.stat(raw_sink).st_mode & 0o777 == 0o600
+    assert os.stat(tmp_path).st_mode & 0o777 == 0o700
+    assert sys.getprofile() is None
+
+
+def test_element_profile_predicate_refuses_non_element_and_dry_run_requests():
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    bodies = [
+        {
+            "api_version": 1,
+            "project_id": "project-move",
+            "timeline_id": "timeline-element",
+            "base_revision_id": "revision-1",
+            "base_publication_id": "publication-1",
+            "commands": [{"schema_version": 1, "op": "clip.move", "version": "1",
+                          "select": "parent/clip:clip-1", "args": {"on": 2}}],
+        },
+        _element_request_body("project-preview", dry_run=True),
+    ]
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        for body in bodies:
+            _handler(Runtime(), body)._dispatch()
+    finally:
+        capture.stop()
+
+    summaries = _summary(capture)
+    assert len(summaries) == 2
+    assert all("cprofile" not in summary for summary in summaries)
+    assert sys.getprofile() is None
+
+
+def test_element_profile_disables_on_handler_exception_without_exporting_exception_text():
+    marker = RuntimeError("element profile exception must remain private")
+
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            raise marker
+
+    body = _element_request_body("project-exception")
+    handler = _handler(Runtime(), body, key="element-exception")
+    handler._prefetched_body = json.dumps(body, separators=(",", ":")).encode()
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        with pytest.raises(RuntimeError) as caught:
+            handler._timeline_commit(body["project_id"], body["timeline_id"], "commit")
+    finally:
+        capture.stop()
+
+    assert caught.value is marker
+    assert sys.getprofile() is None
+    serialized = json.dumps(capture.events)
+    assert "element profile exception must remain private" not in serialized
+    assert _summary(capture)[0]["cprofile"]["status"] == "captured"
+
+
 def test_concurrent_requests_keep_local_ordinals_and_phase_state_isolated():
     calls = []
 

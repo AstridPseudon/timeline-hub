@@ -11,6 +11,12 @@ cannot consume its evidence.  For timeline commits, the dispatch boundary is
 ``RuntimeHandler._timeline_commit`` entry.  Socket/client arrival and body
 receipt have no earlier hook here and remain explicitly unsupported; caller
 receipt is outside this process and remains UNKNOWN.
+For an explicitly enabled, mounted ``clip.set-element`` request, the handler
+boundary also arms one stdlib ``cProfile`` instance on that request's thread.
+It is enabled on ``_timeline_commit`` entry and disabled on its return or
+exception; no profile hook is installed for other requests or threads.  Only
+a bounded ``pstats`` projection is emitted, with module-relative paths and no
+request data.  Raw pstats, when requested, is private temporary output.
 request bodies, headers, credentials, URLs, identifiers and exception text
 never cross the observation boundary.
 
@@ -29,12 +35,16 @@ enabled.
 """
 from __future__ import annotations
 
+import cProfile
 import faulthandler
 import hashlib
 import json
+import math
 import os
+import pstats
 import re
 import sys
+import sysconfig
 import threading
 import time
 from collections import deque
@@ -62,6 +72,10 @@ CAPTURE_FORMAT_VERSION = 2
 RETENTION_MODE = "rolling_plus_final_request"
 SAMPLING_INTERVAL_SECONDS = 0.02
 WITNESS_PHASES = frozenset(("dispatch_queue", "coordinator_lock", "handler_entry"))
+PROFILE_FORMAT_VERSION = 1
+PROFILE_TOP_FUNCTIONS = 40
+PROFILE_MAX_EDGES = 1600
+PROFILE_COMMAND = "clip.set-element"
 _CAPTURE_NAMESPACE = 0
 
 
@@ -129,10 +143,15 @@ class P2CommitPhaseCapture:
         dump_traceback: Any = None,
         utc_now: Any = None,
         sampling_interval: float = SAMPLING_INTERVAL_SECONDS,
+        profile_factory: Any = None,
+        profile_top_functions: int = PROFILE_TOP_FUNCTIONS,
+        profile_max_edges: int = PROFILE_MAX_EDGES,
+        raw_pstats_sink: Path | str | None = None,
     ) -> None:
         if (max_requests < 1 or max_events < 1 or max_bytes < 256
                 or watchdog_seconds <= 0 or max_watchdog_captures < 1
-                or sampling_interval <= 0):
+                or sampling_interval <= 0 or profile_top_functions < 1
+                or profile_max_edges < 1):
             raise ValueError("capture bounds must be positive")
         global _CAPTURE_NAMESPACE
         _CAPTURE_NAMESPACE += 1
@@ -151,6 +170,12 @@ class P2CommitPhaseCapture:
         self._dump_traceback = dump_traceback or faulthandler.dump_traceback
         self._utc_now = utc_now or (lambda: datetime.now(UTC))
         self.sampling_interval = sampling_interval
+        self._profile_factory = profile_factory or cProfile.Profile
+        self.profile_top_functions = min(profile_top_functions, PROFILE_TOP_FUNCTIONS)
+        self.profile_max_edges = min(profile_max_edges, PROFILE_MAX_EDGES)
+        self.raw_pstats_sink = (Path(raw_pstats_sink).absolute()
+                                if raw_pstats_sink is not None else None)
+        self._profile_raw_written: set[int] = set()
         self.pid = os.getpid()
         self.birth_ticks = _process_birth_ticks()
         self.namespace = (f"pid-{self.pid}-birth-{self.birth_ticks or 'unknown'}-"
@@ -243,6 +268,7 @@ class P2CommitPhaseCapture:
             self._sampler_stop.set()
             for request in list(self._requests.values()):
                 self._cancel_watchdog(request)
+                self._stop_profile(request)
         if sys.gettrace() == self._trace:
             sys.settrace(self._previous_trace)
         if threading.gettrace() == self._trace:
@@ -418,6 +444,264 @@ class P2CommitPhaseCapture:
             except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
                 self.failures += 1
 
+    @staticmethod
+    def _is_element_request(handler: Any) -> bool:
+        """Recognize only the mounted App element commit at the handler seam.
+
+        ``_dispatch`` has already prefetched the bounded timeline body before
+        calling ``_route``.  Reading that existing byte buffer here avoids a
+        product hook and avoids consuming ``rfile``.  Direct calls without
+        the mounted prefetch are intentionally not profiled: they cannot
+        prove the real request-selection predicate.
+        """
+        path = getattr(handler, "path", None)
+        if (getattr(handler, "command", None) != "POST"
+                or not isinstance(path, str) or "?" in path
+                or _safe_route_template(path)
+                != "/v1/projects/{project_id}/timelines/{timeline_id}/commit"):
+            return False
+        raw = getattr(handler, "_prefetched_body", None)
+        if not isinstance(raw, (bytes, bytearray, memoryview)):
+            return False
+        try:
+            body = json.loads(bytes(raw))
+        except (TypeError, ValueError, UnicodeDecodeError):
+            return False
+        if not isinstance(body, dict) or body.get("dry_run") is True:
+            return False
+        commands = body.get("commands")
+        return (isinstance(commands, list)
+                and any(isinstance(command, dict)
+                        and command.get("op") == PROFILE_COMMAND
+                        for command in commands))
+
+    def _start_profile(self, request: dict[str, Any], handler: Any) -> None:
+        if not self._is_element_request(handler):
+            return
+        request["profile_eligible"] = True
+        try:
+            profile = self._profile_factory()
+            enable = getattr(profile, "enable", None)
+            if not callable(enable):
+                raise TypeError
+            request["profile"] = profile
+            request["profile_previous"] = sys.getprofile()
+            enable()
+            request["profile_started"] = True
+        except Exception:  # noqa: BLE001 - diagnostics never affect the request
+            request["profile"] = None
+            request["profile_failed"] = True
+
+    @staticmethod
+    def _stop_profile(request: dict[str, Any]) -> None:
+        profile = request.get("profile")
+        if (not request.get("profile_started") or request.get("profile_stopped")
+                or profile is None):
+            return
+        try:
+            profile.disable()
+        except Exception:  # noqa: BLE001 - diagnostics never affect the request
+            request["profile_failed"] = True
+        finally:
+            try:
+                sys.setprofile(request["profile_previous"])
+            except Exception:  # noqa: BLE001 - diagnostics never affect the request
+                request["profile_failed"] = True
+            request["profile_stopped"] = True
+
+    @staticmethod
+    def _safe_profile_file(filename: Any) -> str | None:
+        if not isinstance(filename, str):
+            return None
+        normalized = filename.replace("\\", "/")
+        if normalized in {"~", "<built-in>", "<builtin>"}:
+            return "<stdlib>/builtin"
+        for marker, prefix in (("/runtime_protocol/", "<runtime>/"),
+                               ("/astrid/", "<agent>/"),
+                               ("/site-packages/", "<package>/"),
+                               ("/dist-packages/", "<package>/")):
+            if marker in normalized:
+                value = prefix + normalized.rsplit(marker, 1)[1]
+                return value if len(value) <= 240 else None
+        stdlib = sysconfig.get_paths().get("stdlib")
+        if isinstance(stdlib, str):
+            root = stdlib.replace("\\", "/").rstrip("/") + "/"
+            if normalized.startswith(root):
+                value = "<stdlib>/" + normalized[len(root):]
+                return value if len(value) <= 240 else None
+        if normalized.startswith(("<runtime>/", "<agent>/", "<stdlib>/", "<package>/")):
+            return normalized if len(normalized) <= 240 else None
+        return None
+
+    @staticmethod
+    def _safe_profile_function(function: Any) -> str | None:
+        if not isinstance(function, str) or not function or len(function) > 160:
+            return None
+        safe = re.sub(r"[^A-Za-z0-9_.$<>:' -]", "_", function)
+        return safe[:160] if safe else None
+
+    @classmethod
+    def _safe_profile_key(cls, key: Any) -> tuple[str, int, str] | None:
+        if not isinstance(key, tuple) or len(key) != 3:
+            return None
+        filename, line, function = key
+        if type(line) is not int or line < 0:
+            return None
+        safe_file = cls._safe_profile_file(filename)
+        safe_function = cls._safe_profile_function(function)
+        if safe_file is None or safe_function is None:
+            return None
+        return safe_file, line, safe_function
+
+    @staticmethod
+    def _profile_call_count(value: Any) -> int | None:
+        if type(value) is int:
+            return max(0, value)
+        if isinstance(value, tuple) and len(value) >= 2 and type(value[1]) is int:
+            return max(0, value[1])
+        return None
+
+    def _raw_profile_path(self, ordinal: int) -> Path | None:
+        if self.raw_pstats_sink is None:
+            return None
+        base = self.raw_pstats_sink
+        if ordinal > 1:
+            base = base.with_name(f"{base.stem}.request-{ordinal}{base.suffix}")
+        temporary = Path(os.environ.get("TMPDIR", "/tmp")).resolve()
+        parent = base.parent.resolve()
+        if not parent.is_relative_to(temporary) or base.is_symlink() or base.exists():
+            return None
+        try:
+            parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            os.chmod(parent, 0o700)
+            fd = os.open(base, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            os.close(fd)
+            os.chmod(base, 0o600)
+        except OSError:
+            return None
+        return base
+
+    def _profile_projection(self, request: dict[str, Any]) -> dict[str, Any]:
+        if request["profile_failed"] or request["profile"] is None:
+            return {
+                "format_version": PROFILE_FORMAT_VERSION,
+                "status": "unavailable",
+                "scope": "RuntimeHandler._timeline_commit",
+                "functions": [],
+                "edges": [],
+                "limits": {
+                    "max_functions": self.profile_top_functions,
+                    "max_edges": self.profile_max_edges,
+                    "dropped_rows": 0,
+                    "dropped_edges": 0,
+                },
+                "rank_meaning": "unavailable",
+                "timing_note": "cProfile overhead is not measured as original budget time",
+            }
+        try:
+            profile = request["profile"]
+            stats = pstats.Stats(profile)
+            safe_rows: list[dict[str, Any]] = []
+            unsafe_rows = 0
+            for key, values in stats.stats.items():
+                safe_key = self._safe_profile_key(key)
+                if safe_key is None or not isinstance(values, tuple) or len(values) < 4:
+                    unsafe_rows += 1
+                    continue
+                primitive_calls, calls, tottime, cumtime = values[:4]
+                if (type(primitive_calls) is not int or type(calls) is not int
+                        or not isinstance(tottime, (int, float))
+                        or not isinstance(cumtime, (int, float))
+                        or not math.isfinite(tottime) or not math.isfinite(cumtime)):
+                    unsafe_rows += 1
+                    continue
+                safe_rows.append({
+                    "file": safe_key[0],
+                    "line": safe_key[1],
+                    "function": safe_key[2],
+                    "ncalls": max(0, calls),
+                    "primitive_calls": max(0, primitive_calls),
+                    "tottime": float(tottime),
+                    "cumtime": float(cumtime),
+                    "_key": key,
+                })
+            safe_rows.sort(key=lambda row: (
+                -row["cumtime"], row["file"], row["line"], row["function"]))
+            top = safe_rows[:self.profile_top_functions]
+            top_keys = {row["_key"]: row for row in top}
+            functions = []
+            for rank, row in enumerate(top, 1):
+                functions.append({key: value for key, value in row.items() if key != "_key"} | {
+                    "rank": rank,
+                })
+
+            candidate_edges: list[tuple[int, int, int, dict[str, Any]]] = []
+            for callee_key, callee in top_keys.items():
+                values = stats.stats.get(callee_key)
+                callers = values[4] if isinstance(values, tuple) and len(values) >= 5 else {}
+                if not isinstance(callers, dict):
+                    continue
+                for caller_key, call_value in callers.items():
+                    caller = top_keys.get(caller_key)
+                    calls = self._profile_call_count(call_value)
+                    if caller is None or calls is None:
+                        continue
+                    edge = {
+                        "caller": {
+                            "file": caller["file"], "line": caller["line"],
+                            "function": caller["function"],
+                        },
+                        "callee": {
+                            "file": callee["file"], "line": callee["line"],
+                            "function": callee["function"],
+                        },
+                        "ncalls": calls,
+                    }
+                    candidate_edges.append((
+                        top.index(caller), top.index(callee), calls, edge))
+            candidate_edges.sort(key=lambda item: (-item[2], item[0], item[1]))
+            edges = [item[3] for item in candidate_edges[:self.profile_max_edges]]
+            raw_path = self._raw_profile_path(request["ordinal"])
+            if raw_path is not None:
+                try:
+                    profile.dump_stats(str(raw_path))
+                    os.chmod(raw_path, 0o600)
+                    self._profile_raw_written.add(request["ordinal"])
+                except Exception:  # noqa: BLE001 - private diagnostic persistence is optional
+                    request["profile_failed"] = True
+            return {
+                "format_version": PROFILE_FORMAT_VERSION,
+                "status": "captured",
+                "scope": "RuntimeHandler._timeline_commit",
+                "functions": functions,
+                "edges": edges,
+                "limits": {
+                    "max_functions": self.profile_top_functions,
+                    "max_edges": self.profile_max_edges,
+                    "dropped_rows": unsafe_rows + max(0, len(safe_rows) - len(top)),
+                    "dropped_edges": max(0, len(candidate_edges) - len(edges)),
+                },
+                "rank_meaning": "functions sorted descending cumtime, then file/line/function",
+                "timing_note": "cProfile overhead inflates absolute times; use ranking and call counts observationally, never as the original budget",
+            }
+        except Exception:  # noqa: BLE001 - diagnostics never affect the request
+            request["profile_failed"] = True
+            return {
+                "format_version": PROFILE_FORMAT_VERSION,
+                "status": "unavailable",
+                "scope": "RuntimeHandler._timeline_commit",
+                "functions": [],
+                "edges": [],
+                "limits": {
+                    "max_functions": self.profile_top_functions,
+                    "max_edges": self.profile_max_edges,
+                    "dropped_rows": 0,
+                    "dropped_edges": 0,
+                },
+                "rank_meaning": "unavailable",
+                "timing_note": "cProfile overhead is not measured as original budget time",
+            }
+
     def _arm_watchdog(self, ordinal: int) -> None:
         if self.sink is None or self.watchdog_sink is None:
             return
@@ -578,6 +862,12 @@ class P2CommitPhaseCapture:
                 "lost_samples": 0,
                 "stack_counts": {},
                 "leaf_counts": {},
+                "profile_eligible": False,
+                "profile": None,
+                "profile_started": False,
+                "profile_stopped": False,
+                "profile_failed": False,
+                "profile_previous": None,
             }
             if handler is not None:
                 self._handler_requests[id(handler)] = ordinal
@@ -724,6 +1014,8 @@ class P2CommitPhaseCapture:
                        "caller_receipt_ms": None,
                    },
                    "truncated": self.truncated}
+        if request["profile_eligible"]:
+            summary["cprofile"] = self._profile_projection(request)
         self._summary_events.append(summary)
         # Summaries are synthetic snapshot records; the phase records are the
         # request evidence whose completeness is tracked independently.
@@ -914,6 +1206,7 @@ class P2CommitPhaseCapture:
                     self._end(ordinal, "dispatch_queue")
                 self._begin(ordinal, phase)
                 self._frames[id(frame)] = {"phase": phase, "ordinal": ordinal, "error": False}
+                self._start_profile(self._requests[ordinal], handler)
                 return self._trace
             if (phase is None
                     and frame.f_code.co_qualname != "CommitExecutionCoordinator.execute"
@@ -968,6 +1261,8 @@ class P2CommitPhaseCapture:
             return self._trace
         if event == "exception":
             state["error"] = True
+            if phase == "handler_entry":
+                self._stop_profile(self._requests[ordinal])
             return self._trace
         if event != "return":
             return self._trace
@@ -986,6 +1281,8 @@ class P2CommitPhaseCapture:
                 self._end(ordinal, "coordinator_lock", error=state["error"])
             self._end(ordinal, phase, error=state["error"])
         else:
+            if phase == "handler_entry":
+                self._stop_profile(self._requests[ordinal])
             fields = {}
             if phase == "http_response" and type(frame.f_locals.get("status")) is int:
                 fields["status"] = frame.f_locals["status"]
