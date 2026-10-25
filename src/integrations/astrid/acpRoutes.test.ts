@@ -40,6 +40,13 @@ describe('AstridLocalAcpRoutes', () => {
     expect(String(thrown)).not.toContain(key);
   });
 
+  it('preserves an empty-detail 404 for the setup card without exposing the key', async () => {
+    const key = 'secret-openrouter-key';
+    const requestJson = vi.fn(async () => { throw new BridgeRouteError('Save Astrid API key', 404, { error: 'not_found' }); });
+    const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
+    await expect(routes.saveAstridApiKey('openrouter', key)).rejects.toMatchObject({ code: 'not_found', detail: '', status: 404 });
+  });
+
   it('takes over the loaded session and preserves submission identity on prompt requests', async () => {
     const requestJson = vi.fn(async (_path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse({ result: { _astridSession: { role: 'writer', active: true, activeRequestId: 'queued-1' } } }));
     const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);

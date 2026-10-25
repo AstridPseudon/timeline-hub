@@ -82,7 +82,7 @@ export function isAgentSetupError(error: unknown): AgentSetupErrorCode | null {
 }
 
 class AstridApiKeyRouteError extends Error {
-  constructor(readonly code: string | undefined, readonly detail: string) {
+  constructor(readonly code: string | undefined, readonly detail: string, readonly status?: number) {
     super(detail);
     this.name = 'AstridApiKeyRouteError';
   }
@@ -197,11 +197,12 @@ export class AstridLocalAcpRoutes {
       }, saveAstridApiKeyResponseSchema, 'Save Astrid API key');
     } catch (error) {
       const code = error instanceof BridgeRouteError ? error.code : undefined;
+      const status = error instanceof BridgeRouteError ? error.status : undefined;
       const rawDetail = error instanceof BridgeRouteError
         ? error.detail ?? ''
         : error instanceof Error ? error.message : 'Request failed';
       const redactKey = (value: string) => key ? value.split(key).join('[redacted]') : value;
-      throw new AstridApiKeyRouteError(code ? redactKey(code) : code, redactKey(rawDetail));
+      throw new AstridApiKeyRouteError(code ? redactKey(code) : code, redactKey(rawDetail), status);
     }
   }
 

@@ -16,9 +16,9 @@ describe('TerminalNudge', () => {
     render(<TerminalNudge agent={agent as LocalAgentId} command={command} projectName="My first project" onDismiss={vi.fn()} />);
     expect(screen.getByText(command)).toBeInTheDocument();
     expect(screen.getByText('Updated "My first project"')).toBeInTheDocument();
-    const sameKey = screen.queryByText('Uses the same OpenRouter key and model as here.');
-    if (agent === 'astrid') expect(sameKey).toBeInTheDocument();
-    else expect(sameKey).toBeNull();
+    const sameSignIn = screen.queryByText('Uses the same sign-in as here.');
+    if (agent === 'astrid') expect(sameSignIn).toBeInTheDocument();
+    else expect(sameSignIn).toBeNull();
   });
 
   it('names the project generically when the open project has no name', () => {

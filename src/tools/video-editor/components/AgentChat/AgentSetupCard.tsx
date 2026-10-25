@@ -258,7 +258,10 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
             setCheckingKey(true); setKeyError(null);
             void request.then(async () => { setChosenModel(null); await Promise.all([models.refetch(), refreshAgents()]); }).catch(error => {
               if (!mounted.current) return;
-              setKeyError(error.code === 'invalid_key' ? copy.invalidKey : error.code === 'provider_unreachable' ? copy.providerUnreachable : error.detail ?? error.message);
+              setKeyError(error.code === 'invalid_key' ? copy.invalidKey
+                : error.code === 'provider_unreachable' ? copy.providerUnreachable
+                  : error.status === 403 || error.status === 404 || error.code === 'not_found' ? copy.keyServiceOutdated
+                    : error.detail || error.message || copy.keySaveFailed);
             }).finally(() => { if (mounted.current) setCheckingKey(false); });
           }}>
             <label htmlFor={keyId} className="block text-xs font-medium text-muted-foreground">{copy.openRouterKey}</label>

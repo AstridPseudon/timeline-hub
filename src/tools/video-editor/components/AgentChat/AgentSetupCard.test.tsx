@@ -365,6 +365,22 @@ describe("Astrid's setup", () => {
     expect(screen.getByLabelText('OpenRouter key')).toHaveValue('');
     expect(document.body.innerHTML).not.toContain('test-rejected-value');
   });
+  it('shows fallback copy when the service returns no error detail', async () => {
+    mocks.saveKey.mockRejectedValue({ code: 'unknown_error', detail: '', message: '' });
+    mount(); choose("Astrid's agent");
+    fireEvent.change(await screen.findByLabelText('OpenRouter key'), { target: { value: 'test-key-value' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't save that key. Try again.");
+    expect(document.body.innerHTML).not.toContain('test-key-value');
+  });
+  it('asks to update Astrid for an old service 404', async () => {
+    mocks.saveKey.mockRejectedValue({ code: 'not_found', detail: '', status: 404, message: '' });
+    mount(); choose("Astrid's agent");
+    fireEvent.change(await screen.findByLabelText('OpenRouter key'), { target: { value: 'test-key-value' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Update Astrid on your computer to connect a key here, or use /login below.');
+    expect(document.body.innerHTML).not.toContain('test-key-value');
+  });
   it('reveals terminal sign-in steps and switches to models after polling', async () => {
     const agents = ready(); agents[0].steps = [{ kind: 'sign-in', command: 'run-astrid', label: 'Start Astrid' }, { kind: 'sign-in', command: '/login', label: 'Sign in' }];
     const view = mount({ agents }); choose("Astrid's agent");
