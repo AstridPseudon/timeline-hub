@@ -1,1 +1,1 @@
-app-lead 05:12Z: daemons up (uptime ~2590m, no restart), disk 5.2-5.3G (heavy floor 5.2G, stop 4.0G), no blockers, no LEAD FETCH, no new refusals; codex unchanged; P2 isolated 3/8 GO; SWAP/ADD NO-GO at Undo 503, element NO-GO applied status, parent 20481 running
+app-lead 05:46Z: daemons up (uptime ~2625m, no restart), disk ~6.0G (heavy floor 5.2G), no blockers, no LEAD FETCH, no new refusals; codex unchanged; P1/P3 GO, P2 isolated 4/8 GO, placement 31499 running, D102 adoption + ADD/element next
