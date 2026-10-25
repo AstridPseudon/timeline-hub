@@ -96,4 +96,9 @@ it.each([['local editor', { localBuild: true }], ['phone', { localBuild: false }
   expect(await screen.findByText('Connect your machine')).toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');
   expect(screen.queryByText('How do you want to run Astrid?')).not.toBeInTheDocument();
+  // Back returns to where the user came from, never to the skipped run-mode choice.
+  fireEvent.click(screen.getByText('Back'));
+  expect(await screen.findByText('Welcome to Astrid')).toBeInTheDocument();
+  expect(screen.queryByText('How do you want to run Astrid?')).not.toBeInTheDocument();
+  expect(localStorage.getItem('astrid:welcome-v1')).toBe('tour');
 });

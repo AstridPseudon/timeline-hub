@@ -21,15 +21,17 @@ export function WelcomeFlow({ entry, localBuild = false }: { entry: WelcomeEntry
   });
   const [windowMode, setWindowMode] = useState<WindowMode>('app-window');
   const [runMode, setRunMode] = useState<RunMode>(phase === 'local' ? 'local' : 'hosted');
-  const enter = useCallback((next: 'choose' | 'connection' | 'local') => {
+  const enter = useCallback((next: 'tour' | 'choose' | 'connection' | 'local') => {
     writeWelcomePhase(next);
     setPhase(next);
   }, []);
-  const finishTour = useCallback(() => enter(localBuild || detectInstallScenario() === 'mobile' ? 'connection' : 'choose'), [enter, localBuild]);
+  // A phone or local build has no run-mode choice: the tour leads straight to connecting, and Back returns to the tour.
+  const skipsChoice = localBuild || detectInstallScenario() === 'mobile';
+  const finishTour = useCallback(() => enter(skipsChoice ? 'connection' : 'choose'), [enter, skipsChoice]);
   return <QueryClientProvider client={queryClient}><TooltipProvider><MemoryRouter>
     {phase === 'tour' && <BrowserTourEditor onFinish={finishTour} />}
     {phase === 'choose' && <WelcomeRunMode onContinue={enter} windowMode={windowMode} setWindowMode={setWindowMode} runMode={runMode} setRunMode={setRunMode} />}
     {phase === 'local' && <WelcomeLocalSetup onBack={() => enter('choose')} />}
-    {phase === 'connection' && <Suspense fallback={<><EditorBackdrop /><p role="status" className="sr-only">Connecting to Astrid…</p></>}><WelcomeConnection onBack={() => enter('choose')} /></Suspense>}
+    {phase === 'connection' && <Suspense fallback={<><EditorBackdrop /><p role="status" className="sr-only">Connecting to Astrid…</p></>}><WelcomeConnection onBack={() => enter(skipsChoice ? 'tour' : 'choose')} /></Suspense>}
   </MemoryRouter></TooltipProvider></QueryClientProvider>;
 }
