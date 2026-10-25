@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-25T13:31:10Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 9m -->
+<!-- farm | 2026-10-25T13:33:42Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 12m -->
 # farm board, 2026-10-25T13:25Z. Controllers: farm manager runs checkouts and bodies; FARM LEAD issues the keyed profile requests (request-runtime, request-child-venv). Host14 checkouts verified 13:25Z (Agent 9ea67534 tree ded3451d, Runtime 369ffa7c tree 9bf331d6); core checkouts verified 13:17Z. Nothing starts until the lead issues the keyed profiles and supplies the D73 manifest and launcher inputs.
 # (older header) 12:45Z. Active (D124) for ONE purpose: host Agent's heavy runs. No worker running.
 
