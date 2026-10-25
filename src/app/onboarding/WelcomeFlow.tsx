@@ -22,6 +22,8 @@ export function WelcomeFlow({ entry, localBuild = false }: { entry: WelcomeEntry
   });
   const [windowMode, setWindowMode] = useState<WindowMode>('app-window');
   const [runMode, setRunMode] = useState<RunMode>(phase === 'local' ? 'local' : 'hosted');
+  // Back from connecting returns to the tour's last card, not its welcome.
+  const [tourAtEnd, setTourAtEnd] = useState(false);
   const enter = useCallback((next: 'tour' | 'choose' | 'connection' | 'local') => {
     writeWelcomePhase(next);
     setPhase(next);
@@ -30,9 +32,9 @@ export function WelcomeFlow({ entry, localBuild = false }: { entry: WelcomeEntry
   const skipsChoice = localBuild || detectInstallScenario() === 'mobile';
   const finishTour = useCallback(() => enter(skipsChoice ? 'connection' : 'choose'), [enter, skipsChoice]);
   return <QueryClientProvider client={queryClient}><TooltipProvider><MemoryRouter>
-    {phase === 'tour' && <BrowserTourEditor onFinish={finishTour} />}
+    {phase === 'tour' && <BrowserTourEditor onFinish={finishTour} atEnd={tourAtEnd} />}
     {phase === 'choose' && <WelcomeRunMode onContinue={enter} windowMode={windowMode} setWindowMode={setWindowMode} runMode={runMode} setRunMode={setRunMode} />}
     {phase === 'local' && <WelcomeLocalSetup onBack={() => enter('choose')} />}
-    {phase === 'connection' && <Suspense fallback={<><EditorBackdrop /><p role="status" className="sr-only">Connecting to Astrid…</p></>}><WelcomeConnection onBack={() => enter(skipsChoice ? 'tour' : 'choose')} /></Suspense>}
+    {phase === 'connection' && <Suspense fallback={<><EditorBackdrop /><p role="status" className="sr-only">Connecting to Astrid…</p></>}><WelcomeConnection onBack={() => { setTourAtEnd(skipsChoice); enter(skipsChoice ? 'tour' : 'choose'); }} /></Suspense>}
   </MemoryRouter></TooltipProvider></QueryClientProvider>;
 }

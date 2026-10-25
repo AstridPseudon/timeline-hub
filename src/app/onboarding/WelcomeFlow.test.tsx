@@ -6,7 +6,7 @@ import { startEditorTour, setEditorTourBeat, getEditorTourState } from '@/shared
 import { useEffect } from 'react';
 const spies = vi.hoisted(() => ({ record: vi.fn(), connected: vi.fn() }));
 vi.mock('@/tools/video-editor/tour/runner/tourRecord', () => ({ recordEditorTour: spies.record, buildEditorTourRecord: vi.fn() }));
-vi.mock('./BrowserTourEditor', () => ({ BrowserTourEditor: ({onFinish}: {onFinish:()=>void}) => {
+vi.mock('./BrowserTourEditor', () => ({ BrowserTourEditor: ({onFinish, atEnd = false}: {onFinish:()=>void; atEnd?: boolean}) => {
   useEffect(() => {
     const off = registerBrowserTourFinish(onFinish);
     const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') finishEditorTour(); };
@@ -14,7 +14,7 @@ vi.mock('./BrowserTourEditor', () => ({ BrowserTourEditor: ({onFinish}: {onFinis
     startEditorTour();
     return () => { off(); window.removeEventListener('keydown', onKey); };
   }, [onFinish]);
-  return <><h1>Welcome to Astrid</h1><button onClick={finishEditorTour}>Skip</button><button onClick={() => { setEditorTourBeat(3, 'feedback'); finishEditorTour(); }}>Done</button></>;
+  return <><h1>{atEnd ? 'Last card' : 'Welcome to Astrid'}</h1><button onClick={finishEditorTour}>Skip</button><button onClick={() => { setEditorTourBeat(3, 'feedback'); finishEditorTour(); }}>Done</button></>;
 } }));
 vi.mock('./WelcomeConnection', () => ({ default: ({ onBack }: { onBack: () => void }) => { spies.connected(); return <><h1>Connect your machine</h1><button onClick={onBack}>Back</button></>; } }));
 vi.mock('./WelcomeRunMode', () => ({ WelcomeRunMode: ({ onContinue, runMode, setRunMode }: { onContinue: (phase: 'local' | 'connection') => void; runMode: 'hosted' | 'local'; setRunMode: (mode: 'hosted' | 'local') => void }) => <><h1>How do you want to run the app?</h1><button onClick={() => onContinue('connection')}>Connect</button><button onClick={() => { setRunMode('local'); onContinue('local'); }}>Local</button><span>{runMode}</span></> }));
@@ -102,9 +102,9 @@ it.each([['local editor', { localBuild: true }], ['phone', { localBuild: false }
   expect(await screen.findByText('Connect your machine')).toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');
   expect(screen.queryByText('How do you want to run the app?')).not.toBeInTheDocument();
-  // Back returns to where the user came from, never to the skipped run-mode choice.
+  // Back returns to where the user came from (the tour's last card), never to the skipped run-mode choice.
   fireEvent.click(screen.getByText('Back'));
-  expect(await screen.findByText('Welcome to Astrid')).toBeInTheDocument();
+  expect(await screen.findByText('Last card')).toBeInTheDocument();
   expect(screen.queryByText('How do you want to run the app?')).not.toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('tour');
 });

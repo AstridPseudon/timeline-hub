@@ -74,6 +74,13 @@ describe('placeCard', () => {
     expect(position.top + card.height).toBeLessThanOrEqual(viewport.height - EDGE);
   });
 
+  it('can prefer the spot below the area, over a roomier side', () => {
+    const transcript: SpotlightRect = { x: 732, y: 40, width: 448, height: 380 };
+    const viewport = { width: 1180, height: 820 };
+    expect(placeCard([transcript], CARD, viewport).left + CARD.width).toBeLessThanOrEqual(transcript.x);
+    expect(placeCard([transcript], CARD, viewport, { preferBelow: true }).top).toBeGreaterThanOrEqual(transcript.y + transcript.height);
+  });
+
   it('always keeps the card inside the viewport', () => {
     const layouts: SpotlightRect[][] = [
       [{ x: 0, y: 0, width: 10, height: 10 }],

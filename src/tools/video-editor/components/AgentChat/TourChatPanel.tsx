@@ -203,7 +203,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
             {CHAT_VOICE_ENABLED && (coarsePointer
               ? <p className="mt-1 text-xs">Tap the mic to talk</p>
               : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>)}
-            <p className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px]">
+            <p className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px] [@media(pointer:coarse)]:text-xs">
               <AgentIcon agent="astrid" className="h-3 w-3 shrink-0" />
               {agentNames.astrid} · default model
             </p>

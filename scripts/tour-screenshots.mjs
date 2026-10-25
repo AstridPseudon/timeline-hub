@@ -385,7 +385,7 @@ export async function run(options) {
             rows[index].status = 'skipped';
             rows[index].reason = reasonForChoice().text;
             rows[index].reasonSource = reasonForChoice().source;
-          } else await perform(steps[index], index, remaining => page.getByRole('heading', { name: 'How do you want to run Astrid?', exact: true }).waitFor({ timeout: remaining() }), remaining => activate(page.getByRole('button', { name: /Continue in this tab|^Continue$/ }), device.profile.hasTouch, remaining));
+          } else await perform(steps[index], index, remaining => page.getByRole('heading', { name: /^How do you want to run (Astrid|the app)\?$/ }).waitFor({ timeout: remaining() }), remaining => activate(page.getByRole('button', { name: /Continue in this tab|^Continue$/ }), device.profile.hasTouch, remaining));
           if (!failed && lastSelected >= index + 1) await perform(steps[index + 1], index + 1, remaining => page.locator('[data-testid="runtime-not-connected"] h1').waitFor({ timeout: remaining() }));
           if (!failed && lastSelected >= index + 2 && (scenario.mobile || scenario.local)) {
             rows[index + 2].status = 'skipped';
@@ -394,7 +394,7 @@ export async function run(options) {
           } else if (!failed && lastSelected >= index + 2) await perform(steps[index + 2], index + 2, async remaining => {
             if (await page.getByRole('heading', { name: 'Have your agent set it up', exact: true }).isVisible()) return;
             if (await page.locator('[data-testid="runtime-not-connected"]').isVisible()) await activate(page.getByRole('button', { name: 'Back', exact: true }), device.profile.hasTouch, remaining);
-            await activate(page.getByText('Run everything on your computer', { exact: true }), device.profile.hasTouch, remaining);
+            await activate(page.getByText(/^(Run everything on your computer|Run app on your computer)$/), device.profile.hasTouch, remaining);
             await activate(page.getByRole('button', { name: 'Set up with your agent', exact: true }), device.profile.hasTouch, remaining);
           });
         }

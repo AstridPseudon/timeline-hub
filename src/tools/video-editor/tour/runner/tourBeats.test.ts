@@ -7,7 +7,7 @@ import {
   setEditorTourBeat,
   startEditorTour,
 } from '@/shared/state/editorTourStore';
-import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
+import { backEditorTour, finishEditorTour, returnToEditorTourEnd, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
 
 let stopWatching: (() => void) | undefined;
 
@@ -272,5 +272,12 @@ describe('tour Send', () => {
     readyChat();
     runEditorTourPrimary();
     expect(getEditorTourState()).toMatchObject({ act, beat: 'land', instant: false });
+  });
+});
+
+describe('returnToEditorTourEnd', () => {
+  it('opens a running tour on its feedback card, settled, as Back from the screen after it', () => {
+    returnToEditorTourEnd();
+    expect(getEditorTourState()).toMatchObject({ act: 3, beat: 'feedback', instant: true });
   });
 });

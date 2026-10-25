@@ -88,6 +88,11 @@ export function backEditorTour(): void {
   }
 }
 
+/** Back from the screen after a browser tour (a phone's "Open Astrid on your computer"): its last card again, settled. */
+export function returnToEditorTourEnd(): void {
+  if (getEditorTourState().status === 'running') setEditorTourBeat(LAST_ACT, 'feedback', true);
+}
+
 /**
  * Esc, Skip, leaving the page, and the end of the feedback card: leave the tour and hand the user their own chat.
  */

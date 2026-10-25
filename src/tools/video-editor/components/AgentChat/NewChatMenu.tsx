@@ -15,7 +15,7 @@ import { useSetting } from '@/shared/settings/useSetting';
 
 export type { NewChatAgentModels, NewChatModelChoice } from './NewChatModels.tsx';
 
-const SPLIT_BUTTON = 'inline-flex h-6 items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 [@media(pointer:coarse)]:h-8';
+const SPLIT_BUTTON = 'inline-flex h-6 items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 [@media(pointer:coarse)]:h-11';
 
 export interface NewChatMenuHandle {
   /** Opens the chooser on one agent's models: a chat keeps its model, so a different model is chosen for the next chat. */
@@ -221,13 +221,13 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
     <Popover open={open} onOpenChange={changeOpen}>
       <div role="group" aria-label="New chat" className="flex shrink-0 items-center rounded-md transition-colors hover:has-[:enabled]:bg-accent/50 has-[[aria-expanded=true]]:bg-accent/50">
         <button type="button" disabled={disabled || newChatDisabled || !availability(quickAgent).usable} aria-label={quickLabel} title={quickLabel}
-          className={cn(SPLIT_BUTTON, 'w-6 rounded-l-md [@media(pointer:coarse)]:w-8')}
+          className={cn(SPLIT_BUTTON, 'w-6 rounded-l-md [@media(pointer:coarse)]:w-11')}
           onClick={startQuick}>
           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
         <PopoverTrigger asChild>
           <button type="button" disabled={disabled} aria-label="Choose the agent and model for new chats" title="Choose the agent and model for new chats"
-            className={cn(SPLIT_BUTTON, 'gap-0.5 rounded-r-md px-1 aria-expanded:bg-accent aria-expanded:text-foreground')}>
+            className={cn(SPLIT_BUTTON, 'gap-0.5 rounded-r-md px-1 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:justify-center aria-expanded:bg-accent aria-expanded:text-foreground')}>
             <AgentIcon agent={effective.agent} className="h-3 w-3 shrink-0" />
             <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
           </button>

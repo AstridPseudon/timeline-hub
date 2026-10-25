@@ -4,8 +4,10 @@ import { AppMainContent } from '@/app/components/AppMainContent.tsx';
 import { TasksPaneSurface, TasksPaneChatSlot } from '@/features/tasks/components/TasksPane/components/TasksPaneSurface';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
+import { useDeviceInfo } from '@/shared/hooks/mobile';
 import { useEditorTour, startEditorTour, exitEditorTour } from '@/shared/state/editorTourStore.ts';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers.ts';
+import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { ASTRID_EDITOR_EXTENSIONS } from '@astrid/packs/rendering/editor/catalog';
 import { EditorRuntimeProvider } from '@/tools/video-editor/contexts/EditorRuntimeProvider.tsx';
 import { PUBLIC_ASTRID_ELEMENT_HOST } from '@/pages/Home/astrid-public-host.tsx';
@@ -20,7 +22,7 @@ import { createEditorTourDataProvider } from '@/tools/video-editor/tour/timeline
 import { EDITOR_TOUR_TIMELINE_ID } from '@/tools/video-editor/tour/timeline/tourStages.ts';
 import { EditorTourTimelineDriver } from '@/tools/video-editor/tour/timeline/EditorTourTimelineDriver.tsx';
 import { EditorTourRunner } from '@/tools/video-editor/tour/runner/EditorTourRunner.tsx';
-import { registerBrowserTourFinish } from '@/tools/video-editor/tour/runner/tourBeats.ts';
+import { registerBrowserTourFinish, returnToEditorTourEnd } from '@/tools/video-editor/tour/runner/tourBeats.ts';
 import { useEditorDeviceClass } from '@/tools/video-editor/tour/runner/useIsDesktopEditor.ts';
 import { TourChatPanel } from '@/tools/video-editor/components/AgentChat/TourChatPanel.tsx';
 import { TimelineEditorShellCore } from '@/tools/video-editor/components/TimelineEditorShellCore.tsx';
@@ -71,7 +73,12 @@ function BrowserTourFrame() {
   // The demo editor is a picture behind the tour: the spotlight already takes every pointer, so keep focus and
   // assistive tech on the card (and the chat's Send) too.
   const touring = useEditorTour(state => state.status === 'running');
-  const phone = useEditorDeviceClass() === 'phone';
+  const device = useEditorDeviceClass();
+  const phone = device === 'phone';
+  // A tablet held upright gets the chat as a sheet from the bottom, under a full-width preview, not a drawer that
+  // narrows the editor to a sliver.
+  const { orientation } = useDeviceInfo();
+  const sheet = device === 'tablet' && orientation === 'portrait';
   const chatVisible = !touchPane || beat === 'compose' || beat === 'respond';
   const tasksPaneReserve = touchPane ? '0px' : `${tasksPaneWidth}px`;
   const contentStyle = { marginRight: tasksPaneReserve, willChange: 'margin, padding' } as CSSProperties;
@@ -101,7 +108,10 @@ function BrowserTourFrame() {
     >
       <BrowserTourEditorSurface />
     </AppMainContent></div>
-    <div className="pointer-events-none" style={{
+    <div className="pointer-events-none" style={sheet ? {
+      position: 'fixed', left: 0, right: 0, bottom: 0, height: 'min(52dvh, 44rem)',
+      zIndex: UI_Z_LAYERS.TASKS_PANE_CONTENT,
+    } : {
       position: 'fixed', right: 0, top: 0, bottom: 0,
       // A phone's chat takes the whole screen while it has the spotlight, rather than leaving a sliver of editor.
       width: phone ? '100vw' : touchPane ? 'min(28rem, calc(100vw - 3rem))' : `${tasksPaneWidth}px`,
@@ -109,21 +119,27 @@ function BrowserTourFrame() {
     }}>
       <TasksPaneSurface role="complementary" aria-label="Task and chat pane" aria-hidden={!chatVisible}
         {...(!chatVisible ? { inert: '' } : {})}
-        className={`absolute top-0 right-0 transform transition-transform duration-300 ease-smooth ${chatVisible ? 'translate-x-0' : 'translate-x-full'}`}>
+        className={cn('absolute right-0 transform transition-transform duration-300 ease-smooth',
+          sheet ? cn('bottom-0 rounded-t-2xl border-l-0 border-t', chatVisible ? 'translate-y-0' : 'translate-y-full') : cn('top-0', chatVisible ? 'translate-x-0' : 'translate-x-full'))}>
         <TasksPaneChatSlot><TourChatPanel /></TasksPaneChatSlot>
       </TasksPaneSurface>
     </div>
   </AppFrame>;
 }
 
-/** The shared app/editor shell backed by bundled media and in-memory operations. */
-export function BrowserTourEditor({ onFinish }: { onFinish: () => void }) {
+/**
+ * The shared app/editor shell backed by bundled media and in-memory operations. `atEnd` opens it on its last card,
+ * for Back from the screen that follows it.
+ */
+export function BrowserTourEditor({ onFinish, atEnd = false }: { onFinish: () => void; atEnd?: boolean }) {
   const [dataProvider] = useState(createEditorTourDataProvider);
+  const [startAtEnd] = useState(atEnd);
   useLayoutEffect(() => {
     const unregister = registerBrowserTourFinish(onFinish);
     startEditorTour();
+    if (startAtEnd) returnToEditorTourEnd();
     return () => { exitEditorTour(); unregister(); };
-  }, [onFinish]);
+  }, [onFinish, startAtEnd]);
   return <EditorRuntimeProvider astridElementHost={PUBLIC_ASTRID_ELEMENT_HOST}
     dataProvider={dataProvider} timelineId={HEADER.timelineId} timelineName={HEADER.timelineName}
     timelineServices={PUBLIC_TIMELINE_SERVICE_HOOKS} effectCatalog={EFFECTS} sequenceComponentCatalog={SEQUENCES}

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { EDITOR_TOUR_ANCHORS, EDITOR_TOUR_TRACK_IDS, editorTourSelector, editorTourTrackSelector } from '../anchors';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
@@ -8,13 +8,26 @@ import { TourSpotlight } from './TourSpotlight';
 import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
 import { placeCard } from './cardPlacement';
 import { useSettledRects } from './useSettledRects';
-import { useSpotlightRects } from './useSpotlightRects';
+import { useSpotlightRects, type SpotlightRect } from './useSpotlightRects';
 import { useTourKeys } from './useTourKeys';
 import { useEditorDeviceClass } from './useIsDesktopEditor';
 import type { TimelineDeviceClass } from '../../lib/mobile-interaction-model';
 
 /** Matches the phone card's `w-[calc(100vw-24px)]`. */
 const PHONE_EDGE = 12;
+const PHONE_GAP = 12;
+
+/**
+ * A phone's sheet rests under everything spotlit when it fits there. On a short phone it cannot fit under both the preview
+ * and the act's new row, so the row gives way (it would sit under the sheet) and the preview alone stays lit, clear of it.
+ */
+export function phoneSpotlight(rects: readonly SpotlightRect[], cardHeight: number, viewportHeight: number): readonly SpotlightRect[] {
+  if (rects.length < 2) return rects;
+  const room = (lit: readonly SpotlightRect[]) => viewportHeight - Math.max(...lit.map((r) => r.y + r.height)) - PHONE_GAP - PHONE_EDGE;
+  if (room(rects) >= cardHeight) return rects;
+  const preview = rects[rects.length - 1];
+  return [preview];
+}
 
 const ACT_TRACK: Record<EditorTourAct, string> = {
   1: EDITOR_TOUR_TRACK_IDS.scene,
@@ -24,18 +37,16 @@ const ACT_TRACK: Record<EditorTourAct, string> = {
 
 /**
  * What each beat spotlights: chat composer and Send, the transcript, the act's new row with the preview, or nothing (the welcome,
- * the finale and the feedback card). A phone's timeline sits below the fold under the card, so there the preview alone carries `land`.
+ * the finale and the feedback card).
  */
-export function editorTourTargets(act: EditorTourAct, beat: EditorTourBeat, device: TimelineDeviceClass = 'desktop'): string[] {
+export function editorTourTargets(act: EditorTourAct, beat: EditorTourBeat): string[] {
   switch (beat) {
     case 'compose':
       return [editorTourSelector(EDITOR_TOUR_ANCHORS.chatComposer)];
     case 'respond':
       return [editorTourSelector(EDITOR_TOUR_ANCHORS.chatTranscript)];
     case 'land':
-      return device === 'phone'
-        ? [editorTourSelector(EDITOR_TOUR_ANCHORS.preview)]
-        : [editorTourTrackSelector(ACT_TRACK[act]), editorTourSelector(EDITOR_TOUR_ANCHORS.preview)];
+      return [editorTourTrackSelector(ACT_TRACK[act]), editorTourSelector(EDITOR_TOUR_ANCHORS.preview)];
     case 'welcome':
     case 'finale':
     case 'feedback':
@@ -79,14 +90,19 @@ function RunningTour() {
   const runId = useEditorTour((s) => s.runId);
   const device = useEditorDeviceClass();
   const beatKey = `${runId}:${act}:${beat}`;
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 360, height: 160 });
+  const measured = useSpotlightRects(editorTourTargets(act, beat));
+  const rects = useMemo(
+    () => (device === 'phone' && beat === 'land' ? phoneSpotlight(measured, size.height, window.innerHeight) : measured),
+    [device, beat, measured, size.height],
+  );
   // The card and spotlight show the beat whose targets have settled; it trails the store's beat by a frame or two.
-  const settled = useSettledRects(beatKey, useSpotlightRects(editorTourTargets(act, beat, device)));
+  const settled = useSettledRects(beatKey, rects);
   const [, shownAct, shownBeat] = settled.beatKey.split(':') as [string, `${EditorTourAct}`, EditorTourBeat];
   const pending = settled.beatKey !== beatKey;
   // The Send button is the one thing outside the card the user may press.
   const sendRects = useSpotlightRects(beat === 'compose' ? [editorTourSelector(EDITOR_TOUR_ANCHORS.chatSend)] : []);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 360, height: 160 });
 
   // The shown beat swaps the card's content and size. Read the new size before paint, so the move starts
   // toward the spot for the new card and the content changes as the card starts to move.
@@ -106,7 +122,11 @@ function RunningTour() {
   }, []);
 
   // A phone's card spans the width and rests along the bottom, under the thumb.
-  const position = placeCard(settled.value, size, { width: window.innerWidth, height: window.innerHeight }, device === 'phone' ? { edge: PHONE_EDGE, dock: 'bottom' } : undefined);
+  // On touch the reply's card sits under the reply, in the chat's own space, rather than over the editor beside it.
+  const position = placeCard(settled.value, size, { width: window.innerWidth, height: window.innerHeight }, {
+    ...(device === 'phone' ? { edge: PHONE_EDGE, dock: 'bottom' } : {}),
+    preferBelow: device !== 'desktop' && shownBeat === 'respond',
+  });
   return (
     <>
       <TourSpotlight rects={settled.value} clickable={sendRects[0] ?? null} reducedMotion={reducedMotion} />

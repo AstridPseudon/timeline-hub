@@ -13,6 +13,8 @@ export interface CardPlacementOptions {
   edge?: number;
   /** Where a card with nothing spotlighted goes: centred (desktop), or along the bottom within thumb reach (phones). */
   dock?: 'center' | 'bottom';
+  /** Take the spot below the spotlit area whenever it fits, before the roomiest side (the chat's reply: the card stays in its panel). */
+  preferBelow?: boolean;
 }
 
 function overlapArea(position: CardPosition, card: { width: number; height: number }, rects: readonly SpotlightRect[]): number {
@@ -33,7 +35,7 @@ export function placeCard(
   rects: readonly SpotlightRect[],
   card: { width: number; height: number },
   viewport: { width: number; height: number },
-  { edge = EDGE, dock = 'center' }: CardPlacementOptions = {},
+  { edge = EDGE, dock = 'center', preferBelow = false }: CardPlacementOptions = {},
 ): CardPosition {
   const clamp = (value: number, size: number, limit: number) => Math.max(edge, Math.min(value, limit - size - edge));
   const at = (left: number, top: number): CardPosition => ({ left: clamp(left, card.width, viewport.width), top: clamp(top, card.height, viewport.height) });
@@ -57,7 +59,9 @@ export function placeCard(
     ];
   };
 
-  const fitting = sidesOf(rects).filter((side) => side.room >= side.need).sort((a, b) => b.room - a.room)[0];
+  const sides = sidesOf(rects);
+  const below = sides[2];
+  const fitting = preferBelow && below.room >= below.need ? below : sides.filter((side) => side.room >= side.need).sort((a, b) => b.room - a.room)[0];
   if (fitting) return at(fitting.left, fitting.top);
 
   const docked = dock === 'bottom' ? { left: (viewport.width - card.width) / 2, top: bottom.top } : bottom;
