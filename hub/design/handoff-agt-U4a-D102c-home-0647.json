@@ -1,0 +1,160 @@
+{
+  "schema": "F-D86-U4a-D102c-home-receipt/v1",
+  "task": "U4a F-D86 READ ONLY normal adoption receipt",
+  "status": "SOURCEQUALIFIED_BEHAVIORPENDING",
+  "read_only": true,
+  "actual_home": {
+    "repo": "agent",
+    "worktree": "/home/user/work/wt/agt-U4a-D102c-home-receipt-0647",
+    "branch": "tl/agt-U4a-D102c-home-receipt-0647",
+    "integration_home_commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6",
+    "parents": [
+      "5554fe792bba5ed17c90e0a1ccf46f4d5df19601",
+      "38c419a54672020f9f9b0bfa0903cab4d9185c3e"
+    ],
+    "subject": "Merge tl/agt-U4a-D102c-adopt-0625",
+    "clean": true,
+    "diff_from_captured_base": ["runtime.lock.json"],
+    "diff_from_captured_base_only_lock": true,
+    "worker_repo_modifications": false
+  },
+  "adoption": {
+    "captured_base_commit": "5554fe792bba5ed17c90e0a1ccf46f4d5df19601",
+    "captured_base_tree": "d68a366224e28ee58045805008be092a5a560944",
+    "author_commit": "38c419a54672020f9f9b0bfa0903cab4d9185c3e",
+    "author_tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6",
+    "changed_path": "runtime.lock.json",
+    "previous_source_commit": "689352013ef516a224033ba58820759a96504e68",
+    "source_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "source_mirror_commit": "5e9acf59d266d45d74e5ae844bf62fddb64267f3",
+    "source_mirror_tree": "d68a366224e28ee58045805008be092a5a560944",
+    "source_mirror_relation": "merged through captured base 5554fe792bba5ed17c90e0a1ccf46f4d5df19601"
+  },
+  "immutable_producer": {
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "checkout": "/home/user/work/wt/rt-pin-1daca2a3",
+    "clean_detached": true,
+    "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "tree": "a522511414947e48e317a5e5c2103483b121a750",
+    "reviewed_tree": "ab7ebb4244a40d27ccf9faf56a7916f72fa8765f",
+    "producer": "astrid-runtime",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5"
+  },
+  "consumer_lock": {
+    "count": 15,
+    "all_locked_current_producer_match": true,
+    "rows": [
+      {"consumer": "astrid/core/timeline/schema/timeline-config.schema.json", "producer_path": "contract/schemas/timeline-config.schema.json", "sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"},
+      {"consumer": "astrid_runtime_client/__init__.py", "producer_path": "packages/python/astrid_runtime_client/__init__.py", "sha256": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"},
+      {"consumer": "astrid_runtime_client/contract_metadata.py", "producer_path": "packages/python/astrid_runtime_client/contract_metadata.py", "sha256": "sha256:b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b"},
+      {"consumer": "astrid_runtime_client/generated.py", "producer_path": "packages/python/astrid_runtime_client/generated.py", "sha256": "sha256:952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
+      {"consumer": "astrid_runtime_client/timeline_commit_types.py", "producer_path": "packages/python/astrid_runtime_client/timeline_commit_types.py", "sha256": "sha256:6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
+      {"consumer": "tests/fixtures/runtime-responses/events_page_1_200.json", "producer_path": "conformance/responses/events_page_1_200.json", "sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"},
+      {"consumer": "tests/fixtures/runtime-responses/events_page_2_200.json", "producer_path": "conformance/responses/events_page_2_200.json", "sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"},
+      {"consumer": "tests/fixtures/runtime-responses/invalid_cursor_400.json", "producer_path": "conformance/responses/invalid_cursor_400.json", "sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"},
+      {"consumer": "tests/fixtures/runtime-responses/managed_outputs_200.json", "producer_path": "conformance/responses/managed_outputs_200.json", "sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"},
+      {"consumer": "tests/fixtures/runtime-responses/not_found_404.json", "producer_path": "conformance/responses/not_found_404.json", "sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21af6"},
+      {"consumer": "tests/fixtures/runtime-responses/publish_conflict_409.json", "producer_path": "conformance/responses/commit_conflict_409.json", "sha256": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08"},
+      {"consumer": "tests/fixtures/runtime-responses/task_admission_201.json", "producer_path": "conformance/responses/task_admission_201.json", "sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"},
+      {"consumer": "tests/fixtures/runtime-responses/task_read_200.json", "producer_path": "conformance/responses/task_read_200.json", "sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"},
+      {"consumer": "tests/fixtures/runtime-responses/validation_error_422.json", "producer_path": "conformance/responses/validation_error_422.json", "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"},
+      {"consumer": "tests/fixtures/visual-boundary-v1.json", "producer_path": "conformance/fixtures/visual-boundary-v1.json", "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"}
+    ]
+  },
+  "canonical_schema_config": {
+    "schema": {"path": "astrid/core/timeline/schema/timeline-config.schema.json", "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd", "equals_captured_base": true},
+    "config": {"path": "config/astrid-runtime.json", "sha256": "cd0c78e4ead303aca7f824bad16c3204ef5c142cdbacc84eba92b96a8bab9ad9", "equals_captured_base": true},
+    "generated_client": {"path": "astrid_runtime_client/generated.py", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b", "equals_captured_base": true}
+  },
+  "static_caller_trace": {
+    "timeline_session": "astrid/sdk/timeline/sync.py:556-558 calls self.client.timelines.commit",
+    "client_facade": "astrid/sdk/workspace_client.py:485-500 calls generated commit_timeline",
+    "wire_operation": "astrid_runtime_client/timeline_commit_types.py:79 names commitTimeline",
+    "provider_factory": "astrid/sdk/timeline/commit.py:1472-1476 defines create_runtime_commit_service",
+    "strict_production_caller_unchanged": true,
+    "registered_provider_path_unchanged": true
+  },
+  "finalized_branches": {
+    "D100": {
+      "commit": "dd2fc40d94e35f93b3428210b58e8d58b3156a4a",
+      "tree": "757e848ddb62c06a800588167448ee324dd9cd1d",
+      "parent": "8d43cc7c6c2c339656bb494ee45791d13f9a1104",
+      "lock_sha256": "cc204fa670f8895f4c1f57d99b35c596e4d0b9e64c4de81d8f19d43cf03b19db",
+      "source_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "preserved_reviewed_hashes": {
+        "astrid/sdk/timeline/_command_state.py": "sha256:018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+        "astrid/sdk/timeline/capture.py": "sha256:741e3de381b5cc363c5aa827a87b467ac49995eba2823231390c02f027914e1c",
+        "tests/sdk/test_capture_move_exact_time.py": "sha256:2653bc441cc5e6ddf16414dbfc071f177e98332e3867294e73567de03d0deba6",
+        "tests/sdk/test_sequential_shared_item_provenance.py": "sha256:8b9d0b2d48ce09faa66ace3c9769e79508f2ed648457b56a02821bc4b7da6279"
+      }
+    },
+    "R2_word": {
+      "commit": "44cfb2884e9ee918ba3ea19e354aeba31dfd2347",
+      "tree": "5d6d1b0f128cc355c5ffa6b85efa3732c4dd6243",
+      "parent": "ea57362992e03919651b2f28936b245d9596d279",
+      "lock_sha256": "cc204fa670f8895f4c1f57d99b35c596e4d0b9e64c4de81d8f19d43cf03b19db",
+      "source_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "preserved_reviewed_hashes": {
+        "astrid/sdk/timeline/_step_undo.py": "sha256:7a90a66ab49d58bd2722857e95319ebafe648ab514409aa1bb403189b479f322",
+        "tests/sdk/test_timeline_restore_effect_order_runtime.py": "sha256:52b0f6836af7d2ee68b7d0a9b43dde2ba3c0c6d4d9f7b3360e8c95174290bd9d",
+        "astrid/sdk/timeline/native_word_anchor.py": "sha256:1b74fd5f43bade668a9467b41f006273aa46b7dc668f80bf5c36717273492c51",
+        "astrid/sdk/timeline/_commit_timing_validation.py": "sha256:522d632acdb7e0e836694b43065849dfec24bc22dccdfb8025077e5bde724d85"
+      }
+    }
+  },
+  "candidate_handoff_limits": {
+    "D100_old_candidate": {
+      "handoff": "handoff-agt-U4a-D100-candidate-rebind-0631.json",
+      "status": "HELD_SOURCE_ONLY",
+      "candidate_precommit": "8d43cc7c6c2c339656bb494ee45791d13f9a1104",
+      "metadata_limit": "historical precommit candidate; not the finalized dd2fc40d94 branch"
+    },
+    "R2_word_old_candidate": {
+      "handoff": "handoff-agt-U4a-R2-word-candidate-rebind-0631.json",
+      "status": "HELD_SOURCE_ONLY",
+      "candidate_precommit": "ea57362992e03919651b2f28936b245d9596d279",
+      "working_tree_only": true,
+      "metadata_limit": "historical precommit/working-tree-only candidate; not the finalized 44cfb2884e branch"
+    }
+  },
+  "protected_mirror": {
+    "source_commit": "5e9acf59d266d45d74e5ae844bf62fddb64267f3",
+    "source_tree": "d68a366224e28ee58045805008be092a5a560944",
+    "review_worker": "agt-F-word-mirror-review-0620",
+    "result": "PASS_SOURCE",
+    "evidence": "workers/agt-F-word-mirror-review-0620/evidence/F-D86-source-review.md",
+    "evidence_sha256": "1e5ca1cdbca5f9d99792cef252bcaa66a044cf61896472f5640c9e9da51e9a44"
+  },
+  "prior_author_outputs": {
+    "report": "workers/agt-U4a-D102c-adopt-0625/report.md",
+    "report_exists": true,
+    "requested_handoff": "handoff-agt-U4a-D102c-0625.json",
+    "requested_handoff_exists": false,
+    "author_evidence_directory": "workers/agt-U4a-D102c-adopt-0625/evidence",
+    "author_evidence_directory_exists": false,
+    "prior_report_claims_used_as": "historical author-report evidence only, except permitted read-only checks rerun in this receipt"
+  },
+  "preserved_contract": [
+    "C0 v2 request/reply shapes",
+    "original inputs and topology",
+    "opaque values",
+    "assertions",
+    "refusal and retry",
+    "inverse and ABA",
+    "no-write guards",
+    "no policy or authority changes"
+  ],
+  "validation": {
+    "vendor_lock_check": "PASS: ok runtime.lock.json (matches producer manifest)",
+    "artifact_manifest_check": "PASS: artifacts.json is current",
+    "git_diff_check": "PASS",
+    "source_only": true,
+    "pytest_or_behavioral_proof": "NOT RUN",
+    "refresh_or_mutation": "NOT RUN",
+    "full_suite": "NOT RUN"
+  },
+  "evidence": [
+    "workers/agt-U4a-D102c-home-receipt-0647/evidence/F-D86-home-receipt-verification.md"
+  ]
+}
