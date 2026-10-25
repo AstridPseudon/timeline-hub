@@ -137,6 +137,9 @@ def test_sameclip_exacthead_publication_preserves_closure_and_user_params(monkey
             'params': {'color': '#ff6b6b', 'seed': 15}}}
     assert result.receipt.receipt_id == 'accepted-receipt'
     assert result.idempotency_key == 'edit-element'
+    canonical_document = result.receipt.result['canonical_document']
+    assert canonical_document['shot_revisions'] == []
+    assert canonical_document['internal_timeline_revisions'] == []
     # The native prefix preserves open config; only the final patch retires the orphan.
     plan = execute(bundle, body['commands'][:2], schema_inputs=owner.schema_inputs, realm_id='realm')
     assert plan.bundle['parent']['clips'][1] == bundle['parent']['clips'][1]
