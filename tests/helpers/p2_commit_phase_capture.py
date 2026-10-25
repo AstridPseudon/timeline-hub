@@ -4,7 +4,9 @@ This module is deliberately a test helper, not a Runtime hook.  It uses the
 existing Python trace seam to observe the mounted HTTP dispatch, handler,
 coordinator, provider and store methods after the harness explicitly enables it.
 It keeps only a fixed phase vocabulary, relative monotonic times and bounded
-counts.  For timeline commits, the dispatch boundary is
+counts.  The event snapshot is a bounded last-N ring, with a request-local
+bounded buffer for the final failed or still-pending dispatch so setup traffic
+cannot consume its evidence.  For timeline commits, the dispatch boundary is
 ``RuntimeHandler._dispatch`` entry and the handler boundary is
 ``RuntimeHandler._timeline_commit`` entry; socket/client arrival and caller
 receipt are outside this process and remain UNKNOWN.
@@ -32,6 +34,7 @@ import os
 import sys
 import threading
 import time
+from collections import deque
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Self
@@ -50,6 +53,8 @@ PHASES = (
 
 DEFAULT_WATCHDOG_SECONDS = 20.0
 DEFAULT_MAX_WATCHDOG_CAPTURES = 2
+CAPTURE_FORMAT_VERSION = 2
+RETENTION_MODE = "rolling_plus_final_request"
 
 
 class P2CommitPhaseCapture:
@@ -110,7 +115,13 @@ class P2CommitPhaseCapture:
         self._thread_requests: dict[int, int] = {}
         self._requests: dict[int, dict[str, Any]] = {}
         self._next_request = 0
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
+        self._event_sequence = 0
+        self._events_seen = 0
+        self._rolling_events: deque[tuple[int, dict[str, Any], int]] = deque()
+        self._summary_events: list[dict[str, Any]] = []
+        self._final_request: dict[str, Any] | None = None
+        self.retention: dict[str, Any] = {}
 
     def __enter__(self) -> Self:
         return self.start()
@@ -154,10 +165,15 @@ class P2CommitPhaseCapture:
             sys.settrace(self._previous_trace)
         if threading.gettrace() == self._trace:
             threading.settrace(self._previous_thread_trace)
-        for request in list(self._requests.values()):
-            self._summary(request)
+        with self._lock:
+            for request in list(self._requests.values()):
+                self._summary(request)
+            self._finalize_snapshot()
         if self._stream is not None:
             try:
+                for event in self.events:
+                    encoded = json.dumps(event, separators=(",", ":"), sort_keys=True)
+                    self._stream.write(encoded + "\n")
                 self._stream.flush()
                 self._stream.close()
             except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
@@ -255,23 +271,55 @@ class P2CommitPhaseCapture:
                 request["watchdog_timer"] = None
                 self.failures += 1
 
-    def _write(self, event: dict[str, Any]) -> None:
-        if len(self.events) >= self.max_events:
+    @staticmethod
+    def _encoded_size(event: dict[str, Any]) -> int:
+        return len(json.dumps(event, separators=(",", ":"), sort_keys=True)) + 1
+
+    @staticmethod
+    def _request_outcome(request: dict[str, Any]) -> str:
+        if any(state["error"] for state in request["phases"].values()):
+            return "failed"
+        if not request["dispatch_finished"]:
+            return "pending"
+        response = request["phases"]["http_response"]
+        if type(response.get("status")) is int and response["status"] >= 400:
+            return "failed"
+        return "complete"
+
+    def _record_request_event(self, request: dict[str, Any], event: dict[str, Any], size: int) -> None:
+        request["events_seen"] += 1
+        request["events_required_bytes"] += size
+        if size > self.max_bytes:
+            request["events_dropped"] += 1
+            request["events_dropped_bytes"] += size
             self.truncated = True
             return
-        encoded = json.dumps(event, separators=(",", ":"), sort_keys=True)
-        current_bytes = sum(len(json.dumps(item, separators=(",", ":"))) + 1 for item in self.events)
-        if current_bytes + len(encoded) + 1 > self.max_bytes:
+        buffer = request["event_buffer"]
+        buffer.append((self._event_sequence, event, size))
+        request["event_buffer_bytes"] += size
+        while request["event_buffer_bytes"] > self.max_bytes:
+            _sequence, _old_event, old_size = buffer.popleft()
+            request["event_buffer_bytes"] -= old_size
+            request["events_dropped"] += 1
+            request["events_dropped_bytes"] += old_size
             self.truncated = True
-            return
-        self.events.append(event)
-        if self._stream is not None:
-            try:
-                self._stream.write(encoded + "\n")
-                self._stream.flush()
-            except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
-                # Diagnostics can never replace the operation being observed.
-                self.failures += 1
+
+    def _write(self, event: dict[str, Any], *, track_request: bool = True) -> None:
+        size = self._encoded_size(event)
+        with self._lock:
+            self._event_sequence += 1
+            self._events_seen += 1
+            if track_request and type(event.get("request")) is int:
+                request = self._requests.get(event["request"])
+                if request is not None:
+                    self._record_request_event(request, event, size)
+            if len(self._rolling_events) >= self.max_events:
+                self._rolling_events.popleft()
+                self.truncated = True
+            self._rolling_events.append((self._event_sequence, event, size))
+            # Preserve the existing inspectable live view; shutdown replaces
+            # it with the final request-aware snapshot.
+            self.events = [entry[1] for entry in self._rolling_events]
 
     def _new_request(self, *, handler: Any = None, emit_handler: bool = False) -> int | None:
         with self._lock:
@@ -293,6 +341,12 @@ class P2CommitPhaseCapture:
                 "watchdog_token": None,
                 "watchdog_fired": False,
                 "watchdog_stage": 0,
+                "event_buffer": deque(),
+                "event_buffer_bytes": 0,
+                "events_seen": 0,
+                "events_required_bytes": 0,
+                "events_dropped": 0,
+                "events_dropped_bytes": 0,
             }
             if handler is not None:
                 self._handler_requests[id(handler)] = ordinal
@@ -301,6 +355,13 @@ class P2CommitPhaseCapture:
             self._begin(ordinal, "handler_entry")
             self._arm_watchdog(ordinal)
         return ordinal
+
+    def _select_final_request(self) -> dict[str, Any] | None:
+        candidates = [
+            request for request in self._requests.values()
+            if self._request_outcome(request) != "complete"
+        ]
+        return max(candidates, key=lambda request: request["ordinal"], default=None)
 
     def _request_for_frame(self, frame: Any) -> int | None:
         handler = frame.f_locals.get("self")
@@ -328,6 +389,8 @@ class P2CommitPhaseCapture:
         state["count"] = min(state["count"] + 1, 32)
         now = self._at_ms()
         state["start_ms"] = now if state["start_ms"] is None else state["start_ms"]
+        if phase == "http_response" and type(fields.get("status")) is int:
+            state["status"] = fields["status"]
         request["last_phase"] = phase
         safe_fields = {"status": fields["status"]} if phase == "http_response" and type(fields.get("status")) is int else {}
         self._write({"schema_version": 1, "request": ordinal, "phase": phase,
@@ -340,6 +403,8 @@ class P2CommitPhaseCapture:
         state = request["phases"][phase]
         state["end_ms"] = self._at_ms()
         state["error"] = state["error"] or error
+        if phase == "http_response" and type(fields.get("status")) is int:
+            state["status"] = fields["status"]
         safe_fields = {"status": fields["status"]} if phase == "http_response" and type(fields.get("status")) is int else {}
         self._write({"schema_version": 1, "request": ordinal, "phase": phase,
                      "state": "raised" if error else "end", "at_ms": state["end_ms"],
@@ -381,15 +446,136 @@ class P2CommitPhaseCapture:
             "execution_lock_wait_ms": None,
             "caller_receipt_ms": None,
         }
-        self._write({"schema_version": 1, "request": request["ordinal"], "phase": "summary",
-                     "last_phase": request["last_phase"] or "UNKNOWN", "phases": phases,
-                     "durations_ms": durations,
-                     "unknown_boundaries": {
-                         "client_request_to_server_receive": "outside Runtime process",
-                         "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
-                         "caller_receipt": "outside Runtime process",
-                     },
-                     "truncated": self.truncated})
+        summary = {"schema_version": 1, "request": request["ordinal"], "phase": "summary",
+                   "last_phase": request["last_phase"] or "UNKNOWN", "phases": phases,
+                   "durations_ms": durations,
+                   "unknown_boundaries": {
+                       "client_request_to_server_receive": "outside Runtime process",
+                       "execution_lock_wait": "phase hook has no exact threading.Lock.acquire boundary",
+                       "caller_receipt": "outside Runtime process",
+                   },
+                   "truncated": self.truncated}
+        self._summary_events.append(summary)
+        # Summaries are synthetic snapshot records; the phase records are the
+        # request evidence whose completeness is tracked independently.
+        self._write(summary, track_request=False)
+
+    def _incomplete_limit(self, request: dict[str, Any] | None) -> dict[str, Any] | None:
+        if request is None or request["events_dropped"] == 0:
+            return None
+        return {
+            "reason": "max_bytes",
+            "limit_bytes": self.max_bytes,
+            "required_bytes": request["events_required_bytes"],
+            "retained_bytes": request["event_buffer_bytes"],
+            "dropped_events": request["events_dropped"],
+            "dropped_bytes": request["events_dropped_bytes"],
+        }
+
+    def _retention_metadata(
+        self,
+        *,
+        selected: list[tuple[int, dict[str, Any], int]],
+        rolling_events: list[tuple[int, dict[str, Any], int]],
+        target: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        selected_sequences = {sequence for sequence, _event, _size in selected}
+        rolling_selected = sum(
+            sequence in selected_sequences for sequence, _event, _size in rolling_events
+        )
+        rolling_output_drop = len(rolling_events) - rolling_selected
+        rolling_limit = None
+        if rolling_output_drop:
+            rolling_limit = {
+                "reason": "max_bytes",
+                "limit_bytes": self.max_bytes,
+                "dropped_events": rolling_output_drop,
+                "dropped_bytes": sum(
+                    size for sequence, _event, size in rolling_events
+                    if sequence not in selected_sequences
+                ),
+            }
+        final_metadata: dict[str, Any] | None = None
+        if target is not None:
+            target_events = list(target["event_buffer"])
+            target_sequences = {sequence for sequence, _event, _size in target_events}
+            target_selected = len(target_sequences & selected_sequences)
+            target_dropped_by_output = len(target_events) - target_selected
+            complete = target["events_dropped"] == 0 and target_dropped_by_output == 0
+            incomplete = self._incomplete_limit(target)
+            if target_dropped_by_output:
+                complete = False
+                incomplete = {
+                    "reason": "max_bytes",
+                    "limit_bytes": self.max_bytes,
+                    "required_bytes": target["events_required_bytes"],
+                    "retained_bytes": sum(
+                        size for sequence, _event, size in target_events
+                        if sequence in selected_sequences
+                    ),
+                    "dropped_events": target["events_dropped"] + target_dropped_by_output,
+                    "dropped_bytes": target["events_dropped_bytes"] + sum(
+                        size for sequence, _event, size in target_events
+                        if sequence not in selected_sequences
+                    ),
+                }
+            final_metadata = {
+                "request": target["ordinal"],
+                "outcome": self._request_outcome(target),
+                "events_seen": target["events_seen"],
+                "events_retained": target_selected,
+                "complete": complete,
+                "incomplete_limit": incomplete,
+            }
+        return {
+            "format_version": CAPTURE_FORMAT_VERSION,
+            "mode": RETENTION_MODE,
+            "rolling": {
+                "capacity_events": self.max_events,
+                "events_seen": self._events_seen,
+                "events_retained": rolling_selected,
+                "capacity_dropped_events": max(0, self._events_seen - self.max_events),
+                "complete": rolling_output_drop == 0,
+                "incomplete_limit": rolling_limit,
+            },
+            "final_request": final_metadata,
+            "output": {
+                "max_bytes": self.max_bytes,
+                "bytes": sum(size for _sequence, _event, size in selected),
+                "events": len(selected),
+            },
+        }
+
+    def _finalize_snapshot(self) -> None:
+        target = self._select_final_request()
+        self._final_request = target
+        target_events = list(target["event_buffer"]) if target is not None else []
+        snapshot: list[tuple[int, dict[str, Any], int]] = []
+        for _attempt in range(3):
+            rolling_events = [
+                (sequence, event, self._encoded_size(event))
+                for sequence, event, _size in self._rolling_events
+            ]
+            selected: dict[int, tuple[int, dict[str, Any], int]] = {}
+            used_bytes = 0
+            for entry in target_events:
+                sequence, _event, size = entry
+                if used_bytes + size <= self.max_bytes:
+                    selected[sequence] = entry
+                    used_bytes += size
+            for entry in reversed(rolling_events):
+                sequence, _event, size = entry
+                if sequence in selected:
+                    continue
+                if used_bytes + size <= self.max_bytes:
+                    selected[sequence] = entry
+                    used_bytes += size
+            snapshot = sorted(selected.values(), key=lambda entry: entry[0])
+            self.retention = self._retention_metadata(
+                selected=snapshot, rolling_events=rolling_events, target=target)
+            for summary in self._summary_events:
+                summary["retention"] = self.retention
+        self.events = [event for _sequence, event, _size in snapshot]
 
     @staticmethod
     def _phase(frame: Any) -> str | None:

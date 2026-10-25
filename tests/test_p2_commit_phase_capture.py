@@ -119,8 +119,88 @@ def test_capture_allowlist_redacts_by_not_retaining_transport_values(tmp_path):
     assert "error" not in serialized or '"error":true' not in serialized
     assert all(set(event) <= {"schema_version", "request", "phase", "state", "at_ms", "count",
                               "status", "last_phase", "phases", "durations_ms",
-                              "unknown_boundaries", "truncated"}
+                              "unknown_boundaries", "truncated", "retention"}
                for event in capture.events)
+
+
+def test_ring_retains_late_failing_request_after_successful_setup_events():
+    capture = P2CommitPhaseCapture(enabled=True, max_events=8, max_bytes=64 * 1024)
+    capture.start()
+    try:
+        setup = capture._new_request()
+        assert setup is not None
+        for _index in range(90):
+            capture._begin(setup, "provider")
+        capture._end(setup, "provider")
+        capture._requests[setup]["dispatch_finished"] = True
+
+        failing = capture._new_request()
+        assert failing is not None
+        for _index in range(150):
+            capture._begin(failing, "provider")
+        capture._end(failing, "provider", error=True)
+        capture._requests[failing]["dispatch_finished"] = True
+    finally:
+        capture.stop()
+
+    final_events = [event for event in capture.events
+                    if event.get("request") == failing and event["phase"] != "summary"]
+    assert len(final_events) == capture._requests[failing]["events_seen"]
+    assert capture.retention["final_request"] == {
+        "request": failing,
+        "outcome": "failed",
+        "events_seen": capture._requests[failing]["events_seen"],
+        "events_retained": len(final_events),
+        "complete": True,
+        "incomplete_limit": None,
+    }
+    assert capture.retention["rolling"]["capacity_events"] == 8
+    assert capture.retention["rolling"]["capacity_dropped_events"] > 128
+    assert capture.retention["output"]["bytes"] <= capture.max_bytes
+
+
+def test_final_request_byte_bound_reports_exact_incomplete_limit():
+    capture = P2CommitPhaseCapture(enabled=True, max_events=4, max_bytes=512)
+    capture.start()
+    try:
+        request = capture._new_request()
+        assert request is not None
+        for _index in range(30):
+            capture._begin(request, "provider")
+        capture._end(request, "provider", error=True)
+        capture._requests[request]["dispatch_finished"] = True
+    finally:
+        capture.stop()
+
+    final = capture.retention["final_request"]
+    assert final["request"] == request
+    assert final["outcome"] == "failed"
+    assert not final["complete"]
+    limit = final["incomplete_limit"]
+    assert limit["reason"] == "max_bytes"
+    assert limit["limit_bytes"] == capture.max_bytes
+    assert limit["required_bytes"] == capture._requests[request]["events_required_bytes"]
+    assert limit["dropped_events"] == capture._requests[request]["events_dropped"]
+    assert limit["dropped_bytes"] == capture._requests[request]["events_dropped_bytes"]
+    assert capture.retention["output"]["bytes"] <= capture.max_bytes
+
+
+def test_pending_request_is_the_final_correlated_request_and_shutdown_is_deterministic():
+    def snapshot():
+        capture = P2CommitPhaseCapture(enabled=True, max_events=6, clock_ns=lambda: 0)
+        capture.start()
+        request = capture._new_request()
+        assert request is not None
+        capture._begin(request, "handler_entry")
+        capture.stop()
+        return capture.events, capture.retention
+
+    first_events, first_retention = snapshot()
+    second_events, second_retention = snapshot()
+    assert first_events == second_events
+    assert first_retention["final_request"]["request"] == 1
+    assert first_retention["final_request"]["outcome"] == "pending"
+    assert first_retention == second_retention
 
 
 def test_observer_failure_does_not_replace_original_exception():
