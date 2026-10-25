@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T16:31:47Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# app2 board, 2026-10-25T16:28:28Z
+<!-- app2 | 2026-10-25T16:35:03Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-25T16:32:48Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -160,18 +160,18 @@ regressions: Agent retains REG14 pending a meaningful current full-core result. 
 
 Blockers: SWAP — owner decision under D130 after automatic safety classifier refusal. Runtime recovery and related acceptance remain held; no retry or alternate route.
 Blockers: Element — App owns bounded safe leaf and lifecycle retention. Existing exact request3 has no provider leaf, wall denominator or final outcome; no dominant operation proved.
-Blockers: Final cut — Agent local D128 core controller is queued after verified local D131 receipt; build and body remain pending. Farm owns D77 applied inputs. Final gates and D69 remain owner-lane work.
+Blockers: Final cut — Agent local D128 child passed D131 reserve, then custody verification refused an unowned retained source directory. Runtime peer1623 owns diagnosis; zero core body. Farm owns D77 applied inputs. Final gates and D69 remain owner-lane work.
 Next ready: None for Proof; MAIN closed the D125 exception and Proof remains folded into App.
 
-D131 receiving wait CLEARED. Agent's board16:16 verifies local canonical123bb93c, regular0755, against independent1601 and installed1604. Same-WIP resume1610 is queued on exacta4e016/5e9ad with admission6749282304bytes. No child build, central core ID or body result is yet reported. Runtime source, review, installation and publication remain complete. Farm core remains dropped.
+D131 receiving wait CLEARED. Agent's board16:16 verifies local canonical123bb93c, regular0755, against independent1601 and installed1604. Same-WIP resume1610 ended on exacta4e016/5e9ad after child preparation failed custody verification at canonicalmake-child-venv1154. Agent reports zero body and no test ID; Runtime independent source diagnosis requestedpeer1623. No retry or alternate route. Runtime source, review, installation and publication remain complete. Farm core remains dropped.
 
 D130 remains recorded and surfaced to the owner. Runtime WAL recovery branch stays unreviewed and unmerged; related SWAP acceptance is stopped. No retry, rephrase, transfer, alternate test route or D112 rollback. The existing Runtime escalation owns the decision; Proof creates no duplicate route. D129 and D129a refusals remain recorded and stopped; separately authorized Agent static review1549 PASS does not rewrite that history.
 
-Farm D77 waits for exact applied commit materialization through its ordinary lead route. Runtime records the source objects absent on Main too, with finite input review1616 active and lead publication requested. Guard PASS receipt returned; lock and child status remain unverified. No installed stage/render or Proof input requested. Farm has no core or census job.
+Farm D77 waits for exact applied commit materialization through its ordinary lead route. Runtime records the source objects absent on Main too, with source workers Agent1620 and Runtime1620 active for normal materialization and later independent review. Guard PASS receipt returned; lock and child status remain unverified. No installed stage/render or Proof input requested. Farm has no core or census job.
 
 Runtime normalab1e retains exact genuine3/native2 integrated PASS1550 for grouped inverse/redo; scalar and compound roots remain UNKNOWN. Agent has allocated normal U4a adoption remotely. App adopter1615 is active from84857, excluding held recovery and preserving all captured tours.
 
-Element request3 is bound to exactd22 but retained352samples/3lost expose outer routing frames only, with pending outcome and no wall denominator. Completed request2 measured19.603s/provider11.840s; it proves no request3 duration or dominant operation. App helper author1606 source21 controls PASS; protected1613 review and the same queued socket-control request remain separate. No new body, cost author, helper activation or browser credit inferred.
+Element request3 is bound to exactd22 but retained352samples/3lost expose outer routing frames only, with pending outcome and no wall denominator. Completed request2 measured19.603s/provider11.840s; it proves no request3 duration or dominant operation. App helper author1606 and central28551 passed23 controls. Independent1613 passes privacy, bounds and lifecycle but overall FAILs assertion accounting and App-validator compatibility; same-branch return1619 owns correction. No new body, cost author, helper activation or browser credit inferred.
 
 D125 hosting is closed by MAIN. The exact supplied submit exited1 before D66 at missingtsx. No central preflight ID, normal ID, XML or durable submit plan was produced; readiness and all eight originals NOTRUN. Proof consumed no full P2 body. This remains a harness stop, with no product, sourceguard or safety verdict.
 
