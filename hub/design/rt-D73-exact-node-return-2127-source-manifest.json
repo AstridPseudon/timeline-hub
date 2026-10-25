@@ -1,0 +1,55 @@
+{
+  "schema": "timeline.rt_d73_exact_nodes.source_manifest.v2",
+  "candidate_repo": "composition",
+  "candidate_head": "68343fb8e72bcdf52eddf132d2010506da9c0018",
+  "source_policy": {
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "launcher_author_commit": "d70bb370f396f137933d3b8ae3b194588e96e2b1",
+    "launcher_review_commit": "375c773449b1c6b477f10c1daff1d9f4704208a2",
+    "eligible_single_receipt": {
+      "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+      "selected_sha256": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+      "fork_sha256": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+      "status": "required_but_not_received",
+      "overlay_forbidden": true
+    },
+    "selected_file_observed_reference": {
+      "path": "tests/sdk/test_timeline_selected_schema_runtime.py",
+      "sha256": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+      "observed_source_commit": "27140eaafa748eb1d7c0789c8150b5872d1c07ad",
+      "observed_source_tree": "f7eea928c3a0dd501a6502099ef58fc5cfeb4df5",
+      "observed_launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+      "eligible_as_single_receipt": false
+    },
+    "fork_file_observed_reference": {
+      "path": "tests/editing_conformance/test_occurrence_fork_source_baseline.py",
+      "sha256": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+      "observed_source_commit": "22bf4560aa66e917e8ccde0515475119bec58aea",
+      "observed_source_tree": "671ec5286bda452623a0f4a80123afd9195d9dfe",
+      "observed_launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+      "eligible_as_single_receipt": false
+    },
+    "focused_control_sha256": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600"
+  },
+  "runtime_receipt": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean_observed": true
+  },
+  "normal_agent_observation": {
+    "commit": "22bf4560aa66e917e8ccde0515475119bec58aea",
+    "tree": "671ec5286bda452623a0f4a80123afd9195d9dfe",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "selected_file_sha256": "6d7ba7623cb59931d76d3eeefc564200f4a0336199cc64331fea0fc976939b9a",
+    "eligible": false,
+    "reason": "selected source hash does not match the reviewed exact tuple"
+  },
+  "central_read_only_hashes": {
+    "request_test": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+    "test_run": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "suites_conf": "fecaa66d22ed4e90401455eceb8983b48178a2037c3ccfc0bbc716428239156f"
+  },
+  "receipt_status": "missing_for_this_worker",
+  "manifest_status": "not_rendered"
+}

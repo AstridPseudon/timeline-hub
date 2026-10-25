@@ -1,0 +1,17 @@
+{
+  "status": "SOURCE_TRACED_NOT_EXECUTED",
+  "production_changed": false,
+  "mounted_path": [
+    {"ordinal": 1, "symbol": "RuntimeHandler._timeline_commit", "file": "runtime_protocol/server.py", "lines": "300-340", "controls": ["projects:write identity", "route/body identity", "Idempotency-Key", "request scopes"]},
+    {"ordinal": 2, "symbol": "RuntimeService.commit_timeline", "file": "runtime_protocol/service.py", "lines": "2468-2483", "controls": ["detached body", "request validation", "canonical route", "refusal cleanup"]},
+    {"ordinal": 3, "symbol": "RuntimeService._execute_timeline_commit", "file": "runtime_protocol/service.py", "lines": "2485-2559", "controls": ["publisher", "authenticated project/timeline", "active timeline", "request hash", "provider/port"]},
+    {"ordinal": 4, "symbol": "CommitExecutionCoordinator._execute", "file": "runtime_protocol/timeline_commit_execution.py", "lines": "373-431", "controls": ["request identity", "per-key exclusion", "durable lookup before/after provider", "context identity", "close/reconcile"]},
+    {"ordinal": 5, "symbol": "Agent RuntimeCommitService.commit", "file": "astrid/sdk/timeline/commit.py", "lines": "1160-1465", "controls": ["history/closure reads", "copy/detach", "candidate validation", "bounded CAS retry", "sequential capture"]},
+    {"ordinal": 6, "symbol": "RequestCommitPort", "file": "runtime_protocol/timeline_commit_port.py", "lines": "182-322,660-710", "controls": ["request-bound detached capture", "mutex/history scope", "ancestry/closure reauthentication", "observed head", "capture clearing"]},
+    {"ordinal": 7, "symbol": "TimelineCommitStore.preview/accept", "file": "runtime_protocol/timeline_commit_store.py", "lines": "168-192,1789-1847", "controls": ["verification scope", "read transaction", "store version", "memo invalidation", "head/context checks", "accept transaction"]},
+    {"ordinal": 8, "symbol": "timeline_commit_auth.validate", "file": "runtime_protocol/timeline_commit_auth.py", "lines": "2338-2362,2563-2873", "controls": ["schema", "image uniqueness", "payload digests", "record correspondence", "boundary equality", "replay/read checks"]}
+  ],
+  "benchmark_path": ["verify_retained -> validate_sequential_capture -> _capture_document_images/images/digest", "verify_retained -> validate -> image/read/record/step checks", "synthetic loop -> _capture_document_images or detached"],
+  "benchmark_omissions": ["server/HTTP body prefetch", "authorization/provider registration", "Agent provider commit", "RequestCommitPort reads/custody", "TimelineCommitStore preview/accept/receipt", "lifecycle/daemon/door state", "exact App element document/history"],
+  "guard_conserving_seam": "Use the existing integration fixture and registered Agent provider through RuntimeService.commit_timeline; instrument only an outer timer and existing stage boundaries. Do not cache authenticated images, remove detached copies, bypass revalidation, change lock scopes, or add a new permission gate."
+}

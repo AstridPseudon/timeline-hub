@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "review_task": "rt-U1-Farm-preflight-final-review-2135",
+  "candidate": {
+    "commit": "a2b289dd732db7af10d5c8d375f6dad5e21c9fc8",
+    "tree": "2b78abf70de620a47451aba655de1635143b8e3f"
+  },
+  "source_tuple": {
+    "runtime_commit": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+    "runtime_tree": "73d92563277d2ba5e49b788924c07426a2fdec4a",
+    "agent_commit": "32dde0c035f59029064fe782d5147d4e68e75835",
+    "agent_tree": "81ad4d2d674df3bd096943eb542c949ff011469c"
+  },
+  "interpreter": {
+    "path": "/home/user/work/venv-agent/bin/python",
+    "implementation": "CPython",
+    "python": "3.13"
+  },
+  "pythonpath_order": [
+    "$RUNTIME_CHECKOUT",
+    "$RUNTIME_CHECKOUT/packages/python",
+    "$RUNTIME_CHECKOUT/tests",
+    "$ASTRID_CHECKOUT"
+  ],
+  "actual_modules": [
+    ["tests.conftest", "tests/conftest.py", "50917ded0ac0dc214d24c60894bf62f3b574eaa3f81740bc91eb5dc4739cd476"],
+    ["tests.test_process_control", "tests/test_process_control.py", "260ea8f64aaf3f9e919d4086688cc5bed2aa427c0a963fb6a9e01ef0c6d8a696"],
+    ["tests.test_platform_signaling", "tests/test_platform_signaling.py", "520dccc3cab41d9c8eded56b101c48bc960e1294d77246281880371bae2d10ec"],
+    ["tests.test_door_routes", "tests/test_door_routes.py", "9b757d2c7d1125a76db1ad188672429e2b2e9ea2007cc0f248eda96331c8b67d"],
+    ["tests.test_managed_output_public_api", "tests/test_managed_output_public_api.py", "89c4b3f0aa7998c334d4635524ebb22b75f2f4930f5a028ca8e390c260c82a90"],
+    ["tests.test_timeline_commit_contract", "tests/test_timeline_commit_contract.py", "59693de6b54c7b2660469a771e6d705cdcb4fd512c5700b9089ddb232838404b"],
+    ["tests.test_timeline_legacy_authority", "tests/test_timeline_legacy_authority.py", "55194d035225111dd8989f8885899428b2ef60c86a4f927914eabca810f84305"]
+  ],
+  "test_argv": [
+    "-m", "pytest", "-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45",
+    "--junitxml=$DURABLE_EVIDENCE/targeted.xml",
+    "tests/test_process_control.py",
+    "tests/test_platform_signaling.py",
+    "tests/test_door_routes.py",
+    "tests/test_managed_output_public_api.py",
+    "tests/test_timeline_commit_contract.py",
+    "tests/test_timeline_legacy_authority.py"
+  ],
+  "audits": {
+    "source_hashes": "21/21 PASS",
+    "ast_import_manifests": "7/7 PASS",
+    "six_test_hashes_present": true,
+    "six_test_hashes_enforced": false
+  }
+}

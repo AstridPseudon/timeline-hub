@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task": "rt-U1-D135-farm-preflight-2116",
+  "review_task": "rt-U1-Farm-preflight-final-review-2135",
+  "venue": "Farm",
+  "verdict": "FAIL",
+  "candidate": {
+    "commit": "a2b289dd732db7af10d5c8d375f6dad5e21c9fc8",
+    "tree": "2b78abf70de620a47451aba655de1635143b8e3f"
+  },
+  "required_source_tuple": {
+    "runtime_commit": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+    "runtime_tree": "73d92563277d2ba5e49b788924c07426a2fdec4a",
+    "agent_commit": "32dde0c035f59029064fe782d5147d4e68e75835",
+    "agent_tree": "81ad4d2d674df3bd096943eb542c949ff011469c"
+  },
+  "source_only": {
+    "frozen_source_hashes": "21/21 PASS",
+    "ast_import_manifests": "7/7 PASS",
+    "farm_actual_preflight": "NOTRUN",
+    "farm_six_file_body": "NOTRUN",
+    "provider_socket_store_collection": "NOTRUN"
+  },
+  "canonical_controls": {
+    "ruff": "PASS",
+    "json": "PASS",
+    "private_compile": "PASS",
+    "git_diff_check": "PASS",
+    "venv_negative": {
+      "exit": 1,
+      "imports_attempted": 7,
+      "failed_imports": 4,
+      "all_missing": 39,
+      "body_authorized": false
+    },
+    "system_python_negative": {
+      "exit": 1,
+      "imports_attempted": 7,
+      "failed_imports": 4,
+      "all_missing": 41,
+      "interpreter_match": false,
+      "body_authorized": false
+    },
+    "xml_controls": "PASS"
+  },
+  "findings": [
+    {
+      "id": "D135-FINAL-1",
+      "severity": "P1",
+      "status": "open",
+      "summary": "The six test-module hashes are recorded but not enforced",
+      "locations": [
+        "ops-u1-farm-preflight/source-manifest.json:66-170",
+        "ops-u1-farm-preflight/preflight.py:431-458"
+      ]
+    }
+  ]
+}

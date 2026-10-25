@@ -1,0 +1,56 @@
+{
+  "task": "D127d-offline-path-review-2135",
+  "verdict": "UNAPPLIED_SUPPORTED_ACTUAL_PERFORMANCE_UNPROVED",
+  "production_changed": false,
+  "source_head": "684b3d7b6ac5381ed92a363fa7c941031622e1f3",
+  "source_tree": "7051fd435bc4b328954800bf171f5823ae00b2dd",
+  "artifact_review": {
+    "author_commit": "684b3d7b6ac5381ed92a363fa7c941031622e1f3",
+    "author_scope": "two additive files only: tools/benchmark_timeline_commit_cost.py and tests/test_timeline_offline_cost.py",
+    "retained_capture_sha256": "51e353be23b2ebf80e454f2b5cd165a904ab0478c41a6065ed310535d55976cd",
+    "retained_capture_file_bytes": 200611,
+    "retained_capture_canonical_bytes": 200610,
+    "retained_commands": 2,
+    "author_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D127d-element-cost-sol-2123/evidence/"
+  },
+  "independent_probe": {
+    "command": "benchmark_timeline_commit_cost.py --repeats 1",
+    "status": "UNAPPLIED",
+    "retained_warm_median_seconds": 0.12362930399831384,
+    "retained_validation_calls": {"Recorder": 2, "CanonicalDocument": 54},
+    "synthetic_max_canonical_bytes": 54643,
+    "synthetic_max_checks": 54,
+    "synthetic_max_validation_warm_seconds": 0.2052642609924078,
+    "synthetic_max_detached_warm_seconds": 0.08788792000268586,
+    "output_sha256": "481057f39b9519c6f433897ff2e5b3c1ebd2e910b9aa7a30fa6c588e78e34186"
+  },
+  "live_comparison": {
+    "actual_element_handler_seconds": 21.740631,
+    "actual_element_provider_seconds": 13.780929,
+    "native_control_seconds": 1.75,
+    "comparison_valid": false,
+    "reason": "Retained element/native measurements have missing lifecycle/request dimensions; the offline probe reproduces neither whole path."
+  },
+  "path_coverage": {
+    "server._timeline_commit": "source-traced-only",
+    "service.commit_timeline": "source-traced-only",
+    "service._execute_timeline_commit": "source-traced-only",
+    "CommitExecutionCoordinator": "source-traced-only",
+    "registered_Agent_provider": "not-executed-by-probe",
+    "RequestCommitPort": "not-executed-by-probe",
+    "TimelineCommitStore.preview_accept": "not-executed-by-probe",
+    "timeline_commit_auth.validate_sequential_capture": "executed by retained helper",
+    "timeline_commit_auth.validate": "executed by retained helper",
+    "Runtime lifecycle/HTTP/door": "not-executed-by-probe"
+  },
+  "source_complete_offline_replay": {
+    "venue": "existing in-process RuntimeService integration fixture",
+    "fixture": "tests/test_timeline_commit_integration.py::editing using precut-music-documents-v31.tar.gz",
+    "provider": "load_timeline_commit_provider('astrid')",
+    "input": "one real closure-backed capture_move against the fixture head; then one disjoint real capture_move from the same base to force revalidation/rebase; optionally dry_run equivalent",
+    "entrypoint": "Editing.commit -> RuntimeService.commit_timeline(..., authorize=lambda: None)",
+    "covered_seams": "provider commit, port reads/history/closure, original/landing capture, store preview/accept, auth validation, CAS/idempotency and persisted receipt",
+    "not_claimed": "HTTP/socket/door/daemon lifecycle or exact App element 32016 payload dimensions"
+  },
+  "release": "HELD; no cause, optimization, timing ratio, or production fix is qualified"
+}

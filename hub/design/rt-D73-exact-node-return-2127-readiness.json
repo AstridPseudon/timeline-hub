@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.rt_d73_exact_nodes.readiness.v2",
+  "verdict": "CANDIDATE_NOT_INSTALLED",
+  "ready": false,
+  "candidate": {
+    "repo": "composition",
+    "head": "68343fb8e72bcdf52eddf132d2010506da9c0018",
+    "tree_before_evidence": "59cb1533b9334e5247e9b55f1ba831d9aa007fc7",
+    "paths": [
+      "ops-d73-exact-nodes/README.md",
+      "ops-d73-exact-nodes/dry-check.sh"
+    ]
+  },
+  "fixed_inputs": {
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "selected_sha256": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+    "fork_sha256": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+    "control_test_sha256": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600"
+  },
+  "central_read_only_inputs": {
+    "request_test_sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+    "test_run_sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "suites_conf_sha256": "fecaa66d22ed4e90401455eceb8983b48178a2037c3ccfc0bbc716428239156f"
+  },
+  "missing_inputs": [
+    "one clean eligible Agent receipt satisfying launcher, selected, fork, and focused-control hashes",
+    "selected4 source/receipt binding",
+    "fork source/receipt binding",
+    "rendered four-repository D73 manifest",
+    "installation of both exact suite rows in central suites.conf",
+    "fresh per-central-ID result and receipt artifacts from owner-run rows"
+  ],
+  "body_status": "NOT_RUN",
+  "central_request_status": "NOT_REQUESTED",
+  "historical_controls": "retained only; not fresh evidence for this candidate"
+}
