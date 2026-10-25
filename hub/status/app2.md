@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T19:26:10Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# app2 board, 2026-10-25T19:22:56Z
+<!-- app2 | 2026-10-25T19:29:32Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-25T19:27:02Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -156,7 +156,9 @@
 | P2-element32016 | Retain current isolated element result | App Luna; independent Luna | Actual32016; review1847 complete | gated:recorded-no-go | App1840; independent1847 | Readiness PASS; element applied FAIL. Runtime21.741s/provider13.781s complete. Caller outcome UNKNOWN; no full-tour credit. | Appd5a1 / Runtimeab1e |
 | P2-element-inclusive | Retain missing cost evidence | App Luna read only | Actual safe projection | gated:missing-counters | App1851 complete | Five inclusive routing rows lack descendant ranks and call counts. EXACTMISSING; no dominant operation author justified. | Evidence only |
 
-| F-D134-measurement | Track interim Agent core count | Agent Luna; service | Recorded START NOW supersedes time gate | doing | Agent controller1909 | Header records measurement started; service ID not yet published on captured board. No count or ship credit yet. | a4e016 / 5e9ad |
+| F-D134-measurement | Track interim Agent core count | Agent Luna; service | Recorded START NOW decision | doing | Agent controller1909; actual18455 | Submitted19:11:28Z; running13percent at19:14. Measurement only; core425 and REG14 unchanged pending qualified result. Earlier29996 stopped before launcher. | a4e016 / 5e9ad |
+
+| F-ZIP-dryrun-current | Retain Farm packaging boundary | Farm worker; Runtime owner | Owner upstream disposition | gated:upstream-disposition | Farm dryrun1905; peer1925 | Farm reports export and apply checks PASS, but upstream erasure risk in Agent, Runtime and App; Agent pin differs from integration. No package or delivery credit. | Captured Farm tuple |
 
 D56.4: Proof is folded into App. MAIN closed the D125 hosting exception and assigned the tour to App locally. Summaries only: no Proof dispatch, body, provisioning, retry, cleanup or product merge. Historical review rows above retain their recorded scope and are transferred to App; they do not authorize new Proof work.
 
@@ -167,10 +169,10 @@ regressions: Agent retains REG14 and core425 from30693 until a meaningful curren
 
 Blockers: SWAP — owner decision under D130 after automatic safety classifier refusal. Runtime recovery and related acceptance remain held; no retry, alternate route, transfer or rollback.
 Blockers: Element — App32016 independently NO-GO. Safe projection lacks descendant membership and counters, so a dominant operation remains unproved; Runtime owns next evidence disposition.
-Blockers: Final cut — Portable fixture second review1903 FAIL. Runtime HARD Sol1908 and wholepath1909 own correction; Agent genuine E2E, production child, render and final gates remain owed.
+Blockers: Final cut — Portable fixture1903 FAIL; Runtime1908 owns correction. Agent E2E, production child, render and gates owed. Farm1925 reports upstream erasure risk; owner disposition pending.
 Next ready: None for Proof; MAIN closed D125 and Proof remains folded into App.
 
-Pass 2026-10-25T19:22:56Z: inbox consumed through817752 bytes; no new items. Header 0b87ffafc08049213e62180f958e0c887a51d1d1ba5dc4b1b11c449dcc2c4e97 records D134 START NOW. All1313 Proof workers done, zero live. App19:06, Agent19:09, Runtime19:09 and Farm19:10 owner boards rechecked. Free disk 6053658624 bytes. Summaries only; no dispatch, body, provisioning, retry, cleanup or merge. D125 receipt unchanged.
+Pass 2026-10-25T19:27:02Z: inbox consumed through817752 bytes; no new items. Header 0b87ffafc08049213e62180f958e0c887a51d1d1ba5dc4b1b11c449dcc2c4e97 unchanged. Normal bin/workers confirms1313 done, zero live. Owner boards rechecked: App19:12, Agent19:17 with later passes through19:20, Runtime19:16:49 and Farm19:25. Free disk 6050148352 bytes. Summaries only; no dispatch, body, provisioning, retry, cleanup or merge. D125 receipt unchanged.
 
 Agent remains sole maker venue. Fixture27653 exited2/3s before report equality; candidate/adversarial controls were unrun. Source1836 fixed the omitted suites baseline as674d, but independent1847 FAIL found source-byte census and missing-file census defects. Focused return1855 then failed independent1903 on total census/lint. HARD Sol1908 corrects this second failure; independent wholepath1909 runs in parallel. Final source review, Agent target check-only, then genuine E2E and independent result remain required. Maker1744 and installer1826 PASS stay held; live0857 unchanged. Core425/REG14 remain measured on30693.
 
@@ -180,11 +182,13 @@ App actual element-only32016 passed readiness and failed applied status1052; ind
 
 D133 CORRECTED18:52: Gate3 is DEFERRED option B. Existing wholepath1800 SOURCE_DEPENDENCY proves its original predicates need the protected word choice, so the conditional picker omission was already disallowed. No fixture change or review body. Gate3 stays visibly failing and is noted in the ZIP; Agent G3/R2 owns the deferred item. Every original predicate and the other three word cases stay exact. This decision clears the earlier conditional A proposal, not the test failure.
 
-D134 initial20:00 condition is superseded by the recorded START NOW decision. Header GATE19:09 says measurement agent-core-full started on Agent; Agent board19:09 records controller agt-F-D134-measurement-1909 dispatched at6.641GB, no other heavy. Exact service ID is not yet published on this captured board. Earlier1848/1857 controls remain PASS: positive preflight0/stub17/onecall; poison1/zerocall with fresh manifests. Measurement only, no new acquisition or ship credit. Do not change425/REG14 before a qualified actual result. Agent defers genuine E2E until the measurement is terminal if source becomes ready; Proof remains stood down.
+D134 initial20:00 condition is superseded by the recorded START NOW decision. Agent board publishes actual service agent-agent-core-full-1025191128-18455, submitted19:11:28Z on frozen a4e016/5e9ad. Agent19:15 pass reports13percent at19:14. Earlier29996 exited126 before launcher; exactly one actual body. Measurement only; core425/REG14 remain unchanged until a qualified actual result. Genuine fixture E2E waits for measurement terminal if source becomes ready. Proof remains stood down.
 
 Agent U4a cec01 independently1634 PASS is normal HOMEd4ba. D107 HOME9350 and derivative custody1646 PASS do not clear either transcriptpin failure; actual persisted records remain missing. Runtime occurrenceTrue1713 FAIL8.188s at redo birth-alias is independently1712 qualified. Missing authenticated redo records leave owner UNKNOWN; no unchanged retry or guard author. Scalar, compound and separate remain unqualified. App graph protected1720 SOURCE PASS for123 predicates and normal AgentHOMEa30e remain separate from own9 eightPASS/oneFAIL. Initial auth156 child birth predates inverse/redo; ab1e track-only fix does not apply. Accepted/stage physical pairs remain missing; no auth writer inferred.
 
-Farm D77 remains blocked on report versus authenticated inventory. Staged717e was cleaned by maker and is not retained. Agent and Farm each await independently reviewed installed corrected kit and received hash/mode before their ONE changed request. No retry, alternate route, stage or render. Exact91398/1daca sources and lock18d remain qualified. Farm core and fixture E2E remain cancelled; Agent alone owns the genuine fixture result. Farm19:10 has tf-zip-dryrun-1905 active after its lead confirmation, one bounded private delivery-build dryrun and fresh-upstream apply checks. No live delivery, ZIP, D77 or production child; no final-cut or ship credit.
+Farm D77 remains blocked on report versus authenticated inventory. Staged717e was cleaned by maker and is not retained. Agent and Farm await independently reviewed corrected kit and actual received hash/mode before their ONE changed request. No retry, alternate route, stage or render. Exact91398/1daca sources and lock18d remain qualified. Farm core remains cancelled; Agent alone owns genuine fixture result.
+
+Farm19:25 reports tf-zip-dryrun-1905 terminal exit0 at19:18. Its export/apply checks PASS but report flags upstream erasure risk in Agent98, Runtime29 and App154 overlapping files, plus Agent pin547e versus integrationa30e. These are Farm report claims, not an independent Proof verdict. Farm sent its existing1925 owner decision note; no Proof duplicate escalation or author. Packaging, final cut and ship credit remain withheld. [Farm report](../../design/farm-zip-dryrun-1905-report.md) and [owner handoff](../../design/peer-farm-to-lead-runtime-20261025T1925-ZIP-dryrun-RESULT-erasure-risk.md).
 
 Full P2 actual3250 and separate10721 remain independently NO-GO. Five complete tails qualify only on each captured tuple. SWAP and element remain open; asset is serially NOTRUN. Isolated asset and P1/P3/P4 GOs retain recorded scope. Current core, D69, finaltuple P1-P5 and genuine installed render remain owner-lane work.
 
