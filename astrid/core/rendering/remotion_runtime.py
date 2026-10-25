@@ -766,12 +766,20 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
         script_directory = REPO_ROOT / 'scripts' if generator else Path(run.__file__).resolve().parents[2]
         # Match both real script launchers: replace -c's cwd search entry with
         # the script directory, and insert checkout only when not already present.
+        # Transport filtering removes PYTHONPATH. Carry only the Runtime this
+        # parent imported, and refuse a different Runtime winning in the child.
+        runtime_platform = Path(platform.__file__).resolve()
         source = ('import sys,json; sys.path[0]=sys.argv[2]; '
                   'sys.path.insert(0,sys.argv[1]) if sys.argv[1] not in sys.path else None; '
+                  'sys.path.append(sys.argv[3]); '
+                  'from pathlib import Path; from runtime_protocol import platform\n'
+                  'if str(Path(platform.__file__).resolve()) != sys.argv[4]:\n'
+                  '    raise RuntimeError("registry Runtime origin differs")\n'
                   'from astrid.core.rendering.remotion_runtime import _registry_observation; '
                   'print(json.dumps(_registry_observation(),sort_keys=True))')
         cwd = REPO_ROOT if generator else script_directory
-        argv = [python, '-c', source, str(REPO_ROOT), str(script_directory)]
+        argv = [python, '-c', source, str(REPO_ROOT), str(script_directory),
+                str(runtime_platform.parent.parent), str(runtime_platform)]
     result, receipt = _owned_registry_probe(argv, cwd=cwd, env=environment, phase='registry_discovery')
     try:
         _require_completed_probe(receipt, phase='registry_discovery')
