@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T08:06:37Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 2m -->
+<!-- agent | 2026-10-25T08:10:16Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 3m -->
 # agent board, 2026-10-25T08:04:20Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -284,7 +284,7 @@
 | F D108 D07 coverage | Preserve timing audio and window predicates | Luna / independent Luna | D108 terminal before needed proof | merging | Author0732; review0737 A PASS | Normalb943 adds three faithful current tests. All old predicates and existing ASTs conserved; statics pass. Functional proof pending on exact source. | b943270a9e |
 | U2 D108 Windows | Restore exact Windows registration test | Luna / independent Luna | Proper F-final platform proof | merging | Author0742; review0745 PASS | Normald0ec retains exact upstream registration and unchanged cleanup tests. Statics and source review pass; no Windows functional proof. | d0ecf1d69a |
 | F D07 source receipt | Record exact pending coverage | Luna | Normalb943 and review0737 A | merged | agt-F-D108-D07-source-receipt-0743 PASS | Exact three mappings and handoff copies; prefix CAS, hash and JSON checks pass. Source qualified, behavior pending; no D69 closure. | Evidence only |
-| F D108 assertion map | Qualify each changed assertion signal | Luna read only | Exact applied audit membership | doing | Review0754 FAIL; return0758 | Four report errors: wrong scope, reversed counts, mislabeled hash and missing rows. Same-branch first return active; authoritative membership still missing. | Evidence only |
+| F D108 assertion map | Qualify each changed assertion signal | Luna read only | Exact applied audit membership | review | Return0758; independent0806 | Corrected189/310/119 fallback now has956 predicate rows and8groups. Full113 membership still missing; rereview checks preservation direction and completeness. | Evidence only |
 | F D108 baseline prep | Prepare full upstream comparison input | Luna source only | Authentic upstream924 XML present | doing | Review0758 FAIL; return0803 | Same-branch first return builds complete XML and current9268 joins. Historical276 is valid but incomplete; exact naming and rename citations corrected. | Evidence only |
 
 Integration: Actual normald0ecf1d69a contains reviewed D07 and Windows test-only additions; production remains released070dfc5ef4 and adopts released Runtime1daca; all15 mappings unchanged. Includes normal mirror5554, D10101d516, media1a977, sheetCLI b948 and graph8c88. D103d588/S3badfe/legacy read79c94 and critical D110 normally merged. Historical D110 home tree605641 equals its independent review; later D07 and Windows changes tests only.
@@ -300,8 +300,8 @@ Blockers: Agent D107 — Independent0715 PASS_SOURCE; current test remains held 
 Blockers: Runtime D108 — Solecontroller0759 owns authenticated current MAIN profile provisioning and then agent-core-full submit. Missing profile is setup, not refusal. No competing installer/body.
 Blockers: Agent D69 — D07 normalb943 and Windows normald0ec source independently qualified. Exact assertion review0754 and baseline prep0756 active; functional/platform proof and final source accounting owed.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
-Next ready: MAIN agent-core-full via installed D89 runner. Assertion return0758 and full baseline return0803 active. Every completed source has its required reviewer. Family bodies paused.
-live 2 / cap 6; ready-undispatched 0 eligible local starts. Assertion return0758 and full baseline return0803 active. Independent initial reviews FAIL handled immediately; no product/test/generated/pin edits or body execution by manager.
+Next ready: MAIN agent-core-full via installed D89 runner. Assertion rereview0806 and full baseline return0803 active. Every completed source has its required reviewer. Family bodies paused.
+live 2 / cap 6; ready-undispatched 0 eligible local starts. Assertion rereview0806 and full baseline return0803 active. Independent initial reviews FAIL handled immediately; no product/test/generated/pin edits or body execution by manager.
 Inbox consumed through1484299 bytes. Updated 2026-10-25T08:04:20Z.
 Later: U4a D111 — Runtime memo1171212 security0729 FAIL; wholepath0729 and measured Sol0744 own genuine scaling follow-through. Agent adoption waits actual qualified release/security/native-seed smoke; no duplicate writer or P2 single.
 Later: MAIN profile input — Runtime0759 owns normal current-tree maker and D73 binding on070dfc/1daca. Agent returns existing original profile/archive facts only if that maker cannot qualify the graph; no local installer or body.
