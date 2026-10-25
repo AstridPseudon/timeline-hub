@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T19:24:30Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 3m -->
+<!-- agent | 2026-10-25T19:28:48Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 3 | status age 2m -->
 # agent board, 2026-10-25T19:21Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -95,6 +95,7 @@
 | D134 interim measurement | Measure frozen full core now | Luna / service | Superseding START NOW decision | doing | agt-F-D134-measurement-1909 | Independent1857 and DRY controls PASS | Service18455 submitted19:11:28Z. MEASUREMENT only, no ship credit. Earlier29996 exited126 before launcher; one actual body. E2E waits. | Frozen a4e016 /5e9ad |
 | F Agent conflicts A | Classify first20 frozen Agent paths | Luna read only | Main source slot after critical reviews | blocked:runtime | Hosted allocation peer1920 | Census1844/review1850 PASS | Exact sorted first20; all hunk classifications owed. No source patch or clone proof. | Frozen upstream886a |
 | F Agent conflicts B | Classify last20 frozen Agent paths | Luna read only | Main source slot after critical reviews | blocked:runtime | Hosted allocation peer1920 | Census1844/review1850 PASS | Exact sorted last20; disjoint from A. No source patch or clone proof. | Frozen upstream886a |
+| F Runtime review | Review Runtime10 conflict classification | Luna read only | Lead19:25 allows disjoint review | review | agt-F-Runtime-conflict-review-1926 | Exact six source artifacts received | Full22hunk/source/trivialpatch challenge; no clone or product mutation. | Frozen e319 /dbc |
 Integration: Agent a30e74e901a28b39c28facba3deb00d76f186e23, tree ece8e0887e48e45cb1fce85b1256c49a0f6126c0; clean at 18:27Z. Native companions HOME78db and graph callers HOMEa30e have exact independently reviewed blobs. Runtime ab1e lock remains qualified. Released Agent070dfc stays unchanged until proper batch core. Frozen D128 tuple a4e016 /5e9ad /d8a1 /635f stays exact. Held9ea, D100 product and D130 SWAP source excluded.
 
 core open:425 on immutable30693; REG14 remains until next full core. Original host14 independently passed at normal96df. Checkpoint8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips; exact450 bad conserved. No bounded-proof deduction, retirement0.
@@ -108,7 +109,7 @@ Blockers: SWAP safety — D130 holds recovery and related qualification after au
 Blockers: D69 and D59 — genuine installed render90, platform proof, final upstream audit, fullP2, final tupleP1-P5, wheel and ZIP still owed. Farm remains D77 only, after qualified maker kit.
 
 Next ready: Runtime Sol1908 and independent wholepath1909 complete the second portable return after review1903 FAIL, then exact final review and target check-only, then exact changed fixture at Agent sole venue. Successful parent RED/candidate GREEN needs one independent result review, reviewed CAS kit install, actual received hash/mode, and same-WIP controller1722 ONE changed normal child request/core. Local production request and core remain unspent.
-live 1 / cap 1 heavy; ready-undispatched 0 local. D134 controller1909 queued under superseding START NOW decision. D128 fixture waits for independent portable PASS and core terminal. No other body.
+live 2 / cap 1 heavy plus 1 expressly allowed read-only; ready-undispatched 0 local. D134 controller1909 queued under superseding START NOW decision. D128 fixture waits for independent portable PASS and core terminal. No other body.
 
 Disk:6.684GB at18:29Z; fresh scan found0 ended clean nonKEEP worktrees. Sweep3 removed0; compact packed0 and gzipped2 old logs. Protected d22/f1012 and all branches/evidence retained. Six-pin guard receipt remains design/agent-D128-six-pin-guards-1557.json.
 
@@ -116,7 +117,7 @@ H6 checked Runtime18:22, App18:26 and Farm18:08 actual boards. App D100 proof182
 D129: Farm permission refusals remain historical NOTRUN; expressly authorized normal review1549 completed Ruff, compile and AST PASS. D129a permission-file refusal stays stopped. D131 actual123bb93c regular0755 is installed; child reserve5905580032 bytes, Runtime/profile8GiB unchanged. No local guard edit or near-match reuse.
 Later: current17 selector topology and transcript authority remain incomplete. D23/D14 deferred anchors exact. Graph initial child birth and originalTrue redo have unknown causal owner and missing physical records; no speculative guard author or unchanged repeat. E2/D79 wait ZIP; D13 installed environment gap remains explicit.
 
-INBOX consumed through1811169 bytes. D133 corrected deferred; D134 exact controls and dry authorization consumed. Managers change only board, briefs, peers and exact worker handoffs.
+INBOX consumed through1814818 bytes. D133 corrected deferred; D134 exact controls and dry authorization consumed. Managers change only board, briefs, peers and exact worker handoffs.
 Current pass18:30Z: final1822 binding PASS led to one fixture service27653, exit2 in3s after two real Git fixture commits and two private Stores. Parent never reached report equality; candidate, sealed verification and adversarial controls unreached. No safety/permission denial. Exact safe packet published. Independent Luna1829 dispatched immediately read only, and Runtime peer1829 reserves source1747 correction without a duplicate reader. No installation, production child, core body, service coreID or count change.
 
 Pass18:33Z: independent1829 FAIL is source-bound: prepare_venue omits private tests/suites.conf, read unconditionally by Store.ensure projection before build. Original maker stderr EXACTMISSING; source finding is not a recovered log. Report and five immutable evidence files published byte-exact. Runtime peer1833 requests immediate Luna first return and protected source review; Agent sole receiving service resumes after exact source receipt. App peer1831 clears circular normal-home wait for D100 proof. No ready local author, duplicate reader or body.
@@ -152,3 +153,5 @@ Pass19:18Z: App exact D133 note1853 received and passed to existing Runtime note
 Pass19:20Z: source1901 ZIP allocation received fromdesign: Agent40 split20+20. Added two blocked:runtime hosted rows and peer1920 requests next two Main slots after criticalreviews; localcap1heavy is full and newlocalauthors paused. App own16+D100+helper fills its3source needs. Runtime1858 D100 finite setup/cache disposition accepted; App remains solefirstreturn/proof owner. No new contract question or duplicate author.
 
 Pass19:21Z: actualcore18455 running39percent/free6260924416bytes. Runtime peer1910 consumed: portable1903 secondFAIL on lint and malformedrole census; Sol1908 plus independent wholepath1909 already dispatched. No duplicate diagnosis or unchangedfixture. Old D13420:00 peer is superseded by recorded START NOW and actualservice.
+
+Pass19:26Z: lead19:25 explicit disjointreadreview permission consumed; Luna1926 immediately queued on Runtime10/22hunk sourcepacket at6226870272bytes. ExactthreeGitobjects present. No productauthor; D134 remains soleheavy. Peer1926 returns actual allocation.
