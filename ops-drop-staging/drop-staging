@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""Normal operational caller for the private drop-staging kit."""
+
+from drop_staging import main
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
