@@ -535,6 +535,10 @@ def _genuine_compound_source(tmp_path):
     document["parent_revision"]["payload"]["occurrences"] = \
         document["parent_revision"]["payload"]["occurrences"][:2]
     old_fake = source_old["object_id"]
+    # The bootstrap admits this catalog selection as well as its CAS object.
+    document["parent_revision"]["payload"]["registry"]["assets"][old["asset"]].update(
+        generationId=old["generation_id"], variantId=old["variant_id"]
+    )
     for image in [document["parent_revision"], *document["shot_revisions"],
                   *document["internal_timeline_revisions"]]:
         image["payload"] = _replace_values(image["payload"], {old_fake: old["object_id"]})
@@ -551,12 +555,13 @@ def _genuine_compound_source(tmp_path):
     before = bundle_from_document(current)
     consumer = copy.deepcopy(before)
     internal = consumer["shots"]["chapter-shot"]["internal_timeline"]
-    internal["tracks"] = [{"id": "held-audio", "kind": "audio"}]
-    internal["clips"] = [{"id": "held-audio-clip", "track": "held-audio",
-                           "clipType": "media", "asset": "held-audio", "at": 0, "hold": 1}]
-    internal["registry"] = {"assets": {"held-audio": {
+    original_internal = copy.deepcopy(internal)
+    internal["tracks"].append({"id": "held-audio", "kind": "audio"})
+    internal["clips"].append({"id": "held-audio-clip", "track": "held-audio",
+                              "clipType": "media", "asset": "held-audio", "at": 0, "hold": 1})
+    internal["registry"]["assets"]["held-audio"] = {
         "media_id": retained["object_id"], "type": "audio"
-    }}}
+    }
     from astrid.sdk.timeline.emitter import emit_document_commands
     admission = {"schema_version": 1, "op": "media.admit", "version": "1", "select": None,
                  "args": {"inputs": [{"pin": {"media_id": retained["object_id"],
@@ -569,13 +574,14 @@ def _genuine_compound_source(tmp_path):
     }
     after_a = bundle_from_document(current)
     removed = copy.deepcopy(after_a)
-    removed_internal = removed["shots"]["chapter-shot"]["internal_timeline"]
-    removed_internal["tracks"] = []
-    removed_internal["clips"] = []
-    removed_internal["registry"] = {"assets": {}}
+    removed["shots"]["chapter-shot"]["internal_timeline"] = original_internal
     current = submit(project, emit_document_commands(after_a, removed), "d92-commit-b")
     committed_b, pair_b = public_document(project)
     assert committed_b == current
+    assert bundle_from_document(current)["shots"]["chapter-shot"]["internal_timeline"] == original_internal
+    assert all(retained["object_id"] not in json.dumps(image["payload"]) for image in [
+        current["parent_revision"], *current["shot_revisions"], *current["internal_timeline_revisions"]
+    ])
     assert {row["media_id"] for row in current["dependency_manifest"]["media"]} >= {
         old["object_id"], retained["object_id"]
     }
