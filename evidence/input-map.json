@@ -1,0 +1,149 @@
+{
+  "schema": "timeline.d124.next-farm-core-command.v1",
+  "status": "source_only_next_batch_ready_pending_farm_inputs",
+  "verdict": "PASS",
+  "base": {
+    "composition_branch": "tl/integration",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "source_tuple": {
+    "agent": {
+      "commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+      "parents": [
+        "61fefc6983f4413f1d1964b149bbaf5eadb8d2f0",
+        "96df3f5b4862b1c267e3816237bae8a64b5dc31f"
+      ],
+      "union_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+      "union_tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a",
+      "host_fallback_commit": "96df3f5b4862b1c267e3816237bae8a64b5dc31f"
+    },
+    "runtime": {
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "parents": [
+        "7070f1378d1917fcce69857ebd33cd2b3015568b",
+        "ef4728a1c07b7d3909d5027fbf1e673f6aec0030"
+      ]
+    },
+    "app": {
+      "commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+      "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "selector": {
+    "inventory_metadata_count": 23,
+    "argv_root_count": 22,
+    "root_filters": "none",
+    "includes_live_scene_composition": true,
+    "roots": [
+      "tests/editing_conformance",
+      "tests/sdk",
+      "tests/timeline",
+      "tests/core/timeline",
+      "tests/core/test_timeline_element_orphan_cleanup.py",
+      "tests/core/test_timeline_element_publication.py",
+      "tests/core/test_timeline_element_publication_runtime.py",
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+      "tests/core/rendering/test_local_schema.py",
+      "tests/packs/timeline",
+      "tests/packs/rendering/test_composition_package.py",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_render_export_task_adapter.py",
+      "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+      "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+      "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "tests/stage1/test_cold_launch_autobootstrap.py",
+      "tests/test_installer_schema.py",
+      "tests/test_installer_sources.py",
+      "tests/test_installer_bootstrap_schema.py",
+      "tests/test_timeline_clip_replacement.py",
+      "tests/v10/test_timelines_create.py"
+    ]
+  },
+  "source_invariance": {
+    "from_agent_commit": "0b586e4b56cffbcd066ea8792adf46b660f5395a",
+    "to_agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "old_tree_path_count": 3563,
+    "new_tree_path_count": 3565,
+    "changed_path_count": 10,
+    "non_target_blob_invariant_count": 3555,
+    "changed_paths": [
+      "astrid/sdk/host_bootstrap.py",
+      "astrid/sdk/timeline/_commit_patch.py",
+      "astrid/sdk/timeline/_doc_patch_materialize.py",
+      "astrid/sdk/timeline/_recording.py",
+      "runtime.lock.json",
+      "tests/editing_conformance/native_word_anchor_fixture.py",
+      "tests/editing_conformance/test_native_word_anchor.py",
+      "tests/editing_conformance/test_word_binding_recipe.py",
+      "tests/sdk/test_d124_shared_custody.py",
+      "tests/sdk/test_timeline_commit_native_boundary_runtime.py"
+    ]
+  },
+  "preserved_identities": {
+    "canonical15_source": "6e8ae0142655eb7a6d10083d2d3ae5d434b5c94e",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "canonical_schema_sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
+    "runtime_bundle_sha256": "e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1",
+    "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+    "schema_source_blob": "1b3f12da05da3bb89fa76881184eefdf8232e076",
+    "launcher_blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "d73_maker_path": "tests/suites.conf.candidate.request.md",
+    "d73_maker_blob": "fbde96168dca681a76cff1526c23b8d0b74001eb",
+    "d73_maker_sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c"
+  },
+  "production_contract": {
+    "request_fields": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands",
+      "label",
+      "steps",
+      "merge",
+      "reads",
+      "Idempotency-Key",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id"
+    ],
+    "command_shape": "commands[{schema_version,op,version,select,args}]",
+    "step_shape": "steps[{id,label,intent,tags,command_ordinals,patch,optional reads}]",
+    "merge_values": ["fields", "atomic"],
+    "reply_fields": [
+      "accepted|merged",
+      "canonical",
+      "base",
+      "landing",
+      "receipt",
+      "records",
+      "bindings",
+      "effects",
+      "dependencies",
+      "history",
+      "undo_steps"
+    ],
+    "conflict_fields": ["reason", "head"],
+    "invalid_fields": ["code", "path", "hint", "suggested_command"],
+    "preview_fields": ["would_status", "receipt=null"],
+    "auth_privacy_no_write_semantics": "preserved"
+  },
+  "farm_state": {
+    "source_only": true,
+    "farm_receipts_claimed": false,
+    "body_executed": false,
+    "new_harness_or_body": false,
+    "old_batches_retargeted": false,
+    "child_maker_refusal": "preserved; no retry, substitution, overlay, or bypass"
+  }
+}
