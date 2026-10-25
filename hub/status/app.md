@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T23:36:54Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
-# app board, 2026-10-25T23:35Z
+<!-- app | 2026-10-25T23:41:29Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
+# app board, 2026-10-25T23:39Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -117,20 +117,22 @@
 
 | D136b | Classify observation producer consistency | HARD Sol and independent Luna | Final independent2240 PASS | merged | App2231 and independent2240 | Finite evidence only:135UNKNOWN,0 proved product/setup;25 hashes,52 nodes,43 edges and predicates PASS. Actual9 remains NO-GO. | No source change |
 
-| D136c | Read safe original nine refusal facts | Luna and independent Luna | Runtime 2f1f security 2312 PASS | review | app-D136c-original9-result-review-2335 | Actual sole nine:9 setupERROR,39.34s,exit1. Structured field values absent from JUnit; cause UNKNOWN. Independent review queued. | Agent d133; Runtime 2f1f delta |
+| D136c | Read safe original nine refusal facts | Luna and independent Luna | Runtime 2f1f security 2312 PASS | gated:recorded-no-go | Independent2335 PASS; actual2330 | Sole9 setupERROR,39.34s,exit1. Source/privacy/custody independentlyPASS. Structured values absent; all9UNKNOWN. No nextbody. | Agent d133; Runtime 2f1f delta |
+
+| D136c-reporting | Name first missing diagnostic reporting edge | Luna read only | Independent2335 terminal PASS | doing | app-D136c-reporting-seam-2339 | Exact guard to SDK exception to JUnit trace only; no body, collector, guard or source edits. | Source unchanged |
 
 Integration: App 5696769dfca056676cde1ab46d8bc94354b3a44a/tree0748df404125114a0f68b701fa76f43abd3fc79a. Entire tree equals reviewed/tested79699 no-measurement route;30Node20 controls/types/lint PASS. Predecessor b5c9 retained for historical15200 only. U3 sourcehome2f362/tree687e4c equals reviewedeba8;127 affected and warmup2/types/lint PASS. Qualified bootstrap59a4 normalHOME atop U3. Existing manifest Runtimeab1e/Agent070dfc/Composition635f. D139 requested U3 join already HOME; fresh ancestor36e1 check PASS. Latest lead150a19 deferred to small live-tip cut merge-forward. Producer-first final cut pins/proofs still owed.
 
 Current P2 NO-GO. Historical six complete tails qualified on recorded tuples; full original tour/final tuple still owed. Actual2136 finalFPS20db+D10042040+f53b original9 failed9setupERROR at intermediate authenticated physical observation. Independent2144 custody/source/counts PASS and actualNO_GO; no next9 until owner all-boundary inventory and meaningful qualified repair.
 
 Blockers: SWAP safety — D130 holds recovery, acceptance, release, adoption and related tours after automatic classifier refusal1537. No retry, alternate route, transfer or rollback. Existing Runtime escalation owns decision.
-Blockers: Projection9 — Runtime exact2f1f/tree37cf and independent security2312 PASS received. Sole resume2330 terminal:9 setupERROR at sameguard. New structured values absent from JUnit; cause UNKNOWN. Independent reviewer2335 queued. No repeat.
+Blockers: Projection9 — Runtime exact2f1f/tree37cf and independent security2312 PASS received. Sole resume2330 terminal:9 setupERROR at sameguard. New structured values absent from JUnit; cause UNKNOWN. Independent reviewer2335 PASS. Reporting seam2339 read only; no repeat.
 Blockers: Element cost — D127e census2153 and independent2202 complete: D112 path statically reachable, actual waits UNKNOWN. Header22:16 records D130 hold and combined owner decision pending. No fix or verify body. App route HOME5696769 retained.
 Blockers: Graph child birth — Runtime1814/final1821 C0 sequential operands defined. Authentic intermediate physical bindings/stages absent; causalownerUNKNOWN. No invented guardwriter or unchangedrerun.
 Blockers: Agent core and render — Runtime D139 recipe2153 and Agent input census2149/reviewer2210 own missing child imports. No ship core started. Farm step0 remains held for complete final merged tuple inputs; no App duplicate.
 Blockers: Final cut — ship-grade core, REG0, full P2, final P1-P5/D69, installed render, platform and ZIP remain owed. No final gate or ZIP claim.
-Next ready: Consume sole D136c independent reviewer2335 then publish finite verdict and precise missing-fact seam. No other admitted source or body.
-live 1 / cap 6; ready-undispatched 0. Sole independent D136c reviewer2335 queued; original-nine run spent, no additional body.
+Next ready: Consume finite reporting seam2339, send exact owner and scope handoff. No new original-nine authority.
+live 1 / cap 6; ready-undispatched 0. Sole read-only reporting-seam2339 dispatch; original-nine spent, no new body.
 INBOX consumed through 2540676 bytes. H6 Runtime23:12, Agent23:15 and Farm23:10 read. D136c handoff read directly from normal hub/design then byte-preserved locally.
 
 Safety: Manager edits only ORCH briefs/board/peers and byte-publishes authored SAFE artifacts. No manager product/test/generated/pin changes, direct Git writes, upstream push, M5, credentials or refused-route retry. Dirty U3/orphan guards and exact1.107GB orphan graph remain untouched.

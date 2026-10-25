@@ -1,0 +1,17 @@
+{
+  "review_verdict": "PASS",
+  "original9_verdict": "FAIL_ACTUAL_ORIGINAL9",
+  "classification_rule": "UNKNOWN unless actual facts prove PRODUCT GAP or exact skipped genuine setup proves SETUP",
+  "cases": [
+    {"case": "test_real_saved_projection_config_registry_and_full_pins_golden", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]},
+    {"case": "test_real_saved_entire_expansion_golden", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]},
+    {"case": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]},
+    {"case": "test_real_candidate_matches_sdk_opener_exactly[parent]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]},
+    {"case": "test_real_candidate_matches_sdk_opener_exactly[child]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]},
+    {"case": "test_real_candidate_matches_sdk_opener_exactly[new_shot]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]},
+    {"case": "test_real_candidate_matches_sdk_opener_exactly[duplicate]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]},
+    {"case": "test_real_candidate_matches_sdk_opener_exactly[remove]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]},
+    {"case": "test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN", "missing": ["structured refusal map", "captured-ref/path/native-site flags", "physical digest state", "creation exemption outcome", "ownership/binding/continuation state"]}
+  ],
+  "totals": {"cases": 9, "errors": 9, "failures": 0, "passes": 0, "skips": 0}
+}

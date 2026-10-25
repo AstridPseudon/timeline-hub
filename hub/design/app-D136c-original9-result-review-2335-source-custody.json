@@ -1,0 +1,63 @@
+{
+  "review_verdict": "PASS",
+  "agent": {
+    "commit": "d133a14838a4e607947893408bc34ba2742a19c6",
+    "tree": "f87d59a9deb3b64efddd4707d2c8eb8a52e31bf5",
+    "clean": true,
+    "protected_projection_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "protected_projection_predicates": 43,
+    "protected_projection_test_bodies": 11,
+    "protected_projection_fixture_statements": 54
+  },
+  "runtime": {
+    "carrier_commit": "777f203885ba66d89439d45d584aadd41487119f",
+    "carrier_tree": "2c022e367128da7c556d94613fb0a4b2d1915a09",
+    "immutable_parent": "ab1e4f6141987706132916e2da16477f5a019464",
+    "changed_paths_exactly_three": true,
+    "outside_three_conserved": true,
+    "worktree_clean": true
+  },
+  "reviewed_donor": {
+    "commit": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+    "tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+    "security_review": "PASS",
+    "finding_count": 0,
+    "files": [
+      {
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "git_blob": "b2b238a716b55276e63d23d2886ef8542a382faa",
+        "sha256": "6e227fe16740aa93c1880beea0ff741275a195c0e0d460e9b3d186aed6392598",
+        "equal_to_carrier": true,
+        "preimage_equal_to_ab1e": true
+      },
+      {
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "git_blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7",
+        "sha256": "fce6c3ebe916d3a5f6be48125d3214d7cf15b1e51a6f276681a825d0e3925f99",
+        "equal_to_carrier": true,
+        "preimage_equal_to_ab1e": true
+      },
+      {
+        "path": "tests/test_timeline_missing_observation_diagnostics.py",
+        "git_blob": "15c35c662480d98443b66210a823e3f00967d6db",
+        "sha256": "e2c82f375397a7bc64c198b61b06561e2d11e7fda205ed4aeb2f721af117dc4e",
+        "equal_to_carrier": true,
+        "new_reviewed_test": true
+      }
+    ]
+  },
+  "loader": {
+    "agent_modules_first": true,
+    "runtime_modules_from_carrier": true,
+    "registered_provider_type": "RuntimeCommitService",
+    "diagnostics_source_loaded_from_carrier": true,
+    "python_version": "3.13.16"
+  },
+  "raw_custody": {
+    "private_directory_mode": "0700",
+    "private_file_mode": "0600",
+    "keep_markers": true,
+    "raw_copied": false,
+    "raw_published": false
+  }
+}
