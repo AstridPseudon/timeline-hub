@@ -224,9 +224,20 @@ def historical_sheet_film(tmp_path, request):
         base = history['head']
         document = service._timeline_commits()[0].revision_closure(project, 'film', base['revision_id'])
         bundle = commit.bundle_from_document(document)
+        native_output = {
+            'resolution': '1280x720', 'fps': 30, 'file': 'output.mp4',
+            'background': None, 'background_scale': None,
+        }
         calls = [capture_initialize(bundle, name='Opening', slug='film',
-                                    output=copy.deepcopy(payload['config']['output']))]
+                                    output=native_output)]
         bundle = execute(bundle, calls).bundle
+        calls.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                      'args': {'changes': [{
+                          'op': 'set', 'ref': 'parent', 'path': ['config', 'output'],
+                          'before': present(native_output),
+                          'value': copy.deepcopy(payload['config']['output']),
+                      }]}})
+        bundle = execute(bundle, [calls[-1]]).bundle
         calls.append(capture_track_create(bundle, 'parent', copy.deepcopy(payload['config']['tracks'][0])))
         bundle = execute(bundle, [calls[-1]]).bundle
         calls.append(capture_occurrence_create(
@@ -253,13 +264,15 @@ def historical_sheet_film(tmp_path, request):
 
         steps = [{'id': f'bootstrap-{index + 1}', 'label': 'Bootstrap ordinary sheet',
                   'intent': '', 'tags': [], 'command_ordinals': [index],
-                  'patch': copy.deepcopy(call['args']['changes']) if call['op'] == 'doc.patch' else []}
+                  'patch': copy.deepcopy(call['args']['changes']) if call['op'] == 'doc.patch' else [],
+                  'reads': []}
                  for index, call in enumerate(calls)]
         request_body = {
             'api_version': 1, 'project_id': project, 'timeline_id': 'film',
             'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id'],
             'commands': calls, 'label': 'Bootstrap ordinary sheet', 'steps': steps,
-            'merge': 'atomic', 'dry_run': False, 'source': {'via': 'test-bootstrap'},
+            'merge': 'atomic', 'reads': [], 'dry_run': False, 'source': {'via': 'test-bootstrap'},
+            'rationale': 'Bootstrap ordinary sheet', 'group_id': 'ordinary-sheet-bootstrap',
         }
         accepted = service.commit_timeline(
             project, 'film', request_body, idempotency_key='seed-sheet', publisher='author',
