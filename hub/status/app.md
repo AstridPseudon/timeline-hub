@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T13:15:46Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
+<!-- app | 2026-10-25T13:20:00Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 3m -->
 # app board, 2026-10-25T13:15Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -101,5 +101,5 @@ Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and 
 Next ready: Helper final1315 review and App D66 hook1312 active. On hook author completion dispatch its sole protected review immediately, then merge. Resume one fulltour from1306 preparation with reviewed source and fresh pins.
 live 2 / cap 6; ready-undispatched 0; core open: 2. D124 source repairs are disjoint. No heavy body active. D89b allows up to3 source/read workers at4.6GB; normal cap6 above5.0GB.
 Capacity: Corrected compact ran within current scope:0 scratch dirs,17 old logs gzipped,4 finished test dirs packed losslessly. Free5.364GB at13:14. Ended clean nonKEEP scan0. Heavy5.2GB and stop4.0GB; prior refused and dirty targets untouched.
-INBOX consumed through2205392 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
+INBOX consumed through2208247 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.

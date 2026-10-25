@@ -1,0 +1,74 @@
+{
+  "review": "D124 independent final helper privacy/harness review",
+  "source_verdict": "PASS",
+  "attachment_verdict": "PENDING",
+  "candidate_commit": "181952babeb3454e5d18f441dcb355f203ed775b",
+  "runtime_baseline": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "changed_files": [
+    "tests/helpers/p2_commit_phase_capture.py",
+    "tests/test_p2_commit_phase_capture.py"
+  ],
+  "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+  "source_checks": {
+    "truthful_dispatch_and_arrival": "PASS",
+    "capture_wide_overhead_scope": "PASS",
+    "key_hash_utc_pid_birth": "PASS",
+    "privacy": "PASS",
+    "boundary_names_against_runtime_5e9ad": "PASS",
+    "runtime_product_unchanged": "PASS",
+    "source_containment": "PASS",
+    "sampler_activation_and_selected_request": "PASS",
+    "fail_closed_missing_helper": "PASS"
+  },
+  "truthful_boundaries": {
+    "dispatch": "RuntimeHandler._dispatch call entry",
+    "handler": "RuntimeHandler._timeline_commit call entry",
+    "arrival": "unsupported; no socket/server-accept hook; network_arrival_ms is null",
+    "body": "unsupported; no body-read hook; request_body_receive_ms is null",
+    "wall_denominator": "dispatch_to_completion_wall_ms, equal to dispatch entry through _dispatch return",
+    "observer_cpu": "capture-wide and explicitly not attributed to any request",
+    "lock_wait": "unsupported; no exact threading.Lock.acquire hook"
+  },
+  "correlation_and_privacy": {
+    "correlation_fields": [
+      "method",
+      "sanitized route template",
+      "SHA256 Idempotency-Key",
+      "UTC/monotonic capture anchor",
+      "PID",
+      "process birth ticks"
+    ],
+    "exported_payload": "No request body, raw key, authorization, credentials, opaque identifiers, private URL, or exception text",
+    "poison_marker_check": "PASS"
+  },
+  "sampler": {
+    "donor": "D111a / a0b3eac",
+    "interval_ms": 20,
+    "selected_thread_filter": "active request thread identities only",
+    "per_sample_deduplication": "safe frame identity counted once per sample",
+    "loss_accounting": "lost samples are tracked globally and for active requests",
+    "denominator": "dispatch-scoped wall denominator"
+  },
+  "tests": {
+    "central_targeted": "19 passed in 3.05s",
+    "ruff": "passed",
+    "mypy": "passed with --follow-imports=skip --ignore-missing-imports",
+    "compile": "passed",
+    "git_diff_check": "passed",
+    "private_activation_privacy_denominator": "passed",
+    "node20_app_hook_offline": "passed: v20.19.4, exact helper loaded through App fe3309 sitecustomize, sink created"
+  },
+  "attachment": {
+    "status": "PENDING",
+    "app_source": "fe3309dba4520835a685f925468bff1acdc0506f",
+    "current_route": "App harness p2CommitPhaseCaptureConfig derives helper as RUNTIME_CHECKOUT/tests/helpers/p2_commit_phase_capture.py; runtimeEnv prepends the bootstrap directory and Runtime checkout to PYTHONPATH and passes ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+    "blocker": "Runtime 5e9ad production checkout has no candidate helper, and current D66 serviceRecipe carries no explicit reviewed helper path/hash. No normal production preflight or body tour was claimed.",
+    "required_owner_action": "D66 must accept and record the reviewed helper path/hash while keeping Runtime checkout/manifest exactly 5e9ad; if its source guard requires the helper inside Runtime home, the route is blocked pending an approved test-helper merge/adoption."
+  },
+  "qualification": {
+    "source_only": true,
+    "element_cause_proven": false,
+    "p2_go": false,
+    "full_body_tour": "not run"
+  }
+}
