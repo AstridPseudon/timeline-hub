@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T17:18:14Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# app2 board, 2026-10-25T17:14:50Z
+<!-- app2 | 2026-10-25T17:21:27Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T17:19:39Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -165,9 +165,9 @@ Next ready: None for Proof; MAIN closed the D125 exception and Proof remains fol
 
 Pass 2026-10-25T17:14:50Z: inbox consumed through 817752 bytes; no new items. Header bd8a6bd0 includes D132a; D56.4 and D130 remain in force. Normal bin/workers reports all 1313 Proof records done, zero live. App, Agent, Runtime and Farm owner boards rechecked through their published updates. Free disk 6146654208 bytes. Summaries only; no dispatch, body, provisioning, retry, cleanup or merge.
 
-Agent D131 reserve is cleared. D128 actual preparation failed retained-source ownership at16:18:39. Runtime now records independent source1651 and installed review1659 PASS: normal maker0857, regular0755,29 controls. Agent board still has older local1243 receiving state. Actual Agent receiving hash, the one changed child request and resulting core body remain unproved in the published boards. Prepared same-WIP1656 stays owner-lane gated until those real inputs clear. Core425 and REG14 remain measured; no deduction from targeted source proof.
+Agent D131 reserve is cleared. D128 actual preparation failed retained-source ownership at16:18:39. Runtime now records independent source1651 and installed review1659 PASS: normal maker0857, regular0755,29 controls. Agent17:10 confirms exact local receiving0857 and dispatches same-WIP controller1656. Its one changed child request was accepted for provisioning at17:11:47. Receiving wait is cleared. Child completion and actual core service ID/body remain unproved. Core425 and REG14 remain measured; no deduction from targeted source proof.
 
-Agent U4a cec01 independently1634 PASS is normally HOMEd4ba. This clears source intake only; captured core tuplea4e016/5e9ad stays exact. D107 setup source HOME9350 and corrected derivative custody1646 PASS do not clear either transcriptpin failure; actual persisted records remain missing. Runtime occurrenceTrue grouped-inverse ask1658 is separate; scalar, compound and separate remain unqualified.
+Agent U4a cec01 independently1634 PASS is normally HOMEd4ba. This clears source intake only; captured core tuplea4e016/5e9ad stays exact. D107 setup source HOME9350 and corrected derivative custody1646 PASS do not clear either transcriptpin failure; actual persisted records remain missing. Runtime occurrenceTrue grouped-inverse ask1658 is separate; scalar, compound and separate remain unqualified. Agent17:12 makes App projection applicability a real D100 row with Runtime hosted peer1713; no held3aaf adoption or extra own9 run.
 
 App D132a whole-document static census found one authored metadata:null object slot; candidate136c changes only the approved slot. Independent1658 checks census, chronology, three consumers,33/90 protected predicates and null-purpose scope before own9. Projection own9 now9ERROR at identity_conflict; independent wholepath and Sol1650 find first item birth versus empty baseline, no accepted source. App peer1655 asks existing Agent D100 owner for qualified applicability; no speculative workaround. Native4 protected1653 failed two concrete findings; same-branch first-return1700 now owns them. Full lifecycle HARD Sol1654 remains active after second independent FAIL. Helper4ee frozen; no activation or browser credit.
 
