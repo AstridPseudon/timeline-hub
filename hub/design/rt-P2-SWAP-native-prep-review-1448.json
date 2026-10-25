@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "task": "rt-P2-SWAP-native-prep-review-1448",
+  "verdict": "PASS_BOUNDED_SOURCE_RESULT_REVIEW",
+  "exact_replay": "NOT_ADMITTED",
+  "safe_packet_present": true,
+  "stale_packet_absent_wait_cleared": true,
+  "supported_suite": "full-p2-swap-native-1055",
+  "suite_registration": "orch/tests/suites.conf:223",
+  "suite_selector": "diagnostics/test_p2_swap_native.py::test_p2_swap_native_replay_and_d112_control",
+  "current_base": {
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"
+  },
+  "current_base_has_harness": false,
+  "source_hash_applicability": {
+    "current_app_p2_tour_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "frozen_harness_embedded_p2_tour_sha256": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+    "classification": "APPLICABILITY_MISMATCH_ONLY"
+  },
+  "exact_missing_statuses": {
+    "original_request_body_or_safe_equivalent": "MISSING",
+    "authentic_pre_swap_base_history_closure": "MISSING",
+    "historical_media_selection_and_registry_custody": "MISSING",
+    "receiving_diagnostic_bound_to_5e9ad1c6": "MISSING",
+    "private_realm_auth_if_required": "UNKNOWN_CONDITIONAL"
+  },
+  "checks": {
+    "json": "PASS",
+    "runtime_ast": "PASS",
+    "frozen_harness_ast": "PASS",
+    "frozen_harness_js_syntax": "PASS",
+    "tuple_tree": "PASS",
+    "diff_check": "PASS",
+    "command_executed": false,
+    "root_cause_claim": false
+  },
+  "evidence": "workers/rt-P2-SWAP-native-prep-review-1448/evidence/source-result-review.{md,json}"
+}

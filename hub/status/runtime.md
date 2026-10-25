@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T14:47:38Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 2m -->
-# runtime board, 2026-10-25T14:45:10Z
+<!-- main | 2026-10-25T14:51:52Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 2m -->
+# runtime board, 2026-10-25T14:49:45Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -476,13 +476,15 @@
 
 | OPS-Farm-review | Verify narrow distribution ownership fix | Luna independent | Source review complete | merged | rt-OPS-Farm-metadata-review-resume-1417 | Source PASS through real embedded caller; live root remains inferred. [Review](../../design/rt-OPS-Farm-metadata-review-resume-1417.md). | Independent1417 PASS | Evidence only |
 
-| R-P2-SWAP-3250 | Bind public correlation and refusal tags | Luna / independent Luna | Correct first review findings | doing | Return1444; review1441 FAIL | Keepalive ID reuse, raw public ID on unavailable path and one new Ruff diagnostic. Source correction queued on same branch. Native replay NOTRUN. | Independent1441 FAIL | 938aa54 held |
+| R-P2-SWAP-3250 | Bind public correlation and refusal tags | Luna / independent Luna | Final combined diagnostic rereview | review | Return1444 done; keyjoin1450 | Return12 diagnostic and95 adjacent PASS, zero new Ruff. Final review covers original1441 failures and keyhash join; native replay NOTRUN. | Prior1441 FAIL retained | Return1444 held |
 
 | OPS-Farm-installed | Verify installed maker custody | Luna independent | Farm propagation and actual result | merged | rt-OPS-Farm-installed-review-1440 | Installed and candidate e62f exact, backupff8 exact, mode0755 and embedded controls PASS. [Review](../../design/rt-OPS-Farm-installed-review-1440.md) | Independent1440 PASS | e62f89ea installed |
-| P2-SWAP-native-prep | Bind genuine native replay inputs | Luna read only | Existing3250 sequence and light admission | doing | rt-P2-SWAP-native-prep-1440 | Safe terminal packet received. Exact native body/history still unqualified; source-only command and input assessment active. | Source1441 separate | Base5e9ad |
+| P2-SWAP-native-prep | Bind genuine native replay inputs | Luna read only / Luna | Exact retained sequence and light admission | review | Author1440; result review1448 | Existing suite identified. Exact body, history, base and media custody absent; no native execution. [Facts](../../design/rt-P2-SWAP-native-prep-1440.json) | Independent1448 active | Source unchanged |
 
 | R2-step-boundary | Authenticate complete step source consistently | HARD Sol / Luna | Genuine1433 source and acceptance | doing | rt-R2-step-boundary-1444 | Agent genuine two-command one-step custody PASS, accept FAIL. Source correction plus strict controls assigned; original four remain unqualified. | Agent1433 review separate | Base453b; source pending |
 | Agent-next-Farm-packet | Preserve reviewed future batch command | Agent Luna | Authentic Farm inputs and child | review | Agent1424; independent1426 PASS | Exact291c source packet published. Future a4e016/5e9ad; captured Farm tuples remain unchanged. No body or profile inference. | Independent1426 PASS | Packet291c |
+
+| P2-SWAP-key-correlation | Join helper attempt to refusal diagnostic | Luna / independent Luna | Final diagnostic rereview | doing | rt-P2-SWAP-key-correlation-1450 | Same-branch continuation adds exact helper key SHA256. Prior request-lifetime and unavailable-path fixes preserved; final review follows frozen union. | Final review pending | Source pending |
 
 Runtime producer: RELEASED 5e9ad1c6f74241d8771d3284fdd2ce7a214fd344, tree de2954a0ceadb4455903d9abdfec3b773318a50f. Normal helper453b adds reviewed diagnostic tests only; no semantic release or tour credit inferred.
 core open: 425 on immutable Agent30693; 14 confirmed regressions and450 bad remain. New own-node1357 has six PASS and four FAIL, not yet independently accounted into core. Farm core is still owed.
@@ -490,19 +492,19 @@ regressions: Main96df host revert independently PASS14 plus73/29/12 controls; no
 Gates: P1/P3 recorded GO; P4 independent GO28.101s. P2 six of eight case GOs on recorded34d464/070dfc/7070/635f. SWAP and element open; full tour NO-GO.
 Blockers: Farm child — exact reviewed e62f installed by1431; pre/post controls passed. Farm lead verifies normal propagated hash then one authorized reissue. Actual refused layout remains unknown.
 Blockers: Agent shared roots — original ten six PASS,four FAIL. Agent1433 identifies a genuine step-source mismatch; sole Runtime auth1444 fixes that seam. Other original roots remain unknown.
-Blockers: SWAP — source review1441 FAIL found request lifetime and raw-ID leakage. Same-branch return1444 active. Native1440 assesses genuine sequence; actual3250 lower root remains unknown.
+Blockers: SWAP — first-return1444 fixes request lifetime/raw ID and passes12 diagnostic plus95 neighbors. Keyhash1450 adds App helper join, then independent final review. Actual3250 lower root unknown.
 Blockers: Element — App is sole owner. Runtime453b helper is HOME; App1350 closes two harness contracts under D126 before later sampled tour. No Runtime semantic/source input wait.
 Blockers: Final render — Farm owns ordinary full stage and installed render under D124.6; exact recipe, applied source, pinned public OMP input and reviewed phase guard published. No more Main phases.
 Blockers: D69 — XML107 normal Agentb545 source, applicability and batch proof pending. Installed render90 remains open; no whole audit PASS.
 Blockers: Final cut — green core, REG0, full current P2,D69,final tuple P1–P5 and genuine installed render required. No build or ZIP.
 Blockers: KIT CHANGE — make-child-venv e62f89ea installed0755 with exact predecessor backup; final1428 PASS and pre/post controls passed. Farm propagation and genuine one-reissue result owed.
 
-Next ready: Same-branch diagnostic return1444 and auth source1444. Native1440 prepares genuine inputs. Farm lead verifies propagated e62f then one normal reissue; no additional approval stage.
+Next ready: Step-boundary1444 source, keyhash1450 union and source-result1448 verdict. Final diagnostic security review at freeze. Farm lead exact kit propagation and one reissue own body unblock.
 Ready for host filing: None. Host96df is normal a4e016; no duplicate filing. Separate a1 producer is superseded by independently reviewed union16bb.
 Venues: No Main heavy body. Farm frozen0b586/42aad core and9ea/369 host tuples unchanged; next Agent batch captures normal a4e016. Proof stood down; App D127 owns tagged tour.
 Delivery: Private100Python+TS/41 matrix inventory qualified; D1235bd01/b0ff current patch independently SOURCE_PASS. D123a final upstream refresh occurs once at D59; rehearsal remainsb742. Wheel, final matrix, Windows and installed render proofs pending.
 Later: R2c81b and D1160643 exact seed SOURCE_PASS; new recipe originals in1357 now executed and await exact per-ID review. Occurrence historical stage/promotion records EXACTMISSING, no App input wait. D126 ZIP note awaits qualified App migration.
 Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote filing. Prior source/retirement denials stay stopped. Four historical retirement targets remain held under owner12:25.
-Disk: About4.83GB. Sweep3 completed, zero removed. Four latest finished worktrees already absent. Three source-only authors or preparation under D89b; no native or heavy body.
-live 1 / cap 3; ready-undispatched 0; queued 2. Latest dispatcher header14:39 shows1; completed reviews1441/1440 and new author dispatches1444 await refreshed header.
-INBOX consumed through1262452 bytes. Updated 2026-10-25T14:45:10Z.
+Disk: About4.81GB. Sweep3 removed0; compact packed0, gzipped3 old logs and packed0 test dirs. Three source-only or microcontrol workers; no provider/native or heavy body.
+live 1 / cap 3; ready-undispatched 0. Latest dispatcher header: 2026-10-25T14:47:38Z. Auth1444, diagnostic1444 and review1448 active or queued; no heavy.
+INBOX consumed through1266165 bytes. Updated 2026-10-25T14:48:03Z.
