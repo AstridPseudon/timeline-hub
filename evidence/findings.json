@@ -1,0 +1,47 @@
+{
+  "task": "D134 root-008 FIRST RETURN",
+  "result": "CORRECTED_EVIDENCE",
+  "behavior_status": "NOTRUN",
+  "retained_original": {
+    "result": "FAIL",
+    "source_author": "app-D134-fork18-source-2110",
+    "review": "app-D134-fork18-review-2111",
+    "artifacts_immutable": true,
+    "retained_log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e"
+  },
+  "F001": {
+    "status": "CORRECTED",
+    "finding": "The derivative exact_member_index now uses the authoritative full node IDs, including tests/editing_conformance/ and exact parameter spellings.",
+    "count": 18,
+    "multiset_equality": "exact",
+    "source_and_predicate_conservation": true
+  },
+  "F002": {
+    "status": "CORRECTED",
+    "finding": "The derivative trace continues from the public Agent API through Runtime's registered provider invocation, Agent capture/binding/history, and Runtime acceptance/persistence authority.",
+    "public_agent_api": "astrid/sdk/_remote_timeline.py:225-251; astrid/sdk/workspace_client.py:485-500",
+    "runtime_public_entry": "/home/user/work/runtime/runtime_protocol/server.py:300-340",
+    "runtime_registered_provider": "/home/user/work/runtime/runtime_protocol/daemon.py:239-257; /home/user/work/runtime/runtime_protocol/timeline_commit_provider.py:70-93; /home/user/work/runtime/runtime_protocol/service.py:2412-2432",
+    "provider_invocation_boundary": "/home/user/work/runtime/runtime_protocol/service.py:2528-2559; /home/user/work/runtime/runtime_protocol/timeline_commit_execution.py:365-401",
+    "agent_capture_binding_history": "astrid/sdk/timeline/_recording.py:89-115; astrid/sdk/timeline/_commit_patch.py:277-295,493-501; astrid/sdk/timeline/commit.py:770-922,997-1022,1160-1190,1395-1398",
+    "runtime_verified_acceptance": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:1491-1540,1832-1853,1878-1896,2058-2089",
+    "historical_payload_available": false,
+    "current_caller_conclusion": "The retained historical payload is missing, but source proves a supported current caller path exists; missing history is not evidence that the current caller is absent."
+  },
+  "finite_conclusion": {
+    "classification": "UNKNOWN_UNAPPLIED",
+    "owner": "Agent provider / Runtime producer-history custody seam",
+    "product_fault_proved": false,
+    "behavior_credit": false,
+    "retirement_credit": false,
+    "reason": "The current path is proved, but the retained failure lacks the authenticated ABI-1 record, predecessor/output closures, and exact binding/history boundary needed to attribute the historical failure."
+  },
+  "controls": {
+    "abi1_request_omission_preserved": true,
+    "v2_controls_not_substituted": true,
+    "no_abi_normalization": true,
+    "no_fabricated_binding_receipt_history": true,
+    "no_authored_input_or_predicate_change": true,
+    "D130_safety_hold_unchanged": true
+  }
+}
