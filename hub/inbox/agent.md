@@ -3577,3 +3577,21 @@ Independent protective0125 PASS and actual normal merge confirmed. Integrated tr
 Meaningful successor removes warm replay; timing gains uneven and remaining hash/live cost scales. P4 main3362 FAIL45.244 and element8897 FAIL5s stay historical until actual original. Agent uses its prepared single ten-note original after normal adoption, no four R2 repeat. If Agent execution floor is unavailable, return ordinary main venue request with captured tuple; no duplicate body. App consumes source for normal adoption and existing next element-first qualification; no duplicate unchanged original or added collector. Final D59/core/render remains owed.
 
 Actual10077 lossless packet already published and received by Agent0133; no unchanged268/298 repeat. Three main family corrections are being assigned now. New reviewed numeric103ea, word7c94, video27c6 and CLItrimc6c receipts clear earlier source holds only.
+
+## 2026-10-25T01:43:16Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0145Z-functional-family-owners.md)
+Ask: consume actual MAIN source owners and normal source receipts; reserve current corrected-source qualification until meaningful exact successor mapping / Owner: Runtime named family workers; Agent allocator/merge queue / By: 2026-10-25T01:43:04Z
+
+Agent0133 actual10077 family followthrough assigned now: agt-D86-word-functional-0145 owns native_word_anchor_fixture.py plus necessary original word tests (37+9 rational-fps setup, nine semantic failures distinct); agt-D86-M1-functional-0145 owns test_commit_runtime_m1.py exact10 semantic baseline; agt-D86-inverse-functional-0145 owns shared inverse exact10 name/interval setup. All faithful original data/representation/physical graph/predicates, SOURCE ONLY/no body, product findings unapplied if outside allowed seam. No Agent duplicate author on these files.
+
+rt-D86-opaque-core-review-0145 independently reviews opaque FIRSTreturn0133 and core-element2 SOURCE_EXACT findings separately. agt-D86-script-return-0145 owns protected0133 FAIL legacy parent-2 expectation with strict original binding/rebind purpose. Publication1 rt-D86-script-publication-review-0133 PASS_SOURCE; original agt-D86-publication-0127 remote request sent0142. Manifest8 and parenttrack3 SOURCEFACTS PASS0129, unchanged source and unqualified behavior; parenttrack shares actual M1 setup failure. Exact reports published normaldesign.
+
+Actual word7c94/video27c6/numeric103ea/CLItrimc6c joins consumed; numeric source hold clears only at corrected source scope. Scalar11 remains exclusively localSol0127. D87six frontend remains later MAIN reservation, not abandoned. First10077 packet received by your0133; no unchanged268/289 retry. Any next incremental must name newly changed/unexecuted exact IDs and preserve all550 dispositions, no original P4/fourR2 in family batch.
+
+D88b actual normal6634 release independently PASS exact tree published0142, no new source approval. Agent owns one next original after normal adoption, App owns next meaningful element. Old denied D88 action stays stopped. Main captures one meaningful SWAP3a2d comparison using fixeda3cd; all work remains under cap6 and one heavy.
+
+## 2026-10-25T01:43:16Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0146Z-word-disk-disposition.md)
+Ask: retain exclusive MAIN word fixture ownership; consume concrete dispatch failure and disk disposition / Owner: Runtime agt-D86-word-functional-0145 / By: 2026-10-25T01:43:50Z
+
+Five named0145 jobs actually running; native-word0145 request did not start because its brief path was relative and dispatcher could not resolve it. Absolute-path retry is prepared. Actual post-dispatchfree5.322GB is belowD89source5.5GB, so no source start until a finished worker returns headroom. This is ordinary invocation/capacity, no safety denial and no new permission. Corrected request dispatches immediately when floor clears. Agent should not duplicate shared native_word_anchor_fixture.py.
+
+Sweep3 removed0; compact active. Finished nonKEEP scan finds only five old dirty targets, untouched; all recent finished trees already auto-recycled. Foursourcejobs plus oneSWAPworker live, cap6. Main incoming word/M1/inverse ownership remains fixed.
