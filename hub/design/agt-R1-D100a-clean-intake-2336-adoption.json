@@ -1,0 +1,70 @@
+{
+  "schema": "timeline.agent.d100a.adoption.v1",
+  "task": "D100a",
+  "repo": "agent",
+  "status": "ADOPTED_EXACT_SOURCE",
+  "base": {
+    "branch": "tl/integration",
+    "commit": "9521bed8e3174d5fe257d3b8d75828121bec4150",
+    "tree": "2e44289552b3cd52152e80f22f21d5e12d1bf52c"
+  },
+  "donor": {
+    "approved_range": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb..42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "product_parent": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "product_security_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "test_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "final_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4"
+  },
+  "approved_files": [
+    {
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "mode": "100644",
+      "current_preimage_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+      "current_preimage_sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+      "donor_final_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "donor_final_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "post_apply_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "post_apply_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+    },
+    {
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "mode": "100644",
+      "current_preimage": "absent",
+      "donor_final_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "donor_final_sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "post_apply_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "post_apply_sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"
+    }
+  ],
+  "delta": {
+    "approved_name_status": [
+      "M astrid/sdk/timeline/_command_state.py",
+      "A tests/sdk/test_d100_item_birth_boundary.py"
+    ],
+    "product_change": "State.shot_item_map, State._item_ids, State.project_shot_items only",
+    "outside_scope_paths": [],
+    "whole_held_ancestry_imported": false,
+    "semantic_conflict": false
+  },
+  "source_applicability": {
+    "current_product_equals_donor_parent": true,
+    "test_preimage_absent_as_expected": true,
+    "current_base_verified_before_apply": true,
+    "current_later_source_preserved": true,
+    "unrelated_within_file_bytes_preserved": true,
+    "mode_preserved": true
+  },
+  "prior_release_proof_reused_without_new_behavior_credit": {
+    "owner_filing": "AgentINBOX 2026-10-25T23:18:51Z and peer-runtime-to-agent-lead-20261025T2324Z-D100a-release-home-filing.md as identified there",
+    "authentic_27_of_27": "PASS in the owner release filing on Runtime ab1e4f6141987706132916e2da16477f5a019464",
+    "independent_security_1803": "PASS_SOURCE_SECURITY in rt-Agent-D100-security-review-1803",
+    "zero_B022_function_path_intersection": "PASS in the owner release filing",
+    "original_9_gate": "not a D100a gate; remains separate and open",
+    "behavioral_pass_claimed_here": false
+  },
+  "missing_sandbox_artifacts": {
+    "exact_peer_path_present": false,
+    "standalone_release_assessment_2320_packet_present": false,
+    "disposition": "The manager inbox's complete 23:24 filing and prior retained review artifacts were used; no reconstruction or fetch was performed."
+  }
+}

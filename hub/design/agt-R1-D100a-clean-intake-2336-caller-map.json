@@ -1,0 +1,74 @@
+{
+  "schema": "timeline.agent.d100a.caller-map.v1",
+  "status": "STATIC_CALL_CHAIN_VERIFIED",
+  "chain": [
+    {
+      "step": 1,
+      "symbol": "RuntimeService.register_timeline_commit_provider",
+      "file": "/home/user/work/runtime/runtime_protocol/service.py",
+      "lines": "2412-2432",
+      "fact": "Startup-only registration validates and installs the selected provider."
+    },
+    {
+      "step": 2,
+      "symbol": "RuntimeService.commit_timeline",
+      "file": "/home/user/work/runtime/runtime_protocol/service.py",
+      "lines": "2468-2483",
+      "fact": "The public commitTimeline route validates the exact project/timeline and canonical invocation path, then enters the coordinator."
+    },
+    {
+      "step": 3,
+      "symbol": "CommitExecutionCoordinator._execute",
+      "file": "/home/user/work/runtime/runtime_protocol/timeline_commit_execution.py",
+      "lines": "373-401",
+      "fact": "The authenticated request port is created and the registered provider's commit method is invoked."
+    },
+    {
+      "step": 4,
+      "symbol": "RuntimeCommitService.commit",
+      "file": "astrid/sdk/timeline/commit.py",
+      "lines": "1160-1169,1329-1335",
+      "fact": "The Astrid provider validates commands, loads the authenticated closure, and calls commands.execute with the request-scoped guards and source inputs."
+    },
+    {
+      "step": 5,
+      "symbol": "commands.execute",
+      "file": "astrid/sdk/timeline/commands.py",
+      "lines": "201-255",
+      "fact": "The operation registry selects doc.patch and dispatches its handler through a Recording backed by State."
+    },
+    {
+      "step": 6,
+      "symbol": "Recording.State",
+      "file": "astrid/sdk/timeline/_recording.py",
+      "lines": "71-99",
+      "fact": "Each registered command uses State for guarded reads and writes; captured reads retain the immutable input boundary."
+    },
+    {
+      "step": 7,
+      "symbol": "State.set -> State.project_shot_items -> State.shot_item_map/_item_ids",
+      "file": "astrid/sdk/timeline/_command_state.py",
+      "lines": "316-393,395-420,620-631",
+      "fact": "A physical source item birth reaches the approved methods through the registered provider's doc.patch path."
+    },
+    {
+      "step": 8,
+      "symbol": "test_registered_runtime_first_source_item_birth_and_no_write_refusal",
+      "file": "tests/sdk/test_d100_item_birth_boundary.py",
+      "lines": "206-245",
+      "fact": "The approved regression test submits through service.commit_timeline with the registered provider and checks accepted canonical persistence plus wrong-previous refusal/no write."
+    }
+  ],
+  "conserved_guards": [
+    "Exact runtime-document shot/revision/internal identities and content digests remain required; source_mapping.item_id_map must be empty for the physical-source branch.",
+    "Physical item IDs remain non-empty unique strings; identity mapping is physical and does not allocate or extend an alias map.",
+    "Copied/remapped placements retain strict exact correspondence checks through the existing mapped branch.",
+    "Previous-value, wrong-source, malformed-closure, duplicate/empty-ID, and no-write refusal predicates remain in the approved test and surrounding State paths.",
+    "Runtime authentication, C0 request/reply DTOs, idempotency, managed closure edges, allocation, and persistence are outside the two approved files and unchanged."
+  ],
+  "production_caller_comparison": {
+    "caller_files_changed": false,
+    "registered_provider_path_changed": false,
+    "provider_import_executed_during_validation": false
+  }
+}
