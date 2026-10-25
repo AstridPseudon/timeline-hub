@@ -125,7 +125,7 @@ PY
 preflight_log="$evidence/$request_id.preflight.log"
 set +e
 (
-    export PYTHONNOUSERSITE=1
+    unset PYTHONNOUSERSITE
     export PYTHONPATH="${pin[agent_path]}:${pin[runtime_path]}"
     export ASTRID_RUNTIME_CHECKOUT="${pin[runtime_path]}"
     export ASTRID_RUNTIME_SOURCE_ROOT="${pin[runtime_path]}"
@@ -146,7 +146,7 @@ body_log="$evidence/$request_id.body.log"
 body_exit="$evidence/$request_id.body.exit"
 set +e
 (
-    export PYTHONNOUSERSITE=1
+    unset PYTHONNOUSERSITE
     export PYTHONPATH="${pin[agent_path]}:${pin[runtime_path]}"
     export ASTRID_RUNTIME_CHECKOUT="${pin[runtime_path]}"
     export ASTRID_RUNTIME_SOURCE_ROOT="${pin[runtime_path]}"
