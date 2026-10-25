@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T21:53:18Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 15m -->
-# runtime board, 2026-10-25T21:38:14Z
+<!-- main | 2026-10-25T21:57:53Z | dispatcher heartbeat 2s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 2m -->
+# runtime board, 2026-10-25T21:54:58Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -458,7 +458,7 @@
 | D127c-profile | Deterministic element cost capture | App Sol / Luna | Coupled protected review | review | SecondFAIL1929; Sol1935 and App1935 | Existing helper only. No body, cost author or normal source intake before protected PASS. | App independent review | Held source |
 
 | F-D135-builder | Refuse upstream reverts in builder | Luna | Installed receipt verified | merged | Installer2010; independent2015 PASS | Exactef9 mode0755; eight installed caller controls PASS. Predecessor backup exact; no build or ZIP. | Source2006 and installed2015 PASS | ef9 installed |
-| U1-D135-private-join | Preserve current Runtime upstream | Luna | Genuine six-file union proof | review | Author1952; independent2006 PASS | Two-parent0bb3 preserves29 incoming paths. Generator/artifact PASS; functional tests unqualified. | Auth/source union PASS | 0bb3bc45c |
+| U1-D135-private-join | Preserve current upstream Runtime | Luna | D139 approved | review | Author1952; review2006; merged receipt | Normal f103 contains reviewed 0bb3 plus helper cf0b. Source PASS; integrated six-file proof pending disk. | Independent2006 PASS | 0bb3 / f103bb4686 |
 | F-D135-notes | Name fresh upstream patch base | Luna | Notes worker slot | merged | Notes1940 installed PASS | Patch base must be current upstream main at cut. No new build or ZIP. | D56 prose checks | Pending |
 
 | F-D135-Agent-retarget | Bind real Agent home source | Luna | Actual a30e home object | merged | Census1939; independent1947 PASS | Actuala30e has41 changed-in-both paths,107 preview hunks; actual7 markers across6paths. No normal merge. | Independent review next | a30e74e901 |
@@ -471,10 +471,10 @@
 | OPS-D137-stderr | Preserve private stderr after rollback | Luna | Actual Agent request result | review | Return2018; review2026 PASS; installer2031 PASS | Source44+1 independentPASS; real Store cleanup retains logs. Installed4435 exact; actual child remains unqualified. | PASS source/security | 0c4170e /4435d44 |
 | OPS-D137-install | Verify installed maker custody | Luna | Actual installed source | merged | Installer2031; independent2036 PASS | Exact4435 regular0755, source and predecessor verified; guards unchanged. Acceptance remains unverified until real request. | Independent2036 PASS | Installed4435d44 |
 | OPS-D137-real-child | Qualify real child and core | Agent Luna | Received f07b kit | ready | Agent next controller after receiving receipt | Prior4435 refused log setup. New f07b installed; normal receipt and next one real request owed. | Agent2053 authentic prior refusal | Installed f07b |
-| U1-D135-union-review | Prove private Runtime upstream union | Luna and Farm | Actual Farm import census | review | Preflight2116; Farm receiver2106 | Farm source guards PASS; Main-only Python absent. Portable venv-agent import census active; no functional credit. | Independent2006 source PASS | 0bb3bc45c |
+| U1-D135-union-review | Preserve stopped Farm harness | Luna | D139 supersedes harness | gated:D139-stopped | Farm2106; final2135 | Final2135 FAIL: frozen test hashes not compared. No more Farm correction/body; normal integration targeted proof next. | Independent2135 retained | Private candidate held |
 | F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
-| D136a-fps-regression | Preserve open and typed FPS inputs | Sol / Luna | Sole unchanged original9 | review | Author2108; independent2119 PASS; App next original9 | Exact20db:57 own and138 nearest PASS independently. Real initialization parent2 RED and candidate2 GREEN in detached loader scope. | Independent2119 PASS | 20dbfdef4 held |
+| D136a-fps-regression | Preserve open and typed FPS inputs | Sol / Luna | App actual2136 review2144 | review | Author2108; independent2119; App2136 | Candidate20db:57 own and138 controls PASS. Actual unchanged nine now9 setup errors at physical observation; App2144 owns wholepath. | Independent2119 bounded PASS | 20dbfdef45 held |
 
 | D73-env | Preserve supported launcher environment | Luna | Host filing and Agent intake | merging | Author2026; protected2036 PASS | Two child shells unset inherited variable; actual launcher positive and poison controls PASS. No live body claim. | Independent2036 PASS | 375c773449 |
 
@@ -488,26 +488,32 @@
 
 | D127c-normal-source | Carry reviewed final profiler helper | Luna | Exact reviewed and integrated tree | merged | App clean2010; normal cf0b82dd | Full tree8d568 equals reviewedfb4add. Central61 and Node20three controls retained; no original element result. | Runtime2002 and App2047 PASS | cf0b82dd47 |
 
-| D73-exact-node-route | Bind immutable own-node route | Luna | First-return executable correction | doing | Author2104; review2120 FAIL; return2127 | Fix pytest argv, unique evidence and exact reviewed launcher. Original4+1 and immutableab1e preserved; no body or live installation. | Independent2120 retained | 68343fb8e held |
+| D73-exact-node-route | Correct exact-node service route | HARD Sol / Luna | Two source failures | doing | rt-D73-exact-node-source-sol-2156 | Final2143 FAIL: manifest format and dry versus run controls. Sol fixes complete private route; no installation/body. | Independent2143 FAIL retained | ff649 source held |
 
 | U1-Farm-portable-preflight | Supply Farm interpreter and imports | Luna | Final independent source review | review | First return2127; final2135 active | Exacta2b:21 hashes,7 AST manifests, full missing-input and XML controls PASS. Actual Farm imports and six-file body still owed. | Final2135 active | a2b289dd7 |
 | OPS-D137-installed-shell | Verify exact installed shell fix | Luna independent | Installed f07b | merged | rt-OPS-D137-installed-shell-review-2116 | Installed-byte failure17 and timeout124, private stderr0600 and cleanup PASS. Exact backup and protected source verified. | Independent2116 PASS | f07b8093 |
 
-| D127d-element-cost | Reduce measured element commit cost | HARD Sol / Luna | Faithful offline full-path reproduction | review | Source2123 UNAPPLIED; path review2135 active | Helper123ms and synthetic267ms did not reproduce live delay. No product change; review identifies missing lifecycle coverage and next source seam. | Independent2135 active | 684b benchmark only |
+| D127d-element-cost | Preserve stopped offline cost trial | HARD Sol / Luna | D127e waiter census | gated:D127e | Source2123; path2135; stopped2143 | No safe optimization; warm123ms and synthetic267ms do not reproduce live delay. Later author stopped before product change. | Independent2135 source only | No product change |
 | CLI22-scope-relay | Apply owner D138 CLI scope | Agent owner | Recorded D138 decision | later | Agent existing CLI22 allocator | No new ingress. Per-case current caller migration only with exact predicates; legacy cases listed and boundary changes stopped. | Source decision only | No source change |
-Runtime producer: Normal cf0b82dd helper and tests equals reviewed tree8d568. Product ab1e unchanged. Private upstream0bb3 must conserve new helper at D59; no early U1 integration merge.
-Core: D13418455 measurement8926 PASS190 FAIL180 ERROR173 subtests. Raw XML and full disk witness missing. Own344 split132 setup,0 proved product,212 unknown. Current REG unverified; no ship credit.
-Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element and SWAP. No D59 cut, final build or ZIP.
-Blockers: Agent real child — exact f07b installed21:11 and current normal hub kit bytes match. Source2103 and installed smoke PASS. Agent receives then next ONE request per owner21:05. Actual result owed; Farm D77 waits.
+| D139-child-imports | Complete child dependency recipe | Luna | Pinned schema source and input census | doing | rt-OPS-D139-child-imports-2153 | Actual old child built, D73 missing schema before core. One exhaustive import and distribution correction plus check-only; no live install. | Independent review next | f07 maker parent |
+| D127e-waiter-census | Trace Runtime and Agent waiters | Luna read only | Exact ab1e and Agent070dfc source | doing | rt-D127e-waiter-census-2153 | Static whole-path census and safe sample comparison. Waiting remains hypothesis; D112 finding stops under D130. No body/fix. | Review after return | Source unchanged |
+| OPS-staging-route | Guard regenerable staging removal | Luna | Next admitted source slot | later | Not yet dispatched | Owner22:03 requests ended/path/symlink/KEEP/evidence guards, pack or logged removal. No direct staging deletion. | Independent review required | No source change |
+| D77-complete-inputs | Bind final installed-render inputs | Luna | Core critical source first | later | Not yet dispatched | Farm2140 lacks launcher, manifest, browser source, roots/stage receipts and finite peak. Produce one complete bundle; no piecemeal stage. | Guard1257 retained | No deployment |
+| D139-Runtime-targeted | Qualify normal merged Runtime | Luna / central service | Disk and Agent4c4ee checkout receipt | ready | Normal service controller next admitted slot | Merge f103 receipt present; six original files unchanged. Bind Agent4c4ee. No Farm harness/full or duplicate body. | Source2006 PASS | f103bb4686 |
+
+Runtime producer: Normal f103bb46866999c961a8865636f2e66d544e0c9b contains reviewed upstream0bb3 and helpercf0b. D139 freeze ended; integration proof is pending, not gate credit. Agent merged4c4ee and App2f362 recorded.
+Core: Actual D134 measurement8926 PASS190 FAIL180 ERROR173 subtests. XML/full disk witness absent. Own344 split132 setup,0 proved product,212 unknown. Ship-grade core NEVER started: real child built, D73 schema import failed.
+Gates: Historical P1/P3/P4/P5 GO. Full P2 NO-GO element and SWAP. No final cut, wheel, Windows, installed render90 or ZIP.
+Blockers: Child/core — Runtime2153 owns exhaustive D139 dependency recipe and built-child import check. Agent2136 is input census only. Existing child registration is genuine; no frozen core retry.
+Blockers: D73 — final2143 source FAIL retained; Sol2156 corrects real manifest and run-mode controls. No installed own-node route or functional credit.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after automatic classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
-Blockers: Element — D127d source2123 did not reproduce cost; no optimization applied. Existing auth traversal was excluded by the manager brief; full-path review2135 corrects the scope. No new live profiling.
+Blockers: Runtime integrated proof — normal f103 merge receipt present. Need Agent4c4ee exact checkout and >=5GB light admission before six-file normal targeted run. Main4.66GB, no heavy body.
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tupleP1-P5, wheel, Windows and ZIP remain owed.
-Blockers: Runtime union — Farm source guards PASS; optionA existing venv-agent selected only after actual import census. First review2122 found source-gate defects; return2127 fixes all. No Runtime venv acquisition.
-Next ready: D73 source final review; Farm exact receiving preflight after PASS; fuller offline element source continuation. App sole original9 and Agent next one received-kit request are external ready work.
-D100: Corrected27 PASS. Final FPS20db independent2119 PASS sent App for sole unchanged9. Historical nine setup errors retained; release held until actual proof, no fixture rewrite.
-D77: Farm changed child follows Agent actual new D137 result. No Farm fixture body or core. Exact applied source and lock handoffs remain qualified.
-Delivery: D59 integration tuple only. Private Agent32dde independent1959 PASS; Runtime0bb3 source PASS and Farm functional proof owed. App private upstream join stays App-owned.
-Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and copies authored handbacks only. No product, test, generated, pin, Git internals or credentials mutation.
-Disk: Fresh4.84 GB before Sol2123. Source cap3/floor4.6 GB, stop4 GB. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped6 logs. Three old Runtime trees dirty; protected raw KEEP retained. No local heavy body.
-live 3 / cap 3; ready-undispatched 0. D73 first return2127, Farm final review2135 and element path review2135 active. New cost source continues after the next freed slot with full caller coverage.
-INBOX consumed through1580769 bytes. Complete App D127d evidence2124 consumed; actual15200 NO-GO and missing deterministic table remain explicit. Agent supporting2111 reused only; no duplicate route owner. Updated 2026-10-25T21:38:14Z.
+Next ready: normal Runtime targeted controller when source slot and light-test disk ready; lower priority guarded staging tool and complete D77 input bundle next slots. No duplicate FPS or App original9 author.
+D100: candidate27 PASS; original9 on latest20db is nine setup errors at missing authenticated physical observation. Sole App2144 wholepath active. No release, fixture rewrite or unchanged repeat.
+Element: D127d UNAPPLIED; offline warm123ms/synthetic267ms did not reproduce live delay. Full-path return2143 stopped under new D127e. One read-only Luna2153 includes Agent provider. Actual32016/15200 boundaries only;10721 request2 is NOT element. No further profile body.
+Delivery: prepared joins merge now under D139; second upstream merge at final D59 cut. Farm old union harness STOPPED. D77 final merged tuple inputs remain incomplete.
+Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and byte-exact handbacks only. No product/test/generated/pin/Git internals/credentials mutation.
+Disk:4.66GB before third source. Source cap3/floor4.6GB, stop4GB. Sweep3 removed0; compact finished:0 packed,7 old logs gzipped. Clean ended nonKEEP source audit found0 eligible. Protected test KEEP remains.
+live3 / cap3; ready-undispatched0 admitted. Runtime2153 child, Runtime2153 waiter and Sol2156 D73 are dispatched. Lower-priority source tasks wait occupied cap; integration body waits measured admission.
+INBOX consumed through1598755 bytes including current new2144 receipt; manager reads new tail next pass. Round continues from terminal receipts.
