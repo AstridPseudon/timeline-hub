@@ -21,8 +21,17 @@ def shared_editing(request, tmp_path, monkeypatch):
     from test_timeline_commit_integration import Editing
     from timeline_commit_film_fixture import build_film_fixture
 
+    from astrid.sdk.timeline._shot_commands import capture_shot_set
     from astrid.sdk.timeline.capture import capture_move
-    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import (
+        _digest,
+        _manifest,
+        bundle_from_document,
+        document_from_bundle,
+    )
+    from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
 
     fixture = build_film_fixture(tmp_path)
     service = RuntimeService(fixture.duplicate_root)
@@ -30,36 +39,61 @@ def shared_editing(request, tmp_path, monkeypatch):
                    SimpleNamespace(move=capture_move, bundle=bundle_from_document))
     try:
         original = edit.document()
-        parent = copy.deepcopy(original["parent_revision"]["payload"])
         index = request.param
-        children = {}
+        original_bundle = bundle_from_document(original)
+        setup_commands = []
+        staged = original
         if index == 1:
-            _, shot, internal = copy.deepcopy(occurrence_image(original, "occurrence-1"))
-            shot.update(revision_id="authored-shot", internal_timeline_revision_id="authored-internal")
-            shot["payload"].update(unknown={"literal": [None, False, 0, {}, []]}, items=[{
-                "item_id": "shared-source-item", "media_id": fixture.media_ids[0],
-                "metadata": {"literal": "shared-source-item", "keep": [None, False]},
-            }])
-            internal["revision_id"] = "authored-internal"
-            internal["payload"].update(source_window={"start": 4, "end": 9},
-                                       unknown={"literal": [None, False, 0, {}, []]})
-            internal["payload"]["clips"][0]["extension"] = {"literal": "shared-source-item", "clear": None}
-            for image in (shot, internal):
-                image.pop("content_digest")
-            parent["occurrences"][0]["shot_revision_id"] = shot["revision_id"]
+            _, source_shot, _ = occurrence_image(original, "occurrence-1")
+            shot_set = capture_shot_set(
+                original_bundle, "occurrence:occurrence-1/shot",
+                values={"name": source_shot["payload"]["name"]},
+            )
+            setup_commands.append(shot_set)
+            staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
+        staged_bundle = bundle_from_document(staged)
+        shared = capture_occurrence_place_shared(
+            staged_bundle, f"occurrence:occurrence-{index}", "repeated-third",
+            on=13 if index == 1 else 6,
+        )
+        setup_commands.append(shared)
+        staged = document_from_bundle(execute(staged_bundle, [shared]).bundle)
+        target = copy.deepcopy(staged)
+        parent = copy.deepcopy(staged["parent_revision"]["payload"])
+        if index == 1:
+            _, authored_shot, authored_internal = occurrence_image(target, "occurrence-1")
+            authored_shot["payload"].update(
+                unknown={"literal": [None, False, 0, {}, []]},
+                items=[{
+                    "item_id": "shared-source-item", "media_id": fixture.media_ids[0],
+                    "metadata": {"literal": "shared-source-item", "keep": [None, False]},
+                }],
+            )
+            authored_internal["payload"].update(
+                source_window={"start": 4, "end": 9},
+                unknown={"literal": [None, False, 0, {}, []]},
+            )
+            authored_internal["payload"]["clips"][0]["extension"] = {
+                "literal": "shared-source-item", "clear": None,
+            }
             for ordinal, occurrence in enumerate(parent["occurrences"][1:]):
                 occurrence["placement"]["start_ms"] = 8000 + ordinal * 2000
             parent["unknown"] = {"literal": [None, False, 0, {}, []]}
-            children = {"shot_revisions": [shot], "internal_timeline_revisions": [internal]}
-        repeated = copy.deepcopy(parent["occurrences"][index - 1])
-        repeated.update(occurrence_id="repeated-third",
-                        placement={"start_ms": 13000 if index == 1 else 6000, "track": "picture"})
-        parent["occurrences"].append(repeated)
-        service.publish_parent_composition(edit.project, edit.timeline, {
-            "project_id": edit.project, "timeline_id": edit.timeline,
-            "expected_head": fixture.parent_revision_id,
-            "parent_revision_id": "shared-inverse-baseline", "parent_composition": parent, **children,
-        }, idempotency_key="shared-inverse-baseline")
+        target["parent_revision"]["payload"] = parent
+        target["parent_revision"]["content_digest"] = _digest(parent)
+        for image in target["shot_revisions"]:
+            image["content_digest"] = _digest(image["payload"])
+        for image in target["internal_timeline_revisions"]:
+            image["content_digest"] = _digest(image["payload"])
+        target["dependency_manifest"] = _manifest(
+            target["shot_revisions"], target["internal_timeline_revisions"],
+            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+        )
+        setup_commands.extend(emit_document_commands(
+            bundle_from_document(staged), bundle_from_document(target)))
+
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        edit.commit(edit.body(setup_commands), "shared-inverse-baseline")
 
         def unavailable(*args, **kwargs):
             raise AssertionError("save evaluated a scene")
@@ -68,7 +102,6 @@ def shared_editing(request, tmp_path, monkeypatch):
         import runtime_protocol.visual_seam as visual_seam
         monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
         monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
-        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
         yield edit, index
     finally:
         edit.service.close()
