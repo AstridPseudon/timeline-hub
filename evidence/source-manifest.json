@@ -1,0 +1,43 @@
+{
+  "app_worker": {
+    "path": "/home/user/work/wt/app-D141-full-pristine-prep-2346",
+    "head": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+    "status": "clean_before_evidence_files",
+    "package_json_sha256": "0f66d33d1fdbcf4ff2fe4c3bde81e6d5125831971d3fe492798116bc0f3b5d77",
+    "package_lock_sha256": "59cd66da9a223eb1ff3cf60fd06dfa5b4b376533786366bd94b74ae3d95140ba",
+    "runtime_lock_sha256": "cb6c9b01d5c06cecf4257dece098bf477da9c11b5967a8b0c7e9e00783b57cee",
+    "composition_archive": {
+      "path": "vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz",
+      "sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"
+    }
+  },
+  "frozen_upstream": {
+    "repository": "/home/user/banodoco/reigh-app",
+    "commit": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "subject": "Add preview volume, full screen, speed and loop to the editor player",
+    "package_json_sha256": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6",
+    "package_lock_sha256": "89a3094c58bab686ca620fd239228627659ed19fdc9853b2a86ba42388216000",
+    "runtime_lock_sha256": "34afa8e41aad26c710944193797e96f1aea10accb868554969cedc2bacdd90e6"
+  },
+  "package_contract": {
+    "node_engine": ">=20.19.0",
+    "package_manager": "npm@10.8.2",
+    "test_script": "npm run test:app && npm run test:node",
+    "test_app_script": "npm run check:no-smoke-tests && npm run check:known-failures && npm run check:no-raw-skips && npm run check:skip-registry && vitest run --config config/testing/vitest.config.ts",
+    "test_node_script": "node --import tsx --test --test-concurrency=1 ... scripts/release/verify-extension-ship.test.mjs",
+    "source": "package.json in worker and git show frozen upstream:package.json"
+  },
+  "prior_actual_full": {
+    "worker": "app-m4-agentchat-fixed-current-one-full-r36",
+    "app": "07d86990c65f1663529c19dc41eaf52460f58a61",
+    "app_tree": "757ff3e20c344afd87b15d1bcea273738011987c",
+    "agent": "091aa23ec83ea05ffd3b0115a640230d51c8c429",
+    "runtime": "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c",
+    "graph": "/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules",
+    "wrapper_sha256": "751d0ef413fc6382ef40e640e7e8468dceef9949117d9ce8d58cf4986d9b1d0f",
+    "preload_sha256": "f303229cd36c7878c739cad7e7669e3bf66ee416bd927434aca1addeab059f52",
+    "result": "PASS; 1520 files; 19454 passed; 3 authorized expected failures"
+  }
+}
