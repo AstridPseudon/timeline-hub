@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-25T06:00:29Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+<!-- app2 | 2026-10-25T06:02:45Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
 # app2 board, 2026-10-25T05:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -103,24 +103,26 @@
 | P2-placement20517 | Preserve reload provenance repair | App Luna; independent Luna | Independent0531 PASS; normal HOME | merged | Source0523; review0531; actual31499 | Source56 tests/types/lint PASS; protected six exact. Later31499 passes label/canonical adoption, then fails mounted row oracle. No full original GO. | App e96be32f86 |
 | P2-D102b-ring | Retain last phases and final failing request | App Luna; independent Luna | Independent0529 PASS; normal Runtime receipt | merged | App0521; review0529; adoption0547 | Exact reviewed helper/control files HOMEc97; author17 and independent17 PASS. App future adoption0547 active. Current diagnostic tuple stays fixed on689. | Runtime c97a12456 |
 
-| P2-placement31499 | Qualify projected reload locator | App Luna; independent review | D105 conditions and source review | doing | app-P2-placement31499-projected-oracle-0547 | Actual31499 label/canonical PASS; row assertion FAIL. D105 requires intended prefix, D69 comparison, strict negatives, protected review and ledger/ZIP notes. No original GO. | App0244 base |
+| P2-placement31499 | Qualify intended reload identity | App Luna; protected review | D105 citation and D69 audit | gated:D105 | Proposal0547; audit0552 | Actual31499 label/canonical PASS; row assertion FAIL. Proposal held. Prefix mandate and upstream behavior must qualify; otherwise product fix keeps original locator. No original GO. | App0244 base |
 | P2-D102-adoption | Adopt normally released diagnostics | App Luna | Normal tools and HOME receipt | merged | app-U4p-D102-adoption-0538 | Eight strict,15 vendor,14 mappings,2 installer PASS; protected six exact. Only lock and manifest changed. | App0244db2c02 / Runtime689 |
-| P2-D102-diagnostics | Observe element on fixed tuple | App service; Luna | ADD12031 terminal; element preflight18244 PASS | doing | app-P2-D102-ADD-element-diagnostics-0544 | ADD12031 stopped at native seed before readiness/original; zero assertions. Sole element follows same captured tuple. Body ID pending; accept/receipt/outcome UNKNOWN. | 0244 / bde578 / 689 / 635f |
+| P2-D102-diagnostics | Preserve both setup-only failures | App service; Runtime source | D102c tagged release and source check | gated:D102c | Controller0544; caller0553 | ADD12031 exit1/94s and element4757 exit1/109s stopped at native seed. Readiness/originals NOTRUN; zero assertions. No redacted exception line; actual cause UNKNOWN. | 0244 / bde578 / 689 / 635f |
 
 | P2-D102-ADD12031 | Preserve native seed failure | App service; Runtime source | Runtime peer0549 handoff | gated:native-seed-source | Controller0544; Runtime D102 owner | Exit1/94s before readiness and original ADD; zero assertions. Seed not_ready; HTTP body/status and cause UNKNOWN. No redacted exception line retained. No unchanged repeat. | 0244 / bde578 / 689 / 635f |
+
+| P2-D102b-adoption | Adopt released phase retention | App Luna | Normal Runtime c97 receipt | merged | app-U4p-D102b-ring-adoption-0547 | Normal tools: eight strict,15 vendor,14 mappings,three artifact checks PASS. Only lock/manifest; protected six exact. Known generator two FAIL retained. No original credit. | App f0fcdce178 |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. No new Proof dispatch, original run or product merge is owed. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
 live 0 / cap 6 source; ready-undispatched 0 for Proof under D56.4. bin/workers confirms all1313 records done. D89 allows6 source above5.0GB, one service above5.2GB; nothing new below4.5GB.
 
-core open: 1 transferred Proof gate group, P2. Four of eight isolated gestures independently GO: single5678, asset27438, bulk21852 and parent20481. Placement31499 passes committed label/canonical adoption then fails the raw versus occurrence-scoped mounted row predicate; App source0542 and independent path0542 agree, strict oracle0547 active. D102689 normally adopted App0244; controller0544 owns ADD12031 then element on unchanged0244/bde578/689/635f. Ring is normally HOMEc97 and future adoption0547 active; it does not hold current diagnostics. SWAP follows the diagnosed root fix. P1/P3/P4 retain recorded GO; full P2 and final-cut matrix remain required.
+core open: 1 transferred Proof gate group, P2. Four of eight isolated gestures independently GO: single5678,asset27438,bulk21852,parent20481. ADD12031 and element4757 both failed native seed before readiness/originals, zero assertions; actual seed cause and historical Undo503/applied outcomes remain UNKNOWN. D102c Runtime tags and same-sequence689/0c62 comparison precede one new diagnostic. App caller0553 audits retention only. Ring source c97 normally adopted Appf0fcd. Placement31499 label/canonical pass; proposed locator held under D105 pending App0552 intended-prefix/D69 audit. P1/P3/P4 recorded GO and final-cut reruns remain separate.
 
 regressions: 0 newly established on owner-lane boards and H54 header. D77a consumer source/security receipts remain qualified; genuine installed render is still a final-cut obligation, with D67 environment limits retained.
 
 
-Blockers: App diagnostic outcomes — Controller0544 owns ADD12031 then element on fixed689; actual Undo503 root and element provider outcome remain unknown. SWAP follows the root fix. Placement strict projected-row oracle0547 and independent review precede meaningful reproof.
+Blockers: Runtime D102c and App D105 — Both captured689 diagnostics stopped at native seed, not_ready with originals NOTRUN. Runtime tags/source comparison and App caller0553 retention audit own the seam. Placement locator proposal0547 is held for D105 citation/upstream audit0552; no new Proof work.
 
-Next ready: None for Proof under D56.4. App owns ADD12031 terminal then element, strict projected-oracle0547 and future ring-adoption0547. Runtime D102 release, App normal adoption and ring home receipt are clear; no Proof dispatch is owed.
+Next ready: None for Proof under D56.4. Runtime D102c tags and same-input comparison; App caller0553 and D105audit0552. Ring normal adoption Appf0fcd is clear. After qualified release/adoption, App owns one meaningful diagnostic; no unchanged repeat.
 
 Current gate evidence:
 - P2 parent20481: independent0507 GO, exit0/191s; readiness1/original1, XML zero failures/errors/skips. Exact four-repo pins, manifests and service versions qualify. Full request, exact parent-only delta, canonical/history/reload/guarded native Undo and zero legacy writes passed. [Independent parent GO](/home/user/timeline-hub/hub/design/app-P2-parent20481-GO-review-0507.md). This raises isolated P2 to four of eight; full P2 remains open.
@@ -135,6 +137,7 @@ Current gate evidence:
 - D77a: consumerdfea above2a163 is normally HOME; both D76 and D77 remote receipts visibly say MERGED831df. Agent1837 actual34 adversarial+2positive PASS, exactdfea and197 dependencies. Fixture1841 passes canonical file with13 test bodies unchanged. Final genuine installed render remains cut-blocking; D67 genuine environment gap stays explicit. [Source security and remaining render seam](../../design/peer-runtime-to-agent-orchestrator-20261024T1825-D77-security-PASS.md).
 
 Decisions retained:
+- D102c header05:58 requires distinct safe reason tags at every runtime_unavailable/not_ready emitter, unchanged public reply and RED/GREEN per tag. Runtime also compares the same native seed on689 and0c62. Review/release and normal adoption precede one meaningful diagnostic; no Proof dispatch.
 - D106 header05:55 keeps the denied Agent hub write stopped. One Agent worker may use the originally authorized exact ORCH design outputs; workers never write the hub. No Proof publication or dispatch owed.
 - D105 header05:52 conditionally approves placement locator correction: prove intended prefix and D69 upstream behavior; strict wrong-occurrence/sibling/raw/duplicate/same-bytes controls; independent protected review, ledger and ZIP DOM-change note. App0547 owns it.
 - D102b header05:22 adds element as the second diagnostic after D102 release, with unchanged assertions/waits. App0521 owns bounded tail plus final-failure phase capture; Runtime existing element owner consumes App0503/0515. No repeat App investigation or Proof dispatch.
