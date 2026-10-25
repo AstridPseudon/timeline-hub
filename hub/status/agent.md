@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T22:53:19Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
+<!-- agent | 2026-10-25T22:57:25Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 2m -->
 # agent board, 2026-10-25T22:51Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -104,7 +104,7 @@
 
 | D134 own344 partition | Separate setup and product evidence | Luna read only | First return2016 | review | Author2003; independent2011 FAIL | See proof | Reviewed132 setup,0 proved product,212 unknown. Exact9 projection downgrade; first return active. | Evidence only |
 
-| D139 merged child and core | Qualify merged tuple in complete child | Runtime Luna and service | U2 merge; reviewed recipe; received kit | blocked:runtime | Runtime D139 recipe; Agent later controller | Old child2122 PASS; core never ran. Supported setting controls2136 PASS only old scope. No new f07 request or old-tuple core. | D139 tuple pending |
+| D139 merged child and core | Qualify merged tuple in complete child | Runtime Luna and service | Reviewed recipe; received kit; admission | blocked:runtime | Runtime2239/2238; Agent prep2254 | Agent41ad/Runtimef103 future tuple. Old child2122 PASS, core never ran. New request waits reviewed kit and guarded headroom. | D139 tuple pending |
 
 | D134 D73 source | Preserve supported launcher environment | Luna | Protected2036 cumulative PASS | merged | Source intake2102; normal22bf | Source controls PASS; live core owed | Exact two reviewed operational files HOME. Intake repeated focused2 despite no-repeat brief; retained without extra credit. | 22bf4560aa /bb688 |
 
@@ -144,6 +144,8 @@
 
 | D136b internal trace | Check observation producer and consumer consistency | Runtime and App HARD Sol | Recorded read-only scope | blocked:runtime | Runtime2233; App2231 | Exclusive disjoint source traces under D136b; no Agent duplicate, producer fix or next nine body. | Source unchanged |
 
+| D139 controller prep | Prepare merged-tuple normal controller | Luna | Existing source routes and exact merged heads | doing | agt-F-D139-merged-controller-prep-2254 | Source-only command and complete pending-input list; no child request, preflight, suite or kit write. | Evidence pending |
+
 Integration: Agent 41ad656529fa8489829de9078b1b6e157c7433c8. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lock now names qualified normalf103; all canonical15 bytes retained. Latest owner-reported0cd0398fe9 upstream held for the small second join at cut; no chasing.
 
 Core open: 370 measured (D134, measurement-only), ship-grade pending. The425 count is historical30693 at10:24Z. No source-only change deducts failures.
@@ -158,7 +160,7 @@ Blockers: App D100 — qualified9486 behavior receipt owed before shared105 prop
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-grade core, REG0, final P1-P5/fullP2, installed render90, platform, wheel and ZIP owed. Farm old union stopped; D77 waits complete final merged-tuple inputs.
 
-Next ready: U4a normal41ad merged; CLI22 firstreturn2251 active after complete2244 findings. live 1 / cap 6; ready-undispatched 0. Heavy slot free; Runtime reviewed recipe/kit and guarded retirement remain needed.
+Next ready: U4a normal41ad merged; CLI22 firstreturn2251 and merged-controller sourceprep2254 active. live 2 / cap 6; ready-undispatched 0. Heavy slot free; Runtime reviewed recipe/kit and guarded retirement remain needed.
 
 Disk:about5.09GB; child admission5.905GB, stop4GB. Sweep3 removed3 stale tempdirs; compact packed0 scratch/testdirs and gzipped7 logs. Only ended worktree is protected dirtyG2. Superseded3e163 untouched; Runtime guarded route firstreturn2235 exclusive. Local2224 ended FAIL; no duplicate return. All protected targets retained.
 
