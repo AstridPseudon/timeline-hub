@@ -141,3 +141,34 @@ BRIEF: Source-only faithful current caller/fixture/created-claim migration, all 
 - tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[video-track-label]
 - tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_completed_variant_is_exact_even_after_a_new_primary_is_promoted[image]
 - tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_completed_variant_is_exact_even_after_a_new_primary_is_promoted[video]
+
+FAMILY: D86-parent-swap12
+NODES: 12
+FILES: tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+BRIEF: Additional explicit main source-only reservation after originalsix returns (D86 permits morefamilies). Base currentnormal Agent or published reviewedsourcebranch. FaithfulD72 genuinecurrentRuntimebootstrap/capture/provider/setup migration preserving EVERY originalinput/assertion/raises/parameters/decorators/branch and actualnative physicalidentity/createdclaims/CAS/retry/undo/ABA/refusal/no-write. Own only listedfiles; product/otherhelpers/tests read-only. No retiredpublisher/alias/syntheticacceptedhistory/SQL/fakecustody or commandmetadata. Exactoutsideproductcause returnsunappliedseam beforewidening. Source/AST/compile/scopedRuff/mypy baselinecandidate/diff only, NOpytest/body/service/build/functionexecution. One protectedreview before Agentnormalmerge, thenONE unionaffectedMAINbatch. Delete nothing; no generated/pins/kit/sharedledger/M5/upstream/credentials/deniedroutes. CommitnamesF-D86; finalreport/exacthashes/canonicalselectors; under50MB durableevidence.
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo[image]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo[video]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_lifecycle_race_refuses_at_acceptance[image-old_media]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_lifecycle_race_refuses_at_acceptance[image-media]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_lifecycle_race_refuses_at_acceptance[video-old_media]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_lifecycle_race_refuses_at_acceptance[video-media]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_accepted_history_rebase_and_guarded_aba_undo[image-disjoint]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_accepted_history_rebase_and_guarded_aba_undo[image-aba]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_accepted_history_rebase_and_guarded_aba_undo[video-disjoint]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_accepted_history_rebase_and_guarded_aba_undo[video-aba]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo[parent]
+- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo[occurrence:occ-a]
+
+FAMILY: D86-numeric9
+NODES: 9
+FILES: tests/editing_conformance/test_commit_runtime_numeric_move.py, tests/editing_conformance/test_commit_runtime_numeric_params.py
+BRIEF: Additional explicit main source-only reservation after originalsix returns (D86 permits morefamilies). Base currentnormal Agent or published reviewedsourcebranch. FaithfulD72 genuinecurrentRuntimebootstrap/capture/provider/setup migration preserving EVERY originalinput/assertion/raises/parameters/decorators/branch and actualnative physicalidentity/createdclaims/CAS/retry/undo/ABA/refusal/no-write. Own only listedfiles; product/otherhelpers/tests read-only. No retiredpublisher/alias/syntheticacceptedhistory/SQL/fakecustody or commandmetadata. Exactoutsideproductcause returnsunappliedseam beforewidening. Source/AST/compile/scopedRuff/mypy baselinecandidate/diff only, NOpytest/body/service/build/functionexecution. One protectedreview before Agentnormalmerge, thenONE unionaffectedMAINbatch. Delete nothing; no generated/pins/kit/sharedledger/M5/upstream/credentials/deniedroutes. CommitnamesF-D86; finalreport/exacthashes/canonicalselectors; under50MB durableevidence.
+- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-0-parent]
+- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-0-occurrence]
+- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0.0-0-parent]
+- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0.0-0-occurrence]
+- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-1-parent]
+- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-1-occurrence]
+- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[2-2.0-occurrence:occurrence-1/clip:clip-1]
+- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[1-True-occurrence:occurrence-1/clip:clip-1]
+- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[True-1-occurrence:occurrence-1/clip:clip-1]
