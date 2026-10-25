@@ -1173,7 +1173,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
             physical.bundle = ctx.state.bundle
             live = {'occurrence:' + row['occurrence_id'] for row in ctx.state.bundle['placements']}
             for ref in touched - {'parent', 'timeline'}:
-                physical.owners[ref] = [(owner, local) for owner, local in physical.owners[ref] if owner in live]
+                physical.owners[ref] = [(owner, local) for owner, local in physical.owners[ref]
+                                         if owner in live and local in ctx.state.bundle['shots']]
                 remember(physical, ref, only_if_needed=True)
         ctx.inverse_stages.append((stage_before, copy.deepcopy(ctx.state.bundle)))
         ctx.inverse_effects.append(commands[0].get('_inverse_effects') if len(commands) == 1 else None)
