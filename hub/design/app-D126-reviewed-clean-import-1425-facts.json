@@ -1,0 +1,24 @@
+{
+  "task": "app-D126-reviewed-clean-import-1425",
+  "repo": "app",
+  "base_head": "af5fe0a2748ce6df65fb36ce9cd435fc1df0502a",
+  "candidate": "9d75477be4ab209fed52087f06bfcd20487ce1a9",
+  "candidate_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+  "candidate_parent": "4b4e0558ef3853bc999dd65c0df4580ad5704eff",
+  "candidate_parent_tree": "8e4c8ca6d96a8d39fdad7d4618f940880f8ab46e",
+  "owned_blobs": {
+    "tests/e2e/fake-runtime/server.contract.test.mjs": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": "6f21c0c53517f24da5551bee09382f2f37d5f392"
+  },
+  "candidate_tree_equals_worktree": true,
+  "current_diff_paths": [
+    "tests/e2e/fake-runtime/server.contract.test.mjs",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "upstream_refs": {
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "verdict": "PASS_SOURCE_ONLY",
+  "reviewed_helper_activation": "UNQUALIFIED: Runtime exited before endpoint readiness; no reviewed-helper GREEN claim"
+}
