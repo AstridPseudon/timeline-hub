@@ -38,7 +38,7 @@ PROJECT = "fresh-word-anchor"
 TIMELINE = "film"
 TARGET = "parent/clip:target"
 SOURCE = "occurrence:source-occurrence/clip:source"
-NORMAL_RUNTIME = "ab1e4f6141987706132916e2da16477f5a019464"
+NORMAL_RUNTIME = "f103bb46866999c961a8865636f2e66d544e0c9b"
 ORDINARY_SCHEMA = "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d"
 
 
