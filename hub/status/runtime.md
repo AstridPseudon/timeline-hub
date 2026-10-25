@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T01:24:12Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 0m -->
-# runtime board, 2026-10-25T01:13:00Z
+<!-- main | 2026-10-25T01:27:19Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-25T01:26:42Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -169,7 +169,7 @@
 | R2r-legacy-ABI-expectation | Preserve legacy ABI assertions | Luna / Luna | Independent review and normal apply | merged | Review2135 PASS; normal7aa603 | 75passed18.90s; all12assertions retained. Product bytes exactbc04. [Review](../../design/runtime-legacy-ABI-review-2135.md) | 11efa /7aa603 |
 | D83-schema-churn | Preserve stopped setup experiment | Sol | Structural fix supersedes experiment | gated:superseded | Worker2141 stopped | Checkpoint retained. No released source or original credit; no further micro-gain task. | Held |
 | D84-structural-history | Reuse replay proof within one request | Sol / Luna | Normal apply complete | merged | Author2145; release2202 | Security243+13 pass; author1038 pass. Ten new attacks pass on candidate. [Release](../../design/runtime-D84a-release-2205.md) | beb1dafbd /732c48c6f |
-| R-P2-parent-runtime | Qualify reviewed native Undo successor | Luna / main service | Incremental batch heavy priority | doing | rt-P2-parent-single-0107 | App5f4 Undo home247+13 controls clears source wait. Parent24629 NO-GO208s at Undo label; reads[] progressed. Single11446 now live, same fixed tuple. Exact label finding returned App. | 5f4/0d142/a3cd/635f |
+| R-P2-parent-runtime | Preserve current parent and single results | Luna / main service | App strict Undo label correction | blocked:app | Parent24629; single11446 terminal | App5f4 Undo home247+13 controls clears source wait. Parent24629 NO-GO208s at Undo label; reads[] progressed. Single11446 also NO-GO222s at same label, fixed tuple. Exact label finding returned App. | 5f4/0d142/a3cd/635f |
 | D84-lock-placement | Test head-only CAS authority limit | Sol / Luna | Exact candidate tests passed | merged | Author2147; release2202 | Ten tests pass on memo candidate. No product lock change; head-only CAS insufficient. [Proof](../../design/runtime-D84-lock-placement-2147.md) | 746d745478 /61a16a221 |
 | D84-False-stacks | Capture actual False case at30s and44s | HARD Sol | Actual source unchanged | merged | rt-D84-False-stacks-sol-2151 | Both samples schema computation;12.149CPU/14.002wall. Original45.008FAIL retained. [Report](../../design/runtime-D84-False-stacks-2151.md) | Evidence only |
 | F-final-D84-core-prep | Include current core tests in final candidate | Luna | Author harness checks passed | merged | rt-F-final-D84-core-prep-2207 | Private 92 Python plus TS; five added files collect 89 nodes. Static and D73 stubs pass. [Report](../../design/runtime-final-D84-core-prep-2207.md) | Private candidate only |
@@ -212,14 +212,16 @@
 | D86-manifest-inverse8 | Preserve manifest inverse scenarios | Luna | D89 source slot available | doing | agt-D86-manifest-inverse-0121 | Eight exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 | D86-occurrence-opaque9 | Preserve occurrence and opaque items | Luna | D89 source slot available | doing | agt-D86-occurrence-opaque-0121 | Nine exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 | D86-parent-track3 | Preserve track inverse and labels | Luna | D89 source slot available | doing | agt-D86-parent-track-0121 | Three exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
-| D86-ordinary-script4 | Preserve ordinary and script behavior | Luna | Main source capacity | ready | Reserved main; next capacity slot | Four exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
+| D86-ordinary-script4 | Preserve ordinary and script behavior | Luna | D89 source slot available | doing | agt-D86-ordinary-script-0121 | Four exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 | R-P4-current-cost | Preserve superseded cost checkpoint | HARD Sol | D88 successor owns source | gated:D88-superseded | rt-P4-current-cost-sol-0039 stopped | Normal checkpoint12e7 retained; no merge. D88 explicitly changes integrity scope, one resumed author. | 12e7d78 held |
 | F-final-upstream-App | Preserve fresh App packaging tests | Luna | Packaging checklist installed | merged | rt-F-final-D87-docs-0107 | Packaging checklist keeps Appd11417 and WelcomeConnection.test.tsx overlap, plus Agent08e6 installer tests. No gating merge or build. | Upstreamd11417 |
 | D88-digest-chain | Preserve withdrawn digest-chain source | HARD Sol | Owner withdrew D88 | gated:withdrawn | rt-D88-digest-chain-sol-0044 stopped | Unsafe prototype held; automatic safety review stopped reviewer for possible cybersecurity risk. No retry or alternate route. [Report](../../design/rt-D88-digest-chain-sol-0044.md) | Held; do not merge |
 | D88-queue-handler | Record queue versus handler boundaries | Luna | Eligible genuine caller activation | gated:D88-stop | rt-D88-queue-handler-0044 | Fourteen helper controls PASS; normal766f is harness only. No actual live queue/handler attribution. No capture activation after source safety stop. | 766fd6700 /c32a8b548 |
 | D88-main-incremental | Route actual Agent incremental failures | Luna / main service | Agent current family source corrections | blocked:agent | Actual10077; mechanical export0117 | Actual10077 NO-GO:30 PASS/39 FAIL/176 ERROR. Exact245 XML outcomes and23 NO_JUNIT_CASE recovered;30PASS/39FAIL/176ERROR. No all298 qualification. | Normal Agent home |
 
-| D88b-replay-memo | Reuse replay for recomputed content identity | HARD Sol | Explicit owner replacement01:10 | doing | rt-D88b-replay-memo-sol-0109 | Full replay retained; freshly recomputed entry and chain key. No new attack construction; existing regression only. Security review required before release. | Normal766f base |
+| D88b-replay-memo | Reuse replay for recomputed content identity | HARD Sol / Luna | Independent protective review | review | rt-D88b-protective-review-0125 | Author172+60+21 and central14 PASS; warm reads replay0. Timing uneven, live/hash cost remains. Protective review active; no release or gate claim. | Normal766f base |
+
+| D86-publication1 | Preserve publication revalidation original | Luna | D89 source slot available | doing | agt-D86-publication-0127 | One exact listed live original; source only and all predicates retained. | Normal Agent base |
 
 Runtime producer: RELEASED product a3cd1a3214fa1632879c21d82d1abb9ea720b1de, tree64bb0caf. Normal766fd6700 adds two author-qualified harness files only; canonical15/schema867f unchanged. D88 digest prototype held and unmerged.
 
@@ -254,3 +256,7 @@ Pass 2026-10-25T01:22Z: Video0117PASS and immediateremoteAgentrequest9c149. All5
 Pass2026-10-25T01:21Z: Reviewsfinished and actual5.828GB permits two new reservedD86authors immediately: manifestinverse8 and occurrenceopaque9 named0121. Agentreceivesactualownershipnote. Parent-track3/ordinaryscript4 nextactualslot. No per-familybody or duplicate local transfer.
 
 Pass2026-10-25T01:23Z: Measured5.572GB stillaboveD89sourcefloor; thirdnewreservedparenttrack3 dispatchedimmediately. Mainlive5of6; no newstartsafteractualdiskfallsbelow5.5GB. Ordinaryscript4readycapacityheld.
+
+Later qualification input R2r-inverse-coverage: historical23499 replace-existing provider add-delete original ends Runtimeinverse nativewritecoverage1739. CurrentbehaviorUNKNOWN; preserveguard. AgentphysicalSol0118 separate; no Runtimecodechangeor duplicatebody fromhistoricaltrace.
+
+Pass 2026-10-25T01:26Z: D88b authorcomplete and immediate protective review0125; no source release yet. Parent/single terminalsameUndo label returnedApp. Fullsafeauditnewlystale0ae1pin followednamedKEEP release and recycle succeeded; disk5.888GB thenordinaryscript4/publication1 dispatched. ActualfiveLunaauthorsplusoneLunareviewerfillcap6.

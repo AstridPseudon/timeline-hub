@@ -1,400 +1,400 @@
-- tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]
-- tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original
-- tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
-
-FAMILY: D86-owned-move8
-LOCAL OWNER D89: agt-F-owned-move8-0100 (Agent source-only; do not dispatch main duplicate).
-NODES: 8
-FILES: tests/editing_conformance/test_owned_move_publish_runtime.py, tests/editing_conformance/test_prepared_video_birth.py
-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_move_publish_disjoint_rebase_reload_undo
-- tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write
-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo
-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_transition_clear_lost_ack_reload_retry_undo
-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo
-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_split_stale_rebase_lost_ack_reload_retry_undo
-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_delete_stale_rebase_lost_ack_reload_retry_undo
-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_ambiguous_owner_and_mixed_edits_keep_original_draft
-
-FAMILY: D86-cli-trim3
-LOCAL OWNER D89: agt-F-cli-trim3-0100 (Agent source-only; do not dispatch main duplicate).
-NODES: 3
-FILES: tests/editing_conformance/test_cli_trim_runtime.py
-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-- tests/editing_conformance/test_cli_trim_runtime.py::test_cli_trim_exact_retry_restart_dependent_suffix_and_peer[disjoint-rebase-undo]
---- exact source hashes packet ---
-agent_path=/home/user/work/wt/agt-pin-0ae146e1
-agent_sha=0ae146e1b0acc6e4a82ba6b4f905d88bad48320c
-agent_tree=c91cfe3a28f2951584289bea31f1005222178bed
-runtime_path=/home/user/work/wt/rt-pin-a3cd1a32
-runtime_sha=a3cd1a3214fa1632879c21d82d1abb9ea720b1de
-app_path=/home/user/work/wt/app-pin-91368644
-app_sha=913686448cafbb63dfba5d8053cb725e1140bb07
-composition_path=/home/user/work/wt/vw-pin-635f4de0
-composition_sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
-6b7abbfe3268b5e17dc996cf8e09aa497f4a421d5d214877cfcb151890c5ccea tests/editing_conformance/test_commit_runtime_m1.py
-482d87db620fe482c3f993dfa416de93972f1a6d53d757f52595e236d790e285 tests/editing_conformance/test_commit_runtime_occurrence_media.py
-27910865f3c68dd29a36c03018bed833657a40ad747f51ac97e513adcb3219bc tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
-deafe3971df238009e3108c28983480b95f6eab781b3aa62d9fef2ea5d452fb6 tests/editing_conformance/test_commit_runtime_parent_media.py
-2657e31b53fa86ab08e793cadc006e57502d8166ca527d9e06a505d8e92ef88c tests/editing_conformance/test_commit_runtime_shared_inverse.py
-f8e9eec8d37ea639cbbf1ddfac9b0e3e142a362999c8d98ca4d6f425d452efda tests/editing_conformance/test_inverse_stage_runtime_regressions.py
-6e8b187f8a3bcef57056462974002e7bf27f9d5c04d98e278cbbbfee9c632d8d tests/editing_conformance/test_native_sheet_current_runtime.py
-4532a5d928a417d521f91d24f85541f00d150cafd8d0b1ab4a41bd5828a8962b tests/editing_conformance/test_native_sheet_ordinary_runtime.py
-ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f tests/editing_conformance/test_native_word_anchor.py
-d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0 tests/editing_conformance/test_next_command_cohort_runtime.py
-2400f79c6d2c366fc47caf4a8ad6dfe219e556bf2a789ff5114f2be6b6a6e3bc tests/editing_conformance/test_recipe_m2_auto_placement.py
-51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9 tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
-033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6 tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
-7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e tests/editing_conformance/test_recipe_m2_shot_pool.py
-4722227e6e347778bb491f4f660e0a8d049ee074026b23e43de939a65d47142a tests/editing_conformance/test_word_binding_recipe.py
-a169b1616ed65e0865b2dd06aa962d34c618e57cc87bd0589110c6a05e9dcef4 tests/packs/timeline/test_cli_document_commit.py
-eeb87d727f6b0f194fd1bbbe74f7b7023c02686520bf29d0822d67fe6a1507d9 tests/sdk/test_selected_param_neutral_stage.py
-d9f79e7ea2add6229331948487da8069d0a484ae996b1016f9b1f7aef287abf6 tests/sdk/test_timeline_capture_projection.py
-d4888723f78c2e37f5a22c7584decc57d16e81c155c429943a3eed38a5c1d0ec tests/sdk/test_wc6_completion_capture.py
---- service outcome ---
-service_id=agent-d86-incremental-main-1025011156-10077
-request_id=d86-incremental-main-0107-body
-tuple_agent=0ae146e1b0acc6e4a82ba6b4f905d88bad48320c
-tuple_runtime=a3cd1a3214fa1632879c21d82d1abb9ea720b1de
-tuple_app=913686448cafbb63dfba5d8053cb725e1140bb07
-tuple_composition=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
-selector_count=268
-pytest_summary=39 failed, 30 passed, 176 errors in 111.59s
-service_wall_seconds=115
-body_exit=1
-automatic_verdict=NO-GO
-verdict_scope=automatic service summary only; no independent failure-verdict chain
-qualification_scope=incremental affected-node batch only
-excluded_from_credit=P4 originals; SWAP/bulk terminal bodies; held D88 capture; D59; full suite
-
-exec
-/bin/bash -lc "printf '%s\\n' '--- families first 210 ---'
-sed -n '1,215p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md
-printf '%s\\n' '--- family routing relevant ---'
-rg -n -C3 'media_manifest|occurrence_media_manifest|D86' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-family-routing.tsv
-printf '%s\\n' '--- body manifests relevant lines ---'
-rg -n -C2 'media_manifest|test_occurrence_media_manifest_inverse|test_commit_runtime_media_manifest_inverse' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-d86-incremental-main-0107-body.manifest /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-d86-incremental-main-0107-body.runmanifest
-printf '%s\\n' '--- source test hashes relevant ---'
-rg -n -i 'manifest|occurrence_media|commit_runtime_media' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-body-evidence.sha256 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-source-test-hashes.txt 2>/dev/null || true
-printf '%s\\n' '--- target hashes at integration and receipt ---'
-for ref in HEAD tl/integration 0ae146e1b0acc6e4a82ba6b4f905d88bad48320c; do echo \"## "'$ref"; git show "$ref:tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py" 2>/dev/null | sha256sum; git show "$ref:tests/editing_conformance/test_occurrence_media_manifest_inverse.py" 2>/dev/null | sha256sum; done
-printf '"'%s\\n' '--- current branch commit tree ---'
-git rev-parse HEAD"'^{tree}; git diff --exit-code --quiet || true; git status --short' in /home/user/work/wt/agt-D86-manifest-inverse-0121
- succeeded in 437ms:
---- families first 210 ---
-Ask: dispatch these six disjoint SOURCE-ONLY D86 Agent families on main now; return worker names and own-only remote branches / Owner: Runtime manager on main; Agent merge queue / By: 2026-10-24T23:45Z
-
-D86 explicit ORCH23:25 plus widened23:30:43 authorize six main-hosted families. Base actual Agent5d4ae93c83. No file overlaps peer2310 selected-PARAM files, occurrence48 or WC6. Existing authentic XML/log/rollup normally published design/handoff-agt-F-core-rehearsal-2234-* and handoff-agt-F-rehearsal-rollup-return-2320-*. NEW D85: SOURCE-ONLY authors, NO per-family pytest/body/service/build or original diagnostic; author source/compile/AST/static only. ONE later batched affected-node body runs on MAIN test service; Agent owns membership and qualification; return exact changed hashes and selectors for it. All assertions/parameters kept, no alias/retired writer/synthetic accepted records or relaxed custody. One protected review before Agent normal merge. Never touch shared ledger; propose existing log entry. Code changes from Codex workers only; no upstream push/pin/manual generated/M5/credential/acquisition/denied route. Report read-only source findings when product file ownership would widen; do not invent scope.
-
-FAMILY: D86-M1-outbox
-NODES: 10
-FILES: tests/editing_conformance/test_commit_runtime_m1.py
-BRIEF: Faithful D72 fixture/setup/caller migration through genuine existing bootstrap plus commitTimeline/provider, preserving every original input/assertion/parameter and C0 native authority, previous-value/reads/history/inverse/ABA semantics. Runtime/Agent product and other test files read-only initially. Retired initial publish is not an allowed seed and not a dead behavior. If fixture migration exposes product failure, return exact source seam before widening. Compile, scoped lint/typecheck and complete original assertion/decorator/parameter AST conservation; no test bodies. Commit names F-D86. Evidence under50MB outside worktree, final report and own-only normal remote branch.
-- tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]
-- tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]
-- tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_lost_ack_restart_and_fresh_head
-- tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_requires_write_but_inspection_remains_read_only
-- tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-image]
-- tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-video]
-- tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-image]
-- tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-video]
-- tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-image]
-- tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-video]
-
-FAMILY: D86-shared-inverse
-NODES: 10
-FILES: tests/editing_conformance/test_commit_runtime_shared_inverse.py
-BRIEF: Faithful D72 fixture/setup/caller migration through genuine existing bootstrap plus commitTimeline/provider, preserving every original input/assertion/parameter and C0 native authority, previous-value/reads/history/inverse/ABA semantics. Runtime/Agent product and other test files read-only initially. Retired initial publish is not an allowed seed and not a dead behavior. If fixture migration exposes product failure, return exact source seam before widening. Compile, scoped lint/typecheck and complete original assertion/decorator/parameter AST conservation; no test bodies. Commit names F-D86. Evidence under50MB outside worktree, final report and own-only normal remote branch.
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_slot_move_inverse_redo_and_rematerialization[original-third]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_slot_move_inverse_redo_and_rematerialization[authored-first]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_preserves_newer_disjoint_parent_edit[original-third]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_preserves_newer_disjoint_parent_edit[authored-first]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_preserves_newer_disjoint_sibling_edit[original-third]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_preserves_newer_disjoint_sibling_edit[authored-first]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_refuses_touching_aba_atomically[original-third]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_inverse_refuses_touching_aba_atomically[authored-first]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_redo_refuses_intervening_aba_after_exact_undo[original-third]
-- tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_redo_refuses_intervening_aba_after_exact_undo[authored-first]
-
-FAMILY: D86-native-word
-NODES: 46
-FILES: tests/editing_conformance/test_native_word_anchor.py, tests/editing_conformance/test_word_binding_recipe.py
-BRIEF: Faithful D72 fixture/setup/caller migration through genuine existing bootstrap plus commitTimeline/provider, preserving every original input/assertion/parameter and C0 native authority, previous-value/reads/history/inverse/ABA semantics. Runtime/Agent product and other test files read-only initially. Retired initial publish is not an allowed seed and not a dead behavior. If fixture migration exposes product failure, return exact source seam before widening. Compile, scoped lint/typecheck and complete original assertion/decorator/parameter AST conservation; no test bodies. Commit names F-D86. Evidence under50MB outside worktree, final report and own-only normal remote branch.
-- tests/editing_conformance/test_native_word_anchor.py::test_word_ending_at_occurrence_end_preserves_revision_only_restore_and_inverse[retained0]
-- tests/editing_conformance/test_native_word_anchor.py::test_occurrence_window_is_rechecked_for_source_move_stale_replay_and_inverse
-- tests/editing_conformance/test_native_word_anchor.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-False]
-- tests/editing_conformance/test_native_word_anchor.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-True]
-- tests/editing_conformance/test_native_word_anchor.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]
-- tests/editing_conformance/test_native_word_anchor.py::test_phrase_records_all_consecutive_main_word_ids
-- tests/editing_conformance/test_native_word_anchor.py::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]
-- tests/editing_conformance/test_native_word_anchor.py::test_last_write_clear_undo_restore_and_restore_inverse
-- tests/editing_conformance/test_native_word_anchor.py::test_equal_text_references_produce_distinct_canonical_revisions
-- tests/editing_conformance/test_native_word_anchor.py::test_equal_text_restore_recovers_the_selected_publications_binding
-- tests/editing_conformance/test_native_word_anchor.py::test_raw_canonical_bundle_compiles_in_fresh_process_without_history
-- tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo["stop" #99 +300f]
-- tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[obsolete display label]
-- tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[None]
-- tests/editing_conformance/test_native_word_anchor.py::test_on_until_clear_preserves_other_reference_and_opaque_fields
-- tests/editing_conformance/test_native_word_anchor.py::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance
-- tests/editing_conformance/test_native_word_anchor.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-occurrence-source occurrence/clip is missing]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-clip-source occurrence/clip is missing]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-word-stable word is missing]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-pin-exact transcript pin is missing]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[wrong-pin-exact transcript pin is missing]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[malformed-id-invalid authored word reference]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[empty-ids-invalid authored word reference]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[duplicate-ids-invalid authored word reference]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[null-reference-invalid authored word reference]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[unknown-field-invalid authored word anchor fields]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[outside-window-outside the half-open source window]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[nonfinite-offset-expected finite JSON]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[offset-precision-exceeds main Moment precision]
-- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[unsupported-owner-word anchors require parent ownership]
-- tests/editing_conformance/test_native_word_anchor.py::test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary
-- tests/editing_conformance/test_native_word_anchor.py::test_stale_choice_and_guarded_inverse_refuse_competing_target_writes
-- tests/editing_conformance/test_native_word_anchor.py::test_first_use_retains_v1_before_producer_removes_words_and_exact_retry_after_restart
-- tests/editing_conformance/test_native_word_anchor.py::test_native_move_refuses_anchor_basis_until_explicit_clear
-- tests/editing_conformance/test_native_word_anchor.py::test_source_removal_and_changed_media_refuse_atomically
-- tests/editing_conformance/test_native_word_anchor.py::test_first_anchor_inverse_recovers_literal_timing_and_exact_absence
-- tests/editing_conformance/test_word_binding_recipe.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-False]
-- tests/editing_conformance/test_word_binding_recipe.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-True]
-- tests/editing_conformance/test_word_binding_recipe.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]
-- tests/editing_conformance/test_word_binding_recipe.py::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]
-- tests/editing_conformance/test_word_binding_recipe.py::test_last_write_clear_undo_restore_and_restore_inverse
-- tests/editing_conformance/test_word_binding_recipe.py::test_raw_canonical_bundle_compiles_in_fresh_process_without_history
-- tests/editing_conformance/test_word_binding_recipe.py::test_on_until_clear_preserves_other_reference_and_opaque_fields
-- tests/editing_conformance/test_word_binding_recipe.py::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance
-- tests/editing_conformance/test_word_binding_recipe.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word
-
-FAMILY: D86-CLI-document
-NODES: 8
-FILES: tests/packs/timeline/test_cli_document_commit.py
-BRIEF: Faithful D72 fixture/setup/caller migration through genuine existing bootstrap plus commitTimeline/provider, preserving every original input/assertion/parameter and C0 native authority, previous-value/reads/history/inverse/ABA semantics. Runtime/Agent product and other test files read-only initially. Retired initial publish is not an allowed seed and not a dead behavior. If fixture migration exposes product failure, return exact source seam before widening. Compile, scoped lint/typecheck and complete original assertion/decorator/parameter AST conservation; no test bodies. Commit names F-D86. Evidence under50MB outside worktree, final report and own-only normal remote branch.
-- tests/packs/timeline/test_cli_document_commit.py::test_document_commit_uses_the_authenticated_commit_door
-- tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_uses_runtime_idempotency_without_history_scan
-- tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_does_not_scan_a_long_history_page
-- tests/packs/timeline/test_cli_document_commit.py::test_document_commit_clean_raw_empty_app_is_a_noop
-- tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preserves_unknown_parent_app_data
-- tests/packs/timeline/test_cli_document_commit.py::test_document_commit_human_output_keeps_label_and_receipt
-- tests/packs/timeline/test_cli_document_commit.py::test_document_commit_changed_body_with_same_key_is_runtime_refusal
-- tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preview_has_no_accepted_receipt
-
-D86 WIDENED23:30:43: add these TWO source-only families; all original four remain unchanged. Main hosts six; Agent affected-node BATCH goes to MAIN testservice after reviewed sources merge, qualification only, never D59 credit. No per-familytestbody.
-
-FAMILY: D86-parent-media
-NODES: 20
-FILES: tests/editing_conformance/test_commit_runtime_parent_media.py
-BRIEF: Source-only faithful current caller/fixture/created-claim migration, all original inputs/behavior/assertions/parameters preserved. Only named testfile allowed. Actual43cohort error provider executed a different command may reflect missing caller-created claims; do not infer cause from string alone. Existing RuntimeSWAP2308 found missing Appcreated claim, not Runtimeguarddefect; use facts as source input only. Product/other testfiles READONLY initially. Real bootstrap+commit/provider only, no retiredinitialpublisher, syntheticacceptance/SQL/history or waivedauth. Ifproductionfileoutside scopecausal, return exactunapplied seam. Source/compile/AST/lint/typecheck only; NO pytest/body/service/build; one lateraffectedbatchonMAIN. One independent protectedreview and own-only remoteAgentmerge.
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_fresh_film_first_media_birth_and_exact_inverse[image]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_fresh_film_first_media_birth_and_exact_inverse[video]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-False]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-True]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-False]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-True]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[image]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[video]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-False]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-True]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-False]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-True]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-False]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-True]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-False]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-True]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[image]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[video]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordered_replacement_preserves_unrelated_historical_transition[image]
-- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordered_replacement_preserves_unrelated_historical_transition[video]
-
-FAMILY: D86-parent-auto
-NODES: 14
-FILES: tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
-BRIEF: Source-only faithful current caller/fixture/created-claim migration, all original inputs/behavior/assertions/parameters preserved. Only named testfile allowed. Actual43cohort error provider executed a different command may reflect missing caller-created claims; do not infer cause from string alone. Existing RuntimeSWAP2308 found missing Appcreated claim, not Runtimeguarddefect; use facts as source input only. Product/other testfiles READONLY initially. Real bootstrap+commit/provider only, no retiredinitialpublisher, syntheticacceptance/SQL/history or waivedauth. Ifproductionfileoutside scopecausal, return exactunapplied seam. Source/compile/AST/lint/typecheck only; NO pytest/body/service/build; one lateraffectedbatchonMAIN. One independent protectedreview and own-only remoteAgentmerge.
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-anchor]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-fallback]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-lane-end]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-anchor]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-fallback]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-lane-end]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[image-at]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[image-hold]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[image-track-label]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[video-at]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[video-hold]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[video-track-label]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_completed_variant_is_exact_even_after_a_new_primary_is_promoted[image]
-- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_completed_variant_is_exact_even_after_a_new_primary_is_promoted[video]
-
-FAMILY: D86-parent-swap12
-NODES: 12
-FILES: tests/editing_conformance/test_commit_runtime_parent_media_swap.py
-BRIEF: Additional explicit main source-only reservation after originalsix returns (D86 permits morefamilies). Base currentnormal Agent or published reviewedsourcebranch. FaithfulD72 genuinecurrentRuntimebootstrap/capture/provider/setup migration preserving EVERY originalinput/assertion/raises/parameters/decorators/branch and actualnative physicalidentity/createdclaims/CAS/retry/undo/ABA/refusal/no-write. Own only listedfiles; product/otherhelpers/tests read-only. No retiredpublisher/alias/syntheticacceptedhistory/SQL/fakecustody or commandmetadata. Exactoutsideproductcause returnsunappliedseam beforewidening. Source/AST/compile/scopedRuff/mypy baselinecandidate/diff only, NOpytest/body/service/build/functionexecution. One protectedreview before Agentnormalmerge, thenONE unionaffectedMAINbatch. Delete nothing; no generated/pins/kit/sharedledger/M5/upstream/credentials/deniedroutes. CommitnamesF-D86; finalreport/exacthashes/canonicalselectors; under50MB durableevidence.
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo[image]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo[video]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_lifecycle_race_refuses_at_acceptance[image-old_media]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_lifecycle_race_refuses_at_acceptance[image-media]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_lifecycle_race_refuses_at_acceptance[video-old_media]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_lifecycle_race_refuses_at_acceptance[video-media]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_accepted_history_rebase_and_guarded_aba_undo[image-disjoint]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_accepted_history_rebase_and_guarded_aba_undo[image-aba]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_accepted_history_rebase_and_guarded_aba_undo[video-disjoint]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_accepted_history_rebase_and_guarded_aba_undo[video-aba]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo[parent]
-- tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo[occurrence:occ-a]
-
-FAMILY: D86-numeric9
-NODES: 9
-FILES: tests/editing_conformance/test_commit_runtime_numeric_move.py, tests/editing_conformance/test_commit_runtime_numeric_params.py
-BRIEF: Additional explicit main source-only reservation after originalsix returns (D86 permits morefamilies). Base currentnormal Agent or published reviewedsourcebranch. FaithfulD72 genuinecurrentRuntimebootstrap/capture/provider/setup migration preserving EVERY originalinput/assertion/raises/parameters/decorators/branch and actualnative physicalidentity/createdclaims/CAS/retry/undo/ABA/refusal/no-write. Own only listedfiles; product/otherhelpers/tests read-only. No retiredpublisher/alias/syntheticacceptedhistory/SQL/fakecustody or commandmetadata. Exactoutsideproductcause returnsunappliedseam beforewidening. Source/AST/compile/scopedRuff/mypy baselinecandidate/diff only, NOpytest/body/service/build/functionexecution. One protectedreview before Agentnormalmerge, thenONE unionaffectedMAINbatch. Delete nothing; no generated/pins/kit/sharedledger/M5/upstream/credentials/deniedroutes. CommitnamesF-D86; finalreport/exacthashes/canonicalselectors; under50MB durableevidence.
-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-0-parent]
-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-0-occurrence]
-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0.0-0-parent]
-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0.0-0-occurrence]
-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-1-parent]
-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-1-occurrence]
-- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[2-2.0-occurrence:occurrence-1/clip:clip-1]
-- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[1-True-occurrence:occurrence-1/clip:clip-1]
-- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[True-1-occurrence:occurrence-1/clip:clip-1]
-
-FAMILY: D86-manifest-inverse8
-NODES: 8
-FILES: tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py, tests/editing_conformance/test_occurrence_media_manifest_inverse.py
-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_compiled_popup_inverse_restores_exact_original_document[add]
-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_compiled_popup_inverse_restores_exact_original_document[swap]
-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[add-create-undo]
-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[add-undo-redo]
-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[swap-create-undo]
-- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[swap-undo-redo]
-- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[add]
-- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[swap]
-
-FAMILY: D86-occurrence-opaque9
-NODES: 9
-FILES: tests/editing_conformance/test_commit_runtime_occurrence_create.py, tests/editing_conformance/test_commit_runtime_occurrence_fork.py, tests/editing_conformance/test_commit_runtime_opaque_items.py
-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
-- tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]
-- tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]
-- tests/editing_conformance/test_commit_runtime_occurrence_fork.py::test_registered_fork_normal_wire_accept_edit_and_guarded_undo
-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[item_id]
-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[id]
-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[both]
-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[item_id]
-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[id]
-- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[both]
-
-FAMILY: D86-parent-track3
-NODES: 3
-FILES: tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py, tests/editing_conformance/test_commit_runtime_parent_track_label.py
-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
-- tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py::test_grouped_parent_track_create_move_reload_undo_redo
-- tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move
-- tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_native_label_cli_lost_ack_then_python_suffix_keeps_original_claims
-
-FAMILY: D86-ordinary-script4
-NODES: 4
-FILES: tests/editing_conformance/test_next_ordinary_union_runtime.py, tests/editing_conformance/test_s3_reviewed_cohort_runtime.py, tests/sdk/test_timeline_script.py
-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
-- tests/editing_conformance/test_s3_reviewed_cohort_runtime.py::test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart
---- family routing relevant ---
---- body manifests relevant lines ---
---- source test hashes relevant ---
-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-source-test-hashes.txt:11:482d87db620fe482c3f993dfa416de93972f1a6d53d757f52595e236d790e285 tests/editing_conformance/test_commit_runtime_occurrence_media.py
---- target hashes at integration and receipt ---
-## HEAD
-1bc4b5ad61d5f96e59655ce5a8b75cc66b567232e6f68eadc240eac5ab0ec1e7  -
-f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d  -
-## tl/integration
-1bc4b5ad61d5f96e59655ce5a8b75cc66b567232e6f68eadc240eac5ab0ec1e7  -
-f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d  -
-## 0ae146e1b0acc6e4a82ba6b4f905d88bad48320c
-1bc4b5ad61d5f96e59655ce5a8b75cc66b567232e6f68eadc240eac5ab0ec1e7  -
-f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d  -
---- current branch commit tree ---
-9d26efc30836abb7ae3a19882e6e917405db2f89
++            'base_publication_id': head['head_publication_id'], 'commands': commands,
++            'label': label, 'steps': [step], 'merge': 'fields', 'reads': [],
++            'dry_run': dry_run, 'source': {'via': 'python'},
++            'rationale': 'Replace one parent media selection.',
++            'group_id': 'D86-parent-media-swap'}
+ 
+ 
+ @pytest.fixture(params=['parent', 'occurrence:occ-a'])
+--- trusted seed source ---
+     1	"""Seed a saved parent closure into a real Runtime through its host commit store.
+     2	
+     3	``publish_parent_composition`` is retired, so a fixture that needs a stored parent chain accepts the
+     4	closure at Runtime's test acceptance boundary instead (the same trusted setup Runtime's own tests use).
+     5	This is TEST SETUP, not Agent semantic acceptance: no Agent command compiled these revisions.
+     6	"""
+     7	from __future__ import annotations
+     8	
+     9	import copy
+    10	from typing import Any
+    11	
+    12	from tests.helpers.runtime import use_runtime
+    13	
+    14	PUBLISHER = "trusted-test-setup"
+    15	
+    16	
+    17	def _media(*payloads: Any) -> list[dict[str, str]]:
+    18	    found: dict[str, dict[str, str]] = {}
+    19	
+    20	    def collect(value: Any) -> None:
+    21	        if isinstance(value, dict):
+    22	            for key, child in value.items():
+    23	                if key in {"media_id", "object_id"} and isinstance(child, str):
+    24	                    media_id = child if child.startswith("sha256:") else "sha256:" + child
+    25	                    if len(media_id) == len("sha256:") + 64:
+    26	                        found[media_id] = {"media_id": media_id, "content_digest": media_id}
+    27	                collect(child)
+    28	        elif isinstance(value, list):
+    29	            for child in value:
+    30	                collect(child)
+    31	
+    32	    collect(list(payloads))
+    33	    return [found[key] for key in sorted(found)]
+    34	
+    35	
+    36	def _closure(publication: dict, current: dict, digest) -> dict:
+    37	    parent_payload = copy.deepcopy(publication["parent_composition"])
+    38	    parent = {"revision_id": publication["parent_revision_id"],
+    39	              "content_digest": digest(parent_payload), "payload": parent_payload}
+    40	    wanted = {(row["shot_id"], row["shot_revision_id"]) for row in parent_payload["occurrences"]}
+    41	    shots = []
+    42	    shot_sources = {(row["shot_id"], row["revision_id"]): row
+    43	                    for row in [*current["shot_revisions"], *publication.get("shot_revisions", [])]}
+    44	    for source in shot_sources.values():
+    45	        if (source["shot_id"], source["revision_id"]) not in wanted:
+    46	            continue
+    47	        payload = copy.deepcopy(source["payload"])
+    48	        payload["internal_timeline_revision_id"] = source["internal_timeline_revision_id"]
+    49	        shots.append({"shot_id": source["shot_id"], "revision_id": source["revision_id"],
+    50	                      "internal_timeline_revision_id": source["internal_timeline_revision_id"],
+    51	                      "content_digest": digest(payload), "payload": payload})
+    52	    wanted_internals = {row["internal_timeline_revision_id"] for row in shots}
+    53	    internals = []
+    54	    internal_sources = {row["revision_id"]: row for row in [
+    55	        *current["internal_timeline_revisions"], *publication.get("internal_timeline_revisions", [])]}
+    56	    for source in internal_sources.values():
+    57	        if source["revision_id"] in wanted_internals:
+    58	            payload = copy.deepcopy(source["payload"])
+    59	            internals.append({"timeline_id": source["timeline_id"], "revision_id": source["revision_id"],
+    60	                              "content_digest": digest(payload), "payload": payload})
+    61	    shots.sort(key=lambda row: (row["shot_id"], row["revision_id"]))
+    62	    internals.sort(key=lambda row: (row["timeline_id"], row["revision_id"]))
+    63	    manifest = {
+    64	        "shots": [{key: row[key] for key in ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")}
+    65	                  for row in shots],
+    66	        "internal_timelines": [{key: row[key] for key in ("timeline_id", "revision_id", "content_digest")}
+    67	                               for row in internals],
+    68	        "media": _media(parent["payload"], *(row["payload"] for row in [*shots, *internals])),
+    69	        "documents": [],
+    70	    }
+    71	    return {"schema_version": 1, "project_id": publication["project_id"], "timeline_id": publication["timeline_id"],
+    72	            "parent_revision": parent, "shot_revisions": shots, "internal_timeline_revisions": internals,
+    73	            "dependency_manifest": manifest}
+    74	
+    75	
+    76	def seed_trusted_parent(service: Any, publication: dict, *, idempotency_key: str) -> dict:
+    77	    """Accept ``publication`` (the retired publisher's body) as the next head of its timeline."""
+    78	    use_runtime()
+    79	    from runtime_protocol.timeline_commit_store import digest, request_identity
+    80	
+    81	    project, timeline = publication["project_id"], publication["timeline_id"]
+    82	    commits, _ = service._timeline_commits()
+    83	    authorize = lambda: None  # noqa: E731
+    84	    commits.bootstrap(project, timeline, authorize=authorize)
+    85	    head = commits.head(project, timeline)
+    86	    if publication.get("expected_head") is not None:
+    87	        assert publication["expected_head"] == head["revision_id"], "seed chain must extend the current head"
+    88	    current = commits.revision_closure(project, timeline, head["revision_id"])
+    89	    document = _closure(publication, current, digest)
+    90	    before = {key: current["parent_revision"][key] for key in ("revision_id", "content_digest")}
+    91	    after = {key: document["parent_revision"][key] for key in ("revision_id", "content_digest")}
+    92	    command = {"schema_version": 1, "op": "clip.move", "version": "1", "select": "parent/clip:seed",
+    93	               "args": {"on": 0}, "created": []}
+    94	    request = {"api_version": 1, "project_id": project, "timeline_id": timeline,
+    95	               "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+    96	               "commands": [command], "rationale": "Trusted TEST SETUP for a saved parent; not Agent semantic acceptance"}
+    97	    context = {"request": request,
+    98	               "invocation": {"operation": "commitTimeline", "path": f"/v1/projects/{project}/timelines/{timeline}/commit",
+    99	                              "body": copy.deepcopy(request)},
+   100	               "idempotency_key": idempotency_key, "realm_id": service.realm["id"], "publisher": PUBLISHER}
+   101	    context["request_hash"] = request_identity(context)
+   102	    record = {"ordinal": 0, "command": copy.deepcopy(command),
+   103	              "writes": [{"ref": "timeline", "path": [], "before": {"state": "present", "value": before},
+   104	                          "after": {"state": "present", "value": after}}],
+   105	              "reads": [{"ref": "timeline", "path": [], "state": {"state": "present", "value": before}}],
+   106	              "selections": [], "bindings": [], "created": [], "dependencies": [], "derived_writes": []}
+   107	    value = {"expected_head": head, "canonical_document": document, "document_digest": digest(document),
+   108	             "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
+   109	             "id_map": {}, "semantic_events": [], "provider_version": "trusted-test-setup-1",
+   110	             "compiler_version": "trusted-test-setup-1"}
+   111	    return commits.accept(context, value, authorize=authorize)
+--- occurrence/provider seam source ---
+   995	def _validate_materializations(records):
+   996	    """Require every managed edge proof, even while its source stays reachable."""
+   997	    if not isinstance(records, AcceptedRecords):
+   998	        return
+   999	    from ._commit_patch import _managed_boundaries, _materialization_sites
+  1000	    from ._doc_patch import Closure
+  1001	
+  1002	    for entry in records.entries:
+  1003	        before, after = (Closure(bundle) for bundle in records.load_boundary(entry))
+  1004	        expected, missing = [], set()
+  1005	        for old_images, old_rows, new_images, new_rows, commands, step in _managed_boundaries(entry, before, after):
+  1006	            transitions = []
+  1007	            _materialization_sites(entry, old_images, old_rows, new_images, new_rows, commands, step,
+  1008	                                   transitions, missing, [])
+  1009	            expected.extend((old, new, owner + '/shot', step['id'], step['command_ordinals'][-1])
+  1010	                            for old, new, owner in transitions)
+  1011	        if missing:
+  1012	            raise CommandError('missing authenticated fork materialization', kind='history_unavailable')
+  1013	        for record in entry['records']['commands']:
+  1014	            for binding in record.get('bindings', []):
+  1015	                if binding.get('key') != 'commit.materialization':
+  1016	                    continue
+  1017	                identity = (binding.get('physical_ref'), binding.get('successor'), binding.get('owner'),
+  1018	                            binding.get('step_id'), record['ordinal'])
+  1019	                if (identity not in expected or binding.get('policy') != 'fixed'
+  1020	                        or binding.get('dependencies') != []):
+  1021	                    raise CommandError('ambiguous or unexpected fork materialization', kind='history_unavailable')
+  1022	                expected.remove(identity)
+  1023	        if expected:
+  1024	            raise CommandError('incomplete authenticated fork materialization', kind='history_unavailable')
+  1025	
+  1026	
+  1027	def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
+  1028	    if not records:
+  1029	        raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
+  1030	    if any(not isinstance(record, dict) or 'writes' not in record for record in records):
+    50	
+    51	@pytest.fixture(params=['add', 'swap'])
+    52	def popup_edit(request, monkeypatch):
+    53	    """Use actual recorder writes to isolate compilation from media admission.
+    54	
+    55	    The detached IDs are unit-fixture values. This deliberately makes no claim
+    56	    about Runtime selection, provider acceptance or an installed popup opcode.
+    57	    """
+    58	    operation = request.param
+    59	
+    60	    def handler(ctx, command):
+    61	        ctx.read(OWNER + '/source')
+    62	        ctx.write(OWNER + '/source', ['registry', 'assets', 'new'],
+    63	                  {'media_id': NEW, 'type': 'image', 'generationId': 'generation-new',
+    64	                   'variantId': 'variant-new', 'opaque': [None, False, {}]})
+    65	        if operation == 'add':
+    66	            ctx.create(OWNER, 'clip', {
+    67	                'id': 'reserved-child', 'track': 'picture', 'asset': 'new',
+    68	                'clipType': 'image', 'at': .125, 'hold': 1.25, 'params': None})
+    69	        else:
+    70	            ctx.read(OWNER + '/clip:clip-a')
+    71	            ctx.write(OWNER + '/clip:clip-a', ['asset'], 'new')
+    72	
+    73	    installed = commands.operations()
+    74	    installed['test.popup-media'] = commands.Operation(
+    75	        {'type': 'object', 'additionalProperties': False}, handler,
+    76	        {'ownership': 'occurrence'})
+    77	
+    78	    def properties(ctx, command):
+    79	        for write in command['args']['writes']:
+    80	            ctx.write(write['ref'], write['path'], write['value'])
+    81	
+    82	    installed['test.properties'] = commands.Operation({'type': 'object'}, properties, {})
+    83	    monkeypatch.setattr(commands, 'operations', lambda: installed)
+    84	    document = popup_document()
+    85	    original = bundle_from_document(document)
+    86	    call = {'schema_version': 1, 'op': 'test.popup-media', 'version': '1',
+    87	            'select': OWNER, 'args': {}}
+    88	    plan = commands.execute(original, [call])
+    89	    return document, original, plan
+    90	
+    91	
+    92	def test_recorded_registry_creation_and_child_inverse_preserve_authored_state(popup_edit):
+--- current target status and diff ---
+## tl/agt-D86-manifest-inverse-0121
 
 exec
-/bin/bash -lc 'for f in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-d86-incremental-main-0107-body.manifest /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-d86-incremental-main-0107-body.runmanifest; do echo "### $f"; sed -n '"'1,120p' \""'$f"; done
-printf '"'%s\\n' '--- exact current target source relations ---'
-git log --format='%H %s' --follow -- tests/editing_conformance/test_occurrence_media_manifest_inverse.py | head -15
-git log --format='%H %s' --follow -- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py | head -15
-printf '%s\\n' '--- current source changes after target introduction ---'
-git log --oneline --ancestry-path 2f77310e6e..HEAD -- astrid/sdk/timeline tests/editing_conformance/test_occurrence_media_manifest_inverse.py tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py | head -80
-printf '%s\\n' '--- actual target source from prior fixture-current commit ---'
-git show 134f1c276a"'^:tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py | sha256sum
-git show 134f1c276a:tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py | sha256sum
-printf '"'%s\\n' '--- exact occurrence failures summary from classification ---'
-sed -n '55,75p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-rehearsal-errors-2305-classification-errors.tsv
-sed -n '390,415p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-rehearsal-errors-2305-classification-errors.tsv" in /home/user/work/wt/agt-D86-manifest-inverse-0121
- succeeded in 438ms:
-### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-d86-incremental-main-0107-body.manifest
-format=p4-d73-v1
-agent_sha=0ae146e1b0acc6e4a82ba6b4f905d88bad48320c
-agent_tree=c91cfe3a28f2951584289bea31f1005222178bed
-agent_parents=0ae146e1b0acc6e4a82ba6b4f905d88bad48320c 756f911847b6033f6098caddd42a00b1fb6a8638 ec76fa69e6cc8af424ec397512b9422968b7eaf5
-agent_path=/home/user/work/wt/agt-pin-0ae146e1
-runtime_sha=a3cd1a3214fa1632879c21d82d1abb9ea720b1de
-runtime_tree=64bb0caf0b7b950e02c4075077868a3dcd12ee06
-runtime_parents=a3cd1a3214fa1632879c21d82d1abb9ea720b1de 732c48c6f5a9441a65c61b24595d454a1cd3e180 6a9a98f96e73e26fac8e76bb21c13baa5e20e97a
-runtime_path=/home/user/work/wt/rt-pin-a3cd1a32
-app_sha=913686448cafbb63dfba5d8053cb725e1140bb07
-app_tree=963b621de5f3b4235895b543bfa949a080e4cc0c
-app_parents=913686448cafbb63dfba5d8053cb725e1140bb07 5f4ce933ec4ad883787e4730d92c0bca8caf0814 b11859b45970330bbe217b3355e9470ab8d09ecd
-app_path=/home/user/work/wt/app-pin-91368644
-composition_sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
-composition_tree=5ab5191a296980a0a6bcd1178ab6902d6478a148
-composition_parents=635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a
-composition_path=/home/user/work/wt/vw-pin-635f4de0
-python=/home/user/work/venv-agent/bin/python
-node=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
-profile=/home/user/work/runtimes/agent-remotion-0013
-schema=/home/user/work/venv-agent/lib/python3.13/site-packages
-node_version=v20.19.4
-profile_lock_sha=c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24
-profile_archive_sha=9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
-profile_registry_sha=b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d
-composition_version=0.0.13
-original_p4_test_hash=49a331fd153b19b0b65e8f272beecce95ed9231216722ccd17ebce87571c9ae8
-service_versions=agent:0ae146e1b0acc6e4a82ba6b4f905d88bad48320c,runtime:a3cd1a3214fa1632879c21d82d1abb9ea720b1de,app:913686448cafbb63dfba5d8053cb725e1140bb07,composition:635f4de06fda22a85fc2e4cfc764d0153a4c9f40,node:v20.19.4,client:0.2.14,schema:sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
-junit_paths=/home/user/work/wt/rt-D86-incremental-submit-0107/evidence/rt-D86-incremental-submit-0107/<ACTUAL_SERVICE_ID>.xml
-### /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-d86-incremental-main-0107-body.runmanifest
-agent_sha=0ae146e1b0acc6e4a82ba6b4f905d88bad48320c
-runtime_sha=a3cd1a3214fa1632879c21d82d1abb9ea720b1de
-app_sha=913686448cafbb63dfba5d8053cb725e1140bb07
-composition_sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
-original_p4_test_hash=49a331fd153b19b0b65e8f272beecce95ed9231216722ccd17ebce87571c9ae8
-service_versions=agent:0ae146e1b0acc6e4a82ba6b4f905d88bad48320c,runtime:a3cd1a3214fa1632879c21d82d1abb9ea720b1de,app:913686448cafbb63dfba5d8053cb725e1140bb07,composition:635f4de06fda22a85fc2e4cfc764d0153a4c9f40,node:v20.19.4,client:0.2.14,schema:sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
-junit_paths=/home/user/work/wt/rt-D86-incremental-submit-0107/evidence/rt-D86-incremental-submit-0107/<ACTUAL_SERVICE_ID>.xml
---- exact current target source relations ---
-780a3182d73ad6e9a686248e4bcd43c0c3b61920 test(timeline): authenticate inverse fixture history
-7b61efd5ea9fd9420b7fa577cfafa4487e3ca746 feat(timeline): compose provisional popup editing candidate
-ba21beffd177e7d80a5b839bde5a9e25b97235c2 feat(timeline): stage ordinary 6ba source on Main-current
-7b61efd5ea9fd9420b7fa577cfafa4487e3ca746 feat(timeline): compose provisional popup editing candidate
---- current source changes after target introduction ---
---- actual target source from prior fixture-current commit ---
-a3c15cc995d1c0954e97b178a83a9c311ed58620c544ecfbd98a0d564835441f  -
-1bc4b5ad61d5f96e59655ce5a8b75cc66b567232e6f68eadc240eac5ab0ec1e7  -
---- exact occurrence failures summary from classification ---
-tests.editing_conformance.test_commit_runtime_m1::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_keyed_view_lost_ack_restart_and_fresh_head	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_keyed_view_requires_write_but_inspection_remains_read_only	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-image]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-video]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-image]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-video]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-image]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_m1::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-video]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / M1 outbox/restart	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_media_manifest_inverse::test_real_media_manifest_inverse_retry_restart_and_history[add]	error	core	core	CORE-OPEN	media-manifest-fixture-index-error	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact IndexError in test setup helper; current inverse/history behavior remains promised and unqualified.	Agent — media-manifest inverse fixture	OWN-REHEARSAL-SUITE.xml exact IndexError in test setup helper; current inverse/history behavior remains promised and unqualified.
-tests.editing_conformance.test_commit_runtime_media_manifest_inverse::test_real_media_manifest_inverse_retry_restart_and_history[swap]	error	core	core	CORE-OPEN	media-manifest-fixture-index-error	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact IndexError in test setup helper; current inverse/history behavior remains promised and unqualified.	Agent — media-manifest inverse fixture	OWN-REHEARSAL-SUITE.xml exact IndexError in test setup helper; current inverse/history behavior remains promised and unqualified.
-tests.editing_conformance.test_commit_runtime_native_checkout::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / native checkout	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_native_checkout::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / native checkout	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_native_checkout::test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / native checkout	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_native_checkout::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / native checkout	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_native_frontends::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[False]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / NativeSheet frontends	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_native_frontends::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[True]	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / NativeSheet frontends	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_commit_runtime_native_frontends::test_checkout_first_refuses_sheet_suffix_keeps_draft_and_pending_intent	error	core	core	CORE-OPEN	retired-route-setup	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.	Runtime — commitTimeline provider / NativeSheet frontends	OWN-REHEARSAL-SUITE.xml exact retired-route setup error; D72/BOARD-HEADER.md:345-357 requires current replacement coverage or faithful migration, and deletion-ledger.agent.md WC7/WC8/WC10 remain live/held; retired-interface error alone is not dead-scope.
-tests.editing_conformance.test_gate1_fresh_word_transcript_frontends::test_fresh_word_transcript_frontends_exact_pin_roundtrip[python]	error	core	core	CORE-OPEN	word-transcript-source-identity-pin-mismatch	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact source-hash assertion mismatch in setup; D23 is not cited because no exact D23 identity matches these nodes.	Agent — fresh word transcript frontend source identity	OWN-REHEARSAL-SUITE.xml exact source-hash assertion mismatch in setup; D23 is not cited because no exact D23 identity matches these nodes.
-tests.editing_conformance.test_gate1_fresh_word_transcript_frontends::test_fresh_word_transcript_frontends_exact_pin_roundtrip[cli]	error	core	core	CORE-OPEN	word-transcript-source-identity-pin-mismatch	OWN-REHEARSAL-SUITE.xml::testcase/error	OWN-REHEARSAL-SUITE.xml exact source-hash assertion mismatch in setup; D23 is not cited because no exact D23 identity matches these nodes.	Agent — fresh word transcript frontend source identity	OWN-REHEARSAL-SUITE.xml exact source-hash assertion mismatch in setup; D23 is not cited because no exact D23 identity matches these nodes.
+/bin/bash -lc 'set -o pipefail
+TASKTMP=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/tmpdir
+mkdir -p "$TASKTMP"
+printf '"'%s\\n' '--- static AST/compile/conservation ---'
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import ast
+import hashlib
+import pathlib
 
+paths = [
+    pathlib.Path('tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py'),
+    pathlib.Path('tests/editing_conformance/test_occurrence_media_manifest_inverse.py'),
+]
+expected = {
+    paths[0]: {
+        'test_real_media_manifest_inverse_retry_restart_and_history': {'params': ['operation', 'manifest_media'], 'decorators': 1},
+    },
+    paths[1]: {
+        'test_compiled_popup_inverse_restores_exact_original_document': {'params': ['popup_edit'], 'decorators': 0},
+        'test_multiple_target_pin_changes_use_reverse_publication_order': {'params': ['popup_edit', 'pair'], 'decorators': 1},
+    },
+}
+for path in paths:
+    source = path.read_text(encoding='utf-8')
+    tree = ast.parse(source, filename=str(path))
+    compile(source, str(path), 'exec')
+    digest = hashlib.sha256(source.encode()).hexdigest()
+    funcs = {node.name: node for node in tree.body if isinstance(node, ast.FunctionDef)}
+    print(f'{path}: sha256={digest} compile=PASS')
+    for name, contract in expected[path].items():
+        node = funcs[name]
+        args = [arg.arg for arg in node.args.args]
+        assert args == contract['params'], (path, name, args)
+        assert len(node.decorator_list) == contract['decorators'], (path, name)
+        print(f'  {name}: params={args} decorators={len(node.decorator_list)} asserts={sum(isinstance(n, ast.Assert) for n in ast.walk(node))} raises={sum(isinstance(n, ast.Raise) for n in ast.walk(node))}')
+print('AST_CONSERVATION=PASS')
+PY
+printf '%s\\n' '--- diff/static whitespace ---'
+git diff --exit-code --check
+git diff --quiet
+echo \"worktree_diff=NONE\"
+printf '%s\\n' '--- scoped Ruff ---'
+/home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+printf '%s\\n' '--- scoped mypy ---'
+PYTHONPATH=\""'$PWD" /home/user/work/venv-agent/bin/mypy --cache-dir "$TASKTMP/mypy-cache" tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py' in /home/user/work/wt/agt-D86-manifest-inverse-0121
+ succeeded in 1673ms:
+mkdir: cannot create directory ‘/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/tmpdir’: File exists
+--- static AST/compile/conservation ---
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py: sha256=1bc4b5ad61d5f96e59655ce5a8b75cc66b567232e6f68eadc240eac5ab0ec1e7 compile=PASS
+Traceback (most recent call last):
+  File "<stdin>", line 28, in <module>
+AssertionError: (PosixPath('tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py'), 'test_real_media_manifest_inverse_retry_restart_and_history', ['monkeypatch', 'operation', 'manifest_media'])
+--- diff/static whitespace ---
+worktree_diff=NONE
+--- scoped Ruff ---
+All checks passed!
+--- scoped mypy ---
+Success: no issues found in 2 source files
+
+exec
+/bin/bash -lc "set -o pipefail
+printf '%s\\n' '--- corrected AST/selector conservation ---'
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import ast, hashlib, pathlib
+paths = [pathlib.Path('tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py'), pathlib.Path('tests/editing_conformance/test_occurrence_media_manifest_inverse.py')]
+expected = {
+ paths[0]: {'test_real_media_manifest_inverse_retry_restart_and_history': (['monkeypatch','operation','manifest_media'], 1)},
+ paths[1]: {
+  'test_compiled_popup_inverse_restores_exact_original_document': (['popup_edit'], 0),
+  'test_multiple_target_pin_changes_use_reverse_publication_order': (['popup_edit','pair'], 1),
+ },
+}
+for path in paths:
+ source=path.read_text(encoding='utf-8'); tree=ast.parse(source, filename=str(path)); compile(source,str(path),'exec')
+ funcs={node.name:node for node in tree.body if isinstance(node,ast.FunctionDef)}
+ print(f'{path}: sha256={hashlib.sha256(source.encode()).hexdigest()} compile=PASS')
+ for name,(params,decorators) in expected[path].items():
+  node=funcs[name]; actual=[a.arg for a in node.args.args]
+  assert actual == params, (name,actual)
+  assert len(node.decorator_list)==decorators, (name,len(node.decorator_list))
+  print(f'  {name}: params={actual} decorators={decorators} asserts={sum(isinstance(n,ast.Assert) for n in ast.walk(node))} raises={sum(isinstance(n,ast.Raise) for n in ast.walk(node))} branches={sum(isinstance(n,(ast.If,ast.For,ast.While,ast.Try,ast.Match)) for n in ast.walk(node))}')
+print('AST_CONSERVATION=PASS')
+PY
+printf '%s\\n' '--- assigned selector presence (static text/AST only) ---'
+PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+import ast, pathlib
+wanted = {
+ 'tests/editing_conformance/test_occurrence_media_manifest_inverse.py': [
+  'test_compiled_popup_inverse_restores_exact_original_document',
+  'test_multiple_target_pin_changes_use_reverse_publication_order',
+ ],
+ 'tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py': ['test_real_media_manifest_inverse_retry_restart_and_history'],
+}
+for path, names in wanted.items():
+ tree=ast.parse(pathlib.Path(path).read_text())
+ actual={n.name for n in tree.body if isinstance(n,ast.FunctionDef)}
+ missing=set(names)-actual
+ assert not missing, (path,missing)
+ print(f'{path}: {len(names)}/{len(names)} assigned test bodies present')
+PY
+printf '%s\\n' '--- lock and source identities ---'
+python3 - <<'PY'
+import json
+p=json.load(open('runtime.lock.json'))
+print('runtime.lock.source_commit=',p.get('source_commit'))
+PY
+git status --short --branch" in /home/user/work/wt/agt-D86-manifest-inverse-0121
+ succeeded in 248ms:
+--- corrected AST/selector conservation ---
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py: sha256=1bc4b5ad61d5f96e59655ce5a8b75cc66b567232e6f68eadc240eac5ab0ec1e7 compile=PASS
+  test_real_media_manifest_inverse_retry_restart_and_history: params=['monkeypatch', 'operation', 'manifest_media'] decorators=1 asserts=20 raises=0 branches=4
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py: sha256=f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d compile=PASS
+  test_compiled_popup_inverse_restores_exact_original_document: params=['popup_edit'] decorators=0 asserts=6 raises=0 branches=0
+  test_multiple_target_pin_changes_use_reverse_publication_order: params=['popup_edit', 'pair'] decorators=1 asserts=1 raises=0 branches=1
+AST_CONSERVATION=PASS
+--- assigned selector presence (static text/AST only) ---
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py: 2/2 assigned test bodies present
+tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py: 1/1 assigned test bodies present
+--- lock and source identities ---
+runtime.lock.source_commit= a3cd1a3214fa1632879c21d82d1abb9ea720b1de
+## tl/agt-D86-manifest-inverse-0121
+
+codex
+Static verification is complete with no worktree diff: both assigned files compile, the six occurrence and two runtime selector bodies are present, AST parameter/decorator/assertion structure is conserved, scoped Ruff passes, scoped mypy passes, and `git diff --check` is clean. I’m recording the required F-D86 commit message and completion marker; no pytest, collection, fixture execution, service, or full-suite command will be run.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e2036a8b45f299550d009f9ddeab53946d7d6a3a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): audit D86 media manifest inverse sources
++
++Record the source-exact D86 manifest inverse audit and its bounded
++authenticated-materialization seam without changing assigned tests.
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/DONE && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/commit-msg && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-manifest-inverse-0121/commit-msg && git status --short --branch" in /home/user/work/wt/agt-D86-manifest-inverse-0121
+ succeeded in 170ms:
+test(timeline): audit D86 media manifest inverse sources
+
+Record the source-exact D86 manifest inverse audit and its bounded
+authenticated-materialization seam without changing assigned tests.
+## tl/agt-D86-manifest-inverse-0121
+
+codex
+## F-D86 report — SOURCE_EXACT
+
+No files changed. Current `HEAD` and `tl/integration`: `219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b`.
+
+Source identities:
+
+- `test_commit_runtime_media_manifest_inverse.py`: `1bc4b5ad…`
+- `test_occurrence_media_manifest_inverse.py`: `f416287f…`
+- Runtime lock: `a3cd1a3214fa1632879c21d82d1abb9ea720b1de`
+- Relevant Agent sources: `commit.py 6c2fc6c8…`, `inverse.py 0702cda4…`, `_commit_patch.py 05a1ebc6…`
+- Current transitive fixture migrations: `134f1c276a`, `2f935f6d4d`
+
+The runtime fixture’s prior `IndexError` is addressed by the existing current parent-media fixture migration. The detached popup tests still encounter the current authenticated fork-materialization guard (`ambiguous or unexpected fork materialization`); fixing this would require out-of-scope product changes or synthetic custody, so it remains unapplied.
+
+Checks:
+
+- AST parse/compile and selector conservation: PASS
+- Scoped Ruff: PASS
+- Scoped mypy: PASS
+- `git diff --check`: PASS
+- Pytest, collection, fixture/service execution: not run per brief
+
+Required commit message and `DONE` marker created.
+tokens used
+160,200
+## F-D86 report — SOURCE_EXACT
+
+No files changed. Current `HEAD` and `tl/integration`: `219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b`.
+
+Source identities:
+
+- `test_commit_runtime_media_manifest_inverse.py`: `1bc4b5ad…`
+- `test_occurrence_media_manifest_inverse.py`: `f416287f…`
+- Runtime lock: `a3cd1a3214fa1632879c21d82d1abb9ea720b1de`
+- Relevant Agent sources: `commit.py 6c2fc6c8…`, `inverse.py 0702cda4…`, `_commit_patch.py 05a1ebc6…`
+- Current transitive fixture migrations: `134f1c276a`, `2f935f6d4d`
+
+The runtime fixture’s prior `IndexError` is addressed by the existing current parent-media fixture migration. The detached popup tests still encounter the current authenticated fork-materialization guard (`ambiguous or unexpected fork materialization`); fixing this would require out-of-scope product changes or synthetic custody, so it remains unapplied.
+
+Checks:
+
+- AST parse/compile and selector conservation: PASS
+- Scoped Ruff: PASS
+- Scoped mypy: PASS
+- `git diff --check`: PASS
+- Pytest, collection, fixture/service execution: not run per brief
+
+Required commit message and `DONE` marker created.

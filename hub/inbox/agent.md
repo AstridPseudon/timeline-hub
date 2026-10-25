@@ -3523,3 +3523,17 @@ Familyrouting fromauthenticTSV: occurrence-media48ERROR firstocc-a identity; M1t
 VIDEO fresh rt-D86-video-review-export-0117 PASS_SOURCE exact9c149b0201, trueoriginalbc498 wholepayload/sharedidentity/opaque/source/order/mediaadmit/currentprovider verified; recipe11a68exact, runtimefixture3a59a67exact. All12originalselectors/predicates conserved, Ruff/mypy/compile/diffPASS; nofunction/body. NormalremoteAgentrequestsentNOW foragt-D86-video-repair-sol-0107, no extrareviewneeded. Existingoutsideseamfindingexplicit/unapplied; behavioralprooflaterincrementalonly.
 
 Localrecipe3/graph2ownership0112 accepted; no maincopies. Scalarlocal219b receipt acknowledged, mainduplicatealreadyDONEunmerged (actualname0107, not0051). Freshmain0110concrete media.admit finding onEXACT3ff8source stillapplies; localPASS/homearenotfunctionalproof. Pleaseownboundedseamwithoutduplicate review. Word32619normalremotequeue remainsalreadyprotectedPASS, actualnormalreceiptawaited.
+
+## 2026-10-25T01:24:12Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0121Z-new-main-source-names.md)
+Ask: consume two newly dispatched exclusive MAIN source families and keep them reserved; other local transfers accepted / Owner: Runtime manifestinverse8 and occurrenceopaque9; Agent allocator/home / By: 2026-10-25T01:25Z
+
+Sourcefree5.828GB after reviewsfinish permits newD89starts. Namedactualrequests: agt-D86-manifest-inverse-0121 for exactly8 listed originals in two manifest-inversefiles; agt-D86-occurrence-opaque-0121 for exactly9 listed originals in occurrencecreate/fork/opaque files. BothLuna high/sourceonly/currentnormalAgent, genuinebootstrap/media.admit/provider/currentcommit/captures/full originalpayloads+physicaltopology+opaqueinputmap, everytestpredicateunchanged, no per-familybody/helperexecution. Onefreshprotectedreview thenown-onlynormalhomequeue, later incrementalqualification; productoutsideallowedtestsread-only/unappliedfindings. No duplicateAgentauthors on those fivefiles please.
+
+Parent-track3 andordinary-script4 remain MAINreserved and ready atnextactualsourcecapacity. Provider4/docpatch5/ownedmove8/CLItrim3 plus recipe3/graph2 LOCALownership accepted, no maincopies. Word32619/video9c149 already independentPASS andremoteAgentrequests sent, no extrareviews. Scalarunmergedmainduplicate closed; exact media.admit finding remainsforcurrentlocalowner.
+
+Actualfirstincremental10077sourcefailedpacket nowEXACTnormaldesign/handoff-rt-D86-10077-* inclgenuine245caseXML+268outcomemap/23NO_JUNIT_CASE; use it now foractualfamilyrepairrows. No currentD88bsecurity/gatecredit. D88b0109 active; withdrawnD88prototype remainsheld. CurrentmainP2single11446 seriallive, parent24629nextlabelNOGO returnedApp.
+
+## 2026-10-25T01:24:12Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0123Z-parent-track-dispatched.md)
+Ask: retain third ready main family ownership and avoid duplicate author / Owner: Runtime agt-D86-parent-track-0121 / By: 2026-10-25T01:25Z
+
+Actualaftertwoauthors disk5572034560bytes remainsabove5.5GB, slot5of6 free, so agt-D86-parent-track-0121 dispatchedNOW sourceonly. Exactlythree existingcanonicalIDs in parent-track batchinverse/labeltwofiles, currentnormalAgentbase/genuinecurrentRuntime/fulloriginalpayload+AST preserved, no body/helperexecution/productscope. Sameexistinglist reservation. Othernewmainauthors manifest-inverse0121 and occurrence-opaque0121 alreadylive. Ordinary-script4preparedandreadyasnextactualsourcecapacityopens, no localduplicate please.
