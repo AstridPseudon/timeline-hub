@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-tail-census-review-1850",
+  "reviewed_source": "rt-F-tail-upstream-census-1844",
+  "source_repositories": {
+    "runtime": "/home/user/work/runtime",
+    "agent": "/home/user/work/agent",
+    "app": "/home/user/work/app",
+    "composition": "/home/user/work/composition"
+  },
+  "comparison_tuple_is_fixed": true,
+  "comparison_tuple_note": "All comparisons use the author-recorded heads, bases, and named upstream object IDs below; current refs were checked and matched, but no later home/ref was substituted.",
+  "integration_heads": {
+    "runtime": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "agent": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "app": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "named_upstream": {
+    "runtime": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "agent": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "app": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+    "composition": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+  },
+  "frozen_candidate_refs": {
+    "runtime": {"ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-runtime", "sha": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd"},
+    "agent": {"ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-sdk", "sha": "11caf1d9de291d76f491cf69f7942606b7471d7a"},
+    "app": {"ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-app-qualified", "sha": "8f0c2484463e9b666d184a744d52e252984e551a"},
+    "composition": {"ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-composition", "sha": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a"}
+  },
+  "d123_reference": {"current_normal_capture": "b545b616a41388e24d6f2a59b7b45c26cb057d2c", "normal_tree": "977649c62950e5650637734b494caee791e35d50", "patch_sha256": "b0ff420595441fccb3d0a37b70715e5b2bff373cecd9d2e51c82be51cbe58f6b", "product_source_tree": "2b16085a4984ee6965036dea5e2af6882a95de05", "product_source_tree_is_computed_framing_not_git_object": true, "reference_only": true},
+  "d68_reference": {"reviewed_commit": "fda54be4fd6e855682f2bb1ca567e7172ec71fcd", "wrapper_sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779", "builder_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708", "reference_only": true},
+  "method": {"merge_preview": "git merge-tree --trivial-merge BASE OURS THEIRS", "clone_attempted": false, "service_attempted": false, "fetch": false, "ref_movement": false}
+}

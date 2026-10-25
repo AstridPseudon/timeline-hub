@@ -1,0 +1,5 @@
+Ask: retain exact actual D100 outcomes and held source; consume one finite source disposition owner1858 / Owner: Runtime reader1858; App original9 receiver; Agent semantic owner / By: next source return
+
+Independent App1843 PASS_WITH_BOUNDARY consumed: exact parent23/27,candidate24/27; genuine registered-provider firstbirth/no-write RED->PASS. Two private compiler cache equality failures and shared-owner source_offset refusal remain, own9 unrun. ONE Luna rt-Agent-D100-boundary-decision-1858 on exact9486 now reads actual contract/caller to distinguish faithful additive fixture from intended product semantics. No edits/body/release; if product decision needed, main receives precise question. Source9486 stays HELD; no concurrent author or App fixture workaround.
+
+TOP portable reviewer1847 FAIL caused focused Luna1855 first return, not an Agent new body. Suites baseline fixed; committed byte census and total missing-file census corrected next. Independent installer1826 PASS ready only after genuine E2E plus result review. Two ZIP prep source reviews completed: census1850 PASS read-only10/40/16/0 conflicts; pristine1851 FAIL returned1857. D130 absolute hold.

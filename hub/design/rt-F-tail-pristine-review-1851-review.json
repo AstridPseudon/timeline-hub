@@ -1,0 +1,56 @@
+{
+  "review": "rt-F-tail-pristine-review-1851",
+  "task": "F ZIP-tail(b), D54a pristine-upstream preparation",
+  "verdict": "FAIL",
+  "scope": "Independent read-only review of rt-F-tail-pristine-core-prep-1844 evidence/report and its named source/object/selector provenance. No core comparison, test, runner, body, install, checkout, registry, or source write was performed.",
+  "source_floor": "4.6",
+  "budget_policy": "noheavy; stop4GB",
+  "checks": {
+    "json_outputs": "PASS for prep inputs.json, selector-map.json, source-manifest.json",
+    "normal_route_bash_syntax": "PASS",
+    "preflight_bash_syntax": "PASS",
+    "route_selector_crosswalk": "PASS: 22 roots, exact order, no extra root",
+    "named_upstream_objects": "PASS: Agent 886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55/f53cc8426ccef8760021ef6207303bce7b80e777, Runtime dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f/904d3d90d8235d4a27f2d5a8cbf88298d5ec0210, App 213318f1ec6ea5c324787bbd1c30a73072d1151a/591327d499ea162dd2ccb4620e577480aa305fae, Composition 67b8aa3d0d6831d3e3504a340ff583c3da253707/62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+    "captured_current_integration": "PASS: recorded commits/trees match /home/user/work/{agent,runtime,app,composition} tl/integration at review time and worktrees are clean",
+    "private_100_python_source_identity": "PASS against released Runtime 7070f1378d1917fcce69857ebd33cd2b3015568b: 100/100 raw SHA256 source hashes match; TypeScript target is recorded as packages/typescript: npm test",
+    "git_diff_check": "PASS for the four captured integration worktrees and the prep worktree",
+    "execution_claim_boundary": "PASS: prep report says no heavy/core/full/P4/body/ZIP execution and no D134/D130 credit"
+  },
+  "failures": [
+    {
+      "id": "C0-step-field-crosswalk",
+      "severity": "blocking",
+      "evidence": "prep evidence/commands.md uses the step key optionalreads; runtime contract/schemas/timeline-commit.json RequestedStep properties use reads. The contract prose also says optional reads.",
+      "required_fix": "Use the exact step reads key in the crosswalk/example."
+    },
+    {
+      "id": "C0-idempotency-location",
+      "severity": "blocking",
+      "evidence": "prep evidence/commands.md places \"Idempotency-Key\" inside the JSON example. The real contract requires it as the HTTP header, and CommitRequest has no such body property.",
+      "required_fix": "Keep Idempotency-Key as header metadata, separate from the JSON body."
+    },
+    {
+      "id": "missing-selector-classification",
+      "severity": "blocking",
+      "evidence": "selector-map.json records the five missing upstream roots and tools/p4-d73-pinned-launch.sh as named_agent_upstream=missing, but does not assign the required explicit UNKNOWN_MISSING_UPSTREAM_SELECTOR disposition to those six missing inputs. Only the five historical D54a nodes carry that literal disposition.",
+      "required_fix": "Classify every missing root and the missing D73 launcher explicitly as UNKNOWN_MISSING_UPSTREAM_SELECTOR; do not count them as zero or PASS."
+    },
+    {
+      "id": "frozen-ref-crosswalk",
+      "severity": "blocking",
+      "evidence": "At review time, the source manifest's frozen_r4_ref labels do not resolve to its recorded named commits: Agent frozen ref resolves 11caf1d9de291d76f491cf69f7942606b7471d7a, Runtime 31c7ac3a00f7a205f507bb5bd4d4625628d429bd, App 8f0c2484463e9b666d184a744d52e252984e551a, and Composition candidate ref c82eb7c459d0a41263954bf007071a6a0e8e0a6a, while the manifest records 886a..., dbcdb..., 213318..., and origin/main 67b8.... The exact named objects do exist, but the frozen-ref labels are not binding them.",
+      "required_fix": "Record the exact immutable object/ref relationship and distinguish current named candidate objects from the frozen R4 refs; never let a later/moved ref substitute for the recorded commit/tree."
+    },
+    {
+      "id": "matrix-manifest-coverage",
+      "severity": "blocking",
+      "evidence": "The prep reports a 41-file matrix, but d59-final-matrix/source-hash-manifest.json lists 34 files and omits source-hash-manifest.json plus six generated __pycache__ files. Its current generated run-final-matrix.pyc hash also mismatches the recorded hash. The 100-file Python inventory is internally verified against Runtime 7070, but the 41-file identity is not a stable complete manifest.",
+      "required_fix": "Provide a stable source-only 41-file manifest or explicitly exclude generated/cache files and reconcile the count/hash claims before the final cut."
+    }
+  ],
+  "limitations": [
+    "D73 launcher and five upstream route roots are genuinely absent from named Agent commit; no executable pristine upstream gate can be claimed.",
+    "D59 tuple and upstream census remain pending; no D134 interim count was used as final measurement.",
+    "No live kit/hub/credentials/permissions/generated/pin writes, package acquisition, clone, environment provisioning, Store write, or git write was performed."
+  ]
+}

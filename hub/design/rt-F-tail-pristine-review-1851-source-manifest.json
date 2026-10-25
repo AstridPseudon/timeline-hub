@@ -1,0 +1,59 @@
+{
+  "manifest_version": 1,
+  "review": "rt-F-tail-pristine-review-1851",
+  "verdict": "FAIL",
+  "prep_evidence": {
+    "inputs.json": "b32e8b7cf248a0810fb6cace00fc4196bf2654e02c1f0eba01c21e05d85e116d",
+    "selector-map.json": "d7ee180ddbeead063f1709043840a3fb06781a103df27934759ca2146bfe3d23",
+    "source-manifest.json": "4d84aaf920fcd5927ab10427d4da1fa09e5ce0c33aa7548dfcd5e869988a487f",
+    "commands.md": "3c8ebcadb040463ec9a216f21d023ee88eb87dd0f74fc9241c5a89948711696b",
+    "validation.md": "265997a37f5cbc532e6d20164fc4126a92844a6dfbbf8b336648a23eb224d29c"
+  },
+  "named_upstream": [
+    {"role":"Agent","commit":"886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55","tree":"f53cc8426ccef8760021ef6207303bce7b80e777","origin":"https://github.com/peteromallet/astrid-agent","object":"verified"},
+    {"role":"Runtime","commit":"dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f","tree":"904d3d90d8235d4a27f2d5a8cbf88298d5ec0210","origin":"https://github.com/banodoco/banodoco-workspace-runtime","object":"verified"},
+    {"role":"App","commit":"213318f1ec6ea5c324787bbd1c30a73072d1151a","tree":"591327d499ea162dd2ccb4620e577480aa305fae","origin":"https://github.com/banodoco/reigh-app","object":"verified"},
+    {"role":"Composition","commit":"67b8aa3d0d6831d3e3504a340ff583c3da253707","tree":"62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120","origin":"https://github.com/peteromallet/timeline-composition","object":"verified"}
+  ],
+  "captured_current_integration": [
+    {"role":"Agent","commit":"547e10456250c1b5bcf63b44a50c90ff0563ce1e","tree":"68df11fad2b082fa12d99ca20404e1e40e350cd7"},
+    {"role":"Runtime","commit":"e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9","tree":"d5cb9335a03bf4764548e379ce180a66bf966910"},
+    {"role":"App","commit":"d5a1d1ab6550187e377fd7387d300102b8b82ece","tree":"7be73e2cbbcf89d627bf7b9da940b4ce17968c20"},
+    {"role":"Composition","commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  ],
+  "route": {
+    "path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-core-full-command.md",
+    "sha256":"8cd8300a4d1e4f43dc7895907f858f6f2989e964ba38cc017a6a5fbe4cfd2637",
+    "root_count":22,
+    "root_order":"exact match to prep selector-map.json",
+    "launcher_current_integration_blob":"2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "launcher_named_agent_status":"missing"
+  },
+  "contract_sources": {
+    "contract":"/home/user/work/runtime/contract/commit-v2.md",
+    "schema":"/home/user/work/runtime/contract/schemas/timeline-commit.json",
+    "schema_requested_step_keys":["id","label","intent","tags","command_ordinals","patch","reads"],
+    "schema_request_keys":["api_version","project_id","timeline_id","base_revision_id","base_publication_id","commands","label","steps","merge","reads","dry_run","source","rationale","group_id"],
+    "idempotency_key":"HTTP header; not a CommitRequest body property"
+  },
+  "private_matrix": {
+    "core_inventory":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-7070-inventory-1144/evidence/candidate/core-inventory.json",
+    "core_inventory_sha256":"1bf6b9ab77c72c644cf6d8f9cafdaff31ce8dd2f9e0ec04693567641f30c9d0d",
+    "python_target_count":100,
+    "python_source_hashes_vs_released_runtime_7070":"100/100 match",
+    "typescript_target":"packages/typescript: npm test",
+    "matrix_reported_file_count":41,
+    "matrix_source_hash_manifest":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-7070-inventory-1144/evidence/candidate/d59-final-matrix/source-hash-manifest.json",
+    "matrix_source_hash_manifest_sha256":"01ddd1522cc42c3be60699ed6eac502afa6f37b58f8035d711f5971d222fe9f2",
+    "manifest_listed_files":34,
+    "actual_matrix_files":41,
+    "generated_cache_hash_mismatch":"__pycache__/run-final-matrix.cpython-313.pyc"
+  },
+  "missing_upstream_inputs": {
+    "required_disposition":"UNKNOWN_MISSING_UPSTREAM_SELECTOR",
+    "five_roots":["tests/core/test_timeline_element_orphan_cleanup.py","tests/core/test_timeline_element_publication_runtime.py","tests/core/rendering/test_local_schema.py","tests/packs/rendering/test_composition_package.py","tests/test_installer_bootstrap_schema.py"],
+    "launcher":"tools/p4-d73-pinned-launch.sh",
+    "prep_literal_disposition_present_for_roots":false,
+    "prep_literal_disposition_present_for_launcher":false
+  }
+}

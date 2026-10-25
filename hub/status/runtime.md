@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T18:52:06Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 4m -->
-# runtime board, 2026-10-25T18:47:44Z
+<!-- main | 2026-10-25T18:57:06Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 0m -->
+# runtime board, 2026-10-25T18:56:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -434,39 +434,36 @@
 
 | R2-graph-boundary | Assess current graph child inverse | Luna | Authentic stage and physical records | later | Author1744; independent1749 PASS | Current track-only fix does not cover clip aliases. Causal owner UNKNOWN; exact accepted/stage/physical records absent. No body. | PASS SOURCE ASSESSMENT1749 | Source unchanged |
 | D127-leaf-current | Preserve exact helper import evidence | Luna | App1734 is first intake owner | gated:duplicate | rt-D127-leaf-retention-ready-1741 | Exact231ddb import completed. Offline21PASS and prior23 reused; three parent E402 diagnostics retained. No duplicate merge; App1734 owns intake. | Prior helper review reused | Duplicate source only |
-| OPS-inventory-E2E | Correct portable whole-make fixture | Luna | Independent source review then Agent check-only | review | Author1836; review1847 active | Source674d adds empty private suites baseline, self-contained makers and exhaustive check-only. Author40PASS; actual E2E remains failed. | Agent1829 source cause verified | 674d13e26 held |
+| OPS-inventory-E2E | Correct portable whole-make fixture | Luna | First return then independent PASS | doing | Source1836; review1847 FAIL; return1855 | Suites baseline fixed; committed source-byte census and complete missing-file census need correction. No genuine E2E GREEN. | Review1847 FAIL retained | 674d held |
 
-| D100-provider-birth | Preserve authenticated item birth | Sol / Luna | App genuine regression and own9 | doing | Author1742; security1803; App1826 | Exact two-file source PASS. App1826 now owns parent RED/candidate GREEN then original9 at actual admission. No normal merge or release. | PASS SOURCE SECURITY1803 | 9486cbb06e held |
+| D100-provider-birth | Preserve authenticated item birth | Sol / Luna | Exact additive and original proof | review | Source1742; security1803; App1837; reader1858 | Parent23/27; candidate24/27. First-birth/no-write RED to PASS; three additive failures remain. Own9 unrun. Source disposition active. | App1843 PASS WITH BOUNDARY | 9486 held |
 
 | R2-created-read-contract | Assess same-command child reads | Luna | Corrected independent interpretation PASS | merged | Correction1814; finalreview1821 PASS | C0 sequential operands defined; raw staged reads grant no new trust. Actual authenticated record pairs missing; causal owner unknown. | [Review](../../design/rt-R2-created-read-final-review-1821-review.json) | Source unchanged |
 
 | OPS-inventory-install | Prepare guarded kit installation | Luna | Genuine E2E and independent result PASS | gated:E2E | Return1821; independent1826 PASS | F1–F7 resolved; exact private installer ready. Synthetic private gates carry no genuine acceptance. Live0857 unchanged. | [Review](../../design/rt-OPS-inventory-install-final-review-1826-review.json) | a3e707dbc held |
 
-| F-tail-upstream-census | Preview fresh upstream conflicts | Luna | Exact current local objects | doing | rt-F-tail-upstream-census-1844 | Read-only census on current integration and three named upstream tips. No integration change, resolution, fetch or delivery build. | Independent review follows | Source census only |
-| F-tail-pristine-prep | Prepare pristine core comparison | Luna | Existing source and normal routes | doing | rt-F-tail-pristine-core-prep-1844 | Exact future commands and source/input map only. No core body, new environment, final tuple or historical retarget. | Independent review follows | Private preparation |
+| F-tail-upstream-census | Preview current upstream conflicts | Luna | Source census independently verified | merged | Author1844; independent1850 PASS | Read-only merge-tree: Runtime10, Agent40, App16, Composition0 conflicts. No actual clone dry run. | [Review](../../design/rt-F-tail-census-review-1850-report.md) | Evidence only |
+| F-tail-pristine-prep | Prepare pristine core comparison | Luna | Correct five review findings | doing | Author1844; review1851 FAIL; return1857 | Correct DTO example, missing roots, frozen ref crosswalk and stable matrix count. No core body or executable pristine gate. | Review1851 FAIL retained | Private preparation |
 | F-tail-patch-dryrun | Check fresh upstream patch export | Farm runner | Farm receiving source route | blocked:farm | Peer1844 exact test-only handoff | Existing squash/export script, private clones and apply check. No live delivery, ZIP or integration mutation. Farm headroom requested. | Result review follows | No run yet |
 
-Runtime producer: Normal e319 adds exact leaf-helper tests only; product remains qualified ab1e step, inverse/redo and safe diagnostic source. Home1550 genuine3/native2 PASS. Held SWAP WAL1537 excluded; broader original-four behavior remains unqualified.
-core open:425 and REG14 from immutable30693. Agent child1610 passed D131 reserve then refused source ownership, zero core body. No bounded-proof deduction. Agent a4e016/5e9ad/d8a1/635f capture stays exact.
-Gates: P1/P3 recorded GO; P4 independent GO28.101seconds. FullP2 NO-GO for element/SWAP; no cut, build or ZIP.
-Blockers: Agent core — maker1744 and installer1826 PASS. Portablefixture674d review1847 active; on PASS Agent check-only then sole genuine E2E. No install until actual result and independent review.
-Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after automatic classifier refusal1537. No retry/rephrase/transfer/review/alternate test/rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
-Blockers: Agent roots — scalar/compound still UNKNOWN; transcriptpin317 two cases FAIL, owner UNKNOWN and persisted private records EXACTMISSING. No guard writer inferred.
-Blockers: Element — helper actualHOMEe319 and App normalvalidatorHOME, retained bootstrap custody1738 scopedPASS. App sole one-element profile prep requested1753; no measured provider cost author yet.
-Blockers: Final render — Farm717e layout EXACTMISSING. Agent1805 sole whole-make E2E, then qualified kit installation and exact receiving receipt; no Farm retry yet.
-Blockers: D69 and cut — normal XML applicability/full core, installed render90, REG0, fullP2, final tupleP1-P5, wheel, Windows and final build/ZIP remain.
-Next ready: Portable1847 review then exact Agent handoff. ZIP census/pristine1844 active; Farm patch dryrun requested. App1826 genuine D100 proof and elementSol1824 active. Cancelled control-binding task not dispatched.
-Source receipts: D128 independent reader1637 source generator finding PASS, actual layout EXACTMISSING. D107 reader1634/source review1640 plus derivative correction1644/final1646 PASS_EVIDENCE_ONLY; no behavior closure. Exact safe outputs flat design under each worker prefix; handbacks1642/1649 sent.
-Host actions: U4a HOME Agentd4ba; filing wait cleared. D107 already HOME9350. Farm verified portable91398/1daca checkouts16:52, no integration merge wanted. No Main Git mutation.
-Kit: Live0857 unchanged. Candidatec3226b/source09ed independent1744PASS; installera3e707 independent1826PASS. E2E and independent result still required, no production request or early install.
-Venues: No Main heavy body; Farm core dropped, D77 only. Agent sole local core stopped at new report mismatch; zero service ID/body. New exact kit required. Historical tuples and failures never retargeted.
-Delivery: Private100Python+TS/41matrix and D123 current patch source qualified; final cut remains gated. D126 App owns migration prose/ZIP line. R2c81b/D116 source-only seeds held; no D79 or competing small-file writers.
-Safety: All D130 and prior D88/D111/retirement refusals stay held. D106 ORCH-only output; no hub writes, Git mutations, credentials, upstream push, M5 or permission-file changes by manager.
-Disk: Sweep3 removed0; compact packed0 scratch/test directories and losslessly gzipped2 old logs. Free5.052GB. Three finished current workers already auto-recycled; no dirty, KEEP or refused targets retried.
-live 3 / cap 3 at4.89GB; ready-undispatched 0 local. Luna1847 portable review plus two Luna ZIP-tail1844 tasks. Farm patch dryrun receiving requested with headroom. No Main heavy or production child.
-INBOX consumed through1424431bytes. Updated 2026-10-25T18:47:44Z.
-Later: OriginalTrue redo-birth still fails on d4ba/ab1e. Independent1712 verified custody and traced full path; exact authenticated redo records and stage pairs absent, owner UNKNOWN. No unchanged retry or guard author.
-Later: Graph applicability1744 and independent1749 PASS source assessment; ab1e track-only correction does not cover clip aliases. Accepted/stage/physical pairs EXACTMISSING; owner UNKNOWN, no auth author.
-Later: Main diagnostic reproduction remains unrun with original Store and8GiB gate intact. Agent owns admitted genuine fixture E2E; Main venue limits are not an extra installation gate.
-Blockers: ZIP patch dryrun — Farm test-only receiving requested1844; exact source and upstream tips supplied. Main below5GB has three source slots filled. No final-cut/build/ZIP credit.
-Later: D134 recorded18:53 sets future20:00Z measurement-only Agent core if custody E2E still not GREEN. No early run, new acquisition, guard bypass or ship credit; Agent owns trigger.
+
+Runtime producer: Normal e319 adds qualified leaf helper/tests only; product remains ab1e step and inverse/redo plus safe diagnostics. Genuine3/native2 PASS on recorded home1550. Held SWAP1537 excluded.
+core open:425 and REG14 from immutable30693. No newer core body or bounded-proof deduction. Frozen a4e016/5e9ad/d8a1/635f unchanged.
+Gates: P1/P3 recorded GO; P4 independent GO28.101seconds. Full P2 NO-GO for element/SWAP. No cut, build or ZIP.
+Blockers: Agent core — portable674d review1847 FAIL; focused return1855 active. Installer1826 PASS and maker1744 PASS stay held until genuine Agent E2E and independent result. Live0857 unchanged.
+Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
+Blockers: Element — App sole durable recipe1824/finalreview1834. Normal helper e319 and App validator/bootstrap qualified. No authentic provider leaf or dominant-cost author yet.
+Blockers: Final render — Farm717e layout EXACTMISSING. Qualified changed kit and actual receiving receipt precede any D77 retry; Farm core remains dropped.
+Blockers: D69 and cut — current core, REG0, full P2, installed render90, final tuple P1–P5, wheel, Windows and final build/ZIP remain owed.
+Blockers: ZIP patch dryrun — Farm test-only receiving requested1844, exact source/tips supplied. No final-cut/build/ZIP credit; no duplicate Main run.
+Next ready: Independent portable review immediately after1855; exact Agent check-only then sole genuine E2E only on PASS. Pristine1857 and D100 disposition1858 proceed independently.
+Kit: Candidate c3226b/source09ed independent1744 PASS; installer a3e707 independent1826 PASS. No production install/request before genuine E2E and independent result. CHILD5905580032, other8GiB, stop4GB unchanged.
+Delivery: Census1850 PASS is read-only merge-tree evidence: Runtime10/Agent40/App16 conflicts, Composition0; clone dry run remains unperformed. Pristine1851 FAIL returned1857. Private100Python/TS final cut remains gated.
+Source receipts: U4a HOME d4ba; D107 HOME9350. Transcriptpin317 two FAIL; private records EXACTMISSING and owner UNKNOWN. D100 firstbirth provider improves, three additive failures remain; source1858 disposition owns next question.
+Safety: D130 and prior D88/D111/retirement refusals held. ORCH-only outputs; no manager product/test/pin writes, Git mutations, credentials, upstream push, M5 or permission-file changes.
+Venues: Agent sole genuine E2E venue. No Main heavy or production child. Historical tuples/results never retargeted. Cancelled control-binding request not dispatched.
+Later: D13420:00Z conditional interim count only if custody E2E not GREEN; no early run/acquisition/bypass/ship credit. Agent owns trigger and recovered exact bindings.
+Later: OriginalTrue redo birth and graph initial child alias remain failed/unknown with missing authentic physical records. No unchanged retry or speculative guard author. Scalar/compound and Gate3 remain visible; D133 final B deferred.
+Disk: Fresh4.89GB before three source starts. Sweep3/compact active; finished1844 and reviews autorecycled. No dirty, KEEP or refused target retried. Three source-only starts maximum under D89b.
+live 3 / cap 3; ready-undispatched 0 local. Portable1855, pristine1857 and D100 disposition1858 queued/running. Farm patch-export test pending receiving owner.
+INBOX consumed through1434828bytes. Updated 2026-10-25T18:56:28Z.

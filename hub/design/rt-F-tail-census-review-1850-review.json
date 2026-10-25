@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-tail-census-review-1850",
+  "reviewed_task": "rt-F-tail-upstream-census-1844",
+  "reviewed_at_utc": "2026-10-25",
+  "verdict": "PASS",
+  "verdict_scope": "The recorded source-only census is accurate and method-limited as reported; this does not certify a resolved merge, final cut, ZIP, or delivery run.",
+  "captured_at_utc": "2026-10-25T18:47:50.824772Z",
+  "method": {
+    "actual": "git merge-tree --trivial-merge BASE OURS THEIRS against captured object IDs in the existing source repositories",
+    "read_only": true,
+    "fresh_mktemp_clone_attempted": false,
+    "service_dry_run_attempted": false,
+    "clone_claim_refused": true,
+    "reason": "The reviewed record says clone was not attempted because free space was near the 4 GB stop line. No clone or service execution is claimed here."
+  },
+  "source_tuple": {
+    "integration_heads": {
+      "runtime": {"head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9", "tree": "d5cb9335a03bf4764548e379ce180a66bf966910", "parents": ["ab1e4f6141987706132916e2da16477f5a019464", "8faff00d412521ba4b004858e1290250dcdfe0dc"]},
+      "agent": {"head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e", "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7", "parents": ["070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "39b9587c0801c23ccb7b8a93a438e1dbb564b710"]},
+      "app": {"head": "d5a1d1ab6550187e377fd7387d300102b8b82ece", "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20", "parents": ["d4e5284dfcc20801977cef12253b12f9cc8798fd", "9bf465285ccf57be31570c800d4a1f86855ebc4e"]},
+      "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "parents": ["7a95a40b07ea0d273e17afb69dbc3456b603f2bc", "c05fdb171fe37c1d5817a060ecb716a329ee821a"]}
+    },
+    "named_upstream": {
+      "runtime": {"ref": "refs/remotes/origin/main", "head": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f", "tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210", "parents": ["2b632c68e3547db073e21c6adaa8bc5db4c0360a"]},
+      "agent": {"ref": "refs/remotes/origin/main", "head": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55", "tree": "f53cc8426ccef8760021ef6207303bce7b80e777", "parents": ["b565ea8dd8252e41bb802140ed2df3a1a4efd68b"]},
+      "app": {"ref": "refs/remotes/origin/main", "head": "213318f1ec6ea5c324787bbd1c30a73072d1151a", "tree": "591327d499ea162dd2ccb4620e577480aa305fae", "parents": ["c27957dcfd429c0e585bfa73ec53d961d0b6743b"]},
+      "composition": {"ref": "refs/remotes/origin/main", "head": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120", "parents": ["bd1011bce5fb4f172269911555568d18e6b22f3c"]}
+    },
+    "merge_bases": {
+      "runtime": {"commit": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad", "tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075"},
+      "agent": {"commit": "92443771676ef2bbb547d0a103d708fa8bec4c63", "tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"},
+      "app": {"commit": "3881e9440688f774878e18806da2dc5c993a9b00", "tree": "210e5739b838ef7655f87238c711704301d12846"},
+      "composition": {"commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120"}
+    }
+  },
+  "census_verification": {
+    "runtime": {"conflicts": 10, "unique_conflict_paths": 10, "ours_changed_files": 323, "upstream_changed_files": 29, "merge_tree_bytes": 71105, "merge_tree_sha256": "2d341b37bafebc1feb09d4e69971bcde5ed12b729dcdc6e1c041838e7142540e", "merge_tree_changed_in_both": 10, "merge_tree_hunks": 22, "ours_hunks": 207, "upstream_hunks": 24},
+    "agent": {"conflicts": 40, "unique_conflict_paths": 40, "ours_changed_files": 919, "upstream_changed_files": 98, "merge_tree_bytes": 588285, "merge_tree_sha256": "3a9566673df762ca978b1dd920b6db5b0d95766854771c07a88043b214c95141", "merge_tree_changed_in_both": 40, "merge_tree_hunks": 107, "ours_hunks": 85, "upstream_hunks": 186},
+    "app": {"conflicts": 16, "unique_conflict_paths": 16, "ours_changed_files": 565, "upstream_changed_files": 154, "merge_tree_bytes": 769114, "merge_tree_sha256": "6c7cf7073a554a81ddbfe9aca90da2a192e73bed90245e137e030998c4439535", "merge_tree_changed_in_both": 16, "merge_tree_hunks": 81, "ours_hunks": 182, "upstream_hunks": 110},
+    "composition": {"conflicts": 0, "unique_conflict_paths": 0, "ours_changed_files": 118, "upstream_changed_files": 0, "merge_tree_bytes": 0, "merge_tree_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "merge_tree_changed_in_both": 0, "merge_tree_hunks": 0, "ours_hunks": 0, "upstream_hunks": 0}
+  },
+  "patch_equivalence": {
+    "method": "git cherry -v UPSTREAM OURS; merge commits separately unclassified",
+    "normalized_patch_matches": {"runtime": 0, "agent": 0, "app": 0, "composition": 0},
+    "nonmerge_cherry_plus": {"runtime": 273, "agent": 691, "app": 566, "composition": 40},
+    "unclassified_merge_commits": {"runtime": 216, "agent": 579, "app": 479, "composition": 21},
+    "upstream_only_commits": {"runtime": 16, "agent": 22, "app": 68, "composition": 0}
+  },
+  "whitespace_check": {
+    "integration_side_findings": {"runtime": 3, "agent": 162, "app": 56, "composition": 0},
+    "named_upstream_side_findings": {"runtime": 0, "agent": 0, "app": 0, "composition": 0},
+    "preserved_without_fix": true
+  },
+  "artifact_checks": {
+    "D123_current_normal": {"commit": "b545b616a41388e24d6f2a59b7b45c26cb057d2c", "tree": "977649c62950e5650637734b494caee791e35d50", "patch_sha256": "b0ff420595441fccb3d0a37b70715e5b2bff373cecd9d2e51c82be51cbe58f6b", "artifact": "workers/rt-F-D123-predicate-return-1314/evidence/b742-current-agent.patch", "protected_predicates": 173, "product_source_tree": "2b16085a4984ee6965036dea5e2af6882a95de05", "product_source_tree_note": "Recorded computed tree framing from the D123 source artifact; it is not present as a Git object in the captured /home/user/work/agent object database, so it is not claimed as a Git object fact."},
+    "D68": {"reviewed_commit": "fda54be4fd6e855682f2bb1ca567e7172ec71fcd", "wrapper_sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779", "builder_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708"},
+    "frozen_r4_refs_unchanged": true
+  },
+  "limitations": [
+    "No actual merge, conflict resolution, clone, service dry run, fetch, build, ZIP, installer, or full test was performed.",
+    "The conflict path/hunk inventory is source evidence only; it cannot establish that a future merge or final cut resolves correctly.",
+    "The D123 and D68 artifacts are preservation references and were not substituted for the captured integration heads."
+  ]
+}

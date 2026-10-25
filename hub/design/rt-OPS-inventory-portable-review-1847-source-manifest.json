@@ -1,0 +1,47 @@
+{
+  "schema": "timeline.ops-child-custody.portable-review.v1",
+  "final_branch_sha": "674d13e26ce40ce9a158a7e50b226c247fbc9588",
+  "final_tree_sha": "f2abd214b4b45fa4a6b6de0932ad5371e4f3fc4b",
+  "authored_parent_input_sha": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "authored_parent_input_tree_sha": "a4fe6f76b9da7cc78fa49fc814ed78dc8e7d71db",
+  "source_scope_from_f6b9": [
+    "ops-child-custody/e2e-fixtures/README.md",
+    "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv",
+    "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv",
+    "ops-child-custody/e2e-fixtures/tiny/manifest.json",
+    "ops-child-custody/source-manifest.json",
+    "ops-child-custody/tests/e2e_inventory.py",
+    "ops-child-custody/tests/support.py"
+  ],
+  "hashes": {
+    "e2e_inventory.py": "05c7dcc2781acff05d364fc34924298ee4a58204642651f8fbbb9121dde54ef5",
+    "support.py": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+    "parent_maker": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "candidate_maker": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "protected_store_helper": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "protected_dependency_helper": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "bootstrap_artifact": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548"
+  },
+  "blocks": {
+    "production_parent_store": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+    "production_parent_verifier": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "candidate_store": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+    "candidate_verifier": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209"
+  },
+  "interpreters": {
+    "runner": "/home/user/work/venv-agent/bin/python",
+    "runner_version": "3.13.16",
+    "build": "1.4.0",
+    "setuptools": "80.9.0",
+    "wheel": "0.46.3",
+    "child": "/usr/bin/python3.13",
+    "child_version": "3.13.16"
+  },
+  "admission_constants": {
+    "normal_child_reserve_bytes": 5905580032,
+    "stop_line_bytes": 4000000000,
+    "source_floor_bytes": 4600000000,
+    "ordinary_body_floor_bytes": 5000000000
+  },
+  "e2e_status": "NOTRUN"
+}
