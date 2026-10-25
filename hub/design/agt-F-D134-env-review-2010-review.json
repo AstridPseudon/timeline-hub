@@ -1,0 +1,67 @@
+{
+  "schema": "timeline.agent.f_d134_env_review.v1",
+  "status": "PASS_SOURCE_ASSESSMENT",
+  "scope": "independent source-only review of the D134 next-run candidate",
+  "base": "tl/agt-F-D134-env-prepare-2000",
+  "source_manifest": "evidence/source-manifest.json",
+  "findings": [
+    {
+      "id": "F1",
+      "status": "confirmed",
+      "claim": "Removing only the outer PYTHONNOUSERSITE assignment is ineffective against the current pinned launcher.",
+      "evidence": [
+        "a4e016b6:tools/p4-d73-pinned-launch.sh blob 2844cec15b97fa995ecaf120961fc891b8e13b1c",
+        "sha256 cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+        "line 128 exports PYTHONNOUSERSITE=1 in preflight",
+        "line 149 exports PYTHONNOUSERSITE=1 in the body"
+      ]
+    },
+    {
+      "id": "F2",
+      "status": "confirmed",
+      "claim": "The frozen Agent source reaches the Remotion validation probe while the launcher enables the Remotion project, and the probe refuses PYTHONNOUSERSITE.",
+      "evidence": [
+        "host_bootstrap.py:1651 calls _prepare_render_validation",
+        "host_bootstrap.py:813-814 skips validation only when ASTRID_REMOTION_PROJECT_DIR is absent",
+        "host_bootstrap.py:835 builds the worker environment from the host environment",
+        "remotion_runtime.py:916-921 applies the child-environment projection",
+        "remotion_runtime.py:934 calls probe_context",
+        "remotion_runtime.py:214-216 lists PYTHONNOUSERSITE as unsupported and :234-236 raises when present"
+      ]
+    },
+    {
+      "id": "F3",
+      "status": "confirmed",
+      "claim": "The candidate preserves the frozen tuple and the requested test-body shape.",
+      "evidence": [
+        "Agent, Runtime, App, and Composition commit/tree IDs match evidence/source-manifest.json",
+        "candidate shell syntax passes bash -n",
+        "candidate body is byte-identical to the author measurement body",
+        "22 selector roots, -n 3, empty addopts, no cache plugin, timeout 45, JUnit path, and D73 bindings are present",
+        "candidate outer environment omits PYTHONNOUSERSITE"
+      ]
+    },
+    {
+      "id": "F4",
+      "status": "limitation",
+      "claim": "The candidate is not an approved working fix or launchable gate.",
+      "evidence": [
+        "The current launcher reinjects the rejected key before the body can be admitted",
+        "Compared with the 1909 author recipe, the candidate omits D134 dispatch checks and four remote-origin checks",
+        "No launch, preflight, body, or test command was executed"
+      ]
+    }
+  ],
+  "limits": [
+    "No launcher-owned source was changed.",
+    "No workaround, alternate route, or permission flow was proposed.",
+    "D137 must continue through the normal real-child/current guarded route; this review supplies no launch authority or runtime result.",
+    "The production caller and final core/registration state are not assessed here."
+  ],
+  "source_refs": {
+    "agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "app": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  }
+}

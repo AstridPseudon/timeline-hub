@@ -1,0 +1,76 @@
+# Validation
+
+This is source/dry preparation only. No launcher, preflight control, body,
+test, provider, browser, socket, render, package, profile, or service command
+was executed.
+
+Read-only source facts used by the candidate:
+
+- `tools/p4-d73-pinned-launch.sh:128` and `:149` export
+  `PYTHONNOUSERSITE=1`; `:132` and `:153` export the Remotion project.
+- `host_bootstrap.py:1651` calls `_prepare_render_validation`; `:836` calls
+  `prepare_remotion_validation`; `:813-814` only takes the no-Remotion return
+  when the project variable is absent.
+- `remotion_runtime.py:214-216` includes `PYTHONNOUSERSITE` in
+  `_UNSUPPORTED_PYTHON_STARTUP`; `:234-236` raises before host launch.
+- The launcher preflight checks exact manifest keys, four SHA/tree/clean
+  states, parent guards, original P4 test hash, Python/Node/profile/schema
+  bindings, module origins, lock and registry hashes, and writes report-all
+  evidence before the body. Those guards are unchanged in the candidate.
+
+Commands run after editing:
+
+```text
+bash -n evidence/next-core-command.sh                         PASS
+python3 -m json.tool evidence/environment-contract.json        PASS
+python3 -m json.tool evidence/source-manifest.json             PASS
+git diff --check                                               PASS
+```
+
+Additional read-only checks:
+
+```text
+sha256sum tools/p4-d73-pinned-launch.sh                        PASS: cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1
+git -C /home/user/work/wt/agt-pin-a4e016b6 rev-parse HEAD HEAD^{tree} PASS: a4e016b6 / 60d45288
+python3 AST-parse of host_bootstrap.py, remotion_runtime.py,
+  subprocess_env.py                                             PASS (read-only)
+static recipe comparison                                            PASS: 22 roots, -n 3, empty addopts, no cache, timeout 45
+static full-body comparison                                        PASS: command/body copied from 1909; only outer PYTHONNOUSERSITE omitted
+```
+
+The corrected candidate is not evidence that the current launcher can admit
+the environment: the two launcher-owned exports are the exact finite blocker.
+An independent review must verify any authorized launcher correction before a
+meaningful own-14 or ship-grade/full-core run.
+
+## Independent source review
+
+Commands and results:
+
+```text
+bash -n evidence/next-core-command.sh                         PASS
+python3 -m json.tool evidence/environment-contract.json        PASS
+python3 -m json.tool evidence/source-manifest.json             PASS
+git diff --check                                               PASS
+```
+
+Read-only source checks against Agent commit
+`a4e016b6a9f91fbe372672bdcf382c630bf59186`:
+
+```text
+launcher SHA-256 and blob ID                                  PASS
+launcher exports at lines 128 and 149                         PASS
+AST parse of host_bootstrap.py, remotion_runtime.py,           PASS
+  and subprocess_env.py
+Agent/Runtime/App/Composition commit/tree tuple                PASS
+candidate body comparison with author measurement              PASS
+selector-root count                                            PASS: 22
+flags and D73 bindings                                         PASS
+```
+
+The candidate body SHA-256 from the static comparison is
+`e5455f5a9a1b5b89837301e542f245f70d3b18892507fa7c16f399d2cc6ea3aa`.
+No launcher, preflight, body, test, provider, browser, socket, render, or
+service command was run. This is source evidence only; it does not establish
+a working fix, launch admission, child reachability, registration, custody,
+or final-core state.
