@@ -245,17 +245,24 @@ function shellQuote(value) {
 }
 
 export function playwrightLaunchEnv({ suite, suiteName, output, junit, stage, baseEnv = process.env }) {
-  const env = {
+  const env = configureRuntimeLogEnv({ suite, output, env: {
     ...baseEnv,
     PLAYWRIGHT_OUTPUT_DIR: path.join(output, stage),
     PLAYWRIGHT_JUNIT_OUTPUT_FILE: junit[stage === 'readiness' ? 'readiness' : 'original'],
-  };
+  } });
   delete env.D66_RUNTIME_LOG_DIR;
   if (suite.retainRuntimeLogs && stage === suiteName) env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
   if (stage === suiteName) {
     env.D79_HUNG_STACK_EVIDENCE_DIR = path.join(output, 'hung-request-stacks');
     env.D79_HUNG_STACK_RUN_ID = `${suiteName}-${stage}`;
   }
+  return env;
+}
+
+/** Configure the existing Runtime sink before the direct harness is constructed. */
+export function configureRuntimeLogEnv({ suite, output, env = process.env }) {
+  delete env.D66_RUNTIME_LOG_DIR;
+  if (suite.retainRuntimeLogs) env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
   return env;
 }
 
@@ -648,6 +655,7 @@ export async function main(sourceOptions = {}) {
     ? path.join(orch, 'tests', snapshot.slice(6), 'd66')
     : path.join(process.env.TMPDIR ?? '/tmp', `d66-${name}`));
   mkdirSync(output, { recursive: true });
+  configureRuntimeLogEnv({ suite, output });
   if (mode === '--preflight') {
     const manifest = { suite: name, mode, repo_heads: repoHeads(sources), repo_trees: repoTrees(sources),
       source_checkouts: sources, service_source: preflight.service_source, service_target: preflight.target };
