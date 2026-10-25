@@ -1,0 +1,32 @@
+{
+  "status": "STOPPED_BEFORE_SCHEMA_ADJUDICATION",
+  "reason": "G1 actual-tip freshness is not established and G2 triggers D54a regression stop.",
+  "source": {
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "lines": 279,
+    "test_bodies": 11,
+    "original_predicates": 43,
+    "module_assertions_in_current_file": 44,
+    "setup_assertions_excluded_from_original_predicate_count": 1,
+    "fixture_statements": 54,
+    "conservation": "Prior protected AST review records all 43 original predicate ASTs, 11 test functions and 54 fixture statements as preserved; current file is byte-identical to the approved receiving projection source."
+  },
+  "authored_known_input": {
+    "path": "parent.config.theme_overrides.visual.canvas.fps",
+    "shape": "array of two integers",
+    "summary": "[30000, 1001]",
+    "typed": true,
+    "predicate_relevant": true,
+    "receiving_supported_alternative": {"numerator": 30000, "denominator": 1001},
+    "alternative_status": "not applied; no division, rounding, epsilon or fixture conversion"
+  },
+  "static_construction_census": {
+    "projection_construction": "saved_closure lines 284-441 builds source provenance, opaque extension fields, duplicate/remove topology, parent metadata, child metadata and final publication call.",
+    "explicit_fps_override": "lines 418-420 only authored known FPS override in the reviewed tail.",
+    "opaque_preservation_inputs": "Opaque parent, occurrence, shot, internal, registry and metadata values remain unchanged and are not reinterpreted here.",
+    "invalid_inputs_beyond_fps": "UNKNOWN because conditional whole-seed schema validation was not authorized after gate stop; no additional invalidity is claimed or invented."
+  },
+  "dependency_on_array_shape": "The array is consumed only at provider final-candidate validation before the nine saved projection bodies. The preserved predicates assert canonical projection, custody, ordering, opaque preservation and caller equivalence; no predicate traverses the FPS array shape. Predicate AST conservation is recorded separately in predicate-map.json.",
+  "no_edits": true
+}

@@ -1,0 +1,54 @@
+{
+  "task": "app-D136-fps-readonly-gates-2000",
+  "receiving": {
+    "commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+    "tree": "84e9d485a7ee8fdf2969eaf19d159e400f0ca1d4",
+    "worktree_clean": true,
+    "changed_path_from_parent": "tests/sdk/test_timeline_capture_projection.py",
+    "projection_file_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "projection_file_git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19"
+  },
+  "agent_source": [
+    {"path": "astrid/sdk/timeline/validation.py", "git_blob": "84f0a307e765a469ae5d1f267f84b360a05dbe88", "sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c"},
+    {"path": "astrid/core/timeline/schema/timeline-config.schema.json", "git_blob": "a59d42e663a4e137ef15fea709b1e6380c0dc4dc", "sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"},
+    {"path": "astrid/sdk/timeline/commit.py", "git_blob": "3ca7c6e970cc162cef30989ad9cb5e0e2a61715c", "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"},
+    {"path": "tests/sdk/test_capture_source_runtime.py", "git_blob": "092b212d4708c0a19fa4d183632ca5c64abc4da7", "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48"},
+    {"path": "astrid/core/timeline/authoring_bundle.py", "git_blob": "e329c565bbaea9acac81c71929b7f3c3cadd0a17", "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d"}
+  ],
+  "pristine_published_ref": {
+    "repository": "Agent",
+    "ref": "origin/main (also origin/HEAD)",
+    "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+    "published_commit_date": "2026-10-25T16:51:50+01:00",
+    "freshness": "local ref only; remote freshness not established",
+    "schema_path": "astrid/core/timeline/schema/timeline-config.schema.json",
+    "schema_sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1",
+    "validator_path": "astrid/core/timeline/validators/timeline.py",
+    "validator_sha256": "0b4839537aa72013812a4f5a4676468343e22fa35da9a592a8501f9b42953fc5",
+    "projection_test_path": "tests/sdk/test_timeline_capture_projection.py",
+    "projection_test_presence": "absent at this exact local ref; freshness still NOTQUALIFIED"
+  },
+  "frozen_r4": {
+    "sdk_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "sdk_commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "sdk_tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610",
+    "runtime_ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+    "runtime_commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+    "runtime_tree": "73e676f420ba0545b6eebe45870d532344a9e69b",
+    "runtime_timeline_schema_sha256": "e1ed88e93c81094b46fedb87b5e71b576183db9282aae40a37b13f20a65732af",
+    "projection_test_presence_in_sdk_candidate": false
+  },
+  "approved_c0": {
+    "path": "runtime/contract/commit-v2.md",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "integration_runtime_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "provider_path": "runtime_protocol/timeline_commit_provider.py",
+    "provider_sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"
+  },
+  "historical_d100": {
+    "candidate27": "27/27 PASS",
+    "projection9": "9 setupERROR, first common seam candidate.parent.config.theme_overrides.visual.canvas.fps",
+    "original_source_and_product_hashes": "unchanged; held by D100 evidence"
+  }
+}

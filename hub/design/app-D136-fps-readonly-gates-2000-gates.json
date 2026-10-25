@@ -1,0 +1,42 @@
+{
+  "task": "app-D136-fps-readonly-gates-2000",
+  "status": "STOP_REPORT_REGRESSION_D54A",
+  "receiving_commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+  "gates": {
+    "G1": {
+      "status": "NOTQUALIFIED",
+      "local_published_ref": "origin/main",
+      "local_published_tip": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "origin_head_equals_origin_main": true,
+      "target_path": "tests/sdk/test_timeline_capture_projection.py",
+      "local_cat_file_result": "absent at origin/main and origin/HEAD",
+      "freshness": "NOT_ESTABLISHED; no fetch/acquisition permitted",
+      "required_lead_readback": "Current published upstream tip full commit/ref/provenance and exact path-presence result at that hash."
+    },
+    "G2": {
+      "status": "FAIL_REGRESSION_D54A",
+      "captured_pristine_ref": "origin/main@886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "pristine_schema": "ThemeOverrides.visual is an object with additionalProperties {}; nested canvas/fps has no array-rejecting schema rule.",
+      "pristine_validator": "_timeline_fps accepts positive scalar numbers and otherwise returns 30.0; it does not reject an FPS array.",
+      "receiving_provider": "_fps accepts positive scalar or exact positive integer numerator/denominator mapping; array reaches must-be-a-finite-number rejection.",
+      "c0": "Approved C0 delegates final known-parameter/schema validation to the provider and preserves open document fields; it does not define this TimelineConfig field.",
+      "condition": "Captured pristine upstream accepts/does not reject the authored list while receiving Agent rejects it.",
+      "action": "Leave all nine historical setup errors visible; hand product owner to Runtime/Agent; no fixture conversion or retry."
+    }
+  },
+  "historical_result": {
+    "candidate27": "27/27 PASS, unchanged historical evidence",
+    "projection9": "0 PASS, 0 FAIL, 9 setupERROR, unchanged historical evidence",
+    "authored_path": "parent.config.theme_overrides.visual.canvas.fps",
+    "authored_shape": "array of two integers",
+    "authored_value_summary": "[30000, 1001]",
+    "exact_rational_candidate": "{numerator: 30000, denominator: 1001} is supported by receiving _fps, but no conversion is authorized after D54a."
+  },
+  "constraints_observed": [
+    "No source edit",
+    "No fixture edit or conversion",
+    "No pytest/service/socket/browser/profile/full rerun",
+    "No upstream fetch/acquisition/Git mutation",
+    "No raw payloads, credentials, URLs, stacks, or private evidence published"
+  ]
+}

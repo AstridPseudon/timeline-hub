@@ -1,0 +1,795 @@
+{
+  "task": "app-D136-fps-readonly-gates-2000",
+  "source_path": "tests/sdk/test_timeline_capture_projection.py",
+  "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+  "counts": {
+    "original_predicates": 43,
+    "current_module_assertions": 44,
+    "setup_assertions_excluded": 1,
+    "test_bodies": 11,
+    "fixture_statements": 54
+  },
+  "conservation": {
+    "original_predicate_ast_multiset_preserved": true,
+    "test_function_ast_equal_to_protected_base": true,
+    "fixture_statements_ordered_subsequence": true,
+    "all_authored_values_goldens_pins_topology_unchanged": true
+  },
+  "fps_boundary": {
+    "path": "parent.config.theme_overrides.visual.canvas.fps",
+    "shape": "array of two integers",
+    "summary": "[30000, 1001]",
+    "setup_line": 418,
+    "provider_rule": "receiving _fps rejects arrays; exact positive integer numerator/denominator mapping is supported",
+    "stop_rule": "D54a regression stop; no conversion"
+  },
+  "predicates": [
+    {
+      "id": "P01",
+      "function": "test_capture_candidate_inputs_exact_pure_detached_golden",
+      "original_line": 53,
+      "current_line": 53,
+      "ast_sha256": "c25ccf33b0151eb2bc1d1f0677ab6c2439e456b3e0adffd974cd25fad9458957",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P02",
+      "function": "test_capture_candidate_inputs_exact_pure_detached_golden",
+      "original_line": 57,
+      "current_line": 57,
+      "ast_sha256": "7aa57cd685d855a2d9de7c76617222dd1218859326b7e4905c0baff588fad9ec",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P03",
+      "function": "test_capture_candidate_inputs_exact_pure_detached_golden",
+      "original_line": 58,
+      "current_line": 58,
+      "ast_sha256": "2de3f5053f1400ba09e7d3b78630ae2b5ea0e696d80691f9a8b414ac982314db",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P04",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 87,
+      "current_line": 87,
+      "ast_sha256": "c25ccf33b0151eb2bc1d1f0677ab6c2439e456b3e0adffd974cd25fad9458957",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P05",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 90,
+      "current_line": 90,
+      "ast_sha256": "0643d8a34e1624d90f279da50d51c4f6f186fb2e2739ffac67fd408871f448f9",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P06",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 91,
+      "current_line": 91,
+      "ast_sha256": "dd8dafad96703cd92532d7d6b4f6adf8b3192cc2cce0c00a58ec76f8d1f643d4",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P07",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 92,
+      "current_line": 92,
+      "ast_sha256": "a68b6ba25d795cd5a0323b9b497b984cc04d770dfc901dbdcf48ba8c1283be25",
+      "status": "preserved",
+      "array_shape_dependency": "Checks canonical projected FPS object shape in output, not the authored input array; preserved as-is."
+    },
+    {
+      "id": "P08",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 93,
+      "current_line": 93,
+      "ast_sha256": "5dc699f8aa683349dfb4ecfb4b112a4919bdf566da921ae18c2f8b55f095bcff",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P09",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 94,
+      "current_line": 94,
+      "ast_sha256": "0b544782543fbe84461e7eb7ada3cde35322a5198fc5d7466546d84507be5c2c",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P10",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 97,
+      "current_line": 97,
+      "ast_sha256": "d5326811a4656b4bdab12db96b4c166357f095c152231591f4e57f16a8e523f6",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P11",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 98,
+      "current_line": 98,
+      "ast_sha256": "433d0fe29a5cd62c11dd4cfe657e1ab18324e59c20977d7c90d50687890c38d1",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P12",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 99,
+      "current_line": 99,
+      "ast_sha256": "9ca5712e258df6f0f377718b87dd962ac01938a8cfa83d74ee3c900262a36fb9",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P13",
+      "function": "test_projection_is_detached_json_deterministic_without_io",
+      "original_line": 100,
+      "current_line": 100,
+      "ast_sha256": "d030d9ae3d120f6a9b9d0efd202dc45764efbcf8ea70e7492cb52ad38a0b2de0",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P14",
+      "function": "test_capture_method_imports_and_runs_without_renderer_or_runtime",
+      "original_line": 205,
+      "current_line": 205,
+      "ast_sha256": "26f44094348772966caed95da19674841079be8544e962489d3cfb74aa8f3e88",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P15",
+      "function": "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "original_line": 379,
+      "current_line": 453,
+      "ast_sha256": "d2751204ab8ff3d1e81ce5e124fb1395e8db185b33c9397910814f2d4e4aa4f3",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P16",
+      "function": "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "original_line": 380,
+      "current_line": 454,
+      "ast_sha256": "65cb1c97676ccb961da523ddeae1f3af584ad1962c6f2e9d81282488f621e493",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P17",
+      "function": "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "original_line": 381,
+      "current_line": 455,
+      "ast_sha256": "0e966a5e41fe4bd659158d6c0039194c228d7b66c6bd610a404cfdd16425b94f",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P18",
+      "function": "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "original_line": 383,
+      "current_line": 457,
+      "ast_sha256": "e295d5af5edcd1b12dd288ca2b3f29159fc1704297c0765afecbee79629bed77",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P19",
+      "function": "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "original_line": 384,
+      "current_line": 458,
+      "ast_sha256": "342dfc8261fd8940418774d2b324b0877bda405c139555ff2022c379b61a35e1",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P20",
+      "function": "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "original_line": 385,
+      "current_line": 459,
+      "ast_sha256": "94b25f1c62b68e22ba2c3fbf5cfe02b543aeba2ee4b30e14c04e7393c5aec05c",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P21",
+      "function": "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "original_line": 387,
+      "current_line": 461,
+      "ast_sha256": "f60e5370b1454effd19cdfaffa224f318cd56c299181aebc0eef4e8ccf6427b8",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P22",
+      "function": "test_real_saved_entire_expansion_golden",
+      "original_line": 400,
+      "current_line": 474,
+      "ast_sha256": "80efb2633f1521705b94a965ce69ef114dc0d5cb2b13593cf45190746d3fdf5f",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P23",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 430,
+      "current_line": 504,
+      "ast_sha256": "d8b97ee27a79ecb2e32949b847a30c40ee3577e93c944ff6089d7cf7041b765d",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P24",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 431,
+      "current_line": 505,
+      "ast_sha256": "27661f651e0444a246b9b0daf32579c94825e09d821a743bd5f52eb111f8a832",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P25",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 432,
+      "current_line": 506,
+      "ast_sha256": "fc22e75f872f3382844cdcab0c67e033502b41b7a6ae659219961c2659f8d9ef",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P26",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 433,
+      "current_line": 507,
+      "ast_sha256": "3ff1e038ab0c86e027db81b0a7a27107fd96e4c497aa7461dfba5c383e3675e7",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P27",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 434,
+      "current_line": 508,
+      "ast_sha256": "99344b79fb51c892c8f9d5b1b73fe616bcd43fad20e62cbe59c5ab4cf0d49f7d",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P28",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 435,
+      "current_line": 509,
+      "ast_sha256": "23581b952ff09807c1bc7bbbc392413cadb86c4eb5405b1f4e0c8e315cd8b15a",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P29",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 436,
+      "current_line": 510,
+      "ast_sha256": "462089583d764b4cbb0fc7e2223054de350aa96e95b9b9f24f53d8f33a0c2681",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P30",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 437,
+      "current_line": 511,
+      "ast_sha256": "31680dc93f5c1861338d6af965ff3a34be4c11779b86a746e1f5d9f904bd9df2",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P31",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 438,
+      "current_line": 512,
+      "ast_sha256": "91f461ceecb29c26f8691a6d752747eeee69c8062b8b51e9fe60c5af2370b912",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P32",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 439,
+      "current_line": 513,
+      "ast_sha256": "443613e0b9e7490b60164ee13412a9bbf714175e335651c2e6c66e019c5c7621",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P33",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 443,
+      "current_line": 517,
+      "ast_sha256": "05d92c566ec371a8735d370c666beefbe508d5b7d296fa223775b78311fb7b86",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P34",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 444,
+      "current_line": 518,
+      "ast_sha256": "be259f9e3276606b02e46470907952cd8ddacff419efef8017a4aa7524bd8899",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P35",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 445,
+      "current_line": 519,
+      "ast_sha256": "52300cd0cdc3847004fb190b13e0ad571fc29fb92a8aecbe4fdbecd77fbcd46a",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P36",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 447,
+      "current_line": 521,
+      "ast_sha256": "8377602494214716bcaac10648c0229cdff85dbad5df7c43216265d3e3dd97e3",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P37",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 449,
+      "current_line": 523,
+      "ast_sha256": "3cd926babf58669b09485a637135661ecf90ac1e78322a3ad1c44fe555a81c99",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P38",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 450,
+      "current_line": 524,
+      "ast_sha256": "fe561e02ae2b877d4d0700b40f5a3592e9e7f5de46b90e90245b7f85cc45c26d",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P39",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 451,
+      "current_line": 525,
+      "ast_sha256": "b2a88469601035ca87e5196fc0fa4d758c0ecc8770c148978812b918ec71b08e",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P40",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 453,
+      "current_line": 527,
+      "ast_sha256": "b2a88469601035ca87e5196fc0fa4d758c0ecc8770c148978812b918ec71b08e",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P41",
+      "function": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "original_line": 454,
+      "current_line": 528,
+      "ast_sha256": "c69f4b0ed6bccf1f4e1d0299596e8996f760042e9aee41138e0dee1636b497d3",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P42",
+      "function": "test_real_candidate_matches_sdk_opener_exactly",
+      "original_line": 493,
+      "current_line": 567,
+      "ast_sha256": "5efb43c1eea4b5ac04991ed661aa2f73e42b97f2f35ff4ee3657606f715ce4d2",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    },
+    {
+      "id": "P43",
+      "function": "test_real_candidate_matches_sdk_opener_exactly",
+      "original_line": 494,
+      "current_line": 568,
+      "ast_sha256": "6599ee78df77999c6b70f3c952e04b6e1aa2a57af171a65bf9784e9e8c848118",
+      "status": "preserved",
+      "array_shape_dependency": "No traversal or shape assumption for parent.config.theme_overrides.visual.canvas.fps; setup validation occurs before these predicates."
+    }
+  ],
+  "fixture_statement_map": [
+    {
+      "id": "F01",
+      "original_line": 275,
+      "current_line": 281,
+      "ast_sha256": "c66674ebb4c0a17672d1a3d838ec217487ddfbd715c4116e8d18e7261d92a4fa",
+      "role": "fixture/runtime setup preserved in order"
+    },
+    {
+      "id": "F02",
+      "original_line": 276,
+      "current_line": 282,
+      "ast_sha256": "0075a48edef9ef84ece7df5ef1c0c24ace140568ba037b3b0d60a343f409512f",
+      "role": "fixture/runtime setup preserved in order"
+    },
+    {
+      "id": "F03",
+      "original_line": 278,
+      "current_line": 284,
+      "ast_sha256": "abc09589fa7a1f2d4fe2ffc7e5f0e8ad9b99c6ab77cb2c73fb62d98bdcbc2059",
+      "role": "fixture/runtime setup preserved in order"
+    },
+    {
+      "id": "F04",
+      "original_line": 279,
+      "current_line": 285,
+      "ast_sha256": "0dc3ec880d9bfa46945afadc0e6f0437500261ec4218ae378f6656b0c74b93d1",
+      "role": "fixture/runtime setup preserved in order"
+    },
+    {
+      "id": "F05",
+      "original_line": 280,
+      "current_line": 339,
+      "ast_sha256": "4e24d77d7f7ad9de00b457ff5002583e93318ef7183c3b2000db745e80530405",
+      "role": "canonical reread and source bundle setup"
+    },
+    {
+      "id": "F06",
+      "original_line": 281,
+      "current_line": 340,
+      "ast_sha256": "a3bf67446e1755bd85b3b7ce1e327d06a349972b60da38d53656abcb617c1c77",
+      "role": "canonical reread and source bundle setup"
+    },
+    {
+      "id": "F07",
+      "original_line": 287,
+      "current_line": 346,
+      "ast_sha256": "ec92db12ac92241827967d0f47fb9ec39f452dd6e4257f6626ca9de745eaf57e",
+      "role": "canonical reread and source bundle setup"
+    },
+    {
+      "id": "F08",
+      "original_line": 288,
+      "current_line": 347,
+      "ast_sha256": "c907646d0b36c2e09aade3452d47bc179a9e722240caca84218b5a3d23723f5d",
+      "role": "canonical reread and source bundle setup"
+    },
+    {
+      "id": "F09",
+      "original_line": 289,
+      "current_line": 348,
+      "ast_sha256": "3b2f094a36dcd8e916bac405834b8152df143df640eaf8859a8bfd8442f2f91f",
+      "role": "canonical reread and source bundle setup"
+    },
+    {
+      "id": "F10",
+      "original_line": 290,
+      "current_line": 349,
+      "ast_sha256": "fefe3c7be2af4e3c6c01c1aa4999e87fc6229be2ea5d5ee12eb102d5ec1e4650",
+      "role": "canonical reread and source bundle setup"
+    },
+    {
+      "id": "F11",
+      "original_line": 291,
+      "current_line": 350,
+      "ast_sha256": "51efd615e2ee932c60f586bb389c941773eeea84e2777cd80e523c075cb40721",
+      "role": "canonical reread and source bundle setup"
+    },
+    {
+      "id": "F12",
+      "original_line": 299,
+      "current_line": 358,
+      "ast_sha256": "e799b38537ee5f34bd05effbce55222c71c01a4506244591de352e820fe146f8",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F13",
+      "original_line": 300,
+      "current_line": 359,
+      "ast_sha256": "765bcd0de2095182f42bdeba612711fb78daecbcf8e893ab8a3d0cd5d8ba6ba3",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F14",
+      "original_line": 301,
+      "current_line": 360,
+      "ast_sha256": "da975f772350e16116cb77a458022d4c7dc51dca67f16f7246b3ace6342a9e60",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F15",
+      "original_line": 302,
+      "current_line": 361,
+      "ast_sha256": "a92e8cfd5dfc4e455add2bc5dfe57938b71c7f8fe457d228177169cfd4e9860d",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F16",
+      "original_line": 303,
+      "current_line": 362,
+      "ast_sha256": "77caac2729faf638929d7392260f88071c982b615706f8234858a4db689bf635",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F17",
+      "original_line": 304,
+      "current_line": 363,
+      "ast_sha256": "d047c333ea856ff7a55e5025f30861f49635a02d90340521ed0328e847ef3d9a",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F18",
+      "original_line": 305,
+      "current_line": 364,
+      "ast_sha256": "80251b6b5ee0d18227f066f05bb8ab3edbdbaaa36c386359b1b8321ce6d8f9a2",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F19",
+      "original_line": 306,
+      "current_line": 365,
+      "ast_sha256": "a5f1f85c16deb739fb9fa12af4660b0afbeb70ea21fef3b86edc0328c99b3ae9",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F20",
+      "original_line": 307,
+      "current_line": 366,
+      "ast_sha256": "849ffda9f00af66098903155b3086a39b41c86b468591f18999e25e7fc4298b9",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F21",
+      "original_line": 309,
+      "current_line": 368,
+      "ast_sha256": "e4e382ef7c30e967c85d82ac07e94b0da970c4a976633b5c32b1805acf9e048d",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F22",
+      "original_line": 310,
+      "current_line": 369,
+      "ast_sha256": "6d58f251aaa3cde7fde5fe806435769b4845a1b84bab7ba59347946d24098feb",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F23",
+      "original_line": 311,
+      "current_line": 370,
+      "ast_sha256": "7a11d9c01dab75f0135272e18213243247fe13d72c9e34bc04735febafd5c607",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F24",
+      "original_line": 312,
+      "current_line": 371,
+      "ast_sha256": "054d16515947ddfd4829699cabea6d30531fd303b95af956536f44bd99e45277",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F25",
+      "original_line": 313,
+      "current_line": 372,
+      "ast_sha256": "79e5b0fdeaa267fb66215b61508985e82307d008074fc51c4ef01673cfdca473",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F26",
+      "original_line": 314,
+      "current_line": 373,
+      "ast_sha256": "fcdaba6eaa5499070374fc7facab88f3ca30f6dbc8d6cb56c20e2059b523f34c",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F27",
+      "original_line": 315,
+      "current_line": 374,
+      "ast_sha256": "3dcfba480b2a62ffd0922c69b346d0ed82bd3bcbd3b3cf8cb156ffdb13df84d1",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F28",
+      "original_line": 316,
+      "current_line": 375,
+      "ast_sha256": "d1652a3e95198c258534f6a291632b76b134d511813017d653ec87befdfbbb30",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F29",
+      "original_line": 317,
+      "current_line": 376,
+      "ast_sha256": "d380fbe77ed53defe176cd7b5a24a6a3b97e1d2ed1ba410033f6635909ab991d",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F30",
+      "original_line": 318,
+      "current_line": 377,
+      "ast_sha256": "dc99b2dee53cd4335111feaf91992df23457175a1fa7f6438d57c8674eddb4ee",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F31",
+      "original_line": 324,
+      "current_line": 383,
+      "ast_sha256": "4547348547977d0b5541434589d6e0b4b686ec47742bc98564f6a3af79d50972",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F32",
+      "original_line": 325,
+      "current_line": 384,
+      "ast_sha256": "8630a6b2636cb321569c23ec25f3e5ec8c74d64664fdd29f6867cbbe7417bad6",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F33",
+      "original_line": 326,
+      "current_line": 385,
+      "ast_sha256": "b94f3a19c88e81c3c1188b90c7117ae009a645bc9df41ade893e1074ca2b873b",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F34",
+      "original_line": 327,
+      "current_line": 386,
+      "ast_sha256": "f1813e2ad0e18f7eb6e801b410084fe0fd5962dc472ec93dfe7e826a0c8ccde5",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F35",
+      "original_line": 328,
+      "current_line": 387,
+      "ast_sha256": "fe2f0611317e78247e1c55918e26b5b1006ffccdc924d89b9af0163418359548",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F36",
+      "original_line": 329,
+      "current_line": 388,
+      "ast_sha256": "e6ab90c9e63602aa2a65f8bde140b94c5c19b8be72719843669a02d7ab02e892",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F37",
+      "original_line": 330,
+      "current_line": 389,
+      "ast_sha256": "1420eb4b92cb9195af65762a2e3e9df59fe94ccd9531ea3df3e165d2390b3abe",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F38",
+      "original_line": 331,
+      "current_line": 390,
+      "ast_sha256": "3cb694defec5f2a0996b106adba04caa8f8326682236f7b7352ca4183dd62c98",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F39",
+      "original_line": 336,
+      "current_line": 410,
+      "ast_sha256": "3d899e4bbf14e8d22afd88c940e7311642da02fb2753cdbaee6f8bae01c207ea",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F40",
+      "original_line": 337,
+      "current_line": 411,
+      "ast_sha256": "56ee9effcc05ade8bb33d535c476f2036f6efc6f2c25880c35ba6247dcf79559",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F41",
+      "original_line": 339,
+      "current_line": 413,
+      "ast_sha256": "71a90b5a5e313af1b9a081ae7ffa2bb30e967ec6ebf5f4ad728760d45c332da3",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F42",
+      "original_line": 340,
+      "current_line": 414,
+      "ast_sha256": "3d0f949cd0cd85bd10ac7c7e9a95ca6dc0a5b6041d89002e9f1a4f36d2b80ab2",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F43",
+      "original_line": 341,
+      "current_line": 415,
+      "ast_sha256": "63ed1ecf7bb27a92335d887e96ffc8b9ea5735578e79986ab6526ac106c6dc39",
+      "role": "opaque extension and source graph authoring"
+    },
+    {
+      "id": "F44",
+      "original_line": 342,
+      "current_line": 416,
+      "ast_sha256": "3304b00acc84e6e2459e8bfa1e470bed2b50b39582fb9e264fd055189f408f72",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F45",
+      "original_line": 343,
+      "current_line": 417,
+      "ast_sha256": "237262fc86913de776987831f3c4097eb5bee4234195eb33a83eafd8a020bb78",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F46",
+      "original_line": 344,
+      "current_line": 418,
+      "ast_sha256": "9f54251b93cbe4f055e9bfec34d87cfbac94ee5c959a7604a7a88848083c4a45",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F47",
+      "original_line": 347,
+      "current_line": 421,
+      "ast_sha256": "ea4aaeb051059f558341edfb0216f66f7c9469e01c8bf4d4cfc80a0bf82ccd8d",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F48",
+      "original_line": 355,
+      "current_line": 429,
+      "ast_sha256": "6394bcf4585a351396063320f83e3f00618553fb55a05091796e57ecf836b34a",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F49",
+      "original_line": 356,
+      "current_line": 430,
+      "ast_sha256": "053ff2224c2e98c6eaf8a5bfda42d9322c3b0b92aa2ebb57819a8d2175d7af75",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F50",
+      "original_line": 357,
+      "current_line": 431,
+      "ast_sha256": "a05c85cac901b6fa1f46b09966ce5d26891fb1b4a568b5e8c6ff400cf26dc1c6",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F51",
+      "original_line": 358,
+      "current_line": 432,
+      "ast_sha256": "9844cb821a9b5123f0338f8ca0376558c651ba10e9b42286251c3dbdfe1741ec",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F52",
+      "original_line": 359,
+      "current_line": 433,
+      "ast_sha256": "1896e6993f44031a785bc8937298056fcb65aa391811e2ad3c6bbc71b75659ed",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F53",
+      "original_line": 360,
+      "current_line": 434,
+      "ast_sha256": "a4acd978d989e264b182cc487065579820678376c0473ac57d5707d93b84dd07",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    },
+    {
+      "id": "F54",
+      "original_line": 367,
+      "current_line": 441,
+      "ast_sha256": "06da1c749458022d78c5dec31a00bb9898397d43839d7fe5326610667c548c8a",
+      "role": "authored final candidate setup / protected FPS boundary or publication tail"
+    }
+  ]
+}

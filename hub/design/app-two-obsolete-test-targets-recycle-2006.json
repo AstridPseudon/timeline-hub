@@ -1,0 +1,32 @@
+{
+  "time": "2026-10-25T20:05:34.752488+00:00",
+  "rows": [
+    {
+      "name": "app-P1-D26-exact-target-sol-2007",
+      "head": "be890a1fa5d6db02e4964522aa356f88f115a22a",
+      "clean": true,
+      "current_head": false,
+      "live_refs": [],
+      "host_clear_receipt": "design/app-pin-host-process-use-2005.md"
+    },
+    {
+      "name": "app-P3-D29-target-checks-2112",
+      "head": "6c33025bb50783a7c325250de27e3bdef45577cb",
+      "clean": true,
+      "current_head": false,
+      "live_refs": [],
+      "host_clear_receipt": "design/app-pin-host-process-use-2005.md"
+    }
+  ],
+  "integration_heads": {
+    "app": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "agent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "runtime": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "free_before": 5055143936,
+  "free_after": 5344952320,
+  "net_free_change": 289808384,
+  "raw_outputs_branches_reports_retained": true,
+  "guard_refusals": 0
+}
