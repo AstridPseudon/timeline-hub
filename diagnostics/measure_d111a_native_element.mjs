@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { startDirectHarness } from '/home/user/work/app/tests/e2e/local/support/harness.ts';
@@ -94,7 +95,7 @@ function elementRequest(harness, seed, document, head) {
 }
 
 const harness = await startDirectHarness({ deferTimelineInitialization: true });
-const result = { run_id: runId, profile, runtime, source: { diagnostic: 'tl/rt-D111a-scope-return-0827', app_harness: 'e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3', runtime, agent: process.env.ASTRID_CHECKOUT }, phases: [] };
+const result = { run_id: runId, profile, mode: process.env.D111A_MODE, runtime, source: { diagnostic: 'tl/rt-D111a-scope-return-0827', app_harness: 'e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3', runtime, agent: process.env.ASTRID_CHECKOUT }, phases: [] };
 try {
   result.phases.push('startup-ready');
   harness.withdrawProductCredential();
@@ -132,15 +133,29 @@ try {
   const start = process.hrtime.bigint();
   const response = await harness.runtimeFetch(result.request.route, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': request.key },
     body: requestText, signal: AbortSignal.timeout(120_000) });
-  const body = await response.json().catch(() => null);
+  const responseText = await response.text();
+  const body = JSON.parse(responseText);
   const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
   writeFileSync(marker, 'done\n', { mode: 0o600 });
-  writeFileSync(`${logDir}/reply.json`, JSON.stringify(body), { mode: 0o600 });
+  writeFileSync(`${logDir}/reply.json`, responseText, { mode: 0o600 });
   result.request.end_utc = new Date().toISOString();
   result.request.elapsed_ms = elapsedMs;
   result.request.pid = harness.runtime?.child.pid;
   result.request.outcome = response.status;
   result.reply = { status: response.status, body_keys: body && typeof body === 'object' ? Object.keys(body).sort() : [], receipt_present: Boolean(body?.receipt) };
+  if (!isDeepStrictEqual(body?.receipt?.result, body?.data)) fail('receipt/result mismatch');
+  const data = object(body?.data, 'accepted data');
+  if (!['accepted', 'merged'].includes(data.status)) fail('not accepted');
+  const readback = await canonicalAt(harness, seed, data.accepted_revision_id);
+  if (!isDeepStrictEqual(readback, data.canonical_document)) fail('canonical readback mismatch');
+  const headAfter = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
+  if (headAfter.status !== 200 || headAfter.body.head.revision_id !== data.accepted_revision_id
+      || headAfter.body.head.publication_id !== body.receipt.receipt_id) fail('head mismatch');
+  const afterRows = sourceClips(data.canonical_document).rows;
+  if (afterRows.length !== rows.length + 1 || !isDeepStrictEqual(afterRows.at(-1), request.body.commands[0].args.changes[0].value)
+      || !isDeepStrictEqual(afterRows.slice(0, -1), rows)) fail('element/copy isolation mismatch');
+  result.correctness = { receipt_result_exact: true, canonical_readback_exact: true, head_exact: true, existing_rows_preserved: true,
+    reply_bytes: Buffer.byteLength(responseText), reply_sha256: createHash('sha256').update(responseText).digest('hex') };
   result.phases.push('element-response');
 } catch (error) {
   result.error = { class: error?.constructor?.name ?? 'unknown', message: String(error?.message ?? error) };
@@ -166,9 +181,7 @@ try {
 const profiles = [];
 for (const name of readdirSync(logDir).filter((item) => item.startsWith('profile-') && item.endsWith('.json'))) {
   const item = JSON.parse(readFileSync(`${logDir}/${name}`, 'utf8'));
-  profiles.push({ file: name, run_id: item.run_id, source: item.source, pid: item.pid, process_identity: item.process_identity,
-    sampling_interval_ms: item.sampling_interval_ms, request_count: item.request_count, requests: item.requests,
-    inclusive_overlap: item.inclusive_overlap, timing_definition: item.timing_definition, observer_scope: item.observer_scope, sampler_errors: item.sampler_errors });
+  profiles.push({ file: name, ...item });
 }
 result.profiles = profiles;
 mkdirSync(logDir, { recursive: true });
