@@ -1,0 +1,14 @@
+scope	count	status	authority	hash_or_rule
+candidate-receiving	96	SOURCE_ONLY	membership.tsv	27 READY_SOURCE + 20 READY_CURRENT_DELTA + 49 READY_HOME_CLEARED; unique canonical set
+fixed0351-ready	27	SOURCE_PACKET	0151 handoff	video8 + numeric6 + CLItrim3 + opaque6 + ordinaryscript4
+current-overlap-delta	20	SOURCE_ONLY	f31f/9c4b reviewed joins	ordinarysheet11 + projection9; newer than actual9211, no current rerun owner
+cleared-word-d92	49	SOURCE_ONLY	0348 PASS_SOURCE + b7c5/f518 normal-home	word-bootstrap46 + D92 compound3
+actual9211	161	IMMUTABLE_NOT_REBOUND	prior actual outcome packet	no unchanged retry; source delta must remain explicit
+actual11789	102	IMMUTABLE_NOT_REBOUND	rt-D86-later102-first-body-0303	no unchanged retry; source delta must remain explicit
+actual18575	20	IMMUTABLE_EXECUTED_OR_SCHEDULED	D91 immutable20	D91 ten ERROR scheduled elsewhere; inverse7 PASS excluded; D92 three FAIL now source-cleared
+original550	550	PRESERVED	original550-dispositions.tsv	abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2
+NO_JUNIT_CASE	23	PRESERVED	unexecuted-23.tsv	7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca
+D87-ledger-retirements	PRESERVED	PRESERVED	prior inverse7 boundary	unchanged; no source-only promotion
+candidate-product-mandatory8	8	HELD	b415 candidate proof	six parent guard failures + two word setup errors; no normal product merge
+optional-word-oracle-sheet-cli	5	EXCLUDED	candidate13 source record	NOTRUN and no exact current-normal applicability proof
+media20-transition-continuation	18	EXCLUDED_PENDING_RECEIPT	0352/0358/0406 handoff	join only after actual normal receipt and reviewed blob 369b match

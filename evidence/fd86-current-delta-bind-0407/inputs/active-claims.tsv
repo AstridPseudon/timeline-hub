@@ -1,0 +1,6 @@
+claim	count	current_source_or_receipt	prior_actual_or_status	disposition	note
+D91-shared-inverse10	10	b003f3799b198c206126c430ac31ea7200372ab5 / 562ee30b6e	18575 ERROR	SCHEDULED_ELSEWHERE	per-ID selectors are in scheduled-D91-per-id.tsv; no unchanged rerun
+inverse7	7	e6ffc8f62b / caffef8d93	18575 PASS	EXECUTED_EXCLUDED	per-ID source rows are in executed-inverse7-per-id.tsv; no rerun
+candidate-product-mandatory8	8	b415a427	candidate proof NO-GO	HELD	no normal product merge; exact six parent-guard failures and two word setup errors remain outside this source bind
+optional-word-oracle2-sheet-cli3	5	candidate13 source record	NOTRUN	EXCLUDED	no exact current-normal source applicability proof; no guessed selectors
+media20-transition-continuation	18	reviewed blob 369b required	0352/0358 PASS_SOURCE, 0406 requested	EXCLUDED_PENDING_RECEIPT	join only after exact normal receipt and reviewed blob match; do not repeat passing auto literals

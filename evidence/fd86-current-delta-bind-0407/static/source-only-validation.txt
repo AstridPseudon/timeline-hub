@@ -1,0 +1,14 @@
+[source packet]
+PASS: source-map-0351, source-manifest-0351, and the fixed packet artifacts are preserved byte-for-byte from the supplied handoff.
+[current tuple]
+PASS: Agent, Runtime, App, and Composition current clean checkout commits/trees are recorded in current-receiving-tuple.tsv.
+[current hashes]
+PASS: current-source-hashes.tsv records exact SHA-256 and Git blob IDs for all changed/dependency paths; reviewed source hashes match the packet.
+[set accounting]
+PASS: 96 unique selectors = 27 fixed ready + 20 current reviewed overlap deltas + 49 cleared normal-home rows; held rows are absent from selector-argv.txt.
+[history boundaries]
+PASS: actual9211, actual11789, actual18575, original550, and NO_JUNIT_CASE-23 boundaries remain explicit; D91 and inverse7 are not rebound.
+[route]
+PASS: existing MAIN route shape retained; no new runner/framework/profile/install and no marker filter.
+[behavior]
+NOT RUN: no pytest, collection, helper, service, body, browser, build, or live registry operation.
