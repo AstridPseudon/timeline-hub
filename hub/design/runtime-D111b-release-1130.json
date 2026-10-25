@@ -1,0 +1,85 @@
+{
+  "task": "rt-D111b-normal-release-1130",
+  "status": "RELEASED",
+  "released_at_utc": "2026-10-25T11:25:50Z",
+  "runtime": {
+    "normal_head": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+    "normal_head_short": "7070f1378",
+    "normal_tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+    "reviewed_source": "f0c4d6d2b66bb84e935b9008853fcb628746fe88",
+    "reviewed_tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+    "reviewed_base": "8ca89d83049affbb0bdb68a441b023225b7a731d",
+    "reviewed_base_tree": "85eafb3fdc9d4dfcba010dd1b521071e9f785574",
+    "integration_parent": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree_equal_to_reviewed_source": true,
+    "diff_reviewed_source_to_normal": "clean",
+    "working_tree": "clean"
+  },
+  "queue": {
+    "receipt": "merged tl/rt-D111b-closure-growth-sol-1115 into runtime tl/integration -> 7070f1378",
+    "receipt_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/merge-rt-D111b-closure-growth-sol-1115",
+    "first_parent": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "reviewed_product_parent": "f0c4d6d2b66bb84e935b9008853fcb628746fe88"
+  },
+  "author": {
+    "source_commit": "f0c4d6d2b66bb84e935b9008853fcb628746fe88",
+    "native_actual_request": "rt-D111b-closure-growth-sol-1115-full-d111b-native-1047-1025111152-10398",
+    "native_actual_tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+    "native_result": "PASS",
+    "native_gate": "1.448x, 84.715ms -> 122.704ms, unchanged 1.5x gate",
+    "native_scope": "one existing native acceptance case; source-document and source-store counters were zero",
+    "known_prior_native_failure": "1.971x retained from the 1057 run; noisy middle interval 190.000671ms"
+  },
+  "review": {
+    "source_review": "PASS_SOURCE",
+    "review_task": "rt-D111b-release-security-1122",
+    "reviewed_candidate": "f0c4d6d2b66bb84e935b9008853fcb628746fe88",
+    "review_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111b-release-security-1122/evidence/source-manifest.txt",
+    "static_result": "Ruff, compile, diff checks passed; Pyright had 57 parent-identical diagnostics and zero new diagnostics",
+    "known_parent_failure": "test_created_child_public_captured_transcript_advances_sequential_manifest[None-True] reproduced independently on parent and candidate; not rerun or fixed"
+  },
+  "integrated_smoke": {
+    "result": "PASS",
+    "cases": 9,
+    "exit": 0,
+    "duration_seconds": 15.89,
+    "command": "PYTHONDONTWRITEBYTECODE=1 ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-070dfc5e PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-070dfc5e /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider -o addopts= tests/test_timeline_commit_closure_growth.py tests/test_timeline_commit_ancestry_reads.py 'tests/test_timeline_native_asset_union.py::test_genuine_native_capture_is_retained_with_lossless_union[raw]' 'tests/test_timeline_native_asset_union.py::test_disjoint_clip_merge_and_guarded_undo_preserve_explicit_scopes[raw-None]' 'tests/test_timeline_commit_acceptance.py::test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated' 'tests/test_timeline_fresh_bootstrap_scope.py::test_real_provider_fresh_create_uses_normal_bootstrap' --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111b-normal-release-1130/evidence/integrated.xml --basetemp=/tmp/w-51d8cf95be/rt-D111b-normal-release-1130/integrated",
+    "xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111b-normal-release-1130/evidence/integrated.xml",
+    "xml_sha256": "7cdbf4afb9550f527987c522c582efd72db5761ce46bbd8ed1eb6db8f5dbf9b3",
+    "stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111b-normal-release-1130/evidence/integrated.stdout",
+    "warning": "pytest record_property is incompatible with junit_family xunit2; no test failure"
+  },
+  "static_and_wire_proof": {
+    "compile": "PASS; four changed Python source/test files compiled in memory",
+    "diff_check": "PASS; git diff --check 42aad0e92..7070f1378",
+    "canonical_15": "PASS; all 15 canonical client/schema paths byte-equal to 42aad0e92",
+    "canonical_15_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111b-normal-release-1130/evidence/canonical-15-compare.txt",
+    "reused_independent_static_review": true,
+    "repeated_typecheck": false
+  },
+  "module_hashes": {
+    "runtime_protocol/timeline_commit_port.py": "5d6b7a0948ce52147b79eb2413503b770465128a86ed8f6ffb48edea9791a37a",
+    "runtime_protocol/timeline_commit_store.py": "f5b1b60d1da19ca54b73c8af5a784c21bbc9b9b1c07875c99de1a2966502a554",
+    "runtime_protocol/timeline_commit_auth.py": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+    "tests/test_timeline_commit_ancestry_reads.py": "316f7ca5ff1874c3f0206296ed2ef18341c8ac5a35ba1de8db803219325cd42a",
+    "tests/test_timeline_commit_closure_growth.py": "e64b9b587eb3540bfe58adde45191d491b40017c0cf4b2dfbbbd0ceb3ca4ae1f"
+  },
+  "source_proof": {
+    "changed_from_42aad": [
+      "runtime_protocol/timeline_commit_port.py",
+      "runtime_protocol/timeline_commit_store.py",
+      "tests/test_timeline_commit_ancestry_reads.py",
+      "tests/test_timeline_commit_closure_growth.py"
+    ],
+    "private_diagnostic_or_evidence_imported": false,
+    "postflight": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111b-normal-release-1130/evidence/postflight.txt"
+  },
+  "not_claimed": [
+    "full suite",
+    "full core",
+    "P2 GO",
+    "original element proof",
+    "browser or live-socket qualification",
+    "cut/build/ZIP"
+  ]
+}

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T11:25:16Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 19 | status age 5m -->
+<!-- main | 2026-10-25T11:29:13Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 2m -->
 # runtime board, 2026-10-25T11:19:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -443,3 +443,5 @@ Safety: WithdrawnD88/D111memo stay stopped. D106 ORCH outputs only, never worker
 Disk: About5.7GB free. Sweep3 running through guarded route; read-only1110 audit excludes previously refused/dirty/registered/KEEP targets and Codex sessions. No compact-scratch invocation because it touches prohibited sessions.
 live 3 plus 2 queued / cap 6; ready-undispatched 0. Dispatcher sample: security1122, finalreview1122, result1122; tags1124 and audit1125 queued. All Luna; HARD Sol1115 ended.
 INBOX consumed through1145137 bytes. Updated 2026-10-25T11:19:33Z.
+
+Later: D122 — Host up to3 independent Agent cluster authors on Main as exact assigned rows arrive. Peer1137 requests node/file/source ownership; two source slots presently available, Runtime-critical tasks first.
