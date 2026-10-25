@@ -14,6 +14,7 @@ const bootstrapDirectory = path.resolve('scripts/testing');
 const NORMAL_HELPER_SHA256 = 'a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4';
 const REVIEWED_HELPER_SHA256 = '6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760';
 const REVIEWED_NEW_HELPER_SHA256 = '4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e';
+const REVIEWED_PROFILER_HELPER_SHA256 = 'a92122c24afc581f71687d25ffc6a4bd8bb7c2e7381e5b47a6be861d23594a1c';
 const CAPTURE_SCHEMA_VERSION = 1;
 const RETENTION_FORMAT_VERSION = 2;
 const NORMAL_PHASES = ['dispatch_queue', 'handler_entry', 'authorization', 'coordinator_admission', 'coordinator_lock', 'provider', 'accept', 'receipt', 'http_response'];
@@ -239,7 +240,112 @@ function assertSampling(value: unknown, newSchema = false): void {
   if (newSchema) assertFrameRows(sampling.top_leaf_frames, 'top_leaf_frames');
 }
 
-type CaptureValidatorArm = 'normal' | 'reviewed' | 'reviewed-new';
+function assertProfileFunction(value: unknown, label: string): asserts value is string {
+  assert.equal(typeof value, 'string', label);
+  assert.ok(value.length > 0 && value.length <= 160, label);
+  assert.match(value, /^[A-Za-z0-9_.$<>:' -]+$/, label);
+  assert.doesNotMatch(value, PRIVATE_VALUE, label);
+}
+
+function assertProfileFile(value: unknown, label: string): asserts value is string {
+  assert.equal(typeof value, 'string', label);
+  assert.match(value, /^<(?:runtime|agent|stdlib|package)>\/[A-Za-z0-9_./<>-]+$/, label);
+  assert.doesNotMatch(value, /(?:^|\/)\.\.(?:\/|$)/, label);
+  assert.doesNotMatch(value, PRIVATE_VALUE, label);
+}
+
+function assertProfileEndpoint(value: unknown, label: string): void {
+  const endpoint = record(value, label);
+  exactKeys(endpoint, ['file', 'line', 'function']);
+  assertProfileFile(endpoint.file, `${label}.file`);
+  assertInteger(endpoint.line, `${label}.line`);
+  assertProfileFunction(endpoint.function, `${label}.function`);
+}
+
+function assertCProfile(value: unknown): void {
+  const profile = record(value, 'cprofile');
+  exactKeys(profile, ['format_version', 'status', 'scope', 'functions', 'edges', 'limits', 'rank_meaning', 'timing_note']);
+  assert.equal(profile.format_version, 1);
+  assert.equal(profile.scope, 'RuntimeHandler._timeline_commit');
+  assert.equal(profile.status === 'captured' || profile.status === 'unavailable', true);
+  const limits = record(profile.limits, 'cprofile.limits');
+  exactKeys(limits, ['max_functions', 'max_edges', 'dropped_rows', 'dropped_edges']);
+  assertInteger(limits.max_functions, 'cprofile.limits.max_functions', { maximum: 40 });
+  assertInteger(limits.max_edges, 'cprofile.limits.max_edges', { maximum: 1600 });
+  assertInteger(limits.dropped_rows, 'cprofile.limits.dropped_rows');
+  assertInteger(limits.dropped_edges, 'cprofile.limits.dropped_edges');
+  assert.equal(limits.max_functions, 40);
+  assert.equal(limits.max_edges, 1600);
+  assert.equal(typeof profile.timing_note, 'string');
+  assert.match(profile.timing_note, /cProfile overhead/);
+
+  const functions = profile.functions;
+  assert.ok(Array.isArray(functions), 'cprofile.functions');
+  if (profile.status === 'unavailable') {
+    assert.deepEqual(functions, []);
+    assert.deepEqual(profile.edges, []);
+    assert.equal(profile.rank_meaning, 'unavailable');
+    assert.equal(limits.dropped_rows, 0);
+    assert.equal(limits.dropped_edges, 0);
+    return;
+  }
+
+  assert.equal(profile.rank_meaning, 'functions sorted descending cumtime, then file/line/function');
+  assert.ok(functions.length <= 40, 'cprofile.functions limit');
+  const identities = new Set<string>();
+  let previous: Record<string, unknown> | undefined;
+  for (let index = 0; index < functions.length; index += 1) {
+    const row = record(functions[index], 'cprofile.functions row');
+    exactKeys(row, ['rank', 'file', 'line', 'function', 'ncalls', 'primitive_calls', 'tottime', 'cumtime']);
+    assertInteger(row.rank, 'cprofile.functions.rank', { minimum: 1, maximum: 40 });
+    assert.equal(row.rank, index + 1);
+    assertProfileFile(row.file, 'cprofile.functions.file');
+    assertInteger(row.line, 'cprofile.functions.line');
+    assertProfileFunction(row.function, 'cprofile.functions.function');
+    assertInteger(row.ncalls, 'cprofile.functions.ncalls');
+    assertInteger(row.primitive_calls, 'cprofile.functions.primitive_calls');
+    assertFiniteNumber(row.tottime, 'cprofile.functions.tottime', { nonnegative: true });
+    assertFiniteNumber(row.cumtime, 'cprofile.functions.cumtime', { nonnegative: true });
+    assert.ok((row.cumtime as number) >= (row.tottime as number), 'cprofile cumulative time');
+    const identity = `${row.file}\0${row.line}\0${row.function}`;
+    assert.equal(identities.has(identity), false, 'cprofile function identity is unique');
+    identities.add(identity);
+    if (previous) {
+      const order = (previous.cumtime as number) - (row.cumtime as number);
+      if (order === 0) {
+        const previousKey = `${previous.file}\0${String(previous.line).padStart(10, '0')}\0${previous.function}`;
+        const currentKey = `${row.file}\0${String(row.line).padStart(10, '0')}\0${row.function}`;
+        assert.ok(previousKey <= currentKey, 'cprofile tie ranking');
+      } else {
+        assert.ok(order >= 0, 'cprofile cumulative ranking');
+      }
+    }
+    previous = row;
+  }
+
+  const edges = profile.edges;
+  assert.ok(Array.isArray(edges), 'cprofile.edges');
+  assert.ok(edges.length <= 1600, 'cprofile.edges limit');
+  const edgeIdentities = new Set<string>();
+  for (const edgeValue of edges) {
+    const edge = record(edgeValue, 'cprofile edge');
+    exactKeys(edge, ['caller', 'callee', 'ncalls']);
+    assertProfileEndpoint(edge.caller, 'cprofile.edge.caller');
+    assertProfileEndpoint(edge.callee, 'cprofile.edge.callee');
+    assertInteger(edge.ncalls, 'cprofile.edge.ncalls');
+    const caller = record(edge.caller, 'cprofile.edge.caller');
+    const callee = record(edge.callee, 'cprofile.edge.callee');
+    const callerIdentity = `${caller.file}\0${caller.line}\0${caller.function}`;
+    const calleeIdentity = `${callee.file}\0${callee.line}\0${callee.function}`;
+    assert.equal(identities.has(callerIdentity), true, 'cprofile caller is emitted');
+    assert.equal(identities.has(calleeIdentity), true, 'cprofile callee is emitted');
+    const edgeIdentity = `${callerIdentity}\0${calleeIdentity}`;
+    assert.equal(edgeIdentities.has(edgeIdentity), false, 'cprofile edge is unique');
+    edgeIdentities.add(edgeIdentity);
+  }
+}
+
+type CaptureValidatorArm = 'normal' | 'reviewed' | 'reviewed-new' | 'reviewed-profiler';
 
 function assertReviewedNewLifecycle(
   event: Record<string, unknown>,
@@ -303,7 +409,8 @@ function assertReviewedNewLifecycle(
 
 function assertCaptureEvent(event: Record<string, unknown>, arm: CaptureValidatorArm): void {
   const reviewed = arm !== 'normal';
-  const newSchema = arm === 'reviewed-new';
+  const profiler = arm === 'reviewed-profiler';
+  const newSchema = arm === 'reviewed-new' || profiler;
   assertNoPrivateKeys(event);
   const phase = event.phase;
   assert.equal(event.schema_version, CAPTURE_SCHEMA_VERSION);
@@ -311,7 +418,7 @@ function assertCaptureEvent(event: Record<string, unknown>, arm: CaptureValidato
   if (phase !== 'summary' || reviewed) assertFiniteNumber(event.at_ms, 'at_ms', { nonnegative: true });
   if (phase === 'summary') {
     exactKeys(event, reviewed
-      ? [...(newSchema ? ['lifecycle'] : []), 'schema_version', 'request', 'phase', 'last_phase', 'phases', 'durations_ms', 'utc', 'at_ms', 'capture_anchor', 'capture_namespace', 'pid', 'birth_ticks', 'method', 'route_template', 'idempotency_key_sha256', 'dispatch_start_ms', 'sampling', 'unknown_boundaries', 'unsupported_boundaries', 'truncated', 'retention']
+      ? [...(newSchema ? ['lifecycle'] : []), 'schema_version', 'request', 'phase', 'last_phase', 'phases', 'durations_ms', 'utc', 'at_ms', 'capture_anchor', 'capture_namespace', 'pid', 'birth_ticks', 'method', 'route_template', 'idempotency_key_sha256', 'dispatch_start_ms', 'sampling', 'unknown_boundaries', 'unsupported_boundaries', 'truncated', 'retention', ...(profiler ? ['cprofile'] : [])]
       : ['schema_version', 'request', 'phase', 'last_phase', 'phases', 'durations_ms', 'unknown_boundaries', 'truncated', 'retention']);
     assert.equal(typeof event.last_phase, 'string');
     assert.ok([...NORMAL_PHASES, 'UNKNOWN'].includes(event.last_phase as string));
@@ -345,6 +452,7 @@ function assertCaptureEvent(event: Record<string, unknown>, arm: CaptureValidato
         if (final.request === event.request) assert.equal(final.outcome, event.lifecycle, 'final_request outcome matches its summary');
       }
     }
+    if (profiler) assertCProfile(event.cprofile);
     const unknown = record(event.unknown_boundaries, 'unknown_boundaries');
     exactKeys(unknown, reviewed
       ? ['client_request_to_server_receive', 'request_body_receive', 'execution_lock_wait', 'caller_receipt']
@@ -416,12 +524,14 @@ test('D105 launch ownership gives each retained DirectHarness start a distinct s
 function readCapture(sink: string, helperSha256: string): string {
   const text = readFileSync(sink, 'utf8');
   assert.ok(text.length <= 64 * 1024);
-  assert.ok([NORMAL_HELPER_SHA256, REVIEWED_HELPER_SHA256, REVIEWED_NEW_HELPER_SHA256].includes(helperSha256), `unexpected P2 helper identity: ${helperSha256}`);
+  assert.ok([NORMAL_HELPER_SHA256, REVIEWED_HELPER_SHA256, REVIEWED_NEW_HELPER_SHA256, REVIEWED_PROFILER_HELPER_SHA256].includes(helperSha256), `unexpected P2 helper identity: ${helperSha256}`);
   const arm: CaptureValidatorArm = helperSha256 === NORMAL_HELPER_SHA256
     ? 'normal'
     : helperSha256 === REVIEWED_HELPER_SHA256
       ? 'reviewed'
-      : 'reviewed-new';
+      : helperSha256 === REVIEWED_NEW_HELPER_SHA256
+        ? 'reviewed-new'
+        : 'reviewed-profiler';
   const events = text.trim().split('\n').map((line) => JSON.parse(line) as Record<string, unknown>);
   assert.ok(events.length > 0);
   for (const event of events) assertCaptureEvent(event, arm);
@@ -526,6 +636,93 @@ function newValidatorSummaryFixture(): Record<string, unknown> {
     },
   };
 }
+
+function cProfileFixture(status: 'captured' | 'unavailable' = 'captured'): Record<string, unknown> {
+  const limits = { max_functions: 40, max_edges: 1600, dropped_rows: 0, dropped_edges: 0 };
+  const base = {
+    format_version: 1,
+    status,
+    scope: 'RuntimeHandler._timeline_commit',
+    limits,
+    timing_note: 'cProfile overhead inflates absolute times; use ranking and call counts observationally, never as the original budget',
+  };
+  if (status === 'unavailable') {
+    return { ...base, functions: [], edges: [], rank_meaning: 'unavailable' };
+  }
+  const outer = {
+    rank: 1,
+    file: '<runtime>/outer.py',
+    line: 10,
+    function: 'outer',
+    ncalls: 2,
+    primitive_calls: 1,
+    tottime: 0.1,
+    cumtime: 0.3,
+  };
+  const inner = {
+    rank: 2,
+    file: '<runtime>/inner.py',
+    line: 20,
+    function: 'inner',
+    ncalls: 2,
+    primitive_calls: 2,
+    tottime: 0.1,
+    cumtime: 0.2,
+  };
+  return {
+    ...base,
+    functions: [outer, inner],
+    edges: [{
+      caller: { file: outer.file, line: outer.line, function: outer.function },
+      callee: { file: inner.file, line: inner.line, function: inner.function },
+      ncalls: 2,
+    }],
+    rank_meaning: 'functions sorted descending cumtime, then file/line/function',
+  };
+}
+
+test('D127c reviewed-profiler validator enforces the exact safe cProfile projection', () => {
+  const fixture = newValidatorSummaryFixture();
+  fixture.cprofile = cProfileFixture();
+  assert.doesNotThrow(() => assertCaptureEvent(fixture, 'reviewed-profiler'));
+
+  const unavailable = newValidatorSummaryFixture();
+  unavailable.cprofile = cProfileFixture('unavailable');
+  assert.doesNotThrow(() => assertCaptureEvent(unavailable, 'reviewed-profiler'));
+
+  const noEligibleProfile = newValidatorSummaryFixture();
+  assert.doesNotThrow(() => assertCaptureEvent(noEligibleProfile, 'reviewed-new'));
+  assert.equal('cprofile' in noEligibleProfile, false);
+
+  const rejects = (label: string, mutate: (event: Record<string, any>) => void): void => {
+    const mutated = JSON.parse(JSON.stringify(fixture)) as Record<string, any>;
+    mutate(mutated);
+    assert.throws(() => assertCaptureEvent(mutated, 'reviewed-profiler'), undefined, label);
+  };
+  rejects('unknown cProfile field is refused', (event) => { event.cprofile.extra = true; });
+  rejects('private cProfile payload is refused', (event) => { event.cprofile.payload = 'private'; });
+  rejects('private cProfile key hash is refused', (event) => { event.cprofile.key_hashes = ['private']; });
+  rejects('private cProfile URL path is refused', (event) => { event.cprofile.functions[0].file = 'https://private.invalid'; });
+  rejects('private cProfile locals are refused', (event) => { event.cprofile.locals = {}; });
+  rejects('absolute cProfile path is refused', (event) => { event.cprofile.functions[0].file = '/tmp/private.py'; });
+  rejects('duplicate cProfile function identity is refused', (event) => {
+    event.cprofile.functions[1].file = event.cprofile.functions[0].file;
+    event.cprofile.functions[1].line = event.cprofile.functions[0].line;
+    event.cprofile.functions[1].function = event.cprofile.functions[0].function;
+  });
+  rejects('cProfile function bound is refused', (event) => {
+    event.cprofile.functions.push({ ...event.cprofile.functions[1], rank: 41 });
+  });
+  rejects('negative cProfile call counts are refused', (event) => { event.cprofile.functions[0].ncalls = -1; });
+  rejects('non-finite cProfile times are refused', (event) => { event.cprofile.functions[0].cumtime = Number.NaN; });
+  rejects('negative cProfile times are refused', (event) => { event.cprofile.functions[0].tottime = -0.1; });
+  rejects('edge call counts remain exact integers', (event) => { event.cprofile.edges[0].ncalls = 1.5; });
+  rejects('edge endpoints remain among emitted functions', (event) => { event.cprofile.edges[0].callee.function = 'missing'; });
+  rejects('cProfile truncation limits are fixed', (event) => { event.cprofile.limits.max_edges = 1601; });
+  rejects('cProfile rank meaning is fixed', (event) => { event.cprofile.rank_meaning = 'descending tottime'; });
+  rejects('cProfile overhead note is required', (event) => { event.cprofile.timing_note = 'fast'; });
+  rejects('cProfile status is enumerated', (event) => { event.cprofile.status = 'captured-with-private-data'; });
+});
 
 test('D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations', () => {
   const fixture = newValidatorSummaryFixture();
