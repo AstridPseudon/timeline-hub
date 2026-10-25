@@ -51,15 +51,18 @@ def build(kind, *, frame=None, anchor=None, wide=True, context=None, **kwargs):
     if context is None:
         document, _, new, verified = inputs(kind)
     else:
+        context.prepare_fixture(wide=wide, shared=True)
         document, new, verified = context.document, context.new, context.verified
     bundle = bundle_from_document(document)
     state = State(bundle)
     if wide:
         state.occurrence(OWNER)['duration_ms'] = 20000
     internal = state.config(OWNER)
-    internal['tracks'].append({'id': 'overlay', 'kind': 'visual'})
-    internal['clips'].append({'id': 'clip-c', 'track': 'overlay', 'asset': 'picture', 'clipType': 'media',
-                              'at': 1, 'hold': 8})
+    if not any(track['id'] == 'overlay' for track in internal['tracks']):
+        internal['tracks'].append({'id': 'overlay', 'kind': 'visual'})
+    if not any(row['id'] == 'clip-c' for row in internal['clips']):
+        internal['clips'].append({'id': 'clip-c', 'track': 'overlay', 'asset': 'picture', 'clipType': 'media',
+                                  'at': 1, 'hold': 8})
     result = auto_place_shared(bundle, OWNER, 'placed', new, ownership='occurrence',
                                verified_media=verified, frame=frame, anchor=anchor, **kwargs)
     return document, bundle, result, verified
@@ -95,7 +98,7 @@ def test_exact_capture_replay_inverse_and_redo(name, genuine_runtime):
     undone = inverse(plan.bundle, plan.records)
     assert undone.bundle == before
     redone = inverse(undone.bundle, genuine_runtime.accepted_boundaries(
-        undone.records, plan.bundle, undone.bundle))
+        undone.records, plan.bundle, undone.bundle, plan.commands))
     assert redone.bundle == plan.bundle
 
 

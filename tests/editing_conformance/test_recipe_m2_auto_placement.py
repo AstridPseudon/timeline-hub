@@ -158,17 +158,40 @@ class GenuineTimeline:
             invocation_path=f'/v1/projects/{self.project}/timelines/film/commit',
             authorize=self.authorize)
 
-    def accepted_boundaries(self, records, before, after):
+    def prepare_fixture(self, *, wide=False, overlay=False, shared=False):
+        from astrid.sdk.timeline.emitter import emit_document_commands
+
+        before = bundle_from_document(self.document)
+        after = copy.deepcopy(before)
+        state = State(after)
+        if wide:
+            state.occurrence(OWNER)['duration_ms'] = 20000
+        if overlay or shared:
+            tracks = state.config(OWNER)['tracks']
+            if not any(track['id'] == 'overlay' for track in tracks):
+                tracks.append({'id': 'overlay', 'kind': 'visual'})
+        if shared and not any(row['id'] == 'clip-c' for row in state.config(OWNER)['clips']):
+            state.config(OWNER)['clips'].append(
+                {'id': 'clip-c', 'track': 'overlay', 'asset': 'picture', 'clipType': 'media',
+                 'at': 1, 'hold': 8})
+        commands = emit_document_commands(before, after)
+        if commands:
+            self.call(commands, label='placement-input')
+            self.document = self._document(self.service, self.project, 'film')
+
+    def accepted_boundaries(self, records, before, after, forward_commands):
         from astrid.sdk.timeline._collections import AcceptedRecords
         from astrid.sdk.timeline._commit_patch import inverse_address_resolver
 
-        commands = [copy.deepcopy(record['command']) for record in records]
-        accepted = self.call(commands, label='placement-boundary')
+        accepted = self.call(copy.deepcopy(forward_commands), label='placement-boundary-forward')
+        undone = self.call(
+            [inverse_call([accepted['receipt']['receipt_id']])],
+            label='placement-boundary-undo')
         items = self.service.list_timeline_commits(
             self.project, 'film', limit=100, authorize=self.authorize)['items']
         history = {item['publication_id']: item for item in items}
         item = next(row for row in items
-                    if row['receipt']['receipt_id'] == accepted['receipt']['receipt_id'])
+                    if row['receipt']['receipt_id'] == undone['receipt']['receipt_id'])
 
         def boundary(entry):
             previous = history[entry['previous']['publication_id']]
@@ -201,12 +224,15 @@ def build(kind, anchor, *, duration=None, wide=False, overlay=False, context=Non
     if context is None:
         document, _, new, verified = inputs(kind)
     else:
+        context.prepare_fixture(wide=wide, overlay=overlay)
         document, new, verified = context.document, context.new, context.verified
     bundle = bundle_from_document(document)
     if wide:
         State(bundle).occurrence(OWNER)['duration_ms'] = 20000
     if overlay:
-        State(bundle).config(OWNER)['tracks'].append({'id': 'overlay', 'kind': 'visual'})
+        tracks = State(bundle).config(OWNER)['tracks']
+        if not any(track['id'] == 'overlay' for track in tracks):
+            tracks.append({'id': 'overlay', 'kind': 'visual'})
     result = auto_place_completion(bundle, OWNER, 'placed', new, ownership='occurrence',
                                    verified_media=verified, anchor=anchor, duration=duration, **saved)
     return document, bundle, result, verified
@@ -243,7 +269,7 @@ def test_exact_capture_replay_inverse_and_redo(name, genuine_runtime):
     undone = inverse(plan.bundle, plan.records)
     assert undone.bundle == before
     redone = inverse(undone.bundle, genuine_runtime.accepted_boundaries(
-        undone.records, plan.bundle, undone.bundle))
+        undone.records, plan.bundle, undone.bundle, plan.commands))
     assert redone.bundle == plan.bundle
 
 

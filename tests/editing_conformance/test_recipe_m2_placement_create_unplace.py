@@ -106,7 +106,7 @@ def test_exact_capture_replay_inverse_and_redo(operation, genuine_runtime):
     assert undone.bundle == before
     # Re-inserting a removed row needs accepted order, as in the removal recipe.
     redone = inverse(undone.bundle, genuine_runtime.accepted_boundaries(
-        undone.records, plan.bundle, undone.bundle))
+        undone.records, plan.bundle, undone.bundle, plan.commands))
     assert redone.bundle == plan.bundle
 
 
