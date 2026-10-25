@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.agent.d138.protected_source_manifest.v1",
+  "task": "agt-F-D138-protected-review-2128",
+  "base": {
+    "ref": "tl/integration",
+    "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+    "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4"
+  },
+  "reviewed": {
+    "commit": "aa62c1a1726a14d6fb08c73143334c91dfc89663",
+    "tree": "88c15e3a1ed7bfd0d368b2db2c12464b59dfc86a"
+  },
+  "owned_file": {
+    "path": "tests/editing_conformance/test_native_batch_ingress.py",
+    "before_sha256": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669",
+    "after_sha256": "8bff12b06be10a5b08597dc6c0bf6566b1ffe409f479a6b7d49ac3285dfb845e",
+    "diff": "36 insertions, 8 deletions; cli() only"
+  },
+  "read_only_route_sources": [
+    {"path": "astrid/sdk/timeline/sync.py", "sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254", "anchors": ["320-369", "525-601", "603-623"]},
+    {"path": "astrid/packs/timeline/cli_native.py", "sha256": "f53472cca88dcf4d00ac3936117eb332c9ce73aa1901d2b83e61cc6421da861c", "anchors": ["382-445"]},
+    {"path": "astrid/sdk/_remote_timeline.py", "sha256": "833283bd72f6944567abbe6e5562964b24dbbba3bf88e35fdbe2007f2e4eb287", "anchors": ["225-251"]},
+    {"path": "astrid/sdk/workspace_client.py", "sha256": "ba2366493cbcad2524f0704247b9811c78f4c7c8b2d689683c5b60aa478a5814", "anchors": ["485-500"]},
+    {"path": "astrid_runtime_client/generated.py", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b", "anchors": ["963-965"]}
+  ],
+  "negative_boundary": {
+    "parser_sentinel": "test_file_parser_requires_both_original_pins_and_describes_registry is AST-identical to base",
+    "current_surface": "current cli.py has no commands-file registration; the sentinel remains visibly failing and untouched",
+    "forbidden_changes": "no production source, Runtime, fixture, schema, generated client, pin, kit, config or test selection change"
+  }
+}

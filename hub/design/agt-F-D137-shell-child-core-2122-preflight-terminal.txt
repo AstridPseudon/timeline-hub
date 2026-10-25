@@ -1,0 +1,12 @@
+status=BLOCKED
+stage=D73 preflight import verification
+exit=1
+error_type=ModuleNotFoundError
+error_file=<stdin>
+error_line=17
+error_sha256=04f4cca6d893b40c8249d137253bcafaa9d83b1655be4c33ae04b7e15b768f5b
+child_interpreter=/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/bin/python
+registered_schema_manifest=/home/user/work/venv-agent/lib/python3.13/site-packages
+launcher_pythonpath=agent-checkout:runtime-checkout (launcher-controlled)
+schema_import_origin=absent from registered child site-packages
+core_service=submitted:0

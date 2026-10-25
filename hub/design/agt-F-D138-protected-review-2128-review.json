@@ -1,0 +1,52 @@
+{
+  "schema": "timeline.agent.d138.protected_review.v1",
+  "task": "agt-F-D138-protected-review-2128",
+  "verdict": "PASS",
+  "scope": "source-only protected review of the sole test-file caller migration",
+  "base": {
+    "branch": "tl/integration",
+    "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+    "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4"
+  },
+  "reviewed_head": {
+    "commit": "aa62c1a1726a14d6fb08c73143334c91dfc89663",
+    "tree": "88c15e3a1ed7bfd0d368b2db2c12464b59dfc86a"
+  },
+  "changed_files": [
+    {
+      "path": "tests/editing_conformance/test_native_batch_ingress.py",
+      "status": "M",
+      "before_sha256": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669",
+      "after_sha256": "8bff12b06be10a5b08597dc6c0bf6566b1ffe409f479a6b7d49ac3285dfb845e",
+      "changed_surface": "cli() helper only"
+    }
+  ],
+  "conservation": {
+    "test_functions_ast_identical_except": ["cli"],
+    "authored_commands_and_assertions": "preserved",
+    "parser_only_sentinel": "unchanged_and_expected_to_fail",
+    "retirement_skip_deselection_xfail": "none"
+  },
+  "partition": {
+    "cluster": "root-045",
+    "migrated": 22,
+    "legacy_only": 0,
+    "stopped": 0,
+    "sum": "22 + 0 + 0 = 22",
+    "static_case_expansion": "2 + 8 + 4 + 5 + 2 + 1 = 22",
+    "behavioral_credit": "NOTRUN"
+  },
+  "route": {
+    "caller": "TimelineSession.commit_many(commands, idempotency_key=..., dry_run=..., via='cli')",
+    "outbox": "durable flight body and key are created/reused by TimelineSession._flush",
+    "client": "TimelineSession._flush -> client.timelines.commit(project_id, timeline_id, body, idempotency_key)",
+    "runtime": "RemoteTimelines.commit -> commit_timeline -> POST /v1/projects/{project}/timelines/{timeline}/commit",
+    "production_peer": "astrid/packs/timeline/cli_native.py:401-423 uses TimelineSession and via='cli'"
+  },
+  "behavioral_status": {
+    "live_tests": "NOTRUN_BY_TASK_INSTRUCTION",
+    "author_attempt": "22 deselected, exit 5; no case executed",
+    "qualified_route": "pending rt-D73-exact-node-route-2104; no alternate route/config/body used"
+  },
+  "findings": []
+}

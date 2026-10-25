@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.agent.d138.protected_field_map.v1",
+  "verdict": "PASS",
+  "source": "tests/editing_conformance/test_native_batch_ingress.py:141-179",
+  "request_fields": {
+    "api_version": "TimelineSession._flush defaults to 1",
+    "project_id": "TimelineSession.open resolves runtime.project and writes canonical session.project_id",
+    "timeline_id": "TimelineSession.open resolves 'film' and writes canonical session.timeline_id",
+    "base_revision_id": "runtime.base or explicit pins are installed as the outbox base; no head refresh is performed",
+    "base_publication_id": "runtime.base or explicit pins are installed as the outbox base; no head refresh is performed",
+    "commands": "JSON file bytes decode to the authored command list; commit_many deep-copies/validates and preserves command-level rationale, expect and reads",
+    "label": "omitted by this ABI-1 semantic caller, so commit_many applies its compatibility default 'Timeline edit'",
+    "steps": "omitted by this ABI-1 semantic caller, so commit_many synthesizes steps from command order",
+    "merge": "omitted, so commit_many uses the supported default 'fields'",
+    "reads": "no request-level reads are authored in root-045; command-level reads/guards remain inside commands",
+    "idempotency": "--idempotency-key is extracted only when supplied and forwarded unchanged; absent retries reuse the persisted flight key",
+    "dry_run": "--dry-run is converted to the boolean argument and becomes the persisted request field",
+    "source": "via='cli' is passed unchanged and _flush writes source={'via':'cli'}",
+    "rationale": "command-level rationale remains in commands; no top-level rationale is authored by root-045",
+    "group_id": "not authored by root-045 and not synthesized"
+  },
+  "reply_fields": {
+    "success": "{'ok': True, **accepted} preserves the complete TimelineSession {data, receipt, idempotency_key} result",
+    "refusal": "local/provider errors retain code/message/details; no Runtime request is sent for preflight refusals",
+    "preview": "accepted result is preserved and the underlying _ack requires status=preview and receipt=null"
+  },
+  "envelope_boundary": {
+    "valid_inputs": "all 21 non-envelope root-045 cases write a JSON command array",
+    "malformed_envelope_case": "test_file_refusal_is_atomic_and_keeps_file[envelope] writes a dict; schema validation rejects its iterated key before staging/transport",
+    "extra_fields": "the adapter does not unwrap-and-ignore a dict envelope; it refuses it, preserving the no-call/no-history/file-bytes predicate",
+    "decision": "no C0 envelope field is silently discarded in an accepted root-045 case"
+  },
+  "static_comparison": {
+    "test_function_ast": "all test functions except cli() are identical to 2eca9a1d",
+    "file_bytes": "all authored command/file assertions remain in place",
+    "base_pair": "explicit in all lost-ack/original-pair cases and asserted in outgoing request",
+    "metadata": "command rationale and generated/default commit metadata are retained by the supported session route"
+  }
+}

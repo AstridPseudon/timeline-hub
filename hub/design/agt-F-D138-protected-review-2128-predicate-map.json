@@ -1,0 +1,42 @@
+{
+  "schema": "timeline.agent.d138.protected_predicate_map.v1",
+  "verdict": "PASS_SOURCE_ONLY",
+  "comparison": "Each listed test function body is AST-identical to 2eca9a1d; only cli() changed.",
+  "cases": [
+    {"id": "test_batch_original_claims_one_publication_reload_inverse[cli-False]", "purpose": "raw authored batch; one commit/publication, reload, inverse and redo", "static": "PASS"},
+    {"id": "test_batch_original_claims_one_publication_reload_inverse[cli-True]", "purpose": "captured batch with original expect/reads; same one-publication/reload/inverse/redo assertions", "static": "PASS"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-False]", "purpose": "lost ACK then restart and exact retry across ABA peer history; suffix remains separate", "static": "PASS"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-True]", "purpose": "captured lost-ACK batch preserves guards across ABA peer history and exact retry", "static": "PASS"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-False]", "purpose": "delete/recreate peer retains identity-sensitive conflict boundary after exact retry", "static": "PASS"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-True]", "purpose": "captured delete/recreate case preserves guards and conflict boundary", "static": "PASS"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-False]", "purpose": "disjoint peer allows exact lost-ACK replay, then dependent suffix rebases", "static": "PASS"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-True]", "purpose": "captured disjoint lost-ACK replay preserves original bytes/key before suffix rebase", "static": "PASS"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-False]", "purpose": "relevant peer causes conflict while original file flight and suffix remain pending", "static": "PASS"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-True]", "purpose": "captured relevant conflict preserves expect/reads and pending suffix", "static": "PASS"},
+    {"id": "test_file_uses_original_pair_after_peer_advances_head[disjoint-False]", "purpose": "raw file sends its original revision/publication pair and is accepted as rebased", "static": "PASS"},
+    {"id": "test_file_uses_original_pair_after_peer_advances_head[disjoint-True]", "purpose": "captured file sends its original pair and preserves derived guards on disjoint rebase", "static": "PASS"},
+    {"id": "test_file_uses_original_pair_after_peer_advances_head[relevant-False]", "purpose": "raw file keeps original pair and refuses relevant peer overlap without history write", "static": "PASS"},
+    {"id": "test_file_uses_original_pair_after_peer_advances_head[relevant-True]", "purpose": "captured file keeps original pair/guards and refuses relevant overlap", "static": "PASS"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[claims]", "purpose": "stale expect claim refuses before Runtime; no history, call, or file mutation", "static": "PASS"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[empty]", "purpose": "empty command input refuses without publication or file mutation", "static": "PASS"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[envelope]", "purpose": "malformed top-level envelope is refused, not unwrapped or silently field-dropped", "static": "PASS"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[late-invalid]", "purpose": "late missing selection refuses atomically before Runtime write", "static": "PASS"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[media]", "purpose": "unsupported media command refuses before Runtime write", "static": "PASS"},
+    {"id": "test_captured_file_retry_refuses_boolean_to_number_claim[expect]", "purpose": "retry refuses boolean-to-number expect mutation and later replays original bytes", "static": "PASS"},
+    {"id": "test_captured_file_retry_refuses_boolean_to_number_claim[reads]", "purpose": "retry refuses boolean-to-number reads mutation and later replays original bytes", "static": "PASS"},
+    {"id": "test_file_preview_keeps_batch_for_one_real_publication", "purpose": "preview keeps command batch, returns null receipt/no history, then one real publication", "static": "PASS"}
+  ],
+  "cross_case_predicates": {
+    "commands": "all command constructors and authored values unchanged",
+    "expect_reads": "captured guards unchanged; boolean/numeric distinction retained",
+    "base_pair": "explicit original pair retained and asserted where applicable",
+    "idempotency": "lost-ACK keys and exact request body/key retry assertions unchanged",
+    "file_bytes": "pre/post bytes and restart preservation assertions unchanged",
+    "no_write": "refusal cases retain empty Runtime calls/history and clean pending/flight assertions",
+    "inverse": "reload plus guarded inverse/redo assertions unchanged",
+    "preview": "dry-run status and null receipt assertions unchanged",
+    "aba_delete_recreate": "identity/conflict cases remain represented",
+    "legacy": "parser-only test unchanged; no skip, retirement, deselection, or xfail"
+  },
+  "behavioral_status": "NOTRUN"
+}

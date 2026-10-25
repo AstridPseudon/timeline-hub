@@ -1,0 +1,44 @@
+{
+  "task": "rt-OPS-D137-shell-CAS-install-2110",
+  "source_commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+  "source_tree": "363a551a00e9dc081da9760e21a6383296135c06",
+  "candidate": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bytes": 75541,
+    "mode": "0755",
+    "regular_single_link": true
+  },
+  "required_preimage": {
+    "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bytes": 75503,
+    "mode": "0755",
+    "regular_single_link": true
+  },
+  "review": {
+    "source_author": "rt-OPS-D137-shell-closure-return-2058",
+    "independent_security": "rt-OPS-D137-shell-security-review-2103",
+    "independent_verdict": "PASS",
+    "independent_controls": "44/44 plus actual serialized Store parent RED/candidate GREEN",
+    "reviewed_installer": "installer1826"
+  },
+  "protected_source_units": {
+    "STORE_PY": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+    "STORE_VERIFY": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "source_checkout": {
+    "path": "/home/user/work/wt/rt-OPS-D137-shell-CAS-install-2110",
+    "clean_before_install": true,
+    "physical_owned": true
+  },
+  "decision": {
+    "authorization": "D137",
+    "fixture_e2e_gate": "WITHDRAWN",
+    "e2e_result": "NOTRUN",
+    "e2e_pass": false,
+    "install_route": "CAS_MANAGER_ONLY",
+    "production_install": false
+  }
+}
