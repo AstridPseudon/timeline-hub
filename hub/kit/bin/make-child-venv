@@ -26,6 +26,10 @@ DEPENDENCY_SEED=
 FARM_SCHEMA_SOURCE=
 FARM_REQUIRED=0
 FARM_AUTHORITY=
+SCHEMA_SOURCE=
+SCHEMA_REQUIRED=0
+SCHEMA_MANIFEST=
+SCHEMA_INSTALLED_DISTRIBUTION=
 DIAGNOSTIC_RETENTION=0
 BOOTSTRAP_ARCHIVE=$O/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
@@ -66,6 +70,18 @@ while [ "$#" -gt 0 ]; do
       [ "$#" -ge 2 ] || { echo 'REFUSED: Farm schema source path is missing' >&2; exit 2; }
       FARM_SCHEMA_SOURCE=$2; FARM_REQUIRED=1; shift 2
       ;;
+    --schema-source)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: pinned timeline schema source path is missing' >&2; exit 2; }
+      SCHEMA_SOURCE=$2; SCHEMA_REQUIRED=1; shift 2
+      ;;
+    --schema-source-manifest)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: pinned timeline schema source manifest is missing' >&2; exit 2; }
+      SCHEMA_MANIFEST=$2; SCHEMA_REQUIRED=1; shift 2
+      ;;
+    --schema-installed-distribution)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: authenticated installed timeline schema distribution is missing' >&2; exit 2; }
+      SCHEMA_INSTALLED_DISTRIBUTION=$2; SCHEMA_REQUIRED=1; shift 2
+      ;;
     --dependency-wheelhouse)
       [ "$#" -ge 2 ] || { echo 'REFUSED: dependency wheelhouse path is missing' >&2; exit 2; }
       DEPENDENCY_SEED=$2; shift 2
@@ -82,6 +98,22 @@ while [ "$#" -gt 0 ]; do
 done
 [ -z "$FARM_SCHEMA_SOURCE" ] || FARM_REQUIRED=1
 [ "$BS" != OPS-farm-agent-full ] || FARM_REQUIRED=1
+[ -z "$SCHEMA_SOURCE" ] || SCHEMA_REQUIRED=1
+[ -z "$SCHEMA_SOURCE" ] || [ -z "$SCHEMA_INSTALLED_DISTRIBUTION" ] || { echo 'REFUSED: choose one authenticated timeline schema input' >&2; exit 2; }
+[ -z "$SCHEMA_INSTALLED_DISTRIBUTION" ] || [ "$FARM_REQUIRED" = 0 ] || { echo 'REFUSED: installed schema input cannot be combined with Farm schema authority' >&2; exit 2; }
+if [ "${SCHEMA_REQUIRED:-0}" = 1 ]; then
+  if [ -n "$SCHEMA_SOURCE" ]; then
+    [[ "$SCHEMA_SOURCE" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: missing pinned timeline schema source' >&2; exit 2; }
+    [ -d "$SCHEMA_SOURCE" ] && [ "$SCHEMA_SOURCE" = "$(readlink -e -- "$SCHEMA_SOURCE" 2>/dev/null)" ] || { echo 'REFUSED: timeline schema source must be an existing physical directory' >&2; exit 2; }
+    [ -f "$SCHEMA_SOURCE/pyproject.toml" ] || { echo 'REFUSED: timeline schema source must include pyproject.toml' >&2; exit 2; }
+    [ -f "$SCHEMA_SOURCE/banodoco_timeline_schema/timeline.schema.json" ] || { echo 'REFUSED: timeline schema source closure is incomplete' >&2; exit 2; }
+  else
+    [[ "$SCHEMA_INSTALLED_DISTRIBUTION" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: authenticated installed timeline schema distribution path is required' >&2; exit 2; }
+    [ -d "$SCHEMA_INSTALLED_DISTRIBUTION" ] && [ "$SCHEMA_INSTALLED_DISTRIBUTION" = "$(readlink -e -- "$SCHEMA_INSTALLED_DISTRIBUTION" 2>/dev/null)" ] || { echo 'REFUSED: installed timeline schema distribution must be an existing physical directory' >&2; exit 2; }
+  fi
+  [[ "$SCHEMA_MANIFEST" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: exact pinned timeline schema source manifest is required' >&2; exit 2; }
+  [ -f "$SCHEMA_MANIFEST" ] && [ "$SCHEMA_MANIFEST" = "$(readlink -e -- "$SCHEMA_MANIFEST" 2>/dev/null)" ] || { echo 'REFUSED: timeline schema source manifest must be an existing physical file' >&2; exit 2; }
+fi
 if [ "$FARM_REQUIRED" = 1 ]; then
   [[ "$FARM_SCHEMA_SOURCE" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: missing authentic selected Farm schema Git source' >&2; exit 2; }
   [ -d "$FARM_SCHEMA_SOURCE" ] && [ "$FARM_SCHEMA_SOURCE" = "$(readlink -e -- "$FARM_SCHEMA_SOURCE" 2>/dev/null)" ] || { echo 'REFUSED: Farm schema source must be an existing physical directory' >&2; exit 2; }
@@ -382,10 +414,10 @@ done)
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
 export CHILD_VENV_DIAGNOSTIC_RETENTION=$DIAGNOSTIC_RETENTION
-export STORE_CONTEXT="$(declare -p FARM_SCHEMA_SOURCE FARM_REQUIRED FARM_AUTHORITY O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA VERIFIER_SHA256 BOOTSTRAP_ARCHIVE DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state stage_stderr_path retain_stage_stderr)"
-python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" "$VERIFIER_SHA256" "$EXPECTED_PROOF_LOCK_SHA256" "$FARM_SCHEMA_SOURCE" "$FARM_REQUIRED" "$BOOTSTRAP_ARCHIVE" <<'STORE_PY'
-import hashlib, importlib.util, json, os, pathlib, re, shlex, signal, stat, subprocess, sys
-script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed, verifier_sha, approved_lock, farm_source, farm_required, bootstrap_archive = sys.argv[1:]
+export STORE_CONTEXT="$(declare -p FARM_SCHEMA_SOURCE FARM_REQUIRED FARM_AUTHORITY SCHEMA_SOURCE SCHEMA_REQUIRED SCHEMA_MANIFEST SCHEMA_INSTALLED_DISTRIBUTION O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA VERIFIER_SHA256 BOOTSTRAP_ARCHIVE DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state stage_stderr_path retain_stage_stderr)"
+python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" "$VERIFIER_SHA256" "$EXPECTED_PROOF_LOCK_SHA256" "$FARM_SCHEMA_SOURCE" "$FARM_REQUIRED" "$BOOTSTRAP_ARCHIVE" "$SCHEMA_SOURCE" "$SCHEMA_REQUIRED" "$SCHEMA_MANIFEST" "$SCHEMA_INSTALLED_DISTRIBUTION" <<'STORE_PY'
+import hashlib, importlib.util, json, os, pathlib, re, shlex, signal, stat, subprocess, sys, tempfile
+script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed, verifier_sha, approved_lock, farm_source, farm_required, bootstrap_archive, schema_source, schema_required, schema_manifest, schema_installed_distribution = sys.argv[1:]
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
@@ -402,6 +434,9 @@ def report_bytes(path):
     expected = {'status': 'passed', 'agent_sha': agent, 'runtime_sha': backend,
                 'requirements_path': requirements, 'requirements_lock_sha256': lock,
                 'runtime_client_identity_sha256': hashlib.sha256(client.encode()).hexdigest()}
+    if globals().get('schema_required', '0') == '1':
+        expected['schema_source_identity_sha256'] = hashlib.sha256(
+            schema_identity_json.encode()).hexdigest()
     for key, value in expected.items():
         if [line for line in lines if line.startswith(key + '=')] != [key + '=' + value]:
             raise RuntimeError('provision report identity mismatch: ' + key)
@@ -420,15 +455,267 @@ def success_receipt(entry, report):
     data = report_bytes(path)
     if data != report or pathlib.Path(tests, 'provision', name + '.txt').read_bytes() != data:
         raise RuntimeError('transactional provision report projection mismatch')
+    schema_receipt = (' schema_source_identity_sha256=' + hashlib.sha256(schema_identity_json.encode()).hexdigest()
+                      if globals().get('schema_required', '0') == '1' else '')
     return (('reused child venv path=' if entry['reused'] else 'created ') + str(path) +
             ' agent=' + agent + ' runtime=' + backend + ' remotion=' + (remotion or 'none') +
             ' registration=existing key=' + entry['key'] + ' requested_name=' + name +
             ' actual_agent=' + (path / '.astrid-source-commit').read_text().strip() +
             ' actual_runtime=' + (path / '.astrid-runtime-source-commit').read_text().strip() +
             ' provision_report=' + str(pathlib.Path(tests, 'provision', name + '.txt')) +
-            ' provision_report_sha256=' + hashlib.sha256(data).hexdigest() + ' status=passed')
+            ' provision_report_sha256=' + hashlib.sha256(data).hexdigest() + schema_receipt + ' status=passed')
 identity = {'agent_sha': agent, 'backend_sha': backend,
             'client_tuple': dict(line.split('=', 1) for line in client.splitlines())}
+schema_identity_json = ''
+if schema_required == '1':
+    schema_installed_distribution = globals().get('schema_installed_distribution', '')
+    TRUSTED_SCHEMA = {'url': 'https://github.com/banodoco/ArtAgents.git',
+                      'commit': '242f9c4306bf3b501222cb041a9eb246ef47bc85',
+                      'subdirectory': 'packages/timeline-schema/python',
+                      'source_tree': '75a5a697f630affee40632e500b3f5b704a9b834'}
+    def source_fail(message):
+        raise RuntimeError('sourceNOT_READY: ' + message)
+    def safe_ancestry(path):
+        path = pathlib.Path(path)
+        if path != path.resolve():
+            source_fail('trusted schema carrier or manifest contains a symlink')
+        for item in [path, *path.parents]:
+            if not item.exists():
+                continue
+            info = item.lstat()
+            if (stat.S_ISLNK(info.st_mode) or info.st_uid not in {0, os.getuid()}
+                    or (info.st_mode & 0o022 and not (info.st_uid == 0 and info.st_mode & stat.S_ISVTX))):
+                source_fail('trusted schema carrier ancestry has unsafe ownership or mode')
+    def source_entries(root):
+        root = pathlib.Path(root)
+        safe_ancestry(root)
+        if not root.is_dir() or root.is_symlink():
+            source_fail('exact D73 schema source carrier is missing or not a physical directory')
+        entries = {}
+        for path in [root, *sorted(root.rglob('*'))]:
+            info = path.lstat()
+            if info.st_uid not in {0, os.getuid()} or info.st_mode & 0o022:
+                source_fail('D73 schema source has unsafe ownership or writable group/other mode')
+            if stat.S_ISLNK(info.st_mode) or (stat.S_ISREG(info.st_mode) and info.st_nlink != 1):
+                source_fail('D73 schema source contains a symlink or hardlink')
+            rel = '.' if path == root else path.relative_to(root).as_posix()
+            if stat.S_ISDIR(info.st_mode):
+                entries[rel] = {'kind': 'dir', 'mode': stat.S_IMODE(info.st_mode)}
+            elif stat.S_ISREG(info.st_mode):
+                data = path.read_bytes()
+                entries[rel] = {'kind': 'file', 'mode': '100755' if info.st_mode & 0o111 else '100644',
+                                 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(), 'data': data}
+            else:
+                source_fail('D73 schema source contains an unsupported filesystem object')
+        if not any(item['kind'] == 'file' for item in entries.values()):
+            source_fail('D73 schema source is empty')
+        return entries
+    def git_tree(entries):
+        def tree(rel):
+            children = {}
+            prefix = '' if rel == '.' else rel + '/'
+            for name, item in entries.items():
+                if name == rel or not name.startswith(prefix):
+                    continue
+                tail = name[len(prefix):]
+                children.setdefault(tail.split('/', 1)[0],
+                                    None if '/' in tail or item['kind'] == 'dir' else item)
+            payload = []
+            for name in sorted(children):
+                item = children[name]
+                if item is None:
+                    mode, digest = '040000', tree(prefix + name)
+                else:
+                    mode = item['mode']
+                    digest = hashlib.sha1((mode + ' blob\\0').encode() + item['data']).digest()
+                payload.append(mode.encode() + b' ' + name.encode() + b'\\0' + digest)
+            raw = b''.join(payload)
+            return hashlib.sha1(('tree ' + str(len(raw)) + '\\0').encode() + raw).digest()
+        return tree('.').hex()
+    manifest_path = pathlib.Path(schema_manifest)
+    source_path = pathlib.Path(schema_source or schema_installed_distribution)
+    safe_ancestry(manifest_path)
+    if not manifest_path.is_file() or manifest_path.is_symlink():
+        source_fail('exact D73 schema manifest is missing or not a physical file')
+    manifest_info = manifest_path.lstat()
+    if manifest_info.st_nlink != 1 or manifest_info.st_uid not in {0, os.getuid()} or manifest_info.st_mode & 0o022:
+        source_fail('exact D73 schema manifest has unsafe ownership or mode')
+    manifest_bytes = manifest_path.read_bytes()
+    try:
+        manifest = json.loads(manifest_bytes)
+    except json.JSONDecodeError as error:
+        source_fail('exact D73 schema manifest is invalid JSON: ' + str(error))
+    if manifest != TRUSTED_SCHEMA:
+        source_fail('manifest is not the fixed trusted D73 source identity')
+    snapshot_root = pathlib.Path(tempfile.mkdtemp(prefix='timeline-schema-'))
+    snapshot = snapshot_root / 'python'
+    if schema_installed_distribution:
+        expected_direct = {'subdirectory': TRUSTED_SCHEMA['subdirectory'], 'url': TRUSTED_SCHEMA['url'],
+                           'vcs_info': {'commit_id': TRUSTED_SCHEMA['commit'],
+                                        'requested_revision': TRUSTED_SCHEMA['commit'], 'vcs': 'git'}}
+        expected_unhashed = {
+            'banodoco_timeline_schema-0.0.2.dist-info/RECORD',
+            'banodoco_timeline_schema/__pycache__/__init__.cpython-313.pyc',
+            'banodoco_timeline_schema/__pycache__/generated.cpython-313.pyc',
+            'banodoco_timeline_schema/__pycache__/materialize.cpython-313.pyc',
+            'banodoco_timeline_schema/__pycache__/theme.cpython-313.pyc',
+            'banodoco_timeline_schema/__pycache__/validate.cpython-313.pyc',
+        }
+        dist_info = pathlib.Path(schema_installed_distribution)
+        safe_ancestry(dist_info)
+        if dist_info.name != 'banodoco_timeline_schema-0.0.2.dist-info' or not dist_info.is_dir() or dist_info.is_symlink():
+            source_fail('installed schema distribution is not the pinned dist-info directory')
+        site = dist_info.parent
+        safe_ancestry(site)
+        package = site / 'banodoco_timeline_schema'
+        if not package.is_dir() or package.is_symlink():
+            source_fail('installed schema package directory is missing or linked')
+        direct_path = dist_info / 'direct_url.json'
+        record_path = dist_info / 'RECORD'
+        if not direct_path.is_file() or not record_path.is_file():
+            source_fail('installed schema direct_url or RECORD is missing')
+        direct_bytes = direct_path.read_bytes()
+        try:
+            direct = json.loads(direct_bytes)
+        except json.JSONDecodeError as error:
+            source_fail('installed schema direct_url is invalid JSON: ' + str(error))
+        if direct != expected_direct:
+            source_fail('installed schema direct_url is not the pinned VCS source')
+        metadata = (dist_info / 'METADATA').read_text().splitlines()
+        if [line for line in metadata if line.startswith('Name: ')] != ['Name: banodoco-timeline-schema'] \
+                or [line for line in metadata if line.startswith('Version: ')] != ['Version: 0.0.2']:
+            source_fail('installed schema metadata name/version mismatch')
+        rows = list(__import__('csv').reader(io.StringIO(record_path.read_text()), strict=True))
+        if len(rows) != 18:
+            source_fail('installed schema RECORD row count mismatch')
+        row_paths = set()
+        hashed = 0
+        first = {'.': {'kind': 'dir', 'mode': 0o500}}
+        for row in rows:
+            if len(row) != 3 or not row[0] or '\\' in row[0]:
+                source_fail('installed schema RECORD row is malformed')
+            rel, encoded, size = row
+            pure = pathlib.PurePosixPath(rel)
+            if pure.is_absolute() or str(pure) != rel or '..' in pure.parts or rel in row_paths:
+                source_fail('installed schema RECORD path is unsafe or duplicated')
+            row_paths.add(rel)
+            target = site / rel
+            if target.resolve() != target or not target.is_file() or target.is_symlink():
+                source_fail('installed schema RECORD target is not a physical file')
+            info = target.lstat()
+            if info.st_uid not in {0, os.getuid()} or info.st_nlink != 1 or info.st_mode & 0o022:
+                source_fail('installed schema RECORD target ownership or mode is unsafe')
+            data = target.read_bytes()
+            if encoded or size:
+                if not re.fullmatch(r'sha256=[A-Za-z0-9_-]{43}', encoded) or not re.fullmatch(r'0|[1-9][0-9]*', size):
+                    source_fail('installed schema RECORD digest or size is malformed')
+                digest = 'sha256=' + __import__('base64').urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('=')
+                if encoded != digest or int(size) != len(data):
+                    source_fail('installed schema RECORD bytes mismatch')
+                hashed += 1
+            elif rel not in expected_unhashed:
+                source_fail('installed schema has an unapproved unhashed RECORD row: ' + rel)
+            item = {'kind': 'file', 'mode': '100644', 'bytes': len(data),
+                    'sha256': hashlib.sha256(data).hexdigest(), 'data': data}
+            first[rel] = item
+        if hashed != 12 or len(row_paths - expected_unhashed) != 12:
+            source_fail('installed schema RECORD hashed row count mismatch')
+        if set(row_paths) & expected_unhashed != expected_unhashed:
+            source_fail('installed schema unhashed RECORD set mismatch')
+        actual_files = {path.relative_to(site).as_posix() for root in (package, dist_info)
+                        for path in root.rglob('*') if path.is_file() or path.is_symlink()}
+        if actual_files != row_paths:
+            source_fail('installed schema has an unlisted file')
+        for rel in sorted(row_paths):
+            for parent in pathlib.PurePosixPath(rel).parents:
+                if str(parent) != '.':
+                    first.setdefault(str(parent), {'kind': 'dir', 'mode': 0o500})
+        first['.']['mode'] = 0o500
+        for rel, item in first.items():
+            target = snapshot if rel == '.' else snapshot / rel
+            if item['kind'] == 'dir':
+                target.mkdir(mode=0o700, parents=True, exist_ok=True)
+            else:
+                target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o400)
+                with os.fdopen(fd, 'wb') as output:
+                    output.write(item['data'])
+        for rel, item in first.items():
+            target = snapshot if rel == '.' else snapshot / rel
+            os.chmod(target, 0o500 if item['kind'] == 'dir' else 0o400)
+        second = source_entries(snapshot)
+        if second != first:
+            source_fail('installed schema snapshot changed during authenticated copy')
+        for rel, item in first.items():
+            path = site if rel == '.' else site / rel
+            info = path.lstat()
+            if stat.S_ISLNK(info.st_mode) or info.st_uid not in {0, os.getuid()} \
+                    or (item['kind'] == 'file' and (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1)) \
+                    or (item['kind'] == 'dir' and not stat.S_ISDIR(info.st_mode)):
+                source_fail('installed schema source changed during authenticated snapshot')
+            if item['kind'] == 'file' and path.read_bytes() != item['data']:
+                source_fail('installed schema source changed during authenticated snapshot')
+        source_sha = hashlib.sha256(json.dumps(
+            [(name, item['kind'], item.get('mode') if item['kind'] == 'file' else 'dir',
+              item.get('bytes'), item.get('sha256'))
+             for name, item in sorted(first.items())], separators=(',', ':')).encode()).hexdigest()
+        schema_identity = {'origin': TRUSTED_SCHEMA['url'], 'commit': TRUSTED_SCHEMA['commit'],
+                           'subdirectory': TRUSTED_SCHEMA['subdirectory'], 'source_tree': TRUSTED_SCHEMA['source_tree'],
+                           'manifest_sha256': hashlib.sha256(manifest_bytes).hexdigest(), 'source_sha256': source_sha,
+                           'source_files': sum(item['kind'] == 'file' for item in first.values()),
+                           'source_bytes': sum(item.get('bytes', 0) for item in first.values()),
+                           'input_kind': 'installed_distribution', 'package': 'banodoco-timeline-schema',
+                           'version': '0.0.2', 'direct_url': direct,
+                           'direct_url_sha256': hashlib.sha256(direct_bytes).hexdigest(),
+                           'record_sha256': hashlib.sha256(record_path.read_bytes()).hexdigest(),
+                           'record_rows': 18, 'record_hashed_rows': 12,
+                           'record_paths': sorted(row_paths),
+                           'record_unhashed_rows': sorted(expected_unhashed),
+                           'entry_manifest': 'RECORD', 'tree_tie': 'UNAVAILABLE'}
+        schema_identity_json = json.dumps(schema_identity, sort_keys=True, separators=(',', ':'))
+        context += '\nSCHEMA_INPUT_KIND=installed_distribution'
+    else:
+        first = source_entries(source_path)
+        if git_tree(first) != TRUSTED_SCHEMA['source_tree']:
+            source_fail('physical schema bytes/modes do not match the fixed D73 source tree')
+        for rel, item in first.items():
+            target = snapshot if rel == '.' else snapshot / rel
+            if item['kind'] == 'dir':
+                target.mkdir(mode=0o700, parents=True, exist_ok=True)
+            else:
+                target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o400)
+                with os.fdopen(fd, 'wb') as output:
+                    output.write(item['data'])
+        for rel, item in first.items():
+            target = snapshot if rel == '.' else snapshot / rel
+            os.chmod(target, 0o500 if item['kind'] == 'dir' or item['mode'] == '100755' else 0o400)
+        if source_entries(source_path) != first:
+            source_fail('protected schema source changed during authenticated snapshot')
+        source_sha = hashlib.sha256(json.dumps(
+            [(name, item['kind'], item.get('mode') if item['kind'] == 'file' else 'dir',
+              item.get('bytes'), item.get('sha256'))
+             for name, item in sorted(first.items())], separators=(',', ':')).encode()).hexdigest()
+        schema_identity = {'origin': TRUSTED_SCHEMA['url'], 'commit': TRUSTED_SCHEMA['commit'],
+                           'subdirectory': TRUSTED_SCHEMA['subdirectory'], 'source_tree': TRUSTED_SCHEMA['source_tree'],
+                           'manifest_sha256': hashlib.sha256(manifest_bytes).hexdigest(), 'source_sha256': source_sha,
+                           'source_files': sum(item['kind'] == 'file' for item in first.values()),
+                           'source_bytes': sum(item.get('bytes', 0) for item in first.values())}
+        schema_identity_json = json.dumps(schema_identity, sort_keys=True, separators=(',', ':'))
+        context += '\nSCHEMA_INPUT_KIND=source_tree'
+    manifest_snapshot = snapshot_root / 'manifest.json'
+    manifest_snapshot.write_bytes(manifest_bytes)
+    manifest_snapshot.chmod(0o400)
+    snapshot_root.chmod(0o500)
+    # The protected Store key admits an opaque client tuple map. This reserved
+    # producer member binds the schema identity without changing Store_VERIFY.
+    identity['client_tuple']['__timeline_schema_identity__'] = schema_identity_json
+    schema_source = str(snapshot)
+    schema_manifest = str(manifest_snapshot)
+    context += '\\nSCHEMA_SOURCE=' + shlex.quote(schema_source)
+    context += '\\nSCHEMA_MANIFEST=' + shlex.quote(schema_manifest)
+    context += '\\nSCHEMA_SOURCE_TREE_SHA=' + shlex.quote(schema_identity['source_tree'])
+    context += '\\nSCHEMA_SOURCE_IDENTITY=' + shlex.quote(schema_identity_json)
 seed_helper = pathlib.Path(script).parent / 'verify_dependency_seed.py'
 def bootstrap_key():
     if (seed_helper != seed_helper.resolve() or not seed_helper.is_file()
@@ -554,11 +841,13 @@ def verify(path):
         farm_args = ['--farm-source', receipt['schema_source']['custody']['root']]
     elif (retained / '.farm-receipt.json').exists() or (retained / '.farm-receipt.json').is_symlink():
         raise RuntimeError('Farm child requires authenticated Store authority')
+    schema_args = (['--schema-source', schema_source, '--schema-source-manifest', schema_manifest]
+                   if globals().get('schema_required', '0') == '1' else [])
     verify_invocation = ['python3', '-I', '-', str(path), client, checkout, agent,
-                         runtime_checkout, backend, work, python, *farm_args, '--staging']
+                         runtime_checkout, backend, work, python, *schema_args, *farm_args, '--staging']
     local_inventory = json.loads(subprocess.check_output(
         ['python3', '-I', '-', str(path), client, checkout, agent,
-         runtime_checkout, backend, work, python, *farm_args, '--staging'], input=verifier, text=True))
+         runtime_checkout, backend, work, python, *schema_args, *farm_args, '--staging'], input=verifier, text=True))
     for marker, expected in (('.astrid-source-commit', agent), ('.astrid-runtime-source-commit', backend), ('.astrid-runtime-client-identity', client)):
         if (retained / marker).read_text().rstrip('\n') != expected:
             raise RuntimeError('retained child source/client marker mismatch: ' + marker)
@@ -782,13 +1071,50 @@ fi
 
 AGENT_SRC=$SRC/agent
 RUNTIME_SRC=$SRC/runtime
-run_stage source-directories "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$AGENT_SRC" "$RUNTIME_SRC"
+SCHEMA_SRC=$SRC/schema
+run_stage source-directories "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$AGENT_SRC" "$RUNTIME_SRC" "$SCHEMA_SRC"
 run_stage archive-agent "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' \
   _ "$A" "$S" "$AGENT_SRC"
 run_stage archive-runtime "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' \
   _ "$R" "$RUNTIME_SHA" "$RUNTIME_SRC"
+if [ "${SCHEMA_REQUIRED:-0}" = 1 ] && [ "${SCHEMA_INPUT_KIND:-source_tree}" != installed_distribution ]; then
+  run_stage archive-schema "$LOCAL_TIMEOUT_SECONDS" bash -c \
+    'set -e; tar --create --file=- --directory="$1" . | tar --extract --directory="$2"' \
+    _ "$SCHEMA_SOURCE" "$SCHEMA_SRC"
+fi
+if [ "${SCHEMA_REQUIRED:-0}" = 1 ] && [ "${SCHEMA_INPUT_KIND:-source_tree}" = installed_distribution ]; then
+  run_stage archive-schema-installed "$LOCAL_TIMEOUT_SECONDS" bash -c \
+    'set -e; tar --create --file=- --directory="$1" . | tar --extract --directory="$2"' \
+    _ "$SCHEMA_SOURCE" "$SCHEMA_SRC"
+fi
+if [ "${SCHEMA_REQUIRED:-0}" = 1 ]; then
+  run_stage schema-source-cas "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I - "$SCHEMA_SOURCE" "$SCHEMA_SOURCE_IDENTITY" <<'SCHEMA_SOURCE_CAS'
+import hashlib, json, os, pathlib, stat, sys
+root = pathlib.Path(sys.argv[1])
+expected = json.loads(sys.argv[2])
+if root != root.resolve() or not root.is_dir() or root.is_symlink():
+    raise SystemExit('schema source snapshot is not physical')
+rows = []
+for path in [root, *sorted(root.rglob('*'))]:
+    info = path.lstat()
+    if (info.st_uid != os.getuid() or (stat.S_ISREG(info.st_mode) and info.st_nlink != 1)
+            or info.st_mode & 0o222 or stat.S_ISLNK(info.st_mode)):
+        raise SystemExit('schema source snapshot changed or is unsafe')
+    rel = '.' if path == root else path.relative_to(root).as_posix()
+    if stat.S_ISDIR(info.st_mode):
+        rows.append((rel, 'dir', 'dir', None, None))
+    elif stat.S_ISREG(info.st_mode):
+        data = path.read_bytes()
+        rows.append((rel, 'file', '100755' if info.st_mode & 0o111 else '100644', len(data), hashlib.sha256(data).hexdigest()))
+    else:
+        raise SystemExit('schema source snapshot contains unsupported object')
+actual = hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
+if actual != expected.get('source_sha256'):
+    raise SystemExit('schema source changed before archive')
+SCHEMA_SOURCE_CAS
+fi
 
 # Install from authenticated archives so packaging never writes build outputs
 # into the retained, committed-only source snapshots.
@@ -796,6 +1122,9 @@ BUILD_INPUT=$T/.source-inputs
 run_stage build-input-directory "$LOCAL_TIMEOUT_SECONDS" mkdir "$BUILD_INPUT"
 run_stage build-agent-input "$LOCAL_TIMEOUT_SECONDS" git -C "$A" archive --format=tar --output="$BUILD_INPUT/agent.tar" "$S"
 run_stage build-runtime-input "$LOCAL_TIMEOUT_SECONDS" git -C "$R" archive --format=tar --output="$BUILD_INPUT/runtime.tar" "$RUNTIME_SHA"
+if [ "${SCHEMA_REQUIRED:-0}" = 1 ] && [ "${SCHEMA_INPUT_KIND:-source_tree}" != installed_distribution ]; then
+  run_stage build-schema-input "$LOCAL_TIMEOUT_SECONDS" tar --create --file="$BUILD_INPUT/schema.tar" --directory="$SCHEMA_SOURCE" .
+fi
 if [ -n "$DEPENDENCY_SEED" ]; then
   if [ "$FARM_REQUIRED" = 1 ]; then
     run_stage retain-farm-inputs "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --prepare-farm "$T" "$FARM_SCHEMA_SOURCE" "$FARM_AUTHORITY"
@@ -804,15 +1133,58 @@ if [ -n "$DEPENDENCY_SEED" ]; then
     run_stage install-farm-schema "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/schema.tar"
   fi
 fi
+if [ "${SCHEMA_REQUIRED:-0}" = 1 ] && [ "${SCHEMA_INPUT_KIND:-source_tree}" != installed_distribution ]; then
+  run_stage install-schema "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/schema.tar"
+fi
+if [ "${SCHEMA_REQUIRED:-0}" = 1 ] && [ "${SCHEMA_INPUT_KIND:-source_tree}" = installed_distribution ]; then
+  run_stage install-schema-installed "$LOCAL_TIMEOUT_SECONDS" "$P" -I - "$SCHEMA_SOURCE" "$SCHEMA_SOURCE_IDENTITY" <<'INSTALL_SCHEMA_INSTALLED'
+import hashlib, json, os, pathlib, stat, sys, sysconfig
+
+source = pathlib.Path(sys.argv[1])
+expected = json.loads(sys.argv[2])
+if expected.get('input_kind') != 'installed_distribution' or source != source.resolve() or not source.is_dir():
+    raise SystemExit('installed schema snapshot identity is invalid')
+site = pathlib.Path(sysconfig.get_paths()['purelib']).resolve()
+if site.is_symlink() or not site.is_dir():
+    raise SystemExit('child site-packages is not physical')
+files = [path for path in sorted(source.rglob('*')) if path.is_file()]
+listed = set(expected.get('record_unhashed_rows', [])) | {
+    rel for rel in expected.get('record_paths', [])
+}
+if not listed or {path.relative_to(source).as_posix() for path in files} != listed:
+    raise SystemExit('installed schema snapshot does not equal RECORD closure')
+for path in files:
+    info = path.lstat()
+    if (stat.S_ISLNK(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid()
+            or info.st_mode & 0o222):
+        raise SystemExit('installed schema snapshot file is unsafe')
+    rel = path.relative_to(source).as_posix()
+    target = site / rel
+    if target != target.resolve() or target.exists() or target.is_symlink():
+        raise SystemExit('installed schema target already exists or escapes site-packages')
+    target.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
+    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
+    with os.fdopen(fd, 'wb') as output:
+        output.write(path.read_bytes())
+    if target.stat().st_uid != os.getuid() or target.stat().st_nlink != 1 \
+            or hashlib.sha256(target.read_bytes()).hexdigest() != hashlib.sha256(path.read_bytes()).hexdigest():
+        raise SystemExit('installed schema copy identity mismatch')
+INSTALL_SCHEMA_INSTALLED
+fi
 run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/agent.tar"
 run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/runtime.tar"
 printf '%s\n' "$S" > "$T/.astrid-source-commit"
 printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
 printf '%s\n' "$CLIENT_IDENTITY" > "$T/.astrid-runtime-client-identity"
+if [ "${SCHEMA_REQUIRED:-0}" = 1 ]; then
+  printf '%s\n' "$SCHEMA_SOURCE" > "$T/.schema-source"
+  printf '%s\n' "$SCHEMA_SOURCE_IDENTITY" > "$T/.schema-source-identity"
+  export SCHEMA_SOURCE_IDENTITY
+fi
 
 PROVENANCE_SCRIPT='import importlib.util, pathlib, sys
 names = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
-if (pathlib.Path(sys.prefix) / ".farm-receipt.json").is_file():
+if (pathlib.Path(sys.prefix) / ".farm-receipt.json").is_file() or pathlib.Path(sys.prefix, ".schema-source").is_file():
     names += ("banodoco_timeline_schema",)
 for name in names:
     spec = importlib.util.find_spec(name)
@@ -833,11 +1205,19 @@ run_stage markers "$LOCAL_TIMEOUT_SECONDS" bash -c \
 # source installs have directory metadata; wheel installs have archive hashes.
 # Render both report sections from the installed inventory. pip freeze has a
 # different contract for dependency direct URLs, duplicate names and ordering.
-DIST_METADATA_SCRIPT='import hashlib, importlib.metadata as metadata, json, pathlib, re, sys, tomllib
+DIST_METADATA_SCRIPT='import hashlib, importlib.metadata as metadata, json, os, pathlib, re, sys, tomllib
 from urllib.parse import unquote, urlparse
 roots = {"astrid": pathlib.Path(sys.argv[1]).resolve(), "astrid-runtime": pathlib.Path(sys.argv[2]).resolve()}
-if (roots["astrid"].parent / "schema").is_dir():
-    roots["banodoco-timeline-schema"] = roots["astrid"].parent / "schema"
+schema_root = pathlib.Path(sys.argv[3]) if len(sys.argv) > 3 else pathlib.Path()
+schema_identity = os.environ.get("SCHEMA_SOURCE_IDENTITY", "")
+schema_identity_object = json.loads(schema_identity) if schema_identity else {}
+if schema_identity_object.get("input_kind") == "installed_distribution":
+    roots["banodoco-timeline-schema"] = (schema_root / "banodoco_timeline_schema").resolve()
+else:
+    if not (schema_root / "pyproject.toml").is_file():
+        schema_root = roots["astrid"].parent / "schema"
+    if (schema_root / "pyproject.toml").is_file():
+        roots["banodoco-timeline-schema"] = schema_root.resolve()
 child = roots["astrid"].parent.parent
 sites = list((child / "lib").glob("python*/site-packages"))
 assert len(sites) == 1, "ambiguous installed inventory"
@@ -846,8 +1226,13 @@ def canonical(name):
     return re.sub(r"[-_.]+", "-", name).lower()
 metadata_lines = []
 freeze_urls = {}
+if schema_identity:
+    json.loads(schema_identity)
+    metadata_lines.append("schema_source_identity=" + schema_identity)
 for name, root in roots.items():
-    project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+    project = (tomllib.loads((root / "pyproject.toml").read_text())["project"]
+               if name != "banodoco-timeline-schema" or schema_identity_object.get("input_kind") != "installed_distribution"
+               else {"name": name, "version": "0.0.2"})
     matches = [dist for dist in inventory if canonical(dist.metadata.get("Name", "")) == name]
     assert len(matches) == 1, (name, "ambiguous installed distribution")
     dist = matches[0]
@@ -856,30 +1241,36 @@ for name, root in roots.items():
     direct = json.loads((pathlib.Path(dist._path) / "direct_url.json").read_text())
     url = direct.get("url")
     parsed = urlparse(url or "")
-    assert parsed.scheme == "file" and parsed.netloc in ("", "localhost"), (name, url)
-    if "dir_info" in direct or "directory_info" in direct:
-        info = direct.get("dir_info", direct.get("directory_info"))
-        assert not info.get("editable", False), (name, info)
-        assert pathlib.Path(unquote(parsed.path)).resolve() == root, (name, url, root)
-        kind = "directory"
+    if name == "banodoco-timeline-schema" and schema_identity_object.get("input_kind") == "installed_distribution":
+        assert direct == schema_identity_object["direct_url"], (name, direct)
+        kind = "installed-distribution"
     else:
-        archive = direct.get("archive_info") or {}
-        carrier = root.parent.parent / ".source-inputs" / (root.name + ".tar")
-        assert pathlib.Path(unquote(parsed.path)).resolve() == carrier, (name, url)
-        assert archive.get("hashes", {}).get("sha256") == hashlib.sha256(carrier.read_bytes()).hexdigest(), (name, direct)
-        kind = "archive"
+        assert parsed.scheme == "file" and parsed.netloc in ("", "localhost"), (name, url)
+        if "dir_info" in direct or "directory_info" in direct:
+            info = direct.get("dir_info", direct.get("directory_info"))
+            assert not info.get("editable", False), (name, info)
+            assert pathlib.Path(unquote(parsed.path)).resolve() == root, (name, url, root)
+            kind = "directory"
+        else:
+            archive = direct.get("archive_info") or {}
+            carrier = root.parent.parent / ".source-inputs" / (root.name + ".tar")
+            assert pathlib.Path(unquote(parsed.path)).resolve() == carrier, (name, url)
+            assert archive.get("hashes", {}).get("sha256") == hashlib.sha256(carrier.read_bytes()).hexdigest(), (name, direct)
+            kind = "archive"
     metadata_lines.extend((f"{name}_name={name}", f"{name}_version={dist.version}",
                            f"{name}_direct_url={url}", f"{name}_provenance={kind}"))
-    freeze_urls[name] = url if kind == "directory" else url + "#sha256=" + archive["hashes"]["sha256"]
+    freeze_urls[name] = url if kind in {"directory", "installed-distribution"} else url + "#sha256=" + archive["hashes"]["sha256"]
 metadata_text = "\n".join(metadata_lines) + "\n"
 freeze = []
 for dist in inventory:
     name = canonical(dist.metadata.get("Name", ""))
     freeze.append((name, f"{name} @ {freeze_urls[name]}" if name in roots
                    else dist.metadata["Name"] + "==" + dist.version))
-agent_sha, runtime_sha, client, requirements, lock_sha = sys.argv[3:]
+metadata_offset = 4 if (pathlib.Path(sys.argv[3]) / "pyproject.toml").is_file() or not re.fullmatch(r"[0-9a-f]{40}", sys.argv[3]) else 3
+agent_sha, runtime_sha, client, requirements, lock_sha = sys.argv[metadata_offset:]
 report = (f"status=passed\nagent_sha={agent_sha}\nruntime_sha={runtime_sha}\n"
           + "runtime_client_identity_sha256=" + hashlib.sha256(client.encode()).hexdigest() + "\n"
+          + ("schema_source_identity_sha256=" + hashlib.sha256(schema_identity.encode()).hexdigest() + "\n" if schema_identity else "")
           + f"requirements_path={requirements}\nrequirements_lock_sha256={lock_sha}\n"
           + "installed_import_origins:\n" + (child / ".astrid-import-origins").read_text()
           + "installed_distribution_metadata:\n" + metadata_text + "pip_freeze:\n"
@@ -890,17 +1281,25 @@ metadata_path.write_text(metadata_text)
 metadata_path.chmod(0o600)
 print(report, end="")'
 run_stage freeze "$FREEZE_TIMEOUT_SECONDS" bash -c \
-  'set -e; umask 077; "$1" -I -c "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" > "${10}"; chmod 600 "${10}"' \
-  _ "$P" "$DIST_METADATA_SCRIPT" "$AGENT_SRC" "$RUNTIME_SRC" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$REPORT_TMP"
+  'set -e; umask 077; "$1" -I -c "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" > "${11}"; chmod 600 "${11}"' \
+  _ "$P" "$DIST_METADATA_SCRIPT" "$AGENT_SRC" "$RUNTIME_SRC" "${SCHEMA_SRC:-/nonexistent}" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$REPORT_TMP"
 
 IDENTITY_SCRIPT='import hashlib, importlib.metadata as metadata, json, pathlib, sys, tomllib
 from urllib.parse import unquote, urlparse
 report = pathlib.Path(sys.argv[1])
 child = pathlib.Path(sys.argv[2]).resolve()
 roots = {"astrid": pathlib.Path(sys.argv[3]).resolve(), "astrid-runtime": pathlib.Path(sys.argv[4]).resolve()}
-if (roots["astrid"].parent / "schema").is_dir():
-    roots["banodoco-timeline-schema"] = roots["astrid"].parent / "schema"
-expected = {"astrid": sys.argv[5], "astrid-runtime": sys.argv[6]}
+schema_root = pathlib.Path(sys.argv[5]) if len(sys.argv) > 5 else pathlib.Path()
+schema_marker = child / ".schema-source-identity"
+schema_identity = json.loads(schema_marker.read_text()) if schema_marker.is_file() else {}
+if schema_identity.get("input_kind") == "installed_distribution":
+    roots["banodoco-timeline-schema"] = (schema_root / "banodoco_timeline_schema").resolve()
+else:
+    if not (schema_root / "pyproject.toml").is_file():
+        schema_root = roots["astrid"].parent / "schema"
+    if (schema_root / "pyproject.toml").is_file():
+        roots["banodoco-timeline-schema"] = schema_root.resolve()
+expected = {"astrid": sys.argv[6], "astrid-runtime": sys.argv[7]}
 lines = report.read_text().splitlines()
 def fail(message):
     raise SystemExit("freeze identity mismatch: " + message)
@@ -940,8 +1339,19 @@ if metadata_start is not None:
         if "=" in line:
             key, item = line.split("=", 1)
             reported[key] = item
+if "banodoco-timeline-schema" in roots:
+    marker = child / ".schema-source-identity"
+    if not marker.is_file() or marker.is_symlink():
+        fail("schema source identity marker")
+    marker_text = marker.read_text().strip()
+    if value("schema_source_identity_sha256") != hashlib.sha256(marker_text.encode()).hexdigest():
+        fail("schema source identity report hash")
+    if reported.get("schema_source_identity") != marker_text:
+        fail("schema source identity inventory equality")
 for name, root in roots.items():
-    project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+    project = (tomllib.loads((root / "pyproject.toml").read_text())["project"]
+               if name != "banodoco-timeline-schema" or schema_identity.get("input_kind") != "installed_distribution"
+               else {"name": name, "version": "0.0.2"})
     dist = metadata.distribution(name)
     if dist.metadata["Name"] != project["name"] or dist.metadata["Name"] != name:
         fail(f"distribution name {name}")
@@ -950,23 +1360,28 @@ for name, root in roots.items():
     direct = json.loads((pathlib.Path(dist._path) / "direct_url.json").read_text())
     url = direct.get("url") or ""
     parsed = urlparse(url)
-    if parsed.scheme != "file" or parsed.netloc not in ("", "localhost"):
-        fail(f"distribution source {name}")
-    if "dir_info" in direct or "directory_info" in direct:
-        info = direct.get("dir_info", direct.get("directory_info"))
-        if info.get("editable", False):
-            fail(f"editable source {name}")
-        if pathlib.Path(unquote(parsed.path)).resolve() != root:
-            fail(f"directory source {name}")
-        kind = "directory"
+    if name == "banodoco-timeline-schema" and schema_identity.get("input_kind") == "installed_distribution":
+        if direct != schema_identity.get("direct_url"):
+            fail(f"installed schema source {name}")
+        kind = "installed-distribution"
     else:
-        archive = direct.get("archive_info") or {}
-        carrier = root.parent.parent / ".source-inputs" / (root.name + ".tar")
-        if (pathlib.Path(unquote(parsed.path)).resolve() != carrier
-                or archive.get("hashes", {}).get("sha256") != hashlib.sha256(carrier.read_bytes()).hexdigest()):
-            fail(f"archive provenance {name}")
-        kind = "archive"
-    freeze_url = url if kind == "directory" else url + "#sha256=" + archive["hashes"]["sha256"]
+        if parsed.scheme != "file" or parsed.netloc not in ("", "localhost"):
+            fail(f"distribution source {name}")
+        if "dir_info" in direct or "directory_info" in direct:
+            info = direct.get("dir_info", direct.get("directory_info"))
+            if info.get("editable", False):
+                fail(f"editable source {name}")
+            if pathlib.Path(unquote(parsed.path)).resolve() != root:
+                fail(f"directory source {name}")
+            kind = "directory"
+        else:
+            archive = direct.get("archive_info") or {}
+            carrier = root.parent.parent / ".source-inputs" / (root.name + ".tar")
+            if (pathlib.Path(unquote(parsed.path)).resolve() != carrier
+                    or archive.get("hashes", {}).get("sha256") != hashlib.sha256(carrier.read_bytes()).hexdigest()):
+                fail(f"archive provenance {name}")
+            kind = "archive"
+    freeze_url = url if kind in {"directory", "installed-distribution"} else url + "#sha256=" + archive["hashes"]["sha256"]
     freeze = [line for line in lines if line.startswith(name + " @ ")]
     if len(freeze) != 1 or freeze[0].split(" @ ", 1)[1] != freeze_url:
         fail(f"pip freeze source {name}")
@@ -976,14 +1391,14 @@ for name, root in roots.items():
                 fail(f"reported {key}")'
 run_stage freeze-identity "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -e; "$1" -I -c "$2" "$3" "$4" "$5" "$6" "$7" "$8"' _ \
-  "$P" "$IDENTITY_SCRIPT" "$REPORT_TMP" "$T" "$AGENT_SRC" "$RUNTIME_SRC" "$S" "$RUNTIME_SHA"
+  "$P" "$IDENTITY_SCRIPT" "$REPORT_TMP" "$T" "$AGENT_SRC" "$RUNTIME_SRC" "${SCHEMA_SRC:-/nonexistent}" "$S" "$RUNTIME_SHA"
 
 # Venv launchers contain the partial path. Fix them before the atomic publish;
 # no complete destination exists until all validation above has passed.
 if [ -n "$DEPENDENCY_SEED" ]; then
-  run_stage verify-staging-inventory "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I - "$MAKER_SOURCE" "$T" "$CLIENT_IDENTITY" "$A" "$S" "$R" "$RUNTIME_SHA" "$W" "$PYTHON" "$SEED_SNAPSHOT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$VERIFIER_SHA256" "$FARM_AUTHORITY" <<'STAGING_INVENTORY'
+  run_stage verify-staging-inventory "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I - "$MAKER_SOURCE" "$T" "$CLIENT_IDENTITY" "$A" "$S" "$R" "$RUNTIME_SHA" "$W" "$PYTHON" "$SEED_SNAPSHOT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$VERIFIER_SHA256" "$FARM_AUTHORITY" "${SCHEMA_SOURCE:-}" "${SCHEMA_MANIFEST:-}" <<'STAGING_INVENTORY'
 import contextlib, hashlib, importlib.util, io, json, pathlib, sys
-maker, root, client, agent, sha, runtime, runtime_sha, work, python, seed, lock_path, lock_sha, helper_sha, farm_authority = sys.argv[1:]
+maker, root, client, agent, sha, runtime, runtime_sha, work, python, seed, lock_path, lock_sha, helper_sha, farm_authority, schema_source, schema_manifest = sys.argv[1:]
 helper = pathlib.Path(maker).parent / 'verify_dependency_seed.py'
 if helper != helper.resolve() or not helper.is_file() or hashlib.sha256(helper.read_bytes()).hexdigest() != helper_sha:
     raise SystemExit('untrusted dependency seed verifier')
@@ -995,6 +1410,8 @@ spec.loader.exec_module(module)
 if farm_authority:
     receipt, _, _ = module.retained_farm(pathlib.Path(root), farm_authority)
     sys.argv[-1:-1] = ['--farm-source', receipt['schema_source']['custody']['root']]
+if schema_source:
+    sys.argv[-1:-1] = ['--schema-source', schema_source, '--schema-source-manifest', schema_manifest]
 output = io.StringIO()
 with contextlib.redirect_stdout(output):
     exec(compile(source, maker, 'exec'), {})
@@ -1113,6 +1530,20 @@ def fail_unowned_metadata(distribution, metadata_rel):
 
 staging = sys.argv[-1] == '--staging'
 farm_source = sys.argv[sys.argv.index('--farm-source') + 1] if '--farm-source' in sys.argv else None
+schema_source = sys.argv[sys.argv.index('--schema-source') + 1] if '--schema-source' in sys.argv else None
+schema_manifest = sys.argv[sys.argv.index('--schema-source-manifest') + 1] if '--schema-source-manifest' in sys.argv else None
+if schema_source is not None:
+    if schema_manifest is None:
+        fail('timeline schema source manifest is required')
+    manifest_path = pathlib.Path(schema_manifest)
+    if manifest_path != manifest_path.resolve() or manifest_path.is_symlink() or not manifest_path.is_file():
+        fail('timeline schema source manifest is not a physical file')
+    manifest = json.loads(manifest_path.read_text())
+    if manifest != {'url': 'https://github.com/banodoco/ArtAgents.git',
+                    'commit': '242f9c4306bf3b501222cb041a9eb246ef47bc85',
+                    'subdirectory': 'packages/timeline-schema/python',
+                    'source_tree': '75a5a697f630affee40632e500b3f5b704a9b834'}:
+        fail('timeline schema source manifest is not the fixed trusted D73 identity')
 
 def readonly(root):
     if root != root.resolve() or root.is_symlink() or not root.is_dir():
@@ -1131,6 +1562,29 @@ def readonly(root):
 
 root = pathlib.Path(sys.argv[1])
 readonly(root)
+schema_identity = None
+if schema_source is not None:
+    marker = root / '.schema-source-identity'
+    if not marker.is_file() or marker.is_symlink() or marker.stat().st_nlink != 1 or marker.stat().st_mode & 0o077:
+        fail('missing or unsafe schema source identity marker')
+    try:
+        schema_identity = json.loads(marker.read_text())
+    except json.JSONDecodeError as error:
+        fail('schema source identity marker is invalid: ' + str(error))
+    if not isinstance(schema_identity, dict) or schema_identity.get('origin') != manifest['url'] \
+            or schema_identity.get('commit') != manifest['commit'] \
+            or schema_identity.get('subdirectory') != manifest['subdirectory'] \
+            or schema_identity.get('source_tree') != manifest['source_tree']:
+        fail('schema source identity marker does not match trusted manifest')
+installed_schema = schema_source is not None and schema_identity.get('input_kind') == 'installed_distribution'
+if installed_schema:
+    expected_direct = {'subdirectory': manifest['subdirectory'], 'url': manifest['url'],
+                       'vcs_info': {'commit_id': manifest['commit'],
+                                    'requested_revision': manifest['commit'], 'vcs': 'git'}}
+    if schema_identity.get('direct_url') != expected_direct or schema_identity.get('package') != 'banodoco-timeline-schema' \
+            or schema_identity.get('version') != '0.0.2' or schema_identity.get('record_rows') != 18 \
+            or schema_identity.get('record_hashed_rows') != 12 or schema_identity.get('tree_tie') != 'UNAVAILABLE':
+        fail('installed schema identity is not the approved pinned input')
 interpreter = shutil.which(sys.argv[8])
 if interpreter is None or (root / 'bin/python').read_bytes() != pathlib.Path(interpreter).read_bytes():
     fail('child interpreter differs from maker interpreter')
@@ -1145,6 +1599,9 @@ expected_client = dict(item.removeprefix('packages/python/').split('=', 1) for i
 checkouts = {'astrid': (sys.argv[3], sys.argv[4]), 'astrid-runtime': (sys.argv[5], sys.argv[6])}
 if farm_source is not None:
     checkouts['banodoco-timeline-schema'] = (farm_source, '242f9c4306bf3b501222cb041a9eb246ef47bc85:packages/timeline-schema/python')
+elif schema_source is not None:
+    checkouts['banodoco-timeline-schema'] = (schema_source,
+                                              '__installed_distribution__' if installed_schema else '__physical_source__')
 work = pathlib.Path(sys.argv[7]).resolve()
 origins = {}
 for line in (root / '.astrid-import-origins').read_text().splitlines():
@@ -1153,7 +1610,7 @@ for line in (root / '.astrid-import-origins').read_text().splitlines():
         fail('duplicate import origin')
     origins[name] = pathlib.Path(origin).resolve()
 imports = ('astrid', 'astrid_runtime', 'runtime_protocol', 'astrid_runtime_client')
-if farm_source is not None:
+if farm_source is not None or schema_source is not None:
     imports += ('banodoco_timeline_schema',)
 for name in imports:
     spec = importlib.machinery.PathFinder.find_spec(name, [str(site)])
@@ -1177,6 +1634,36 @@ def committed_files(checkout, commit):
             files[entry.name] = archive.extractfile(entry).read()
     return files
 
+def physical_source_files(checkout):
+    checkout = pathlib.Path(checkout).resolve()
+    if checkout.is_symlink() or not checkout.is_dir():
+        fail('schema source is missing or symlinked')
+    files = {}
+    for path in [checkout, *sorted(checkout.rglob('*'))]:
+        info = path.lstat()
+        if (info.st_uid not in {0, os.getuid()} or (stat.S_ISREG(info.st_mode) and info.st_nlink != 1)
+                or info.st_mode & 0o022 or stat.S_ISLNK(info.st_mode)):
+            fail('schema source contains unsafe ownership, mode, symlink or hardlink')
+        if path.is_file():
+            files[path.relative_to(checkout).as_posix()] = path.read_bytes()
+    return files
+
+def physical_source_digest(checkout):
+    checkout = pathlib.Path(checkout).resolve()
+    rows = []
+    for path in [checkout, *sorted(checkout.rglob('*'))]:
+        info = path.lstat()
+        rel = '.' if path == checkout else path.relative_to(checkout).as_posix()
+        if stat.S_ISDIR(info.st_mode):
+            rows.append((rel, 'dir', 'dir', None, None))
+        elif stat.S_ISREG(info.st_mode):
+            data = path.read_bytes()
+            rows.append((rel, 'file', '100755' if info.st_mode & 0o111 else '100644',
+                         len(data), hashlib.sha256(data).hexdigest()))
+        else:
+            fail('schema source contains unsupported filesystem object')
+    return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
+
 sources = {}
 source_urls = {}
 source_kinds = {}
@@ -1193,28 +1680,48 @@ for name, (checkout, commit) in checkouts.items():
     dist_path = pathlib.Path(dist._path)
     if not dist_path.resolve().is_relative_to(site):
         fail('distribution escapes site')
-    files = committed_files(checkout, commit)
-    config = tomllib.loads(files['pyproject.toml'].decode())
-    project = config['project']
+    files = physical_source_files(checkout) if commit in {'__physical_source__', '__installed_distribution__'} else committed_files(checkout, commit)
+    if name == 'banodoco-timeline-schema' and commit == '__physical_source__':
+        if physical_source_digest(checkout) != schema_identity.get('source_sha256'):
+            fail('schema source identity does not match the authenticated snapshot')
+    if name == 'banodoco-timeline-schema' and commit == '__installed_distribution__':
+        if schema_identity.get('source_sha256') != physical_source_digest(checkout):
+            fail('installed schema source identity does not match the authenticated snapshot')
+        project = {'name': 'banodoco-timeline-schema', 'version': '0.0.2', 'scripts': {}}
+        config = {'tool': {'setuptools': {'packages': {'find': {'include': [], 'exclude': []}}}}}
+    else:
+        config = tomllib.loads(files['pyproject.toml'].decode())
+        project = config['project']
     if dist.metadata['Name'] != project['name'] or dist.version != project['version']:
         fail(f'distribution name/version mismatch: {name}')
     direct = json.loads((dist_path / 'direct_url.json').read_text())
     parsed = urlparse(direct.get('url', ''))
-    if parsed.scheme != 'file' or parsed.netloc not in ('', 'localhost') or parsed.query or parsed.fragment:
-        fail('invalid source URL')
-    carrier = pathlib.Path(unquote(parsed.path))
-    if carrier.is_symlink() or carrier != carrier.resolve() or not carrier.is_relative_to(root):
-        fail('source carrier escapes retained child root')
+    if commit == '__installed_distribution__':
+        if direct != schema_identity.get('direct_url') \
+                or hashlib.sha256((dist_path / 'direct_url.json').read_bytes()).hexdigest() != schema_identity.get('direct_url_sha256') \
+                or hashlib.sha256((dist_path / 'RECORD').read_bytes()).hexdigest() != schema_identity.get('record_sha256'):
+            fail('installed schema direct_url differs from authenticated input')
+        carrier = None
+    else:
+        if parsed.scheme != 'file' or parsed.netloc not in ('', 'localhost') or parsed.query or parsed.fragment:
+            fail('invalid source URL')
+        carrier = pathlib.Path(unquote(parsed.path))
+        if carrier.is_symlink() or carrier != carrier.resolve() or not carrier.is_relative_to(root):
+            fail('source carrier escapes retained child root')
     snapshot_name = {'astrid': 'agent', 'astrid-runtime': 'runtime', 'banodoco-timeline-schema': 'schema'}[name]
     snapshots = list(root.glob('.child-venv-source-*'))
     if len(snapshots) != 1:
         fail('ambiguous retained source snapshot')
     source = snapshots[0] / snapshot_name
-    if name == 'banodoco-timeline-schema' and 'archive_info' not in direct:
+    if name == 'banodoco-timeline-schema' and commit not in {'__installed_distribution__'} and 'archive_info' not in direct:
         fail('schema requires retained authenticated original Git archive')
-    if 'archive_info' in direct:
+    if commit == '__installed_distribution__':
+        source_kinds[name] = 'installed-distribution'
+        freeze_urls[name] = direct['url']
+    elif 'archive_info' in direct:
         expected_carrier = root / '.source-inputs' / (snapshot_name + '.tar')
-        original = subprocess.check_output(['git', '-C', checkout, 'archive', '--format=tar', commit])
+        original = (carrier.read_bytes() if commit == '__physical_source__' else
+                    subprocess.check_output(['git', '-C', checkout, 'archive', '--format=tar', commit]))
         if (carrier != expected_carrier or carrier.read_bytes() != original
                 or direct['archive_info'].get('hashes', {}).get('sha256') != hashlib.sha256(original).hexdigest()
                 or set(direct) != {'url', 'archive_info'}):
@@ -1250,7 +1757,18 @@ for name, (checkout, commit) in checkouts.items():
             fail(f'missing {name} RECORD file: {rel}')
         content = installed.read_bytes()
         if not encoded and not size:
-            if installed != record and not (rel.endswith('.pyc') and '__pycache__' in pure.parts):
+            if commit == '__installed_distribution__':
+                allowed = {
+                    'banodoco_timeline_schema-0.0.2.dist-info/RECORD',
+                    'banodoco_timeline_schema/__pycache__/__init__.cpython-313.pyc',
+                    'banodoco_timeline_schema/__pycache__/generated.cpython-313.pyc',
+                    'banodoco_timeline_schema/__pycache__/materialize.cpython-313.pyc',
+                    'banodoco_timeline_schema/__pycache__/theme.cpython-313.pyc',
+                    'banodoco_timeline_schema/__pycache__/validate.cpython-313.pyc',
+                }
+                if rel not in allowed:
+                    fail('installed schema has an unapproved unhashed RECORD row')
+            elif installed != record and not (rel.endswith('.pyc') and '__pycache__' in pure.parts):
                 fail('unhashed non-RECORD/non-pyc row')
         else:
             if not re.fullmatch(r'sha256=[A-Za-z0-9_-]{43}', encoded) or not re.fullmatch(r'0|[1-9][0-9]*', size):
@@ -1261,18 +1779,25 @@ for name, (checkout, commit) in checkouts.items():
         package = pure.parts[0]
         prefixes = {'astrid': ('astrid', 'astrid_runtime_client'), 'astrid-runtime': ('astrid_runtime', 'runtime_protocol'),
                     'banodoco-timeline-schema': ('banodoco_timeline_schema',)}[name]
-        if package in prefixes and not rel.endswith('.pyc'):
+        if package in prefixes and (commit == '__installed_distribution__' or not rel.endswith('.pyc')):
             if rel not in files or files[rel] != content:
                 fail(f'installed source bytes mismatch: {name}/{rel}')
         rows[rel] = encoded
-    discovery = config['tool']['setuptools']['packages']['find']
-    modules = {rel for rel in files if rel.endswith('.py')
-               and any(fnmatch.fnmatch(str(pathlib.PurePosixPath(rel).parent).replace('/', '.'), pattern)
-                       for pattern in discovery['include'])
-               and not any(fnmatch.fnmatch(str(pathlib.PurePosixPath(rel).parent).replace('/', '.'), pattern)
-                           for pattern in discovery.get('exclude', []))}
-    if not modules.issubset(rows):
-        fail(f'incomplete installed source modules: {name}')
+    if commit == '__installed_distribution__':
+        if len(rows) != 18 or sum(bool(value) for value in rows.values()) != 12:
+            fail('installed schema RECORD cardinality mismatch')
+        if set(files) != set(rows) or sorted(rows) != schema_identity.get('record_paths') \
+                or sorted(rel for rel, digest in rows.items() if not digest) != schema_identity.get('record_unhashed_rows'):
+            fail('installed schema source is not the exact RECORD closure')
+    else:
+        discovery = config['tool']['setuptools']['packages']['find']
+        modules = {rel for rel in files if rel.endswith('.py')
+                   and any(fnmatch.fnmatch(str(pathlib.PurePosixPath(rel).parent).replace('/', '.'), pattern)
+                           for pattern in discovery['include'])
+                   and not any(fnmatch.fnmatch(str(pathlib.PurePosixPath(rel).parent).replace('/', '.'), pattern)
+                               for pattern in discovery.get('exclude', []))}
+        if not modules.issubset(rows):
+            fail(f'incomplete installed source modules: {name}')
     # Source ownership is finite: committed bytes, validated bytecode, known
     # installer metadata and console scripts declared in committed pyproject.
     # An extra local RECORD row never becomes dependency inventory authority.
@@ -1311,6 +1836,12 @@ for name, (checkout, commit) in checkouts.items():
                 fail('local console script differs from committed entry point')
         else:
             fail('unowned local distribution RECORD addition')
+    if commit == '__installed_distribution__':
+        actual_schema_files = {path.relative_to(site).as_posix()
+                               for directory in (site / 'banodoco_timeline_schema', dist_path)
+                               for path in directory.rglob('*') if path.is_file() or path.is_symlink()}
+        if actual_schema_files != set(rows):
+            fail('installed schema has an unlisted child file')
     local_inventory[name] = list(rows)
     rows_by_name[name] = rows
 if sources['astrid'].parent != sources['astrid-runtime'].parent:
@@ -1351,9 +1882,13 @@ for rel, expected in markers.items():
         fail('retained source/client marker differs from requested identity')
     root_inventory.add(rel)
 root_inventory.add('.astrid-import-origins')
+if schema_identity is not None:
+    root_inventory.add('.schema-source-identity')
 # Maker metadata has a closed grammar and exact provenance. Its bytes never
 # grant ownership to another path or distribution.
 metadata_lines = []
+if schema_identity is not None:
+    metadata_lines.append('schema_source_identity=' + json.dumps(schema_identity, sort_keys=True, separators=(',', ':')))
 for name in checkouts:
     dist = next(d for d in md.distributions(path=[str(site)])
                 if re.sub(r'[-_.]+', '-', d.metadata.get('Name', '')).lower() == name)
@@ -1369,6 +1904,9 @@ agent_files = committed_files(*checkouts['astrid'])
 lock = agent_files['requirements/proof.lock']
 report_prefix = (f'status=passed\nagent_sha={sys.argv[4]}\nruntime_sha={sys.argv[6]}\n'
                  + 'runtime_client_identity_sha256=' + hashlib.sha256(sys.argv[2].encode()).hexdigest() + '\n'
+                 + (('schema_source_identity_sha256=' + hashlib.sha256(
+                     json.dumps(schema_identity, sort_keys=True, separators=(',', ':')).encode()).hexdigest() + '\n')
+                    if schema_identity is not None else '')
                  + 'requirements_path=requirements/proof.lock\nrequirements_lock_sha256=' + hashlib.sha256(lock).hexdigest() + '\n'
                  + 'installed_import_origins:\n' + (root / '.astrid-import-origins').read_text()
                  + 'installed_distribution_metadata:\n' + metadata_text + 'pip_freeze:\n')
@@ -1385,6 +1923,8 @@ for path in (metadata_path, report):
         fail('unsafe maker metadata')
     root_inventory.add(path.name)
 local_inventory['__root__'] = sorted(root_inventory)
+if schema_identity is not None:
+    local_inventory['__schema_source_identity__'] = schema_identity
 print(json.dumps(local_inventory))
 # STORE_VERIFY_END
 STORE_VERIFY_BODY

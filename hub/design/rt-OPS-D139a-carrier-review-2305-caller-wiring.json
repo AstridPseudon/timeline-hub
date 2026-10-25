@@ -1,0 +1,43 @@
+{
+  "schema": "timeline.d139a.request-carrier.caller-wiring/v1",
+  "route": [
+    {
+      "stage": "normal request wrapper",
+      "path": "/home/user/work/wt/rt-OPS-D139a-carrier-review-2305/ops-child-custody/request-child-venv",
+      "line_refs": "27-70, 291-299",
+      "behavior": "parses and validates the installed-distribution/manifest pair, then emits each once in the CHILDVENV row"
+    },
+    {
+      "stage": "dispatcher",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon",
+      "line_refs": "7-14, 19-24",
+      "behavior": "recognizes CHILDVENV, strips the record prefix, word-splits safe fields, and invokes the maker"
+    },
+    {
+      "stage": "joined maker parser",
+      "path": "/home/user/work/wt/rt-OPS-D139a-carrier-review-2305/ops-child-custody/make-child-venv",
+      "line_refs": "60-115",
+      "behavior": "accepts both schema flags and validates the exact physical paths"
+    },
+    {
+      "stage": "schema-bearing Store identity",
+      "path": "/home/user/work/wt/rt-OPS-D139a-carrier-review-2305/ops-child-custody/make-child-venv",
+      "line_refs": "467-475, 535-675, 710-718",
+      "behavior": "authenticates the D139a manifest/RECORD/direct_url closure and binds schema identity into the existing client tuple used by Store"
+    }
+  ],
+  "actual_live_gap": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "observed": "unknown child venv option",
+    "required_before_receiving": "install/receive the independently reviewed fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5 maker through the manager-only CAS process"
+  },
+  "schema_input_interface": {
+    "installed_distribution_flag": "--schema-installed-distribution",
+    "manifest_flag": "--schema-source-manifest",
+    "dist_info": "absolute physical banodoco_timeline_schema-0.0.2.dist-info directory, validated by the joined maker",
+    "manifest": "absolute physical regular JSON file, validated against the fixed D139a identity by the joined maker",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "direct_url_commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85"
+  }
+}

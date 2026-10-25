@@ -12,6 +12,9 @@ RUNTIME_SHA=
 DEPENDENCY_SEED=${CHILD_VENV_DEPENDENCY_WHEELHOUSE:-}
 FARM_SCHEMA_SOURCE=${CHILD_VENV_FARM_SCHEMA_SOURCE:-}
 FARM_REQUIRED=0
+SCHEMA_INSTALLED_DISTRIBUTION=
+SCHEMA_SOURCE_MANIFEST=
+SCHEMA_REQUIRED=0
 refuse() { echo "REFUSED: $*" >&2; exit 2; }
 case "$O:$W" in /*:/*) ;; *) refuse 'roots must be absolute';; esac
 [[ "$N" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || refuse 'invalid child name'
@@ -34,6 +37,18 @@ while [ "$#" -gt 0 ]; do
       [ "$#" -ge 2 ] || { echo 'REFUSED: Farm schema source path is missing' >&2; exit 2; }
       FARM_SCHEMA_SOURCE=$2; FARM_REQUIRED=1; shift 2
       ;;
+    --schema-installed-distribution)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: authenticated installed timeline schema distribution is missing' >&2; exit 2; }
+      [ -n "$2" ] || { echo 'REFUSED: authenticated installed timeline schema distribution is missing' >&2; exit 2; }
+      [ "$SCHEMA_REQUIRED" = 0 ] || { echo 'REFUSED: duplicate timeline schema carrier option' >&2; exit 2; }
+      SCHEMA_INSTALLED_DISTRIBUTION=$2; SCHEMA_REQUIRED=1; shift 2
+      ;;
+    --schema-source-manifest)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: exact pinned timeline schema source manifest is missing' >&2; exit 2; }
+      [ -n "$2" ] || { echo 'REFUSED: exact pinned timeline schema source manifest is missing' >&2; exit 2; }
+      [ "$SCHEMA_SOURCE_MANIFEST" = "" ] || { echo 'REFUSED: duplicate timeline schema source manifest option' >&2; exit 2; }
+      SCHEMA_SOURCE_MANIFEST=$2; shift 2
+      ;;
     --dependency-wheelhouse)
       [ "$#" -ge 2 ] || refuse 'dependency wheelhouse path is missing'
       DEPENDENCY_SEED=$2; shift 2
@@ -43,6 +58,16 @@ while [ "$#" -gt 0 ]; do
 done
 [ -z "$FARM_SCHEMA_SOURCE" ] || FARM_REQUIRED=1
 [ "$BS" != OPS-farm-agent-full ] || FARM_REQUIRED=1
+[ -z "$SCHEMA_INSTALLED_DISTRIBUTION" ] || SCHEMA_REQUIRED=1
+[ "$SCHEMA_REQUIRED" = 0 ] || [ -n "$SCHEMA_SOURCE_MANIFEST" ] || { echo 'REFUSED: schema installed distribution and source manifest must be supplied together' >&2; exit 2; }
+[ -z "$SCHEMA_SOURCE_MANIFEST" ] || [ "$SCHEMA_REQUIRED" = 1 ] || { echo 'REFUSED: schema source manifest requires installed distribution' >&2; exit 2; }
+[ "$FARM_REQUIRED" = 0 ] || [ "$SCHEMA_REQUIRED" = 0 ] || { echo 'REFUSED: installed schema input cannot be combined with Farm schema authority' >&2; exit 2; }
+if [ "$SCHEMA_REQUIRED" = 1 ]; then
+  [[ "$SCHEMA_INSTALLED_DISTRIBUTION" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: authenticated installed timeline schema distribution path contains unsafe characters' >&2; exit 2; }
+  [ -d "$SCHEMA_INSTALLED_DISTRIBUTION" ] && [ "$SCHEMA_INSTALLED_DISTRIBUTION" = "$(readlink -e -- "$SCHEMA_INSTALLED_DISTRIBUTION" 2>/dev/null)" ] || { echo 'REFUSED: installed schema distribution must be an existing physical directory' >&2; exit 2; }
+  [[ "$SCHEMA_SOURCE_MANIFEST" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: timeline schema source manifest path contains unsafe characters' >&2; exit 2; }
+  [ -f "$SCHEMA_SOURCE_MANIFEST" ] && [ ! -L "$SCHEMA_SOURCE_MANIFEST" ] && [ "$SCHEMA_SOURCE_MANIFEST" = "$(readlink -e -- "$SCHEMA_SOURCE_MANIFEST" 2>/dev/null)" ] || { echo 'REFUSED: timeline schema source manifest must be an existing physical regular file' >&2; exit 2; }
+fi
 if [ "$FARM_REQUIRED" = 1 ]; then
   [[ "$FARM_SCHEMA_SOURCE" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: missing authentic selected Farm schema Git source' >&2; exit 2; }
   [ -d "$FARM_SCHEMA_SOURCE" ] && [ "$FARM_SCHEMA_SOURCE" = "$(readlink -e -- "$FARM_SCHEMA_SOURCE" 2>/dev/null)" ] || { echo 'REFUSED: Farm schema source must be an existing physical directory' >&2; exit 2; }
@@ -82,6 +107,7 @@ if [ -e "$W/$N" ] || [ -L "$W/$N" ]; then TARGET=$W/$N; fi
 for d in "$W"/venv-agent-child-*; do
   [[ "$(basename "$d")" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || continue
   [ -z "$TARGET" ] || [ "$d" = "$TARGET" ] || continue
+  [ "$SCHEMA_REQUIRED" = 0 ] || continue
   # A legacy child has no Store custody or retained original wheel authority.
   # Only the Store maker may qualify opt-in seeded reuse; never adopt this path.
   if [ -n "$DEPENDENCY_SEED" ] || [ "$FARM_REQUIRED" = 1 ]; then
@@ -268,6 +294,7 @@ done
   [ -z "$REMOTION" ] || printf ' %s' "$REMOTION"
   [ -z "$DEPENDENCY_SEED" ] || printf ' --dependency-wheelhouse %s' "$DEPENDENCY_SEED"
   [ "$FARM_REQUIRED" != 1 ] || printf ' --farm-schema-source %s' "$FARM_SCHEMA_SOURCE"
+  [ "$SCHEMA_REQUIRED" != 1 ] || printf ' --schema-installed-distribution %s --schema-source-manifest %s' "$SCHEMA_INSTALLED_DISTRIBUTION" "$SCHEMA_SOURCE_MANIFEST"
   printf ' --source-carrier %s %s %s\n' "$A" "$R" "$RUNTIME_SHA"
 } > "$O/queue/pending/childvenv-$N"
 echo "child venv $N queued; result in $O/queue/done/childvenv-$N"

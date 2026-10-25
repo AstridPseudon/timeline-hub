@@ -1,0 +1,50 @@
+{
+  "schema": "timeline.d139a.request-carrier.review-source-manifest/v1",
+  "review_commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+  "review_tree": "577a3cca4e23c94d051e839eb47d7b1bd7a1c9c3",
+  "base_join_commit": "f304bfc97be7319c7a69272a4c9311ff5c1b3d08",
+  "private_source": {
+    "path": "/home/user/work/wt/rt-OPS-D139a-carrier-review-2305/ops-child-custody/request-child-venv",
+    "sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504",
+    "bytes": 18066,
+    "mode": "0755"
+  },
+  "private_test": {
+    "path": "/home/user/work/wt/rt-OPS-D139a-carrier-review-2305/ops-child-custody/tests/test_request_schema_carrier.py",
+    "sha256": "78f7dc2b40c7c36539980f301bb755d1fdd08392c7be4eaeb5a7cd8d5749acb0",
+    "bytes": 10724,
+    "mode": "0644"
+  },
+  "joined_maker": {
+    "path": "/home/user/work/wt/rt-OPS-D139a-carrier-review-2305/ops-child-custody/make-child-venv",
+    "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "bytes": 111171,
+    "mode": "0755"
+  },
+  "authenticated_preimage": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+    "sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
+    "bytes": 15435,
+    "mode": "0755"
+  },
+  "live_receiving_maker": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bytes": 75541,
+    "mode": "0755",
+    "schema_flags_present": false
+  },
+  "dispatcher": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon",
+    "sha256": "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed",
+    "bytes": 5010,
+    "mode": "0755"
+  },
+  "live_actions": {
+    "install": false,
+    "request": false,
+    "store_publication": false,
+    "child_or_venv": false,
+    "network_acquisition": false
+  }
+}
