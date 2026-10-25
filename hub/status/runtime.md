@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T16:40:52Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 3m -->
+<!-- main | 2026-10-25T16:45:34Z | dispatcher heartbeat 13s | live 1 (sol 1, luna 0, other 0) | busy30 13 | status age 0m -->
 # runtime board, 2026-10-25T16:36:46Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -414,7 +414,7 @@
 | R2-inverse-boundary | Authenticate grouped inverse and redo | Sol / Luna | Exact integrated proof passed | merged | Author1523; security1537; home1550 | Exactab1e genuine3/native2 PASS;1501Agent blobs exact. [Receipt](../../design/rt-R2-redo-home-1550.md). Other roots UNKNOWN. | Independent1537 PASS | a5fc9 / ab1e4f6141 |
 | R2-step-home | Verify integrated step correction | Luna | Exact integratedbc487 | merged | rt-R2-step-home-proof-1519 | Actualbc487 genuine2 and native2 PASS, scoped static PASS. Durable XML and before/after origins retained. | Prior1514 PASS | bc487974a5 |
 | Agent-inverse-diagnosis | Challenge grouped inverse diagnosis | Luna read only | Exact source review complete | merged | rt-Agent-inverse-diagnosis-review-1519 | Formal source PASS; exact genuine3 reproduces2PASS1specificRED on5e9ad. No product edits or original-four closure. | Independent1519 PASS source | Agent a0d839 |
-| D107-current-two | Preserve current replacement journeys | Luna / Luna | Protected purpose and source seam | review | Author1530; reviewer1550 | Protected purpose PASS131assert/5raises. Exacttwo still transcriptpinFAIL; ownershipUNKNOWN. Normal source intake requested, behavior open. | Independent1550 purposePASS | b4b380 held |
+| D107-current-two | Preserve current replacement journeys | Luna / Luna | Actual transcript behavior | review | Author 1530; purpose 1550; source home 9350 | Exact reviewed setup is normally joined. Both transcriptpin317 failures remain open; owner UNKNOWN, private records missing. | Independent 1550 purpose PASS | Agent 9350 / b4b380 |
 | OPS-census-layout | Preserve reviewed retention option | Luna / Luna | Owner drops Farm core | gated:D128-dropped | Author1535; review1540; install1544 | Installed1243cb6c with controls PASS. Retained as ordinary kit improvement; no diagnostic build or further cycle. | Independent1540 PASS | Installed1243cb6c |
 
 | OPS-D131 | Size reserve by build kind | Luna | Actual Agent receipt complete | merged | Author 1558; review 1601; install 1604 | Agent received exact 123bb regular 0755. Five live tests PASS. Next child passes reserve then refuses source ownership. | Independent 1607 PASS | Installed 123bb93c |
@@ -426,8 +426,8 @@
 | D77-Runtime-source | Publish captured Runtime tree | Luna | Independent exact tree review passed | review | Author 1620; review 1624 PASS | Portable 1daca tree equals captured a522; all 528 paths and modes exact. Lead publication requested 1635. | Independent 1624 PASS | 1daca2a33 |
 
 | U4a-inverse-batch | Adopt released Runtime provenance | Luna | Host filing and Agent home queue | merging | Author 1614; independent 1634 PASS | Only lock provenance changes to ab1e; all 15 mappings exact. Author and independent 24 tool tests PASS. | Independent 1634 PASS | cec01ed66 |
-| OPS-child-custody | Correct retained source ownership | HARD Sol / Luna | Recorded critical owner instruction 16:36 | doing | Sol 1633; independent reader 1637 | Installed retention mode reused. Exact current tuple source diagnosis; actual Main reproduction needs 5905580032 free bytes. | Independent review next | Private source only |
-| D128-custody-wholepath | Challenge maker ownership path | Luna read only | Actual Agent refusal and peer 1623 | doing | rt-Agent-D128-custody-wholepath-1637 | Source carrier to inventory and verifier comparison. No child retry or core body. | Independent source reader | Evidence only |
+| OPS-child-custody | Correct retained source ownership | HARD Sol / Luna | Recorded critical owner instruction 16:36 | doing | Sol resume 1643; reader 1637 complete | Installed retention mode reused. Exact current tuple source diagnosis; actual Main reproduction needs 5905580032 free bytes. | Independent review next | Private source only |
+| D128-custody-wholepath | Challenge maker ownership path | Luna read only | Complete source comparison | merged | rt-Agent-D128-custody-wholepath-1637 | Direct source pip can generate retained egg-info. Actual offending path and layout EXACTMISSING. Source facts only; no child retry. | Independent source reader | Evidence only |
 | D107-transcript-wholepath | Trace persisted transcript authority | Luna read only | Peer 1619 and protected baseline | doing | rt-Agent-D107-pin-wholepath-1634 | Exact b4b380 and retained two failures. No repeated body or guard author. | Read only | Source unchanged |
 | D77-portable-handoff | Correct source refs and lock hash | Luna independent | Exact captured source trees | merged | rt-D77-source-review-handoff-1624 | Source review and corrected handoff PASS; safe exact bytes published 1635. Stage and render remain unrun. | Independent 1624 PASS | 86c306ed6 |
 
@@ -436,7 +436,7 @@ Runtime producer: Normal ab1e includes independently qualified step, inverse/red
 core open: 425 on immutable30693; 450 bad and REG14 retained. Agent same-WIP1610 child passed D131 reserve, then refused unowned retained source directory. Zero core body. Farm core is dropped; Farm keeps D77 only.
 regressions: Normal Agent a4e016 has reviewed upstream host fallback and bounded original14 PASS; REG14 remains until actual current full core.
 Gates: P1/P3 recorded GO; P4 independent GO 28.101 seconds. Full P2 remains NO-GO for element and SWAP; no cut or ZIP.
-Blockers: Agent core — deterministic maker retained-source ownership refusal. Sol1633 owns one exact correction and census; independent Luna1637 challenges whole path. No child retry before reviewed kit publication.
+Blockers: Agent core — deterministic maker retained-source ownership refusal. Sol1643 resumes exact WIP after Sol capacity exit; one correction and census; independent Luna1637 challenges whole path. No child retry before reviewed kit publication.
 Blockers: Main reproduction — free about 5.3 GB versus child reserve 5905580032 bytes. Guarded sweep and compact active; no ended clean nonKEEP worktree eligible. Five historical dirty trees remain held.
 Blockers: SWAP safety — automatic classifier refused scoped recovery tests1537. D130 holds all related work; no review, retry, rephrase, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
 Blockers: Agent roots — scalar and compound remain UNKNOWN. Qualified grouped inverse/redo source does not close all four originals.
@@ -444,12 +444,16 @@ Blockers: Element profile — request3 binding exact, but retained outer frames 
 Blockers: Final render — corrected portable source refs and exact lock end18d independently PASS1624. Lead normal source publication requested1635. Applied-tuple child maker unqualified; Farm must receive refs and qualified route before stage.
 Blockers: D69 — genuine installed render90 and normal XML applicability/full core remain. No whole-audit PASS.
 Blockers: Final cut — current core, REG0, full P2, D69, final tuple P1-P5, wheel, Windows and genuine installed render remain. No build or ZIP.
-Next ready: Sol1633 root correction, independent1637 source diagnosis, U4a1634 review and D1071634 wholepath are assigned. On U4a PASS, host publication and Agent home queue. On kit source return, independent Luna custody review then exact installer and publication.
-Ready for host filing: U4a Agent tl/rt-U4a-Agent-inverse-adopt-1614 cec01ed6612f2b56e8d170a5d066dc7a4882805f, independent1634 PASS; lead1638 note sent. Agent tl/rt-D107-current-baseline-1530 b4b3805da5e8611490401122f986e203f67f21b4, purpose-only independent1550 PASS; both behaviors remain FAIL. Lead1635 request sent.
+Next ready: Sol1643 exact WIP root correction, independent1637 source diagnosis, U4a1634 review and D1071634 wholepath are assigned. On U4a PASS, host publication and Agent home queue. On kit source return, independent Luna custody review then exact installer and publication.
+Ready for host filing: U4a Agent tl/rt-U4a-Agent-inverse-adopt-1614 cec01ed6612f2b56e8d170a5d066dc7a4882805f, independent1634 PASS; lead1638 note sent. D107 source intake cleared: normal Agent9350 contains exact reviewed b4b380 setup correction; both behaviors remain failed. No D107 host filing remains.
 Ready for host publication, NO integration merge: Agent tl/rt-D77-Agent-applied-source-1620 91398e9de4500ce16c8e55741209ba3609cb1694, Runtime tl/rt-D77-Runtime-applied-source-1620 1daca2a33f6d7b10053e07c539a54843e3984e19. Exact original applied trees 523893/a522 verified1624. Corrected flat handoff design/handoff-rt-D77-portable-1624-*.
 Venues: No Main heavy body. Agent exact a4e016/5e9ad/d8a1/635f core capture unchanged and zero-body blocked. Farm keeps only D77. D131 actual Agent local receiving hash123bb0755 qualified; reserve wait cleared.
 Delivery: Private100Python plus TS and41matrix qualified; D1235bd01/b0ff source PASS. No final cut installation or build.
 Later: R2c81b/D116 seed source PASS; D126 App owns migration paragraph/ZIP line. No D79 or small-file competing product authors. Native topology4 stays App-owned. Historical physical records remain EXACTMISSING.
 Safety: D130 SWAP hold and historical D88/D111/retirement refusals remain stopped. D106 ORCH-only output. Farm approval refusals are never rerouted. No permission-file changes.
-live 4 / cap 6; ready-undispatched 0. Sol1633, U4a review1634, D107 reader1634 and custody reader1637 assigned; queued/running transitions checked next pass. Source floor and 4.0 GB stop retained; child reserve unchanged.
+live 2 / cap 6; ready-undispatched 0. Sol1643 exact WIP and D107 derivative correction1644 assigned. U4a PASS; host filing requested. Both source readers complete. Source floor and 4.0 GB stop retained; child reserve unchanged.
 INBOX consumed through 1336464 bytes. Updated 2026-10-25T16:36:46Z
+
+D107 review1640: source PASS, custody FAIL because historical1550 protected hash has62 characters. Derivative correction1644 assigned; original evidence retained. Both real behaviors remain failed and owner UNKNOWN.
+
+Agent peer1632 consumed: exact D107 source home9350 received; intake wait cleared. U4a lock-only cec01 still host-ready after independent1634 PASS. Source correction remains sole Sol1643.
