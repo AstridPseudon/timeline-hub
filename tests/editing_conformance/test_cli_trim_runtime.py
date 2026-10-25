@@ -54,6 +54,13 @@ def film(runtime):  # noqa: F811
     service.create_timeline(runtime.project, 'trim-film', idempotency_key='trim-timeline')
     session = TimelineSession.open(runtime.project, 'trim-film', client=client)
     bundle = session._bundle(session.outbox.read())
+    output = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+              'args': {'changes': [{
+                  'op': 'set', 'ref': 'parent', 'path': ['config', 'output'],
+                  'before': {'state': 'absent'}, 'value': {'fps': 30},
+              }]}}
+    configured = session.commit(output, idempotency_key='trim-output')
+    bundle = bundle_from_document(configured['data']['canonical_document'])
     tracked = session.commit(capture_track_create(bundle, 'parent', {
         'id': 'picture', 'kind': 'visual',
     }), idempotency_key='trim-track')
