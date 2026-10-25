@@ -16,9 +16,12 @@ def test_pin_script_reads_the_constant() -> None:
 
 
 def test_no_other_tracked_file_copies_the_pin() -> None:
-    tracked = subprocess.run(
+    result = subprocess.run(
         ["git", "grep", "-l", "-I", VIBECOMFY_ENGINE_REVISION],
         cwd=ROOT, capture_output=True, text=True,
-    ).stdout.split()
+    )
+    # git grep exits 1 for "no matches"; anything else (e.g. 128 outside a repo) is a failure.
+    assert result.returncode in (0, 1), result.stderr
+    tracked = result.stdout.split()
     allowed = {"astrid/core/generation/vibecomfy_dependency.py"}
     assert set(tracked) <= allowed, f"derive these from vibecomfy_dependency.py instead: {sorted(set(tracked) - allowed)}"

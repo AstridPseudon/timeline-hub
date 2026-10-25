@@ -76,7 +76,7 @@ jobs:
 
       - name: Read the pinned VibeComfy revision
         id: vibecomfy-pin
-        run: echo "revision=$(python3 scripts/vibecomfy_pin.py)" >> "$GITHUB_OUTPUT"
+        run: rev=$(python3 scripts/vibecomfy_pin.py) && echo "revision=$rev" >> "$GITHUB_OUTPUT"
 
       - name: Check out VibeComfy at the pinned engine revision
         uses: actions/checkout@v4
@@ -158,7 +158,7 @@ jobs:
 
       - name: Read the pinned VibeComfy revision
         id: vibecomfy-pin
-        run: echo "revision=$(python3 scripts/vibecomfy_pin.py)" >> "$GITHUB_OUTPUT"
+        run: rev=$(python3 scripts/vibecomfy_pin.py) && echo "revision=$rev" >> "$GITHUB_OUTPUT"
 
       - name: Check out VibeComfy at the pinned engine revision
         uses: actions/checkout@v4
