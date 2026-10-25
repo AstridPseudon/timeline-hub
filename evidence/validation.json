@@ -1,0 +1,132 @@
+{
+  "schema": "timeline.d124.next-farm-core-command.final-rereview.v1",
+  "verdict": "PASS",
+  "packet": {
+    "commit": "291cbbfba278205909746deb15f55a3da64f897c",
+    "tree": "2e7adffb856bb5d5cecc19e57bd2ad6000a2cae0",
+    "base_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "base_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "blocking_findings_cured": [
+    {
+      "id": "D124-FARM-REVIEW-1",
+      "status": "PASS",
+      "evidence": "The App and Composition table rows contain both actual parents, and the first shell block guards complete rev-list --parents output for all four source tuples."
+    },
+    {
+      "id": "D124-FARM-REVIEW-2",
+      "status": "PASS",
+      "evidence": "The qualified parsed positive/poison controls and exit/counter expectations are restored; launcher blob/SHA-256, Node v20.19.4, and stale-manifest rejection guards 070dfc and b545b616 are present."
+    },
+    {
+      "id": "D124-FARM-REVIEW-3",
+      "status": "PASS",
+      "evidence": "The packet requires the existing Runtime/Farm owner disposition before qualification and preserves the unowned-local-distribution refusal without retry, substitution, overlay, or bypass."
+    }
+  ],
+  "checks": {
+    "json_tool": {
+      "command": "python3 -m json.tool evidence/input-map.json",
+      "result": "PASS"
+    },
+    "shell_blocks": {
+      "count": 2,
+      "command": "extract each ~~~sh block to $TMPDIR and run bash -n on each",
+      "result": "PASS"
+    },
+    "git_diff_check": {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    "source_tuple_git_objects": {
+      "result": "PASS",
+      "agent": {
+        "commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+        "tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+        "parents": [
+          "61fefc6983f4413f1d1964b149bbaf5eadb8d2f0",
+          "96df3f5b4862b1c267e3816237bae8a64b5dc31f"
+        ]
+      },
+      "runtime": {
+        "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+        "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+        "parents": [
+          "7070f1378d1917fcce69857ebd33cd2b3015568b",
+          "ef4728a1c07b7d3909d5027fbf1e673f6aec0030"
+        ]
+      },
+      "app": {
+        "commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+        "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9",
+        "parents": [
+          "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+          "331a58363d1dc6ade1db2d2fa9d58688520c51bd"
+        ]
+      },
+      "composition": {
+        "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "parents": [
+          "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+          "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+        ]
+      }
+    },
+    "agent_source_invariance": {
+      "from": "0b586e4b56cffbcd066ea8792adf46b660f5395a",
+      "to": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "old_tree_path_count": 3563,
+      "new_tree_path_count": 3565,
+      "changed_path_count": 10,
+      "non_target_blob_invariant_count": 3555,
+      "changed_paths_match_input_map": true,
+      "result": "PASS"
+    },
+    "selector": {
+      "exact_match_to_qualified_1336": true,
+      "argv_root_count": 22,
+      "inventory_metadata_count": 23,
+      "live_scene_root_present": true,
+      "root_filters": "none",
+      "result": "PASS"
+    },
+    "preserved_identities": {
+      "canonical15_source": "6e8ae0142655eb7a6d10083d2d3ae5d434b5c94e",
+      "canonical15_tree": "bb35f386027336cbd1ae9baed9f4aa2f04369441",
+      "schema_blob": "1b3f12da05da3bb89fa76881184eefdf8232e076",
+      "schema_sha256": "867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+      "canonical_schema_sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
+      "runtime_bundle_sha256": "e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1",
+      "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+      "launcher_blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+      "launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+      "d73_maker_blob": "fbde96168dca681a76cff1526c23b8d0b74001eb",
+      "d73_maker_sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c",
+      "runtime_lock_blob": "e4f7e2db58ce73bbe69c1ae07566ba56b360bf47",
+      "result": "PASS"
+    },
+    "qualified_publication_1342": {
+      "referenced_hashes_match": true,
+      "result": "PASS"
+    },
+    "c0_wire_seam": {
+      "request_and_reply_fields_present": true,
+      "auth_privacy_no_write_semantics_preserved": true,
+      "result": "PASS"
+    }
+  },
+  "pending_not_claimed": [
+    "Farm checkout receipts",
+    "profiles and child environment",
+    "D73 manifest and evidence",
+    "positive and poison counters",
+    "Farm execution result",
+    "Runtime/Farm owner disposition"
+  ],
+  "execution_scope": {
+    "farm_execution": "NOT_RUN",
+    "child_refusal_retry": "NOT_RUN",
+    "product_tests": "NOT_RUN; not authorized for source-only Markdown/JSON review"
+  }
+}

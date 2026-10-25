@@ -64,8 +64,8 @@ changed in this Composition worktree.
 The following source-only checks were run after the final edits:
 
 - `python3 -m json.tool evidence/input-map.json` — PASS.
-- The single shell block from `evidence/next-farm-core-command.md` was
-  extracted into the task TMPDIR and checked with `bash -n` — PASS.
+- Both shell blocks from `evidence/next-farm-core-command.md` were extracted
+  into the task TMPDIR and checked with `bash -n` — PASS.
 - `git diff --check` — PASS.
 
 No pytest, sockets, browser, full suite, body, profile, installer, collector,
