@@ -12,6 +12,8 @@ import { CardDisclosure, EditorCard, EditorCardFoot } from './EditorCard.tsx';
 import { EditorCardLayer } from './EditorCardLayer.tsx';
 import { CopyRefusedInstructions } from './CopyRefusedInstructions.tsx';
 import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withOrigin } from './copy.ts';
+import { PINOKIO_INSTALL_COPY } from './copy.ts';
+import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 
 export interface RuntimeConnectionPanelProps {
   /** The gate's value: the screen to show (on the way out, the last one shown). */
@@ -275,10 +277,14 @@ function PermissionCard({ connection, onBack }: { connection: RuntimeConnectionV
           </ol>
         </div>}
         <CardDisclosure label={permission.allowTitle}>{permission.allowDetails}</CardDisclosure>
-        <CardDisclosure label={permission.installTitle}><CopyInstallCommand mode="install" /></CardDisclosure>
+        <CardDisclosure label={permission.installTitle}><CopyInstallCommand mode="install" />{detectInstallScenario() === 'chromium' && <PinokioInstallHelp />}</CardDisclosure>
       </div>}
     />
   );
+}
+
+function PinokioInstallHelp() {
+  return <p className="mt-3 text-sm text-muted-foreground"><a className="underline underline-offset-4 hover:text-foreground" href={PINOKIO_INSTALL_COPY.installUrl} target="_blank" rel="noreferrer">{PINOKIO_INSTALL_COPY.label}</a> · <a className="underline underline-offset-4 hover:text-foreground" href={PINOKIO_INSTALL_COPY.downloadUrl} target="_blank" rel="noreferrer">{PINOKIO_INSTALL_COPY.getPinokio}</a></p>;
 }
 
 /** Permission `denied`: the browser stopped the request, so the fix is in its site settings. */
@@ -303,7 +309,7 @@ function BlockedCard({ onBack }: { readonly onBack?: () => void }) {
 /** Repeated probes went unanswered with permission granted; polling continues during install or repair. */
 function NotRunningCard({ connection, onBack }: { readonly connection: RuntimeConnectionValue; readonly onBack?: () => void }) {
   const { notRunning } = COPY;
-  return <Card title={notRunning.title} sentence={notRunning.sentence} onBack={onBack} action={<div className="space-y-2"><CopyInstallCommand mode="install" /><Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
+  return <Card title={notRunning.title} sentence={connection.managedByPinokio === true ? `${notRunning.sentence} ${notRunning.pinokioHint}` : notRunning.sentence} onBack={onBack} action={<div className="space-y-2"><CopyInstallCommand mode="install" /><Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
 }
 
 /** Astrid answered, but not this page: no install help, because Astrid is already running. Polling continues. */
@@ -315,9 +321,10 @@ function RefusedCard({ connection, onBack }: { readonly connection: RuntimeConne
   </div>} />;
 }
 
-function UpdateNeededCard({ onBack }: { readonly onBack?: () => void }) {
+function UpdateNeededCard({ connection, onBack }: { readonly connection: RuntimeConnectionValue; readonly onBack?: () => void }) {
   const { updateNeeded } = COPY;
-  return <Card title={updateNeeded.title} sentence={updateNeeded.sentence} onBack={onBack} action={<CopyInstallCommand mode="update" />} status={COPY.waiting} showHelp />;
+  const pinokioManaged = connection.managedByPinokio === true;
+  return <Card title={updateNeeded.title} sentence={pinokioManaged ? updateNeeded.pinokioSentence : updateNeeded.sentence} onBack={onBack} action={pinokioManaged ? undefined : <CopyInstallCommand mode="update" />} status={COPY.waiting} showHelp />;
 }
 
 /** The screen for a connection: its name (the journey and Layout tests read it) and its card. */
@@ -332,7 +339,7 @@ function screenFor(connection: RuntimeConnectionValue, onBack?: () => void): { n
     case 'not_running': return { name: 'not_running', card: <NotRunningCard connection={connection} onBack={onBack} /> };
     case 'refused': return { name: 'refused', card: <RefusedCard connection={connection} onBack={onBack} /> };
     case 'blocked': return { name: 'blocked', card: <BlockedCard onBack={onBack} /> };
-    case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard onBack={onBack} /> };
+    case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard connection={connection} onBack={onBack} /> };
     default: return null;
   }
 }

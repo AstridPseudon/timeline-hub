@@ -111,7 +111,7 @@ export type RuntimeConnectionState =
   | { status: 'connecting' }
   /** Permission has never been asked: the page has no evidence about this computer. */
   | { status: 'needs_permission' }
-  | { status: 'connected'; realm: Pick<Realm, 'realm_id' | 'display_name'> }
+  | { status: 'connected'; realm: Pick<Realm, 'realm_id' | 'display_name'>; managedByPinokio?: boolean }
   /** Granted permission and at least two unanswered probes. */
   | { status: 'not_running' }
   /** Granted permission, at least two unreadable readings, and a `no-cors` probe still got an answer: Astrid refuses this origin. */

@@ -53,6 +53,7 @@ export const POLL_INTERVAL_MS = 3000;
 export const PROBE_TIMEOUT_MS = 5000;
 export const SLOW_PROBE_TIMEOUT_MS = 60_000;
 const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
+const PINOKIO_MANAGED_KEY = 'astrid.runtime.managedByPinokio';
 /** The `error` codes of the Runtime door's refusals (astrid-runtime runtime_protocol/door.py): the only error bodies the page reads as the door's. */
 export type RuntimeRefusalCode = 'runtime_unavailable' | 'runtime_identity_mismatch';
 const GATEWAY_REFUSAL_OUTCOMES: Readonly<Record<RuntimeRefusalCode, 'down' | 'restart'>> = Object.freeze({
@@ -63,9 +64,9 @@ const GATEWAY_REFUSAL_OUTCOMES: Readonly<Record<RuntimeRefusalCode, 'down' | 're
 type RealmSummary = Pick<Realm, 'realm_id' | 'display_name'>;
 
 export type RuntimeProbeOutcome =
-  | { kind: 'connected'; realm: RealmSummary; schemaDigest: string | null }
+  | { kind: 'connected'; realm: RealmSummary; schemaDigest: string | null; managedByPinokio: boolean }
   | { kind: 'restart' }
-  | { kind: 'update_needed' }
+  | { kind: 'update_needed'; managedByPinokio: boolean }
   | { kind: 'down' }
   /** Something answered the CORS-less follow-up probe, but this page may not read it: Astrid is up and refuses this origin. */
   | { kind: 'refused' }
@@ -131,15 +132,30 @@ export async function probeRuntime(
   if (typeof health.body !== 'object' || health.body === null || typeof (health.body as { status?: unknown }).status !== 'string') {
     return { kind: 'silent' };
   }
+  const install = (health.body as { install?: unknown }).install;
+  const managedBy = typeof install === 'object' && install !== null ? (install as { managed_by?: unknown }).managed_by : undefined;
+  const managedByPinokio = managedBy === 'pinokio';
   const schemaDigest = (health.body as { schema_digest?: unknown }).schema_digest;
   if (typeof schemaDigest !== 'string' || !RUNTIME_ACCEPTED_SCHEMA_DIGESTS.includes(schemaDigest as typeof RUNTIME_ACCEPTED_SCHEMA_DIGESTS[number])) {
-    return { kind: 'update_needed' };
+    return { kind: 'update_needed', managedByPinokio };
   }
   const realm = await get('/v1/realm');
   if ('kind' in realm) return realm;
   const { realm_id, display_name } = (realm.body ?? {}) as Partial<RealmSummary>;
   if (typeof realm_id !== 'string' || typeof display_name !== 'string') return { kind: 'silent' };
-  return { kind: 'connected', realm: { realm_id, display_name }, schemaDigest };
+  return { kind: 'connected', realm: { realm_id, display_name }, schemaDigest, managedByPinokio };
+}
+
+function readPinokioManaged(): boolean | null {
+  try {
+    const value = window.localStorage.getItem(PINOKIO_MANAGED_KEY);
+    return value === '1' ? true : value === '0' ? false : null;
+  } catch { return null; }
+}
+
+function rememberPinokioManaged(value: boolean | null): void {
+  if (value === null) return;
+  try { window.localStorage.setItem(PINOKIO_MANAGED_KEY, value ? '1' : '0'); } catch { /* Storage can be unavailable. */ }
 }
 
 function readConnectedBefore(): boolean {
@@ -165,6 +181,8 @@ export interface RuntimeConnectionValue {
   isConnected: boolean;
   /** This browser has reached Astrid before, so missing-work guidance can distinguish a return visit from first setup. */
   connectedBefore: boolean;
+  /** Last known installer provenance for this browser; null when unknown or storage is unavailable. */
+  managedByPinokio: boolean | null;
   /** The permission or the first probe is still pending: nothing can be shown yet, so the app renders nothing. */
   isBooting: boolean;
   /** An explicit Connect probe is in flight; background checks never enter a visible checking state. */
@@ -234,6 +252,12 @@ export function RuntimeConnectionProvider({
   const [scenario] = useState(detectInstallScenario);
   const canConnect = scenario !== 'mobile' && (!requireLocalNetworkPermission || scenario === 'chromium');
   const [connectedBeforeAtMount] = useState(() => !gated || readConnectedBefore());
+  const [managedByPinokio, setManagedByPinokio] = useState(readPinokioManaged);
+  useEffect(() => {
+    if (!outcome || !('managedByPinokio' in outcome)) return;
+    rememberPinokioManaged(outcome.managedByPinokio);
+    setManagedByPinokio(outcome.managedByPinokio);
+  }, [outcome]);
 
   const mounted = useRef(true);
   const inFlight = useRef<AbortController | null>(null);
@@ -430,6 +454,7 @@ export function RuntimeConnectionProvider({
         state: { status: 'connected', realm: { realm_id: '', display_name: '' } },
         isConnected: true,
         connectedBefore: true,
+        managedByPinokio,
         isBooting: false,
         isChecking: false,
         realmName: null,
@@ -448,11 +473,12 @@ export function RuntimeConnectionProvider({
       askUnanswered,
       confirmPermission,
       connectedBefore: connectedBeforeAtMount,
+      managedByPinokio,
       localServiceOutOfDate,
       setLocalServiceOutOfDate,
     } as const;
     if (outcome?.kind === 'connected' && !permissionLost) {
-      return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, realmName: outcome.realm.display_name, schemaDigest: outcome.schemaDigest };
+      return { ...base, state: { status: 'connected', realm: outcome.realm, ...(outcome.managedByPinokio ? { managedByPinokio: true } : {}) }, isConnected: true, isBooting: false, realmName: outcome.realm.display_name, schemaDigest: outcome.schemaDigest };
     }
     const notConnected = { ...base, isConnected: false, realmName: null, schemaDigest: null };
     if (scenario === 'mobile') return { ...notConnected, state: { status: 'phone' }, isBooting: false };
@@ -472,7 +498,7 @@ export function RuntimeConnectionProvider({
       };
     }
     return { ...notConnected, state: { status: 'connecting' }, isBooting: outcome === null };
-  }, [gated, requireLocalNetworkPermission, outcome, permission, isChecking, connectedBeforeAtMount, connect, failedReadings, scenario, localServiceOutOfDate, permissionLost, askUnanswered, confirmPermission]);
+  }, [gated, requireLocalNetworkPermission, outcome, permission, isChecking, connectedBeforeAtMount, managedByPinokio, connect, failedReadings, scenario, localServiceOutOfDate, permissionLost, askUnanswered, confirmPermission]);
 
   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;
 }

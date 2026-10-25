@@ -57,6 +57,15 @@ export const LOCAL_SETUP = {
   openUrl: 'http://127.0.0.1:5180/tools/video-editor?connect=1',
 } as const;
 
+/** Optional Pinokio route for installing the fully local app. */
+export const PINOKIO_INSTALL_COPY = {
+  label: 'Use Pinokio? Install Astrid in Pinokio',
+  getPinokio: 'Get Pinokio',
+  installUrl: 'https://pinokio.co/item?uri=https://github.com/banodoco/astrid-pinokio',
+  downloadUrl: 'https://desktop.pinokio.co/download.html',
+  runMode: 'Easiest: Install fully local in Pinokio',
+} as const;
+
 export interface LocalSetupStep {
   readonly line: string;
   readonly command?: string;
@@ -204,10 +213,10 @@ export interface RuntimeConnectionCopy {
     readonly footer: string;
   };
   /** Repeated probes went unanswered with permission granted. */
-  readonly notRunning: Message & { readonly retry: string };
+  readonly notRunning: Message & { readonly retry: string; readonly pinokioHint: string };
   /** Astrid answered the browser but would not let this page read the answer (it serves other origins only). */
   readonly refused: Message & { readonly retry: string };
-  readonly updateNeeded: Message;
+  readonly updateNeeded: Message & { readonly pinokioSentence: string };
   /** Lead-in above the update screen when a chat reply from this computer's Astrid is out of date. */
   readonly chatNeedsUpdate: string;
   /** A phone can never reach Astrid on a computer: the link goes there instead. */
@@ -283,6 +292,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     title: "Astrid isn't answering on this computer",
     retry: 'Try again',
     sentence: "Your coding agent can start it, or install it if it isn't there yet.",
+    pinokioHint: 'Installed with Pinokio? Start Astrid in Pinokio.',
   },
 
   refused: {
@@ -294,6 +304,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   updateNeeded: {
     title: 'Update Astrid',
     sentence: 'This page needs a newer Astrid. Give these instructions to your coding agent to update it.',
+    pinokioSentence: 'Update Astrid in Pinokio: open Pinokio, choose Astrid, then Update.',
   },
 
   /** Lead-in above the shared update screen when a chat reply from this computer's Astrid is out of date. */

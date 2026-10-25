@@ -20,6 +20,7 @@ import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS, RUNTIME_SCHEMA_DIGEST } from './contra
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
 const STORAGE_KEY = 'astrid.runtime.connectedBefore';
+const PINOKIO_STORAGE_KEY = 'astrid.runtime.managedByPinokio';
 
 type Route = () => Response | Promise<Response>;
 
@@ -211,6 +212,37 @@ describe('granted', () => {
     expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health', '/v1/realm']);
     expect(onConnected).toHaveBeenCalledTimes(1);
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('1');
+  });
+
+  it('records Pinokio provenance from health and exposes it in the connected state', async () => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, install: { managed_by: 'pinokio' } });
+    renderProvider(gateway, fakePermissions('granted').permissions);
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(latest.state).toMatchObject({ status: 'connected', managedByPinokio: true });
+    expect(window.localStorage.getItem(PINOKIO_STORAGE_KEY)).toBe('1');
+  });
+
+  it.each([
+    ['managed by Pinokio', { install: { managed_by: 'pinokio' } }, true],
+    ['not managed by Pinokio', {}, false],
+  ] as const)('records health evidence when Runtime is %s', async (_label, healthEvidence, expected) => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', schema_digest: RUNTIME_SCHEMA_DIGEST, ...healthEvidence });
+    renderProvider(gateway, fakePermissions('granted').permissions);
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(latest.managedByPinokio).toBe(expected);
+    expect(window.localStorage.getItem(PINOKIO_STORAGE_KEY)).toBe(expected ? '1' : '0');
+  });
+
+  it('uses Pinokio update instructions when an incompatible Runtime reports Pinokio', async () => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', schema_digest: 'sha256:old-runtime', install: { managed_by: 'pinokio' } });
+    renderPanelProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(status()).toBe('update_needed'));
+    expect(window.localStorage.getItem(PINOKIO_STORAGE_KEY)).toBe('1');
+    expect(screen.getByText(CONNECTION_COPY.updateNeeded.pinokioSentence)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Copy command/ })).not.toBeInTheDocument();
   });
 
   it.each([false, true])('keeps the mount-time connection history when a new probe connects (had connected before: %s)', async (hadConnectedBefore) => {
@@ -1573,6 +1605,23 @@ describe('permission and setup evidence matrix', () => {
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(latest.state.status).toBe('not_running'));
     expect(latest.state).toEqual({ status: 'not_running' });
+  });
+
+  it.each([
+    ['unknown', null, false],
+    ['Pinokio', '1', true],
+    ['other installer', '0', false],
+  ] as const)('not-running guidance uses last-seen provenance: %s', async (_label, storedValue, shouldMentionPinokio) => {
+    if (storedValue !== null) window.localStorage.setItem(PINOKIO_STORAGE_KEY, storedValue);
+    const gateway = fakeGateway();
+    gateway.down();
+    const permission = fakePermissions('granted');
+    renderPanelProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(status()).toBe('connecting'));
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('not_running'));
+    const sentence = screen.getByText((_, element) => element?.tagName === 'P' && element.textContent?.startsWith(CONNECTION_COPY.notRunning.sentence) === true);
+    expect(sentence.textContent?.includes(CONNECTION_COPY.notRunning.pinokioHint)).toBe(shouldMentionPinokio);
   });
 });
 

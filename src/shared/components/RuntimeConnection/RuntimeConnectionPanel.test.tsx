@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { CONNECTED_MIN_MS, LEAVE_MS, RuntimeConnectionPanel, SETTLED_QUIET_MS } from './RuntimeConnectionPanel.tsx';
-import { installCommand, RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
+import { installCommand, PINOKIO_INSTALL_COPY, RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
 import { CONNECTED_REALM, connectionFor } from './connectionFixture.ts';
 
 afterEach(() => {
@@ -63,6 +63,14 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
     expect(screen.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeInTheDocument();
     expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
+  });
+
+  it('offers Pinokio install and download links in the install disclosure for desktop Chromium', () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36');
+    panel(connectionFor({ status: 'needs_permission' }));
+    fireEvent.click(screen.getByRole('button', { name: "Don't have Astrid yet?" }));
+    expect(screen.getByRole('link', { name: PINOKIO_INSTALL_COPY.label })).toHaveAttribute('href', PINOKIO_INSTALL_COPY.installUrl);
+    expect(screen.getByRole('link', { name: PINOKIO_INSTALL_COPY.getPinokio })).toHaveAttribute('href', PINOKIO_INSTALL_COPY.downloadUrl);
   });
 
   it('places an optional onboarding Back action in the card corner only for its caller', () => {
