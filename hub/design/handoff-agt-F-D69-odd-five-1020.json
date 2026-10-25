@@ -1,0 +1,96 @@
+{
+  "task": "agt-F-D69-odd-five-1020",
+  "scope": "exact corrected odd immutable indexes 61, 83, 107, 21, 49",
+  "source_identity": {
+    "old_commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "old_tree": "2694ae8d2709526b40fa037bda8b159cf412769d",
+    "captured_commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "captured_tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6",
+    "current_normal_commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+    "current_normal_tree": "e9845f8cf5a6ba80210336d0e2452f80a0918762"
+  },
+  "review_status": "complete",
+  "source_change": false,
+  "verdict_summary": {
+    "pass_or_approved_replacement": 4,
+    "failures": 2,
+    "unresolved": 0,
+    "failure_scope": "index 107 only: two missing Windows XML serialization guards"
+  },
+  "functions": [
+    {
+      "index": 61,
+      "function_key": "tests/sdk/test_host_bootstrap_source_identity.py:test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+      "current_line": 123,
+      "current_blob": "75a61d96ae7f275b03a2daca47903011c352ef6c",
+      "current_body_sha256": "8a55bbc5f7fa35333691b2d67f0e218028b7ce64e0cc014cfb38c96e496da2cc",
+      "removed_predicates": [
+        {"purpose": "one inventory read at initial launch", "verdict": "PASS equivalent", "replacement": "inventory_reads_per_launch count plus ordered inventory-1 identities"},
+        {"purpose": "second inventory read after identity changes", "verdict": "PASS equivalent", "replacement": "2 * inventory_reads_per_launch plus inventory-1 then inventory-2 sequence"},
+        {"purpose": "third inventory read after inventory is disabled", "verdict": "PASS equivalent", "replacement": "3 * inventory_reads_per_launch plus complete sequence ending in empty identity"}
+      ],
+      "decision_reference": "D72 SDK restart/persistence review; real Agent bootstrap/provider path",
+      "recommendation": null
+    },
+    {
+      "index": 83,
+      "function_key": "tests/sdk/test_timeline_store_fixes.py:test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_wins",
+      "current_line": 97,
+      "current_blob": "dfd1de6876a44f580350120199066aa2a0be799d",
+      "current_body_sha256": "fc131a4bc933dd2a9637360e0efd7f1892980e244ba7a77413fc05f2b987f211",
+      "removed_predicates": [
+        {"purpose": "three_way conflict list names parent-config theme_overrides", "verdict": "APPROVED REPLACEMENT", "replacement": "Checkout.save raises parent collision and no-write is proven by persisted fps24"},
+        {"purpose": "forced merge lands candidate fps60", "verdict": "PASS equivalent", "replacement": "Checkout.save(force=True) followed by load proves fps60"},
+        {"purpose": "forced merge still exposes forced_conflicts", "verdict": "APPROVED REPLACEMENT", "replacement": "supported local-draft contract tests refusal/no-write then explicit force override"}
+      ],
+      "decision_reference": "C0/G5 retire store.three_way and publication force; D72 allows force only on local Checkout.save",
+      "recommendation": null
+    },
+    {
+      "index": 107,
+      "function_key": "tests/test_installer_platforms.py:test_windows_task_settings_and_no_console_executable",
+      "current_line": 106,
+      "current_blob": "55d0bbfd4200756d1a5322ed63e52ada32a44560",
+      "current_body_sha256": "265e028304f1bd923bb9ad6b7eac0c7dddf7c702e36c8161b2e06a073901cfa0",
+      "removed_predicates": [
+        {"purpose": "rendered PowerShell XML begins with Task element", "verdict": "FAIL", "replacement": null, "evidence": "current parsed-field assertions do not assert serialized prefix; D68 restores this exact guard"},
+        {"purpose": "rendered PowerShell XML has no XML declaration", "verdict": "FAIL", "replacement": null, "evidence": "current test omits the guard; D68 explains Register-ScheduledTask -Xml rejects the declaration"},
+        {"purpose": "rendered XML omits Hidden", "verdict": "PASS equivalent", "replacement": "same Hidden-not-in-render assertion against local xml variable"}
+      ],
+      "decision_reference": "D68 upstream Windows Task Scheduler XML encoding decision; D108 identifies the separate registration smoke as retaining the same guards",
+      "recommendation": "Restore xml = service.render(...) followed by assert xml.startswith('<Task ') and assert '<?xml' not in xml; do not change product code or substitute parsed XML fields."
+    },
+    {
+      "index": 21,
+      "function_key": "tests/packs/rendering/test_live_scene_composition.py:test_service_layered_plan_native_renderer_isolates_and_adjusts_once",
+      "current_line": 25,
+      "current_blob": "3c0bfbaaa7b7a8b73ee0d90f1b2a20b58aec6efd",
+      "current_body_sha256": "95c13326014b66d7d65016a3ce356c288a0e871be11569fcc34ed7ad11035f1c",
+      "removed_predicates": [
+        {"purpose": "native request used null window", "verdict": "APPROVED REPLACEMENT", "replacement": "exact FrameWindow dict is asserted; null-window is retained only for legacy supports_windows:false"},
+        {"purpose": "clip frame tuple is 0,63,65,2,2", "verdict": "PASS equivalent", "replacement": "same tuple asserted on transformed native scene, with metadata/id/app/config checks"}
+      ],
+      "decision_reference": "D72 FrameWindow native-rendering decision and D69 rendering triage",
+      "recommendation": null
+    },
+    {
+      "index": 49,
+      "function_key": "tests/packs/timeline/test_verbs_working_copy.py:test_draft_flow_checkout_edit_status_discard",
+      "current_line": 178,
+      "current_blob": "141e93bb4b51680f1cba1b83943278670e19cc05",
+      "current_body_sha256": "e5651f8b183a701e2747ff36595d542414b9328eeba185e1c6faee5e063d705c",
+      "removed_predicates": [
+        {"purpose": "status recommends retired publish command", "verdict": "APPROVED REPLACEMENT", "replacement": "status recommends current commit command with exact command text"},
+        {"purpose": "status output begins with unchanged working-copy zero-change summary", "verdict": "PASS equivalent", "replacement": "status variable asserts the same working-copy prefix"}
+      ],
+      "decision_reference": "G5/D69 retire publish CLI; current working-copy commit guidance is the supported route",
+      "recommendation": null
+    }
+  ],
+  "checks": {
+    "target_blobs_match_captured": true,
+    "ast_parse": "pass for all five target files",
+    "composition_git_diff_check": "pass",
+    "tests_typecheck_lint": "not run; N/A for read-only review"
+  }
+}

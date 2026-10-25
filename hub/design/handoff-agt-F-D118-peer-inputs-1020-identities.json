@@ -1,0 +1,59 @@
+{
+  "schema": "timeline.d118.peer-publication.identities.v1",
+  "status": "safe-publication-only",
+  "effect_regression": {
+    "branch": "tl/agt-F-D115-effect83-sol-0932",
+    "commit": "f6d5d518368b3e4730f742e9f1993e426b10bbaa",
+    "tree": "1d149671faa5f51122a2cc08ddb851f8d578de04",
+    "parent_source_commit": "f3c0bc72898e59e8f8b87c60cb0a47cf247d8c9e",
+    "parent_source_tree": "9b3677db1712fb448b1ba1ccf6b50024380d2def",
+    "path": "tests/sdk/test_effect_image_prepared_candidate_runtime.py",
+    "blob": "d47e04780ce310432bbd72c53fad7b95ea45cf8f",
+    "sha256": "7454494446e5b0f8d5a15e54e9631e792ec5bf13ef558f313684b14447849bb0",
+    "result": "2PASS1FAIL; Runtime control 28PASS",
+    "runtime_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19"
+  },
+  "producer_source": {
+    "branch": "tl/agt-F-D115-producer-input-sol-1002",
+    "commit": "82b6d00d7fcca643c6eaf3246028d9a20f96252a",
+    "tree": "019ae9944d5f445776bd19c7d0c441190955c1a3",
+    "base_commit": "ff8d14f0213f9c7ebe50b9be2c8f9a0254ec293e",
+    "runtime_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "source_sha256": {
+      "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "tests/editing_conformance/test_commit_document_input_capture.py": "13d9bb81321fc81709c3a7b8f5212175edd5827e64dda5f470974ad4b09e1d57",
+      "tests/sdk/test_selected_param_neutral_stage.py": "98afee8f5b25c680c027cd22084d0ceac648cfbd771820c677eb3766fd6844a7"
+    },
+    "producer_xml_sha256": "0f3e98bcc4667203136478226c8aea37689638a724cb64ab6cd03b31f7499ba7",
+    "result": "112PASS1FAIL; 32/32 original physical-custody cases PASS",
+    "next_owner": "Runtime projection boundary at timeline_commit_auth.py:2864"
+  },
+  "retained_run": {
+    "service_id": "agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016",
+    "xml_sha256": "72872c77087719a692bff4b48b8d85ea62b9931d59a502c8e246daee0c81c18a",
+    "outcomes_json_sha256": "c180c1c153264d09e2ae79e0ad63007d9551e43e7b72e87973f0927140a6e2eb",
+    "counts": {"passed": 8763, "failed": 159, "error": 347}
+  },
+  "current_sources": {
+    "agent_commit": "e9e3b8f78a103331c38b70c008bf020f13c46413",
+    "agent_tree": "b1d90e5f2cfe42858efb7226c56192b948e1108c",
+    "runtime_commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "runtime_tree": "6283b5fbb128447f1b333e0e6af334d35637cf69"
+  },
+  "published_packet_sha256": {
+    "effect83-report.md": "3a49663d095db7ad4fe3d6a27e3f9ef122c982862e732bb65333826146e6d1a7",
+    "effect83-manifest.json": "29a954b28353de68704c98464af0538e4cde49977a0104786f73754dfd2a0ab2",
+    "effect83-nodeids.txt": "5e84ce312b568bbe72b22eef3ffd61e7b1d02220eb311e33c6e427dcb2d28543",
+    "effect83-recipe.txt": "e69cc39fc9317c470fcda6a09e4ea9afcce3cdae78b9539d9095dd8771ec1d5d",
+    "effect83-regression.py": "7454494446e5b0f8d5a15e54e9631e792ec5bf13ef558f313684b14447849bb0",
+    "producer-report.md": "6b5de06291c71612a0ede2eb374e4942eedf08bec48ebd15236cdd32eb63b2d9",
+    "producer-pairing.json": "1b2a1f80e3669d2b54735e16b29b217ad0629cd9155799cf9daf6222cb079fe0",
+    "producer-checks.json": "93836fbcba8d7a2634df0309e7f4aec96f6460e78ab7723b6afd031d2b9ea8ac"
+  },
+  "omitted_from_publication": [
+    "raw service logs",
+    "raw request or response payloads",
+    "credentials",
+    "retained XML body"
+  ]
+}

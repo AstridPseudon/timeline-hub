@@ -1,0 +1,811 @@
+{
+  "worker": "agt-F-D115-effect83-sol-0932",
+  "status": "blocked-no-product-fix",
+  "agent_head": "f3c0bc72898e59e8f8b87c60cb0a47cf247d8c9e",
+  "agent_tree": "9b3677db1712fb448b1ba1ccf6b50024380d2def",
+  "runtime_head": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+  "runtime_tree": "a522511414947e48e317a5e5c2103483b121a750",
+  "runtime_status": "",
+  "registered_provider": "astrid.sdk.timeline.commit:create_runtime_commit_service via load_timeline_commit_provider(\"astrid\")",
+  "agent_source_sha256": {
+    "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+    "astrid/sdk/timeline/_commit_preview.py": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+    "astrid/sdk/timeline/_commit_patch.py": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50",
+    "astrid/sdk/timeline/_doc_patch.py": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+    "astrid/sdk/timeline/capture.py": "d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7",
+    "astrid/sdk/timeline/_command_state.py": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+    "astrid/sdk/timeline/_step_undo.py": "a38bb078ecd2579399f131fa0a08a9bedd339226f92b9d8ac27de2b6d27827a6"
+  },
+  "runtime_source_sha256": {
+    "runtime_protocol/timeline_commit_auth.py": "357d7c473d8e1af42646aea57657222123cc039adde16f2700629991d25beafd",
+    "runtime_protocol/timeline_commit_store.py": "6363da83eadce42f75ba51477671aab3769a935e5d19fd3513d2bdc946ce5d6f",
+    "runtime_protocol/timeline_commit_port.py": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+    "runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"
+  },
+  "retained_agent_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+  "retained_agent_source_sha256": {
+    "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+    "astrid/sdk/timeline/_commit_preview.py": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+    "astrid/sdk/timeline/_commit_patch.py": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50",
+    "astrid/sdk/timeline/_doc_patch.py": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+    "astrid/sdk/timeline/capture.py": "d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7",
+    "astrid/sdk/timeline/_command_state.py": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+    "astrid/sdk/timeline/_step_undo.py": "a38bb078ecd2579399f131fa0a08a9bedd339226f92b9d8ac27de2b6d27827a6"
+  },
+  "retained_service_id": "agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016",
+  "retained_artifacts": {
+    "current_xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.xml",
+      "sha256": "72872c77087719a692bff4b48b8d85ea62b9931d59a502c8e246daee0c81c18a",
+      "verified_in_place": true
+    },
+    "current_body_log": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.body.log",
+      "sha256": "0f34700508bfe35c94d2811d502b442cc36d4db4c4643303d8ca5dfd8f5af001",
+      "verified_in_place": true
+    }
+  },
+  "nodes": [
+    {
+      "ordinal": 1297,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_exact_capture_acceptance_inverse_redo_restart_and_retry[image-add]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "5ac313f840216e98ee1066d5ab3f2b058699c512a383036abecd81d6bdfa350f"
+    },
+    {
+      "ordinal": 1298,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_exact_capture_acceptance_inverse_redo_restart_and_retry[image-swap]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "c6daf3be3d7543d05d5eb7a097ad293a54b4f6e7f2b16eb7971f9c3fc5f54b96"
+    },
+    {
+      "ordinal": 1301,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_exact_capture_acceptance_inverse_redo_restart_and_retry[video-add]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "2af78c8a4d6dde00513c97774209cf5414162b6a0811c9407c6431394852aa0b"
+    },
+    {
+      "ordinal": 1303,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_exact_capture_acceptance_inverse_redo_restart_and_retry[video-swap]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "390b6de80ec9f545ead41310bc5def322566df52a1139c2a0cbb3a20983a28b5"
+    },
+    {
+      "ordinal": 1305,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-add-stale-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "0a367c7a8a01ad5eee19c9c8d1feb8d2899e5d50769d28105befd52da7f294c3"
+    },
+    {
+      "ordinal": 1307,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-add-stale-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "cc59e25a265bebcbe81e001b8838790f70036c6ac48cc5c0fd01ed949fb39fa8"
+    },
+    {
+      "ordinal": 1310,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-add-foreign-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "2a0ca9c69eeccbf32f5bae770d554c0d424b0950143d6823ca097a873aae7e71"
+    },
+    {
+      "ordinal": 1313,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-add-foreign-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "61217e47dfc2aa063317bb140932d1d1faae87edde980568225ad1fb4f9b6de9"
+    },
+    {
+      "ordinal": 1317,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-add-fingerprint-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "b62c0c3ee875ec5669fa822ecd9cc3ce6e3183b34c1d1ba83f43960cab569044"
+    },
+    {
+      "ordinal": 1320,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-add-fingerprint-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "792a1bcf1486f14335670981aec626d9a219956a1c4eb2262541d1babe4484c9"
+    },
+    {
+      "ordinal": 1322,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-swap-stale-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "ab1a8a0930725a1c3319bb3d8ea3545fab5b6d7c7007f231825d69e4030156c1"
+    },
+    {
+      "ordinal": 1326,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-swap-stale-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "85e8d4dc6aebc1e0da036fd043a3a1abc4506f09dd665cb125ef48f8fca436ce"
+    },
+    {
+      "ordinal": 1330,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-swap-foreign-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "2c3b035c1cbd2643fc3f40eeac28c574897e82d425bdfc78bd1f13a066416019"
+    },
+    {
+      "ordinal": 1334,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-swap-foreign-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "986617b20c7255c811fd2b94ce74e2d745c5229dc51ef6b1dfee6a12f4356dbd"
+    },
+    {
+      "ordinal": 1357,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-swap-fingerprint-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "7aef375a846672498269cf12b08bc356170d60e5e86d159852af4de103290432"
+    },
+    {
+      "ordinal": 1373,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[image-swap-fingerprint-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "2d322fdf549525ec9b4d7908d72c204f2d35f6cded7be20ec038e5a4cd60b7c5"
+    },
+    {
+      "ordinal": 1411,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-add-stale-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "4e97e31bb35068721c11d40b5f858fe8ff1ad88f49d5e2f7c11cf12e9fcf4b68"
+    },
+    {
+      "ordinal": 1427,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-add-stale-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "cd22e079591a3b800b8299f02fd34c4d2bcd877aa526e77b814e798bca72d87f"
+    },
+    {
+      "ordinal": 1442,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-add-foreign-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "8bf8e44561d3674d2b659f6b1f6a32e992e47a3447bcc6f8f66859618cc26eac"
+    },
+    {
+      "ordinal": 1455,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-add-foreign-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "3ce4cd88ef1e1dd89bb712b2c0bc4f0428df17a4bf58af7a38ac2c28a6a02248"
+    },
+    {
+      "ordinal": 1468,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-add-fingerprint-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "cf590427496c2c4303a26a4b1bca6a57fdfbc16c2054ab5e94e72e74cf5a7878"
+    },
+    {
+      "ordinal": 1472,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-add-fingerprint-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "19adf6affb05c02255ed842a518f0ce5e08dde241e8b4ec3913dc5f1def83e1f"
+    },
+    {
+      "ordinal": 1476,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-swap-stale-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "a624d21986aae5d27ae55fe26ac2603b41bc950af7ab311bf896b8b7b508e4c4"
+    },
+    {
+      "ordinal": 1482,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-swap-stale-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "6f9acdf4d9715c7c3bc626e4a27f01bd4b2140fa56867da6cb38a59b5cd01463"
+    },
+    {
+      "ordinal": 1488,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-swap-foreign-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "4d59364aec50a3114acc72624360f4a6b28995a8f64463d7fbade3d52cf156ef"
+    },
+    {
+      "ordinal": 1492,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-swap-foreign-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "db166bbd40ae4c46a13f52ba118e64584b11d1e704c9172af456aab6cd020336"
+    },
+    {
+      "ordinal": 1497,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-swap-fingerprint-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "549f37718cb316d61dedd72ba4efb7301432bf6f5b3f2aa25edd724877d526ae"
+    },
+    {
+      "ordinal": 1501,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_invalid_exact_selection_refuses_without_any_writes[video-swap-fingerprint-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "b5400184c6bfb45d6c7369035b3fea4f04060ee5b2a47bfb37ed3eae8035fe84"
+    },
+    {
+      "ordinal": 1506,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_source_metadata_is_part_of_the_exact_selection_fingerprint[image-add]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "8137942b46467d19e22b3a4421fb0226d69a95d87455e6384d0dafef9228e765"
+    },
+    {
+      "ordinal": 1512,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_source_metadata_is_part_of_the_exact_selection_fingerprint[image-swap]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "1b1426076c2cc6fc4ae1cec008c56579a4e3c09d951c389a2c1159617d3a3b7f"
+    },
+    {
+      "ordinal": 1520,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_source_metadata_is_part_of_the_exact_selection_fingerprint[video-add]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "107131867120774814d22f1afd28e5aa5d26d291ee7d791df64946855b18ad75"
+    },
+    {
+      "ordinal": 1527,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_source_metadata_is_part_of_the_exact_selection_fingerprint[video-swap]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "3b991687df83c2d59e57d7a54c40f99fb9eaa3820a16bb2da16c0fb4948a60dc"
+    },
+    {
+      "ordinal": 1529,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[image-add-lifecycle-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "843aaf97fc63e1fba78d43e5939b7fb6696c0845e18b616bff7159dacba49117"
+    },
+    {
+      "ordinal": 1532,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[image-add-lifecycle-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "16876ef9951f1f9e423496795921c0560714f92d0fa9ca18e26e2878019188aa"
+    },
+    {
+      "ordinal": 1535,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[image-add-revocation-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "ab88d7c6837f2f3bc2c62a105d099ed49995519ead42038a0c1a6067d1454a81"
+    },
+    {
+      "ordinal": 1538,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[image-add-revocation-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "865ac09011feb1081f2be118e0f00e3d90ad532448bfdf47fb0463680e7fa08e"
+    },
+    {
+      "ordinal": 1541,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[image-swap-lifecycle-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "51e3488dbadb36930155a3abc696baab45c932bcfa2b98dfc483653ec52a9887"
+    },
+    {
+      "ordinal": 1543,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[image-swap-lifecycle-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "636cd0233efa27c5e9d7e415b57350e96cf4960a7fd73552f5f68ed02e7cae75"
+    },
+    {
+      "ordinal": 1547,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[image-swap-revocation-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "34f26261bbb0c3d28c4fede347a08b8337f02dceb2a0af76e47241824d1019cf"
+    },
+    {
+      "ordinal": 1550,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[image-swap-revocation-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "5f3a134cee5394efd7de3a31d3ec614a5986284532e66c15828fc48ef18e2c64"
+    },
+    {
+      "ordinal": 1555,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[video-add-lifecycle-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "5bda5a0c07f97bd7cd9e9558e64e70edd8b57fcdd7beb7a95a06cb642d0b86e4"
+    },
+    {
+      "ordinal": 1564,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[video-add-lifecycle-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "958bd5297a2576b9479101725189b211f67cdcd49341245dc88f7c79df9fded6"
+    },
+    {
+      "ordinal": 1584,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[video-add-revocation-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "f9f6fea268e846df0ceb599ecf8d3faea338a4ee0d1bb03e14b8099f86cd4019"
+    },
+    {
+      "ordinal": 1601,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[video-add-revocation-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "85b05ef72eed49aa0e0d167282c61e7bdd4fc22164da6d8f2f59e9f4f7dc325d"
+    },
+    {
+      "ordinal": 1618,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[video-swap-lifecycle-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "5f2fbca7951f6ec68d9b4e2d83ee8dddbc854b4134ce551ece3c06cf76b676e4"
+    },
+    {
+      "ordinal": 1637,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[video-swap-lifecycle-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "21bd8c329e3a56346151379383641b9daf5de1b6019f446d94d32d3e7d664e8c"
+    },
+    {
+      "ordinal": 1653,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[video-swap-revocation-old_media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "526109501d794ba9b8a7d8811541430f292c319bb1bac1a906ba61768a7b8a33"
+    },
+    {
+      "ordinal": 1669,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_capture_to_accept_races_refuse_atomically[video-swap-revocation-media]",
+      "source": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "retained_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "current_source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "26f7bb6dc8abf043886ce5bd49ab5b172d8d3b865e330258bc7739eb6ff485b3"
+    },
+    {
+      "ordinal": 2370,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-first]",
+      "source": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "retained_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "current_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "f38be5bf68438567c7556df2406ee45978c04ea0da6073c83da328d5e08b2517"
+    },
+    {
+      "ordinal": 2373,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-second]",
+      "source": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "retained_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "current_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "0a6ebf3f186b9aa19cfde5f8f3ffd569cdb113826e8846d629e60b97138504b1"
+    },
+    {
+      "ordinal": 2375,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[remove-middle]",
+      "source": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "retained_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "current_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "2d1ff89e688545c01f052dbac75966f60fb2cd26b2f950b99075165da73ed3af"
+    },
+    {
+      "ordinal": 2395,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_provider_accepts_add_and_remove_with_exact_undo_and_redo",
+      "source": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "retained_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "current_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "16ed2a1373715fe7577e3325c7c8a7ff4ebd27ab7ba3dcff0446378be2c7ee63"
+    },
+    {
+      "ordinal": 2399,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[image]",
+      "source": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "retained_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "current_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "5567033bda763a4626d8430206dda96b29e2ed9ce390c58cef24743863f8557b"
+    },
+    {
+      "ordinal": 2403,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[video]",
+      "source": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "retained_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "current_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "049763ca83c5e8c7ee2118c748c1f3821a01ab5aee0d6ffb808c0d838b8db8dd"
+    },
+    {
+      "ordinal": 2404,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_promotion_and_keep_as_pooled_round_trip_through_the_provider",
+      "source": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "retained_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "current_source_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "9eb62df67b9f26697e59f3cba2ec8aa09445d075744ccf27eac1b91b13874001"
+    },
+    {
+      "ordinal": 2747,
+      "nodeid": "tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo",
+      "source": "tests/editing_conformance/test_recipe_occurrence_media.py",
+      "retained_source_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "current_source_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "ca2cd98213c2b7f6d78d8c1248d506edf499b0d94bb6d34f168baeed6a63becb"
+    },
+    {
+      "ordinal": 2756,
+      "nodeid": "tests/editing_conformance/test_recipe_occurrence_media.py::test_provider_exact_reload_inverse_redo_and_retired_asset_reservation[add]",
+      "source": "tests/editing_conformance/test_recipe_occurrence_media.py",
+      "retained_source_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "current_source_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "6f55994d8c1c3ca5fd433a7f455072a52dac141d6e928d21701a39d83dca38d9"
+    },
+    {
+      "ordinal": 2761,
+      "nodeid": "tests/editing_conformance/test_recipe_occurrence_media.py::test_provider_exact_reload_inverse_redo_and_retired_asset_reservation[swap]",
+      "source": "tests/editing_conformance/test_recipe_occurrence_media.py",
+      "retained_source_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "current_source_sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "359ae9edd555af77998d8ef5a005259af7b9b4dab415c0f1a460204fe8cee8db"
+    },
+    {
+      "ordinal": 3625,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo[parent]",
+      "source": "tests/editing_conformance/test_commit_runtime_parent_media_swap.py",
+      "retained_source_sha256": "685f6168fa378b9269a2e605e5bec4643a413b856e2782a786bbe4e7dfbd9fcf",
+      "current_source_sha256": "685f6168fa378b9269a2e605e5bec4643a413b856e2782a786bbe4e7dfbd9fcf",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "95338f882cb732ef7eb3cb94d1c49250d11921cb5d021204875018f23a12505a"
+    },
+    {
+      "ordinal": 3627,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_parent_media_swap.py::test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo[occurrence:occ-a]",
+      "source": "tests/editing_conformance/test_commit_runtime_parent_media_swap.py",
+      "retained_source_sha256": "685f6168fa378b9269a2e605e5bec4643a413b856e2782a786bbe4e7dfbd9fcf",
+      "current_source_sha256": "685f6168fa378b9269a2e605e5bec4643a413b856e2782a786bbe4e7dfbd9fcf",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "0c56eafbb3eb057628aac2d95651e8260f590fcd3a4b4c5b7f8b6fc9885a7745"
+    },
+    {
+      "ordinal": 3943,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[image-False]",
+      "source": "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+      "retained_source_sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "current_source_sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "4b027e180072dfc8f2639f7d169f34ab7f1fb0f71f616369463d6e6fe544f7c7"
+    },
+    {
+      "ordinal": 3946,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[image-True]",
+      "source": "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+      "retained_source_sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "current_source_sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "f918e05bf4705b29ec4763bf3e61934a83cc6e8a13de37194259b6550d6b04c4"
+    },
+    {
+      "ordinal": 3952,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[video-False]",
+      "source": "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+      "retained_source_sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "current_source_sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "465f3cab1f2f4530adf46c565a96a1c9f0ad30fb3ed629ccb7cab69a45e1fd6a"
+    },
+    {
+      "ordinal": 3980,
+      "nodeid": "tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[video-True]",
+      "source": "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+      "retained_source_sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "current_source_sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "4e4fc9cfdb1897eff7e160f4cfe642abb60386919b3f4304433ea6195e7c82df"
+    },
+    {
+      "ordinal": 4309,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-anchor]",
+      "source": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "retained_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "current_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "8d351eaab6ff7e30fa66012023b0e48e3b94c9ba3dab8ab282e2733182485ee1"
+    },
+    {
+      "ordinal": 4369,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-absent]",
+      "source": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "retained_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "current_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "4a1999b01e0bc76fbd6921e7e511d4bc56b7aa5a4a28fb6f8d007b954ff143d8"
+    },
+    {
+      "ordinal": 4394,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-anchor]",
+      "source": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "retained_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "current_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "64a7a630bbb438b6541e83a44d5f6207bb485d8f1f1ccb42810a6f393a3e0e11"
+    },
+    {
+      "ordinal": 4397,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-absent]",
+      "source": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "retained_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "current_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "ecc617bd3c60ec14ac672c69d18a7647ce5c9443b873dcd0b62fcfb11408f158"
+    },
+    {
+      "ordinal": 4585,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_provider_accepts_completion_placement_with_exact_undo_and_redo[image]",
+      "source": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "retained_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "current_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "1f008277965b6272ac150833a29b5d514a73de7a3c40a2a859f664d89005dc78"
+    },
+    {
+      "ordinal": 4630,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_provider_accepts_completion_placement_with_exact_undo_and_redo[video]",
+      "source": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "retained_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "current_source_sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "6c0ce270c76514c2fb9a18ef3ee83ac746295841599061d6fd0a586151f7db57"
+    },
+    {
+      "ordinal": 5216,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_exact_capture_replay_inverse_and_redo[create]",
+      "source": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "retained_source_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "current_source_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "85f8d0f65884463b9179a1bc38f3944add03b2c1647c2c9c2d5b8c99c2ee981e"
+    },
+    {
+      "ordinal": 5219,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_exact_capture_replay_inverse_and_redo[unplace]",
+      "source": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "retained_source_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "current_source_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "02194e94d395a6c82c5e542aae74007b2150b969358705efa00e43ee79ea5d28"
+    },
+    {
+      "ordinal": 5257,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_provider_accepts_create_with_exact_undo_and_redo",
+      "source": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "retained_source_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "current_source_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "c80a08f2323267f138a68d628d8ab9eb75036b1d347504fbd56d498b28afb2ed"
+    },
+    {
+      "ordinal": 5347,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_provider_accepts_unplace_with_exact_undo_and_redo",
+      "source": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "retained_source_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "current_source_sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "62a4a4ed8760bb7f03df0e9d04e04e48783847b533cb5b3436b4bd8a8b54bf01"
+    },
+    {
+      "ordinal": 5429,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-append]",
+      "source": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "retained_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "current_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "c78920dc5f6827ec300ab20d117ce05c514ceb4e2d59baf1887fb2dd10f7c89d"
+    },
+    {
+      "ordinal": 5432,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-append]",
+      "source": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "retained_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "current_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "894153b38264a5d28911e2ef131b872f3d733468526a701447ba9335dc7aa4a6"
+    },
+    {
+      "ordinal": 5436,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-shift]",
+      "source": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "retained_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "current_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "77c0ac486394b438fe43a9e4ca156b1316a3a163d9f8277a865c55af9e214047"
+    },
+    {
+      "ordinal": 5439,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-overlay-anchor]",
+      "source": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "retained_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "current_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "2b03ed20ba351bf02683a5dbf9bb4bf9e76c6c78061580381d1943f0668ebe1c"
+    },
+    {
+      "ordinal": 5509,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_provider_accepts_shared_placement_with_exact_undo_and_redo[image]",
+      "source": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "retained_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "current_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "4d5fa56305eef650f15c3216101e75c85c2053fb90fea6cb06fa8c1d73e00d7e"
+    },
+    {
+      "ordinal": 5516,
+      "nodeid": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_provider_accepts_shared_placement_with_exact_undo_and_redo[video]",
+      "source": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "retained_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "current_source_sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "6af8a195a64ae56ca225fdb9be319b0a3b8f14e7d69d3dcf9457c4430fffa45b"
+    },
+    {
+      "ordinal": 7527,
+      "nodeid": "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]",
+      "source": "tests/timeline/test_authoring_media.py",
+      "retained_source_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+      "current_source_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "8fbfd941baad9f3c1936584074279bbcdc0c5442147d67fd36e47264c62b95f6"
+    },
+    {
+      "ordinal": 7598,
+      "nodeid": "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]",
+      "source": "tests/timeline/test_authoring_media.py",
+      "retained_source_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+      "current_source_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "1951d62438fd237d162d4d294937e1c86b8edcd9fda48ce1d5e59e06e42e8105"
+    },
+    {
+      "ordinal": 7611,
+      "nodeid": "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original",
+      "source": "tests/timeline/test_authoring_media.py",
+      "retained_source_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+      "current_source_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+      "source_unchanged": true,
+      "retained_failure_text_sha256": "20502df12076ef44f2a314fbf8c1634cb423e7110df1eba6283b47accaea663f"
+    }
+  ],
+  "node_count": 83,
+  "unique_source_count": 9,
+  "unchanged_source_count": 83,
+  "local_xml": {
+    "effect-sample-red.xml": "53b5507b825c36e31b5b847adf2e138d573956e4c1bd9b324c3b65a066dc726b",
+    "effect-boundary-controls-final.xml": "8b76b10ca49786d36dd80db0fe2a7159a5067295857ace913ab76bc8707dc93e",
+    "effect-boundary-controls.xml": "2885c9c65ac5f6b35bdfe9f7ee6f6b78808430498fa2c7e301a9d81388442512",
+    "runtime-strict-controls-configured.xml": "408d428b9c2b7d14f2540729111e4ab172088c0cf7f72edd8ce5eab0887deece",
+    "runtime-strict-controls.xml": "0205a370041fbeb5eaacb21b7061dbf17bbd87e98cc40f6089ae2d21ead100fa"
+  },
+  "guard": "runtime_protocol/timeline_commit_auth.py:826-842 step_output",
+  "blocked_seam": "Unchanged intermediate parent has no effect; no effect pin is legal for an empty patch. step_output compares this image to the final accepted parent instead of retaining the authenticated preceding boundary.",
+  "whole83_submitted": false,
+  "green_sample": false
+}

@@ -1,0 +1,23 @@
+{
+  "status": "HELD_OUTSIDE_OWNERSHIP",
+  "fixed": "document_from_bundle respects the sealed _copy_manifest; CommitPatch.after admits a verified source only after the consuming command",
+  "remaining_case": "test_mounted_accepted_selection_uses_predecessor_input: clip.set-element reselects the same E from newly admitted P2, then clip.set changes hold",
+  "provider_input": "exact sealed P1 predecessor, without hydrated P2; scalar.target and params.element bind this input",
+  "provider_output": "same parent payload/digest, documents P1+P2, new deterministic parent revision after source consumption",
+  "outside_product": "/home/user/work/wt/rt-pin-1daca2a3/runtime_protocol/timeline_commit_auth.py",
+  "frames": {
+    "command_output_unchanged_digest_early_continue": 2158,
+    "validate_sequential_capture_original_input_authentication": 2538,
+    "validate_next_input_projection_refusal": 2864
+  },
+  "unapplied_pairing": "Runtime command_output must authenticate manifest-only parent turnover from the exact consumed-source manifest and scope at that command boundary even when payload digest is unchanged; preserve initial input identity, exact document/media pins, all native/materialization/effect/read coverage, strict binding checks and no-write guarantees. Do not infer authority from payload equality or change provider output to drop P2 or retain a stale parent revision.",
+  "controls": "Retained sources and newly admitted sources with an actual element revision change pass genuine mounted provider acceptance and restarted PARAM; manifest-only source turnover remains refused.",
+  "unresolved_acceptance": [
+    "original mounted newly-admitted same-element regression and its restart remain blocked",
+    "protected security/core review and FULL CORE before adoption pending"
+  ],
+  "outside_observations_untouched": [
+    "sheet alias463",
+    "legacy sequential2431"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/home/user/work/wt/agt-F-D115-producer-input-sol-1002:/home/user/work/wt/rt-pin-1daca2a3",
+    "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-1daca2a3",
+    "TMPDIR": "/tmp/w-1eb8bac14c"
+  },
+  "pytest_prefix": "/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45",
+  "runs": {
+    "input-red.xml": {
+      "files": [
+        "tests/editing_conformance/test_commit_document_input_capture.py"
+      ],
+      "result": "8 passed, 3 failed before source fix",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-D115-producer-input-sol-1002:/home/user/work/wt/rt-pin-1daca2a3 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-1daca2a3 TMPDIR=/tmp/w-1eb8bac14c /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/editing_conformance/test_commit_document_input_capture.py --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D115-producer-input-sol-1002/evidence/input-red.xml --tb=short"
+    },
+    "source-controls.xml": {
+      "files": [
+        "tests/editing_conformance/test_commit_document_input_capture.py"
+      ],
+      "result": "11 passed, 6 failed: new test request used a native alias for a physical CommitRead; corrected only new test input",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-D115-producer-input-sol-1002:/home/user/work/wt/rt-pin-1daca2a3 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-1daca2a3 TMPDIR=/tmp/w-1eb8bac14c /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/editing_conformance/test_commit_document_input_capture.py --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D115-producer-input-sol-1002/evidence/source-controls.xml --tb=short"
+    },
+    "source-controls-fixed.xml": {
+      "files": [
+        "tests/editing_conformance/test_commit_document_input_capture.py"
+      ],
+      "result": "17 passed",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-D115-producer-input-sol-1002:/home/user/work/wt/rt-pin-1daca2a3 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-1daca2a3 TMPDIR=/tmp/w-1eb8bac14c /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/editing_conformance/test_commit_document_input_capture.py --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D115-producer-input-sol-1002/evidence/source-controls-fixed.xml --tb=short"
+    },
+    "source-neighbors.xml": {
+      "files": [
+        "tests/sdk/test_timeline_selected_param_authority.py",
+        "tests/editing_conformance/test_commit_runtime_source_copy.py",
+        "tests/editing_conformance/test_captured_redo_media_closure.py"
+      ],
+      "result": "63 passed, 1 failed: TimelineCommitStore fixture SimpleNamespace lacks db_path before provider execution",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-D115-producer-input-sol-1002:/home/user/work/wt/rt-pin-1daca2a3 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-1daca2a3 TMPDIR=/tmp/w-1eb8bac14c /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/sdk/test_timeline_selected_param_authority.py tests/editing_conformance/test_commit_runtime_source_copy.py tests/editing_conformance/test_captured_redo_media_closure.py --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D115-producer-input-sol-1002/evidence/source-neighbors.xml --tb=short"
+    },
+    "producer.xml": {
+      "files": [
+        "tests/sdk/test_selected_param_neutral_stage.py",
+        "tests/editing_conformance/test_commit_document_input_capture.py"
+      ],
+      "result": "112 passed, 1 failed",
+      "original_physical_custody_cases": "32/32 PASS (accepted16 + staged16)",
+      "failed": [
+        "test_mounted_accepted_selection_uses_predecessor_input"
+      ],
+      "refusal": "Runtime timeline_commit_auth.py:2864 after exact first input now authenticates at :2538",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-D115-producer-input-sol-1002:/home/user/work/wt/rt-pin-1daca2a3 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-1daca2a3 TMPDIR=/tmp/w-1eb8bac14c /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/sdk/test_selected_param_neutral_stage.py tests/editing_conformance/test_commit_document_input_capture.py --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D115-producer-input-sol-1002/evidence/producer.xml --tb=short"
+    }
+  },
+  "ruff": {
+    "command": "/home/user/work/venv-agent/bin/ruff check --no-cache astrid/sdk/timeline/commit.py tests/editing_conformance/test_commit_document_input_capture.py",
+    "exit_code": 0
+  },
+  "mypy": {
+    "command": "/home/user/work/venv-agent-typecheck-v2/bin/mypy --cache-dir=/tmp/w-1eb8bac14c/mypy astrid/sdk/timeline/commit.py tests/editing_conformance/test_commit_document_input_capture.py",
+    "exit_code": 0,
+    "result": "Success: no issues found in 2 source files"
+  },
+  "compile": {
+    "command": "PYTHONPYCACHEPREFIX=/tmp/w-1eb8bac14c/pycache /home/user/work/venv-agent/bin/python -m py_compile astrid/sdk/timeline/commit.py tests/editing_conformance/test_commit_document_input_capture.py",
+    "exit_code": 0
+  },
+  "diff": {
+    "command": "git diff --check",
+    "exit_code": 0
+  },
+  "three_prior_neighbors": {
+    "test_reselection_hold_param_preserves_exact_new_source[True]": "PASS",
+    "test_changed_staged_revision_is_verified_at_its_own_input": "PASS",
+    "test_occurrence_physical_owners_come_from_sealed_closure[None]": "PASS"
+  },
+  "no_full_suite_or_sockets": true
+}
