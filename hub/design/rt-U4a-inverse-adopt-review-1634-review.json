@@ -1,0 +1,42 @@
+{
+  "task": "U4a",
+  "review_branch": "tl/rt-U4a-Agent-inverse-adopt-1614",
+  "review_commit": "cec01ed6612f2b56e8d170a5d066dc7a4882805f",
+  "agent_base": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "verdict": "PASS",
+  "scope": {
+    "allowed_product_diff": "runtime.lock.json source_commit 5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 -> ab1e4f6141987706132916e2da16477f5a019464",
+    "changed_files": ["runtime.lock.json"],
+    "outside_runtime_lock_unchanged": true,
+    "generated_clients_schema_artifacts_and_tests_unchanged": true
+  },
+  "runtime": {
+    "receipt": "checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464",
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "head": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean_current": true,
+    "author_before_after_clean": true,
+    "held_wal_source_used": false,
+    "held_wal_branch_observed": "011cbdc88e0577bed87a3465e772d6ffbdcd46fe (separate D130-held branch; not adopted)"
+  },
+  "mappings": {
+    "count": 15,
+    "mapping_equal_base": true,
+    "all_hashes_match_producer": true,
+    "all_consumers_equal_base": true,
+    "all_consumers_equal_released_runtime": true,
+    "all_consumers_equal_ab1e_producer": true
+  },
+  "checks": {
+    "vendor_lock": "PASS",
+    "artifact_manifest": "PASS",
+    "focused_pytest": "24 passed in 5.43s",
+    "private_compile": "PASS",
+    "ruff_baseline": "PASS; current=2143 baseline=2143",
+    "git_diff_check": "PASS",
+    "mypy_baseline": "UNVERIFIED; configured runner could not execute because the shared Python 3.13 environment lacks types-PyYAML and installed NumPy stubs require Python 3.12 syntax"
+  },
+  "author24pass_retained": true,
+  "d130_wal_hold_preserved": true
+}

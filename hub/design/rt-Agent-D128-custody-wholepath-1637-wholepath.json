@@ -1,0 +1,83 @@
+{
+  "task": "rt-Agent-D128-custody-wholepath-1637",
+  "mode": "independent-read-only-source-diagnosis",
+  "status": "SOURCE_DIAGNOSIS_EXACTMISSING_ACTUAL_PATH",
+  "scope": {
+    "build": false,
+    "provider": false,
+    "child_retry": false,
+    "farm_census_execution": false,
+    "writes_to_product_or_inputs": false,
+    "swap_d130": "HOLD"
+  },
+  "retained_observation": {
+    "request": "venv-agent-child-d131-a4e016",
+    "request_sha256": "208ee436d087552dc055e30d85348055f2923a66b9382d1f7f0e1048ae39b6db",
+    "store_entry": "child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "maker_stage": "readonly-source complete",
+    "refusal": "unowned retained source directory",
+    "verifier_location": "make-child-venv embedded STORE_VERIFY lines 1147-1156",
+    "offending_path": "EXACTMISSING",
+    "classifier_or_permission_denial": false,
+    "retained_source_tree": "EXACTMISSING",
+    "raw_request_exported": false
+  },
+  "source_derived_finding": {
+    "smallest_generator": "normal no-seed source installation of retained source snapshots",
+    "mechanism": "The maker archives Git files into .child-venv-source-{name}/{agent,runtime}, then, when DEPENDENCY_SEED is empty, runs pip install on those source directories. Setuptools build_meta invokes egg_info in the source working directory during build-requirement discovery; egg_info defaults egg_base to the top of the source tree and creates a <project>.egg-info directory.",
+    "candidate_generated_paths": [
+      ".child-venv-source-*/agent/astrid.egg-info",
+      ".child-venv-source-*/runtime/astrid_runtime.egg-info"
+    ],
+    "confidence": "source-proved-generator_actual-path-unverified",
+    "not_proved": [
+      "which candidate source snapshot received the generated directory",
+      "the exact generated directory name in the cleaned D131 staging tree",
+      "whether a second source-side build artifact was present"
+    ],
+    "archive_shape_check": "The authenticated Agent and Runtime Git archives contain no directory entry outside the parent set of their committed files; archive extraction alone is not the proved extra-directory generator.",
+    "inventory_owner": "The existing strict expected_dirs/root_inventory guard is the owner of the refusal; no broad allowlist or security/ownership change is proved."
+  },
+  "normal_route_comparison": {
+    "current_route": [
+      "source-directories",
+      "archive-agent",
+      "archive-runtime",
+      "install-agent from AGENT_SRC",
+      "install-runtime from RUNTIME_SRC",
+      "import-provenance",
+      "distribution-provenance",
+      "freeze",
+      "path-metadata-relocation",
+      "readonly-source"
+    ],
+    "seeded_route_difference": "With DEPENDENCY_SEED set, the maker creates .source-inputs/{agent,runtime}.tar and installs those archives instead of the retained source directories; the D131 refusal log has no build-input-directory/build-agent-input/build-runtime-input stages, so the refused request followed the direct source-directory branch.",
+    "historical_passing_child": "A prior Farm handoff reports an actual normal 9cd3dbe8/1d9ddba5 child and isolated Runtime import PASS, but its retained source tree/path is unavailable here; no actual source-tree equivalence is claimed.",
+    "historical_passing_tree": "EXACTMISSING"
+  },
+  "farm_census_comparison": {
+    "source": "rt-OPS-Farm-census-return-1516.py",
+    "role": "read-only source/manifest comparison only; not executed",
+    "same_rule": "source_manifest_checks also builds expected_dirs from authenticated committed-file parents and reports an offending relative path when an actual retained tree exists",
+    "actual_input": "EXACTMISSING",
+    "census_result_for_d131": "EXACTMISSING, because the cleaned retained root and authenticated Farm corpus are unavailable"
+  },
+  "identities": {
+    "maker_sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_verifier_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "agent_archive_sha256": "506ccb04a37f49ff78c2d7cd7edba11159477085e2ccfba60662e5270c9b7d4f",
+    "runtime_archive_sha256": "763ef7e9232ce4ccc8fd482b85c2af044124144856e0a03e0188dfb596d641dc"
+  },
+  "safety": {
+    "kit_edited": false,
+    "permissions_edited": false,
+    "markers_or_owner_edited": false,
+    "git_or_pin_edited": false,
+    "child_requested": false,
+    "provider_or_full_suite_run": false,
+    "hub_written": false
+  }
+}
