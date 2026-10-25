@@ -1,0 +1,44 @@
+{
+  "task": "D118c-host14-bootstrap-1105",
+  "repo": "agent",
+  "base": "942855e56e774d83b3930bbfd87df22dbcd94ad1",
+  "changed_files": [
+    "astrid/sdk/host_bootstrap.py",
+    "tests/sdk/test_host_bootstrap_environment.py"
+  ],
+  "forbidden_key": "PYTHONNOUSERSITE",
+  "validator_source": "astrid/core/rendering/remotion_runtime.py:214-236",
+  "production_change": "Remove PYTHONNOUSERSITE from the copied host child environment before Remotion validation; retain strict rejection of NODE_OPTIONS and PYTHONHOME.",
+  "protected_file": {
+    "path": "tests/sdk/test_host_bootstrap_source_identity.py",
+    "sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+    "byteexact_against_parent": true,
+    "original_target_function_assert_count": 16,
+    "current_target_function_assert_count": 16
+  },
+  "tests": [
+    {
+      "command": "PYTHONNOUSERSITE=1 PYTHONPYCACHEPREFIX=/tmp/w-7b8cb6b4f6/pycache PYTHONPATH=/home/user/work/wt/app-D118c-host14-bootstrap-1105:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_host_bootstrap_environment.py",
+      "result": "3 passed"
+    },
+    {
+      "command": "/root/.local/bin/ruff check astrid/sdk/host_bootstrap.py tests/sdk/test_host_bootstrap_environment.py",
+      "result": "All checks passed"
+    },
+    {
+      "command": "/home/user/work/venv-agent/bin/mypy --follow-imports=skip astrid/sdk/host_bootstrap.py tests/sdk/test_host_bootstrap_environment.py",
+      "result": "Success: no issues found in 2 source files"
+    },
+    {
+      "command": "PYTHONPYCACHEPREFIX=/tmp/w-7b8cb6b4f6/pycache python -m py_compile astrid/sdk/host_bootstrap.py tests/sdk/test_host_bootstrap_environment.py",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "unrun": "The protected 14-node source-identity selector was not run because no genuine local Remotion profile/environment was present; no fake environment was substituted.",
+  "source_sha256": "341e51a51cb26f58fbde8ef32f729f390dc1226843f85b3394af46fd66c7feae",
+  "additive_test_sha256": "dfa87d6648fc7372f3ae3cd529356b851e8ea1d2313563ae04144a38f6127ffb"
+}

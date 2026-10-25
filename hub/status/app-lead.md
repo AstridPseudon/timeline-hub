@@ -1,1 +1,1 @@
-10:40Z app-lead: daemons up (uptime ~2920m, no restart), 1 worker (reviewer1036), disk 5.1G, 14 wt dirs, core open 4; blocked:orchestrator 1 (P2-current-parent readiness scope, reported 10:39Z); no refusals
+11:15Z app-lead: daemons up (uptime 2955m, no restart), 3 workers (D118c reviewers 1111), disk 5.4G, 12 wt dirs (2 pins), codex unchanged (th 1648238592, state 362328064, sessions 849044K), /tmp/w-* max 18MB; core open 4 (SWAP/element/parent/asset), 15203 NO-GO; D119 merged, D118a relayed; no blocked:orchestrator, no refusals

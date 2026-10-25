@@ -1,0 +1,24 @@
+{
+  "task": "D118c occurrence-create2",
+  "allowed_file": "tests/editing_conformance/test_commit_runtime_occurrence_create.py",
+  "source_sha256_before": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+  "source_sha256_after": "91b0d3e7f5815892e58cb0256640a08173fe3e7703cff0a4caa480d0e9bcf855",
+  "change": "Caller wrapper only: add established C0 label/step/merge/read/dry-run/source/rationale/group metadata.",
+  "semantic_inputs_changed": false,
+  "assertions_changed": false,
+  "assert_count_before": 29,
+  "assert_count_after": 29,
+  "assert_ast_conserved": true,
+  "test_function_ast_conserved": true,
+  "changed_lines": "9 additions, 1 deletion",
+  "tests": [
+    {"command": "ruff check tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "mypy --follow-imports=skip tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "PYTHONPYCACHEPREFIX=$TMPDIR/pycache python -m py_compile tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "git diff --check", "result": "pass"},
+    {"command": "parent-source ruff check via stdin", "result": "pass"}
+  ],
+  "behavioral_tests": "not run per D118c source-only brief; known RED remains open",
+  "blocked": "No source-only closure claim. Runtime/provider behavior and exact failure reproduction remain unverified by this task.",
+  "owner_next_step": "Run the retained two-node behavior lane only after the qualified Agent/runtime tuple is available; investigate any remaining failure outside this test file with the named owner."
+}

@@ -1,0 +1,31 @@
+{
+  "task": "D118c-prepared-video1",
+  "status": "SOURCE_ALIGNED_BEHAVIOR_UNVERIFIED",
+  "assigned_file": "tests/editing_conformance/test_prepared_video_birth.py",
+  "changed_paths": [
+    "tests/editing_conformance/test_prepared_video_birth.py"
+  ],
+  "retained_node": "tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+  "retained_ordinal": 3116,
+  "retained_source_sha256": "4cc89a0a7bbc4e1020e3ca9c676e7125113ee60c517bfdf5e3cd0821620cdc2c",
+  "retained_failure_text_sha256": "8b471510787bc3c5c1ab572e71368d50af920ac7b3e11b3f9a1803d1c59fdf4e",
+  "original_070dfc_source_sha256": "4cc89a0a7bbc4e1020e3ca9c676e7125113ee60c517bfdf5e3cd0821620cdc2c",
+  "parent_source_sha256": "4cc89a0a7bbc4e1020e3ca9c676e7125113ee60c517bfdf5e3cd0821620cdc2c",
+  "current_source_sha256": "ba4acbcdee2a42c85ab7070a26983a59915ddcdfc395214761feb727c8e44476",
+  "runtime_lock_sha256": "cc29667c219cbf48b9575802f00b745ee4893975bcace9acd99bb2ec901b55db",
+  "runtime_source_commit": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+  "runtime_source_tree": "9bf331d68df8c966e8927a3f083ba03687803c99",
+  "runtime_pin_alignment": "updated stale 6634a17f/47b3767 tree controls to current runtime.lock source/tree",
+  "caller_alignment": "retained runtime_media.media_realm registered astrid provider and runtime_media.commit commitTimeline caller",
+  "assert_ast_conserved": true,
+  "function_statement_count_conserved": true,
+  "domain_inputs_and_assertions_changed": false,
+  "behavior_run": false,
+  "behavior_claim": "none",
+  "static_checks": {
+    "ruff": "PASS: /home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_prepared_video_birth.py",
+    "mypy": "PASS: /home/user/work/venv-agent/bin/mypy --follow-imports=skip tests/editing_conformance/test_prepared_video_birth.py",
+    "py_compile": "PASS: PYTHONPYCACHEPREFIX=$TMPDIR/pycache /home/user/work/venv-agent/bin/python -m py_compile tests/editing_conformance/test_prepared_video_birth.py",
+    "diff_check": "PASS: git diff --check"
+  }
+}
