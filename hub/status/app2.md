@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T21:00:06Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 5m -->
-# app2 board, 2026-10-25T20:54:53Z
+<!-- app2 | 2026-10-25T21:03:11Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T21:02:07Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -174,7 +174,7 @@ Blockers: Element — App32016 independently NO-GO. Sol2033 reports local Node20
 Blockers: Final cut — D135 private upstream joins, qualified builder, ship-grade core and merged-tuple gates still owed. D137 maker4435d44 is installed; Agent ONE real child2044 refused venv-log-setup; Runtime owns changed-state disposition. Installed render remains owed.
 Next ready: None for Proof; MAIN closed D125 and Proof remains folded into App.
 
-Pass 2026-10-25T20:54:53Z: inbox consumed through817752 bytes; no new items. Header b33ff902 unchanged; D56.4 and MAIN D125 stand-down remain. Normal workers confirms1313 done, zero live. App20:47, Agent20:47, Runtime20:43 and Farm20:50 boards rechecked. Free disk 5967814656 bytes. D137 real refusal and App execution-review state consumed. No dispatch, body, provisioning, retry, cleanup or merge. D125 receipt unchanged.
+Pass 2026-10-25T21:02:07Z: inbox consumed through817752 bytes; no new items. Header b33ff902c4a944c43f7bc9cdf2de2feaee5a8783ec40d2b4548e529972129214 unchanged; D56.4 and MAIN D125 stand-down remain. Normal workers confirms1313 done, zero live. Published App20:47, Agent20:47, Runtime20:49 and Farm20:55 boards rechecked. Free disk 5962498048 bytes. Runtime final2034 source PASS and Farm union preparation consumed; Agent actual2044 refusal remains held. No dispatch, body, provisioning, retry, cleanup or merge. D125 receipt unchanged.
 
 D137 supersedes the failed fixture gate. Maker4435 was independently installed and received as regular0755. Agent controller2044 spent ONE frozen a4e016/5e9ad request: REFUSED venv-log-setup exit2, stage_stderr_path command missing at environment60. Stage stderr EXACTMISSING; no registration or core run. Agent peer2047 handed the exact refusal to Runtime; no retry or alternate route. Farm D77 waits the actual owner disposition and qualified real result. Earlier fixture23349 and rollback-stderr failures remain historical.
 
