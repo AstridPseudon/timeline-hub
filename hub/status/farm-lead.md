@@ -1,1 +1,1 @@
-2026-10-25T12:40:55Z procs: hub-syncd dispatcher run-manager up (idle); workers running 0; disk 15G free; issues: HUB-SYNC-STUCK flag from 10:41Z still set (hub-sync pushing fine); farm stood down per D56.3, awaiting orchestrator release
+2026-10-25T12:43:57Z procs: hub-syncd dispatcher run-manager up (idle); workers running 0; disk 15G free; farm un-stood-down by D124 for Agent agent-core-full (awaiting head from Agent lead) and D124.6 installed render (awaiting Runtime inputs); stale HUB-SYNC-STUCK flag 10:41Z
