@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "kind": "evidence-only firstreturn correction",
+  "base_packets": {
+    "original2132": "IMMUTABLE",
+    "independent2143": "IMMUTABLE"
+  },
+  "verdict": "CORRECTED_UNKNOWN",
+  "original_result": "NO_GO_ORIGINAL_ELEMENT",
+  "profiling_credit": false,
+  "findings": {
+    "F001": {
+      "status": "CORRECTED",
+      "safe_cprofile_projection": "EXACTMISSING",
+      "actual_summary_omitted_cprofile": "UNKNOWN",
+      "actual_profile_eligibility_gate": "UNKNOWN",
+      "actual_profile_eligibility_subgate": "UNKNOWN",
+      "actual_selector_predicate": "UNKNOWN",
+      "actual_selector_operand": "UNKNOWN",
+      "exact_source_conditional": "If an actual retained helper summary for this request was emitted and lacked cprofile, the helper source makes profile_eligible relevant; the retained safe evidence does not establish either premise.",
+      "runtime_cause_claim": false,
+      "optimization_claim": false,
+      "source_refs": [
+        "app-D127c-profile-trace-return-2132/evidence/first-seam.json",
+        "app-D127c-element15200-review-2113-verdict.json",
+        "app-D127c-element15200-review-2113-profile-totals.json",
+        "runtime/tests/helpers/p2_commit_phase_capture.py:542-564,1133-1134"
+      ]
+    },
+    "F002": {
+      "status": "CORRECTED",
+      "product_tuple": {
+        "app": {"commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881", "tree": "8e10af0976b012205f27a18a432c750a27de0725"},
+        "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+        "runtime": {"commit": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"},
+        "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+      },
+      "product_runtime_helper": {
+        "path": "tests/helpers/p2_commit_phase_capture.py",
+        "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+        "relationship": "helper contained by product Runtime ab1e4f6141987706132916e2da16477f5a019464"
+      },
+      "external_reviewed_helper": {
+        "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+        "origin": "normal-home Runtime",
+        "origin_runtime_commit": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+        "origin_runtime_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+        "repository_relative_path": "tests/helpers/p2_commit_phase_capture.py",
+        "helper_source_commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+        "qualified_helper_source_commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+        "role": "external reviewed diagnostic helper; not Runtime product source"
+      },
+      "actual_selected_helper_path": "UNKNOWN",
+      "actual_selected_helper_source_commit": "UNKNOWN",
+      "normal_receipt_role": "dispatch gate only",
+      "source_refs": [
+        "app-D127c-last-element-prep-2053-recipe.json",
+        "app-D127c-last-element-prep-2053-source-custody.json",
+        "app-D127c-controller2105-admission-2108.json",
+        "app-D127c-element15200-review-2113-source-manifest.json",
+        "app-D127c-element15200-review-2113-source-custody.json"
+      ]
+    }
+  },
+  "preserved_unknowns": [
+    "provider outcome",
+    "App response",
+    "caller receipt",
+    "browser wall outcome",
+    "exact command operand and private payload fields",
+    "raw pstats persistence"
+  ],
+  "source_changed": false,
+  "product_changed": false,
+  "test_changed": false,
+  "pin_changed": false
+}

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "task": "D127c evidence-only firstreturn correction",
+  "source_tuple": {
+    "app": {"commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881", "tree": "8e10af0976b012205f27a18a432c750a27de0725"},
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"commit": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "helper_records": {
+    "product_runtime": {
+      "path": "tests/helpers/p2_commit_phase_capture.py",
+      "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+      "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+    },
+    "external_reviewed": {
+      "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+      "origin": "normal-home Runtime",
+      "origin_runtime_commit": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+      "origin_runtime_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+      "repository_relative_path": "tests/helpers/p2_commit_phase_capture.py",
+      "helper_source_commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+      "qualified_helper_source_commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+      "role": "external reviewed diagnostic helper; not Runtime product source",
+      "actual_selected_absolute_path": "UNKNOWN",
+      "actual_selected_source_commit": "UNKNOWN"
+    }
+  },
+  "normal_receipt": {
+    "commit": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "role": "dispatch gate only"
+  },
+  "immutable_input_hashes": {
+    "plan_sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075",
+    "original2132_first_seam_sha256": "0261b15967422e875c42be77c9fac8a5209f419b4741113734ba705daa88374f",
+    "original2132_source_manifest_sha256": "69be8401c9debbc7da54b51d57e999591112a0d20022ea7e601b712748ea0ab4",
+    "independent2143_review_sha256": "cf5cfc47e24a696688160ad4a10038a0f927024e1bb28f8d29608f2eef542399",
+    "independent2143_source_manifest_sha256": "8553a85d0e6e6850e7f8d1dac5e2e42c454f1ed2c5ff93b9c8f5356a5f3eead1"
+  },
+  "safe_only": true,
+  "source_changed": false,
+  "actual_body_rerun": false,
+  "private_material_published": false
+}

@@ -1,0 +1,88 @@
+{
+  "task": "D127d",
+  "review_kind": "independent_read_only_route_and_contract_review",
+  "status": "FINITE_UNAPPLIED",
+  "candidate_status": "PENDING",
+  "scope_verdict": "PASS",
+  "custody_verdict": "PASS",
+  "route_verdict": "FAIL_FOR_NO_HOOKS_AUTHORIZATION",
+  "acceptance": "NOTRUN",
+  "source_head": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+  "source_tree": "8e10af0976b012205f27a18a432c750a27de0725",
+  "prior_packet": {
+    "status": "FINITE_UNAPPLIED",
+    "claim_confirmed": true,
+    "body_run": false,
+    "functional_credit": false
+  },
+  "d127d_route": {
+    "selector": "p2-element",
+    "retains_runtime_logs": true,
+    "ordinary_stream_retention": "runtime stdout/stderr are retained privately by the harness",
+    "phase_capture_sink": "allocated for authoring runs when the retained-log directory is configured",
+    "helper_activation": "sitecustomize loads the selected helper only for explicit capture environment and Runtime CLI start",
+    "measurement_effects": ["Python trace hook", "sampler thread", "request-scoped cProfile", "bounded watchdog capture"],
+    "supported_disabled_arm": false,
+    "negative_guard": "helper hash/path validation rejects unreviewed identities; no normal no-helper arm is accepted",
+    "source_refs": [
+      "scripts/testing/d66-plain-stack.mjs:21-24,248-256,289-314,627-750",
+      "tests/e2e/local/support/harness.ts:661-705,719-733,766-785,1473-1490",
+      "scripts/testing/sitecustomize.py:33-80",
+      "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts:525-559",
+      "/home/user/work/runtime/tests/helpers/p2_commit_phase_capture.py:14-34,227-250,1390-1441"
+    ]
+  },
+  "scope_correction": {
+    "owner_rule": "D127d prohibits further profiling/measurement; it does not by itself prohibit ordinary retained diagnostic stderr",
+    "plain_stderr_is_measurement": false,
+    "current_coupling": "harness startRuntime derives captureSink from phaseCaptureDirectory for timelineAuthoring, while teardown uses the same directory for child streams",
+    "smallest_future_seam": "In harness startRuntime, retain runtimeLogDirectory for stdout/stderr but do not pass captureSink to runtimeEnv for the one candidate run; keep sitecustomize/helper guards unchanged",
+    "no_flag_invented": true,
+    "no_guard_weakening": true
+  },
+  "production_caller": {
+    "path": "src/tools/video-editor/hooks/useTimelineSave.ts:302-377",
+    "session": "createLocalSaveSession",
+    "route": "localDocumentSave -> timelineLocalSaveHandoff -> Runtime commitTimeline",
+    "request_builder": "src/tools/video-editor/commands/localSaveSession.ts:158-188",
+    "outbox": "src/tools/video-editor/commands/commitOutbox.ts:464-530",
+    "idempotency": "durable pending request retains exact body/key through uncertain outcomes",
+    "a2_a3_p2_usage": "element saves, popup media saves and registerAsset saves enter the same local save funnel; no legacy overwrite route was authorized by this review"
+  },
+  "c0_sections_reviewed": {
+    "1_request": "PASS_STATIC",
+    "2_doc_patch": "PASS_STATIC_WITH_RUNTIME_AUTHORITY_UNVERIFIED",
+    "3_conflicts": "PASS_STATIC_WITH_RUNTIME_AUTHORITY_UNVERIFIED",
+    "4_replies": "PASS_STATIC_WITH_RUNTIME_AUTHORITY_UNVERIFIED",
+    "5_undo": "PASS_STATIC_WITH_RUNTIME_AUTHORITY_UNVERIFIED",
+    "7_history": "PASS_STATIC_WITH_RUNTIME_AUTHORITY_UNVERIFIED"
+  },
+  "c0_notes": [
+    "The production local-save builder supplies base pair, commands, label, steps, dry_run false and source app; full-v2 metadata supplies merge/reads when supported.",
+    "doc.patch intent generation preserves explicit before values, ordered identity-list operations, physical root pins and conservative omitted-read fallback; Runtime remains the authority for closure, conflict and effect authentication.",
+    "Dependent outbox intents chain from the acknowledged head, retain exact pending requests for retry, and mark a refused predecessor plus dependents for explicit resolution/rollback.",
+    "Generated client and operation host send Idempotency-Key and reject preview replies on the mutation path; accepted replies allow the compatibility spelling rebased as well as merged.",
+    "Whole-commit Undo is emitted as timeline.inverse through the same outbox/commit path; P2 source assertions cover canonical readback, reload, guarded Undo and legacy-route absence."
+  ],
+  "pins": {
+    "app": {"commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881", "tree": "8e10af0976b012205f27a18a432c750a27de0725"},
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": "PENDING exact COST-CANDIDATE author plus independent review/source and immutable checkout receipt",
+    "composition": {"commit": "635f4de06da22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "execution_receipts": {
+    "preflight": null,
+    "bootstrap": null,
+    "service": null,
+    "submission": null,
+    "body": null,
+    "acceptance": "NOTRUN"
+  },
+  "privacy": {
+    "raw_payloads": false,
+    "idempotency_keys": false,
+    "private_urls": false,
+    "stacks": false,
+    "credentials": false
+  }
+}

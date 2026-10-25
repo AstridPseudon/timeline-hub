@@ -1,0 +1,46 @@
+{
+  "manifest_kind": "D127d independent source and contract review",
+  "status": "FINITE_UNAPPLIED",
+  "acceptance": "NOTRUN",
+  "candidate_status": "PENDING",
+  "app": {
+    "root": "/home/user/work/wt/app-D127d-route-independent-2143",
+    "commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "tree": "8e10af0976b012205f27a18a432c750a27de0725",
+    "worktree_status": "clean",
+    "source_files": [
+      {"path": "scripts/testing/d66-plain-stack.mjs", "lines": ["21-24", "241-256", "289-314", "627-750"], "sha256": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def", "git_blob_sha1": "7eed3b4f13fb1812db7b255b77757de6978ed6a0"},
+      {"path": "scripts/testing/d66-plain-stack.test.mjs", "lines": ["18-55", "298-320", "429-455"], "sha256": "3b22f3e83e332d5d6834389192d62fa07d5b581c5af4974e619841ab1cb0d6c0", "git_blob_sha1": "bc29ca546619e45da8c013d3ca5c871c5608eaad"},
+      {"path": "scripts/testing/sitecustomize.py", "lines": ["20-80"], "sha256": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e", "git_blob_sha1": "51db46c7de80d38a4d3a8ae06645948dedac697d"},
+      {"path": "tests/e2e/local/support/harness.ts", "lines": ["150-183", "661-705", "719-733", "766-785", "1473-1490"], "sha256": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e", "git_blob_sha1": "4a163448acb5c5446a00a37468840ef959c885df"},
+      {"path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts", "lines": ["525-559", "808-818", "1013-1108"], "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef", "git_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9"},
+      {"path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "lines": ["1038-1131"], "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637", "git_blob_sha1": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019"},
+      {"path": "src/tools/video-editor/commands/commitSession.ts", "lines": ["177-250", "350-438", "1385-1407", "1334-1344"], "sha256": "7bddb9c4adc28ff7d7079c4011ae965e65952570abe248f3d0247789a3532648", "git_blob_sha1": "0d156036d4a10deb37a9c6631cd55d5c2f6f91f6"},
+      {"path": "src/tools/video-editor/commands/commitOutbox.ts", "lines": ["464-530"], "sha256": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21", "git_blob_sha1": "8f6c157b910b12b900b61d45354442e3474c2975"},
+      {"path": "src/tools/video-editor/commands/documentPatchIntent.ts", "lines": ["1-20", "70-180", "180-250", "250-300"], "sha256": "732473c05b7709b8a4bb95160df3f40679caca9e7fe26384fe0a2ec4d80d08b6", "git_blob_sha1": "5e1b1d1e2cd95ac7e402daf0ac9f4f4cf1ec606f"},
+      {"path": "src/tools/video-editor/hooks/useTimelineSave.ts", "lines": ["302-377", "759-797"], "sha256": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a", "git_blob_sha1": "6b069ffd033f3fd0d262e242d9c2cb37cbaff73a"},
+      {"path": "src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts", "lines": ["160-280", "450-560"], "sha256": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c", "git_blob_sha1": "4bce50f28c332c6e28aa4aed635ce80e32e3de52"},
+      {"path": "src/integrations/runtime/timeline-commit-types.ts", "lines": ["1-100", "110-150"], "sha256": "b567dcc623d3b3047b931c4337d9f6688efdfa590c9108c3406d0659fa152674", "git_blob_sha1": "347bae5ac98677a7ee0de1bb685bbfe9829c7842"},
+      {"path": "src/integrations/runtime/generated.ts", "lines": ["190-208"], "sha256": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4", "git_blob_sha1": "eaee6688c68cd657f55fd5675d8b5199bf7867ec"},
+      {"path": "src/integrations/runtime/dataProvider.ts", "lines": ["746-829"], "sha256": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988", "git_blob_sha1": "5c830fe2b4661c9722ad22960f752c968604acd1"},
+      {"path": "src/integrations/runtime/operationHost.ts", "lines": ["280-305"], "sha256": "c11f86dde0131e4c09fea568d340415e0f58c8f08bf8d4d9674b282568ce2284", "git_blob_sha1": "23063d9633af9089b7d0b72d09214241a1768698"}
+    ]
+  },
+  "runtime_read_only_sources": [
+    {"path": "/home/user/work/runtime/tests/helpers/p2_commit_phase_capture.py", "lines": ["1-34", "56-79", "227-285", "1390-1441"], "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d", "git_blob_sha1": "2ae83f1bb8420f1b409165382711aaaeb485fb1f"},
+    {"path": "/home/user/work/runtime/contract/commit-v2.md", "sections": ["1", "2", "3", "4", "5", "7"], "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7", "git_blob_sha1": "257024df6fa93be767f0c74ee10014a6770c4fcb"},
+    {"path": "/home/user/work/runtime/contract/schemas/timeline-commit.json", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815", "git_blob_sha1": "d94415a7d57e7d113223a425c076af7b1a8a4248"}
+  ],
+  "prior_evidence_inputs": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127d-verification-route-prep-2133/evidence/findings.json", "sha256": "0056182fb712e7726e144a5d8e7d75716266d0714fde356117a3221c9760405c"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127d-verification-route-prep-2133/evidence/recipe.json", "sha256": "64e96098488659867aac3a1f8bda1900ccbed506281887ecc399da72329af9ba"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127d-verification-route-prep-2133/evidence/source-manifest.json", "sha256": "45fdaae3554bc80fb3aa727502ad1fe41e0cce015b0a5fbdfdc21da59249dd81"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127d-verification-route-prep-2133/evidence/validation.md", "sha256": "de072300a1067df2b908d84e8d6af89ad750eefcbe274c817c9cd579cde2e643"}
+  ],
+  "product_tuple": {
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": "PENDING exact COST-CANDIDATE",
+    "composition": {"commit": "635f4de06da22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "privacy": {"raw_payloads": false, "idempotency_keys": false, "private_urls": false, "stacks": false, "credentials": false}
+}

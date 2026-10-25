@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task": "D127c independent review",
+  "reviewed_app": {
+    "commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "tree": "8e10af0976b012205f27a18a432c750a27de0725"
+  },
+  "reviewed_product_runtime": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "helper_path": "/home/user/work/wt/rt-pin-ab1e4f61/tests/helpers/p2_commit_phase_capture.py",
+    "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  },
+  "external_helper_used_by_prior_packet": {
+    "path": "/home/user/work/runtime/tests/helpers/p2_commit_phase_capture.py",
+    "commit": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "binding": "separate explicit helper source; not the helper in the pinned product Runtime checkout"
+  },
+  "reviewed_agent": {
+    "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"
+  },
+  "app_source_sha256": {
+    "scripts/testing/d66-plain-stack.mjs": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def",
+    "scripts/testing/sitecustomize.py": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+    "src/tools/video-editor/components/ElementsLibraryPanel.tsx": "2f0c716bd77a5efb7fe18436bfdc1e46b8a85f16d0f562b3986cf67bb30e3f4c",
+    "src/tools/video-editor/runtime/element-adapter.ts": "4f6e7621bcd8795c150a2282d5d41aa8a003ab0570bc1238e88f64d4328344b9",
+    "src/tools/video-editor/commands/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230",
+    "src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+    "src/integrations/runtime/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4"
+  },
+  "source_citations": {
+    "selector": "runtime/tests/helpers/p2_commit_phase_capture.py:449-564",
+    "projection_gate": "runtime/tests/helpers/p2_commit_phase_capture.py:1133-1134",
+    "raw_optional": "runtime/tests/helpers/p2_commit_phase_capture.py:131-150,661-668",
+    "bootstrap": "scripts/testing/sitecustomize.py:33-60",
+    "helper_identity": "scripts/testing/d66-plain-stack.mjs:241-256,377-384,652-672,748-750",
+    "production_caller": "src/tools/video-editor/components/ElementsLibraryPanel.tsx:46-99; src/tools/video-editor/runtime/element-adapter.ts:383-487; src/tools/video-editor/commands/localSaveSession.ts:158-188; src/integrations/runtime/generated.ts:202-204",
+    "c0_request_shape": "contract/commit-v2.md:60-127; src/tools/video-editor/commands/localSaveSession.ts:168-185"
+  },
+  "prior_packet_sha256": {
+    "report.md": "0330629a3e4bc4dd66132642d49d5404c7ac6c5c5084c3970db3a879bf67be73",
+    "evidence/first-seam.json": "0261b15967422e875c42be77c9fac8a5209f419b4741113734ba705daa88374f",
+    "evidence/source-manifest.json": "69be8401c9debbc7da54b51d57e999591112a0d20022ea7e601b712748ea0ab4",
+    "evidence/validation.md": "0c15d7db6e0bbb6a64c70d9405dbf574384bf938333242810c00498ba428d8fd",
+    "evidence/wholepath.md": "188d1a19145c3657169beddaee83247bfada5f40da22ad3543941d12f9dd61a5"
+  },
+  "source_changed": false,
+  "private_material_published": false,
+  "functional_acceptance": "NOT_RUN"
+}

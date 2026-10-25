@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "result": "CORRECTED_UNKNOWN_FIRST_SEAM",
+  "case": "NO_GO_ORIGINAL_ELEMENT",
+  "original2132_immutable": true,
+  "independent2143_immutable": true,
+  "first_seam": {
+    "name": "helper_cprofile_eligibility_gate",
+    "safe_cprofile_projection": "EXACTMISSING",
+    "actual_completed_request_crossed": "UNKNOWN",
+    "actual_summary_present": "UNKNOWN",
+    "actual_summary_omitted_cprofile": "UNKNOWN",
+    "actual_profile_eligible": "UNKNOWN",
+    "actual_gate": "UNKNOWN",
+    "actual_subgate": "UNKNOWN",
+    "actual_selector_predicate": "UNKNOWN",
+    "actual_selector_operand": "UNKNOWN",
+    "source_conditional": {
+      "statement": "If an actual retained helper summary for this request was emitted and lacked cprofile, the helper source makes profile_eligible relevant; the retained safe evidence does not establish either premise.",
+      "conditional_only": true,
+      "runtime_cause_claim": false,
+      "optimization_claim": false
+    }
+  },
+  "raw_pstats": {
+    "status": "OPTIONAL_AND_UNCONFIGURED",
+    "distinct_from_selection": true,
+    "selection_conclusion": "UNKNOWN"
+  },
+  "limits": {
+    "max_functions": 40,
+    "max_edges": 1600
+  },
+  "privacy": {
+    "safe_fields_only": true,
+    "private_payload_args_locals_auth_headers_urls_raw_stacks": false
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "review": "independent read-only review of D127c packet 2132 and D127c actual-15200 packet 2113",
+  "verdict": "FAIL",
+  "original_fail_preserved": true,
+  "profile_rerun": false,
+  "claims": [
+    {
+      "id": "C1",
+      "claim": "The actual completed request is proved not to have crossed the cProfile eligibility gate.",
+      "result": "FAIL",
+      "reason": "The supplied packet proves a completed Runtime boundary with HTTP 200 and records cProfile as EXACTMISSING, but does not publish the summary key set or the internal profile_eligible flag. Source proves that cprofile is emitted only when profile_eligible is true; it does not by itself prove whether this summary was retained with cprofile absent or whether the summary/profile record was missing from the safe packet.",
+      "known": "The source-level eligibility gate is distinct from the exact input predicate.",
+      "unknown": ["summary presence/key omission for the actual request", "profile_eligible value in the actual request", "which eligibility subcondition failed"],
+      "citations": [
+        "app-D127c-element15200-review-2113-verdict.json:runtime_boundary,profile",
+        "app-D127c-element15200-review-2113-profile-totals.json:cprofile",
+        "runtime/tests/helpers/p2_commit_phase_capture.py:542-564,1133-1134"
+      ]
+    },
+    {
+      "id": "C2",
+      "claim": "The exact selector predicate is unknown and must not be reconstructed from the failed browser assertion.",
+      "result": "PASS",
+      "reason": "The packet omits the command operand/private body fields, and the source has multiple gates before the exact _is_element_request predicate.",
+      "citations": [
+        "app-D127c-profile-trace-return-2132/evidence/first-seam.json:first_seam",
+        "runtime/tests/helpers/p2_commit_phase_capture.py:542-564"
+      ]
+    },
+    {
+      "id": "C3",
+      "claim": "The source distinguishes helper source selection, the actual RuntimeHandler, and request-input selection.",
+      "result": "PASS",
+      "reason": "sitecustomize loads the explicitly selected helper into the Runtime CLI daemon; the helper requires the real RuntimeHandler type, commit route, prefetched body and API version before inspecting commands. The actual request operands remain unknown.",
+      "citations": [
+        "scripts/testing/sitecustomize.py:33-60",
+        "runtime/tests/helpers/p2_commit_phase_capture.py:449-474"
+      ]
+    },
+    {
+      "id": "C4",
+      "claim": "Raw pstats is optional and no raw-pstats destination is configured by the reviewed bootstrap path.",
+      "result": "PASS",
+      "reason": "The helper accepts raw_pstats_sink=None and returns no raw path when absent; sitecustomize passes only watchdog_seconds and D66 exports helper identity plus watchdog, not a raw-pstats sink.",
+      "citations": [
+        "runtime/tests/helpers/p2_commit_phase_capture.py:131-150,661-668",
+        "scripts/testing/sitecustomize.py:20-30,45-60",
+        "scripts/testing/d66-plain-stack.mjs:377-384,748-750"
+      ]
+    },
+    {
+      "id": "C5",
+      "claim": "The safe cProfile projection is bounded at 40 functions and 1600 edges.",
+      "result": "PASS",
+      "reason": "The committed App validator requires exactly those limits and the helper emits the configured bounded limits.",
+      "citations": [
+        "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts:265-280",
+        "runtime/tests/helpers/p2_commit_phase_capture.py:704-705,795-796"
+      ]
+    },
+    {
+      "id": "C6",
+      "claim": "The published packet contains no raw private payload, key, URL, stack, or pstats material.",
+      "result": "PASS",
+      "reason": "The reviewed safe artifacts declare safe-only publication and the packet contains no such fields; this review did not read or export private capture material.",
+      "citations": [
+        "app-D127c-profile-trace-return-2132/evidence/first-seam.json:privacy",
+        "app-D127c-element15200-review-2113-verdict.json:privacy"
+      ]
+    },
+    {
+      "id": "C7",
+      "claim": "The prior source manifest is an exact, reproducible binding for the helper and product Runtime source tuple.",
+      "result": "FAIL",
+      "reason": "The manifest records product Runtime ab1e4f... while recording helper hash 095c... under runtime/tests/helpers. The pinned product Runtime helper is 6c9d...; 095c... is the separate normal-home helper from cf0b82... . An explicit override can explain the run, but the prior manifest does not record that helper origin/path, so the tuple is not self-sufficiently reproducible.",
+      "citations": [
+        "app-D127c-profile-trace-return-2132/evidence/source-manifest.json:source_tuple,sha256,source_paths",
+        "app-D127c-element15200-review-2113-source-manifest.json:helper_and_guard,runtime_normal_home_receipt",
+        "/home/user/work/wt/rt-pin-ab1e4f61/tests/helpers/p2_commit_phase_capture.py:sha256=6c9daef...",
+        "/home/user/work/runtime@cf0b82dd47452a7a34fc63eb233e9b1dc0532806/tests/helpers/p2_commit_phase_capture.py:sha256=095c252..."
+      ]
+    },
+    {
+      "id": "C8",
+      "claim": "The actual production element caller uses the App save funnel and Runtime commit route.",
+      "result": "PASS",
+      "scope": "static source only; no live behavior credit",
+      "reason": "ElementsLibraryPanel invokes timeline.apply_element on the mounted adapter; the adapter saves through the bound timeline route, localSaveSession builds a v2 request with source via app, and the generated client POSTs commitTimeline with Idempotency-Key.",
+      "citations": [
+        "src/tools/video-editor/components/ElementsLibraryPanel.tsx:46-99",
+        "src/tools/video-editor/runtime/element-adapter.ts:383-487",
+        "src/tools/video-editor/commands/localSaveSession.ts:158-188",
+        "src/integrations/runtime/generated.ts:202-204"
+      ]
+    },
+    {
+      "id": "C9",
+      "claim": "The App producer shape includes the C0 v2 base, commands, label, steps, merge/reads, dry_run and source fields.",
+      "result": "PASS",
+      "scope": "static source only; no Runtime acceptance claim",
+      "reason": "localSaveSession constructs the base pair, commands, source, label and dry_run, then adds v2 metadata including steps, merge and optional reads when the full-v2 contract is available.",
+      "citations": [
+        "contract/commit-v2.md:60-80,94-127",
+        "src/tools/video-editor/commands/localSaveSession.ts:168-185"
+      ]
+    }
+  ],
+  "finite_findings": ["D127c-IR-F001", "D127c-IR-F002"],
+  "test_policy": "Static source/AST/JSON/hash/diff checks only. No product tests, typecheck, lint, browser, localhost, sockets, bootstrap, service, acquisition, or profiling rerun."
+}
