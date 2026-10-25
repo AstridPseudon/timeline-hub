@@ -1,0 +1,60 @@
+{
+  "task": "D115",
+  "reviewer": "agt-F-D115-batch-review-0932",
+  "base": "f3c0bc72898e59e8f8b87c60cb0a47cf247d8c9e",
+  "verdicts": [
+    {
+      "diff": "A",
+      "branch": "tl/agt-F-D115-pair16-0926",
+      "commit": "7d85895ba18637231adc12fc0130f51f8be96608",
+      "file": "tests/editing_conformance/test_current_pair_reader.py",
+      "file_sha256": "6a0787475f0b032500e769379a2e3f556a4ba5cabc07fa3996350200083a1284",
+      "verdict": "PASS_SOURCE",
+      "selectors": 16,
+      "passed": 16,
+      "failed": 0,
+      "archive_sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+      "evidence_sha256": "9637d97ba0baa7b2400de55bd586e201a004ed9efaab9a3740391cd6a13e22b4",
+      "d72": "Faithful authenticated archive-path setup correction; behavior qualification remains limited to retained 16-node evidence."
+    },
+    {
+      "diff": "B",
+      "branch": "tl/agt-F-D115-legacy27-0926",
+      "commit": "a089532e2bc9a0a014a73047d3cc70b051d8215e",
+      "file": "tests/editing_conformance/test_authenticated_legacy_restore.py",
+      "file_sha256": "c25ec5b116d712d2abdbc316bd5f22be91392435217461ce49d4f4204fa1f374",
+      "verdict": "PASS_SOURCE",
+      "selectors": 27,
+      "passed": 26,
+      "failed": 1,
+      "failure": "test_inverse_preserves_unrelated_parent_move[True]: invalid_records: sequential command metadata differs from the prepared candidate",
+      "archive_sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+      "evidence_sha256": "f2e132895754f39a21d9724cb2d9112be3e984057b274ffbe6340cc5a3a6c209",
+      "d72": "Faithful shared authenticated-reader setup correction; retain the distinct Runtime/provider metadata refusal as open."
+    },
+    {
+      "diff": "C",
+      "branch": "tl/agt-F-D115-native54-0924",
+      "commit": "45daf7d872ab39c91a1a0d3360d5ec7b15f38b3a",
+      "file": "tests/editing_conformance/native_word_anchor_fixture.py",
+      "file_sha256": "e0b170149fa08cd2bd5655af505b4b96cc0faccc5dceba51c50ee2cbdcb1c91a8",
+      "verdict": "PASS_SOURCE",
+      "selectors": 54,
+      "passed": null,
+      "failed": null,
+      "sample": "red before selector bodies: candidate.timing: legacy word anchor is missing; short negative retains [1,3) versus authored [0,0.1)",
+      "exact_cluster_rerun": false,
+      "d72": "Faithful address/envelope/internal-FPS setup correction; no behavior pass; seed/scope question remains open."
+    }
+  ],
+  "static_checks": {
+    "ruff": "pass on private immutable-blob copies",
+    "mypy": "pass with Agent pyproject config and Agent/Runtime MYPYPATH",
+    "py_compile": "pass on private immutable-blob copies",
+    "git_diff_check": "pass for all three diffs"
+  },
+  "shared_test_hashes": {
+    "test_native_word_anchor.py": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f",
+    "test_word_binding_recipe.py": "f23e227bce165d3c7ada70d9742c1e6f36159823c845df9903903f71575228bd"
+  }
+}

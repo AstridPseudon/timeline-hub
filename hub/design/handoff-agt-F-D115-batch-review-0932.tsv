@@ -1,0 +1,4 @@
+diff	branch	commit	file_sha256	verdict	selectors	passed	failed	open_or_note
+A	tl/agt-F-D115-pair16-0926	7d85895ba18637231adc12fc0130f51f8be96608	6a0787475f0b032500e769379a2e3f556a4ba5cabc07fa3996350200083a1284	PASS_SOURCE	16	16	0	archive 2915bd4a...b72d3; override preserved
+B	tl/agt-F-D115-legacy27-0926	a089532e2bc9a0a014a73047d3cc70b051d8215e	c25ec5b116d712d2abdbc316bd5f22be91392435217461ce49d4f4204fa1f374	PASS_SOURCE	27	26	1	sequential command metadata refusal remains Runtime/provider-open
+C	tl/agt-F-D115-native54-0924	45daf7d872ab39c91a1a0d3360d5ec7b15f38b3a	e0b170149fa08cd2bd5655af505b4b96cc0faccc5dceba51c50ee2cbdcb1c91a8	PASS_SOURCE	54			sample red; exact54 not rerun; legacy seed/scope open
