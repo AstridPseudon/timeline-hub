@@ -313,13 +313,6 @@ def saved_closure(saved_runtime):
     source_payload["provenance"] = {"source": "fixture", "shot_id_literal": source_shot}
     source_payload["generation_inputs"] = {"visual": {"object_id": source_media_id}}
     source_payload["text_bindings"] = [{"slot": "voiceover", "text": "hello"}]
-    if not source_payload["items"]:
-        source_payload["items"] = [{
-            "item_id": source_internal["clips"][0]["id"],
-            "media_id": source_media_id,
-            "source_frame": None,
-            "metadata": {},
-        }]
     item = source_payload["items"][0]
     item["source_frame"] = None
     item["metadata"].update({
@@ -336,6 +329,12 @@ def saved_closure(saved_runtime):
     source_internal["registry"]["opaque_registry"] = {"keep": [1, 2, 3]}
     source_internal["tracks"][0]["opaque_track"] = {"future": True}
     source_internal["clips"][0]["opaque_clip"] = {"literal": "item-1"}
+
+    # The current duplicate API copies the explicit authoring baselines.  The
+    # source is removed below, so author its complete current image before the
+    # duplicate commands and retain the original source mapping separately.
+    source["base_payload"] = copy.deepcopy(source_payload)
+    source["base_internal_timeline"] = copy.deepcopy(source_internal)
 
     duplicate_authoring_shot(bundle, source_shot, new_shot_id="shot-z", occurrence_id="occ-z", start_ms=0)
     duplicate_authoring_shot(bundle, source_shot, new_shot_id="shot-a", occurrence_id="occ-a", start_ms=1000)
