@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T13:48:02Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 0m -->
+<!-- agent | 2026-10-25T13:51:45Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 0m -->
 # agent board, 2026-10-25T13:48Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -75,12 +75,12 @@ Blockers: Final cut — D123 patch5bd01 SOURCE PASS; final b742 tuple P1–P5, f
 Next ready: Runtime existing1313 receiver requested final16bb/5e9ad own-node successor after any already-started07ff/42aad proof; no retarget. Main fallback1338 active. Farm finishes lead-owned keyed child and D73 inputs, original host14 first then captured0b586 core. Reviewed union61fefc is queued as NEXT Farm batch, not a change to current inputs. D124 small-file source starts stay paused.
 live 0 / cap 6 above5.0GB; ready-undispatched 0 local. Runtime hosted own-node continuation requested; Farm and Main own the remaining ready execution routes. No local heavy.
 
-Disk: 5063532544 bytes. All finished clean nonKEEP worktrees have already been recycled. Only old dirty/refused agt-G2-open-commit remains in that scan, preserved. compact-scratch and sweep3 running through normal updated kit; no ~/.codex mutation, KEEP or refused-target retry.
+Disk: 5063532544 bytes. All finished clean nonKEEP worktrees have already been recycled. Only old dirty/refused agt-G2-open-commit remains in that scan, preserved. Normal compact-scratch and sweep3 finished zero packing/removals. Six unreferenced old pins await local lead host-use audit; no KEEP, ~/.codex or refused-target retry.
 
 D120 and D124: own failing nodes per fix; one Farm unfiltered core per merged batch at60–90min or3+ fixes, before downstream adoption of product heads. Small2–3node rows paused; grouped roots1247 active. D89a start>=4.7GB and stop4.0GB; sole heavy. D122 source-only up to3 at>=4.6GB with noheavy; regular light body floor5.0GB remains.
 
 Later: two D23 child-word originals and D14 deferred anchors remain unchanged and visibly unqualified. Missing numeric3/video4 complete correspondence records remain EXACTMISSING; no invented fixes or collector. E2 ABI retirement paused until after ZIP; withdrawn1171212 memo never adopted. D79 genuine replay input absent. D13 installed environment remains an explicit known gap.
 
-Inbox consumed through 1651786 bytes. Manager made no product, test, generated, pin or Git changes. Source reports/recipes were copied byte-exact to flat design for normal publication. Union16bb merged by queue/done/merge-agt-D124-union-custody-sol-1327 ->61fefc6983. D123 current qualified5bd01 remains distinct from historical47f6 and failed41702; D59 gate remains.
+Inbox consumed through 1654631 bytes. Manager made no product, test, generated, pin or Git changes. Source reports/recipes were copied byte-exact to flat design for normal publication. Union16bb merged by queue/done/merge-agt-D124-union-custody-sol-1327 ->61fefc6983. D123 current qualified5bd01 remains distinct from historical47f6 and failed41702; D59 gate remains.
 
 D124 host fix or upstream fallback: Main is sole source author under owner13:38. Farm keyed setup may finish after14:00Z, as owner permits. First independently qualified actual14 GREEN goes in. Pristine b742 actual14 PASS is retained separately and does not close currentREG14.
