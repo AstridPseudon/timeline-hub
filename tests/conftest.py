@@ -14,6 +14,38 @@ from tests.astrid_checkout import astrid_importable  # noqa: F401  (fixture)
 from tests.lanes import pytest_collection_modifyitems, pytest_configure  # noqa: F401  (lanes)
 from tests.process_groups import ProcessGroups
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--process-control", choices=("strict", "sandbox"), default="strict",
+        help="run the suite as an install with this Runtime process-control setting "
+             "(CI's seccomp job uses sandbox; see tests/seccomp/README.md)")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _suite_process_control(request):
+    """--process-control=sandbox: every Runtime support root without a setting reads as sandbox."""
+    if request.config.getoption("--process-control") != "sandbox":
+        yield
+        return
+    from runtime_protocol import platform, process_control
+
+    original = process_control.configure_from
+
+    def configure_from(support_root):
+        mode = process_control.read_setting(support_root)
+        if not process_control.setting_path(support_root).exists():
+            mode = "sandbox"
+        platform.configure_process_control(mode)
+        return mode
+
+    platform.configure_process_control("sandbox")
+    process_control.configure_from = configure_from
+    try:
+        yield
+    finally:
+        process_control.configure_from = original
+
+
 # A real `astrid-runtime up` in a test opens its browser door on an ephemeral
 # port, never the well-known 17340 that this machine's own Runtime, or a
 # parallel test, may hold.
@@ -76,7 +108,9 @@ def pytest_sessionfinish(session, exitstatus):
     for pgid in groups:
         try:
             os.killpg(pgid, signal.SIGTERM)
-        except ProcessLookupError:
+        except (ProcessLookupError, PermissionError):
+            # PermissionError: seccomp sandboxes (e.g. OpenShell) deny process-group
+            # kills; still report the leak below instead of losing the summary.
             pass
     deadline = time.monotonic() + 2
     while time.monotonic() < deadline and any(_group_exists(pgid) for pgid in groups):
@@ -85,7 +119,7 @@ def pytest_sessionfinish(session, exitstatus):
         if _group_exists(pgid):
             try:
                 os.killpg(pgid, signal.SIGKILL)
-            except ProcessLookupError:
+            except (ProcessLookupError, PermissionError):
                 pass
     reporter = session.config.pluginmanager.get_plugin("terminalreporter")
     if reporter is not None:

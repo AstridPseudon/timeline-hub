@@ -139,7 +139,7 @@ _SAFE_SEGMENT = re.compile(r"[A-Za-z0-9._~:-]+")
 _ID_SEGMENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._~:-]{0,255}")
 _CONNECTION_SEGMENT = re.compile(r"[A-Za-z0-9_-]{1,128}")
 _ENCODED_SEGMENT = re.compile(r"(?:[^%]|%[0-9A-Fa-f]{2})*")
-_RESERVED_ACP = frozenset({"health", "connect", "projects", "models", "model", "agents"})
+_RESERVED_ACP = frozenset({"health", "connect", "projects", "models", "model", "agents", "astrid"})
 _MAX_PATH_LENGTH = 4096
 
 
@@ -154,6 +154,7 @@ WORKSPACE_ROUTES = (
     _entry("GET", "/v1/realm"),
     _entry("GET,PUT", "/v1/app-state/user/:"),
     _entry("GET,POST", "/v1/projects"),
+    _entry("PUT", "/v1/projects/selection"),
     _entry("GET,PATCH", "/v1/projects/:"),
     _entry("GET,POST", "/v1/projects/:/timelines"),
     _entry("GET,PATCH", "/v1/projects/:/timelines/:"),
@@ -199,6 +200,8 @@ ACP_ROUTES = (
     _entry("GET", "/acp/models"),
     _entry("GET", "/acp/agents"),
     _entry("POST", "/acp/connect"),
+    # Astrid's own agent: the app pastes an OpenRouter key here; only the local chat service sees it.
+    _entry("POST", "/acp/astrid/api-key"),
     _entry("GET", "/acp/:conn/models"),
     _entry("POST", "/acp/:conn/rpc"),
     _entry("POST", "/acp/:conn/cancel"),
@@ -236,6 +239,13 @@ def _segment_matches(expected: str, actual: str) -> bool:
 
 
 def _find(table, method: str, segments: list[str]) -> bool:
+    # Exact routes reserve their path even for methods they don't allow, so a
+    # parameterized route can't reinterpret a reserved word as an id.
+    exact = next((methods for methods, template in table
+                  if len(template) == len(segments) and ":" not in template
+                  and template == tuple(segments)), None)
+    if exact is not None:
+        return method in exact
     return any(
         method in methods and len(template) == len(segments)
         and all(_segment_matches(expected, actual) for expected, actual in zip(template, segments))

@@ -306,6 +306,7 @@ def _assert_closed(fd):
     assert caught.value.errno == errno.EBADF
 
 
+@pytest.mark.needs_real_pidfd
 @requires_linux_tree_custody
 def test_linux_pidfd_fallback_checks_and_terminates_real_child(monkeypatch, waiting_child):
     expected = platform.process_identity(waiting_child.pid)
@@ -330,6 +331,7 @@ def test_linux_pidfd_fallback_checks_and_terminates_real_child(monkeypatch, wait
         assert operations == ["pidfd_open", "pidfd_send_signal"] * 2
 
 
+@pytest.mark.needs_real_pidfd
 @requires_linux_tree_custody
 @pytest.mark.parametrize("mismatch", ["pid", "uid", "birth_id", "absent", "error"])
 def test_linux_pidfd_fallback_refuses_changed_or_unknown_identity(monkeypatch, waiting_child, mismatch):
@@ -358,6 +360,7 @@ def test_linux_pidfd_fallback_refuses_changed_or_unknown_identity(monkeypatch, w
         assert waiting_child.poll() is None
 
 
+@pytest.mark.needs_real_pidfd
 @requires_linux_tree_custody
 @pytest.mark.parametrize("signum", [-1, 2**32 + platform.TERM])
 def test_linux_pidfd_fallback_rejects_invalid_signal_without_terminating_child(monkeypatch, waiting_child, signum):
@@ -486,6 +489,7 @@ def test_signal_process_uses_public_pidfd_helpers(monkeypatch):
     assert calls == [("open", 123), ("observe", 123), ("send", 18, platform.TERM), ("close", 18)]
 
 
+@pytest.mark.needs_real_pidfd
 @requires_linux_tree_custody
 def test_public_pidfd_helpers_fallback_signals_real_child_and_retains_fd(monkeypatch, waiting_child):
     expected = platform.process_identity(waiting_child.pid)
@@ -515,6 +519,7 @@ def test_public_pidfd_helpers_fallback_signals_real_child_and_retains_fd(monkeyp
     (2**32 + platform.TERM, None, OverflowError, None),
     (platform.TERM, object(), NotImplementedError, None),
 ])
+@pytest.mark.needs_real_pidfd
 def test_public_pidfd_send_signal_fallback_errors_retain_real_fd(
     monkeypatch, waiting_child, signum, siginfo, error_type, error_number,
 ):
