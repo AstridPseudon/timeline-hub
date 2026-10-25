@@ -1,0 +1,11 @@
+agent current_HEAD a836baa3b11208d66bf8d23d6abfb1c8e59257e2
+agent pin_is_ancestor True
+agent astrid/sdk/timeline/commit.py eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7
+agent astrid/sdk/timeline/inverse.py 06bd41f404a40c17a1ec06b49c8443e0e755f622134822ede55fb3ca79234cee
+runtime current_HEAD 6634a17f3ffd885567ba3c91b6c7a560df7375a4
+runtime pin_is_ancestor True
+runtime runtime_protocol/timeline_commit_auth.py 4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb
+runtime runtime_protocol/timeline_commit_store.py 2a68990b180326585b7f0abaf1ee54c8ff9340e83663f17cd1efff1b2bd78a5c
+production_source_compile PASS
+--- current worktree status ---
+## tl/agt-F-inverse7-review-log-0239

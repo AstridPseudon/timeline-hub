@@ -1,0 +1,17 @@
+normalized_ast_conservation True
+test_source_compile PASS
+literal_provenance_values True
+RUNTIME_COMMIT 6634a17f3ffd885567ba3c91b6c7a560df7375a4
+AGENT_COMMIT bd3c95b1cebe3bf27c4a82919e5839efb37519db
+AGENT_COMMIT_FILE_HASHES {'astrid/sdk/timeline/commit.py': 'eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7', 'astrid/sdk/timeline/inverse.py': '06bd41f404a40c17a1ec06b49c8443e0e755f622134822ede55fb3ca79234cee'}
+RUNTIME_FILE_HASHES {'runtime_protocol/timeline_commit_auth.py': '4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb', 'runtime_protocol/timeline_commit_store.py': '2a68990b180326585b7f0abaf1ee54c8ff9340e83663f17cd1efff1b2bd78a5c'}
+case_ids ['case-4-two-step-clips-before', 'case-16-two-step-clips-after', 'case-28-two-step-config-clips-before', 'case-40-two-step-config-clips-after', 'case-49-native-whole']
+predicate_counts test_known_whole_inverse_authenticates_forward_history_and_exact_redo asserts 45 raises 0
+predicate_counts test_known_inverse_refuses_forged_source_publication_and_step_without_writes asserts 7 raises 0
+predicate_counts test_known_inverse_refuses_native_write_and_aba_without_writes asserts 4 raises 0
+qualified_source bd3c95b1ce astrid/sdk/timeline/commit.py eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7 True
+qualified_source bd3c95b1ce astrid/sdk/timeline/inverse.py 06bd41f404a40c17a1ec06b49c8443e0e755f622134822ede55fb3ca79234cee True
+qualified_source 6634a17f3f runtime_protocol/timeline_commit_auth.py 4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb True
+qualified_source 6634a17f3f runtime_protocol/timeline_commit_store.py 2a68990b180326585b7f0abaf1ee54c8ff9340e83663f17cd1efff1b2bd78a5c True
+first_import_wins_static True
+git_diff_check PASS
