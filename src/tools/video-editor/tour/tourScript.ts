@@ -30,13 +30,14 @@ export interface EditorTourScript {
   /** The centred card before act 1: Astrid says hello. */
   readonly welcome: { readonly title: string; readonly body: string; readonly action: string };
   /** The card's quiet line while the chat has the spotlight: before Send, and (act 1 only) while the reply plays. */
-  readonly hints: { readonly compose: string; readonly respond: string };
+  readonly hints: { readonly compose: string; readonly composeTouch: string; readonly respond: string };
   readonly controls: { readonly next: string; readonly back: string; readonly skip: string };
   /** Three.js frame → still → video: the card's strip, one step per act. */
   readonly strip: readonly [string, string, string];
   readonly finale: { readonly title: string; readonly action: string; readonly recap: readonly [string, string, string] };
   /** The last card, after the finale: Astrid asks for feedback and points to the Discord. */
-  readonly feedback: { readonly title: string; readonly body: string; readonly discord: string; readonly action: string };
+  /** `mobileAction` ends the tour on a phone or tablet, where the next screen sends Astrid to a computer. */
+  readonly feedback: { readonly title: string; readonly body: string; readonly discord: string; readonly action: string; readonly mobileAction: string };
 }
 
 /**
@@ -90,7 +91,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
     },
   },
   welcome: { title: 'Welcome to Astrid', body: 'Explore a completed project in this quick guided demo. The prompts replay its steps; no new generation runs.', action: 'OK' },
-  hints: { compose: 'Press Send to ask Astrid', respond: 'Your agent uses community-built tools to deliver this request' },
+  hints: { compose: 'Press Send to ask Astrid', composeTouch: 'Tap Send to ask Astrid', respond: 'Your agent uses community-built tools to deliver this request' },
   controls: { next: 'Next', back: 'Back', skip: 'Skip tour' },
   strip: ['Three.js', 'Frames', 'Video'],
   finale: { title: 'Do you get it?', action: 'I got it', recap: ['Agent + extensions', 'Open models', 'Finished shot'] },
@@ -99,5 +100,6 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
     body: 'We’re aiming for a tool that helps unlock the creative potential of open models and the open‑source community. But Astrid is a very early-stage product, and in many ways it doesn’t get there yet. Feedback on any issue you hit helps us improve it: no problem is too large or too small.',
     discord: 'Join the Discord',
     action: 'Start creating',
+    mobileAction: 'Finish the tour',
   },
 });

@@ -334,6 +334,31 @@ describe('EditorTourTimelineDriver', () => {
     expect(previewHandle.play).toHaveBeenCalledTimes(2);
   });
 
+  it('with reduced motion keeps each landing still: the poster stays, act 2 holds its last frame, nothing plays', async () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query } as MediaQueryList));
+    act_(() => startEditorTour());
+    const { previewHandle } = createHarness();
+    goTo(1, 'land');
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(previewHandle.seek).toHaveBeenCalledWith(0);
+    expect(document.querySelector('[data-editor-tour-poster]')).toHaveAttribute('src', EDITOR_TOUR_MEDIA.frames[0].url);
+
+    const stillsRow = document.createElement('div');
+    stillsRow.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.stills);
+    document.body.append(stillsRow);
+    goTo(2, 'land');
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(previewHandle.seek).toHaveBeenLastCalledWith(13);
+
+    const videosRow = document.createElement('div');
+    videosRow.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.videos);
+    document.body.append(videosRow);
+    goTo(3, 'land');
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(document.querySelector('[data-editor-tour-poster]')).toHaveAttribute('src', EDITOR_TOUR_MEDIA.stills[0].url);
+    expect(previewHandle.play).not.toHaveBeenCalled();
+  });
+
   it('steps back a stage by removing the later rows at once, and replays the landing going forward', async () => {
     const { apply, previewHandle } = createHarness();
     addScene('ready');

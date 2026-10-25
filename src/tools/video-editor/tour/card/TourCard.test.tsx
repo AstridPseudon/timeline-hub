@@ -294,6 +294,21 @@ describe('TourCard', () => {
     expect(screen.queryByText('↵')).not.toBeInTheDocument();
   });
 
+  it('on a phone leaves the picture to the spotlit preview, sizes controls for a finger and ends the tour toward a computer', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('iPhone');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)');
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+    startEditorTour();
+    setEditorTourBeat(1, 'land');
+    const { container, rerender } = render(<TourCard act={1} beat="land" device="phone" onPrimary={vi.fn()} onBack={vi.fn()} onSkip={vi.fn()} />);
+    expect(container.querySelector('[aria-hidden="true"].h-32')).toBeNull();
+    expect(screen.getByRole('button', { name: SCRIPT.controls.next })).toHaveClass('h-11');
+    expect(screen.getByRole('button', { name: /Skip tour/ })).toHaveClass('min-h-11');
+    setEditorTourBeat(3, 'feedback');
+    rerender(<TourCard act={3} beat="feedback" device="phone" onPrimary={vi.fn()} onBack={vi.fn()} onSkip={vi.fn()} />);
+    expect(screen.getByRole('button', { name: SCRIPT.feedback.mobileAction })).toBeInTheDocument();
+  });
+
   it('a card still showing the previous beat never reports ready for the new one', () => {
     vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
     startEditorTour();

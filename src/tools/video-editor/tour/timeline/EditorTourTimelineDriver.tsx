@@ -110,6 +110,7 @@ function SceneWarmup({ liveScene, onWarm }: { liveScene: Record<string, unknown>
  * Lives inside the tour's editor and takes the demo timeline to the tour's stage through the editor's
  * own ops (`track.add`, `clip.add`, `clip.update`), then presents it: scroll the new row into view,
  * and on each `land` beat play the 14 s from the start (act 2 presents each reference frame, then holds the last).
+ * With reduced motion nothing plays: acts 1 and 3 keep their poster and act 2 holds its last frame.
  * Reports `ready.timeline` per beat.
  */
 export function EditorTourTimelineDriver() {
@@ -181,6 +182,7 @@ export function EditorTourTimelineDriver() {
   }, [loaded, ops, liveScene, stage, appliedStage, retry]);
 
   const instant = useEditorTour((state) => state.instant);
+  const reducedMotion = useEditorTour((state) => state.reducedMotion);
   const warming = warmupStarted && act === 1 && appliedStage === 0 && !instant
     && (!tourSaveData() || beat !== 'welcome');
   useEffect(() => {
@@ -213,12 +215,12 @@ export function EditorTourTimelineDriver() {
         previewRef.current?.pause();
         if (act === 2) {
           const skipped = getEditorTourState().skipAnimation;
-          const anchors = instant ? [TOUR_ANCHORS.length - 1] : TOUR_ANCHORS.map((_, index) => index);
+          const anchors = instant || reducedMotion ? [TOUR_ANCHORS.length - 1] : TOUR_ANCHORS.map((_, index) => index);
           for (const index of anchors) {
             if (isCancelled() || getEditorTourState().skipAnimation !== skipped) break;
             requestCenterTimelineClip(TOUR_CLIP_IDS.stills[index]);
             previewRef.current?.seek(TOUR_ANCHORS[index].at);
-            if (!instant) await waitFor(
+            if (!instant && !reducedMotion) await waitFor(
               () => getEditorTourState().skipAnimation !== skipped,
               TOUR_ANCHOR_DWELL_MS,
               isCancelled,
@@ -227,6 +229,12 @@ export function EditorTourTimelineDriver() {
         } else {
           const focusClipId = tourStageFocusClipId(stage);
           if (focusClipId) requestCenterTimelineClip(focusClipId);
+          if (reducedMotion) {
+            // The poster stays over the paused preview: the still is the whole presentation.
+            previewRef.current?.seek(0);
+            if (!isCancelled()) markEditorTourReady('timeline');
+            return;
+          }
           if (act === 3) {
             const videoWaitCancelled = () => isCancelled() || getEditorTourState().skipAnimation !== skippedAtStart;
             // Keep the last reference frame underneath while H3 mounts and draws at the current
@@ -259,7 +267,7 @@ export function EditorTourTimelineDriver() {
       if (!isCancelled()) markEditorTourReady('timeline');
     })();
     return () => { cancelled = true; };
-  }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, previewRef, liveScene]);
+  }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, reducedMotion, previewRef, liveScene]);
 
   const notice = sceneLoadError ? (
     <div role="alert" className="fixed bottom-6 left-1/2 z-[2147483647] flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-background p-4 text-sm text-foreground shadow-lg">
