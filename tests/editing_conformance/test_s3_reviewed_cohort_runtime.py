@@ -8,10 +8,13 @@ import pytest
 from astrid.sdk.media_transcript import build_transcript, transcript_document_id
 from astrid.sdk.timeline import commands
 from astrid.sdk.timeline._clip_commands import capture_clip_add
-from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.capture import capture_clip_delete, capture_track_create
 from astrid.sdk.timeline.commit import _digest, bundle_from_document
 from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
-from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+from astrid.sdk.timeline.native_occurrence_media_commands import (
+    capture_occurrence_add_media,
+    capture_parent_swap_media,
+)
 from tests.editing_conformance import test_commit_runtime_parent_media as parent
 from tests.editing_conformance.test_next_command_cohort_runtime import reopen
 from tests.editing_conformance.test_pristine_initialize import batch
@@ -60,12 +63,13 @@ def test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart(t
                's3-overlay')
         row = parent.row(case, 'parent-media', asset='raw-old-alias', track='overlay')
         submit([parent.birth(case, row, case.pins['old'])], 's3-parent-add')
-        submit([parent.call('clip.swap-media', {'old_media': case.pins['old'],
-            'media': case.pins['new']}, 'parent/clip:parent-media')], 's3-parent-swap')
+        submit([capture_parent_swap_media(
+            bundle(), 'parent/clip:parent-media', case.pins['old'], case.pins['new'],
+            verified_media=case.selected)], 's3-parent-swap')
         swapped = next(row for row in parent.current(case)['parent_revision']['payload']['clips']
                        if row['id'] == 'parent-media')
         assert swapped == {**row, 'asset': case.pins['new']['asset']}
-        submit([parent.call('clip.delete', {}, 'parent/clip:parent-media')], 's3-parent-delete')
+        submit([capture_clip_delete(bundle(), 'parent/clip:parent-media')], 's3-parent-delete')
         caption = {'id': 'caption', 'clipType': 'am-type', 'track': 'overlay', 'at': 0,
                    'hold': .5, 'opaque': [None, False, 0.0]}
         submit([capture_clip_add(bundle(), 'parent', caption)], 's3-caption')
