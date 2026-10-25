@@ -1,0 +1,56 @@
+[
+  {
+    "source_commit": "7cb353858c5cf9f3eee484ca0748b61ae01d2ba3",
+    "source_path": "diagnostics/d77_phase_guard.py",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D77-guard-1243-d77_phase_guard.py",
+    "sha256": "5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386"
+  },
+  {
+    "source_commit": "7cb353858c5cf9f3eee484ca0748b61ae01d2ba3",
+    "source_path": "diagnostics/test_d77_phase_guard.py",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D77-guard-1243-test_d77_phase_guard.py",
+    "sha256": "7b13e6e08a464ba07fb7417d64d876ee2cc4c93b133cf9cd8908b4e55e8d9c26"
+  },
+  {
+    "source_commit": "7cb353858c5cf9f3eee484ca0748b61ae01d2ba3",
+    "source_path": "diagnostics/README.md",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D77-guard-1243-README.md",
+    "sha256": "373b4d17cf964c50e172084bf29f525ccc166521e347656f2ae948d462a6a1c7"
+  },
+  {
+    "source_commit": "7cb353858c5cf9f3eee484ca0748b61ae01d2ba3",
+    "source_path": "diagnostics/evidence/frozen-source.json",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D77-guard-1243-frozen-source.json",
+    "sha256": "921f010a145b713171cf17c82e75e494c90dc8672e2b0fbf106026845247a9ca"
+  },
+  {
+    "source_commit": "7cb353858c5cf9f3eee484ca0748b61ae01d2ba3",
+    "source_path": "diagnostics/evidence/controls.json",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D77-guard-1243-controls.json",
+    "sha256": "63de160eaff12315926ab93dcf9497c2700dd1407631e23d91dad22ff6e47860"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D77-guard-review-1257/report.md",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D77-guard-review-1257.md",
+    "sha256": "cdbb9fd919edf832e2da6f09e591f9aa9366cefd51d3f87ab44c8acf0211e57e"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D124-Farm-render-handoff-1253/evidence/farm-stage-render-recipe.sh",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-Farm-render-1253-recipe.sh",
+    "sha256": "93121f68d45b9d2b0c635be4bdc1c3f69f4fcde49091ef8f9b522e3e01fa90d7"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D108-rehearsal-source-0645/evidence/agent.base-to-capture.patch",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-Farm-render-1253-agent.patch",
+    "sha256": "f5d49d5e63ddc0e7a0fb85966280024af70e498eb4f75bd6595bfb59a52a204a",
+    "bytes": 12425282,
+    "purpose": "Original exact applied-source patch; no re-authoring"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D108-rehearsal-source-0645/evidence/runtime.base-to-capture.patch",
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-Farm-render-1253-runtime.patch",
+    "sha256": "c93c3a1d00ddd9bb44ca51af3fdc71ab8311051846b07465d76183457f1b38b0",
+    "bytes": 14928733,
+    "purpose": "Original exact applied-source patch; no re-authoring"
+  }
+]

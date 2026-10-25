@@ -1,0 +1,1107 @@
+{
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 diagnostics/test_d77_phase_guard.py --record",
+  "tests_run": 18,
+  "failures": 0,
+  "errors": 0,
+  "successful": true,
+  "observations": {
+    "exact_omp_stub_native_cancel": {
+      "status": "cancelled-lower-bound",
+      "phase_complete": false,
+      "cancelled": true,
+      "commands": [
+        {
+          "label": "source-extract",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "source-extract",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "bun-fetch",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "bun-fetch",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "bun-install",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase/bun/bun-linux-x64/bun",
+            "install",
+            "--frozen-lockfile",
+            "--ignore-scripts",
+            "--omit",
+            "optional"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase/source",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "lock-after-install",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "lock-after-install",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "gen-tool-views",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase/bun/bun-linux-x64/bun",
+            "run",
+            "gen:tool-views"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase/source",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "lock-after-views",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "lock-after-views",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "native-fetch",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "native-fetch",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-d7tlh1jb/private-phase",
+          "exit": -2,
+          "cancelled": true,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": [
+            "SIGINT"
+          ]
+        }
+      ],
+      "samples": [
+        {
+          "label": "phase:admission",
+          "monotonic": 163674.679746278,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:before",
+          "monotonic": 163674.679762042,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:poll",
+          "monotonic": 163674.680659704,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:poll",
+          "monotonic": 163674.731007473,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:poll",
+          "monotonic": 163674.781414123,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:end",
+          "monotonic": 163674.782100977,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:before",
+          "monotonic": 163674.782116173,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:poll",
+          "monotonic": 163674.782881912,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:poll",
+          "monotonic": 163674.833273798,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:poll",
+          "monotonic": 163674.883737622,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:end",
+          "monotonic": 163674.884615364,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-install:before",
+          "monotonic": 163674.884634195,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-install:poll",
+          "monotonic": 163674.885574636,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-install:poll",
+          "monotonic": 163674.936042575,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-install:end",
+          "monotonic": 163674.936805811,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:before",
+          "monotonic": 163674.936823301,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:poll",
+          "monotonic": 163674.937693115,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:poll",
+          "monotonic": 163674.988164847,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:poll",
+          "monotonic": 163675.03862501,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:end",
+          "monotonic": 163675.039672301,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "gen-tool-views:before",
+          "monotonic": 163675.039701376,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "gen-tool-views:poll",
+          "monotonic": 163675.04065195,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "gen-tool-views:poll",
+          "monotonic": 163675.091040811,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "gen-tool-views:end",
+          "monotonic": 163675.092179761,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:before",
+          "monotonic": 163675.09220421,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:poll",
+          "monotonic": 163675.093235121,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:poll",
+          "monotonic": 163675.143584725,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:poll",
+          "monotonic": 163675.193948673,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:end",
+          "monotonic": 163675.194694515,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:before",
+          "monotonic": 163675.194712793,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.195352168,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.245739304,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.296413656,
+          "free_bytes": 4886465571,
+          "margin_to_phase_floor": 386465571
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.346958315,
+          "free_bytes": 4866230134,
+          "margin_to_phase_floor": 366230134
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.39754523,
+          "free_bytes": 4846006907,
+          "margin_to_phase_floor": 346006907
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.448199173,
+          "free_bytes": 4825746673,
+          "margin_to_phase_floor": 325746673
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.498707245,
+          "free_bytes": 4805532703,
+          "margin_to_phase_floor": 305532703
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.549142693,
+          "free_bytes": 4785355276,
+          "margin_to_phase_floor": 285355276
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163675.599631449,
+          "free_bytes": 4765158890,
+          "margin_to_phase_floor": 265158890
+        },
+        {
+          "label": "native-fetch:end",
+          "monotonic": 163675.62214839,
+          "free_bytes": 4756117307,
+          "margin_to_phase_floor": 256117307
+        }
+      ],
+      "allocations": [],
+      "reason": "phase-reserve",
+      "start_bytes": 5200000000,
+      "phase_floor_bytes": 4500000000,
+      "overall_stop_bytes": 4000000000,
+      "poll_seconds": 0.05,
+      "cancel_seconds": 0.5,
+      "margin_bytes": 50000000,
+      "measurement_peak_complete": false,
+      "observed_min_free_bytes": 4756117307,
+      "observed_peak_allocated_bytes_lower_bound": null,
+      "elapsed_seconds": 0.9424726879806258
+    },
+    "exact_omp_stub_success": {
+      "status": "complete",
+      "phase_complete": true,
+      "cancelled": false,
+      "commands": [
+        {
+          "label": "source-extract",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "source-extract",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "bun-fetch",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "bun-fetch",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "bun-install",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/bun/bun-linux-x64/bun",
+            "install",
+            "--frozen-lockfile",
+            "--ignore-scripts",
+            "--omit",
+            "optional"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/source",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "lock-after-install",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "lock-after-install",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "gen-tool-views",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/bun/bun-linux-x64/bun",
+            "run",
+            "gen:tool-views"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/source",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "lock-after-views",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "lock-after-views",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "native-fetch",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/python-stub",
+            "/home/user/work/wt/rt-D77-guard-repair-sol-1243/diagnostics/d77_phase_guard.py",
+            "--omp-step",
+            "native-fetch",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/retained-stub.tar"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "native-abi-probe",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/bun/bun-linux-x64/bun",
+            "-e",
+            "import {pathToFileURL} from 'node:url';const b=await import(pathToFileURL(process.argv[1]).href);if(typeof b.__piNativesV17_4_0!=='function')throw Error('OMP native ABI mismatch');",
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/source/packages/natives/native/index.js"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/source",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        },
+        {
+          "label": "bun-link",
+          "argv": [
+            "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/bun/bun-linux-x64/bun",
+            "link",
+            "--frozen-lockfile",
+            "--ignore-scripts",
+            "--no-save"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-78a5udhd/private-phase/source/packages/coding-agent",
+          "exit": 0,
+          "cancelled": false,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": []
+        }
+      ],
+      "samples": [
+        {
+          "label": "phase:admission",
+          "monotonic": 163675.626134574,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:before",
+          "monotonic": 163675.626141057,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:poll",
+          "monotonic": 163675.626734815,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:poll",
+          "monotonic": 163675.676906343,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:poll",
+          "monotonic": 163675.727147916,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "source-extract:end",
+          "monotonic": 163675.728427141,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:before",
+          "monotonic": 163675.728441365,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:poll",
+          "monotonic": 163675.729265402,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:poll",
+          "monotonic": 163675.779482988,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:poll",
+          "monotonic": 163675.829683137,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-fetch:end",
+          "monotonic": 163675.83047817,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-install:before",
+          "monotonic": 163675.830495302,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-install:poll",
+          "monotonic": 163675.831192913,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-install:poll",
+          "monotonic": 163675.881508981,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-install:end",
+          "monotonic": 163675.882517006,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:before",
+          "monotonic": 163675.882527011,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:poll",
+          "monotonic": 163675.89158703,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:poll",
+          "monotonic": 163675.941782286,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:poll",
+          "monotonic": 163675.992086223,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-install:end",
+          "monotonic": 163675.993117628,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "gen-tool-views:before",
+          "monotonic": 163675.993128936,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "gen-tool-views:poll",
+          "monotonic": 163675.993849641,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "gen-tool-views:poll",
+          "monotonic": 163676.044118919,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "gen-tool-views:end",
+          "monotonic": 163676.045386302,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:before",
+          "monotonic": 163676.045400313,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:poll",
+          "monotonic": 163676.046230536,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:poll",
+          "monotonic": 163676.096426183,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:poll",
+          "monotonic": 163676.14664781,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "lock-after-views:end",
+          "monotonic": 163676.147409192,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:before",
+          "monotonic": 163676.147417462,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163676.148258023,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163676.198417646,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:poll",
+          "monotonic": 163676.24865241,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-fetch:end",
+          "monotonic": 163676.249498783,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-abi-probe:before",
+          "monotonic": 163676.249507761,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-abi-probe:poll",
+          "monotonic": 163676.250161435,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-abi-probe:poll",
+          "monotonic": 163676.30036854,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "native-abi-probe:end",
+          "monotonic": 163676.301229531,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-link:before",
+          "monotonic": 163676.30123849,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-link:poll",
+          "monotonic": 163676.302059894,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-link:poll",
+          "monotonic": 163676.352252897,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "bun-link:end",
+          "monotonic": 163676.353054494,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "phase:final",
+          "monotonic": 163676.353063946,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        }
+      ],
+      "allocations": [],
+      "reason": null,
+      "start_bytes": 5200000000,
+      "phase_floor_bytes": 4500000000,
+      "overall_stop_bytes": 4000000000,
+      "poll_seconds": 0.05,
+      "cancel_seconds": 0.5,
+      "margin_bytes": 50000000,
+      "measurement_peak_complete": false,
+      "observed_min_free_bytes": 5400000000,
+      "observed_peak_allocated_bytes_lower_bound": null,
+      "elapsed_seconds": 0.726976720005041
+    },
+    "fast_download": {
+      "status": "cancelled-lower-bound",
+      "phase_complete": false,
+      "cancelled": true,
+      "commands": [
+        {
+          "label": "download",
+          "argv": [
+            "/usr/bin/python3",
+            "/tmp/w-d415eb61d8/guard-control-mlrfs_ma/stub.py",
+            "/tmp/w-d415eb61d8/guard-control-mlrfs_ma",
+            "grow"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-mlrfs_ma",
+          "exit": 0,
+          "cancelled": true,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": [
+            "SIGINT"
+          ]
+        }
+      ],
+      "samples": [
+        {
+          "label": "phase:admission",
+          "monotonic": 163676.420288161,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:before",
+          "monotonic": 163676.420339334,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.42084135,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.471263695,
+          "free_bytes": 4894201393,
+          "margin_to_phase_floor": 394201393
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.521774934,
+          "free_bytes": 4874005205,
+          "margin_to_phase_floor": 374005205
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.572267316,
+          "free_bytes": 4853807704,
+          "margin_to_phase_floor": 353807704
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.622747783,
+          "free_bytes": 4833609827,
+          "margin_to_phase_floor": 333609827
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.676386928,
+          "free_bytes": 4812751652,
+          "margin_to_phase_floor": 312751652
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.726967497,
+          "free_bytes": 4791924650,
+          "margin_to_phase_floor": 291924650
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.77760728,
+          "free_bytes": 4771684366,
+          "margin_to_phase_floor": 271684366
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.829833294,
+          "free_bytes": 4750773814,
+          "margin_to_phase_floor": 250773814
+        },
+        {
+          "label": "download:end",
+          "monotonic": 163676.841614156,
+          "free_bytes": 4746034322,
+          "margin_to_phase_floor": 246034322
+        }
+      ],
+      "allocations": [],
+      "reason": "phase-reserve",
+      "start_bytes": 5200000000,
+      "phase_floor_bytes": 4500000000,
+      "overall_stop_bytes": 4000000000,
+      "poll_seconds": 0.05,
+      "cancel_seconds": 0.5,
+      "margin_bytes": 50000000,
+      "measurement_peak_complete": false,
+      "observed_min_free_bytes": 4746034322,
+      "observed_peak_allocated_bytes_lower_bound": null,
+      "elapsed_seconds": 0.4214030979783274
+    },
+    "owned_child_cancel": {
+      "status": "cancelled-lower-bound",
+      "phase_complete": false,
+      "cancelled": true,
+      "commands": [
+        {
+          "label": "download",
+          "argv": [
+            "/usr/bin/python3",
+            "/tmp/w-d415eb61d8/guard-control-rraqeigz/stub.py",
+            "/tmp/w-d415eb61d8/guard-control-rraqeigz",
+            "family"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-rraqeigz",
+          "exit": 0,
+          "cancelled": true,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": [
+            "SIGINT"
+          ]
+        }
+      ],
+      "samples": [
+        {
+          "label": "phase:admission",
+          "monotonic": 163676.97700899,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:before",
+          "monotonic": 163676.97702451,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163676.977507765,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.028063159,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.078506507,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:end",
+          "monotonic": 163677.113878495,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        }
+      ],
+      "allocations": [],
+      "reason": "caller-cancelled",
+      "start_bytes": 5200000000,
+      "phase_floor_bytes": 4500000000,
+      "overall_stop_bytes": 4000000000,
+      "poll_seconds": 0.05,
+      "cancel_seconds": 0.5,
+      "margin_bytes": 50000000,
+      "measurement_peak_complete": false,
+      "observed_min_free_bytes": 5400000000,
+      "observed_peak_allocated_bytes_lower_bound": null,
+      "elapsed_seconds": 0.1369568720110692
+    },
+    "slow_du": {
+      "status": "cancelled-lower-bound",
+      "phase_complete": false,
+      "cancelled": true,
+      "commands": [
+        {
+          "label": "download",
+          "argv": [
+            "/usr/bin/python3",
+            "/tmp/w-d415eb61d8/guard-control-zr4aldrk/stub.py",
+            "/tmp/w-d415eb61d8/guard-control-zr4aldrk",
+            "grow"
+          ],
+          "cwd": "/tmp/w-d415eb61d8/guard-control-zr4aldrk",
+          "exit": 0,
+          "cancelled": true,
+          "cleanup_complete": true,
+          "reserve_bytes": 270000001,
+          "cancel_signals": [
+            "SIGINT"
+          ]
+        }
+      ],
+      "samples": [
+        {
+          "label": "phase:admission",
+          "monotonic": 163677.355013996,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:before",
+          "monotonic": 163677.555646444,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.55761379,
+          "free_bytes": 5400000000,
+          "margin_to_phase_floor": 900000000
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.608632986,
+          "free_bytes": 4890609722,
+          "margin_to_phase_floor": 390609722
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.65913991,
+          "free_bytes": 4870399087,
+          "margin_to_phase_floor": 370399087
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.709756665,
+          "free_bytes": 4850140646,
+          "margin_to_phase_floor": 350140646
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.760425157,
+          "free_bytes": 4829901116,
+          "margin_to_phase_floor": 329901116
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.81090221,
+          "free_bytes": 4809684392,
+          "margin_to_phase_floor": 309684392
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.861353809,
+          "free_bytes": 4789513472,
+          "margin_to_phase_floor": 289513472
+        },
+        {
+          "label": "download:poll",
+          "monotonic": 163677.91185084,
+          "free_bytes": 4769304688,
+          "margin_to_phase_floor": 269304688
+        },
+        {
+          "label": "download:end",
+          "monotonic": 163677.935397129,
+          "free_bytes": 4759860704,
+          "margin_to_phase_floor": 259860704
+        }
+      ],
+      "allocations": [
+        {
+          "label": "phase:before",
+          "allocated_bytes": 100
+        }
+      ],
+      "reason": "phase-reserve",
+      "start_bytes": 5200000000,
+      "phase_floor_bytes": 4500000000,
+      "overall_stop_bytes": 4000000000,
+      "poll_seconds": 0.05,
+      "cancel_seconds": 0.5,
+      "margin_bytes": 50000000,
+      "measurement_peak_complete": false,
+      "observed_min_free_bytes": 4759860704,
+      "observed_peak_allocated_bytes_lower_bound": 100,
+      "elapsed_seconds": 0.5804790919937659
+    }
+  }
+}

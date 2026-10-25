@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T12:58:37Z | dispatcher heartbeat 2s | live 2 (sol 2, luna 0, other 0) | busy30 13 | status age 2m -->
-# runtime board, 2026-10-25T12:56:43Z
+<!-- main | 2026-10-25T13:02:40Z | dispatcher heartbeat 5s | live 4 (sol 2, luna 2, other 0) | busy30 13 | status age 0m -->
+# runtime board, 2026-10-25T13:01:57Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -438,7 +438,7 @@
 | D122-R2-seed | Join reviewed genuine seed | Luna / Luna | Agent genuine raw and config seed | review | Resume1202; protected1208 A PASS | Exact donor7c717 fixture, protected three originals unchanged. Source only; actual seed behavior remains owed by Agent. | Prior evidence | c81b5737 held |
 
 | R2-occurrence-boundaries | Classify guarded live failures | Luna read only | Complete authentic boundary evidence | later | Facts1152; App packet1212 | App finite handback complete. Stage and promotion records EXACTMISSING; no App input wait or Runtime guard writer. | Independent1204 B | Source unchanged |
-| P2-element-current-profile | Support sole App element owner | Luna | App requested existing sampler | doing | rt-D124-App-sampler-handoff-1253 | Native1.75s is not bound to actual11251. Existing attach input being published; no replay or speculative Runtime writer. | Independent1224 NOAUTHOR | Source unchanged |
+| P2-element-current-profile | Support sole App element owner | Luna | App actual process timing | review | Sampler publisher1253 complete | Exact source delivered. Historical native sample is synthetic; request and actual process binding remain App owned. | Source custody1300 active | Source unchanged |
 | F-final-D123 | Apply current Agent patch to b742 | HARD Sol | Current patch and independent review | doing | rt-F-D123-current-return-sol-1257 | Historical47f6 source review passed. Sole Runtime successor consumes stopped Agent checkpoint; later changes separately conserved. | Historical1222; current pending | Historical47f6 held |
 | D122-atomic-join | Carry reviewed private capture caller | Luna | Normal batch qualification | review | Atomic1218; exact join1232 | Reviewed one-line caller is in normal batch b545. Original1 and private4 passed on donor; Farm batch core owed. | Independent1144 | 8d14 / Agentb545 |
 | OPS-four-target-audit | Keep four guarded targets held | Luna / host | Owner12:25 defers host audit | gated:held | rt-OPS-four-target-audit-1212 | Eight references and historical guard refusals. Host audit gains little; no retirement attempt or retry. | Prior evidence | No cleanup |
@@ -446,26 +446,29 @@
 | D122-host-successor | Preserve unqualified host attempts | Luna / Agent Sol | Authentic original14 GREEN | gated:Agent-host | Runtime1222; Agent13117 and Sol1217 | Exact ef4c joined4 environment and child import PASS, but original14 FAIL. Both bae5 and ef4c excluded from ready batch; no competing host writer. | Prior evidence | Held source |
 | D122-document-input3 | Compare hydration manifest identity | Luna read only | Normal batch functional proof | review | Facts1229; corrected review1237 | 82b6 fixes App hydration seam. Historical Runtime2864 is already fixed by42aad. No current Runtime guard fault proved. | Independent1237 PASS corrected | Agentb545 source merged |
 | D124-producer | Repair shared producer root | HARD Sol | Normal reviewed source238ee | doing | rt-D124-producer-sol-1247 | Measure genuine current occurrence and scalar seams first; preserve strict Runtime authority. No full family rerun. | Pending author | Candidate pending |
-| D77-wrapper-guard | Make phase cancellation honest | Sol / Luna | Independent guard review | review | Author1243; review1257 | Author18 finite controls PASS. Sticky cancellation and growth bounds; live tool safety and installed render remain unverified. | rt-D77-guard-review-1257 | Helper5c821f9e |
-| D124-Farm-render | Prepare Farm stage and render inputs | Luna | Qualified wrapper and exact source | doing | rt-D124-Farm-render-handoff-1253 | Source-only portable command and custody handoff. No Main stage, download, npm phase or render. | Pending handoff | Exact applied tuple |
-| D124-App-sampler | Publish existing actual process sampler | Luna | App1243 explicit support request | doing | rt-D124-App-sampler-handoff-1253 | Recover exact existing helper and supported attach recipe. App owns next tagged full tour and actual process binding. | Pending source handback | Existing source only |
+| D77-wrapper-guard | Make phase cancellation honest | Sol / Luna | Farm verifies exact source custody | review | Author1243; independent1257 PASS | Independent18 controls PASS; exact helper5c821f9e published. Private wrapper qualified; live tools require declared bounds. | Independent1257 PASS | 7cb353858c held private |
+| D124-Farm-render | Hand exact stage and render to Farm | Luna | Farm ordinary installed inputs | review | Handoff1253; custody review1300 | Exact recipe, patches and guard source flat-published. Farm owns local admission, genuine stage and render. | Independent1300 active | Applied523893 / a522 |
+| D124-App-sampler | Publish existing process sampler | Luna | App startup injection and lifecycle | review | Handoff1253; custody review1300 | Eight original source files and hashes flat-published. ExistingPID attach absent; App owns actual startup-overlay seam. | Independent1300 active | Existing3c73; held4b240 |
 | D123-current-patch | Conserve current Agent patch on b742 | HARD Sol | Stopped Agent checkpoint | doing | rt-F-D123-current-return-sol-1257 | One Runtime successor. Historical D108 patch and newer normal Agent changes retain separate source manifests. | Pending exact source review | b742 base |
+
+| D124-pristine-host14 | Recheck unchanged host tests on b742 | Luna / service | Exact pristine checkout receipts | doing | rt-D124-b742-host14-1300 | Separate upstream comparison; current host repair stays Agent owned. Actual source and result custody required. | Pending exact result | b742 / pristine Runtime |
+| D124-handoff-review | Verify Farm and sampler input custody | Luna independent | Completed authored packets | doing | rt-D124-handoff-custody-review-1300 | Two separate source verdicts; verify exact original commands and hashes without stage or collector execution. | Independent1300 active | Evidence only |
 
 Runtime producer: RELEASED5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 / tree de2954a0ceadb4455903d9abdfec3b773318a50f. Normal56 controls and provider2 PASS; canonical15 and schema exact7070. App normald8a1 has adopted tags.
 core open: Agent30693 independently425 core open,14 regressions,450 bad. Normal ready producer/XML/atomic source is now Agentb545; no functional reduction credited before Farm batch core.
 regressions: Host14 remain Agent exclusive. Candidate21b failed independent origin review; original14 body was stopped before execution. Agent origin-return1241 owns correction. D124 requires fix or revert by14:00Z, with b742 pristine check.
 Gates: P1/P3 recorded GO; P4 independent GO28.101s. Current tuple34d464/070dfc/7070/635f has six case GOs across11251 and8974: placement, ADD, parent, single, bulk, asset. SWAP and element open. Full tour remains NO-GO.
-Blockers: Element — App sole owner underD124. Actual11251 arrival/UTC/correlation remains EXACTMISSING. Requested existing sampler handoff1253 is active; no Runtime semantic author or duplicate body.
+Blockers: Element — App sole owner underD124. Actual11251 arrival/UTC/correlation remains EXACTMISSING. Requested existing sampler source1253 is delivered. App owns actual startup injection and request binding; no Runtime semantic author.
 Blockers: SWAP — tags5e9ad are normal Appd8a1. Next App full tour names the branch; no adoption wait and no inferred cause from old7070.
-Blockers: Final render — Farm owns full normal installer stage and genuine render underD124.6. Portable exact-source handoff1253 active; wrapper1243 awaits independent1257 before further phases anywhere.
+Blockers: Final render — Farm owns full normal installer stage and genuine render underD124.6. Exact source and recipe1253 published; private wrapper independent1257 PASS. Custody1300 checks both packets; Farm owns actual stage inputs.
 Blockers: D69 — source XML107 is normal Agentb545, applicability and batch proof pending. Genuine installed render90 remains open. No whole audit PASS.
 Blockers: Final cut — green core, REG0, full current P2, D69, final tuple P1–P5 and genuine installed render required. No build or ZIP.
-Next ready: Completed source handoffs publish immediately; guard1257 reviews author18 controls. Producer1247 and current patch1257 active. No extra family body or unqualified host import.
+Next ready: Producer1247, current patch1257, pristineb742 host14 and custody1300 active. Completed packets are published. Independent producer review follows author return.
 Ready for host filing: None for ready batch1232: actual hub merge result MERGED b545b616a4 read back. Agent owns normal source receipt and Farm batch core; product adoption remains held until qualification.
 Venues: No Main heavy body. Farm owns Agent batch core plus D77 full stage/render; serialize there with correctly keyed ordinary profiles. App owns next tagged full tour by about13:30Z and actual-process sampling.
 Delivery: Private100Python+TS/41 matrix inventory qualified. Historical patch47f6/treeec640 is source-reviewed onb742,268 installer and chat PASS; minimal wheel fixture astrid.core gap unverified. Sole current Runtime successor1257 consumes stopped Agent1221 checkpoint; no duplicate author.
 Later: R2c81b and D1160643 exact donor seed source PASS, raw/config behavior remains owed. D100 six custody PASS at donor scope only; originalTEN unchanged. Occurrence stage and promotion records EXACTMISSING, no cross-lane input wait.
 Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote filing. D117a pinned public Git/local input with unchanged integrity only. Four host retirement targets remain held under owner12:25, no attempt or alternative route.
-Disk: About5.50GB before this update. Fresh ended clean nonKEEP scan found zero eligible Runtime worktrees; guarded sweep3 and compact-scratch are running. No reserve reduction or refused target retry. Main D77 phases stopped; overall stop4.0GB.
-live 5 / cap 6; ready-undispatched 0; queued 0. Active: producer1247, Farm handoff1253, App sampler1253, current D123Sol1257, guard review1257.
-INBOX consumed through1205071 bytes. Updated 2026-10-25T12:56:43Z.
+Disk: About5.30GB. Fresh ended clean nonKEEP scan found zero eligible Runtime worktrees. Guarded sweep3 removed3 old temporary directories; compact-scratch packed0 and gzipped0. Main phases stopped; overall stop4.0GB.
+live 4 / cap 6; ready-undispatched 0; queued 0. Active: producer1247, current D123Sol1257, pristineb742 host14-1300, handoff custody1300.
+INBOX consumed through1209079 bytes. Updated 2026-10-25T13:01:57Z.
