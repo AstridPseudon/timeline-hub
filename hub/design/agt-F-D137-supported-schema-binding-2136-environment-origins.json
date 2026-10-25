@@ -1,0 +1,110 @@
+{
+  "expected_partition": {
+    "child_or_pinned": {
+      "astrid": "/home/user/work/wt/agt-pin-a4e016b6/astrid/__init__.py",
+      "astrid.core.timeline.banodoco_schema": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/banodoco_schema.py",
+      "astrid_runtime": "/home/user/work/wt/rt-pin-5e9ad1c6/astrid_runtime/__init__.py",
+      "astrid_runtime_client": "/home/user/work/wt/agt-pin-a4e016b6/astrid_runtime_client/__init__.py",
+      "runtime_protocol": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/__init__.py"
+    },
+    "explicit_schema_root": {
+      "banodoco_timeline_schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py"
+    }
+  },
+  "probe": {
+    "env": {
+      "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONNOUSERSITE": "1",
+      "PYTHONPATH": "/home/user/work/wt/agt-pin-a4e016b6:/home/user/work/wt/rt-pin-5e9ad1c6"
+    },
+    "origins": {
+      "astrid": "/home/user/work/wt/agt-pin-a4e016b6/astrid/__init__.py",
+      "astrid.core.timeline.banodoco_schema": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/banodoco_schema.py",
+      "astrid_runtime": "/home/user/work/wt/rt-pin-5e9ad1c6/astrid_runtime/__init__.py",
+      "astrid_runtime_client": "/home/user/work/wt/agt-pin-a4e016b6/astrid_runtime_client/__init__.py",
+      "banodoco_timeline_schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+      "runtime_protocol": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/__init__.py"
+    },
+    "python": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/bin/python",
+    "python_version": "3.13.16",
+    "record_entries": 12,
+    "record_hash_match": true,
+    "record_hashes": {
+      "banodoco_timeline_schema-0.0.2.dist-info/INSTALLER": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "banodoco_timeline_schema-0.0.2.dist-info/METADATA": "49fd34e5afe868b39ef9c7131f8093ca98017f0129faab5aa86bd5a80e2eba0e",
+      "banodoco_timeline_schema-0.0.2.dist-info/REQUESTED": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "banodoco_timeline_schema-0.0.2.dist-info/WHEEL": "98e75747d0b7c0c568bfb71263c3d8f970b3a374a6996087bc642be5cb09a1aa",
+      "banodoco_timeline_schema-0.0.2.dist-info/direct_url.json": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+      "banodoco_timeline_schema-0.0.2.dist-info/top_level.txt": "543a8d01279949f8ec5ec908c47cfcdb6978921a13207e748a97376022d86ee0",
+      "banodoco_timeline_schema/__init__.py": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+      "banodoco_timeline_schema/generated.py": "da74eae27fafc8e8410b96c99cec0652f54343fa7b975ec315295d644ea6ae63",
+      "banodoco_timeline_schema/materialize.py": "41651567e2e29b565a2854210c146ecb450c49c815504ede375775eb020bde38",
+      "banodoco_timeline_schema/theme.py": "b713f1e61c8c63b1ce957d7a6c4b1f1c5c1700d4fd6336f99f97ba7e964f4dcb",
+      "banodoco_timeline_schema/timeline.schema.json": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25",
+      "banodoco_timeline_schema/validate.py": "ef953e644cbaee6919397571a00966c45cddf9e55f4d83636e9a037afb187059"
+    },
+    "runtime_contract": {
+      "contract_version": "0.2.14",
+      "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+    },
+    "schema_package_metadata": {
+      "direct_url": {
+        "subdirectory": "packages/timeline-schema/python",
+        "url": "https://github.com/banodoco/ArtAgents.git",
+        "vcs_info": {
+          "commit_id": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+          "requested_revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+          "vcs": "git"
+        }
+      },
+      "name": "banodoco-timeline-schema",
+      "record_sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1",
+      "version": "0.0.2"
+    },
+    "sys_path": [
+      "/home/user/work/venv-agent/lib/python3.13/site-packages",
+      "/home/user/work/wt/agt-pin-a4e016b6",
+      "/home/user/work/wt/rt-pin-5e9ad1c6",
+      "/usr/lib/python313.zip",
+      "/usr/lib/python3.13",
+      "/usr/lib/python3.13/lib-dynload",
+      "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/lib/python3.13/site-packages"
+    ]
+  },
+  "registered_child": {
+    "import_origins_file": {
+      "bytes": 714,
+      "mode": "0444",
+      "path": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.astrid-import-origins",
+      "realpath": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.astrid-import-origins",
+      "sha256": "4027bfb8eef61b5e6e72b3b43504c17f495dc3ca60681a2f084f3016075b2c20"
+    },
+    "interpreter": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/bin/python",
+    "key": "3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "owner": {
+      "bytes": 778,
+      "mode": "0400",
+      "path": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.bench-owner.json",
+      "realpath": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.bench-owner.json",
+      "sha256": "1c869788f497ed2bf39feff4e0d95b333f1818c1b70a34999c14b7f7561201f1"
+    },
+    "path": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "provision_report": {
+      "bytes": 3238,
+      "mode": "0400",
+      "path": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.provision-report",
+      "realpath": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.provision-report",
+      "sha256": "99b120fbdfa444ea567344934ede0955f1aeeba8484d7991989eaf33d11be35e"
+    },
+    "python_version": "3.13.16",
+    "shared_schema_in_child": false
+  },
+  "registration": {
+    "agent_sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "requirements_lock_sha256": "6f6e3843fbb39d91e80d5be952cb3d589053503541b61202d341f9757902c110",
+    "runtime_client_identity_sha256": "90a79e0545869e20fe38c3b1118f72006246dff9b215209e606444a2bad93624",
+    "runtime_sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344"
+  },
+  "schema": "timeline.ops.d137.environment-origins/v1"
+}

@@ -1,0 +1,133 @@
+{
+  "conclusion": "retained failure was missing explicit environment binding; not child provisioning failure",
+  "historical_1848": {
+    "historical_environment": "VIRTUAL_ENV exposed shared schema to historical venv interpreter; current child uses explicit supported variable",
+    "poison": {
+      "calls": 0,
+      "exit": 1
+    },
+    "positive": {
+      "calls": 1,
+      "preflight_exit": 0,
+      "stub_exit": 17
+    },
+    "recipe": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D134-dry-preflight-1848-measurement-command.sh"
+  },
+  "retained_prior": {
+    "child_key": "3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "poison": {
+      "calls": 0,
+      "exit": 1
+    },
+    "positive": {
+      "calls": 0,
+      "error": "ModuleNotFoundError: banodoco_timeline_schema",
+      "exit": 1
+    },
+    "preparation_failure": "absent rehearsal stub retained",
+    "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D137-child-result-review-2132-review.json",
+    "unchanged_retry": false,
+    "verdict": "PASS_EVIDENCE"
+  },
+  "schema": "timeline.ops.d137.supported-schema-source-map/v1",
+  "sources": [
+    {
+      "bytes": 23624,
+      "git_blob": "1b3f12da05da3bb89fa76881184eefdf8232e076",
+      "lines": [
+        30,
+        32,
+        38,
+        40,
+        62,
+        67,
+        68
+      ],
+      "mode": "0644",
+      "name": "banodoco_schema.py",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/banodoco_schema.py",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/banodoco_schema.py",
+      "regular": true,
+      "sha256": "572845f1102cefd2c8c9cae1f889393e3ba1b7b2b8d681f3f1f0bd96c63321ce",
+      "symlink": false
+    },
+    {
+      "bytes": 8091,
+      "git_blob": "7a20027fe6292004359f429813f7786e0cdbe916",
+      "lines": [
+        37,
+        39
+      ],
+      "mode": "0644",
+      "name": "env_vars.py",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/env_vars.py",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/env_vars.py",
+      "regular": true,
+      "sha256": "16e37f98580cdd69d91ecf837f99ac59d8e1a01248fead388a0baa33b83d1dd9",
+      "symlink": false
+    },
+    {
+      "bytes": 31607,
+      "git_blob": "0f14d14940f261d279e50b4ca9dd57acc4730dee",
+      "lines": [
+        45,
+        77,
+        379,
+        383,
+        394,
+        398
+      ],
+      "mode": "0644",
+      "name": "run-discovery-original-0603.py",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/tools/run-discovery-original-0603.py",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/tools/run-discovery-original-0603.py",
+      "regular": true,
+      "sha256": "546e6152ac04aaa46c8fa7fda4f36215923691223cba6920f40453094c371888",
+      "symlink": false
+    },
+    {
+      "bytes": 8493,
+      "git_blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+      "lines": [
+        24,
+        29,
+        60,
+        94,
+        122,
+        125,
+        141,
+        149,
+        165
+      ],
+      "mode": "0755",
+      "name": "p4-d73-pinned-launch.sh",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+      "regular": true,
+      "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+      "symlink": false
+    },
+    {
+      "bytes": 13285,
+      "git_blob": "a59d42e663a4e137ef15fea709b1e6380c0dc4dc",
+      "mode": "0644",
+      "name": "agent-runtime-schema",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/schema/timeline-config.schema.json",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/schema/timeline-config.schema.json",
+      "regular": true,
+      "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "symlink": false
+    },
+    {
+      "bytes": 1457,
+      "git_blob": "60290a3c46bcf13d08aef138dc854c3b58f1404b",
+      "mode": "0644",
+      "name": "runtime-schema-provenance",
+      "path": "/home/user/work/wt/rt-pin-5e9ad1c6/contract/schemas/timeline-config.schema.provenance.json",
+      "realpath": "/home/user/work/wt/rt-pin-5e9ad1c6/contract/schemas/timeline-config.schema.provenance.json",
+      "regular": true,
+      "sha256": "1e3518566be46bfca8e1597998eae7f2f7c1b7970ca7439b8ee940831303a8f4",
+      "symlink": false
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "all_other_lines_identical": true,
+  "approved_change_only": true,
+  "changed_fields": [
+    {
+      "field": "agent_sha",
+      "poison": "0000000000000000000000000000000000000000",
+      "positive": "a4e016b6a9f91fbe372672bdcf382c630bf59186"
+    }
+  ],
+  "line_count_poison": 36,
+  "line_count_positive": 36,
+  "poison": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/evidence/poison.manifest",
+    "sha256": "1647b0e625a1786f63b63584afe2ecfcfdaa81d433c1536533bd0468cf4f5b1b"
+  },
+  "positive": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/evidence/positive.manifest",
+    "sha256": "b46261b9dac06baa35a4181ed610d12f3e83ee4c39b3acbf61202668f4cd2566"
+  },
+  "schema": "timeline.ops.d137.manifest-diff/v1"
+}

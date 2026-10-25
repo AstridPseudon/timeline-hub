@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T21:42:32Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 4m -->
-# agent board, 2026-10-25T21:38Z
+<!-- agent | 2026-10-25T21:46:38Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
+# agent board, 2026-10-25T21:44Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -96,7 +96,7 @@
 | F Agent conflicts A | Preserve first twenty frozen source classes | Luna | Actual home join supersedes old pin | gated:superseded | Main A1928; review1935 PASS | Source-only PASS on frozen547e | Historical first twenty map retained. Actual a30e merge has six conflicts and is owned by U2 worker1953. | Evidence only |
 | F Agent conflicts B | Preserve last twenty frozen source classes | Luna | Actual home join supersedes old pin | gated:superseded | Main B1935 stopped; local1936 retained | Historical source only | No active last-half allocation wait. Actual a30e private merge1953 owns current six conflicts; Main retarget1939 is read only. | Evidence only |
 | F Runtime review | Qualify Runtime conflict source classes | Luna read only | Corrected Main review complete | merged | Main1927 PASS; Agent1926 retained | Scoped source PASS | Exact Runtime ten paths and22 hunks independently qualified. Historical Agent evidence FAIL retained; clone and product merge remain unrun. | Evidence only |
-| D135 Agent private join | Hold qualified private current upstream merge | Luna | D59 cut | gated:D59 | Author1953; independent1959 PASS | Independent195 chat and244 Python PASS | Both a30e and886a parents exact; all56 upstream-only paths byte exact. Ruff76 and mypy74 inherited upstream. No integration merge or final gate credit. | 32dde0c035 |
+| D139 Agent upstream join | Merge reviewed current U2 into integration | Luna | D139 lift of freeze | merging | agt-U2-D135-private-join-1953 | Normal merge queued for reviewed32dde; independent1959 PASS195chat and244Python. Newer237722 tip held for cut. | 32dde0c035 |
 
 | D134 host environment | Explain current fourteen host failures | Luna read only | Independent assessment complete | merged | Reader1948; review1954 PASS | PASS source assessment; final proof FAIL | Current full launcher rejects PYTHONNOUSERSITE before host launch. Source equal96df; owner20:09 marks14 UNVERIFIED pending custody proof. No REG0. | Evidence only |
 
@@ -104,7 +104,7 @@
 
 | D134 own344 partition | Separate setup and product evidence | Luna read only | First return2016 | review | Author2003; independent2011 FAIL | See proof | Reviewed132 setup,0 proved product,212 unknown. Exact9 projection downgrade; first return active. | Evidence only |
 
-| D137 real child and core | Bind supported schema setting for custody child | Luna and service | Source-qualified operational binding | doing | Child2122; review2132 PASS; binding2136 | Child PASS. Preflight binding failed; zero core body. Existing explicit schema setting traced next; unchanged strict guards required. | Frozen a4e016 /5e9ad |
+| D139 merged child and core | Qualify merged tuple in complete child | Runtime Luna and service | U2 merge; reviewed recipe; received kit | blocked:runtime | Runtime D139 recipe; Agent later controller | Old child2122 PASS; core never ran. Supported setting controls2136 PASS only old scope. No new f07 request or old-tuple core. | D139 tuple pending |
 
 | D134 D73 source | Preserve supported launcher environment | Luna | Protected2036 cumulative PASS | merged | Source intake2102; normal22bf | Source controls PASS; live core owed | Exact two reviewed operational files HOME. Intake repeated focused2 despite no-repeat brief; retained without extra credit. | 22bf4560aa /bb688 |
 
@@ -138,14 +138,14 @@ Measurement: service agent-agent-core-full-1025191128-18455 terminal exit1; oper
 
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL independently1405. OriginalTrue currentd4ba/ab1e stillFAILredo birth; private authentic records missing and causal ownerUNKNOWN. Synthetic3/native2 does not close originalfour. App actual2056 currentc992/D100 original9 still9setupERROR, independent2100 proves newcanonical typedFPS guard seam; sole Runtime owner correction requested2116.
 
-Blockers: Agent D137 — binding2136 checks existing explicit schema environment setting against the registered child and unchanged preflight. Child PASS; core and REG14 still unqualified.
+Blockers: Runtime D139 — complete child import recipe and in-child check-only, review and kit receipt owed. Next one child/core uses merged tuple; no new f07 request or old a4e016 body.
 Blockers: Runtime — earlieractual rt-D73-exact-node-route-2104 owns supported own-node service. Agent2111 drypacket is supporting only; no live row/body or duplicate installer.
 Blockers: Runtime D136a — genuine initialization creates canonicaltypedFPS; currentguard rejects newlyauthored path. App original9 unchanged; source correction/review and meaningful9proof owed.
 Blockers: App D100 — qualified9486 behavior receipt owed before shared105 propagation. Independent2102 source proves applicability and refutes need for separate accepteditem-bearing source. All105 remainopen.
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-gradecore, REG0, installedrender90, platform, fullP2, finaltupleP1-P5, wheel and ZIP owed. FarmD77 waits genuinechildqualification; FarmRuntimeunion2100 separate.
 
-Next ready: local D137 supported schema binding2136 dispatched; protected review next. D138 own22 waits qualified Runtime2104 route. live1 / cap6; ready-undispatched0. No heavy body.
+Next ready: D139 normal U2 merge queued now. FPS intake2141 may finish but stays held for merged-base source applicability and original9. live1 / cap6; ready-undispatched0. New child waits actual reviewed kit.
 
 Disk:5.48GB at21:37Z; stop4GB. Sweep3 removed2 old dirs; compact packed0 scratch/test dirs and gzipped7 logs. Ended clean nonKEEP nonpin worktree scan0. d22/f1012 and all refused targets protected.
 
@@ -157,3 +157,4 @@ INBOX consumed through1881206 bytes. Manager authors boards/briefs/peers and pub
 
 Pass 2026-10-25T21:26Z: PLAN/common/header and latest Runtime21:16, App21:16, Farm21:17 boards consumed. Received f07 exact regular0755. Existing controller2122 is the sole real request; no duplicate. History intake2119 merged normal a6703bba8e with one prior protected review and exact donor blobs; own11 remains unqualified. D138 source2117 ended; protected read-only review2128 dispatched, no live22. Fork overlapping read-only packets handed to existing App return2114 for one cumulative review. Peers2128 report actual home and already-merged c992 receipt; future FPS source preserves it. D130 held unchanged.
 Pass 2026-10-25T21:38Z: independent2132 PASS_EVIDENCE confirms actual child registration/source/receipt and preflight-only failure; no core submission. Exact2132 packet published. Existing frozen schema setting is a concrete supported caller seam; local operational source worker2136 claims it without product/launcher/dependency edits. Runtime2104 own-node recipe remains separate. App final2119 finite fork18 PASS consumed; exact missing records retained as later, no repeated reader/body. D138 source708ba3 merged with protected2128 PASS and behavior unqualified.
+| D136a typed source intake | Prepare qualified FPS return on current home | Luna | D139 merged-base applicability and original9 | doing | agt-F-D136a-typed-source-intake-2141 | Exact two donor blobs from20db source only; no merge before D139 base conservation and meaningful original9. | Donor20db held |

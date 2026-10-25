@@ -1,0 +1,107 @@
+{
+  "binding": {
+    "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "body": "2234 bounded stub only",
+    "generic_PYTHONPATH": "/home/user/work/wt/agt-pin-a4e016b6:/home/user/work/wt/rt-pin-5e9ad1c6",
+    "mode": "dry",
+    "python": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/bin/python"
+  },
+  "launcher": {
+    "bytes": 8493,
+    "mode": "0755",
+    "path": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+    "realpath": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+    "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1"
+  },
+  "poison": {
+    "calls": 0,
+    "counter": {
+      "bytes": 0,
+      "mode": "0600",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/poison/counter",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/poison/counter",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "counter_bytes": 0,
+    "exit": 1,
+    "exit_file": {
+      "bytes": 2,
+      "mode": "0600",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/poison/exit",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/poison/exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "expected_calls": 0,
+    "expected_exit": 1,
+    "stderr": {
+      "bytes": 33,
+      "mode": "0600",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/poison/stderr",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/poison/stderr",
+      "sha256": "bc85d8762dfb2215099766272d96b8934c29188224dbfb80b14f5cdd0f4395ae"
+    },
+    "stdout": {
+      "bytes": 0,
+      "mode": "0600",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/poison/stdout",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/poison/stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "positive": {
+    "calls": 1,
+    "counter": {
+      "bytes": 7,
+      "mode": "0600",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/positive/counter",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/positive/counter",
+      "sha256": "04d540922ee4c86ca1c488ee84bd212f8ec5deceb222eef48701938a669394c3"
+    },
+    "counter_bytes": 7,
+    "exit": 17,
+    "exit_file": {
+      "bytes": 3,
+      "mode": "0600",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/positive/exit",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/positive/exit",
+      "sha256": "54183f4323f377b737433a1e98229ead0fdc686f93bab057ecb612daa94002b5"
+    },
+    "expected_calls": 1,
+    "expected_exit": 17,
+    "stderr": {
+      "bytes": 0,
+      "mode": "0600",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/positive/stderr",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/positive/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "bytes": 0,
+      "mode": "0600",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/positive/stdout",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D137-supported-schema-binding-2136/private-controls/positive/stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "result": "PASS_CHANGED_STATE_CONTROL_PACKET",
+  "safety": {
+    "alternate_interpreter": false,
+    "child_mutation": false,
+    "child_request": false,
+    "core_service": false,
+    "full_body": false,
+    "full_suite": false,
+    "generic_pythonpath_override": false,
+    "package_install": false,
+    "request_test": false,
+    "schema_copy": false
+  },
+  "schema": "timeline.ops.d137.supported-schema-controls/v1",
+  "stub": {
+    "bytes": 67,
+    "mode": "0700",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh",
+    "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh",
+    "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0"
+  }
+}

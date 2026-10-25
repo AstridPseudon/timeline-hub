@@ -1,0 +1,208 @@
+{
+  "binding": {
+    "caller": {
+      "line": 379,
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/tools/run-discovery-original-0603.py",
+      "value": "/home/user/work/venv-agent/lib/python3.13/site-packages"
+    },
+    "consumer": {
+      "lines": [
+        32,
+        38,
+        40,
+        41
+      ],
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/banodoco_schema.py"
+    },
+    "environment_variable": "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
+    "launcher": {
+      "explicit_variable": "inherited",
+      "generic_pythonpath": "replaced",
+      "lines": [
+        128,
+        129,
+        149,
+        150
+      ],
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh"
+    },
+    "scope": "single absolute server-owned Python install root",
+    "value": "/home/user/work/venv-agent/lib/python3.13/site-packages"
+  },
+  "external_schema_source": {
+    "direct_url": {
+      "subdirectory": "packages/timeline-schema/python",
+      "url": "https://github.com/banodoco/ArtAgents.git",
+      "vcs_info": {
+        "commit_id": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+        "requested_revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+        "vcs": "git"
+      }
+    },
+    "installed_module": {
+      "bytes": 1070,
+      "mode": "0644",
+      "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+      "realpath": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+      "regular": true,
+      "sha256": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+      "symlink": false
+    },
+    "installed_package": {
+      "bytes": 4096,
+      "mode": "0755",
+      "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema",
+      "realpath": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema",
+      "regular": false,
+      "symlink": false
+    },
+    "installed_root": {
+      "bytes": 20480,
+      "mode": "0755",
+      "path": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+      "realpath": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+      "regular": false,
+      "symlink": false
+    },
+    "installed_timeline_schema": {
+      "bytes": 11482,
+      "mode": "0644",
+      "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/timeline.schema.json",
+      "realpath": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/timeline.schema.json",
+      "regular": true,
+      "sha256": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25",
+      "symlink": false
+    },
+    "isolation": "non-symlinked root; absent from registered child site-packages",
+    "owner": "@banodoco/timeline-schema#TimelineConfig",
+    "package": "banodoco-timeline-schema",
+    "provenance_path": "/home/user/work/wt/rt-pin-5e9ad1c6/contract/schemas/timeline-config.schema.provenance.json",
+    "provenance_sha256": "1e3518566be46bfca8e1597998eae7f2f7c1b7970ca7439b8ee940831303a8f4",
+    "record": {
+      "bytes": 1593,
+      "mode": "0644",
+      "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/RECORD",
+      "realpath": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/RECORD",
+      "regular": true,
+      "sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1",
+      "symlink": false
+    },
+    "record_entries": 12,
+    "record_hash_match": true,
+    "source_artifact": "python/banodoco_timeline_schema/timeline.schema.json",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "version": "0.0.2"
+  },
+  "frozen_tuple": {
+    "Agent": {
+      "commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "dirty": false,
+      "expected_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "parents": "a4e016b6a9f91fbe372672bdcf382c630bf59186 61fefc6983f4413f1d1964b149bbaf5eadb8d2f0 96df3f5b4862b1c267e3816237bae8a64b5dc31f",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6",
+      "tree": "60d45288145414ee4702fcce61af7c7810c2a3df"
+    },
+    "App": {
+      "commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+      "dirty": false,
+      "expected_commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+      "origin": "https://github.com/banodoco/reigh-app",
+      "parents": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7 34d4644589970274a5252c0f7c68b6288eb0b0b4 331a58363d1dc6ade1db2d2fa9d58688520c51bd",
+      "path": "/home/user/work/wt/app-pin-d8a1cd40",
+      "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"
+    },
+    "Composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "dirty": false,
+      "expected_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a",
+      "path": "/home/user/work/wt/vw-pin-635f4de0",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "Runtime": {
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "dirty": false,
+      "expected_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "parents": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 7070f1378d1917fcce69857ebd33cd2b3015568b ef4728a1c07b7d3909d5027fbf1e673f6aec0030",
+      "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"
+    }
+  },
+  "interpretation": {
+    "external_package_role": "re-exported types/materialization/import prerequisite",
+    "qualification_basis": [
+      "declared supported environment variable",
+      "frozen production caller sets it",
+      "child interpreter/product origins remain bounded",
+      "schema root is explicit and authenticated",
+      "no broad overlay, alternate interpreter, install, copy, or child mutation"
+    ],
+    "strict_validation_authority": "Agent vendored runtime contract schema, not external package timeline.schema.json"
+  },
+  "protected_source": {
+    "caller": {
+      "bytes": 31607,
+      "git_blob": "0f14d14940f261d279e50b4ca9dd57acc4730dee",
+      "lines": [
+        45,
+        77,
+        379,
+        383,
+        394,
+        398
+      ],
+      "mode": "0644",
+      "name": "run-discovery-original-0603.py",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/tools/run-discovery-original-0603.py",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/tools/run-discovery-original-0603.py",
+      "regular": true,
+      "sha256": "546e6152ac04aaa46c8fa7fda4f36215923691223cba6920f40453094c371888",
+      "symlink": false
+    },
+    "launcher": {
+      "bytes": 8493,
+      "mode": "0755",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+      "regular": true,
+      "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+      "symlink": false
+    },
+    "positive_stub": {
+      "bytes": 67,
+      "mode": "0700",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh",
+      "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh",
+      "regular": true,
+      "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+      "symlink": false
+    }
+  },
+  "runtime": {
+    "canonical_vendored_schema": {
+      "bytes": 13285,
+      "mode": "0644",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/schema/timeline-config.schema.json",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/schema/timeline-config.schema.json",
+      "regular": true,
+      "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "symlink": false
+    },
+    "client_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "client_version": "0.2.14",
+    "lock": {
+      "bytes": 3577,
+      "mode": "0644",
+      "path": "/home/user/work/wt/agt-pin-a4e016b6/runtime.lock.json",
+      "realpath": "/home/user/work/wt/agt-pin-a4e016b6/runtime.lock.json",
+      "regular": true,
+      "sha256": "4a3d51004d022b4c4adc77a15ac919f9716e7c01b37e30eba7d16031aa51d0be",
+      "symlink": false
+    }
+  },
+  "schema": "timeline.ops.d137.supported-schema-source/v1",
+  "status": "QUALIFIED_SUPPORTED_BINDING"
+}

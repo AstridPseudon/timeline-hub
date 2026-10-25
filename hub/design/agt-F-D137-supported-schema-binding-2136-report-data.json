@@ -1,0 +1,74 @@
+{
+  "base": "tl/agt-F-D137-shell-child-core-2122",
+  "binding": {
+    "caller": "frozen run-discovery-original-0603.py:379",
+    "consumer": "frozen astrid/core/timeline/banodoco_schema.py:32-41",
+    "launcher": "unchanged p4-d73-pinned-launch.sh preserves explicit variable while replacing generic PYTHONPATH",
+    "root": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "schema_package_origin": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+    "schema_source_commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "schema_source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "variable": "ASTRID_TIMELINE_SCHEMA_PYTHONPATH"
+  },
+  "changes": {
+    "repo_git_mutation": false,
+    "shared_dependency_writes": false,
+    "worktree_product_files": false
+  },
+  "child": {
+    "actual_interpreter": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/bin/python",
+    "agent_sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "key": "3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "runtime_sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "shared_schema_installed": false,
+    "status": "passed"
+  },
+  "controls": {
+    "manifest_changed_only_agent_sha": true,
+    "poison": {
+      "calls": 0,
+      "exit": 1,
+      "manifest": "1647b0e625a1786f63b63584afe2ecfcfdaa81d433c1536533bd0468cf4f5b1b",
+      "raw_stderr_sha256": "bc85d8762dfb2215099766272d96b8934c29188224dbfb80b14f5cdd0f4395ae",
+      "raw_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "positive": {
+      "calls": 1,
+      "exit": 17,
+      "manifest": "b46261b9dac06baa35a4181ed610d12f3e83ee4c39b3acbf61202668f4cd2566",
+      "raw_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "decision": "supported explicit schema environment binding qualified; exactly one fresh positive and one poison bounded control executed",
+  "next_gate": "independent review of PASS control packet before any actual fullbody",
+  "not_run": [
+    "agent-core-full service/body",
+    "pytest/core suite",
+    "request-test",
+    "child provisioning/request",
+    "full suite",
+    "D130",
+    "Runtime2104 own-node recipe"
+  ],
+  "retained_witnesses": {
+    "prior_child_provision": "PASS",
+    "prior_poison": {
+      "calls": 0,
+      "exit": 1
+    },
+    "prior_positive_preflight": {
+      "calls": 0,
+      "error": "ModuleNotFoundError: banodoco_timeline_schema",
+      "exit": 1
+    },
+    "prior_preparation_failure": "absent rehearsal stub stat failure retained",
+    "prior_records_hidden": false,
+    "unchanged_retry": false
+  },
+  "schema": "timeline.ops.d137.supported-schema-binding-report/v1",
+  "scope": "operational source/proof packet only; no product/code/test/pin/generated/kit change",
+  "task": "D137/F",
+  "verdict": "PASS_EVIDENCE",
+  "worker": "agt-F-D137-supported-schema-binding-2136"
+}
