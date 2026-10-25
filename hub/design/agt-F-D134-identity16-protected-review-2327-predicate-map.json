@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.agent.d134.identity16_protected_review_predicate_map.v1",
+  "method": "read-only exact diff plus AST normalization; only the four old/new Runtime identity strings were normalized",
+  "candidate_diff": {
+    "changed_files": [
+      "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "tests/editing_conformance/test_prepared_video_birth.py"
+    ],
+    "changed_literals": [
+      {"file": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py", "field": "NORMAL_RUNTIME", "before": "ab1e4f6141987706132916e2da16477f5a019464", "after": "f103bb46866999c961a8865636f2e66d544e0c9b"},
+      {"file": "tests/editing_conformance/test_prepared_video_birth.py", "field": "expected_runtime_source", "before": "ab1e4f6141987706132916e2da16477f5a019464", "after": "f103bb46866999c961a8865636f2e66d544e0c9b"},
+      {"file": "tests/editing_conformance/test_prepared_video_birth.py", "field": "expected_runtime_tree", "before": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657", "after": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883"}
+    ],
+    "changed_paths_count": 2,
+    "changed_lines": 3,
+    "assertions_removed": 0,
+    "raises_removed": 0
+  },
+  "ast_conservation": {
+    "normalized_ast_equal_for_all_seven": true,
+    "all_asserts_calls_raises_assignments_control_flow_equal": true,
+    "files": [
+      {"path": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py", "asserts": 19, "raises": 1, "calls": 146, "assigns": 79, "ifs": 3, "functions": 19},
+      {"path": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py", "asserts": 63, "raises": 0, "calls": 147, "assigns": 80, "ifs": 1, "functions": 13},
+      {"path": "tests/editing_conformance/test_native_word_anchor_vectors.py", "asserts": 14, "raises": 0, "calls": 60, "assigns": 61, "ifs": 5, "functions": 9},
+      {"path": "tests/editing_conformance/test_next_command_cohort_runtime.py", "asserts": 44, "raises": 0, "calls": 167, "assigns": 67, "ifs": 7, "functions": 7},
+      {"path": "tests/editing_conformance/test_prepared_video_birth.py", "asserts": 52, "raises": 0, "calls": 189, "assigns": 98, "ifs": 23, "functions": 12},
+      {"path": "tests/editing_conformance/test_word_binding_recipe.py", "asserts": 89, "raises": 0, "calls": 311, "assigns": 166, "ifs": 22, "functions": 31},
+      {"path": "tests/sdk/test_timeline_commit_provider.py", "asserts": 243, "raises": 13, "calls": 923, "assigns": 519, "ifs": 58, "functions": 99}
+    ],
+    "affected_functions": [
+      {"name": "fresh_realm", "file": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py", "asserts": 3, "raises": 1, "calls": 73, "input_metadata_unchanged": true},
+      {"name": "test_fresh_word_transcript_frontends_exact_pin_roundtrip", "file": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py", "parameter_values": ["python", "cli", "sheet"], "asserts": 0, "raises": 0, "calls": 22, "roundtrip_assertions_unchanged": 15},
+      {"name": "test_prepared_video_public_preview_accept_retry_undo_and_no_write", "file": "tests/editing_conformance/test_prepared_video_birth.py", "asserts": 24, "raises": 0, "calls": 76, "pytest_raises": 2, "input_metadata_unchanged": true}
+    ]
+  },
+  "preserved_predicates": [
+    "all assertions and pytest.raises contexts",
+    "authored input/media/transcript/topology",
+    "C0 request fields: api_version, project_id, timeline_id, base_revision_id, base_publication_id, commands, label, steps, merge, reads, idempotency, dry_run, source, rationale, group_id",
+    "command fields: schema_version, op, version, select, args",
+    "step fields: id, label, intent, tags, command_ordinals, patch, reads",
+    "guarded source identity/refusal boundary, inverse, ABA, redo and no-write predicates",
+    "prepared-video accepted/merged/conflict/invalid/preview/receipt/history/records/bindings/effects/dependencies predicates",
+    "C0 replies: accepted, merged, conflict reason/head, invalid code/path/hint/suggested_command, preview would_status/null receipt/no writes"
+  ],
+  "unknown_conservation": {"original_unknown": 5, "current_unknown": 5, "all_unapplied": true},
+  "functional_status": "NOTRUN_ALL_16"
+}

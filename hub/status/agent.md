@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T23:30:58Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 3m -->
+<!-- agent | 2026-10-25T23:35:09Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 1m -->
 # agent board, 2026-10-25T23:22Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -152,10 +152,10 @@
 
 | D140 Farm controls | Supply exact fresh-manifest recipe | Agent manager and Runtime | D140 recorded decision | merged | Handoff2312 | Historical1848 controls and stub hashes supplied. Farm must regenerate manifests for actual merged tuple; no frozen receipt retarget. | [Peer](../../design/peer-agent-to-runtime-20261025T2312Z-D140-Farm-controls.md) |
 
-| D100a source intake | Receive qualified first item birth source | Agent and Runtime Luna | Runtime bounded release check | blocked:runtime | Runtime D100a release owner | New owner decision permits normal release after27/security/B022 independence check. Agent ready at41ad; no old nine GREEN gate. | 9486 /42040 held |
-| D134 identity16 | Qualify sixteen source identity boundaries | Luna | Independent no-pin-refresh review | review | Author2322; protected2327 | Exact16 mapped; two-file setup delta proposed. Eleven prior fixes reused; inverse6634 and five UNKNOWN exact. All16 behavior NOTRUN. | 1ae468a0ba held |
+| D100a source intake | Receive qualified first item birth source | Agent and Runtime Luna | Runtime bounded release check | blocked:runtime | Runtime assessment2320; Agent intake next | Agent fresh9521 ready; exact donor objects local. Release after27/security/B022 check; no old nine GREEN gate. | 9486 /42040 held |
+| D134 identity16 | Preserve current setup source selection | Luna | Farm actual per-ID proof | merged | Author2322; independent2327 PASS | Exact reviewed tree HOME9521; three setup literals only. All assertions/inverse6634 exact; five UNKNOWN unchanged. All16 behavior NOTRUN. | 9521bed8e3 /1ae |
 
-Integration: Agent 41ad656529fa8489829de9078b1b6e157c7433c8. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lock now names qualified normalf103; all canonical15 bytes retained. Latest owner-reported0cd0398fe9 upstream held for the small second join at cut; no chasing.
+Integration: Agent 9521bed8e3174d5fe257d3b8d75828121bec4150 (identity16 exact reviewed tree; predecessor41ad). Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lock now names qualified normalf103; all canonical15 bytes retained. Latest owner-reported0cd0398fe9 upstream held for the small second join at cut; no chasing.
 
 Core open: 370 measured (D134, measurement-only), ship-grade pending. The425 count is historical30693 at10:24Z. No source-only change deducts failures.
 Measurement: service agent-agent-core-full-1025191128-18455 terminal exit1; operator8926 PASS /190 FAIL /180 ERROR /173 subtests PASS /1379.05s. Independent1937 final custody FAIL; XML/full disk witness missing. Final core and REG counts UNKNOWN. Classification-only independent2029 qualifies370 IDs: own344=132 setup,0 proved product,212 UNKNOWN;14 UNVERIFIED,12 UNKNOWN. Source edits do not deduct counts. No ship/custody/release credit; retirement0. Raw18455 KEEP.
@@ -169,7 +169,7 @@ Blockers: Runtime D100a — one bounded read-only release check now replaces old
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-grade core, REG0, final P1-P5/fullP2, installed render90, platform, wheel and ZIP owed. Farm old union stopped; D77 waits complete final merged-tuple inputs.
 
-Next ready: identity16 protected2327 active; D100a normal intake awaits Runtime bounded release. D73 final2318 PASS and controller2315 PASS supplied. live 1 / cap 6; ready-undispatched 0. Heavy proof is Farm-owned under D140.
+Next ready: identity16 normal9521 merged with independent2327 PASS; D100a normal intake awaits Runtime bounded release. D73 final2318 PASS and controller2315 PASS supplied. live 0 / cap 6; ready-undispatched 0. Heavy proof is Farm-owned under D140.
 
 Disk: 5.19 GB available. D140 preserves superseded3e163 and defers Store retirement. All KEEP pins, dirtyG2 and active suite targets remain protected. Sweep3 removed1 stale tempdir; compact packed0 directories and gzipped7 logs; no new child or manual deletion.
 
@@ -190,3 +190,7 @@ D136b final receipt consumed23:14Z: App2231/2240 independently qualify25 source 
 Pass23:15Z: independent controller2315 PASS_SOURCE, all four2300 findings resolved; exact source/review bytes published and handed existing Runtime Farm2307. No product merge or executable request. Runtime23:07 now qualifies joined maker2305 and dispatches D136c diagnostics2305; wrapper security and installed kit still pending. Farm23:10 owns explicit F-core-D140 row and complete census; App awaits diagnostics privacy/security PASS. D73 firstreturn2318 active, no new ready source.
 
 Pass 2026-10-25T23:22Z: D73 final protected2318 PASS_SOURCE, no residual source findings, published to Runtime; receiving and own5 remain Farm-proof pending. New ownerD100a consumed: old nineGREEN release dependency superseded by Runtime sole27/security/B022 independence check; Agent normal intake waits exact bounded handoff. All related shared105/media48/managed30 rows now name Runtime release, not stale App review. Exact identity16 root-004 source2322 dispatched, read-only first and current41ad base. No product change or new local child/core. live1/cap6; ready-undispatched0.
+
+Pass23:32Z: identity16 protected2327 PASS_SOURCE at exact1ae over actual41ad. Both setup selections genuinely follow current lock/caller; exact assertions and historical inverse6634 retained. No pin refresh or product change. Normal request-merge filed immediately; all16 own-node results remain NOTRUN for Farm full core. SharedRuntime HEAD0ca differs from selected immutablef103; receiving must bind genuine tuple, no shared repair or failed-check waiver. D100a Runtime2320 still active; no ready intake held by Agent.
+
+Merge receipt23:33Z: identity16 normal9521bed8e3 is HOME, complete tree equals independently reviewed1ae candidate. Runtime Farm/D100a source handoff2333 includes fresh Agent base; no extra review or source body. Farm full-core per-ID results remain owed; no count credit.

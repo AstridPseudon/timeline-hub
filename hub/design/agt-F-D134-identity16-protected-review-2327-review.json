@@ -1,0 +1,46 @@
+{
+  "schema": "timeline.agent.d134.identity16_protected_review.v1",
+  "task": "D134 identity16 root-004",
+  "verdict": "PASS_SOURCE_REVIEW",
+  "scope": "Independent read-only protected SOURCE review of exact candidate 1ae468a0ba against root-004, PLAN R1/R2/G3/P4, C0 and current normal Agent base 41ad6565.",
+  "source_decision": {
+    "candidate_is_one_commit_over_current_normal_agent": true,
+    "allowed_scope_only": true,
+    "actual_delta_only_three_literals": true,
+    "gate1_delta": "PASS_SETUP_ONLY",
+    "prepared_video_delta": "PASS_SETUP_ONLY",
+    "inverse6634_tuple_exact": true,
+    "five_unknown_unchanged_and_unapplied": true,
+    "historical_eleven_preserved": true,
+    "matching_lock_alone_not_used_as_authorization": true,
+    "authorization_basis": [
+      "current Agent base lock is f103/tree 5d0c",
+      "D139 independent provenance receipt records 15/15 canonical consumer bytes unchanged and equal to f103",
+      "direct read-only Git-object checks independently confirm all 15 current/base/f103 hashes",
+      "Gate1 actual caller selects runtime.lock source via NORMAL_RUNTIME and use_runtime(commit=...), then uses Runtime provider through daemon/TimelineSession/CLI/Python/Sheet",
+      "prepared-video actual caller selects vendored_runtime_commit, use_runtime(commit=...), and exact Runtime HEAD/tree guards before public media/provider route"
+    ]
+  },
+  "enumeration": {"expected": 16, "actual": 16, "unique": 16, "functional_status": "NOTRUN_ALL_16"},
+  "classification": {"historical_setup_or_expectation_proved": 11, "unknown_gated": 5, "product_fault_proved": 0, "functional_pass": 0, "retirement": 0, "count_deduction": 0},
+  "predicate_conservation": {"normalized_ast_equal_all_seven": true, "assertions_removed": 0, "raises_removed": 0, "calls_changed": 0, "inputs_metadata_changed": 0, "guards_relaxed": 0, "pins_refreshed": false, "dto_changed": false},
+  "source_delta_findings": [
+    {"id": "gate1-normal-runtime", "verdict": "PASS_SETUP_ONLY", "evidence": "tests/.../test_gate1_fresh_word_transcript_frontends.py:41,70-74,113-119,152-303; current lock f103; Runtime provider and schema fixture blobs are equal ab1e/f103; frontend routes and all 15 roundtrip assertions conserved", "identity_boundary": "strict lock equality plus use_runtime(commit=NORMAL_RUNTIME); no assertion/refusal/pin predicate change"},
+    {"id": "prepared-video-runtime-source-tree", "verdict": "PASS_SETUP_ONLY", "evidence": "tests/.../test_prepared_video_birth.py:248-256,260-363; vendored_runtime_commit -> use_runtime(commit=runtime_pin) -> exact HEAD/tree; public managed media selection/provider route and 24 assertions/2 raises conserved", "identity_boundary": "strict source/tree equality; no request, media, inverse, invalid, conflict, preview, no-write, history or receipt predicate change"},
+    {"id": "inverse7-history5-reuse", "verdict": "PASS_REUSED_EXACTLY", "evidence": "current inverse file equals reviewed inverse7 blob; Gate1/prepared source changes are the only rebinding; inverse Runtime 6634 tuple retained", "identity_boundary": "no duplicate ownership or false retarget"},
+    {"id": "unknown-five", "verdict": "PASS_PRESERVED_UNAPPLIED", "evidence": "members 11-13,15-16 retain original file blobs and current hashes; no accepted-record/source receipt authorizes a delta", "identity_boundary": "no source fault or functional credit inferred"}
+  ],
+  "environmental_caveat": {
+    "status": "UNVERIFIED_CURRENT_SHARED_RUNTIME_WORKTREE",
+    "detail": "shared /home/user/work/runtime is at 0ca306d rather than the Agent lock's f103; vendor_lock.py check therefore fails only its producer-HEAD equality check",
+    "not_a_candidate_delta": true,
+    "no_mutation_performed": true,
+    "farm_owner_next": "D140/Farm must run against an explicitly clean/current producer tuple or resolve the stale shared-worktree state before functional qualification"
+  },
+  "negative_findings": [
+    "No product fault proved.",
+    "No functional PASS claimed.",
+    "No pin refresh, guard relaxation, assertion change, DTO change, product change, shared fixture change, generated change, retirement, acquisition, or deletion.",
+    "No pytest, collection, import/provider execution, launcher, preflight, service, child, Store, core, retirement, or acquisition run performed."
+  ]
+}

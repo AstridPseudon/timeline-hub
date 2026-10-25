@@ -1,0 +1,69 @@
+{
+  "schema": "timeline.agent.d134.identity16_protected_review_source_manifest.v1",
+  "agent": {
+    "candidate_commit": "1ae468a0ba47dd43ac0a1dc81b9fb4884ad4ea52",
+    "candidate_tree": "2e44289552b3cd52152e80f22f21d5e12d1bf52c",
+    "base_commit": "41ad656529fa8489829de9078b1b6e157c7433c8",
+    "base_tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+    "base_is_current_normal_agent": true,
+    "own_commit_count_over_base": 1,
+    "changed_paths": [
+      "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "tests/editing_conformance/test_prepared_video_birth.py"
+    ],
+    "scope_paths": [
+      "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+      "tests/editing_conformance/test_native_word_anchor_vectors.py",
+      "tests/editing_conformance/test_next_command_cohort_runtime.py",
+      "tests/editing_conformance/test_prepared_video_birth.py",
+      "tests/editing_conformance/test_word_binding_recipe.py",
+      "tests/sdk/test_timeline_commit_provider.py"
+    ]
+  },
+  "current_source_files": [
+    {"path": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py", "git_blob": "5508855be2034cc5c36dfd6f30e3b4ea44e6645e", "sha256": "71ab19e7351f5e2b7d609d32a55aa1c6cf6af5d4bab865b353a64fecf1da86e5"},
+    {"path": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py", "git_blob": "55e7cec5da3463360a4f862986bc28e6a1e39345", "sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3"},
+    {"path": "tests/editing_conformance/test_native_word_anchor_vectors.py", "git_blob": "85d85f96f167c576af310b097c02f8903926c7e7", "sha256": "01258d742c30ccd018d7c7f86a29d05fdc5263659eaec0f9e989734e43adc377"},
+    {"path": "tests/editing_conformance/test_next_command_cohort_runtime.py", "git_blob": "74e25432f820740e23b7c843c07407f36f71fc8f", "sha256": "d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0"},
+    {"path": "tests/editing_conformance/test_prepared_video_birth.py", "git_blob": "19b8ae33f0425ff6f9248ab66c943df65cc7c092", "sha256": "2cb86c85e972ba324d0f71af6d38ea0cb58c31a98adc78c3c4200c778f5ea958"},
+    {"path": "tests/editing_conformance/test_word_binding_recipe.py", "git_blob": "6d1f0f50394e5063a1de09564d89dd5c988ae93a", "sha256": "7f644c38f179fc37868b87a588da833947d16b1896210cfaf0fa016941fe8963"},
+    {"path": "tests/sdk/test_timeline_commit_provider.py", "git_blob": "85c7b16316b3f7ba2e5830681d46e6925a5d19db", "sha256": "cde797633e42e21fc7219c2b5288ce8238cdacf92e094450e02e4e746c871434"}
+  ],
+  "current_normal_runtime": {
+    "lock_path": "runtime.lock.json",
+    "lock_sha256": "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a",
+    "source_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "schema_sha256": "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d",
+    "immutable_git_object_present": true,
+    "provider_file_ab1e_blob": "a05812e82ee2930f29e277f260f3329855378932",
+    "provider_file_f103_blob": "a05812e82ee2930f29e277f260f3329855378932",
+    "validation_file_ab1e_blob": "e896fcc8f44822ba6e8a7a6566b35657b0678283",
+    "validation_file_f103_blob": "e896fcc8f44822ba6e8a7a6566b35657b0678283",
+    "test_generation_fixture_ab1e_blob": "a5317ce82f008cc4cfd8d86f73e5c95e50a567dd",
+    "test_generation_fixture_f103_blob": "a5317ce82f008cc4cfd8d86f73e5c95e50a567dd"
+  },
+  "canonical15_receipt": {
+    "review": "agt-U4a-D139-provenance-review-2242",
+    "all_15_consumer_blobs_unchanged_from_parent": true,
+    "all_15_consumer_blobs_equal_f103_sources": true,
+    "all_15_consumer_sha256_equal_canonical15": true,
+    "all_15_consumer_sha256_equal_lock": true,
+    "all_15_f103_source_blobs_equal_ab1e_sources": true,
+    "direct_object_check": "PASS 15/15: current Agent, Agent base, f103 Git objects, and recorded hashes equal",
+    "runtime_d139_receipt": {"commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883", "selected_tests": 1571, "passed": 1571, "failed": 0, "errors": 0, "skipped": 0}
+  },
+  "historical_donors": {
+    "history5": {"agent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23", "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464", "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657", "source_adaptation": false},
+    "inverse7": {"agent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23", "runtime_commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4", "runtime_tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a", "source_adaptation": false}
+  },
+  "environment": {
+    "shared_runtime_worktree_observed_head": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+    "shared_runtime_worktree_observed_tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+    "vendor_lock_check_against_shared_worktree": "FAIL_EXPECTED_HEAD_MISMATCH_ONLY",
+    "vendor_lock_detail": "expected f103bb46866999c961a8865636f2e66d544e0c9b, got 0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+    "candidate_source_selection": "use_runtime(commit=f103...) selects the immutable f103 object; no product/source file was changed"
+  },
+  "functional": {"status": "NOTRUN_ALL_16", "source_review_does_not_claim_behavior" : true}
+}
