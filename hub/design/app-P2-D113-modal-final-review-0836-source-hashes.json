@@ -1,0 +1,98 @@
+{
+  "result": "PASS",
+  "candidate_commit": "d2d8b2104d50fda3a9b1a4fca9ef2bb1cca3caf3",
+  "base_commit": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+  "base_tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d",
+  "complete_delta": {
+    "changed_paths": [
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts"
+    ],
+    "insertions": 2,
+    "deletions": 0,
+    "diff_sha256": "ae060c2a1c1a3c49df20f37d8f54127b4ccdd585a045572b75c73372481a038b",
+    "reverse_remove_only_two_lines": true,
+    "repository_notes_in_candidate": false
+  },
+  "target": {
+    "path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "sha256_before": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7",
+    "sha256_after": "777966e38459f13dec60a180253f3ed88e83995eee3fdbf81570a86946e78e7e",
+    "inserted_lines": [
+      "await reloadedDialog.getByRole('button', { name: 'Close', exact: true }).click();",
+      "await expect(reloadedDialog).toHaveCount(0);"
+    ],
+    "placement_lines": {
+      "reload_assertions": [1260, 1261],
+      "close": 1262,
+      "gone_assertion": 1263,
+      "parent_undo": 1265,
+      "inverse_request": 1267,
+      "native_undo_context": 1268,
+      "final_reload": 1276
+    }
+  },
+  "protected_specs_sha256_after": {
+    "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "777966e38459f13dec60a180253f3ed88e83995eee3fdbf81570a86946e78e7e",
+    "tests/e2e/local/three-products.spec.ts": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7"
+  },
+  "protected_specs_sha256_base_unchanged": {
+    "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.spec.ts": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7"
+  },
+  "d69_frozen_upstream": {
+    "commit": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "dialog_source_sha256": "78eb0cfe3e3c511279d4d0ce7f0435037dd530b94f2163ac337ab4856c79fa60",
+    "editor_source_sha256": "bea86bb573dd76dad202e373c151bf95cb3821b077a6356b66c85f24c4ec869b",
+    "current_sources_byte_identical": true,
+    "dialog_modal": true
+  },
+  "current_product_sources_sha256": {
+    "src/tools/video-editor/components/TimelineEditorShellToolbar.tsx": "46d629c0f4b3cb9fd8860cdc6ede1e866b50ce13e7452118fa7db06f27b6b906",
+    "src/tools/video-editor/components/AstridTimelineEditor.tsx": "bea86bb573dd76dad202e373c151bf95cb3821b077a6356b66c85f24c4ec869b",
+    "src/tools/video-editor/hooks/useTimelineHistory.ts": "fffeaf412e10e54bdc91c0932f521ba38e49bff4936e5f7914da1b9dd12214ac",
+    "src/tools/video-editor/hooks/useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+    "src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c",
+    "src/tools/video-editor/commands/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230",
+    "src/tools/video-editor/commands/commitOutbox.ts": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21",
+    "src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+    "src/shared/components/ui/overlay/dialog.tsx": "78eb0cfe3e3c511279d4d0ce7f0435037dd530b94f2163ac337ab4856c79fa60",
+    "src/tools/travel-between-images/components/ShotTimelinePreview.tsx": "43795fd4c36b6f7e903229e5c171f9e2f6f62b5442584a64fbec67caf79b4cae"
+  },
+  "fixture_and_predicate_map": {
+    "shared_default_occurrence_host_window": 12,
+    "placement_occurrence_host_window": 14,
+    "media_import_selection_waits": "1206-1215",
+    "semantic_request_and_accepted_reply": "1217-1234",
+    "closure_registry_manifest_and_sibling_preservation": "1235-1251",
+    "occurrence_scoped_reload_identity": "1252-1261",
+    "dialog_close_and_unmount": "1262-1263",
+    "native_undo_request_and_exact_timeline_inverse": "1265-1268",
+    "D105a_scoped_identity_and_inverse_residue_restore": "935-970, 1260-1261, 1267-1279",
+    "history_zero_legacy_and_final_reload": "1255-1257, 1274-1279",
+    "all_existing_waits_locators_timeouts_unchanged": true
+  },
+  "contract_c0": {
+    "path": "/home/user/work/runtime/contract/commit-v2.md",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "authored_input": {
+    "path": "design/app-A2-placement19078-undo-sol-0819-proposal.patch",
+    "sha256": "ab3dd878853def648b60ffd340f0931fd6857277d0b30a1dd40e38addde04e33"
+  },
+  "checks": {
+    "node20_focused_controls": "139 passed",
+    "tsc_app_locked": "PASS",
+    "tsc_node_locked": "PASS",
+    "scoped_eslint_max_warnings_0": "PASS",
+    "git_diff_check": "PASS",
+    "static_source_predicate_hash_map": "PASS",
+    "browser_service_body_collector_inverse_full_suite": "NOT RUN"
+  }
+}

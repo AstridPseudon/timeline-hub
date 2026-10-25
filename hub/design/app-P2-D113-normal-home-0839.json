@@ -1,0 +1,11 @@
+{
+  "time": "2026-10-25T08:40:08.579746+00:00",
+  "author": "d2d8b2104d50fda3a9b1a4fca9ef2bb1cca3caf3",
+  "normal_home": "dc8c809cd9a5a2e4fa712718a69b29745f59341e",
+  "normal_tree": "6260a69f32907abc0e6883b0705346fa798271a5",
+  "review": "app-P2-D113-modal-final-review-0836 PASS",
+  "entire_tree_equals_reviewed_author": true,
+  "source_checks": "139 Node controls; App and Node types; scoped lint PASS on identical tree",
+  "browser_credit": false,
+  "next_proof": "next authorized full P2, no isolated placement body"
+}
