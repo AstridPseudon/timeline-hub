@@ -1,0 +1,40 @@
+{
+  "task": "app-D118a-numeric-params3-1204",
+  "result": "blocked_out_of_scope_runtime_failure",
+  "changed_files": [],
+  "agent_head": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+  "agent_tree": "6540b10a56c4453609c0da5219ad314d8fda0dcd",
+  "target_file": "tests/editing_conformance/test_commit_runtime_numeric_params.py",
+  "target_file_sha256": "1ced4d39f8c2da4972863500b20aa67da1ee458f20ee9f4c86be152fd716b5d6",
+  "target_file_git_blob": "1dbc32cc5de5a1d17b6ddf572bc213a7ad0e5683",
+  "base_file_sha256": "1ced4d39f8c2da4972863500b20aa67da1ee458f20ee9f4c86be152fd716b5d6",
+  "pristine_08e6b905_file": "absent",
+  "runtime_receipt": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+  "runtime_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+  "runtime_checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+  "runtime_clean": true,
+  "runtime_source_sha256": {
+    "runtime_protocol/service.py": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666",
+    "runtime_protocol/timeline_commit_auth.py": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+    "runtime_protocol/errors.py": "f10518c992c28d5836fdd7916337679f0ba92b9722dacc1dd94fe408a22a49f4"
+  },
+  "exact_nodes": [
+    "tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[2-2.0-occurrence:occurrence-1/clip:clip-1]",
+    "tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[1-True-occurrence:occurrence-1/clip:clip-1]",
+    "tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[True-1-occurrence:occurrence-1/clip:clip-1]"
+  ],
+  "exact_node_result": "3 failed in 13.30s",
+  "failure": {
+    "service_entry": "runtime_protocol/service.py:2524",
+    "auth_frame": "runtime_protocol/timeline_commit_auth.py:1755",
+    "message": "inverse stage native writes do not cover its authenticated effect image",
+    "phase": "redo inverse; accepted save, reload, and first inverse assertions passed"
+  },
+  "static_checks": {
+    "ruff": "passed",
+    "mypy_follow_imports_skip": "passed",
+    "py_compile": "passed",
+    "git_diff_check": "passed",
+    "byte_and_ast_conservation": "passed"
+  }
+}

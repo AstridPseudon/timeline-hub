@@ -1,0 +1,79 @@
+{
+  "task": "D122/D116 independent exact source-join review",
+  "verdict": "PASS_SOURCE",
+  "functional_proof": false,
+  "candidate": "0643b073a2b101f484ac3836dbbb796d86505fe8",
+  "candidate_parent": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+  "normal_base": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+  "reviewed_donor": "7c717062128f61adacf613b6ee05a0992abb9024",
+  "reviewed_donor_parent": "21146cd6decaa1c15bca1753ca719f6937040798",
+  "shared_merge_base": "e9e3b8f78a103331c38b70c008bf020f13c46413",
+  "changed_paths": [
+    "tests/editing_conformance/native_word_anchor_fixture.py",
+    "tests/editing_conformance/test_native_word_anchor.py",
+    "tests/editing_conformance/test_word_binding_recipe.py"
+  ],
+  "all_other_repo_blobs_equal_normal_base": true,
+  "normal_base_target_advancement_from_merge_base": false,
+  "donor_delta_sha256_from_merge_base": "7f701395d628cea2103b4b28e20453f04ea6b9cbc90eb89636b255141a8ec9d5",
+  "files": {
+    "tests/editing_conformance/native_word_anchor_fixture.py": {
+      "candidate_sha256": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+      "donor_sha256": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+      "normal_base_sha256": "e0b170149fa08cd2bd5655af505b4b96cc0faccc5dceba51c50ee2cbdcb1c91a",
+      "candidate_equals_donor_bytes": true,
+      "base_equals_merge_base_bytes": true,
+      "assert_count": 5,
+      "ast_sha256": "9485ae7484fcf0b0f006fbd4f45d872686952cb6ced28ca10c4bec683dac3ae1",
+      "assert_ast_sha256": "b9bf2408b807232a26aaeca3db3752557d05f394eb2c15dd702c6bb393c15477",
+      "reviewed_input_ast_sha256": "134397693ed8fe17a732e61dff9ef509da807dc4068698151b31ee0a3e92c957"
+    },
+    "tests/editing_conformance/test_native_word_anchor.py": {
+      "candidate_sha256": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8",
+      "donor_sha256": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8",
+      "normal_base_sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f",
+      "candidate_equals_donor_bytes": true,
+      "base_equals_merge_base_bytes": true,
+      "assert_count": 122,
+      "ast_sha256": "f591f392a2141128f888fc3705283c46070abc3389cd9eac57acf05dbabbf379",
+      "assert_ast_sha256": "6ae8aad454a415741a8c9c45c8576066e80a0d7e949964be94d80164ffbde16a",
+      "reviewed_input_ast_sha256": "25fad62f3feeb9145de45ed1c28263ed1c61ef5cf0cd597e209641d892ad81b8"
+    },
+    "tests/editing_conformance/test_word_binding_recipe.py": {
+      "candidate_sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04",
+      "donor_sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04",
+      "normal_base_sha256": "f23e227bce165d3c7ada70d9742c1e6f36159823c845df9903903f71575228bd",
+      "candidate_equals_donor_bytes": true,
+      "base_equals_merge_base_bytes": true,
+      "assert_count": 87,
+      "ast_sha256": "0d68068825a50ab84ab47ea8d37efeb8f77375bb9754646d646be1bb2aa3c73e",
+      "assert_ast_sha256": "50f5ffbdc9064ed9a217007a86c8545d109305261829cf9b23cc791c1d9869fc",
+      "reviewed_input_ast_sha256": "25fad62f3feeb9145de45ed1c28263ed1c61ef5cf0cd597e209641d892ad81b8"
+    }
+  },
+  "protected_donor_review": {
+    "artifact": "handoff-agt-F-D116-protected-return-review-1104",
+    "verdict": "PASS_SOURCE",
+    "historical_sample": {
+      "passed": 6,
+      "failed": 2,
+      "errors": 0,
+      "skipped": 0
+    },
+    "failure_nodes": [
+      "test_phrase_records_all_consecutive_main_word_ids",
+      "test_raw_canonical_bundle_compiles_in_fresh_process_without_history"
+    ],
+    "md_sha256": "17c124bed97cd398c283ac58cd7a75c7b2e98acaa21245dd938f8cd179ce8e21",
+    "json_sha256": "2efd872e28de31ec338afc07e062347d16198aa172a0255416d3cc4d6cba47f5"
+  },
+  "checks": {
+    "ruff": "PASS: /home/user/work/venv-agent/bin/ruff check --no-cache allowed three files",
+    "mypy": "PASS: /home/user/work/venv-agent/bin/mypy --follow-imports=skip allowed three files",
+    "py_compile": "PASS: /home/user/work/venv-agent/bin/python -m py_compile allowed three files with private PYTHONPYCACHEPREFIX",
+    "git_diff_check": "PASS: candidate diff and worktree",
+    "targeted_behavior_tests": "NOT RUN by scope",
+    "full_or_browser_or_service_tests": "NOT RUN by scope"
+  },
+  "hold": "Candidate remains HELD pending Agent product-batch raw/config seam qualification; no joined functional GO claimed."
+}

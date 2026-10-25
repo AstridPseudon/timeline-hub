@@ -1,0 +1,41 @@
+{
+  "task": "D118a-parent-label2-1206",
+  "repo": "agent",
+  "base": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+  "allowed_file": "tests/editing_conformance/test_commit_runtime_parent_track_label.py",
+  "allowed_file_sha256": "1e3517c511a1e6f1090d9d15bf212553762de83cfae40ad330ac77749a0edb91",
+  "allowed_file_unchanged": true,
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "clean": true
+  },
+  "exact_nodes": [
+    {
+      "nodeid": "tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move",
+      "outcome": "error",
+      "failure": "candidate.timing: legacy word anchor is missing",
+      "location": "astrid/sdk/timeline/validation.py:650",
+      "setup_boundary": "tests/editing_conformance/test_commit_runtime_m1.py::film"
+    },
+    {
+      "nodeid": "tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_native_label_cli_lost_ack_then_python_suffix_keeps_original_claims",
+      "outcome": "error",
+      "failure": "candidate.timing: legacy word anchor is missing",
+      "location": "astrid/sdk/timeline/validation.py:650",
+      "setup_boundary": "tests/editing_conformance/test_commit_runtime_m1.py::film"
+    }
+  ],
+  "checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "git_status": "clean",
+    "pristine_08e6b905_file": "absent",
+    "assert_count": 30,
+    "call_count": 89
+  },
+  "disposition": "no_edit_product_or_shared_fixture_failure_outside_scope"
+}

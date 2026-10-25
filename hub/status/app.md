@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T12:08:12Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 2m -->
-# app board, 2026-10-25T12:05Z
+<!-- app | 2026-10-25T12:12:22Z | dispatcher heartbeat 16s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 0m -->
+# app board, 2026-10-25T12:11Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -46,19 +46,21 @@
 
 | D118a-helper-cut1 | Preserve owner-deferred timing purpose | Luna | Existing D23 scope | gated:D23 | app-D118a-helper-cut1-1130 | No source change; exact second word-anchor case is already owner-deferred. Authenticated binding would change input. No new core bug claimed. | Original exact |
 
-| D118a-clip-scalars3 | Preserve scalar bootstrap and grouping | Luna and protected review | Review1148 first FAIL | review | Final reviewer1209 | Remove unsupported metadata; retain causal provider order and original grouping. Existing inverse auth failures stay open. | 04eb2d2 held |
+| D118a-clip-scalars3 | Preserve scalar bootstrap and grouping | Luna and protected review | Final1209 SOURCEPASS | merging | Author1155; host route1207 | Only provider relocation; wrapper and grouping exact. Own3 reach live auth2267 failure; no whole-case GO. | fac7ed023 |
 | D118a-auto-completion4 | Preserve exact field conflict refusal | Luna and protected review | Independent1152 PASS | merging | Author1148; host route1200 | Exact four originals PASS; AST, statics and no-write exact. Normal remote Agent merge requested through lead. | 4319be817c |
 
 | U4p-D111b | Adopt qualified generic read performance | Luna | Released normal7070 | merged | Adopter1139; normal receipt1145 | Node20 strict8/vendor17/artifact3/lint PASS;14 mappings/15 canonical/8protected exact; full normal tree equals tested author. | 34d4644589 |
 | D120-full-P2 | Qualify all eight on released D111b | Luna and service | Preflight12718 PASS | gated:recorded-no-go | Producer1145; actual11251 | Exit1/643s; readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN. [Packet](../../design/app-D120-full-P2-D111b-1145-terminal.md). | 34d464 070dfc 7070 635f |
 | D120-five-cases | Qualify five passing full tails | Luna independent | Actual11251 terminal | merged | app-D120-P2-11251-pass-review-1202 | Independent GO for placement, ADD, parent and both clears; exact tuple and whole original tails qualified. | Source unchanged |
-| D120-element-path | Find current element first failed seam | Luna read only | Repeated gate failure | doing | app-D120-element11251-wholepath-1206 | Source and retained actual11251 comparison with passing path; no body or speculative repair. | Source unchanged |
-| D122-D116-join | Prepare reviewed genuine seed join | Luna | Agent request1136 | review | Join1204; exact review1205 | All three files donor-byte exact; statics PASS. Candidate held for raw/config product batch qualification. No body. | 0643b073a2 |
+| D120-element-path | Find current element first failed seam | Luna read only | Actual11251 retained | merged | app-D120-element11251-wholepath-1206 | Applied5s wait ends before teardown; commitPOST unresolved, outcome UNKNOWN. No repair proved. Finite peer1207 sent. | Source unchanged |
+| D122-D116-join | Prepare reviewed genuine seed join | Luna and independent | Exact join1205 SOURCEPASS | gated:Agent-product-batch | Join1204; review1205 | Three donor-byte-exact files, statics and containment PASS. Prior6PASS2FAIL historical only. No normal merge yet. | 0643b073a2 |
 
-| D118a-numeric3 | Preserve numeric parameter callers | Luna | Agent selfclaim published | doing | app-D118a-numeric-params3-1204 | Own three-node check on exact42aad; preserve inputs, grouping and guards; no speculative product change. | Source pending |
+| D118a-numeric3 | Preserve numeric parameter callers | Luna | Exact own3 current check | blocked:runtime | app-D118a-numeric-params3-1204 | No diff; original3 FAIL at redo auth1755 after save/reload/first inverse pass. Existing product batch asked1211. | Source unchanged |
 
-| D118a-parent-label2 | Preserve parent track labels | Luna | Agent selfclaim published | doing | app-D118a-parent-label2-1206 | Own two-node current check; minimum faithful caller fix only, all original inputs and guards exact. | Source pending |
+| D118a-parent-label2 | Preserve parent track labels | Luna | Exact own2 current check | blocked:agent | app-D118a-parent-label2-1206 | No diff; two setupERROR at shared m1.film missing legacy word anchor. Existing genuine seed owner asked1211. | Source unchanged |
 | D118a-document-input3 | Preserve document input capture | Luna | Agent selfclaim published | doing | app-D118a-document-input3-1206 | Own three-node current check; no product or shared fixture edits. All assertions and grouping exact. | Source pending |
+
+| D118a-native-binding | Preserve Runtime binding authority in native output | Luna | Explicit Agent1155 scope | doing | app-D118a-native-binding-authority-1210 | One product file plus additive real-caller controls; strict authority and privacy, then core review and held batch. | Candidate pending |
 
 Integration: App34d4644589970274a5252c0f7c68b6288eb0b0b4/tree48d71e1a0c18a13668e1d1e086def9dd6210affe; ENTIRE tree equals tested authora385cc76bf. Qualified Runtime7070/treecd680 adopted through normal tools; Agent070dfc and Composition635f retained. D119/D115/D113 exact. [Home receipt](../../design/app-U4p-D111b-normal-home-1145.json).
 
@@ -70,12 +72,12 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 
 Blockers: Runtime current SWAP — Actual11251 again returned409 history_unavailable. Existing Runtime tags1140 owns source observability; lower correlated guard remains UNKNOWN.
-Blockers: Current element — Actual11251 applied completion failed with page closed and pending apply1. Independent wholepath1206 owns exact retained boundary; backend outcome UNKNOWN.
+Blockers: Current element — Actual11251 applied completion failed with page closed and pending apply1. Wholepath1206 complete; finite missing cross-layer correlation and outcome sent to existing Runtime owner.
 Blockers: Agent host14 — Agent genuine-profile proof1141 resumed; App bae5 remains source-qualified and held for batch/core before adoption.
-Blockers: Agent normal queue — Auto4319 host route1200 requested. Atomic8a product request pending Agent home/batch. Sheet and occurrence receipts consumed and waits cleared.
+Blockers: Agent normal queue — Auto4319 host route1200 filed. Scalarfac7 host route1207 asked; atomic8a pending Agent home/batch. Sheet and occurrence receipts consumed and waits cleared.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Five-case independent verdict1202; scalar final correction then one protected review; D116 exact join holds for Agent product batch; no unchanged body.
-live 6 / cap 6; ready-undispatched 0; core open: 3. Wholepath1206; scalar review1209; seed review1205; numeric1204, parentlabel1206 and input1206 active or queued. All claims published beforestart; no heavy body.
-Capacity: 5.163 GB before last source admission; no heavy body remains. D89 source floor5.0 and D122 hosted-source allowance4.6 with no heavy apply; stop4.0. Sweep3 removed0 normally; fresh ended clean nonKEEP worktree audit found0 eligible. Compact-scratch touches prohibited sessions and remains unused.
-INBOX consumed through2141218 bytes, plus own host-route1200 note. Existing whole-path and denied routes preserved. All11251/15203/15712 outputs, branches, reports and current tuple kept.
-Later: D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees remain behind recorded guards. No product/test/generated/pin edits by manager, upstream push, M5, test weakening, credentials or refused-route retry.
+Next ready: Nativebinding1210 and documentinput1206 active; one bounded existing occurrence evidence pairing requested by Agent1155 is next. No unchanged body.
+live 2 / cap 6; ready-undispatched 0; core open: 3. Three no-diff/source reviews and exact D116 join complete; all ready reviewed remote branches use host route.
+Capacity: 5.320 GB at12:08; no heavy body. D89 general source floor5.0; D122 hosted Agent source4.6 with noheavy, stop4.0. Sweep3 removed0; ended clean nonKEEP audit0. Compact-scratch touches prohibited sessions and remains unused.
+INBOX consumed through2153967 bytes. All current11251/15203/15712 outputs, branches, exact reports and tuple inputs retained. D117 denied acquisition and old refused cleanup routes remain stopped.
+Later: D79 waits ZIP; E4 dropped; D74 orphan graph and dirty trees keep recorded guards. No manager product/test/generated/pin edits, upstream push, M5, test weakening, credentials or refused-route retry.

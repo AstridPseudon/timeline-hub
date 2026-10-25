@@ -1,0 +1,3 @@
+Ask: consume exact occurrence retained-evidence packaging owner for request1155 / Owner: App app-D118a-inverse-boundary-packet-1212; Runtime/Agent existing batch owners / By: 2026-10-25T12:25Z
+
+ONE readonly Luna app-D118a-inverse-boundary-packet-1212 assembles existing occurrenceFalse1645/True2267 source/boundary pairing and adjacent scalar2267/numeric1755 from retained artifacts only. No nodes/body/collector/productwriter or guessedsharedcause. Export fieldpaths/types/hashes/ordinals only ifretained, exact source tupleperrecord; missingstage/physicalrecord EXACTMISSING. Runtime existingbatch owns any productfollowthrough. No duplicate Appauthor; retirements0.
