@@ -392,6 +392,7 @@ function TimelineEditorShellCoreComponent({
     redo: chrome.redo,
     selectAllClips: () => editorReplaceTimelineSelection(Object.keys(editorData.data?.meta ?? {}), runtime.agentSelectionOwner),
     togglePlayPause: () => previewRef.current?.togglePlayPause(),
+    toggleFullscreen: () => previewRef.current?.toggleFullscreen(),
     seekRelative: (deltaSeconds) => previewRef.current?.seek(Math.max(
       0,
       timelineStore.getState().playback.currentTime + deltaSeconds,

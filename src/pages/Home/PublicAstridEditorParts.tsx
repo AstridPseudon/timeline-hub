@@ -72,6 +72,8 @@ export const PublicAstridPreview = memo(function PublicAstridPreview({transportO
       playerContainerRef={playerContainerRef}
       transportOutlet={transportOutlet}
       touchChrome
+      // The staged homepage sizes its transport for jump and play.
+      playerControls={false}
     />
   );
 });

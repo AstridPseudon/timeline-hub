@@ -133,6 +133,7 @@ export const BUILT_IN_RESERVED_KEYBINDINGS: ReadonlySet<string> = new Set([
   'ctrl+a',             // Select all clips
   ' ',                  // Play/pause (Space)
   'm',                  // Mute toggle
+  'f',                  // Preview full screen
   's',                  // Split clip
   'backspace',          // Delete clip
   'delete',             // Delete clip
