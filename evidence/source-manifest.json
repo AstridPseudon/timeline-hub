@@ -1,29 +1,70 @@
 {
-  "schema_version": 1,
-  "task": "U2/D135",
-  "repo": "agent",
-  "candidate_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
-  "candidate_base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
-  "merge_head": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
-  "merge_head_tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
-  "merge_base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
-  "changed_file_count_from_candidate_base": 96,
-  "frozen_source_note": "The first20 and B-1936 packets use frozen ours 547e10456250c1b5bcf63b44a50c90ff0563ce1e, not the actual candidate base. They were used only as bounded source dispositions; actual conflicts and final source were checked against a30e and merge head.",
-  "resolved_paths": {
-    "astrid/chat/astrid-local-agents.test.ts": "53a14d2debc4c45618e2d40fdd6f42659bc51b6cee274a2c2a7fb4bfb63461e3",
-    "astrid/chat/service.mjs": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
-    "astrid/installer/backend.py": "3892c447dc111cd0b41b06d38483b0cffc5cf2ae63ab519cad7388fc145029c0",
-    "docs/install/OMP-LANDING.md": "ec58b4e1a22ca71e1c5acd28c7e823ab948e0fe6b7a24874e96895688f699061",
-    "tests/test_installer_omp_source.py": "1d925f6a343b8a85144967948fb4c80443c74b3c32510bc00645e734b31de4de",
-    "tests/test_installer_platforms.py": "77517d7eec667958ae2409146ac4d3bf472a0878a5965504fe8fac0961126e10"
+  "schema": "timeline.d141.pristine-source-review-manifest.v1",
+  "review_verdict": "FAIL",
+  "target": {
+    "prep_commit": "1de87d66097b3e17c684f18674870e556cfcbc99",
+    "base_commit": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "base_tree": "81999820a81432c06ef7aefc4519dc84e71f56f7",
+    "repo_origin": "https://github.com/peteromallet/astrid-agent"
   },
-  "generated": {
-    "source": "astrid/chat/service.ts",
-    "source_sha256": "e6ca2f298d2785fac2d850fddd34f81c827c1c640f461bb63316fa3ee5ba4899",
-    "artifact": "astrid/chat/service.mjs",
-    "artifact_sha256": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
-    "command": "NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run build:chat",
-    "freshness_command": "NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run check:chat-bundle",
-    "result": "PASS"
+  "prep_evidence_blobs": {
+    "evidence/manifest-invocation.md": "8bed6de00a2af3fd01eee06bbe95975a57cda567",
+    "evidence/notes-input.md": "691e8f5d0055910d6ffe7418ad4abf128799f9b1",
+    "evidence/preflight-inventory.json": "5d5dd90163cb03baa79b4fc1e9067401965a2357",
+    "evidence/progress.md": "bc8751534ddbe95739a3ce45563d456127106ce1",
+    "evidence/recipe.sh": "55a35b4ff546ca9f3229fdaf5fda5851578934c3",
+    "evidence/service-row.txt": "069facd9120d3dd7cb94fc51775227a93ddbe70e",
+    "evidence/source-manifest.json": "e014a9bc61e3e6510f5733f823caa37bcc45834c",
+    "evidence/validation.md": "28aa0622b4cb0402f35108afc0455ceb30146182"
+  },
+  "frozen_tuple": {
+    "agent": {"commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a", "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed", "origin": "https://github.com/peteromallet/astrid-agent"},
+    "runtime": {"commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "origin": "https://github.com/banodoco/banodoco-workspace-runtime"},
+    "app": {"commit": "7ca61bb3280beca21d98a854af266a382f7ce5df", "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab", "origin": "https://github.com/banodoco/reigh-app"},
+    "composition": {"commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120", "origin": "https://github.com/peteromallet/timeline-composition"}
+  },
+  "controlling_inputs": {
+    "d134_root_clusters": {"sha256": "789f644fa3d0ab3aaf009073657c4437505024b3898162e1cbb5d304c6b18e7e", "git_blob": "02df177d271c8bf80f6cfb626db265c634c99729"},
+    "d134_per_id": {"sha256": "4cfe0a5fedd24f31e6c438d3a5240d61ae7fcebfe117a2c24589f0959b78ef3e", "git_blob": "bbbae572bac55cf76bbc8eaee3674ca00b7c5a4d"},
+    "root_review_2029": {"sha256": "8d9796c64a04c0dbf81dbda41e3d85435ba6521b6c7bcaf6df6c9efc0b13e1e4", "git_blob": "4ada59177f8020c5cfc54c6fdbd142569412bfbe"},
+    "root_review_2029_source_manifest": {"sha256": "f9493d4fd3175f2ebebd43cfda0646065c86787a44964e3dc0244df324fa0353", "git_blob": "96c10a97b5e5ad1a181f53c7defe967959501b3a"},
+    "d134_command_1848": {"sha256": "3d2333d9d17997512f614f16badf10c01eebf477aabd2466164a19ce41e2b398", "git_blob": "ec5f0f3dceca7ecc67ecfe203df2a27b23fd05e2"},
+    "agent_core_command": {"sha256": "8cd8300a4d1e4f43dc7895907f858f6f2989e964ba38cc017a6a5fbe4cfd2637", "git_blob": "3edd7822848da7ee755ba95e8bf4d45619d3dbde"},
+    "d141_cut_tuple": {"sha256": "612c12a391af576cb57e7c329acbd69dd3ff402241c9ddcde47a4f12def46996", "git_blob": "ea72404bb37401952eeaf8c531ddd39671fd7dc2"},
+    "d141_morning_cut": {"sha256": "9291c9a81b102dc93a10181f6bca83c47f90b5b8a7cc307630e154d32c143c82", "git_blob": "002f3a9f0c33cd5fbb16742a685468009bdead03"}
+  },
+  "external_sources": {
+    "launcher": {
+      "path": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh",
+      "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+      "git_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+      "status_for_pristine": "incompatible_without_additional_supported_route"
+    },
+    "manifest_maker": {
+      "path": "/home/user/work/agent/tests/suites.conf.candidate.request.md",
+      "sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c",
+      "git_blob": "fbde96168dca681a76cff1526c23b8d0b74001eb",
+      "status_for_pristine": "manager_recipe_only"
+    },
+    "control_stub": {
+      "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+      "status": "hash_verified_not_run"
+    }
+  },
+  "historical_packet": {
+    "retained_log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "groups": 52,
+    "ids": 370,
+    "classification": {"TEST_SETUP_OR_EXPECTATION_PROVED": 132, "PRODUCT_FAULT_PROVED": 0, "UNKNOWN": 212, "UNVERIFIED_CURRENT_REG": 14, "PRIOR_UNKNOWN": 12},
+    "raw_xml_receipt_disk_caller_final_counts": "missing_or_private_as_declared",
+    "media48_managed105_relation": "media48 is nested in managed105/root-019; do not add to 153"
+  },
+  "review_boundary": {
+    "source_only": true,
+    "product_or_test_execution": false,
+    "controls_run": false,
+    "imports_or_collection": false,
+    "git_mutation": false,
+    "not_ready_credit": "no controls/proof/REG/core/ship credit"
   }
 }
