@@ -1,0 +1,58 @@
+{
+  "schema": "timeline.f_d134_media48_source_manifest.v1",
+  "task": "agt-F-D134-media48-review-2024",
+  "status": "PASS_FINITE_UNAPPLIED",
+  "repository": "composition",
+  "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "own_scope": {
+    "agent_ref": "tl/agt-F-D134-media48-2016",
+    "agent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "agent_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "file": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+    "blob_sha1": "c4f54e34536dabbf196fd9a17c337b78394506e3",
+    "sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+    "author_changed_files": [
+      "tests/editing_conformance/test_recorded_graph_roots.py",
+      "tests/sdk/test_timeline_commit_graph_roots.py"
+    ],
+    "d134_file_changed": false
+  },
+  "author_evidence": {
+    "worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D134-media48-2016/evidence",
+    "permanent_prefix": "agt-F-D134-media48-2016-",
+    "byte_equal_to_permanent_copies": true,
+    "private_xml": "EXACTMISSING",
+    "private_experiment_record": "EXACTMISSING"
+  },
+  "held_d100_boundary": {
+    "agent_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "agent_tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "product_path": "astrid/sdk/timeline/_command_state.py",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "test_path": "tests/sdk/test_d100_item_birth_boundary.py",
+    "test_sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58",
+    "present_on_current_integration": false,
+    "source_applicability": "PASS_FINITE_SOURCE_APPLICABILITY",
+    "behavioral_qualification": "UNPROVEN"
+  },
+  "runtime": {
+    "author_declared_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "author_validation_path": "/home/user/work/runtime",
+    "author_validation_immutable_receipt": false,
+    "current_checkout_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "current_checkout_tree": "d5cb9335a03bf4764548e379ce180a66bf966910"
+  },
+  "app_currentproof1939": {
+    "source": "app-D100-final-receiving-proof-1939",
+    "registered_route": "RuntimeService.commit_timeline -> startup-selected astrid provider -> Agent commit service",
+    "own9_status": "FAIL_SETUP",
+    "projection_acceptance": "NOTRUN"
+  },
+  "credit": {
+    "setup": false,
+    "behavior": false,
+    "parent_red": false,
+    "candidate_green": false,
+    "whole_cohort": false
+  }
+}
