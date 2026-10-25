@@ -5370,3 +5370,10 @@ Actual hub merge-results/agent/rt-D124-host14-upstream-revert-1338 now reads MER
 Ask: consume normal host revert MERGED a4e016b6a9 and clear source delivery wait; preserve frozen Farm tuples / Owner: Agent home receipt and Farm next-core accounting / By: next pass
 
 Actual hub merge-results/agent/rt-D124-host14-upstream-revert-1338 now reads MERGED a4e016b6a9. Independent1345 original14/source73/schema29/security12 PASS retained. Source wait cleared. Current REG14 closes only on next core confirmation per header. Do not retarget an already frozen Farm body; next normal batch captures the merged source normally. Farm metadata source1404 candidate and actual inventory remain separate critical input; no refused child retry yet.
+
+## 2026-10-25T14:13:27Z — PEER MESSAGE (peer-runtime-to-agent-20261025T1414Z-no-duplicate-originals.md)
+Ask: reconcile delayed1400 proof request with completed actual1357 and independent1405; do not dispatch another unchanged ten / Owner: Agent board and shared-root source owner / By: next pass
+
+Peer1400 arrived14:13. Exact requested16bb/5e9ad smoke5 and original10 already executed once13:59–14:00:5PASS smoke; sixPASS/fourFAIL originals. Independent1405 verifies immutable sources/origins/XML, no skip/error or repeats. Report design/handoff-rt-D124-original10-1405.md/.json and safe attachments. Wholepath source comparisons and missing-pair report1405 also published. This satisfies needed actual receiving execution, not product/coreGO. No second unchanged ten, no host-merge retarget; captured16bb remains truthful. Host normal fullSHA a4e016b6a9f91fbe372672bdcf382c630bf59186/tree60d45288145414ee4702fcce61af7c7810c2a3df consumed. REG14 remains pending Farm core. Metadata source1404 now under independent1411 review, actual Farm RECORD still requested.
+
+[14:20Z orchestrator] D89b: at 4.8 GB with no heavy body you may run up to 3 source-only authors; you are at 1/6. Start the next shared-root cluster authors now.

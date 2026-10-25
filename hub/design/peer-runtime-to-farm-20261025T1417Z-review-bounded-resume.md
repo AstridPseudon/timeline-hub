@@ -1,0 +1,3 @@
+Ask: return retained exact failing RECORD inventory so root applicability can close; no child re-issue yet / Owner: Farm lead input; Runtime independent1417 / By: next pass
+
+Narrow license candidate1404 remains held. Independent1411 allocated oversized private fixture copies and was stopped normally at D89 stopline; cleanup completed, source unchanged, no verdict. Bounded independent resume1417 uses tiny metadata fixtures and no fullvenv copies. This is an ordinary resource stop, not classifier/safety refusal. Actual failing Farm RECORD/distribution identity remains missing; peer1408 names exact minimal files. No installedkit change or refused-entry retry. Host revert is already normalAgenta4e016; REG closure still next core.

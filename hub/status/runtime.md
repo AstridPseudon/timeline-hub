@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T14:13:27Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-25T14:12:05Z
+<!-- main | 2026-10-25T14:17:51Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
+# runtime board, 2026-10-25T14:17:44Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -425,7 +425,7 @@
 | D111b-remaining-path | Compare failed and passing read paths | Luna read only | Finite source finding complete | merged | rt-D111b-remaining-wholepath-1115 | Closure calls8 to29; same-request authenticated ancestry seam identified. Transcript refusal parent-identical; no guard change. | Prior evidence | Evidence only |
 
 | D117a-source | Validate exact public OMP git input | Luna / Luna | Actual stage custody | review | Author1128; review1134 PASS | Exact9e282/tree2074,onefetch,LFS0,local_source/extract0. Temporary artifact cleaned; no stage or render credit. | Prior evidence | Evidence only |
-| D77-stage-resume | Move exact applied stage to Farm | Luna | Reviewed wrapper and Farm inputs | blocked:farm | rt-D124-Farm-render-handoff-1253 | No more Main phases underD124.6. Exact applied trees and pinned public OMP input go to ordinary Farm installer. | Guard review1257 active | No deployment |
+| D77-stage-resume | Move exact applied stage to Farm | Luna | Reviewed wrapper and Farm inputs | blocked:farm | rt-D124-Farm-render-handoff-1253 | No more Main phases underD124.6. Exact applied trees and pinned public OMP input go to ordinary Farm installer. | Independent1257 PASS | No deployment |
 | D100-six-receipt | Consume corrected six controls | Luna read only | Existing independent results | merged | Receipt1142; review1144 A PASS | Exact six and source lineage verified. Existing author6PASS3.42s and protected6PASS4.00s on1daca; private XML rehash limit explicit. | Prior evidence | Agent3aaf held |
 | OPS-v1-log-headroom | Audit old V1 plain logs | Luna | Finite receipt review | merged | Author1142; review1144 C PASS | Zero eligible, zero removals and zero bytes freed. Pending nonplain target remains held. | Prior evidence | No source change |
 
@@ -467,10 +467,10 @@
 | OPS-D124-old-proof-pins | Release two superseded source pins | Manager guarded route | Recorded host CLEAR and fresh guards | merged | bin/recycle two exact pins | Clean and idle; active routes, registrations and leases clear. Both recycled; branches and all reports retained. | Host CLEAR; audit1348 | No source change |
 
 | D124-union-original10 | Qualify shared-root originals | Luna / independent | Four actual source follow-throughs | review | Original1357; result1405 PASS | Exact16bb/5e9ad: native5 PASS; original10 six PASS,four FAIL. [Evidence](../../design/handoff-rt-D124-original10-1405.md). | Independent1405 PASS | Agent16bb / home61fefc |
-| OPS-Farm-metadata | Fix exact generated metadata ownership | Luna / independent Luna | Review and actual Farm inventory | review | Author1404; reviewer1411 | Narrow authenticated LICENSE candidate. Existing Farm failing RECORD absent; root inferred. No install or retry. | Independent1411 active | Candidate d2da4aec |
+| OPS-Farm-metadata | Fix exact generated metadata ownership | Luna / independent Luna | Review and actual Farm inventory | review | Author1404; resume1417 | Candidate d2da narrow license ownership; first review stopped for disk, no verdict. Bounded resume active; actual Farm row still absent. | Independent1417 active | Candidate held |
 | D124-original10-result | Verify actual original ten evidence | Luna independent | Evidence verified | merged | rt-D124-original10-result-review-1405 | Source, origins, ten XML and exits verified. Preflight5.001GB; post4.974GB, no later body. Raw XML/log remain private. | Independent result PASS | Evidence only |
 | D124-four-wholepath | Compare four failures with passing paths | Luna read only | Agent shared-root source follow-through | merged | rt-D124-four-failure-wholepath-1405 | Four UNKNOWN_UNAPPLIED with exact missing pairs; six passing comparators cited. Safe source report sent to Agent. | Independent read only | Source unchanged |
-| D126-final-notes | Record retired-write contract migration | Luna | App exact reviewed migration and ledger | later | Existing F-final docs owner | Add required ZIP note after App source qualifies. Do not edit upstream test or imply browser proof. | Pending App review | No installed change |
+| D126-final-notes | Record retired-write contract migration | App Luna | App exact reviewed migration and ledger | doing | app-D126-ledger-zip-note-1359 | App owns approved ledger paragraph and ZIP line; Runtime consumes exact returned source. No duplicate author. | App1354 source review | Documentation only |
 
 | OPS-Farm-inventory | Authenticate exact refused metadata row | Farm lead | Retained failed-entry input | blocked:farm | Farm lead; Runtime peer1408 | Need RECORD, license bytes/hash and exact distribution identity. No new install or collector; preserve refusal. | Reviewer1411 consumes input | Input only |
 
@@ -485,12 +485,12 @@ Blockers: Element — App is sole owner. Runtime453b helper is HOME; App1350 clo
 Blockers: Final render — Farm owns ordinary full stage and installed render under D124.6; exact recipe, applied source, pinned public OMP input and reviewed phase guard published. No more Main phases.
 Blockers: D69 — XML107 normal Agentb545 source, applicability and batch proof pending. Installed render90 remains open; no whole audit PASS.
 Blockers: Final cut — green core, REG0, full current P2,D69,final tuple P1–P5 and genuine installed render required. No build or ZIP.
-Next ready: Independent metadata1411 review active. On source PASS and authentic Farm inventory, dispatch exact reviewed installation worker. No source-author wait; no unrelated small Agent authors under D124.
+Next ready: Independent metadata resume1417 with bounded fixtures, then source disposition. Actual Farm inventory requested. No live install/reissue before qualified source and observed layout; no heavy start below floor.
 Ready for host filing: None. Host96df is normal a4e016; no duplicate filing. Separate a1 producer is superseded by independently reviewed union16bb.
 Venues: No Main heavy body. Farm frozen0b586/42aad core and9ea/369 host inputs stay immutable; final61fefc union is a later batch. Proof D125 attempts had no browser body; fallback App-owned.
 Delivery: Private100Python+TS/41 matrix inventory qualified; D1235bd01/b0ff current patch independently SOURCE_PASS. D123a final upstream refresh occurs once at D59; rehearsal remainsb742. Wheel, final matrix, Windows and installed render proofs pending.
 Later: R2c81b and D1160643 exact seed SOURCE_PASS; new recipe originals in1357 now executed and await exact per-ID review. Occurrence historical stage/promotion records EXACTMISSING, no App input wait. D126 ZIP note awaits qualified App migration.
 Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote filing. Prior source/retirement denials stay stopped. Four historical retirement targets remain held under owner12:25.
-Disk: Two exact superseded07ff/42aad pins recycled after host CLEAR and fresh guards. About0.15GB recovered. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped4 old logs. Free about5.14GB.
-live 1 / cap 3; ready-undispatched 0; queued 0. Metadata source returned; independent1411 active. Agent owns next shared-root semantics; ordinary Farm input pending.
-INBOX consumed through1244222 bytes. Updated 2026-10-25T14:12:05Z.
+Disk: Review1411 fixture copies crossed4GB stop; worker stopped normally and temporary copies cleaned. Free4.889GB. Resume1417 source-only, scratch<100MB; no full venv copies. Prior guarded pins and lossless cleanup retained.
+live 0 / cap 3; ready-undispatched 0; queued 1. Bounded independent metadata1417 queued at4.889GB. Prior1411 STOPPED without verdict. All finished evidence sent to Agent.
+INBOX consumed through1246493 bytes. Updated 2026-10-25T14:17:44Z.
