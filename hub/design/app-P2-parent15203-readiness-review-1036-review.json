@@ -1,0 +1,37 @@
+{
+  "verdict": "SOURCE_PASS",
+  "approval": "HELD_PENDING_OWNER_ANSWER",
+  "base": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+  "proposal_sha256": "c9a6fa6d36ef161fa527c4247ddfbe3aa42590a695cd509ace819f52b570f0d4",
+  "materialized": {
+    "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+    "line": "await expect(page.getByTestId('runtime-not-connected')).toHaveCount(0);",
+    "source_sha256": "60cd89500ca020c6abe8ab019252e1da5c1887141296d529585fbca57422bbc0",
+    "diff_stat": "1 added, 0 removed",
+    "other_modified_files": []
+  },
+  "callers": [746, 778, 798],
+  "gate": {
+    "comparison_commit": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "provider_sha256": "cf07a243f882591446965e161e20d611bb422a4f0767d3e20955c3d4dc7260f0",
+    "panel_sha256": "7285e0ad6dc9700dfb48483eef0070c15e5ff16723520e2ea718e1dcb4ebc5fd",
+    "behavior_diff": "none",
+    "invariant": "panel removal follows exit.left; gate clears the inert app wrapper when overlay is gone"
+  },
+  "finding": {
+    "scope": "bounded actualinert",
+    "observed": "mouse-down occurred while the mounted parent clip retained an inert ancestor; inert cleared by move completion; clip position and selection were unchanged",
+    "unknown": ["exact event target", "callback/capture outcome", "save scheduling", "outbox state", "Runtime cause"],
+    "network": "zero commit POSTs observed"
+  },
+  "tests": {
+    "requested_vitest": "FAIL_BEFORE_TEST_LOAD: __dirname is not defined under --configLoader=runner",
+    "fallback_vitest": "PASS: 2 files, 154 tests",
+    "tsc_app": "PASS",
+    "tsc_node": "PASS",
+    "eslint": "PASS",
+    "git_diff_check": "PASS",
+    "browser_backend_http_full": "NOT_RUN_BY_SCOPE"
+  },
+  "approved_patch": "source review only; no normal merge or body submission before owner answer"
+}
