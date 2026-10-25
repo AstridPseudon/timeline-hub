@@ -156,6 +156,7 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
 def _document_file(tmp_path, realm):
     candidate = bundle_from_document(copy.deepcopy(realm.documents[realm.head["revision_id"]]))
     candidate["base_parent"]["publication_id"] = realm.head["publication_id"]
+    candidate["source_mapping"].pop("_runtime_document", None)
     path = tmp_path / "timeline.json"
     path.write_text(json.dumps(candidate), encoding="utf-8")
     return path
