@@ -6,7 +6,7 @@ import copy
 import pytest
 
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
-from astrid.sdk.timeline._doc_patch import Closure, value_at
+from astrid.sdk.timeline._doc_patch import Closure, allocations, apply_change, value_at
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import (
@@ -31,19 +31,24 @@ from tests.timeline.test_authoring_bundle import AUDIO, OLD, _replace_values
 pytestmark = pytest.mark.integration
 
 
-def _patch(bundle, ref, path, value):
+def _patch(bundle, ref, path, value, *, verified_media=()):
     physical = Closure(bundle).resolve(ref)
     before = value_at(Closure(bundle).payload(physical), physical, path)
+    change = {'op': 'set', 'ref': ref, 'path': list(path),
+              'before': before, 'value': copy.deepcopy(value)}
+    closure = Closure(bundle)
+    root = closure.payload(physical)
+    after, _ = apply_change(copy.deepcopy(root), change, physical=physical)
     return execute(bundle, [{
         'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
-        'args': {'changes': [{'op': 'set', 'ref': ref, 'path': list(path),
-                              'before': before, 'value': copy.deepcopy(value)}]},
-    }]).commands[0]
+        'created': [row['ref'] for row in allocations(closure, physical, root, after)],
+        'args': {'changes': [change]},
+    }], verified_media=verified_media).commands[0]
 
 
 def _seed_current_app_document(service, project, document):
     """Author the App closure through current Runtime semantic commands."""
-    from runtime_protocol.timeline_commit_port import route_path
+    from runtime_protocol.timeline_commit_port import MediaReads, route_path
 
     timeline = 'film'
     service.create_timeline(project, timeline, idempotency_key='create-film')
@@ -57,32 +62,34 @@ def _seed_current_app_document(service, project, document):
              'dependency_manifest': bootstrap['dependency_manifest']}
     bundle = bundle_from_document(empty)
     target_parent = document['parent_revision']['payload']
-    commands = []
+    inputs = [{'pin': copy.deepcopy(pin)} for pin in document['dependency_manifest']['media']]
+    # Use Runtime's managed-project/CAS read locally; the provider recaptures
+    # these exact inputs through media.admit when it accepts the commit.
+    verified_media = [{**MediaReads(service).raw_media_info(project, row['pin']),
+                       'pin': copy.deepcopy(row['pin'])} for row in inputs]
+    commands = [{'schema_version': 1, 'op': 'media.admit', 'version': '1', 'select': None,
+                 'args': {'inputs': inputs}}]
 
     def append(command):
         nonlocal bundle
         commands.append(command)
-        bundle = execute(bundle, [command]).bundle
+        bundle = execute(bundle, [command], verified_media=verified_media).bundle
 
-    append(_patch(bundle, 'parent', ['config'], target_parent['config']))
-    append(_patch(bundle, 'parent', ['registry'], target_parent['registry']))
-    append(_patch(bundle, 'parent', ['clips'], target_parent['clips']))
-    append(_patch(bundle, 'parent', ['opaque_parent'], target_parent['opaque_parent']))
+    parent_payload = Closure(bundle).payload('parent')
+    parent_payload.update({key: copy.deepcopy(target_parent[key]) for key in
+                           ('config', 'registry', 'clips', 'opaque_parent')})
+    append(_patch(bundle, 'parent', [], parent_payload, verified_media=verified_media))
 
     first, second = target_parent['occurrences']
     append(capture_occurrence_create(
         bundle, first['occurrence_id'], first['shot_id'], name='F2 agent shot',
         track=first['track'], on=first['placement']['start_ms'] / 1000,
         duration=first['duration_ms'] / 1000))
-    append(capture_occurrence_place_shared(
-        bundle, 'occurrence:' + first['occurrence_id'], second['occurrence_id'],
-        on=second['placement']['start_ms'] / 1000))
-
     internal = document['internal_timeline_revisions'][0]
     for row in internal['payload']['tracks']:
         append(capture_track_create(bundle, 'occurrence:' + first['occurrence_id'], row))
     internal_ref = next(ref for ref in Closure(bundle).images if ref.startswith('internal-revision:'))
-    append(_patch(bundle, internal_ref, [], internal['payload']))
+    append(_patch(bundle, internal_ref, [], internal['payload'], verified_media=verified_media))
 
     shot = document['shot_revisions'][0]
     shot_payload = copy.deepcopy(shot['payload'])
@@ -90,35 +97,46 @@ def _seed_current_app_document(service, project, document):
     shot_ref = next(ref for ref in Closure(bundle).images if ref.startswith('shot-revision:'))
     append(_patch(bundle, shot_ref, [], shot_payload))
 
-    actual_occurrences = bundle['placements']
-    occurrences = copy.deepcopy(target_parent['occurrences'])
-    for row in occurrences:
-        actual = next(item for item in actual_occurrences
+    def occurrence(row):
+        actual = next(item for item in Closure(bundle).payload('parent')['occurrences']
                       if item['occurrence_id'] == row['occurrence_id'])
-        row['shot_revision_id'] = actual['shot_revision_id']
-    append(_patch(bundle, 'parent', ['occurrences'], occurrences))
+        value = {**copy.deepcopy(row), **{key: actual[key] for key in
+                                        ('shot_id', 'shot_revision_id')}}
+        append(_patch(bundle, 'parent', ['occurrences', 'occurrence_id:' + row['occurrence_id']], value))
 
-    head = service.get_project_timeline(project, timeline)
-    request = {
-        'api_version': 1, 'project_id': project, 'timeline_id': timeline,
-        'base_revision_id': head['head_revision_id'],
-        'base_publication_id': head['head_publication_id'], 'commands': commands,
-        'label': 'App scalar fixture',
-        'steps': [{'id': str(index), 'label': 'App scalar fixture',
-                   'intent': 'Prepare current scalar fixture', 'tags': ['fixture'],
-                   'command_ordinals': [index],
-                   'patch': (copy.deepcopy(command['args']['changes'])
-                             if command['op'] == 'doc.patch' else []),
-                   'reads': []}
-                  for index, command in enumerate(commands)],
-        'merge': 'atomic', 'reads': [], 'dry_run': False,
-        'source': {'via': 'python'}, 'rationale': 'Current scalar fixture',
-        'group_id': 'app-scalar-fixture',
-    }
-    return service.commit_timeline(
-        project, timeline, request, idempotency_key='seed-app-scalars',
-        publisher='scalar-author', invocation_path=route_path(project, timeline),
-        authorize=lambda: None)
+    def submit(key):
+        head = service.get_project_timeline(project, timeline)
+        request = {
+            'api_version': 1, 'project_id': project, 'timeline_id': timeline,
+            'base_revision_id': head['head_revision_id'],
+            'base_publication_id': head['head_publication_id'], 'commands': commands,
+            'label': 'App scalar fixture',
+            'steps': [{'id': str(index), 'label': 'App scalar fixture',
+                       'intent': 'Prepare current scalar fixture', 'tags': ['fixture'],
+                       'command_ordinals': [index],
+                       'patch': (copy.deepcopy(command['args']['changes'])
+                                 if command['op'] == 'doc.patch' else []),
+                       'reads': []}
+                      for index, command in enumerate(commands)],
+            'merge': 'atomic', 'reads': [], 'dry_run': False,
+            'source': {'via': 'python'}, 'rationale': 'Current scalar fixture',
+            'group_id': 'app-scalar-fixture',
+        }
+        return service.commit_timeline(
+            project, timeline, request, idempotency_key=key,
+            publisher='scalar-author', invocation_path=route_path(project, timeline),
+            authorize=lambda: None)
+
+    occurrence(first)
+    accepted = submit('seed-app-scalars')
+    # Shared placement requires the unchanged, published physical source.
+    bundle = bundle_from_document(accepted['data']['canonical_document'])
+    commands = []
+    append(capture_occurrence_place_shared(
+        bundle, 'occurrence:' + first['occurrence_id'], second['occurrence_id'],
+        on=second['placement']['start_ms'] / 1000))
+    occurrence(second)
+    return submit('seed-app-scalar-sibling')
 
 
 @pytest.mark.parametrize('mode', ['scalar', 'compound', 'separate'])
