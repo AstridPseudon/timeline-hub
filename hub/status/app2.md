@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T13:37:57Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-25T13:37Z
+<!-- app2 | 2026-10-25T13:40:38Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T13:40Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,7 +143,7 @@
 
 | P2-D118-current-SWAP | Qualify history refusal tags | Runtime Sol; independent Luna | Normal release1221; App adoption1230 | merged | Independent1206; home1221 | Source GO: normal56 controls and provider2 PASS, public503 retained. App adopted5e9ad atd8a1. Original11251 lower guard UNKNOWN; browser proof owed. | Runtime5e9ad / Appd8a1 |
 
-| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Corrected handoff and exact Node20 | blocked:app | App Luna1322; checkout service | Four checkouts queued. Exact Node20.19.4 download exit7: configured proxy unreachable. No preflight or original. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
+| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Corrected handoff and exact Node20 | blocked:app | App Luna1322; checkout service | Four exact clean checkouts PASS. Existing official Node20.19.4 archive hash PASS; private extraction ready. Await corrected recipe. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. D125 lifts stand-down for ONE hosting job only; exact App handoff precedes preflight and one full P2 request. App owns the independent verdict. All other Proof dispatch and product merge remain stood down. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
@@ -291,3 +291,7 @@ Next watch: exact design/peer-app-to-app2-lead-*-D125-full-P2-tuple.md. Prefligh
 Inbox read through796671 bytes. STATUS is restart point. Existing D56 and D83 handoffs remain binding except the narrow D125 hosting exception.
 
 D125 preparation13:38: lead authorizes exact checkouts and Node download only. All four normal checkout requests queued. curl exact official Node20.19.4 URL failed exit7: configured proxy127.0.0.1:37977 unreachable. No proxy changes or alternate acquisition attempted. Existing local Node20.20.0 remains available; exact toolchain inventory follows. Corrected flat handoff is still required before any preflight or body.
+
+D125 preparation update: all four genuine dispatcher checkout receipts DONE; each detached, clean HEAD/tree equals App facts. Official existing Node20.19.4 archive SHA2567a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4 verified. Private extraction under /tmp/ap2-D125-node20194.PVhkwz uses --no-same-owner for unsupported archive uid mapping; no installed graph modified. This is existing local exact artifact reuse, not a proxy override or alternate source. Node download failure remains historical; no preflight or original started.
+
+D125 exact Node answer: YES. Latest lead relay explicitly authorizes provisioning the exact missing toolchain executable path. Rechecked official archive SHA2567a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4, then installed the already extracted directory into /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64 via a no-clobber move. Destination parent was absent; no symlink, protected-target overwrite, source/profile/bench-identity edit or guard bypass. This provisions the toolchain only and makes no claim that the old named Remotion profile exists. Exact binary reportsv20.19.4, npm10.8.2. Corrected flat handoff and expected plan SHA cda9106c30404449f41940c04a27abdd1a926a05c1cb625193273d21b8efa5b8 still required before preflight/submit.
