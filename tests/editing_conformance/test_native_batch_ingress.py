@@ -139,16 +139,44 @@ def batch():
 
 
 def cli(runtime, capsys, path, *args, base=None):
-    from astrid.packs.timeline.cli import build_parser
+    """Submit the file's batch through the current Runtime-backed commit API.
 
+    ``edit commands-file`` was retired by G5. Keep the original file input
+    and CLI provenance while routing the batch through the public session
+    caller, which uses Runtime's canonical ``commitTimeline`` door.
+    """
     pins = base or runtime.base
-    parsed = build_parser(runtime.client()).parse_args([
-        'edit', 'commands-file', 'film', str(path), '--project', runtime.project, '--json',
-        '--base-revision-id', pins['base_revision_id'], '--base-publication-id', pins['base_publication_id'],
-        *args,
-    ])
-    code = parsed.handler(parsed)
-    return code, json.loads(capsys.readouterr().out)
+    idempotency_key = None
+    for index, value in enumerate(args):
+        if value == '--idempotency-key' and index + 1 < len(args):
+            idempotency_key = args[index + 1]
+            break
+    dry_run = '--dry-run' in args
+    try:
+        commands = json.loads(path.read_bytes())
+        accepted = runtime.session(base=pins).commit_many(
+            commands, idempotency_key=idempotency_key, dry_run=dry_run, via='cli'
+        )
+        payload = {'ok': True, **accepted}
+        print(json.dumps(payload))
+        return 0, payload
+    except (TimelineEditError, WorkspaceClientError, CommitConflict, URLError,
+            OSError, TypeError, ValueError, KeyError) as error:
+        failure = getattr(error, 'failure', None)
+        if isinstance(failure, dict):
+            payload = {'ok': False, 'error': {
+                'code': failure.get('code', 'timeline_commit_error'),
+                'message': failure.get('message', str(error)),
+                'details': failure.get('details', {}),
+            }}
+        else:
+            payload = {'ok': False, 'error': {
+                'code': getattr(error, 'code', 'timeline_commit_error'),
+                'message': str(getattr(error, 'message', error)),
+                'details': dict(getattr(error, 'details', {}) or {}),
+            }}
+        print(json.dumps(payload))
+        return 1, payload
 
 
 @pytest.mark.parametrize('captured', [False, True])
