@@ -1,1 +1,1 @@
-2026-10-25T20:05:08Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D77 render HELD: Runtime reviewed kit not yet published (kit still 0857a5e0, mtime 17:05Z); ZIP dry-run staging kept as evidence until MAIN says recycle (after post-merge rerun, D135)
+2026-10-25T20:36:58Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D77 render HELD (waits on Agent's real-request result + Runtime D137 maker receipt; kit still 0857a5e0); Runtime asks for a six-file union proof slot, asked MAIN, not dispatched
