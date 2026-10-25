@@ -1,0 +1,184 @@
+{
+  "service_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203",
+  "service_target": "app-pin-96d4754b",
+  "status": "FAIL",
+  "central_duration_seconds": 605,
+  "d66_started_at": "2026-10-25T10:07:17.640Z",
+  "d66_finished_at": "2026-10-25T10:17:18.614Z",
+  "d66_duration_seconds": 600.974,
+  "profile": {
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "agent_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1"
+  },
+  "readiness": {
+    "status": "PASS",
+    "count": 1,
+    "exit": 0,
+    "xml": "d66/readiness.xml",
+    "xml_sha256": "a578a9c8c6affeacefec3675b864eaa9430acacb6840a1355d9345f3965c66fc"
+  },
+  "original": {
+    "status": "FAIL",
+    "pass": 2,
+    "fail": 2,
+    "error": 1,
+    "notrun": 3,
+    "exit": 1,
+    "xml": "d66/p2.xml",
+    "xml_sha256": "360e4f07926cfe952f95e48e034d1246dbdde9eb8b3b9290a540abd5aeb3b54d",
+    "xml_total_seconds": 461.379028
+  },
+  "gestures": [
+    {
+      "name": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+      "status": "PASS",
+      "file": "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "line": 941,
+      "duration_seconds": 36.819,
+      "tail_reachable": true
+    },
+    {
+      "name": "P2 popup mounted SWAP on selected child uses authenticated old/new media selections",
+      "status": "FAIL",
+      "first_unmet": {
+        "predicate": "accepted commit response status is 200",
+        "file": "tests/e2e/local/three-products.p2-popup.spec.ts",
+        "line": 495,
+        "observed": "refused conflict history_unavailable; no tail predicates reached"
+      },
+      "duration_seconds": 23.149,
+      "tail_reachable": false
+    },
+    {
+      "name": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo",
+      "status": "ERROR",
+      "first_unmet": {
+        "predicate": "page.waitForResponse observed the commit response",
+        "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+        "line": 125,
+        "callsite_line": 751,
+        "observed": "TimeoutError after 90000ms; no tail predicates reached"
+      },
+      "duration_seconds": 94.121,
+      "tail_reachable": false
+    },
+    {
+      "name": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo",
+      "status": "NOTRUN",
+      "first_unmet": {
+        "predicate": "serial phase stopped after an earlier parent-move error",
+        "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+        "line": 777
+      },
+      "tail_reachable": false
+    },
+    {
+      "name": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo",
+      "status": "NOTRUN",
+      "first_unmet": {
+        "predicate": "serial phase stopped after an earlier parent-move error",
+        "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+        "line": 797
+      },
+      "tail_reachable": false
+    },
+    {
+      "name": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo",
+      "status": "FAIL",
+      "first_unmet": {
+        "predicate": "dialog status contains applied",
+        "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+        "line": 1052,
+        "test_line": 1038,
+        "observed": "status element not found after the existing 5000ms assertion timeout"
+      },
+      "duration_seconds": 11.905,
+      "tail_reachable": false
+    },
+    {
+      "name": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo",
+      "status": "NOTRUN",
+      "first_unmet": {
+        "predicate": "serial phase stopped after earlier element-edit failure",
+        "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+        "line": 1133
+      },
+      "tail_reachable": false
+    },
+    {
+      "name": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo",
+      "status": "PASS",
+      "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "line": 1214,
+      "duration_seconds": 88.78,
+      "tail_reachable": true,
+      "note": "existing retry also passed"
+    }
+  ],
+  "tuple": {
+    "app": { "sha": "96d4754b4eef0591a208d6b51b60c30fc44b6915", "tree": "3f9da34c4f116026ec21022421850e0608ba653b", "checkout": "/home/user/work/wt/app-pin-96d4754b" },
+    "agent": { "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3", "checkout": "/home/user/work/wt/agt-pin-070dfc5e" },
+    "runtime": { "sha": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e", "tree": "6283b5fbb128447f1b333e0e6af334d35637cf69", "checkout": "/home/user/work/wt/rt-pin-d23a8e0d" },
+    "composition": { "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0" }
+  },
+  "source_hashes": {
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f3bee9bf0511824e652a85f7",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"
+  },
+  "artifacts": {
+    "manifest": "d66/manifest.json",
+    "manifest_sha256": "9c97027b9e3ee8057638a8d54d7587a8afec088fea2ffcddf77fb6f760752aec",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203"
+  },
+  "runtime_private": {
+    "searched_files": [
+      "runtime-private/p2-commit-phase.jsonl",
+      "runtime-private/p2-commit-phase.stacks.txt",
+      "runtime-private/runtime.stderr.log",
+      "runtime-private/runtime.stdout.log",
+      "runtime-private/launch-2285001d-6b34-4eed-9439-a542df1ba8f8/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-2285001d-6b34-4eed-9439-a542df1ba8f8/runtime.stderr-2.log",
+      "runtime-private/launch-2285001d-6b34-4eed-9439-a542df1ba8f8/runtime.stdout-2.log",
+      "runtime-private/launch-2ea33f85-c154-4614-af78-adb2491855ce/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-2ea33f85-c154-4614-af78-adb2491855ce/runtime.stderr-2.log",
+      "runtime-private/launch-2ea33f85-c154-4614-af78-adb2491855ce/runtime.stdout-2.log",
+      "runtime-private/launch-6d6192c8-714b-410d-8d8d-528c6cc43e8d/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-6d6192c8-714b-410d-8d8d-528c6cc43e8d/runtime.stderr-2.log",
+      "runtime-private/launch-6d6192c8-714b-410d-8d8d-528c6cc43e8d/runtime.stdout-2.log",
+      "runtime-private/launch-813fcad1-eb56-4c1c-9dbc-d59134f40c1b/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-813fcad1-eb56-4c1c-9dbc-d59134f40c1b/runtime.stderr-2.log",
+      "runtime-private/launch-813fcad1-eb56-4c1c-9dbc-d59134f40c1b/runtime.stdout-2.log",
+      "runtime-private/launch-a9fcf6f7-29a1-4870-bc9b-8cb2d8abf32f/p2-commit-phase-2.jsonl",
+      "runtime-private/launch-a9fcf6f7-29a1-4870-bc9b-8cb2d8abf32f/runtime.stderr-2.log",
+      "runtime-private/launch-a9fcf6f7-29a1-4870-bc9b-8cb2d8abf32f/runtime.stdout-2.log"
+    ],
+    "stderr_files_empty": true,
+    "d102": {
+      "reason": null,
+      "class_chain": null,
+      "correlation": "UNKNOWN; no safe correlation field was retained",
+      "frame": [
+        "[REDACTED_RUNTIME]/timeline_commit_producer.py:67:value_equal",
+        "[REDACTED_RUNTIME]/timeline_commit_auth.py:223:covers",
+        "[REDACTED_RUNTIME]/timeline_commit_auth.py:2891:validate",
+        "[REDACTED_RUNTIME]/timeline_commit_store.py:875:_verify_accepted_replay",
+        "[REDACTED_RUNTIME]/timeline_commit_store.py:681:_verify_accepted",
+        "[REDACTED_RUNTIME]/timeline_commit_execution.py:259:_execute",
+        "[REDACTED_RUNTIME]/service.py:2524:_execute_timeline_commit",
+        "[REDACTED_RUNTIME]/server.py:313:_timeline_commit",
+        "[REDACTED_RUNTIME]/server.py:1243:do_POST",
+        "[REDACTED]::__init__:???",
+        "[REDACTED]::<invalid frame>"
+      ],
+      "diagnostic_key_search": "no reason/error/exception/class/frame/correlation keys in retained JSONL"
+    }
+  }
+}

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T10:15:21Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
-# app board, 2026-10-25T10:13Z
+<!-- app | 2026-10-25T10:19:39Z | dispatcher heartbeat 0s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 3m -->
+# app board, 2026-10-25T10:17Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -286,9 +286,9 @@
 | U4p-D112 | Adopt verified identity recovery | Luna normal tools | Normal Runtime 8b389; D112a warm PASS53 | merged | Author0938; acceptance0942 PASS | Normal home tree equals tested author. Node20 updater2,17 vendor/skew,manifest/schema/artifacts/lint PASS; protected8 exact. | Home 28660e72fa |
 
 | D118-Agent-tail | Help allocated Agent tail scopes | Luna up to three | Exact Agent allocation0956 | doing | Audio and sheet1015; WC6 ready | Three disjoint test scopes reserved; source floor checked before each start. | Agent e9e3b8 |
-| D118-tail-audio2 | Preserve prepared audio coverage | Luna | Agent allocation0956 | doing | app-D118-tail-audio2-1015 | Source only; two exact original nodes, assertions and input retained. | Base e9e3b8 |
-| D118-tail-sheet15 | Preserve current sheet purposes | Luna | Agent allocation0956 | doing | app-D118-tail-sheet15-1015 | Source only; fifteen exact original nodes, no product writer. | Base e9e3b8 |
-| D118-tail-WC6three | Preserve completion capture coverage | Luna | Source floor above 5.0 GB | gated:disk-source-floor | Brief1015 prepared | Two files reserved; admission rechecked after sheet tree. | Base e9e3b8 |
+| D118-tail-audio2 | Preserve prepared audio coverage | Luna; independent review | Author86c10c static PASS | review | Author1015; review1017 | Small fixture delta; no functional GREEN. Review checks environment cleanup against real producer. | Candidate86c10c |
+| D118-tail-sheet15 | Preserve current sheet purposes | Luna; readonly review | Exact exception and prepared record | blocked:agent | Author1015; finding review1017 | No source change;248 assertions/static PASS. Existing outcome packet lacks needed failure details; peer1017. | Source unchanged |
+| D118-tail-WC6three | Preserve completion capture coverage | Luna | Agent allocation0956 | doing | app-D118-tail-WC6three-1015 | Two reserved files only; no new family or browser proof. | Base e9e3b8 |
 
 | U4p-D112a-release | Adopt final qualified D112 typing correction | Luna normal tools | Released d23a8; exact reviewed tree6283 | merged | app-U4p-D112a-release-adoption-1000 | Normal home tree equals tested author;8 strict,17 vendor/skew,3 artifact/lint PASS; protected8/14 mappings exact. | Home96d4754b4e |
 
@@ -300,10 +300,10 @@ regressions: D102 context and D110 inverse KeyError source repairs released. Cur
 
 Decision: D113 conditions satisfied and source merged normally: upstream modal exact, real Close, meaningful dialog-gone assertion, all pre-existing bytes preserved, independent139/types/lint PASS and existing ledger paragraph. No isolated placement body; next proof full P2.
 Blockers: Runtime D111b element follow-through only — corrected cold-read source review0930 PASS; scaling remains open. This does not block D118 full P2. Sol0930 owns measured source-document/store reads, 97.2 percent of retained read time.
-Blockers: Capacity input — App lead fresh host use audit requested1013 for two stale Runtime pins. Manager static guards found no current or live request references; no KEEP released yet.
+Blockers: Agent sheet15 — Exact retained exception/stack/prepared record and passing public-caller seam requested1017. No justified source fix from hashes alone.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
-Next ready: Wait same full P2 ID15203 to terminal; dispatch WC6third immediately when source admission is above5.0GB. Review each completed owned source diff; no isolated gesture successor.
-live 3 / cap 6; ready-undispatched 0; core open: 4. Full P2 actual15203 RUNNING. Audio running and sheet queued; WC6 gated at4.85GB, below5.0GB source floor. One App heavy body.
+Next ready: Wait same full P2 ID15203 to terminal; independent verdict on passing original cases. Review WC6 when complete and consume sheet15 exact input; no isolated successor.
+live 3 / cap 6; ready-undispatched 0; core open: 4. Full P2 actual15203 RUNNING; WC6 source and independent audio/sheet reviewer assigned. All three Agent scopes dispatched.
 Capacity: Free5.38GB during full-tour build; admission above5.2GB, existing-run stop4.0GB. Recheck5.0GB source floor for any Agent tail allocation. Completed adoption worker recycled normally. Sweep3 removed zero; no eligible clean ended nonKEEP worktrees. Last normal recycle of recreated old04be pin preserved all outputs. Fresh static guards and host0921 CLEAR; zero refusals. All15712 and historical outputs/branches/reports retained. Current inputs and old dirty/refused targets untouched. Fresh10:12 free5.029GB after audio tree; guarded old Runtime pin host audit requested1013. compact-scratch not run because it includes prohibited Codex session paths.
 Inbox consumed through2060508 bytes. Fresh pass 2026-10-25T09:57Z: D118 allocation peer sent; Runtime corrected type-only source normald23 visible but final independent0945/release still owner-side. D111b Sol0930 active; App normal28660 is a provenance adoption, not Runtime release or gesture GO. No safety refusal in this App pass.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
@@ -317,3 +317,5 @@ Decision: D11809:50 supersedes the D111b full-tour hold. Next FULL P2 after D112
 Decision 10:13Z: consumed exact Agent allocation0956 from local design (not yet INBOX). Source-only audio2 and sheet15 dispatched; WC6three admission checks source floor. No duplicate Agent author. Full P2 same15203 continues; placement servicePASS pending independent verdict. All outputs retained.
 
 Capacity 10:14Z: 4.85GB free after sheet tree; WC6 held by D89 source floor. No additional source or heavy start. Host audit requested for two stale clean Runtime pins; guarded release only after actual host clearance. Sweep3 in progress, compact-scratch prohibited session path untouched.
+
+Capacity 10:17Z: both stale Runtime pins recycled after host1015CLEAR/fresh guards, zero refusal. Receipt1016 preserves all outputs/branches/reports and current tuple. WC6 and independent reviewer admitted on fresh free above5.0GB. sweep3 removed0; compact-scratch session path remains prohibited. Inbox consumed through2065390 bytes.
