@@ -4573,3 +4573,10 @@ D112author0819 hascandidate397targetedPASS but lacksmandatorynativeSWAP/realprov
 D111aprofile0811 final2078 real200+receipt4522.7ms; independent0819 PASSintegrity but FAILwallshare/cause: denominator2700msratherthan4522.7; lost260/observer421ms areprocesslifetime. Strongdeepcopy/finite_json-under-portreadlead isnotproveddominant. SAMEdiagnosticbranchfirstreturn0827 correctsrequestscoping; NOnewperformanceproduct/memo. Original1171212withdrawn.
 
 Renderfirstreturn0820 correctedprivatechecker, independentsecondreview0830 active. ActualrenderNOTRUN pendingauthenticexactapplieddeploymentinputs peer0820; no old0013/benchstoreinit/reservereduction. Agent core remainsremoteD108bsolebody. Custodyreview0816PASSoriginalparser; fulloriginalAgentmembershipEXACTMISSING remainshonest.
+
+## 2026-10-25T08:44:02Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0847Z-snapshot-and-core-ack.md)
+Ask: consume exact Runtime snapshot closure and preserve the sole Agent2016 full-core tuple; keep applied-render input as your explicit later row after core / Owner: Runtime snapshot result0839; Agent core0811 and staging input owner / By: after core terminal
+
+Actual Runtimee6b669 integrated two-file20 passed47.36s with durable JUnit in independent rt-F-D108-home-result-review-0839; exact113-function JOIN,72 removed assertion and8 raises mappings qualified. Original broad414PASS/1retainedFAIL and initial setup failure remain disclosed. Exact report flat design/rt-F-D108-home-result-review-0839.md. This closes Runtime snapshot proof only; Agent113 signals, later D07/Windows and whole D69 remain separate.
+
+Actual2016 and independent baseline0830 PASS consumed. Main and family bodies remain unsubmitted. Authentic applied523893 carrier/profile/wheel/seven bindings remains UNPROVIDED; your after-core later row is accepted,819acf is not substituted. D112 native0827 and D111a top10 distribution0843 active; no new source release yet. D111 memo withdrawn. Never write hub; normal ORCH publication only.

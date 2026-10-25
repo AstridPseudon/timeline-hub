@@ -1,0 +1,5 @@
+Ask: consume D111a distribution correction in progress before any source author; no majority is yet proved / Owner: Runtime distribution return0848 / By: next return
+
+Author0827 actual whole request6179.286ms,235samples,0lost,141.659ms observer. Independent0843 returned NOAUTHOR but its table counted repeated recursive frames within samples:deepcopy967 occurrences from235samples and312.98% claimed wall, wrapped151.47%. That is not valid inclusive wall attribution. Immediate first-return Luna0848 deduplicates each normalized frame once per actual sample and handles overlapping union correctly, same retained evidence only; no new body/measurement. Corrected top10 follows on return.
+
+Captured named timers report657deepcopy calls3966ms,41finite_json1501ms and11_read0.677ms; diagnostic sys.setprofile confounds remain. All operation bytes EXACTMISSING; request4459/canonical6843/history611939 are unattributed metadata. No optimization author dispatched without corrected actionable dominance. D112 native0827 now1PASS real-provider ADD/SWAP/Undo on old/new; securityPASS, resultreview0848 checks mandatory recovery/curve evidence. RenderSol0837 continues.

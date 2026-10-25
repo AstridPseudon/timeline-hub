@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T08:44:02Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 10m -->
-# runtime board, 2026-10-25T08:33:36Z
+<!-- main | 2026-10-25T08:48:01Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 0m -->
+# runtime board, 2026-10-25T08:47:34Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -344,7 +344,7 @@
 
 | R2-choice-three-prep | Prepare remaining inverse and word originals | Luna source only | Full core first under D108 | gated:D108-core | Prep0638 complete; rebound44cf | Exact three source recipe prepared with reviewed blobs and normal 1daca lock. No actual originals run; prior four PASS controls excluded. | Held candidate |
 
-| D108-Agent-core | Measure current Agent core outcomes | Agent Luna / service | D108b authentic Agent profile | blocked:agent | Agent owns full-core controller | D108b moves this single body to Agent. Main prep never submitted; exact 22 roots and receipts retained. | Fixed tuple at submit |
+| D108-Agent-core | Measure current Agent core outcomes | Agent Luna / service | D108b authentic Agent profile | doing | Agent0811; service2016 | Running since08:18Z on070dfc/1daca/04beed/635f; latest peer reports past59%. Main and family bodies remain unsubmitted. | Fixed captured tuple |
 | D108-reverse-audit | Preserve upstream and live predicates | Luna independent | Exact applied trees | review | rt-F-D108-reverse-audit-0645 | Source identities checked. Final initial audit: Agent96 cited and8 unresolved; Runtime10 unresolved. Citation crosswalk and TS audit assigned. | Source only |
 
 | D111-validation-memo | Retain withdrawn validation memo | Luna / Sol | Owner D111a withdrawal | gated:withdrawn | Security0729 and measured0744 | Required revalidation bypass, unbounded cache and no measured wall gain. Branch and evidence retained; no release or adoption. | 1171212 withdrawn |
@@ -361,41 +361,43 @@
 | OPS-stale-d629-v1-log | Restore safe MAIN run headroom | Manager route | Fresh route and process audit | merged | Recycle d629; remove named v1 archive | Unreferenced clean pin and one121.8MB v1 log archive removed. Four registered old pins retained. Branches and current proof outputs preserved. | No source change |
 
 | OPS-D108a-disk | Preserve main work headroom | Manager route | Fresh host and route audit | doing | Five finished v1 trees audited | About6GB available. Five dirty old v1 trees retained; three Remotion copies await owner disposition. Codex session paths are untouched. | No source change |
-| D108a-agent-core-full | Hand full core to Agent machine | Agent Luna / service | D108b owner decision | blocked:agent | Agent full-core owner | Main request6897 was cancelled before execution. All main preparations ended unsubmitted; Agent runs with authentic819acf. | No main body |
+| D108a-agent-core-full | Hand full core to Agent machine | Agent Luna / service | Actual2016 terminal | doing | Agent0811; service2016 | Actual remote full core running. Main6897 cancelled before execution; all Main preparations ended unsubmitted. | 070dfc /1daca /04beed /635f |
 | D111-security | Preserve failed memo review | Luna / independent Sol | Owner withdrawal recorded | gated:withdrawn | Security0729 FAIL; wholepath0729 | Candidate not merged. Whole-request sampler0811 replaces the memo work; protected assertions remain unchanged. | Source unchanged |
 | D108-applied-audit | Verify retained applied predicates | Luna independent | Independent assertion join | review | rt-F-D108-assertions-review-0813 | Runtime partitions map 72 removed assertions and eight raises. Ten publication-purpose fingerprints unresolved by author; review active. | Read only |
 | D108-crosswalk-restore | Restore authentic audit publication | Agent Luna / independent | Independent exact-byte verification | merged | Return0731; review0737 B | Original MD354c2aa0 and JSONcd784758 restored exactly. Agent derivative census stays separate. | Evidence only |
 
-| D111a-profile | Scope whole native element request | Luna / independent | First return after evidence review | doing | Review0819; return0827 | Diagnostic fidelity PASS; wall-share denominator and dominant-cause proof FAIL. Correct request-scoped samples/timers before optimization. | Baseline1daca /070dfc |
-| D108-Runtime-assertions | Preserve exact assertion purposes | Luna independent | Actual integrated snapshot proof | review | Review0824 PASS; home0831 | 113-function normalized JOIN verified. All72 removed assertions and8raises mapped; three current snapshot predicates merged, actual-head proof running. | Runtime e6b669b98 |
-| D108-render-prep | Prepare genuine installed rehearsal render | Luna / independent | Authentic deployment inputs | review | Return0820; rereview0830 | First return removes historical defaults and hardens readiness. Independent second review active; actual installed render stillNOTRUN. | Private candidate a6086a |
+| D111a-profile | Scope whole native element request | Luna / independent | Correct distribution return0848 | review | Scope0827; distribution return0848 | 6179ms/235samples/0lost. Review0843 overcounted recursive frames above100%; correction reuses retained samples. Bytes missing; no optimization author. | 1daca /070dfc unchanged |
+| D108-Runtime-assertions | Preserve exact assertion purposes | Luna independent | Exact integrated20 proof passed | merged | Review0824; result0839 PASS | Actuale6b669:20 PASS47.36s with durable XML. Exact113-function JOIN and72assert/8raises mapping verified; no prior assertion removed. | e6b669b98 |
+| D108-render-prep | Prepare genuine installed rehearsal render | HARD Sol / Luna | Exact authentic deployment inputs | doing | Sol0837; wholepath0837 | Second review0830 FAIL: unbound Agent ID and duplicate argv accepted. Sol correction active; authentic applied carrier absent. No render run. | Private candidate held |
 | D108-metric-custody | Return original audit membership inputs | Luna / independent | Original parser custody PASS | merged | Author0811; independent0816 PASS | Exact parser and aggregates published. Original full membership EXACTMISSING; historical289 record and limited examples kept distinct. | b52d3a319 evidence only |
 
-| D108-snapshot-coverage | Restore immutable publication payload proof | Luna / independent | Actual integrated20 proof | merging | Author0813; review0824; home0831 | Independent20PASS43.76s, +24/-0 only; normal mergee6b669. No existing assertions removed. Actual integrated proof pending. | 1eceb7ff7 / e6b669b98 |
+| D108-snapshot-coverage | Restore immutable publication payload proof | Luna / independent | Exact integrated20 proof passed | merged | Author0813; review0824; result0839 | Actuale6b669:20 PASS47.36s with durable XML; reviewed +24/-0. Broad414PASS/1retainedFAIL remains disclosed. | 1eceb7ff7 /e6b669b98 |
 | D108-custody-review | Verify recovered metric source provenance | Luna independent | Exact authored blobs available | merged | rt-F-D108-custody-review-0816 PASS | Original command/blob hashes and missing-membership limit verified; no semantic equivalence or new audit claimed. | Evidence only |
 
 | D112-SWAP-identity | Full verify after store identity change | Luna / security review | Native acceptance and security | review | Author0819; security/native0827 | Candidate has397 targetedPASS; authorizer baseline failures disclosed. Native SWAP, genuine-provider seed and flat curve still required. | Candidate held |
-| P2-19078-placement | Attribute separate placement wait | App Luna read only | Existing actual19078 artifacts | blocked:app | app-P2-19078-failed-paths-0810 | Placement222.7s ran before SWAP. App owns first predicate/stderr; no poisoned-store claim, Runtime duplicate or new body. | Fixed19078 tuple |
-| D108-render-inputs | Obtain authentic installed rehearsal carrier | Agent source owner | Peer0820 exact applied graph | blocked:agent | Requested installer/staging input row | Existing authentic profile/wheel/seven bindings/schema/Remotion or precise normal route. No new Agent heavy body or near-match source. | AppliedAgent523893 |
+| P2-19078-placement | Preserve placement user action | App HARD Sol / Luna | D113 protected correction | doing | App0819; protected0830 | Initial placement200 in11.38s; later Undo has no POST because modal remains open. D113 authorizes close then assert gone; next full tour only. | Recorded19078 |
+| D108-render-inputs | Obtain authentic installed rehearsal carrier | Agent source owner | Agent core terminal | blocked:agent | Agent later row0834 | Applied523893 profile, wheel and seven-key carrier UNPROVIDED. Agent inventories authentic artifacts or normal staging route after core. | AppliedAgent523893 |
 
-| D112-security | Review full-verification recovery authority | Luna independent | Frozen author candidate | review | rt-D112-security-review-0827 | Verifies stale-handle, protection, transactions, races and tamper controls. Native acceptance is a separate required result. | Candidate held |
-| D112-native | Prove real SWAP and recovery sequence | Luna / central service | Frozen source; one main heavy | doing | rt-D112-native-acceptance-0827 | Exact old/new native lifecycle, real-provider smoke, SWAP, tamper and flat curve. No synthetic control called original proof. | Candidate held |
+| D112-security | Review full-verification recovery authority | Luna independent | Native acceptance before release | review | rt-D112-security-review-0827 PASS | 344 source controls PASS; two authorizer failures reproduced on parent. Existing Pyright diagnostics disclosed. Native proof remains separate. | be828d92c held |
+| D112-native | Prove real SWAP and recovery sequence | Luna / independent | Mandatory result accounting0848 | review | Native0827; resultreview0848 | Real-provider ADD/SWAP/Undo1PASS on old and new;53 controlsPASS. Original409 not reproduced. Exact identity/tamper/curve credit under review. | be828d92c held |
 
-Runtime producer: RELEASED1daca2a33 reviewed treea522. Normale6b669 adds reviewed snapshot coverage afterc916 release tooling; product unchanged. Agent070dfc D110 released; App04be has reviewed portable capture and normal D110 adoption.
-core open: 2 Runtime findings: element cost under D111a and SWAP identity refusal under D112. Agent count UNKNOWN until remote full core. App core open3; early19078 independently GO for ADD,parent,single,bulk.
-regressions: D102 shared-context request_id closed on1daca; D110 inverse KeyError released with real-provider RED2/GREEN2 and independent44 controls. Current full-tour proof remains owed.
+Runtime producer: RELEASED1daca2a33 reviewed treea522. Normale6b669 adds reviewed snapshot tests afterc916 release tooling; product unchanged. Agent070dfc D110 released; App04be includes reviewed portable capture and D110 adoption.
+core open: 2 Runtime findings: element cost D111a and SWAP identity recovery D112. Agent count UNKNOWN until actual2016 terminal. App core open3; early19078 independently GO for ADD,parent,single,bulk.
+regressions: D102 context regression closed on1daca; D110 inverse KeyError released. Current full-tour proof remains owed.
 Gates: P1/P3 independently GO on recordedf7201/d629/c916/635f. P4 independent GO28.101s; per-note intervals UNKNOWN. Final tuple/core/P2/render still required.
 
-Blockers: Agent full core — D108b assigns the single heavy body to Agent with authentic819acf profile. Main prep is released, never submitted; no main bench-store or reserve changes.
-Blockers: Runtime D111a — Independent0819 accepts diagnostic fidelity but rejects wall-share/cause proof. First return0827 corrects request-scoped measurement after D112 native stage. Memo1171212 withdrawn.
-Blockers: Runtime D69 — Independent0824 normalizes exact113-function JOIN and verifies added snapshot checks; actuale6b669 proof0831 pending. Agent owns113 separate signals; App scoped mappings passed0742.
+Blockers: Agent full core — Actual2016 runs remotely on070dfc/1daca/04beed/635f with authentic819acf; Main and family bodies remain unsubmitted. Baseline custody0830 independently PASS; current classification awaits terminal.
+Blockers: Runtime D111a — Review0843 counts recursive frames repeatedly, so its wall-share table is rejected. First return0848 deduplicates exact retained samples. Counts657deepcopy/41finite_json/11read; bytes EXACTMISSING. No author before corrected distribution.
+Blockers: Runtime D112 — Security0827 PASS on heldbe828. Native0827 real-provider ADD/SWAP/Undo1PASS on old/new, no original409 reproduction. Independent resultreview0848 verifies mandatory recovery/tamper/flat-curve credit before release.
+Blockers: Runtime D69 — Runtime snapshot and assertion purpose proof now PASS20 on actuale6b669 with durable XML. Agent113 membership accounting remains open; App scoped mappings passed0742.
+Blockers: Final render — Sol0837 corrects second readiness-review failure. Exact applied Agent523893 deployment receipt/profile/seven-key carrier remains UNPROVIDED; Agent later owner after core terminal.
 Blockers: Final cut — D69, current full core, final pinned P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
-KIT CHANGE installed: bin/test-run SHA5df4145, independent0746 PASS33 before and after; predecessor backed up. No current live-kit blocker.
-Next ready: D112 security/native0827, D111a scope return0827, snapshot home0831 and render rereview0830 assigned. Agent installed-input and App19078 failed-path requests remain owned.
-Venues: D108b full core is Agent-only. Main finite native D112 reproduction uses the sole heavy slot; installed render waits real inputs and qualification. No family or duplicate App body.
-Delivery: Rehearsal0645 applied trees and durable patches retained; exact manifest37e559 and initial applied audit are flat-published. Current D07/Windows additions remain separate later source inputs. No ZIP.
-Later: D107 depends on held2154 and full core. D100new26, R2three, old ten, passed restore controls and P4 are not repeated. Three Remotion copies await owner disposition before retirement.
-Safety: Withdrawn D88 remains stopped; D111 memo withdrawn too. D106 ORCH-only outputs, no denied hub writes retried. No product/test/generated/pin changes by manager.
-Disk: About5.93GB available during the sample. sweep-tmp3 removed0 old directories. Five remaining finished v1 trees are dirty and retained. compact-scratch touches prohibited Codex sessions, so that script is not invoked; approved targeted cleanup only.
-live 5 / cap 6; ready-undispatched 0. Native diagnostic bodies must serialize; D111a is after D112 native. No main full-core body queued. No main full-core body remains queued.
-INBOX consumed through 1074908 bytes. Updated 2026-10-25T08:33:36Z.
+KIT CHANGE installed: bin/test-run SHA5df4145, independent0746 PASS33 before and after; predecessor backed up. No live-kit blocker.
+Next ready: Assigned D112 resultreview0848, D111a distribution return0848 and render Sol0837. No unassigned eligible source work. Snapshot integrated20 PASS closes its proof wait.
+Venues: D108b full core is Agent-only. Main native diagnostic bodies serialize above5.2GB. No family or duplicate App body.
+Delivery: Rehearsal0645 applied trees and patches retained; manifest37e559 and initial audit flat-published. Agent D07/Windows later source inputs stay separate; no ZIP.
+Later: D107 held2154 and full core; D100new26/R2three and original ten remain held. P4 and passed controls are not repeated. Three Remotion copies await owner disposition.
+Safety: Withdrawn D88 remains stopped; D111 memo withdrawn. D106 ORCH-only outputs; no denied hub write retries. Manager edits no product, test, generated file or pin.
+Disk: About5.85GB free. Fresh scan found no ended clean non-KEEP Runtime v1/U1 worktree. Five dirty v1 trees retained. Sweep3 removed0 directories; free about5.92GB. Compact-scratch would touch prohibited Codex sessions, so it is not invoked.
+live 3 / cap 6; ready-undispatched 0. D112 result review, D111a distribution return and render Sol assigned. No active main heavy body; source-only reviews active.
+INBOX consumed through 1080101 bytes. Updated 2026-10-25T08:47:34Z.
