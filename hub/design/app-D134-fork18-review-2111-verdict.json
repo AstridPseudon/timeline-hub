@@ -1,0 +1,25 @@
+{
+  "task": "D134 root-008",
+  "result": "FAIL",
+  "classification": "FINITE_UNAPPLIED_WITH_EVIDENCE_DEFECTS",
+  "behavior_status": "NOTRUN",
+  "product_fault_proved": false,
+  "base": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "source_author": "app-D134-fork18-source-2110",
+  "owned_files_unchanged": true,
+  "exact_root_membership_count": 18,
+  "exact_root_membership_raw_equal": false,
+  "exact_root_membership_normalized_equal": true,
+  "findings": [
+    "F-001",
+    "F-002"
+  ],
+  "finite_seam": {
+    "classification": "UNKNOWN_UNAPPLIED",
+    "owner": "Agent provider / Runtime producer-history seam",
+    "agent_guard": "astrid/sdk/timeline/commit.py:_check_reservations -> restore_native_fork",
+    "runtime_authority": "runtime_protocol/timeline_commit_store.py:accept/_publish",
+    "missing_bound_evidence": "authenticated Runtime ABI-1 fork history entry with canonical predecessor/output closures and exact records.commands[0].bindings"
+  },
+  "body_status": "NOTRUN_BY_INSTRUCTION"
+}

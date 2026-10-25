@@ -1,0 +1,64 @@
+{
+  "task": "D134 root-008",
+  "result": "FAIL",
+  "repository": "agent",
+  "base": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "owned_files": {
+    "tests/editing_conformance/test_fork_abi1_binding_set.py": {
+      "sha256": "901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2",
+      "base_blob": "fe4b81c92dceda1750fb6effd6ee6deb9e8f4c47",
+      "byte_equal_to_base": true,
+      "function_ast_equal_to_base": true,
+      "function_count": 12
+    },
+    "tests/editing_conformance/test_recipe_occurrence_fork.py": {
+      "sha256": "19b1e47a89604803d0f0f90964db48788d0bfc82955eb229949d9dee158ade2a",
+      "base_blob": "1ad7b6c1b1b1190152270b7f106d449ac8aa4479",
+      "byte_equal_to_base": true,
+      "function_ast_equal_to_base": true,
+      "function_count": 10
+    }
+  },
+  "exact_membership": {
+    "cluster": "root-008",
+    "count": 18,
+    "source": "$ORCH/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+    "raw_member_index_equal": false,
+    "normalized_member_index_equal": true,
+    "normalization": "prepend tests/editing_conformance/ to each author exact_member_index nodeid",
+    "unlisted_root_members": 0
+  },
+  "frozen_reference": {
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "owned_files_present": false
+  },
+  "source_trace": {
+    "agent_submit_helper": "tests/editing_conformance/test_doc_patch_v2.py:45-50",
+    "fork_capture": "tests/editing_conformance/test_provider_occurrence_fork.py:17-19",
+    "binding_producer": "astrid/sdk/timeline/_recording.py:101-115",
+    "v2_enrichment": "astrid/sdk/timeline/_commit_patch.py:277-295,493-501",
+    "agent_history_consumer": "astrid/sdk/timeline/commit.py:770-922,997-1022",
+    "agent_guard_call": "astrid/sdk/timeline/commit.py:1395-1398",
+    "current_v2_comparator": "tests/editing_conformance/test_provider_occurrence_fork.py:23-45",
+    "runtime_provider_loader": "/home/user/work/runtime/runtime_protocol/timeline_commit_provider.py:70-90",
+    "runtime_recorder_authority": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py:1832-1853,2058-2082"
+  },
+  "retained_failure_log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+  "author_evidence_sha256": {
+    "source-manifest.json": "40aac0e8b001c838b58b637e229904e372f8f0b12f7ec150e265ffadf1cc40c5",
+    "predicate-map.json": "c3f92ac1866f89b434ee57eb9eacbd6a7d0d9489a6dd2cd0ee9140979e15671d",
+    "findings.json": "7e2255354f5b5abb81ce5e46a9627e5b412b910ac53969f05cd63267c8147ef0",
+    "validation.md": "1c4784eaec71f68930b2363083a3121b5c378b718fea9d256d380cdab65f874b",
+    "report.md": "934748055d370355e2627a3cceacd66a2195d1887c2bc1aa918f255480c70443"
+  },
+  "outside_scope": {
+    "git_status_clean": true,
+    "git_diff_check": true,
+    "all_tracked_paths_equal_base": true,
+    "product_files_changed": false,
+    "shared_fixtures_changed": false,
+    "runtime_or_schema_changed": false,
+    "generated_or_pin_files_changed": false
+  }
+}
