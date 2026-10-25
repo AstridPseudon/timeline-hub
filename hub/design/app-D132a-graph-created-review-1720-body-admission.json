@@ -1,0 +1,40 @@
+{
+  "task": "D132a/G3",
+  "admitted": true,
+  "admission_basis": "independent protected source PASS",
+  "source_commit": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+  "source_tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "fresh_free_bytes_decimal": 5028933632,
+  "minimum_free_bytes_decimal": 5000000000,
+  "stop_free_bytes_decimal": 4000000000,
+  "exact_nodes": [
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved",
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[shot-owner]",
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[occurrence-owner]",
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[kind]",
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[ref]",
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_bad_typed_creation_history_refuses[claim]",
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_trusted_inverse_recreation_keeps_identity_reservation",
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_root_creation_reload_inverse_redo_exact_closure",
+    "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure"
+  ],
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "registered_provider": "astrid"
+  },
+  "launches_permitted": 1,
+  "launches_used": 1,
+  "result": {
+    "passed": 8,
+    "failed": 1,
+    "duration_seconds": 8.15,
+    "failure": "invalid_records: provider occurrence alias is outside its boundary",
+    "failure_frame": "runtime_protocol/timeline_commit_auth.py:156",
+    "failure_nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+    "same_safe_boundary_as_author": true,
+    "no_retry": true
+  }
+}

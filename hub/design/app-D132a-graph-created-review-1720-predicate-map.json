@@ -1,0 +1,44 @@
+{
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "source_head": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+  "fixture": {
+    "path": "tests/editing_conformance/test_recorded_graph_roots.py",
+    "test_bodies": 22,
+    "assertions": 90,
+    "parametrize": 6,
+    "test_body_ast_equal": true,
+    "assertion_ast_equal": true,
+    "parametrize_ast_equal": true,
+    "authored_input_differences": [
+      "root[0].value.payload.metadata: null -> {}",
+      "root[1].value.gain: null -> 1"
+    ],
+    "created_declaration": "[root['ref'] for root in roots]"
+  },
+  "graph": {
+    "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+    "test_bodies": 11,
+    "assertions": 33,
+    "parametrize": 7,
+    "test_body_ast_equal": true,
+    "assertion_ast_equal": true,
+    "parametrize_ast_equal": true,
+    "changed_lines_only": "six request metadata lines",
+    "all_graph_predicates_unchanged": true
+  },
+  "shared_consumers": {
+    "graph": "metadata-only delta; predicates unchanged",
+    "semantic_reservations": "byte-exact",
+    "created_root_stage_redo": "byte-exact"
+  },
+  "preserved": [
+    "inputs/order/refs/topology",
+    "open-object null and opaque values other than the two approved setup slots",
+    "previous-value, ABA, atomicity and no-write assertions",
+    "guards, auth, provider registration and Runtime pin"
+  ],
+  "absence_claims": {
+    "graph_consumer_claims_created_absent": false,
+    "fixture_or_other_consumer_claims_gain_or_metadata_null_purpose": false
+  }
+}

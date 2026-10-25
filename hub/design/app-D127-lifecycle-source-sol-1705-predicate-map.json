@@ -1,0 +1,85 @@
+{
+  "byte_identical_regions": [
+    {
+      "region": "generic validators",
+      "byte_identical": true,
+      "sha256": "e50a214bc6eb86786a4e018f3be729bf8912ff0c9c8e1194ca92b18d753f41a0"
+    },
+    {
+      "region": "phase counts, keys and status rules",
+      "byte_identical": true,
+      "sha256": "982f04ccaa3a4f8d57eaecc4488953594d755f9f19ad6e08b1ae25b40d806b5a"
+    },
+    {
+      "region": "retention accounting and drop limits",
+      "byte_identical": true,
+      "sha256": "1f31b26b6957d3adaa1e2ee6490f5ad2619967bbebaa0af365678a32b016f098"
+    },
+    {
+      "region": "sampling keys, privacy and limits",
+      "byte_identical": true,
+      "sha256": "88f47b35b8371936c3b93d07dc67290e0ed94aa9d55a8f999c00ebd6e25d949f"
+    },
+    {
+      "region": "D105 launch ownership",
+      "byte_identical": true,
+      "sha256": "2354dcd8c5f4bd31bd36a2cc8f206a571167113f25799b22c17cca348baf3205"
+    },
+    {
+      "region": "hash selection and sink privacy",
+      "byte_identical": true,
+      "sha256": "1ef667d9510a9dd574927b32b492c9309be84dca245330f77a9ee649dcd194a5"
+    },
+    {
+      "region": "D78, normal hook bootstrap, original inputs, assertions, modes and timeouts",
+      "byte_identical": true,
+      "sha256": "0b788fc0cb28c8021e8d7816cfbada2f3028c5cdd3ce0e380fc53557bf9b72b5"
+    }
+  ],
+  "normal_and_legacy_event_validator": "byte identical after removing only the old newSchema lifecycle-only assertion block; all changes are under reviewed-new",
+  "source_corrections": [
+    {
+      "old": "minimum dispatch phase count 1",
+      "new": "count may be 0 with existing exact UNKNOWN/null shape; fixed cap 32 remains",
+      "source": "541-591, 906-917; Runtime test 315-333"
+    },
+    {
+      "old": "pending durations always null",
+      "new": "derive boundaries; pending return callback may have completion before finished bit",
+      "source": "948-961"
+    },
+    {
+      "old": "completed durations always known",
+      "new": "response wins before raised; completion timestamp remains null after dispatch error",
+      "source": "496-504, 954-957"
+    },
+    {
+      "old": "raised queue always raised",
+      "new": "queue already closed at handler entry stays observed; before handler a raised queue must be closed",
+      "source": "913-915, 958-959"
+    },
+    {
+      "old": "fixture dispatch_start_ms null with observed queue start 0",
+      "new": "fixture start identity 0; actual outputs checked without normalization",
+      "source": "622-625"
+    }
+  ],
+  "adapted_new_D127_mutations": [
+    "pending-duration prohibition replaced with a missing known-handler-duration contradiction",
+    "completed mutation still rejects absent response; source-disproved required numeric completion assertion removed",
+    "raised mutation rejects unfinished queue before handler, with source-consistent conditional raised queue rule",
+    "returned/response mutation now has a structurally well-formed response row; lifecycle/closed dispatch purpose preserved"
+  ],
+  "additional_controls": "53 helper cases, 16 flag combinations, 16 retention pairs; positive leaf/privacy tests and original D105 retained; new exact key/privacy/request/phase/rolling/output/sampling/accounting negatives",
+  "runtime_predicate_custody": {
+    "parent_predicates": 160,
+    "current_predicates": 181,
+    "test_functions": 23,
+    "helper_and_test_unchanged": true,
+    "source": "design/app-D127-leaf-combined-review-1630-assertion-custody.json",
+    "reused_pass": "app-D127-leaf-retention-author-1606-targeted-1025160952-28551: 23 passed in 3.46s; not rerun"
+  },
+  "no_product_contract_schema_pin_guard_helper_or_runtime_test_changes": true,
+  "additional_source_discriminator": "An explicitly raised dispatch_queue requires null completion timing in completed and pending projections too; per-source status is direct evidence of the dispatch error flag. The new source matrix rejects invented timestamps with otherwise consistent numeric relationships.",
+  "queue_mutation_isolation": "Keep queue+handler total arithmetic consistent while contradicting the observed queue start-to-handler start duration; preserve the original generic arithmetic assertion unchanged."
+}

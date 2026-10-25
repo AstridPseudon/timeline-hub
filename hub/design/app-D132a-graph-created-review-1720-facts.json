@@ -1,0 +1,87 @@
+{
+  "task": "D132a/G3",
+  "reviewer_worktree": "/home/user/work/wt/app-D132a-graph-created-review-1720",
+  "head": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+  "tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "source_verdict": "PASS",
+  "changed_paths": [
+    "tests/editing_conformance/test_recorded_graph_roots.py",
+    "tests/sdk/test_timeline_commit_graph_roots.py"
+  ],
+  "cumulative_delta": {
+    "graph_request_metadata_lines": 6,
+    "fixture_gain": {"before": null, "after": 1},
+    "fixture_metadata": {"before": null, "after": {}},
+    "created_declaration": "[root['ref'] for root in roots]"
+  },
+  "fixture": {
+    "test_bodies": 22,
+    "assertions": 90,
+    "parametrize_decorators": 6,
+    "test_bodies_ast_equal": true,
+    "assertions_ast_equal": true,
+    "parametrize_ast_equal": true,
+    "non_helper_ast_equal": true
+  },
+  "graph": {
+    "test_bodies": 11,
+    "assertions": 33,
+    "parametrize_decorators": 7,
+    "test_bodies_ast_equal": true,
+    "assertions_ast_equal": true,
+    "parametrize_ast_equal": true,
+    "only_metadata_change": true,
+    "no_created_absence_assertion": true
+  },
+  "other_consumers": {
+    "tests/sdk/test_timeline_semantic_reservations.py": "byte-exact",
+    "tests/sdk/test_timeline_created_root_stage_redo.py": "byte-exact"
+  },
+  "root_value_differences_exact": [
+    "[0].value.payload.metadata: null -> {}",
+    "[1].value.gain: null -> 1"
+  ],
+  "created_capture": {
+    "default_refs": ["shot:new-shot", "occurrence:new-occ"],
+    "handler_loop": "for root in command['args']['roots']",
+    "handler_capture": "ctx.create_entity(**root)",
+    "order_equal": true,
+    "custom_root_call_verified": true
+  },
+  "route": {
+    "registered_provider": "astrid",
+    "real_runtime_method": "RuntimeService.commit_timeline",
+    "request_metadata": ["label", "steps", "merge", "reads"]
+  },
+  "author1713": {
+    "status": "unqualified_author_evidence",
+    "retained_result": "47 fixture controls passed; graph9 8 passed, 1 failed in 14.36s",
+    "failure": "provider occurrence alias is outside its boundary",
+    "used_for_source_or_body_credit": false
+  },
+  "own9": {
+    "requested": 9,
+    "passed": 8,
+    "failed": 1,
+    "duration_seconds": 8.15,
+    "status": "SOURCE_PASS_OWN9_FAIL",
+    "first_and_only_failure": {
+      "nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "reason": "invalid_records",
+      "message": "provider occurrence alias is outside its boundary",
+      "frame": "runtime_protocol/timeline_commit_auth.py:156"
+    },
+    "all_other_nodes_passed": true,
+    "retry_or_alternate_route": false
+  },
+  "finite_source_comparison": {
+    "passing_caller": "root-only create_command",
+    "failing_caller": "child-stage create_command with child_ops",
+    "same_created_refs": true,
+    "child_only_alias_seam": "occurrence:new-occ/clip:title",
+    "child_only_selection": "occurrence:new-occ/collection:clip",
+    "child_only_effect": "additional reads, binding, and writes on created occurrence child alias",
+    "classification": "later authenticated Runtime closure-boundary seam; no test-only correction applied"
+  }
+}

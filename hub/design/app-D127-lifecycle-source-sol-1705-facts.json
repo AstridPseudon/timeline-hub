@@ -1,0 +1,38 @@
+{
+  "task": "app-D127-lifecycle-source-sol-1705",
+  "scope": [
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "focused_node20": {
+    "passed": 3,
+    "selector_exclusions": 2
+  },
+  "original_helper_projections": {
+    "baseline_pass": 8,
+    "baseline_fail": 4,
+    "corrected_pass": 12
+  },
+  "current_helper_cases_pass": 53,
+  "flag_combinations": 16,
+  "retention_combinations": 16,
+  "observable_shape_truth_table_rows": 128,
+  "eslint": "PASS",
+  "tsc_app_serialized": "PASS",
+  "tsc_node": "PASS",
+  "git_diff_check": "PASS",
+  "positive_controls": {
+    "D78 normal watchdog bootstrap": "PASS: 1 passed, 4 selector exclusions",
+    "exact_4ee_normal_hook_bootstrap": "NOTRUN: no registered central service suite for this node:test selector; localhost suites may not run directly"
+  },
+  "stop_floor_bytes": 4000000000,
+  "runtime_evidence_reused": "23 pass / original 160 predicates unchanged",
+  "independent_review": "REQUIRED; no self-review or integration credit",
+  "previous_candidate": "FAIL retained",
+  "initial_positive_gate_available_bytes": 4999151616,
+  "initial_positive_gate_shortfall_bytes": 848384,
+  "subsequent_positive_gate_available_bytes": 5039894528,
+  "latest_available_bytes": 5028909056,
+  "latest_decimal_5GB_shortfall_bytes": 0,
+  "central_exact_selector_registered": false,
+  "disposition": "source implementation and focused checks PASS; exact-4ee real bootstrap qualification BLOCKED; independent review required"
+}

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T17:24:53Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 4m -->
-# app board, 2026-10-25T17:20Z
+<!-- app | 2026-10-25T17:29:59Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 3m -->
+# app board, 2026-10-25T17:26Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -109,28 +109,30 @@
 | D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | merged | Author1540; independent1552 | Current file byte-exact captured120d; all16 PASS in30693. Existing7d858 setupfix home; no diff, rerun or current5e9ad behavior credit. | Agent20177 unchanged |
 | D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Qualified D100 source applicability | blocked:agent | Sol1650 and wholepath1650 complete | Both confirm first item birth hits correspondence guard before acceptance. No valid test-only fix; exact D100 dependency assessment sent Agent1655. | f53b01690 held |
 
-| D118d-graph9 | Preserve typed roots and tamper checks | Luna and independent Luna | Protected source review next | review | app-D132a-graph-created-review-1720 | Created declaration authored; independent cumulative review required. Premature author tests8 PASS1 FAIL unqualified; no source or behavior GO. | 160c675a2 held |
+| D118d-graph9 | Prove typed roots and child inverse redo | Luna and independent Luna | Runtime exact child boundary | blocked:runtime | app-D132a-graph-created-review-1720 | Cumulative source PASS123 predicates; exact own9:8 PASS1 FAIL/8.15s. Child alias outside boundary at auth156; no guard change or full-case GO. | 160c675a2 held |
 
 | D127-leaf-retention | Retain safe leaf and lifecycle evidence | Luna and protected Luna | App lifecycle validator repair | review | Helper231ddb; independent1630 | Helper4ee and all160 predicate mapping qualified; exact central28551 PASS23. Combined FAIL belongs App lifecycle cross checks. No activation. | 231ddb5 held |
 
 | U4p-R2-diagnostic | Adopt qualified inverse redo and diagnostics | Luna | Qualified ab1e normal receipt | merged | Adopter1615; normal1624 | Entire normal tree equals tested author. Vendor17/artifact3/lint PASS; mappings14/protected8 exact. D130 recovery excluded; no gate claim. | d4e5284dfc |
 
-| D127-App-validator | Validate actual helper lifecycle schema | HARD Sol and protected Luna | Frozen helper truth table | doing | app-D127-lifecycle-source-sol-1705 | Sol implements helper-derived matrix after repeated Luna failures. Runtime helper4ee and fixed budgets remain exact. Final review owed. | 5a9e0eb523 held |
+| D127-App-validator | Validate actual helper lifecycle schema | HARD Sol and protected Luna | Final source54c91d77 | review | app-D127-lifecycle-final-review-1723 | Author12 callback and53 source cases, D78, types and lint PASS. Sole independent review and exact4ee localhost bootstrap pending. | 54c91d77 held |
 
 | D116-native-topology4 | Prove four current checkout companions | Luna and independent Luna | Independent1705 SOURCE PASS | blocked:agent | app-D116-native4-result-wholepath-1719 | Independent evidence PASS; actual3 FAIL1 ERROR. Transcript record missing; gate3 membership needs semantic commands. No valid companion-only fix established. | 795608e1b held |
+
+| D132a-graph-source | Import reviewed graph v2 caller source | Luna; review1720 reused | Source PASS; live child failure separate | doing | app-D132a-graph-clean-import-1726 | Exact two reviewed blobs only; no donor ancestry or new semantic edits. Original child failure remains visible; no behavior or core claim. | Donor160c675a2 |
 
 Integration: App d4e5284dfcc20801977cef12253b12f9cc8798fd; tree5efca939546f30b039cb9cacba7a29d7db690f2a. Entire tree equals tested adopter1615. Qualified Runtime ab1e adoption passed vendor17, artifacts3 and lint; mappings14 and protected8 exact. Receipt design/app-U4p-R2-normal-home-1624.json.
 
 Current P2 is NO-GO; core open 2 gestures. Six cases qualified across named historical runs, but no full eight-case tour GO. Actual10721 readiness PASS; originals5 PASS,2 FAIL,1 NOTRUN. Exact element joins d22 request3:352 samples,3 lost,PENDING. Provider leaf, response, duration and denominator UNKNOWN. Request2 is distinct. Final tuple proof remains owed.
 
 Blockers: SWAP safety — D130 holds recovery, related qualification, release, adoption and tours after automatic classifier refusal. No retry, alternate route, machine transfer or rollback.
-Blockers: Element source — App Sol1705 implements actual frozen-helper lifecycle matrix; final independent proof owed. Helper4ee is frozen. No new tour or cost author.
+Blockers: Element source — Sole App reviewer1723 checks completed helper-derived validator and exact4ee bootstrap. Helper4ee frozen. No new tour or cost author.
 Blockers: Projection source — Agent D100 owner owes qualified normal applicability at first item birth. Both independent traces sent in peer1655; no valid test-only fix or unchanged rerun.
 Blockers: Agent core — Agent owns D128 local a4e016/5e9ad core. Runtime17:04 reports maker0857 installed; Agent must receive exact hash before changed normal child request. No App duplicate body.
 Blockers: Final render — Farm16:53 has exact91398/1daca checkouts and lock18d; awaits qualified child maker and lead profile requests. No App input owed.
 Blockers: Final cut — Full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
 Next ready: Final App review when Sol1705 finishes; graph protected review after created declaration; consume native4 actual result. Normal imports only after required reviews. No tour or SWAP qualification.
-live 2 / cap 3; ready-undispatched 0. App Sol1705 and graph protected reviewer1720 active. Native4 source dependency returned to Agent. Source starts require4.6GB with no heavy; own-node proof requires5GB; stop4GB. No heavy body.
+live 2 / cap 3; ready-undispatched 0. App independent1723 and graph clean import1726 active. Native4 source dependency returned to Agent. Source starts require4.6GB with no heavy; own-node proof requires5GB; stop4GB. No heavy body.
 INBOX consumed through2305237 bytes. H6 checked Agent17:00, Runtime17:04 and Farm16:53 actual hub boards. Farm core dropped. Runtime maker installation is a peer-owned receiving step, not an App dispatch.
 Safety: D130 absolute hold. No manager product/test/generated/pin edits, Git writes, upstream push, M5, credentials or refused-route retry. All current inputs, outputs, branches and reports preserved; historical dirty/orphan guard targets untouched.
 Later: Parent labels2, native checkout originals4 and trackbatch1 retain word-source setup errors; new native companions are separate. D79 waits ZIP; E4 dropped. Applicability17 and pair16 historical source equality grant no current behavior credit.
@@ -141,3 +143,6 @@ Pass17:17: native4 actual result retained and safe packet published; independent
 Pass17:19: graph1713 completed exact created declaration; reported47 fixture PASS and8/9 own cases before required protected review. This violated brief ordering; results retained as unqualified author evidence. Independent1720 dispatched immediately for cumulative source and all123 predicates, then exact9 only if actual light admission permits. No premature merge or behavior GO.
 
 Blockers: Native companions — Agent shared source allocator needs genuine persisted transcript authority and current semantic topology route. Independent1719 found no valid companion-only fix; no unchanged rerun or normal merge.
+
+Blockers: Graph child — Runtime R2 source coordinator owes qualified applicability or exact owner for auth156 created-occurrence child alias. Independent8/9 own result and safe source sent peer1726; no guard writer or unchanged rerun.
+Pass17:26: App source54c91d77 completed, all12 original helper projections and53 matrix cases PASS; D78 normal bootstrap/types/lint PASS. Exact4ee localhost remained unrun due missing service suite, not safety or current disk. Sole independent1723 dispatched with sanctioned net for existing targeted controls. Graph cumulative independent123 predicates PASS, then actual8PASS1FAIL; exact source clean import1726 dispatched at5161009152 bytes. Full graph behavior and native4 remain open. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped1 old log; no guarded target touched.

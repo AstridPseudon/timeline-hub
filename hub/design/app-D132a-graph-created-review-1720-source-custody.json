@@ -1,0 +1,29 @@
+{
+  "review_worktree": "/home/user/work/wt/app-D132a-graph-created-review-1720",
+  "agent_head": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+  "agent_tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+  "agent_clean": true,
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "only_changed_files": [
+    "tests/editing_conformance/test_recorded_graph_roots.py",
+    "tests/sdk/test_timeline_commit_graph_roots.py"
+  ],
+  "runtime_pin": {
+    "worktree": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true,
+    "provider_module_sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+    "port_module_sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+    "store_module_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+    "validation_module_sha256": "aaf7fe7b057e5792f85493fff631e2ed0538d1a0acfec9580837fc5489c9a5bd",
+    "types_module_sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+    "bundle_schema_sha256": "e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1"
+  },
+  "module_origins": {
+    "agent": "review worktree",
+    "runtime": "rt-pin-5e9ad1c6",
+    "provider_profile": "astrid"
+  },
+  "prior_schema_census": "app-D132a-graph-protected-own9-1658; reused unchanged qualified census"
+}

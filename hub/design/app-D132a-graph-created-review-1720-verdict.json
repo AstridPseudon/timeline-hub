@@ -1,0 +1,37 @@
+{
+  "task": "D132a",
+  "overall_verdict": "SOURCE_PASS_OWN9_FAIL",
+  "source_verdict": "PASS",
+  "head": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+  "tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "fixture_predicates": {"test_bodies": 22, "assertions": 90, "parametrize": 6, "ast_equal": true},
+  "graph_predicates": {"test_bodies": 11, "assertions": 33, "parametrize": 7, "ast_equal": true},
+  "other_consumers_byte_exact": true,
+  "created_refs_match_handler_order": true,
+  "consumer_absence_claim": false,
+  "runtime": {
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true,
+    "registered_provider": "astrid"
+  },
+  "body_admitted": true,
+  "own9": {
+    "requested": 9,
+    "passed": 8,
+    "failed": 1,
+    "duration_seconds": 8.15,
+    "failure_reason": "invalid_records",
+    "failure_message": "provider occurrence alias is outside its boundary",
+    "failure_frame": "runtime_protocol/timeline_commit_auth.py:156",
+    "failure_nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+    "retry_or_alternate_route": false
+  },
+  "finite_comparison": {
+    "same_created_refs": true,
+    "child_stage_aliases": ["occurrence:new-occ/collection:clip", "occurrence:new-occ/clip:title"],
+    "classification": "later Runtime authenticated closure-boundary seam",
+    "proposed_test_only_correction": "UNAPPLIED"
+  }
+}

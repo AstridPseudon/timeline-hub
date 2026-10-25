@@ -1,0 +1,26 @@
+{
+  "base": "5a9e0eb523353a95af45563a4f3e80bd8772222e",
+  "expected_base": "5a9e0eb523353a95af45563a4f3e80bd8772222e",
+  "changed_files": [
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "app_file_sha256_before": "1855a9c9b68818f27bbfb420a9c6c1b97312bd30a52f21fbab76c2b4e5a177de",
+  "app_file_sha256_after": "92586e7fb9603bec32b6fbee03aeb0fff9176d7cf16a35534ae8a2287e4ad48c",
+  "patch_sha256": "6ecb1cb15996c9186564eef4e533897f730bee08f29d414ad279e64981e3baac",
+  "helper_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+  "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+  "runtime_test_sha256": "d6b5703492b4b4d399ee1d5d7350faae615a01448df70229efc3cc03a1ecff18",
+  "qualified_runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "head": "ab1e4f6141987706132916e2da16477f5a019464"
+  },
+  "qualified_agent": {
+    "path": "/home/user/work/wt/agt-pin-070dfc5e",
+    "head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "frozen_helper_execution": "exact bytes compiled in memory for source probes; no start() or sink; no external helper copy or normalizer",
+  "prior_differential_inputs": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-lifecycle-complete-sol-1654/evidence/private/helper-projections.json",
+  "shared_dependency_path": "/home/user/work/app/node_modules",
+  "shared_dependency_writes_by_this_worker": false,
+  "git_writes_commits_pushes_deletions_by_this_worker": false
+}

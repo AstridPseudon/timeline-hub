@@ -1,0 +1,32 @@
+{
+  "task": "D132a/G3",
+  "status": "SAFE_SOURCE_PASS",
+  "decision": "admit exactly one original graph9 launch",
+  "source_tree": {
+    "commit": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+    "tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+    "baseline": "20177e66564f9f91735ed1a11bac821682d60edf"
+  },
+  "scope": [
+    "six reviewed request metadata lines",
+    "gain null to numeric 1 setup migration",
+    "metadata null to empty-object setup migration",
+    "created refs declaration from the existing roots sequence"
+  ],
+  "conservation": {
+    "fixture_90": true,
+    "graph_33": true,
+    "all_other_inputs": true,
+    "all_three_consumers": true,
+    "runtime_guards_schema_pins": true
+  },
+  "source_checks": {
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "python311_compile": "PASS",
+    "git_diff_check": "PASS",
+    "module_origins": "PASS"
+  },
+  "schema_census": "reused qualified independent1658 evidence; unchanged by created declaration",
+  "no_source_fix": true
+}
