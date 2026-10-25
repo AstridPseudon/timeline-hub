@@ -25,6 +25,20 @@ REF = "parent/clip:card"
 KEY = (REF, "on")
 
 
+def mirrored_parent_clip_apps(bundle):
+    clips = bundle["parent"]["clips"]
+    mirrors = bundle["parent"]["config"]["clips"]
+    assert [clip["id"] for clip in clips] == [clip["id"] for clip in mirrors]
+    primary = next(clip for clip in clips if clip["id"] == "card")
+    mirror = next(clip for clip in mirrors if clip["id"] == "card")
+    assert primary == mirror
+    bundle["parent"]["config"]["clips"] = clips
+    current_mirrors = bundle["parent"]["config"]["clips"]
+    primary = next(clip for clip in clips if clip["id"] == "card")
+    mirror = next(clip for clip in current_mirrors if clip["id"] == "card")
+    return [primary["app"]["astrid"], mirror["app"]["astrid"]]
+
+
 @pytest.fixture
 def recipe(retained, monkeypatch):
     retained.submit(retained.create("recipe-initial"), "recipe-initial")
@@ -422,11 +436,13 @@ def test_reference_is_authoritative_and_kernel_never_searches_echo(recipe, monke
                      "choice": authored(current)[KEY]["choice"]}}]), "change-echo")
         case.restart()
         current = bundle(case)
-    app = current["parent"]["clips"][0]["app"]["astrid"]
+    apps = mirrored_parent_clip_apps(current)
     if echo is None:
-        del app["on"]
+        for app in apps:
+            del app["on"]
     else:
-        app["on"] = echo
+        for app in apps:
+            app["on"] = echo
 
     def no_search(*args, **kwargs):
         pytest.fail("a present stable reference must never search for text")
@@ -457,13 +473,14 @@ def test_legacy_unique_word_in_reused_cas_is_still_ambiguous_without_raw_clip(re
 
 def test_unique_legacy_word_compiles_without_persisting_a_reference(recipe):
     current = bundle(recipe)
-    app = current["parent"]["clips"][0]["app"]["astrid"]
-    app["on"] = 'after "stop" -1f'
+    apps = mirrored_parent_clip_apps(current)
+    for app in apps:
+        app["on"] = 'after "stop" -1f'
     before = copy.deepcopy(current)
     result = compile_authored(current, current["source_mapping"]["pinned_documents"])
     assert result.timings[TARGET]["start_frame"] == 148
     assert result.bundle == current == before
-    assert "word_anchors" not in app
+    assert all("word_anchors" not in app for app in apps)
 
 
 def test_on_until_clear_preserves_other_reference_and_opaque_fields(recipe):
