@@ -1,0 +1,65 @@
+{
+  "task": "rt-F-final-7070-inventory-1144",
+  "status": "PRIVATE_PREPARATION",
+  "base": "composition tl/integration",
+  "predecessor": {
+    "candidate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-2252-first-return-1130/evidence/candidate",
+    "matrix_file_count_before": 41,
+    "matrix_file_count_after": 41,
+    "matrix_changed_file_count": 0,
+    "predecessor_target_count": 98,
+    "p4_historical_selector_count": 5,
+    "p4_final_selector_count": 3,
+    "venue_count": 10,
+    "tuple": "PENDING",
+    "d73": "capture once, four checkout receipts, preflight before body",
+    "controls": ["positive dispatch once", "poisoned dispatch zero", "registry drift refusal before mutation"]
+  },
+  "release": {
+    "normal_1130": {
+      "commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+      "reviewed_source": "f0c4d6d2b66bb84e935b9008853fcb628746fe88",
+      "reviewed_tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+      "smoke": "9 passed, exit 0"
+    },
+    "security_1122": {
+      "candidate": "f0c4d6d2b66bb84e935b9008853fcb628746fe88",
+      "base": "8ca89d83049affbb0bdb68a441b023225b7a731d",
+      "result": "PASS_SOURCE"
+    }
+  },
+  "inventory": {
+    "predecessor_target_count": 98,
+    "successor_target_count": 100,
+    "preserved_predecessor_targets": 98,
+    "added": [
+      {
+        "path": "tests/test_timeline_commit_ancestry_reads.py",
+        "git_blob": "c30916940e7816ab1332cee271deda4352eeeef0",
+        "introduced_by": "8ca89d83049affbb0bdb68a441b023225b7a731d",
+        "sha256": "316f7ca5ff1874c3f0206296ed2ef18341c8ac5a35ba1de8db803219325cd42a",
+        "production_caller": "server._timeline_commit -> Service._execute_timeline_commit -> RequestCommitPort.history_entry/history"
+      },
+      {
+        "path": "tests/test_timeline_commit_closure_growth.py",
+        "git_blob": "9e4ebfc7c455441a41da750c41241800782e9153",
+        "introduced_by": "f0c4d6d2b66bb84e935b9008853fcb628746fe88",
+        "sha256": "e64b9b587eb3540bfe58adde45191d491b40017c0cf4b2dfbbbd0ceb3ca4ae1f",
+        "production_caller": "server._timeline_commit -> Service._execute_timeline_commit -> RequestCommitPort.history_entry/revision_closure"
+      }
+    ],
+    "removed": [],
+    "held_or_unmerged_added": []
+  },
+  "c0_wire_preserved": [
+    "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+    "commands", "label", "steps(id,label,intent,tags,command_ordinals,patch,reads)",
+    "merge", "reads", "dry_run", "Idempotency-Key",
+    "accepted/merged canonical_document/receipt/head/effects/bindings/dependencies",
+    "conflict head/reason", "invalid code/path/hint"
+  ],
+  "candidate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-7070-inventory-1144/evidence/candidate",
+  "no_live_install_or_body": true,
+  "full_suite": "not run"
+}
