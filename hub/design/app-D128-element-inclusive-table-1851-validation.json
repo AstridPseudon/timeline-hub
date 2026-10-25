@@ -1,0 +1,56 @@
+{
+  "schema": "timeline.d128.inclusive_table.validation.v1",
+  "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D127-element-profile-controller-1840-safe-profile.json",
+  "source_before": {
+    "sha256": "7ea986113ce80436d873739e2406dfed56308f4f6ed1577c99dc946e752cc756",
+    "size_bytes": 3557,
+    "json_parse": "PASS"
+  },
+  "source_after": {
+    "sha256": "7ea986113ce80436d873739e2406dfed56308f4f6ed1577c99dc946e752cc756",
+    "size_bytes": 3557,
+    "json_parse": "PASS"
+  },
+  "source_unchanged": true,
+  "read_only": true,
+  "arithmetic_checks": {
+    "inclusive_rows": 5,
+    "inclusive_unique_frame_identities": 5,
+    "inclusive_sample_counts": [828, 828, 828, 828, 828],
+    "inclusive_sample_count_sum": 4140,
+    "inclusive_sample_count_sum_interpretable_as_exclusive_cost": false,
+    "inclusive_sample_total_values": [828],
+    "inclusive_lost_samples_values": [15],
+    "leaf_rows": 4,
+    "leaf_sample_counts": [39, 33, 27, 24],
+    "leaf_sample_count_sum": 123,
+    "leaf_sample_total_values": [828],
+    "leaf_lost_samples_values": [15],
+    "all_inclusive_counts_equal_sample_total": true,
+    "all_leaf_counts_at_most_sample_total": true,
+    "requested_descendant_rows": 10,
+    "actual_descendant_rows": 0,
+    "ranked_descendant_rows": 0,
+    "invented_rank": false,
+    "call_counts_derived": 0
+  },
+  "schema_counts": {
+    "source_top_inclusive_frames": 5,
+    "source_top_leaf_frames": 4,
+    "published_inclusive_frames": 5,
+    "published_leaf_frames": 4,
+    "published_missing_fields": 6
+  },
+  "checks": {
+    "safe_file_only": "PASS",
+    "source_hash_and_size_before_after_equal": "PASS",
+    "json_parse": "PASS",
+    "inclusive_and_leaf_fields_preserved": "PASS",
+    "no_call_inference": "PASS",
+    "no_exclusive_cost_claim": "PASS",
+    "no_private_raw_data_read": "PASS",
+    "no_new_collector_or_sampler": "PASS",
+    "requested_table_complete": "FAIL_EXACTMISSING",
+    "runtime_or_agent_cost_author": "NOT_JUSTIFIED"
+  }
+}

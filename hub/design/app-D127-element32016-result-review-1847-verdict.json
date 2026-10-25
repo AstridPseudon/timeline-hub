@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "review": "independent_read_only_actual_element32016_result",
+  "verdict": "FAIL",
+  "scope": "retained actual normal result only",
+  "actual_first_predicate": {
+    "status": "FAIL",
+    "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "line": 1052,
+    "assertion": "dialog.getByRole('status').toContainText('applied')",
+    "timeout_ms": 5000,
+    "observed": "status locator not found",
+    "secondary_teardown": "page.waitForResponse target page/context/browser closed"
+  },
+  "gate_status": {
+    "source_preflight": "PASS",
+    "readiness": "PASS",
+    "original_element": "FAIL",
+    "normal_service_exit": 1,
+    "normal_counts": {"tests": 1, "passed": 0, "failed": 1, "skipped": 0, "errors": 0},
+    "readiness_counts": {"tests": 1, "passed": 1, "failed": 0, "skipped": 0, "errors": 0},
+    "full_original_body": "not completed after first predicate",
+    "go_credit": false
+  },
+  "profile_usefulness": {
+    "status": "PARTIAL_USEFUL_RUNTIME_BOUND_PROFILE",
+    "request_bound": true,
+    "request_ordinal": 1,
+    "method": "POST",
+    "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+    "idempotency_key_sha256_utf8": "18ac05fb924bc2495b6ba84917f2936d6308317cd66cd585e5a5bca227ebb4f9",
+    "capture_namespace": "pid-18571-birth-20416744-capture-1",
+    "pid": 18571,
+    "birth_ticks": 20416744,
+    "request_utc": "2026-10-25T18:42:58.224Z",
+    "lifecycle": "completed",
+    "runtime_http_status": 200,
+    "app_response": "UNKNOWN",
+    "provider_outcome": "UNKNOWN",
+    "caller_receipt": "UNKNOWN",
+    "element_wall_denominator": "UNKNOWN",
+    "captured_sample_share_is_not_measured_wall_share": true
+  },
+  "privacy_custody": {
+    "status": "PASS_WITH_PRIVATE_RAW_CAPTURE",
+    "public_projection": "safe aggregate only",
+    "raw_key_exported": false,
+    "raw_payload_exported": false,
+    "auth_exported": false,
+    "private_url_or_headers_exported": false,
+    "exception_text_locals_raw_stacks_exported": false,
+    "private_capture_retained": true,
+    "private_capture_mode": "0600",
+    "private_capture_path_is_not_published": true,
+    "canonical_helper_basename": "p2_commit_phase_capture.py",
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e"
+  },
+  "source": {
+    "app": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "app_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "plan_sha256": "21c1e9471c61d3e7925062f3e0a0bf3b943d988dad200d789dcb4018bd1b403c"
+  },
+  "limitations": [
+    "No provider response body, canonical reply, receipt, records, bindings, effects, dependencies, history, or undo_steps were publicly retained.",
+    "The first Apply assertion failed before params, reload, and guarded Undo phases; those phases are UNKNOWN/unexecuted, not refusals.",
+    "No historical request, request 2, older 10721 result, completedrequest2, 20-second assignment, or retry was substituted."
+  ]
+}

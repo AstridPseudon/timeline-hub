@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "publication": "safe_files_only",
+  "worker": "app-D127-element32016-result-review-1847",
+  "source_result": "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016",
+  "private_raw_capture_published": false,
+  "files": [
+    {
+      "name": "verdict.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element32016-result-review-1847/evidence/verdict.json",
+      "bytes": 3354,
+      "sha256": "d5c1457120f5e96dbe9f5f3e7e5438671b33df586a6626deeeafc61441d41989",
+      "mode": "0600",
+      "safe": true
+    },
+    {
+      "name": "findings.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element32016-result-review-1847/evidence/findings.md",
+      "bytes": 5122,
+      "sha256": "a804a24b190a8dad1221b706151c68696a11345daab1d731e2cb15027d6501de",
+      "mode": "0600",
+      "safe": true
+    },
+    {
+      "name": "source-custody.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element32016-result-review-1847/evidence/source-custody.json",
+      "bytes": 5698,
+      "sha256": "8f171407687729711a81b88bca2fe49432ccda374dd4b184ffe6771c8f50a31a",
+      "mode": "0600",
+      "safe": true
+    },
+    {
+      "name": "safe-profile.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element32016-result-review-1847/evidence/safe-profile.json",
+      "bytes": 8241,
+      "sha256": "a8aad8e29caec3772f2d83bbf1422fa90294a15534229bd7319380a64a26a0c5",
+      "mode": "0600",
+      "safe": true
+    }
+  ],
+  "manager_publication_targets": [
+    "app-D127-element32016-result-review-1847-verdict.json",
+    "app-D127-element32016-result-review-1847-findings.md",
+    "app-D127-element32016-result-review-1847-source-custody.json",
+    "app-D127-element32016-result-review-1847-safe-profile.json",
+    "app-D127-element32016-result-review-1847-publication-manifest.json"
+  ],
+  "report_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element32016-result-review-1847/report.md",
+  "report_written_by": "harness"
+}

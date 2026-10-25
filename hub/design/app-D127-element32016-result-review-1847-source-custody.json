@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "review": "independent_read_only",
+  "source_verdict": "PASS_SOURCE_READY",
+  "behavior_verdict": "FAIL_ORIGINAL_ELEMENT_PREDICATE",
+  "qualified_tuple": {
+    "app": {"head": "d5a1d1ab6550187e377fd7387d300102b8b82ece", "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20"},
+    "agent": {"head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"head": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e"
+  },
+  "preflight": {
+    "id": "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-preflight-1025183946-29958",
+    "result": "PASS",
+    "exit": 0,
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-preflight-1025183946-29958/d66/manifest.json",
+    "manifest_sha256": "9b34f2f89ba687ccafe11e671849f8bd232315d75c6ceabb9bf8662f598dcbd9",
+    "same_plan_and_tuple": true
+  },
+  "normal": {
+    "id": "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016",
+    "result": "FAIL",
+    "exit": 1,
+    "plan_sha256": "21c1e9471c61d3e7925062f3e0a0bf3b943d988dad200d789dcb4018bd1b403c",
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016/d66/manifest.json",
+    "manifest_sha256": "dba95c84f8e8afde36b1c211c7bee0c714894795a1eb8782bb9cd7ef7c52f325",
+    "original_junit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016/d66/p2-element.xml",
+      "sha256": "32782a1d7692dc2fd8aab201f08f55facd39c3f6ffcaa7a0ffecb079cff25493",
+      "tests": 1,
+      "failures": 1,
+      "skipped": 0,
+      "errors": 0
+    },
+    "readiness_junit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016/d66/readiness.xml",
+      "sha256": "0f7a32222be370dc3c0659197fa5ba4842167ffe4ebc6c596d9d6613c0e95246",
+      "tests": 1,
+      "failures": 0,
+      "skipped": 0,
+      "errors": 0
+    },
+    "first_failed_predicate": {
+      "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "line": 1052,
+      "assertion": "dialog.getByRole('status').toContainText('applied')",
+      "timeout_ms": 5000
+    },
+    "submission_count": 1,
+    "retry_count": 0,
+    "resubmission_count": 0
+  },
+  "source_files": {
+    "p2_element_spec": {
+      "path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "bytes": 78876,
+      "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "base_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+      "selector": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo",
+      "selector_count": 1,
+      "ceiling_timeout_ms": 90000,
+      "original_status_wait_ms": 5000,
+      "original_body_unchanged": true,
+      "tail_reached": false
+    },
+    "readiness_spec": {
+      "path": "tests/e2e/local/three-products.mounted-readiness.spec.ts",
+      "bytes": 18101,
+      "sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "base_blob": "ba85a25085b61bd2e8e3960ab0260a91c6f9650a"
+    },
+    "helper": {
+      "basename": "p2_commit_phase_capture.py",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-durable-recipe-sol-1824/evidence/p2_commit_phase_capture.py",
+      "sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "mode": "0600",
+      "regular_nonsymlink": true,
+      "source_role": "helper-source-only; not Runtime product pin"
+    },
+    "plan": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-profile-controller-1840/submission/p2-element/p2-element-submit-plan.json",
+      "sha256": "21c1e9471c61d3e7925062f3e0a0bf3b943d988dad200d789dcb4018bd1b403c"
+    }
+  },
+  "checkout_custody": {
+    "app": {"path": "/home/user/work/wt/app-pin-d5a1d1ab", "receipt": "present", "manifest_state_dirty": false},
+    "agent": {"path": "/home/user/work/wt/agt-pin-070dfc5e", "receipt": "present", "manifest_state_dirty": false},
+    "runtime": {"path": "/home/user/work/wt/rt-pin-ab1e4f61", "receipt": "present", "manifest_state_dirty": false},
+    "composition": {"path": "/home/user/work/wt/vw-pin-635f4de0", "receipt": "present", "manifest_state_dirty": false},
+    "service_root": "retained manifest records exact service root; ephemeral root is not required for custody"
+  },
+  "checks": {
+    "json_parse": "PASS",
+    "xml_counts": "PASS",
+    "sha256": "PASS",
+    "git_exact_source": "PASS",
+    "review_worktree_clean": "PASS",
+    "no_source_changes": true,
+    "no_private_export": true
+  },
+  "private_capture": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016/d66/runtime-private/p2-commit-phase.jsonl",
+    "sha256": "d564affb1d38478a0a452ed5fb5670bad670cd5fb7082dac45ed125cdebc2a14",
+    "mode": "0600",
+    "publicly_exported": false,
+    "custody": "retained at exact absolute result path"
+  }
+}

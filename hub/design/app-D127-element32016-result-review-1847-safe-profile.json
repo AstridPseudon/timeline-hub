@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "publication": "safe_aggregate_only",
+  "binding": {
+    "normal_id": "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016",
+    "request_ordinal": 1,
+    "method": "POST",
+    "route_template": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+    "idempotency_key_sha256_utf8": "18ac05fb924bc2495b6ba84917f2936d6308317cd66cd585e5a5bca227ebb4f9",
+    "capture_namespace": "pid-18571-birth-20416744-capture-1",
+    "pid": 18571,
+    "birth_ticks": 20416744,
+    "request_utc": "2026-10-25T18:42:58.224Z",
+    "raw_key_public": false
+  },
+  "outcome": {
+    "source_preflight": "PASS",
+    "readiness": "PASS",
+    "original_element": "FAIL",
+    "normal_service_exit": 1,
+    "runtime_lifecycle": "completed",
+    "runtime_http_status": 200,
+    "handler_outcome": "completed at Runtime boundary; browser/app outcome UNKNOWN",
+    "provider_outcome": "UNKNOWN",
+    "response_body": "UNKNOWN",
+    "caller_receipt": "UNKNOWN",
+    "element_wall_denominator": "UNKNOWN",
+    "first_failed_predicate": {
+      "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "line": 1052,
+      "assertion": "dialog.getByRole('status').toContainText('applied')",
+      "timeout_ms": 5000
+    }
+  },
+  "runtime_lifecycle": {
+    "capture_anchor_utc": "2026-10-25T18:42:22.144Z",
+    "last_phase": "http_response",
+    "durations_ms": {
+      "dispatch_queue": 0.901,
+      "handler": 21740.631,
+      "provider": 13780.929,
+      "response_write": 3.44,
+      "dispatch_wall_denominator": 21741.532,
+      "caller_receipt": null,
+      "network_arrival": null,
+      "request_body_receive": null,
+      "execution_lock_wait": null
+    },
+    "phase_counts": {
+      "arrival": {"count": 0, "status": "unsupported", "reason": "no earlier socket/server-accept hook"},
+      "dispatch_queue": {"count": 1, "status": "observed"},
+      "handler_entry": {"count": 1, "status": "observed"},
+      "authorization": {"count": 19, "status": "observed"},
+      "coordinator_admission": {"count": 1, "status": "observed"},
+      "coordinator_lock": {"count": 1, "status": "observed"},
+      "provider": {"count": 1, "status": "observed"},
+      "accept": {"count": 1, "status": "observed"},
+      "receipt": {"count": 1, "status": "observed"},
+      "http_response": {"count": 2, "status": "observed", "status_code": 200}
+    },
+    "unknown_boundaries": {
+      "client_request_to_server_receive": "unsupported: no earlier socket/server-accept hook",
+      "request_body_receive": "unsupported: no body-read hook",
+      "execution_lock_wait": "unsupported: no exact threading.Lock.acquire boundary",
+      "caller_receipt": "outside Runtime process"
+    }
+  },
+  "sampling": {
+    "sample_total": 828,
+    "sampling_interval_ms": 20.0,
+    "lost_samples": 15,
+    "sampler_errors": [],
+    "observer_cpu_ms": 877.038,
+    "observer_cpu_scope": "capture-wide",
+    "observer_cpu_attribution": "not attributed to this request",
+    "truncated": false,
+    "retained_events": 57,
+    "events_seen": 57,
+    "capacity_dropped_events": 0,
+    "retained_bytes": 19005,
+    "max_bytes": 65536,
+    "max_events": 128,
+    "max_requests": 8,
+    "top_frames_limit": 10,
+    "sample_membership": "each safe frame identity counted at most once per sample",
+    "top_inclusive_frames": [
+      {"file": "<runtime>/server.py", "function": "_dispatch", "line": 1229, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<runtime>/server.py", "function": "_route", "line": 547, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<runtime>/server.py", "function": "_timeline_commit", "line": 332, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<runtime>/server.py", "function": "do_POST", "line": 1264, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<runtime>/server.py", "function": "handle_one_request", "line": 99, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<runtime>/service.py", "function": "wrapped", "line": 438, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<stdlib>/server.py", "function": "handle", "line": 451, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<stdlib>/server.py", "function": "handle_one_request", "line": 439, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<stdlib>/socketserver.py", "function": "__init__", "line": 766, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482},
+      {"file": "<stdlib>/socketserver.py", "function": "finish_request", "line": 362, "sample_count": 828, "sample_total": 828, "lost_samples": 15, "sample_share": 1.0, "dispatch_wall_share": 0.76167585614482}
+    ],
+    "top_leaf_frames": [
+      {"file": "<stdlib>/copy.py", "function": "deepcopy", "line": 125, "sample_count": 39, "sample_total": 828, "lost_samples": 15, "sample_share": 0.04710144927536232, "dispatch_wall_share": 0.035876036702473406},
+      {"file": "<stdlib>/copy.py", "function": "deepcopy", "line": 119, "sample_count": 33, "sample_total": 828, "lost_samples": 15, "sample_share": 0.03985507246376811, "dispatch_wall_share": 0.03035664644055443},
+      {"file": "<stdlib>/_keywords.py", "function": "<genexpr>", "line": 285, "sample_count": 32, "sample_total": 828, "lost_samples": 15, "sample_share": 0.03864734299516908, "dispatch_wall_share": 0.029436748063567924},
+      {"file": "<stdlib>/validators.py", "function": "is_type", "line": 452, "sample_count": 32, "sample_total": 828, "lost_samples": 15, "sample_share": 0.03864734299516908, "dispatch_wall_share": 0.029436748063567924},
+      {"file": "<stdlib>/_core.py", "function": "create_resource", "line": 169, "sample_count": 31, "sample_total": 828, "lost_samples": 15, "sample_share": 0.03743961352657005, "dispatch_wall_share": 0.028516849686581426},
+      {"file": "<stdlib>/_core.py", "function": "create_resource", "line": 165, "sample_count": 29, "sample_total": 828, "lost_samples": 15, "sample_share": 0.03502415458937198, "dispatch_wall_share": 0.026677052932608434},
+      {"file": "<runtime>/timeline_commit_validation.py", "function": "reuse", "line": 120, "sample_count": 27, "sample_total": 828, "lost_samples": 15, "sample_share": 0.03260869565217391, "dispatch_wall_share": 0.02483725617863544},
+      {"file": "<runtime>/timeline_commit_validation.py", "function": "reuse", "line": 116, "sample_count": 24, "sample_total": 828, "lost_samples": 15, "sample_share": 0.02898550724637681, "dispatch_wall_share": 0.022077561047675942},
+      {"file": "<stdlib>/_types.py", "function": "is_type", "line": 94, "sample_count": 21, "sample_total": 828, "lost_samples": 15, "sample_share": 0.02536231884057971, "dispatch_wall_share": 0.01931786591671645},
+      {"file": "<stdlib>/copy.py", "function": "_deepcopy_atomic", "line": 173, "sample_count": 21, "sample_total": 828, "lost_samples": 15, "sample_share": 0.02536231884057971, "dispatch_wall_share": 0.01931786591671645}
+    ],
+    "source_bound_operation": {
+      "status": "not_dominant; no optimization attribution",
+      "owning_repo": "Runtime",
+      "operation": "timeline_commit_validation.py:reuse",
+      "lines": [116, 120],
+      "sample_counts": [24, 27]
+    }
+  },
+  "privacy": {
+    "raw_payload": "private only",
+    "raw_key": "private only",
+    "auth": "private only",
+    "private_url": "private only",
+    "headers": "private only",
+    "exception_text": "private only",
+    "locals": "private only",
+    "raw_stacks": "private only",
+    "public_projection_contains_only_safe_fields": true
+  }
+}

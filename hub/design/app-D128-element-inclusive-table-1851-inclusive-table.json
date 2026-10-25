@@ -1,0 +1,190 @@
+{
+  "schema": "timeline.d128.inclusive_table.v1",
+  "task": "D128(4)",
+  "verdict": "EXACTMISSING/full requestedtable NOTDERIVABLE",
+  "source": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D127-element-profile-controller-1840-safe-profile.json",
+    "publication": "safe_aggregate_only",
+    "profile_task": "D127",
+    "sha256": "7ea986113ce80436d873739e2406dfed56308f4f6ed1577c99dc946e752cc756",
+    "size_bytes": 3557,
+    "bytes_unchanged": true,
+    "read_only": true
+  },
+  "scope": {
+    "element": "existingactualelement32016",
+    "anchor_function": "_timeline_commit",
+    "requested_rows": 10,
+    "requested_order": "inclusive samples descending",
+    "requested_call_counts": "only explicit real call counters where derivable",
+    "excluded": [
+      "old10721",
+      "request2",
+      "new sampler/body/collector",
+      "private raw capture or stack extraction",
+      "synthetic precise timing",
+      "source authoring",
+      "cost optimization or guard changes"
+    ]
+  },
+  "sampling": {
+    "sample_total": 828,
+    "lost_samples": 15,
+    "sampling_interval_ms": 20.0,
+    "observer_cpu_ms": 877.038,
+    "observer_cpu_attribution": "capture-wide; not attributed to request",
+    "truncated": false,
+    "events": 57,
+    "max_events": 128,
+    "max_bytes": 65536
+  },
+  "requested_table_coverage": {
+    "status": "EXACTMISSING/full requestedtable NOTDERIVABLE",
+    "requested_descendant_rows": 10,
+    "actual_descendant_rows_retained": 0,
+    "finite_inclusive_rows_retained": 5,
+    "finite_leaf_rows_retained": 4,
+    "ranked_descendant_rows": 0,
+    "invented_rank": false,
+    "product_author_identified": false,
+    "runtime_or_agent_cost_author_justified": false,
+    "reason": "The safe top_inclusive_frames projection contains outer routing frames and the _timeline_commit anchor, but no child stack membership or inclusive child counters under _timeline_commit. A top-10 list censored to those outer routing frames cannot identify descendants."
+  },
+  "inclusive_frames": [
+    {
+      "projection_index": 0,
+      "classification": "outer_routing_wrapper",
+      "file": "<runtime>/server.py",
+      "function": "_dispatch",
+      "line": 1229,
+      "sample_count": 828,
+      "sample_total": 828,
+      "lost_samples": 15,
+      "rank": null,
+      "call_count": "UNKNOWN"
+    },
+    {
+      "projection_index": 1,
+      "classification": "outer_routing_wrapper",
+      "file": "<runtime>/server.py",
+      "function": "_route",
+      "line": 547,
+      "sample_count": 828,
+      "sample_total": 828,
+      "lost_samples": 15,
+      "rank": null,
+      "call_count": "UNKNOWN"
+    },
+    {
+      "projection_index": 2,
+      "classification": "requested_anchor_not_child",
+      "file": "<runtime>/server.py",
+      "function": "_timeline_commit",
+      "line": 332,
+      "sample_count": 828,
+      "sample_total": 828,
+      "lost_samples": 15,
+      "rank": null,
+      "call_count": "UNKNOWN"
+    },
+    {
+      "projection_index": 3,
+      "classification": "outer_routing_wrapper",
+      "file": "<runtime>/server.py",
+      "function": "do_POST",
+      "line": 1264,
+      "sample_count": 828,
+      "sample_total": 828,
+      "lost_samples": 15,
+      "rank": null,
+      "call_count": "UNKNOWN"
+    },
+    {
+      "projection_index": 4,
+      "classification": "service_wrapper",
+      "file": "<runtime>/service.py",
+      "function": "wrapped",
+      "line": 438,
+      "sample_count": 828,
+      "sample_total": 828,
+      "lost_samples": 15,
+      "rank": null,
+      "call_count": "UNKNOWN"
+    }
+  ],
+  "leaf_frames": [
+    {
+      "projection_index": 0,
+      "file": "<stdlib>/copy.py",
+      "function": "deepcopy",
+      "line": 125,
+      "sample_count": 39,
+      "sample_total": 828,
+      "lost_samples": 15
+    },
+    {
+      "projection_index": 1,
+      "file": "<stdlib>/copy.py",
+      "function": "deepcopy",
+      "line": 119,
+      "sample_count": 33,
+      "sample_total": 828,
+      "lost_samples": 15
+    },
+    {
+      "projection_index": 2,
+      "file": "<runtime>/timeline_commit_validation.py",
+      "function": "reuse",
+      "line": 120,
+      "sample_count": 27,
+      "sample_total": 828,
+      "lost_samples": 15
+    },
+    {
+      "projection_index": 3,
+      "file": "<runtime>/timeline_commit_validation.py",
+      "function": "reuse",
+      "line": 116,
+      "sample_count": 24,
+      "sample_total": 828,
+      "lost_samples": 15
+    }
+  ],
+  "call_counts": {
+    "status": "UNKNOWN",
+    "explicit_real_counter_fields": [],
+    "sampled_frames_to_calls_inference": false,
+    "leaf_counts_substitute_for_inclusive_counts": false,
+    "reason": "The safe profile provides sample counts only. Multiple samples may belong to one invocation, and recursion or repeated sampling prevents a call count from being derived."
+  },
+  "aggregation_limits": {
+    "membership_rule": "At most once per safe frame identity per sample.",
+    "line_entries_aggregate_safely": false,
+    "why": "Multiple line entries are not guaranteed to be disjoint invocation counts; recursive frames and sample overlap can cause the same sample or invocation to appear in more than one entry.",
+    "inclusive_sample_counts_sum_is_exclusive_cost": false,
+    "leaf_counts_prove_call_chains": false,
+    "exclusive_walltime_available": false
+  },
+  "missing_fields": [
+    "inclusive child frame identities below _timeline_commit",
+    "per-sample stack membership or parent-child relationships under _timeline_commit",
+    "inclusive child counters for descendants",
+    "explicit real invocation/call counters",
+    "per-function inclusive wall-time or duration",
+    "element-specific child attribution sufficient to name a Runtime or Agent cost author"
+  ],
+  "existing_helper_owner": "The existing safe-profile producer/helper owns the aggregate projection; no new collector or stack extractor is authorized by this task.",
+  "plain_table": {
+    "columns": [
+      "rank",
+      "classification",
+      "file",
+      "function",
+      "line",
+      "sample_count",
+      "sample_total",
+      "call_count"
+    ],
+    "rows": "See inclusive_frames above; all five retained rows are finite evidence, not ranked descendants. No guessed rows are emitted."
+  }
+}

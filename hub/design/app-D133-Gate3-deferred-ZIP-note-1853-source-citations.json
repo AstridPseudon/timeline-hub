@@ -1,0 +1,55 @@
+{
+  "schema": "d133-deferred-zip-note-v1",
+  "base_head": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "decision": {
+    "outcome": "option B deferred; Gate3 visibly failing; owner Agent G3/R2",
+    "refs": [
+      {
+        "path": "design/BOARD-HEADER.md",
+        "lines": "215",
+        "sha256": "7e8766a02a4bccc9a6d20b03b7e5885eccb28f0a1b4c6402a112540cdf7eb09b"
+      },
+      {
+        "path": "design/peer-agent-to-app-runtime-20261025T1843Z-D133-corrected-deferred-stop-A.md",
+        "sha256": "d4db59c73c133f9f4a426337482b2e174f23d79fa46090f376435b55982f6bea"
+      }
+    ]
+  },
+  "source_refs": [
+    {
+      "path": "tests/editing_conformance/test_native_checkout_current_equivalent.py",
+      "lines": "196-233",
+      "sha256": "999c1848c59254db7fd75a3a741685bbfa979a4b6864b85bd2b29c8eb87cb395"
+    },
+    {
+      "path": "tests/editing_conformance/native_checkout_current_fixture.py",
+      "lines": "25-31,76-97",
+      "sha256": "777e566993c8424b7b1c364a2d67598e2fa10865697fcee4e1e6e5a35c9897f1"
+    },
+    {
+      "path": "astrid/sdk/timeline/native_word_anchor.py",
+      "lines": "67-82,366-381",
+      "sha256": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744"
+    },
+    {
+      "path": "astrid/sdk/timeline/commands.py",
+      "lines": "271-275",
+      "sha256": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96"
+    }
+  ],
+  "evidence_refs": [
+    {
+      "path": "workers/app-D116-native-gate3-protected-1755/evidence/source-verdict.json",
+      "sha256": "3633f592d8e21d06d233c979edf76a623a06d80561281fa9ce8e1f23f4f03745"
+    },
+    {
+      "path": "workers/app-D116-native-gate3-wholepath-1800/evidence/facts.json",
+      "sha256": "0c56331fa0a434d0ba742d923b647fb70c5ba161abd3a7c9b2701f2e8cd9e89e"
+    },
+    {
+      "path": "workers/app-D116-native-gate3-wholepath-1800/evidence/predicate-map.json",
+      "sha256": "27292d19a05c514697d39300d1af6d6b704294b4bd813e589cf8954e67af715d"
+    }
+  ],
+  "retained_failed_candidate": "65d1dead09331f2615d5649c9a2ede8191799724"
+}

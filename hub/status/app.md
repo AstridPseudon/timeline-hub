@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T18:49:38Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
-# app board, 2026-10-25T18:46Z
+<!-- app | 2026-10-25T18:54:48Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
+# app board, 2026-10-25T18:54Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -94,24 +94,25 @@
 | D132a-graph-source | Land reviewed graph v2 caller source | Luna; independent1720 | Normal receipt verified | merged | Agent normala30e; receipt1754 | Exact two reviewed donor blobs HOME. Own9 retained8 PASS1 FAIL at child birth; source merge grants no behavior closure. | a30e74e901 |
 | D127-bootstrap-custody | Qualify retained actual helper bootstrap | Luna independent read only | Exact retained1731 log and source | merged | app-D127-bootstrap-custody-return-1738 | Actual selector PASS1/0FAIL with source and tuple verified. Capture absent;102 events/mode/privacy remain retained-log assertions. No new body. | Evidence only |
 | D127-request3-inputs | Feed existing element profile inputs | Luna1518; custodySol1524 | Owner D57 nudge | merged | Existing qualified packet1518 and1524 | Exact d22 request3 binding and all available safe summaries/stacks sent peer1742. Own launch stacks/provider leaf/wall denominator remain absent. | Evidence only |
-| D116-Gate3-setup | Preserve exact Gate3 setup purpose | Luna and independent Luna | Agent authored input scope decision | gated:Agent-scope | Both1800 finite source owners complete | Agent escalation1820 asks genuine post-clear input; no author or body before recorded decision. Failed65d1 held. | No new edit |
+| D116-Gate3-setup | Preserve exact Gate3 setup purpose | Luna and independent Luna | Corrected D133 option B | gated:deferred | Both1800 finite source owners complete | Protected word choice affects topology. No option A author, review or own1. Existing visible failure retained; note1853 active. | No new edit |
 
-| D127-element-profile | Measure actual element leaf cost | Luna and independent Luna | Actual32016 terminal | review | Controller1840; independent1847 | Service exit1; producer packet pending. Sole result/privacy reviewer dispatched at5.000 GB, no heavy. | Appd5a1 Runtimeab1e |
+| D127-element-profile | Measure actual element leaf cost | Luna and independent Luna | Sole result1847 complete | gated:recorded-no-go | Actual32016; independent1847 | Readiness PASS; element FAIL1052. Runtime completed21.741s/provider13.781s; safe profile qualified. Caller outcome UNKNOWN. | Appd5a1 Runtimeab1e |
+| D128-inclusive-table | Rank functions under timeline commit | Luna read only | Actual safe projection only | gated:missing-counters | app-D128-element-inclusive-table-1851 complete | EXACTMISSING: five routing rows, no descendant membership/counters or call counts. [Table](../../design/app-D128-element-inclusive-table-1851-inclusive-table.md). | Source unchanged |
 
 Integration: App d5a1d1ab6550187e377fd7387d300102b8b82ece; tree7be73e2cbbcf89d627bf7b9da940b4ce17968c20. Entire tree equals independent1723 reviewed54c91d77 and tested import9bf46528. Source, D78, types and lint PASS. Qualified Runtime ab1e provenance; Agent070dfc/Composition635f exact. Receipt design/app-D127-normal-home-1738.json. Actual new-helper bootstrap retained execution independently PASS1738; raw capture absent, retained-log assertions only.
 
 Current P2 NO-GO; core open2 original gestures. Six named historical cases qualified, no full eight-case tour GO. Actual10721 readiness PASS; originals5 PASS,2 FAIL,1 NOTRUN. Element exact d22 request3:352 samples,3lost,PENDING; provider leaf, response, duration and denominator UNKNOWN. Request2 distinct. Final tuple proof owed. Graph child birth is a visible additional live P2 source item; actual own9 remains8 PASS1 FAIL.
 
 Blockers: SWAP safety — D130 holds recovery, related qualification, release, adoption and tours after automatic classifier refusal. No retry, alternate route, machine transfer or rollback.
-Blockers: Element profile — actual32016 terminal exit1. Controller1840 preserves all outputs; independent1847 dispatched immediately for exact first predicate, request binding, safe leaves and privacy. No rerun.
+Blockers: Element cost — table1851 EXACTMISSING: retained safe projection has wrapper counts only, no inclusive descendant ranks/call counts. Runtime existing coordinator owns next disposition; no cost author or body.
 Blockers: Graph child birth — corrected Runtime1814 and independent1821 complete. C0 sequential operands already defined; authentic intermediate stage/binding records absent. Causal owner UNKNOWN; no new body.
 Blockers: Projection behavior — independent1843 PASS_WITH_BOUNDARY: genuine first-birth fixed; whole27 still24 PASS3 FAIL. Runtime source1742 and Agent provider allocator own next source disposition. Own9 NOTRUN.
 Blockers: Agent core — Actual changed0857 child refuses report versus installed inventory. Runtime sole Sol1725 correction and independent1726 own root; no App duplicate body.
 Blockers: Final render — Farm17:43 records same report/inventory refusal and cleaned717e staging. Runtime1725 owns correction. Farm core dropped; D77 only.
 Blockers: Final cut — FullP2, finalP1-P5/core/D69 and genuine installed render owed. No ZIP claim.
-Next ready: Sole result/privacy reviewer1847 active on terminal32016; D100 existing Runtime source owner finite return. No new body, full tour or SWAP work.
-live 2 / cap 3; ready-undispatched 0. Luna producer1840 finishing terminal packet and read-only reviewer1847. No heavy; D89b>=4.6 GB admission, stop4 GB.
-INBOX consumed through2361981 bytes including D89d and Agent1820 Gate3 scope hold. Actual32016 already admitted and submitted; no new floor calculation required. H6 Runtime18:32, Agent18:30 and Farm18:08 inspected; no cleared ready row waits.
+Next ready: D133 deferred note1853 active; D100 source owner return and Runtime element counter disposition peer-owned. No new body, full tour or SWAP work.
+live 1 / cap 6; ready-undispatched 0. Luna D133 faithful deferred note1853; table1851 complete. No product authors or heavy body; stop4 GB.
+INBOX consumed through2366075 bytes. Delayed D100 proof-ready superseded by1837/1843; D133 option A superseded by corrected option B on current hub header/Agent board. No early source/body.
 Safety: D130 absolute hold. No manager product/test/generated/pin edits, Git writes, upstream push, M5, credentials or refused-route retry. Current inputs/outputs/branches/reports retained; historical dirty/orphan guarded targets untouched.
 Later: Parentlabels2/native originals4/trackbatch1 retain word-source errors. Three current native companions need exact transcript authority records; no unchanged rerun. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Current17 and pair16 source equality grants no current behavior credit.
 
@@ -120,7 +121,7 @@ Later: Parentlabels2/native originals4/trackbatch1 retain word-source errors. Th
 
 
 
-Blockers: Gate3 setup — Agent scope escalation1820 owns authored input decision. Both1800 finite source dependencies complete; no fixture-only exact route. No new author/body before recorded decision.
+Later: Gate3 D133 corrected option B is DEFERRED. Existing1800 protected word-choice dependency already fails option A condition. Agent G3/R2 future semantic owner; no new source or body.
 
 
 
@@ -134,3 +135,7 @@ Blockers: Gate3 setup — Agent scope escalation1820 owns authored input decisio
 Pass 18:44Z: actual32016/preflight29958 and plan21c1e9 read back from persistent facts, immediately published byte-exact. D100 reviewer1843 complete and four exact safe files published; peer source-return sent Runtime/Agent and lead. Existing failed assertions untouched; original9 remains unspent. No manager repo edits or new body.
 Pass18:45Z: service32016 changed fail/exit1. Independent Luna1847 dispatched immediately after fresh5000593408 bytes/noheavy admission; producer continues safe packet, no duplicate body. D89d fallback unneeded. Whole original outcome and dominant cost await review.
 Pass18:47Z: producer six exact safe terminal files published and Runtime/lead notified, provisional until independent1847. Runtime lifecycle completed21.741s/provider13.781s, actual element binding/outcome remain for reviewer. Agent1820 Gate3 scope hold consumed; no duplicate escalation/author/body.
+Pass18:51Z: independent1847 completed, exact six safe files published immediately. One Luna1851 follows on same producer safeprofile only per D128; no costauthor yet. Originalelement NO-GO and callerreceipt UNKNOWN preserved. No new body.
+Pass18:52Z: H6 read current Agent board and hub header BEFORE any D133 dispatch; corrected option B supersedes delayed conditional approval. No Gate3 author/review/body was queued. Stale D100 ready note already satisfied by1837 and independent1843; source-return peer1844 remains live.
+Pass18:53Z: Agent1843 requests only worker-authored deferred ZIP paragraph. Luna1853 dispatched immediately on exact normal a30e with no repo/source/test edits or review/body; notes handback follows. Latest H6 corrected D133 B retained.
+Pass18:54Z: D128 table1851 COMPLETE EXACTMISSING; four exact safe artifacts published and lead/Runtime notified immediately. Five inclusive routing rows cannot rank descendants or count calls; no guessed author/body. Sweep3 removed0; compact0scratch/0testdirs and4oldlogs compressed. No eligible ended nonKEEP worktrees remain.
