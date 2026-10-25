@@ -1,0 +1,62 @@
+{
+  "task": "app-F-App16-final-artifact-review-1941",
+  "verdict": "PASS_CORRECTED_ARTIFACTS",
+  "scope": "Independent read-only final review of corrected1932 App16 artifacts; no product, test, pin, merge, ref, build, ZIP, or semantic-resolution writes.",
+  "source_tuple": {
+    "base": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "ours": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "upstream": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+    "merge_base": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "ours_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20"
+  },
+  "merge_preview": {
+    "bytes": 769114,
+    "sha256": "6c7cf7073a554a81ddbfe9aca90da2a192e73bed90245e137e030998c4439535",
+    "byte_equivalent_to_1926": true,
+    "read_only": true
+  },
+  "coverage": {
+    "files": 16,
+    "preview_headers": 81,
+    "true_conflict_marker_hunks": 14,
+    "clean_nonconflicting_hunks": 67,
+    "semantic_true_conflicts": 13,
+    "trivial_textual_conflicts": 1,
+    "unclassified": 0,
+    "arithmetic": "14 = 13 + 1; 81 = 14 + 67"
+  },
+  "packet_match": {
+    "matches_independent_1926_hunk_map": true,
+    "owner_choices_unchanged": true,
+    "retargeted_or_new_owner_choices": false,
+    "all_choices_concrete": true,
+    "both_test_families_preserved": true,
+    "c0_and_live_predicates_preserved": true
+  },
+  "source_identity": {
+    "blob_triplets_verified": 48,
+    "source_byte_sha256_verified": 48,
+    "all_git_objects_are_blobs": true,
+    "outside_blobs_or_refs_changed": false
+  },
+  "trivial_artifact": {
+    "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "conflict_header": "@@ -6,7 +6,11 @@",
+    "adds": ["CHAT_VOICE_ENABLED", "type LocalAgentChoice"],
+    "artifact_only": true,
+    "repository_applied": false,
+    "temporary_copy_git_apply_check": "PASS"
+  },
+  "production_path": {
+    "mounted_outbox_to_runtime": true,
+    "path": "useTimelineSave.ts:319-323 -> localSaveSession.ts:168-196 -> dataProvider.ts:751-767 -> client.ts:735-742",
+    "ordinary_d66_hook": "timeline-diagnostics.ts:10-14,147-201",
+    "helper_only_credit": false
+  },
+  "route": {
+    "delivery": "git am -q at delivery-build lines 195-198",
+    "whitespace_error_flag": false,
+    "reported_56_eof_whitespace_untouched": true
+  },
+  "tests": "NOTRUN by explicit artifact-review scope; no new source was investigated"
+}

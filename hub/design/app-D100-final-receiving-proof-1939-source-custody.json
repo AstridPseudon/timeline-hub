@@ -1,0 +1,74 @@
+{
+  "task": "app-D100-final-receiving-proof-1939",
+  "source": {
+    "agent_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "agent_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "agent_worktree": "/home/user/work/wt/app-D100-final-receiving-proof-1939",
+    "product": {
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a",
+      "git_blob_sha1": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "bytes": 37283
+    },
+    "test": {
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "git_blob_sha1": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a"
+    },
+    "diff_scope": ["tests/sdk/test_d100_item_birth_boundary.py"],
+    "outside_modes": {
+      "product_changed": false,
+      "other_paths_changed": false,
+      "fixture_or_pin_changed": false,
+      "working_tree_clean": true
+    }
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "python": "/home/user/work/venv-agent/bin/python",
+    "module_origins": {
+      "provider_loader": {
+        "path": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_provider.py",
+        "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"
+      },
+      "runtime_http_commit_route": {
+        "path": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/server.py",
+        "sha256": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc"
+      },
+      "provider_execution": {
+        "path": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_execution.py",
+        "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"
+      },
+      "agent_provider": {
+        "path": "/home/user/work/wt/app-D100-final-receiving-proof-1939/astrid/sdk/timeline/commit.py",
+        "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+      },
+      "registered_provider_test": {
+        "path": "/home/user/work/wt/app-D100-final-receiving-proof-1939/tests/sdk/test_capture_source_runtime.py",
+        "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48",
+        "registration": "service.register_timeline_commit_provider(load_timeline_commit_provider(\"astrid\"))",
+        "commit_call": "service.commit_timeline(project, \"main\", request, idempotency_key=...)"
+      }
+    },
+    "recipe": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<exactAgentRoot>:/home/user/work/wt/rt-pin-ab1e4f61 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-ab1e4f61 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --junitxml=<ownXML> tests/sdk/test_d100_item_birth_boundary.py"
+  },
+  "production_boundary": {
+    "mounted_app_outbox": {
+      "path": "/home/user/banodoco/reigh-app/src/tools/video-editor/hooks/useTimelineState.ts",
+      "sha256": "f057780b4c5c97302d6426c64472e49736988bb32a1cbb48262d0eb7bc5fe018",
+      "reviewed_route": "localSaveSession durable outbox -> DataProvider.commitTimeline"
+    },
+    "registered_runtime_route": "RuntimeService.commit_timeline -> startup-selected astrid provider -> Agent commit service",
+    "diagnostic_hook": "No D66 hook is relevant to this physical-item custody assertion; no helper credit claimed",
+    "evidence_basis": "App D100 protected review 1924 and Agent capture-source registered-provider test"
+  },
+  "prior_review_reuse": {
+    "security": "Product/source security PASS retained from rt-Agent-D100-security-review-1803",
+    "purpose": "PASS_SOURCE_PURPOSE after correcting only the two 63-character metadata hashes identified by rt-Agent-D100-test-review-1919",
+    "static_checks": ["AST", "Ruff", "mypy", "Python 3.11 compile", "git diff --check", "scope/hash census"],
+    "semantic_review": "No new semantic review owed; no product or test-body change made during receiving"
+  }
+}

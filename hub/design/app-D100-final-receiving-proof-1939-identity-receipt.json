@@ -1,0 +1,46 @@
+{
+  "task": "app-D100-final-receiving-proof-1939",
+  "stage": "corrected_identity",
+  "verdict": "PASS",
+  "identity": {
+    "agent_final_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "agent_final_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "agent_base_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "agent_base_tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "product_path": "astrid/sdk/timeline/_command_state.py",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "product_sha256_length": 64,
+    "product_git_blob_sha1": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+    "test_path": "tests/sdk/test_d100_item_birth_boundary.py",
+    "test_sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+    "test_sha256_length": 64,
+    "test_git_blob_sha1": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+    "changed_paths": ["tests/sdk/test_d100_item_birth_boundary.py"],
+    "original_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-Agent-D100-test-return-1914-source-manifest.json",
+    "corrected_derivative": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D100-final-receiving-proof-1939/evidence/source1914-corrected-manifest.json",
+    "correction_scope": ["agent.protected_product.sha256", "agent.protected_product.required_exact_blob"]
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true
+  },
+  "source_review": {
+    "prior_review": "rt-Agent-D100-test-review-1919",
+    "purpose_static_scope": "PASS retained; sole finding was corrected 63-character metadata hashes",
+    "protected_product_unchanged": true,
+    "test_source_exact": true,
+    "outside_modes": "No product, fixture, pin, runtime, or other test path changed",
+    "json_parse": "PASS",
+    "static_exact": "PASS"
+  },
+  "admission": {
+    "checked_at": "2026-10-25",
+    "free_bytes": 4772810752,
+    "behavior_floor_bytes": 5000000000,
+    "behavior_shortfall_bytes": 227189248,
+    "candidate27_started": false,
+    "own9_started": false
+  }
+}
