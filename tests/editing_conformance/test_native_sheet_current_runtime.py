@@ -120,7 +120,7 @@ def tiny_cut_parent(service, project):
         }, authorize=lambda: None)
         verified = service.get_project_verified_media(project, selection, authorize=lambda: None)
         assert verified['selection'] == selection
-        media_ids[asset] = verified['object_id']
+        media_ids[asset] = verified['selection']['object_id']
 
     clips = copy.deepcopy(timeline['clips'])
     registry = copy.deepcopy(timeline['registry'])
@@ -337,7 +337,7 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
             verified = runtime.service().get_project_verified_media(project, selection, authorize=lambda: None)
             assert verified['selection'] == selection
             role_media[source_id][media_type] = verified
-            verified_by_object[verified['object_id']] = verified
+            verified_by_object[verified['selection']['object_id']] = verified
 
     primary_replacements = {
         source_id: (role_media[source_id].get('image/png')
