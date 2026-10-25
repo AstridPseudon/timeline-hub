@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T03:02:34Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 4m -->
+<!-- agent | 2026-10-25T03:05:36Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 1m -->
 # agent board, 2026-10-25T02:57:10Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -160,8 +160,8 @@
 | D86 main word46 | Preserve native word binding behavior | Main Luna | MAIN source successor proof | merging | Functional0145; review0152 PASS | Exact9e88 supported init then original rational fps; normal5dc9. Nine semantic failures remain separate; no body. | 5dc9f0c898 |
 | D86 main CLI8 | Preserve real CLI idempotency | Main Luna | Main affected-node batch | merging | Runtime0022 PASS; home a0b8a3c078 | Real store retries and exact mismatch reason verified; eight assigned scenarios and twelve tests conserved. Functional proof pending. | Home a0b8a3c078 |
 | F next cohort11 | Preserve next-command scenarios | Luna | MAIN meaningful successor proof | merging | Word9e88; normal5dc9; inputs0200 | Exact2 historical PASS retained;9 prior setup errors now eligible via reviewed shared word fps correction. Actual behavior owed. | 5dc9f0c898 |
-| D86 main media20 | Preserve parent-media scenarios | Local Luna | Actual 10077 source correction | doing | agt-F-parent-media-return-0257 | Unstarted MAIN reservation reclaimed. Two PASS and 18 setup errors retained; faithful source correction or exact outside seam. Earlier owners checked before edits. | Current 562ee |
-| D86 main auto14 | Preserve parent auto-completion | Local Luna | Actual 10077 source correction | doing | agt-F-parent-auto-return-0257 | Unstarted MAIN reservation reclaimed. Six PASS and eight FAIL retained; strict conflict and address predicates preserved. Earlier owners checked before edits. | Current 562ee |
+| D86 main media20 | Preserve parent-media scenarios | MAIN Luna | Normal merge then meaningful MAIN proof | merging | Author0240; protected0245 PASS | Earlier MAIN owner arrived late. Exact child media claims source queued. Local0257 differs and stays held; duplicate local review stopped. All20 behavior owed. | 2a04d92fca |
+| D86 main auto14 | Preserve parent auto-completion | MAIN Luna | Existing protected review0254 | review | Author0241; review0254; six-case facts0254 | Earlier MAIN owner arrived late. Local0257 held; duplicate review stopped. Two exact code expectations corrected; six guarded-address failures stay open. | MAIN candidate held |
 | F current sheet17 | Preserve current sheet scenarios | Luna | MAIN corrected subset proof | merging | Author0157; review0203 PASS | Normal3b8f exact reviewed64166; original17 conserved. Init/emitter source corrected; inverse1 and retired CLI3 findings held. | 3b8f341cf6 |
 | F main batch recipe | Hand back exact affected-node inputs | Luna | Main recipe2337 and source joins | merging | agt-F-main-batch-prep-2342 | Exact251 source-only snapshot exported. Extra37 assigned cases join later; remaining live core stays visible. No registry install or body. | Private bundle only |
 | F M2 placement20 | Preserve placement recipe scenarios | Luna | MAIN successor qualification | merging | BatchE0151 PASS; home536b | Exact85e046 protected PASS, mirrored parent clips preserved; all20 retained. Source joined; behavior owed. | 536bb82153 |
@@ -206,10 +206,12 @@
 
 | D91 inverse window | Make five original-third hosts valid | Luna | Protected PASS then exact MAIN proof | merging | Author0218; independent0223 PASS | Approved host1.8 to2.0s only. Normal 9f697 has exact source; other timing and predicates exact. MAIN proof and D72 log owed. | 9f697afcf0 |
 
-| P4 cross-process sample | Measure actual ten-note process costs | MAIN Sol | Existing original route and heavy order | doing | rt-P4-allprocess-sample-sol-0233 | Actual producer consumes same owner sample; agt0242 reservation coalesced, never locally dispatched. CPU/stacks10/25/40 plus CLI spawn curve. | Current6634 tuple pending |
+| P4 cross-process sample | Measure actual ten-note process costs | MAIN Luna | Locally proven corrected observer | doing | First0233 actual30057; corrected agt0242 | First FAIL45.478s,43.90 CPU/46.14wall; zero Python CLI children. Observer failed before all timed stacks; dominant function UNKNOWN. One corrected owner only. | d407 /6634 /4b984 /635f |
 
 | F D72 current receipts | Publish approved migration log entries | Luna | Existing independent PASS | merged | Review-log0239 | Exact D91 and core-element D83 entries appended with original byte prefix and hash preserved. MAIN proof remains pending. | Existing ledger only |
 | F current supplement | Publish exact new proof inputs | Luna | Existing MAIN receiving route | merged | Return0252 PASS; flat packet published | Exact 34 new selectors, zero overlap with immutable230. All34 AST and eight home hashes pass. Review inventory is24 scopes; functional proof pending. | Home 562ee |
+
+| F held thirteen | Resolve exact word and sheet inputs | Luna read only | Existing current source and old failure traces | doing | agt-F-held13-source-disposition-0301 | Nine word semantics and four sheet findings need per-ID eligibility or bounded owner scope. No code or body; preserve all live originals. | Normal 562ee |
 
 Integration: Current Agent 562ee30b6e includes five reviewed source joins: occurrence48, D91 host window, core-element literal, inverse7 source hashes, genuine D92 fixture. Every imported file matches its reviewed blob. D90 remains qualified by actual28969 PASS36; final tuple remains separate.
 core open: P4 service14151 FAIL45.448s versus45 on d407/6634. Owner now authorizes ONE cross-process sample through the existing original route; MAIN host requested. Four R2 retain qualified historical scope.
@@ -221,7 +223,7 @@ Safety: Old D88 denial/prototype stay stopped. D93 classifies private401 as prod
 Disk: Amended02:42 source/review6 above5.0GB, heavy1 above5.2GB, nothing new4.5GB. Free6.047GB before cleanjoin request; reclaimed completed trees safely. Sweep3 removed0; compact0. No ended nonKEEP unrecycled tree; old dirty/KEEP/refused paths untouched.
 Blockers: MAIN proof — Exact230 corrected input and new reviewed fixture joins need meaningful existing-runner qualification; all23 no-case/livefrontend6/netzero1 remain visibly unqualified.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
-Next ready: Local parent-media20 and auto14 source returns0257; MAIN actual sample0233, current161/D91 proofs and exact34 supplemental inputs. No unchanged original or broad retry.
-live 2 / cap 6; ready-undispatched 0 eligible local starts. Local parent-media20 and auto14 returns0257 own current ready source. Exact34 packet published; no unreviewed returned diff remains. MAIN sample0233 exclusive.
+Next ready: Existing MAIN media0240 source merge and auto0241 protected review; MAIN actual sample0233, current161/D91 proofs and exact34 supplemental inputs. No unchanged original or broad retry.
+live 1 plus duplicate review stopping / cap 6; ready-undispatched 0 eligible local starts. Held13 source disposition0301 active. Earlier MAIN media0240/auto0241 owners now consumed; local duplicate branches held and review stopped. Exact34 packet published. MAIN sample0233 exclusive.
 
 Inbox consumed through1309019 bytes. Updated 2026-10-25T02:54:31Z: exact normal562ee verifies all reviewed joins; D72 log complete; D92 original assertions retained, helper proof owed; metadata packet correction active. No manager product/test/pin edits or bodies.
