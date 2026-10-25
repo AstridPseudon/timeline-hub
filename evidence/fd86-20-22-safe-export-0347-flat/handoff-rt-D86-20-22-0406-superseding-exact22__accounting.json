@@ -1,0 +1,59 @@
+{
+  "schema": "astrid.timeline.fd86-exact22-corrected-safe-accounting/v1",
+  "packet": "superseding-exact22",
+  "task": "F-D86-20-22-exact-return-0358",
+  "original_first_export": "../exact22",
+  "original_first_export_immutable": true,
+  "actual20_packet_unchanged": "../actual20",
+  "actual20_reference": {
+    "service_id": "d91-first20-immutable20-0313-1025031717-18575",
+    "records": "existing real per-ID records with safe first-exception, helper, and source identities",
+    "current_agent_peer": "033346",
+    "peer_request": "still requested"
+  },
+  "producer": {
+    "branch": "tl/rt-D86-ready22-body-0333",
+    "commit": "350058edc5b830215c7d915e09024e2362a0b429",
+    "actual_run_id": "fd86-exact22-body-20261025-034159",
+    "venue": "direct existing D73 launcher from producer worker",
+    "central_request_record": "not found",
+    "central_service_id": null,
+    "source_paths": {
+      "xml": "evidence/fd86-next32-receive-0328/output/fd86-exact22-body-20261025-034159.xml",
+      "body_log": "evidence/fd86-next32-receive-0328/output/fd86-exact22-body-20261025-034159.body.log",
+      "summary": "evidence/fd86-next32-receive-0328/output/fd86-exact22-body-20261025-034159.summary.txt",
+      "selector": "evidence/fd86-next32-receive-0328/inputs/selector-argv.txt",
+      "membership": "evidence/fd86-next32-receive-0328/inputs/membership.tsv",
+      "manifest": "evidence/fd86-next32-receive-0328/inputs/fd86-exact22-d73.manifest",
+      "receipts": "evidence/fd86-next32-receive-0328/inputs/fd86-exact22-d73-checkout-receipts.txt"
+    }
+  },
+  "limits": {
+    "selected_unique": 22,
+    "worker_parallelism": 3,
+    "cache": "disabled",
+    "timeout_seconds": 45,
+    "marker_filter": "none",
+    "preflight_exit": 0,
+    "body_exit": 1
+  },
+  "aggregate_counts": {
+    "PASS": 4,
+    "FAIL": 0,
+    "ERROR": 18,
+    "SKIP": 0,
+    "executed": 22
+  },
+  "aggregate_counts_from_producer_summary": true,
+  "per_id_status_source": "authentic producer XML testcase records",
+  "pass_status_projection_from_retained_log_summary": false,
+  "xml_membership_matches_selector_membership": true,
+  "membership_rows": 22,
+  "preserved_prior_identity_rows": 22,
+  "prior_identity_projection_sha256": "f3b64f21d1fc4dda3673466c99efb1f8227f8df26769a1291a9fba63cf7147f5",
+  "corrected_identity_projection_sha256": "f3b64f21d1fc4dda3673466c99efb1f8227f8df26769a1291a9fba63cf7147f5",
+  "no_absent_case_pass": true,
+  "no_reconstructed_missing_records": true,
+  "no_new_verdict": true,
+  "source_only_no_functional_closure": true
+}

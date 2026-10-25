@@ -1,0 +1,117 @@
+{
+  "task": "F-D86",
+  "packet": "actual9211-video-correspondence-0406",
+  "scope": "exactly four test_commit_runtime_video_unplace selectors",
+  "source_only": true,
+  "semantic_verdict": null,
+  "source": {
+    "actual_agent_commit": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9",
+    "runtime_commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "test_source_commit": "9c149b0201f6cbca096064f5b516a673e8eb0a59",
+    "test_source_sha256": "3a59a67cd47c94c169255e1cea64d3be4ead8ccbb1b324af7f00233deb8618e1",
+    "home_receipt": "27c68177c1f587acec0d2b615d1b8bb95c4a4fde",
+    "safe_selector_projection": {
+      "artifact": "actual9211-video12.json",
+      "sha256": "45ca7797941ee9e86476e02ab755604442681d064026e6b92a57288ef655a6e4"
+    }
+  },
+  "private_artifacts_inspected": [
+    {
+      "artifact": "actual9211 XML",
+      "sha256": "eef3d52683227fe57b2d5e63abce044d11fd68cb31960e9a4ff5194cfeb5aab2",
+      "bytes": 2625666,
+      "coverage": "all 161 retained testcases; four requested video12 records selected"
+    },
+    {
+      "artifact": "actual9211 body log",
+      "sha256": "796efbbcbed165da591506305129f7fce9a99a172b6a0576a2e3bf8134c61981",
+      "bytes": 2612623,
+      "coverage": "same actual9211 run; four requested selector records only"
+    }
+  ],
+  "records": [
+    {
+      "ordinal": "107",
+      "selector": "tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[image-False]",
+      "status": "ERROR",
+      "first_exception": {
+        "class": "CommandError",
+        "message": "missing or ambiguous identity 'occ-a'",
+        "source": "astrid/sdk/timeline/_command_state.py:154"
+      },
+      "correspondence": {
+        "accepted_setup_placement": "EXACTMISSING",
+        "inverse_placement": "EXACTMISSING",
+        "shot_revision_id": "EXACTMISSING",
+        "internal_timeline_revision_id": "EXACTMISSING",
+        "source_mapping.shots.item_id_map": "EXACTMISSING",
+        "commit.materialization.binding_identifiers": "EXACTMISSING"
+      }
+    },
+    {
+      "ordinal": "108",
+      "selector": "tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[image-True]",
+      "status": "ERROR",
+      "first_exception": {
+        "class": "CommandError",
+        "message": "missing or ambiguous identity 'occ-a'",
+        "source": "astrid/sdk/timeline/_command_state.py:154"
+      },
+      "correspondence": {
+        "accepted_setup_placement": "EXACTMISSING",
+        "inverse_placement": "EXACTMISSING",
+        "shot_revision_id": "EXACTMISSING",
+        "internal_timeline_revision_id": "EXACTMISSING",
+        "source_mapping.shots.item_id_map": "EXACTMISSING",
+        "commit.materialization.binding_identifiers": "EXACTMISSING"
+      }
+    },
+    {
+      "ordinal": "109",
+      "selector": "tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[video-False]",
+      "status": "ERROR",
+      "first_exception": {
+        "class": "CommandError",
+        "message": "missing or ambiguous identity 'occ-a'",
+        "source": "astrid/sdk/timeline/_command_state.py:154"
+      },
+      "correspondence": {
+        "accepted_setup_placement": "EXACTMISSING",
+        "inverse_placement": "EXACTMISSING",
+        "shot_revision_id": "EXACTMISSING",
+        "internal_timeline_revision_id": "EXACTMISSING",
+        "source_mapping.shots.item_id_map": "EXACTMISSING",
+        "commit.materialization.binding_identifiers": "EXACTMISSING"
+      }
+    },
+    {
+      "ordinal": "110",
+      "selector": "tests/editing_conformance/test_commit_runtime_video_unplace.py::test_capture_commit_reload_undo_redo_and_restart_safe_retry[video-True]",
+      "status": "ERROR",
+      "first_exception": {
+        "class": "CommandError",
+        "message": "missing or ambiguous identity 'occ-a'",
+        "source": "astrid/sdk/timeline/_command_state.py:154"
+      },
+      "correspondence": {
+        "accepted_setup_placement": "EXACTMISSING",
+        "inverse_placement": "EXACTMISSING",
+        "shot_revision_id": "EXACTMISSING",
+        "internal_timeline_revision_id": "EXACTMISSING",
+        "source_mapping.shots.item_id_map": "EXACTMISSING",
+        "commit.materialization.binding_identifiers": "EXACTMISSING"
+      }
+    }
+  ],
+  "missing_field_coverage": {
+    "accepted_setup_placement": "EXACTMISSING: selected XML nodes are error records; no accepted setup object or placement identifier retained",
+    "inverse_placement": "EXACTMISSING: selected XML/body-log coverage contains no retained inverse placement record",
+    "shot_revision_id": "EXACTMISSING: no retained value in the four selected records",
+    "internal_timeline_revision_id": "EXACTMISSING: key appears only in traceback source text; no retained value",
+    "source_mapping.shots.item_id_map": "EXACTMISSING: zero exact item_id_map fields in the four selected record payloads",
+    "commit.materialization.binding_identifiers": "EXACTMISSING: no retained accepted materialization binding record in the four selected records"
+  },
+  "no_reconstruction": true,
+  "no_new_collection": true,
+  "raw_artifacts_exported": false
+}

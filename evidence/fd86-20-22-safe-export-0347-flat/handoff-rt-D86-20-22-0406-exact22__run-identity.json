@@ -1,0 +1,77 @@
+{
+  "body_exit": 1,
+  "no_absent_case_pass": true,
+  "no_new_verdict": true,
+  "no_reconstructed_records": true,
+  "outcome_counts": {
+    "ERROR": 18,
+    "FAIL": 0,
+    "PASS": 4,
+    "SKIP": 0,
+    "executed": 22,
+    "selected": 22
+  },
+  "pass_detail_note": "PASS statuses are the exact four-selector complement of the retained 18 ERROR short-summary IDs; no duration, exception, or private stack was reconstructed.",
+  "preflight_exit": 0,
+  "private_artifacts": [
+    {
+      "bytes": 43811,
+      "exported": false,
+      "name": "xml",
+      "sha256": "a45a18c8813ad115a19a5a70e3f4c382e30854b5c930c503c62d89108839e99c"
+    },
+    {
+      "bytes": 42015,
+      "exported": false,
+      "name": "body_log",
+      "sha256": "a7a1d775801a0db420d077b53de9e6048a4b9f21272831c187c9fff0c095135c"
+    },
+    {
+      "bytes": 3490,
+      "exported": false,
+      "name": "command",
+      "sha256": "a9ad9f5789521e3d65d53057f286e0a5cd869adc9cde6fd2b644e4a6c17f8984"
+    },
+    {
+      "bytes": 2239,
+      "exported": false,
+      "name": "manifest",
+      "sha256": "8ab5c8ad7c2bac0f56ea24ee852f1e7c3fa2c0360802ed1804340b601d9eea89"
+    }
+  ],
+  "profile": {
+    "client": "0.2.14",
+    "helper_harness_sha256": "b745f780687763b1a4e85a6af6fb85a17d3000fbd8628038252fd87400a1a189",
+    "node": "v20.19.4",
+    "schema_sha256": "867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "proof": "exact22",
+  "request_id": "fd86-exact22-body-20261025-034159",
+  "route": "existing-main-D73",
+  "selector": {
+    "count": 22,
+    "sha256": "f1b95e8a05cdffc9c4e8862dc242f48d0967fcedcc840f1308c210406fb3a4de"
+  },
+  "service_id": "fd86-exact22-body-20261025-034159",
+  "source_only": true,
+  "status": "terminal",
+  "task": "F-D86-20-22-safe-export-0347",
+  "tuple": {
+    "agent": {
+      "commit": "657bc2e8dba066df1c7d21851315bdb6b0f16a3a",
+      "tree": "9dee25d783fbb7d70a4eaf76e66de2db1743663f"
+    },
+    "app": {
+      "commit": "5465100844483f4299825816b0fba66e5e5d3b24",
+      "tree": "190cfca7977ec3c63a11a7f505037f3dba1717c6"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a"
+    }
+  }
+}
