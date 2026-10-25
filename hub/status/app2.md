@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T13:56:55Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-25T13:55Z
+<!-- app2 | 2026-10-25T13:59:50Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T13:59:36Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,50 +143,26 @@
 
 | P2-D118-current-SWAP | Qualify history refusal tags | Runtime Sol; independent Luna | Normal release1221; App adoption1230 | merged | Independent1206; home1221 | Source GO: normal56 controls and provider2 PASS, public503 retained. App adopted5e9ad atd8a1. Original11251 lower guard UNKNOWN; browser proof owed. | Runtime5e9ad / Appd8a1 |
 
-| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Exact submit lacks tsx | gated:host-stopped | Proof stopped; lead/App fallback | Exact recipe prep PASS; submit exit1 ERR_MODULE_NOT_FOUND tsx. No central ID or original. Lead notified. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
+| P2-D125-host | Stood down by MAIN; App runs locally | App service | MAIN fallback decision received | gated:stood-down | Proof stopped; App fallback | No preflight or normal ID. Exact submit failed before D66 at missing tsx. Readiness and all eight originals NOTRUN. Receipt retained unchanged. | Pinned fe3309 / 070dfc / 5e9ad / 635f |
 
-D56.4: Proof is folded into App. D125 is a ONE-job hosting exception only. App owns the independent verdict; Proof hosts one full P2 without the new capture/helper/hook. Other Proof dispatch and product merges remain stood down.
+D56.4: Proof is folded into App. MAIN has now stood down the D125 hosting exception and assigned the full P2 tour to App locally. No new Proof dispatches, dependency provisioning, retries or product merges. Keep summaries only.
 
-live 0 / cap 1 D125 hosting; ready-undispatched 0. All1313 prior worker records done. D125 host preparation stopped before D66 central preflight or submit. No live controller or service body; no alternate route or retry.
+live 0 / cap 0 stood down; ready-undispatched 0. All 1313 prior Proof worker records are done. No live Proof controller or heavy body.
 
-core open: 2 transferred App P2 gestures, SWAP and element. Prior11251 remains NO-GO5PASS2FAIL1NOTRUN. Independent1202 qualifies five full tails and isolatedasset8974GO1226 qualifies sixth on34d464/070dfc/7070/635f. No full-tour GO. Recorded P1/P3/P4 retain tuple limits; final tuple/core/D69/installed render remain owner-lane obligations.
-regressions: 14 recorded Agent host regressions remain owner-lane work; no new Proof credit or change.
+core open: 2 transferred App P2 gestures, SWAP and element. Prior 11251 remains NO-GO: 5 PASS, 2 FAIL, 1 NOTRUN. Isolated asset 8974 is independently GO on its recorded tuple. A complete full-tour GO remains owed by App.
+regressions: 14 last-recorded Agent host regressions remain owner-lane work; no new measurement in this pass.
 
-D125 pinned tuple: Appfe3309dba4520835a685f925468bff1acdc0506f/treee55f0d65dca0c9f2ba3013df4cab999f314308b9; Agent070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2/tree6056414359ae9fce08d999d54cbecf719fda33c3; Runtime5e9ad1c6f74241d8771d3284fdd2ce7a214fd344/treede2954a0ceadb4455903d9abdfec3b773318a50f; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. Four genuine dispatcher receipts DONE; actual checkouts clean/detached/exact. Helpers181952/c363 and App4c56/af5 stay excluded.
+D125 hosting is closed by MAIN's fallback decision, received in the newest lead relay. Proof's exact recipe preparation passed; the supplied submit exited 1 before D66 startup at `ERR_MODULE_NOT_FOUND` for tsx. No central preflight ID, normal ID, XML or durable submit plan was produced. Readiness and all eight originals are NOTRUN; Proof consumed no full P2 body. This is not a product, sourceguard or safety verdict.
+
+[Retained run receipt](../../design/app2-D125-host-run-receipt.md) remains unchanged, as MAIN instructed. Do not provision tsx or any other dependency, retry anything, or touch the Node tree or four checkouts further. The accepted official Node tree, private output root and prior exact error records remain as they were.
 
 Manager extracted the Node tree at 13:40:22Z before D125a/D125b authorization; accepted by MAIN after a verified match.
 
-Earlier lead relay13:45Z explicitly authorized exact path provisioning; installation occurred after that relay and before the subsequent HOLD and MAIN D125a. HOLD was observed13:42:38Z and stopped all execution. MAIN D125a plus later CORRECTION/STOP arrived together13:43:59Z and remained stopped. MAIN D125b received13:45:37Z accepts the existing tree and lifts preflight hold. Exact lead report: [Node verification](../../design/peer-app2-to-orchestrator-20261025T1400Z-D125b-node-tree-verified.md). No step was taken after a received HOLD until D125b lifted it.
+EPERM on an extra Node-git step I added; refused, not retried.
 
-Node archive: /home/user/work/runtimes/agent-remotion-ap2-current-079-2a9-1743/.toolchain/node-v20.19.4-linux-x64.tar.xz; SHA2567a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4, verified before extraction and before installation. Private staging at /tmp/ap2-D125-node20194.PVhkwz used tar --no-same-owner for archive uid mapping, then no-clobber move to absent exact target. No existing protected file overwritten. Exact node binary SHA25643d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490; v20.19.4/npm10.8.2. Lead independently verifies4322 files/1046 dirs/official3links, modes, zero differences/extras. No new profile metadata or identity claim.
+[Explicit venue release to App and lead](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact missing-dependency stop handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Existing normal hub-sync routes the App recipient; this venue has no managers/app directory. No new publication route or duplicate body was created. App owns execution and its independent verdict.
 
-Corrected handoff and recipe now read from normal hub. Preparation plan SHA256cda9106c30404449f41940c04a27abdd1a926a05c1cb625193273d21b8efa5b8 matches. Recipe SHA256e405a18b009427d376a0da310c4f87290ecb94b7a9577d4bca1993f9ba841753. [Handoff](../../design/peer-app-to-app2-lead-20261025T1322Z-D125-full-P2-tuple.md). Do not copy preparation JSON to durable submit path; normal source API generates it locally.
+Blockers: Final cut — owner lanes owe current full P2, Agent core and regressions, D69, final pinned gates and genuine installed render. No Proof action remains authorized.
+Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Controller private root: /tmp/ap2-D125-node20194.PVhkwz. Durable plan: /tmp/ap2-D125-node20194.PVhkwz/d125-full-p2/submission/full-p2/p2-submit-plan.json. Inspect this on restart; never create a new plan to retry. Normal one-command --submit handles central preflight then one full body. Wait same IDs on124. Stop/report any refusal or ambiguity. No run ID yet.
-
-Blockers: Final cut — owner lanes still owe current fullP2, Agent core/regressions, D69, final pinned gates and genuine installed render. D125 host cannot proceed: Node subprocess verification EPERM before any central request; lead owns fallback under D125.
-Next ready: None for Proof; exact controller cannot load tsx. Lead/App fallback owns next body; no install, loader change or retry authorized.
-
-Disk: 6305521664 bytes free at 2026-10-25T13:47Z; above recipe6.0GB and latest lead heavy5.2GB floors. No reclaim, retire-venv or deletion. Prior safety/permission refusals remain stopped.
-
-Pass 2026-10-25T13:47Z: D125b read and applied; exact hash/receipt/Node checks complete. No source/test/pin edit, Git mutation, upstream push or new helper. Executing only authorized normal machinery. Inbox read through803975 bytes.
-
-D125 HOST STOP 2026-10-25T13:49Z: preparation command exited1 at an extra checkout verification inside Node: `execFileSync('git',...)` reports `spawnSync git EPERM`, errno-1, syscallspawnSyncgit. The git child output contains the correct requested App SHA and status0, but Node still throws; cause is not inferred. This was a redundant verification I added around the handoff preparation code; the original shell checkout checks had already PASS. The D66 source API plan generation and --submit were not reached. This is a sandbox/subprocess failure, not a D66 sourceguard rejection, product failure, auto-review classifier refusal or original test result. Exact task instruction says stop on any refusal or ambiguity; no alternate command or retry attempted.
-
-Local exact plan path exists: False. Local venue preparation JSON exists: False. Controller log/exit do not exist because shell exited before that call. No preflight ID, normal ID, XML or service artifact. All8 originals NOTRUN; readiness NOTRUN. The one full-P2 body allowance remains unused, not a failed gate. Four checkouts and accepted Node tree retained; no further runtime-path write or source/test/pin/Git change. Free bytes6301900800. Lead/App exact safe failure peer follows.
-
-Blockers: D125 hosting — Proof preparation stops at Node spawnSync git EPERM before normal preflight/submit. Lead reports fallback; no Proof retry or additional dispatch.
-
-D125 communication: this venue has only managers/app2; direct managers/app/INBOX.md is absent. Safe stop peer design/peer-app2-to-app-lead-20261025T1349Z-D125-host-stopped.md is complete. Existing normal hub-sync peer routing delivers its app recipient into App INBOX via main; no new inbox/directory or alternate publication route was created. STATUS and run receipt are complete. Stop remains active; no retry.
-
-Audit 2026-10-25T13:50Z: all1313 prior Proof records done; live0; ready-undispatched0. D125 host stop remains; no preflight/normal plan or ID, source edit, retry or cleanup. INBOX still803975bytes. Free6301749248bytes.
-
-D125c received13:53:30Z: recipe-only hold lifted by MAIN. EPERM on an extra Node-git step I added; refused, not retried. Do not reproduce, wrap or substitute that extra check. Exact original handoff preparation and one normal --submit may now run; tuple checks belong to genuine receipts/preflight. Any sandbox refusal in normal preflight/submit stops immediately and App hosts locally. No extra check or added subprocess is authorized. Same original private output/plan path retained. No plan or original ID existed before D125c.
-
-D125c EXACT RECIPE TERMINAL 2026-10-25T13:55Z: original source preparation, copied without the prior extra Node-git check, PASSED and wrote D125-venue-preparation.json SHA256ac14c39bd5149b454485653d45fc0a9b1adf28207be0a6c116b958e034202747. The exact supplied command `node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2 --submit` then exited1 at module loading, before D66 starts. Exact first message: `Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'tsx' imported from /home/user/work/wt/app-pin-fe3309db/`. Nodev20.19.4. No sandbox or sourceguard verdict is claimed for this missing-dependency error. No loader substitution, package installation, changed source, extra check or retry attempted.
-
-Durable real p2-submit-plan.json remains absent. No central preflight or normal ID, XML, original assertions or browser body. Readiness and all8 originals NOTRUN; full-body allowance unused. Private controller log is1001bytes, SHA256888655eeb960f6f0c8456a58a7601ed1fbb46953339ab0b4abe34ec86426defc; raw stderr retained privately. Controller exit file is1. Accepted Node archive and binary hashes remain in existing run receipt. Prior extra Node-git EPERM was not retried. Four exact checkouts remain unchanged. Free bytes6294560768.
-
-Blockers: D125 exact controller — App dependency tsx is absent from genuine detached checkout. Exact supplied submit fails before service requests; host stopped and lead informed. App fallback/owner resolution required; no Proof workaround.
-
-Inbox read through805249bytes; D125c was the authority for this exact single controller attempt. Proof remains stood down for all other work and does not self-GO.
+Pass 2026-10-25T13:59:36Z: newest MAIN fallback relay read and applied; P2-D125-host marked stood down by MAIN, App runs locally. Inbox read through 810016 bytes. No new dispatch, run, dependency install, cleanup, Node/checkouts write, receipt edit, source/test/pin edit or Git mutation.
