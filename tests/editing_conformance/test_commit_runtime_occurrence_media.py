@@ -23,6 +23,7 @@ def _create_fixture(service, project, document, selection, *, authorize):
     from astrid.sdk.timeline._doc_patch import Closure, allocations
     from astrid.sdk.timeline.commands import execute
     from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 
     head = service.get_project_timeline(project, 'film')
     parent = service.get_project_parent_composition_revision(
@@ -74,9 +75,8 @@ def _create_fixture(service, project, document, selection, *, authorize):
             'args': {'inputs': [{'pin': {'media_id': selection['object_id'],
                                         'content_digest': selection['object_id']},
                                  'selection': selection}]}})
-    append({'schema_version': 1, 'op': 'occurrence.create', 'version': '1', 'select': 'parent',
-            'args': {'occurrence_id': 'occ-a', 'shot_id': 'chapter-shot', 'name': 'Chapter One',
-                     'track': 'picture', 'on': 8, 'duration': 10}})
+    append(capture_occurrence_create(
+        bundle, 'occ-a', 'chapter-shot', name='Chapter One', track='picture', on=8, duration=10))
     # Runtime must accept the semantic birth before guarded patches can use its
     # registered source mapping for the new occurrence.
     birth = submit(calls, 'popup-birth')
