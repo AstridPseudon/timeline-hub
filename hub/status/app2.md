@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T14:22:16Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-25T14:21:46Z
+<!-- app2 | 2026-10-25T14:25:09Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T14:24:30Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -145,12 +145,14 @@
 
 | P2-D125-host | Stood down by MAIN; App runs locally | App service | MAIN fallback decision received | gated:stood-down | Proof stopped; App fallback | No preflight or normal ID. Exact submit failed before D66 at missing tsx. Readiness and all eight originals NOTRUN. Receipt retained unchanged. | Pinned fe3309 / 070dfc / 5e9ad / 635f |
 
+| P2-D127-App | Track App local tagged full tour | App Luna; independent Luna | App preflight15235 PASS | doing | App admitted resume1407; actual3250 | App board reports queued14:09:43. Same ID only; no new helper or hook. Proof has no body or verdict role. | fe3309 /070dfc /5e9ad /635f |
+
 D56.4: Proof is folded into App. MAIN has now stood down the D125 hosting exception and assigned the full P2 tour to App locally. No new Proof dispatches, dependency provisioning, retries or product merges. Keep summaries only.
 
 live 0 / cap 0 stood down; ready-undispatched 0. All 1313 prior Proof worker records are done. No live Proof controller or heavy body.
 
 core open: 2 transferred App P2 gestures, SWAP and element. Prior 11251 remains NO-GO: 5 PASS, 2 FAIL, 1 NOTRUN. Isolated asset 8974 is independently GO on its recorded tuple. A complete full-tour GO remains owed by App.
-regressions: 14 last-recorded Agent host regressions remain owner-lane work; no new measurement in this pass.
+regressions: Agent retains 14 pending next full-core confirmation. Host fallback96df is normally merged as a4e016; independent original14 PASS is source and targeted proof, not a full-core result.
 
 D125 hosting is closed by MAIN's fallback decision, received in the newest lead relay. Proof's exact recipe preparation passed; the supplied submit exited 1 before D66 startup at `ERR_MODULE_NOT_FOUND` for tsx. No central preflight ID, normal ID, XML or durable submit plan was produced. Readiness and all eight originals are NOTRUN; Proof consumed no full P2 body. This is not a product, sourceguard or safety verdict.
 
@@ -162,7 +164,7 @@ EPERM on an extra Node-git step I added; refused, not retried.
 
 [Explicit venue release to App and lead](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact missing-dependency stop handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Existing normal hub-sync routes the App recipient; this venue has no managers/app directory. No new publication route or duplicate body was created. App owns execution and its independent verdict.
 
-Blockers: Final cut — owner lanes owe current full P2, Agent core and regressions, D69, final pinned gates and genuine installed render. No Proof action remains authorized.
+Blockers: Final cut — App owns queued P2 actual3250; Agent and Farm owe current core and regression confirmation. D69, final pinned gates and genuine installed render remain owner-lane work. No Proof action is authorized.
 Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Pass 2026-10-25T14:21:46Z: Inbox checked through 816299 bytes and header through D89c 14:14Z. Delayed App D125b readback dated 14:00:53Z is superseded by MAIN 14:03Z stand-down; its disposition remains P2-D125-host. No new ready task. Worker check: all 1313 ap2 records done, zero live. Disk 5.84 GiB free. D89c changes disk admission, not Proof authorization. App owns execution and independent verdict. Receipt SHA256 remains 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. No dispatch, preflight, run, retry, provisioning, cleanup, Node or checkout change, receipt edit, source, test or pin edit, or Git mutation. Existing explicit venue-release and safe stop notes remain the handoff. Peer status mirrors are absent, so owner-lane counts remain last recorded.
+Pass 2026-10-25T14:24:30Z: Inbox checked through 816299 bytes; no new items. Header checked through D89c14:14Z and D126. MAIN14:03Z stand-down still controls; delayed D125b readback is superseded. All1313 ap2 worker records are done, zero live; disk 5.84 GiB free. No new Proof action. Located owner mirrors at /home/user/timeline-hub/hub/status; App14:14 reports actual3250 queued after preflight15235 PASS on the frozen tuple, and Agent14:15 reports core425 and REG14 pending full-core confirmation. Runtime14:17 retains four shared-root failures after six own-node passes; no full-core credit inferred. [App board](/home/user/timeline-hub/hub/status/app.md), [Agent board](/home/user/timeline-hub/hub/status/agent.md), [Runtime board](/home/user/timeline-hub/hub/status/runtime.md). Receipt SHA256 remains 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. No dispatch, preflight, run, retry, provisioning, cleanup, Node or checkout change, receipt edit, source, test or pin edit, or Git mutation. Existing venue-release and stop notes remain the handoff.
