@@ -1,19 +1,17 @@
 {
-  "schema": "timeline.d139a.join-custody/v1",
-  "verdict": "PASS_SOURCE_JOIN",
+  "schema": "timeline.d139a.join-custody/v2",
+  "verdict": "PASS_SOURCE",
   "base": {
     "commit": "bae2ba5ec66e6fb4115c2f79299f82f535e68bb1",
     "review": "2244 PASS_SOURCE",
-    "preserved_exactly": [
-      "ops-child-custody/check-child-imports",
-      "ops-child-custody/tests/test_canonical_census.py"
-    ],
     "checker_sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c",
-    "canonical_test_sha256": "3c13d042b06373c27bd99bd44a7c842f32d1f658e9edc6736dc79586ec5e271c"
+    "canonical_test_sha256": "3c13d042b06373c27bd99bd44a7c842f32d1f658e9edc6736dc79586ec5e271c",
+    "checker_changed": false,
+    "canonical_test_changed": false
   },
   "maker": {
     "commit": "e9fdcfe299a20f1a137e0c87d2c0bf2de49f9e45",
-    "review": "2250 PASS",
+    "review": "2250 PASS_SOURCE",
     "candidate_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
     "candidate_bytes": 111171,
     "candidate_mode": "0755",
@@ -21,32 +19,10 @@
     "preimage_bytes": 75541,
     "preimage_mode": "0755"
   },
-  "five_exact_imports": [
-    {"path": "ops-child-custody/make-child-venv", "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "bytes": 111171, "mode": "0755"},
-    {"path": "ops-child-custody/tests/test_schema_distribution.py", "sha256": "e692c2fd3275775124feebd31765f4eebf535dce6d4ad20f5ae7581eff1d53e1", "bytes": 11299, "mode": "0644"},
-    {"path": "ops-child-custody/install-prep/apply-reviewed-maker.sh", "sha256": "4e4f88e92b90faedafcfdad6caeb8ab89e7d8bd16a0dfdadbf22a2479e714b27", "bytes": 10259, "mode": "0644"},
-    {"path": "ops-child-custody/install-prep/dry_run_controls.py", "sha256": "8bde415fb283ad73630baf605e66f9dcf5ad7082976d457f33261ae7930950ea", "bytes": 9144, "mode": "0644"},
-    {"path": "ops-child-custody/install-prep/verify_gate_artifacts.py", "sha256": "849dbb49643d2e807f2598d52ddd43cb9e95524e71aab3235be11dc15dc036f5", "bytes": 4146, "mode": "0644"}
-  ],
-  "final_changed_product_paths": [
-    "ops-child-custody/install-prep/apply-reviewed-maker.sh",
-    "ops-child-custody/install-prep/dry_run_controls.py",
-    "ops-child-custody/install-prep/verify_gate_artifacts.py",
-    "ops-child-custody/make-child-venv",
-    "ops-child-custody/source-manifest.json",
-    "ops-child-custody/tests/test_schema_distribution.py"
-  ],
-  "outside_byte_census": {
-    "outside_allowed_product_paths": [],
-    "checker_changed": false,
-    "canonical_test_changed": false,
-    "live_store_or_registry_changed": false,
-    "git_internals_changed": false,
-    "evidence_is_private_only": true
-  },
-  "protected_helpers": {
-    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
-    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
-  },
-  "real_child_and_core": "NOTRUN"
+  "five_exact_imports": ["ops-child-custody/make-child-venv", "ops-child-custody/tests/test_schema_distribution.py", "ops-child-custody/install-prep/apply-reviewed-maker.sh", "ops-child-custody/install-prep/dry_run_controls.py", "ops-child-custody/install-prep/verify_gate_artifacts.py"],
+  "final_changed_product_paths": ["ops-child-custody/make-child-venv", "ops-child-custody/tests/test_schema_distribution.py", "ops-child-custody/install-prep/apply-reviewed-maker.sh", "ops-child-custody/install-prep/dry_run_controls.py", "ops-child-custody/install-prep/verify_gate_artifacts.py", "ops-child-custody/source-manifest.json"],
+  "outside_byte_census": {"outside_allowed_product_paths": [], "evidence_private_only": true, "live_store_or_registry_changed": false, "git_internals_changed": false},
+  "schema_input": {"route": "strict installed distribution", "package": "banodoco-timeline-schema", "version": "0.0.2", "record_rows": 18, "hashed_rows": 12, "unhashed_rows": 6, "tree_tie": "UNAVAILABLE", "acquisition": false},
+  "custody_disclosures": {"author_absolute_paths_claimed": false, "original_physical_source_carrier": "EXACTMISSING", "source_tree_extra_evidence": "Committed source-manifest records are disclosed but do not replace Git blob custody.", "real_child_and_core": "NOTRUN"},
+  "caller_status": {"status": "NOT_READY", "sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94", "missing_flags": ["--schema-installed-distribution", "--schema-source-manifest"], "forwards_in_CHILDVENV": false}
 }

@@ -1,0 +1,74 @@
+{
+  "schema": "timeline.d139a.join-review/v1",
+  "task": "rt-OPS-D139a-join-review-2305",
+  "verdict": "PASS_SOURCE",
+  "joined_commit": "f304bfc97be7319c7a69272a4c9311ff5c1b3d08",
+  "base": {
+    "commit": "bae2ba5ec66e6fb4115c2f79299f82f535e68bb1",
+    "review": "rt-OPS-D139-census-review-2244 PASS_SOURCE",
+    "protected_exact": {
+      "ops-child-custody/check-child-imports": {"sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c", "bytes": 14033, "mode": "0755"},
+      "ops-child-custody/tests/test_canonical_census.py": {"sha256": "3c13d042b06373c27bd99bd44a7c842f32d1f658e9edc6736dc79586ec5e271c", "bytes": 8393, "mode": "0644"}
+    }
+  },
+  "maker": {
+    "commit": "e9fdcfe299a20f1a137e0c87d2c0bf2de49f9e45",
+    "review": "rt-OPS-D139a-security-review-2250 PASS_SOURCE",
+    "candidate_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "candidate_bytes": 111171,
+    "candidate_mode": "0755",
+    "preimage_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "preimage_bytes": 75541,
+    "preimage_mode": "0755"
+  },
+  "five_exact_imports": [
+    {"path": "ops-child-custody/make-child-venv", "blob": "02f605dfbe6bb997538c91694cf2221399104e71", "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "bytes": 111171, "mode": "0755"},
+    {"path": "ops-child-custody/tests/test_schema_distribution.py", "blob": "df5770777948dbb3c9ad5355002a5f3bcbc7ed81", "sha256": "e692c2fd3275775124feebd31765f4eebf535dce6d4ad20f5ae7581eff1d53e1", "bytes": 11299, "mode": "0644"},
+    {"path": "ops-child-custody/install-prep/apply-reviewed-maker.sh", "blob": "a3e470ff0c3c7092062edd52e6b3eba1a2a7fa0f", "sha256": "4e4f88e92b90faedafcfdad6caeb8ab89e7d8bd16a0dfdadbf22a2479e714b27", "bytes": 10259, "mode": "0644"},
+    {"path": "ops-child-custody/install-prep/dry_run_controls.py", "blob": "a0faa63d48cb2e093ee02adc66f0442c6c7258bf", "sha256": "8bde415fb283ad73630baf605e66f9dcf5ad7082976d457f33261ae7930950ea", "bytes": 9144, "mode": "0644"},
+    {"path": "ops-child-custody/install-prep/verify_gate_artifacts.py", "blob": "5e6af6ed490e4f4ed602b4509ee7d72049bd91cb", "sha256": "849dbb49643d2e807f2598d52ddd43cb9e95524e71aab3235be11dc15dc036f5", "bytes": 4146, "mode": "0644"}
+  ],
+  "product_delta": {
+    "allowed_paths": ["ops-child-custody/make-child-venv", "ops-child-custody/tests/test_schema_distribution.py", "ops-child-custody/install-prep/apply-reviewed-maker.sh", "ops-child-custody/install-prep/dry_run_controls.py", "ops-child-custody/install-prep/verify_gate_artifacts.py", "ops-child-custody/source-manifest.json"],
+    "outside_allowed_product_paths": [],
+    "checker_changed": false,
+    "canonical_test_changed": false,
+    "live_store_or_registry_changed": false,
+    "git_internals_changed": false
+  },
+  "schema_route": {
+    "input": "installed_distribution",
+    "flag": "--schema-installed-distribution",
+    "manifest_flag": "--schema-source-manifest",
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "tree_tie": "UNAVAILABLE",
+    "acquisition": false
+  },
+  "canonical_cli": {"exit": 1, "rows": 1146, "attempted_modules": 22, "missing_census_modules": 12, "failures": 12, "missing_installed_distributions": 0, "packet_sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30", "supporting_probe_only": true},
+  "controls": {"combined_unittest": "63/63 PASS", "ruff": "PASS", "bash_syntax": "PASS", "embedded_python_compile": "7/7 PASS", "private_cas": "PASS", "json_and_diff": "PASS"},
+  "custody_disclosures": {
+    "author_absolute_paths_claimed": false,
+    "original_custody_limit": "The author evidence was relative and did not provide an independently reusable absolute-path custody claim; exact five source blobs were recovered from committed Git objects and compared here.",
+    "source_tree_extra_evidence": "The committed product source manifest contains additional live-source, block, admission, and test-source records. These are disclosed as extra evidence only; they are not substituted for Git blob custody or treated as author absolute-path proof.",
+    "prior_source_carrier": "The original 2214/2218 physical source/carrier result remains EXACTMISSING; D139a permits the strict installed-distribution route.",
+    "synthetic_controls_are_not_real_acceptance": true
+  },
+  "caller_status": {
+    "status": "NOT_READY",
+    "separate_from_source_verdict": true,
+    "live_path": "bin/request-child-venv",
+    "live_sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
+    "accepts_schema_installed_distribution": false,
+    "accepts_schema_source_manifest": false,
+    "forwards_schema_flags_in_CHILDVENV": false,
+    "qualification_scope": "joined maker/checker source only; not production request readiness or installation"
+  },
+  "live_actions": {"installation": false, "child_request": false, "child_or_core_body": false, "store_or_registry": false, "provider_or_browser": false, "package_acquisition": false},
+  "findings": []
+}
