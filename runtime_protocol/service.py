@@ -2464,7 +2464,16 @@ class RuntimeService:
     def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
                                  operation, idempotency_key, publisher, invocation_path, authorize):
         from .timeline_commit import CommitRejected
-        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        from .timeline_commit_execution import (
+            _emit_redacted_diagnostic,
+            _new_request_id,
+        )
+        from .timeline_commit_port import (
+            CommitUnavailable,
+            RequestCommitPort,
+            detached,
+            public_failure,
+        )
         if not isinstance(publisher, str) or not publisher:
             raise AuthorizationError("authenticated publisher is required")
         idempotency_key = require_idempotency_key(idempotency_key)
@@ -2494,7 +2503,8 @@ class RuntimeService:
         }).encode()).hexdigest()
         context = {"request": detached(request), "invocation": invocation,
                    "request_hash": request_hash, "idempotency_key": idempotency_key,
-                   "publisher": publisher, "realm_id": self.realm["id"]}
+                   "publisher": publisher, "realm_id": self.realm["id"],
+                   "request_id": _new_request_id()}
         commits, coordinator = self._timeline_commits()
         with self.store._mutex:
             self._timeline_commit_started = True
@@ -2521,6 +2531,7 @@ class RuntimeService:
         except RuntimeErrorBase:
             raise
         except Exception as exc:
+            _emit_redacted_diagnostic(context["request_id"], exc)
             raise CommitUnavailable() from exc
 
     def _ensure_timeline_commit_baseline(self, commits, project_id, timeline_id, authorize):

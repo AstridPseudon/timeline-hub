@@ -1,12 +1,152 @@
 """Owner-local execution exclusion; the command ledger is the only journal."""
 from __future__ import annotations
 
+import hashlib
+import json
+import re
+import secrets
+import sys
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 from .errors import ProtocolError, RuntimeErrorBase
 from .timeline_commit_store import detached, reject, request_identity, scope
+
+_REQUEST_ID_RE = re.compile(r"^[a-f0-9]{32}$")
+_MAX_EXCEPTION_CLASSES = 8
+_MAX_FRAMES = 32
+_MAX_DIAGNOSTIC_BYTES = 4096
+_MAX_METADATA_BYTES = 128
+_SAFE_CLASS_RE = re.compile(
+    r"^[A-Za-z_][A-Za-z0-9_]*(?:\.(?:[A-Za-z_][A-Za-z0-9_]*|<locals>))*$"
+)
+_SAFE_FILENAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+|<[^<>\r\n]{1,64}>)$")
+
+
+def _new_request_id():
+    """Create the private Runtime correlation value for one commit request."""
+    return secrets.token_hex(16)
+
+
+def _validated_request_id(value):
+    if type(value) is str and _REQUEST_ID_RE.fullmatch(value):
+        return value
+    return _new_request_id()
+
+
+def _metadata_digest(value):
+    if not isinstance(value, str):
+        return "sha256:invalid"
+    return "sha256:" + hashlib.sha256(value.encode("utf-8", "surrogatepass")).hexdigest()
+
+
+def _safe_metadata(value, pattern):
+    if not isinstance(value, str):
+        return "sha256:invalid"
+    try:
+        if (len(value.encode("utf-8", "surrogatepass")) <= _MAX_METADATA_BYTES
+                and pattern.fullmatch(value)):
+            return value
+    except (UnicodeError, TypeError):
+        pass
+    return _metadata_digest(value)
+
+
+def _exception_class(kind):
+    try:
+        module = _safe_metadata(kind.__module__, _SAFE_CLASS_RE)
+        qualname = _safe_metadata(kind.__qualname__, _SAFE_CLASS_RE)
+    except BaseException:  # noqa: BLE001 - diagnostics cannot affect the result
+        return "sha256:invalid"
+    return f"{module}.{qualname}"
+
+
+def _exception_class_chain(error):
+    classes = []
+    seen = set()
+    current = error
+    while current is not None and id(current) not in seen and len(classes) < _MAX_EXCEPTION_CLASSES:
+        seen.add(id(current))
+        classes.append(_exception_class(type(current)))
+        try:
+            current = current.__cause__ or current.__context__
+        except BaseException:  # noqa: BLE001 - diagnostics cannot affect the result
+            break
+    return classes
+
+
+def _exception_frames(error):
+    frames = []
+    seen = set()
+    current = error
+    while current is not None and id(current) not in seen and len(frames) < _MAX_FRAMES:
+        seen.add(id(current))
+        try:
+            traceback = current.__traceback__
+        except BaseException:  # noqa: BLE001 - diagnostics cannot affect the result
+            traceback = None
+        while traceback is not None and len(frames) < _MAX_FRAMES:
+            try:
+                code = traceback.tb_frame.f_code
+                filename = _safe_metadata(code.co_filename, _SAFE_FILENAME_RE)
+                function = _safe_metadata(code.co_name, _SAFE_CLASS_RE)
+                lineno = traceback.tb_lineno
+                if type(lineno) is not int or not 0 <= lineno <= 1_000_000_000:
+                    lineno = 0
+                frames.append(f"{filename}:{lineno}:{function}")
+                traceback = traceback.tb_next
+            except BaseException:  # noqa: BLE001 - diagnostics cannot affect the result
+                frames.append("sha256:invalid:0:sha256:invalid")
+                break
+        try:
+            current = current.__cause__ or current.__context__
+        except BaseException:  # noqa: BLE001 - diagnostics cannot affect the result
+            break
+    return frames
+
+
+def _diagnostic_line(payload):
+    def fits(value):
+        return len((value + "\n").encode("utf-8")) <= _MAX_DIAGNOSTIC_BYTES
+
+    line = "runtime.timeline_commit.error " + json.dumps(
+        payload, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    )
+    if fits(line):
+        return line
+    compact = dict(payload)
+    compact["exception_class_chain"] = [_metadata_digest(json.dumps(
+        payload["exception_class_chain"], separators=(",", ":")
+    ))]
+    compact["frames"] = [_metadata_digest(json.dumps(
+        payload["frames"], separators=(",", ":")
+    ))]
+    line = "runtime.timeline_commit.error " + json.dumps(
+        compact, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    )
+    if fits(line):
+        return line
+    compact["exception_class_chain"] = []
+    compact["frames"] = []
+    return "runtime.timeline_commit.error " + json.dumps(
+        compact, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    )
+
+
+def _emit_redacted_diagnostic(request_id, error):
+    """Write one bounded, source-only diagnostic without inspecting exception data."""
+    try:
+        payload = {
+            "event": "timeline_commit_error",
+            "request_id": _validated_request_id(request_id),
+            "exception_class_chain": _exception_class_chain(error),
+            "frames": _exception_frames(error),
+        }
+        sys.stderr.write(_diagnostic_line(payload) + "\n")
+    except BaseException:  # noqa: BLE001, S110 - diagnostics cannot affect the result
+        # Diagnostics must never replace the original commit outcome.
+        pass
 
 
 class CommitOutcomeUnknown(RuntimeErrorBase):
@@ -56,14 +196,15 @@ class CommitExecutionCoordinator:
                     del self._entries[key]
 
     def _lookup(self, context, authorize):
-        from .timeline_commit import CommitRejected
         from .errors import AuthorizationError, ForbiddenError
+        from .timeline_commit import CommitRejected
 
         try:
             return self.commit_store.lookup(context, authorize=authorize)
         except (CommitRejected, AuthorizationError, ForbiddenError):
             raise
         except Exception as exc:
+            _emit_redacted_diagnostic(context.get("request_id"), exc)
             raise CommitOutcomeUnknown() from exc
 
     def execute(self, context, provider, port_factory, *, authorize):
@@ -72,6 +213,7 @@ class CommitExecutionCoordinator:
 
     def _execute(self, context, provider, port_factory, *, authorize):
         context = detached(context)
+        context["request_id"] = _validated_request_id(context.get("request_id"))
         if request_identity(context) != context["request_hash"]:
             reject("invocation_mismatch", status=422)
         # There is intentionally no optimistic dependency/head read here. Even
