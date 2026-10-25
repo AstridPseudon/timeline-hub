@@ -1,12 +1,77 @@
 """Owner-local execution exclusion; the command ledger is the only journal."""
 from __future__ import annotations
 
+import json
+import re
+import secrets
+import sys
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 from .errors import ProtocolError, RuntimeErrorBase
 from .timeline_commit_store import detached, reject, request_identity, scope
+
+
+_REQUEST_ID_RE = re.compile(r"^[a-f0-9]{32}$")
+_MAX_EXCEPTION_CLASSES = 8
+_MAX_FRAMES = 32
+
+
+def _new_request_id():
+    """Create the private Runtime correlation value for one commit request."""
+    return secrets.token_hex(16)
+
+
+def _validated_request_id(value):
+    if type(value) is str and _REQUEST_ID_RE.fullmatch(value):
+        return value
+    return _new_request_id()
+
+
+def _exception_class_chain(error):
+    classes = []
+    seen = set()
+    current = error
+    while current is not None and id(current) not in seen and len(classes) < _MAX_EXCEPTION_CLASSES:
+        seen.add(id(current))
+        kind = type(current)
+        classes.append(f"{kind.__module__}.{kind.__qualname__}")
+        current = current.__cause__ or current.__context__
+    return classes
+
+
+def _exception_frames(error):
+    frames = []
+    seen = set()
+    current = error
+    while current is not None and id(current) not in seen and len(frames) < _MAX_FRAMES:
+        seen.add(id(current))
+        traceback = current.__traceback__
+        while traceback is not None and len(frames) < _MAX_FRAMES:
+            code = traceback.tb_frame.f_code
+            frames.append(f"{code.co_filename}:{traceback.tb_lineno}:{code.co_name}")
+            traceback = traceback.tb_next
+        current = current.__cause__ or current.__context__
+    return frames
+
+
+def _emit_redacted_diagnostic(request_id, error):
+    """Write one bounded, source-only diagnostic without inspecting exception data."""
+    try:
+        payload = {
+            "event": "timeline_commit_error",
+            "request_id": _validated_request_id(request_id),
+            "exception_class_chain": _exception_class_chain(error),
+            "frames": _exception_frames(error),
+        }
+        line = "runtime.timeline_commit.error " + json.dumps(
+            payload, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+        )
+        sys.stderr.write(line + "\n")
+    except BaseException:  # noqa: BLE001, S110 - diagnostics cannot affect the result
+        # Diagnostics must never replace the original commit outcome.
+        pass
 
 
 class CommitOutcomeUnknown(RuntimeErrorBase):
@@ -56,14 +121,15 @@ class CommitExecutionCoordinator:
                     del self._entries[key]
 
     def _lookup(self, context, authorize):
-        from .timeline_commit import CommitRejected
         from .errors import AuthorizationError, ForbiddenError
+        from .timeline_commit import CommitRejected
 
         try:
             return self.commit_store.lookup(context, authorize=authorize)
         except (CommitRejected, AuthorizationError, ForbiddenError):
             raise
         except Exception as exc:
+            _emit_redacted_diagnostic(context.get("request_id"), exc)
             raise CommitOutcomeUnknown() from exc
 
     def execute(self, context, provider, port_factory, *, authorize):
@@ -72,6 +138,7 @@ class CommitExecutionCoordinator:
 
     def _execute(self, context, provider, port_factory, *, authorize):
         context = detached(context)
+        context["request_id"] = _validated_request_id(context.get("request_id"))
         if request_identity(context) != context["request_hash"]:
             reject("invocation_mismatch", status=422)
         # There is intentionally no optimistic dependency/head read here. Even
