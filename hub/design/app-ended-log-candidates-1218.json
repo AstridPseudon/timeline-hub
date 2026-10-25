@@ -1,0 +1,62 @@
+[
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-host14-core-review-1111/log.txt",
+    "bytes": 1877643
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-occurrence-create2-1105/log.txt",
+    "bytes": 3713391
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D115-native-asset-protected-review-0910/log.txt",
+    "bytes": 2561202
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-occurrence2-protected-review-1111/log.txt",
+    "bytes": 6469474
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-sheet15-verified-caller-return-1050/log.txt",
+    "bytes": 1770691
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-tail-WC6three-1015/log.txt",
+    "bytes": 1342867
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D112a-release-adoption-1000/log.txt",
+    "bytes": 2917121
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent15203-dispatch-sol-1028/log.txt",
+    "bytes": 1280851
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-video1-protected-review-1111/log.txt",
+    "bytes": 3095549
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-prepared-video1-1105/log.txt",
+    "bytes": 1261153
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-tail-WC6-review-1021/log.txt",
+    "bytes": 3621987
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D112-acceptance-0942/log.txt",
+    "bytes": 1173018
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-WC6-current-fixture-return-1050/log.txt",
+    "bytes": 2814987
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D115-release-adoption-1050/log.txt",
+    "bytes": 1214139
+  },
+  {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D112-normal-adoption-0938/log.txt",
+    "bytes": 2409562
+  }
+]

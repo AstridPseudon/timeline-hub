@@ -1,0 +1,32 @@
+{
+  "task": "app-D118a-native-binding-authority-1210",
+  "base": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+  "changed_paths": [
+    "astrid/sdk/timeline/native_text_binding.py",
+    "tests/sdk/test_native_text_binding_authority_fields.py"
+  ],
+  "parent_red": {
+    "command": "PYTHONPATH=$PWD:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= tests/sdk/test_native_text_binding_authority_fields.py",
+    "result": "1 failed, 1 passed",
+    "findings": [
+      "native output lacked binding_id/head",
+      "incomplete Runtime authority was accepted"
+    ]
+  },
+  "candidate_green": {
+    "command": "PYTHONPATH=$PWD:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= tests/sdk/test_native_text_binding_authority_fields.py",
+    "result": "4 passed in 1.12s"
+  },
+  "source_sha256": {
+    "astrid/sdk/timeline/native_text_binding.py": "b885711cecfa2bd92a7c0abb8e4464e1bb711fa838e6e13581cc58a9ad3bc3f2",
+    "tests/sdk/test_native_text_binding_authority_fields.py": "7ae90e6d46a3c2960dd200073b64536aa02a048083b4978f9d8dc59ab8799fc0",
+    "parent_production": "19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d"
+  },
+  "static_checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass"
+  },
+  "runtime_qualification": "held; not run by worker"
+}

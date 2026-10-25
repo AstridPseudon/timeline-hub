@@ -1,0 +1,244 @@
+{
+  "packet": "D118a exact inverse-boundary handback",
+  "verdict": "FINITE_READONLY_SOURCE_PAIRING",
+  "scope": {
+    "repo": "agent",
+    "product_edits": false,
+    "test_edits": false,
+    "collector_probe_replay": false,
+    "raw_payload_auth_key_url_opaque_id_stackdump_exported": false,
+    "retirement": 0
+  },
+  "runtime_pairing": {
+    "qualified": {
+      "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+      "parent_commit": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+      "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+      "clean": true,
+      "files": {
+        "runtime_protocol/timeline_commit_auth.py": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+        "runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+        "runtime_protocol/timeline_commit_port.py": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+        "runtime_protocol/service.py": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666",
+        "contract/commit-v2.md": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+      }
+    },
+    "distinction": "The retained original-369 reference is the parent commit above; it is not the current qualified 42aad source and is not collapsed into the 085a tree."
+  },
+  "agent_source_pairs": {
+    "occurrence": {
+      "commit": "36e44e1c0ed9b454faaf973715a2be7119552d0a",
+      "tree": "ad8b2be09adf3b8dfa7d091511e9a25e912adb79",
+      "files": {
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+        "astrid/sdk/timeline/native_occurrence_create.py": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22",
+        "astrid/sdk/timeline/_commit_errors.py": "c0e11dcdd2e6f511f18ce08afd60eff5d54554bcfb93855ab667c7e047a476e3"
+      },
+      "producer_boundary": [
+        "astrid/sdk/timeline/native_occurrence_create.py:15 occurrence_create",
+        "astrid/sdk/timeline/native_occurrence_create.py:53 capture_occurrence_create",
+        "astrid/sdk/timeline/commit.py:1160 RuntimeCommitService.commit"
+      ]
+    },
+    "scalar": {
+      "commit": "0ad49261ed36f043b059c07de989bd39cd3a5889",
+      "tree": "aa413f6e1712626c0506284c8727057d753f692d",
+      "files": {
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+        "astrid/sdk/timeline/_clip_scalar_commands.py": "131ba969cd5fa04ce4af85de5700db57ba27f0917ccc9b2a446980ae5d85f869",
+        "astrid/sdk/timeline/_commit_errors.py": "c0e11dcdd2e6f511f18ce08afd60eff5d54554bcfb93855ab667c7e047a476e3"
+      },
+      "producer_boundary": [
+        "astrid/sdk/timeline/_clip_scalar_commands.py:89 clip_set",
+        "astrid/sdk/timeline/_clip_scalar_commands.py:113 capture_clip_set",
+        "astrid/sdk/timeline/commit.py:1160 RuntimeCommitService.commit"
+      ]
+    },
+    "numeric": {
+      "commit": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+      "tree": "6540b10a56c4453609c0da5219ad314d8fda0dcd",
+      "files": {
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+        "astrid/sdk/timeline/_scalar_commands.py": "6b5c1a0db9fcf78533f16ca14d9ab14d96ca31ce19875c062b0470954488b34c",
+        "astrid/sdk/timeline/_commit_errors.py": "c0e11dcdd2e6f511f18ce08afd60eff5d54554bcfb93855ab667c7e047a476e3"
+      },
+      "producer_boundary": [
+        "astrid/sdk/timeline/_scalar_commands.py:68 clip_set_params",
+        "astrid/sdk/timeline/_scalar_commands.py:150 capture_clip_set_params",
+        "astrid/sdk/timeline/commit.py:1160 RuntimeCommitService.commit"
+      ]
+    }
+  },
+  "records": [
+    {
+      "id": "occurrence-false",
+      "source_tuple": {
+        "test_path": "tests/editing_conformance/test_commit_runtime_occurrence_create.py",
+        "original_test_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+        "migrated_test_sha256": "f1d86c7a95140a3f69a60e3ac348511eedf2eca52d75da135eb04450f9935ca1",
+        "agent_commit": "36e44e1c0ed9b454faaf973715a2be7119552d0a",
+        "runtime_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+        "runtime_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c"
+      },
+      "node": {
+        "parameter": false,
+        "allocation_ordinal": 1286,
+        "qualified_original_trace_sha256": "2d3de0f7926a71f855f2030d2708ee677b3fb5230c3324bb332c9c943e81d7ce",
+        "qualified_later_log_sha256": "0a8cfd2dedacae4aa4cc20634716d23044c60355deb7554e306ead8c6f3a93e4",
+        "qualified_later_xml_sha256": "f12f0a45838f19f1d9e54d9ecd6d02db2cc317f5c6080683e58f0a00feb15eb6"
+      },
+      "predicate_reached": [
+        "Original unchanged test reached _prove_birth status assertion: RuntimeErrorBase, status 422, reason unsupported_timing; authored invalid timing was unchanged.",
+        "Retained migrated candidate reached no-write/history checks, then first later failure at media_undo."
+      ],
+      "source_paired_guard": {
+        "owner": "Runtime",
+        "function": "_inverse_stage_boundaries",
+        "path": "runtime_protocol/timeline_commit_auth.py:1645",
+        "source_sha256": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+        "actual_response_class": "RuntimeErrorBase",
+        "actual_status": 422,
+        "actual_reason": "invalid_records",
+        "stage": "media_undo",
+        "command_ordinal": "EXACTMISSING"
+      },
+      "expected_vs_observed": {
+        "expected_source_shapes": [
+          {"fieldpath": "records.commands[*].bindings[*].key", "type": "string", "value": "commit.effect"},
+          {"fieldpath": "records.commands[*].bindings[*].boundary.side", "type": "string", "value": "before"},
+          {"fieldpath": "records.commands[*].bindings[*].revision_id", "type": "string"},
+          {"fieldpath": "records.commands[*].bindings[*].content_digest", "type": "string"}
+        ],
+        "observed": "EXACTMISSING: prepared records, stage_before/stage_after images, physical turnover refs, binding values, and content digests were not retained in the safe artifacts. No source-only value is substituted."
+      }
+    },
+    {
+      "id": "occurrence-true",
+      "source_tuple": {
+        "test_path": "tests/editing_conformance/test_commit_runtime_occurrence_create.py",
+        "original_test_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+        "migrated_test_sha256": "f1d86c7a95140a3f69a60e3ac348511eedf2eca52d75da135eb04450f9935ca1",
+        "agent_commit": "36e44e1c0ed9b454faaf973715a2be7119552d0a",
+        "runtime_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+        "runtime_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c"
+      },
+      "node": {
+        "parameter": true,
+        "allocation_ordinal": 1289,
+        "qualified_original_trace_sha256": "2d3de0f7926a71f855f2030d2708ee677b3fb5230c3324bb332c9c943e81d7ce",
+        "qualified_later_log_sha256": "66c38299159f93ae31ec156746873eb61c06cbfc26c050ea5f4969f4e7db3ab0",
+        "qualified_later_xml_sha256": "f20e9117657f4ff51d4bc98016a834a23bd13a7387608457ef65553f423c3fc4"
+      },
+      "predicate_reached": [
+        "Original unchanged test reached _prove_birth status assertion: RuntimeErrorBase, status 422, reason unsupported_timing; authored invalid timing was unchanged.",
+        "Retained migrated candidate reached grouped birth, then the first physical-promotion authentication failure."
+      ],
+      "source_paired_guard": {
+        "owner": "Runtime",
+        "function": "command_output",
+        "path": "runtime_protocol/timeline_commit_auth.py:2267",
+        "source_sha256": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+        "actual_response_class": "RuntimeErrorBase",
+        "actual_status": 422,
+        "actual_reason": "invalid_records",
+        "stage": "grouped_birth",
+        "command_ordinal": "EXACTMISSING"
+      },
+      "expected_vs_observed": {
+        "expected_source_shapes": [
+          {"fieldpath": "following.bindings[*].physical_ref", "type": "string"},
+          {"fieldpath": "following.bindings[*].boundary.phase", "type": "string", "value": "input"},
+          {"fieldpath": "result[physical_ref]", "type": "mapping"},
+          {"fieldpath": "result.parent.content_digest", "type": "string"}
+        ],
+        "observed": "EXACTMISSING: prepared command records, intermediate image ref, authenticated physical promotion record, following read, and digest were not retained in the safe artifacts."
+      }
+    },
+    {
+      "id": "scalar",
+      "source_tuple": {
+        "test_path": "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py",
+        "base_test_sha256": "52c63fa1a59d4ac08ca9077b97e6facfe7947cc36fde2795d1538df31a14cfed",
+        "qualified_candidate_test_sha256": "80b146829f4c493f1381b561c13b3b992bd792a5931747eea0725061822dbc1b",
+        "agent_commit": "0ad49261ed36f043b059c07de989bd39cd3a5889",
+        "runtime_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+        "runtime_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c"
+      },
+      "nodes": [
+        {"mode": "scalar", "allocation_ordinal": 925},
+        {"mode": "compound", "allocation_ordinal": 927},
+        {"mode": "separate", "allocation_ordinal": 929}
+      ],
+      "predicate_reached": "All three retained modes passed provider registration/bootstrap and reached Runtime authorization; no scalar accepted-result record was retained after that boundary.",
+      "source_paired_guard": {
+        "owner": "Runtime",
+        "function": "command_output",
+        "path": "runtime_protocol/timeline_commit_auth.py:2267",
+        "source_sha256": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+        "actual_response_class": "RuntimeErrorBase",
+        "actual_status": 422,
+        "actual_reason": "invalid_records",
+        "stage": "initial scalar commit authorization",
+        "command_ordinal": "EXACTMISSING"
+      },
+      "artifact_sha256": {
+        "log": "412f2021e627aaf57883e49bc80969fef42d66cf68cbd305549384e150f51c60",
+        "xml": "ffbd6d5c2734a259cd4404af6c290dad45b527bec94643c5a7c3f2d300ea1ed1"
+      },
+      "expected_vs_observed": {
+        "expected_source_shapes": [
+          {"fieldpath": "occurrence-child.clip.hold", "type": "number"},
+          {"fieldpath": "occurrence-child.clip.at", "type": "number", "modes": ["compound", "separate"]},
+          {"fieldpath": "occurrence-child.clip.app.astrid.fixed_start", "type": "boolean", "modes": ["compound", "separate"]},
+          {"fieldpath": "occurrence-child.clip.app.astrid.for", "type": "number", "modes": ["compound", "separate"]}
+        ],
+        "observed": "EXACTMISSING: accepted canonical field values, effect bindings, prepared record, physical image, and content digest were not retained at the 2267 refusal."
+      }
+    },
+    {
+      "id": "numeric",
+      "source_tuple": {
+        "test_path": "tests/editing_conformance/test_commit_runtime_numeric_params.py",
+        "test_sha256": "1ced4d39f8c2da4972863500b20aa67da1ee458f20ee9f4c86be152fd716b5d6",
+        "agent_commit": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+        "runtime_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+        "runtime_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c"
+      },
+      "nodes": [
+        {"before_type": "int", "after_type": "float", "after_value_shape": "2.0", "allocation_ordinal": 1211},
+        {"before_type": "int", "after_type": "bool", "after_value_shape": "true", "allocation_ordinal": 1221},
+        {"before_type": "bool", "after_type": "int", "after_value_shape": "1", "allocation_ordinal": 1234}
+      ],
+      "predicate_reached": "All three retained numeric nodes passed accepted save, reload, and first inverse assertions; failure occurred at redo inverse authorization.",
+      "source_paired_guard": {
+        "owner": "Runtime",
+        "function": "_inverse_stage_boundaries",
+        "path": "runtime_protocol/timeline_commit_auth.py:1755",
+        "source_sha256": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+        "actual_response_class": "RuntimeErrorBase",
+        "actual_status": 422,
+        "actual_reason": "invalid_records",
+        "stage": "redo inverse",
+        "command_ordinal": "EXACTMISSING"
+      },
+      "artifact_sha256": {
+        "log": "47cb6a96f182684f242039597443c6ed1f841db9716c23c2e3d15fd739e2a7d1",
+        "xml": "b1cce956cf3ef0509915905a45a29b5624ff1e2993e808e01724a879f7c2195c"
+      },
+      "expected_vs_observed": {
+        "expected_source_shapes": [
+          {"fieldpath": "occurrence-child.clip.params.x", "type": "float", "case": "int-to-float"},
+          {"fieldpath": "occurrence-child.clip.params.x", "type": "boolean", "case": "int-to-bool"},
+          {"fieldpath": "occurrence-child.clip.params.x", "type": "int", "case": "bool-to-int"}
+        ],
+        "observed": "Retained type predicates passed through first inverse. EXACTMISSING at redo: native_image payload map, stage_after payload map, effect bindings, physical refs, and canonical content digest. No payload hash is inferred."
+      }
+    }
+  ],
+  "safe_conclusions": [
+    "Agent producer/source and Runtime guard source are identified and byte-paired by commit, tree, path, function, and SHA-256.",
+    "The Runtime guard location is a correlation boundary, not proof that Runtime is at fault.",
+    "No prepared/stage/physical record comparison is possible from the retained safe artifacts; those fields remain EXACTMISSING.",
+    "Original strict-auth, ABA, no-write, history, inverse, redo, retry, and numeric type predicates were not retired or weakened in the retained source reviews."
+  ]
+}

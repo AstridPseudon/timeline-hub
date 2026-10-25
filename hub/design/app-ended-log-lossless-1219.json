@@ -1,0 +1,114 @@
+{
+  "before_free_bytes": 5303296000,
+  "after_free_bytes": 5333618688,
+  "logs": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-host14-core-review-1111/log.txt",
+      "sha256": "e5e8e256da293c62c30f73580636aab87af1aa9b8ed42c5f2eacbb0865deabcf",
+      "decompressed_sha256": "e5e8e256da293c62c30f73580636aab87af1aa9b8ed42c5f2eacbb0865deabcf",
+      "original_bytes": 1877643,
+      "compressed_bytes": 408212
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-occurrence-create2-1105/log.txt",
+      "sha256": "a6fd381ea05c44be6b7df88bba9ae508cc38699ec7400b7ec178d96ae7f2b0ab",
+      "decompressed_sha256": "a6fd381ea05c44be6b7df88bba9ae508cc38699ec7400b7ec178d96ae7f2b0ab",
+      "original_bytes": 3713391,
+      "compressed_bytes": 745093
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D115-native-asset-protected-review-0910/log.txt",
+      "sha256": "0570c2b3c562465b34d2a3222d12bf96f365a6fb33c17550eed69424e1f42af0",
+      "decompressed_sha256": "0570c2b3c562465b34d2a3222d12bf96f365a6fb33c17550eed69424e1f42af0",
+      "original_bytes": 2561202,
+      "compressed_bytes": 597251
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-occurrence2-protected-review-1111/log.txt",
+      "sha256": "2c72460801764c86ca1b7cbdc8e53ecc807023d6de6f12bf4166ede56cceeb89",
+      "decompressed_sha256": "2c72460801764c86ca1b7cbdc8e53ecc807023d6de6f12bf4166ede56cceeb89",
+      "original_bytes": 6469474,
+      "compressed_bytes": 860630
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-sheet15-verified-caller-return-1050/log.txt",
+      "sha256": "d1faa11fe7dd2de9e856d5375be5057b77451997ea1de23104f31eee1fac6f2a",
+      "decompressed_sha256": "d1faa11fe7dd2de9e856d5375be5057b77451997ea1de23104f31eee1fac6f2a",
+      "original_bytes": 1770691,
+      "compressed_bytes": 235114
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-tail-WC6three-1015/log.txt",
+      "sha256": "fddf5ff1c964076f39a27f196e2b0849b2a1ddd5c7a59cf87d57c6d2f7b70755",
+      "decompressed_sha256": "fddf5ff1c964076f39a27f196e2b0849b2a1ddd5c7a59cf87d57c6d2f7b70755",
+      "original_bytes": 1342867,
+      "compressed_bytes": 210180
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D112a-release-adoption-1000/log.txt",
+      "sha256": "d74e93b0686323812a27b7345026cb9172f493d29589518f67724f7b5bd39497",
+      "decompressed_sha256": "d74e93b0686323812a27b7345026cb9172f493d29589518f67724f7b5bd39497",
+      "original_bytes": 2917121,
+      "compressed_bytes": 624131
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-parent15203-dispatch-sol-1028/log.txt",
+      "sha256": "474a44612387c24e0d340bf88e9bf25cb77dc044bd585ab6b3adb1a4f1e36b9d",
+      "decompressed_sha256": "474a44612387c24e0d340bf88e9bf25cb77dc044bd585ab6b3adb1a4f1e36b9d",
+      "original_bytes": 1280851,
+      "compressed_bytes": 263577
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-video1-protected-review-1111/log.txt",
+      "sha256": "75d9d01bc73276c252871e0ef09082b1cb4a2cc9e6008cd9b1c71c00229ba8bf",
+      "decompressed_sha256": "75d9d01bc73276c252871e0ef09082b1cb4a2cc9e6008cd9b1c71c00229ba8bf",
+      "original_bytes": 3095549,
+      "compressed_bytes": 421515
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118c-prepared-video1-1105/log.txt",
+      "sha256": "3781a2fe69735095aa3d1fd687d7d5285fa03462e3e745e215f2ae1e31e581a6",
+      "decompressed_sha256": "3781a2fe69735095aa3d1fd687d7d5285fa03462e3e745e215f2ae1e31e581a6",
+      "original_bytes": 1261153,
+      "compressed_bytes": 201989
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-tail-WC6-review-1021/log.txt",
+      "sha256": "7cff49ab1dfa0bbbab65416f11f1b29534378edc46a1d25a374e922d28e70b66",
+      "decompressed_sha256": "7cff49ab1dfa0bbbab65416f11f1b29534378edc46a1d25a374e922d28e70b66",
+      "original_bytes": 3621987,
+      "compressed_bytes": 787768
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D112-acceptance-0942/log.txt",
+      "sha256": "1c25f68d8611f9db645ba0c0bc1ac02c176974a3804ea50727231e30d283d1cd",
+      "decompressed_sha256": "1c25f68d8611f9db645ba0c0bc1ac02c176974a3804ea50727231e30d283d1cd",
+      "original_bytes": 1173018,
+      "compressed_bytes": 239202
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118-WC6-current-fixture-return-1050/log.txt",
+      "sha256": "c0fa67c85481d604f1b7412233a00b39c5005e613f469999a3a4c17c6a5ca790",
+      "decompressed_sha256": "c0fa67c85481d604f1b7412233a00b39c5005e613f469999a3a4c17c6a5ca790",
+      "original_bytes": 2814987,
+      "compressed_bytes": 759110
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D115-release-adoption-1050/log.txt",
+      "sha256": "d64b66fb43fb0edf5fcb0fc8bb879e8b59b2050420958f3320af5ccd2e2b5004",
+      "decompressed_sha256": "d64b66fb43fb0edf5fcb0fc8bb879e8b59b2050420958f3320af5ccd2e2b5004",
+      "original_bytes": 1214139,
+      "compressed_bytes": 195312
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D112-normal-adoption-0938/log.txt",
+      "sha256": "907d5701ce480d712ce264d5f59608022a080d74647c2b8f830e7f139ae1310c",
+      "decompressed_sha256": "907d5701ce480d712ce264d5f59608022a080d74647c2b8f830e7f139ae1310c",
+      "original_bytes": 2409562,
+      "compressed_bytes": 375088
+    }
+  ],
+  "logical_bytes_reduced": 30599463,
+  "all_decompressed_hashes_equal": true,
+  "sessions_or_test_outputs_touched": false
+}
