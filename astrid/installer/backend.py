@@ -661,7 +661,7 @@ class Backend:
         shim = hint = None
         try:
             shim, hint = install_shim(self.service, say=report)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - the command shim is optional; installation must still finish
             report(f"Astrid command shim setup failed ({type(exc).__name__}); use the run-astrid launcher.")
         marker = self.root / "install.json"
         command_shim = shim if self.service.system == "win32" or hint is None else None

@@ -15,7 +15,6 @@ import pytest
 
 from astrid import omp_agent
 
-
 KEY = "sk-or-test-private-key-for-local-fixtures"
 
 
