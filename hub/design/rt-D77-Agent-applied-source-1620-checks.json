@@ -1,0 +1,45 @@
+{
+  "patch_sha256_and_size": "PASS",
+  "manifest_sha256": "PASS",
+  "git_apply_check_without_index": "PASS",
+  "in_memory_tree_digest": {
+    "actual": "523893dcf54dbe756db8fe2915d14055b1da660b",
+    "expected": "523893dcf54dbe756db8fe2915d14055b1da660b",
+    "result": "PASS"
+  },
+  "path_and_mode_conservation": {
+    "actual_paths": 3560,
+    "expected_paths": 3560,
+    "deleted_paths": 32,
+    "mode_errors": 0,
+    "result": "PASS"
+  },
+  "base924_patch_context": {
+    "paths_with_patch_index_blob_different_after_application_to_08e6": [
+      "astrid/installer/service.py",
+      "tests/test_installer_platforms.py"
+    ],
+    "interpretation": "Expected when the reviewed base924-to-capture patch is applied to descendant fresh-upstream 08e6; actual bytes are included in the independent target-tree digest.",
+    "target_tree_digest_remains_exact": true
+  },
+  "python_ast_parse": {
+    "files": 636,
+    "errors": 0,
+    "result": "PASS"
+  },
+  "git_diff_check": {
+    "exit": 2,
+    "warning_count": 120,
+    "warning_kind": "historical new blank line at EOF diagnostics; not normalized",
+    "result": "PASS_WITH_HISTORICAL_WARNINGS"
+  },
+  "package_lock_sha256": {
+    "actual": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "result": "PASS"
+  },
+  "tests_not_run": [
+    "full/provider/browser/live-socket suites",
+    "installer/stage/install/build/render/product behavior tests"
+  ],
+  "source_only_scope": "No current integration repos, refs, index, Git internals, caches, builds, profiles, or generated evidence were modified."
+}

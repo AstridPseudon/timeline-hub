@@ -1,0 +1,31 @@
+{
+  "task": "D77",
+  "result": "exact historical applied Agent source tree materialized; source-only",
+  "historical_applied_commit": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+  "historical_applied_commit_present": false,
+  "harness_commit_policy": "new truthful harness commit; never forge cd3f identity",
+  "base_commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+  "base_tree": "2694ae8d2709526b40fa037bda8b159cf412769d",
+  "target_tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+  "original_patch": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-Farm-render-1253-agent.patch",
+    "sha256": "f5d49d5e63ddc0e7a0fb85966280024af70e498eb4f75bd6595bfb59a52a204a",
+    "bytes": 12425282,
+    "manifest_sections": 917
+  },
+  "authoritative_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D108-rehearsal-source-0645/evidence/d108-source-rehearsal-manifest.json",
+    "sha256": "37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504"
+  },
+  "materialized_tree": {
+    "tracked_paths": 3560,
+    "deleted_paths": 32,
+    "modes_exact": true,
+    "digest_method": "in-memory Git tree hash from actual worktree bytes/modes and patched HEAD path inventory"
+  },
+  "remotion_package_lock": {
+    "path": "remotion/package-lock.json",
+    "sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "bytes": 151418
+  }
+}

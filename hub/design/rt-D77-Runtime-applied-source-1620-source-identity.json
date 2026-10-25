@@ -1,0 +1,58 @@
+{
+  "task": "D77",
+  "repository": "Runtime",
+  "branch": "tl/rt-D77-Runtime-applied-source-1620",
+  "head": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+  "head_tree": "a522511414947e48e317a5e5c2103483b121a750",
+  "expected_tree": "a522511414947e48e317a5e5c2103483b121a750",
+  "head_parents": [
+    "2999f0491eb51586f93e2c91c83995589c592044",
+    "ab7ebb4244a40d27ccf9faf56a7916f72fa8765f"
+  ],
+  "captured_integration": {
+    "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "tree": "a522511414947e48e317a5e5c2103483b121a750",
+    "parents": [
+      "2999f0491eb51586f93e2c91c83995589c592044",
+      "ab7ebb4244a40d27ccf9faf56a7916f72fa8765f"
+    ]
+  },
+  "original_applied_commit": {
+    "commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+    "status": "absent",
+    "tree_from_manifest": "a522511414947e48e317a5e5c2103483b121a750"
+  },
+  "fresh_upstream": {
+    "commit": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+    "is_ancestor_of_head": true
+  },
+  "manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D108-0645-d108-source-rehearsal-manifest.json",
+    "sha256": "37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504",
+    "phase": "SOURCEONLY",
+    "repositories_runtime": {
+      "applied_commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+      "applied_tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "captured_integration_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "captured_integration_tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "gated_tip": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "gated_tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "source_clone": "/home/user/banodoco/banodoco-workspace-runtime"
+    }
+  },
+  "patch": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-Farm-render-1253-runtime.patch",
+    "bytes": 14928733,
+    "sha256": "c93c3a1d00ddd9bb44ca51af3fdc71ab8311051846b07465d76183457f1b38b0",
+    "manifest_sha256": "c93c3a1d00ddd9bb44ca51af3fdc71ab8311051846b07465d76183457f1b38b0",
+    "manifest_bytes": 14928733,
+    "reproduced_from": [
+      "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+      "1daca2a33f6d7b10053e07c539a54843e3984e19"
+    ],
+    "reproduced_sha256": "c93c3a1d00ddd9bb44ca51af3fdc71ab8311051846b07465d76183457f1b38b0",
+    "reproduced_bytes": 14928733
+  },
+  "source_publication": "ordinary source publication of existing captured commit; no new product commit"
+}

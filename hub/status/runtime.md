@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T16:21:57Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 2m -->
+<!-- main | 2026-10-25T16:26:33Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
 # runtime board, 2026-10-25T16:19:51Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -422,8 +422,10 @@
 | D77-inputs | Reconcile exact Farm inputs | Luna | Farm questions1606 | merged | Author1612; review1616 | Runtime tree a522 survives at1daca; Agent exact tree absent. Guard receipts returned; child UNKNOWN, lock unverified. | Independent1616 bounded PASS | Evidence only |
 | D127-leaf-retention | Trace retained sampler leaf omission | App Luna read only | Exact retained helper | doing | app-D127-leaf-retention-author-1606 | App1606 owns bounded existing-helper leaf projection and lifecycle labels; no tour or product cost author. | App owner | Source unchanged |
 
-| D77-Agent-source | Restore original applied Agent tree | Luna | Original manifest and patch | doing | rt-D77-Agent-applied-source-1620 | Target tree 523893; new truthful worker commit required. No current or near-match source; no build. | Review next | Pending exact tree |
-| D77-Runtime-source | Publish captured Runtime tree | Luna | Exact captured1daca | doing | rt-D77-Runtime-applied-source-1620 | Existing1daca tree equals originala522. Branch/source verification only; no current integration merge. | Review next | 1daca expected |
+| D77-Agent-source | Restore original applied Agent tree | Luna | Original manifest and patch | review | Author1620; paired review1624 | Actual91398 tree exactly523893; 3560 paths/modes conserved. Actual lock ends18d; 636 Python files parse. | rt-D77-source-review-handoff-1624 | 91398e9de |
+| D77-Runtime-source | Publish captured Runtime tree | Luna | Exact captured1daca | review | Author1620; paired review1624 | Actual1daca tree exactlya522; all528 blobs exact. No product edits; portable worker branch created. | rt-D77-source-review-handoff-1624 | 1daca2a33 |
+
+| U4a-inverse-batch | Adopt released Runtime provenance | Luna | Qualified ab1e and Agent request1614 | doing | rt-U4a-Agent-inverse-adopt-1614 | Normal tools only; exact ab1e checkout requested. Canonical fifteen must remain byte-identical; captured core tuple unchanged. | Tool checks next | Pending |
 
 Runtime producer: RELEASED5e9ad. Normalab1e includes independently qualified step, inverse and redo source plus reviewed safe diagnostic correlation. Home1550 exact genuine3/native2 PASS, all1501Agent package blobs exact. Qualified bounded release; no broader original-four closure.
 core open:425 on immutable30693;450 bad and REG14 retained. Latest recorded owner16:00 DROPS Farm core; Agent runs local agent-core-full with restored6.1GB. No historical tuple retarget.
@@ -436,14 +438,14 @@ Blockers: Final render — Farm requested exact applied checkouts. Source object
 Blockers: D69 — normalXML107 applicability/full-core and genuine installed render90 remain. No whole-auditPASS.
 Blockers: Final cut — current core, REG0, fullP2, D69, finaltupleP1–P5 and genuine installed render remain. No build or ZIP.
 
-Next ready: D77 exact source branches1620 then independent whole-tree review and Farm handoff correction. Agent receives installed D131 through normal kit sync, then ordinary exact child/core; no Runtime install wait. IntegratedR2 receipt1550 PASS and published. ProtectedD107 purposePASS; Agent source intake requested, actual behavior remains failed. SWAP recovery and related acceptance held on actual safety refusal. No ready critical source author remains unassigned.
+Next ready: D77 paired source review1624 then exact corrected Farm handoff and normal code publication. Agent receives installed D131 through normal kit sync, then ordinary exact child/core; no Runtime install wait. IntegratedR2 receipt1550 PASS and published. ProtectedD107 purposePASS; Agent source intake requested, actual behavior remains failed. SWAP recovery and related acceptance held on actual safety refusal. No ready critical source author remains unassigned.
 Ready for host filing: Agent tl/rt-D107-current-baseline-1530 b4b3805da5, source-only purpose PASS1550 over recorded20177; actual home owns freshness/import. Two behaviors remain failed. Priora1 donor superseded by16bb.
 Venues: No Main heavy body. Agent local core authorized; Farm keepsD77 only. All prior Farm0b586/42aad,9ea/369,a4e016/5e9ad captures immutable and zero corebody.
 Delivery: Private100Python+TS/41matrix qualified; D1235bd01/b0ffSOURCE_PASS. Final upstream refresh onlyD59. Wheel,matrix,Windows,installedrender pending.
 Later: R2c81b/D1160643 exactseedSOURCE_PASS. D126 App owns approved paragraph/ZIPline. No small-file Agent writers or D79 until critical gates clear.
 Safety: NewD1271537 refusal held and reported. PriorD88/D111 and retirement denials remain stopped. D106ORCHonly. Four historical retirement targets held; no retry.
 Disk: About5.47GB after D131. No ended clean nonKEEP worktree eligible; five dirty historical trees stay held. This pass guarded sweep3 removed0; compact packed0 scratch/test directories and gzipped1 old log; no new target retirement. Prior host-CLEARed pins already recycled; all branch/report/proof evidence retained.
-live2 / cap6; queued0; ready-undispatched0. D77 source workers Agent1620 and Runtime1620 active; D131 installed and published, Agent exact receipt pending. Source>=4.6GB/noheavy; ordinaryprovider>=5GB, ongoingstop4GB. Both1550 workers ended successfully; no ready critical row unassigned. SWAP heldD130; element awaits operation evidence.
+live2 / cap6; queued0; ready-undispatched0. D77 paired source review1624 and U4a1614 active; D131 installed and published, Agent exact receipt pending. Source>=4.6GB/noheavy; ordinaryprovider>=5GB, ongoingstop4GB. Both1550 workers ended successfully; no ready critical row unassigned. SWAP heldD130; element awaits operation evidence.
 INBOX consumed through1320607 bytes. Updated 2026-10-25T16:08:32Z.
 
 

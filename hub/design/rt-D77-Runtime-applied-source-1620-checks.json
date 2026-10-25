@@ -1,0 +1,85 @@
+{
+  "task": "D77",
+  "result": "PASS",
+  "checks": [
+    {
+      "id": "head_matches_expected_captured_commit",
+      "command": "test $(git rev-parse HEAD) = 1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "status": 0
+    },
+    {
+      "id": "tree_matches_expected",
+      "command": "git diff --quiet a522511414947e48e317a5e5c2103483b121a750 HEAD",
+      "status": 0,
+      "head_tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "expected_tree": "a522511414947e48e317a5e5c2103483b121a750"
+    },
+    {
+      "id": "all_recursive_blobs_match",
+      "command": "diff -u <(git ls-tree -r --full-tree HEAD) <(git ls-tree -r --full-tree a522511414947e48e317a5e5c2103483b121a750)",
+      "status": 0,
+      "head_entries": 528,
+      "expected_entries": 528
+    },
+    {
+      "id": "manifest_captured_runtime_matches_head",
+      "status": 0,
+      "manifest_captured_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "manifest_captured_tree": "a522511414947e48e317a5e5c2103483b121a750"
+    },
+    {
+      "id": "manifest_runtime_tree_matches_applied_tree",
+      "status": 0,
+      "manifest_applied_tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "manifest_captured_tree": "a522511414947e48e317a5e5c2103483b121a750"
+    },
+    {
+      "id": "patch_hash_and_size_match_manifest",
+      "command": "sha256sum handoff-rt-D124-Farm-render-1253-runtime.patch; stat -c %s handoff-rt-D124-Farm-render-1253-runtime.patch",
+      "status": 0,
+      "sha256": "c93c3a1d00ddd9bb44ca51af3fdc71ab8311051846b07465d76183457f1b38b0",
+      "bytes": 14928733
+    },
+    {
+      "id": "patch_reproduces_captured_tree",
+      "command": "git diff --full-index --binary d4f496ec4fbcae7a1f3a51d47ed5147c561117ad HEAD",
+      "status": 0,
+      "sha256": "c93c3a1d00ddd9bb44ca51af3fdc71ab8311051846b07465d76183457f1b38b0",
+      "bytes": 14928733
+    },
+    {
+      "id": "patch_reverse_applies_to_head",
+      "command": "git apply --check --reverse handoff-rt-D124-Farm-render-1253-runtime.patch",
+      "status": 0
+    },
+    {
+      "id": "captured_parents_match_manifest",
+      "status": 0,
+      "head_parents": [
+        "2999f0491eb51586f93e2c91c83995589c592044",
+        "ab7ebb4244a40d27ccf9faf56a7916f72fa8765f"
+      ]
+    },
+    {
+      "id": "fresh_upstream_is_ancestor",
+      "command": "git merge-base --is-ancestor d4f496ec4fbcae7a1f3a51d47ed5147c561117ad HEAD",
+      "status": 0
+    },
+    {
+      "id": "missing_temporary_commit_preserved_as_missing",
+      "command": "git cat-file -e 62040eeab98747dfb65abb6366236bf213109d6c^{commit}",
+      "status": 128,
+      "expected": "absent; not substituted or recreated"
+    },
+    {
+      "id": "worktree_clean",
+      "command": "test -z \"$(git status --porcelain=v1)\"",
+      "status": 0
+    }
+  ],
+  "tests": {
+    "product_tests_run": false,
+    "reason": "unchanged byte-exact source publication; task explicitly forbids product suite/body"
+  },
+  "product_tree_changes": 0
+}
