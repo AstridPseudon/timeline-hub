@@ -1,0 +1,68 @@
+{
+  "schema": "timeline.agent.d118.terminal-metadata-correction.v1",
+  "task": "agt-F-D118-terminal-metadata-1111",
+  "service_id": "agent-agent-core-full-1025102421-30693",
+  "status": "corrected_readonly",
+  "tree_records": {
+    "service_summary_tree": "f43dd198e915c3319983d406773f3d6683833d28",
+    "service_summary_path": "/home/user/work/agent",
+    "service_summary_commit": "0277f46d5578a8d87a58b2ba8f570ee914303be3",
+    "service_summary_meaning": "ambient mutable service snapshot label",
+    "manifest_agent_commit": "120d71202a9ebafa99011aec417cfca6d67fafc2",
+    "manifest_agent_tree": "9a65a32e4462464825df6cfe4d913408694ad4c5",
+    "manifest_agent_path": "/home/user/work/wt/agt-pin-120d7120",
+    "manifest_agent_meaning": "actual pinned test source"
+  },
+  "source_tuple_unchanged": {
+    "agent": ["120d71202a9ebafa99011aec417cfca6d67fafc2", "9a65a32e4462464825df6cfe4d913408694ad4c5"],
+    "runtime": ["1daca2a33f6d7b10053e07c539a54843e3984e19", "a522511414947e48e317a5e5c2103483b121a750"],
+    "app": ["96d4754b4eef0591a208d6b51b60c30fc44b6915", "3f9da34c4f116026ec21022421850e0608ba653b"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+  },
+  "execution": {
+    "manifest_and_runmanifest_agree": true,
+    "exact_head_tree_guards": true,
+    "pinned_pythonpath": "/home/user/work/wt/agt-pin-120d7120:/home/user/work/wt/rt-pin-1daca2a3",
+    "pinned_import_path_checks": true,
+    "preflight_exit": 0,
+    "body_exit": 1,
+    "root_count": 22,
+    "live_scene_root": "tests/packs/rendering/test_live_scene_composition.py"
+  },
+  "coverage": {
+    "stale_first_block_missing_roots": 4,
+    "corrected_missing_roots": 0,
+    "corrected_complete": true,
+    "outcomes_unchanged": true
+  },
+  "retained_result": {
+    "xml_sha256": "483e5c13c3443147488da436acc49d0c0f322f7e4d3f020fbd656a548459139c",
+    "xml_cases": 9273,
+    "pass": 8823,
+    "fail": 159,
+    "error": 291,
+    "subtests": 173,
+    "skips": 0,
+    "bad": 450,
+    "core_open": 425,
+    "reg": 14
+  },
+  "original_preimage_hashes": {
+    "test_run": "5df4145dfb972a0470f20a1959b470f6b17aa68d02c6478da22ed3fadbd922ea",
+    "suites_conf": "209e00c24a97aeb6b3b97cc359314a537eabe2328519b36cf4c8dbcfcd4f8708",
+    "suites_conf_retry": "1bf0bbe87720011b830222f614bad5d7353773cfd3d3dc6b86eb98d3aaa18fbe",
+    "controller_manifest": "dcfb6e253acbc1dad1011019eb8610d3d8e507c0872f257a10b30f209d98e817",
+    "controller_runmanifest": "7338f54cf65584106956056dec87e6d20971ef4fba17cd18987e080d07481f54",
+    "controller_command": "a554ddddc38f8e0b05b38749fbeb8493853e2542df01940477d98fc9edede0cf",
+    "service_summary": "ca37d55c96c9147270270bdadac6571414d9df9e133fea60a8a213e92b05764a",
+    "service_snapshot": "43d85770716df63c1fd48b2dc061bfe167ff8ea6395e12c065eadf1df1b6de0e",
+    "terminal_xml": "483e5c13c3443147488da436acc49d0c0f322f7e4d3f020fbd656a548459139c"
+  },
+  "limits": [
+    "read-only static XML/JSON/hash/source review",
+    "no source/test/generated/pin/registry/ledger edits",
+    "no body/import/collection/helper/observer/acquisition/credential action",
+    "no new proof or behavior claim"
+  ],
+  "evidence": "workers/agt-F-D118-terminal-metadata-1111/evidence/d118-terminal-metadata-1111.{md,json}"
+}

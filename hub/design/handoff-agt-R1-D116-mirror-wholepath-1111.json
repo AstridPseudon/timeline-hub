@@ -1,0 +1,22 @@
+{
+  "task": "agt-R1-D116-mirror-wholepath-1111",
+  "candidate": "7c717062128f61adacf613b6ee05a0992abb9024",
+  "tree": "8d05e3fc19c9cbcf0cc8d6bf1d3b9fdf4fc1c98f",
+  "verdict": "PASS_SOURCE_DOWNSTREAM_FAIL",
+  "sample": {
+    "tests": 8,
+    "passed": 6,
+    "failed": 2,
+    "errors": 0,
+    "skipped": 0,
+    "failure_seam": "bundle_from_document -> lookup._parent_clip_list",
+    "mismatch": "parent.clips != parent.config.clips",
+    "xml_sha256": "570b43cce443e545a4b6217f7266cc42e41701ce1c1bf5fb2f34964e0c759882"
+  },
+  "earliest_changed_owner": "UNKNOWN",
+  "next_owner": ["held-82b6-producer", "runtime-output-projection-owner"],
+  "c0_purpose": "Preserve the complete v2 request, authenticated source/previous values, accepted/rejected records, inverse guards, opaque data, FPS/timing and short-negative purposes.",
+  "changes": [],
+  "tests": "N/A: static read-only publication/source/hash/AST task",
+  "evidence": "scratchpad/orch/workers/agt-R1-D116-mirror-wholepath-1111/evidence/source-facts.md"
+}
