@@ -1,1 +1,1 @@
-2026-10-25T17:40:31Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 12G free; D77 render HELD: applied child-venv refused 17:22Z (provision report differs from installed inventory); Runtime doing one hard kit pass; no retry until reviewed kit published
+2026-10-25T18:07:43Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 12G free; D77 render HELD: waiting for Runtime's published reviewed kit (kit still 0857a5e0); custody E2E test stood down (Agent runs it)
