@@ -19,8 +19,9 @@ function prefersReducedMotion(): boolean {
 
 /**
  * The mink beside a run-mode option: on the beach with a laptop and a drink (astrid.haus), or at a desk in
- * glasses (on your computer). Decorative: the option's own text says what it means. Only the chosen option's
- * mink moves, and none does when the person asks for reduced motion; a still frame shows instead.
+ * glasses (on your computer). Decorative: the option's own text says what it means. The chosen option's mink
+ * moves, and so does an option's mink while the pointer hovers over that option (CSS, fine pointers only). None
+ * moves when the person asks for reduced motion; a still frame shows instead.
  */
 export function RunModeMink({ scene, active, className }: { readonly scene: RunModeMinkScene; readonly active: boolean; readonly className?: string }) {
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => true);

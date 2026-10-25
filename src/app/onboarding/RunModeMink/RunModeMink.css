@@ -21,6 +21,11 @@
 .run-mode-mink[data-scene="desk"] { background-image: url('./runmode-mink-desk.png'); background-size: calc(16 * var(--frame-w)) 100%; }
 .run-mode-mink[data-motion="play"][data-scene="beach"] { animation: run-mode-mink-beach 6.8s steps(1, end) infinite; }
 .run-mode-mink[data-motion="play"][data-scene="desk"] { animation: run-mode-mink-desk 6.4s steps(1, end) infinite; }
+/* Hovering an option (its label is the .group) plays that option's mink too, for fine pointers only. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .group:hover .run-mode-mink[data-scene="beach"] { animation: run-mode-mink-beach 6.8s steps(1, end) infinite; }
+  .group:hover .run-mode-mink[data-scene="desk"] { animation: run-mode-mink-desk 6.4s steps(1, end) infinite; }
+}
 
 /* Idle, a long sip through the straw with eyes closed, a pause, a blink. */
 @keyframes run-mode-mink-beach {
