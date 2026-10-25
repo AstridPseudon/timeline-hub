@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T10:24:58Z | dispatcher heartbeat 14s | live 1 (sol 1, luna 0, other 0) | busy30 16 | status age 1m -->
+<!-- main | 2026-10-25T10:28:56Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 17 | status age 0m -->
 # runtime board, 2026-10-25T10:22:06Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -408,6 +408,8 @@
 
 | OPS-App-tail-allocation | Relay existing reserved tail owners | Manager peer relay | Agent published0956 | merged | Existing Agent source allocation | Authoritative compileaudio2,sheet15,WC6three peer relayed toApp. Runtime opens no competing writer. | Evidence only |
 
+| D115-command-output | Trace consumed source output identity | Luna read only | Agent authentic1020 pairing | doing | rt-D115-output-path-1028 | Candidate82b6 sealedinput PARAM32PASS,producer112PASS1FAIL. Auth2864 mismatch needs genuine boundary ownership proof. | Source facts pending |
+
 Runtime producer: RELEASED d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e, tree6283b5 EXACT independent32c. Packet design/runtime-D112a-release-0952.json;15 canonical mappings unchanged. App normal96d475 adopts exactd23a8; fullP2 actual15203 on96d475/070dfc/d23a8/635f RUNNING after preflight19156PASS, Appsolecontroller1004.
 core open: Runtime D111b actual generic head/history/closure read cost remains open. Positional source-document attribution corrected1010; source snapshots02b are unused by measured doc.patch and remain held. Sol1016 retargets normald23a. Agent437; full2016 remains8763PASS159FAIL347ERROR,173subtests. D54a upstream23 actual16:15PASS1FAIL;7absent. Independent1001:REG14/NEW8/UNKN1.
 regressions: D118 independent1001 establishes14 host-bootstrap identical-body regressions in bounded23 scope; PRE0/REG14/NEW8/UNKN1. Prior REG0 is superseded. Agent allocator notified; no P2 credit.
@@ -425,5 +427,5 @@ Delivery: Applied rehearsal trees/patches retained. Private96Python+TS final inv
 Later: D107 held2154; D100 candidate20PASS6FAIL at duplicatechapter seed remains held; originalTEN distinct. Fixturepurpose27 complete: no pin-loss bug,17 not retired. Three Remotion copies await owner disposition.
 Safety: Withdrawn D88/D111memo stopped. D106 ORCH outputs only; denied hub target never retried. Manager edits no product/test/generated/pin files.
 Disk: About5.9GB available. Fresh audit found no ended clean unreferenced Runtime worktree. Sweep3 removed0. Five dirty v1 trees/prohibited Codex session paths untouched; compact-scratch touches those paths and is not run.
-live 2 / cap 6; ready-undispatched 0. Security1014 and sole HARD Sol1016 assigned; final inventory/accounting review1018 bothPASS. No independent ready row waits.
-INBOX consumed through1111869 bytes. Updated 2026-10-25T10:22:06Z.
+live 3 / cap 6; ready-undispatched 0. Publisher1025, sole HARD Sol1016 and output-path reader1028 assigned. Final inventory/accounting1018 bothPASS.
+INBOX consumed through1113586 bytes. Updated 2026-10-25T10:22:06Z.

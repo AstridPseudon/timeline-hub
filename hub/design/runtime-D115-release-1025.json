@@ -1,0 +1,175 @@
+{
+  "schema": "timeline.runtime.d115.release.v1",
+  "status": "RELEASED",
+  "published_at": "2026-10-25T10:25:00Z",
+  "task": "rt-D115-home-release-1025",
+  "repo": "runtime",
+  "normal_branch": "tl/integration",
+  "actual_normal_head": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+  "actual_normal_tree": "9bf331d68df8c966e8927a3f083ba03687803c99",
+  "home_checkout": "/home/user/work/runtime",
+  "home_clean": true,
+  "reviewed_candidate": {
+    "commit": "274bbf7d73c543d72058ce3563eba2af5cdc4bd1",
+    "parent": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "tree": "9bf331d68df8c966e8927a3f083ba03687803c99",
+    "tree_exact": true,
+    "verification": "git diff --exit-code 274bbf7d73c543d72058ce3563eba2af5cdc4bd1 -- . exited 0"
+  },
+  "normal_merge_receipt": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/merge-rt-D115-intermediate-image-1002",
+    "text": "merged tl/rt-D115-intermediate-image-1002 into runtime tl/integration -> 369ffa7c0",
+    "merge_commit": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "parents": [
+      "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+      "274bbf7d73c543d72058ce3563eba2af5cdc4bd1"
+    ]
+  },
+  "review": {
+    "source_security": "PASS",
+    "json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/review-json-validated.json",
+    "review_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/report.md",
+    "candidate_regression": "5 passed",
+    "parent_regression": "1 genuine RED, 4 strict refusals passed",
+    "strict_neighbors": "321 passed, 74 deselected",
+    "native_provider_smoke": "2 passed, no skips or deselections",
+    "release_smoke_controls": "1 passed",
+    "auth_integration_candidate": "39 passed, 1 baseline-identical failure out of 40",
+    "auth_integration_parent": "39 passed, 1 same failure out of 40",
+    "sequential_verifier_candidate": "66 passed, 1 known excluded failure out of 67",
+    "sequential_verifier_parent": "66 passed, 1 same known excluded failure out of 67"
+  },
+  "known_failures_preserved": [
+    {
+      "test": "test_admission_step_uses_its_unchanged_parent_boundary[True]",
+      "candidate": "passed",
+      "parent": "genuine RED: provider intermediate parent lacks an effect image"
+    },
+    {
+      "test": "test_created_child_public_captured_transcript_advances_sequential_manifest[None-True]",
+      "candidate_and_parent": "same baseline-identical failure: sequential original or landing input does not match its authenticated head"
+    },
+    {
+      "test": "test_moved_history_replays_authenticated_original_and_landing",
+      "candidate_and_parent": "same known excluded failure: synthetic SimpleNamespace lacks db_path"
+    }
+  ],
+  "changed_files": [
+    {
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "git_blob": "97247a44e9077f64c603a28912cd43d960192c77",
+      "sha256": "68e594537c09cc1c49f02ab9657fb8c76166763098b6932fc6c75741b957d9dc"
+    },
+    {
+      "path": "tests/test_timeline_intermediate_image_auth.py",
+      "git_blob": "ce15f084566a44231da76b5a3515f3c4a2d61732",
+      "sha256": "90c09fa44d098333e6b7dcbbd20ed0af5c653ebd5c37f7667d0d9883e18ad6c1"
+    }
+  ],
+  "parent_source": {
+    "runtime_protocol/timeline_commit_auth.py": {
+      "sha256": "357d7c473d8e1af42646aea57657222123cc039adde16f2700629991d25beafd"
+    },
+    "protected_neighbors_equal_parent": true
+  },
+  "source_custody_paths": [
+    {
+      "path": "/home/user/work/wt/agt-pin-070dfc5e/astrid/sdk/timeline/_commit_preview.py",
+      "role": "Agent capture_sequential_execution caller",
+      "git_blob": "daeed358b72e852abe9ee4bad367dc454bd91ba1",
+      "sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36"
+    },
+    {
+      "path": "/home/user/work/wt/agt-pin-070dfc5e/astrid/sdk/timeline/commit.py",
+      "role": "Agent registered-provider commit caller",
+      "git_blob": "0ab8cb16761c9ce6a971fae3e8600f35f391760e",
+      "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_port.py",
+      "role": "Runtime RequestCommitPort.capture_sequential_execution and auth handoff",
+      "git_blob": "a204909316060e51cc23d916c95aeba99f2e2f62",
+      "sha256": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_auth.py",
+      "role": "Runtime authenticated intermediate-image validation",
+      "git_blob": "97247a44e9077f64c603a28912cd43d960192c77",
+      "sha256": "68e594537c09cc1c49f02ab9657fb8c76166763098b6932fc6c75741b957d9dc"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/service.py",
+      "role": "Runtime production commit service caller",
+      "git_blob": "12f21aa80c89136d13d09798d7bd1e705a18facc",
+      "sha256": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666"
+    }
+  ],
+  "evidence": {
+    "worker_evidence_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-home-release-1025/evidence",
+    "source_hashes": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-intermediate-image-1002/evidence/source-hashes.txt",
+    "raw_exit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-intermediate-image-1002/evidence/rawexit.txt",
+      "sha256": "8103a845eb702ee3285c1be9321e8ff310a31256f3dd65118af1d94d23c71c44"
+    },
+    "junit": {
+      "targeted": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-intermediate-image-1002/evidence/d115-targeted.xml", "b69233c0a0310c8d5b6e106e8b7615b421af96518b47339556bd392652e75280"],
+      "candidate_regression": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/candidate-regression.xml", "f863fa76d48c4745dd3a8754f01ee825b1d320b6e81976ae74b56ee4aa7158b4"],
+      "parent_regression": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/parent-regression-final.xml", "90c8752691f6b495450087f5b7b6a67da47fc4d76f7d86bea13afac288cd7907"],
+      "candidate_auth_integration": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/auth-integration.xml", "e389d7819b237721a7728e6b91872ab5d7605ac26b1479128f3f18b9afba4c64"],
+      "parent_auth_integration": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/auth-integration-parent.xml", "20eeb78972e4c8df9654a5e891cf99e3982d61b82373a17284cdc90e2513efcb"],
+      "candidate_sequential_verifier": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/sequential-verifier-candidate.xml", "9e8b4ad23b5d265a6a9d52471d697194af654a3b333d961460b201a55178f0fb"],
+      "parent_sequential_verifier": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/sequential-verifier-parent.xml", "b204f342b6703d8b6d20e424bb3f469a2f9a666df0d7ce24d78737e9bb2d7a5b"]
+    },
+    "smoke": {
+      "native_provider": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/native-provider-smoke.log", "5db21f5c8d43bc69bca7351d762815b0d88e178597f269254683842ea531dbee"],
+      "release_controls": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence/release-native-smoke-controls.xml", "957091f5a920e454f6f0e260799e9d30f1da257bbd8658329b4835ec485d37cf"]
+    }
+  },
+  "canonical_client_schema_unchanged": {
+    "count": 15,
+    "against": "D112a preserved source / parent tree",
+    "paths": [
+      ["contract/schemas/timeline-commit.json", "d94415a7d57e7d113223a425c076af7b1a8a4248", "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815"],
+      ["runtime_protocol/schemas/timeline-commit-bundle.json", "6ba53bc1e4ce2e1c5681a77a7107d5a98e214207", "e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1"],
+      ["runtime_protocol/timeline_commit_types.py", "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"],
+      ["packages/python/astrid_runtime_client/__init__.py", "9b4dc2a37eed9e99673485c66c504c1125b5f315", "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"],
+      ["packages/python/astrid_runtime_client/contract_metadata.py", "6cffd789cb8f527108e6b9b6995229e9ad37085f", "b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b"],
+      ["packages/python/astrid_runtime_client/generated.py", "b8dd84cf35db2420ba23bb560abcbd5d6115a77b", "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"],
+      ["packages/python/astrid_runtime_client/timeline_commit_types.py", "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"],
+      ["packages/typescript/src/contract-metadata.ts", "100bc43789a8949591358035d8163ab48c95068e", "adedd98ba6672fc1ab7476fccb69b1380fc23f09edd42a80a9b2294182a2e15c"],
+      ["packages/typescript/src/generated.ts", "eaee6688c68cd657f55fd5675d8b5199bf7867ec", "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4"],
+      ["packages/typescript/src/index.ts", "270fdf03fc27473a1b12560bd9592241b9861c9d", "2d23f8ee1cb38e6b1d3366663887b88a4981ec298d8c8d5a758a62a7ad8cc0e4"],
+      ["packages/typescript/src/timeline-commit-types.ts", "347bae5ac98677a7ee0de1bb685bbfe9829c7842", "b567dcc623d3b3047b931c4337d9f6688efdfa590c9108c3406d0659fa152674"],
+      ["conformance/second-client-core-v1.yaml", "f18940302f1bfb7fbab128a29fadfd2d82b2eea6", "3a0a5aff4e66435212ba567850a0a27c5555601a33ecbd3ed7e21737948662e3"],
+      ["conformance/typescript/generated.ts", "10c1e0a86ba8ea1b77b0b5b17d0e98d8fc28cafd", "35318089ebbb8d7edec4d8a77096295fd5807e4dac9d0fe9a2a7a5c404c86cae"],
+      ["contract/schemas/document.json", "4d835e89031074fba77d5e5f34393e4b0866b4b2", "6d8fe08563eb96504c874c1d3535527371a8a67f54b06bcd324c32f99cb286e3"],
+      ["contract/schemas/edit-command.json", "de301d13e44bad44c84bac35f8d929e24fbf55ff", "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d"]
+    ]
+  },
+  "preserved_D112a_source": {
+    "runtime_protocol/timeline_commit_store.py": ["6e29f654710649bd1110d5c5a4be04dbfde198c8", "f0867b6bf083aef2ca280c3f1bcbbbc926c7dfc448c519836e286022f5e3d59a"],
+    "tests/test_timeline_history_state.py": ["098eee4efb4236e45dda2b0742295aece56f50e9", "788e1280c61cbee6817595544495ba462365d956d0cd85499923328dedba838b"],
+    "tests/test_timeline_render_publication.py": ["88ff0a9d94af99d28e58b935de946f9ca1ffc7c2", "7de21278fa27582e7b6d4d47a2fac69468c9466931f4f2c44923d8e44977e6a2"]
+  },
+  "public_contract_unchanged": {
+    "production_caller": "mounted App/SDK registered provider -> RequestCommitPort.capture_sequential_execution -> Runtime authenticated intermediate images",
+    "request": "C0v2 api_version/project_id/timeline_id/base_revision_id/base_publication_id/commands/label/steps(id,label,intent,tags,command_ordinals,patch,reads)/merge/reads/dry_run/Idempotency-Key",
+    "replies": "accepted/merged canonical_document/receipt/head/effects/bindings/dependencies; conflict head/reason; invalid code/path/hint; dry_run",
+    "unchanged": true,
+    "source_changes_include_DTOs": false
+  },
+  "handoff_limits": {
+    "no_83_body_or_full_repeat": true,
+    "next_83_count": "Agent normal tool adoption is required before the next unfiltered-core count can qualify 83 actual nodes; do not retarget inflight core; no repeat until D118 batch authorization",
+    "app": "Current App 15203 remains captured 96d475/070dfc/d23a8/635f; no retarget or repeat; only the future D59 matrix decides adoption/gate rerun",
+    "not_claimed": ["final tuple", "gate", "core", "ZIP", "83 closure", "full-suite PASS"]
+  },
+  "publication_scope": {
+    "normal_integration_only": true,
+    "upstream_touched": false,
+    "additional_tests_run": false,
+    "additional_approval_or_stage": false,
+    "proof_or_evidence_branch_merge": false,
+    "deletions": false
+  }
+}

@@ -1,0 +1,5 @@
+Ask: consume Runtime read-only command_output owner1028 and publish existing pairing/regression inputs through ORCH / Owner: Runtime rt-D115-output-path-1028; Agent publication/review1020 / By: next pass
+
+Peer1021 becomes Runtime row/worker now. Reader1028 traces genuine source consumption/sealedinput/stepimage/command_output to auth2864 on normal369ffa. No Runtime author/guard edit/body; no competing Agent commit.py/_preview/_patch source owner. Exact safe pairing JSON, source hashes and real RED/control metadata needed. Upcoming handoff-agt-F-D118-peer-inputs-1020-producer-pairing.json expected; otherwise UNKNOWN, no fabricated records.
+
+NormalD115369ffa publication1025 checks tree now. CorrectparentRED,5GREEN,strict321,native2/security1014PASS. Sourcequalified, no83closure. CurrentApp15203/anycapturedcore remain immutable. Next normal adoption/core may consume369 after publication. D111b Sol1016 actualgenericreads; prior02bheld unused.
