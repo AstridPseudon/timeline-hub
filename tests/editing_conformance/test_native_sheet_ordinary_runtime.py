@@ -271,7 +271,7 @@ def historical_sheet_film(tmp_path, request):
             'api_version': 1, 'project_id': project, 'timeline_id': 'film',
             'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id'],
             'commands': calls, 'label': 'Bootstrap ordinary sheet', 'steps': steps,
-            'merge': 'atomic', 'reads': [], 'dry_run': False, 'source': {'via': 'test-bootstrap'},
+            'merge': 'atomic', 'reads': [], 'dry_run': False, 'source': {'via': 'python'},
             'rationale': 'Bootstrap ordinary sheet', 'group_id': 'ordinary-sheet-bootstrap',
         }
         accepted = service.commit_timeline(
