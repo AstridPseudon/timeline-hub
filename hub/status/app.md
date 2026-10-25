@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T01:32:27Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 0m -->
-# app board, 2026-10-25T01:31Z
+<!-- app | 2026-10-25T01:36:05Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 3m -->
+# app board, 2026-10-25T01:32Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -162,7 +162,7 @@
 | P2-SWAP-current | Qualify reviewed complete creation claim | Luna; main service | Exact App3a2d and released a3cd | blocked:runtime | Main venue reservation asked0124 | One meaningful original after current main heavy priority; no App duplicate. Genuine checkouts and preflight required. | App3a2d6067 |
 
 | A3-placement-coordinator | Apply real managed image drop resolution | Luna | Sol0112 finite proposal | doing | app-A3-placement-coordinator-apply-0127 | Two product files and real mounted controls. Spec and strict V2/9 unchanged; fresh independent core review follows. | Base3a2d |
-| P2-native-Undo-reply | Assert source-derived native reply labels and steps | Luna | Actual24629 | doing | app-P2-native-Undo-reply-0127 | Audit native and modern reply/step branches once; retain full strict assertions and fallback. No new original. | Base3a2d |
+| P2-native-Undo-reply | Assert source-derived native reply labels and steps | Luna; independent | Author0127 complete | review | Batch reviewer0130 optionalB | Sixteen parent and3 transition controls/types/lint PASS. Explicit Undo/Redo metadata plus exact omission defaults; source awaiting protected review. | Branch0127 |
 
 | P2-bootstrap-diagnostics | Retain bounded missing bootstrap facts | Luna harness | Finite readiness0125 report | doing | app-P2-bootstrap-diagnostics-0132 | Existing safe producer only; capture before close and cleanup. Original specs/waits locked. No diagnostic-only run or product cause claimed. | Base3a2d |
 
@@ -175,7 +175,7 @@ Blockers: Runtime source — element8897 still fails five seconds on a3cd. Compl
 Blockers: Runtime venue — main SWAP3a2 reservation requested0124. Parent24629 and single11446 use existing0107; next source reply correction is App0127. Bulk21061 waits retained finite Runtime packet, requested0126.
 Blockers: Final cut — eight isolated P2, one full App tour, final pinned P1–P5/core and genuine installed render remain required. Runtime coordinates matrix and ZIP.
 Next ready: Reviewer0130 whole registry diff then one asset on PASS; optional disjoint review of completed placement/native reply. Readiness0125 finite report complete; additive diagnostics0132 active. Main SWAP reservation0124; no unchanged originals.
-live 4 / cap 6; ready-undispatched 0. Registry reviewer0130, bootstrap diagnostics0132, placement application0127 and native Undo oracle0127 assigned. No App service body active.
+live 3 / cap 6; ready-undispatched 0. Registry reviewer0130, bootstrap diagnostics0132, placement application0127 assigned; native Undo0127 complete for optional batch review0130. No App service body active.
 Capacity: Source authors and completed reviewers auto-recycle; no idle worker holds a body wait. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
 Disk: 6.009GB at01:29 before fresh registry reviewer0130. Guarded stale c9 and50cf pins recycled; outputs kept, no refusal. D89: six source above5.5GB, one body above5.2GB; no new below4.5GB; stop newest nongate4.0GB.
 Safety: No new App safety or permission refusal. Runtime peer0106 reports D88 safety-review denial and integrity failure; candidate held with existing orchestrator escalation. No App adoption, retry or alternate review of that candidate; releaseda3cd retained.
