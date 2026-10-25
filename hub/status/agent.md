@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T13:51:45Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 0m -->
+<!-- agent | 2026-10-25T13:55:31Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 2m -->
 # agent board, 2026-10-25T13:48Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -56,7 +56,7 @@
 
 | D118a captured redo1 | Preserve exact captured redo closure | App Luna / protected Luna | Farm batch core | merged | Author1242; protected1251 | PASS1 and statics | SQLite file and matching db_path setup only; seven assertions and authored inputs exact. Original1 PASS2.38s at donor; HOME. | 0b586e4b56 |
 
-| D124 host fallback | Restore upstream host behavior on Main | Runtime Luna | Original14 and independent review | doing | rt-D124-host14-upstream-revert-1338 | Pending | Main is sole fallback author. Farm9ea races this source; first independently GREEN14 wins. CurrentREG14 stays open. | Main pending |
+| D124 host fallback | Restore upstream host behavior | Runtime Luna | Normal source publication | ready | rt-D124-host14-upstream-revert-1338 | Independent1345 PASS | Original14, source73, schema29, security12 PASS per owner. Exact96df branch not received yet; home merge immediately on normal fetch. | 96df held |
 
 | D124 Farm input command | Publish qualified core and host commands | Luna read only | Actual Farm receipts | merged | agt-D124-Farm-command-final-review-1336 | Independent1336 PASS | Exact worker Git blobs published1342; shell/JSON/source checks PASS. Farm profile and D73 execution inputs remain lead-owned. | Evidence only |
 
@@ -66,14 +66,14 @@ core open: 425 on immutable30693. Confirmed regressions:14, all still open until
 
 Current full checkpoint:8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips on120d/1daca/96d475/635f. Exact450 bad IDs and D54a per-node categories are retained in classification1055 and terminal-review1104. Metadata1111 distinguishes ambient f43dd from actual pinned9a65; no source retag.
 
-Blockers: Agent core425 andREG14 — Runtime receiver continuation owns exact finalunion/5e9ad originals; Farm owns core and9ea host14. Source PASS adds no closure.
-Blockers: Farm host14 — genuine runtime profile reused and verified; lead child request and actual original14 result owed. Main fallback1338 runs in parallel.
+Blockers: Agent core425 andREG14 — shared union originals and Farm core owed. Main fallback96df original14 PASS, normal source fetch then merge owed; REG closure awaits core.
+Blockers: Farm child — final store verification refused unowned distribution metadata. No retry or substitution. Runtime and Farm lead own safe source disposition; Farm host14/core wait.
 Blockers: Agent D69 — installed render90 and final b742 cut audit owed. XML107 source is home; genuine platform proof remains separate.
 Blockers: Farm D117a — full normal installer stage and genuine installed render pending after core. Prior denied route remains stopped.
 Blockers: Final cut — D123 patch5bd01 SOURCE PASS; final b742 tuple P1–P5, full core, D69, wheel and installed render proof owed.
 
 Next ready: Runtime existing1313 receiver requested final16bb/5e9ad own-node successor after any already-started07ff/42aad proof; no retarget. Main fallback1338 active. Farm finishes lead-owned keyed child and D73 inputs, original host14 first then captured0b586 core. Reviewed union61fefc is queued as NEXT Farm batch, not a change to current inputs. D124 small-file source starts stay paused.
-live 0 / cap 6 above5.0GB; ready-undispatched 0 local. Runtime hosted own-node continuation requested; Farm and Main own the remaining ready execution routes. No local heavy.
+live 0 / cap 6 above5.0GB; ready-undispatched 0 local executable. Host14 home merge waits normal source delivery, requested from local lead. Runtime hosted own-node continuation requested; Farm and Main own the remaining ready execution routes. No local heavy.
 
 Disk: 5063532544 bytes. All finished clean nonKEEP worktrees have already been recycled. Only old dirty/refused agt-G2-open-commit remains in that scan, preserved. Normal compact-scratch and sweep3 finished zero packing/removals. Six unreferenced old pins await local lead host-use audit; no KEEP, ~/.codex or refused-target retry.
 
@@ -81,6 +81,6 @@ D120 and D124: own failing nodes per fix; one Farm unfiltered core per merged ba
 
 Later: two D23 child-word originals and D14 deferred anchors remain unchanged and visibly unqualified. Missing numeric3/video4 complete correspondence records remain EXACTMISSING; no invented fixes or collector. E2 ABI retirement paused until after ZIP; withdrawn1171212 memo never adopted. D79 genuine replay input absent. D13 installed environment remains an explicit known gap.
 
-Inbox consumed through 1654631 bytes. Manager made no product, test, generated, pin or Git changes. Source reports/recipes were copied byte-exact to flat design for normal publication. Union16bb merged by queue/done/merge-agt-D124-union-custody-sol-1327 ->61fefc6983. D123 current qualified5bd01 remains distinct from historical47f6 and failed41702; D59 gate remains.
+Inbox consumed through 1655179 bytes. Manager made no product, test, generated, pin or Git changes. Source reports/recipes were copied byte-exact to flat design for normal publication. Union16bb merged by queue/done/merge-agt-D124-union-custody-sol-1327 ->61fefc6983. D123 current qualified5bd01 remains distinct from historical47f6 and failed41702; D59 gate remains.
 
 D124 host fix or upstream fallback: Main is sole source author under owner13:38. Farm keyed setup may finish after14:00Z, as owner permits. First independently qualified actual14 GREEN goes in. Pristine b742 actual14 PASS is retained separately and does not close currentREG14.
