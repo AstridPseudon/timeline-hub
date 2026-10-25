@@ -1,0 +1,39 @@
+{
+  "schema": "app-d116-current17-independent-review-v1",
+  "task": "D116/D118d current17 source applicability review",
+  "base": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "tree": "68433c5f77be90063b1f43d3e8f1407346a50675",
+  "overall": "FINITE_SOURCE_FINDINGS",
+  "source_applicability": "PASS",
+  "custody": "FINITE_FINDING",
+  "functional": "NOTRUN",
+  "scope": "read-only; no source, fixture, test, pin, generated, schema, history, or product changes",
+  "selector_checks": {
+    "safe_map_count": 27,
+    "excluded_d107_count": 10,
+    "retained_count": 17,
+    "retained_ordinals": [1143, 1147, 1152, 1159, 1165, 1171, 1180, 2913, 2923, 2927, 2940, 2958, 2996, 3649, 3651, 3653, 3654],
+    "approved_d107_ordinals": [1085, 1091, 1100, 1106, 1112, 1116, 1121, 1126, 1131, 1138],
+    "selectors_equal_to_safe_map": true,
+    "ast_and_param_cases": "17/17 PASS"
+  },
+  "finding": {
+    "id": "CUSTODY-HASH-001",
+    "file": "tests/editing_conformance/test_commit_runtime_scalar.py",
+    "expected_in_supplied_source_map": "691046ff5ac6919745c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+    "actual_sha256": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618",
+    "expected_length": 65,
+    "actual_length": 64,
+    "impact": "The supplied map is not hash-qualified as written; source applicability remains supported by the live file and matching prior custody records.",
+    "source_changed": false
+  },
+  "current_seam": {
+    "alias": "tests/editing_conformance/current_word_baseline_fixture.py::retained -> native_word_anchor_fixture.current_retained",
+    "target": "parent/clip:card",
+    "declaration": "\"again\" in line #2 +1f",
+    "provider": "registered Runtime provider via agent.create_runtime_commit_service()",
+    "operation": "clip.anchor through commit_timeline, followed by retain-and-clear",
+    "qualification_boundary": "shared authenticated source/pin seam only; not selector-complete, not retirement, not functional GO"
+  },
+  "no_change": true
+}

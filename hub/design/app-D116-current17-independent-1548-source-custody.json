@@ -1,0 +1,19 @@
+{
+  "schema": "app-d116-source-custody-v1",
+  "base": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "tree": "68433c5f77be90063b1f43d3e8f1407346a50675",
+  "source_map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D116-current17-source-1540-current17-source-map.json",
+  "safe_map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D115-fixture-purpose-0934.exactsafeIDmap.json",
+  "source_hashes": [
+    {"file": "tests/editing_conformance/test_commit_runtime_native_checkout.py", "expected": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461", "actual": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461", "match": true},
+    {"file": "tests/editing_conformance/test_commit_runtime_native_frontends.py", "expected": "06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2", "actual": "06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2", "match": true},
+    {"file": "tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py", "expected": "2a75e2a63df99f26134c56b3833628c696f8be43a8d7dd567e7a03c27010690c", "actual": "2a75e2a63df99f26134c56b3833628c696f8be43a8d7dd567e7a03c27010690c", "match": true},
+    {"file": "tests/editing_conformance/test_commit_runtime_parent_track_label.py", "expected": "1e3517c511a1e6f1090d9d15bf212553762de83cfae40ad330ac77749a0edb91", "actual": "1e3517c511a1e6f1090d9d15bf212553762de83cfae40ad330ac77749a0edb91", "match": true},
+    {"file": "tests/editing_conformance/test_commit_runtime_scalar.py", "expected": "691046ff5ac6919745c221ab992cb362b5153a8099f441c5d8dd57661351c9618", "actual": "691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618", "match": false, "expected_length": 65, "actual_length": 64},
+    {"file": "tests/editing_conformance/test_owned_move_publish_runtime.py", "expected": "7f1860c3a9075d26b5ee80cae68a530b48fcdb60d6450801d5970ea3d22bae70", "actual": "7f1860c3a9075d26b5ee80cae68a530b48fcdb60d6450801d5970ea3d22bae70", "match": true},
+    {"file": "tests/editing_conformance/current_word_baseline_fixture.py", "expected": "c219e1a2bd5e04e7e68825552cbb1e85e12b3d77f4124609ce1942b1679b40d5", "actual": "c219e1a2bd5e04e7e68825552cbb1e85e12b3d77f4124609ce1942b1679b40d5", "match": true},
+    {"file": "tests/editing_conformance/native_word_anchor_fixture.py", "expected": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8", "actual": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8", "match": true}
+  ],
+  "git_status": "clean",
+  "source_delta": false
+}

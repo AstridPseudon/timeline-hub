@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T15:51:40Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 4m -->
-# app board, 2026-10-25T15:47Z
+<!-- app | 2026-10-25T15:56:33Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
+# app board, 2026-10-25T15:53Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -105,9 +105,11 @@
 
 | D127b-stacks | Publish retained safe sampler frames | Luna and HARD Sol review | D127b and exact element join | merged | Binding1518; durable review1524 | Privacy, content and durable custody PASS. All safe frames and summaries published to Runtime; element d22 request3 matched. No outcome or timing claim. | Evidence only |
 
-| D116-current17 | Map shared current word setup | Luna read only | Agent peer1526; normal20177 | review | Author1540; finite review next | Exact17 AST/statics PASS; seed supports only authenticated pin/anchor seam. Every case still needs exact topology. No source delta or behavior credit. | Source unchanged |
-| D118d-pair16 | Preserve current pair-reader purposes | Luna | D118d and existing home setup fix | review | Author1540; own16 review next | No diff; existing7d858 fixes archive lookup and preserves all inputs/assertions. Statics PASS; own16 not run below5GB. | Agent20177 unchanged |
-| D118d-projection9 | Preserve real capture projection purposes | Luna and independent | Exact candidatea92c6 | review | app-D118d-projection-protected-review-1545 | One-file52-line setup patch; original43 assertions retained. Authorstatics PASS; independent exact9 and D104 causal review active. | a92c6afe0 held |
+| D116-current17 | Map shared current word setup | Luna and independent | Agent peer1526; normal20177 | merged | Author1540; independent1548 | Source applicability17/17 PASS; scalar suppliedhash malformed65chars, exact64 reviewerhash published. All selector-specific topology still missing. No behavior credit. | Source unchanged |
+| D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | review | Author1540; accounting reader1552 | No diff; all16 already PASS in30693. Reader verifies current-source equality; no redundant own16 rerun or current-tuple credit. | Agent20177 unchanged |
+| D118d-projection9 | Preserve real capture projection purposes | Luna and independent | First protected1545 FAIL | doing | First return1551; wholepath1552 | Genuine exact9 allsetupERROR at canonical project-scope converter. Original43 predicates exact; samebranch causal return and independent wholepath active. | a92c6afe0 held |
+
+| D118d-graph9 | Preserve typed root and tamper purposes | Luna | D118d and exclusive claim1549 | doing | app-D118d-graph-roots9-1549 | One-file source setup/caller check. All root/owner/kind/ref/claim/reservation/no-write assertions exact; no shared auth writer. | Base Agent20177 |
 
 Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals the entire independently1414 reviewed candidate tree. Only exact two D126 and strict bootstrap test blobs imported. Targeted normal2, mutations, types and lint PASS. [Normal receipt](../../design/app-D126-normal-home-1437.json). Actual3250 remains frozenfe3309/070dfc/5e9ad/635f and excludes new helper/hook. No result retarget.
 
@@ -122,10 +124,10 @@ Blockers: App current SWAP — Runtime owns D127 connection recovery and safe di
 Blockers: Element cost — Runtime Luna1535 aggregates exact element request3 safe frames. Final packet1524 PASS is in shared hub; duration and backend outcome UNKNOWN. D127b holds new tours until qualified fixes ship.
 Blockers: Farm host14 and batch — Agent upstream fallback is home a4e016; original14 independently PASS. Core still waits genuine Farm child. Retained-source refusal remains stopped; Runtime owns D127a diagnosis.
 Blockers: Final cut — Current full P2 remains NO-GO. Final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes stay stopped.
-Next ready: Pair16 own-node and current17 finite review share the next light-proof slot after projection review. At5.089GB one light reviewer fits; another Agent worktree would take its required proof below5.0GB. No heavy or tour.
-live 1 / cap 6; ready-undispatched 0; core open: 2. bin/workers15:46 reports one protected Luna reviewer. Two finite source/own-node review packets are prepared for next light slot; no unassigned source task or tour.
-Capacity: Free5088702464 bytes at15:46Z after three authors ended/recycled and protected reviewer started. Each source admission checked>=4.6GB. Stop4.0GB; light own-node proof>=5.0GB. Earlier sweep3 removed0/compact packed0+gzipped0. No current pin or original output removed.
-INBOX consumed through2276916 bytes, including ownerD118d15:37 and Runtime profile1535. Latest Agent board and INBOX checked before claims. Known auth2267/1645 and child-import/Farm-census roots already assigned; no duplicate authors. Claim note1540 posted to Agent INBOX delivery route before three requests.
-Current pass15:42: Agent peer1526 ready17 source reader dispatched immediately from shared hub. Two disjoint historical-cluster selfclaims completed on exact normal20177; protected review is active. All output paths absolute in briefs; manager only publishes worker bytes. Runtime1535 now owns retained element aggregation; packet/input wait cleared remotely. Runtime released stepbc487 consumed as later batched normal adoption with qualified recovery/inverse, no redundant tool churn or tour.
+Next ready: Protected reviews of first-return projection or graph source when they finish. All three D89b slots occupied. Shared17 source request complete with independently recorded finite custody typo; Agent allocator has full exact missing-topology map.
+live 3 / cap 3; ready-undispatched 0; core open: 2. Current source workers: projection1551, independent wholepath1552, graph1549. No heavy body or new tour. Pair16 retained-proof check shares wholepath1552, no extra body.
+Capacity: Free4929802240 bytes before third source start15:52, above4.6GB. Stop4.0GB; light own-node proof>=5.0GB. Three source worktrees fit D89b. Sweep3 removed0/compact packed0+gzipped0 this pass; no original output/current pin removed.
+INBOX consumed through2281223 bytes, including delayed Agent1526 source request already completed. Runtime1535 actualprofile owner consumed; full safe packet1524 remains shared. No additional input/publication wait.
+Current pass15:53: source17 independently matches all17 purposes and identifies genuine pin/anchor seam only. Scalar hash typo is explicit with actual64hash in reviewer custody; no source/body/retirement. Pair16 are alreadyPASS in30693, avoid duplicate. Projection onefile firstreturn follows exact failedown9; independent wholepath dispatched in parallel as required. Graph9 exclusive claim precedes source start. Released Runtimebc487 remains later batch adoption with qualified recovery/inverse; no tour.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 exact seed join is home Agent61fefc with two recorded recipe PASS; Farm core still owed. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 
