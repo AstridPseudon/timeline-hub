@@ -243,6 +243,23 @@ class SyncGatewayTest(unittest.TestCase):
         finally:
             fx.close()
 
+    def test_sync_cli_selects_only_requested_harness(self) -> None:
+        fx = _Tmp()
+        try:
+            args = skills_cli.build_parser().parse_args(["sync", "--harness", "codex", "--json"])
+            sync = skills.sync
+            with mock.patch.object(
+                skills_cli, "sync_fn",
+                side_effect=lambda **kwargs: sync(state_path=fx.state_path, **kwargs),
+            ) as called, contextlib.redirect_stdout(io.StringIO()):
+                skills_cli._cmd_sync(args)
+            self.assertEqual(called.call_args.kwargs["harness_names"], ["codex"])
+            self.assertTrue((fx.home / ".codex/skills/astrid").is_symlink())
+            self.assertFalse((fx.home / ".claude/skills/astrid").exists())
+            self.assertFalse((fx.home / ".hermes/skills/astrid").exists())
+        finally:
+            fx.close()
+
     def test_sync_is_idempotent(self) -> None:
         fx = _Tmp()
         try:

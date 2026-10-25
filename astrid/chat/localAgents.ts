@@ -58,6 +58,28 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {
   },
 };
 
+export function agentCommand(line: string): string {
+  return line.match(/`([^`]+)`/)![1]!;
+}
+
+export function astridInstallCommand(platform = process.platform): string {
+  return platform === 'win32' ? 'irm https://astrid.haus/install.ps1 | iex' : 'curl -fsSL https://astrid.haus/install | sh';
+}
+
+export function localAgentSteps(id: LocalAgentId, state: LocalAgentChoice['state'], platform = process.platform): Array<{ kind: 'install' | 'sign-in'; command: string; label: string }> {
+  if (state === 'ready') return [];
+  const definition = LOCAL_AGENT_TABLE[id];
+  if (id === 'astrid') return [
+    { kind: 'sign-in', command: agentCommand(definition.signInLine), label: 'Start Astrid in a terminal' },
+    { kind: 'sign-in', command: '/login', label: 'Then sign in' },
+  ];
+  const installLine = platform === 'win32' ? definition.windowsNotInstalledLine ?? definition.notInstalledLine! : definition.notInstalledLine!;
+  return [
+    ...(state === 'not-installed' ? [{ kind: 'install' as const, command: agentCommand(installLine), label: `Install ${definition.name}` }] : []),
+    { kind: 'sign-in', command: agentCommand(definition.signInLine), label: 'Sign in' },
+  ];
+}
+
 export const thoughtLevelSchema = z.object({
   configId: z.string().min(1),
   name: z.string(),
@@ -80,17 +102,22 @@ const agentModelSchema = z.object({
 
 export const localAgentCatalogSchema = z.object({
   defaultAgent: localAgentIdSchema,
-  agents: z.array(z.strictObject({
+  agents: z.array(z.object({
     id: localAgentIdSchema,
     name: z.string(),
     state: z.enum(['ready', 'sign-in', 'not-installed']),
     line: z.string().nullable(),
     signInLine: z.string().optional(),
+    signIn: z.enum(['signed-in', 'signed-out', 'unknown']).optional(),
+    steps: z.array(z.object({ kind: z.enum(['install', 'sign-in']), command: z.string(), label: z.string() })).optional(),
+    creditLine: z.string().optional(),
+    creditUrl: z.string().optional(),
+    terminal: z.object({ command: z.string(), skillSynced: z.boolean(), detail: z.string().optional() }).optional(),
     models: z.array(agentModelSchema),
     defaultModel: z.string().nullable(),
   })),
 });
-export type LocalAgentChoice = Pick<z.infer<typeof localAgentCatalogSchema>['agents'][number], 'id' | 'name' | 'state' | 'line'>;
+export type LocalAgentChoice = Pick<z.infer<typeof localAgentCatalogSchema>['agents'][number], 'id' | 'name' | 'state' | 'line' | 'signIn' | 'steps'>;
 
 export const localAgentModelsSchema = z.object({
   availableModels: z.array(agentModelSchema),

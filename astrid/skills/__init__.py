@@ -172,6 +172,7 @@ def uninstall(
 
 def sync(
     *,
+    harness_names: Iterable[str] | None = None,
     mechanism: str = "symlink",
     force: bool = False,
     deep: bool = False,
@@ -192,7 +193,7 @@ def sync(
     """
     all_descriptors = list_skills()
     selected_pack_ids = tuple(selected_pack_ids)
-    targets = _resolve_harnesses(None)
+    targets = _resolve_harnesses(harness_names)
     if proposed_state is not None and not dry_run:
         raise ValueError("proposed_state is only valid for a dry-run sync")
     current_state = proposed_state if proposed_state is not None else state.load(state_path)
