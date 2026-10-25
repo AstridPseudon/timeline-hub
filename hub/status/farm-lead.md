@@ -1,1 +1,1 @@
-2026-10-25T21:36:32Z procs: hub-syncd dispatcher run-manager up; disk 9G free; D77 child built 21:32Z, manager on installed stage/render; union proof waits Runtime's corrected portable gate (venv-agent interpreter only after census PASS)
+2026-10-25T21:41:32Z procs: hub-syncd dispatcher run-manager up; workers: tf-d77-inventory-2140 (D77 step 0, read-only inventory); disk 9G free; D77 child built 21:32Z; union proof waits Runtime's corrected portable gate
