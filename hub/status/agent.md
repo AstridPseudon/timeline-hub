@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T03:52:10Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 22 | status age 2m -->
+<!-- agent | 2026-10-25T03:55:11Z | dispatcher heartbeat 12s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 0m -->
 # agent board, 2026-10-25T03:46:38Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -155,7 +155,7 @@
 | F NativeSheet11 | Preserve ordinary sheet behavior | Luna | Meaningful MAIN11 proof | merging | Author0325; review0329 PASS | Normalf31f contains exact truthful source.via correction. All11 original predicates retained; no behavior claim. | f31f315a8d |
 | F projection9 | Preserve genuine opaque captured sources | Luna | Meaningful MAIN9 proof | merging | Author0325; review0329 PASS | Normal9c4b exact opaque baseline conservation. All9 predicates retained; meaningful behavior owed. | 9c4b6354d8 |
 | F numeric9 | Preserve numeric revision fixtures | Luna | Main affected-node batch | merging | Source2328; review2342 PASS | Independent audit PASS after author merge; nine cases and exact test ASTs retained. Functional batch owed. | 3edc45cb26 |
-| D86 main M1 10 | Preserve outbox and restart scenarios | MAIN Luna / Agent R1 | Actual11789 source follow-through | doing | MAIN0333; legacy-basisSol0338 | Actual11789 ERROR10 historical text basis. MAIN owns testfile, Agent Sol owns validation source analysis; no overlapping writes. | Current6634 |
+| D86 main M1 10 | Preserve outbox and restart scenarios | Luna | Common original fixture correction | doing | MAIN0333 complete; Agent0355 | Actual11789 historical binding errors share unnecessary new-target duplicate. No validator defect established. | Currentf518 |
 | D86 main inverse10 | Preserve shared inverse scenarios | Main Luna | Actual corrected-source proof | merging | Host0158; review0204 PASS; home8dad | Restores original authored-first13s host. Five original-third incompatible inputs live. Unqualified local5FAIL5ERROR retained without acceptance credit. | 8dadab251a |
 | D86 main word46 | Preserve exact native word declarations | Luna | Meaningful MAIN46 | merging | Author0338; review0348 PASS | Exact timing/transcript/FPS/choice inputs retained; source only. Independent review has separate PASS. | Homef518440837 |
 | D86 main CLI8 | Preserve real CLI idempotency | Main Luna | Main affected-node batch | merging | Runtime0022 PASS; home a0b8a3c078 | Real store retries and exact mismatch reason verified; eight assigned scenarios and twelve tests conserved. Functional proof pending. | Home a0b8a3c078 |
@@ -229,12 +229,15 @@
 | F9211 numeric six | Preserve numeric move invocation | Luna | MAIN corrected six and auth three | merging | Author0325; review0330 PASS | Normal5954 exact guarded emitter source; six numeric originals source qualified, inverse three live. | 595464fd1c |
 
 
-| R1 legacy source basis | Preserve unchanged historical authority | HARD Sol | Common M1 fixture source follow-through | blocked:runtime | Sol0338 SOURCE_EXACT; MAIN0333 | Twenty-three share empty-destination duplicate. No metadata-only defect or safe validation correction proved. [Trace](../../design/handoff-agt-R1-legacy-basis-sol-0338-source-findings.md) | No product change |
+| R1 legacy source basis | Preserve existing legacy baseline | Luna / HARD Sol facts | Faithful common fixture source and review | doing | Sol0338 complete; Luna0355 | Compare true original accepted film with failed empty-target duplicate. Validator unchanged; all23 original predicates retained. | Currentf518 |
 | F word legacy bound two | Preserve exact rebind and clear intent | Owner | C0 versus legacy source mutation disposition | blocked:orchestrator | Escalation0348 | Source targets bound descriptor; set removes binding ID, clear removes descriptor. No weaker guard or changed assertion. | Actual9211 IDs99,101 |
 
 | F current source delta | Bind exact newly eligible source inputs | Luna read only | Actual reviewed home receipts | doing | agt-F-current-source-inputs-0351 | Reuse existing MAIN route; exact per-ID source dependencies and disjoint pending scopes. No body or new runner. | Fixed68404 source |
 
 | F video and owned remainder | Locate exact remaining source seams | Luna read only | Existing actual9211 safe packet | doing | agt-F-video-owned-remainder-0352 | Four video correspondence findings and two owned assertion failures kept separate; no body or competing product author. | Fixedf518 source |
+
+| F owned oracles two | Preserve fresh status and exact source guards | Luna | D83 protected source correction | doing | agt-F-owned-oracles2-0357 | Exact fresh merged status and qualified Runtime guard only; frozen schema controls unchanged. No body. | Currentf518 |
+| F video correspondence four | Preserve shared physical item mapping | Luna read only | Existing safe intermediate identifiers | blocked:runtime | Source0352; peer0356 | Missing actual item/materialization correspondence. Existing-artifact input requested; no guessed cure or new collector. | Actual9211 |
 
 Integration: Agentf518 now includes normal reviewed wordb2cb and D92importda61 plus reviewed video5b3e, opaqueeb5c, scriptb4a, sheet11f31f, projection9c4b, numeric5954 and CLItrim5687. D90 actual36PASS and inverse7 actual7PASS retain exact scopes.
 core open: P4 original14151 FAIL45.448s and corrected diagnostic25257 FAIL45.557s. Sole Runtime D94 author owns measured cost; no Agent diagnosis or original queued.
@@ -249,6 +252,6 @@ Blockers: Runtime command input — Existing safe captured/executed pair needed 
 Blockers: MAIN proof — Ready22 and candidate13 existing receivers own proof; reviewed new sources need exact disjoint successor mapping. No duplicate body.
 Blockers: Orchestrator scope — Exact legacy word two source-mutation acceptance versus C0 D12; escalation0348 written.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
-Next ready: Word/D92 protected review0348; graph firstreturn0348; sheet13 source0348; legacy-basisSol0338 complete; common M1 returned to owner0333. Every eligible start dispatched; next source waits floor after latest start.
-live 4 / cap6; ready-undispatched0 eligible source starts. Pending review inventory24 was scopes, not24 unresolved diffs; new protected reviews now assigned as separate verdicts in one worker.
+Next ready: Graph/sheet protected0354; common M1fixture0355; input0351 and remainder0352 active. Word/D92 normalf518 proof input ready. Every eligible start dispatched; next source waits floor after latest start.
+live 3 plus queued1 / cap6; ready-undispatched0 eligible source starts. Pending review inventory24 was scopes, not24 unresolved diffs; new protected reviews now assigned as separate verdicts in one worker.
 Inbox consumed through1344510 bytes. Updated 2026-10-25T03:46:38Z. No manager product/test/generated/pin edits or bodies.
