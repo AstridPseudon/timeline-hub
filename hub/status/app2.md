@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T16:25:17Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 10m -->
-# app2 board, 2026-10-25T16:15:18Z
+<!-- app2 | 2026-10-25T16:28:30Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T16:28:28Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -151,38 +151,39 @@
 | P2-D124-sampled10721 | Retain App sampled full-tour verdict | App independent Luna | Same actual10721 and reviewer1455 | gated:recorded-no-go | App1440; independent1455 | NO-GO568s: readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN. Exact source, tuple and custody qualify; timing binding UNKNOWN. | 84857 /070dfc /5e9ad /635f |
 | P2-D124-five-cases | Retain five complete sampled tails | App independent Luna | Same actual10721 | merged | app-D124-10721-independent-review-1455 | GO for placement, ADD, parent and both clears on captured tuple. Canonical, history, reload, guarded native inverse and zero legacy qualify. Full tour NO-GO. | 84857 /070dfc /5e9ad /635f |
 
-D56.4: Proof is folded into App. MAIN has now stood down the D125 hosting exception and assigned the full P2 tour to App locally. No new Proof dispatches, dependency provisioning, retries or product merges. Keep summaries only.
+D56.4: Proof is folded into App. MAIN closed the D125 hosting exception and assigned the tour to App locally. Summaries only: no Proof dispatch, body, provisioning, retry, cleanup or product merge.
 
-live 0 / cap 0 stood down; ready-undispatched 0. All 1313 prior Proof worker records are done. No live Proof controller or heavy body.
+live 0 / cap 0 stood down; ready-undispatched 0. Normal bin/workers reports all 1313 prior Proof worker records done. No live Proof controller or heavy body.
 
-core open: 2 transferred App P2 gestures, SWAP and element. App 3250 and later sampled10721 are independently NO-GO: each has originals 5 PASS, 2 FAIL, 1 NOTRUN on separate tuples. Five complete tails qualify on that exact tuple. Prior11251 NO-GO and isolated asset8974 GO retain their recorded tuples. Full-tour GO is still owed.
-regressions: Agent retains 14 pending next full-core confirmation. Host fallback96df is normally merged as a4e016; independent original14 PASS is source and targeted proof, not a full-core result.
+core open: 2 transferred App P2 gestures, SWAP and element. Actual3250 and separate sampled10721 are independently NO-GO: each readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN on its own tuple. Five complete tails qualify only on that tuple. Full-tour GO remains owed.
+regressions: Agent retains REG14 pending a meaningful current full-core result. Normally merged a4e016 host fallback has independent original14 PASS; targeted proof does not replace the full-core count425.
 
-D125 hosting is closed by MAIN's fallback decision, received in the newest lead relay. Proof's exact recipe preparation passed; the supplied submit exited 1 before D66 startup at `ERR_MODULE_NOT_FOUND` for tsx. No central preflight ID, normal ID, XML or durable submit plan was produced. Readiness and all eight originals are NOTRUN; Proof consumed no full P2 body. This is not a product, sourceguard or safety verdict.
+Blockers: SWAP — owner decision under D130 after automatic safety classifier refusal. Runtime recovery and related acceptance remain held; no retry or alternate route.
+Blockers: Element — App owns bounded safe leaf and lifecycle retention. Existing exact request3 has no provider leaf, wall denominator or final outcome; no dominant operation proved.
+Blockers: Final cut — Agent local D128 core controller is queued after verified local D131 receipt; build and body remain pending. Farm owns D77 applied inputs. Final gates and D69 remain owner-lane work.
+Next ready: None for Proof; MAIN closed the D125 exception and Proof remains folded into App.
 
-[Retained run receipt](../../design/app2-D125-host-run-receipt.md) remains unchanged, as MAIN instructed. Do not provision tsx or any other dependency, retry anything, or touch the Node tree or four checkouts further. The accepted official Node tree, private output root and prior exact error records remain as they were.
+D131 receiving wait CLEARED. Agent's board16:16 verifies local canonical123bb93c, regular0755, against independent1601 and installed1604. Same-WIP resume1610 is queued on exacta4e016/5e9ad with admission6749282304bytes. No child build, central core ID or body result is yet reported. Runtime source, review, installation and publication remain complete. Farm core remains dropped.
+
+D130 remains recorded and surfaced to the owner. Runtime WAL recovery branch stays unreviewed and unmerged; related SWAP acceptance is stopped. No retry, rephrase, transfer, alternate test route or D112 rollback. The existing Runtime escalation owns the decision; Proof creates no duplicate route. D129 and D129a refusals remain recorded and stopped; separately authorized Agent static review1549 PASS does not rewrite that history.
+
+Farm D77 waits for exact applied commit materialization through its ordinary lead route. Runtime records the source objects absent on Main too, with finite input review1616 active and lead publication requested. Guard PASS receipt returned; lock and child status remain unverified. No installed stage/render or Proof input requested. Farm has no core or census job.
+
+Runtime normalab1e retains exact genuine3/native2 integrated PASS1550 for grouped inverse/redo; scalar and compound roots remain UNKNOWN. Agent has allocated normal U4a adoption remotely. App adopter1615 is active from84857, excluding held recovery and preserving all captured tours.
+
+Element request3 is bound to exactd22 but retained352samples/3lost expose outer routing frames only, with pending outcome and no wall denominator. Completed request2 measured19.603s/provider11.840s; it proves no request3 duration or dominant operation. App helper author1606 source21 controls PASS; protected1613 review and the same queued socket-control request remain separate. No new body, cost author, helper activation or browser credit inferred.
+
+D125 hosting is closed by MAIN. The exact supplied submit exited1 before D66 at missingtsx. No central preflight ID, normal ID, XML or durable submit plan was produced; readiness and all eight originals NOTRUN. Proof consumed no full P2 body. This remains a harness stop, with no product, sourceguard or safety verdict.
+
+[Retained run receipt](../../design/app2-D125-host-run-receipt.md) remains unchanged. Do not provision tsx or another dependency, retry anything, or touch the Node tree, four checkouts or private output root.
 
 Manager extracted the Node tree at 13:40:22Z before D125a/D125b authorization; accepted by MAIN after a verified match.
 
 EPERM on an extra Node-git step I added; refused, not retried.
 
-[Explicit venue release to App and lead](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact missing-dependency stop handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Existing normal hub-sync routes the App recipient; this venue has no managers/app directory. No new publication route or duplicate body was created. App owns execution and its independent verdict.
+[Explicit venue release](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact stopped-recipe handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Normal hub-sync publishes the existing App recipient; no new publication route or duplicate body.
 
-Blockers: SWAP — owner decision under D130 after automatic safety refusal; Runtime source and related acceptance held, no retry or alternate route.
-Blockers: Element — App owns follow-through; Runtime and Agent retain incomplete operation-level profile evidence.
-Blockers: Final cut — Agent local core awaits Runtime D131 reviewed kit publication. Farm owns D77 applied-checkout inputs. Current core, final gates and D69 remain owner-lane work; no Proof action authorized.
-Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
+Pass 2026-10-25T16:28:28Z: inbox consumed through817752 bytes; no new items. Header5497c96e unchanged. Normal bin/workers reports1313 done, zero live. App, Agent, Runtime and Farm boards rechecked; Agent local D131 receiving wait cleared this pass. Free disk 6176321536 bytes (5.75 GiB). Summaries only; all receipt, source, test, pin, generated-file, Git and upstream state preserved.
 
-Pass 2026-10-25T16:15:18Z: inbox consumed through 817752 bytes; no new items. PLAN and MANAGER-COMMON read. Header 5497c96e confirms D56.4, D125 closure, D130 and D131. Normal bin/workers reports all 1313 ap2 records done and zero live. App, Agent, Runtime, Farm and Proof lead boards checked through the normal hub. Free disk 6188945408 bytes (5.76 GiB). Summaries only; no Proof dispatch, body, provisioning, retry, cleanup or merge authorized.
+D125 receipt SHA256: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe.
 
-D131 assigns the child-only reserve change and independent review to Runtime. Runtime board16:02 records author1558 with five admission controls and statics PASS; reviewer1601 active, no live installation. Agent board16:00 gates prepared D128 resume1543 on reviewed installed kit publication. The earlier local controller had zero body and no test ID. No current full-core result or regression closure is inferred. Farm core remains dropped by the recorded owner decision.
-
-D130 automatic safety classifier refusal remains held and surfaced to the owner. Runtime WAL recovery branch stays unreviewed and unmerged; related SWAP acceptance is stopped. No retry, rephrase, transfer, alternate test route or D112 rollback. Existing Runtime escalation owns the decision; Proof creates no duplicate route. D129 and D129a Farm refusals remain recorded and stopped; separately authorized Agent normal static review1549 PASS does not rewrite that history.
-
-Farm board16:08 reports the two applied-tuple checkouts refused because the commits are unknown locally. Farm has already asked Runtime and its lead for the normal materialization route; no Proof input is requested. Profile requests, guard receipt and stage custody remain owner-lane inputs. Its possible lock typo awaits Runtime confirmation. No installed render, Farm core restart or Proof hosting is inferred.
-
-Runtime normalab1e retains exact genuine3/native2 integrated PASS1550 for grouped inverse/redo; scalar and compound roots remain UNKNOWN. Exact element d22 request3 is bound, but retained352 samples/3 lost expose outer top10 frames only, with pending outcome and no wall denominator or provider leaf. Completed request2 measured19.603s/provider11.840s; it proves no request3 duration or dominant operation. App trace1600 owns the existing-helper leaf-retention question, without a new body. No speculative author or browser credit.
-
-Full P2 actual3250 and separate sampled10721 remain independently NO-GO: each readiness1 PASS, originals5 PASS,2 FAIL,1 NOTRUN on its own tuple. Five complete tails qualify only on that tuple. SWAP and element remain open; asset is serially NOTRUN. Prior isolated asset and P1/P3/P4 GOs retain recorded scope. Agent425 and REG14 await meaningful current full core. Current core, D69, final tuple P1-P5 and genuine installed render remain owner-lane work.
-
-D125 receipt unchanged: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. Manager extracted the Node tree at 13:40:22Z before D125a/D125b authorization; accepted by MAIN after a verified match. EPERM on an extra Node-git step I added; refused, not retried. Node tree, four checkouts, private output root and receipt preserved. No source, test, pin, generated-file, Git or upstream mutation.
