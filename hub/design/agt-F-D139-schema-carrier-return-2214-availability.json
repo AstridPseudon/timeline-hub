@@ -1,0 +1,68 @@
+{
+  "schema": "timeline.d139.schema-carrier-availability/v1",
+  "task": "D139",
+  "status": "EXACTMISSING",
+  "expected_source": {
+    "repository": "ArtAgents",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "requested_revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "source_tree_from_prior_evidence": "75a5a697f630affee40632e500b3f5b704a9b834"
+  },
+  "physical_availability": {
+    "exact_source_directory": false,
+    "exact_source_revision_object_in_known_repos": false,
+    "authorized_source_archive": false,
+    "portable_carrier": false,
+    "acquisition_attempted": false,
+    "source_path_checked": "packages/timeline-schema/python",
+    "scope": "exact expected source path and known authenticated repository roots only"
+  },
+  "available_authenticated_input": {
+    "kind": "installed_distribution",
+    "root": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "package_path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema",
+    "dist_info_path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info",
+    "record_rows": 18,
+    "record_hashed_rows": 12,
+    "record_sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1",
+    "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+    "package_init_sha256": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+    "schema_json_sha256": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25",
+    "all_record_files_regular_mode": "0644"
+  },
+  "provenance_boundary": {
+    "proves": [
+      "The installed distribution has direct_url metadata naming the expected ArtAgents URL, revision, and subdirectory.",
+      "All 12 hashed RECORD entries match the physically installed files.",
+      "The previously qualified Runtime-supported explicit schema binding can consume this installed input."
+    ],
+    "does_not_prove": [
+      "The original ArtAgents source tree is physically available now.",
+      "The installed files can be republished as a source carrier without source-tree and mode provenance.",
+      "That any nearby vendor copy is the pinned ArtAgents source rather than an unchecked module copy."
+    ]
+  },
+  "runtime_candidate": {
+    "supported_candidate_can_consume_installed_input": true,
+    "basis": "D137 explicit ASTRID_TIMELINE_SCHEMA_PYTHONPATH qualification and 12-entry RECORD verification",
+    "portable_carrier_available": false
+  },
+  "missing_inputs": [
+    "Physically available ArtAgents revision 242f9c4306bf3b501222cb041a9eb246ef47bc85 source tree at packages/timeline-schema/python",
+    "Authorized carrier preserving original source bytes, modes, source revision, digest, RECORD, and origin"
+  ],
+  "excluded_candidates": [
+    {
+      "kind": "nearby vendor copies",
+      "reason": "not the authenticated ArtAgents source path/revision and therefore unchecked module copies"
+    },
+    {
+      "kind": "installed distribution",
+      "reason": "authenticated input only; repackaging it would lose the required source-tree provenance"
+    }
+  ]
+}

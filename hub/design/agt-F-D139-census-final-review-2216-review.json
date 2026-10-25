@@ -1,0 +1,70 @@
+{
+  "schema": "timeline.d139.import-census-final-review/v1",
+  "task": "D139",
+  "mode": "independent_read_only_finite_audit",
+  "overall": "PASS_FINITE_RECONCILED",
+  "publication": "PASS for the finite graph correction only; Runtime remains the owner of the complete child recipe and real in-child check-only.",
+  "custody": {
+    "author_branch": "tl/agt-F-D139-import-census-return-2210",
+    "author_commit": "05f7b40eea88724beb6227db4b55a7fa2c31943d",
+    "author_written_paths": [
+      "evidence/correction.json",
+      "evidence/excluded-occurrences.json",
+      "evidence/source-manifest.json",
+      "evidence/validation.md",
+      "evidence/progress.md"
+    ],
+    "manager_recovery": "The five exact Git blobs were recovered into the flat design/agt-F-D139-import-census-return-2210-* paths.",
+    "recovered_git_blobs_exact": true,
+    "limitation": "This review does not claim that absolute-path artifacts existed in the author's output; it verifies the committed relative evidence blobs and their manager-recovered copies."
+  },
+  "source_tuple": {
+    "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "agent_tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "tuple_identity": "PASS"
+  },
+  "checks": {
+    "recovered_git_blobs": "PASS: all five manager-recovered copies are byte-exact to the return-2210 Git blobs",
+    "finite_graph_complement": "PASS: the 38 returned records are the exact multiset complement of the original 17,642 import occurrences after normalizing graph edge shape",
+    "graph_arithmetic": "PASS: 17604 + 38 = 17642",
+    "exclusion_rules": "PASS: 14 D73 launcher-preflight records plus 24 caught/conditional missing-import records; no unmatched or over-counted records",
+    "source_proof": "PASS: all 24 guarded imports match the authenticated Agent source AST inside try/except; all 14 launcher imports match the original preflight imports and recorded embedded blocks",
+    "source_git_objects": "PASS: all 1,001 source rows match owner-repo Git blobs and byte SHA-256 values (924 Agent, 77 Runtime)",
+    "source_coverage": "PASS: 22 selectors, 431 root Python files, 1,001 source rows, 1,001 graph nodes, 1,146 import-table entries, 983 dynamic records, zero recorded parse errors",
+    "original_evidence_hashes": "PASS: all seven original-2149 packet hashes and the review-2210 review hash match their retained files",
+    "original_tuple_and_map": "PASS: 4c/ab1e tuple, 17-entry missing-module map, and original evidence remain unchanged",
+    "missing_classification": "PASS_WITH_CAVEAT: 12 registered-child absences plus 5 optional/plugin absences; zero unconditional production blockers inferred",
+    "schema_record_hashes": "PASS: banodoco-timeline-schema 0.0.2 RECORD and all 12 pinned RECORD-entry SHA-256 values match",
+    "c0_contract_shape": "PASS_READ_ONLY: requested v2 request/reply vocabulary, fields|atomic merge, accepted|merged, conflict/invalid diagnostics, preview null receipt, records/bindings/effects/dependencies/history/undo shapes are present; no DTO changed",
+    "composition_gitdiff_check": "PASS: composition final-review worktree is clean and git diff --check is clean",
+    "source_floor": "PASS: 5,272,358,912 bytes available, above the 5 GB floor and 4 GB stop threshold"
+  },
+  "counts": {
+    "graph_nodes": 1001,
+    "graph_edges": 17604,
+    "import_table_entries": 1146,
+    "import_occurrence_records": 17642,
+    "excluded_occurrence_records": 38,
+    "dynamic_records": 983,
+    "root_selectors": 22,
+    "root_python_files": 431,
+    "source_rows": 1001,
+    "parse_errors": 0
+  },
+  "excluded_by_path": {
+    "tools/p4-d73-pinned-launch.sh": 14,
+    "astrid/core/generation/backends/vibecomfy.py": 10,
+    "astrid/core/timeline/banodoco_schema.py": 7,
+    "astrid/packs/vibecomfy/production_engine.py": 6,
+    "tests/packs/rendering/_helpers.py": 1
+  },
+  "limitations": [
+    "No new broad census or rerun was performed.",
+    "No product import execution, child/provider/Store/acquisition/plugin execution, product tests, typecheck, lint, browser, socket, or full suite was performed.",
+    "The separate 2214 worker owns physical schema-carrier checking; this review does not claim that evidence.",
+    "Runtime alone owns the complete child recipe and real in-child check-only."
+  ],
+  "next_step": "Consume the finite corrected graph evidence while retaining Runtime recipe ownership; do not infer a mandatory blocker from the 12 child or 5 optional/plugin absences."
+}

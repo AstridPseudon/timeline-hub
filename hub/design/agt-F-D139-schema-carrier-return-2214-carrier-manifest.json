@@ -1,0 +1,20 @@
+{
+  "schema": "timeline.d139.schema-carrier-manifest/v1",
+  "task": "D139",
+  "status": "EXACTMISSING",
+  "carrier_path": null,
+  "carrier_created": false,
+  "source": {
+    "repository": "ArtAgents",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "version": "0.0.2"
+  },
+  "manifest_entries": [],
+  "reason": "The exact pinned source tree and an authorized source carrier are not physically available. The installed distribution is retained as authenticated input evidence only; no unchecked copy or invented archive was made.",
+  "required_to_complete": [
+    "Authenticated physical ArtAgents source at the pinned revision and subdirectory",
+    "Permission to preserve and publish its original bytes, modes, RECORD, digest, and origin"
+  ]
+}

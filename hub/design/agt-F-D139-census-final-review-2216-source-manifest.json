@@ -1,0 +1,99 @@
+{
+  "schema": "timeline.d139.import-census-final-review-source-manifest/v1",
+  "task": "D139",
+  "status": "PASS_FINITE_RECONCILED",
+  "source_tuple": {
+    "agent": {
+      "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+      "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+      "repo": "/home/user/peteromallet/astrid-agent"
+    },
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "repo": "/home/user/banodoco/banodoco-workspace-runtime"
+    }
+  },
+  "return_2210": {
+    "branch": "tl/agt-F-D139-import-census-return-2210",
+    "commit": "05f7b40eea88724beb6227db4b55a7fa2c31943d",
+    "recovered_files": {
+      "correction.json": {
+        "git_blob": "f966f346fee0c9befdc0ae19e5fa5d84c91468ce",
+        "sha256": "1a2a5f435dca22669056aa0cde64177fb052d04ad1ee66d9d192520e8f02a4ec",
+        "exact_copy": true
+      },
+      "excluded-occurrences.json": {
+        "git_blob": "9eade0ed89b7856f75f15372ca6a7edd93397d1c",
+        "sha256": "398a622c0042e50d8c9533629c88e8385ab603345fdece3e529c1571969c288e",
+        "exact_copy": true
+      },
+      "source-manifest.json": {
+        "git_blob": "4a1f69977d80382d98be3ffad93b978ec70072fd",
+        "sha256": "44a1e649c8092d15a95f41b9f492d2df21e60967bce8b4cdd8114bb56a5fd33e",
+        "exact_copy": true
+      },
+      "validation.md": {
+        "git_blob": "1eaa5f68903cb3f5d2d3307d3ae3acbec4f97d51",
+        "sha256": "70aea3e7a4d93bd63f1d1bb3376fc90542ae3486fb2c6e34691ca75bbeb81d05",
+        "exact_copy": true
+      },
+      "progress.md": {
+        "git_blob": "1919857401f3920178f255eeb84df43b7178a7b1",
+        "sha256": "f601e6c2a312eb9c8e6bd818664759aec41aa98cd402ac6569df5baf9c0386c0",
+        "exact_copy": true
+      }
+    }
+  },
+  "original_evidence_sha256": {
+    "input_census.json": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30",
+    "missing_modules.json": "2d008eae7e10ec0364b4395e0e368a72690680ee15729d65cb39c5e51b39fc2b",
+    "source_manifest.json": "da8140716e8cc84c61c6956faac7559e116eeea79b1649bfcf7f73bdedb59153",
+    "source_pins.json": "7644e140279928e915513cf7a6ac8fb115bd91d788db4ec81bc31105d423584a",
+    "coverage.md": "39fc593a37b21172b783b153fd2089fd772c21ecfb93e681669521fb75cdaed5",
+    "validation.md": "2a653ecdf94701fa4b58f43481bd3b96acd1528b944d2157a2170a0256b6d2d6",
+    "progress.md": "5a141feea28f15d4734793121b28810395e6f7006cf4a2ca33512fffb6c37e99",
+    "review_2210.json": "a961de1dfb5ac97ff5c5ffc74c04c1de52cdef7da080d0e8238508d4795b185f"
+  },
+  "coverage": {
+    "root_selectors": 22,
+    "root_python_files": 431,
+    "source_rows": 1001,
+    "agent_source_rows": 924,
+    "runtime_source_rows": 77,
+    "graph_nodes": 1001,
+    "graph_edges": 17604,
+    "import_table_entries": 1146,
+    "import_occurrence_records": 17642,
+    "dynamic_records": 983,
+    "parse_errors": 0
+  },
+  "graph_reconciliation": {
+    "prior_graph_edges": 17604,
+    "prior_occurrence_records": 17642,
+    "excluded_records": 38,
+    "arithmetic": "17604 + 38 = 17642",
+    "rule_counts": {
+      "d73_launcher_preflight": 14,
+      "caught_or_conditional_missing": 24
+    },
+    "complement_check": "PASS exact multiset complement after normalizing graph edge fields"
+  },
+  "missing_classification": {
+    "reported_total": 17,
+    "registered_child_exact_missing": 12,
+    "optional_or_plugin_missing": 5,
+    "unconditional_missing_blockers": 0,
+    "map_exact_to_original": true
+  },
+  "schema_pin": {
+    "distribution": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "direct_url_commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "record_sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1",
+    "record_entries_checked": 12,
+    "record_entries_missing": 0,
+    "record_entries_mismatched": 0
+  },
+  "custody_note": "The author branch stores the five derivatives under relative evidence/. This packet verifies those committed blobs and the manager's flat design recovery only; it does not invent or claim an absolute author artifact."
+}

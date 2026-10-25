@@ -1,0 +1,63 @@
+{
+  "schema": "timeline.d139.source-manifest/v1",
+  "status": "EXACTMISSING",
+  "source": {
+    "repository": "ArtAgents",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "source_tree_from_prior_evidence": "75a5a697f630affee40632e500b3f5b704a9b834"
+  },
+  "physical_source": {
+    "directory_present": false,
+    "revision_object_present_in_known_repos": false,
+    "archive_present": false,
+    "carrier_present": false
+  },
+  "authenticated_installed_input": {
+    "root": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "package": "banodoco_timeline_schema",
+    "package_mode": "0755",
+    "dist_info_mode": "0755",
+    "record_path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/RECORD",
+    "record_bytes": 1593,
+    "record_mode": "0644",
+    "record_sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1",
+    "record_rows": 18,
+    "record_hashed_rows": 12,
+    "direct_url_path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/direct_url.json",
+    "direct_url_bytes": 254,
+    "direct_url_mode": "0644",
+    "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+    "files": [
+      {"path": "banodoco_timeline_schema-0.0.2.dist-info/INSTALLER", "mode": "0644", "bytes": 4, "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508"},
+      {"path": "banodoco_timeline_schema-0.0.2.dist-info/METADATA", "mode": "0644", "bytes": 205, "sha256": "49fd34e5afe868b39ef9c7131f8093ca98017f0129faab5aa86bd5a80e2eba0e"},
+      {"path": "banodoco_timeline_schema-0.0.2.dist-info/REQUESTED", "mode": "0644", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      {"path": "banodoco_timeline_schema-0.0.2.dist-info/WHEEL", "mode": "0644", "bytes": 91, "sha256": "98e75747d0b7c0c568bfb71263c3d8f970b3a374a6996087bc642be5cb09a1aa"},
+      {"path": "banodoco_timeline_schema-0.0.2.dist-info/direct_url.json", "mode": "0644", "bytes": 254, "sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e"},
+      {"path": "banodoco_timeline_schema-0.0.2.dist-info/top_level.txt", "mode": "0644", "bytes": 25, "sha256": "543a8d01279949f8ec5ec908c47cfcdb6978921a13207e748a97376022d86ee0"},
+      {"path": "banodoco_timeline_schema/__init__.py", "mode": "0644", "bytes": 1070, "sha256": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c"},
+      {"path": "banodoco_timeline_schema/generated.py", "mode": "0644", "bytes": 2462, "sha256": "da74eae27fafc8e8410b96c99cec0652f54343fa7b975ec315295d644ea6ae63"},
+      {"path": "banodoco_timeline_schema/materialize.py", "mode": "0644", "bytes": 1892, "sha256": "41651567e2e29b565a2854210c146ecb450c49c815504ede375775eb020bde38"},
+      {"path": "banodoco_timeline_schema/theme.py", "mode": "0644", "bytes": 2595, "sha256": "b713f1e61c8c63b1ce957d7a6c4b1f1c5c1700d4fd6336f99f97ba7e964f4dcb"},
+      {"path": "banodoco_timeline_schema/timeline.schema.json", "mode": "0644", "bytes": 11482, "sha256": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25"},
+      {"path": "banodoco_timeline_schema/validate.py", "mode": "0644", "bytes": 1265, "sha256": "ef953e644cbaee6919397571a00966c45cddf9e55f4d83636e9a037afb187059"}
+    ],
+    "record_unhashed_rows": [
+      "banodoco_timeline_schema-0.0.2.dist-info/RECORD",
+      "banodoco_timeline_schema/__pycache__/__init__.cpython-313.pyc",
+      "banodoco_timeline_schema/__pycache__/generated.cpython-313.pyc",
+      "banodoco_timeline_schema/__pycache__/materialize.cpython-313.pyc",
+      "banodoco_timeline_schema/__pycache__/theme.cpython-313.pyc",
+      "banodoco_timeline_schema/__pycache__/validate.cpython-313.pyc"
+    ]
+  },
+  "provenance_interpretation": {
+    "direct_url_is_source_provenance": true,
+    "source_tree_is_physically_available": false,
+    "installed_package_is_portable_source_carrier": false,
+    "runtime_supported_candidate_can_consume_installed_input": true
+  }
+}

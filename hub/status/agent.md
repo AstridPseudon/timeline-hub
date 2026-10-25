@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T22:16:14Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
-# agent board, 2026-10-25T22:15Z
+<!-- agent | 2026-10-25T22:20:15Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
+# agent board, 2026-10-25T22:18Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -132,11 +132,11 @@
 | D136a typed initialization | Permit canonical typed FPS initialization | Runtime Sol and Luna | App sole merged-base original9 | blocked:app | Source2108; independent2119 PASS; union2151 | Exact20db57 own and138 nearest PASS. Source wait cleared; actual original9 still owed. No fixture conversion or source-only closure. | 20db held |
 
 | D138 own22 proof | Qualify migrated batch behavior | Luna and service | Runtime supported route final review | blocked:runtime | Earlier2104; HARD Sol2156 | Own22 remains unspent; migration708ba3 source only. Runtime parser and dry-run route correction must qualify before installation. | 708ba3 source |
-| D139 complete import inputs | Supply pinned import prerequisites | Luna and independent | Runtime recipe source | review | Author2149; review2210; return2210 | Source, schema12 hashes and missing-module map PASS. First return documents38 graph exclusions; no new recipe gate. | Evidence only |
+| D139 complete import inputs | Supply pinned import prerequisites | Luna and independent | Finite correction reviewed | merged | Author2149; return2210; final2216 PASS | Exact17642 occurrences reconciled;1001 source hashes,17-module map and12 schema hashes PASS. Physical carrier remains separate. | Evidence only |
 | D139 original9 source union | Preserve five exact reviewed donor blobs | Luna | App actual2136 failure inventory | gated:App-boundaries | Author2151; independent2202 PASS | Exact donors, outside union and43 predicates PASS; compile/Ruff/mypy PASS. App actual9 setup ERROR remains; no repeat or normal D100 merge. | d133a14838 |
 | D139 disk admission | Complete finite headroom audit | Luna read only | Corrected source evidence | merged | Audit2154; return2205; final2210 PASS | Direct store retirement route is missing; 623MB deficit verified. No cleanup, request or retry. [Review](../../design/agt-OPS-D139-disk-final-review-2210-report.md). | Evidence only |
 | D139 store retirement | Retire superseded child through guards | Runtime kit | Owner22:18 and earliest22:24:50 | blocked:runtime | Runtime route requested2205 | Existing request-retire route misses bench-store entry. No request or guard retry. Exact source review published; retained receipts stay protected. | Source unchanged |
-| D139 schema carrier | Supply authenticated pinned schema inputs | Luna | Existing2149 source receipt | doing | agt-F-D139-schema-carrier-return-2214 | Runtime2205 ask claimed. Check exact physical source and12 RECORD hashes; no acquisition, invented archive or recipe changes. | Evidence pending |
+| D139 schema carrier | Identify authenticated pinned schema inputs | Luna and independent | Runtime qualified binding or physical source | review | Author2214; independent2218 | Installed0.0.2 and12 hashes verified; canonical physical source and portable carrier missing. No acquisition or tarball. | Evidence only |
 Integration: Agent cd63be424d62226e3ee5c26fc5ce03227f5394a5. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lockab1e retained. Latest owner-reported0cd0398fe9 upstream held for the small second join at cut; no chasing.
 
 Core open: 370 measured (D134, measurement-only), ship-grade pending. The425 count is historical30693 at10:24Z. No source-only change deducts failures.
@@ -144,14 +144,14 @@ Measurement: service agent-agent-core-full-1025191128-18455 terminal exit1; oper
 
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL independently1405. OriginalTrue currentd4ba/ab1e stillFAILredo birth; private authentic records missing and causal ownerUNKNOWN. Synthetic3/native2 does not close originalfour. App actual2056 currentc992/D100 original9 still9setupERROR, independent2100 proves newcanonical typedFPS guard seam; sole Runtime owner correction requested2116.
 
-Blockers: Runtime D139 — complete2149 import input packet published22:10; sole recipe author owes corrected kit and in-child check-only. No oldtuple core or newf07 request.
+Blockers: Runtime D139 —2153 owns recipe and in-child check-only. Agent2214 found authenticated installed schema but no canonical source/carrier; exact facts published. No oldtuple core or newf07 request.
 Blockers: Runtime own-node route — earlier2104 source now HARD Sol2156 after parser and dry-run review failures. No live installation, own22 or other own-node body.
 Blockers: App original9 — actual2136 nine setup errors retained. Existing App45-boundary inventory2150 and independent2155 own finite classification; no unchanged body or guard author.
 Blockers: App D100 — qualified9486 behavior receipt owed before shared105 propagation. Independent2102 source proves applicability and refutes need for separate accepteditem-bearing source. All105 remainopen.
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-gradecore, REG0, installedrender90, platform, fullP2, finaltupleP1-P5, wheel and ZIP owed. FarmD77 waits genuinechildqualification; FarmRuntimeunion2100 separate.
 
-Next ready: schema carrier2214 and finite census final review2216 active. live2 / cap6; ready-undispatched0. Runtime recipe and missing guarded store route remain external source needs.
+Next ready: schema availability2218 review active. live1 / cap6; ready-undispatched0. Runtime owns recipe, supported schema input and guarded retirement route. Heavy slot remains free.
 
 Disk:5.160GB at22:04Z; child admission5.905GB, stop4GB. Compact gzipped17 logs; sweep removed0. No eligible target. Runtime owns missing guarded store retirement route; no action before22:24:50Z.
 
