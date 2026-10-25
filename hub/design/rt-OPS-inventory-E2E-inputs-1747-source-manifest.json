@@ -1,0 +1,41 @@
+{
+  "schema": "timeline.ops-child-custody.tiny-source.v1",
+  "source_root": "ops-child-custody/e2e-fixtures/tiny",
+  "roles": {
+    "agent": {
+      "files": {
+        "LICENSE": "40ba8a8b08a725cc4d7c6d674297c4447ba0357020cb23f19107557705916b2d",
+        "astrid/__init__.py": "57af0815dfaaf2a9ac485a45c83126a7d7926dd900a02cc9667af3a825fc481d",
+        "astrid_runtime_client/__init__.py": "dde31f7e1cc63ef00cb7eee89d0b12514b29549448525367b3ab75962ad7c3ca",
+        "pyproject.toml": "4d2a2286436fb8b084cc4e492f55c768df9a706f687da943ed621e834c68e6db",
+        "requirements/proof.lock": "934a9a0c59d4310eacb6a02699644b1df5e5a847c65ba0708997b37348fd0185"
+      }
+    },
+    "runtime": {
+      "files": {
+        "LICENSE": "40ba8a8b08a725cc4d7c6d674297c4447ba0357020cb23f19107557705916b2d",
+        "astrid_runtime/__init__.py": "1043ef52e8b2145382368acfe3244720f319f539a54f1542a9c3c857ed3d2111",
+        "astrid_runtime/__main__.py": "6834b438d197bcd8ac3a32e661e2667c54dbe84a79f58e7cc98baa2c82d0ee53",
+        "packages/python/astrid_runtime_client/__init__.py": "dde31f7e1cc63ef00cb7eee89d0b12514b29549448525367b3ab75962ad7c3ca",
+        "pyproject.toml": "ac8868ea6e75f9ed6a55c7e13141555c66ec945b0e7c8283cc0ad63a2bbc7f61",
+        "runtime_protocol/__init__.py": "1043ef52e8b2145382368acfe3244720f319f539a54f1542a9c3c857ed3d2111"
+      }
+    },
+    "dependency-dot": {
+      "files": {
+        "custody_b/__init__.py": "d0a9c55fc2a992698d2b88161905a4d3a7900aac6a9171d8708571f30ac98d76",
+        "pyproject.toml": "26b92b5c2fd49a8269722b6b17bda2a305d2cbb136860117e46138649034a0e4"
+      },
+      "wheel": "custody_b-0.1.0-py3-none-any.whl",
+      "wheel_sha256": "1e3759d3710d3d92e31f10df3abe7ee8003532a19c1686fa5c2fbc75c407531e"
+    },
+    "dependency-underscore": {
+      "files": {
+        "custody_a/__init__.py": "9a63481bae87da9982570dda365619c24c6ec148d9c93e5ab61cbd6cb8cecf37",
+        "pyproject.toml": "5f0ce1ee39a927ec85a1523e7315b4abcda525f8b0a6a2d6955141aa0fe1dd92"
+      },
+      "wheel": "custody_a-0.1.0-py3-none-any.whl",
+      "wheel_sha256": "7997736a950ea3c6a4fbe32ca5cde306ced6610cbb0a4baa392cb402c59a3a14"
+    }
+  }
+}
