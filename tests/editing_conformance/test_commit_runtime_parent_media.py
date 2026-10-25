@@ -177,6 +177,9 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
             child_preview = call('occurrence.add-media', {
                 'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
             child_preview['intent'] = {'ownership': 'occurrence'}
+            child_preview['created'] = [
+                'occurrence:occurrence-2/asset:' + child['asset'],
+                'occurrence:occurrence-2/clip:' + child['id']]
             commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
             child_command = capture_occurrence_add_media(
                 bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
