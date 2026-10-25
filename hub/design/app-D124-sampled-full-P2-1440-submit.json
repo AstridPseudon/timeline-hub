@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task": "D124 sole sampled full P2 controller",
+  "status": "SUBMITTED_WAITING_TERMINAL",
+  "admission": {
+    "controller_dispatch_bytes": 5331136512,
+    "controller_dispatch_utc": "2026-10-25T14:40Z",
+    "stop_floor_bytes": 4000000000,
+    "basis": "D89c admission measured once at controller dispatch; same-body prep does not retrigger the 5.2GB gate"
+  },
+  "protected_activation": {
+    "report": "PASS_PROTECTED_ACTIVATION",
+    "source_custody": "PASS",
+    "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "helper_basename": "p2_commit_phase_capture.py"
+  },
+  "submission": {
+    "target": "app-pin-84857c45",
+    "preflight_id": "app-pin-84857c45-d73-p2-84857c45-submit-preflight-1025144221-30400",
+    "preflight_status": "pass",
+    "normal_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+    "normal_status_at_handoff": "running",
+    "body_count": 1,
+    "duplicate_body_count": 0,
+    "durable_plan": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-sampled-full-P2-1440/submission/full-p2/p2-submit-plan.json",
+      "sha256": "4fb77fe90f3e5afa603d82fb86221aed511276a2cd77d52899c8bbc954caa777"
+    }
+  },
+  "tuple": {
+    "app": ["84857c45347539c7820bb054b69e2e5ad4079081", "7feb5b12a1ad9629f096700c40c393d5b3998217"],
+    "agent": ["070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "6056414359ae9fce08d999d54cbecf719fda33c3"],
+    "runtime": ["5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "de2954a0ceadb4455903d9abdfec3b773318a50f"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+  },
+  "node_and_dependencies": {
+    "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "node_sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "launch_root": "/home/user/work/wt/app-pin-84857c45",
+    "node_modules": "/home/user/work/wt/app-pin-84857c45/node_modules",
+    "node_modules_realpath": "/home/user/work/app/node_modules",
+    "tsx_resolved": "file:///home/user/work/app/node_modules/tsx/dist/loader.mjs",
+    "shared_dependency_write": false
+  },
+  "terminal": null,
+  "independent_verdict": "not_claimed"
+}

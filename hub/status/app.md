@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T14:44:30Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
-# app board, 2026-10-25T14:44Z
+<!-- app | 2026-10-25T14:49:03Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
+# app board, 2026-10-25T14:48Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -77,7 +77,7 @@
 | D118a-captured-redo1 | Preserve exact captured redo closure | Luna and protected Luna | Agent normal home1313 | merged | Author1242; review1251 | Exact SQLite and db_path setup home0b586. Original1 PASS2.38s at donor; seven assertions exact. No full core credit. | 0b586e4b56 |
 
 | D124-sampler-prep | Reuse sampler for actual element process | Luna | Source inventory complete | merged | app-D124-actual-element-sampler-prep-1245 | Exact seam: D66 overwrites PYTHONPATH; existing phase helper needs sampler wiring. Source and safe recipe inventoried; no body. | Evidence only |
-| D124-full-P2 | Run actual sampled element tour | Luna and service | Protected1435 activation PASS | doing | app-D124-sampled-full-P2-1440 | Admitted5331136512 bytes; exact84857/070dfc/5e9ad/635f and6c9. Preflight30400 queued at separate light floor;1.7MB shortfall, normal compact active. No original ID yet. | App84857 tuple |
+| D124-full-P2 | Run actual sampled element tour | Luna and service | Protected1435 activation PASS | doing | app-D124-sampled-full-P2-1440 | Actual10721 RUNNING after preflight30400 PASS. Exact84857/070dfc/5e9ad/635f with reviewed6c9. Plan4fb77f; same ID only. [Packet](../../design/app-D124-sampled-full-P2-1440-submit.json). | App84857 tuple |
 
 | D124-capture | Truthful dispatch and sampler capture | Luna and protected Luna | Final1315 SOURCE PASS | merged | Clean1321; Runtime normal453b | Exact helperSHA and normal remote receipt verified;19 controls/statics PASS at donor. Browser qualification still owed. | Runtime453b3e6f92 |
 | D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1320 SOURCE PASS | merged | Author1312; review1320 | Whole normal tree equals reviewed4c56.29 D66 and2 route, types/lint PASS; actual sampler attachment qualified only in later tour. | af5fe0a274 |
@@ -91,6 +91,9 @@
 
 | D124-activation-proof | Preserve actual helper startup proof | Luna independent | Normal84857 and canonical6c9 source | merged | app-D124-protected-activation-1435 | Fresh normal2 and reviewed2 PASS. Exact6c9,102 rows/30754B,0600,bounded phases/sampler/privacy PASS. No original body or source edits. | App84857 |
 | D124-correlation | Join browser helper and error diagnostic | Runtime current author | Existing safe hash and source audit | blocked:runtime | Runtime MAIN14:29 source owner | Public and logged IDs differ. Existing exact key hash joins browser/helper; Runtime log needs supported safe join. Peer1435 sent; no App duplicate writer. | Source unchanged |
+
+| D74-fe3309-pin | Release completed tagged tuple pin | Manager and host audit | Host1446 and fresh static guards | merged | Guarded recycle1448 | Only oldfe3309 recycled; zero refusal. Current84857 tuple and all3250 outputs, branches and reports kept. [Receipt](../../design/app-pin-guarded-release-1448.json). | No source edits |
+| D127-Runtime-inputs | Hand retained tagged tour source facts | Existing producer and review | Runtime1426 peer ask | merged | Controller1407; independent D125 verdict | Safe facts and source sequence published. No standalone native package or lower private binding in handback; UNKNOWN stays explicit. | Source unchanged |
 
 | D125-local-prep | Prepare exact local fallback | Luna read only | Exact four local receipts | merged | app-D125-local-fallback-prep-1356 | Source/API/Node and source hashes PASS; no body. Dependency omission is explicit and assigned to D127 controller. | Frozen fe3309 tuple |
 
@@ -110,9 +113,9 @@ Blockers: App element — Sole App owner. Strict bounds normal84857; startup roo
 Blockers: Farm host14 and batch — Agent upstream fallback is normal a4e016 and original14 independently PASS. REG closure awaits core; Farm child metadata refusal remains stopped with Runtime1404 correction owner.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Sole sampled controller1440 awaits SAME preflight30400; separate light5GB floor is about1.7MB short. Normal compact running; old completedfe3309 host audit requested proactively. Heavy admission remains carried.
-live 1 / cap 1 at current body slot; ready-undispatched 0; core open: 2. Luna sampled controller prepares sole heavy body. Source reviews await new actual evidence, no duplicate extractor.
-Capacity: Free5.331GB (5331136512 bytes) at sampled controller admission. D89c applies once;4.0GB ongoing stop. Protected helper source and all original outputs remain retained. No refused cleanup or acquisition retry.
-INBOX consumed through2258376 bytes. Runtime1426 existing safe-input ask received and answered with published actual3250 packet, source sequence and honest missing lower pairing. Sampled tour source qualification complete.
+Next ready: Sole sampled actual10721 is RUNNING after normal preflight30400 PASS. Wait SAME ID, then one independent actual timing and passing-tail verdict. No ready body waits; Runtime semantic source remains disjoint.
+live 1 / cap 1 at current floor; ready-undispatched 0; core open: 2. Luna controller1440 owns sole heavy10721. No new source starts below5.0 while it runs.
+Capacity: Free4.771GB after guarded oldfe3309 recycle. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
+INBOX consumed through2258823 bytes. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled actual10721 same-ID running; no source/adoption wait.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 

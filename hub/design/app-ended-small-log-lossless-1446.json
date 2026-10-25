@@ -1,0 +1,119 @@
+{
+  "at_utc": "2026-10-25T14:45:33Z",
+  "scope": "finished over one hour old, non KEEP, nonrunning, unreferenced App logs under 1MiB; no source/test outputs/sessions touched",
+  "rows": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-bulk-required-types-0302/log.txt",
+      "source_bytes": 1047300,
+      "gzip_bytes": 202069,
+      "source_sha256": "89096ff4a54767de40a6c893a43a4b1443d7bfaf7cbe1e885ce086ab126a3264",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-V1-current-merge-forward-r1/log.txt",
+      "source_bytes": 1044249,
+      "gzip_bytes": 174086,
+      "source_sha256": "95f34a55d63e8944a48a81891bbd465f4e477bdbf867c416841c60aa585cb8cb",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D53-pure-integrated-1143/log.txt",
+      "source_bytes": 1038164,
+      "gzip_bytes": 182337,
+      "source_sha256": "2735a30da460f596cbd3d6aaf5f01d54d1275de77d6f570bfb0ca4d710912480",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D79-live-edit-smoke-1821/log.txt",
+      "source_bytes": 1036624,
+      "gzip_bytes": 208391,
+      "source_sha256": "b2818d6884698674c204e9fbd63b749b97c60854df6f844b62801b1b6a3670d8",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D66-plain-stack-sol-1528/log.txt",
+      "source_bytes": 1035690,
+      "gzip_bytes": 195644,
+      "source_sha256": "e7de2727b5f07eeefaaf210e6700059ce12e16619a06a7c2132b12e7dce176d0",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-assets-independent-review-1106/log.txt",
+      "source_bytes": 1034784,
+      "gzip_bytes": 195582,
+      "source_sha256": "c3dbd69162eefe324fadf109fc9a0bd789ca32408d73367d52de4ac256b93c35",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m1-bounded-log-classify/log.txt",
+      "source_bytes": 1032667,
+      "gzip_bytes": 164868,
+      "source_sha256": "54913d1e76e7886a85be7ec89ee1242535b4f3074b948f41092500f081ded9ea",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-d08-public-rate-current-cut/log.txt",
+      "source_bytes": 1024386,
+      "gzip_bytes": 171288,
+      "source_sha256": "7b9511f820d44fe30c536e096fb71422f0ca0427e986c62309533550e6062d8e",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-bulk-fixed-plan-prep-0309/log.txt",
+      "source_bytes": 1023848,
+      "gzip_bytes": 217725,
+      "source_sha256": "b20be7d89c7091aef48afdc9d7ebe95971eb9806e37bdfa819ba199f499cb5bd",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A4-track-label-protocol-0231/log.txt",
+      "source_bytes": 1023378,
+      "gzip_bytes": 179072,
+      "source_sha256": "ce855ee933ee1e166c7369b39525243451d065672b1b1c7e1cdc50a121c377b5",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3b-whole-draft-review-0722/log.txt",
+      "source_bytes": 1020702,
+      "gzip_bytes": 232497,
+      "source_sha256": "18fdd64b8c11f85025ef153d948e4565ea85326b0ab50607060eff7448d455bf",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-ADD-owner-regression-0230/log.txt",
+      "source_bytes": 1018204,
+      "gzip_bytes": 215247,
+      "source_sha256": "3f989b11946e0ea343e35a61ff6a7065afe887fd8e482e8876dd802e7a57b66d",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-public12-readonly-adoption-review/log.txt",
+      "source_bytes": 1015457,
+      "gzip_bytes": 204777,
+      "source_sha256": "4777701327fa00b0dda7597efceebf22050b87723b1848fc793f11fa4ea7ac67",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D96-placement-scope-return-0411/log.txt",
+      "source_bytes": 1013100,
+      "gzip_bytes": 212427,
+      "source_sha256": "fc59e4c7341cf034634b89b0d7821dfa49b038446c005b8d8637e6ca3d20497b",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D125-Proof-full-P2-handoff-1322/log.txt",
+      "source_bytes": 1012928,
+      "gzip_bytes": 169278,
+      "source_sha256": "cd7531a0649da51095afcb84923e00ed788fd8d5ab999c8a7a07d94f775c09e2",
+      "decompressed_exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-P3-caller-prep-review-0850/log.txt",
+      "source_bytes": 1004654,
+      "gzip_bytes": 180450,
+      "source_sha256": "8df1aa3e5f1d0f07dfcbd58498a8651e9943f9c6ecff1bdf920617382aa63c3b",
+      "decompressed_exact": true
+    }
+  ],
+  "logical_saved": 13320397
+}
