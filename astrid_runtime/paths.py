@@ -7,14 +7,44 @@ runtime behaviour.
 
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
-import os
 
 from runtime_protocol import platform
 
 
 DATA_ROOT_ENV = "ASTRID_RUNTIME_DATA_ROOT"
+INSTALL_RECORD_OWNER = "haus.astrid.runtime"
+
+
+def _install_record_path(home: Path) -> Path:
+    """Return the installer selection record path for the current platform."""
+    if platform.sys.platform == "win32":
+        local_app_data = Path(os.environ.get("LOCALAPPDATA") or home / "AppData" / "Local")
+        return local_app_data / "astrid-install.json"
+    if platform.sys.platform == "linux":
+        return Path(os.environ.get("XDG_DATA_HOME") or home / ".local" / "share") / "astrid-install.json"
+    return home / ".local" / "share" / "astrid-install.json"
+
+
+def _installed_data_root(home: Path) -> Path | None:
+    """Read the installer's selected data root, ignoring unavailable records."""
+    path = _install_record_path(home)
+    if path.is_symlink():
+        return None
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(record, dict) or record.get("owner") != INSTALL_RECORD_OWNER:
+            return None
+        raw = record.get("data_root")
+        if not isinstance(raw, str) or not raw.strip():
+            return None
+        root = Path(raw).expanduser()
+        return root if root.is_absolute() else None
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        return None
 
 
 @dataclass(frozen=True)
@@ -29,6 +59,7 @@ class RuntimePaths:
     source_profiles_dir: Path
     instance_lock_path: Path
     bootstrap_lock_path: Path
+    process_control_path: Path
 
     @classmethod
     def current(
@@ -48,7 +79,7 @@ class RuntimePaths:
             if not app_support.is_absolute():
                 raise ValueError(f"{DATA_ROOT_ENV} must be an absolute path")
         else:
-            app_support = platform.data_root(home_path)
+            app_support = _installed_data_root(home_path) or platform.data_root(home_path)
         runtime = app_support / "runtime"
         return cls(
             home=home_path,
@@ -61,6 +92,7 @@ class RuntimePaths:
             source_profiles_dir=runtime / "source-profiles",
             instance_lock_path=runtime / "instance.lock",
             bootstrap_lock_path=runtime / "bootstrap.lock",
+            process_control_path=runtime / "process-control.json",
         )
 
     @classmethod

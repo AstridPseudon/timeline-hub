@@ -88,7 +88,7 @@ def parse_services(value):
             ready_file = ready["file"]
             # Never let a readiness hint remove Runtime-owned authority files.
             if ready_file.casefold() in {"discovery.json", "catalog.json", "instance.lock", "bootstrap.lock",
-                    "runtime.log", "runtime-epoch-floor.json", "replacement.json"} or ready_file.casefold() in ready_files:
+                    "runtime.log", "runtime-epoch-floor.json", "replacement.json", "process-control.json"} or ready_file.casefold() in ready_files:
                 invalid("readiness files must be unique and service-owned")
             ready_files.add(ready_file.casefold())
             timeout = ready.get("timeout_seconds", 30)

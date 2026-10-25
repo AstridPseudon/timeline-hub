@@ -241,6 +241,10 @@ def test_native_custody_unknown_prior_controller_observation_does_not_adopt(tmp_
 
 @requires_linux_tree_custody
 def test_native_custody_real_reparented_controller_signals_and_releases(tmp_path):
+    # The controller subprocess reads Runtime support's setting, as an install would.
+    if platform.process_control() == "sandbox":
+        from runtime_protocol import process_control
+        process_control.write_setting(tmp_path, "sandbox")
     # Subreaper state belongs only to this isolated subprocess, never pytest.
     completed = subprocess.run(
         [sys.executable, "-c", "from pathlib import Path; import sys; "

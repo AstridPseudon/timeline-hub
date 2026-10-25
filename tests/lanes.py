@@ -32,6 +32,7 @@ LANE_MARKERS = {
     "integration": "needs a long-lived subprocess, Node, ffmpeg, the network, or a second checkout",
     "darwin_native": "needs native macOS APIs; skipped elsewhere",
     "live": "needs real provider credentials",
+    "needs_real_pidfd": "exercises the real Linux pidfd syscalls; only the seccomp sandbox-process-control job deselects it",
 }
 
 # --- The skip registry ------------------------------------------------------
@@ -282,6 +283,10 @@ requires_posix_process_group_id_reuse = _declare(
 requires_posix_fork = _declare(
     "posix-fork", "os_name == 'nt'",
     "multiprocessing fork is unavailable on Windows", ("unit",),
+).mark()
+requires_linux_o_path = _declare(
+    "dirfd-o-path", "sys_platform != 'linux'",
+    "the ancestor walk uses Linux O_PATH", ("unit",),
 ).mark()
 
 # Decided while the test runs, so it is a call rather than a mark. The skip can

@@ -445,3 +445,22 @@ def test_an_oversized_registration_is_ignored(make_world, chat):
 
     assert (reply.status, reply.json()) == (503, {"error": "acp_unavailable"})
     assert chat.requests == []
+
+
+def test_forwards_astrid_api_key_route_and_keeps_astrid_out_of_connection_ids(make_world, chat):
+    world = make_world()
+    _point_chat_at(world, chat.endpoint)
+    key_body = b'{"provider":"openrouter","key":"sk-or-test-key"}'
+
+    def saved(handler):
+        _json_reply(handler, 200, {"provider": "openrouter", "signedIn": True, "currentModel": None})
+
+    chat.hooks[("POST", "/astrid/api-key")] = saved
+    reply = world.call("/api/astrid/acp/astrid/api-key", "POST", headers={"Content-Type": "application/json"}, body=key_body)
+    as_connection = world.call("/api/astrid/acp/astrid", "DELETE")
+
+    assert (reply.status, reply.json()) == (200, {"provider": "openrouter", "signedIn": True, "currentModel": None})
+    assert [(entry["method"], entry["path"], entry["body"]) for entry in chat.requests] == [
+        ("POST", "/astrid/api-key", key_body),
+    ]
+    assert as_connection.status == 404

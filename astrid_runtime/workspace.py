@@ -21,6 +21,7 @@ from .bootstrap import (
     _validate_support_paths,
 )
 from .paths import RuntimePaths
+from runtime_protocol import process_control as process_control_setting
 
 
 def _root(value: str | Path, *, must_exist: bool, empty: bool = False) -> Path:
@@ -137,10 +138,18 @@ def configure_workspace(
     mode: str,
     realm_root: str | Path,
     realm_id: str | None,
+    process_control: str | None = None,
 ) -> dict[str, Any]:
-    """Explicitly create or attach and select exactly one canonical realm."""
+    """Explicitly create or attach and select exactly one canonical realm.
+
+    ``process_control`` ("strict" or "sandbox"), when given, is written to
+    Runtime support whether or not the selection changes, so re-running the
+    installer with or without --sandbox switches the mode.
+    """
     if mode not in {"create", "attach"}:
         raise ValueError("workspace mode must be create or attach")
+    if process_control is not None and process_control not in process_control_setting.MODES:
+        raise ValueError(f"process control must be one of {', '.join(process_control_setting.MODES)}")
     _validate_support_paths(paths)
     source = config.resolve_source_profile(paths)
     _validate_source_profile(source, expected_profile=config.profile)
@@ -163,7 +172,10 @@ def configure_workspace(
                 observed, _ = _inspect(boundary, root)
                 if observed != requested:
                     raise BootstrapError("configured workspace identity does not match its canonical realm")
-            return {"ok": True, "status": "unchanged", "realm_id": requested, "realm_root": str(root)}
+            if process_control is not None:
+                process_control_setting.write_setting(paths.runtime_support, process_control)
+            return {"ok": True, "status": "unchanged", "realm_id": requested, "realm_root": str(root),
+                    "process_control": process_control_setting.read_setting(paths.runtime_support)}
 
         created_here = False
         try:
@@ -195,6 +207,9 @@ def configure_workspace(
                 "source_profiles": {source.profile: source.as_dict()},
             }
             _commit_source_profile_metadata(paths, source, catalog)
+            if process_control is not None:
+                process_control_setting.write_setting(paths.runtime_support, process_control)
+            selected_process_control = process_control_setting.read_setting(paths.runtime_support)
         except Exception:
             if created_here and root.is_dir() and not root.is_symlink():
                 shutil.rmtree(root)
@@ -204,6 +219,7 @@ def configure_workspace(
         "status": f"configured_{mode}",
         "realm_id": requested,
         "realm_root": str(root),
+        "process_control": selected_process_control,
         "next_action": "astrid-runtime up",
     }
 

@@ -25,6 +25,8 @@ import uuid
 from .io import atomic_write_json, owner_only, read_json, remove_file
 from runtime_protocol import platform as runtime_platform
 from runtime_protocol import cancellation
+from runtime_protocol import process_control
+from runtime_protocol.errors import ConflictError
 from .paths import RuntimePaths
 from runtime_protocol.lifecycle import interruption_fence
 
@@ -424,7 +426,7 @@ def _validate_support_paths(paths: RuntimePaths) -> None:
     )
     files = (
         paths.catalog_path, paths.discovery_path,
-        paths.instance_lock_path, paths.bootstrap_lock_path,
+        paths.instance_lock_path, paths.bootstrap_lock_path, paths.process_control_path,
         paths.runtime_support / "credentials" / "owner.token",
         paths.runtime_support / "credentials" / "owner.json",
         paths.runtime_support / "credentials" / "astrid-pack-host.token",
@@ -743,6 +745,9 @@ def bootstrap(
     """Perform ``astrid-runtime up`` for the one current-Mac realm."""
     config = config or BootstrapConfig()
     _validate_support_paths(paths)
+    # The launcher signals the daemon it starts, so it follows the same
+    # process-control setting as the daemon, fixed before anything is spawned.
+    process_control.configure_from(paths.runtime_support)
     # Collision detection is deliberately before the mutex/support directory:
     # a legacy checkout must never cause even neutral launch state to be
     # created, and the user must be directed to fresh canonical provisioning.
@@ -1216,6 +1221,13 @@ def _doctor_observation(paths: RuntimePaths, boundary: RuntimeBoundary | None = 
         except BootstrapError as exc:
             report["healthy"] = False
             report["issues"].append(str(exc))
+    try:
+        report["process_control"] = process_control.read_setting(paths.runtime_support)
+    except ConflictError as exc:
+        report["healthy"] = False
+        report["issues"].append(str(exc))
+    # Probed live in this process, evaluated for the configured mode.
+    report["process_signalling"] = runtime_platform.process_control_probe(mode=report.get("process_control"))
     if discovery is not None:
         report["pid_alive"] = bool(_pid_alive(boundary, discovery.get("pid")))
         if not report["pid_alive"]:
