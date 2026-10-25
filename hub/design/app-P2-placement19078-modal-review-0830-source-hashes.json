@@ -1,0 +1,31 @@
+{
+  "base_commit": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+  "base_tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d",
+  "target": {
+    "path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "before_git_blob": "00a6fc147d9cd48086aa6726a3c96ae74ab8b53c",
+    "after_git_blob": "80cfb7148aac90e6c453c98aba787abc9c231cad",
+    "before_sha256": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7",
+    "after_sha256": "d4c8c06f68cf2b1bc686e485a3205ce3d1033dcbfbf1316f774cd8bbbbd2dc67"
+  },
+  "unchanged_retained_files_sha256": {
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/support/app.ts": "238f7b5422dadf0ec7e1df361f7c74d8310c8064a056e4e22bfa53a779d6845f"
+  },
+  "unchanged_production_sources_sha256": {
+    "src/tools/video-editor/components/TimelineEditorShellToolbar.tsx": "46d629c0f4b3cb9fd8860cdc6ede1e866b50ce13e7452118fa7db06f27b6b906",
+    "src/tools/video-editor/components/AstridTimelineEditor.tsx": "bea86bb573dd76dad202e373c151bf95cb3821b077a6356b66c85f24c4ec869b",
+    "src/tools/video-editor/hooks/useTimelineHistory.ts": "fffeaf412e10e54bdc91c0932f521ba38e49bff4936e5f7914da1b9dd12214ac",
+    "src/tools/video-editor/hooks/useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+    "src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c",
+    "src/tools/video-editor/commands/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230",
+    "src/tools/video-editor/commands/commitOutbox.ts": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21",
+    "src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+    "src/shared/components/ui/overlay/dialog.tsx": "78eb0cfe3e3c511279d4d0ce7f0435037dd530b94f2163ac337ab4856c79fa60",
+    "src/tools/travel-between-images/components/ShotTimelinePreview.tsx": "43795fd4c36b6f7e903229e5c171bf6f2e9f6f62b5442584a64fbec67caf79b4cae"
+  },
+  "proposal_sha256": "ab3dd878853def648b60ffd340f0931fd6857277d0b30a1dd40e38addde04e33",
+  "contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+}

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T08:29:27Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
-# app board, 2026-10-25T08:28Z
+<!-- app | 2026-10-25T08:33:32Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+# app board, 2026-10-25T08:31Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -272,20 +272,20 @@
 | A2-placement19078-Undo | Attribute native Undo dispatch | HARD Sol | Exact 19078 traces | merged | app-A2-placement19078-undo-sol-0819 | Initial placement200; modal hides parent Undo. Zero click/input/inverse. [Facts](../../design/app-A2-placement19078-undo-sol-0819-facts.md) | Source unchanged |
 
 | P2-placement19078-modal-review | Review exact dialog dismissal | Luna independent | Sol0819 exact proposal | review | app-P2-placement19078-modal-review-0830 | Retained-state challenge; exact one-line materialization plus focused controls/types/lint. No merge or body before scope decision. | Base04beed |
-| P2-placement19078-modal-scope | Authorize original UI dismissal | Orchestrator | Exact proposal and review0830 | blocked:orchestrator | Escalation0830; App reviewer0830 | Close dialog after both reload checks, before parent Undo. No predicate/input/wait/product change. [Decision](../../escalations/app-20261025T0830Z-placement-modal-dismissal.md) | Unapplied proposal |
+| P2-placement19078-modal-scope | Apply D113 original user step | Luna author; independent | D113 APPROVED | doing | app-P2-D113-modal-dismissal-0832 | D69 upstream modal check, real Close and dialog-gone assertion. All existing bytes exact. Final review0830 continuation then normal merge. | Base04beed |
 | P2-D112-SWAP | Adopt store identity fallback release | Runtime Luna; security | Runtime D112 reviewed release | blocked:runtime | Runtime existing409 owner | D112 requires full verification after identity change, not persistent refusal. App has no source input outstanding. | Released1daca only |
 
 Integration: App04beed includes reviewed portable capture and AgentD110 adoption6e21; actual early19078 tuple04beed/070dfc/1daca/635f. Runtime lockc916 is production-equivalent to released1daca. D111 memo is withdrawn and unadopted. No new source merge this pass.
 core open: 3 — SWAP, element and placement lack GO. ADD, parent, single and bulk have independent full-tail caseGO in19078. Older asset27438 GO is a separate tuple; current full tour and current asset proof remain owed.
 regressions: D102 context and D110 inverse KeyError source repairs released. Current SWAP initial409 is Runtime D112; placement error is a protected original modal sequence, not a demonstrated product defect.
 
-Blockers: Orchestrator scope — exact one-line placement dialog dismissal proposal awaits decision in escalations/app-20261025T0830Z-placement-modal-dismissal.md; independent review0830 runs now.
+Decision: D113 APPROVED; exact scope blocker cleared. Author0832 adds real Close plus dialog-gone assertion after D69 upstream-modal proof. Independent0830 continuation must review final authored bytes; next body is full P2 only.
 Blockers: Runtime D111a — whole-element cross-process profile0811 before any new fix; memo1171212 withdrawn and never released.
 Blockers: Runtime D112 — initial SWAP409 store-identity fallback source correction, security review and qualified release precede adoption and next full tour.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
-Next ready: Independent modal review0830 is dispatched. On owner scope answer and PASS, merge exact reviewed proposal through normal queue; next original body follows authorized ordering. Qualified Runtime releases are adopted immediately, then final full P2.
-live 1 / cap 6; ready-undispatched 0; core open: 3. Dispatcher queue/done confirms independent0830 running; prior Sol0819 ended and its tree recycled normally. No App heavy body.
+Next ready: D113 author0832 and independent preliminary0830 dispatched; final0830 continuation follows exact author completion. On PASS append authored existing ledger entry and normal merge. Runtime D111a/D112 releases then normal adoption and full P2.
+live 2 / cap 6; ready-undispatched 0; core open: 3. Dispatcher confirms preliminary review0830 and author0832 assigned. No App heavy body.
 Capacity: About5.98GB free. Current pin tuple retained. Fresh scan has zero ended clean non-KEEP App trees eligible for recycle. Old KEEP, dirty, missing-metadata and prior refused targets remain untouched; all outputs, branches and GO reports kept. Prior compact/session refusal is not retried. Sourcecap6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB.
-Inbox consumed through2026320 bytes. PLAN, MANAGER-COMMON, C0, owner Runtime/App2 boards and BOARD-HEADER including D112 consumed. Runtime applied-source audit0742 clears both App predicate asks; no further source row owed. Sol0819 exact safe evidence copied byte-exact; scope escalation and peer0830 published. No safety or permission refusal this pass.
+Inbox consumed through2027127 bytes, including D113 approval. Scope blocker cleared same pass. Exact author0832 and independent preliminary0830 are separate roles; final protected review follows actual D113 two-addition candidate. No safety or permission refusal.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).
