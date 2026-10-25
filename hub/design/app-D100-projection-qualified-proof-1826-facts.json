@@ -1,0 +1,50 @@
+{
+  "task": "D100 genuine parentRED/candidateGREEN then App projection9",
+  "status": "BLOCKED_BEHAVIOR_NOTRUN",
+  "plan_scope": "R1/G3/P4/A2; C0 sections 1-5,7",
+  "candidate": {
+    "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "base_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "product_path": "astrid/sdk/timeline/_command_state.py",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "test_path": "tests/sdk/test_d100_item_birth_boundary.py",
+    "test_sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58",
+    "changed_paths_from_parent": [
+      "astrid/sdk/timeline/_command_state.py",
+      "tests/sdk/test_d100_item_birth_boundary.py"
+    ]
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "python": "/home/user/work/venv-agent/bin/python"
+  },
+  "fixture": {
+    "current_path": "tests/sdk/test_timeline_capture_projection.py",
+    "before_sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+    "after_sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+    "reviewed_source_commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+    "reviewed_source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "receiving_delta_applied": false,
+    "reason": "Exact receiving is gated on meaningful parentRED/candidateGREEN; the light floor was unavailable."
+  },
+  "behavior": {
+    "parent_red": "NOTRUN",
+    "candidate_green": "NOTRUN",
+    "app_projection9": "NOTRUN",
+    "required_free_bytes": 5000000000,
+    "last_free_bytes": 4929978368,
+    "source_floor_bytes": 4600000000,
+    "ongoing_stop_bytes": 4000000000
+  },
+  "module_origins": {
+    "agent_command_state": "/home/user/work/wt/app-D100-projection-qualified-proof-1826/astrid/sdk/timeline/_command_state.py",
+    "agent_commit": "/home/user/work/wt/app-D100-projection-qualified-proof-1826/astrid/sdk/timeline/commit.py",
+    "runtime_service": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/service.py",
+    "runtime_auth": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_auth.py",
+    "runtime_store": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_store.py"
+  }
+}
