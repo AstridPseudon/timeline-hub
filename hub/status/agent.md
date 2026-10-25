@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T22:57:25Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 2m -->
-# agent board, 2026-10-25T22:51Z
+<!-- agent | 2026-10-25T23:01:31Z | dispatcher heartbeat 15s | live 3 (sol 0, luna 3, other 0) | busy30 12 | status age 1m -->
+# agent board, 2026-10-25T22:59Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -137,14 +137,16 @@
 | D139 disk admission | Complete finite headroom audit | Luna read only | Corrected source evidence | merged | Audit2154; return2205; final2210 PASS | Direct store retirement route is missing; 623MB deficit verified. No cleanup, request or retry. [Review](../../design/agt-OPS-D139-disk-final-review-2210-report.md). | Evidence only |
 | D139 store retirement | Preserve failed local candidate | Luna | Earlier Runtime2235 exclusive | gated:superseded | Author2224; review2232 FAIL | Journal can delete unrelated entry; late KEEP ignored. No installation. Findings sent to Runtime2222; no duplicate return. | 4c396e7c0c held |
 | D139 schema carrier | Bind approved exact installed distribution | Runtime Luna and independent | D139a source review and received kit | blocked:runtime | Runtime schema2239; Agent2214/2218 input | D139a allows pinned installed0.0.2 with exact RECORD/authentication. Carrier decision cleared; no new reader or acquisition. | Source pending |
-| D138 CLI22 service | Correct exact current-source service recipe | Luna | First independent findings | doing | Review2244 FAIL; return2251 | Lock/source mismatch and duplicate manifest keys. Normal41ad lock resolves source; private pre-dispatch validation next. Actual22 NOTRUN. | 2111 held |
+| D138 CLI22 service | Qualify corrected current-source service recipe | Luna | Independent first-return review | review | Return2251; final2259 | Both findings addressed; eleven private controls PASS. Actual41ad/f103 and pre-dispatch manifest check; actual22 NOTRUN. | Source candidate |
 | D139 Runtime retirement | Receive guarded ordinary retirement route | Runtime Luna | Source review and installed kit | blocked:runtime | rt-OPS-store-retire-return-2235 | Earlier owner exclusive; review2228 FAIL, one return active. Local security findings2232 delivered; superseded3e163 untouched. | Source pending |
 
 | U4a D139 provenance | Adopt qualified normal Runtime provenance | Luna | Independent receiving source check | merged | Author2239; reviewer2242 PASS | Normal41ad entire tree equals reviewed4fec; normal tools and independent source checks PASS. Canonical15/schema/config/fixtures exact. | 41ad656529 |
 
 | D136b internal trace | Check observation producer and consumer consistency | Runtime and App HARD Sol | Recorded read-only scope | blocked:runtime | Runtime2233; App2231 | Exclusive disjoint source traces under D136b; no Agent duplicate, producer fix or next nine body. | Source unchanged |
 
-| D139 controller prep | Prepare merged-tuple normal controller | Luna | Existing source routes and exact merged heads | doing | agt-F-D139-merged-controller-prep-2254 | Source-only command and complete pending-input list; no child request, preflight, suite or kit write. | Evidence pending |
+| D139 controller prep | Qualify merged-tuple controller source | Luna | Independent source packet review | review | Author2254; reviewer2300 | Source commands complete; final kit fields UNBOUND/fail-closed. No request, import, preflight, suite or kit write. | Evidence only |
+
+| D73 merged own nodes | Prepare current merged selected4 and fork1 route | Luna | D139 merged-source qualification | doing | agt-OPS-D73-merged-ownnode-source-2259 | Adapt existing afda private recipe only if exact caller/predicate conservation. No old receipt retarget or body. | Source pending |
 
 Integration: Agent 41ad656529fa8489829de9078b1b6e157c7433c8. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lock now names qualified normalf103; all canonical15 bytes retained. Latest owner-reported0cd0398fe9 upstream held for the small second join at cut; no chasing.
 
@@ -154,13 +156,13 @@ Measurement: service agent-agent-core-full-1025191128-18455 terminal exit1; oper
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL independently1405. OriginalTrue d4ba/ab1e still FAIL redo birth; authentic records missing, causal owner UNKNOWN. App actual2136 on finalFPS20db andD10042040 is nine setup ERROR at physical observation; App final boundary inventory remains controlling. No repeat or product release.
 
 Blockers: Runtime D139a — recorded installed-distribution scope clears carrier decision. Runtime2239 schema and2238 checker join/review/install still owed. Exact pinned RECORD input only; no new reader, source invention or403 retry.
-Blockers: Own-node receiving — afda source and2209 PASS7 retained. Agent2227 finite NOT_READY packet reviewed2232; final factual derivative2240 complete; prior source-tree typo corrected in derivative. Genuine manifest, receipts, origins and central rows missing.
+Blockers: Own-node receiving — afda/2209 historical PASS7 retained. Current-source adaptation2259 dispatched under D139; no old receipt retarget. Genuine manifests, receipts, origins/dependencies and central rows still needed.
 Blockers: D136b original9 — actual2136 nine setup errors retained. Complete45-boundary inventory final2220 PASS received; evidence wait cleared. Runtime2233/App2231 own internal source traces; no next body.
 Blockers: App D100 — qualified9486 behavior receipt owed before shared105 propagation. Independent2102 source proves applicability and refutes need for separate accepteditem-bearing source. All105 remainopen.
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-grade core, REG0, final P1-P5/fullP2, installed render90, platform, wheel and ZIP owed. Farm old union stopped; D77 waits complete final merged-tuple inputs.
 
-Next ready: U4a normal41ad merged; CLI22 firstreturn2251 and merged-controller sourceprep2254 active. live 2 / cap 6; ready-undispatched 0. Heavy slot free; Runtime reviewed recipe/kit and guarded retirement remain needed.
+Next ready: U4a normal41ad merged; CLI22 final2259, merged-ownnode source2259 and controller independent2300 active. live 3 / cap 6; ready-undispatched 0. Heavy slot free; Runtime reviewed recipe/kit and guarded retirement remain needed.
 
 Disk:about5.09GB; child admission5.905GB, stop4GB. Sweep3 removed3 stale tempdirs; compact packed0 scratch/testdirs and gzipped7 logs. Only ended worktree is protected dirtyG2. Superseded3e163 untouched; Runtime guarded route firstreturn2235 exclusive. Local2224 ended FAIL; no duplicate return. All protected targets retained.
 
