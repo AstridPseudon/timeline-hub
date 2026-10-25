@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T04:41:56Z | dispatcher heartbeat 3s | live 2 (sol 1, luna 1, other 0) | busy30 17 | status age 3m -->
+<!-- agent | 2026-10-25T04:45:00Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 2m -->
 # agent board, 2026-10-25T04:38:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -11,7 +11,7 @@
 | G2 / G3 | Public commit, emitter, CLI and sheet | Sol / Luna | R1, R2 | merged | G234 integrated0549 | Joined131 and live Runtime controls passed. P4 retains actual HTTP scope. | ea302e0f5 |
 | G4 | Remaining production writers | Sol / Luna | G2 | merged | G234; video; media admission0832 | Writer migration qualified; media admission20 passed on0ff3. Managed duck original remains held. | ea302e0f5; 0ff3d103fb |
 | G5 | Retire superseded writers | Luna / Sol | H24 criteria | merged | Custody review2155 | 350 cases, four SDK and c271 passed. Historical raw packet loss remains disclosed. | c36ca8c94 |
-| P4 owner | Qualify unchanged ten-note original | MAIN Luna / service | Exact adopted normal tuple | doing | MAIN prep0421; Agent peer0437 | Normal Agent786385/Runtime0c62 receipt delivered. Source and adoption holds cleared; one unchanged45s original next. No passing R2 or sample repeat. | Agent786385 / Runtime0c62 |
+| P4 owner | Qualify unchanged ten-note original | MAIN Luna / service | Exact adopted normal tuple | doing | MAIN prep0421; Agent peer0437 | Normal Agent786385/Runtime0c62 delivered. Owner0440 adds per-note Undo wall times to existing one-original MAIN request; no second sample or passing R2 repeat. | Agent786385 / Runtime0c62 |
 | F original census | Keep exact historical267 records | Sol / Luna | Independent accounting | merged | Count0818; review0827 | 263 closed,4 open;123 exact mappings. Current full9758 remains a separate failed checkpoint. | Census e13d65ba |
 | F checkpoint9758 | Retain failed full checkpoint | Service / Luna | Exact census complete | merged | 9758; census 1052 and 1058 | Historical FAIL: 17673 passed, 231 failed, 45 errors. All 276 bad IDs exact. This is retained evidence, never full PASS. | ba55 / tree c13 |
 | F checkpoint setup | Correct profile setup | Luna / Luna | Source1052; review1105 | merged | Install1118; review1124 | All45 errors classified:3 loops and42 artifact mismatches. Actual registry18de/row0bdf verified; no full retry. | Candidate4a2a3472d1 |
