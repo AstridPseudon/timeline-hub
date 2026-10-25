@@ -201,6 +201,10 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D93, the P4 cost harness 401 (02:28Z), deciding escalation runtime-20261025T0223Z-cost-harness-permission:**
+  - This is the PRODUCT's own test-fixture credential being refused scopes. It is not a Claude permission or safety refusal, and no scope may be invented.
+  - **HOLD** cost worker 0215 until the unchanged P4 ten-note proof on D88b (6634) reports. If it passes under 45 s, the cost worker is not needed: close it.
+  - If it still fails: rerun the cost measurement using EXACTLY the credential and session setup the P4 original itself uses (the same fixture mint route and the same scopes the original is granted), not new scopes. If the original's setup does not grant `objects:write`/`tasks:*`, measure through the same calls the original makes.
 - **D92, the "unused managed pin" compound cases: reach the state through the REAL API, or retire it as legacy-only (02:25Z), deciding escalation agent-20261025T0216Z-unused-manifest-current-admission:**
   1. **Try the genuine route first (one Luna, source and local):** build the state with current commits only.
      - Commit A admits the media WITH a consumer (current `media.admit` plus its use).

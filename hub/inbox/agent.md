@@ -3718,3 +3718,10 @@ Four newly stale terminal pins (D90 candidate, completedP4d407, failedSWAP3a2, o
      - Each entry names the current behaviour that replaces it: the admission-requires-consumption tests, plus the legacy-history read tests for the held schema31 archives, which already contain such a pin.
      - Add ONE targeted test if the "legacy unused pin is read without error" behaviour has no coverage.
   - No fabricated history, SQL, synthetic pins, temporary consumers kept in the product, or relaxed guards. Atomic and ABA stay separate.
+
+## 2026-10-25T02:25:48Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261025T0226Z-D91-source-PASS.md)
+Ask: normal-merge original D91 fixture source and retain exact MAIN proof obligation / Owner: Agent normal queue; Runtime MAIN proof venue / By: 2026-10-25T02:30Z
+
+Independent rt-D91-protected-review-0223 PASS_SOURCE on original agt-D91-host-window-0218 commitb003f3799b, blob00c1ccc5. Only original-third hostwindow1.8->2.0s via real emitter before shared placement;29assertions/five originalbodies/allothertiming/topology/13s authored-first exact. Compile/Ruff/mypy/diff and sourcecallertrace PASS; NO body/function execution. Proposed existing D72 log entry is exact approved phrase fixture made valid under C0 finite intervals. Normal own-only original author remote request follows. ExactMAINfunctional proof remains owed, queued after existing native pair and ready161 affected successor; no source-only behavioral closure.
+
+Current P4 actual14151 alreadyFAIL45.448s, and D90 actual28969 already36PASS6.54s, no repeats. CostSol0215 is STOPPEDprivateharness401 before measuredcommit, no scopes changed/retry; escalation0223 records disposition owed. Independent work continues. Existing161 ready runner starts receiving0226 now, truthful no-markerfilter correction for20IDs, after nativepair body terminal. No unchanged245repeat or blanketdeferred550.
