@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T01:04:28Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
+<!-- app | 2026-10-25T01:08:40Z | dispatcher heartbeat 10s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 2m -->
 # app board, 2026-10-25T01:04Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -145,7 +145,7 @@
 | P2-import-ABI | Assert raw and normalized media exactly | Luna; independent | Actual20057 | merged | Author0038; independent0048 | Independent25 Node and7 semantic controls, all three types/lint PASS. Three source blobs match normal home; original proof owed. | Home913686448c |
 | P2-ADD-5211 | Use exact projected clip identity | Luna; independent | Actual 5211 and mounted source | merged | Author0038; review submit0042 | Independent selector review merged exact source. Preflight28266 PASS; actual ADD6954 submitted00:50:11 on c9d71b/0d142/a3cd/635f. Same ID only; result pending. | Home c9d71b651d |
 
-| P2-ADD-6954 | Prove exact selected clip label | Luna | Actual6954 selected label874 | doing | app-P2-ADD-6954-selected-label-return-0056 | Readiness1 PASS; original FAIL62s at selected label. Projected clip and preceding canvas checks advance. Later history/Undo NOTRUN. | Appc9d71b |
+| P2-ADD-6954 | Read popup selection from its actual owner | Luna; independent | Actual6954 selected label874 | review | Author0056; review submit0106 | Product owner-selection fix:11 mounted and62 neighbors plus3 oracle/types/lint PASS. Six original specs exact; no browser credit. | Two source blobs in review |
 | P2-asset-import-current | Qualify exact import and catalogue ABI | Luna; service | Actual32587 terminal | gated:strict-oracle | Launcher0055; registry author0064 | Readiness1 PASS; original FAIL36s at missing config.registry527. Raw import, semantic request, acceptance and canonical readback advance. Later tail NOTRUN. | App913686448c |
 
 | P2-placement-import-current | Qualify embedded geometry and exact ABI | Luna; service | Asset32587 terminal | doing | app-P2-import-placement-submit-0062 | First original on reviewed embedded geometry and import ABI. Fixed913686/0d142/a3cd/635f; genuine request pending. | App913686448c |
@@ -163,8 +163,8 @@ Next ready: Asset0055 submitted to dispatcher after ADD6954 terminal; placement 
 
 live 1 / cap 6; ready-undispatched 0. Dispatcher header01:00:34 reports1; label0056 active. Placement0062 and registry0064 dispatched after asset32587 terminal. One App body only; no idle wait worker.
 Capacity: Source authors and completed reviewers auto-recycle; no idle worker holds a body wait. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
-Disk: 6.641GB at00:58. Newly stale clean c9 pin recycled after terminal6954 and head/queue/lease/process checks; no refusal, all run outputs retained. Source cap6 above6.5GB; one body below7.5GB; floor5.2/stop4.5.
+Disk: 6.656GB at01:05 after guarded stale50cf pin recycle; zero use/queue/lease hits or unreadable processes. D89 supersedes old floors: six source workers above5.5GB, one body above5.2GB, no starts below4.5GB; stop newest nongate at4.0GB.
 Safety: No new safety or permission refusal. No direct product, test or pin edits by manager. All source and review work assigned to Codex workers.
-Inbox consumed through1841848 bytes. Runtime0040 source continuation0039 and assigned SWAP/bulk0039 consumed. New ORCH00:42 upstream App d11417a59 is deferred from gating under D68; fresh F-final rehearsal uses it with Agent08e6 and reports patch conflicts/full-suite result. This is a later final-cut entry, not a new upstream merge.
+Inbox consumed through1844191 bytes. D89 new floors and up-to-five disjoint diff reviews consumed immediately. New upstreamAppd114 remains F-final-only; no gating upstream merge.
 Later: F-final App upstream d11417a59 refresh and applied-result full suite are Runtime final coordinator-owned, gated on D59 cut. Gating App keeps frozen upstream3881.
 Evidence: [ADD review and submission](../../workers/app-P2-ADD-selector-review-submit-0042/report.md), [Undo author](../../workers/app-A2-Undo-reads-current-sol-0033/report.md), [import author](../../workers/app-P2-assets-import-ABI-0038/report.md), [element facts](../../design/app-P2-element-8897-safe-facts-0019.md).
