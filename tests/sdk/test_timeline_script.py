@@ -1,6 +1,12 @@
 import hashlib
+
 import pytest
+
 from astrid.sdk.contracts import DomainResult
+from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
+from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+from astrid.sdk.timeline.native_text_binding import capture_text_binding_set
 from astrid.sdk.timeline_script import read_composition_script
 
 
@@ -133,6 +139,7 @@ def test_script_rejects_changed_snapshot_and_malformed_descriptors():
 
 def test_timeline_script_cli_forwards_revision_occurrence_and_kind(monkeypatch):
     from types import SimpleNamespace
+
     import astrid.packs.timeline.cli as cli
 
     calls = []
@@ -149,6 +156,7 @@ def test_timeline_script_cli_forwards_revision_occurrence_and_kind(monkeypatch):
 def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
     from runtime_protocol import service as service_module
     from runtime_protocol import store as store_module
+    from runtime_protocol.timeline_commit_port import route_path
 
     realm = tmp_path / "realm"
     store_module.RealmStore.initialize(realm).close()
@@ -156,6 +164,7 @@ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
     try:
         project = service.create_project({"slug": "narration", "name": "Narration"}, idempotency_key="project")
         project_id = project["id"]
+        service.register_timeline_commit_provider(create_runtime_commit_service())
         service.create_timeline(project_id, "main", idempotency_key="timeline")
 
         def publication(parent_id, expected_head, shot_revision, internal_revision, *, text_bindings=None):
@@ -177,14 +186,64 @@ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
                 }]},
             }
 
-        service.publish_parent_composition(project_id, "main", publication(
-            "parent-1", None, "shot-1-r1", "internal-r1"), idempotency_key="publish-no-script")
-        pin = service.set_project_shot_text_binding(project_id, {
-            "shot_id": "shot-1", "kind": "voiceover_script", "text": "Pinned before rebind.", "expected_head": 0,
-        }, idempotency_key="register-script")["data"]
-        service.publish_parent_composition(project_id, "main", publication(
-            "parent-2", "parent-1", "shot-1-r2", "internal-r2", text_bindings=[pin]),
-            idempotency_key="publish-pin")
+        def body(calls):
+            head = service.get_project_timeline(project_id, "main")
+            label = "Timeline script setup"
+            changes = [change for command in calls if command["op"] == "doc.patch"
+                       for change in command["args"]["changes"]]
+            step = {"id": "timeline-script", "label": label, "intent": label,
+                    "tags": ["timeline-script"], "command_ordinals": list(range(len(calls))),
+                    "patch": changes, "reads": []}
+            return {"api_version": 1, "project_id": project_id, "timeline_id": "main",
+                    "base_revision_id": head["head_revision_id"],
+                    "base_publication_id": head["head_publication_id"], "commands": calls,
+                    "label": label, "steps": [step], "merge": "fields", "reads": [],
+                    "dry_run": False, "source": {"via": "python"},
+                    "rationale": "Set up the timeline script binding.",
+                    "group_id": "D86-timeline-script"}
+
+        def commit(calls, key):
+            return service.commit_timeline(
+                project_id, "main", body(calls), idempotency_key=key, publisher="timeline-script-test",
+                invocation_path=route_path(project_id, "main"), authorize=lambda: None)
+
+        template = publication("parent-1", None, "shot-1-r1", "internal-r1")
+        head = service.get_project_timeline(project_id, "main")
+        bootstrap = service.get_project_parent_composition_revision(
+            project_id, "main", head["head_revision_id"])
+        empty = {"schema_version": 1, "project_id": project_id, "timeline_id": "main",
+                 "parent_revision": {key: bootstrap[key] for key in ("revision_id", "content_digest", "payload")},
+                 "shot_revisions": [], "internal_timeline_revisions": [],
+                 "dependency_manifest": bootstrap["dependency_manifest"]}
+        bundle = bundle_from_document(empty)
+        parent_track = capture_track_create(bundle, "parent", {"id": "voice", "kind": "visual"})
+        tracked = commit([parent_track], "parent-track")
+        bundle = bundle_from_document(tracked["data"]["canonical_document"])
+        occurrence = template["parent_composition"]["occurrences"][0]
+        shot = template["shot_revisions"][0]
+        birth = capture_occurrence_create(
+            bundle, occurrence["occurrence_id"], shot["shot_id"], name=shot["payload"]["metadata"]["title"],
+            track="voice", on=occurrence["placement"]["start_ms"] / 1000,
+            duration=occurrence["duration_ms"] / 1000)
+        born = commit([birth], "publish-no-script")
+
+        raw = b"Pinned before rebind."
+        stored = service.ingest(project_id, raw, media_type="text/plain; charset=utf-8",
+                                idempotency_key="register-script")
+        pin = stored["data"]
+        text_pin = {key: pin[key] for key in ("object_id", "digest", "size", "media_type")}
+        verified = {**text_pin, "utf8": True}
+        rebound_template = publication("parent-2", "parent-1", "shot-1-r2", "internal-r2",
+                                       text_bindings=[pin])
+        rebound_occurrence = rebound_template["parent_composition"]["occurrences"][0]
+        bundle = bundle_from_document(born["data"]["canonical_document"])
+        captured = capture_text_binding_set(
+            bundle, "occurrence:" + rebound_occurrence["occurrence_id"],
+            {"kind": "voiceover_script", "slot": None}, text=text_pin, verified_text=[verified])
+        binding_result = commit([captured], "publish-pin")
+        assert binding_result["data"]["accepted_revision_id"]
+        pin = next(row for row in service.list_project_shot_text_bindings(
+            project_id, kind="voiceover_script")["items"] if row["shot_id"] == shot["shot_id"])
 
         class Timelines:
             def inspect(self, project_ref, timeline_ref, **options):
