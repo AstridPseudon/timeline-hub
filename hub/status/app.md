@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T22:32:41Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 1m -->
-# app board, 2026-10-25T22:31Z
+<!-- app | 2026-10-25T22:37:12Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 4 | status age 3m -->
+# app board, 2026-10-25T22:33Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -40,7 +40,7 @@
 | D79 | Live edit robustness smoke | Luna and service | ZIP owner release | gated:ZIP | Prior source and reports retained | Earlier setup failure and held extension proposal remain scoped; no browser credit. | Branches retained |
 | E4 | Dropped history and undo design | Luna | D81 cut | gated:dropped | Author2005 stopped | WIP retained; no integration merge or new task. | No product edits |
 | F-final | Final pinned gates and core suites | Runtime coordinator and services | D59 cut and current core zero | gated:D59-cut | Existing final coordinator | Current full P2, final P1-P5, core, D69 and genuine installed render still owed. No ZIP claim. | Cut pending |
-| D77-D117a | Genuine installed render | Farm and Runtime support | Exact authorized installer inputs | blocked:farm | Farm stage/render underD124 | Runtime recipe and custody PASS delivered; Farm owns keyed profiles and actual stage/render. Historical denied archive route remains stopped. | Evidence retained |
+| D77-D117a | Genuine installed render | Farm and Runtime support | Exact authorized installer inputs | blocked:runtime | Runtime complete D77 inputs; Farm step0 HOLD | Runtime recipe and custody PASS delivered; Farm owns keyed profiles and actual stage/render. Historical denied archive route remains stopped. | Evidence retained |
 | D118a-script-pin1 | Preserve pinned script after rebind | Luna and independent Luna | Normal remote home receipt | merged | Author1124; independent1132; Agentb850 | Exact original1 PASS on42aad;7 predicates/49call ASTs preserved. Reviewed setup home; native binding field gap remains separate. | b8507e946a |
 | D118a-atomic-scope1 | Preserve authenticated atomic scope | Luna and core review | Farm core before release | merged | App1137 and Runtime1232 | Agent board confirms exact reviewed private capture line home in b545. Donor original1 and private4 PASS; Farm core still owed. | b545 / 8a4103 |
 | D118a-helper-cut1 | Preserve owner-deferred timing purpose | Luna | Existing D23 scope | gated:D23 | app-D118a-helper-cut1-1130 | No source change; exact second word-anchor case is already owner-deferred. Authenticated binding would change input. No new core bug claimed. | Original exact |
@@ -128,7 +128,7 @@ Blockers: Graph child birth — Runtime1814/final1821 C0 sequential operands def
 Blockers: Agent core and render — Runtime D139 recipe2153 and Agent input census2149/reviewer2210 own missing child imports. No ship core started. Farm step0 remains held for complete final merged tuple inputs; no App duplicate.
 Blockers: Final cut — ship-grade core, REG0, full P2, final P1-P5/D69, installed render, platform and ZIP remain owed. No final gate or ZIP claim.
 Next ready: D136b sole Sol2231 producer trace, then independent Luna check. Original9 stays gated on final classification and independently qualified repair; element stays D130 held. Cut refresh waits cut.
-live 0 / cap 6; ready-undispatched 0; queued1 D136b Sol2231. HARD owner-approved cross-provider/auth classification; sole Sol justified. No body/profiling.
+live 1 / cap 6; ready-undispatched 0. D136b Sol2231 active. HARD owner-approved cross-provider/auth classification; sole Sol justified. No body/profiling.
 INBOX consumed through2505185 bytes. H6 Runtime22:02, Agent22:10 and Farm22:00 boards plus D139/H72 and D127e header consumed. All cross-lane asks have existing rows or later entries.
 
 Safety: Manager edits only ORCH briefs/board/peers and byte-publishes authored SAFE artifacts. No manager product/test/generated/pin changes, direct Git writes, upstream push, M5, credentials or refused-route retry. Dirty U3/orphan guards and exact1.107GB orphan graph remain untouched.
@@ -163,3 +163,5 @@ Pass2026-10-25T22:27Z: final independent2220 PASS zero findings on complete stat
 Later22:29: spare admitted App venue offered Runtime for its existing critical child-recipe final review or normal six-file targeted controller if Main remains below floor. No new worker/body started, exact final source/command and sole-owner transfer required to avoid duplicate. Offer peer-app-to-runtime-20261025T2229Z-spare-admitted-venue.md excludes every held/refused path.
 
 Pass2026-10-25T22:31Z: received recorded D136b read-only INTERNAL CONSISTENCY instruction and dispatched sole HARD Sol2231 immediately from exact prior source lineage. B022 producer/attachment, genuine-flow reachability and skipped real-step mapping, plus all later B023-B036 where statically decidable; per-case PRODUCT GAP/SETUP/UNKNOWN with evidence. One independent check next. No pristine/body, product/guard/fixture edit, release or retry. Delayed Agent2205/2207 correctly retain existing no-next9 and supporting union custody; oldb5host-use2208 is already closed by guarded2211 receipt.
+
+H6 2026-10-25T22:33Z: Runtime22:24, Agent22:27 and Farm22:00 rechecked. Child recipe firstreturn2217 remains active after security2212 FAIL; genuine schema source still external. D73 source2209 PASS, Agent2227 owns missing genuine receiving inputs. Farm D77 complete final tuple inputs are Runtime-owned, row relabeled blocked:runtime. Runtime integration body9082 terminal1571PASS per header; no App duplicate. Sole AppD136b2231 active, no other admitted ready row.
