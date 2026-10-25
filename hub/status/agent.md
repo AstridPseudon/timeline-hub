@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T06:07:59Z | dispatcher heartbeat 8s | live 4 (sol 1, luna 3, other 0) | busy30 22 | status age 0m -->
+<!-- agent | 2026-10-25T06:11:20Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 22 | status age 1m -->
 # agent board, 2026-10-25T06:07:33Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -183,7 +183,7 @@
 | D86-owned-move8 | Preserve owned move and video birth | Luna source | Exact historical-source findings | doing | Shared source0329 | Actual9211 6ERROR2FAIL. Full original text/source/topology preserved; exact correction scope pending. | Actualcef8 /6634 |
 | D86-cli-trim3 | Preserve current CLI trim behavior | Luna / independent Luna | Meaningful MAIN three proof | merging | Author0520; review0525 PASS; home9c9b | Genuine tracked video 42s contains source end6 and move end11/2. All 38 assertions and timing unchanged. MAIN proof owed. | Home9c9ba51f65 |
 | D86-occurrence-recipe3 | Preserve occurrence recipe behavior | Luna / independent Luna | Meaningful changed-source MAIN proof | merging | Shared capture0545; review0550 PASS | Genuine capture source homea90b; approved diagnostic spent. No extra observer/body requested; existing MAIN receiver owns functional input. | a90bc7f9e1 |
-| D86-graph-redo2 | Preserve authenticated graph roots | Luna / independent Luna | Exact own-only import0610 | doing | Return0555; independent0601 PASS | Full cumulative source retains parent film and adds real chapter-1 scope registration. All topology and guards conserved; clean import active. | e5f5b0ec10 held |
+| D86-graph-redo2 | Preserve authenticated graph roots | Luna / independent Luna | Meaningful MAIN two proof | merging | Review0601 PASS; home8c88 | Full cumulative source retains parent film and adds real chapter-1 registration. Exact independently reviewed source normal; all original guards conserved. | 8c88ea8f06 |
 | D86-publication1 | Preserve remaining live behavior | Main Luna requested | Later MAIN functional qualification | merging | Main0127; review0133 PASS; home258d | Genuine publication/render-task source path reviewed and normal joined. Original one remains behaviorally unqualified until MAIN proof. | 258d2cccdf |
 | D86-core-element2 | Preserve remaining live element behavior | Luna | MAIN corrected literal proof | merging | Author0218; independent0222 PASS | Normal a836 has exact reviewed merged literal; lost-ACK metadata refusal remains open. Original two predicates retained. | a836baa3b1 |
 | D87 live frontends6 | Preserve six current frontend scenarios | Main Luna | MAIN meaningful proof | merging | Return0148; review0202 PASS | Exact7e0ac full stack now home8d938; six original live cases and separate retirement intact. No body. | 8d93889e01 |
@@ -245,7 +245,7 @@
 
 | U4a D97 adoption | Adopt released permission-gated Runtime | Luna | Normal tools and receipt verified | merged | agt-U4a-D97-adopt-0435 | Lock-only source6634 to0c62; refresh, vendor, artifact and diff checks pass. All15 mappings unchanged; actual home readback matches. | 49f66cf62c; now786385 |
 
-| G3 D100 exact time | Use exact move local-time arithmetic | Luna / independent Luna | Review0610 and meaningful MAIN proof | review | Time0604; independent0610 | Actual at_ms control failed internal Fraction check. Narrow boundary source corrected; original ten and shared controls remain unqualified. | Held source successor |
+| G3 D100 exact time | Use exact move local-time arithmetic | Luna / independent Luna | Meaningful MAIN candidate proof | review | Time0604; independent0610 PASS | Internal at_ms boundary fixed; exact duration and local arithmetic retained. Source PASS only; original ten and shared controls remain unqualified. | 7f6e9db743 held |
 | R1 D100 shared items | Resolve sequential shared item provenance | HARD Sol / independent Luna | Source0604 and meaningful MAIN proof | doing | Shared0604; wholepath0555 | New positive setups lack source trim or admitted chapter-1 scope. Faithful setup correction active; original inverse/history failures remain distinct. | d3b5 held |
 | F6058 word bootstrap46 | Preserve exact original word inputs | Luna / independent Luna | Meaningful MAIN46 new-source proof | merging | Author0502; review0507 PASS; home6aefd | Child now reuses parent-selected current Runtime instead of80973. Original46 inputs conserved; actual6058 inner cause UNKNOWN. | Home6aefd11766 |
 | F6058 opaque6 | Preserve exact step patch claims | MAIN Luna / independent Luna | Meaningful MAIN six proof | merging | Author0514; protected0517 PASS; homefd3c | Both setup steps copy exact ordered doc.patch changes. All six IDs and 29 assertions retained. Source merged; no functional claim. | Homefd3cbf2b1a |
@@ -258,7 +258,7 @@
 | U4a D102 adoption | Adopt released diagnostics provenance | Luna | Normal tool checks and receipt complete | merged | Author0550; home825d | Exact Runtime689/treea821 adopted normally; all 15 client mappings/schema/artifacts unchanged. No new P4 body. | 825db6c32c |
 | D100 actual candidate | Retain exact failed candidate outcomes | Luna / MAIN | Corrected source and exact proof | doing | Actual30890; exporter0543; source0604 | Exact16FAIL38PASS5ERROR retained; wholepath0555 complete. No GREEN, normal merge or unchanged originalten repeat. | d3b5 held |
 | F M1 scope | Bind legacy declarations to current C0 | Luna read only | Source proposal and orchestrator scope | doing | agt-F-M1-scope-return-0610 | Exact selectors, shared callers, authority and replacement coverage. No authored-input change or legacy retirement authorized. | Evidence only |
-| F graph clean import | Import exact reviewed graph setup | Luna | Independent0601 PASS | doing | agt-F-graph-clean-import-0610 | Own-only file6cb631 onto normal; true pre-bde source plus one genuine chapter-1 registration. No behavior claim. | e5f5 held |
+| F graph clean import | Import exact reviewed graph setup | Luna | Meaningful MAIN two proof | merging | Import0610; normal8c88 | Exact reviewed6cb631 file now normal; true pre-bde source plus one genuine chapter-1 registration. Functional proof still owed. | 8c88ea8f06 |
 Integration: Normal01d51620a6 contains exact D101 Agent e021, reviewed media lane1a977, sheetCLI b948, D102 adoption825d, D98a capturea90b and prior source joins. D100 d3b5 and restore7e775 remain held.
 core open: P4 independent GO28.101s on786/0c62/1e34/635f; every per-note duration UNKNOWN. P2 remains open; D59 final tuple gates/core,D69 and genuine installed render required.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later named proofs retain their exact sources; no full/core-zero/ZIP claim.
@@ -268,9 +268,9 @@ Restore: Prior new regression and three strict cases PASS; originalID5 word setu
 Admission: Projection a55a remains gated on real D100 proof/normal merge. New graph setup source imported only after exact cumulative source verification. M1 original scope proposal0610 follows rejected authority-changing archive.
 Safety: Withdrawn D88 denied action stays stopped. D93 original credentials/session/scopes only. D98a spent; no extra observer/body. D106 never retries hub write; authorized new ORCH-only worker active.
 Disk: D89 source/review cap6 above5.0GB; heavy1 above5.2GB; nothing below4.5GB. Current free5.82GB. Sweep3 in progress; no clean ended nonKEEP worktree remains to recycle.
-Blockers: D100 source — Capture review0610 and shared-owner0604 active; original ten inverse/history failures remain separate. Runtime already owns later MAIN controls; no unchanged retry.
+Blockers: D100 source — Capture source review0610 PASS and shared-owner0604 active; original ten inverse/history failures remain separate. Runtime already owns later MAIN controls; no unchanged retry.
 Blockers: M1 scope — Readonly0610 prepares exact preserved-source question after anchor archive FAIL; no authority substitution or retired test claim.
 Blockers: Final cut — D59 final P1-P5/core,D69 and genuine installed render still required.
 Next ready: Time review0610, graph clean import0610, M1 scope0610, shared source0604 and D106 ledger0604 assigned. New source handbacks go to existing Runtime MAIN receiver.
-live 5 / cap 6; ready-undispatched 0 eligible local starts. No manager product/test/generated/pin edits or test bodies.
-Inbox consumed through1431376 bytes. Updated 2026-10-25T06:07:33Z.
+live 3 / cap 6; ready-undispatched 0 eligible local starts. No manager product/test/generated/pin edits or test bodies.
+Inbox consumed through1432529 bytes. Updated 2026-10-25T06:07:33Z.
