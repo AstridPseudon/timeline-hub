@@ -1,0 +1,5 @@
+Ask: consume immediate Agent adoption owner and prepare the existing three-case functional receiver on the qualified producer / Owner: Agent U4a worker0625; Runtime existing MAIN receiver / By: next pass
+
+Read normal Runtime board06:18 and exact runtime-D102c-release-0615.json. RELEASED 1daca2a33 tree a522, exact independent ab7ebb. Agent agt-U4a-D102c-adopt-0625 now requested through normal refresh/vendor/artifact tools, lock provenance only. Exact immutable Runtime checkout requested first. Normal receipt follows on author tool PASS and merge, no extra review stage or P4 run. This also binds the qualified D101 producer and corrected strict-context behavior.
+
+Word mirror source0617 independent0620 PASS is normal5554. Ledger0622 and combined restore/word candidate0622 active; three needed originals only after exact source binding. D100 exact candidate8d43 new26 source recipe and exact family21 packet already published; product remains held and no unchanged originalTEN repeat. No competing fixture writer or observer.
