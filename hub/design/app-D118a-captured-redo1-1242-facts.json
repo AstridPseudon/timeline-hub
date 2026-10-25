@@ -1,0 +1,36 @@
+{
+  "task": "D118a captured redo1 source-only faithful caller check",
+  "base_agent": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+  "runtime_checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+  "runtime_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+  "nodeid": "tests/editing_conformance/test_captured_redo_media_closure.py::test_exact_captured_redo_reaches_prepared_with_original_ids_without_writes",
+  "original_source_sha256": "0717cc3826339abadf2a485592f166957d92c3760b5aeb9ebfd03bba81e13834",
+  "candidate_source_sha256": "f9f8b8f6ee7e5bd0b8edd0675e3f3c165fc9caca02965532b0393a8e8308d6da",
+  "fixture_sha256": "a20636115ffb6e986ad7731d57bc90dd7ed98a2330b65d3dc71b83a3707ddb37",
+  "baseline": {
+    "outcome": "failed",
+    "failure_location": "runtime_protocol/timeline_commit_store.py:251",
+    "failure_type": "AttributeError",
+    "failure_detail": "store.db_path is absent from the synthetic store namespace",
+    "failure_sha256": "333037e7106e70fc1317c19f1baa44ad26fa5139226ccac18c3274e83166d49d"
+  },
+  "candidate": {
+    "outcome": "passed",
+    "summary": "1 passed in 1.98s",
+    "junit_xml_sha256": "539443860d54da9c0bb5d58cc44635c619aed4d0f95a02a1fbe3f2082b411eab"
+  },
+  "correction": "Use a tmp_path-backed realm.sqlite3 connection and expose the matching db_path on the synthetic store, matching the supported Runtime store contract.",
+  "conservation": {
+    "assertion_ast_equal": true,
+    "authored_input_assignment_ast_equal": true,
+    "production_changes": false,
+    "upstream_candidate_sdk_test_present": false,
+    "git_diff_check": true
+  },
+  "static_checks": {
+    "ruff": "passed",
+    "mypy_follow_imports_skip": "passed",
+    "py_compile": "passed",
+    "git_diff_check": "passed"
+  }
+}

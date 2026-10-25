@@ -1,0 +1,34 @@
+{
+  "task": "app-D118a-binding-clean-import-1245",
+  "verdict": "PASS_CLEAN_IMPORT_ONLY",
+  "base": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+  "candidate": "74e1961abb9efd0b79e6b1d9842364dca110a9f6",
+  "changed_paths": [
+    "astrid/sdk/timeline/native_text_binding.py",
+    "tests/sdk/test_native_text_binding_authority_fields.py"
+  ],
+  "production": {
+    "donor_sha256": "3ef9a6b49cb1624ac5a5fe6a163c89c13a50f73fea591f6c19745bd0616d3782",
+    "worktree_byte_equal_to_donor": true
+  },
+  "test": {
+    "sha256": "87324e0ada9aa93bd358400fa8d1d2480b2e6b8184d1579a86561d16ccb9e23c",
+    "donor_equal_except_one_ruff_required_blank_line": true
+  },
+  "checks": {
+    "ruff_production_normal": "pass",
+    "ruff_both_allowed_imports_isolated": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "focused_pytest": "7 passed in 1.40s",
+    "scope": "pass",
+    "source_containment": "pass",
+    "ancestry": "pass"
+  },
+  "notes": [
+    "Initial pytest collection without the shared Runtime checkout failed with ModuleNotFoundError: runtime_protocol; rerun with read-only PYTHONPATH=/home/user/work/runtime passed.",
+    "No full, browser, live-socket, family, or Runtime qualification suite was run.",
+    "Downstream adoption remains held for Agent batch/full gates per plan."
+  ]
+}

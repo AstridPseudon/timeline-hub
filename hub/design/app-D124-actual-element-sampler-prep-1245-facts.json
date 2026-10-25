@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "task": "D124(4)+Runtimepeer1232 actual element sampler source-only prep",
+  "status": "blocked_on_exact_supported_attach_handoff",
+  "submission": "not_submitted",
+  "body": "not_created",
+  "source_tuple": {
+    "app": {
+      "head": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+      "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"
+    },
+    "agent": {
+      "head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"
+    },
+    "runtime": {
+      "head": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "existing_d111a_source": {
+    "runtime_source_commit": "a0b3eac1a2126c6bf2e77f06ab5d0a9312ef4328",
+    "runtime_parent_tested": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+    "files": {
+      "diagnostics/sitecustomize_d111a.py": "4efa1e6e7934cd6ada72e83660ed54f3db7b9e60c28905614b070e1194cebe41",
+      "diagnostics/measure_d111a_native_element.mjs": "38495fad1fd15c2a025a0f03172f09793cfa98747ce629bc9b181e3274b17f7d",
+      "diagnostics/test_d111a_native_sample.py": "f10d8148fcabb277fb0a2e550ec7f97a0530f591d8ede470058f67c33b2c5468"
+    },
+    "method": [
+      "passive sys.setprofile plus threading.setprofile in the Runtime daemon",
+      "20ms stack sampling with per-sample frame identity deduplication",
+      "private handler/read metrics and process PID/birth-tick identity",
+      "native provider request exercised after startup/refusal control in one process"
+    ],
+    "qualification": "not_current_tuple_qualified"
+  },
+  "app_supported_d66_hook": {
+    "app_file": "tests/e2e/local/support/harness.ts",
+    "runtime_env_lines": "692-706",
+    "runtime_start_lines": "757-758",
+    "phase_bootstrap": "scripts/testing/sitecustomize.py",
+    "phase_helper": "tests/helpers/p2_commit_phase_capture.py",
+    "d66_configuration": "scripts/testing/d66-plain-stack.mjs:247-274,661-667,709-715",
+    "retention": "runtime-private stdout/stderr are mode 0600 under the D66 output directory after stop; phase sink is mode 0600 under a mode 0700 directory",
+    "restarts": "launch ordinal 1 is the cold daemon and later authoring restart uses a distinct launch directory/ordinal"
+  },
+  "exact_missing_seam": [
+    "No published peer handoff exists at peer-app-to-runtime-20261025T1243Z-existing-sampler-handoff.md; that file contains the request only.",
+    "D66 runtimeEnv replaces PYTHONPATH with the App phase bootstrap, selected Runtime checkout, and Agent checkout, so D111a sitecustomize cannot be injected by D111A_* environment variables.",
+    "The current D111a source was tested against Runtime 7070f13, not current Runtime 5e9ad1c; current port/store/execution source blobs differ.",
+    "D111a direct launcher records a synthetic Node POST, not the browser-originated element POST in the tagged P2 tour.",
+    "The existing D111a handler record has only a boolean request-id-present field and no safe per-request correlation hash; its global lost-samples and observer CPU counters are process-lifetime values."
+  ],
+  "required_before_body": [
+    "Runtime publisher supplies exact current-tuple D111a source bytes/hashes and supported D66 attach invocation.",
+    "Attach path preserves the normal runtime_protocol.cli launch, selected source pins, and repeated-start retention.",
+    "Actual element POST selection is bound by private correlation/hash plus Runtime PID and birth tick; no body, auth, URL, opaque ID, or raw stack is exported.",
+    "Request-wall denominator is the selected browser POST wall interval; per-sample dedup, process-lifetime loss scope, observer overhead, and calibration are emitted explicitly."
+  ],
+  "app_source_hashes": {
+    "scripts/testing/d66-plain-stack.mjs": "81d273e626240cb02b0f1a5cee7314325bf935bf487874a178acede4d9de0dd3",
+    "tests/e2e/local/support/harness.ts": "e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": "b02699f153afebe6b1f26384e565aab396d4017c12b7efb34e5992aa6e8d5ee8",
+    "scripts/testing/sitecustomize.py": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "status": "not_ready_until_runtime_handoff",
+  "tour": "one normal tagged full P2; no submission by this worker",
+  "pins": {
+    "app": {"head": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7", "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"},
+    "agent": {"head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"head": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "normal_command_template": "set -eu; : \"${APP_CHECKOUT:?bind detached exact App receipt}\"; : \"${AGENT_CHECKOUT:?bind detached exact Agent receipt}\"; : \"${RUNTIME_CHECKOUT:?bind detached exact Runtime receipt}\"; : \"${COMPOSITION_CHECKOUT:?bind detached exact Composition receipt}\"; : \"${D66_OUTPUT_DIR:?private output directory}\"; cd \"$APP_CHECKOUT\"; env D66_OUTPUT_DIR=\"$D66_OUTPUT_DIR\" D66_APP_SHA=d8a1cd40b866c49c0ab415682391f0ec87a7a8e7 D66_APP_TREE=dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9 D66_APP_CHECKOUT=\"$APP_CHECKOUT\" D66_AGENT_SHA=070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2 D66_AGENT_TREE=6056414359ae9fce08d999d54cbecf719fda33c3 D66_AGENT_CHECKOUT=\"$AGENT_CHECKOUT\" D66_RUNTIME_SHA=5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 D66_RUNTIME_TREE=de2954a0ceadb4455903d9abdfec3b773318a50f D66_RUNTIME_CHECKOUT=\"$RUNTIME_CHECKOUT\" D66_COMPOSITION_SHA=635f4de06fda22a85fc2e4cfc764d0153a4c9f40 D66_COMPOSITION_TREE=5ab5191a296980a0a6bcd1178ab6902d6478a148 D66_COMPOSITION_CHECKOUT=\"$COMPOSITION_CHECKOUT\" ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=20 /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2",
+  "preflight": "Use the same existing command with p2 --preflight after exact detached checkout receipts are verified.",
+  "sampler_activation": {
+    "state": "refused_pending_handoff",
+    "required_marker_lifecycle": "private idle marker -> active only after the browser element response waiter is armed and immediately before the Apply gesture -> done immediately after that response is captured -> retain private profile until teardown",
+    "required_binding": "supported D66 bootstrap must load the exact current-tuple D111a source into the actual Runtime daemon and expose a safe private request correlation/hash",
+    "safe_summary": "run private/d111a_profile_control.py only after a unique request ordinal, PID/birth match, and selected browser request wall interval are available",
+    "never_do": ["do not set unsupported D111A_* variables and assume attachment", "do not run a body without the handoff", "do not use prior 11:50 trace", "do not export payload/auth/URLs/opaque IDs/raw stacks", "do not submit or retry here"]
+  },
+  "normal_lifecycle": [
+    "D66 source preflight",
+    "hosted build and normal direct harness launch",
+    "native seed and Agent preflight",
+    "mounted-readiness phase",
+    "one original eight-test P2 phase",
+    "private Runtime teardown retention",
+    "offline safe summary and source/hash receipt"
+  ],
+  "full_suite": "not requested or run by this worker"
+}

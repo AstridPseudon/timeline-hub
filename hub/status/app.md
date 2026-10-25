@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T12:49:43Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 1m -->
-# app board, 2026-10-25T12:48Z
+<!-- app | 2026-10-25T12:54:03Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 1m -->
+# app board, 2026-10-25T12:53Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -60,7 +60,7 @@
 | D118a-parent-label2 | Preserve parent track labels | Luna | Exact own2 current check | blocked:agent | app-D118a-parent-label2-1206 | No diff; two setupERROR at shared m1.film missing legacy word anchor. Existing genuine seed owner asked1211. | Source unchanged |
 | D118a-document-input3 | Preserve document input capture | Luna | Exact own3 current check | blocked:runtime | app-D118a-document-input3-1206 | No diff; original3 FAIL before commands. commit.py369 hydration changes manifest/pair; existing Agent batch owner asked1214. | Source unchanged |
 
-| D118a-native-binding | Preserve Runtime binding authority | Luna and core Luna | Independent1239 PASS behavior | doing | app-D118a-binding-clean-import-1245 | Genuine1 and parent1 PASS; authority/privacy qualified. Exact reviewed import fixes additive I001 only; product held. | 74e1961ab held |
+| D118a-native-binding | Preserve Runtime binding authority | Luna and core Luna | Clean9d75ec lint PASS | review | app-D118a-binding-final-import-review-1250 | Production exact core-reviewed74e196; only test import whitespace corrected. Final source continuation before Agent batch handoff. | 9d75ec260 held |
 
 | D118a-inverse-packet | Pair existing inverse guard evidence | Luna read only | Agent1155 and Runtime1208 | merged | app-D118a-inverse-boundary-packet-1212 | Safe source and observed guards paired; actual stage/promotion/digests EXACTMISSING. Handback1225 clears App input wait. | Evidence only |
 
@@ -74,10 +74,14 @@
 | D121-element-timestamps | Join retained browser App Runtime clocks | Luna read only | Retained11251 | merged | app-D121-element11251-timestamps-1230 | FINITE MISSING SEAM: browser send known; App receive, shared correlation and Runtime UTC anchor absent. No delay attribution. | Evidence only |
 | U4p-D121-tags | Adopt qualified history reason tags | Luna | Released5e9ad | merged | Adopter1230; normal receipt1237 | Entire normal tree equals tested author331a583. Node20 vendor17/artifact3/lint PASS; protected8 and mapped14 exact. | d8a1cd40b8 |
 
-| D118a-captured-redo1 | Preserve exact captured redo closure | Luna | Posted Agent claim1242 | doing | app-D118a-captured-redo1-1242 | Own original668 and source-only faithful caller check. All IDs, inputs and no-write predicates exact; no product source scope. | Candidate pending |
+| D118a-captured-redo1 | Preserve exact captured redo closure | Luna and protected review | Author own1 PASS | review | app-D118a-captured-redo-protected-review-1251 | File-backed SQLite and matchingdb_path only; seven predicates and six inputs exact. Independent review active. | c474325862 |
 
-| D124-sampler-prep | Reuse sampler for actual element process | Luna | Existing Runtime sampler handoff | doing | app-D124-actual-element-sampler-prep-1245 | Source-only normal attach plan; exact existing sampler handoff requested1243. No new collector or body. | Source prep |
+| D124-sampler-prep | Reuse sampler for actual element process | Luna | Source inventory complete | merged | app-D124-actual-element-sampler-prep-1245 | Exact seam: D66 overwrites PYTHONPATH; existing phase helper needs sampler wiring. Source and safe recipe inventoried; no body. | Evidence only |
 | D124-full-P2 | Run tagged tour with actual element timing | Luna and service | Sampler prep and disk5.2GB | blocked:app | Sole App tour controller next | Owner D124 target13:30Z; exact tags5e9ad and current App provenance home. No semantic Runtime fix wait. | Tuple capture pending |
+
+| D124-capture | Add safe hash and UTC to existing phase sink | Luna | Explicit owner capture directive | doing | app-D124-phase-correlation-author-1250 | Harness-only actual boundaries; no raw keys or private URLs. Original tests/waits exact; one independent review before merge. | Source pending |
+
+| D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
 
 Integration: Appfe3309dba4520835a685f925468bff1acdc0506f/treee55f0d65dca0c9f2ba3013df4cab999f314308b9; only reviewed additive A2 test differs from qualified tags Appd8a1. Exact reviewed test blob home, types/lint and protected source unchanged. Runtime5e9ad, Agent070dfc and Composition635f retained. [Receipt](../../design/app-A2-outcome-controls-normal-home-1248.json).
 
@@ -93,8 +97,8 @@ Blockers: App element — Sole App owner under D124. Retained11251 correlation m
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Agent batch — Atomic8a joins held product batch; full core required before adoption. Scalar and auto normal receipt consumed; source waits cleared. Bindingf3a6 held after real rebind FAIL.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Sampler prep1245, binding clean import1245 and capturedredo1242 active. Next ONE tagged full P2 by13:30Z after supported sampler recipe and disk>=5.2GB. Existing blocked rows checked against Agent12:25 and Runtime12:20 boards; no other answered dependency found.
+Next ready: After capture1250, same-branch existing sampler integration; then one combined protected review and full tour by13:30Z. Binding and captured-redo reviews active. Existing blocked rows checked against Agent12:25 and Runtime12:20 boards; no other answered dependency found.
 live 3 / cap 3; ready-undispatched 0; core open: 2. D89b admits up to3 source/read workers at4.6GB without heavy; cap6 resumes above5.0GB. Sampler prep, exact reviewed binding import and captured-redo author fill three source slots. Fresh5.274GB before each replacement start.
-Capacity: Fresh5.168GB before timestamp start,5.002GB before adopter, fresh4.993GB before binding return; no heavy body. Ongoing stop4.0GB. Prior refused cleanup and session paths remain untouched.
-INBOX consumed through2176236 bytes; D124 sole element ownership, tour deadline and sampler continuation consumed. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
+Capacity: Host-cleared old34d464/7070 recycled normally; free5.283GB after187MB net recovery. Fresh heavy admission5.2GB still required after source review. No heavy body; ongoing stop4.0GB.
+INBOX consumed through2181353 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
