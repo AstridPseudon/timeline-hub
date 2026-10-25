@@ -53,8 +53,10 @@ def root_values():
 
 
 def create_command(roots=None):
+    roots = root_values() if roots is None else roots
     return {'schema_version': 1, 'op': 'test.create-roots', 'version': '1',
-            'select': 'parent', 'args': {'roots': root_values() if roots is None else roots}}
+            'select': 'parent', 'args': {'roots': roots},
+            'created': [root['ref'] for root in roots]}
 
 
 def test_missing_roots_are_tagged_absent():
