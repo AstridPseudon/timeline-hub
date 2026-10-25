@@ -140,7 +140,9 @@ def _fps_basis(bundle: Mapping[str, Any]) -> str:
 
 def _validate_fps(candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None) -> None:
     values = _fps_values(candidate)
-    if baseline is not None and _typed_fps_paths(candidate) != _typed_fps_paths(baseline):
+    # New declarations (including pristine initialization) still pass value and
+    # parity validation; every previously authored typed location must survive.
+    if baseline is not None and not _typed_fps_paths(baseline) <= _typed_fps_paths(candidate):
         _fail("candidate", "all authored fps declarations must retain their typed locations")
     if not values or all(rate == values[0][1] for _, rate in values[1:]):
         return
