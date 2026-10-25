@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import importlib.util
+import io
 import json
 import shutil
 import sys
@@ -422,7 +423,164 @@ def test_document_publish_captures_verified_media_before_document_patches():
     assert commands[0]["reads"]
 
 
-def _public_document_compound(recorded):
+def _genuine_compound_source(tmp_path):
+    """Create the retained-manifest source through the current Runtime API."""
+    from tests.helpers.runtime import use_runtime
+
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_port import route_path
+
+    from astrid.sdk.timeline.commit import _digest, create_runtime_commit_service
+    from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
+    from tests.editing_conformance.test_commit_runtime_occurrence_media import _create_fixture
+    from tests.editing_conformance.test_recipe_occurrence_media import inputs
+    from tests.timeline.test_authoring_bundle import _replace_values
+
+    root = tmp_path / "d92-genuine-realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
+
+    def import_media(project, value, *, media_type, filename, alias, key):
+        result = service.import_media(
+            project, value, media_type=media_type, original_name=filename,
+            actor_id="d92-authoring-test", idempotency_key=key,
+        )["data"]
+        selection = service.get_project_media_selection(project, {
+            "asset": alias, "generation_id": result["generation_id"],
+            "variant_id": result["variant_id"],
+        }, authorize=lambda: None)
+        return selection, service.get_project_verified_media(
+            project, selection, authorize=lambda: None
+        )
+
+    def submit(project, commands, key):
+        head = service.get_project_timeline(project, "film")
+        request = {
+            "api_version": 1, "project_id": project, "timeline_id": "film",
+            "base_revision_id": head["head_revision_id"],
+            "base_publication_id": head["head_publication_id"], "commands": commands,
+            "label": key, "merge": "atomic", "reads": [], "dry_run": False,
+            "source": {"via": "python"}, "rationale": "D92 genuine compound setup",
+            "group_id": key,
+            "steps": [{
+                "id": str(index), "label": key, "intent": "D92 setup", "tags": ["d92"],
+                "command_ordinals": [index],
+                "patch": command.get("args", {}).get("changes", []), "reads": [],
+            } for index, command in enumerate(commands)],
+        }
+        return service.commit_timeline(
+            project, "film", request, idempotency_key=key, publisher="d92-authoring-test",
+            invocation_path=route_path(project, "film"), authorize=lambda: None,
+        )["data"]["canonical_document"]
+
+    def public_document(project):
+        head = service.get_project_timeline(project, "film")
+        parent = service.get_project_parent_composition_revision(
+            project, "film", head["head_revision_id"]
+        )
+        document = {
+            "schema_version": 1, "project_id": project, "timeline_id": "film",
+            "parent_revision": {key: parent[key] for key in (
+                "revision_id", "content_digest", "payload")},
+            "shot_revisions": [], "internal_timeline_revisions": [],
+            "dependency_manifest": copy.deepcopy(parent["dependency_manifest"]),
+        }
+        for pin in document["dependency_manifest"]["shots"]:
+            image = service.get_project_shot_revision(project, pin["shot_id"], pin["revision_id"])
+            document["shot_revisions"].append({key: image[key] for key in (
+                "revision_id", "shot_id", "internal_timeline_revision_id", "content_digest", "payload")})
+        for pin in document["dependency_manifest"]["internal_timelines"]:
+            image = service.get_project_timeline_revision(
+                project, "film", pin["revision_id"]
+            )
+            document["internal_timeline_revisions"].append({key: image[key] for key in (
+                "revision_id", "timeline_id", "content_digest", "payload")})
+        return document, {
+            "revision_id": head["head_revision_id"],
+            "publication_id": head["head_publication_id"],
+        }
+
+    project = service.create_project(
+        {"slug": "d92-compound", "name": "D92 compound"}, idempotency_key="d92-project"
+    )["id"]
+    service.create_timeline(project, "film", idempotency_key="d92-timeline")
+    old_png = io.BytesIO()
+    Image.new("RGB", (1, 1), "blue").save(old_png, format="PNG")
+    new_png = io.BytesIO()
+    Image.new("RGB", (1, 1), "red").save(new_png, format="PNG")
+    audio = io.BytesIO()
+    with wave.open(audio, "wb") as stream:
+        stream.setnchannels(1)
+        stream.setsampwidth(2)
+        stream.setframerate(8000)
+        stream.writeframes(b"\0\0" * 8000)
+    old, old_verified = import_media(
+        project, old_png.getvalue(), media_type="image/png", filename="old.png",
+        alias="picture", key="d92-old"
+    )
+    new, new_verified = import_media(
+        project, new_png.getvalue(), media_type="image/png", filename="new.png",
+        alias="reserved-new", key="d92-new",
+    )
+    retained, _ = import_media(
+        project, audio.getvalue(), media_type="audio/wav", filename="held.wav", alias="held-audio", key="d92-held"
+    )
+    document, source_old, _, _ = inputs()
+    document["parent_revision"]["payload"]["occurrences"] = \
+        document["parent_revision"]["payload"]["occurrences"][:2]
+    old_fake = source_old["object_id"]
+    for image in [document["parent_revision"], *document["shot_revisions"],
+                  *document["internal_timeline_revisions"]]:
+        image["payload"] = _replace_values(image["payload"], {old_fake: old["object_id"]})
+        image["content_digest"] = _digest(image["payload"])
+    document["dependency_manifest"]["media"] = [{
+        "media_id": old["object_id"], "content_digest": old["object_id"]
+    }]
+    _create_fixture(service, project, document, old, authorize=lambda: None)
+    current, _ = public_document(project)
+    from astrid.sdk.timeline.commit import bundle_from_document
+    bundle = bundle_from_document(current)
+    delete = capture_occurrence_delete(bundle, "occurrence:occ-b")
+    current = submit(project, [delete], "d92-remove-sibling")
+    before = bundle_from_document(current)
+    consumer = copy.deepcopy(before)
+    internal = consumer["shots"]["chapter-shot"]["internal_timeline"]
+    internal["tracks"] = [{"id": "held-audio", "kind": "audio"}]
+    internal["clips"] = [{"id": "held-audio-clip", "track": "held-audio",
+                           "clipType": "media", "asset": "held-audio", "at": 0, "hold": 1}]
+    internal["registry"] = {"assets": {"held-audio": {
+        "media_id": retained["object_id"], "type": "audio"
+    }}}
+    from astrid.sdk.timeline.emitter import emit_document_commands
+    admission = {"schema_version": 1, "op": "media.admit", "version": "1", "select": None,
+                 "args": {"inputs": [{"pin": {"media_id": retained["object_id"],
+                                                   "content_digest": retained["object_id"]}}]}}
+    current = submit(project, [*emit_document_commands(before, consumer), admission], "d92-commit-a")
+    committed_a, _ = public_document(project)
+    assert committed_a == current
+    assert {row["media_id"] for row in current["dependency_manifest"]["media"]} >= {
+        old["object_id"], retained["object_id"]
+    }
+    after_a = bundle_from_document(current)
+    removed = copy.deepcopy(after_a)
+    removed_internal = removed["shots"]["chapter-shot"]["internal_timeline"]
+    removed_internal["tracks"] = []
+    removed_internal["clips"] = []
+    removed_internal["registry"] = {"assets": {}}
+    current = submit(project, emit_document_commands(after_a, removed), "d92-commit-b")
+    committed_b, pair_b = public_document(project)
+    assert committed_b == current
+    assert {row["media_id"] for row in current["dependency_manifest"]["media"]} >= {
+        old["object_id"], retained["object_id"]
+    }
+    service.close()
+    return current, old, new, [old_verified, new_verified], retained["object_id"], pair_b
+
+
+def _public_document_compound(recorded, tmp_path):
     from types import SimpleNamespace
 
     from astrid.sdk.contracts import DomainResult
@@ -432,18 +590,14 @@ def _public_document_compound(recorded):
     from astrid.sdk.timeline.emitter import DocumentPatchError
     from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
     from astrid.sdk.timeline.store import fetch_bundle
-    from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
+    from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm
 
-    document, old, new, verified = inputs()
+    document, old, new, verified, retained, pin = _genuine_compound_source(tmp_path)
+    project_id, timeline_id = document["project_id"], document["timeline_id"]
     document["parent_revision"]["payload"]["occurrences"] = document["parent_revision"]["payload"]["occurrences"][:1]
     document["parent_revision"]["content_digest"] = _digest(document["parent_revision"]["payload"])
-    # Reuse the canonical admitted audio identity without adding an artificial
-    # payload consumer merely to make the retained dependency valid.
-    retained = AUDIO
-    document["dependency_manifest"]["media"].append({"media_id": retained, "content_digest": retained})
     new["asset"] = old["asset"]
     verified[1]["selection"] = copy.deepcopy(new)
-    pin = {"revision_id": "parent-1", "publication_id": "original-publication"}
 
     class Reader(RemoteTimelines):
         def __init__(self):
@@ -453,7 +607,7 @@ def _public_document_compound(recorded):
 
         def open_composition(self, project, timeline, **kwargs):
             return DomainResult.success({
-                "native_inspection": {"project_id": "project-1", "timeline_id": "film"},
+                "native_inspection": {"project_id": project, "timeline_id": timeline},
                 "summary": {"head_revision_id": "later-head"},
             })
 
@@ -471,14 +625,14 @@ def _public_document_compound(recorded):
                       *document["internal_timeline_revisions"]]
             image = next(row for row in images if row["revision_id"] == args[-1])
             return DomainResult.success({**copy.deepcopy(image), "project_id": project,
-                **({"timeline_id": "film", "dependency_manifest": document["dependency_manifest"]}
+                **({"timeline_id": timeline_id, "dependency_manifest": document["dependency_manifest"]}
                    if operation == "get_project_parent_composition_revision" else {})})
 
     reader = Reader()
     client = SimpleNamespace(timelines=reader)
-    detached = fetch_bundle("project-1", "film", revision_id=pin["revision_id"], client=client)
+    detached = fetch_bundle(project_id, timeline_id, revision_id=pin["revision_id"], client=client)
     assert "_runtime_document" not in detached["source_mapping"]
-    base = fetch_bundle("project-1", "film", **pin, client=client)
+    base = fetch_bundle(project_id, timeline_id, **pin, client=client)
     assert base["source_mapping"]["_runtime_document"] == document
     assert base["base_parent"]["publication_id"] == pin["publication_id"]
     target = "occurrence:occ-a/clip:clip-a"
@@ -508,7 +662,7 @@ def _public_document_compound(recorded):
     from astrid.sdk.timeline.sync import TimelineSession
 
     reader._client = object()
-    session = SimpleNamespace(project_id="project-1", timeline_id="film", client=client)
+    session = SimpleNamespace(project_id=project_id, timeline_id=timeline_id, client=client)
     staged_base = TimelineSession._bundle(session, {"base": pin, "pending": []}, commands)
     assert staged_base == base
     assert execute(staged_base, commands, verified_media=verified).bundle["shots"] == candidate["shots"]
@@ -549,27 +703,29 @@ def _public_document_compound(recorded):
         helper.emit_document_publish_commands(base, corrupt, selections, verified)
     reader.history_revision = "changed-original"
     with pytest.raises(ValueError, match="original revision/publication pair"):
-        fetch_bundle("project-1", "film", revision_id=pin["revision_id"],
+        fetch_bundle(project_id, timeline_id, revision_id=pin["revision_id"],
                      publication_id=pin["publication_id"], client=client)
     if recorded:
         reader.history_revision = pin["revision_id"]
         reader.canonical = copy.deepcopy(document)
         reader.canonical["parent_revision"]["revision_id"] = "foreign-source"
         with pytest.raises(ValueError, match="canonical document differs"):
-            fetch_bundle("project-1", "film", **pin, client=client)
+            fetch_bundle(project_id, timeline_id, **pin, client=client)
     return realm, accepted, document
 
 
+@pytest.mark.integration
 @pytest.mark.parametrize("recorded", [True, False])
-def test_public_document_swap_and_residual_patch_use_original_sequential_closure(recorded):
-    _public_document_compound(recorded)
+def test_public_document_swap_and_residual_patch_use_original_sequential_closure(recorded, tmp_path):
+    _public_document_compound(recorded, tmp_path)
 
 
-def test_public_document_compound_inverse_restores_exact_original():
+@pytest.mark.integration
+def test_public_document_compound_inverse_restores_exact_original(tmp_path):
     from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
     from tests.sdk.test_timeline_commit_provider import inverse
 
-    realm, accepted, document = _public_document_compound(True)
+    realm, accepted, document = _public_document_compound(True, tmp_path)
     restored = realm.call([inverse([accepted["receipt"]["receipt_id"]])])
     assert restored["data"]["canonical_document"] == document
     assert document_from_bundle(bundle_from_document(restored["data"]["canonical_document"])) == document
