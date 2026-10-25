@@ -1,0 +1,118 @@
+{
+  "task": "F-D108-native24-disposition-0912",
+  "scope": "exact actual2016 failures in test_native_batch_ingress.py",
+  "verdict": "PARTIAL_EXISTING_DISPOSITION; 2 qualified, 22 core-open",
+  "no_new_retirement": true,
+  "partition": {
+    "actual_native_nodes": 40,
+    "actual_native_passed": 16,
+    "actual_native_failed": 24,
+    "actual_failed_unique": true,
+    "d87_assigned_unique": true,
+    "exact_selector_intersection": 24,
+    "exact_selector_partition": "actual_failed_native == D87_assigned_native24",
+    "actual_failure_shape": {"SystemExit:2": 22, "assertion": 1, "did_not_raise": 1},
+    "qualified_existing_legacy_only": 2,
+    "core_open": 22
+  },
+  "inputs": {
+    "actual_agent_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "actual_agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "actual_xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108b-core-local-0811/evidence/agent-core-full.xml",
+      "sha256": "72872c77087719a692bff4b48b8d85ea62b9931d59a502c8e246daee0c81c18a"
+    },
+    "safe_cohort_a184": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D108-terminal-classify-a-0846.json",
+      "sha256": "a215867211faac47f03242d17ec50c3f5ac0d50921a2fdb220af570ef736e77f",
+      "classification": "A=184; ENV-KNOWN-GAP=43; NEW-OURS CORE-OPEN=141",
+      "native_batch_rows": "24; all are NEW-OURS CORE-OPEN in cohort A"
+    },
+    "d87_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D87-retained-source-manifest.json",
+      "sha256": "e128e2def01c11ec11ba21455ad6bb0ff79d68913bbdb61434d4eab0ca38fd0b",
+      "original_native24_source_sha256": "c3ece0310d594e82ae1d1643cf9571fd395ddb2c56dc6b2e171d990f49da3f53"
+    },
+    "d87_appendix": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D87-0007-appendix.md",
+      "sha256": "ffb22fae000f94992157ebee3c0d4756d53d5a6c86674e91b771dcde647c681b"
+    },
+    "independent_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D87-coverage-review-0033.md",
+      "sha256": "a8153ca32f23d50473fbe8a02cf7fa0b722bdae4dd322fd8ad3affa8bca663dd",
+      "reviewed_agent_commit": "0d142f79518ba4ec20eb195657ccc7eb6e903fc3",
+      "ruling": "PASS_SOURCE; 24 mapped, zero claimed current gaps; no behavior rerun"
+    },
+    "ledger_readback": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md",
+      "sha256": "43f8e150e3af08b29f7ad3a3be5a2a7a5d47b6d97431d066c38fc633eb1865b8"
+    }
+  },
+  "source_applicability": {
+    "actual_070dfc": {
+      "tests/editing_conformance/test_native_batch_ingress.py": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669",
+      "tests/packs/timeline/test_cli_document_commit.py": "eb5e311c23a6a734fc1e82738bb8c2bbf549717bdc128d7df9de7426f6b2b6da",
+      "tests/packs/timeline/test_cli_commit_move.py": "da4024e0c999bb33861b72e78a4d48185d7f981a0299b4de6dee5932fada8fa1",
+      "tests/packs/timeline/test_cli_native_sheet.py": "8f552ed4f528efbaa60343fe1798982a4ae8d5bdd0bc315f08023693dd33a9cd",
+      "tests/editing_conformance/test_commit_runtime_native_checkout.py": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461"
+    },
+    "review_0d142f": {
+      "tests/editing_conformance/test_native_batch_ingress.py": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669",
+      "tests/packs/timeline/test_cli_document_commit.py": "e5ffb3e24a6fb13d6b9111d5fceb93ce1d5138eb0b9aaa4bef0b5d70cdef3865",
+      "tests/packs/timeline/test_cli_commit_move.py": "da4024e0c999bb33861b72e78a4d48185d7f981a0299b4de6dee5932fada8fa1",
+      "tests/packs/timeline/test_cli_native_sheet.py": "8f552ed4f528efbaa60343fe1798982a4ae8d5bdd0bc315f08023693dd33a9cd",
+      "tests/editing_conformance/test_commit_runtime_native_checkout.py": "e922781967e89406053f7f83a65f9d142d63221351c428121f1eeb2fd3beac08"
+    },
+    "exact_applicability": {
+      "native_batch_source": true,
+      "native_sheet_replacement_source": true,
+      "cli_document_commit_replacement_source": false,
+      "native_checkout_replacement_source": false
+    }
+  },
+  "approval": {
+    "citations": ["D87/G5/D52/D72(1)", "rt-D87-coverage-review-0033"],
+    "existing_effective_disposition": "legacy-only",
+    "qualification_rule": "retain only if every named replacement purpose has exact source applicability and actual proof; otherwise CORE-OPEN",
+    "historical_accounting": "D87/D85 550 and prior 276 remain historical; D95 two remains separate; neither is recounted as actual2016"
+  },
+  "owner_trace": {
+    "runtime_provider_setup": {
+      "current_caller": "registered commitTimeline/provider via RuntimeService.commit_timeline",
+      "failure": "timeline commit provider interface/contract mismatch at tests/packs/timeline/test_cli_document_commit.py:34",
+      "smallest_named_owner": "Runtime — commitTimeline provider / M1 outbox-restart"
+    },
+    "legacy_timing_replacement": {
+      "current_caller": "registered commitTimeline/provider reaches Agent validate_final_candidate -> validate_candidate_timing -> legacy_binding",
+      "failure": "candidate.timing: legacy word anchor is missing at astrid/sdk/timeline/validation.py:650",
+      "smallest_named_owner": "Agent — F09 native-word-binding / R1-R2 provider"
+    },
+    "scope_note": "The removed CLI/native label is not used as a blanket disposition. The two owner traces are unresolved proof gaps, not new approvals or code-change instructions."
+  },
+  "rows": [
+    {"n":1,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-False]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:166","actual_failure_sha256":"f393f3862d28dd41590b2f5ce59aed5c1d05889f853612da4945535606d78660","d87":"legacy-only","replacement":"test_document_commit_uses_the_authenticated_commit_door=error; test_document_commit_human_output_keeps_label_and_receipt=error; tests/packs/timeline/test_cli_commit_move.py::test_cli_accepted_redo_inverts_undo_publication_and_preserves_disjoint_edit=passed","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":2,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-True]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:166","actual_failure_sha256":"5b6fb3e809c80d3b51a4a0816196c645c229829b245b319284685f8a8f2985ad","d87":"legacy-only","replacement":"test_document_commit_human_output_keeps_label_and_receipt=error; tests/packs/timeline/test_cli_commit_move.py::test_cli_accepted_redo_inverts_undo_publication_and_preserves_disjoint_edit=passed","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":3,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-False]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:214","actual_failure_sha256":"74e9a35f1792be39869a47f9a2c003dcc9faf8cb86838a2204412910adcbecdd","d87":"legacy-only","replacement":"test_document_commit_retry_uses_runtime_idempotency_without_history_scan=error; test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":4,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-True]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:214","actual_failure_sha256":"0c9f23bff2bc16723c2c4678ca0aafbf1957dac04a6273a7607b3b6122284a8b","d87":"legacy-only","replacement":"test_document_commit_retry_uses_runtime_idempotency_without_history_scan=error; test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":5,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-False]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:214","actual_failure_sha256":"a8b2671ce599a56ab14843733912028f33af3451044603de229e82ce40a1a54f","d87":"legacy-only","replacement":"test_document_commit_retry_uses_runtime_idempotency_without_history_scan=error; test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":6,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-True]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:214","actual_failure_sha256":"b4b29bdb7cc553ed1d54908582d742de95f317e8522bf19b06c91cf9d1617e69","d87":"legacy-only","replacement":"test_document_commit_retry_uses_runtime_idempotency_without_history_scan=error; test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":7,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-False]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:214","actual_failure_sha256":"65e0a27f0c1de844676829dd1136da7ec6196494061a9b96e8f9a5e0c6515b7f","d87":"legacy-only","replacement":"test_document_commit_retry_uses_runtime_idempotency_without_history_scan=error; test_cli_native_sheet.py::test_lost_ack_immutable_retry_and_pending_export_refusal=passed","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":8,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-True]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:214","actual_failure_sha256":"a3ba736c62fc9164d7be1c9a68987021477ed2f4c9d2bc133653e71e882935e0","d87":"legacy-only","replacement":"test_document_commit_changed_body_with_same_key_is_runtime_refusal=error; test_cli_native_sheet.py::test_stale_export_refuses_without_recapturing[True]=passed","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":9,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-False]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:214","actual_failure_sha256":"58357f13ec0862e65280dd9ee8c6cf35b7a5bc029f28477caeb70b8fb895b6c5","d87":"legacy-only","replacement":"test_document_commit_retry_uses_runtime_idempotency_without_history_scan=error; test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":10,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-True]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:214","actual_failure_sha256":"ec6348ae4493f0bf13f292dfce4ff8d4fd0b72bd18de2f9508fb4002e629cfca","d87":"legacy-only","replacement":"test_document_commit_changed_body_with_same_key_is_runtime_refusal=error; test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":11,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[disjoint-False]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:293","actual_failure_sha256":"1ab0117b2cf5adcdd80601e98a9131e6212aa58b54cf38ff4a438c71d7e4ff32","d87":"legacy-only","replacement":"test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]=error; test_document_commit_refuses_a_stale_base_pair=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":12,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[disjoint-True]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:293","actual_failure_sha256":"e4ee1da15c1272b6c9bbf1483c9f4927475e822fd7b5d36115af107e655d7c3d","d87":"legacy-only","replacement":"test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]=error; test_document_commit_refuses_a_stale_base_pair=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":13,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[relevant-False]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:293","actual_failure_sha256":"0f2159a8c10bd853453f6cd57a3d649dae4fd7d0a726be16adfe17c37c83e6c0","d87":"legacy-only","replacement":"test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]=error; test_document_commit_refuses_a_stale_base_pair=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":14,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[relevant-True]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:293","actual_failure_sha256":"8bd7c88aeb0c4620a64f2f70c3c867e9e57f78483c7ab97fff487051b5bba830","d87":"legacy-only","replacement":"test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]=error; test_document_commit_refuses_a_stale_base_pair=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart; Agent F09 native-word-binding / R1-R2 provider"},
+    {"n":15,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[claims]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:367","actual_failure_sha256":"f9538404db7e7c6fe2e2e3e70b2a5cc38d478d66935fd60f396ffdb22b7cf319","d87":"legacy-only","replacement":"test_document_commit_changed_body_with_same_key_is_runtime_refusal=error; test_stale_export_refuses_without_recapturing[True]=passed","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":16,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[late-invalid]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:367","actual_failure_sha256":"7587c41d25c8e693df81c5169c60bb925a2a275a6623fe550e9f0ded10030453","d87":"legacy-only","replacement":"tests/packs/timeline/test_cli_native_sheet.py::test_unsupported_edits_leave_text_and_outbox_intact[<lambda>0,<lambda>1,<lambda>2]=passed","disposition":"QUALIFIED_EXISTING_LEGACY_ONLY","owner":"none; existing D87 approval remains applicable"},
+    {"n":17,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[media]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:367","actual_failure_sha256":"2361347ecf04b86133296b6021cf406ec1bfa119f1f7f9615973e861a1ca3ad0","d87":"legacy-only","replacement":"tests/packs/timeline/test_cli_native_sheet.py::test_unsupported_edits_leave_text_and_outbox_intact[<lambda>0,<lambda>1,<lambda>2]=passed","disposition":"QUALIFIED_EXISTING_LEGACY_ONLY","owner":"none; existing D87 approval remains applicable"},
+    {"n":18,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[empty]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:367","actual_failure_sha256":"1057454869bc878c2b7086342ed14442e3c51a89b15e16eb576423ee96b19fb2","d87":"legacy-only","replacement":"test_document_commit_clean_raw_empty_app_is_a_noop=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":19,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[envelope]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:367","actual_failure_sha256":"bafb5b01b1a0ce2bd2809663e2b49ca1c8de770b7f86de85687ed8e4c65ccb1f","d87":"legacy-only","replacement":"test_document_commit_refuses_a_stale_base_pair=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":20,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_parser_requires_both_original_pins_and_describes_registry","actual_outcome":"failed","actual_failure":"assert False","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:408","actual_failure_sha256":"ff07e9bff3144632ee8a07779ac146129b4158c98a85eb8cfae38f200dcaefd4","d87":"legacy-only","replacement":"test_document_commit_uses_the_authenticated_commit_door=error; test_document_commit_refuses_a_stale_base_pair=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":21,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_captured_file_retry_refuses_boolean_to_number_claim[reads]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:426","actual_failure_sha256":"1ea325300c5f0c6d9b062462734d31128f12747733cbe4fbd7452d2faf3c7f5c","d87":"legacy-only","replacement":"test_original_identity_never_coerces_boolean_to_number[pending]=passed; test_document_commit_changed_body_with_same_key_is_runtime_refusal=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":22,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_captured_file_retry_refuses_boolean_to_number_claim[expect]","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:426","actual_failure_sha256":"ccd0d3bb3f9087a640ff82b8b62bf83b08337b9e28facd0a35b33dcaa24313d7","d87":"legacy-only","replacement":"test_original_identity_never_coerces_boolean_to_number[bundle]=passed; test_document_commit_changed_body_with_same_key_is_runtime_refusal=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":23,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_file_preview_keeps_batch_for_one_real_publication","actual_outcome":"failed","actual_failure":"SystemExit:2","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:454","actual_failure_sha256":"0721eabd0db73c0927998dbda0219e4bfa027f5dc5e364180179f61aadb8b3a5","d87":"legacy-only","replacement":"test_document_commit_preview_has_no_accepted_receipt=error","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"},
+    {"n":24,"actual":"tests/editing_conformance/test_native_batch_ingress.py::test_batch_capture_never_refreshes_after_concurrent_ack","actual_outcome":"failed","actual_failure":"Failed: DID NOT RAISE TimelineEditError","actual_location":"tests/editing_conformance/test_native_batch_ingress.py:476","actual_failure_sha256":"fcd2bb962dcc6449014743f400c541939d5f80b44cded6edb293a48a16c6c786","d87":"legacy-only","replacement":"test_document_commit_retry_does_not_scan_a_long_history_page=error; test_cli_native_sheet.py::test_lost_ack_immutable_retry_and_pending_export_refusal=passed","disposition":"CORE-OPEN","owner":"Runtime — commitTimeline provider / M1 outbox-restart"}
+  ]
+}
