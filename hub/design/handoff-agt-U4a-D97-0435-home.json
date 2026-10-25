@@ -1,0 +1,12 @@
+{
+  "agent": "786385631b8096e50e66b8ecff1e7034c5bc1da9",
+  "agent_tree": "d67cd81db76fe410ae7c12009ed6c7db41cba770",
+  "runtime_source_commit": "0c62dfa63db9ff608ac9338388431e31a814e080",
+  "runtime_tree": "e22cdd54b668acea9fe593e6724b34d1a56f7530",
+  "lock_sha256": "7c16b70e720aa4029d4a8f1e0efee1ca2dc27b2000878a62504ab0f61523b2a3",
+  "canonical_files_count": 15,
+  "all_non_source_lock_fields_unchanged": true,
+  "d91_exact_reviewed_blob": "621110f87f0af576097aeeaa92574f18f29e999b",
+  "adopter_report": "agt-U4a-D97-adopt-0435-report.md",
+  "proof_status": "No body; normal tool-only adoption qualified"
+}

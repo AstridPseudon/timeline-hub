@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T04:35:47Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 20 | status age 0m -->
-# agent board, 2026-10-25T04:35:13Z
+<!-- agent | 2026-10-25T04:38:52Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 16 | status age 0m -->
+# agent board, 2026-10-25T04:38:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -11,7 +11,7 @@
 | G2 / G3 | Public commit, emitter, CLI and sheet | Sol / Luna | R1, R2 | merged | G234 integrated0549 | Joined131 and live Runtime controls passed. P4 retains actual HTTP scope. | ea302e0f5 |
 | G4 | Remaining production writers | Sol / Luna | G2 | merged | G234; video; media admission0832 | Writer migration qualified; media admission20 passed on0ff3. Managed duck original remains held. | ea302e0f5; 0ff3d103fb |
 | G5 | Retire superseded writers | Luna / Sol | H24 criteria | merged | Custody review2155 | 350 cases, four SDK and c271 passed. Historical raw packet loss remains disclosed. | c36ca8c94 |
-| P4 owner | Qualify unchanged ten-note original | Luna adoption / MAIN | Normal D97 adoption receipt | doing | agt-U4a-D97-adopt-0435; MAINprep0421 | Runtime0c62 RELEASED exact reviewed tree, source hold cleared. Normal lock-only tool adoption dispatched immediately; then one original45s body on MAIN. | Runtime0c62 |
+| P4 owner | Qualify unchanged ten-note original | MAIN Luna / service | Exact adopted normal tuple | doing | MAIN prep0421; Agent peer0437 | Normal Agent786385/Runtime0c62 receipt delivered. Source and adoption holds cleared; one unchanged45s original next. No passing R2 or sample repeat. | Agent786385 / Runtime0c62 |
 | F original census | Keep exact historical267 records | Sol / Luna | Independent accounting | merged | Count0818; review0827 | 263 closed,4 open;123 exact mappings. Current full9758 remains a separate failed checkpoint. | Census e13d65ba |
 | F checkpoint9758 | Retain failed full checkpoint | Service / Luna | Exact census complete | merged | 9758; census 1052 and 1058 | Historical FAIL: 17673 passed, 231 failed, 45 errors. All 276 bad IDs exact. This is retained evidence, never full PASS. | ba55 / tree c13 |
 | F checkpoint setup | Correct profile setup | Luna / Luna | Source1052; review1105 | merged | Install1118; review1124 | All45 errors classified:3 loops and42 artifact mismatches. Actual registry18de/row0bdf verified; no full retry. | Candidate4a2a3472d1 |
@@ -204,7 +204,7 @@
 | F later source delta | Publish later setup corrections | Luna | Existing MAIN targeted runner | merging | Inputs 0209 PASS | Exact 69 extra: sheet 13, M1 10, word 46; combined 230. Flat packet published; all original dispositions kept. | Captured 3b8f |
 | R2 net-zero oracle | Bind exact native recorder expectation | Luna | MAIN exact net-zero proof | merging | Author 0210; review 0215 PASS | Seven-line test-only correction now home cef8. All original predicates preserved. Matching NumPy mypy limit; functional proof still owed. | cef8a5be53 |
 
-| D91 inverse window | Preserve valid original shared host | Runtime Sol / Agent Luna | Exact final reviewed source import | doing | Runtime0409; cleanimport0435 | New12c4 protected0420 PASS, target6211. Import one exact file on normal base, exclude older unreviewed ancestry. MAIN ten proof remains Runtime-owned. | Prior b806 /19ad |
+| D91 inverse window | Preserve valid original shared host | Runtime / Agent Luna | Exact MAIN ten-case proof | merging | Clean import0435; normal786385 | Target621110f byte exact reviewed12c4. Original ten conserved; older17648 tenERROR remains historical. Runtime sole proof owner, no repeated inverse7. | 786385631b |
 
 | P4 cross-process sample | Measure actual ten-note process costs | MAIN Luna | Complete corrected measurement | merged | Corrected0242; actual25257 | All432 samples captured, one process, zero Python CLI children. Main42.63 CPU/46.32 wall; Runtime digest121 and cursor106 samples. | d407 /6634 /4b984 /635f |
 
@@ -223,7 +223,7 @@
 
 | F word oracle two | Match exact current operation and C0 | Luna | Meaningful MAIN two originals | merging | Author0317; review0320 PASS | Normal657 contains exact reviewed oracle source. Protected original bodies still owed. | 657bc |
 
-| F9211 command identity | Preserve strict executed command equality | Luna private observer / MAIN | D98 approved diagnostic and receiver | doing | agt-F-D98-command-observer-0427 | At most3 originals, one per family; field paths, shapes and hashes only. D82 classification first. No full67 or pool6 retry. | Current released source |
+| F9211 command identity | Preserve strict executed command equality | MAIN Luna private observer | D98 bounded three-case diagnostic | doing | Runtime observer0423; local0427 done | Coalesced under earlier Runtime owner. Local observer d751 is input only, never product merged. One diagnostic up to3 originals; D82 classification first. | Current released source |
 | F9211 ordinary sheet | Correct truthful bootstrap caller | Luna | Meaningful MAIN11 proof | merging | Author0325; review0329 PASS | Normalf31f source.via correction; eleven original predicates retained. No behavioral claim. | f31f315a8d |
 | F9211 projection | Preserve opaque captured fixture | Luna | Meaningful MAIN9 proof | merging | Author0325; review0329 PASS | Normal9c4b exact opaque baseline; nine original predicates retained. Behavior still owed. | 9c4b6354d8 |
 | F9211 numeric six | Preserve numeric move invocation | Luna | MAIN corrected six and auth three | merging | Author0325; review0330 PASS | Normal5954 exact guarded emitter source; six numeric originals source qualified, inverse three live. | 595464fd1c |
@@ -243,18 +243,20 @@
 | F media transition return | Preserve exact crossfade setup | MAIN Luna | Meaningful MAIN changed18 | merging | Author0352; review0358 PASS | Exact369b normal608b, independent review and all67 assertions conserved. No duplicate local author or unchanged22 body. | 608b6a7a2b |
 | F numeric auth three | Preserve typed numeric inverse effects | Luna read only | Genuine complete accepted and rejected records | later | Runtime0358 EXACTMISSING | Exact2 to2.0 and bool changes fail effect-image guard. No producer/verifier fault proved from retained source; no guard change or retry. | Actual9211 |
 
-Integration: Actual normal5fae includes D95 retirement33be, media369b, D91 clean import19ad, M1 baseline11d, owned oracle9dc and graph9215. Source joins alone give no behavior credit.
-core open: P4 original14151 FAIL45.448s and diagnostic25257 FAIL45.557s. Runtime D97 RELEASED0c62, normal adoption0435 now ready/active; one MAIN original follows actual Agent receipt.
+| U4a D97 adoption | Adopt released permission-gated Runtime | Luna | Normal tools and receipt verified | merged | agt-U4a-D97-adopt-0435 | Lock-only source6634 to0c62; refresh, vendor, artifact and diff checks pass. All15 mappings unchanged; actual home readback matches. | 49f66cf62c; now786385 |
+
+Integration: Actual normal786385 adopts Runtime0c62 through tool-only lock change and imports D91 exact621110f. All15 canonical mappings and schema unchanged. Held product candidates are absent.
+core open: P4 prior original14151 FAIL45.448s and sample25257 FAIL45.557s. D97 adoption is normal and exact tuple sent to MAIN0437; next meaningful unchanged original requested.
 Gates: P1/P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine installed render required. No full PASS, core0, final tuple or ZIP claim.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later18 ENV passes retain exact source scope.
-Families: 9211 exact161 6PASS43FAIL112ERROR;11789 exact102 10PASS24FAIL68ERROR;18575 exact20 7PASS3FAIL10ERROR. Later22 4PASS18ERROR;17648 D91 tenERROR. No unchanged repeat.
+Families: Historical9211 6PASS43FAIL112ERROR;11789 10PASS24FAIL68ERROR;18575 7PASS3FAIL10ERROR. Current96 actual6058 14PASS7FAIL75ERROR retained; safe owner packet pending, no unchanged repeat.
 Candidate: b415 mandatory8 sixFAIL twoERROR; optional5 not selected. ParentSol0425 made no patch; exact encoding handback Runtime0431. Product4dcb and word2154 stay held.
 Admission: D92 real A/B and WAV duration correction normalb7c5; three historical FAIL await source proof. D95 exact99/101 retirement normal5fae, new refusal2 MAIN pending. D99 role split source active.
 Safety: Withdrawn D88 denied action/prototype remain stopped. D93 original fixture credentials, session, granted scopes and calls only. No new sample or denied-route retry.
-Disk: D89 source/review6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB. Free5.737GB after four starts. Sweep3/compact in progress; no ended clean nonKEEP tree remains. Dirty/refused paths untouched.
+Disk: D89 source/review6 above5.0GB; heavy1 above5.2GB; nothing below4.5GB. Last free5.977GB. Sweep3 removed0; compact gzipped14 logs. Ended trees recycled; dirty/refused paths untouched.
 Blockers: Runtime encoding — Exact parent asset capture root scope conflicts with narrow rebase dependency; bounded source handback0431 asks canonical both-mirror normalization. No competing Agent author.
 Blockers: MAIN proof — Immutable96 owner0415; next M1/CLI and later delta receiver0419. D98 bounded3 observer0427; D95 new refusal2 requested. Restore72a still held before candidate proof.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
-Next ready: Critical normal adopter0435, D99 reviewer0435, restoreSol0435 and D91 exact import0435 all dispatched. MAIN receiver0419 owns new family source; D98 coalesced under earlier Runtime0423.
-live4 / cap6; ready-undispatched0 eligible starts. No stale Runtime-release or orchestrator decision blocker. Historical24 review scopes reconciled; actual new protected reviews assigned.
-Inbox consumed through1381360 bytes. Updated 2026-10-25T04:35:13Z. No manager product/test/generated/pin edits or bodies.
+Next ready: D99 protected review0435 and restore HARD Sol0435 active. MAIN sole P4 prep0421 has exact adoption receipt; D91 and D98 follow serial heavy order. No eligible source task waits.
+live2 / cap6; ready-undispatched0 eligible local starts. Runtime owns next proof bodies. Actual protected reviews follow source returns; historical24 scopes are not24 pending reviews.
+Inbox consumed through1381360 bytes. Updated 2026-10-25T04:38:27Z. No manager product/test/generated/pin edits or bodies.
