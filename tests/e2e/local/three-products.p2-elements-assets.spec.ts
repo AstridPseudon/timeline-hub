@@ -1205,12 +1205,16 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
   assertNormalizedCatalogueEntry(childRegistry[row.asset as string], mediaEvidence.source);
   expect(afterChildRegistry).toEqual({ ...beforeChildRegistry, assets: childRegistry });
   assertMediaManifestIdentity(original, after, mediaEvidence.source);
+  // The mounted child projection scopes an authored clip id to its selected physical occurrence.
+  // Derive this expected identity from the canonical placement row, independently of the DOM.
+  const projectedPlacementClipId = `${seed3.occurrenceId}:${String(row.id)}`;
   const committed = await history(harness, seed3);
   assertHistoryEntry(committed, post, result);
   assertNoLegacy(wire);
   await assertReload(page, harness, seed3, result.data.accepted_revision_id, after, async () => {
     const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
-    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
+    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${projectedPlacementClipId}"]`)).toHaveCount(1);
+    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
   assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication }, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId }, publicationId(post));
@@ -1225,6 +1229,6 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
   assertUndoHistoryEntry(undoContext.history, undo, post, undoContext);
   await assertReload(page, harness, seed3, undone.data.accepted_revision_id, original, async () => {
     const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
-    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
+    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${projectedPlacementClipId}"]`)).toHaveCount(0);
   });
 });
