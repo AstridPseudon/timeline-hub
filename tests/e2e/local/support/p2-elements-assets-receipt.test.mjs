@@ -19,6 +19,7 @@ const helperSource = [
   'nativeValue', 'nativeSite', 'nativeSelection', 'nativeBinding', 'nativeEffects', 'nativeUndoExpected',
   'canonicalJson', 'materializedIdentity', 'assertRequestV2', 'acceptedMutation', 'publicationId', 'assertNativeAcceptedReply', 'assertNativeHistoryEntry',
   'assertAcceptedReply', 'assertHistoryEntry', 'assertUndoHistoryEntry', 'assertOccurrenceParentProjection',
+  'projectedPlacementClipId', 'assertMountedPlacementIdentity',
 ].map(extract).join('\n');
 const transpile = (input) => {
   const result = ts.transpileModule(input, { compilerOptions: { target: ts.ScriptTarget.ES2022 }, reportDiagnostics: true });
@@ -26,7 +27,7 @@ const transpile = (input) => {
   return result.outputText;
 };
 const sha256Hex = (bytes) => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
-const helpers = compileFunction(`${transpile(helperSource)}\nreturn { assertAcceptedReply, assertHistoryEntry, assertUndoHistoryEntry, assertOccurrenceParentProjection };`, ['expect', 'sha256Hex'])(expect, sha256Hex);
+const helpers = compileFunction(`${transpile(helperSource)}\nreturn { assertAcceptedReply, assertHistoryEntry, assertUndoHistoryEntry, assertOccurrenceParentProjection, projectedPlacementClipId, assertMountedPlacementIdentity };`, ['expect', 'sha256Hex'])(expect, sha256Hex);
 const checkRequest = compileFunction(`${transpile([extract('object'), requestHelper].join('\n'))}\nreturn assertRequestV2;`, ['expect'])(expect);
 
 const command = {
@@ -151,6 +152,83 @@ test('actual occurrence parent projection rejects the stale whole-parent expecta
   assert.throws(() => expect(fixture.after.parent_revision.payload).toEqual(fixture.before.parent_revision.payload));
   assert.doesNotThrow(() => helpers.assertOccurrenceParentProjection(
     fixture.before, fixture.after, fixture.result, fixture.occurrenceId, fixture.row, fixture.source,
+  ));
+});
+
+function mountedPlacementFixture() {
+  const fixture = occurrenceProjectionFixture();
+  const rawClipId = String(fixture.row.id);
+  const occurrenceId = fixture.occurrenceId;
+  const child = fixture.after.internal_timeline_revisions.find((image) => image.revision_id === fixture.result.data.steps[0].patch[0].ref.slice('internal-revision:'.length));
+  assert.ok(child, 'mounted fixture has the projected child revision');
+  const payloadDigest = fixtureDigest(child.payload);
+  return {
+    ...fixture,
+    occurrenceId,
+    rawClipId,
+    payloadDigest,
+    mounted: [{
+      clipId: helpers.projectedPlacementClipId(occurrenceId, rawClipId),
+      occurrenceId,
+      rawClipId,
+      physicalRef: `occurrence:${occurrenceId}`,
+      payloadDigest,
+    }],
+  };
+}
+
+function canonicalPlacementDigest(fixture) {
+  return fixtureDigest({ before: fixture.before, after: fixture.after, result: fixture.result });
+}
+
+test('actual mounted placement identity accepts one occurrence-scoped canonical child', () => {
+  const fixture = mountedPlacementFixture();
+  assert.doesNotThrow(() => helpers.assertMountedPlacementIdentity(
+    fixture.mounted, fixture.occurrenceId, fixture.rawClipId, fixture.payloadDigest, true,
+  ));
+});
+
+for (const [name, mutate] of [
+  ['wrong occurrence', (fixture) => {
+    fixture.mounted[0].occurrenceId = 'other-occurrence';
+    fixture.mounted[0].physicalRef = 'occurrence:other-occurrence';
+    fixture.mounted[0].clipId = helpers.projectedPlacementClipId('other-occurrence', fixture.rawClipId);
+  }],
+  ['sibling physical owner', (fixture) => {
+    fixture.mounted[0].occurrenceId = 'sibling';
+    fixture.mounted[0].physicalRef = 'occurrence:sibling';
+  }],
+  ['raw fallback', (fixture) => { fixture.mounted[0].clipId = fixture.rawClipId; }],
+  ['duplicate', (fixture) => { fixture.mounted.push(structuredClone(fixture.mounted[0])); }],
+  ['same-bytes sibling', (fixture) => fixture.mounted.push({
+    clipId: helpers.projectedPlacementClipId('sibling', fixture.rawClipId),
+    occurrenceId: 'sibling',
+    rawClipId: fixture.rawClipId,
+    physicalRef: 'occurrence:sibling',
+    payloadDigest: fixture.payloadDigest,
+  })],
+]) test(`actual mounted placement identity rejects byte-identical ${name}`, () => {
+  const fixture = mountedPlacementFixture();
+  const canonical = canonicalPlacementDigest(fixture);
+  mutate(fixture);
+  assert.equal(canonicalPlacementDigest(fixture), canonical, `${name} changes no canonical bytes`);
+  assert.throws(() => helpers.assertMountedPlacementIdentity(
+    fixture.mounted, fixture.occurrenceId, fixture.rawClipId, fixture.payloadDigest, true,
+  ));
+});
+
+test('fixed inverse rejects projected residue that the old raw inverse accepts', () => {
+  const fixture = mountedPlacementFixture();
+  const oldRawInverse = () => assert.equal(
+    fixture.mounted.filter((candidate) => candidate.clipId === fixture.rawClipId).length, 0,
+  );
+  assert.doesNotThrow(oldRawInverse);
+  assert.throws(() => helpers.assertMountedPlacementIdentity(
+    fixture.mounted, fixture.occurrenceId, fixture.rawClipId, fixture.payloadDigest, false,
+  ));
+  fixture.mounted = [];
+  assert.doesNotThrow(() => helpers.assertMountedPlacementIdentity(
+    fixture.mounted, fixture.occurrenceId, fixture.rawClipId, fixture.payloadDigest, false,
   ));
 });
 

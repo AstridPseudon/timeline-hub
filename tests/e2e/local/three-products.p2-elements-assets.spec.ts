@@ -932,6 +932,50 @@ function assertMediaManifestIdentity(
   });
 }
 
+function projectedPlacementClipId(occurrenceId: string, rawClipId: unknown): string {
+  expect(occurrenceId).toEqual(expect.any(String));
+  expect(rawClipId).toEqual(expect.any(String));
+  expect(rawClipId).not.toBe('');
+  return `${occurrenceId}:${String(rawClipId)}`;
+}
+
+function projectedPlacementClipIdForRow(occurrenceId: string, row: JsonObject): string {
+  expect(row.id).toEqual(expect.any(String));
+  return projectedPlacementClipId(occurrenceId, row.id);
+}
+
+interface MountedPlacementIdentity {
+  clipId: string;
+  occurrenceId: string;
+  rawClipId: string;
+  physicalRef: string;
+  payloadDigest: string;
+}
+
+function assertMountedPlacementIdentity(
+  mounted: MountedPlacementIdentity[],
+  occurrenceId: string,
+  rawClipId: string,
+  payloadDigest: string,
+  present: boolean,
+): void {
+  const expected = {
+    clipId: projectedPlacementClipId(occurrenceId, rawClipId),
+    occurrenceId,
+    rawClipId,
+    physicalRef: `occurrence:${occurrenceId}`,
+    payloadDigest,
+  };
+  const rawMatches = mounted.filter((candidate) => candidate.rawClipId === rawClipId);
+  expect(rawMatches).toHaveLength(present ? 1 : 0);
+  if (present) {
+    expect(rawMatches[0]).toEqual(expected);
+    expect(mounted.filter((candidate) => candidate.clipId === expected.clipId)).toHaveLength(1);
+  } else {
+    expect(mounted.filter((candidate) => candidate.clipId === expected.clipId)).toHaveLength(0);
+  }
+}
+
 async function dropFileIn(scope: Locator, file: { name: string; type: string; bytesBase64: string }, occurrenceId: string, clipId: string, referenceId: string, from: number, referenceAt: number, time: number): Promise<void> {
   const clipLocator = scope.locator(`.clip-action[data-clip-id="${occurrenceId}:${clipId}"]`).first();
   const referenceLocator = scope.locator(`.clip-action[data-clip-id="${occurrenceId}:${referenceId}"]`).first();
@@ -1205,12 +1249,16 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
   assertNormalizedCatalogueEntry(childRegistry[row.asset as string], mediaEvidence.source);
   expect(afterChildRegistry).toEqual({ ...beforeChildRegistry, assets: childRegistry });
   assertMediaManifestIdentity(original, after, mediaEvidence.source);
+  // The mounted child projection scopes an authored clip id to its selected physical occurrence.
+  // Derive this expected identity from the canonical placement row, independently of the DOM.
+  const projectedPlacementClipId = projectedPlacementClipIdForRow(seed3.occurrenceId, row);
   const committed = await history(harness, seed3);
   assertHistoryEntry(committed, post, result);
   assertNoLegacy(wire);
   await assertReload(page, harness, seed3, result.data.accepted_revision_id, after, async () => {
     const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
-    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
+    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${projectedPlacementClipId}"]`)).toHaveCount(1);
+    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
   assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication }, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId }, publicationId(post));
@@ -1225,6 +1273,6 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
   assertUndoHistoryEntry(undoContext.history, undo, post, undoContext);
   await assertReload(page, harness, seed3, undone.data.accepted_revision_id, original, async () => {
     const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
-    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
+    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${projectedPlacementClipId}"]`)).toHaveCount(0);
   });
 });
