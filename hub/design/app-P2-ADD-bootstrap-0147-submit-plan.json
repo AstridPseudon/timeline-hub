@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "suite": "p2-popup-add",
+  "pins": {
+    "app": {
+      "head": "4b98436552bf30f5fb28bbb958b1817430b12e34",
+      "tree": "dc69ca43857aaeff5d2f3d7acd1915b4e24b59e6"
+    },
+    "agent": {
+      "head": "0d142f79518ba4ec20eb195657ccc7eb6e903fc3",
+      "tree": "f490451a3fa92f847a9ff2d26daac9e1157925e3"
+    },
+    "runtime": {
+      "head": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de",
+      "tree": "64bb0caf0b7b950e02c4075077868a3dcd12ee06"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "checkouts": {
+    "app": "/home/user/work/wt/app-pin-4b984365",
+    "agent": "/home/user/work/wt/agt-pin-0d142f79",
+    "runtime": "/home/user/work/wt/rt-pin-a3cd1a32",
+    "composition": "/home/user/work/wt/vw-pin-635f4de0"
+  },
+  "target": "app-pin-4b984365",
+  "suites": {
+    "normal": "p2-bootstrap-add-0147",
+    "preflight": "p2-bootstrap-add-0147-preflight"
+  },
+  "recipes": {
+    "preflight": "D66_APP_SHA='4b98436552bf30f5fb28bbb958b1817430b12e34' D66_APP_TREE='dc69ca43857aaeff5d2f3d7acd1915b4e24b59e6' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-4b984365' D66_AGENT_SHA='0d142f79518ba4ec20eb195657ccc7eb6e903fc3' D66_AGENT_TREE='f490451a3fa92f847a9ff2d26daac9e1157925e3' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-0d142f79' D66_RUNTIME_SHA='a3cd1a3214fa1632879c21d82d1abb9ea720b1de' D66_RUNTIME_TREE='64bb0caf0b7b950e02c4075077868a3dcd12ee06' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-a3cd1a32' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-add' --preflight",
+    "normal": "D66_APP_SHA='4b98436552bf30f5fb28bbb958b1817430b12e34' D66_APP_TREE='dc69ca43857aaeff5d2f3d7acd1915b4e24b59e6' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-4b984365' D66_AGENT_SHA='0d142f79518ba4ec20eb195657ccc7eb6e903fc3' D66_AGENT_TREE='f490451a3fa92f847a9ff2d26daac9e1157925e3' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-0d142f79' D66_RUNTIME_SHA='a3cd1a3214fa1632879c21d82d1abb9ea720b1de' D66_RUNTIME_TREE='64bb0caf0b7b950e02c4075077868a3dcd12ee06' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-a3cd1a32' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-add'"
+  },
+  "preflight": {
+    "id": "app-pin-4b984365-p2-bootstrap-add-0147-preflight-1025014802-15961",
+    "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-4b984365-p2-bootstrap-add-0147-preflight-1025014802-15961",
+    "status": "pass"
+  },
+  "normal": {
+    "id": "app-pin-4b984365-p2-bootstrap-add-0147-1025014832-28616",
+    "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-4b984365-p2-bootstrap-add-0147-1025014832-28616"
+  }
+}

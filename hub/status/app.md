@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T01:46:45Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 0m -->
-# app board, 2026-10-25T01:46Z
+<!-- app | 2026-10-25T01:50:35Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 0m -->
+# app board, 2026-10-25T01:50Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -153,9 +153,9 @@
 
 | P2-placement-16952 | Prove actual embedded drop geometry | HARD Sol; Luna applies | Retained16952 and source | merged | Sol0112 complete; application0127 | Real generic coordinator resolves V3/4.5; asset planner expects V2/9. Old5FAIL93PASS versus proposal98PASS. Source unchanged; proposal artifacts ephemeral. | Evidence only |
 | P2-SWAP-11089 | Assert exact conditional created claim | Luna; independent | Independent0115 DiffB PASS | merged | Author0112; review0115 | Four oracle and37 producer controls; three types/lint PASS. Exact two reviewed blobs home. Original browser proof owed. | Home3a2d6067b4 |
-| P2-bulk-21061 | Attribute original response timeout | Runtime facts; App source later | Existing main finite packet | blocked:runtime | Runtime producer0039 facts requested0112 | Readiness PASS; original responsewait90s. POST/provider/outcome UNKNOWN; no unchanged repeat or inferred Runtime cost. | Appfd2f / Runtimea3cd |
+| P2-bulk-21061 | Attribute bulk no-dispatch boundary | Runtime facts; App Luna next | Finite packet0129 published | gated:D89-source-floor | App brief0150 prepared | Intended commit POST ABSENT; ordinal1/2 setup both200. No Runtime wait claim. Minimum mounted App source attribution ready at next5.5GB slot. | Originalfd2f |
 
-| P2-ADD-selection-current | Qualify mounted selection with new bootstrap facts | Luna; service | New capture home740513 | doing | app-P2-ADD-bootstrap-submit-0147 | ONE ADD assigned on4b984/0d142/a3cd/635f after empty body check; genuine ID pending plan. Actual29065 original was NOTRUN. | App4b984365 |
+| P2-ADD-selection-current | Qualify mounted selection with new bootstrap facts | Luna; service | Preflight15961 PASS | doing | Actual28616; launcher0147 ended | ONE ADD submitted01:48:32 on4b984/0d142/a3cd/635f, hostvm. Same ID only; no result yet. Bootstrap diagnostics active. | App4b984365 |
 
 | P2-ADD-29065 | Attribute readonly readiness failure | Luna | Existing actual29065 | merged | app-P2-ADD-29065-readiness-0125 | Missing status at connection5s; handshake/page error absent. Earlier same support passed; no product fix proved.13 controls/types/lint PASS; two known diagnostic failures. | Evidence only |
 
@@ -168,7 +168,9 @@
 
 | P2-registry-asset-current | Qualify exact registry and import identity | Luna; service | Actual15897 terminal | gated:native-oracle-fix | Reviewer0130; source0142 | NO-GO240s. Readiness PASS; canonical registry/history/first reload reached. Undo request181 expects atomic, native sends fields. Later Undo tail NOTRUN. | App37384adf26 |
 
-| P2-asset-native-Undo | Assert complete source-derived native inverse tail | Luna | Actual15897 | doing | app-P2-asset-native-Undo-0142 | Whole affected helper/caller audit of native versus doc.patch request/reply/steps; all original predicates kept. One protected review follows. | Base740513 |
+| P2-asset-native-Undo | Assert complete source-derived native inverse tail | Luna; independent | Author0142 complete | review | app-P2-asset-native-review-0149 | Full native inverse request/reply/control correction; reviewer must run missing semantic controls through existing graph. Original body still NO-GO. | Sourcebbba1990 |
+
+| U4p-D88b | Adopt independently qualified replay memo release | Luna normal tools | Security0125 PASS; Runtime normal6634 | doing | app-U4p-D88b-adoption-0150 | Separate owner-authorized replacement; full replay retained, old denied D88 not ancestor. Normal lock/manifest tools only; no original credit. | Runtime6634a17 |
 
 Integration: App4b98436552 merges independently reviewed native Undo reply oracle over bootstrap740513 and registry37384. Managed-placementa90 is held after concrete preview/save mismatch; no original or final-cut credit inferred.
 
@@ -178,13 +180,13 @@ regressions: No browser closure from source controls. D69 complete at its record
 Blockers: Runtime source — element8897 still fails five seconds on a3cd. Complete ordinal3 frame/phase packet is published; Runtime owns next source decision. No App capture input remains owed.
 Blockers: Runtime venue — main SWAP3a2 reservation requested0124. Parent24629 and single11446 terminal; App native reply correction0127 is reviewed by0138. Bulk21061 finite Runtime facts worker0129 active; packet pending, no new collector or original.
 Blockers: Final cut — eight isolated P2, one full App tour, final pinned P1–P5/core and genuine installed render remain required. Runtime coordinates matrix and ZIP.
-Next ready: Asset tail0142 then protected review; placement first-return0145 then independent core review. ADD0147 sourcepreflight/body. Main reviewed native4b and SWAP reservation asked0146; bulk facts0129 pending.
-live 3 / cap 6; ready-undispatched 0. Native review0138 PASS/home; placement first-return0145, asset native oracle0142 and ADD launcher0147 active. Bootstrap source home740513 and asset15897 terminal. Reviewer0130 finished registry PASS and asset15897 submission. Asset15897 terminal. ADD0147 owns next local body; placement cannot submit before source re-review and ADD terminal.
+Next ready: Asset tail0142 then protected review; placement first-return0145 then independent core review. ADD0147 sourcepreflight/body. Main reviewed native4b and SWAP reservation asked0146; bulk facts0129 clear: no POST; App source0150 ready, disk admission tracked.
+live 3 / cap 6; ready-undispatched 0. Native review0138 PASS/home; placement return0145, asset review0149 and D88b adoption0150 active. ADD launcher0147 ended; body28616 running. Bulk source0150 waits eligible disk. Bootstrap source home740513 and asset15897 terminal. Reviewer0130 finished registry PASS and asset15897 submission. Asset15897 terminal. ActualADD28616 sole local body; placement cannot submit before source re-review and ADD terminal.
 Capacity: Newly stale detached18de pin passed full current-head/test/queue/lease/process checks; named KEEP release and bin/recycle succeeded,440MB freed. Source authors and completed reviewers auto-recycle; no idle worker holds a body wait. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
 Disk: 5.991GB at01:44 after guarded unused37384 pin recycle;18de also recycled earlier. Exact clean noncurrent head; no active tests/queue/leases/processes or unreadable processes. No refusal; all output retained. Guarded stale c9 and50cf pins recycled; outputs kept, no refusal. D89: six source above5.5GB, one body above5.2GB; no new below4.5GB; stop newest nongate4.0GB.
 Safety: No new App safety or permission refusal. Runtime peer0106 reports D88 safety-review denial and integrity failure; candidate held with existing orchestrator escalation. No App adoption, retry or alternate review of that candidate; releaseda3cd retained.
-Inbox consumed through1858771 bytes. Runtime0118 actual parent24629 and serial single11446 consumed; App reply0127 owns strict follow-through. D88 held denial retained. D89 six source above5.5GB/one body above5.2GB applies; no new below4.5GB, newest nongate stop4.0GB.
+Inbox consumed through1858771 bytes; additionally consumed published bulk facts0129 and protective D88b review0125 directly. Runtime0118 actual parent24629 and serial single11446 consumed; App reply0127 owns strict follow-through. D88 held denial retained. D89 six source above5.5GB/one body above5.2GB applies; no new below4.5GB, newest nongate stop4.0GB.
 Later: F-final App upstream d11417a59 refresh and applied-result full suite are Runtime final coordinator-owned, gated on D59 cut. Gating App keeps frozen upstream3881.
 Evidence: [ADD review and submission](../../workers/app-P2-ADD-selector-review-submit-0042/report.md), [Undo author](../../workers/app-A2-Undo-reads-current-sol-0033/report.md), [import author](../../workers/app-P2-assets-import-ABI-0038/report.md), [element facts](../../design/app-P2-element-8897-safe-facts-0019.md).
 
-Later: App bulk21061 source attribution waits existing main producer finite POST/provider packet, requested0112; no new collector or original. Runtime D88 source/capture is owned there and not a new App prerequisite.
+Later: Bulk21061 retained packet is published: no gesture POST. Brief0150 source attribution prepared; no duplicate collector or original. Withdrawn D88 stays held; separately authorized protective D88b now qualified and normal6634, adoption0150 active.
