@@ -5,9 +5,12 @@ import { MemoryRouter, useSearchParams } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RUNTIME_REQUEST_WAIT_MS } from '@/integrations/runtime/useRuntimeRequestWait.ts';
 import VideoEditorPage from './VideoEditorPage.tsx';
+import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { RUNTIME_CONNECTION_COPY as COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { assertNativeEditorConnection } from '@/integrations/astrid/nativeEditorConnection.ts';
 
 const harness = vi.hoisted(() => ({
+  origin: '',
   mode: 'projects' as 'projects' | 'timelines',
   projectsPending: true,
   projectsError: null as Error | null,
@@ -108,7 +111,7 @@ vi.mock('@/shared/components/RuntimeConnection/RuntimeConnectorRecoveryBanner.ts
 vi.mock('@/integrations/runtime/client.ts', () => ({ AstridRuntimeClient: class { selectProject = harness.selectProject; }, RuntimeUnavailableError: class extends Error {}, RuntimeAuthenticationError: class extends Error {} }));
 vi.mock('@/integrations/runtime/createDefaultTimeline.ts', () => ({ ensureProjectHasTimeline: vi.fn(), createCanonicalTimeline: vi.fn() }));
 vi.mock('@/integrations/runtime/generated.ts', () => ({ ApiError: class extends Error {} }));
-vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => null }));
+vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => harness.origin }));
 vi.mock('@/shared/lib/taskCreation/ids.ts', () => ({ generateUUID: () => 'generated-id' }));
 vi.mock('@/shared/components/ui/toast.tsx', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -135,6 +138,8 @@ function PageWithProjectSwitch() {
 describe('VideoEditorPage workspace settling', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    harness.origin = '';
+    setRecoveryCardShowing(false);
     harness.mode = 'projects';
     harness.projectsPending = true;
     harness.projectsError = null;
@@ -148,6 +153,7 @@ describe('VideoEditorPage workspace settling', () => {
   });
   afterEach(() => {
     cleanup();
+    setRecoveryCardShowing(false);
     vi.useRealTimers();
   });
 
@@ -237,4 +243,30 @@ describe('VideoEditorPage workspace settling', () => {
     expect(assertNativeEditorConnection).not.toHaveBeenCalled();
     expect(screen.getByText('No projects yet')).toBeInTheDocument();
   });
+
+  it('uses loadFailed copy for hosted discovery errors before the editor mounts', () => {
+    harness.origin = 'http://127.0.0.1:17340';
+    harness.projectsPending = false;
+    harness.projectsError = new Error('raw discovery diagnostic');
+    render(<PageHarness entry="/tools/video-editor" />);
+    expect(screen.getByRole('heading', { name: COPY.loadFailed.title })).toBeInTheDocument();
+    expect(screen.getByText(COPY.loadFailed.sentence)).toBeInTheDocument();
+    expect(screen.queryByText('raw discovery diagnostic')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: COPY.loadFailed.button }));
+    expect(harness.reconnect).toHaveBeenCalledOnce();
+  });
+
+  it.each([true, false])('defers the hosted fallback to recovery while discovery is pending=%s', (pending) => {
+    harness.origin = 'http://127.0.0.1:17340';
+    harness.projectsPending = pending;
+    harness.projectsError = pending ? null : new Error('raw discovery diagnostic');
+    setRecoveryCardShowing(true);
+    render(<PageHarness entry="/tools/video-editor" />);
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(screen.queryByText('raw discovery diagnostic')).toBeNull();
+    expect(document.querySelector('[data-boot-hold]')).toBeNull();
+    act(() => setRecoveryCardShowing(false));
+    expect(screen.getByRole('heading', { name: pending ? 'Opening your workspace…' : COPY.loadFailed.title })).toBeInTheDocument();
+  });
+
 });

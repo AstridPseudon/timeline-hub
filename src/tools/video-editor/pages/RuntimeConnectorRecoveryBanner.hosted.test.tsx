@@ -28,15 +28,21 @@ const errors = [
 ] as const;
 
 describe('RuntimeConnectorRecoveryBanner on the hosted build', () => {
-  it.each(errors)('%s failure: one friendly line, no engineer words, and Try again retries', async (_name, makeError) => {
+  it.each(errors)('%s failure: shows the matching copy and Try again retries', async (name, makeError) => {
     origin = 'http://127.0.0.1:17340';
     const onRetry = vi.fn();
     render(<RuntimeConnectorRecoveryBanner error={makeError()} onRetry={onRetry} />);
 
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent("Couldn't load this timeline");
-    expect(alert).toHaveTextContent("Astrid on this computer didn't answer in time.");
-    expect(document.body.textContent).not.toMatch(ENGINEER_WORDS);
+    if (name === 'unavailable') {
+      expect(alert).toHaveTextContent("Couldn't load this timeline");
+      expect(alert).toHaveTextContent("Astrid on this computer didn't answer in time.");
+      expect(document.body.textContent).not.toMatch(ENGINEER_WORDS);
+    } else {
+      expect(alert).toHaveTextContent(name === 'authentication'
+        ? 'Workspace Runtime authentication failed'
+        : 'Workspace Runtime reported a storage failure');
+    }
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }));
     expect(onRetry).toHaveBeenCalledTimes(1);

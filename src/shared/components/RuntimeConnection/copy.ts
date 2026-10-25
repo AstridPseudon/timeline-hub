@@ -178,7 +178,7 @@ export interface RuntimeConnectionCopy {
     readonly footer: string;
   };
   /** Repeated probes went unanswered with permission granted. */
-  readonly notRunning: Message;
+  readonly notRunning: Message & { readonly retry: string };
   readonly updateNeeded: Message;
   /** Lead-in above the update screen when a chat reply from this computer's Astrid is out of date. */
   readonly chatNeedsUpdate: string;
@@ -186,6 +186,8 @@ export interface RuntimeConnectionCopy {
   readonly phone: Message & { readonly button: string; readonly copied: string };
   /** A desktop browser that cannot request local-network access. */
   readonly unsupported: Message & { readonly button: string; readonly copied: string };
+  readonly browserUpdateNeeded: Message;
+  readonly connectorFailure: { readonly authentication: string; readonly admission: string; readonly storage: string; readonly unavailable: string };
   /** Screen-reader text of the status container while connected, and the line App settings shows then. */
   readonly connected: { readonly sentence: string };
   /** Connected, and the health check answers too slowly: Astrid is running under load. The card clears itself. */
@@ -250,6 +252,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   notRunning: {
     title: "Astrid isn't answering on this computer",
+    retry: 'Try again',
     sentence: "Your coding agent can start it, or install it if it isn't there yet.",
   },
 
@@ -273,6 +276,18 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     sentence: 'This browser cannot connect to Astrid on your computer.',
     button: 'Copy link for Chrome or Edge',
     copied: 'Copied. Open it in Chrome or Edge.',
+  },
+
+  browserUpdateNeeded: {
+    title: 'Update {browser} to connect',
+    sentence: "This version of {browser} can't reach Astrid on this computer. Update it, then come back.",
+  },
+
+  connectorFailure: {
+    authentication: 'Workspace Runtime authentication failed',
+    admission: 'Workspace Runtime failed its startup checks',
+    storage: 'Workspace Runtime reported a storage failure',
+    unavailable: 'Workspace Runtime is unavailable',
   },
 
   connected: {

@@ -1,8 +1,22 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { RuntimeAuthenticationError, RuntimeUnavailableError } from '@/integrations/runtime/client.ts';
+import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
+import { RUNTIME_CONNECTION_COPY as COPY } from './copy.ts';
 import { RuntimeConnectorRecoveryBanner, buildWorkspaceRestartBrief } from './RuntimeConnectorRecoveryBanner';
 
+const harness = vi.hoisted(() => ({ origin: '' }));
+vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/integrations/runtime/connection.ts')>()),
+  runtimeOrigin: () => harness.origin,
+}));
+
+beforeEach(() => { harness.origin = ''; });
+
 afterEach(() => {
+  harness.origin = '';
+  setRecoveryCardShowing(false);
+  vi.useRealTimers();
   cleanup();
   vi.restoreAllMocks();
 });
@@ -131,5 +145,40 @@ describe('RuntimeConnectorRecoveryBanner', () => {
 
     expect(brief).toContain('project newblanktimeline3, timeline timeline-a');
     expect(brief).toContain('Timeline lookup timed out.');
+  });
+});
+
+
+describe('hosted typed recovery', () => {
+  it.each([
+    [new RuntimeAuthenticationError('/api/runtime'), COPY.connectorFailure.authentication],
+    [new RuntimeUnavailableError(new Error('No space left on device'), '/api/runtime'), COPY.connectorFailure.storage],
+    [new RuntimeUnavailableError(new Error('startup admission failed'), '/api/runtime'), COPY.connectorFailure.admission],
+    [new Error('internal failure details'), COPY.loadFailed.title],
+  ])('shows the failure kind for %s', (error, title) => {
+    harness.origin = 'http://127.0.0.1:17340';
+    const onRetry = vi.fn();
+    render(<RuntimeConnectorRecoveryBanner error={error} onRetry={onRetry} />);
+    expect(screen.getByRole('alert')).toHaveTextContent(title);
+    expect(screen.queryByText('internal failure details')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: COPY.loadFailed.button }));
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('stops quiet retries when a hosted failure becomes authentication and retries only on click', async () => {
+    harness.origin = 'http://127.0.0.1:17340';
+    vi.useFakeTimers();
+    const onRetry = vi.fn();
+    const view = render(<RuntimeConnectorRecoveryBanner error={new Error('down')} onRetry={onRetry} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    view.rerender(<RuntimeConnectorRecoveryBanner error={new RuntimeAuthenticationError('/api/runtime')} onRetry={onRetry} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(9000); });
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(onRetry).toHaveBeenCalledTimes(2);
+    view.rerender(<RuntimeConnectorRecoveryBanner error={new Error('down')} onRetry={onRetry} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    expect(onRetry).toHaveBeenCalledTimes(3);
   });
 });

@@ -64,13 +64,14 @@ const QUIET_RETRY_MS = 3000;
  * While it shows, it quietly retries every few seconds so a Runtime restart heals without a click.
  */
 // Initial focus goes to Retry, not the first tabbable element (the diagnostic summary).
-function RecoveryOverlay({ onRetry, retryRef, children }: { onRetry: () => void | Promise<void>; retryRef: RefObject<HTMLButtonElement | null>; children: ReactNode }) {
+function RecoveryOverlay({ onRetry, retryRef, children, quietRetry = true }: { quietRetry?: boolean; onRetry: () => void | Promise<void>; retryRef: RefObject<HTMLButtonElement | null>; children: ReactNode }) {
   const latestRetry = useRef(onRetry);
   const inFlight = useRef(false);
   useEffect(() => {
     latestRetry.current = onRetry;
   });
   useEffect(() => {
+    if (!quietRetry) return undefined;
     const timer = setInterval(() => {
       if (inFlight.current) return;
       inFlight.current = true;
@@ -80,7 +81,7 @@ function RecoveryOverlay({ onRetry, retryRef, children }: { onRetry: () => void 
         .finally(() => { inFlight.current = false; });
     }, QUIET_RETRY_MS);
     return () => clearInterval(timer);
-  }, []);
+  }, [quietRetry]);
   return (
     <AlertDialog open onOpenChange={() => undefined}>
       <AlertDialogContent
@@ -125,21 +126,24 @@ export function RuntimeConnectorRecoveryBanner({
   const recoveryCardShowing = useRecoveryCardShowing();
   const hosted = runtimeOrigin() !== '';
   if (hosted && recoveryCardShowing) return null;
-  const title = error instanceof RuntimeAuthenticationError
-    ? "Workspace Runtime authentication failed"
+  const authenticationFailed = error instanceof RuntimeAuthenticationError;
+  const typedFailure = authenticationFailed || error instanceof RuntimeUnavailableError && (error.failureKind === "admission" || error.failureKind === "storage");
+  const titles = RUNTIME_CONNECTION_COPY.connectorFailure;
+  const title = authenticationFailed
+    ? titles.authentication
     : error instanceof RuntimeUnavailableError && error.failureKind === "admission"
-      ? "Workspace Runtime failed its startup checks"
+      ? titles.admission
       : error instanceof RuntimeUnavailableError && error.failureKind === "storage"
-        ? "Workspace Runtime reported a storage failure"
-        : "Workspace Runtime is unavailable";
+        ? titles.storage
+        : titles.unavailable;
   const action = 'recoveryAction' in error && typeof error.recoveryAction === 'string'
     ? error.recoveryAction : 'Retry the connection to your configured Astrid Runtime.';
   if (hosted) return (
-    <RecoveryOverlay onRetry={onRetry} retryRef={retryRef}>
+    <RecoveryOverlay onRetry={onRetry} retryRef={retryRef} quietRetry={!authenticationFailed}>
     <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-6 shadow-lg" role="alert">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground">{RUNTIME_CONNECTION_COPY.loadFailed.title}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{RUNTIME_CONNECTION_COPY.loadFailed.sentence}</p>
+        <p className="text-sm font-medium text-foreground">{typedFailure ? title : RUNTIME_CONNECTION_COPY.loadFailed.title}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{typedFailure ? action : RUNTIME_CONNECTION_COPY.loadFailed.sentence}</p>
       </div>
       <Button ref={retryRef} type="button" size="sm" variant="outline" onClick={() => void onRetry()} disabled={retrying}>
         {retrying ? RUNTIME_CONNECTION_COPY.loadFailed.retrying : RUNTIME_CONNECTION_COPY.loadFailed.button}

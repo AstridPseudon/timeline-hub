@@ -7,6 +7,7 @@ import {
   RuntimeConnectionProvider,
   useRuntimeConnection,
   PROBE_TIMEOUT_MS,
+  SLOW_PROBE_TIMEOUT_MS,
   type RuntimeConnectionPanelExit,
   type RuntimeConnectionValue,
 } from './RuntimeConnectionProvider.tsx';
@@ -292,7 +293,7 @@ describe('granted', () => {
     expect(latest.isBooting).toBe(false);
   });
 
-  it('a request timeout stays connecting while the untimed retry makes its first reading', async () => {
+  it('a slow reading and its failed follow-up show help without another reading', async () => {
     const gateway = fakeGateway();
     gateway.down();
     let expireProbe: () => void = () => {};
@@ -316,14 +317,38 @@ describe('granted', () => {
     await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
     act(() => expireProbe());
     await waitFor(() => expect(latest.isBooting).toBe(false));
-    expect(latest.state).toEqual({ status: 'connecting' });
     await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(2));
-    await flushReactWork();
-    expect(latest.state).toEqual({ status: 'connecting' });
-
-    await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(latest.state.status).toBe('not_running'));
-    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('bounds the slow follow-up to 60 seconds, shows help, and lets Try again connect', async () => {
+    const timers = new Map<number, () => void>();
+    const realSetTimeout = window.setTimeout.bind(window);
+    vi.spyOn(window, 'setTimeout').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (ms === PROBE_TIMEOUT_MS || ms === SLOW_PROBE_TIMEOUT_MS) {
+        timers.set(ms, () => typeof handler === 'function' ? handler(...args) : undefined);
+        return 0;
+      }
+      return realSetTimeout(handler, ms, ...args);
+    }) as typeof window.setTimeout);
+    const gateway = fakeGateway();
+    let stalled = true;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => stalled
+      ? new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true }))
+      : gateway.fetchImpl(input)) as unknown as typeof fetch;
+    renderPanelProvider({ ...gateway, fetchImpl }, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+    await act(async () => { timers.get(PROBE_TIMEOUT_MS)!(); });
+    expect(latest.state.status).toBe('connecting');
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(SLOW_PROBE_TIMEOUT_MS).toBe(60_000);
+    await act(async () => { timers.get(SLOW_PROBE_TIMEOUT_MS)!(); });
+    expect(latest.state.status).toBe('not_running');
+    expect(screen.getByRole('heading', { name: CONNECTION_COPY.notRunning.title })).toBeInTheDocument();
+    stalled = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(status()).toBe('connected'));
   });
 
   it('follows a slow probe with an untimed probe, keeps the waiting state, and connects on its late answer', async () => {
@@ -426,7 +451,7 @@ describe('granted', () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(latest.state).toEqual({ status: 'connecting' });
+    expect(latest.state).toEqual({ status: 'not_running' });
     expect(expirations).toHaveLength(1);
 
     await act(async () => {
@@ -516,13 +541,14 @@ describe('granted', () => {
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
   });
 
-  it('classifies a real phone user agent as phone without querying permission or probing', async () => {
+  it.each([true, false])('classifies a phone without permission queries or probes (requireLocalNetworkPermission=%s)', async (requireLocalNetworkPermission) => {
     vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36');
     const gateway = fakeGateway();
     const permissions = fakePermissions('granted');
-    renderProvider(gateway, permissions.permissions);
+    renderPanelProvider(gateway, permissions.permissions, { requireLocalNetworkPermission });
 
     await waitFor(() => expect(latest.state.status).toBe('phone'));
+    expect(screen.getByRole('heading', { name: CONNECTION_COPY.phone.title })).toBeInTheDocument();
     act(() => latest.connect());
     expect(permissions.permissions.query).not.toHaveBeenCalled();
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
@@ -594,17 +620,14 @@ describe('granted', () => {
     expect(latest.state).toEqual({ status: 'not_running' });
   });
 
-  it('requires two gateway restart readings before showing not_running', async () => {
-    const code = 'runtime_identity_mismatch';
+  it.each([502, 503])('shows restart help for an identity mismatch at HTTP %i', async (httpStatus) => {
     const gateway = fakeGateway();
-    gateway.gatewayDown(code);
-    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
-    expect(status()).toBe('connecting');
-    await flushReactWork();
-    await act(async () => { window.dispatchEvent(new Event('focus')); });
-    await waitFor(() => expect(status()).toBe('not_running'));
-    expect(latest.state).toEqual({ status: 'not_running' });
+    gateway.gatewayDown('runtime_identity_mismatch', httpStatus);
+    renderPanelProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(status()).toBe('restart'));
+    expect(screen.getByRole('heading', { name: CONNECTION_COPY.restarted.title })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: CONNECTION_COPY.restarted.reload })).toBeInTheDocument();
+    expect(screen.queryByText(CONNECTION_COPY.notRunning.title)).toBeNull();
   });
 
   it('a 503 with no readable body remains a transient check, not a stopped verdict', async () => {
@@ -844,12 +867,12 @@ describe('prompt', () => {
     expect(latest.state).toEqual({ status: 'connected', realm: REALM });
   });
 
-  it('a rejected permission query on Chromium reports unsupported and never probes', async () => {
+  it('a rejected permission query on Chromium asks for a browser update and never probes', async () => {
     const gateway = fakeGateway();
     const throwing: PermissionsLike = { query: vi.fn(async () => { throw new TypeError('unknown permission name'); }) };
     renderProvider(gateway, throwing);
 
-    await waitFor(() => expect(latest.state.status).toBe('unsupported'));
+    await waitFor(() => expect(latest.state.status).toBe('browser_update_needed'));
     expect(throwing.query).toHaveBeenCalled();
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
   });
@@ -876,6 +899,22 @@ describe('denied', () => {
     act(() => latest.connect());
     window.dispatchEvent(new Event('focus'));
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it.each(['focus', 'visibilitychange'])('re-queries denied permission on %s without a change event', async (event) => {
+    const gateway = fakeGateway();
+    const permission = fakePermissions('denied');
+    const view = renderProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(status()).toBe('blocked'));
+    permission.status.state = 'granted';
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    await act(async () => { (event === 'focus' ? window : document).dispatchEvent(new Event(event)); });
+    await waitFor(() => expect(status()).toBe('connected'));
+    view.unmount();
+    const queries = vi.mocked(permission.permissions.query).mock.calls.length;
+    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(permission.permissions.query).toHaveBeenCalledTimes(queries);
   });
 
   it('allowing it in site settings connects without a reload', async () => {
@@ -1276,12 +1315,7 @@ describe('permission and setup evidence matrix', () => {
       await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 2 : 1));
       act(() => expireProbes[0]!());
       await waitFor(() => expect(latest.isBooting).toBe(false));
-      expect(latest.state).toEqual({ status: 'connecting' });
       await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 3 : 2));
-      await flushReactWork();
-      expect(latest.state).toEqual({ status: 'connecting' });
-      await act(async () => { window.dispatchEvent(new Event('focus')); });
-      await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 4 : 3));
       await waitFor(() => expect(latest.state.status).toBe('not_running'));
       expect(latest.state).toEqual({ status: 'not_running' });
       expect(latest.connectedBefore).toBe(connectedBefore);
