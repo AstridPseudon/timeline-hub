@@ -100,18 +100,31 @@ def tiny_cut_parent(service, project):
     source = json.loads((Path(__file__).parents[1] / 'fixtures' / 'timeline_editing' / 'tiny.json').read_text())
     timeline = source['shots']['B']['internal_timeline']
     media_ids = {}
-    for asset in ('P', 'Q'):
-        result = service.ingest(
-            project, f'native-sheet-cut-{asset}'.encode(), media_type='application/octet-stream',
-            original_name=f'native-sheet-cut-{asset}', idempotency_key=f'native-sheet-cut-media-{asset}',
-        )
-        media_ids[asset] = result['data']['object_id']
+    media_files = {
+        'P': ('idea-1.png', 'image/png'),
+        'Q': ('presenter_selected_cut/frame-0.png', 'image/png'),
+        'R': ('presenter_selected_cut/frame-4.png', 'image/png'),
+    }
+    media_root = Path(__file__).parents[1] / 'fixtures' / 'storyboard-assets'
+    for asset, (filename, media_type) in media_files.items():
+        result = service.import_media(
+            project, (media_root / filename).read_bytes(), media_type=media_type,
+            original_name=filename, actor_id='native-sheet-current',
+            idempotency_key=f'native-sheet-cut-media-{asset}',
+        )['data']
+        selection = service.get_project_media_selection(project, {
+            'asset': result['variant_id'], 'generation_id': result['generation_id'],
+            'variant_id': result['variant_id'],
+        }, authorize=lambda: None)
+        verified = service.get_project_verified_media(project, selection, authorize=lambda: None)
+        assert verified['selection'] == selection
+        media_ids[asset] = verified['object_id']
 
     clips = copy.deepcopy(timeline['clips'])
     registry = copy.deepcopy(timeline['registry'])
-    for asset, entry in registry['assets'].items():
-        if asset in media_ids:
-            entry['media_id'] = media_ids[asset]
+    replacements = {f'm-{asset.lower()}': media_id for asset, media_id in media_ids.items()}
+    _replace_media_ids(clips, replacements)
+    _replace_media_ids(registry, replacements)
     tracks = copy.deepcopy(timeline['tracks'])
     payload = {
         'config': {
@@ -183,6 +196,13 @@ def _publish_current_candidate(runtime, timeline, payload, shots, internals, *, 
     publication = publish_authoring_candidate(candidate, writer, idempotency_key=key)['publication']
     assert publication['accepted_revision_id'] == publication['canonical_document']['parent_revision']['revision_id']
     assert publication['previous_revision_id'] == head['revision_id']
+    canonical, canonical_head = _public_document(service, runtime.project, timeline)
+    assert canonical_head == {
+        'revision_id': publication['accepted_revision_id'],
+        'publication_id': publication['receipt']['receipt_id'],
+    }
+    assert canonical == publication['canonical_document']
+    publication['canonical_document'] = canonical
     return publication
 
 
@@ -258,13 +278,26 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     collect([parent, *shots, *internals])
     replacements = {}
     for index, source_id in enumerate(sorted(media_ids)):
-        ingested = runtime.service().ingest(
-            project, f'connected-occurrence-source-{index}'.encode(),
-            media_type='application/octet-stream',
-            original_name=f'connected-occurrence-source-{index}',
+        media_type = 'image/png'
+        for scope in [parent, *shots, *internals]:
+            payload = scope.get('payload', scope)
+            for entry in payload.get('registry', {}).get('assets', {}).values():
+                if entry.get('media_id') == source_id and entry.get('type') == 'audio':
+                    media_type = 'audio/wav'
+        filename = 'idea-1.wav' if media_type == 'audio/wav' else 'idea-1.png'
+        imported = runtime.service().import_media(
+            project, (Path(__file__).parents[1] / 'fixtures' / 'storyboard-assets' / filename).read_bytes(),
+            media_type=media_type, original_name=f'connected-occurrence-source-{index}.{filename.rsplit(".", 1)[-1]}',
+            actor_id='native-sheet-current',
             idempotency_key=f'connected-occurrence-source-{index}',
-        )
-        replacements[source_id] = ingested['data']['object_id']
+        )['data']
+        selection = runtime.service().get_project_media_selection(project, {
+            'asset': imported['variant_id'], 'generation_id': imported['generation_id'],
+            'variant_id': imported['variant_id'],
+        }, authorize=lambda: None)
+        verified = runtime.service().get_project_verified_media(project, selection, authorize=lambda: None)
+        assert verified['selection'] == selection
+        replacements[source_id] = verified['object_id']
     _replace_media_ids(parent, replacements)
     _replace_media_ids(shots, replacements)
     _replace_media_ids(internals, replacements)
