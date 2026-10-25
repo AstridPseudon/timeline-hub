@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T21:57:53Z | dispatcher heartbeat 2s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 2m -->
-# runtime board, 2026-10-25T21:54:58Z
+<!-- main | 2026-10-25T22:02:32Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 11 | status age 0m -->
+# runtime board, 2026-10-25T22:02:20Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -496,10 +496,12 @@
 | D127d-element-cost | Preserve stopped offline cost trial | HARD Sol / Luna | D127e waiter census | gated:D127e | Source2123; path2135; stopped2143 | No safe optimization; warm123ms and synthetic267ms do not reproduce live delay. Later author stopped before product change. | Independent2135 source only | No product change |
 | CLI22-scope-relay | Apply owner D138 CLI scope | Agent owner | Recorded D138 decision | later | Agent existing CLI22 allocator | No new ingress. Per-case current caller migration only with exact predicates; legacy cases listed and boundary changes stopped. | Source decision only | No source change |
 | D139-child-imports | Complete child dependency recipe | Luna | Pinned schema source and input census | doing | rt-OPS-D139-child-imports-2153 | Actual old child built, D73 missing schema before core. One exhaustive import and distribution correction plus check-only; no live install. | Independent review next | f07 maker parent |
-| D127e-waiter-census | Trace Runtime and Agent waiters | Luna read only | Exact ab1e and Agent070dfc source | doing | rt-D127e-waiter-census-2153 | Static whole-path census and safe sample comparison. Waiting remains hypothesis; D112 finding stops under D130. No body/fix. | Review after return | Source unchanged |
+| D127e-waiter-census | Trace Runtime and Agent waiters | Luna read only | Independent source review | review | Author2153; reviewer2202 | Static D112 reconnect path reachable; actual waiter UNKNOWN. Stopped under D130. No test, fix or profile. | Review2202 active | Source unchanged |
 | OPS-staging-route | Guard regenerable staging removal | Luna | Next admitted source slot | later | Not yet dispatched | Owner22:03 requests ended/path/symlink/KEEP/evidence guards, pack or logged removal. No direct staging deletion. | Independent review required | No source change |
 | D77-complete-inputs | Bind final installed-render inputs | Luna | Core critical source first | later | Not yet dispatched | Farm2140 lacks launcher, manifest, browser source, roots/stage receipts and finite peak. Produce one complete bundle; no piecemeal stage. | Guard1257 retained | No deployment |
 | D139-Runtime-targeted | Qualify normal merged Runtime | Luna / central service | Disk and Agent4c4ee checkout receipt | ready | Normal service controller next admitted slot | Merge f103 receipt present; six original files unchanged. Bind Agent4c4ee. No Farm harness/full or duplicate body. | Source2006 PASS | f103bb4686 |
+
+| OPS-three-idle-pins | Release obsolete clean proof checkouts | Manager guarded route | Full host and live-reference audit clear | merged | bin/recycle a30e,369f,c916 | All ended, clean and ancestors; no process, queue, service, lease or registration users. 08e6 and d4f remain registered and kept. | Guarded recycle PASS | Branches and evidence retained |
 
 Runtime producer: Normal f103bb46866999c961a8865636f2e66d544e0c9b contains reviewed upstream0bb3 and helpercf0b. D139 freeze ended; integration proof is pending, not gate credit. Agent merged4c4ee and App2f362 recorded.
 Core: Actual D134 measurement8926 PASS190 FAIL180 ERROR173 subtests. XML/full disk witness absent. Own344 split132 setup,0 proved product,212 unknown. Ship-grade core NEVER started: real child built, D73 schema import failed.
@@ -511,9 +513,9 @@ Blockers: Runtime integrated proof — normal f103 merge receipt present. Need A
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tupleP1-P5, wheel, Windows and ZIP remain owed.
 Next ready: normal Runtime targeted controller when source slot and light-test disk ready; lower priority guarded staging tool and complete D77 input bundle next slots. No duplicate FPS or App original9 author.
 D100: candidate27 PASS; original9 on latest20db is nine setup errors at missing authenticated physical observation. Sole App2144 wholepath active. No release, fixture rewrite or unchanged repeat.
-Element: D127d UNAPPLIED; offline warm123ms/synthetic267ms did not reproduce live delay. Full-path return2143 stopped under new D127e. One read-only Luna2153 includes Agent provider. Actual32016/15200 boundaries only;10721 request2 is NOT element. No further profile body.
+Element: D127d UNAPPLIED; offline warm123ms/synthetic267ms did not reproduce live delay. Full-path return2143 stopped under new D127e. Read-only Luna2153 includes Agent provider; independent2202 reviews source facts only. D112 path static candidate is held, not proved waiter. Actual32016/15200 boundaries only;10721 request2 is NOT element. No further profile body.
 Delivery: prepared joins merge now under D139; second upstream merge at final D59 cut. Farm old union harness STOPPED. D77 final merged tuple inputs remain incomplete.
 Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and byte-exact handbacks only. No product/test/generated/pin/Git internals/credentials mutation.
-Disk:4.66GB before third source. Source cap3/floor4.6GB, stop4GB. Sweep3 removed0; compact finished:0 packed,7 old logs gzipped. Clean ended nonKEEP source audit found0 eligible. Protected test KEEP remains.
-live3 / cap3; ready-undispatched0 admitted. Runtime2153 child, Runtime2153 waiter and Sol2156 D73 are dispatched. Lower-priority source tasks wait occupied cap; integration body waits measured admission.
+Disk:4.617GB before read-only review2202. Three unused clean pins released after full audit; about125MB net recovered from trough. Source cap3/floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and compressed7 logs. Registered pins and protected test KEEP remain.
+live3 / cap3; ready-undispatched0 admitted. Child2153, SolD73-2156 and read-only waiter review2202 active. Lower-priority source waits cap; integration body waits measured admission.
 INBOX consumed through1598755 bytes including current new2144 receipt; manager reads new tail next pass. Round continues from terminal receipts.

@@ -1,0 +1,59 @@
+{
+  "task": "D127e",
+  "source_tuple": {
+    "runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "comparisons": [
+    {
+      "request": "32016",
+      "qualification": "independently qualified actual element boundary; runtime handler completed, caller/browser outcome UNKNOWN",
+      "handler_ms": 21740.631,
+      "provider_ms": 13780.929,
+      "dispatch_wall_ms": 21741.532,
+      "samples": 828,
+      "lost_samples": 15,
+      "published_frames": "10 inclusive frames plus 10 leaves; product-specific leaf timeline_commit_validation.py:reuse at lines 116/120.",
+      "wait_evidence": {
+        "lock_acquire": "EXACTMISSING raw per-sample membership and exact cProfile/call edges; no lock marker in the published top leaves.",
+        "select": "EXACTMISSING raw per-sample membership; no selectors.select in the published top leaves.",
+        "sleep": "EXACTMISSING raw per-sample membership; no sleep marker in the published top leaves."
+      },
+      "interpretation": "Inclusive sampling cannot distinguish CPU from blocking waits. No waiter attribution is proven."
+    },
+    {
+      "request": "15200",
+      "qualification": "independently qualified actual element boundary; runtime handler completed, caller/browser outcome UNKNOWN",
+      "handler_ms": 19557.721,
+      "provider_ms": 12290.285,
+      "dispatch_wall_ms": 19558.85,
+      "samples": 737,
+      "lost_samples": 17,
+      "published_frames": "10 inclusive frames only; exact cProfile top-40 and call edges are EXACTMISSING.",
+      "wait_evidence": {
+        "lock_acquire": "EXACTMISSING raw per-sample membership, cProfile, and edges; no lock marker in the published inclusive rows.",
+        "select": "EXACTMISSING raw per-sample membership, cProfile, and edges; no selectors.select in the published inclusive rows.",
+        "sleep": "EXACTMISSING raw per-sample membership, cProfile, and edges; no sleep marker in the published inclusive rows."
+      },
+      "interpretation": "Inclusive sampling cannot distinguish CPU from blocking waits. No waiter attribution is proven."
+    }
+  ],
+  "non_comparators": [
+    {
+      "request": "10721 request 2",
+      "status": "NOT_ELEMENT",
+      "reason": "Completed 19.603 s / provider 11.840 s replay is explicitly not the element request."
+    },
+    {
+      "replay": "direct 1.75 s",
+      "status": "NOT_SAME_STATE_COMPARISON",
+      "reason": "Native replay does not establish the same App lifecycle, state, arrival, or process boundary."
+    }
+  ],
+  "most_likely_waiter": {
+    "status": "HYPOTHESIS_ONLY",
+    "candidate": "Runtime TimelineCommitStore._reestablish_connection:315 plus SQLite busy timeout/open at store.py:1230-1246",
+    "evidence": "It is the only identified D112 WAL/DB recovery path reachable from a real provider port read, has an explicit 10 s per-operation SQLite wait, and is inside a no-timeout mutex."
+  },
+  "conclusion": "Waiting remains UNKNOWN for both element captures; the source rank is not a measured attribution."
+}

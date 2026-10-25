@@ -1,0 +1,169 @@
+{
+  "task": "D127e",
+  "mode": "read_only_historical_source_census",
+  "runtime_ref": "ab1e4f6141987706132916e2da16477f5a019464",
+  "agent_ref": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+  "d112_actual_element_path": {
+    "status": "REACHABLE_CONDITIONALLY",
+    "condition": "TimelineCommitStore._store_version observes a changed DB/WAL identity while a provider port read/accept is active.",
+    "call_chain": "RequestCommitPort._read -> TimelineCommitStore.history_read_scope -> _read_transaction -> _store_version -> _reestablish_connection",
+    "source": [
+      "Runtime ab1e4f6141987706132916e2da16477f5a019464 runtime_protocol/timeline_commit_port.py:217-228",
+      "Runtime ab1e4f6141987706132916e2da16477f5a019464 runtime_protocol/timeline_commit_store.py:381-408",
+      "Runtime ab1e4f6141987706132916e2da16477f5a019464 runtime_protocol/timeline_commit_store.py:349-357"
+    ],
+    "d130": "HELD: this is the held SWAP/WAL recovery path. Stop before authoring, tests, qualification, retries, or alternate execution."
+  },
+  "waiters": [
+    {
+      "id": "d112-reestablish-store-mutex",
+      "kind": "lock_acquire",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/timeline_commit_store.py",
+      "line": 315,
+      "condition": "Only when _store_version detects connection_changed, database_changed, or wal_changed at lines 353-357.",
+      "max_wait": "UNKNOWN/unbounded for Python RLock acquisition; no timeout argument.",
+      "reachability": "Actual element path: provider port reads enter history_read_scope and _read_transaction, which call _store_version. D112 recovery is therefore reachable if physical identity changes."
+    },
+    {
+      "id": "request-port-read-store-mutex",
+      "kind": "lock_acquire",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/timeline_commit_port.py",
+      "line": 221,
+      "condition": "Every RequestCommitPort._read call, including head/history_entry/revision closure and other provider reads.",
+      "max_wait": "UNKNOWN/unbounded; store._mutex is a threading.RLock and no timeout is supplied.",
+      "reachability": "Direct provider read boundary. It nests TimelineCommitStore.history_read_scope at line 223."
+    },
+    {
+      "id": "history-read-transaction-store-mutex",
+      "kind": "lock_acquire",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/timeline_commit_store.py",
+      "line": 383,
+      "condition": "history_read_scope enters _read_transaction when not already reading (line 517).",
+      "max_wait": "UNKNOWN/unbounded; no timeout.",
+      "reachability": "Every ordinary provider history-read scope; this is the immediate caller of _store_version and D112 recovery."
+    },
+    {
+      "id": "coordinator-guard",
+      "kind": "lock_acquire",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/timeline_commit_execution.py",
+      "line": 328,
+      "condition": "All coordinator executions enter the guard to find/create the (scope, Idempotency-Key) entry.",
+      "max_wait": "UNKNOWN/unbounded; threading.Lock context manager has no timeout.",
+      "reachability": "_timeline_commit -> service._execute_timeline_commit:2556 -> coordinator.execute:365 -> _execution:328. Cleanup reacquires the same guard at line 344."
+    },
+    {
+      "id": "coordinator-idempotency-entry-lock",
+      "kind": "lock_acquire",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/timeline_commit_execution.py",
+      "line": 341,
+      "condition": "A matching request hash shares an existing entry for the same scope and idempotency key; mismatched hashes do not wait and are refused.",
+      "max_wait": "UNKNOWN/unbounded; entry.lock is threading.Lock with no timeout.",
+      "reachability": "Every non-mismatch coordinator execution, immediately before lookup/provider invocation."
+    },
+    {
+      "id": "service-store-mutex-family",
+      "kind": "lock_acquire",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/service.py",
+      "line": 2438,
+      "condition": "TimelineCommitStore/coordinator initialization; the same service mutex is used at lines 2464, 2517, 2538, and 2625.",
+      "max_wait": "UNKNOWN/unbounded; store._mutex is a threading.RLock.",
+      "reachability": "_timeline_commit authorization, coordinator setup, active check, baseline, and provider capture."
+    },
+    {
+      "id": "timeline-evaluation-mutex-family",
+      "kind": "lock_acquire",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/timeline_commit_store.py",
+      "line": "172, 583, 977, 1026, 1075, 1100, 1150, 1205, 1273, 1792, 1834",
+      "condition": "The _evaluation wrapper and the public/history/accept helpers acquire the same store RLock around lookup, head, history, closure, preview, and accept operations.",
+      "max_wait": "UNKNOWN/unbounded; no timeout. Nested acquisitions are reentrant on the request thread but can contend with another request thread.",
+      "reachability": "The coordinator lookup and Agent provider port methods reach these helpers conditionally by command shape; the wrapper at line 172 is the common outer boundary."
+    },
+    {
+      "id": "store-project-mutex",
+      "kind": "lock_acquire",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/store.py",
+      "line": 1516,
+      "condition": "_timeline_authorize calls store.get_project for every request authorization check.",
+      "max_wait": "UNKNOWN/unbounded; same RLock, no timeout.",
+      "reachability": "Directly reachable through service._timeline_authorize:2454."
+    },
+    {
+      "id": "sqlite-connection-busy-timeout",
+      "kind": "busy_timeout",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/store.py",
+      "line": 1246,
+      "condition": "_open configures every opened/reopened connection; SQLite waits on a busy database operation.",
+      "max_wait": "10000 ms per SQLite busy operation; overall request is UNKNOWN/unbounded because multiple operations can each encounter it.",
+      "reachability": "D112 same-connection recovery calls store._open(fresh=False) at timeline_commit_store.py:333-338. Initial request connection was opened with timeout=10 at store.py:1230-1233."
+    },
+    {
+      "id": "sqlite-accept-begin-immediate",
+      "kind": "blocking_transaction",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/store.py",
+      "line": 933,
+      "condition": "TimelineCommitStore._accepting enters store._transaction during RequestCommitPort.accept; BEGIN IMMEDIATE excludes other SQLite writers.",
+      "max_wait": "Up to the connection busy timeout (10 s) per busy operation; route-level total UNKNOWN/unbounded.",
+      "reachability": "Provider return path: Agent port.accept:694 -> Runtime TimelineCommitStore.accept:1837 -> _accepting:455 -> store._transaction:933."
+    },
+    {
+      "id": "provider-call",
+      "kind": "blocking_provider_call",
+      "repo": "Runtime -> Agent",
+      "ref": "Runtime ab1e4f6141987706132916e2da16477f5a019464 / Agent 070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "file": "runtime_protocol/timeline_commit_execution.py; astrid/sdk/timeline/commit.py",
+      "line": "Runtime:395; Agent:1160",
+      "condition": "Provider is installed and coordinator lookup is not a replay/refusal.",
+      "max_wait": "UNKNOWN/unbounded; synchronous provider.commit has no timeout in either source.",
+      "reachability": "The only provider body call is coordinator._execute:395. Retained actual element boundaries measured provider 13,780.929 ms (32016) and 12,290.285 ms (15200); inclusive samples do not identify waiting."
+    },
+    {
+      "id": "agent-stale-head-retry-loop",
+      "kind": "retry_loop",
+      "repo": "Agent",
+      "ref": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "file": "astrid/sdk/timeline/commit.py",
+      "line": 1336,
+      "condition": "After a StaleHead from port.accept at line 1445; attempt > 0 rereads port.head at line 1339.",
+      "max_wait": "Bounded: exactly 3 attempts (0, 1, 2); no sleep/backoff and no blocking primitive in the loop.",
+      "reachability": "Normal provider handler; it is a bounded retry candidate, not evidence of elapsed waiting."
+    },
+    {
+      "id": "restore-integrity-report",
+      "kind": "bounded_integrity_wait",
+      "repo": "Runtime",
+      "ref": "ab1e4f6141987706132916e2da16477f5a019464",
+      "file": "runtime_protocol/timeline_commit_port.py; runtime_protocol/store.py",
+      "line": "155; 6210",
+      "condition": "Only restoreProjectParentCompositionRevision/timeline.restore constructs the port with restore preflight.",
+      "max_wait": "Configured admission_timeout deadline, exact value UNKNOWN from this call site; SQLite busy operations still use 10 s.",
+      "reachability": "Conditional restore route only; not the ordinary element command route."
+    }
+  ],
+  "negative_findings": {
+    "reachable_time_sleep": "NONE",
+    "reachable_event_or_condition_wait": "NONE",
+    "reachable_subprocess_wait": "NONE",
+    "agent_provider_package": "No time.sleep, backoff, lock acquire, Event/Condition wait, or subprocess call in commit.py or its invoked native_media_admission/producer helper source. Agent sdk/timeline/store.py has unrelated file-lock sleeps and subprocess helpers, but commit.py does not import or call them.",
+    "runtime_unrelated_waits": "Runtime service ffmpeg subprocesses, worker/supervisor Event waits, and unrelated task retry/sleep paths are not reached from _timeline_commit's timeline provider call map."
+  }
+}
