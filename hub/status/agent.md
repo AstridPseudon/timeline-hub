@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T12:43:51Z | dispatcher heartbeat 5s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 2m -->
-# agent board, 2026-10-25T12:40Z
+<!-- agent | 2026-10-25T12:47:36Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 0m -->
+# agent board, 2026-10-25T12:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -50,6 +50,10 @@
 | D118a native checkout4 | Preserve native checkout behavior | App Luna | Genuine current word seed | gated:word-source | app-D118a-native-checkout4-1215 | No diff. Exact own4 setup ERROR at shared m1.film missing legacy word anchor; real checkout tail unverified. | Source unchanged |
 | D118a track batch1 | Preserve parent track batch inverse | App Luna | Genuine current word seed | gated:word-source | app-D118a-track-batch1-1215 | No diff. Exact own1 setup ERROR at shared m1.film missing legacy word anchor. Inputs and grouping unchanged. | Source unchanged |
 
+| D124 shared product roots | Repair shared promotion, inverse and seed roots | HARD Sol | Owner D124 | doing | agt-D124-shared-custody-sol-1247 | One owner for auth2267,inverse1645/1755 and D116 raw/config; exact reviewed prerequisites first. No small file authors or guard relaxation. | Base3ab324 |
+| D124 Farm core | Measure reviewed merged batch | Farm service | Actual1232 normal receipt and authentic inputs | blocked:farm | Farm lead requested1245 | Current3ab supplied; pending1232 list explicit. One unfiltered core after actual final head; no local duplicate. | Head pending |
+| D124 upstream host14 | Recheck pristine b742 behavior | Runtime Luna requested | Existing D123 source qualification | blocked:runtime | D123 owner requested1248 | Exact original14 on pristine b742 pair; genuine profile and source guards. No current-source repeat or gating retarget. | b742 base |
+
 Integration: normal Agent3ab324c891 contains reviewed sheet, WC6, video and Scene test changes plus normal Runtime42aad lock-only provenance. Agent product remains released070dfc. Held82b6/adcb/bae5 product changes are not adopted. Exact merge receipts are in queue/done and worker reports.
 
 core open: 425 on immutable30693. Confirmed regressions:14, all still open until original-node proof. Effective retirements added this batch:0. D107 ten remain held, not counted as closed. Historical550,267,276 and506 inventories remain distinct.
@@ -62,13 +66,15 @@ Blockers: Agent D69 — index90 genuine installed render and index107 held norma
 Blockers: Runtime D117a — exact authorized git source and installer integrity handoff; historical refusal retained. Genuine installed render NOTRUN.
 Blockers: Final cut — D123 fresh b742 patch, final tuple P1–P5, full core, D69 and render remain owed.
 
-Next ready: host origin source return1241 active after independent1237 FAIL; proof1248 stopped before execution. Runtime batch/XML/atomic and exact D116/R2 sources are owned and held. App nativebinding sole core review1221 active; no duplicate author.
-live 1 / cap 6; ready-undispatched 0 local. Light body gated by fresh5GB admission; source-only reviews at D89b floor. Hosted source joins remain assigned. Full core follows qualified batch at D89a floor4.7GB.
+Next ready: host origin source return1241 active after independent1237 FAIL; proof1248 stopped before execution. Runtime1232 no-host batch and exact D116/R2 source joins are owned; farm gets actual normal receipt before core. App nativebinding sole core review1221 active; no duplicate author.
+live 2 / cap 6; ready-undispatched 0 local. Light body gated by fresh5GB admission; source-only reviews at D89b floor. Hosted source joins remain assigned. D124 moves the next batch core to Farm; no local heavy. Small file authors paused unless already in review.
 
 Disk: 4919459840 bytes before proof preparation. Sweep-tmp3 complete0 eligible; finished nonKEEP scan found only dirty agt-G2-open-commit, recycle refused once and preserved. No retry. compact-scratch not invoked because its session action is outside allowed scope. Current21b pin and all proof inputs retained; host process-use audit requested before obsolete pin release.
 
-D120: check each fix with its own failing nodes; one unfiltered agent-core-full per batch at60–90min or3+ landed fixes, before downstream adoption of product heads. D89a start>=4.7GB and stop4.0GB; sole heavy. D122 source-only up to3 at>=4.6GB with noheavy; regular light body floor5.0GB remains.
+D120 and D124: own failing nodes per fix; one Farm unfiltered core per merged batch at60–90min or3+ fixes, before downstream adoption of product heads. Small2–3node rows paused; grouped roots1247 active. D89a start>=4.7GB and stop4.0GB; sole heavy. D122 source-only up to3 at>=4.6GB with noheavy; regular light body floor5.0GB remains.
 
 Later: two D23 child-word originals and D14 deferred anchors remain unchanged and visibly unqualified. Missing numeric3/video4 complete correspondence records remain EXACTMISSING; no invented fixes or collector. E2 ABI retirement paused until after ZIP; withdrawn1171212 memo never adopted. D79 genuine replay input absent. D13 installed environment remains an explicit known gap.
 
-Inbox consumed through 1618736 bytes. Manager made no product, test, generated, pin or Git changes. Duplicate D123 stopped; Runtime sole owner receives byte-exact checkpoint. New source handbacks do not reduce core or regression counts. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
+Inbox consumed through 1619513 bytes. Manager made no product, test, generated, pin or Git changes. Duplicate D123 stopped; Runtime sole owner receives byte-exact checkpoint. New source handbacks do not reduce core or regression counts. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
+
+D124: host fix or upstream-behavior revert by14:00Z if current attempt fails, unless cited C0 requires ours. Recheck exact14 on upstreamb742. Source1241 remains exclusive; farm venue decision received in INBOX12:41, header sync pending.
