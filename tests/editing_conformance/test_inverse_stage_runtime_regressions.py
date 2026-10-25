@@ -29,15 +29,15 @@ from tests.helpers.runtime import use_runtime
 
 pytestmark = pytest.mark.integration
 
-RUNTIME_COMMIT = "49ce53289bc37d9387a7d9e6b9c9b16072162181"
-AGENT_COMMIT = "06226186149374f1e2c78c0d17f1cb76cc0bdc51"
+RUNTIME_COMMIT = "a3cd1a3214fa1632879c21d82d1abb9ea720b1de"
+AGENT_COMMIT = "7c94e9d2d753fc8f082877ef3de50b3a55a18689"
 AGENT_COMMIT_FILE_HASHES = {
-    "astrid/sdk/timeline/commit.py": "6c2fc6c8dcfc228c87a285e0869b803a034b9e41c7b2e643ee500b78605b6437",
+    "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
     "astrid/sdk/timeline/inverse.py": "0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4",
 }
 RUNTIME_FILE_HASHES = {
-    "runtime_protocol/timeline_commit_auth.py": "65fd735edfa0e9f4a77aaf4f473095f1539ea1ce453439177e9fe7f39b4466f1",
-    "runtime_protocol/timeline_commit_store.py": "243d312fe404f5ed80f0ef1aa9d7405b93ff77949eef5157827a7779c6323b9f",
+    "runtime_protocol/timeline_commit_auth.py": "4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb",
+    "runtime_protocol/timeline_commit_store.py": "633bc0a71d0e3715a4b402c8b572e2df9d8f333fe3bf6f2256a8cadde8538360",
 }
 
 CASES = (
