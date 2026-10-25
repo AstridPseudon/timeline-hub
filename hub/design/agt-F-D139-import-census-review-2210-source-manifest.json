@@ -1,0 +1,90 @@
+{
+  "schema": "timeline.d139.import-census-review-source-manifest/v1",
+  "source_tuple": {
+    "agent": {
+      "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+      "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+      "origin": "https://github.com/peteromallet/astrid-agent"
+    },
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
+    }
+  },
+  "authenticated_files": {
+    "command_sha256": "8cd8300a4d1e4f43dc7895907f858f6f2989e964ba38cc017a6a5fbe4cfd2637",
+    "launcher_git_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "proof_lock_sha256": "6f6e3843fbb39d91e80d5be952cb3d589053503541b61202d341f9757902c110",
+    "runtime_lock_sha256": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"
+  },
+  "coverage": {
+    "root_selectors": 22,
+    "root_python_files": 431,
+    "reachable_source_rows": 1001,
+    "source_rows_by_owner": {
+      "agent": 924,
+      "runtime": 77
+    },
+    "source_rows_by_role": {
+      "root": 431,
+      "reachable": 570
+    },
+    "source_object_sha256_checks": 1001,
+    "duplicate_path_aliases": [
+      {
+        "path": "tests/sdk/test_timing_compiler.py",
+        "reason": "same blob is represented by top-level and package-qualified module names"
+      }
+    ],
+    "ast_parse_errors": []
+  },
+  "graph_accounting": {
+    "graph_nodes": 1001,
+    "graph_edges": 17604,
+    "import_table_entries": 1146,
+    "import_occurrence_records": 17642,
+    "dynamic_records": 983,
+    "unmatched_occurrences": 38,
+    "unmatched_breakdown": {
+      "tools/p4-d73-pinned-launch.sh": 14,
+      "astrid/core/generation/backends/vibecomfy.py": 10,
+      "astrid/core/timeline/banodoco_schema.py": 7,
+      "astrid/packs/vibecomfy/production_engine.py": 6,
+      "tests/packs/rendering/_helpers.py": 1
+    },
+    "graph_arithmetic_status": "FAIL_UNDECLARED_FILTER"
+  },
+  "registered_child": {
+    "distribution_count": 68,
+    "record_row_count": 16670,
+    "hashed_record_count": 9252,
+    "record_paths_existing": true,
+    "record_sizes_match": true,
+    "record_hashes_match": true,
+    "metadata_hashes_match": true,
+    "top_level_mappings_match": true,
+    "schema_distribution_present": false,
+    "mapped_import_entries": 26,
+    "mapped_unique_modules": 15,
+    "mapped_unique_distributions": 9
+  },
+  "schema_pin": {
+    "distribution": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "direct_url_commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "record_sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1",
+    "record_entries": 12,
+    "record_entry_hashes_match": true,
+    "registered_child_presence": "absent",
+    "authenticated_venv_source_root": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema"
+  },
+  "missing_classification": {
+    "reported_total": 17,
+    "registered_child_exact_missing": 12,
+    "explicitly_optional_missing": 5,
+    "unconditional_missing_blockers": 0,
+    "classification_status": "CONDITIONAL_PLUGIN_AND_PRELIGHT_LIMITS_VISIBLE"
+  }
+}

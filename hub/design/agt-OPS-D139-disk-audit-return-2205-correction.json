@@ -1,0 +1,80 @@
+{
+  "schema": "timeline.ops.d139-correction/v1",
+  "task": "D139",
+  "captured_at_utc": "2026-10-25T22:06:38Z",
+  "result": "finite_no_eligible_normal_cleanup_candidate",
+  "correction": {
+    "prior_review": "FAIL",
+    "corrected_finding": "bench-store entries are Store-owned child entries, not work-root retire-child-venv targets",
+    "direct_bench_entry_retirement_route": "EXACT_MISSING",
+    "age_boundary": "2026-10-25T22:24:50Z",
+    "age_boundary_effect": "does_not_authorize a guessed route or direct retirement",
+    "source_proven_future_caller": {
+      "command": "$ORCH/bin/request-child-venv NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH] --source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA",
+      "queue_record": "CHILDVENV NAME AGENT_SHA ... --source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA",
+      "effect": "ordinary guarded child admission; make-child-venv invokes Store.ensure('child', ...) and Store.ensure invokes _evict before reserve admission",
+      "direct_retirement": false,
+      "status": "not_requested"
+    },
+    "missing_route_reason": "No source-proven manager command directly retires /home/user/work/bench-store/entries/child-*; request-retire-venv and retire-child-venv operate a name resolved under /home/user/work.",
+    "runtime_kit_need": {
+      "status": "finite_need",
+      "owner": "Runtime peer2205",
+      "reason": "the next genuine child is the merged tuple only; no competing recipe/source author is permitted"
+    }
+  },
+  "finite_accounting": {
+    "filesystem": "/dev/vda",
+    "available_bytes": 5295046656,
+    "child_admission_threshold_bytes": 5905580032,
+    "deficit_bytes": 610533376,
+    "source_worker_estimate_bytes": 200000000,
+    "source_worker_estimate_status": "brief-input-only-unverified",
+    "post_estimate_deficit_bytes": 410533376,
+    "source_floor_bytes": 5000000000,
+    "above_source_floor_bytes": 295046656,
+    "stop_bytes": 4000000000,
+    "above_stop_bytes": 1295046656
+  },
+  "bench_entries": [
+    {
+      "name": "venv-agent-child-d137-a4e016",
+      "entry_key": "child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "path": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "size_bytes": 848089088,
+      "registered_at_receipt": "2026-10-25T21:24:50Z",
+      "age_seconds_at_capture": 2508,
+      "classification": "active_store_entry_not_a_retire-child-venv_target",
+      "disposition": "retain; no Store operation"
+    },
+    {
+      "name": "venv-agent-child-d40-ba8f-f320",
+      "entry_key": "child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+      "path": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+      "size_bytes": 772354048,
+      "suite_reference": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:173",
+      "classification": "active_store_entry_with_live_suite_reference",
+      "disposition": "retain; no Store operation"
+    }
+  ],
+  "finite_witnesses": {
+    "candidate_count": 0,
+    "g2_dirty": true,
+    "source_keep_0816": true,
+    "d22_protected": true,
+    "f1012_protected": true,
+    "prior_refused_targets_preserved": true,
+    "no_cleanup_or_mutation": true,
+    "no_tests_or_body_execution": true
+  },
+  "source_hashes": {
+    "bench_index": "6ea9e569f623784a3dfbd53c5ecff37c22fde4587a495a89f394d14f0af899f6",
+    "request_child_venv": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
+    "make_child_venv": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bench_store_py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "request_retire_venv": "21f61833a6718794ab2a06a3a96d34ca58c050ccd0151622e16866ac78758139",
+    "retire_child_venv": "954d5d87fe2e6fcf42b34953ec0edc519a2eb97ade8f66f0f2f96f523516b791",
+    "dispatcher_daemon": "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed",
+    "suites_conf": "84d3045878ea806439b73b0a5ca983c06371fcac2d42bc8c7e8add0ebfbd3988"
+  }
+}

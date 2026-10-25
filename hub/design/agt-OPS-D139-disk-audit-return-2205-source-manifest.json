@@ -1,0 +1,69 @@
+{
+  "schema": "timeline.ops.d139-source-manifest/v1",
+  "captured_at_utc": "2026-10-25T22:06:38Z",
+  "sources": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+      "sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
+      "lines": "2-4,17-18,250-272",
+      "proves": "supported manager child-admission command and exact CHILDVENV queue carrier"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+      "lines": "382-396,729-735",
+      "proves": "production CHILDVENV caller loads bench_store.py and calls Store.ensure('child', ...)"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "lines": "501-533,650-661,800-819",
+      "proves": "Store._evict is lease-guarded lifecycle; Store.ensure invokes it before the child reserve check; CLI has no retire-entry action"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-retire-venv",
+      "sha256": "21f61833a6718794ab2a06a3a96d34ca58c050ccd0151622e16866ac78758139",
+      "lines": "1-8,27-48",
+      "proves": "retirement request accepts work-root child names and queues RETIREVENV; it does not accept bench entry paths"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/retire-child-venv",
+      "sha256": "954d5d87fe2e6fcf42b34953ec0edc519a2eb97ade8f66f0f2f96f523516b791",
+      "lines": "2,8-10,65-145,332-378",
+      "proves": "retirement resolves /home/user/work/NAME, applies the one-hour guard and reference/process checks; bench-store paths are outside its target model"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon",
+      "sha256": "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed",
+      "lines": "20-24",
+      "proves": "manager dispatch maps CHILDVENV to make-child-venv and RETIREVENV to retire-child-venv"
+    },
+    {
+      "path": "/home/user/work/bench-store/index.json",
+      "sha256": "6ea9e569f623784a3dfbd53c5ecff37c22fde4587a495a89f394d14f0af899f6",
+      "proves": "two active child entries; d137 and d40 registrations and paths"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md",
+      "sha256": "55a21a611109ecd8bd115725e4dfd8a3f3425c5fad287fb94d3fdd17eb420229",
+      "lines": "10217",
+      "proves": "MAIN 22:18 owner directive: d137 superseded, ordinary guarded route only after 22:24:50Z, no hand cleanup, other targets protected"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-OPS-D139-disk-audit-review-2202-review.json",
+      "sha256": "0f54713163993d67c79521ea30c046161037aac231c38b04b9317409acac344e",
+      "proves": "independent 2202 FAIL route classification and finite no-cleanup conclusion"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D139-disk-headroom-audit-2154/evidence/audit.json",
+      "sha256": "6b0e6bf8206b776d484733d627d3cd8ccd0512c49ce63c566a14af999ff65f83",
+      "proves": "original 2154 finite packet preserved as prior evidence"
+    }
+  ],
+  "guard_map": {
+    "worktree_recycle": "recycle checks finished, KEEP, lease, clean status; no candidate is authorized here",
+    "legacy_work_root_retire": "request-retire-venv -> RETIREVENV -> retire-child-venv under /home/user/work/NAME",
+    "bench_store_lifecycle": "request-child-venv -> CHILDVENV -> make-child-venv -> Store.ensure -> Store._evict; no direct retirement CLI",
+    "owner_timing": "22:24:50Z is an earliest age boundary only; fresh references, leases, source and kit checks remain required"
+  }
+}

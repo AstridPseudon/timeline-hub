@@ -1,0 +1,72 @@
+{
+  "schema": "timeline.d139.import-census-review/v1",
+  "task": "D139",
+  "mode": "independent_read_only_finite_audit",
+  "overall": "FAIL_CONDITIONAL_PUBLICATION",
+  "publication": "Do not publish the prior census as an unqualified complete import graph until the graph scope/arithmetic is corrected or explicitly declared.",
+  "source_tuple": {
+    "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "agent_tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "identity_checks": "PASS",
+    "remote_checks": "PASS",
+    "runtime_lock_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_lock_sha256": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"
+  },
+  "checks": {
+    "json_parse": "PASS",
+    "source_git_objects_and_sha256": "PASS: 1001 source rows; all referenced blobs and byte hashes matched",
+    "ast_parse": "PASS: 1001 source files; no parse errors",
+    "root_coverage": "PASS: 22 selectors and 431 Python files; fixture data excluded by the command's Python-file inventory",
+    "child_distribution_record_mapping": "PASS: 68 distributions, 16670 RECORD rows, 9252 hashed rows; all mapped paths/sizes/hashes matched",
+    "schema_pin": "PASS: banodoco-timeline-schema 0.0.2, direct URL commit 242f9c4306bf3b501222cb041a9eb246ef47bc85, all 12 pinned RECORD-entry hashes matched",
+    "missing_classification": "PASS_WITH_CAVEAT: 12 registered-child absences plus 5 explicitly optional absences; no absent item is treated as an unconditional production blocker",
+    "c0_contract_shape": "PASS_READ_ONLY: request/reply fields, fields|atomic, accepted|merged, conflict/invalid diagnostics, preview would_status and null receipt, recorder/history/undo shapes are present; no DTO was changed",
+    "composition_gitdiff_check": "PASS: clean worktree and git diff --check"
+  },
+  "findings": [
+    {
+      "id": "graph-arithmetic",
+      "severity": "blocker_for_unqualified_publication",
+      "status": "FAIL",
+      "claim_reviewed": "The AST import graph and import arithmetic are complete and mutually countable.",
+      "observed": {
+        "graph_nodes": 1001,
+        "graph_edges": 17604,
+        "import_table_entries": 1146,
+        "import_occurrence_records": 17642,
+        "unmatched_occurrences": 38
+      },
+      "omitted_from_graph": {
+        "d73_launcher_preflight": 14,
+        "conditional_or_try_missing_imports": 24,
+        "paths": {
+          "astrid/core/generation/backends/vibecomfy.py": 10,
+          "astrid/core/timeline/banodoco_schema.py": 7,
+          "astrid/packs/vibecomfy/production_engine.py": 6,
+          "tests/packs/rendering/_helpers.py": 1
+        }
+      },
+      "assessment": "The omission may be an intentional filtered-graph definition, but coverage.md and input-census.json do not declare that graph.edges excludes launcher preflight and caught missing imports. The prior validation therefore cannot claim complete graph arithmetic. Correct the evidence definition or add an explicit excluded-record accounting before publication."
+    },
+    {
+      "id": "missing-absence-classification",
+      "severity": "clarity",
+      "status": "PASS_WITH_CAVEAT",
+      "assessment": "missing-modules.json correctly separates 12 EXACTMISSING entries from 5 EXACTMISSING_OPTIONAL entries. Most hard-status entries are lazy, caught, plugin, test, or preflight imports; the registered child lacks the schema distribution, but the authenticated 0.0.2 package is present in the pinned Agent venv. Keep these distinctions visible and do not turn them into mandatory acquisition or runtime blockers."
+    },
+    {
+      "id": "historical-command-guards",
+      "severity": "warning",
+      "status": "NOT_SOURCE_IDENTITY_FAILURE",
+      "assessment": "The hashed command document embeds historical guard commits 070dfc/1daca, while this census explicitly and correctly authenticates the current merged tuple 4c4ee35d/ab1e4f6. The command hash, launcher blob, and current source tuple are internally authenticated; Runtime must use the explicit census tuple and must not present the old guarded command as a runnable current recipe without a documented substitution."
+    }
+  ],
+  "limitations": [
+    "Static AST/metadata only; no product import execution, collection, pytest, provider, child, Store, acquisition, install, or plugin execution.",
+    "Dynamic records are enumerated as data (983 records) only where source literals/config calls expose them; runtime/data-dependent imports remain unproved.",
+    "No product suite, typecheck, lint, browser, socket, or live-service test was run, as required for this read-only input review."
+  ],
+  "recommended_next_step": "Keep Runtime ownership of the complete child recipe/maker and in-child check-only. First reconcile the 17604-edge graph with the 17642 occurrence records (or publish the explicit filter accounting); then consume the verified 4c/ab1e tuple without adding imports or acquisition."
+}

@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T22:07:56Z | dispatcher heartbeat 16s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
-# agent board, 2026-10-25T22:07Z
+<!-- agent | 2026-10-25T22:12:09Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
+# agent board, 2026-10-25T22:11Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -132,9 +132,9 @@
 | D136a typed initialization | Permit canonical typed FPS initialization | Runtime Sol and Luna | App sole merged-base original9 | blocked:app | Source2108; independent2119 PASS; union2151 | Exact20db57 own and138 nearest PASS. Source wait cleared; actual original9 still owed. No fixture conversion or source-only closure. | 20db held |
 
 | D138 own22 proof | Qualify migrated batch behavior | Luna and service | Runtime supported route final review | blocked:runtime | Earlier2104; HARD Sol2156 | Own22 remains unspent; migration708ba3 source only. Runtime parser and dry-run route correction must qualify before installation. | 708ba3 source |
-| D139 complete import inputs | Supply pinned import prerequisites | Luna and independent | Runtime recipe source | review | Author2149; reviewer2210 | Finite22 roots431 files and17 absent modules; pinned schema12 RECORD hashes. [Packet](../../design/agt-F-D139-import-input-census-2149-report.md). | Evidence only |
+| D139 complete import inputs | Supply pinned import prerequisites | Luna and independent | Runtime recipe source | review | Author2149; review2210; return2210 | Source, schema12 hashes and missing-module map PASS. First return documents38 graph exclusions; no new recipe gate. | Evidence only |
 | D139 original9 source union | Preserve five exact reviewed donor blobs | Luna | App actual2136 failure inventory | gated:App-boundaries | Author2151; independent2202 PASS | Exact donors, outside union and43 predicates PASS; compile/Ruff/mypy PASS. App actual9 setup ERROR remains; no repeat or normal D100 merge. | d133a14838 |
-| D139 disk admission | Restore normal child headroom | Luna read only | Runtime guarded store route | blocked:runtime | Audit2154; review2202 FAIL; return2205 | Finite deficit verified. Workroot retirement does not cover store entry; corrected source packet active. Owner permits3e163 after22:24:50 only through guards. | Evidence only |
+| D139 disk admission | Complete finite headroom audit | Luna read only | Corrected source evidence | merged | Audit2154; return2205; final2210 PASS | Direct store retirement route is missing; 623MB deficit verified. No cleanup, request or retry. [Review](../../design/agt-OPS-D139-disk-final-review-2210-report.md). | Evidence only |
 | D139 store retirement | Retire superseded child through guards | Runtime kit | Owner22:18 and earliest22:24:50 | blocked:runtime | Runtime route requested2205 | Existing request-retire route misses bench-store entry. No request or guard retry. Exact source review published; retained receipts stay protected. | Source unchanged |
 Integration: Agent cd63be424d62226e3ee5c26fc5ce03227f5394a5. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lockab1e retained. Newer237722 upstream held for cut.
 
@@ -149,7 +149,7 @@ Blockers: App D100 — qualified9486 behavior receipt owed before shared105 prop
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-gradecore, REG0, installedrender90, platform, fullP2, finaltupleP1-P5, wheel and ZIP owed. FarmD77 waits genuinechildqualification; FarmRuntimeunion2100 separate.
 
-Next ready: input census2210 review and disk audit correction2205 active. live2 / cap6; ready-undispatched0. New child awaits Runtime kit and guarded headroom.
+Next ready: import census correction2210 active. live1 / cap6; ready-undispatched0. Runtime owns missing guarded store route and complete child recipe; Agent hosting slot offered.
 
 Disk:5.160GB at22:04Z; child admission5.905GB, stop4GB. Compact gzipped17 logs; sweep removed0. No eligible target. Runtime owns missing guarded store retirement route; no action before22:24:50Z.
 
