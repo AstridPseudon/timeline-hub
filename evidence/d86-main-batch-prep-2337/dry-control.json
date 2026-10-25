@@ -1,6 +1,6 @@
 {
   "format": "d86-main-dry-control-v1",
-  "status": "control-only; not the future submission tuple",
+  "status": "historical predecessor control-only; superseded by tools/main_affected_batch_d86; not the future submission tuple",
   "launcher": "tools/p4-d73-pinned-launch.sh",
   "tuple": {
     "agent": {

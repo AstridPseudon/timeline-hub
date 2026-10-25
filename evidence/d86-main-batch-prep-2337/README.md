@@ -1,6 +1,10 @@
-# D86 MAIN affected-node batch preparation
+# D86 MAIN affected-node batch preparation (superseded predecessor)
 
-This is a source/harness candidate only. It preserves the existing D73 pinned
+This is the superseded 110-selector predecessor. The current source/harness
+candidate is the exact 251-node bundle in
+`tools/main_affected_batch_d86/`; do not submit this predecessor.
+
+This predecessor is a source/harness candidate only. It preserves the existing D73 pinned
 launcher and central test-service route; it does not install a row, request the
 service, collect tests, run a body, build a profile, or change live config.
 

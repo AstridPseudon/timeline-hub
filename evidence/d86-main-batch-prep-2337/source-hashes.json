@@ -32,6 +32,7 @@
     }
   },
   "format": "d86-main-source-manifest-v2",
+  "superseded_by": "tools/main_affected_batch_d86/source-manifest.json",
   "input_provenance": {
     "d86_families": "design/agt-D86-main-families.md and peer-runtime-to-agent-orchestrator-20261024T2353Z-D86-all-six-source-returned.md",
     "abi20": {
