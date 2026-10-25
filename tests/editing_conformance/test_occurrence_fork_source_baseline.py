@@ -165,24 +165,29 @@ def test_retained_app_stale_or_invalid_fork_refuses_without_writes(mutation):
 def test_current_runtime_retained_fork_then_emitter(tmp_path):
     from types import SimpleNamespace
 
-    from tests.helpers.runtime import use_runtime
+    from tests.helpers.runtime import new_runtime_daemon, use_runtime, vendored_runtime_commit
 
-    use_runtime()
-    from runtime_protocol.auth import CredentialStore
-    from runtime_protocol.service import RuntimeService
+    use_runtime(vendored_runtime_commit())
     from runtime_protocol.store import RealmStore
-    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
     from runtime_protocol.timeline_commit_validation import validate_commit_value
 
+    from astrid.sdk.client import AstridClient
     from tests.editing_conformance.test_native_sheet_current_runtime import (
         seed_document_diff_parent,
     )
 
     root = tmp_path / 'realm'
     RealmStore.initialize(root).close()
-    service = RuntimeService(root)
-    credentials = CredentialStore(tmp_path / 'credentials')
-    token, _ = credentials.provision('fork-editor', ['projects:read', 'projects:write'])
+    daemon = new_runtime_daemon(
+        root, commit=vendored_runtime_commit(), support_root=tmp_path / 'support',
+        authoring_profile='astrid',
+    ).start()
+    service = daemon.service
+    client = AstridClient.open(
+        endpoint=daemon.endpoint, credential=daemon.token, realm_id=service.realm['id'],
+        actor_id='owner', client_name='fork-editor', client_version='1',
+        protocol_version='workspace.v1',
+    )
 
     def document():
         head = service.get_project_timeline(project, 'film')
@@ -202,13 +207,12 @@ def test_current_runtime_retained_fork_then_emitter(tmp_path):
         validate_commit_value(body, 'CommitRequest')
         return service.commit_timeline(project, 'film', body, idempotency_key=key,
             publisher='fork-editor', invocation_path=f'/v1/projects/{project}/timelines/film/commit',
-            authorize=lambda: credentials.require(token, 'projects:write'))
+            authorize=lambda: daemon.credentials.require(daemon.token, 'projects:write'))
 
     try:
         project = service.create_project({'slug': 'fork', 'name': 'Fork'}, idempotency_key='project')['id']
-        service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
         service.create_timeline(project, 'film', idempotency_key='bootstrap')
-        seed_document_diff_parent(SimpleNamespace(project=project, service=lambda: service))
+        seed_document_diff_parent(SimpleNamespace(project=project, service=lambda: service, client=lambda: client))
         original = document()
         before = bundle_from_document(original)
         call = capture_occurrence_fork(before, OWNER, 'selected-shot')
@@ -234,4 +238,4 @@ def test_current_runtime_retained_fork_then_emitter(tmp_path):
         assert State(bundle_from_document(landed)).entity(TARGET)['params'] == {}
         assert result['data']['steps'][0]['patch']
     finally:
-        service.close()
+        daemon.stop()
