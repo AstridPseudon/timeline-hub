@@ -17,9 +17,9 @@ for d in $O/workers/*/; do w=$(basename $d)
 find /root/.codex/sessions -type f -name '*.jsonl' -mmin +120 -print0 2>/dev/null | xargs -0 -r gzip -q 2>/dev/null
 echo "packed $n scratch dirs; free ${B}M -> $(df -BM --output=avail /home/user | tail -1 | tr -d ' ')"
 
-# worker logs over 1 MB in workers finished (ended, recycled or INTERRUPTED) over 6 h ago and not running/KEEP: gzip in place
+# worker logs over 1 MB in workers finished (ended, recycled or INTERRUPTED) over 1 h ago (03:50Z 25 Oct: was 6 h; 175 MB plain finished logs sat 1-6 h) and not running/KEEP: gzip in place
 # (lossless; read with zcat). 05:40Z: 1.6 GB of mostly v1 logs on main.
-old=$(date -d '-6 hour' +%s); g=0
+old=$(date -d '-1 hour' +%s); g=0
 for d in $O/workers/*/; do [ -f $d/running ] || [ -f $d/KEEP ] && continue; f=""; for m in ended recycled INTERRUPTED; do [ -f $d/$m ] && f=$d/$m; done
   [ -n "$f" ] && [ $(stat -c %Y $f) -lt $old ] || continue
   for l in $d/log.txt $d/*.log; do [ -f "$l" ] && [ $(stat -c %s "$l") -gt 1048576 ] && gzip -f "$l" && g=$((g+1)); done; done
