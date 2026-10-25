@@ -1,0 +1,11 @@
+D94a deployment protection premise needs owner disposition: candidate09a27/tree6a0db, store dc7035 andtest7c764 passes246central/242local andflat forward/warmhistorycurve; independentsecurity0409 is assigned. Actualsource /home/user/work/runtime andruntime_protocol UID/GID0:0 modes0755; module0644. Author found NO declaredexistingproduction data root/override/runningCLI declaration, so code-versus-data owner/mode premise is UNVERIFIED. Exactfacts design/handoff-rt-D94a-0348-code-data-protection.json and authorreport design/rt-D94a-history-state-sol-0348-report.md. Decisionowed: provide authoritativedeploymentdata path/protectionfact or explicitly narrow/condition approvedtrade. No premise assumed, no release/merge/adoption/P4 until source securityPASS andthisdecision resolved. Not a safetyrefusal; oldD88deniedaction remainsstopped.
+
+## RESOLVED 04:12Z by orchestrator: D97
+- **D97, the D94 protection premise becomes a runtime check, not a deployment assumption (04:12Z), deciding escalation runtime-20261025T0409Z-D94a-data-protection:** the deliverable is a patch set installed wherever users put it, so no single deployment data path exists to verify. Instead the approved trade is NARROWED: the memo is used only when the premise holds on the running machine, checked by Runtime itself.
+  - **Enable the D94 memo only if every writer of the store could also write the code:**
+    - the DB, WAL and SHM files and their directory are not group- or world-writable;
+    - their owner uid is 0 or equals the owner uid of the installed `runtime` package directory.
+  - **Evaluate this when the baseline is set.** Add st_uid and st_mode to the D94a identity tuple, so a chmod/chown of the store counts as an external change and forces the full verify.
+  - **Otherwise full verification on every request** (today's behaviour), with one diagnostic line naming the failed condition.
+  - **Tests (mktemp, no rm -rf):** a group-writable store and a store owned by a different uid both fall back to the full verify; chmod after baseline forces the full verify. The cost curve stays flat on the protected default.
+  - **Gate:** security review 0409 covers this check too. No release, merge, adoption or P4 until it PASSES. No owner decision needed: this only narrows the trade the owner was offered.

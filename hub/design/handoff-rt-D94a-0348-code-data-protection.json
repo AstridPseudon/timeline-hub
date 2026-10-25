@@ -1,0 +1,104 @@
+{
+  "effective_uid": 0,
+  "effective_gid": 0,
+  "declared_environment": {},
+  "actual_paths": [
+    {
+      "path": "/home",
+      "resolved": "/home",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user",
+      "resolved": "/home/user",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user/work",
+      "resolved": "/home/user/work",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user/work/runtime",
+      "resolved": "/home/user/work/runtime",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol",
+      "resolved": "/home/user/work/runtime/runtime_protocol",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py",
+      "resolved": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user/banodoco/banodoco-workspace-runtime",
+      "resolved": "/home/user/banodoco/banodoco-workspace-runtime",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user/work/wt/rt-D94a-history-state-sol-0348",
+      "resolved": "/home/user/work/wt/rt-D94a-history-state-sol-0348",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user/work/wt/rt-D94a-history-state-sol-0348/runtime_protocol/timeline_commit_store.py",
+      "resolved": "/home/user/work/wt/rt-D94a-history-state-sol-0348/runtime_protocol/timeline_commit_store.py",
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o644",
+      "group_or_other_write": false
+    },
+    {
+      "path": "/home/user/work/runtime/.runtime",
+      "exists": false
+    },
+    {
+      "path": "/root/.local/share/astrid-runtime",
+      "exists": false
+    },
+    {
+      "path": "/root/.local/share/astrid-runtime/runtime/realms",
+      "exists": false
+    },
+    {
+      "path": "/home/user/.local/share/astrid-runtime",
+      "exists": false
+    }
+  ],
+  "declared_running_runtime_paths": [],
+  "source_path_definitions": [
+    "runtime_protocol/cli.py:47 --root / ASTRID_RUNTIME_ROOT defaults to relative .runtime",
+    "astrid_runtime/paths.py:RuntimePaths.current and runtime_protocol/platform.py:data_root --data-root / ASTRID_RUNTIME_DATA_ROOT else XDG_DATA_HOME or home/.local/share/astrid-runtime; realm is selected from catalog/runtime/realms",
+    "runtime_protocol/store.py:_open creates DB 0600 and CAS/staging 0700; initialize creates realm root 0700; no product modification was made to these rules"
+  ],
+  "production_data_root": "UNKNOWN: no explicit production root provided; conventional roots absent; no running CLI declaration found. Fixture roots do not establish deployment facts.",
+  "comparison": "Declared integration/source code directories are root:root 0755 and store module 0644; all observed parents are root:root 0755. No group/other writes in these paths. Production data-root UID/GID/mode and exact same-owner/same-mode comparison are UNKNOWN. Do not infer the approved code/data equivalence premise from fixtures; manager must obtain actual deployment facts or owner disposition.",
+  "threat_model": "D94a adds mtime_ns and ctime_ns to both DB/WAL fingerprints, narrowing the accepted exclusion. No broader owner trust trade is asserted."
+}

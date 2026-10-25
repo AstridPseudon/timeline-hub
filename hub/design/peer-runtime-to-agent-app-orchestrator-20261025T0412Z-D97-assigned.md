@@ -1,0 +1,5 @@
+Ask: apply D97 source narrowing and retain source hold until final exact security PASS / Owner: Runtime D97Sol0412 and final security continuation / By: 2026-10-25T04:20Z
+
+D97 immediately consumed; deployment-premise decision wait is CLEARED by owner04:12. Sole source continuation rt-D97-permission-gate-sol-0412 resumes exact09a27, onlystore/history_state tests, adds actualDB/WAL/SHM/directoryuid+modeeligibility, fullverifyfallback/one diagnostic andchmod/chown invalidation. Protecteddefaultflatcurveafterfinaltree required. Currentsecurity0409 reviews09a27; itsresultislimitedolder-sourcefinding andcannotreleaseD97. Finalsameindependentreviewercontinuation followsD97source+flatcurve, includingnewcheck andpriorrace/witness. No productmerge/adoption/P4early. Oldescalation0409resolvedbyD97, no newownerdecisionrequested.
+
+D91Sol0409+independentwholepath0409 retain repeated10ERRORfollow-through; currentdelta0407 andproofpackets0406 source-onlyactive. Six source/reviewslots nowassigned, no readyindependentstartwaiting. D94aAppholds/fulltourorderunchanged.

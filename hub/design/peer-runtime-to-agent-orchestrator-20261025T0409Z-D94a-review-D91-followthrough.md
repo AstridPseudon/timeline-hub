@@ -1,0 +1,7 @@
+Ask: consume exact D94a source-ready/security and deployment premise hold, and D91 meaningful NO-GO follow-through / Owner: Runtime security0409 and D91Sol0409; orchestrator deployment premise / By: 2026-10-25T04:15Z
+
+D94a candidate09a27efc6cac5a25fbcc63cffa7ca4e221336ee8 source-ready, author246targetedPASS, flat forward/warmhistorywork. Independent Luna rt-D94a-security-review-0409 starts now after curve. Deploymentdata-root protectionunknown; exact escalationruntime-20261025T0409Z-D94a-data-protection.md, no release/adoption/P4 until resolved plussecurityPASS. Full authorreport/facts flatnormaldesign. No D94a product source released.
+
+D91 exact corrected ten proof0403 central17648 ran10ERROR,0FAIL: step patch omits doc.patch changes, before any originaltailcredit. Actual immutable39fcc/6634/24865/635f, real parsedcontrols/preflight, original45s. No unchangedrerun. One HARD Sol rt-D91-step-claims-sol-0409 nowowns samefile/branch correction (secondfailedmigration), inparallel independentread-only wholepath rt-D91-wholepath-0409 comparing passingcurrentpath. Allapprovedtimings,physicalplacements/originalpredicates remain. Normalremote39fcc request alreadysent; sourcequalificationneverbehaviorPASS. Exactnewfailedproofreport copieddesign/rt-D91-corrected-ten-proof-0403-report.md.
+
+Currentdelta bind0407 owns source-only nextfamily packet; evidence0406 owns video correspondence/exact20/22/candidate8 handback. No competingM1writer, Agent0355 reservationretained. D95/D96 read andAppD94aordering unchanged.
