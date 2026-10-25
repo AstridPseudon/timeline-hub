@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T01:25:09Z | dispatcher heartbeat 3s | live 3 (sol 1, luna 2, other 0) | busy30 11 | status age 1m -->
-# app board, 2026-10-25T01:22Z
+<!-- app | 2026-10-25T01:28:51Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 12 | status age 1m -->
+# app board, 2026-10-25T01:27Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -129,7 +129,7 @@
 | A3-bulk-none-display | Restore visible None label | Luna; independent | Review2355 PASS | merged | Author2347; review2355 | Independent182 controls, app/node types and lint PASS. Two reviewed blobs home. Browser proof owed. | Home2341a1de21 |
 
 | A3-12239-cause | Prove actual mounted dispatch boundary | HARD Sol | Actual12239 | merged | app-A3-mounted-12239-return-sol-2353 | Zero commit POST. Helper pointer5 becomes preview2.5, overlaps parent0–3 and changes lane. First thrown capture guard unobserved. | Evidence only |
-| P2-main-current | Qualify reviewed parent and single | Luna; main venue | Priority main D86 body completion | doing | rt-P2-parent-single-0107 | Exact5f/0d142/a3cd/635f preparation assigned; original bodies serialize after main D86. Source wait cleared; no App duplicate. | Tuple fixed5f |
+| P2-main-current | Qualify reviewed parent and single | Luna; main venue | Exact5f/0d142/a3cd/635f | doing | rt-P2-parent-single-0107 | Parent24629 NO-GO at Undo reply label270; readiness PASS. Single11446 same tuple serial. Source reply author0127 assigned; no App duplicate. | Tuple5f |
 
 | P2-drop-geometry | Align intended file drop start | Luna; independent | Independent0014 PASS | merged | Author0004; review0014 | Independent6 real coordinator plus42 neighbors/types/lint PASS; protected six exact. Normal merge complete; browser proof owed. | Home50cfedd889 |
 | U4p-provider | Adopt full provider freshness release | Luna | Runtime a3cd released | merged | app-U4p-provider-release-adoption-0008 | Normal tools,8 strict,15 vendor and14 mappings PASS; protected six exact. Only lock/install manifest. | Home fd2f843a69 |
@@ -151,7 +151,7 @@
 | P2-placement-import-current | Qualify embedded geometry and exact ABI | Luna; service | Preflight2470 PASS | doing | Actual16952; launcher0062 | Sole App placement body submitted01:05:28 on fixed913686/0d142/a3cd/635f. Original NO-GO213s at semantic row580; exactexpectedV2/9 versus actualV3/4.5. Source proposal0112 assigned. | App913686448c |
 | P2-asset-registry | Prove canonical registry boundary | Luna; independent | Review0115 DiffA FAIL | doing | app-P2-registry-identity-return-0124 | First return: cross-check authoritative import generation/variant IDs through selection and canonical binding. Failed source held. | Branch4b633d09 |
 
-| P2-placement-16952 | Prove actual embedded drop geometry | HARD Sol proposal | Actual16952 wrong semantic row | doing | app-P2-placement-16952-geometry-sol-0112 | Readiness1 PASS; expectedV2/9, actualV3/4.5 at580. Retained mounted coordinates first; spec owner0064 stays exclusive. | Readonly proposal |
+| P2-placement-16952 | Prove actual embedded drop geometry | HARD Sol; Luna applies | Retained16952 and source | merged | Sol0112 complete; application0127 | Real generic coordinator resolves V3/4.5; asset planner expects V2/9. Old5FAIL93PASS versus proposal98PASS. Source unchanged; proposal artifacts ephemeral. | Evidence only |
 | P2-SWAP-11089 | Assert exact conditional created claim | Luna; independent | Independent0115 DiffB PASS | merged | Author0112; review0115 | Four oracle and37 producer controls; three types/lint PASS. Exact two reviewed blobs home. Original browser proof owed. | Home3a2d6067b4 |
 | P2-bulk-21061 | Attribute original response timeout | Runtime facts; App source later | Existing main finite packet | blocked:runtime | Runtime producer0039 facts requested0112 | Readiness PASS; original responsewait90s. POST/provider/outcome UNKNOWN; no unchanged repeat or inferred Runtime cost. | Appfd2f / Runtimea3cd |
 
@@ -161,19 +161,21 @@
 
 | P2-SWAP-current | Qualify reviewed complete creation claim | Luna; main service | Exact App3a2d and released a3cd | blocked:runtime | Main venue reservation asked0124 | One meaningful original after current main heavy priority; no App duplicate. Genuine checkouts and preflight required. | App3a2d6067 |
 
+| A3-placement-coordinator | Apply real managed image drop resolution | Luna | Sol0112 finite proposal | doing | app-A3-placement-coordinator-apply-0127 | Two product files and real mounted controls. Spec and strict V2/9 unchanged; fresh independent core review follows. | Base3a2d |
+| P2-native-Undo-reply | Assert source-derived native reply labels and steps | Luna | Actual24629 | doing | app-P2-native-Undo-reply-0127 | Audit native and modern reply/step branches once; retain full strict assertions and fallback. No new original. | Base3a2d |
+
 Integration: App3a2d6067b4 merges independently reviewed full popup creation-claim oracle over mounted selection18de and Undo5f/import913686. Registry candidate4b633 remains held after independent FAIL. No original or final-cut credit inferred.
 
 core open: Zero of eight isolated gestures PASS. ADD29065 fails readiness before original; bounded source0125 owns it. Element8897 fails five seconds. ADD6954 passes projected clip/canvas then selected label874 fails; product fix in review. Asset32587 accepts and passes canonical readback, then registry527 fails. All later tails remain unqualified.
 regressions: No browser closure from source controls. D69 complete at its recorded source. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Runtime source — element8897 still fails five seconds on a3cd. Complete ordinal3 frame/phase packet is published; Runtime owns next source decision. No App capture input remains owed.
-Blockers: Runtime venue — exact reviewed parent/single5f assigned0107, waiting main D86 heavy priority. SWAP11089 source assigned App0112; bulk21061 waits existing Runtime finite producer packet. No stale App source wait.
+Blockers: Runtime venue — main SWAP3a2 reservation requested0124. Parent24629 and single11446 use existing0107; next source reply correction is App0127. Bulk21061 waits retained finite Runtime packet, requested0126.
 Blockers: Final cut — eight isolated P2, one full App tour, final pinned P1–P5/core and genuine installed render remain required. Runtime coordinates matrix and ZIP.
-Next ready: Registry first return0124 and readiness0125; geometrySol0112 proposal then one worker application/review. Main SWAP3a2 reservation asked0124; parent/single0107 and bulk retained facts tracked. No unchanged ADD.
-
-live 3 / cap 6; ready-undispatched 0. Registry return0124, geometry Sol0112 and readiness Luna0125 assigned. SWAP review0115 completed PASS and merged. ADD29065 is terminal; no App service body active.
+Next ready: Four source authors. Batch independent review of disjoint completed diffs, separate verdicts; product/protected fixes merge only on PASS. Asset after registry PASS, placement after source PASS, main SWAP reservation0124.
+live 4 / cap 6; ready-undispatched 0. Registry0124, readiness0125, placement application0127 and native Undo oracle0127 assigned. No App service body active.
 Capacity: Source authors and completed reviewers auto-recycle; no idle worker holds a body wait. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
-Disk: 6.194GB at01:21 after ADD29065 terminal. Guarded stale c9 and50cf pins recycled; outputs kept, no refusal. D89: six source above5.5GB, one body above5.2GB; no new below4.5GB; stop newest nongate4.0GB.
+Disk: 6.196GB at01:26 before two source dispatches. Guarded stale c9 and50cf pins recycled; outputs kept, no refusal. D89: six source above5.5GB, one body above5.2GB; no new below4.5GB; stop newest nongate4.0GB.
 Safety: No new App safety or permission refusal. Runtime peer0106 reports D88 safety-review denial and integrity failure; candidate held with existing orchestrator escalation. No App adoption, retry or alternate review of that candidate; releaseda3cd retained.
 Inbox consumed through1850842 bytes. Runtime0106 parent/single0107 and D88 held denial consumed. D89 six source above5.5GB/one body above5.2GB applies; no new below4.5GB, newest nongate stop4.0GB.
 Later: F-final App upstream d11417a59 refresh and applied-result full suite are Runtime final coordinator-owned, gated on D59 cut. Gating App keeps frozen upstream3881.
