@@ -1,1 +1,1 @@
-LEAD 13:17Z | up | P1 GO stands, P3 GO, P4 GO | P2 NO-GO stands, App owns verdict | D125: hosting one full P2 tour for App once its tuple arrives | disk 6.6G
+LEAD 13:44Z | up | P1 GO, P3 GO, P4 GO | P2 NO-GO stands, App owns verdict | D125: Node tree verified and accepted by main; manager extracted it early, before authorization (recorded); preflight then one P2 submit under way | disk 6.0G
