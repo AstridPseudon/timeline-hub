@@ -8,6 +8,7 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider.tsx';
 import { TimelineEditorCore } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx';
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
+import type { PreviewRevision } from '@/tools/video-editor/components/PreviewPanel/previewRevision.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import { useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -254,6 +255,24 @@ function ShotTimelineEditorSurface({
             ? 'Save needs attention'
             : 'Unsaved changes — saving shortly';
 
+  const previewRevision = useMemo<PreviewRevision>(() => {
+    if (isAdoptingCanonicalHead && canonicalHeadRevisionId) {
+      return {
+        kind: 'unavailable',
+        unavailableTarget: {
+          targetRevisionId: canonicalHeadRevisionId,
+          reason: 'The mounted shot preview is still adopting the latest canonical revision.',
+        },
+      };
+    }
+    if (saveStatus !== 'saved') {
+      return { kind: 'local', baseRevisionId: canonicalHeadRevisionId };
+    }
+    return canonicalHeadRevisionId
+      ? { kind: 'committed', revisionId: canonicalHeadRevisionId }
+      : { kind: 'unknown', reason: 'The mounted shot timeline has no canonical revision identity.' };
+  }, [canonicalHeadRevisionId, isAdoptingCanonicalHead, saveStatus]);
+
   const previewConfig = useMemo(
     () => boundShotTimelinePreviewConfig(activeConfig, hardDurationSeconds),
     [activeConfig, hardDurationSeconds],
@@ -291,6 +310,7 @@ function ShotTimelineEditorSurface({
           <RemotionPreview
             ref={previewRef}
             config={previewConfig}
+            previewRevision={previewRevision}
             compact
             onTimeUpdate={onPreviewTimeUpdate}
             playerContainerRef={playerContainerRef}
