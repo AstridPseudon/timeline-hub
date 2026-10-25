@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.agent.d134_history_source_intake_predicate_map.v1",
+  "method": "AST counts plus exact reviewed donor/blob identity",
+  "inverse7": {
+    "node_count": 7,
+    "tests": {
+      "test_known_whole_inverse_authenticates_forward_history_and_exact_redo": {
+        "assertions": 45,
+        "pytest_raises": 0
+      },
+      "test_known_inverse_refuses_forged_source_publication_and_step_without_writes": {
+        "assertions": 7,
+        "pytest_raises": 2
+      },
+      "test_known_inverse_refuses_native_write_and_aba_without_writes": {
+        "assertions": 4,
+        "pytest_raises": 1
+      }
+    },
+    "parameters_preserved": ["4/clips/false", "16/clips/true", "28/config.clips/false", "40/config.clips/true", "49/native"],
+    "purposes_preserved": ["auth", "forged-source", "forged-step", "ABA", "no-write", "history", "redo"]
+  },
+  "history5": {
+    "gate1_parameters": ["python", "cli", "sheet"],
+    "gate1_roundtrip_assertions": 15,
+    "prepared_assertions": 24,
+    "prepared_pytest_raises": 2,
+    "m1_assertions": 22,
+    "m1_source_sha256_before_after": "838c77332683358877059f1357267a49cd130a985be4e4755a9655ec3f930d01",
+    "purposes_preserved": ["media", "transcript anchors", "opaque", "on", "no-write", "privacy", "history", "inverse", "retry", "conflict", "preview"]
+  },
+  "identity_guards": {
+    "inverse_runtime_6634_retained": true,
+    "history5_runtime_ab1e_coherent": true,
+    "strict_equality_retained": true,
+    "blind_refresh_to_current_runtime": false
+  }
+}

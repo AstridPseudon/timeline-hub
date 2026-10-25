@@ -1,0 +1,65 @@
+{
+  "status": "UNAPPLIED",
+  "scope": {
+    "root": "root-008",
+    "member_count": 18,
+    "causal_category": "UNKNOWN",
+    "product_fault_proved": false,
+    "message_family": "fork native binding schema changed",
+    "first_agent_frame": "astrid/sdk/timeline/commit.py:1398",
+    "first_runtime_frame": "EXACTMISSING"
+  },
+  "members": [
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_authenticated_history_abi_preserves_original_fork_proofs[1-False]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_authenticated_history_abi_preserves_original_fork_proofs[absent-False]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_caller_annotations_and_recorder_schema_do_not_supply_history_abi",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[0]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[1.0]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[1]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[2.0]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[2]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[3]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[False]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[None]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[True]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[metadata10]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[metadata11]",
+    "tests/editing_conformance/test_fork_abi1_binding_set.py::test_malformed_authenticated_recorder_abi_fails_closed[metadata9]",
+    "tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[1]",
+    "tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[2]",
+    "tests/editing_conformance/test_recipe_occurrence_fork.py::test_undo_refuses_aba_and_surviving_owner"
+  ],
+  "exact_membership_source": "scratchpad/orch/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+  "preserved_predicates": [
+    "exact authored fork roots and operands",
+    "original media, transcripts, topology, timing, opaque values, groupings and steps",
+    "lost acknowledgement and reload behavior",
+    "exact undo/redo and replay",
+    "ABA refusal and surviving-owner refusal",
+    "malformed authenticated recorder ABI negatives",
+    "before/after document, head, entries, prepared and input-map equality on refusal"
+  ],
+  "production_shape": {
+    "capture": "capture_occurrence_fork(bundle, owner, shot_id) emits the registered occurrence.fork command",
+    "native_bindings": [
+      "collection.owner:collection.clips",
+      "collection.owner:collection.tracks",
+      "fork.source",
+      "fork.owner"
+    ],
+    "abi1_requirement": "the four native bindings must equal the exact legacy shape",
+    "active_caller_effect": "_commit_patch.finish appends physical commit.effect bindings whenever the request is active",
+    "failure": "the active fork caller therefore cannot create the exact ABI-1 four-binding record"
+  },
+  "passing_comparator": {
+    "path": "tests/editing_conformance/test_provider_occurrence_fork.py",
+    "property": "same registered occurrence.fork semantics through the production provider with full v2 controls and physical effects",
+    "not_substitutable_for": "the exact ABI-1 binding/history records required by root-008"
+  },
+  "forbidden_migrations": [
+    "strip or normalize recorder ABI",
+    "fabricate accepted history, bindings, receipts, pins, sources or allocations",
+    "change authored inputs, assertions or negative predicates",
+    "revive legacy routes or modify product/provider/runtime code"
+  ]
+}

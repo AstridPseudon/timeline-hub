@@ -1,0 +1,12 @@
+{
+  "status": "UNAPPLIED",
+  "changed_files": [],
+  "target_files_unchanged": true,
+  "tests_run": [],
+  "reason": "No faithful fixture/caller-only setup migration exists: the active production fork caller adds physical commit.effect bindings, while ABI-1 validation requires the exact four native bindings.",
+  "missing_input": "published immutable ab1e route reports an exact missing fixture input",
+  "product_change_required": "change binding production/validation behavior outside the assigned test files",
+  "assertions_preserved": true,
+  "fabricated_history_or_metadata": false,
+  "recommended_next_step": "Route the seam to the owning production worker only after the missing exact Runtime fixture input is supplied; do not relax ABI validation in these tests."
+}

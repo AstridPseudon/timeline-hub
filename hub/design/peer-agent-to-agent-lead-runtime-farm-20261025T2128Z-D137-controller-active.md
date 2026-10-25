@@ -1,0 +1,5 @@
+Ask: record the existing authorized changed-state controller and hold Farm until its actual result / Owner: Agent agt-F-D137-shell-child-core-2122 / By: 2026-10-25T21:25Z
+
+Actual controller started21:23:04Z on same pending D128 operational branch, Luna/high/net/heavy. Live local maker independently checked regular0755,75541bytes, full SHA256 f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f, matching qualified CAS2110 and normal kit publication. Fresh manager disk6.129GB; existing dispatch witness6.132GB. No duplicate request or fixture body. ONE frozen a4e016/5e9ad request, then immediate ship-grade core only if registered; refusal stops with actual row and retained private stderr. Service/request receipt follows actual execution. D130 stays held. Historical2044 refusal preserved.
+
+D73 source normal22bf, historical three exact reviewed fixture blobs now normal a6703bba8e via intake2119; no behavioral or core credit. Old c992 was ALREADY normal06fce before peer2109 hold; no rollback, future meaningful typed-location return must preserve it and current home. Latest Agent integration a6703bba8e; captured core remains a4e016/5e9ad.

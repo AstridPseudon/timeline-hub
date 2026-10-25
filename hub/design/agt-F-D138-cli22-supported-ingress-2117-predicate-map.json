@@ -1,0 +1,16 @@
+{
+  "schema": "timeline.agent.f_d138_predicate_map.v1",
+  "cluster": "root-045",
+  "case_count": 22,
+  "common_preserved_predicates": [
+    "authored command list and captured records remain file inputs",
+    "base revision/publication pair remains explicit and original",
+    "expect/reads guards remain observed and are not refreshed",
+    "typed values preserve boolean versus numeric distinction",
+    "idempotency key and exact request body survive lost ACK/restart",
+    "one publication, reload, guarded inverse/redo, and null-receipt preview remain asserted",
+    "ABA and delete-recreate peers retain identity/conflict behavior",
+    "refusal cases remain no-write/no-call and file bytes remain unchanged"
+  ],
+  "coverage": "Each of the 22 case IDs is listed in per-case.json and partition.json; each retains its original test body and predicates."
+}

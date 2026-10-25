@@ -1,0 +1,32 @@
+{
+  "schema": "timeline.agent.f_d138_per_case.v1",
+  "cluster": "root-045",
+  "count": 22,
+  "status": "source-migrated_behavioral-service-unverified",
+  "caller": "TimelineSession.commit_many(commands, idempotency_key, dry_run, via='cli', base=pins)",
+  "partition": "migrated=22, legacy_only=0, stopped=0",
+  "case_ids": [
+    "test_batch_original_claims_one_publication_reload_inverse[cli-False]",
+    "test_batch_original_claims_one_publication_reload_inverse[cli-True]",
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-False]",
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-True]",
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-False]",
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-True]",
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-False]",
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-True]",
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-False]",
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-True]",
+    "test_file_uses_original_pair_after_peer_advances_head[disjoint-False]",
+    "test_file_uses_original_pair_after_peer_advances_head[disjoint-True]",
+    "test_file_uses_original_pair_after_peer_advances_head[relevant-False]",
+    "test_file_uses_original_pair_after_peer_advances_head[relevant-True]",
+    "test_file_refusal_is_atomic_and_keeps_file[claims]",
+    "test_file_refusal_is_atomic_and_keeps_file[empty]",
+    "test_file_refusal_is_atomic_and_keeps_file[envelope]",
+    "test_file_refusal_is_atomic_and_keeps_file[late-invalid]",
+    "test_file_refusal_is_atomic_and_keeps_file[media]",
+    "test_captured_file_retry_refuses_boolean_to_number_claim[expect]",
+    "test_captured_file_retry_refuses_boolean_to_number_claim[reads]",
+    "test_file_preview_keeps_batch_for_one_real_publication"
+  ]
+}

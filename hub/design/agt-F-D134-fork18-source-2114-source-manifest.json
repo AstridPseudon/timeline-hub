@@ -1,0 +1,62 @@
+{
+  "task": "D134",
+  "result": "UNAPPLIED",
+  "repository": "agent",
+  "worktree": "/home/user/work/wt/agt-F-D134-fork18-source-2114",
+  "head": "d066e3b7a82a1e7853963ea357510ccef0c0aa34",
+  "base_ref": "tl/integration",
+  "base": "2eca9a1da94eb35bb969540e150192ff920ce326",
+  "assigned_files": [
+    {
+      "path": "tests/editing_conformance/test_fork_abi1_binding_set.py",
+      "sha256": "901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2"
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_occurrence_fork.py",
+      "sha256": "19b1e47a89604803d0f0f90964db48788d0bfc82955eb229949d9dee158ade2a"
+    }
+  ],
+  "read_only_source": [
+    {
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f"
+    },
+    {
+      "path": "astrid/sdk/timeline/commit.py",
+      "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+    },
+    {
+      "path": "astrid/sdk/timeline/native_occurrence_fork.py",
+      "sha256": "bb129592203eb0e8bd6353c804d335ce13dca1441813ad266451016d7c7a0d7d"
+    },
+    {
+      "path": "tests/editing_conformance/test_provider_occurrence_fork.py",
+      "sha256": "febd9b5261ce768375dbbb7efe3844ecf76e9283ebd6a3595c8d368b84c3cbe4"
+    }
+  ],
+  "cluster_inputs": [
+    {
+      "path": "scratchpad/orch/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+      "sha256": "789f644fa3d0ab3aaf009073657c4437505024b3898162e1cbb5d304c6b18e7e"
+    },
+    {
+      "path": "scratchpad/orch/design/agt-F-D134-root-clusters-2022-per-id.tsv",
+      "sha256": "4cfe0a5fedd24f31e6c438d3a5240d61ae7fcebfe117a2c24589f0959b78ef3e"
+    },
+    {
+      "path": "scratchpad/orch/design/agt-F-D134-root-review-2029-review.json",
+      "sha256": "8d9796c64a04c0dbf81dbda41e3d85435ba6521b6c7bcaf6df6c9efc0b13e1e4"
+    },
+    {
+      "path": "scratchpad/orch/tests/agent-agent-core-full-1025191128-18455/log.txt",
+      "sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e"
+    }
+  ],
+  "protected_review": "agt-F-D134-root-review-2029 PASS",
+  "live_route": {
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "status": "not_run",
+    "reason": "published route reports exact missing fixture input"
+  }
+}

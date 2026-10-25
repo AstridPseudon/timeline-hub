@@ -1,0 +1,40 @@
+{
+  "schema": "timeline.agent.f_d138_cli22_supported_ingress.source_manifest.v1",
+  "task": "D138 CLI22 supported ingress",
+  "repo": "agent",
+  "base_branch": "tl/integration",
+  "base_head": "2eca9a1da94eb35bb969540e150192ff920ce326",
+  "base_tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+  "owned_file": {
+    "path": "tests/editing_conformance/test_native_batch_ingress.py",
+    "before_sha256": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669",
+    "after_sha256": "8bff12b06be10a5b08597dc6c0bf6566b1ffe409f479a6b7d49ac3285dfb845e",
+    "changed_surface": "cli() test caller only"
+  },
+  "existing_production_source_read_only": [
+    {
+      "path": "astrid/sdk/timeline/sync.py",
+      "sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254",
+      "anchors": ["320-369", "530-558", "571-601"]
+    },
+    {
+      "path": "tests/helpers/runtime.py",
+      "sha256": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f",
+      "anchors": ["new_runtime_daemon", "vendored_runtime_commit"]
+    }
+  ],
+  "source_basis": [
+    "D134 source-manifest.json",
+    "D134 predicate-map.json",
+    "D134 findings.md",
+    "D134 review.json",
+    "D134 validation.md",
+    "D138 supersedes the prior strict literal-CLI constraint"
+  ],
+  "forbidden_changes": [
+    "no production changes",
+    "no Runtime/shared fixture/schema/pin/generated/client/kit changes",
+    "no new CLI spelling or commands-file restoration",
+    "no assertion weakening, skip, xfail, or deselection"
+  ]
+}

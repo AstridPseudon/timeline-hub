@@ -1,0 +1,48 @@
+{
+  "schema": "timeline.agent.f_d138_cli22_field_map.v1",
+  "case_count": 22,
+  "request_builder": {
+    "source": "astrid/sdk/timeline/sync.py:536-542",
+    "before": "retired edit commands-file parser rejected before handler/Runtime; no authentic request envelope",
+    "after": {
+      "api_version": 1,
+      "project_id": "session.project_id",
+      "timeline_id": "session.timeline_id",
+      "base_revision_id": "outbox.state.base.revision_id",
+      "base_publication_id": "outbox.state.base.publication_id",
+      "commands": "deepcopy(outbox.state.pending)",
+      "source": {"via": "cli"},
+      "dry_run": "commit_many argument",
+      "rationale": "preserved when present in state",
+      "label": "commit_options.label, default Timeline edit",
+      "steps": "commit_options.steps, one per command when omitted",
+      "merge": "commit_options.merge, fields or atomic",
+      "reads": "commit_options.reads when supplied",
+      "idempotency_key": "flight.key passed to client.timelines.commit"
+    }
+  },
+  "cases": [
+    {"id": "test_batch_original_claims_one_publication_reload_inverse[cli-False]", "before": "retired/no request", "after": "same authored commands; source via cli; one request"},
+    {"id": "test_batch_original_claims_one_publication_reload_inverse[cli-True]", "before": "retired/no request", "after": "same captured commands and guards; source via cli; one request"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-False]", "before": "retired/no request", "after": "same commands, original pair, flight key/body retained"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-True]", "before": "retired/no request", "after": "same captured commands/guards, original pair, flight key/body retained"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-False]", "before": "retired/no request", "after": "same commands, original pair, exact retry"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-True]", "before": "retired/no request", "after": "same captured commands/guards, original pair, exact retry"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-False]", "before": "retired/no request", "after": "same commands, original pair, rebased request"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-True]", "before": "retired/no request", "after": "same captured commands/guards, original pair, rebased request"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-False]", "before": "retired/no request", "after": "same commands, original pair, conflict with suffix retained"},
+    {"id": "test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-True]", "before": "retired/no request", "after": "same captured commands/guards, original pair, conflict with suffix retained"},
+    {"id": "test_file_uses_original_pair_after_peer_advances_head[disjoint-False]", "before": "retired/no request", "after": "same commands and explicit base pair; rebased"},
+    {"id": "test_file_uses_original_pair_after_peer_advances_head[disjoint-True]", "before": "retired/no request", "after": "same captured commands/guards and explicit base pair; rebased"},
+    {"id": "test_file_uses_original_pair_after_peer_advances_head[relevant-False]", "before": "retired/no request", "after": "same commands and explicit base pair; conflict"},
+    {"id": "test_file_uses_original_pair_after_peer_advances_head[relevant-True]", "before": "retired/no request", "after": "same captured commands/guards and explicit base pair; conflict"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[claims]", "before": "retired/no request", "after": "same stale claim; local refusal before Runtime"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[empty]", "before": "retired/no request", "after": "same empty input; local refusal before Runtime"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[envelope]", "before": "retired/no request", "after": "same malformed envelope; local refusal before Runtime"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[late-invalid]", "before": "retired/no request", "after": "same late invalid command; local refusal before Runtime"},
+    {"id": "test_file_refusal_is_atomic_and_keeps_file[media]", "before": "retired/no request", "after": "same unsupported media command; local refusal before Runtime"},
+    {"id": "test_captured_file_retry_refuses_boolean_to_number_claim[expect]", "before": "retired/no request", "after": "same expect claim and exact retry guard"},
+    {"id": "test_captured_file_retry_refuses_boolean_to_number_claim[reads]", "before": "retired/no request", "after": "same reads claim and exact retry guard"},
+    {"id": "test_file_preview_keeps_batch_for_one_real_publication", "before": "retired/no request", "after": "same commands; dry_run preview with null receipt then one publication"}
+  ]
+}

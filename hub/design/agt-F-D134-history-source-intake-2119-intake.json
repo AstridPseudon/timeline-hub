@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.agent.d134_history_source_intake.v1",
+  "task": "agt-F-D134-history-source-intake-2119",
+  "result": "PASS_SOURCE_ONLY_EXACT_INTAKE",
+  "base": {
+    "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0"
+  },
+  "donors": {
+    "A_inverse7": {
+      "ref": "refs/remotes/hub/tl/rt-D134-inverse7-return-2053",
+      "commit": "9a7c9e38cf9baa72a4b10b7b6a50cf47b6447430",
+      "tree": "cc91a71e3ddb48c49554e0d34c59e3ab302811ce",
+      "paths": [
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py"
+      ],
+      "blob": "55e7cec5da3463360a4f862986bc28e6a1e39345"
+    },
+    "B_history5": {
+      "ref": "refs/remotes/hub/tl/rt-D134-history5-return-2053",
+      "commit": "9e85402544af522a2b5bb2716731b2dfe4413652",
+      "tree": "7915f92306c4633e508711866d8061a4b05b108f",
+      "paths": [
+        "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+        "tests/editing_conformance/test_prepared_video_birth.py"
+      ],
+      "blobs": [
+        "33ffb59d7e66469784f97a3542e9475b27d11888",
+        "72783d84e1edfac23f3508ee21aad824e425e6b8"
+      ]
+    }
+  },
+  "changed_paths": [
+    "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+    "tests/editing_conformance/test_prepared_video_birth.py"
+  ],
+  "imported_reviewed_blobs": 3,
+  "source_adaptation": false,
+  "foreign_ancestry": false,
+  "evidence_files_in_product_tree": false,
+  "m1": {
+    "path": "tests/editing_conformance/test_m1_legacy_archive_read.py",
+    "sha256": "838c77332683358877059f1357267a49cd130a985be4e4755a9655ec3f930d01",
+    "byte_unchanged": true,
+    "behavior": "UNKNOWN",
+    "run": false
+  }
+}
