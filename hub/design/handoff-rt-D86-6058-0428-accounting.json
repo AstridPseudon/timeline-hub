@@ -1,0 +1,86 @@
+{
+  "ERROR": 75,
+  "FAIL": 7,
+  "PASS": 14,
+  "UNKNOWN": 0,
+  "cluster_counts_are_not_used_for_family_counts": true,
+  "executed_unique": 96,
+  "expected_96": true,
+  "family_counts_are_membership_routed": true,
+  "historical_dispositions_retained": true,
+  "historical_input_hashes": {
+    "original550_dispositions": "abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2",
+    "unexecuted23": "7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca"
+  },
+  "historical_original550_rows": 550,
+  "historical_unexecuted23_rows": 23,
+  "membership_matches_per_id": true,
+  "membership_matches_xml": true,
+  "membership_rows": 96,
+  "membership_unique": 96,
+  "no_absent_case_pass": true,
+  "no_new_semantic_verdict": true,
+  "no_reconstructed_missing_records": true,
+  "per_id_source_rows": 96,
+  "previous_source_specific_sets": {
+    "actual102": {
+      "policy": "immutable; source-specific",
+      "rows": 102,
+      "status_counts": {
+        "ERROR": 68,
+        "FAIL": 24,
+        "PASS": 10
+      }
+    },
+    "actual161": {
+      "policy": "immutable; not rebound",
+      "rows": 161,
+      "status_counts": {
+        "ERROR": 112,
+        "FAIL": 43,
+        "PASS": 6
+      }
+    },
+    "actual20": {
+      "policy": "immutable; source-specific",
+      "rows": 20,
+      "status_counts": {
+        "ERROR": 10,
+        "FAIL": 3,
+        "PASS": 7
+      }
+    },
+    "actual22": {
+      "policy": "immutable; source-specific",
+      "rows": 22,
+      "status_counts": {
+        "ERROR": 18,
+        "FAIL": 0,
+        "PASS": 4
+      }
+    }
+  },
+  "request_id": "agent-fd86-current96-body-0415-1025041953-6058",
+  "schema": "astrid.timeline.fd86-6058-safe-accounting/v1",
+  "selected_unique": 96,
+  "selector_membership_equal": true,
+  "selector_rows": 96,
+  "selector_unique": 96,
+  "separate_boundaries": {
+    "D91": {
+      "D92_failures": 3,
+      "errors": 10,
+      "inverse_passes_excluded": 7,
+      "policy": "separate",
+      "rows": 20
+    },
+    "candidate_product_mandatory8": {
+      "policy": "separate; no product merge or relabeling",
+      "status": "HELD"
+    }
+  },
+  "source_only_no_functional_closure": true,
+  "task": "F-D86-6058",
+  "xml_testcase_count": 96,
+  "xml_unique": 96
+}
