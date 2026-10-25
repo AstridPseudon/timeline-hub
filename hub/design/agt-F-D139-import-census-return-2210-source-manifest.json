@@ -1,0 +1,699 @@
+{
+  "schema": "timeline.d139.correction-source-manifest/v1",
+  "task": "D139",
+  "status": "FINITE_SOURCE_FACTS_PRESERVED",
+  "source_tuple": {
+    "agent": {
+      "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+      "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+      "origin": "https://github.com/peteromallet/astrid-agent"
+    },
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
+    }
+  },
+  "original_evidence": {
+    "author_packet": {
+      "input_census_sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30",
+      "missing_modules_sha256": "2d008eae7e10ec0364b4395e0e368a72690680ee15729d65cb39c5e51b39fc2b",
+      "source_manifest_sha256": "da8140716e8cc84c61c6956faac7559e116eeea79b1649bfcf7f73bdedb59153",
+      "source_pins_sha256": "7644e140279928e915513cf7a6ac8fb115bd91d788db4ec81bc31105d423584a",
+      "coverage_sha256": "39fc593a37b21172b783b153fd2089fd772c21ecfb93e681669521fb75cdaed5",
+      "validation_sha256": "2a653ecdf94701fa4b58f43481bd3b96acd1528b944d2157a2170a0256b6d2d6",
+      "progress_sha256": "5a141feea28f15d4734793121b28810395e6f7006cf4a2ca33512fffb6c37e99"
+    },
+    "independent_review": {
+      "review_sha256": "a961de1dfb5ac97ff5c5ffc74c04c1de52cdef7da080d0e8238508d4795b185f",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D139-import-census-review-2210/evidence/review.json",
+      "note": "The review file is retained as an input; no original evidence file was edited."
+    }
+  },
+  "coverage": {
+    "root_selectors": 22,
+    "root_python_files": 431,
+    "reachable_source_rows": 1001,
+    "graph_nodes": 1001,
+    "unique_import_requirements": 1146,
+    "dynamic_records": 983,
+    "parse_errors": 0
+  },
+  "authenticated_hashes": {
+    "command_sha256": "8cd8300a4d1e4f43dc7895907f858f6f2989e964ba38cc017a6a5fbe4cfd2637",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "proof_lock_sha256": "6f6e3843fbb39d91e80d5be952cb3d589053503541b61202d341f9757902c110",
+    "runtime_lock_sha256": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"
+  },
+  "schema_pin": {
+    "distribution": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "direct_url": {
+      "subdirectory": "packages/timeline-schema/python",
+      "url": "https://github.com/banodoco/ArtAgents.git",
+      "vcs_info": {
+        "commit_id": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+        "requested_revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+        "vcs": "git"
+      }
+    },
+    "record_sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1",
+    "record_entries": {
+      "banodoco_timeline_schema-0.0.2.dist-info/INSTALLER": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "banodoco_timeline_schema-0.0.2.dist-info/METADATA": "49fd34e5afe868b39ef9c7131f8093ca98017f0129faab5aa86bd5a80e2eba0e",
+      "banodoco_timeline_schema-0.0.2.dist-info/REQUESTED": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "banodoco_timeline_schema-0.0.2.dist-info/WHEEL": "98e75747d0b7c0c568bfb71263c3d8f970b3a374a6996087bc642be5cb09a1aa",
+      "banodoco_timeline_schema-0.0.2.dist-info/direct_url.json": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+      "banodoco_timeline_schema-0.0.2.dist-info/top_level.txt": "543a8d01279949f8ec5ec908c47cfcdb6978921a13207e748a97376022d86ee0",
+      "banodoco_timeline_schema/__init__.py": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+      "banodoco_timeline_schema/generated.py": "da74eae27fafc8e8410b96c99cec0652f54343fa7b975ec315295d644ea6ae63",
+      "banodoco_timeline_schema/materialize.py": "41651567e2e29b565a2854210c146ecb450c49c815504ede375775eb020bde38",
+      "banodoco_timeline_schema/theme.py": "b713f1e61c8c63b1ce957d7a6c4b1f1c5c1700d4fd6336f99f97ba7e964f4dcb",
+      "banodoco_timeline_schema/timeline.schema.json": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25",
+      "banodoco_timeline_schema/validate.py": "ef953e644cbaee6919397571a00966c45cddf9e55f4d83636e9a037afb187059"
+    }
+  },
+  "missing_classification": {
+    "reported_total": 17,
+    "registered_child_exact_missing": 12,
+    "explicitly_optional_or_plugin_missing": 5,
+    "unconditional_missing_blockers": 0
+  },
+  "missing_module_mapping": [
+    {
+      "module": "banodoco_timeline_schema",
+      "occurrences": [
+        {
+          "alias": "ambient_schema",
+          "guard": "inside test_forced_caption_uses_server_owned_executable_routing_and_isolation()",
+          "importer": "tests.packs.rendering.test_render_export_task_adapter",
+          "kind": "import",
+          "line": 434,
+          "path": "tests/packs/rendering/test_render_export_task_adapter.py"
+        },
+        {
+          "alias": "shared_schema",
+          "guard": "module-level",
+          "importer": "d73_preflight",
+          "kind": "import",
+          "line": 111,
+          "path": "tools/p4-d73-pinned-launch.sh"
+        },
+        {
+          "alias": "UpstreamSharedAssetEntry",
+          "guard": "try/except",
+          "importer": "astrid.core.timeline.banodoco_schema",
+          "kind": "from",
+          "line": 41,
+          "path": "astrid/core/timeline/banodoco_schema.py"
+        },
+        {
+          "alias": "SharedTheme",
+          "guard": "try/except",
+          "importer": "astrid.core.timeline.banodoco_schema",
+          "kind": "from",
+          "line": 44,
+          "path": "astrid/core/timeline/banodoco_schema.py"
+        },
+        {
+          "alias": "SharedThemeOverrides",
+          "guard": "try/except",
+          "importer": "astrid.core.timeline.banodoco_schema",
+          "kind": "from",
+          "line": 47,
+          "path": "astrid/core/timeline/banodoco_schema.py"
+        },
+        {
+          "alias": "SharedTimelineClip",
+          "guard": "try/except",
+          "importer": "astrid.core.timeline.banodoco_schema",
+          "kind": "from",
+          "line": 50,
+          "path": "astrid/core/timeline/banodoco_schema.py"
+        },
+        {
+          "alias": "SharedTimelineConfig",
+          "guard": "try/except",
+          "importer": "astrid.core.timeline.banodoco_schema",
+          "kind": "from",
+          "line": 53,
+          "path": "astrid/core/timeline/banodoco_schema.py"
+        },
+        {
+          "alias": "SharedTimelineOutput",
+          "guard": "try/except",
+          "importer": "astrid.core.timeline.banodoco_schema",
+          "kind": "from",
+          "line": 56,
+          "path": "astrid/core/timeline/banodoco_schema.py"
+        },
+        {
+          "alias": "_materialize_output",
+          "guard": "try/except",
+          "importer": "astrid.core.timeline.banodoco_schema",
+          "kind": "from",
+          "line": 59,
+          "path": "astrid/core/timeline/banodoco_schema.py"
+        },
+        {
+          "alias": null,
+          "guard": "inside _execution_env(); if not old_schema_root; try/except",
+          "importer": "tests.packs.rendering._helpers",
+          "kind": "import",
+          "line": 110,
+          "path": "tests/packs/rendering/_helpers.py"
+        }
+      ],
+      "reason": "D73 preflight/import requirement absent from registered child; authenticated shared schema is input-only",
+      "status": "EXACTMISSING_IN_REGISTERED_CHILD"
+    },
+    {
+      "module": "runpod_lifecycle.api",
+      "occurrences": [
+        {
+          "alias": "get_pod_status",
+          "guard": "inside resolve_runpod_pod_handle_ssh_route()",
+          "importer": "astrid.core.execution.provider_route_resolvers",
+          "kind": "from",
+          "line": 62,
+          "path": "astrid/core/execution/provider_route_resolvers.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy",
+      "occurrences": [
+        {
+          "alias": null,
+          "guard": "inside class VibeComfyBackend; inside generate()",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "import",
+          "line": 604,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": null,
+          "guard": "inside _load_workflow(); if isinstance(template_id, str) and isinstance(bindings, Mapping)",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "import",
+          "line": 172,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.node_packs",
+      "occurrences": [
+        {
+          "alias": "missing_packs_for_workflow",
+          "guard": "inside _live_preflight()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 30,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "resolve_node_packs",
+          "guard": "inside _live_preflight()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 30,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.registry.ready",
+      "occurrences": [
+        {
+          "alias": "repo_ready_template_discovery",
+          "guard": "inside class VibeComfyBackend; inside generate()",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 605,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "resolve_ready_template",
+          "guard": "inside class VibeComfyBackend; inside generate()",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 605,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "workflow_from_ready",
+          "guard": "inside class VibeComfyBackend; inside generate()",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 605,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "repo_ready_template_discovery",
+          "guard": "inside _load_workflow(); if isinstance(template_id, str) and isinstance(bindings, Mapping)",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 173,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        },
+        {
+          "alias": "workflow_from_ready",
+          "guard": "inside _load_workflow(); if isinstance(template_id, str) and isinstance(bindings, Mapping)",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 173,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.runtime.run",
+      "occurrences": [
+        {
+          "alias": "run_sync",
+          "guard": "inside class VibeComfyBackend; inside _run_workflow()",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 491,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "run_embedded_sync",
+          "guard": "inside _run_profile_result(); if profile_id == 'pip_embedded'",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 753,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        },
+        {
+          "alias": "run_sync",
+          "guard": "inside run_local_server()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 175,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "run_sync",
+          "guard": "inside class VibeComfyEngine; inside run(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 1248,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.runtime.session",
+      "occurrences": [
+        {
+          "alias": "SessionConfig",
+          "guard": "inside _embedded_session_config()",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 651,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        },
+        {
+          "alias": "module",
+          "guard": "inside class SelectedSourceObserver; inside from_selected_launch()",
+          "importer": "astrid.core.execution.vibecomfy_engine_adapter",
+          "kind": "import",
+          "line": 269,
+          "path": "astrid/core/execution/vibecomfy_engine_adapter.py"
+        },
+        {
+          "alias": "session_module",
+          "guard": "inside engine_main()",
+          "importer": "astrid.core.execution.vibecomfy_engine_adapter",
+          "kind": "import",
+          "line": 703,
+          "path": "astrid/core/execution/vibecomfy_engine_adapter.py"
+        },
+        {
+          "alias": "SessionConfig",
+          "guard": "inside run_local_server()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 176,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "_process_start_identity",
+          "guard": "inside _assert_process_incarnation_gone(); try/except; if sys.platform == 'darwin'",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 146,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "current_source_content_digest",
+          "guard": "inside _observed_source_identity(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 217,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "current_source_revision",
+          "guard": "inside _observed_source_identity(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 217,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "session_module",
+          "guard": "inside _verify_owned_vibe_session(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "import",
+          "line": 439,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "SessionConfig",
+          "guard": "inside class CheckoutServerAdapter; inside run_compiled_workflow(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 2157,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.schema.provider",
+      "occurrences": [
+        {
+          "alias": "get_target_schema_provider",
+          "guard": "inside _live_preflight()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 31,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.schema.validate",
+      "occurrences": [
+        {
+          "alias": "_choice_scope",
+          "guard": "inside _live_preflight()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 32,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "validate_api_against_schema",
+          "guard": "inside _live_preflight()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 32,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "validate_api_link_shapes",
+          "guard": "inside _live_preflight()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 32,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.security.provenance",
+      "occurrences": [
+        {
+          "alias": "Provenance",
+          "guard": "inside local_server_bundle()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 125,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "Provenance",
+          "guard": "inside _canonicalize_ui_workflow(); try/except",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 303,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        },
+        {
+          "alias": "Provenance",
+          "guard": "inside load_workflow_path(); if source.suffix.lower() == '.py'; try/except",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 333,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.utils",
+      "occurrences": [
+        {
+          "alias": "utils",
+          "guard": "inside validate_selected_observation_sources()",
+          "importer": "astrid.core.execution.vibecomfy_engine_adapter",
+          "kind": "import",
+          "line": 220,
+          "path": "astrid/core/execution/vibecomfy_engine_adapter.py"
+        },
+        {
+          "alias": "utils",
+          "guard": "inside class SelectedSourceObserver; inside from_selected_launch()",
+          "importer": "astrid.core.execution.vibecomfy_engine_adapter",
+          "kind": "import",
+          "line": 270,
+          "path": "astrid/core/execution/vibecomfy_engine_adapter.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "occurrences": [
+        {
+          "alias": "ApprovedProjectionRecord",
+          "guard": "inside _approve_live()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 99,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "canonical_digest",
+          "guard": "inside _approve_live()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 99,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "emit_bundle_with_candidate",
+          "guard": "inside local_server_bundle()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 126,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "load_bundle",
+          "guard": "inside local_server_bundle()",
+          "importer": "astrid.packs.vibecomfy.local_server_engine",
+          "kind": "from",
+          "line": 126,
+          "path": "astrid/packs/vibecomfy/local_server_engine.py"
+        },
+        {
+          "alias": "load_bundle",
+          "guard": "inside class VibeComfyBackend; inside _run_workflow(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 500,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "load_bundle",
+          "guard": "inside class VibeComfyEngine; inside run(); try/except; if isinstance(workflow, tuple) and len(workflow) == 2; try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 1261,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "WorkflowBundle",
+          "guard": "inside class CheckoutServerAdapter; inside run_compiled_workflow(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 2093,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "load_bundle",
+          "guard": "inside class CheckoutServerAdapter; inside run_compiled_workflow(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 2093,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "WorkflowBundle",
+          "guard": "inside _canonical_bundle_value(); try/except",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 202,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        },
+        {
+          "alias": "load_bundle",
+          "guard": "inside _canonical_bundle_value(); try/except",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 202,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        },
+        {
+          "alias": "load_bundle",
+          "guard": "inside _canonicalize_ui_workflow(); try/except",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 304,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        },
+        {
+          "alias": "load_bundle",
+          "guard": "inside load_workflow_path(); if source.suffix.lower() == '.py'; try/except",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 334,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        }
+      ],
+      "reason": "No Agent/Runtime source and no authenticated child distribution/top_level/RECORD mapping",
+      "status": "EXACTMISSING"
+    },
+    {
+      "module": "fontTools.ttLib",
+      "occurrences": [
+        {
+          "alias": "TTFont",
+          "guard": "inside _metrics(); try/except",
+          "importer": "astrid.core.timeline.text_fit",
+          "kind": "from",
+          "line": 29,
+          "path": "astrid/core/timeline/text_fit.py"
+        }
+      ],
+      "reason": "Source-proved optional/manual import has no Agent/Runtime source or authenticated child distribution mapping",
+      "status": "EXACTMISSING_OPTIONAL"
+    },
+    {
+      "module": "mutagen.mp4",
+      "occurrences": [
+        {
+          "alias": "MP4",
+          "guard": "inside _canonicalize_generated_files(); try/except",
+          "importer": "astrid.packs.wan2gp.src.driver",
+          "kind": "from",
+          "line": 680,
+          "path": "astrid/packs/wan2gp/src/driver.py"
+        }
+      ],
+      "reason": "Source-proved optional/manual import has no Agent/Runtime source or authenticated child distribution mapping",
+      "status": "EXACTMISSING_OPTIONAL"
+    },
+    {
+      "module": "vibecomfy.porting.import_service",
+      "occurrences": [
+        {
+          "alias": "import_workflow_bytes",
+          "guard": "inside _canonicalize_ui_workflow(); try/except",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 267,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        }
+      ],
+      "reason": "Source-proved optional/manual import has no Agent/Runtime source or authenticated child distribution mapping",
+      "status": "EXACTMISSING_OPTIONAL"
+    },
+    {
+      "module": "vibecomfy.schema",
+      "occurrences": [
+        {
+          "alias": "get_target_schema_provider",
+          "guard": "inside class CheckoutServerAdapter; inside run_compiled_workflow(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 2120,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        }
+      ],
+      "reason": "Source-proved optional/manual import has no Agent/Runtime source or authenticated child distribution mapping",
+      "status": "EXACTMISSING_OPTIONAL"
+    },
+    {
+      "module": "vibecomfy.workflow",
+      "occurrences": [
+        {
+          "alias": "VibeWorkflow",
+          "guard": "inside class VibeComfyBackend; inside _run_workflow(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 499,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "VibeWorkflow",
+          "guard": "inside class VibeComfyEngine; inside run(); try/except; if isinstance(workflow, tuple) and len(workflow) == 2; try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 1260,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "VibeWorkflow",
+          "guard": "inside class CheckoutServerAdapter; inside run_compiled_workflow(); try/except",
+          "importer": "astrid.core.generation.backends.vibecomfy",
+          "kind": "from",
+          "line": 2092,
+          "path": "astrid/core/generation/backends/vibecomfy.py"
+        },
+        {
+          "alias": "VibeWorkflow",
+          "guard": "inside _canonical_bundle_value(); try/except",
+          "importer": "astrid.packs.vibecomfy.production_engine",
+          "kind": "from",
+          "line": 201,
+          "path": "astrid/packs/vibecomfy/production_engine.py"
+        }
+      ],
+      "reason": "Source-proved optional/manual import has no Agent/Runtime source or authenticated child distribution mapping",
+      "status": "EXACTMISSING_OPTIONAL"
+    }
+  ]
+}

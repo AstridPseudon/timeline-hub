@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T22:12:09Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
-# agent board, 2026-10-25T22:11Z
+<!-- agent | 2026-10-25T22:16:14Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
+# agent board, 2026-10-25T22:15Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -136,8 +136,10 @@
 | D139 original9 source union | Preserve five exact reviewed donor blobs | Luna | App actual2136 failure inventory | gated:App-boundaries | Author2151; independent2202 PASS | Exact donors, outside union and43 predicates PASS; compile/Ruff/mypy PASS. App actual9 setup ERROR remains; no repeat or normal D100 merge. | d133a14838 |
 | D139 disk admission | Complete finite headroom audit | Luna read only | Corrected source evidence | merged | Audit2154; return2205; final2210 PASS | Direct store retirement route is missing; 623MB deficit verified. No cleanup, request or retry. [Review](../../design/agt-OPS-D139-disk-final-review-2210-report.md). | Evidence only |
 | D139 store retirement | Retire superseded child through guards | Runtime kit | Owner22:18 and earliest22:24:50 | blocked:runtime | Runtime route requested2205 | Existing request-retire route misses bench-store entry. No request or guard retry. Exact source review published; retained receipts stay protected. | Source unchanged |
-Integration: Agent cd63be424d62226e3ee5c26fc5ce03227f5394a5. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lockab1e retained. Newer237722 upstream held for cut.
+| D139 schema carrier | Supply authenticated pinned schema inputs | Luna | Existing2149 source receipt | doing | agt-F-D139-schema-carrier-return-2214 | Runtime2205 ask claimed. Check exact physical source and12 RECORD hashes; no acquisition, invented archive or recipe changes. | Evidence pending |
+Integration: Agent cd63be424d62226e3ee5c26fc5ce03227f5394a5. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lockab1e retained. Latest owner-reported0cd0398fe9 upstream held for the small second join at cut; no chasing.
 
+Core open: 370 measured (D134, measurement-only), ship-grade pending. The425 count is historical30693 at10:24Z. No source-only change deducts failures.
 Measurement: service agent-agent-core-full-1025191128-18455 terminal exit1; operator8926 PASS /190 FAIL /180 ERROR /173 subtests PASS /1379.05s. Independent1937 final custody FAIL; XML/full disk witness missing. Final core and REG counts UNKNOWN. Classification-only independent2029 qualifies370 IDs: own344=132 setup,0 proved product,212 UNKNOWN;14 UNVERIFIED,12 UNKNOWN. Source edits do not deduct counts. No ship/custody/release credit; retirement0. Raw18455 KEEP.
 
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL independently1405. OriginalTrue currentd4ba/ab1e stillFAILredo birth; private authentic records missing and causal ownerUNKNOWN. Synthetic3/native2 does not close originalfour. App actual2056 currentc992/D100 original9 still9setupERROR, independent2100 proves newcanonical typedFPS guard seam; sole Runtime owner correction requested2116.
@@ -149,7 +151,7 @@ Blockers: App D100 — qualified9486 behavior receipt owed before shared105 prop
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-gradecore, REG0, installedrender90, platform, fullP2, finaltupleP1-P5, wheel and ZIP owed. FarmD77 waits genuinechildqualification; FarmRuntimeunion2100 separate.
 
-Next ready: import census correction2210 active. live1 / cap6; ready-undispatched0. Runtime owns missing guarded store route and complete child recipe; Agent hosting slot offered.
+Next ready: schema carrier2214 and finite census final review2216 active. live2 / cap6; ready-undispatched0. Runtime recipe and missing guarded store route remain external source needs.
 
 Disk:5.160GB at22:04Z; child admission5.905GB, stop4GB. Compact gzipped17 logs; sweep removed0. No eligible target. Runtime owns missing guarded store retirement route; no action before22:24:50Z.
 
@@ -157,7 +159,7 @@ H6: Runtime f103 upstream join merged; Agentcd63 and Appb5 normal source receipt
 
 Later: transcript authority, originalTrue redo and graph child birth await authentic privateboundary records; no speculativeguardwriter or unchangedrepeat. D133 correctedoptionB DEFERRED, Gate3 unchanged/visiblyfailing with existingnotesline; nooptionA review/body. D23/D14 retained. Providercost lacks measured leaf attribution; App owns elementloader/body. D135 finalcut and currentupstreamjoin remain gatedD59. M1archive2915 exists but on/opaque/anchor behaviorUNKNOWN, no unchangedrerun/retirement.
 
-INBOX consumed through1900753 bytes. Latest Runtime21:55 and App21:56 boards consumed. Manager writes only boards, briefs and peer notes, plus exact worker evidence publication.
+INBOX consumed through1904767 bytes. Owner22:20 count wording applied:370 measured, ship-grade pending. New upstream0cd0398fe9 remains cut-only.
 
 Pass 2026-10-25T21:26Z: PLAN/common/header and latest Runtime21:16, App21:16, Farm21:17 boards consumed. Received f07 exact regular0755. Existing controller2122 is the sole real request; no duplicate. History intake2119 merged normal a6703bba8e with one prior protected review and exact donor blobs; own11 remains unqualified. D138 source2117 ended; protected read-only review2128 dispatched, no live22. Fork overlapping read-only packets handed to existing App return2114 for one cumulative review. Peers2128 report actual home and already-merged c992 receipt; future FPS source preserves it. D130 held unchanged.
 Pass 2026-10-25T21:38Z: independent2132 PASS_EVIDENCE confirms actual child registration/source/receipt and preflight-only failure; no core submission. Exact2132 packet published. Existing frozen schema setting is a concrete supported caller seam; local operational source worker2136 claims it without product/launcher/dependency edits. Runtime2104 own-node recipe remains separate. App final2119 finite fork18 PASS consumed; exact missing records retained as later, no repeated reader/body. D138 source708ba3 merged with protected2128 PASS and behavior unqualified.

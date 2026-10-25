@@ -1,0 +1,983 @@
+{
+  "schema": "timeline.d139.excluded-occurrences/v1",
+  "task": "D139",
+  "status": "FINITE_EXCLUDED_OCCURRENCES",
+  "source_occurrence_count": 17642,
+  "graph_edge_count": 17604,
+  "excluded_count": 38,
+  "exclusion_rules": [
+    {
+      "rule_id": "d73_launcher_preflight",
+      "description": "Exclude every static import occurrence in the embedded Python blocks of tools/p4-d73-pinned-launch.sh from graph.edges.",
+      "count": 14
+    },
+    {
+      "rule_id": "caught_or_conditional_missing",
+      "description": "Exclude a missing import occurrence from graph.edges when its source-proved AST guard contains try/except.",
+      "count": 24
+    }
+  ],
+  "excluded_occurrences": [
+    {
+      "module": "vibecomfy.runtime.session",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "_process_start_identity",
+        "guard": "inside _assert_process_incarnation_gone(); try/except; if sys.platform == 'darwin'",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 146,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 146,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.runtime.session",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "current_source_content_digest",
+        "guard": "inside _observed_source_identity(); try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 217,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 217,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.runtime.session",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "current_source_revision",
+        "guard": "inside _observed_source_identity(); try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 217,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 217,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.runtime.session",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "session_module",
+        "guard": "inside _verify_owned_vibe_session(); try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "import",
+        "line": 439,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 439,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "load_bundle",
+        "guard": "inside class VibeComfyBackend; inside _run_workflow(); try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 500,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 500,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.runtime.run",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "run_sync",
+        "guard": "inside class VibeComfyEngine; inside run(); try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 1248,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 1248,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "load_bundle",
+        "guard": "inside class VibeComfyEngine; inside run(); try/except; if isinstance(workflow, tuple) and len(workflow) == 2; try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 1261,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 1261,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "WorkflowBundle",
+        "guard": "inside class CheckoutServerAdapter; inside run_compiled_workflow(); try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 2093,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 2093,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "load_bundle",
+        "guard": "inside class CheckoutServerAdapter; inside run_compiled_workflow(); try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 2093,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 2093,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.runtime.session",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "SessionConfig",
+        "guard": "inside class CheckoutServerAdapter; inside run_compiled_workflow(); try/except",
+        "importer": "astrid.core.generation.backends.vibecomfy",
+        "kind": "from",
+        "line": 2157,
+        "path": "astrid/core/generation/backends/vibecomfy.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/generation/backends/vibecomfy.py",
+          "source_line": 2157,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "UpstreamSharedAssetEntry",
+        "guard": "try/except",
+        "importer": "astrid.core.timeline.banodoco_schema",
+        "kind": "from",
+        "line": 41,
+        "path": "astrid/core/timeline/banodoco_schema.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/timeline/banodoco_schema.py",
+          "source_line": 41,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "SharedTheme",
+        "guard": "try/except",
+        "importer": "astrid.core.timeline.banodoco_schema",
+        "kind": "from",
+        "line": 44,
+        "path": "astrid/core/timeline/banodoco_schema.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/timeline/banodoco_schema.py",
+          "source_line": 44,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "SharedThemeOverrides",
+        "guard": "try/except",
+        "importer": "astrid.core.timeline.banodoco_schema",
+        "kind": "from",
+        "line": 47,
+        "path": "astrid/core/timeline/banodoco_schema.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/timeline/banodoco_schema.py",
+          "source_line": 47,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "SharedTimelineClip",
+        "guard": "try/except",
+        "importer": "astrid.core.timeline.banodoco_schema",
+        "kind": "from",
+        "line": 50,
+        "path": "astrid/core/timeline/banodoco_schema.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/timeline/banodoco_schema.py",
+          "source_line": 50,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "SharedTimelineConfig",
+        "guard": "try/except",
+        "importer": "astrid.core.timeline.banodoco_schema",
+        "kind": "from",
+        "line": 53,
+        "path": "astrid/core/timeline/banodoco_schema.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/timeline/banodoco_schema.py",
+          "source_line": 53,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "SharedTimelineOutput",
+        "guard": "try/except",
+        "importer": "astrid.core.timeline.banodoco_schema",
+        "kind": "from",
+        "line": 56,
+        "path": "astrid/core/timeline/banodoco_schema.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/timeline/banodoco_schema.py",
+          "source_line": 56,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "_materialize_output",
+        "guard": "try/except",
+        "importer": "astrid.core.timeline.banodoco_schema",
+        "kind": "from",
+        "line": 59,
+        "path": "astrid/core/timeline/banodoco_schema.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/core/timeline/banodoco_schema.py",
+          "source_line": 59,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "WorkflowBundle",
+        "guard": "inside _canonical_bundle_value(); try/except",
+        "importer": "astrid.packs.vibecomfy.production_engine",
+        "kind": "from",
+        "line": 202,
+        "path": "astrid/packs/vibecomfy/production_engine.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/packs/vibecomfy/production_engine.py",
+          "source_line": 202,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "load_bundle",
+        "guard": "inside _canonical_bundle_value(); try/except",
+        "importer": "astrid.packs.vibecomfy.production_engine",
+        "kind": "from",
+        "line": 202,
+        "path": "astrid/packs/vibecomfy/production_engine.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/packs/vibecomfy/production_engine.py",
+          "source_line": 202,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.security.provenance",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "Provenance",
+        "guard": "inside _canonicalize_ui_workflow(); try/except",
+        "importer": "astrid.packs.vibecomfy.production_engine",
+        "kind": "from",
+        "line": 303,
+        "path": "astrid/packs/vibecomfy/production_engine.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/packs/vibecomfy/production_engine.py",
+          "source_line": 303,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "load_bundle",
+        "guard": "inside _canonicalize_ui_workflow(); try/except",
+        "importer": "astrid.packs.vibecomfy.production_engine",
+        "kind": "from",
+        "line": 304,
+        "path": "astrid/packs/vibecomfy/production_engine.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/packs/vibecomfy/production_engine.py",
+          "source_line": 304,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.security.provenance",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "Provenance",
+        "guard": "inside load_workflow_path(); if source.suffix.lower() == '.py'; try/except",
+        "importer": "astrid.packs.vibecomfy.production_engine",
+        "kind": "from",
+        "line": 333,
+        "path": "astrid/packs/vibecomfy/production_engine.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/packs/vibecomfy/production_engine.py",
+          "source_line": 333,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "vibecomfy.workflow_bundle",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "load_bundle",
+        "guard": "inside load_workflow_path(); if source.suffix.lower() == '.py'; try/except",
+        "importer": "astrid.packs.vibecomfy.production_engine",
+        "kind": "from",
+        "line": 334,
+        "path": "astrid/packs/vibecomfy/production_engine.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "astrid/packs/vibecomfy/production_engine.py",
+          "source_line": 334,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": null,
+        "guard": "inside _execution_env(); if not old_schema_root; try/except",
+        "importer": "tests.packs.rendering._helpers",
+        "kind": "import",
+        "line": 110,
+        "path": "tests/packs/rendering/_helpers.py"
+      },
+      "exclusion": {
+        "rule_id": "caught_or_conditional_missing",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tests/packs/rendering/_helpers.py",
+          "source_line": 110,
+          "basis": "the AST guard is try/except; the missing import is caught or conditional and is excluded from the runtime/source graph"
+        }
+      }
+    },
+    {
+      "module": "json",
+      "category": "stdlib",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": null,
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 83,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            82,
+            89
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "sys",
+      "category": "stdlib",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": null,
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 84,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            82,
+            89
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "pathlib",
+      "category": "stdlib",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "Path",
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "from",
+        "line": 85,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            82,
+            89
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "hashlib",
+      "category": "stdlib",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": null,
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 95,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "json",
+      "category": "stdlib",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": null,
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 96,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "sys",
+      "category": "stdlib",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": null,
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 97,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "pathlib",
+      "category": "stdlib",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "Path",
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "from",
+        "line": 98,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "astrid",
+      "category": "internal_source_carrier",
+      "distribution": null,
+      "resolved_local": "astrid",
+      "source_owner": "agent",
+      "occurrence": {
+        "alias": null,
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 107,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "astrid_runtime_client",
+      "category": "internal_source_carrier",
+      "distribution": null,
+      "resolved_local": "astrid_runtime_client",
+      "source_owner": "agent",
+      "occurrence": {
+        "alias": null,
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 108,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "astrid_runtime_client.contract_metadata",
+      "category": "internal_source_carrier",
+      "distribution": null,
+      "resolved_local": "astrid_runtime_client.contract_metadata",
+      "source_owner": "agent",
+      "occurrence": {
+        "alias": "CONTRACT_VERSION",
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "from",
+        "line": 109,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "astrid_runtime_client.contract_metadata",
+      "category": "internal_source_carrier",
+      "distribution": null,
+      "resolved_local": "astrid_runtime_client.contract_metadata",
+      "source_owner": "agent",
+      "occurrence": {
+        "alias": "SCHEMA_DIGEST",
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "from",
+        "line": 109,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "astrid.core.timeline.banodoco_schema",
+      "category": "internal_source_carrier",
+      "distribution": null,
+      "resolved_local": "astrid.core.timeline.banodoco_schema",
+      "source_owner": "agent",
+      "occurrence": {
+        "alias": "schema",
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 110,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "banodoco_timeline_schema",
+      "category": "missing",
+      "distribution": null,
+      "resolved_local": null,
+      "source_owner": null,
+      "occurrence": {
+        "alias": "shared_schema",
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 111,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    },
+    {
+      "module": "runtime_protocol",
+      "category": "internal_source_carrier",
+      "distribution": null,
+      "resolved_local": "runtime_protocol",
+      "source_owner": "runtime",
+      "occurrence": {
+        "alias": null,
+        "guard": "module-level",
+        "importer": "d73_preflight",
+        "kind": "import",
+        "line": 112,
+        "path": "tools/p4-d73-pinned-launch.sh"
+      },
+      "exclusion": {
+        "rule_id": "d73_launcher_preflight",
+        "source_proof": {
+          "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+          "source_path": "tools/p4-d73-pinned-launch.sh",
+          "embedded_python_lines": [
+            94,
+            115
+          ],
+          "basis": "embedded Python preflight in the pinned launcher is source input, not a runtime/source graph edge"
+        }
+      }
+    }
+  ],
+  "arithmetic": {
+    "graph_edges_plus_excluded": "17604 + 38 = 17642",
+    "graph_edges": 17604,
+    "excluded_occurrences": 38,
+    "occurrence_records": 17642,
+    "reconciled": true
+  }
+}
