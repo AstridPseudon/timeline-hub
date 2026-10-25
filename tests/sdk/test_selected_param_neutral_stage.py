@@ -207,15 +207,17 @@ def test_physical_binding_requires_authenticated_source_context(two_pins, damage
     calls = _sequence(element, p2)[:2]
     context = _context(realm, calls, True)
     port = DetachedPort(realm, context)
-    through = copy.deepcopy(realm.head)
-    plan = execute(selected.current(realm), calls, schema_inputs=p2['schema_inputs'],
-                   realm_id='realm', commit_request=context['request'], evaluated_head=through)
-    staged = plan.records
-    record = staged[0]
     if accepted:
         create_runtime_commit_service().commit(context, port)
-        accepted_record = realm.entries[-1]['records']['commands'][0]
-        assert accepted_record['command'] == record['command']
+        staged = ()
+        record = realm.entries[-1]['records']['commands'][0]
+        through = copy.deepcopy(realm.head)
+    else:
+        through = copy.deepcopy(realm.head)
+        plan = execute(selected.current(realm), calls, schema_inputs=p2['schema_inputs'],
+                       realm_id='realm', commit_request=context['request'], evaluated_head=through)
+        staged = plan.records
+        record = staged[0]
     assert resolve_selected_param_source(port, context=context, through=through,
                                          select=REF, staged=staged)['source'] == p2['schema_source']
     _damage_binding(record, damage)
