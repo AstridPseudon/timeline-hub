@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import sys
 
 import pytest
 from test_timeline_commit_port import (
@@ -42,23 +43,31 @@ def test_revision_read_isolation_and_single_port_detach(service, monkeypatch):
 
     def action(context, port):
         head = port.head()
-        baseline = real_deepcopy(port.revision_closure(head["revision_id"]))
-        calls = 0
+        port_calls = 0
+        copying = False
 
         def counted(value, memo=None, _deepcopy=real_deepcopy):
-            nonlocal calls
-            calls += 1
-            return _deepcopy(value, memo) if memo is not None else _deepcopy(value)
+            nonlocal copying, port_calls
+            if copying:
+                return _deepcopy(value, memo) if memo is not None else _deepcopy(value)
+            if sys._getframe(1).f_code.co_filename == port_module.__file__:
+                port_calls += 1
+            copying = True
+            try:
+                return _deepcopy(value, memo) if memo is not None else _deepcopy(value)
+            finally:
+                copying = False
 
         monkeypatch.setattr(port_module.copy, "deepcopy", counted)
         try:
             first = port.revision_closure(head["revision_id"])
+            baseline = real_deepcopy(first)
             first["parent_revision"]["payload"]["read_isolation_probe"] = "mutated"
             second = port.revision_closure(head["revision_id"])
         finally:
             monkeypatch.setattr(port_module.copy, "deepcopy", real_deepcopy)
 
-        observed["copy_calls"] = calls
+        observed["port_copy_calls"] = port_calls
         observed["second"] = second
         observed["baseline"] = baseline
         return port.accept(prepared(context, port))
@@ -67,9 +76,9 @@ def test_revision_read_isolation_and_single_port_detach(service, monkeypatch):
     result = commit(service, body, key="read-isolation")
 
     assert result["data"]["status"] == "accepted"
-    # Each public read gets exactly one isolated boundary copy; the first read
-    # must not also copy the private request snapshot into the closure cache.
-    assert observed["copy_calls"] == 2
+    # Each public read gets exactly one isolated boundary copy; the first cold
+    # read must not also copy the private request snapshot into the cache.
+    assert observed["port_copy_calls"] == 2
     assert observed["second"] == observed["baseline"]
     stored = service._timeline_commits()[0].revision_closure(
         service.test_project, "main", base_revision_id
