@@ -233,7 +233,7 @@ const TEST_DATA_ENV_KEYS = [
   'BANODOCO_LOCAL_DATA_ROOT', 'BANODOCO_LOCAL_SOURCE_MANIFEST', 'ASTRID_LOCAL_DATA_ROOT',
   'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'BANODOCO_RUNTIME_DATA_ROOT',
   'ASTRID_DATA_ROOT', 'ASTRID_SUPPORT_ROOT', 'ASTRID_RUNTIME_PYTHON',
-  'ASTRID_RUNTIME_CHECKOUT', 'ASTRID_RUNTIME_SOURCE_MANIFEST', 'ASTRID_START_COMMAND',
+  'ASTRID_RUNTIME_CHECKOUT', 'ASTRID_RUNTIME_SOURCE_MANIFEST', 'ASTRID_START_COMMAND', 'ASTRID_INSTALL_MANAGED_BY',
 ];
 
 function cleanInheritedEnvironment(source = process.env) {
@@ -717,16 +717,19 @@ test('--verbose prints the technical lines after the Open block, and ASTRID_VERB
 
 test('a running Runtime without a door for this hosted page is not attached: it is named, nothing starts, no Open', async () => {
   const cases = [
-    ['another page', { doorOrigin: 'https://other.test' }, 'the running Runtime\'s browser door serves https://other.test'],
-    ['no door at all', { door: false }, 'the running Runtime\'s browser door serves no hosted page'],
+    ['another page', { doorOrigin: 'https://other.test' }, 'the running Runtime\'s browser door serves https://other.test', undefined],
+    ['no door at all', { door: false }, 'the running Runtime\'s browser door serves no hosted page', undefined],
+    ['Pinokio-managed app', { door: false }, 'the running Runtime\'s browser door serves no hosted page', { ASTRID_INSTALL_MANAGED_BY: 'pinokio', ASTRID_START_COMMAND: '/Pinokio/Astrid/start' }],
   ];
-  for (const [label, overrides, details] of cases) {
+  for (const [label, overrides, details, env] of cases) {
     const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test', ...overrides });
     try {
-      const result = await launcherEnds({ fixture });
+      const result = await launcherEnds({ fixture, env });
       assert.equal(result.code, 1, label);
       assert.deepEqual(result.stderr.split('\n').slice(0, 2), [
-        "Astrid's engine is running without a door for https://hosted.test. Restart it: astrid-runtime restart --profile astrid --hosted-origin https://hosted.test",
+        env
+          ? "Astrid's engine is running without a door for https://hosted.test. Restart Astrid in Pinokio."
+          : "Astrid's engine is running without a door for https://hosted.test. Restart it: astrid-runtime restart --profile astrid --hosted-origin https://hosted.test",
         `Details: ${details}`,
       ], label);
       assert.equal(result.stdout, '', `${label}: printed something`);
@@ -848,14 +851,50 @@ test('a stopped Runtime points to the command that starts it', async () => {
   try {
     // The discovery file still names a Runtime, but nothing listens there any more.
     await new Promise(r => fixture.runtime.close(r));
-    const result = await run(['--check'], fixture.env);
-    assert.equal(result.code, 1);
-    assert.equal(result.stderr.split('\n')[0], "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid");
-    assert.match(result.stderr.split('\n')[1], /^Details: runtime is unavailable at http:\/\/127\.0\.0\.1:\d+ /);
+    const noHelperDirectory = join(fixture.fixture, 'pinokio-entry');
+    const withHelperDirectory = join(fixture.fixture, 'installed-entry');
+    mkdirSync(noHelperDirectory);
+    mkdirSync(withHelperDirectory);
+    const withEnv = join(withHelperDirectory, 'with-env');
+    writeFileSync(withEnv, '');
+    const cases = [
+      ['default CLI', {}, "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid", false],
+      ['missing with-env', { ASTRID_START_COMMAND: join(noHelperDirectory, 'start') }, "Astrid's engine isn't running. Start it first: astrid-runtime up --profile astrid", false],
+      ['available with-env', { ASTRID_START_COMMAND: join(withHelperDirectory, 'start') }, `Astrid's engine isn't running. Start it first: ${shellQuote(withEnv)} astrid-runtime up --profile astrid`, true],
+      ['Pinokio environment', { ASTRID_INSTALL_MANAGED_BY: 'pinokio' }, "Astrid's engine isn't running. Start Astrid in Pinokio.", false],
+      ['Pinokio run entry', { ASTRID_START_COMMAND: join(noHelperDirectory, 'run') }, "Astrid's engine isn't running. Start Astrid in Pinokio.", false],
+      ['Pinokio Windows run entry', { ASTRID_START_COMMAND: join(noHelperDirectory, 'run.cmd') }, "Astrid's engine isn't running. Start Astrid in Pinokio.", false],
+    ];
+    for (const [label, env, friendly, hasWithEnv] of cases) {
+      const result = await run(['--check'], { ...fixture.env, ...env });
+      assert.equal(result.code, 1, label);
+      assert.equal(result.stderr.split('\n')[0], friendly, label);
+      assert.match(result.stderr.split('\n')[1], /^Details: runtime is unavailable at http:\/\/127\.0\.0\.1:\d+ /, label);
+      assert.equal(result.stderr.includes('with-env'), hasWithEnv, label);
+    }
   } finally {
     await new Promise(r => fixture.door.close(r));
     rmSync(fixture.fixture, { recursive: true, force: true });
   }
+});
+
+test('a Pinokio Runtime that changed points back to Pinokio', async () => {
+  const fixture = await launchFixture({ healthInstanceId: 'unexpected-runtime-instance' });
+  try {
+    const result = await launcherEnds({ fixture, env: { ASTRID_INSTALL_MANAGED_BY: 'pinokio' } });
+    assert.equal(result.code, 1);
+    assert.equal(result.stderr.split('\n')[0], 'Astrid changed on this computer. Restart Astrid in Pinokio.');
+    assert.equal(result.stderr.split('\n')[1], 'Details: Runtime health instance does not match the selected Astrid profile');
+  } finally { await fixture.close(); }
+});
+
+test('a Pinokio Runtime with an incompatible schema points to a Pinokio restart', async () => {
+  const fixture = await launchFixture({ healthProtocol: 'workspace.v0' });
+  try {
+    const result = await launcherEnds({ fixture, env: { ASTRID_INSTALL_MANAGED_BY: 'pinokio' } });
+    assert.equal(result.code, 1);
+    assert.match(result.stderr.split('\n')[0], /; restart: Restart Astrid in Pinokio$/);
+  } finally { await fixture.close(); }
 });
 
 function assertOpenAfterStart(started) {

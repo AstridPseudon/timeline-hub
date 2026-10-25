@@ -38,19 +38,34 @@ const INSTALL_GUIDE_URL = 'https://github.com/banodoco/astrid-agent/blob/main/do
 const NOT_SET_UP = `Astrid isn't set up on this computer yet. Install guide: ${INSTALL_GUIDE_URL}`;
 const PROGRAM_IN_THE_WAY = "Another program is in the way, so Astrid can't start. Close it and try again.";
 const OTHER_ASTRID_RUNNING = 'Another Astrid is already running in another window. Stop it there with Ctrl+C first.';
-const startCommand = process.env.ASTRID_START_COMMAND
-  ? `${process.platform === 'win32' ? '& ' : ''}${shellQuote(process.env.ASTRID_START_COMMAND)}`
+const astridStartCommand = process.env.ASTRID_START_COMMAND;
+const startCommand = astridStartCommand
+  ? `${process.platform === 'win32' ? '& ' : ''}${shellQuote(astridStartCommand)}`
   : 'npm run dev:local';
-// An install keeps its Runtime behind `<install>/with-env` (next to `<install>/start`), off the person's PATH.
-const runtimeCli = (action) => (process.env.ASTRID_START_COMMAND
-  ? `${process.platform === 'win32' ? '& ' : ''}${shellQuote(resolve(dirname(process.env.ASTRID_START_COMMAND), 'with-env'))} astrid-runtime ${action} --profile astrid`
-  : `astrid-runtime ${action} --profile astrid`);
+const startCommandBasename = astridStartCommand?.split(/[\\/]/).at(-1)?.toLowerCase();
+const pinokioManaged = process.env.ASTRID_INSTALL_MANAGED_BY === 'pinokio'
+  || startCommandBasename === 'run' || startCommandBasename === 'run.cmd';
+// An install may keep its Runtime behind `<install>/with-env` (next to `<install>/start`), off the person's PATH.
+// Use that helper only when it exists; otherwise hints fall back to the ordinary Runtime CLI name.
+const runtimeCli = (action) => {
+  const withEnv = astridStartCommand && resolve(dirname(astridStartCommand), 'with-env');
+  const installedCli = withEnv && existsSync(withEnv)
+    ? `${process.platform === 'win32' ? '& ' : ''}${shellQuote(withEnv)} astrid-runtime`
+    : 'astrid-runtime';
+  return `${installedCli} ${action} --profile astrid`;
+};
 const runtimeUpCommand = runtimeCli('up');
-const ENGINE_STOPPED = `Astrid's engine isn't running. Start it first: ${runtimeUpCommand}`;
+const ENGINE_STOPPED = pinokioManaged
+  ? "Astrid's engine isn't running. Start Astrid in Pinokio."
+  : `Astrid's engine isn't running. Start it first: ${runtimeUpCommand}`;
 const DEFAULT_HOSTED_ORIGIN = 'https://astrid.haus';
-const engineWithoutDoor = (origin) => `Astrid's engine is running without a door for ${origin}. Restart it: ${runtimeCli('restart')}${origin === DEFAULT_HOSTED_ORIGIN ? '' : ` --hosted-origin ${origin}`}`;
+const engineWithoutDoor = (origin) => pinokioManaged
+  ? `Astrid's engine is running without a door for ${origin}. Restart Astrid in Pinokio.`
+  : `Astrid's engine is running without a door for ${origin}. Restart it: ${runtimeCli('restart')}${origin === DEFAULT_HOSTED_ORIGIN ? '' : ` --hosted-origin ${origin}`}`;
 const BAD_HOSTED_ORIGIN = '--hosted-origin must be an https:// address, like https://astrid.haus';
-const ENGINE_CHANGED = `Astrid changed on this computer. Restart its engine: ${runtimeUpCommand}`;
+const ENGINE_CHANGED = pinokioManaged
+  ? 'Astrid changed on this computer. Restart Astrid in Pinokio.'
+  : `Astrid changed on this computer. Restart its engine: ${runtimeUpCommand}`;
 const CANT_START = "Astrid can't start with the setup on this computer.";
 
 /**
@@ -422,7 +437,7 @@ async function verifyRuntime(endpoint, token, expectedIdentity, allowStart = fal
       const selected = runtimeCommand('restart');
       const quote = (value) => /^[A-Za-z0-9_./:=+-]+$/.test(value) ? value : `'${value.replaceAll("'", "'\"'\"'")}'`;
       const invocation = [selected.command, ...selected.args.filter((value) => value !== '--json')].map(quote).join(' ');
-      const restart = `${selected.cwd ? `cd ${quote(selected.cwd)} && ` : ''}${invocation}`;
+      const restart = pinokioManaged ? 'Restart Astrid in Pinokio' : `${selected.cwd ? `cd ${quote(selected.cwd)} && ` : ''}${invocation}`;
       console.error(`Astrid: Runtime ${actual?.protocol ?? 'unknown'} schema ${actual?.schema_digest ?? 'unknown'} is incompatible with App workspace.v1 schema ${expectedSchemaDigest}; ${reason}; restart: ${restart}`);
       process.exitCode = 1;
       return null;
@@ -471,7 +486,8 @@ async function verifyRuntime(endpoint, token, expectedIdentity, allowStart = fal
     return true;
   } catch (error) {
     if (allowStart && error.cause?.code === 'ECONNREFUSED') return NOT_RUNNING;
-    return fail(ENGINE_STOPPED, `runtime is unavailable at ${endpoint.origin} (run ${runtimeUpCommand}): ${error instanceof Error ? error.message : String(error)}`);
+    const recovery = pinokioManaged ? 'Start Astrid in Pinokio' : `run ${runtimeUpCommand}`;
+    return fail(ENGINE_STOPPED, `runtime is unavailable at ${endpoint.origin} (${recovery}): ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
