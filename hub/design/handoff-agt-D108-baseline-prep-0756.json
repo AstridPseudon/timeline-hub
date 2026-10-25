@@ -1,0 +1,87 @@
+{
+  "all_current_selector_joins": {
+    "absent_xml_join_rows": 6312,
+    "ambiguous_rows_explicit": 0,
+    "exact_xml_join_rows": 2956,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-return-0803/evidence/d108-current-selector-upstream-joins.tsv",
+    "publication_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803-current-joins.tsv",
+    "rows": 9268,
+    "sha256": "0fbcdf46e9272a2a3bd1e3f275cfa09f2887e50bef848f41c68c2c71a8ef12c5"
+  },
+  "boundaries": {
+    "D13_ENV": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+    "D23_DEFERRED": [
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head"
+    ],
+    "D63_order_129": "same_function_name_only; normalized body not equal; upstream PASS observation only",
+    "D63_order_181": "same_function_name_and_body_text; current proof pending; upstream PASS observation only; per-row D63 reference added",
+    "approved_dead_scope_assignments": 0,
+    "current_core_open_count": "WITHHELD_UNTIL_D108_TERMINAL",
+    "current_failure_classification": "WITHHELD_UNTIL_D108_TERMINAL",
+    "existing_276_comparison": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-prep-0756/evidence/d108-upstream924-node-index.tsv",
+    "existing_276_sha256": "72534d6e122d282310f9275952f9711abd73c4a3ff8194e6eb5d56b6867cf917",
+    "no_upstream_pass_claim": true,
+    "runtime_isolation": "UNCERTAIN_FULL_RUN_PER_D54_CUSTODY_CORRECTION"
+  },
+  "correction": "The historical F-prefixed prep handoff remains unchanged. This non-F successor adds the complete testcase index from the authentic upstream924 XML and binds all 9268 retained current selectors; it does not replace the historical 276-row comparison.",
+  "full_upstream924_index": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-return-0803/evidence/d108-upstream924-full-testcase-index.tsv",
+    "publication_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-return-0803-upstream-index.tsv",
+    "root_total": 13083,
+    "rows": 12517,
+    "sha256": "075f630611aad412b8e2fda861e807800d8756dbd31aed19acc0c7d43fe7b456",
+    "subtests": 566,
+    "testcase_nodes": 12517,
+    "unique_raw_node_ids": 12517
+  },
+  "guards": {
+    "body_run": false,
+    "collection_run": false,
+    "fixtures_services_browsers_install_probes": false,
+    "imports_of_product_code": false,
+    "pytest_run": false,
+    "source_or_product_edits": false
+  },
+  "historical_f_prefixed_artifacts_preserved": true,
+  "historical_prep": {
+    "index_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-prep-0756/evidence/d108-upstream924-node-index.tsv",
+    "index_sha256": "72534d6e122d282310f9275952f9711abd73c4a3ff8194e6eb5d56b6867cf917",
+    "rows": 276,
+    "summary_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-prep-0756/evidence/d108-upstream924-node-index-summary.json",
+    "summary_sha256": "61d309853e1e68f20de4238c7cde258bc485462a7c17251c06b56e58e05e3736",
+    "upstream_exact_matches": 75,
+    "upstream_unknown": 201
+  },
+  "schema": "timeline.agent.d108.baseline-prep-successor-correction.v1",
+  "sources": {
+    "current_agent_commit": "b27ff3449ec4d9b5e14ac25b8f5a18c1999c21f6",
+    "current_agent_tree": "972188c76ed7a9e8f41d1baf6768673de2596efc",
+    "current_inventory": {
+      "aggregate_sha256": "7ac5cdd0bfa2b811f9a0a4fb719d9a28ef6080d2bb879ed29fe54fc1a6882b69",
+      "files": 409,
+      "nodes": 9268,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-core-input-0656/evidence/current-source-inventory.json",
+      "sha256": "a64319f07be3184ddc8af462b8de6e9dffd77660d78f785649a4b30b0eecb8c2"
+    },
+    "current_selectors": {
+      "count": 9268,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-core-input-0656/evidence/current-selectors.txt",
+      "sha256": "1fe99f7c09a5324fbd8c029e07a6c5def2406f1a4274e6448ea3febaba1856b1"
+    },
+    "source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-0656-manifest.json",
+      "sha256": "ef233661a73a7f5697d3a9bee06d635c0393cae6e641820e22477bc161cd11e8"
+    },
+    "upstream_agent_commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "upstream_agent_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b",
+    "upstream_xml": {
+      "bytes": 6732462,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+      "sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f"
+    }
+  },
+  "status": "source_only_ready_for_main_terminal",
+  "successor_task": "agt-F-D108-baseline-return-0803",
+  "task": "agt-F-D108-baseline-prep-0756"
+}

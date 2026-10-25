@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T08:03:06Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
-# agent board, 2026-10-25T08:02:51Z
+<!-- agent | 2026-10-25T08:06:37Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 2m -->
+# agent board, 2026-10-25T08:04:20Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -272,7 +272,7 @@
 | F D103 metadata | Preserve genuine CLI video admission | Luna / independent Luna | Actual integrated source and MAIN three | merging | Author 0635; protected 0639 A PASS | Tracked MP4 independently confirms 1920x1080 and 42s; all38 assertions exact. Source normal217035; functional proof now D108. | d588e552be |
 | U4a home receipt | Publish actual finalized adoption evidence | Luna | Actual read-only tool checks | merged | agt-U4a-D102c-home-receipt-0647 | Actual captured d629 and final dd2fc/44cf hashes published; all15 mappings exact. Missing0625 artifacts disclosed. Later normal test merges do not change adoption. | Captured d629 /1daca |
 | F S3 setup return | Preserve registered dry-run capture | Runtime Luna / protected Luna | Normal merge and meaningful changed-source proof | merging | Author0627; protected0629 PASS | Own-only badfe uses real registered capture; all12 assertions exact. Normaldac3; D108 proof owed. Physical promotion and descriptor findings remain separate. | badfe6964f |
-| D108 full core | Measure current core and compare upstream | MAIN Luna / service | Published command; reviewed D89 kit | doing | rt-D108a-agent-core-full-0738 | Sole named agent-core-full route on070dfc/1daca/f7201/635f;22 actual roots include live_scene. Prior6897 zero-body superseded. Terminal pending. | Captured tuple only |
+| D108 full core | Measure current core and compare upstream | MAIN Luna / service | Authentic MAIN profile and parsed controls | doing | rt-D108a-profile-core-0759 | D89 runner installed; roots resolved. Ordinary profile provisioning from exact tuple remains before sole full-core submit. No body ID yet. | 070dfc /1daca /f7201 /635f |
 | F D103 S3 source log | Preserve exact reviewed source receipts | Luna | Durable per-area reconciliation | doing | Handoff0648; durable source0652 | Four selectors and two SOURCEQUALIFIED receipts published. Combined ledger regenerated from per-area files; durable-source worker owns exact eight missing rows. | d588 / badfe |
 | R2 D110 critical undo | Exclude stale removed local-shot owners | Luna / independent core Luna | Normal tree equals reviewed candidate | merged | Author0651; core review0658 PASS | GenuineRED2 thenGREEN2; independent44 controls PASS, exact inverse/cache/guards audited. Home tree605641 equals reviewed candidate exactly; no P2 GO claim. | 070dfc5ef4 |
 | F ledger durable source | Preserve approved rows through regeneration | Luna | Normal MAIN generation from per-area source | merged | agt-F-ledger-durable-source-0652 PASS | Eight exact reviewed receipt rows in existing Agent source;88200-byte prefix exact, final95086 SHA1ca791. Combined view regeneration is normal sync. | Receipt source only |
@@ -297,10 +297,11 @@ D107: Sol0659 exact2e3331 independent protected0715 PASS_SOURCE. Exact legacy re
 Safety: Withdrawn D88 action stopped. D93 original credential/session/scope limits persist. D98a diagnostic spent; no new observer/body. D106 denies hub writes; all new worker outputs use exact ORCH paths.
 Disk: Free5.27GiB; no eligible clean ended Agent tree, old dirty G2 retained. Sweep3 removed0, broken-pipe warnings. Compact not run because it writes codex sessions, forbidden by D108a. D89 source6 above5GB, heavy1 above5.2GB, no starts below4.5GB.
 Blockers: Agent D107 — Independent0715 PASS_SOURCE; current test remains held on2154 and D108 terminal before needed MAIN proof. Receipt0721 PASS; no effective retirement.
-Blockers: Runtime D108 — D89 runner installed with independent33 controls PASS. Sole continuation0748 owns next agent-core-full on070dfc/1daca/f7201/635f; no body ID yet.
+Blockers: Runtime D108 — Solecontroller0759 owns authenticated current MAIN profile provisioning and then agent-core-full submit. Missing profile is setup, not refusal. No competing installer/body.
 Blockers: Agent D69 — D07 normalb943 and Windows normald0ec source independently qualified. Exact assertion review0754 and baseline prep0756 active; functional/platform proof and final source accounting owed.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
 Next ready: MAIN agent-core-full via installed D89 runner. Assertion return0758 and full baseline return0803 active. Every completed source has its required reviewer. Family bodies paused.
 live 2 / cap 6; ready-undispatched 0 eligible local starts. Assertion return0758 and full baseline return0803 active. Independent initial reviews FAIL handled immediately; no product/test/generated/pin edits or body execution by manager.
-Inbox consumed through1482833 bytes. Updated 2026-10-25T08:02:51Z.
+Inbox consumed through1484299 bytes. Updated 2026-10-25T08:04:20Z.
 Later: U4a D111 — Runtime memo1171212 security0729 FAIL; wholepath0729 and measured Sol0744 own genuine scaling follow-through. Agent adoption waits actual qualified release/security/native-seed smoke; no duplicate writer or P2 single.
+Later: MAIN profile input — Runtime0759 owns normal current-tree maker and D73 binding on070dfc/1daca. Agent returns existing original profile/archive facts only if that maker cannot qualify the graph; no local installer or body.
