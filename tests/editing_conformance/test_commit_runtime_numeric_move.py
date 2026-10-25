@@ -1,28 +1,30 @@
 """Native numeric moves on API-built films, including the M1 command surface."""
 from __future__ import annotations
 
-import copy
 from types import SimpleNamespace
 
 import pytest
 
 from astrid.sdk.timeline import commit
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.capture import capture_move
-from tests.helpers.runtime import use_runtime
+from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 
 pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
 def numeric_film(tmp_path, monkeypatch):
-    runtime = use_runtime()
+    runtime = use_runtime(commit=vendored_runtime_commit())
     monkeypatch.syspath_prepend(str(runtime / 'tests'))
     from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
     from timeline_commit_film_fixture import build_film_fixture
 
     film = build_film_fixture(tmp_path)
     service = RuntimeService(film.duplicate_root)
+    service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
     case = SimpleNamespace(service=service, film=film)
 
     def head():
@@ -37,7 +39,12 @@ def numeric_film(tmp_path, monkeypatch):
         base = head()
         body = {'api_version': 1, 'project_id': film.project_id, 'timeline_id': film.timeline_id,
                 'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id'],
-                'commands': calls}
+                'commands': calls, 'label': key, 'merge': 'atomic', 'reads': [],
+                'steps': [{'id': key, 'label': key, 'intent': 'Numeric conformance edit',
+                           'tags': ['numeric'], 'command_ordinals': list(range(len(calls))),
+                           'patch': [], 'reads': []}],
+                'dry_run': False, 'source': {'via': 'python'},
+                'rationale': 'Preserve exact numeric authored values', 'group_id': key}
         return case.service.commit_timeline(
             film.project_id, film.timeline_id, body, idempotency_key=key, publisher='author',
             invocation_path=f'/v1/projects/{film.project_id}/timelines/{film.timeline_id}/commit',
@@ -58,36 +65,20 @@ def exact(actual, expected):
 @pytest.mark.parametrize('start,on', [(0, 0), (0.0, 0), (0, 1)])
 def test_native_move_keeps_exact_numeric_image_and_unchanged_history(numeric_film, scope, start, on):
     case = numeric_film
-    source = case.document()
-    parent = copy.deepcopy(source['parent_revision']['payload'])
-    shots, internals = [], []
     if scope == 'parent':
         ref = 'parent/clip:music-bed'
-        target = parent['clips'][0]
     else:
         ref = 'occurrence:occurrence-1/clip:clip-1'
-        internal = copy.deepcopy(source['internal_timeline_revisions'][0])
-        shot = next(copy.deepcopy(row) for row in source['shot_revisions']
-                    if row['internal_timeline_revision_id'] == internal['revision_id'])
-        internal.update(revision_id='numeric-internal')
-        shot.update(revision_id='numeric-shot', internal_timeline_revision_id='numeric-internal')
-        shot['payload']['internal_timeline_revision_id'] = 'numeric-internal'
-        for occurrence in parent['occurrences']:
-            if occurrence['shot_id'] == shot['shot_id']:
-                occurrence['shot_revision_id'] = 'numeric-shot'
-        target = internal['payload']['clips'][0]
-        target['hold'] = 0.25
-        for row in (internal, shot):
-            row.pop('content_digest')
-        shots, internals = [shot], [internal]
-    target['at'] = start
-    target['app'] = {'astrid': {'fixed_start': True, 'for': target['hold']},
-                     'org.example/opaque': [None, False, 1, 1.0]}
-    case.service.publish_parent_composition(case.film.project_id, case.film.timeline_id, {
-        'project_id': case.film.project_id, 'timeline_id': case.film.timeline_id,
-        'expected_head': case.head()['revision_id'], 'parent_revision_id': 'numeric-baseline',
-        'parent_composition': parent, 'shot_revisions': shots, 'internal_timeline_revisions': internals,
-    }, idempotency_key='numeric-baseline')
+
+    bundle = commit.bundle_from_document(case.document())
+    hold = 0.25 if scope == 'occurrence' else State(bundle).entity(ref)['hold']
+    values = {'at': start,
+              'app': {'astrid': {'fixed_start': True, 'for': hold},
+                      'org.example/opaque': [None, False, 1, 1.0]}}
+    if scope == 'occurrence':
+        values['hold'] = 0.25
+    baseline = capture_clip_set(bundle, ref, values=values)
+    case.submit([baseline], 'numeric-baseline')
     case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
     original, base = case.document(), case.head()
     bundle = commit.bundle_from_document(original)
