@@ -453,7 +453,12 @@ def _write_object(path: Path, value: Mapping[str, Any]) -> None:
 def _dependency_pythonpath() -> tuple[str, ...]:
     """Keep only approved dependency roots across the host boundary."""
     try:
-        return dependency_pythonpath()
+        runtime_package = Path(platform.__file__).resolve().parent
+        runtime_root = runtime_package.parent
+        if (runtime_package.name != "runtime_protocol"
+                or not (runtime_package / "__init__.py").is_file()):
+            raise PackHostBootstrapError("the imported Runtime package has no usable source root")
+        return tuple(dict.fromkeys((str(runtime_root), *dependency_pythonpath())))
     except VibeComfyDependencyError as exc:
         raise PackHostBootstrapError(str(exc)) from exc
 
