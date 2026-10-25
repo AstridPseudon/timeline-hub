@@ -379,7 +379,8 @@ def _sequential_assertion(claim, ordinals, sequential, key, phase="input"):
     return matches[0]
 
 
-def validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs=None, sequential=None):
+def validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs=None, sequential=None,
+                  inverse_boundaries=None):
     submitted = next((item for item in request.get("steps", []) if item["id"] == step["id"]), None)
     dependencies = step["dependencies"]
     step_reads = []
@@ -395,6 +396,28 @@ def validate_step(request, records, step, boundary, batch_reads, continuations, 
         created = {item["ref"] for item in record["created"]}
         for read in record["reads"]:
             if read["ref"] in created and read["state"] == {"state": "absent"}:
+                continue
+            owner, separator, _ = read["ref"].partition("/")
+            owner_path = ["occurrences", "occurrence_id:" + owner.removeprefix("occurrence:")]
+            if (inverse_boundaries is not None and record["command"]["op"] == "timeline.inverse"
+                    and separator and read["ref"] == owner + "/collection:track" and not read["path"]
+                    and owner.startswith("occurrence:") and owner in created
+                    and location(command_boundary["parent"]["payload"], owner_path,
+                                 absent_items=True) == {"state": "absent"}):
+                # Native inverse reads describe the input even when later
+                # stage writes restore their owner. Its authenticated absence
+                # guards every child; no restored alias is an input image.
+                restorations = [write for write in record["writes"]
+                                if write["ref"] == owner and write["path"] == []]
+                require(read["state"] == {"state": "absent"} and len(restorations) == 1
+                        and restorations[0]["before"] == {"state": "absent"}
+                        and restorations[0]["after"].get("state") == "present"
+                        and restorations[0]["after"].get("value", {}).get("occurrence_id")
+                        == owner.removeprefix("occurrence:"),
+                        "inverse child read lacks its authenticated absent restoration owner")
+                require(covers(dependencies, {"kind": "field", "ref": "parent", "path": owner_path,
+                                              "state": {"state": "absent"}}),
+                        "provider dependency union omits a restored owner's input absence")
                 continue
             if read["ref"] == "parent/collection:asset" and not read["path"]:
                 for capture in native_asset_reads(command_boundary["parent"]["payload"]):
@@ -1014,8 +1037,11 @@ def _inverse_stage_inherited(source_step, source_commands, source_records, publi
         return None
     if len(bindings) == 1:
         writes = [write for command in source_commands for write in command.get("writes", [])]
-        if (len(writes) != 1 or writes[0]["path"]
-                or not re.fullmatch(r"occurrence:[^/]+", writes[0]["ref"])):
+        if ((len(writes) != 1 or writes[0]["path"]
+                or not re.fullmatch(r"occurrence:[^/]+", writes[0]["ref"]))
+                and not any(not write["path"] and re.fullmatch(r"shot:[^/]+", write["ref"])
+                            and write["before"]["state"] == "present"
+                            and write["after"] == {"state": "absent"} for write in writes)):
             return None
     require(len(source_commands) == 1 and source_commands[0]["command"]["op"] == "timeline.inverse",
             "inherited inverse stages require one authenticated source command")
@@ -1447,6 +1473,7 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         native_image = copy.deepcopy(stage_before)
         inherited_effects = stage["source_stage"].get("source_effects")
         root_checks = []
+        native_sites = []
         # Native captures observe each preceding write (including empty ancestor
         # removals); canonical effects describe the complete stage transition.
         for write in writes:
@@ -1454,8 +1481,6 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                 root = write["ref"]
                 observed, physical = _inverse_stage_root(native_image, root)
                 after, successors = _inverse_stage_root(stage_after, root)
-                root_checks.append((observed, write["before"], root, physical,
-                                    after, write["after"], successors))
                 if root.startswith("occurrence:"):
                     path = ["occurrences", "occurrence_id:" + root.partition(":")[2]]
                     state = location(stage_after["parent"]["payload"], path, absent_items=True)
@@ -1471,8 +1496,20 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                         native_image.pop(ref)
                     for ref in successors:
                         native_image[ref] = copy.deepcopy(stage_after[ref])
+                    if (inherited_effects is not None and observed == {"state": "absent"}
+                            and after["state"] == write["after"]["state"] == "present"):
+                        # The sealed inverse restores the aggregate before its
+                        # later child writes. Keep the authenticated physical
+                        # pins, but replay from the exact source aggregate.
+                        internal = next(ref for ref in successors if ref.startswith("internal-revision:"))
+                        native_image[internal]["payload"] = copy.deepcopy(
+                            write["after"]["value"]["internal_timeline"])
+                        after, _ = _inverse_stage_root(native_image, root)
+                root_checks.append((observed, write["before"], root, physical,
+                                    after, write["after"], successors))
                 continue
             ref, path = _inverse_stage_write_site(native_image, write)
+            native_sites.append((ref, path))
             if (inherited_effects is not None and write["ref"].startswith("occurrence:")
                     and "/" not in write["ref"] and write["path"] == ["shot_id"]):
                 occurrence_path = ["occurrences", "occurrence_id:" + write["ref"].partition(":")[2]]
@@ -1762,12 +1799,15 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                 require(value_equal(_inverse_stage_root(native_image, write["ref"])[0],
                                     _inverse_stage_root(stage_after, write["ref"])[0]),
                         "inverse stage roots differ from its authenticated effect image")
-                continue
-            before_ref, before_path = _inverse_stage_write_site(native_image, write)
-            after_ref, after_path = _inverse_stage_write_site(stage_after, write)
-            require(before_ref == after_ref and before_path == after_path
-                    and value_equal(_inverse_stage_state(native_image, before_ref, before_path),
-                                    _inverse_stage_state(stage_after, after_ref, after_path)),
+        # Each native site belongs to its sequential input. Later writes may
+        # remove its alias/owner; compare the resolved physical site, following
+        # only the complete source turnovers authenticated above.
+        for ref, path in native_sites:
+            for old, new, _, _, _, _ in transitions:
+                if ref == old:
+                    ref = new
+            require(value_equal(_inverse_stage_state(native_image, ref, path),
+                                _inverse_stage_state(stage_after, ref, path)),
                     "inverse stage writes differ from its authenticated effect image")
         for index in range(effect_start, effect_end):
             effect = step["patch"][index]
@@ -2895,7 +2935,6 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                 if next_ordinal is not None:
                     require(_capture_projection_equal(images(captured["output"]), command_inputs[next_ordinal]),
                             "provider sequential command output differs from its next input projection")
-        validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs, sequential)
         authenticated_output = None
         if sequential is not None:
             last = sequential["landing"].get(step["command_ordinals"][-1])
@@ -2907,6 +2946,8 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
             require(last is not None and _capture_projection_equal(images(last["output"]), output),
                     "provider sequential command output differs from its authenticated projection")
         effect_boundaries = _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history)
+        validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs, sequential,
+                      effect_boundaries)
         for ordinal in step["command_ordinals"]:
             record = records["commands"][ordinal]
             command_input = command_inputs[ordinal]
