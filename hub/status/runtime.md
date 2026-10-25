@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T13:23:12Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 8m -->
-# runtime board, 2026-10-25T13:14:37Z
+<!-- main | 2026-10-25T13:27:17Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 3m -->
+# runtime board, 2026-10-25T13:23:55Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -439,7 +439,7 @@
 
 | R2-occurrence-boundaries | Classify guarded live failures | Luna read only | Complete authentic boundary evidence | later | Facts1152; App packet1212 | App finite handback complete. Stage and promotion records EXACTMISSING; no App input wait or Runtime guard writer. | Independent1204 B | Source unchanged |
 | P2-element-current-profile | Support sole App element owner | Luna | App actual process timing | review | Sampler publisher1253 complete | Exact source delivered. Historical native sample is synthetic; request and actual process binding remain App owned. | Source custody1300 active | Source unchanged |
-| F-final-D123 | Apply current Agent patch to b742 | Sol / Luna | Restore actual normal assertion | doing | Return1314; review1307 FAIL | Reviewer found actualb545 live Hidden renderer assertion omitted. One narrow first return restores exact source purpose. | Current1307 SOURCE_FAIL | 41702 held |
+| F-final-D123 | Apply current Agent patch to b742 | Sol / Luna | Final D59 cut and matrix | gated:D59-cut | Return1314; independent1317 PASS | Final5bd01 current source and173 predicates PASS. Patchb0ff4205 conserved normalb545. Wheel and final matrix unverified. | Independent1317 SOURCE_PASS | 5bd01bfd1a held |
 | D122-atomic-join | Carry reviewed private capture caller | Luna | Normal batch qualification | review | Atomic1218; exact join1232 | Reviewed one-line caller is in normal batch b545. Original1 and private4 passed on donor; Farm batch core owed. | Independent1144 | 8d14 / Agentb545 |
 | OPS-four-target-audit | Keep four guarded targets held | Luna / host | Owner12:25 defers host audit | gated:held | rt-OPS-four-target-audit-1212 | Eight references and historical guard refusals. Host audit gains little; no retirement attempt or retry. | Prior evidence | No cleanup |
 | D77-phase-peaks | Preserve incomplete OMP measurement | Luna | No further Main phases | review | OMP1237; wholepath1243 | Observed1.624GB lower bound; free4.393GB crossed4.5GB floor. Cancelled steps falsely reported complete; repair reviewed next. | Wholepath1243 | No installed render |
@@ -449,14 +449,14 @@
 | D77-wrapper-guard | Make phase cancellation honest | Sol / Luna | Farm verifies exact source custody | review | Author1243; independent1257 PASS | Independent18 controls PASS; exact helper5c821f9e published. Private wrapper qualified; live tools require declared bounds. | Independent1257 PASS | 7cb353858c held private |
 | D124-Farm-render | Hand exact stage and render to Farm | Luna | Farm ordinary installed inputs | review | Handoff1253; custody review1300 | Exact recipe, patches and guard source flat-published. Farm owns local admission, genuine stage and render. | Independent1300 PASS | Applied523893 / a522 |
 | D124-App-sampler | Publish existing process sampler | Luna | App startup injection and lifecycle | review | Handoff1253; custody review1300 | Eight original source files and hashes flat-published. ExistingPID attach absent; App owns actual startup-overlay seam. | Independent1300 PASS | Existing3c73; held4b240 |
-| D123-current-patch | Conserve current Agent patch on b742 | Luna first return | Exact normal source conservation | doing | rt-F-D123-predicate-return-1314 | Restore one omitted actualnormal assertion; regenerate patch and173-map without new semantics or recapturing source. | Review1307 failed; return active | 41702 donor held |
+| D123-current-patch | Conserve current Agent patch on b742 | Sol / Luna | Final D59 cut | gated:D59-cut | Return1314; independent1317 PASS | One omitted assertion restored. Sixnormalpaths exact;173/173 and3571inventory verified. Source artifact complete, no gating move. | Independent1317 SOURCE_PASS | 5bd01bfd1a / patchb0ff |
 
 | D124-pristine-host14 | Recheck unchanged host tests on b742 | Luna / service | Current Agent fix or revert | merged | Actual26621; independent1307 PASS | Actual14PASS2.29s proved by four pristine origins. Receipt labels are stale; standalone receipt congruence FAIL disclosed. CurrentREG14 open. | Independent1307 scoped PASS | Pristineb742 / d4f496 |
 | D124-handoff-review | Verify Farm and sampler input custody | Luna independent | Actual downstream input custody | merged | rt-D124-handoff-custody-review-1300 | Separate A Farm PASS and B sampler PASS; original source identities, commands and eight-file publication verified. No body run. | Independent1300 PASS | Evidence only |
 
-| D124-App-helper | Bind actual request timing in existing helper | App Luna / protected review | D124 capture scope and normal source route | doing | app-D124-existing-runtime-helper-1255 | App exclusively owns Runtime phase helper and additive controls; exact existing source published. Runtime home assists after protected PASS. | App combined review pending | Candidate pending |
+| D124-App-helper | Bind actual request timing in existing helper | App Luna / reviewer | Normal activation and protected PASS | review | Author1255; App reviewer1304 | Exact480392 helper adds safe key hash and UTC plus sampler reuse. App reports18PASS; no actual tour or Runtime product credit. | App combined1304 active | 480392a1b held |
 
-| D124-shared-two | Prepare genuine word recipe proof | Luna | Final Agent source and core review | doing | rt-D124-shared-two-prep-1313 | Source-only pending-safe recipe; two original word selectors, exact Runtime42aad and actual source receipts. No body yet. | Final source review owed by Agent | Candidate pending |
+| D124-shared-two | Qualify genuine word recipe originals | Luna / service | Final Agent source and independent core PASS | blocked:agent | Prep1313; independent1319 PASS | Pending recipe refuses before body. Actual admission needs final source and fresh42aad tuple; existing manifest6634 is stale. | Independent1319 prep PASS | Candidate pending |
 
 Runtime producer: RELEASED5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 / tree de2954a0ceadb4455903d9abdfec3b773318a50f. Normal56 controls and provider2 PASS; canonical15 and schema exact7070. App normald8a1 has adopted tags.
 core open: Agent30693 independently425 core open,14 regressions,450 bad. Normal ready producer/XML/atomic source is now Agentb545; no functional reduction credited before Farm batch core.
@@ -467,12 +467,12 @@ Blockers: SWAP — tags5e9ad are normal Appd8a1. Next App full tour names the br
 Blockers: Final render — Farm owns full normal installer stage and genuine render underD124.6. Exact source and recipe1253 published; private wrapper independent1257 PASS. Custody1300 PASS for both packets; Farm owns actual stage inputs.
 Blockers: D69 — source XML107 is normal Agentb545, applicability and batch proof pending. Genuine installed render90 remains open. No whole audit PASS.
 Blockers: Final cut — green core, REG0, full current P2, D69, final tuple P1–P5 and genuine installed render required. No build or ZIP.
-Next ready: D123 narrow return1314 and shared two-source prep1313 active. Reviewed a1 source ready for host filing; App helper1255 exclusively reserved pending combined protected review.
+Next ready: Final Agent shared candidate and core PASS trigger one Main two-original proof. App protected helper PASS triggers supported activation/normal home merge. Reviewed a1 source awaits host filing.
 Ready for host filing: Agent rt-D124-producer-sol-1247 a1a8bc692a2cdcb49c0d168e1fbf76467956c333 / tree18acc9096ddc1c63d945fd930f524d3a8e236952. Independent1307 source/security PASS; own two-file source delta only. Original four failures remain; Farm core before release. Prior1232 mergedb545.
 Venues: No Main heavy body. Farm owns Agent batch core plus D77 full stage/render; serialize there with correctly keyed ordinary profiles. App owns next tagged full tour by about13:30Z and actual-process sampling.
-Delivery: Private100Python+TS/41 matrix inventory qualified. Historical patch47f6/treeec640 is source-reviewed onb742,268 installer and chat PASS; minimal wheel fixture astrid.core gap unverified. Sole current Runtime successor1257 consumes stopped Agent1221 checkpoint; no duplicate author.
+Delivery: Private100Python+TS/41 matrix inventory qualified. Current D123 source5bd01 with patchb0ff4205 independently1317 SOURCEPASS onb742 and capturednormalb545.173predicates conserved. Historical47f6/failed41702 retained. Wheelastrid.core fixture gap, full C0/finalmatrix/actualWindows proof remain unverified. Finalcut uses b742.
 Later: R2c81b and D1160643 exact donor seed source PASS, raw/config behavior remains owed. D100 six custody PASS at donor scope only; originalTEN unchanged. Occurrence stage and promotion records EXACTMISSING, no cross-lane input wait.
 Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote filing. D117a pinned public Git/local input with unchanged integrity only. Four host retirement targets remain held under owner12:25, no attempt or alternative route.
-Disk: About5.59GB after ended worker cleanup. Fresh ended clean nonKEEP scan found zero eligible Runtime worktrees. Guarded sweep3 removed3 old temporary directories; compact-scratch packed0 and gzipped0. Main phases stopped; overall stop4.0GB.
-live 2 / cap 6; ready-undispatched 0; queued 0. Active: D123 predicate return1314 and shared two-source prep1313. Ready a1 source awaits host-only merge filing.
-INBOX consumed through1219230 bytes. Updated 2026-10-25T13:14:37Z.
+Disk: About5.46GB after ended worker cleanup. Fresh ended clean nonKEEP scan found zero eligible Runtime worktrees. Guarded sweep3 removed3 old temporary directories; compact-scratch packed0 and gzipped0. Main phases stopped; overall stop4.0GB.
+live 0 / cap 6; ready-undispatched 0; queued 0. All current workers returned and were reviewed. a1 source awaits host filing; next proof needs finalized Agent source/core PASS; App helper review is external.
+INBOX consumed through1221077 bytes. Updated 2026-10-25T13:23:55Z.
