@@ -243,8 +243,8 @@ def http_retained_pack(configured_project_pack, selected_runtime_env, tmp_path, 
     resource = service.get_project_timeline(project, 'film')
     base = {'revision_id': resource['head_revision_id'],
             'publication_id': resource['head_publication_id']}
-    baseline = commit.bundle_from_document(service._timeline_commits()[0].revision_closure(
-        project, 'film', base['revision_id']))['parent']
+    baseline = service._timeline_commits()[0].revision_closure(
+        project, 'film', base['revision_id'])['parent_revision']['payload']
     original_parent = {
         'config': {'tracks': []}, 'registry': {}, 'clips': [], 'occurrences': [],
     }
