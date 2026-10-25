@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T06:20:53Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 1m -->
-# agent board, 2026-10-25T06:19:44Z
+<!-- agent | 2026-10-25T06:24:05Z | dispatcher heartbeat 0s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 1m -->
+# agent board, 2026-10-25T06:22:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -215,7 +215,7 @@
 
 | F parent guard six | Preserve every captured dependency | HARD Sol / independent Luna | Actual MAINsix and normal merge complete | merged | Runtime0450; security0514; protected0534 | Exact6205 sixPASS6.49s; Agent e021 normally merged01d516. Full lossless both-mirror field union retained. Final tuple still owed. | Agent01d51620a6 |
 | F sheet CLI three | Preserve current sheet CLI behavior | Luna / independent Luna | MAIN exact new-source proof | merging | Pair0547; batch0553 C PASS; homeb948 | Exact revision and publication pair supplied; all original assertions and raw command surface retained. Behavior pending. | b9484befca |
-| F word source four | Preserve exact choice and current C0 tests | Luna / MAIN | Clean current fixture join0616 and MAINtwo | doing | Choice0317; review0321 PASS; join0616 | Earlier two setup errors used stale clip birth. Reviewed exact2154 product joins normal corrected helper; remains held for meaningful two proof. | 2154 held |
+| F word source four | Preserve exact choice and current C0 tests | Luna / MAIN | Combined exact three-original proof | doing | Choice0317; review0321; join0622 | Exact reviewed2154 source combines with restore and reviewed normal mirror. Two exact choice originals remain unqualified pending meaningful proof. | Combined candidate held |
 | F inverse source six | Bind inverse failures to exact owner | Luna read only | Exact source disposition complete | merged | Source0314 complete | Two exact D14 positives remain deferred. Four live auth seams handed to Runtime with conditional Agent producer follow-up. No body. | Current7e237 |
 | F next exact input | Join new source receipts to later delta | Luna / MAIN receiver | Existing next10 extends to32 | merging | Inputs0314; receiving Runtime0306 | Exact32 published; four source hashes match7e237, zero161 overlap. Receiver subtracts later102 and coalesces inverse7/D92. Behavior owed. | Current7e237 |
 
@@ -260,13 +260,15 @@
 | F M1 scope | Bind legacy declarations to current C0 | Luna read only / orchestrator | Exact legacy-only scope decision | blocked:orchestrator | Scope0610; escalation0613 | Exact ten selectors and original authority preserved. Replacement tests cover separate predicates; historical combined-source coverage missing. No retirement. | Evidence only |
 | F graph clean import | Import exact reviewed graph setup | Luna | Meaningful MAIN two proof | merging | Import0610; normal8c88 | Exact reviewed6cb631 file now normal; true pre-bde source plus one genuine chapter-1 registration. Functional proof still owed. | 8c88ea8f06 |
 | F new source inputs | Bind media sheet and graph proof inputs | Luna read only | Existing Runtime MAIN receiver | merged | agt-F-new-source-inputs-0612 PASS | Exact21:18historical media,2CLI semanticbatch,1graph. Source hashes, AST and historical outcomes retained; metadata only. | Normal8c88 capture |
-| F native word mirrors | Preserve genuine seed and exact inputs | Luna / independent Luna | Protected0620 then normal source and proof | review | Source0617; protected0620 active | Raw/config parent clip mirror synchronized before emitter. Every original input and guard retained; no executed cure for ID5 or60. | Source candidate held |
-| D100 current clean join | Bind exact reviewed four files | Luna | Source review0610 and0614 PASS | doing | agt-R1-D100-clean-join-0619 | Own-only join on current normal; new26 controls and originalTEN dependencies stay separate. No product merge or body. | Held candidate |
-Integration: Normal01d51620a6 contains exact D101 Agent e021, reviewed media lane1a977, sheetCLI b948, D102 adoption825d, D98a capturea90b and prior source joins. D100 d3b5 and restore7e775 remain held.
+| F native word mirrors | Preserve genuine seed and exact inputs | Luna / independent Luna | Changed-source original proof | merging | Source0617; review0620 PASS; home5554 | Exact raw/config mirror correction normal. Original inputs and guards conserved; ledger0622 active. No ID5 or60 functional credit. | 5554fe792b |
+| D100 current clean join | Bind exact reviewed four files | Luna | MAIN changed-source new26 proof | review | Join0619; source reviews0610 and0614 | Exact four-file candidate8d43, new26 selected. OriginalTEN unresolved seams excluded; product held and no GREEN claim. | 8d43cc7c6c held |
+| R2 V2 current join | Bind restore and exact word choices | Luna | Exact reviewed sources and mirror0620 PASS | doing | agt-R2-word-choice-restore-join-0622 | Own-only combined candidate prepares remainingID5 plus two choice originals. Four prior PASS restore controls excluded; product held. | Candidate pending |
+| F mirror source log | Publish reviewed setup receipt | Luna | D104 source review complete | doing | agt-F-word-mirror-ledger-0622 | Append-CAS source-only behavior-pending entry and exact handoff in ORCH/design. Never writes hub. | Existing ledger |
+Integration: Normal5554fe792b contains reviewed native-word mirror setup, D101 Agent e021, media lane1a977, sheetCLI b948, D102 adoption825d and graph8c88. D1008d43 and restore/word product remain held.
 core open: P4 independent GO28.101s on786/0c62/1e34/635f; every per-note duration UNKNOWN. P2 remains open; D59 final tuple gates/core,D69 and genuine installed render required.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later named proofs retain their exact sources; no full/core-zero/ZIP claim.
 Families: Actual6058 all96=14PASS7FAIL75ERROR; actual19214 all61=13PASS21FAIL27ERROR; actual1565 all60=3FAIL57ERROR. Exact1565 packet now published; source0617 checks shared word mirror only.
-D100: Wholepath0555 complete. Exact at_ms product boundary source0604 now under review0610. Shared Sol0604 corrects only faithful new-control setup first. Original ten separate inverse/history source limits retained.
+D100: Exact cleanjoin8d43 contains reviewed time7f6e9 and shared fb9a source. MAIN new26 changed-source recipe published; originalTEN inverse/history failures remain separate and are not repeated.
 Restore: Prior new regression and three strict controls PASS. Actual1023 remainingID5 on7e775 now parent-mirror setup ERROR; exact fixture source0617 active. No unchanged ID5 or four-control repeat.
 Admission: Projection a55a remains gated on real D100 proof/normal merge. New graph setup source imported only after exact cumulative source verification. M1 original scope proposal0610 follows rejected authority-changing archive.
 Safety: Withdrawn D88 denied action stays stopped. D93 original credentials/session/scopes only. D98a spent; no extra observer/body. D106 never retries hub write; authorized new ORCH-only worker active.
@@ -274,6 +276,6 @@ Disk: D89 source/review cap6 above5.0GB; heavy1 above5.2GB; nothing below4.5GB. 
 Blockers: D100 source — Capture source review0610 PASS and shared-owner0604 active; original ten inverse/history failures remain separate. Runtime already owns later MAIN controls; no unchanged retry.
 Blockers: Orchestrator M1 scope — Exact proposal0610 and escalation0613 ask legacy-only disposition for baseline ten or a preserving current route. Original source and all assertions unchanged.
 Blockers: Final cut — D59 final P1-P5/core,D69 and genuine installed render still required.
-Next ready: D100 exact cleanjoin0619 and protected word mirror0620 active. Exact21 handback published to existing Runtime receiver. Word-choice candidate source ready; proof waits reviewed mirror.
-live 2 / cap 6; ready-undispatched 0 eligible local starts. Cleanjoin and mirror review assigned; later proof/input work depends on their exact results. No manager code or bodies.
-Inbox consumed through1437955 bytes. Updated 2026-10-25T06:19:44Z.
+Next ready: Word mirror ledger0622 and combined restore/choice candidate0622 active. D100 new26 and exactfamily21 input handed to existing Runtime venue. No extra review or unmodified body requested.
+live 2 / cap 6; ready-undispatched 0 eligible local starts. Publication and exact candidate join assigned. MAIN owns ready changed-source proof requests; no manager code or bodies.
+Inbox consumed through1437955 bytes. Updated 2026-10-25T06:22:54Z.

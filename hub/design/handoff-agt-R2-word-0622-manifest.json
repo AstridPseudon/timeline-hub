@@ -1,0 +1,98 @@
+{
+  "format": "timeline.agent.r2.v2.exact-source-only-join.v1",
+  "task": "agt-R2-word-choice-restore-join-0622",
+  "status": "candidate",
+  "base": {
+    "branch": "tl/agt-R2-word-choice-restore-join-0622",
+    "commit": "5e9acf59d266d45d74e5ae844bf62fddb64267f3",
+    "parent": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+    "tree": "d68a366224e28ee58045805008be092a5a560944"
+  },
+  "source_commits": {
+    "r2_restore": "7e7753564f127eb0242f53704ad33ba63d9e2e63",
+    "v2_word_choice": "11d8a231ee503b409337eda563f865f0443e572e"
+  },
+  "files": [
+    {
+      "role": "R2-product",
+      "path": "astrid/sdk/timeline/_step_undo.py",
+      "blob": "221e517c246e220580c77411ca6d0863996f092d",
+      "sha256": "7a90a66ab49d58bd2722857e95319ebafe648ab514409aa1bb403189b479f322",
+      "bytes": 30429
+    },
+    {
+      "role": "R2-regression",
+      "path": "tests/sdk/test_timeline_restore_effect_order_runtime.py",
+      "blob": "d85d96ea5fc00fc4c53dbdb030a8874ae5e54617",
+      "sha256": "52b0f6836af7d2ee68b7d0a9b43dde2ba3c0c6d4d9f7b3360e8c95174290bd9d",
+      "bytes": 10612
+    },
+    {
+      "role": "V2-product",
+      "path": "astrid/sdk/timeline/native_word_anchor.py",
+      "blob": "edeb0a24253b32d958f4f2fafe7514b9a0139ee0",
+      "sha256": "1b74fd5f43bade668a9467b41f006273aa46b7dc668f80bf5c36717273492c51",
+      "bytes": 21735
+    },
+    {
+      "role": "V2-product",
+      "path": "astrid/sdk/timeline/_commit_timing_validation.py",
+      "blob": "a5496a6d2a8f0aad618ca9b3229716060c88622e",
+      "sha256": "522d632acdb7e0e836694b43065849dfec24bc22dccdfb8025077e5bde724d85",
+      "bytes": 30663
+    }
+  ],
+  "proof_selection": [
+    {
+      "id": 5,
+      "family": "restore",
+      "selector": "tests/editing_conformance/test_word_binding_recipe.py::test_last_write_clear_undo_restore_and_restore_inverse",
+      "source": "existing 0525/0558 selector",
+      "status": "not run"
+    },
+    {
+      "id": 3,
+      "family": "native-word-semantic",
+      "selector": "tests/editing_conformance/test_word_binding_recipe.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]",
+      "source": "handoff-agt-F-held13-0301-selectors.tsv",
+      "status": "not run"
+    },
+    {
+      "id": 9,
+      "family": "native-word-semantic",
+      "selector": "tests/editing_conformance/test_word_binding_recipe.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word",
+      "source": "handoff-agt-F-held13-0301-selectors.tsv",
+      "status": "not run"
+    }
+  ],
+  "historical_checkpoints": {
+    "old_red_31475": "reviewed new regression RED; strict three controls PASS; unchanged word-binding control ERROR",
+    "candidate_30269": "reviewed new regression and strict three controls PASS; unchanged word-binding setup ERROR",
+    "restore_id5_actual_1023": "ERROR: unchanged contradictory parent mirrors setup",
+    "stale_clip_setup": "two existing setup errors retained",
+    "all_other_prior_checkpoints": "preserved as non-PASS"
+  },
+  "excluded_controls": [
+    "original TEN",
+    "P4",
+    "parent 6",
+    "four already-PASS controls",
+    "new regression repeat",
+    "unchanged 60"
+  ],
+  "validation": {
+    "ast_parse_in_memory_compile": "PASS",
+    "ruff_candidate": "PASS",
+    "ruff_parent_scoped": "PASS",
+    "mypy_candidate_scoped": "PASS: zero diagnostics",
+    "mypy_parent_scoped": "PASS per reviewed source reports",
+    "git_diff_check": "PASS",
+    "behavioral_execution": "NOT RUN"
+  },
+  "claims": {
+    "coverage": false,
+    "semantic_policy_change": false,
+    "authority_change": false,
+    "source_only": true
+  }
+}

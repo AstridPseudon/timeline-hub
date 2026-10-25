@@ -1,0 +1,78 @@
+{
+  "schema": "F-D86-word-mirror-publication-0622/v1",
+  "task": "F-D86 native word mirror publication",
+  "status": "SOURCEQUALIFIED_BEHAVIOR_PENDING",
+  "source_only": true,
+  "actual_source": {
+    "repo": "agent",
+    "base": "tl/integration",
+    "base_commit": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+    "candidate_commit": "5e9acf59d266d45d74e5ae844bf62fddb64267f3",
+    "candidate_tree": "d68a366224e28ee58045805008be092a5a560944",
+    "path": "tests/editing_conformance/native_word_anchor_fixture.py",
+    "blob_sha256": "f70d2e9cc65ea6207d4ca4b5c0b85527c70495e29696e4acbee120718ddeddac",
+    "change": "Synchronize authored parent.clips into parent.config.clips before the unchanged emitter validation call.",
+    "normal_receipt": "normal5554fe792b",
+    "normal_receipt_status": "reference only; no new behavioral receipt from this source-only publication",
+    "behavior_credit": "none"
+  },
+  "independent_review": {
+    "worker": "agt-F-word-mirror-review-0620",
+    "verdict": "PASS_SOURCE",
+    "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-word-mirror-review-0620/evidence/F-D86-source-review.md",
+    "evidence_sha256": "1e5ca1cdbca5f9d99792cef252bcaa66a044cf61896472f5640c9e9da51e9a44"
+  },
+  "current_helper_hashes": [
+    {
+      "path": "astrid/sdk/timeline/emitter.py",
+      "sha256": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a",
+      "role": "unchanged emitter validation/projection helper"
+    },
+    {
+      "path": "astrid/sdk/timeline/_recording.py",
+      "sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43",
+      "role": "unchanged compile_mirrors recorder helper"
+    }
+  ],
+  "caller_scope": {
+    "registered_route": "seed -> RuntimeService.commit_timeline with service.register_timeline_commit_provider(agent.create_runtime_commit_service())",
+    "direct_callers": [
+      "tests/editing_conformance/native_word_anchor_fixture.py::retained subprocess",
+      "tests/editing_conformance/test_timing_retained_inputs.py::retained"
+    ],
+    "shared_fixture_consumers": [
+      "tests/editing_conformance/test_native_word_anchor.py",
+      "tests/editing_conformance/test_word_binding_recipe.py",
+      "tests/editing_conformance/test_next_command_cohort_runtime.py"
+    ],
+    "original_id5": {
+      "receipt": "rt-R2-ID5-route-return-0558-r2-id5-route-return-0558-1025055758-1023",
+      "selector_count": 1,
+      "scope": "one unchanged test_native_word_anchor.py selector; setup reached and refused on contradictory parent mirrors",
+      "outcome": "ERROR"
+    },
+    "actual1565": {
+      "receipt": "rt-D86-new-source-body-0537-fd86-new-source-body-0537-1025054041-1565",
+      "selector_count": 60,
+      "scope": "word46 + ordinary sheet11 + D92 three",
+      "outcomes": {"PASS": 0, "FAIL": 3, "ERROR": 57}
+    }
+  },
+  "preserved": [
+    "original words, transcript and choices",
+    "FPS and authored timing",
+    "media, pins and source authority",
+    "physical and opaque graph topology",
+    "callers, assertions, refusal, retry, inverse, ABA and no-write guards",
+    "C0 v2 request/reply semantics and historical retry identities"
+  ],
+  "verification": {
+    "ast_compile": "PASS",
+    "ruff_parent_candidate": "PASS",
+    "mypy_parent_candidate": "PASS",
+    "git_diff_check": "PASS",
+    "runtime_execution": "NOT RUN by source-only brief",
+    "full_suite": "NOT RUN by source-only brief"
+  },
+  "next_step": "Run the exact changed-source original proof through the existing MAIN receiver; do not infer behavior credit from source qualification."
+}
