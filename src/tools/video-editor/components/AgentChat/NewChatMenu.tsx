@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Check, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { Command, CommandGroup, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
@@ -10,6 +10,8 @@ import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIden
 import { readModelThoughtSelections, readNewChatChoice, rememberModelThoughtSelection, rememberNewChatChoice, type NewChatChoice } from './newChatThinkingSelection.ts';
 import { NewChatModels, type NewChatAgentModels } from './NewChatModels.tsx';
 import { CommandLine } from './CommandLine.tsx';
+import { newChatChoice } from '@/shared/settings/declarations';
+import { useSetting } from '@/shared/settings/useSetting';
 
 export type { NewChatAgentModels, NewChatModelChoice } from './NewChatModels.tsx';
 
@@ -70,7 +72,8 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   // The agent row itself opened the model list, so an empty catalog falls back to choosing that agent.
   const startedFromRow = useRef(false);
 
-  const [stored, setStored] = useState<NewChatChoice | null>(readNewChatChoice);
+  const [savedChoice] = useSetting(newChatChoice);
+  const stored = useMemo(readNewChatChoice, [savedChoice]);
   const availability = (id: LocalAgentId) => {
     const row = agents?.find(choice => choice.id === id);
     // Keep the Ready fallback when older services fail to load any agent rows.
@@ -112,7 +115,6 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   }));
   const choose = (agent: LocalAgentId, model?: string, level?: string, modelName?: string | null) => {
     const next: NewChatChoice = { agent, ...(model ? { model } : {}), ...(modelName ? { modelName } : {}), ...(level !== undefined ? { thoughtLevel: level } : {}) };
-    setStored(next);
     rememberNewChatChoice(next);
     changeOpen(false);
   };
