@@ -13,12 +13,9 @@ from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_f
 from astrid.sdk.timeline.native_auto_placement import auto_place_completion
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_recipe_m1_commands import inverse
-from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
+from tests.editing_conformance.test_recipe_occurrence_media import inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
-)
-from tests.sdk.test_timeline_commit_provider import (
-    runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
 )
 
 OWNER = 'occurrence:occ-a'
@@ -30,63 +27,222 @@ ANCHOR_FRAME, LANE_END_FRAME = 330, 450
 CASES = {'image-anchor': ('image', 'clip-a'), 'image-absent': ('image', 'gone'),
          'video-anchor': ('video', 'clip-a'), 'video-absent': ('video', None)}
 
-_AUTHENTICATED_BOUNDARIES = {}
+
+class GenuineTimeline:
+    """A current Runtime commitTimeline caller for the placement recipes."""
+
+    def __init__(self, service, project, authorize, document, old, new, verified):
+        self.service = service
+        self.project = project
+        self.authorize = authorize
+        self.document = document
+        self.old = old
+        self.new = new
+        self.verified = verified
+
+    @classmethod
+    def create(cls, tmp_path, monkeypatch, kind):
+        from tests.helpers.runtime import use_runtime
+
+        runtime = use_runtime()
+        monkeypatch.syspath_prepend(str(runtime / 'tests'))
+        from runtime_protocol.auth import CredentialStore
+        from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+        from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+
+        from tests.editing_conformance.test_commit_runtime_occurrence_media import _create_fixture
+        from tests.sdk.test_timeline_commit_provider_document import MEDIA
+
+        def effect(project):
+            result = _effect(project, groups=[{'group_key': 'main', 'selectors': [
+                {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': kind}
+                for index, name in enumerate(('old', 'new'))]}])
+            result['payload']['metadata']['params'] = {'duration_seconds': 6} if kind == 'video' else {}
+            return result
+
+        service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
+        project = project['id']
+        credentials = CredentialStore(tmp_path / 'credentials')
+        token, _ = credentials.provision('placement-editor', ['projects:read', 'projects:write'])
+
+        def authorize():
+            return credentials.require(token, 'projects:write')
+
+        try:
+            outputs = [_output(name.encode(), output_port=kind, group_key='main', variant_key=name,
+                               ordinal=index, filename=name + ('.mp4' if kind == 'video' else '.png'),
+                               media_type=kind + ('/mp4' if kind == 'video' else '/png'))
+                       for index, name in enumerate(('old', 'new'))]
+            _settle(service, attempt, outputs, effect=admitted)
+            associations = service.managed_outputs(task['task']['id'])
+            selections = [service.get_project_media_selection(project, {
+                'association_id': association['association_id'], 'object_id': association['object_id'],
+                'version': association['lifecycle']['version']}, authorize=authorize)
+                          for association in associations]
+            old, new = selections
+            verified = [service.get_project_verified_media(project, selection, authorize=authorize)
+                        for selection in selections]
+            document, _, _, _ = inputs(kind)
+
+            def replace(value):
+                if value == MEDIA:
+                    return old['object_id']
+                if isinstance(value, dict):
+                    return {key: replace(child) for key, child in value.items()}
+                if isinstance(value, list):
+                    return [replace(child) for child in value]
+                return value
+
+            document = replace(document)
+            document.update(project_id=project, timeline_id='film')
+            document['internal_timeline_revisions'][0]['timeline_id'] = 'film'
+            document['dependency_manifest']['media'] = [
+                {'media_id': old['object_id'], 'content_digest': old['object_id']}]
+            for payload in (document['parent_revision']['payload'],
+                            document['internal_timeline_revisions'][0]['payload']):
+                assets = payload['registry']['assets']
+                binding = assets.pop('picture')
+                binding.update(media_id=old['object_id'], generationId=old['generation_id'],
+                               variantId=old['variant_id'])
+                assets[old['asset']] = binding
+                for row in payload.get('clips', []):
+                    if row.get('asset') == 'picture':
+                        row['asset'] = old['asset']
+            for image in [document['parent_revision'], *document['shot_revisions'],
+                          *document['internal_timeline_revisions']]:
+                image['content_digest'] = _digest(image['payload'])
+            service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+            service.create_timeline(project, 'film', idempotency_key='placement-bootstrap')
+            _create_fixture(service, project, document, old, authorize=authorize)
+            document = cls._document(service, project, 'film')
+            return cls(service, project, authorize, document, old, new, verified)
+        except Exception:
+            service.close()
+            raise
+
+    @staticmethod
+    def _document(service, project, timeline):
+        head = service.get_project_timeline(project, timeline)
+        parent = service.get_project_parent_composition_revision(project, timeline, head['head_revision_id'])
+        occurrences = parent['payload'].get('occurrences', [])
+        shots = {}
+        internals = {}
+        for occurrence in occurrences:
+            shot = service.get_project_shot_revision(project, occurrence['shot_id'],
+                                                     occurrence['shot_revision_id'])
+            shots[(shot['shot_id'], shot['revision_id'])] = shot
+            internal = service.get_project_timeline_revision(
+                project, timeline, shot['internal_timeline_revision_id'])
+            internals[(internal['timeline_id'], internal['revision_id'])] = internal
+        return {'schema_version': 1, 'project_id': project, 'timeline_id': timeline,
+                'parent_revision': parent, 'shot_revisions': list(shots.values()),
+                'internal_timeline_revisions': list(internals.values()),
+                'dependency_manifest': parent['dependency_manifest']}
+
+    def body(self, commands, label):
+        head = self.service.get_project_timeline(self.project, 'film')
+        steps = [{'id': str(index), 'label': label, 'intent': 'M2 placement', 'tags': ['placement'],
+                  'command_ordinals': [index],
+                  'patch': copy.deepcopy(command.get('args', {}).get('changes', [])), 'reads': []}
+                 for index, command in enumerate(commands)]
+        return {'api_version': 1, 'project_id': self.project, 'timeline_id': 'film',
+                'base_revision_id': head['head_revision_id'],
+                'base_publication_id': head['head_publication_id'], 'commands': commands,
+                'label': label, 'steps': steps, 'merge': 'atomic', 'reads': [], 'dry_run': False,
+                'source': {'via': 'python'}, 'rationale': 'M2 placement recipe', 'group_id': label}
+
+    def call(self, commands, label='placement'):
+        return self.service.commit_timeline(
+            self.project, 'film', self.body(commands, label), idempotency_key=label,
+            publisher='placement-editor',
+            invocation_path=f'/v1/projects/{self.project}/timelines/film/commit',
+            authorize=self.authorize)
+
+    def prepare_fixture(self, *, wide=False, overlay=False, shared=False):
+        from astrid.sdk.timeline.emitter import emit_document_commands
+
+        before = bundle_from_document(self.document)
+        after = copy.deepcopy(before)
+        state = State(after)
+        if wide:
+            state.occurrence(OWNER)['duration_ms'] = 20000
+        if overlay or shared:
+            tracks = state.config(OWNER)['tracks']
+            if not any(track['id'] == 'overlay' for track in tracks):
+                tracks.append({'id': 'overlay', 'kind': 'visual'})
+        if shared and not any(row['id'] == 'clip-c' for row in state.config(OWNER)['clips']):
+            state.config(OWNER)['clips'].append(
+                {'id': 'clip-c', 'track': 'overlay', 'asset': 'picture', 'clipType': 'media',
+                 'at': 1, 'hold': 8})
+        commands = emit_document_commands(before, after)
+        if commands:
+            self.call(commands, label='placement-input')
+            self.document = self._document(self.service, self.project, 'film')
+
+    def accepted_boundaries(self, records, before, after, forward_commands):
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver
+
+        accepted = self.call(copy.deepcopy(forward_commands), label='placement-boundary-forward')
+        undone = self.call(
+            [inverse_call([accepted['receipt']['receipt_id']])],
+            label='placement-boundary-undo')
+        items = self.service.list_timeline_commits(
+            self.project, 'film', limit=100, authorize=self.authorize)['items']
+        history = {item['publication_id']: item for item in items}
+        item = next(row for row in items
+                    if row['receipt']['receipt_id'] == undone['receipt']['receipt_id'])
+
+        def boundary(entry):
+            previous = history[entry['previous']['publication_id']]
+            return (bundle_from_document(previous['receipt']['result']['canonical_document']),
+                    bundle_from_document(entry['receipt']['result']['canonical_document']))
+
+        result = AcceptedRecords([item], item['records']['commands'], boundary)
+        result.address_resolver = inverse_address_resolver(
+            [item], after, load_boundary=boundary, load_history=history.__getitem__)
+        return result
+
+    def close(self):
+        self.service.close()
 
 
-def build(kind, anchor, *, duration=None, wide=False, overlay=False, **saved):
-    document, _, new, verified = inputs(kind)
+@pytest.fixture
+def genuine_runtime(request, tmp_path, monkeypatch):
+    parameter = getattr(request.node, 'callspec', None)
+    values = parameter.params if parameter is not None else {}
+    name = values.get('name')
+    kind = values.get('kind') or (CASES[name][0] if name in CASES else 'image')
+    context = GenuineTimeline.create(tmp_path, monkeypatch, kind)
+    try:
+        yield context
+    finally:
+        context.close()
+
+
+def build(kind, anchor, *, duration=None, wide=False, overlay=False, context=None, **saved):
+    if context is None:
+        document, _, new, verified = inputs(kind)
+    else:
+        context.prepare_fixture(wide=wide, overlay=overlay)
+        document, new, verified = context.document, context.new, context.verified
     bundle = bundle_from_document(document)
     if wide:
         State(bundle).occurrence(OWNER)['duration_ms'] = 20000
     if overlay:
-        State(bundle).config(OWNER)['tracks'].append({'id': 'overlay', 'kind': 'visual'})
+        tracks = State(bundle).config(OWNER)['tracks']
+        if not any(track['id'] == 'overlay' for track in tracks):
+            tracks.append({'id': 'overlay', 'kind': 'visual'})
     result = auto_place_completion(bundle, OWNER, 'placed', new, ownership='occurrence',
                                    verified_media=verified, anchor=anchor, duration=duration, **saved)
     return document, bundle, result, verified
 
 
-def case(name, **kwargs):
+def case(name, context=None, **kwargs):
     kind, anchor = CASES[name]
-    document, bundle, result, verified = build(kind, anchor, wide=anchor in ('gone', None), **kwargs)
-    # Keep the provider's accepted undo record intact. The local inverse is
-    # only the execution target; its native record must not be augmented with
-    # caller-authored materialization bindings.
-    document = document_from_bundle(bundle)
-    plan = execute(bundle, result['commands'], verified_media=verified)
-    undone = inverse(plan.bundle, plan.records)
-    realm = MediaRealm(document, verified)
-    created = realm.call(result['commands'])
-    realm.call([inverse_call([created['receipt']['receipt_id']])])
-    accepted_entry = copy.deepcopy(realm.entries[-1])
-    history = {item['publication_id']: copy.deepcopy(item) for item in realm.entries}
-    key = (_digest(document_from_bundle(plan.bundle)), _digest(document_from_bundle(undone.bundle)))
-    _AUTHENTICATED_BOUNDARIES[key] = (accepted_entry, history)
-    authenticated_redo = inverse(
-        undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
-    bundle['source_mapping']['_doc_patch_images'] = copy.deepcopy(
-        authenticated_redo.bundle['source_mapping']['_doc_patch_images'])
-    plan = execute(bundle, result['commands'], verified_media=verified)
-    undone = inverse(plan.bundle, plan.records)
-    key = (_digest(document_from_bundle(plan.bundle)), _digest(document_from_bundle(undone.bundle)))
-    _AUTHENTICATED_BOUNDARIES[key] = (accepted_entry, history)
+    document, bundle, result, verified = build(kind, anchor, wide=anchor in ('gone', None),
+                                               context=context, **kwargs)
     return document, bundle, result, verified
-
-
-def accepted_boundaries(_records, before, after):
-    from astrid.sdk.timeline._collections import AcceptedRecords
-    from astrid.sdk.timeline._commit_patch import inverse_address_resolver
-
-    key = (_digest(document_from_bundle(before)), _digest(document_from_bundle(after)))
-    entry, history = copy.deepcopy(_AUTHENTICATED_BOUNDARIES[key])
-    def proof_boundary(item):
-        return (
-            bundle_from_document(history[item['previous']['publication_id']]['receipt']['result']
-                                 ['canonical_document']),
-            bundle_from_document(item['receipt']['result']['canonical_document']))
-    accepted = AcceptedRecords([entry], entry['records']['commands'], proof_boundary)
-    accepted.address_resolver = inverse_address_resolver(
-        [entry], after, load_boundary=proof_boundary, load_history=history.__getitem__)
-    return accepted
 
 
 @pytest.mark.parametrize('name', CASES)
@@ -99,8 +255,9 @@ def test_portable_goldens(name):
 
 
 @pytest.mark.parametrize('name', CASES)
-def test_exact_capture_replay_inverse_and_redo(name):
-    _, bundle, result, verified = case(name)
+@pytest.mark.integration
+def test_exact_capture_replay_inverse_and_redo(name, genuine_runtime):
+    _, bundle, result, verified = case(name, genuine_runtime)
     before = copy.deepcopy(bundle)
     [command] = result['commands']
     validate_command(command)
@@ -111,7 +268,8 @@ def test_exact_capture_replay_inverse_and_redo(name):
     assert replay(plan, bundle, verified_media=verified).records == plan.records
     undone = inverse(plan.bundle, plan.records)
     assert undone.bundle == before
-    redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+    redone = inverse(undone.bundle, genuine_runtime.accepted_boundaries(
+        undone.records, plan.bundle, undone.bundle, plan.commands))
     assert redone.bundle == plan.bundle
 
 
@@ -317,13 +475,14 @@ def test_replay_refuses_when_the_anchor_was_deleted_meanwhile_and_a_rebuild_fall
 
 
 @pytest.mark.parametrize('kind', ['image', 'video'])
-def test_provider_accepts_completion_placement_with_exact_undo_and_redo(kind):
-    document, _, result, verified = build(kind, 'clip-a')
-    realm = MediaRealm(document, verified)
-    created = realm.call(result['commands'])
-    undo = realm.call([inverse_call([created['receipt']['receipt_id']])])
+@pytest.mark.integration
+def test_provider_accepts_completion_placement_with_exact_undo_and_redo(kind, genuine_runtime):
+    document, _, result, verified = build(kind, 'clip-a', context=genuine_runtime)
+    realm = genuine_runtime
+    created = realm.call(result['commands'], 'completion-placement')
+    undo = realm.call([inverse_call([created['receipt']['receipt_id']])], 'completion-placement-undo')
     assert undo['data']['canonical_document'] == document
-    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])], 'completion-placement-redo')
     assert redo['data']['canonical_document'] == created['data']['canonical_document']
     assert document_from_bundle(bundle_from_document(created['data']['canonical_document'])) == (
         created['data']['canonical_document'])
