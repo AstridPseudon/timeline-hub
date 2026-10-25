@@ -1,0 +1,44 @@
+{
+  "task": "rt-OPS-inventory-install-final-review-1826",
+  "reviewed_branch": "tl/rt-OPS-inventory-install-return-1821",
+  "reviewed_commit": "a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4",
+  "reviewed_tree": "07ad8ae939278ae3aef37dc0f7495daa8c365b2c",
+  "prior_review": {
+    "commit": "a5c39e412b8974932bb20a726ef08f8853c594a4",
+    "verdict": "FAIL",
+    "result_code": "FAIL_SOURCE_SECURITY",
+    "findings_retained": true
+  },
+  "verdict": "PASS",
+  "result_code": "PASS_SOURCE_SECURITY_FIRST_RETURN",
+  "scope": "Independent read-only review of private ops-child-custody/install-prep against F1-F7 and the approved actual1656/independent1659 installation boundary.",
+  "findings": [],
+  "finding_disposition": {
+    "F1": "PASS: install_atomic.py uses O_EXCL|O_NOFOLLOW and a parent directory descriptor for backup and replacement reservations; private controls exercise both destination classes.",
+    "F2": "PASS: ORCH, ORCH/bin, and ORCH/backups are required physical, invoking-user-owned, non-broadly-writable directories; the approved same-user manager boundary is retained.",
+    "F3": "PASS: the receiving lock is acquired before the receiving preimage/inode capture, held across backup and replacement commit, and rename_if_same reopens the parent directory by descriptor and checks target device/inode before os.replace.",
+    "F4": "PASS: postcommit readback checks target and both protected helpers for regular non-symlink single-link shape, owner, mode, bytes/hash, and cmp; every postcommit/readback/lock-cleanup failure reports INSTALLED_BUT_UNVERIFIED.",
+    "F5": "PASS: TMPDIR is required physical, invoking-user-owned, non-broadly-writable, and disjoint from ORCH and source; the extraction root is rechecked before archive extraction.",
+    "F6": "PASS: source checkout ownership is enforced and every source ancestor is checked for physicality, root/user ownership, and non-broad writability; source status and exact archived commit remain checked.",
+    "F7": "PASS: exact E2E_RESULT and INDEPENDENT_REVIEW artifacts are verified before any receiving-tree write, including owner/shape/ancestry, E2E status fields, E2E hash binding, candidate/source/artifact identity, and review self-path. Private synthetic gates are explicitly not live acceptance."
+  },
+  "gate_state": {
+    "agent_e2e_1800": "NOT_AVAILABLE_IN_THIS_REVIEW",
+    "independent_result_review": "NOT_AVAILABLE_IN_THIS_REVIEW",
+    "d125b": "HOLD",
+    "live_install": false,
+    "private_synthetic_gate_route": "PASS; no qualification credit"
+  },
+  "approved_install_boundary": {
+    "actual1656_target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "actual1656_result": "PASS_INSTALL",
+    "independent1659_result": "PASS_INSTALLED_SOURCE",
+    "actual_child_acceptance": "UNVERIFIED / EXACTMISSING",
+    "current_live_kit_read_only_target_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39"
+  },
+  "limitations": [
+    "No live target, backup, temporary installation, Store, package acquisition, provider, socket, Git mutation, permission write, production child, or D130 SWAP/WAL path was used.",
+    "The private route used synthetic gate JSON and therefore cannot stand in for the genuine Agent1810 same-WIP1805 E2E plus independent PASS required by D125b.",
+    "No full40 suite was rerun; the requested scoped controls and static checks were run directly."
+  ]
+}

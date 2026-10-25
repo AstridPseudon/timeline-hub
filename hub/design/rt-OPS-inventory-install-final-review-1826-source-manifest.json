@@ -1,0 +1,61 @@
+{
+  "task": "rt-OPS-inventory-install-final-review-1826",
+  "reviewed_commit": "a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4",
+  "reviewed_tree": "07ad8ae939278ae3aef37dc0f7495daa8c365b2c",
+  "held_return_commit": "a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4",
+  "prior_fail_commit": "a5c39e412b8974932bb20a726ef08f8853c594a4",
+  "candidate": {
+    "source_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+    "source_tree": "32dbfb3e6ec08b032db2c9f75c6fae29e5e4abcc",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "bytes": 69516,
+    "mode": "0755",
+    "regular_single_link": true
+  },
+  "preimage": {
+    "parent_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+    "parent_tree": "7952f3e9e15532072066474ea9d151fe79114bd6",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755",
+    "regular_single_link": true
+  },
+  "protected_helpers_read_only": {
+    "bench_store.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "bytes": 43403,
+      "mode": "0755",
+      "links": 1
+    },
+    "verify_dependency_seed.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "bytes": 52731,
+      "mode": "0755",
+      "links": 1
+    }
+  },
+  "install_prep_delta": {
+    "ops-child-custody/install-prep/README.md": "7d813363c57a125c47a824fb1b7773cc04b583515d1858b7e382f786414eb868",
+    "ops-child-custody/install-prep/apply-reviewed-maker.sh": "9873716e54b3f628e7002dea8ac0b28775f1b487bcc3e13025520a28d2f2480f",
+    "ops-child-custody/install-prep/dry_run_controls.py": "7753d918fb434f95b437b08a67f83eac1f5fe7998055b134ddfb9795ddd680eb",
+    "ops-child-custody/install-prep/install_atomic.py": "bddfbe30f97529211b7c18d0c46961e6c6ca61fa159e755b0413988684a3bc42",
+    "ops-child-custody/install-prep/verify_gate_artifacts.py": "26df1c9151e11eeea5277bef413db522fb41cb92b13e90bc3693ab6997d5f3ec"
+  },
+  "actual_approved_install": {
+    "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "historical_receipt_candidate_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "historical_receipt_result": "PASS_INSTALL",
+    "independent_result": "PASS_INSTALLED_SOURCE",
+    "actual_layout": "UNVERIFIED / EXACTMISSING"
+  },
+  "gate_inputs": {
+    "producer": "ops-child-custody/tests/e2e_inventory.py",
+    "required_e2e_fields": ["whole_make_e2e", "parent_red", "candidate_green", "verifier_mocked", "store_initialized_by_worker", "admission_changed", "adversarial_checks"],
+    "required_review_fields": ["verdict", "result_path", "result_sha256", "candidate_sha256", "source_commit", "reviewed_artifact", "review_path"],
+    "private_gate_route_is_not_acceptance": true
+  }
+}
