@@ -774,6 +774,58 @@ function assertParentListIsolation(
     .toEqual(Object.fromEntries(Object.entries(beforeConfig).filter(([key]) => key !== 'clips' && !changedConfigKeys.includes(key))));
 }
 
+// C0 §2: child materialization may replace an occurrence's parent shot pin;
+// the accepted native effect is the authoritative source for that projection.
+function assertOccurrenceParentProjection(
+  before: CanonicalDocument,
+  after: CanonicalDocument,
+  result: CommitAcceptedMutation,
+  occurrenceId: string,
+  addedClipId: string,
+): void {
+  const beforeParent = before.parent_revision.payload as unknown as JsonObject;
+  const afterParent = after.parent_revision.payload as unknown as JsonObject;
+  const beforeOccurrences = beforeParent.occurrences as Array<JsonObject>;
+  const beforeOccurrence = beforeOccurrences.find((candidate) => candidate.occurrence_id === occurrenceId);
+  expect(beforeOccurrence, `original occurrence ${occurrenceId}`).toBeTruthy();
+  expect(typeof beforeOccurrence!.shot_revision_id).toBe('string');
+
+  const parentEffects = (result.data.steps ?? [])
+    .flatMap((step) => step.patch)
+    .filter((change) => change.ref === 'parent');
+  expect(parentEffects).toHaveLength(1);
+  const effect = parentEffects[0]!;
+  expect(effect.op).toBe('set');
+  expect(effect.path).toEqual(['occurrences', `occurrence_id:${occurrenceId}`, 'shot_revision_id']);
+  expect(effect.before).toEqual({ state: 'present', value: beforeOccurrence!.shot_revision_id });
+  expect(typeof effect.value).toBe('string');
+  const projectedRevision = effect.value as string;
+  expect(projectedRevision).not.toBe(beforeOccurrence!.shot_revision_id);
+
+  const afterOccurrence = (afterParent.occurrences as Array<JsonObject>)
+    .find((candidate) => candidate.occurrence_id === occurrenceId);
+  expect(afterOccurrence).toEqual({ ...beforeOccurrence, shot_revision_id: projectedRevision });
+
+  const expectedParent = structuredClone(beforeParent);
+  const expectedOccurrence = (expectedParent.occurrences as Array<JsonObject>)
+    .find((candidate) => candidate.occurrence_id === occurrenceId)!;
+  expectedOccurrence.shot_revision_id = projectedRevision;
+  expect(afterParent).toEqual(expectedParent);
+
+  const projectedShots = after.shot_revisions.filter((image) => image.revision_id === projectedRevision);
+  expect(projectedShots).toHaveLength(1);
+  expect(projectedShots[0]!.shot_id).toBe(beforeOccurrence!.shot_id);
+  const beforeShot = before.shot_revisions.find((image) => image.revision_id === beforeOccurrence!.shot_revision_id);
+  expect(beforeShot).toBeTruthy();
+  expect(projectedShots[0]!.internal_timeline_revision_id).not.toBe(beforeShot!.internal_timeline_revision_id);
+  const projectedChild = after.internal_timeline_revisions.find(
+    (image) => image.revision_id === projectedShots[0]!.internal_timeline_revision_id,
+  );
+  expect(projectedChild).toBeTruthy();
+  const projectedRows = projectedChild!.payload.clips as unknown as Array<JsonObject>;
+  expect(projectedRows.some((candidate) => candidate.id === addedClipId)).toBe(true);
+}
+
 async function seedImageFile(harness: DirectHarness): Promise<{ name: string; type: string; bytesBase64: string }> {
   const response = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(harness.seed.image.objectId)}`);
   expect(response.status).toBe(200);
@@ -1061,7 +1113,7 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
   expect(afterRows.filter((candidate) => !beforeRows.some((known) => known.id === candidate.id))).toEqual([expect.objectContaining(row)]);
   for (const known of beforeRows) expect(afterRows.find((candidate) => candidate.id === known.id)).toEqual(known);
   expect(afterRows.map((candidate) => candidate.id)).toEqual([...beforeRows.map((candidate) => candidate.id), row.id]);
-  expect(after.parent_revision.payload).toEqual(original.parent_revision.payload);
+  assertOccurrenceParentProjection(original, after, result, seed3.occurrenceId, row.id as string);
   expect(after.shot_revisions).toEqual(original.shot_revisions);
   const beforeChildRegistry = object(beforeInternal.registry, 'original child registry');
   const afterChildRegistry = object(afterInternal.registry, 'child registry');

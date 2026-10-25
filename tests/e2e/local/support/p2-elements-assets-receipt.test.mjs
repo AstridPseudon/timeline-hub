@@ -18,7 +18,7 @@ const helperSource = [
   'object', 'exactKeys', 'digest', 'nativeImages', 'nativeChild', 'nativeState', 'nativeConfig', 'nativeRows',
   'nativeValue', 'nativeSite', 'nativeSelection', 'nativeBinding', 'nativeEffects', 'nativeUndoExpected',
   'assertRequestV2', 'acceptedMutation', 'publicationId', 'assertNativeAcceptedReply', 'assertNativeHistoryEntry',
-  'assertAcceptedReply', 'assertHistoryEntry', 'assertUndoHistoryEntry',
+  'assertAcceptedReply', 'assertHistoryEntry', 'assertUndoHistoryEntry', 'assertOccurrenceParentProjection',
 ].map(extract).join('\n');
 const transpile = (input) => {
   const result = ts.transpileModule(input, { compilerOptions: { target: ts.ScriptTarget.ES2022 }, reportDiagnostics: true });
@@ -26,7 +26,7 @@ const transpile = (input) => {
   return result.outputText;
 };
 const sha256Hex = (bytes) => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
-const helpers = compileFunction(`${transpile(helperSource)}\nreturn { assertAcceptedReply, assertHistoryEntry, assertUndoHistoryEntry };`, ['expect', 'sha256Hex'])(expect, sha256Hex);
+const helpers = compileFunction(`${transpile(helperSource)}\nreturn { assertAcceptedReply, assertHistoryEntry, assertUndoHistoryEntry, assertOccurrenceParentProjection };`, ['expect', 'sha256Hex'])(expect, sha256Hex);
 const checkRequest = compileFunction(`${transpile([extract('object'), requestHelper].join('\n'))}\nreturn assertRequestV2;`, ['expect'])(expect);
 
 const command = {
@@ -74,6 +74,54 @@ function historyFor(post, { publication = receiptId1, receipt = post.json.receip
     steps: [step], publisher: 'publisher', source: { via: 'app' }, label: 'Edit timeline',
   }] };
 }
+
+function occurrenceProjectionFixture() {
+  const beforeParent = {
+    config: { output: { fps: 30 }, opaque: 'retained' },
+    occurrences: [
+      { occurrence_id: 'occ', shot_id: 'shot', shot_revision_id: 'shot-old', duration_ms: 20000 },
+      { occurrence_id: 'sibling', shot_id: 'sibling-shot', shot_revision_id: 'sibling-old', duration_ms: 10000 },
+    ],
+    opaque: { retained: true },
+  };
+  const afterParent = structuredClone(beforeParent);
+  afterParent.occurrences[0].shot_revision_id = 'shot-new';
+  const before = {
+    parent_revision: { payload: beforeParent },
+    shot_revisions: [{ shot_id: 'shot', revision_id: 'shot-old', internal_timeline_revision_id: 'child-old', payload: {} }],
+    internal_timeline_revisions: [{ revision_id: 'child-old', payload: { clips: [{ id: 'clip-existing' }] } }],
+  };
+  const after = {
+    parent_revision: { payload: afterParent },
+    shot_revisions: [{ shot_id: 'shot', revision_id: 'shot-new', internal_timeline_revision_id: 'child-new', payload: {} }],
+    internal_timeline_revisions: [{ revision_id: 'child-new', payload: { clips: [{ id: 'clip-existing' }, { id: 'clip-added' }] } }],
+  };
+  const result = { data: { steps: [{ patch: [{
+    op: 'set', ref: 'parent', path: ['occurrences', 'occurrence_id:occ', 'shot_revision_id'],
+    before: { state: 'present', value: 'shot-old' }, value: 'shot-new',
+  }] }] } };
+  return { before, after, result };
+}
+
+test('actual occurrence parent projection rejects the stale whole-parent expectation', () => {
+  const fixture = occurrenceProjectionFixture();
+  assert.throws(() => expect(fixture.after.parent_revision.payload).toEqual(fixture.before.parent_revision.payload));
+  assert.doesNotThrow(() => helpers.assertOccurrenceParentProjection(
+    fixture.before, fixture.after, fixture.result, 'occ', 'clip-added',
+  ));
+});
+
+for (const [name, mutate] of [
+  ['wrong physical shot', (fixture) => { fixture.after.shot_revisions[0].shot_id = 'sibling-shot'; }],
+  ['sibling parent field', (fixture) => { fixture.after.parent_revision.payload.occurrences[1].duration_ms = 10001; }],
+  ['opaque parent field', (fixture) => { fixture.after.parent_revision.payload.opaque.retained = false; }],
+]) test(`actual occurrence parent projection rejects ${name}`, () => {
+  const fixture = occurrenceProjectionFixture();
+  mutate(fixture);
+  assert.throws(() => helpers.assertOccurrenceParentProjection(
+    fixture.before, fixture.after, fixture.result, 'occ', 'clip-added',
+  ));
+});
 
 test('actual accepted helper preserves distinct publication and idempotency identities', () => {
   const post = acceptedPost();
