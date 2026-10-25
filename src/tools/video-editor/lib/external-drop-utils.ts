@@ -497,9 +497,7 @@ export async function handleFileDrop({
             ? dropPosition.pointerTrackId
             : undefined;
           if (!dropAsset(preparedAsset.assetKey, preparedManagedImageTrackId ?? compatibleTrackId ?? undefined, clipTime,
-            false, false, preparedAsset, skeletonId, preparedManagedImageTrackId
-              ? dropPosition.placementPolicy
-              : undefined)) {
+            false, false, preparedAsset, skeletonId)) {
             removeSkeleton();
           }
           return;

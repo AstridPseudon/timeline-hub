@@ -157,7 +157,6 @@ describe('mixed row drop geometry', () => {
     expect(position.trackId).toBe('V3');
     expect(position.time).toBe(4.5);
 
-    current.config.app = { canonicalComposition: { occurrenceIds: ['f2-occurrence'] } };
     const managedPosition = computeDropPosition({
       wrapper,
       dataRef,
@@ -173,7 +172,7 @@ describe('mixed row drop geometry', () => {
     });
     expect(managedPosition.pointerTrackId).toBe('V2');
     expect(managedPosition.trackId).toBe('V2');
-    expect(managedPosition.time).toBe(4.5);
+    expect(managedPosition.time).toBe(9);
   });
 
   it.each([

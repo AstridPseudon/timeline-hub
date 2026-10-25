@@ -24,7 +24,6 @@ import {
   getPlayableAssetKind,
   planAssetDropTarget,
   planGenerationAssetRegistration,
-  type TimelineAssetPlacementPolicy,
 } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import type {
   TimelineApplyEdit,
@@ -83,7 +82,6 @@ export interface UseAssetManagementResult {
     insertAtTop?: boolean,
     preparedAsset?: TimelineProvisionedAsset,
     removeClipId?: string,
-    placementPolicy?: TimelineAssetPlacementPolicy,
   ) => boolean;
 }
 
@@ -101,7 +99,6 @@ export function buildPlacePreparedMediaCommand({
   forceNewTrack,
   insertAtTop,
   removeClipId,
-  placementPolicy,
 }: {
   prepared: TimelineProvisionedAsset;
   trackId?: string;
@@ -110,7 +107,6 @@ export function buildPlacePreparedMediaCommand({
   forceNewTrack: boolean;
   insertAtTop: boolean;
   removeClipId?: string;
-  placementPolicy?: TimelineAssetPlacementPolicy;
 }): PlacePreparedMediaCommand {
   return {
     type: 'place-prepared-media',
@@ -122,7 +118,6 @@ export function buildPlacePreparedMediaCommand({
       forceNewTrack,
       insertAtTop,
       ...(removeClipId !== undefined ? { removeClipId } : {}),
-      ...(placementPolicy !== undefined ? { placementPolicy } : {}),
     },
   };
 }
@@ -277,7 +272,6 @@ export function useAssetManagement({
     forceNewTrack: boolean,
     insertAtTop: boolean,
     removeClipId?: string,
-    placementPolicy?: TimelineAssetPlacementPolicy,
   ) => {
     const latestDataRef = getDataRef();
     const current = latestDataRef.current;
@@ -293,7 +287,6 @@ export function useAssetManagement({
       forceNewTrack,
       insertAtTop,
       removeClipId,
-      placementPolicy,
     });
     if (removeClipId !== undefined && prepared.mediaType === 'image' && prepared.mediaSelection) {
       const media = prepared.mediaSelection;
@@ -334,7 +327,7 @@ export function useAssetManagement({
       const local = { ...current,
         rows: current.rows.map(row => ({ ...row, actions: row.actions.filter(action => action.id !== removeClipId) })) };
       const target = planAssetDropTarget({ current: local, assetKind: 'visual', trackId,
-        selectedTrackId: getSelectedTrackId(), time, duration: 5, placementPolicy });
+        selectedTrackId: getSelectedTrackId(), time, duration: 5 });
       if (!target.ok || target.trackId !== trackId || target.preparedCurrent !== local) return false;
       const edit = buildAssetDropEdit({ current: local, assetKey: prepared.assetKey, assetEntry: prepared.entry,
         trackId: target.trackId, time: target.snappedTime ?? time });
@@ -369,9 +362,9 @@ export function useAssetManagement({
     return true;
   }, [getApplyEdit, getDataRef, getSelectedTrackId, selectedProjectId]);
 
-  const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string, placementPolicy?: TimelineAssetPlacementPolicy) => {
+  const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string) => {
     if (preparedAsset) {
-      return placePreparedAsset(preparedAsset, trackId, time, forceNewTrack, insertAtTop, removeClipId, placementPolicy);
+      return placePreparedAsset(preparedAsset, trackId, time, forceNewTrack, insertAtTop, removeClipId);
     }
 
     const latestDataRef = getDataRef();
@@ -393,7 +386,6 @@ export function useAssetManagement({
       insertAtTop,
       time,
       duration,
-      placementPolicy,
     });
     if (!targetPlan.ok) {
       return false;

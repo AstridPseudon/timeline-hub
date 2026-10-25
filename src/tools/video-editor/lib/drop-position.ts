@@ -5,7 +5,6 @@ import { rawRowIndexFromY } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { planClipDrag, type ClipDragPlan } from '@/tools/video-editor/lib/clip-drag-planner.ts';
 import { createTimelineScale } from '@/tools/video-editor/lib/timeline-scale.ts';
 import { planAssetDropTarget } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
-import type { TimelineAssetPlacementPolicy } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { TrackKind } from '@/tools/video-editor/types/index.ts';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
@@ -50,8 +49,6 @@ export interface DropPosition {
    * used by the preview without recomputing snap or track resolution.
    */
   plan?: ClipDragPlan;
-  /** Preserve the captured raw track when this is an embedded occurrence edit. */
-  placementPolicy?: TimelineAssetPlacementPolicy;
 }
 
 export interface ComputeDropPositionParams {
@@ -198,15 +195,6 @@ export const computeDropPosition = ({
       : rawRowIndex >= 0 && rawRowIndex < plannerRows.length
         ? current?.tracks.find((track) => track.id === plannerRows[rawRowIndex]?.id)
         : undefined;
-  const canonicalComposition = current?.config.app?.canonicalComposition;
-  const occurrenceRawTrackPolicy = managedImage && pointerTrack?.kind === 'visual'
-    && canonicalComposition !== null
-    && typeof canonicalComposition === 'object'
-    && !Array.isArray(canonicalComposition)
-    && Array.isArray((canonicalComposition as { occurrenceIds?: unknown }).occurrenceIds)
-    && (canonicalComposition as { occurrenceIds: unknown[] }).occurrenceIds.length === 1
-    ? { kind: 'occurrence-raw-track' as const, trackId: pointerTrack.id }
-    : undefined;
   // A Runtime-backed single image has no authoritative media identity until
   // drop, but its duration and placement semantics are already owned by the
   // existing managed-media planner. Use that planner against the rendered
@@ -220,7 +208,6 @@ export const computeDropPosition = ({
         selectedTrackId: pointerTrack.id,
         time,
         duration: clipDuration,
-        placementPolicy: occurrenceRawTrackPolicy,
       })
     : null;
   const resolvedPlan: ClipDragPlan = managedPlacement?.ok
@@ -290,7 +277,6 @@ export const computeDropPosition = ({
     ...(invalidTarget || !pointerTrack || pointerTrack.kind !== (sourceKind ?? 'visual')
       ? {}
       : { pointerTrackId: pointerTrack.id }),
-    ...(occurrenceRawTrackPolicy ? { placementPolicy: occurrenceRawTrackPolicy } : {}),
     trackKind: resolvedPlan.needsNewTrack ? (sourceKind ?? resolvedPlan.trackKind) : resolvedPlan.trackKind,
     trackName: resolvedTrackName,
     isNewTrack: resolvedPlan.needsNewTrack,
