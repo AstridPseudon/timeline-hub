@@ -369,7 +369,7 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
     if document_pins is None:
         documents = copy.deepcopy(documents)
         for capture in bundle['source_mapping'].get('pinned_documents', []):
-            if not copy_manifest and capture['pin'] not in documents:
+            if capture['pin'] not in documents:
                 documents.append(copy.deepcopy(capture['pin']))
         for pin in copy_manifest.get("documents", []):
             if pin not in documents:
