@@ -201,6 +201,17 @@ function nativeSite(document: CanonicalDocument, ref: string, path: string[]): {
   throw new Error(`P2 native oracle scope question: physical site ${ref} ${JSON.stringify(path)}`);
 }
 
+// Agent _commit_patch.native_asset_reads: asset collection reads retain both
+// physical parent registry fields, including an absent config mirror.
+function nativeAssetReads(document: CanonicalDocument): JsonObject[] {
+  const config = document.parent_revision.payload.config as unknown as JsonObject;
+  const paths = [
+    ['registry'],
+    config && typeof config === 'object' ? ['config', 'registry'] : ['config'],
+  ];
+  return paths.map((path) => ({ kind: 'field', ref: 'parent', path, state: nativeValue(document, 'parent', path) }));
+}
+
 function nativeSelection(document: CanonicalDocument, key: string, owner: string): JsonObject {
   let members: string[];
   let boundaries: string[];
@@ -357,6 +368,10 @@ function nativeUndoExpected(post: CommitPost, context: NativeUndoContext): { dat
     reads, selections, bindings: Object.fromEntries(bindings.map((binding) => [binding.key, binding.ref])), created: [] };
   const dependencies: JsonObject[] = [];
   for (const item of reads) {
+    if (item.ref === 'parent/collection:asset' && !item.path.length) {
+      for (const dependency of nativeAssetReads(before)) unique(dependencies, dependency);
+      continue;
+    }
     const site = nativeSite(before, item.ref as string, item.path as string[]);
     if (String(item.ref).includes('/collection:')) {
       const image = nativeImages(before)[site.ref]!;
