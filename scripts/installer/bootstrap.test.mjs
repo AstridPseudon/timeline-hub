@@ -50,7 +50,10 @@ test('POSIX uses developer manifest, the per-OS data layout (HOME-based on macOS
 for (const manifestFlag of ['--manifest', '--manifest=']) {
   test(`POSIX uses a supplied local manifest (${manifestFlag}) for bootstrap pins and core without downloading`, () => scenario(async (context) => {
     const localManifest = path.join(context.root, 'local manifest.json');
-    await writeFile(localManifest, JSON.stringify(context.manifest));
+    const localPins = structuredClone(context.manifest);
+    localPins.agent.sha = 'a'.repeat(40);
+    localPins.runtime.sha = 'b'.repeat(40);
+    await writeFile(localManifest, JSON.stringify(localPins));
     const supplied = manifestFlag === '--manifest' ? [manifestFlag, localManifest] : [`${manifestFlag}${localManifest}`];
     const managerArgs = ['--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid'];
     const result = await run(context, [...managerArgs, ...supplied]);
@@ -59,6 +62,9 @@ for (const manifestFlag of ['--manifest', '--manifest=']) {
     const core = (await context.calls()).at(-1);
     assert.deepEqual(core.slice(-managerArgs.length - supplied.length), [...managerArgs, ...supplied]);
     assert.equal(core.filter((argument) => argument === '--manifest' || argument.startsWith('--manifest=')).length, 1);
+    const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
+    assert.ok(localInstall.includes(`https://github.com/banodoco/astrid-agent/archive/${localPins.agent.sha}.tar.gz`));
+    assert.ok(localInstall.includes(`https://github.com/banodoco/astrid-runtime/archive/${localPins.runtime.sha}.tar.gz#subdirectory=packages/python`));
   }));
 }
 

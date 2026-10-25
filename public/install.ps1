@@ -1,7 +1,7 @@
 # Astrid's bootstrap, PowerShell 5.1+. Run with -NoProfile -ExecutionPolicy Bypass.
 # A child scope keeps irm | iex from changing the caller's error preference.
-$FileInvocation = [bool]$PSCommandPath -and $MyInvocation.MyCommand -is [Management.Automation.ExternalScriptInfo]
 & {
+    $FileInvocation = [bool]$PSCommandPath
     $InstallerArgs = @($args)
     $ErrorActionPreference = 'Stop'
     $UvVersion = '0.11.32'

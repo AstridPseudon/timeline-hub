@@ -16,6 +16,21 @@ test('PowerShell opens install log appends with sharing compatible with the runn
   assert.doesNotMatch(script, /File\.AppendAllText\(log/);
 });
 
+test('PowerShell bootstrap source selects local manifest pins before download and forwards args in the child scope', async () => {
+  const script = await readFile(path.join(repo, 'public/install.ps1'), 'utf8');
+  const manifestScan = script.indexOf('for ($Index = 0; $Index -lt $InstallerArgs.Count; $Index++)');
+  const download = script.indexOf('Invoke-WebRequest -UseBasicParsing $ManifestUrl -OutFile $Manifest');
+  const pinRead = script.indexOf('Get-Content -Raw -Encoding UTF8 $Manifest | ConvertFrom-Json');
+  const coreArgs = script.indexOf("$RunArgs = @('run', '--no-project'");
+  const forwardArgs = script.indexOf('$RunArgs += $InstallerArgs');
+  assert.ok(manifestScan >= 0 && download > manifestScan && pinRead > download && coreArgs > pinRead && forwardArgs > coreArgs);
+  assert.match(script, /if \(-not \$ManifestProvided\) \{\s*\$ManifestUrl = if/s);
+  assert.match(script, /if \(-not \$ManifestProvided\) \{ \$RunArgs \+= @\('--manifest', \$Manifest\) \}/);
+  assert.match(script, /& \{\s+\$FileInvocation = \[bool\]\$PSCommandPath\s+\$InstallerArgs = @\(\$args\)/);
+  assert.doesNotMatch(script, /param\(\[bool\]\$FileInvocation\)/);
+  assert.match(script, /\} @args\s*$/);
+});
+
 test('PowerShell explains first-run preparation before Python setup completes', () => scenario(async (context) => {
   const harness = await context.powershell();
   const release = path.join(context.root, 'release-python');
@@ -216,7 +231,10 @@ test('PowerShell tolerates native stderr, forwards arguments and avoids Python s
 for (const manifestFlag of ['--manifest', '--manifest=']) {
   test(`PowerShell uses a supplied local manifest (${manifestFlag}) for bootstrap pins and core without downloading`, () => scenario(async (context, run) => {
     const localManifest = path.join(context.root, 'local manifest.json');
-    await writeFile(localManifest, JSON.stringify(context.manifest));
+    const localPins = structuredClone(context.manifest);
+    localPins.agent.sha = 'a'.repeat(40);
+    localPins.runtime.sha = 'b'.repeat(40);
+    await writeFile(localManifest, JSON.stringify(localPins));
     const supplied = manifestFlag === '--manifest' ? [manifestFlag, localManifest] : [`${manifestFlag}${localManifest}`];
     const managerArgs = ['--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid'];
     const result = await run([...managerArgs, ...supplied]);
@@ -225,6 +243,9 @@ for (const manifestFlag of ['--manifest', '--manifest=']) {
     const core = (await context.calls()).at(-1);
     assert.deepEqual(core.slice(-managerArgs.length - supplied.length), [...managerArgs, ...supplied]);
     assert.equal(core.filter((argument) => argument === '--manifest' || argument.startsWith('--manifest=')).length, 1);
+    const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
+    assert.ok(localInstall.includes(`https://github.com/banodoco/astrid-agent/archive/${localPins.agent.sha}.tar.gz`));
+    assert.ok(localInstall.includes(`https://github.com/banodoco/astrid-runtime/archive/${localPins.runtime.sha}.tar.gz#subdirectory=packages/python`));
   }));
 }
 
