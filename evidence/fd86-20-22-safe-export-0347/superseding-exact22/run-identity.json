@@ -1,0 +1,90 @@
+{
+  "schema": "astrid.timeline.fd86-exact22-corrected-safe-identity/v1",
+  "task": "F-D86-20-22-exact-return-0358",
+  "proof": "exact22",
+  "status": "terminal",
+  "actual_run_id": "fd86-exact22-body-20261025-034159",
+  "venue": "direct existing D73 launcher from producer worker",
+  "central_request_record": "not found",
+  "central_service_id": null,
+  "source": {
+    "branch": "tl/rt-D86-ready22-body-0333",
+    "commit": "350058edc5b830215c7d915e09024e2362a0b429",
+    "producer_packet": "evidence/fd86-next32-receive-0328"
+  },
+  "limits": {
+    "selected_unique": 22,
+    "worker_parallelism": 3,
+    "cache": "disabled",
+    "timeout_seconds": 45,
+    "marker_filter": "none",
+    "preflight_exit": 0,
+    "body_exit": 1
+  },
+  "outcome_counts": {
+    "PASS": 4,
+    "FAIL": 0,
+    "ERROR": 18,
+    "SKIP": 0,
+    "executed": 22,
+    "selected": 22
+  },
+  "pass_detail_note": "PASS statuses are explicit XML testcase records; no absent-case or complement inference was used.",
+  "preserved_prior_identity_rows": 22,
+  "identity_projection_sha256": "f3b64f21d1fc4dda3673466c99efb1f8227f8df26769a1291a9fba63cf7147f5",
+  "selector": {
+    "count": 22,
+    "sha256": "02be87e3ad97b024e6129d4dd797c71a608466c4b82ef99f9004e6f45ad5552c"
+  },
+  "private_artifacts": [
+    {
+      "name": "xml",
+      "bytes": 43811,
+      "sha256": "a45a18c8813ad115a19a5a70e3f4c382e30854b5c930c503c62d89108839e99c",
+      "exported": false
+    },
+    {
+      "name": "body_log",
+      "bytes": 42015,
+      "sha256": "a7a1d775801a0db420d077b53de9e6048a4b9f21272831c187c9fff0c095135c",
+      "exported": false
+    },
+    {
+      "name": "command",
+      "bytes": 3490,
+      "sha256": "a9ad9f5789521e3d65d53057f286e0a5cd869adc9cde6fd2b644e4a6c17f8984",
+      "exported": false
+    },
+    {
+      "name": "manifest",
+      "bytes": 2239,
+      "sha256": "8ab5c8ad7c2bac0f56ea24ee852f1e7c3fa2c0360802ed1804340b601d9eea89",
+      "exported": false
+    },
+    {
+      "name": "selector_argv",
+      "bytes": 3248,
+      "sha256": "02be87e3ad97b024e6129d4dd797c71a608466c4b82ef99f9004e6f45ad5552c",
+      "exported": false
+    },
+    {
+      "name": "producer_membership",
+      "bytes": 9704,
+      "sha256": "637f86d78b9c399c24e768bde2479c5235cb696ee8cdf2053f4ee550e7291508",
+      "exported": false
+    },
+    {
+      "name": "checkout_receipts",
+      "bytes": 970,
+      "sha256": "bd9c61cef7b0e97bd502b00fa2b400ca46c4b08ae7057165f43958a3b83e5992",
+      "exported": false
+    },
+    {
+      "name": "summary",
+      "bytes": 560,
+      "sha256": "baa5c2989b4a1ee997e9db6432dc29300f35e297eeaa4a3cb508a226bd28efe9",
+      "exported": false
+    }
+  ],
+  "source_only": true
+}
