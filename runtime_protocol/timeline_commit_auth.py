@@ -123,9 +123,8 @@ def site(boundary, ref, path, continuations=None):
         if family == "asset":
             require(owner == "parent",
                     "provider collection alias is outside its authenticated boundary")
-            # The native asset collection is a shape guard over the complete
-            # parent image.  Its recorder state includes both authored registry
-            # mirrors, so it must retain the parent root as its physical site.
+            # The physical owner is parent; validate_step expands this native
+            # shape capture into fields for both authored registry mirrors.
             return "parent", []
         if family in {"clip", "track", "occurrence"}:
             prefix = ["config", family + "s"] if owner == "parent" and family != "occurrence" else [family + "s"]
@@ -228,6 +227,19 @@ def covers(dependencies, read):
                 and read["path"][:len(dependency["path"])] == dependency["path"]):
             return True
     return False
+
+
+def native_asset_reads(payload):
+    """Lossless field guards for the native parent asset storage shape.
+
+    C0 fields retain the complete registry value, including malformed containers
+    and ordered values. Never resolve one mirror through the other. A missing
+    or non-object config must be guarded at config itself.
+    """
+    paths = [["registry"], ["config", "registry"]
+             if isinstance(payload.get("config"), dict) else ["config"]]
+    return [{"kind": "field", "ref": "parent", "path": path,
+             "state": copy.deepcopy(location(payload, path))} for path in paths]
 
 
 def validate_read(boundary, read, continuations=None):
@@ -383,6 +395,10 @@ def validate_step(request, records, step, boundary, batch_reads, continuations, 
         created = {item["ref"] for item in record["created"]}
         for read in record["reads"]:
             if read["ref"] in created and read["state"] == {"state": "absent"}:
+                continue
+            if read["ref"] == "parent/collection:asset" and not read["path"]:
+                for capture in native_asset_reads(command_boundary["parent"]["payload"]):
+                    require(covers(dependencies, capture), "provider dependency union omits a captured read")
                 continue
             ref, path = native_site(command_boundary, read["ref"], read["path"])
             if ref == "timeline" or not path or "/collection:" in read["ref"]:
