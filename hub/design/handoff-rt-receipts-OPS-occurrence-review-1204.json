@@ -1,0 +1,55 @@
+{
+  "task": "rt-receipts-OPS-occurrence-review-1204",
+  "disposition": {
+    "A": "validated_with_exclusion_evidence_caveat",
+    "B": "UNAPPLIED"
+  },
+  "A": {
+    "receipt": "workers/rt-OPS-ended-log-return-1150/evidence/receipt.json",
+    "listed": 737,
+    "compressed_sha256_size_failures": 0,
+    "decompressed_sha256_size_failures": 0,
+    "allowlist_failures": 0,
+    "plain_files_still_present": 0,
+    "logical_reduction_reported": 178210050,
+    "observed_free_delta_reported": 7118848,
+    "prior_inventory": 1709,
+    "fresh_recheck": 737,
+    "fresh_recheck_difference": 972,
+    "log_content_read_or_printed_guard": false,
+    "no_further_cleanup": true,
+    "caveat": "A refusal-like review-task name is present; no excluded-target manifest is in the receipt."
+  },
+  "B": {
+    "disposition": "UNAPPLIED",
+    "runtime": {
+      "commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+      "guard_lines": ["runtime_protocol/timeline_commit_auth.py:1645", "runtime_protocol/timeline_commit_auth.py:2267"]
+    },
+    "agent": {
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7"
+    },
+    "missing_records": [
+      "accepted source commit.effect before-image",
+      "inverse.stage and commit.materialization bindings",
+      "source/inverse closure images",
+      "following child-media physical promotion bindings",
+      "original/landing sequential outputs and prepared canonical closure"
+    ],
+    "closest_passing_controls": [
+      "tests/test_timeline_commit_authentication.py::test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic",
+      "tests/test_timeline_commit_authentication.py::test_created_child_promotion_keeps_prior_parent_media_and_mirror_writes",
+      "tests/test_timeline_popup_fork_owner_projection.py::test_actual_agent_fork_add_media_reaches_owner_projection",
+      "tests/test_timeline_inverse_historical_image.py::test_redo_reopens_exact_retired_images_with_one_native_write"
+    ],
+    "changes": []
+  },
+  "verification": {
+    "json": "PASS",
+    "ast": "PASS (8 Python sources)",
+    "git_diff_check": "PASS",
+    "product_tests": "NOT RUN per brief"
+  }
+}

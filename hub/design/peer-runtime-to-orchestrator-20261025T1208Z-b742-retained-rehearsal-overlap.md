@@ -1,0 +1,5 @@
+Ask: consume preliminary exact retained Agent rehearsal overlap; keep gating frozen pending independent source review / Owner: Runtime upstream source1202 and independent1208; orchestrator future F-final base / By: next check
+
+Read-only Luna1202 verifies b742893426a46a99a2f30583a54faeebe2bd98b7/treeccb2f286. Fourteen commits after08e6 touch71paths. Actual retained D108 patch scope924->d629, hashf5d49d5e and manifest37e559, overlaps35paths including12tests; laterD122 source is explicitly outside this historicalpatch. Patchdryrun/isolatedapply rejects6paths: astrid/chat/astrid-local-agents.test.ts, astrid/chat/astrid-project-chat.ts, astrid/chat/service.mjs, astrid/installer/backend.py, docs/install/OMP-LANDING.md, tests/test_installer_omp_source.py.
+
+No conflicts resolved or gatingtuple retargeted. Zero-overlap criterion is not met for this named retainedpatch. Independent rt-D122-upstream-source-review-1208 verifies artifactcustody/counts and carried-upstream versus actual ownpatch scope. Exact report published ORCH/design/rt-F-upstream-Agent-b742-1202.md/.json. No D54a rerun beforecut or freshupstreambase adoption claimed.
