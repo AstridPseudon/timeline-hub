@@ -201,6 +201,17 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D111a, the validation memo is WITHDRAWN; profile the whole element request first (08:05Z).**
+  - **Why:** review 0729 FAILED the memo:
+    - memo hits bypassed required per-value revalidation;
+    - the cache was unbounded;
+    - there was no wall gain: 19.9 / 11.0 / 16.7 s at N = 2/3/4, and the profiled request took 2754 ms before and 2995 ms after.
+
+    Wholepath 0729 and Sol 0744 add that ordinary runs do 8 replay checks with ZERO Recorder validations and still take 10–11 s. So historical Recorder validation is NOT the main cost. My D111 premise came from a single stack snapshot, which repeats the LOOPS #74 mistake.
+  - **Next (Runtime, one Luna; HARD is not needed):** use the SAME cross-process sampling method that pinned P4 (agt-P4-crossprocess-sample-0242, 432 samples) on element's real request sequence. Run it through the D102c/D109 native harness on main, not the browser, on Runtime 1daca / Agent 070dfc. Aggregate stacks over the WHOLE request, then report the top inclusive frames and the share of wall time for each.
+    - **0744's launcher refusal:** an absolute `--files` path was rejected. Use a path inside the allowed tree; do NOT bypass the check.
+    - Only after the profile names a dominant cost does an author fix it, with a flat-N curve, a real-provider seed smoke, then review.
+  - The memo candidate is not merged (closed, retained as evidence). The App early tour (19078) continues; element is expected to fail.
 - **D111, element's applied-status hang NAMED: replay verification re-validates history against the schema on every request (07:10Z).** Element 29218's runtime.stderr.log is empty (no 503), but its watchdog stack dump (p2-commit-phase.stacks.txt) shows the executing thread deep in jsonschema (iter_errors / descend / ref / allOf) along this path:
   - store.lookup/evaluate → `_verify_accepted` (store:612) → `_verify_accepted_replay` (798) → `_historical_sequential` (849) → `auth.validate_sequential_capture` (2512) → `_capture_records` (2387) → `validate_commit_value(records, "Recorder")` (validation:173).
   - The phase log shows handler 18.5 s, of which provider 11.7 s; lock wait null; queue about 1 ms.

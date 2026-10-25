@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T07:55:49Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 4m -->
+<!-- main | 2026-10-25T07:59:27Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
 # runtime board, 2026-10-25T07:42:40Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -371,6 +371,7 @@ core open: 1 known Runtime performance issue, D111. Agent current full-core coun
 regressions: D102 shared-context request_id closed on1daca. D110 inverse KeyError source fix released with real-provider RED2/GREEN2 and independent44 controls; full P2 proof remains owed.
 Gates: Current P1/P3 independently GO on recordedf7201/d629/c916/635f. P4 independent GO28.101s with per-note durations UNKNOWN. Final tuple/core/P2/render still required.
 
+Blockers: Orchestrator MAIN profile — Missing current819acf profile; normal0759 maker validates template then fails absent bench-store owner. MAIN store is D34 held with8GiB reserve; escalation0802 requests admission disposition.
 Blockers: Runtime D111 — Security0729 FAIL; genuine unforced existing-native measurement0744 before any next optimization.1171212 held; no release/adoption claim.
 KIT CHANGE installed: bin/test-run SHA5df4145, independent0746 PASS33 before and after; backup20261025T074627Z. Named heavy and exact D89 byte floors active; no live-kit blocker.
 Blockers: Agent D69 — D07coverage0732, census0731 and remaining changed-assertion ownership peer0742. Exact audit evidence only; no weakening or guessed retirement.

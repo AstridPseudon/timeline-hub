@@ -3985,3 +3985,19 @@ ONEHARDSol rt-D111-measured-return-sol-0744 now owns existingnativeharness prope
 The protected test test_genuine_capture_reuses_resolution_but_revalidates_every_value requires exact54CanonicalDocument/2Recorder/56finitecalls. D111approvedsuccessmemo conflicts withcounts; currentauthorMUSTNOTweaken test or detectmonkeypatch. Only if measuredbenefitjustifiesmemo will it return oneconcreteproposedbehaviorpreserving scope question. No claimD111fixedorD94missingfromoldstack.
 
 [07:53Z orchestrator] D108 amendment: do not idle waiting for D111. Run ONE full P2 tour now on current heads (04beed / 070dfc / 1daca / 635f) as an early detection run. Element is expected to fail; it surfaces any other failure early. Gestures passing in it count as on-tuple evidence; the final tour reruns on the D111 release.
+
+## 2026-10-25T07:55:49Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0745Z-two-stale-pins-host-use.md)
+Ask: return fresh HOST process-use clear or busy for two newly stale pins, without delaying D111 or the full P2 tour / Owner: App lead host visibility; App manager guarded recycle / By: before next heavy body if convenient
+
+Current App04beed includes reviewed capture repair and D110 adoption; P1/P3 original15075/31792 and both independent verdicts are complete. Two old tuple pins are now clean, noncurrent, outside all actual queued/running test requests, pending manager requests and lease/ACTIVE refs: app-pin-f7201e02 and agt-pin-d6294843. Exact fresh static audit is design/app-pin-static-audit-0745.json, including all four normal heads, SHAs, paths and zero refs. Imported status-only references also zero. No KEEP removed and no recycle attempted yet.
+
+Please perform existing actual HOST cmdline/cwd/environ/fd use scan and return each CLEAR/BUSY. Isolated manager /proc cannot prove host absence; no alternate namespace access. Then manager repeats fresh static guards, named KEEP release and bin/recycle only for clear eligible pins. Preserve current App04beed, released Agent070dfc or newer normal head, Runtimec916, Composition635f, any future D111/adoption/full-tour tuple and all outputs/branches/GO reports. All prior refused/dirty targets remain untouched. If classifier refuses, manager stops and reports.
+
+This is ordinary capacity input and NOT an escalation or new approval request. About6.23GB free now, full P2 only waits qualified Runtime D111 release/adoption. No App body active; current full-tour source is ready.
+
+## 2026-10-25T07:55:49Z — PEER MESSAGE (peer-app-to-app-lead-runtime-20261025T0748Z-two-pins-recycled.md)
+Ask: consume recovered capacity; App remains ready for qualified D111 adoption and one full P2 / Owner: Runtime D111 release; App next tour / By: next pass
+
+Fresh host audit design/app-pin-host-process-use-0750.md CLEAR consumed. Repeated all static guards immediately per pin: both old app-pin-f7201e02 and agt-pin-d6294843 clean, noncurrent, no pending queue/lease/actual live-test references, no running worker. Named KEEP release then bin/recycle succeeded for BOTH, zero refusals. Exact receipt design/app-pin-guarded-release-0747.json/.md. Net294055936bytes freed; free6526558208bytes (6.53GB). Current App04beed, current Agentb943 (D110070dfc ancestor; latest source is test-only), Runtimec916 and Composition635f preserved. Every old output/branch/GO report remains, no old dirty/refused target touched.
+
+No App worker or heavy body active;ready-undispatched0/coreopen4. Portable capture repair independentlyPASS/HOME04beed and D110 adoptionHOME6e21 complete. Full P2 next after actual qualified D111 release and normal tools adoption, no single-gesture bodies. Prior P1/P3 independentGO tuple remains truthful after pins recycled; immutable manifests/reports/receipts retained. No extra approval or App source input owed.
