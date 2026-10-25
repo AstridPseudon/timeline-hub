@@ -290,6 +290,7 @@ def saved_closure(saved_runtime):
     source_bundle = bundle_from_document(document)
     source_placement = source_bundle["placements"][0]
     source_shot = source_bundle["shots"][source_placement["shot_id"]]
+    source_pin = source_bundle["source_mapping"]["shots"][source_placement["shot_id"]]
     source_media_id = source_shot["internal_timeline"]["registry"]["assets"][
         source_shot["internal_timeline"]["clips"][0]["asset"]
     ]["media_id"]
@@ -300,7 +301,7 @@ def saved_closure(saved_runtime):
     item_patch = {
         "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
         "args": {"changes": [{
-            "op": "set", "ref": "shot-revision:" + source_shot["revision_id"],
+            "op": "set", "ref": "shot-revision:" + source_pin["revision_id"],
             "path": ["items"], "before": {"state": "present", "value": []},
             "value": [copy.deepcopy(source_item)],
         }]},
@@ -387,6 +388,21 @@ def saved_closure(saved_runtime):
     source_internal["registry"]["opaque_registry"] = {"keep": [1, 2, 3]}
     source_internal["tracks"][0]["opaque_track"] = {"future": True}
     source_internal["clips"][0]["opaque_clip"] = {"literal": "item-1"}
+
+    # Duplication verifies its source against Runtime history. Persist the
+    # authored source through the registered provider, then read its exact
+    # accepted closure so the duplicate baselines have genuine provenance.
+    source_publication = publish_authoring_candidate(
+        bundle, _RuntimeAuthoringWriter(runtime.service),
+        idempotency_key="capture-projection-authored-source",
+    )
+    runtime.parent_revision_id = source_publication["publication"]["parent_revision_id"]
+    document = _saved_document(runtime)
+    bundle = bundle_from_document(document)
+    source_shot = bundle["placements"][0]["shot_id"]
+    source = bundle["shots"][source_shot]
+    source_payload = source["payload"]
+    source_internal = source["internal_timeline"]
 
     # The current duplicate API copies the explicit authoring baselines.  The
     # source is removed below, so author its complete current image before the
