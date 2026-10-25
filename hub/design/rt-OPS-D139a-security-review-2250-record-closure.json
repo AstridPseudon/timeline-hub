@@ -1,0 +1,48 @@
+{
+  "schema": "timeline.d139a.record-closure-review/v1",
+  "input_root": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+  "dist_info": "banodoco_timeline_schema-0.0.2.dist-info",
+  "record_sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
+  "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+  "record_rows": 18,
+  "hashed_rows": 12,
+  "direct_url": {
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "subdirectory": "packages/timeline-schema/python",
+    "vcs_info": {
+      "vcs": "git",
+      "commit_id": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+      "requested_revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85"
+    }
+  },
+  "unhashed_rows": [
+    "banodoco_timeline_schema-0.0.2.dist-info/RECORD",
+    "banodoco_timeline_schema/__pycache__/__init__.cpython-313.pyc",
+    "banodoco_timeline_schema/__pycache__/generated.cpython-313.pyc",
+    "banodoco_timeline_schema/__pycache__/materialize.cpython-313.pyc",
+    "banodoco_timeline_schema/__pycache__/theme.cpython-313.pyc",
+    "banodoco_timeline_schema/__pycache__/validate.cpython-313.pyc"
+  ],
+  "hashed_rows": [
+    {"path":"banodoco_timeline_schema-0.0.2.dist-info/INSTALLER","sha256":"ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508","bytes":4},
+    {"path":"banodoco_timeline_schema-0.0.2.dist-info/METADATA","sha256":"49fd34e5afe868b39ef9c7131f8093ca98017f0129faab5aa86bd5a80e2eba0e","bytes":205},
+    {"path":"banodoco_timeline_schema-0.0.2.dist-info/REQUESTED","sha256":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","bytes":0},
+    {"path":"banodoco_timeline_schema-0.0.2.dist-info/WHEEL","sha256":"61532836a2b3111b7ec23519c09df7c41180c27165fb872a6d8913b566b88ad1","bytes":91},
+    {"path":"banodoco_timeline_schema-0.0.2.dist-info/direct_url.json","sha256":"b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e","bytes":254},
+    {"path":"banodoco_timeline_schema-0.0.2.dist-info/top_level.txt","sha256":"543a8d01279949f8ec5ec908c47cfcdb6978921a13207e748a97376022d86ee0","bytes":25},
+    {"path":"banodoco_timeline_schema/__init__.py","sha256":"0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c","bytes":1070},
+    {"path":"banodoco_timeline_schema/generated.py","sha256":"da74eae27fafc8e8410b96c99cec0652f54343fa7b975ec315295d644ea6ae63","bytes":2462},
+    {"path":"banodoco_timeline_schema/materialize.py","sha256":"41651567e2e29b565a2854210c146ecb450c49c815504ede375775eb020bde38","bytes":1892},
+    {"path":"banodoco_timeline_schema/theme.py","sha256":"b713f1e61c8c63b1ce957d7a6c4b1f1c5c1700d4fd6336f99f97ba7e964f4dcb","bytes":2595},
+    {"path":"banodoco_timeline_schema/timeline.schema.json","sha256":"5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25","bytes":11482},
+    {"path":"banodoco_timeline_schema/validate.py","sha256":"ef953e644cbaee6919397571a00966c45cddf9e55f4d83636e9a037afb187059","bytes":1265}
+  ],
+  "closure_check": "package and dist-info recursive file sets equal RECORD paths; unrelated site-packages entries excluded",
+  "prior_2214_2218_provenance": {
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "source_carrier": "EXACTMISSING",
+    "acquisition": false
+  }
+}

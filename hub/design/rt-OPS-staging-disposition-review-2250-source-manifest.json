@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "review": "rt-OPS-staging-disposition-review-2250",
+  "candidate_commit": "25f311f8567fdb65408f1ae8a8f662649c1e0f57",
+  "base_commit": "9524356e2ca603f444eda451a502438ef9110d3b",
+  "candidate_tree": "648bd6431e171d43b061a13211239322c1aeecd1",
+  "base_tree": "93ba9e7a6f96ea4d2b9bb31460d01832fcb5945a",
+  "files": [
+    {
+      "path": "ops-drop-staging/drop_staging.py",
+      "mode": "0644",
+      "size": 54135,
+      "sha256": "5d8bba470b847e3c832ce0da17c0e4ac5f2645ca03b96305717206fa28e055de",
+      "base_sha256": "5d8bba470b847e3c832ce0da17c0e4ac5f2645ca03b96305717206fa28e055de",
+      "unchanged_from_base": true
+    },
+    {
+      "path": "ops-drop-staging/test_drop_staging.py",
+      "mode": "0755",
+      "size": 15868,
+      "sha256": "e08f30cdaf8d5179d09c95ce9c0a1d8dce4d7e2d53e75709e1b4bc461a8fcc9e",
+      "base_sha256": "e08f30cdaf8d5179d09c95ce9c0a1d8dce4d7e2d53e75709e1b4bc461a8fcc9e",
+      "unchanged_from_base": true
+    },
+    {
+      "path": "ops-drop-staging/drop-staging",
+      "mode": "0755",
+      "size": 178,
+      "sha256": "4ff7ff083dae0e4d20badb6cec69e29f5018e2934a14e0e18eca1882067ee5e7",
+      "base_sha256": "4ff7ff083dae0e4d20badb6cec69e29f5018e2934a14e0e18eca1882067ee5e7",
+      "unchanged_from_base": true,
+      "executable": true
+    },
+    {
+      "path": "ops-drop-staging/README.md",
+      "mode": "0644",
+      "size": 3220,
+      "sha256": "824d582fa2653d3a7471986c7a477e995b5c21bc8588538eae21ecf5aef43f00",
+      "base_sha256": "25b6dcd5f66b6c1123f84a6c17c73c39ef2a2a911a91e782a2c76060acc7f9e2",
+      "unchanged_from_base": false,
+      "delta": "qualification-only UNAPPLIED hold; no runtime or test changes"
+    }
+  ],
+  "changed_tracked_files": ["ops-drop-staging/README.md"],
+  "install_destinations": {
+    "observed": "absent in residual evidence",
+    "installation_permitted": false
+  },
+  "source_scope": ["ops-drop-staging/"],
+  "protected_inputs": [
+    "PLAN.md",
+    "rt-OPS-staging-tool-2209 brief",
+    "rt-OPS-staging-return-2223 brief/evidence",
+    "rt-OPS-staging-final-review-2235 evidence",
+    "rt-OPS-staging-residual-sol-2239 evidence"
+  ],
+  "status": "UNAPPLIED_HOLD"
+}

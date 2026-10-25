@@ -1,0 +1,76 @@
+{
+  "schema": "timeline.runtime.d136b.trace-review.v1",
+  "task": "rt-D136b-trace-review-2247",
+  "verdict": "PASS_SOURCE",
+  "qualification": "Source/hash/citation review passes; no behavioral or original9 qualification granted.",
+  "overall_result": "UNKNOWN_ACTUAL_B022_CAUSE",
+  "release": "NO_GO",
+  "source_result": "PROVED_STATIC_CONDITIONAL_PRODUCER_CONSUMER_INCONSISTENCY",
+  "controlling_evidence": {
+    "actual2136": {
+      "agent": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tests": 9,
+      "setup_errors": 9,
+      "passes": 0,
+      "failures": 0,
+      "skips": 0,
+      "exit_code": 1,
+      "first_seam": "provider intermediate command lacks an authenticated physical observation",
+      "guard": "runtime_protocol/timeline_commit_auth.py:2209"
+    },
+    "app2211_final2220": {
+      "verdict": "PASS_STATIC_IDENTITY_CHECKS",
+      "source_files": 16,
+      "groups": 6,
+      "boundaries": 45,
+      "condition_maps": 30,
+      "ast_blocks": 31,
+      "function_definition_records": 75,
+      "group_helper_call_records": 307,
+      "final_predicates": 9,
+      "final_parameter_values": 6,
+      "dynamic_qualification": "none"
+    }
+  },
+  "current_source": {
+    "agent_working_head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "agent_working_branch": "tl/integration",
+    "agent_authoritative_integration_ref": "cd63be424d62226e3ee5c26fc5ce03227f5394a5",
+    "agent_authoritative_parent": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "runtime_integration": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "app_integration_observed": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "composition_integration_observed": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "red_flag": "Trace source-manifest agent_home and patch_before_home use stale 547e; the working checkout is not the authoritative D139-integrated Agent ref."
+  },
+  "conditional_finding": {
+    "id": "D136B-PRODUCER-01",
+    "status": "PROVED_STATIC_CONDITIONAL_INCONSISTENCY",
+    "actual_failure_attribution": "UNKNOWN",
+    "owner": "Agent R1/G3 authoring request producer",
+    "before": "authoring_commit_request puts all semantic structural commands in one structure step; occurrence_duplicate creates shot:<destination> and occurrence:<destination> roots; a following independent duplicate names a different destination.",
+    "projection": "Runtime _project_created_child only projects a created birth when immediately following reads/bindings/writes name that same occurrence root or descendant. The independent next duplicate does not consume the previous destination.",
+    "output": "The unprojected shot root is normalized by native_site to timeline at []; images() contains only parent, shot-revision and internal-revision images. command_output therefore reaches B022 before private captured-output comparison or store persistence.",
+    "private_capture_limit": "Private input/output capture, effect, materialization and commit.input bindings cannot repair a missing native projection; exact actual record/ref/ordinal remains unavailable.",
+    "repair": "UNAPPLIED; no producer author, step split, Runtime guard change, setup migration, fixture/body change or D104 permission is granted."
+  },
+  "comparators": {
+    "accepted_first_birth": "D100 candidate27 is a single guarded doc.patch into an existing physical shot; it does not prove grouped independent root creation.",
+    "strict_sequential": "Runtime controls create an occurrence and immediately consume that same native owner with explicit reads/bindings; accepted fields/atomic and separate-step cases plus foreign/future/ambiguous/owner/input/scope refusals are a different connected shape.",
+    "production_source": "Relevant authoring/duplicate/execution/capture/projection source is byte-identical from actual2136 Agent 90b59 to authoritative Agent cd63, except _command_state and the changed projection test fixture; the conditional finding remains source-valid, not actual-cause-valid."
+  },
+  "stale_or_unqualified_claims": [
+    "Trace.md:9 and source-manifest agent_home identify 547e as current Agent home; authoritative tl/integration is cd63, while 547e is the stale 07:16 checkout.",
+    "Trace.md:11 says current CommitPatch.before, recorder compiler-mirror and document-manifest handling differ from original; those differences are present at stale 547e, but authoritative cd63 uses the original blobs for _commit_patch.py, _recording.py and commit.py.",
+    "Trace.md:79 says Original/current before differ; this is false for authoritative cd63 because _commit_patch.py is ac72a2cb8c549393869a96d753a04fc2d88b91ec at both original90b59 and cd63.",
+    "The trace citation patch_before_home is an exact citation to stale 547e, not a current-integration citation. The original90b59 source citations remain exact.",
+    "The original90b59 projection-test citation truthfully describes the actual2136 source, but authoritative cd63's test_timeline_capture_projection.py is a different fixture source; do not transfer that fixture-path claim to current integration."
+  ],
+  "custody_limits": [
+    "No actual private capture path, publication invocation, step id, command ordinal, ref, resolved physical ref, owner edge, before/after payload or private record was available; all remain UNKNOWN.",
+    "The 17 trace input documents hash-match in place. The App2211 manifest's 37 prior input hashes all match saved copies under orch/design, while 36 original worker paths are absent; no missing raw artifact was reconstructed or exported.",
+    "No tests, imports, providers, services, browsers, original9, full suite, recovery, SWAP/WAL, source edits or Git writes were performed."
+  ],
+  "wire_shape_preserved": true,
+  "source_change": "none"
+}

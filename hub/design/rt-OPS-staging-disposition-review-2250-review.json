@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "review": "rt-OPS-staging-disposition-review-2250",
+  "assessment": "PASS_ASSESSMENT",
+  "disposition": "UNAPPLIED_HOLD",
+  "source_status": "FAIL_SOURCE_AGAINST_REQUESTED_RESIDUAL_SAFETY_CONTRACT",
+  "candidate_commit": "25f311f8567fdb65408f1ae8a8f662649c1e0f57",
+  "candidate_parent": "9524356e2ca603f444eda451a502438ef9110d3b",
+  "candidate_tree": "648bd6431e171d43b061a13211239322c1aeecd1",
+  "candidate_parent_tree": "93ba9e7a6f96ea4d2b9bb31460d01832fcb5945a",
+  "candidate_delta": {
+    "tracked_files": ["ops-drop-staging/README.md"],
+    "functional_source_changed": false,
+    "launcher_changed": false,
+    "tests_changed": false,
+    "qualification_only": true
+  },
+  "custody": {
+    "existing_14_test_result": "PASS, inherited from residual-sol-2239 evidence; not rerun unchanged",
+    "reviewer_five_probes": "completed with five defect observations",
+    "new_subprocess_controls": "5 tests, 5 failures, exit 1; expectations retained",
+    "real_cleanup": false,
+    "installation": false,
+    "acquisition": false,
+    "full_suite": false,
+    "tests_weakened_or_rewritten": false
+  },
+  "findings": [
+    {"id": "OPS-STAGING-FR-001", "severity": "HIGH", "status": "UNRESOLVED_UNAPPLIED"},
+    {"id": "OPS-STAGING-FR-002", "severity": "HIGH", "status": "UNRESOLVED_UNAPPLIED"},
+    {"id": "OPS-STAGING-FR-003", "severity": "HIGH", "status": "UNRESOLVED_UNAPPLIED"},
+    {"id": "OPS-STAGING-FR-004", "severity": "HIGH", "status": "UNRESOLVED_UNAPPLIED"},
+    {"id": "OPS-STAGING-FR-005", "severity": "MEDIUM", "status": "UNRESOLVED_UNAPPLIED"}
+  ],
+  "decision": "The Sol disposition is accurate: no safe source repair was applied. The candidate remains unqualified and must not be installed or used for real cleanup until the exclusion/recovery scope is resolved.",
+  "next_step": "Orchestrator scope decision, then a separately authorized source task if a shared exclusion/recovery mechanism is required."
+}

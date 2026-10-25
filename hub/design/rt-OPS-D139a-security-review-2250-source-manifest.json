@@ -1,0 +1,43 @@
+{
+  "schema": "timeline.d139a.security-source-manifest/v1",
+  "review_commit": "e9fdcfe299a20f1a137e0c87d2c0bf2de49f9e45",
+  "base_commit": "4e0fa7afeeee5ee380c6e063c09bc1c63aa98aee",
+  "candidate": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "bytes": 111171,
+    "mode": "0755"
+  },
+  "original_and_protected": {
+    "base_candidate_sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+    "base_candidate_bytes": 93300,
+    "shared_preimage_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "shared_preimage_bytes": 75541,
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_verifier_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "schema_source": {
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "tree_tie": "UNAVAILABLE",
+    "source_acquisition": false,
+    "input_route": "--schema-installed-distribution"
+  },
+  "production_callsite": "Store.ensure('child', identity, registration, build, verify, seal=seal, failure_name=name)",
+  "protected_unchanged_blocks": {
+    "STAGING_INVENTORY": "47d3cc08f853dfd3544fa390c5cf205f8b929bb6605aca172ee32230332e0065",
+    "RELOCATE": "cf189024a79d12481c0629d3815c794c805dcd3fb4de6e9c3640ec242693cd98"
+  },
+  "live_actions": {
+    "install": false,
+    "child_acceptance": "NOTRUN",
+    "store_publication": false,
+    "git_mutation": false,
+    "network_acquisition": false,
+    "shared_source_manifest_modified": false
+  }
+}

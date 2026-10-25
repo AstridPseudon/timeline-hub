@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.d139a.security-review/v1",
+  "task": "rt-OPS-D139a-security-review-2250",
+  "verdict": "PASS_SOURCE",
+  "candidate": {
+    "commit": "e9fdcfe299a20f1a137e0c87d2c0bf2de49f9e45",
+    "base": "4e0fa7afeeee5ee380c6e063c09bc1c63aa98aee",
+    "maker_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "maker_bytes": 111171,
+    "maker_mode": "0755"
+  },
+  "protected": {
+    "original_base_maker_sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+    "original_base_maker_bytes": 93300,
+    "shared_preimage_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "shared_preimage_bytes": 75541,
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_verifier_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "unchanged_embedded_blocks": {
+      "STAGING_INVENTORY": "47d3cc08f853dfd3544fa390c5cf205f8b929bb6605aca172ee32230332e0065",
+      "RELOCATE": "cf189024a79d12481c0629d3815c794c805dcd3fb4de6e9c3640ec242693cd98"
+    }
+  },
+  "scope": {
+    "source_review": true,
+    "real_child_acceptance": "NOTRUN_BY_SCOPE",
+    "installation": false,
+    "store_publication": false,
+    "source_acquisition": false,
+    "product_or_test_source_edits": false,
+    "shared_source_manifest_modified": false
+  },
+  "findings": [],
+  "accepted_boundaries": [
+    "tree_tie=UNAVAILABLE because no genuine pinned ArtAgents object was held",
+    "synthetic controls are not real-child acceptance evidence"
+  ]
+}

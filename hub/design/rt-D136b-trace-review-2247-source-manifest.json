@@ -1,0 +1,86 @@
+{
+  "schema": "timeline.runtime.d136b.trace-review-source-manifest.v1",
+  "task": "rt-D136b-trace-review-2247",
+  "verdict": "PASS_SOURCE",
+  "source_inputs": {
+    "trace_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D136b-producer-trace-sol-2233-source-manifest.json",
+    "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D136b-producer-trace-sol-2233-trace.json",
+    "findings": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D136b-producer-trace-sol-2233-findings.json",
+    "app_inventory": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-table.json",
+    "app_final_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-review.json"
+  },
+  "canonical_counts": {
+    "input_documents": 17,
+    "parsed_files": 65,
+    "manifest_checks": 73,
+    "unique_citations": 48,
+    "trace_manifest_file_entries": 68,
+    "trace_manifest_git_blob_entries": 67,
+    "trace_manifest_hash_findings": 0
+  },
+  "trace_manifest_rederivation": {
+    "input_documents": {"declared": 17, "present": 17, "hash_matches": 17, "status": "PASS"},
+    "git_blobs": {"checked": 67, "blob_matches": 67, "sha256_matches": 67, "line_count_matches": 67, "status": "PASS"},
+    "ast": {"declared_pass": 65, "parsed": 65, "failures": 0, "status": "PASS"},
+    "expected_absence": "agent@547e10456250c1b5bcf63b44a50c90ff0563ce1e:tests/sdk/test_d100_item_birth_boundary.py has no current-home blob; the held D100 blob is separately exact at 42040a9c05ae7105cf88459cad5f0b8b9bf56fd1.",
+    "citations": {"unique_records": 48, "blob_matches": 48, "sha256_matches": 48, "ranges_in_bounds": 48, "status": "PASS"}
+  },
+  "app2211_final2220_rederivation": {
+    "source_files": 16,
+    "source_hashes": "16/16 PASS",
+    "ast_parses": "16/16 PASS",
+    "groups": 6,
+    "boundaries": 45,
+    "condition_maps": 30,
+    "ast_blocks": 31,
+    "function_definition_records": 75,
+    "group_helper_call_records": 307,
+    "final_predicates": 9,
+    "final_parameter_values": 6,
+    "remaining_identity_errors": 0,
+    "prior_input_hashes": {"declared": 37, "saved_design_copies_hash_matched": 37, "original_worker_paths_present": 1, "original_worker_paths_absent": 36},
+    "dynamic_qualification": "none",
+    "status": "PASS_STATIC_IDENTITY_CHECKS"
+  },
+  "authoritative_refs": {
+    "agent_working_branch": {"branch": "tl/integration", "head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e", "status": "stale sampled checkout"},
+    "agent_integration": {"ref": "hub/tl/integration", "commit": "cd63be424d62226e3ee5c26fc5ce03227f5394a5", "parent": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d"},
+    "runtime_integration": {"ref": "tl/integration", "commit": "f103bb46866999c961a8865636f2e66d544e0c9b"},
+    "actual_agent_source": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+    "reviewed_agent_source": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+    "d100_agent_source": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "projection_agent_source": "f53b016900c99e46998268e36c7c431ac0eec61e",
+    "runtime_immutable": "ab1e4f6141987706132916e2da16477f5a019464"
+  },
+  "current_source_comparison": {
+    "agent_actual_to_authoritative_cd63": {
+      "source_files_compared": 21,
+      "identical": 19,
+      "different": [
+        {"path": "astrid/sdk/timeline/_command_state.py", "actual_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40", "authoritative_blob": "4bbb4615d276ecae57965993e38080c77a93f757", "note": "authoritative blob matches reviewed20db lineage"},
+        {"path": "tests/sdk/test_timeline_capture_projection.py", "actual_blob": "16954294f9f70018e4bbd1012083f51594f6cb19", "authoritative_blob": "337379f6d9cc9732664b8423dfe537b6cd71fa09", "note": "fixture source differs; original actual2136 citation remains exact only for original source"}
+      ],
+      "production_conditional_paths_same": ["authoring_commit.py", "native_occurrence_duplicate.py", "commands.py", "_recording.py", "_commit_patch.py", "_commit_preview.py", "_doc_patch.py", "commit.py", "native_initialize.py", "native_occurrence_shared.py", "native_occurrence_create.py"],
+      "status": "PASS_CONDITIONAL_SOURCE_REMAINS_VALID"
+    },
+    "runtime_ab1e_to_f103_selected": {
+      "auth_port_store_coordinator_provider_controls_contract": "byte-identical",
+      "service.py": "only four-line unrelated output filename storage change",
+      "status": "PASS"
+    }
+  },
+  "source_condition": {
+    "status": "PASS_CONDITIONAL_ONLY",
+    "producer": "One structure step contains independent duplicate births; each duplicate writes a shot aggregate and occurrence root.",
+    "owner": "Following duplicate uses its own explicit source and destination; it does not name the prior destination occurrence.",
+    "capture": "Recording and CommitPatch retain actual writes/created roots and physical input/output bindings; commit.input is not a native occurrence alias.",
+    "projection": "_project_created_child requires immediately following native refs to the same occurrence/descendant.",
+    "output": "Unprojected shot root maps through native_site to timeline []; images() has no timeline image; command_output reaches B022 before private-output comparison.",
+    "actual_coordinates": "UNKNOWN",
+    "no_invented_records": true
+  },
+  "source_change": "none",
+  "git_diff_check": "PASS",
+  "worktree_status": {"review": "clean", "agent_sampled_home": "clean", "runtime_integration": "clean"},
+  "custody_limit": "Private actual failure coordinates and the original worker-directory copies of 36 App prior inputs are unavailable. Saved design copies, declared hashes, and immutable Git blobs were used; no script, payload, raw log, or record was fabricated or transferred."
+}
