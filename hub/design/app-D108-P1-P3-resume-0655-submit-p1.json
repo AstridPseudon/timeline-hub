@@ -1,0 +1,33 @@
+{
+  "task": "D108 P1 resumed retained original",
+  "stage": "terminal_pass_independent_go",
+  "host": "app-pin-f7201e02",
+  "preflight": {
+    "id": "app-pin-f7201e02-d108-p1-current-0648-preflight-1025064914-13611",
+    "status": "pass",
+    "exit": 0,
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-f7201e02-d108-p1-current-0648-preflight-1025064914-13611"
+  },
+  "original": {
+    "id": "app-pin-f7201e02-d108-p1-current-0648-1025064944-15075",
+    "status": "pass",
+    "exit": 0,
+    "duration_seconds": 177,
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-f7201e02-d108-p1-current-0648-1025064944-15075",
+    "counts": { "readiness": { "passed": 1, "failed": 0, "skipped": 0, "errors": 0 }, "original": { "passed": 2, "failed": 0, "skipped": 0, "errors": 0 } },
+    "xml_sha256": { "readiness": "e9ff8854e297a9231cf0d340b2d0867ab878eb318e2a92e783e7e3ff88a340cb", "original": "cb5a8f2aff463ffd0ee4058a836eecf15db0a8afa4807d25348ab2a9f1457a1a" },
+    "manifest_sha256": "502755e6e979335f6cadba00450305f0cd49f2c968760a97f684cb49bf8532ca",
+    "source_sha256": { "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17", "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593" },
+    "first_failure": null
+  },
+  "tuple": {
+    "app": { "sha": "f7201e02dc53ca7b1e70e38894284528fc78aa70", "tree": "cdc1809f3ec82fa1f360092041eb2a8597fc62e5", "checkout": "/home/user/work/wt/app-pin-f7201e02" },
+    "agent": { "sha": "d6294843286c18e57af3c1874cf1996be42212d2", "tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6", "checkout": "/home/user/work/wt/agt-pin-d6294843" },
+    "runtime": { "sha": "c91626f5e905f9336b51aae0486a071d83f0bac7", "tree": "16264479ae18fbb05ec5356ce5b5ab6f69dea9aa", "checkout": "/home/user/work/wt/rt-pin-c91626f5" },
+    "composition": { "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0" }
+  },
+  "service_source": { "head": "b320efd7d34d55958efb395759d2a4a5c01d4818", "tree": "cdc1809f3ec82fa1f360092041eb2a8597fc62e5", "parents": ["f7201e02dc53ca7b1e70e38894284528fc78aa70"], "dirty": false },
+  "versions": { "node": "v20.19.4", "npm": "10.8.2", "runtime": "AstridRuntime/0.1 Python/3.13.16", "protocol": "workspace.v1", "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b", "provider": "astrid-v1", "compiler": "authoring-bundle-1" },
+  "independent_go_review": { "worker": "app-D108-P1-independent-GO-review-0655-r2", "verdict": "GO", "report": "workers/app-D108-P1-independent-GO-review-0655-r2/report.md", "note": "Immutable retained service snapshot commit independently matched the recorded tree and sole parent; temporary directory recycling is disclosed." },
+  "evidence": "workers/app-D108-P1-P3-resume-0655/submission/p1/evidence"
+}

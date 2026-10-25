@@ -1,0 +1,81 @@
+{
+  "utc": "2026-10-25T06:58:17.876354+00:00",
+  "host_audit": "design/app-pin-host-process-use-0702.md",
+  "heads": {
+    "app": "f7201e02dc53ca7b1e70e38894284528fc78aa70",
+    "agent": "b27ff3449ec4d9b5e14ac25b8f5a18c1999c21f6",
+    "runtime": "c91626f5e905f9336b51aae0486a071d83f0bac7",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "before": 5301469184,
+  "targets": [
+    {
+      "worker": "app-pin-0b6cee26",
+      "path": "/home/user/work/wt/app-pin-0b6cee26",
+      "sha": "0b6cee269f32079c5446036bbca8a484176799bc",
+      "repo": "app",
+      "clean": true,
+      "current": false,
+      "references": [],
+      "running": false,
+      "eligible": true
+    },
+    {
+      "worker": "app-pin-51239c79",
+      "path": "/home/user/work/wt/app-pin-51239c79",
+      "sha": "51239c79e26ff743623218b9c09fdce1629ec90c",
+      "repo": "app",
+      "clean": true,
+      "current": false,
+      "references": [],
+      "running": false,
+      "eligible": true
+    },
+    {
+      "worker": "agt-pin-8c88ea8f",
+      "path": "/home/user/work/wt/agt-pin-8c88ea8f",
+      "sha": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+      "repo": "agent",
+      "clean": true,
+      "current": false,
+      "references": [],
+      "running": false,
+      "eligible": true
+    },
+    {
+      "worker": "rt-pin-1daca2a3",
+      "path": "/home/user/work/wt/rt-pin-1daca2a3",
+      "sha": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "repo": "runtime",
+      "clean": true,
+      "current": false,
+      "references": [],
+      "running": false,
+      "eligible": true
+    }
+  ],
+  "results": [
+    {
+      "worker": "app-pin-0b6cee26",
+      "exit": 0,
+      "output": "recycled app-pin-0b6cee26"
+    },
+    {
+      "worker": "app-pin-51239c79",
+      "exit": 0,
+      "output": "recycled app-pin-51239c79"
+    },
+    {
+      "worker": "agt-pin-8c88ea8f",
+      "exit": 0,
+      "output": "recycled agt-pin-8c88ea8f"
+    },
+    {
+      "worker": "rt-pin-1daca2a3",
+      "exit": 0,
+      "output": "recycled rt-pin-1daca2a3"
+    }
+  ],
+  "after": 5782609920,
+  "net_free_change": 481140736
+}
