@@ -6,7 +6,7 @@
  *
  *   workspace.json, health/handshake/realm, objects, media imports, timelines/:t/*  -> runtimeFixture
  *   every other /v1/*                                                               -> createFakeRuntimeRouter
- *   ACP chat reads                                                                  -> acp.ts
+ *   ACP chat reads and opt-in setup scenarios                                        -> acp.ts
  *
  * Run with `tsx --tsconfig tests/e2e/fake-runtime/tsconfig.json` (see launch.mjs). Env: FAKE_RUNTIME_PORT
  * (0 or unset picks a free port) and FAKE_RUNTIME_TOKEN_FILE (required). On start it prints
@@ -217,6 +217,7 @@ export async function startFakeRuntimeServer(options: { token: string; port?: nu
       }
       const acp = live.acp.handle(method, pathname, parsed);
       if (acp) {
+        if (acp.delayMs) await new Promise(resolve => setTimeout(resolve, acp.delayMs));
         return { status: acp.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }, body: jsonBody(acp.body) };
       }
       console.error(`[fake-runtime] no fake route for ${method} ${pathname}`);
