@@ -55,10 +55,6 @@ def _fps(value: Any, path: str) -> Fraction:
         if set(value) != {"numerator", "denominator"}:
             _fail(path, "rational fps requires numerator and denominator")
         numerator, denominator = value["numerator"], value["denominator"]
-    elif isinstance(value, (list, tuple)):
-        if len(value) != 2:
-            _fail(path, "rational fps requires numerator and denominator")
-        numerator, denominator = value
     else:
         return _validation_number(value, path, positive=True)
     if (isinstance(numerator, bool) or isinstance(denominator, bool)
@@ -83,19 +79,6 @@ def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
     output = config.get("output")
     if isinstance(output, Mapping) and "fps" in output:
         values.append(("candidate.parent.config.output.fps", _fps(output["fps"], "candidate.parent.config.output.fps")))
-    overrides = config.get("theme_overrides")
-    if overrides is not None and not isinstance(overrides, Mapping):
-        _fail("candidate.parent.config.theme_overrides", "must be an object")
-    visual = overrides.get("visual") if isinstance(overrides, Mapping) else None
-    if visual is not None and not isinstance(visual, Mapping):
-        _fail("candidate.parent.config.theme_overrides.visual", "must be an object")
-    canvas = visual.get("canvas") if isinstance(visual, Mapping) else None
-    if canvas is not None and not isinstance(canvas, Mapping):
-        _fail("candidate.parent.config.theme_overrides.visual.canvas", "must be an object")
-    if isinstance(canvas, Mapping) and "fps" in canvas:
-        values.append(("candidate.parent.config.theme_overrides.visual.canvas.fps",
-                       _fps(canvas["fps"], "candidate.parent.config.theme_overrides.visual.canvas.fps")))
-
     for shot_id, shot in (bundle.get("shots") or {}).items():
         if not isinstance(shot, Mapping):
             _fail(f"candidate.shots[{shot_id!r}]", "must be an object")
@@ -109,10 +92,29 @@ def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
     return values
 
 
+def _typed_fps_paths(bundle: Mapping[str, Any]) -> set[str]:
+    """Return the authored locations governed by the strict FPS policy."""
+    paths: set[str] = set()
+    parent = bundle.get("parent")
+    config = parent.get("config") if isinstance(parent, Mapping) else None
+    output = config.get("output") if isinstance(config, Mapping) else None
+    if isinstance(output, Mapping) and "fps" in output:
+        paths.add("parent.config.output.fps")
+    for shot_id, shot in (bundle.get("shots") or {}).items():
+        internal = shot.get("internal_timeline") if isinstance(shot, Mapping) else None
+        child_output = internal.get("output") if isinstance(internal, Mapping) else None
+        if isinstance(child_output, Mapping) and "fps" in child_output:
+            paths.add(f"shots[{shot_id!r}].internal_timeline.output.fps")
+    return paths
+
+
 def _fps_basis(bundle: Mapping[str, Any]) -> str:
     """Fingerprint authored rates and their physical clock owners, not timing edits."""
     config = bundle["parent"]["config"]
-    canvas = ((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {}
+    overrides = config.get("theme_overrides")
+    visual = overrides.get("visual") if isinstance(overrides, Mapping) else None
+    canvas_value = visual.get("canvas") if isinstance(visual, Mapping) else None
+    canvas = canvas_value if isinstance(canvas_value, Mapping) else {}
     source = bundle.get("source_mapping") or {}
     source_shots = source.get("shots") or {}
     shots = {}
@@ -138,6 +140,8 @@ def _fps_basis(bundle: Mapping[str, Any]) -> str:
 
 def _validate_fps(candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None) -> None:
     values = _fps_values(candidate)
+    if baseline is not None and _typed_fps_paths(candidate) != _typed_fps_paths(baseline):
+        _fail("candidate", "all authored fps declarations must retain their typed locations")
     if not values or all(rate == values[0][1] for _, rate in values[1:]):
         return
     # D12 preserves an untouched legacy mismatch without equating its exact
@@ -308,13 +312,32 @@ def _timing_parent_view(bundle: Mapping[str, Any]) -> Mapping[str, Any]:
     from astrid.sdk.timeline._doc_patch import null_clip_mirror
 
     parent = bundle["parent"]
-    if not null_clip_mirror(parent):
+    config = parent.get("config")
+    timing_config = config
+    open_canvas = False
+    if isinstance(config, Mapping):
+        overrides = config.get("theme_overrides")
+        visual = overrides.get("visual") if isinstance(overrides, Mapping) else None
+        if isinstance(overrides, Mapping) and isinstance(visual, Mapping) and "canvas" in visual:
+            open_canvas = True
+            canvas = visual["canvas"]
+            if not isinstance(canvas, Mapping) or "fps" not in canvas:
+                timing_canvas = dict(canvas) if isinstance(canvas, Mapping) else {}
+                timing_canvas["fps"] = None
+                timing_visual = {**visual, "canvas": timing_canvas}
+                timing_overrides = dict(overrides)
+                timing_overrides["visual"] = timing_visual
+                timing_config = {**config, "theme_overrides": timing_overrides}
+    if not null_clip_mirror(parent) and not open_canvas:
         return bundle
     clips = _parent_clips(parent)
     # The timing kernel consumes one list. Adapt its detached input, never the
     # canonical payload, source images or authenticated restoration records.
-    return {**bundle, "parent": {**parent, "clips": clips,
-            "config": {**parent["config"], "clips": clips}}}
+    source = bundle.get("source_mapping")
+    timing_source = ({**source, "_timing_open_canvas": open_canvas}
+                     if isinstance(source, Mapping) else source)
+    return {**bundle, "source_mapping": timing_source, "parent": {**parent, "clips": clips,
+            "config": {**timing_config, "clips": clips}}}
 
 
 def _schema_for_selected(

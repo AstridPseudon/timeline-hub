@@ -5,6 +5,8 @@ import copy
 
 import pytest
 
+from astrid.sdk.timeline import _commit_timing_validation as timing_validation
+from astrid.sdk.timeline._timing_evaluators import _fps as production_fps
 from astrid.sdk.timeline.commit import _digest
 from tests.sdk import test_timeline_commit_provider as provider
 from tests.sdk.test_p1_doc_patch_provider import _service_call
@@ -42,6 +44,14 @@ def _controls(*, dry_run: bool) -> dict:
             "reads": [],
         }],
     }
+
+
+def _document_with_canvas(canvas) -> dict:
+    document = document_fixture(shared=False)
+    parent = document["parent_revision"]
+    parent["payload"]["config"]["theme_overrides"] = {"visual": {"canvas": canvas}}
+    parent["content_digest"] = _digest(parent["payload"])
+    return document
 
 
 @pytest.mark.parametrize("dry_run", [False, True])
@@ -86,3 +96,63 @@ def test_production_caller_keeps_invalid_typed_fps_refused(fps):
     assert realm.head == before
     assert realm.prepared == []
     assert realm.accepted == []
+
+
+@pytest.mark.parametrize(
+    ("label", "canvas", "effective_fps"),
+    [
+        ("canvas-null", None, 30),
+        ("canvas-bool", True, 30),
+        ("canvas-string", "canvas", 30),
+        ("canvas-list", [], 30),
+        ("fps-null", {"fps": None}, 30),
+        ("fps-true", {"fps": True}, 1),
+        ("fps-false", {"fps": False}, 30),
+        ("fps-string", {"fps": "30"}, 30),
+        ("fps-mapping", {"fps": {"arbitrary": 1}}, 30),
+        ("fps-zero", {"fps": 0}, 30),
+        ("fps-negative", {"fps": -1}, 30),
+        ("fps-empty", {"fps": []}, 30),
+        ("fps-one", {"fps": [30000]}, 30),
+        ("fps-three", {"fps": [30000, 1001, 1]}, 30),
+        ("fps-noninteger", {"fps": [30000.0, 1001]}, 30),
+        ("fps-zero-pair", {"fps": [30000, 0]}, 30),
+        ("fps-negative-pair", {"fps": [-30000, 1001]}, 30),
+        ("fps-rational-list", {"fps": [30000, 1001]}, 30),
+        ("fps-rational-map", {"fps": {"numerator": 30000, "denominator": 1001}}, 30),
+        ("fps-positive-scalar", {"fps": 24}, 24),
+    ],
+)
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_open_canvas_forms_follow_upstream_fallback_through_production_provider(
+    label, canvas, effective_fps, dry_run, monkeypatch,
+):
+    del label
+    observed = []
+    original_compile = timing_validation.compile_timing
+
+    def capture(inputs):
+        observed.append(production_fps(inputs.bundle))
+        return original_compile(inputs)
+
+    monkeypatch.setattr(timing_validation, "compile_timing", capture)
+    document = _document_with_canvas(canvas)
+    original = copy.deepcopy(document["parent_revision"]["payload"]["config"]["theme_overrides"])
+    realm = provider.DetachedRealm(document)
+
+    result = _service_call(
+        realm,
+        [provider.track_create("d136-open-canvas")],
+        controls=_controls(dry_run=dry_run),
+    )
+
+    data = result["data"]
+    assert data["status"] == ("preview" if dry_run else "accepted")
+    if dry_run:
+        assert data["would_status"] == "accepted"
+        assert result["receipt"] is None
+    else:
+        assert result["receipt"]["result"] == data
+    assert observed[-1] == effective_fps
+    payload = data["canonical_document"]["parent_revision"]["payload"]
+    assert payload["config"]["theme_overrides"] == original
