@@ -1,0 +1,34 @@
+{
+  "utc": "2026-10-25T11:01:05.473743+00:00",
+  "current_heads": {
+    "app": "7e92cd9468b883b009e8840786e832301479c3ed",
+    "agent": "7b96e1effa550635fa795a17839d47116e4d2906",
+    "runtime": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "targets": [
+    {
+      "name": "app-pin-96d4754b",
+      "path": "/home/user/work/wt/app-pin-96d4754b",
+      "sha": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+      "clean": true,
+      "current_lane_head": false,
+      "refs": [],
+      "KEEP": true,
+      "manager_no_mutation": true
+    },
+    {
+      "name": "rt-pin-d23a8e0d",
+      "path": "/home/user/work/wt/rt-pin-d23a8e0d",
+      "sha": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+      "clean": true,
+      "current_lane_head": false,
+      "refs": [],
+      "KEEP": true,
+      "manager_no_mutation": true
+    }
+  ],
+  "host_process_use": "NOT_CHECKED: isolated manager namespace; lead audit required",
+  "scan_files": 70,
+  "no_mutation": true
+}

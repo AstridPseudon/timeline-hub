@@ -1,0 +1,63 @@
+{
+  "task": "D118 sheet15 sole final independent protected review",
+  "verdict": "PASS",
+  "scope": {
+    "candidate_commit": "c3be5da918e8f8cb6f86f3d0a270dfc6ee230cff",
+    "candidate_tree": "4a194fedb17897a4037b2f380b48dab5227d075b",
+    "base_commit": "e9e3b8f78a103331c38b70c008bf020f13c46413",
+    "prior_candidate": "38c67242435dfa92b65a2c93255ec5c90481540e",
+    "changed_paths": [
+      "tests/editing_conformance/test_native_sheet_current_runtime.py"
+    ],
+    "cumulative_diff": "4 substitutions, 4 additions and 4 deletions; no production or fixture-body changes"
+  },
+  "source_hashes": {
+    "original_e9e3_sha256": "3d391f6362053159a15f7d8ee15c7088c4b4e44a85431c0b094195a07027b8b7",
+    "original_070dfc_sha256": "3d391f6362053159a15f7d8ee15c7088c4b4e44a85431c0b094195a07027b8b7",
+    "original_blob": "13937e75836f5468467579898ddb4cde2afdb92e",
+    "prior_38c672_blob": "54725fe13d8bb61dd3a07f1a8307f20b36ad9c4a",
+    "full_candidate_blob": "afba3d3482192a3408c6c0fa77c5ccd0305425a3",
+    "full_candidate_sha256": "2030df0000e0ad8e7a7fe41d5726a9bdbd367a436e7728dc76980dd745b96156"
+  },
+  "runtime_contract": {
+    "checkout_head": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "timeline_commit_port_blob": "a204909316060e51cc23d916c95aeba99f2e2f62",
+    "service_lines": "runtime_protocol/service.py:2589-2592",
+    "selected_lines": "runtime_protocol/timeline_commit_port.py:1023-1030",
+    "shape": "get_project_verified_media delegates to MediaReads.selected; selected returns selection={all five identity fields} plus metadata and has no top-level object_id"
+  },
+  "caller_contract": {
+    "assembly_lines": "astrid/sdk/timeline/assembly.py:74-83",
+    "assembly_shape": "the real caller obtains media, obtains verified, and requires verified['selection'] == media before retaining verified_media",
+    "admission_lines": "astrid/core/contracts/runtime_orchestration.py:120-124",
+    "admission_shape": "the current assembly admission also requires child['verified_media']['selection'] == child['media'] and orders selection['object_id']"
+  },
+  "setup_access_audit": {
+    "line_123": "verified['selection']['object_id']",
+    "line_340": "verified_by_object[verified['selection']['object_id']] = verified",
+    "line_345": "role_media[source_id] selected verified record then ['selection']['object_id']",
+    "line_352": "role_media[source_id]['video/mp4']['selection']['object_id']",
+    "downstream": "verified_by_object consumers at lines 420 and 478 read ['selection']; all_verified_media is passed to capture/execute/commit at lines 422-428 and 480-488",
+    "production_consumers": "native_media_admission.py checks selected['selection'] and selected['selection']['object_id']; _media_inputs.py matches row.get('selection')",
+    "identity_basis": "all four IDs are read directly from the current Runtime verified reply after assert verified['selection'] == selection; no guessed identity, history, or prepared record is used",
+    "unexamined_top_level_object_id": false
+  },
+  "conservation": {
+    "assert_ast_nodes_original": 248,
+    "assert_ast_nodes_candidate": 248,
+    "assert_ast_identical": true,
+    "tests_original": 10,
+    "tests_candidate": 10,
+    "test_names_identical": true,
+    "authored_values_intervals_rational_opaque_parent_reload_inverse_aba_no_write_inputs": "unchanged by exact four-line cumulative diff and identical Assert AST"
+  },
+  "checks": {
+    "ruff": "/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_native_sheet_current_runtime.py: PASS",
+    "mypy_current": "/home/user/work/venv-agent/bin/mypy --follow-imports=skip tests/editing_conformance/test_native_sheet_current_runtime.py: Success: no issues found in 1 source file",
+    "mypy_baseline": "same command against the e9e3 source: Success: no issues found in 1 source file; diagnostics identical",
+    "py_compile": "PYTHONPYCACHEPREFIX=$TMPDIR/pycache python -m py_compile tests/editing_conformance/test_native_sheet_current_runtime.py: PASS",
+    "git_diff_check": "git diff --check and candidate cumulative diff --check: PASS",
+    "functional_tests": "NOT RUN per brief: no service/family/browser/full/P4/collector/observer/socket or primary test run"
+  },
+  "open_failures": "The retained CommitConflict and AssertionError cases remain open and unchanged; this review does not claim functional GREEN."
+}

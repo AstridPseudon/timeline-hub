@@ -1,0 +1,53 @@
+{
+  "verdict": "PASS",
+  "candidate": "fff96c7d7f1d2d047b17a5eaf31301b53a796984",
+  "normal": "7b96e1effa550635fa795a17839d47116e4d2906",
+  "historical": {
+    "original_release": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "fixture_review": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+    "fixture_review_report": "agt-F-wc6-review-2328.md"
+  },
+  "scope": {
+    "changed_files": [
+      "tests/sdk/test_wc6_completion_capture.py",
+      "tests/helpers/run_wc6_completion_capture.py"
+    ],
+    "runner_test_file_unchanged": true,
+    "production_files_changed": false,
+    "source_helper_changed": false
+  },
+  "receipts": {
+    "helper_sha256_constant": "f17c605ab7ad991d9f45713a8b1de0830289239506b62069691333b17e2a8c01",
+    "helper_sha256_candidate": "f17c605ab7ad991d9f45713a8b1de0830289239506b62069691333b17e2a8c01",
+    "helper_sha256_normal_7b96": "f17c605ab7ad991d9f45713a8b1de0830289239506b62069691333b17e2a8c01",
+    "original_fixture_blob_candidate": "adc6fb3946de7c0fc75dc5bf440c8bdc73b59e17",
+    "original_fixture_blob_normal_7b96": "adc6fb3946de7c0fc75dc5bf440c8bdc73b59e17",
+    "protected_original_asserts": 59,
+    "candidate_head_tree": "a6a3be5ec030c78850022a7a11f46987d73645ba"
+  },
+  "checks": {
+    "pytest": "15 passed in 3.09s",
+    "ruff": "All checks passed",
+    "mypy_candidate": "Success: no issues found in 2 source files",
+    "mypy_normal_snapshot": "Success: no issues found in 2 source files",
+    "py_compile": "passed",
+    "git_diff_check": "passed",
+    "offline_only": true,
+    "service_browser_full_p4_family_runs": false
+  },
+  "production_basis": {
+    "registered_method_qualname": "_clear_replay_on_refusal.<locals>.wrapped",
+    "registered_method_wrapped_qualname": "RuntimeService._execute_timeline_commit",
+    "provider_qualname": "RuntimeCommitService.commit",
+    "port_qualname": "RequestCommitPort.close",
+    "session_qualname": "TimelineSession.undo",
+    "diagnostic_request_id_guard_present": true,
+    "request_commit_port_guard_present": true,
+    "offline_exception_cause_identity": true,
+    "offline_result_code": "not_ready"
+  },
+  "limits": [
+    "Source/fixture review only; no real service/core GREEN claim",
+    "The assigned worker tmpdir path was a regular-file harness artifact; commands were rerun in private /tmp/w-6b02428a4b scratch"
+  ]
+}
