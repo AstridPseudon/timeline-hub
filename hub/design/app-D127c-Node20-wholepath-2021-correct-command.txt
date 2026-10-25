@@ -1,0 +1,11 @@
+# Minimal corrected Node20 command; recorded only, not executed by this worker.
+# Run from the exact committed App source checkout after the manager confirms its
+# identity is fd586440a626fc49a35a9dd0ac7e838d5fe55a4b / tree 6d2744e....
+cd /home/user/work/wt/app-D127c-Node20-proof-sol-2021 && TSX_DISABLE_CACHE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/app-D127c-Node20-wholepath-2021 /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --import tsx --test --test-concurrency=1 --test-name-pattern='^(?:D127c source guard accepts every reviewed arm and rejects wrong hash or source|D127c reviewed-profiler validator enforces the exact safe cProfile projection)$' --test-reporter=spec tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts
+
+# Why this is the correction:
+# - preserve the supported Node20 interpreter, TSX entry, test file and concurrency;
+# - replace the short anchored prefixes with the two complete registered titles;
+# - do not add --experimental-test-isolation=none because Node20 does not advertise it;
+# - TSX_DISABLE_CACHE=1 keeps this no-live control from writing shared TSX cache state;
+# - the explicit Runtime checkout is the exact read-only Runtime base used by this review.

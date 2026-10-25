@@ -1,0 +1,47 @@
+{
+  "manifest_kind": "D127c read-only exact source and environment manifest",
+  "app": {
+    "source_commit": "466c921f40fb9c08e50928df6dea27dfdfb45d15",
+    "equivalent_committed_source_commit": "fd586440a626fc49a35a9dd0ac7e838d5fe55a4b",
+    "tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "path": "/home/user/work/wt/app-D127c-Node20-proof-sol-2021",
+    "test_file": {
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "git_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+      "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+      "size_bytes": 60923,
+      "mode": "100644"
+    }
+  },
+  "runtime": {
+    "source_commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "path": "/home/user/work/wt/app-D127c-Node20-wholepath-2021",
+    "helper": {
+      "path": "tests/helpers/p2_commit_phase_capture.py",
+      "git_blob_sha1": "2ae83f1bb8420f1b409165382711aaaeb485fb1f",
+      "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d"
+    }
+  },
+  "node20": {
+    "path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "realpath": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "version": "v20.19.4",
+    "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "supports": ["--import", "--test", "--test-concurrency", "--test-name-pattern", "--test-reporter"],
+    "does_not_advertise": ["--experimental-test-isolation"]
+  },
+  "node22": {
+    "path": "/usr/local/bin/node",
+    "version_observed": "v22.22.0",
+    "supports": ["--import", "--test", "--test-concurrency", "--test-name-pattern", "--test-reporter", "--experimental-test-isolation=none"]
+  },
+  "tsx": {
+    "package_path": "/home/user/work/app/node_modules/tsx/package.json",
+    "version": "4.21.0",
+    "lockfile_integrity": "sha512-5C1sg4USs1lfG0GFb2RLXsdpXqBSEhAaA/0kPL01wxzpMqLILNxIxIOKiILz+cdg/pLnOUxFYOR5yhHU666wbw==",
+    "resolution_is_shared_readonly": true
+  },
+  "runtime_base": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+  "app_full_source_tree_unchanged": true
+}

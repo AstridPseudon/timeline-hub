@@ -1,0 +1,32 @@
+{
+  "warmup_recovery": {
+    "predicate": "generic warm-up reaches Try again; setup warm-up reaches Codex login; no extra session",
+    "test": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx:289",
+    "production": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+    "adaptation": "deterministic model-endpoint fixture failures now return 400 instead of 502, avoiding the transport retry ladder without changing production retry policy",
+    "result": "PASS (2/2)"
+  },
+  "legacy_menu_default": {
+    "predicate": "legacy AgentChatMenu default-model row uses curly-copy alias and starts through existing start path",
+    "test": "src/tools/video-editor/components/AgentChat/AgentChatMenu.test.tsx:349,654",
+    "production": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx:327-348",
+    "result": "PASS in focused run"
+  },
+  "upstream_new_chat_selection": {
+    "predicate": "NewChatMenu model/default selection records the next-chat choice and does not start immediately",
+    "test": "src/tools/video-editor/components/AgentChat/NewChatMenu.test.tsx:264-318,455-598",
+    "production": "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx:255-266",
+    "result": "PASS for selected predicates"
+  },
+  "upstream_new_chat_presentation": {
+    "predicate": "selector class/copy and per-model New chat button",
+    "test": "src/tools/video-editor/components/AgentChat/NewChatMenu.test.tsx:363-399",
+    "production": "src/tools/video-editor/components/AgentChat/NewChatModels.tsx",
+    "result": "BLOCKED by exact scope: three focused failures; source file not authorized"
+  },
+  "runtime_authority": {
+    "predicate": "mounted App outbox remains authoritative through Runtime commitTimeline with v2 request identity, idempotency, dry-run, source, rationale, merge, reads, and reply/result types",
+    "production": "src/integrations/runtime/dataProvider.ts:751-803; src/integrations/runtime/timeline-commit-types.ts:76-101",
+    "result": "unchanged source audit; no product-file edit"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "status": "BLOCKED_BY_AUTHORIZED_SCOPE",
+  "findings": [
+    {
+      "id": "D135-NEWCHATMODELS-SCOPE",
+      "severity": "hard",
+      "path": "src/tools/video-editor/components/AgentChat/NewChatModels.tsx",
+      "evidence": "upstream NewChatMenu tests still fail only on selector class/copy and per-model New chat button; the retained unified-menu component owns all three behaviors",
+      "required_decision": "authorize the NewChatModels source resolution or accept the three upstream presentation failures",
+      "worker_action": "did not edit the file or weaken any assertion"
+    },
+    {
+      "id": "D135-RUNTIME-PIN",
+      "severity": "deferred",
+      "path": "public/install-manifest.json",
+      "evidence": "manifest preserves Agent 070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2, Runtime ab1e4f6141987706132916e2da16477f5a019464, schema provenance, VibeComfy, and OMP; selected cuts remain pending because the planner refused the Runtime HEAD mismatch",
+      "worker_action": "did not fabricate pins or change producer/tool guard"
+    }
+  ],
+  "negative_scope_checks": [
+    "no git merge/fetch/checkout/commit",
+    "no Git mutation, push, credentials, kit, hub, refused route, TS executor, legacy writer, product redesign, M5, or D130 activity",
+    "no full/browser/e2e/build/ZIP/profile run"
+  ]
+}

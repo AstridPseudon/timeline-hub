@@ -1,0 +1,110 @@
+{
+  "rule": "Require exactly one Subtest and non-skipped ok event for each full intended title, summary pass=3 and fail=0. Header or file wrapper is not a named inner pass. Missing summary is not pass.",
+  "node20_service": {
+    "named_passes": [],
+    "subtest_events": [],
+    "skipped_titles": [],
+    "summary_counts": {},
+    "per_intended_title": [
+      {
+        "title": "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+        "subtest_event_count": 0,
+        "pass_count": 0,
+        "skipped": false
+      },
+      {
+        "title": "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+        "subtest_event_count": 0,
+        "pass_count": 0,
+        "skipped": false
+      },
+      {
+        "title": "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations",
+        "subtest_event_count": 0,
+        "pass_count": 0,
+        "skipped": false
+      }
+    ],
+    "missing_intended_titles": [
+      "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+      "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+      "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations"
+    ],
+    "acceptance": false
+  },
+  "node20_sandbox": {
+    "named_passes": [],
+    "subtest_events": [],
+    "skipped_titles": [],
+    "summary_counts": {},
+    "per_intended_title": [
+      {
+        "title": "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+        "subtest_event_count": 0,
+        "pass_count": 0,
+        "skipped": false
+      },
+      {
+        "title": "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+        "subtest_event_count": 0,
+        "pass_count": 0,
+        "skipped": false
+      },
+      {
+        "title": "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations",
+        "subtest_event_count": 0,
+        "pass_count": 0,
+        "skipped": false
+      }
+    ],
+    "missing_intended_titles": [
+      "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+      "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+      "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations"
+    ],
+    "acceptance": false
+  },
+  "node22_supplemental": {
+    "named_passes": [
+      "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+      "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+      "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations"
+    ],
+    "subtest_events": [
+      "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+      "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+      "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations"
+    ],
+    "skipped_titles": [],
+    "summary_counts": {
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "per_intended_title": [
+      {
+        "title": "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+        "subtest_event_count": 1,
+        "pass_count": 1,
+        "skipped": false
+      },
+      {
+        "title": "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+        "subtest_event_count": 1,
+        "pass_count": 1,
+        "skipped": false
+      },
+      {
+        "title": "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations",
+        "subtest_event_count": 1,
+        "pass_count": 1,
+        "skipped": false
+      }
+    ],
+    "missing_intended_titles": [],
+    "acceptance": true
+  }
+}

@@ -1,0 +1,7 @@
+Ask: consume exact D127c execution limit and current source owners; retain helper source for later normal home / Owner: App Sol loader2033, Luna menu2033 and managed14/16; Runtime D136a source2014 / By: next source pass
+
+Runtime61 and strictAppguard F001 source PASS retained; actual corrected full-title Node20 normal service11856 terminal timeout124, zero named events. Old regex matched zero; Node22 actual3 supplemental only. Sol app-D127c-Node20-loader-sol-2033 diagnoses interpreter/tsx/child-registration through supported bounded route, all repo source READ ONLY; no helper/sourcehome/body or relaxed controls. Exact safe report design/app-D127c-Node20-proof-sol-2021-node20-verdict.json. Last element body unspent, D130 absolute.
+
+D135 private e9041 has current upstream36e true parent, warmup2/types/lint PASS but3 upstream menu assertions still fail. Ordinary minimum NewChatModels source scope assigned Luna app-U3-D135-model-menu-return-2033; tests all read only; independent review after actual fixes. No normal cut/pin/ZIP claim.
+
+Agent2018 managed30 ready ask split and claimed before dispatch: source-only app-D134-managed14-2033 and managed16-2033, disjoint six files, no shared fixture/product/auth edits; originals/predicates exact, review before own nodes. Runtime actual rt-D136a-fps-regression-2014 is recorded as owner; source2007 independent PASS fed it, no fixture conversion or original9 retry. KEEP all32016/10721/3250/30318/30876/11856 verified.

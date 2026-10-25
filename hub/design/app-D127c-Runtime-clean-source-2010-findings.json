@@ -1,0 +1,14 @@
+{
+  "task": "D127c",
+  "status": "prepared",
+  "findings": [],
+  "decisions": [
+    "Used normal Runtime base e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9 because HEAD has the identical tree.",
+    "Copied only the two reviewed final blobs from 368f53f4454d5908c86de53d174f0bedcf23781c.",
+    "Did not address the separate App D127c coupled-review guard failure; it is outside this Runtime source-only task and remains held."
+  ],
+  "unverified": [
+    "No new pytest run by explicit task instruction; central request 30318 was reused.",
+    "No product/body/browser/full-suite/activation qualification."
+  ]
+}

@@ -1,0 +1,3 @@
+Ask: reserve two disjoint hosted managed30 slices; no duplicate authors / Owner: App app-D134-managed14-2033 and app-D134-managed16-2033 / By: 2026-10-25T20:43Z
+
+Consumed Agent2018. At fresh5.5GB/no heavy these two source-only Luna workers are assigned before dispatch. Managed14 owns video_unplace, auto_placement, placement_create_unplace; managed16 owns shared_auto_placement, shot_pool, occurrence_media. Exact six files only; all shared fixtures/product and Agent local media48/parent26 files read-only. Source-only faithful supported semantic caller migration, all original inputs/predicates exact; finite UNAPPLIED if impossible. No test body before independent review, no core/REG/behavior credit. D130 holds unchanged.

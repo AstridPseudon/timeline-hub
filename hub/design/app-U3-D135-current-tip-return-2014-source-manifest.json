@@ -1,0 +1,30 @@
+{
+  "task": "app-U3-D135-current-tip-return-2014",
+  "candidate": "002a82339c934d75894467032d788606257315fa",
+  "candidate_parents": [
+    "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "213318f1ec6ea5c324787bbd1c30a73072d1151a"
+  ],
+  "actual_upstream_tip": "36e1ef39c03c2c91a36fd964e3a2385a410bc06c",
+  "actual_upstream_verified_by": "merge-parent",
+  "manager_route": "manager merge-forward; harness owns final merge metadata and exact parent ancestry",
+  "manifest_pins": {
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "vibecomfy": "31f90bb03d330283b76e7dbdda51197be787090d",
+    "omp": "78f0e0960f471c2c62b943272a48c33366f239fe",
+    "selected_cut_heads": "PENDING; runtime HEAD mismatch remains a planner refusal"
+  },
+  "actual_upstream_files_applied_exactly": [
+    "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.test.tsx",
+    "src/shared/components/ToolbarPointer/ToolbarPointer.tsx"
+  ],
+  "authorized_source_files_touched_after_candidate": [
+    "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx"
+  ],
+  "outside_candidate_worktree_changes": "none beyond the five paths above; conflict markers absent",
+  "scope_limit": "NewChatModels.tsx was not changed; it is outside the exact seven-file authorization"
+}

@@ -1,0 +1,41 @@
+{
+  "task": "D127c-Node20-wholepath-2021",
+  "verdict": "FINITE_CAUSE_FOUND",
+  "qualification": "F002_UNQUALIFIED",
+  "cause": {
+    "id": "D127c-F002-title-pattern-filtering",
+    "status": "resolved_as_diagnosis_only",
+    "summary": "The failed Node20 selector anchors short prefixes with $, but the registered top-level test titles continue beyond those prefixes; zero intended nodes are therefore selected.",
+    "bad_pattern": "^(D127c source guard|D127c reviewed-profiler validator)$",
+    "bad_pattern_match_count": 0,
+    "registered_titles": [
+      "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+      "D127c reviewed-profiler validator enforces the exact safe cProfile projection"
+    ],
+    "claimed_sandbox_spawn_cause": "NOT_ESTABLISHED",
+    "node20_fork_inability": "NOT_ESTABLISHED",
+    "evidence_basis": [
+      "TypeScript AST parse of the exact committed App test blob found both registrations and zero parse diagnostics.",
+      "Regex evaluation against the exact registered title strings gives zero matches for the failed selector.",
+      "A prior Node20 control using the exact full profiler title passed 1 named node, showing the Node20+tsx route can register and run the intended control.",
+      "Node20 --help has --test-name-pattern, --test-reporter, and --import, but no --experimental-test-isolation option; Node22 exposes the isolation option."
+    ]
+  },
+  "source_guard": {
+    "status": "F001_SOURCE_FIXED",
+    "app_commit": "466c921f40fb9c08e50928df6dea27dfdfb45d15",
+    "app_equivalent_commit": "fd586440a626fc49a35a9dd0ac7e838d5fe55a4b",
+    "app_tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "runtime_commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "runtime_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "runtime_helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d"
+  },
+  "scope": {
+    "repo_source_modified": false,
+    "runtime_source_modified": false,
+    "tests_executed": false,
+    "prohibited_bodies_executed": false,
+    "git_writes": false,
+    "upstream_push": false
+  }
+}

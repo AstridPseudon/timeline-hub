@@ -1,0 +1,104 @@
+{
+  "app": {
+    "worktree": "/home/user/work/wt/app-D127c-Node20-proof-sol-2021",
+    "head_before_and_after": "fd586440a626fc49a35a9dd0ac7e838d5fe55a4b",
+    "tree_before_and_after": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "equivalent_final_commit": "466c921f40fb9c08e50928df6dea27dfdfb45d15",
+    "equivalent_final_tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "status_before_and_after": "clean",
+    "source": {
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+      "git_blob": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+      "size": 60923
+    },
+    "all_tracked_files_unchanged": true,
+    "untracked_files": [],
+    "outside_source_scope_unchanged": true,
+    "mounted_path_hashes": {
+      "src/tools/video-editor/components/ElementsLibraryPanel.tsx": "2f0c716bd77a5efb7fe18436bfdc1e46b8a85f16d0f562b3986cf67bb30e3f4c",
+      "src/tools/video-editor/hooks/useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+      "src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+      "src/integrations/runtime/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+      "src/tools/video-editor/commands/documentPatchIntent.ts": "732473c05b7709b8a4bb95160df3f40679caca9e7fe26384fe0a2ec4d80d08b6",
+      "src/tools/video-editor/commands/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230"
+    }
+  },
+  "runtime": {
+    "repository_read_only": "/home/user/banodoco/banodoco-workspace-runtime",
+    "source_commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "reviewed_equivalent_commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+    "helper": {
+      "path": "tests/helpers/p2_commit_phase_capture.py",
+      "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+      "git_blob": "2ae83f1bb8420f1b409165382711aaaeb485fb1f"
+    },
+    "qualification": "exact committed object verified; Runtime61 not rerun",
+    "service_runtime_environment": "/home/user/work/runtime is only a path input to these pure unit controls; they do not read or execute the Runtime helper. Its current helper is 4ee\u2026 and is not substituted for the committed 095c source proof."
+  },
+  "node20": {
+    "path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "realpath": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "version": "v20.19.4",
+    "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "service_observation": {
+      "version": "v20.19.4",
+      "execPath": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+      "env": {
+        "NODE_OPTIONS": "--use-openssl-ca",
+        "NODE_TEST_CONTEXT": null,
+        "NODE_PATH": "/usr/local/lib/node_modules_global",
+        "TSX_DISABLE_CACHE": "1",
+        "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/runtime",
+        "TMPDIR": null
+      }
+    }
+  },
+  "node22": {
+    "path": "/opt/node22/bin/node",
+    "version": "v22.22.0",
+    "qualification": "supplemental only"
+  },
+  "dependencies": {
+    "node_modules_realpath": "/home/user/work/app/node_modules",
+    "tsx_version": "4.21.0",
+    "shared_installs_written": false,
+    "TSX_DISABLE_CACHE": "1"
+  },
+  "service": {
+    "id": "app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856",
+    "status": "timeout",
+    "exit_code": 124,
+    "snapshot_tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "cache_hit": false,
+    "requests": 1
+  },
+  "registry": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "before_sha256": "90bf27689647f3cf0e97c6028b745a0f4f233ba1a8634ecff3b2959121973ba2",
+    "after_sha256": "e934b46aa9c6bc1d5d727d7f39c33adbd3b836f1b9ba4532939e7a09fb54d80a",
+    "exactly_one_row_appended": true,
+    "existing_bytes_unchanged": true,
+    "row_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-Node20-proof-sol-2021/evidence/named-suite-entry.txt"
+  },
+  "disk": {
+    "unit_run_threshold_bytes": 5000000000,
+    "execution_min_before_bytes": 5333868544,
+    "final_available_bytes": 5519310848,
+    "heavy_run": false,
+    "scratch_bytes": 1437834
+  },
+  "scope": {
+    "repo_source_modified": false,
+    "git_writes": false,
+    "old_artifacts_modified": false,
+    "full_bootstrap_browser_live_product_bodies_run": false,
+    "only_named_controls_requested": [
+      "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+      "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+      "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations"
+    ]
+  }
+}

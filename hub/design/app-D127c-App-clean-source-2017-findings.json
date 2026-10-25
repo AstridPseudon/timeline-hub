@@ -1,0 +1,15 @@
+{
+  "findings": [],
+  "decisions": [
+    {
+      "id": "D127c-clean-carrier",
+      "decision": "Copy only the exact reviewed source blob into the normal App base worktree.",
+      "reason": "The task requires a clean carrier while independent final review remains the authority for semantic/protected-source qualification."
+    }
+  ],
+  "qualification_boundary": {
+    "candidate_held_until_independent_review": true,
+    "runtime_modified": false,
+    "production_or_live_qualification_claimed": false
+  }
+}

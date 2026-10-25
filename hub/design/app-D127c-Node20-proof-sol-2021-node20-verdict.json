@@ -1,0 +1,36 @@
+{
+  "task": "app-D127c-Node20-proof-sol-2021",
+  "verdict": "BLOCKED_NOTPASS",
+  "F002": "UNQUALIFIED",
+  "prior_false_proof_correction": "Author2009 exit0 claims do not prove intended Node20 controls: old anchored prefix pattern matches zero actual registered titles. Review2013 environmental-causality statement was not proved by that malformed selection alone. Correct full-title selection still times out in the current sandbox and ordinary outside test service.",
+  "old_pattern_match_count": 0,
+  "selected_titles": [
+    "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+    "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+    "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations"
+  ],
+  "actual_node20_named_pass_count": 0,
+  "actual_node20_missing_intended_titles": [
+    "D127c source guard accepts every reviewed arm and rejects wrong hash or source",
+    "D127c reviewed-profiler validator enforces the exact safe cProfile projection",
+    "D127 reviewed-new validator rejects field, lifecycle, phase, truncation, and safety mutations"
+  ],
+  "actual_node20_summary_counts": {},
+  "node20_version": "v20.19.4",
+  "node20_binary": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+  "service_id": "app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856",
+  "service_status": "timeout",
+  "service_exit_code": 124,
+  "service_seconds": 48,
+  "sandbox_node20_exit_code": 124,
+  "sandbox_fork_probe": "spawnSync process.execPath returned error EPERM, status0, no child stdout; no child interpreter success credited",
+  "outside_service_cause": "UNRESOLVED; TAP header only does not establish why intended tests did not register or finish",
+  "node22_named_pass_count": 3,
+  "node22_substitution_for_node20": false,
+  "source_sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+  "tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+  "source_unchanged": true,
+  "qualification": "No execution-qualified packet; independent quick closure2013 must remain held. F001 source conclusion retained, no new source defect established.",
+  "next_step": "Manager should assign a bounded supported-Node20 interpreter/loader/child-registration diagnosis on the ordinary service. Retain this terminal request; do not resubmit unchanged or start bootstrap/full/live bodies.",
+  "prohibited_bodies_run": false
+}

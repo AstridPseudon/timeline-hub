@@ -1,0 +1,22 @@
+{
+  "candidate_head": "002a82339c934d75894467032d788606257315fa",
+  "candidate_parents": [
+    "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "213318f1ec6ea5c324787bbd1c30a73072d1151a"
+  ],
+  "actual_upstream_parent_to_record": "36e1ef39c03c2c91a36fd964e3a2385a410bc06c",
+  "route": "manager normal merge-forward; harness --merge-parent records actual upstream tip",
+  "worker_constraints_observed": [
+    "no merge/fetch/checkout/direct commit",
+    "hidden MERGE_HEAD was not treated as a blocker",
+    "actual 36e pointer/panel changes applied exactly",
+    "final two-parent ancestry remains harness-owned"
+  ],
+  "working_tree_delta": [
+    "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.test.tsx",
+    "src/shared/components/ToolbarPointer/ToolbarPointer.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx"
+  ]
+}
