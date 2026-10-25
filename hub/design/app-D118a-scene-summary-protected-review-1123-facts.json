@@ -1,0 +1,38 @@
+{
+  "review": "D118a protected independent source review",
+  "disposition": "PASS_SOURCE",
+  "functional_go": false,
+  "head": "528ec4f219b67771e8cdfc3afdc6a6611add0149",
+  "parent": "36e44e1c0ed9b454faaf973715a2be7119552d0a",
+  "allowed_file": "tests/sdk/test_scene_real_public_summary_rle.py",
+  "current_sha256": "d688735227bee66f38c420f23abd3c5457c8d6471919a2c96f754708509802c0",
+  "parent_sha256": "b53c2c4bc53789dd4667b99c4219ec28c4cd9ce850d638f298dfa88d48ad9e8d",
+  "pristine_agent": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+  "pristine_path_check": "absent: git cat-file -e <pristine>:tests/sdk/test_scene_real_public_summary_rle.py exits 128",
+  "diff": "one added statement: monkeypatch.delenv(\"PYTHONNOUSERSITE\", raising=False)",
+  "causal_source": {
+    "host_frames_at": "astrid/core/rendering/scene_answers.py:99-118",
+    "strict_caller": "astrid/core/rendering/scene_answers.py:54-96; _query calls probe_context at line 76",
+    "validator": "astrid/core/rendering/remotion_runtime.py:214-236; PYTHONNOUSERSITE is in _UNSUPPORTED_PYTHON_STARTUP and raises RemotionValidationError",
+    "summary_path": "tests/sdk helper -> astrid/sdk/timeline_filmstrip.py:_scene_only_spans -> astrid/sdk/_timeline_filmstrip_scene.py:299 -> astrid/sdk/timeline/check.py:232 _scene_problems"
+  },
+  "conservation": {
+    "ast": "PASS: removing exactly the added delenv statement makes current AST equal HEAD^ AST",
+    "inputs_and_assertions": "PASS: real host_frames_at inputs, all frame counts/ranges/classes/content/clips/fade/summary assertions, and opaque authored values unchanged",
+    "fixture_order": "PASS: native_host setup completes before the test body; the test-scoped monkeypatch is applied before the first host_frames_at call",
+    "isolation": "PASS: no production, fixture, conftest, renderer, generated, schema, or other-test edits"
+  },
+  "checks": {
+    "ruff": "PASS: /home/user/work/venv-agent/bin/ruff check tests/sdk/test_scene_real_public_summary_rle.py",
+    "mypy": "PASS: /home/user/work/venv-agent/bin/mypy --follow-imports=skip tests/sdk/test_scene_real_public_summary_rle.py",
+    "py_compile": "PASS: PYTHONPYCACHEPREFIX=$TMPDIR/pycache /home/user/work/venv-agent/bin/python -m py_compile tests/sdk/test_scene_real_public_summary_rle.py",
+    "diff_check": "PASS: git diff --check HEAD^ HEAD -- tests/sdk/test_scene_real_public_summary_rle.py",
+    "causal_probe": "PASS: direct probe_context source probe rejects PYTHONNOUSERSITE and admits clean environment"
+  },
+  "target_test": {
+    "nodeid": "tests/sdk/test_scene_real_public_summary_rle.py::test_real_public_scene_answers_reach_rle_summary",
+    "status": "NOT RUN",
+    "reason": "D120 receipt gate not met: ASTRID_NODE_EXECUTABLE, ASTRID_REMOTION_PROJECT_DIR, and ASTRID_TEST_NODE_MODULES are unset; local remotion/node_modules and receipt-backed current profile are absent. No install/acquisition/near-match/bypass attempted."
+  },
+  "review_scope": "No product/source fix made; D117 OMP route untouched; no full/family/browser/render/P2/P4 run."
+}
