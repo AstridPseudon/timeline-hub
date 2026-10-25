@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "task": "rt-U1-D135-source-review-2000",
+  "source": {
+    "commit": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+    "tree": "73d92563277d2ba5e49b788924c07426a2fdec4a",
+    "runtime_parent": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "runtime_parent_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "upstream_parent": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "upstream_parent_tree": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210",
+    "merge_base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad"
+  },
+  "merge": {
+    "incoming_path_count": 29,
+    "overlap_count": 10,
+    "upstream_only_count": 19,
+    "upstream_only_byte_exact": true,
+    "working_tree_clean": true,
+    "conflict_markers": false,
+    "paths": [
+      ".github/workflows/ci.yml",
+      "astrid_runtime/bootstrap.py",
+      "astrid_runtime/cli.py",
+      "astrid_runtime/custody_broker.py",
+      "astrid_runtime/paths.py",
+      "astrid_runtime/workspace.py",
+      "docs/runtime-portability-testing.md",
+      "runtime_protocol/daemon.py",
+      "runtime_protocol/dirfd.py",
+      "runtime_protocol/door.py",
+      "runtime_protocol/platform.py",
+      "runtime_protocol/process_control.py",
+      "runtime_protocol/server.py",
+      "runtime_protocol/service.py",
+      "runtime_protocol/services.py",
+      "tests/conftest.py",
+      "tests/lanes.py",
+      "tests/process_groups.py",
+      "tests/seccomp/README.md",
+      "tests/seccomp/openshell-like.json",
+      "tests/seccomp/run-suite.sh",
+      "tests/test_data_root.py",
+      "tests/test_dirfd_ancestor_walk.py",
+      "tests/test_door_chat.py",
+      "tests/test_door_routes.py",
+      "tests/test_managed_output_public_api.py",
+      "tests/test_native_custody.py",
+      "tests/test_platform_signaling.py",
+      "tests/test_process_control.py"
+    ]
+  },
+  "protected_source_families": {
+    "startup_and_provider": ["runtime_protocol/daemon.py", "runtime_protocol/process_control.py"],
+    "door_and_auth": ["runtime_protocol/door.py", "runtime_protocol/server.py"],
+    "process_identity": ["runtime_protocol/platform.py", "runtime_protocol/dirfd.py"],
+    "output_identity": ["runtime_protocol/service.py"],
+    "r2_auth_store_exact": ["runtime_protocol/timeline_commit.py", "runtime_protocol/timeline_commit_execution.py", "runtime_protocol/timeline_commit_provider.py", "runtime_protocol/timeline_commit_validation.py", "runtime_protocol/store.py", "runtime_protocol/auth.py"]
+  },
+  "canonical_15": {
+    "status": "PASS",
+    "comparison": "HEAD exact to runtime parent e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  }
+}

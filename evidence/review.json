@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task": "rt-U1-D135-source-review-2000",
+  "verdict": "SOURCE_SECURITY_PASS",
+  "source_commit": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+  "source_tree": "73d92563277d2ba5e49b788924c07426a2fdec4a",
+  "parents": {
+    "runtime_base": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "upstream": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "merge_base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad"
+  },
+  "source_checks": {
+    "two_parent_merge": "PASS",
+    "incoming_path_count": 29,
+    "incoming_path_union": "PASS",
+    "upstream_only_paths_byte_exact": "PASS",
+    "conflict_markers": "NONE",
+    "protected_r2_auth_store_bytes_exact_to_runtime_base": "PASS",
+    "canonical_15_exact_to_runtime_base": "PASS",
+    "schema_generator_check": "PASS",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "artifact_manifest": "80/80 hashes PASS",
+    "py_compile": "PASS, 24 changed Python files",
+    "ast_parse": "PASS, 24 changed Python files",
+    "route_auth_matrix": "PASS, 16 route cases plus 3 canonical-path refusals",
+    "diff_check": "PASS",
+    "lint_parent_provenance": "PASS, no diagnostics attributable to this join beyond upstream parent content"
+  },
+  "security_review": {
+    "startup_configure_probe_announce_before_provider": "PASS",
+    "strict_pidfd_and_sandbox_member_walk_policy": "PASS",
+    "door_reserved_routes_methods_scopes_and_api_key_route": "PASS",
+    "c0_public_envelopes_redaction_idempotency_and_legacy_guards": "PASS, unchanged protected sources plus stderr-only traceback logging",
+    "managed_output_filename_vs_logical_port_identity": "PASS",
+    "test_weakening_or_invisible_skip": "NONE_FOUND"
+  },
+  "targeted_result": {
+    "request": "rt-U1-D135-private-join-1952-targeted-1025195923-1341",
+    "status": "ENVIRONMENT_BLOCKED",
+    "result": "1491 passed, 80 errors in 40.01s",
+    "error": "ASTRID_CHECKOUT unavailable at /home/user/work/wt/astrid",
+    "source_failure_attribution": "none established"
+  },
+  "limitations": [
+    "Local pytest was not run because free space was 4,871,896 KiB, below the required fresh 5 GiB threshold.",
+    "Pyright has no repository configuration here; an ad hoc changed-file run reported the existing broad baseline and was not used as a clean-suite claim.",
+    "No full suite, live socket, browser, production-store, build, or integration merge was run."
+  ],
+  "findings": []
+}

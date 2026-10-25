@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "status": "source_review_pass_targeted_environment_blocked",
+  "source_verdict": "PASS",
+  "targeted_result": {
+    "status": "environment_blocked",
+    "passed": 1491,
+    "errors": 80,
+    "duration_seconds": 40.01,
+    "cause": "ASTRID_CHECKOUT unavailable at /home/user/work/wt/astrid"
+  },
+  "preserved_predicates": {
+    "tests/test_process_control.py": [
+      "strict default and setting validation",
+      "fixed process mode",
+      "ENOSYS-only sandbox PID fallback with identity check",
+      "member walk refuses own group and signals leader last",
+      "live probe and doctor reporting"
+    ],
+    "tests/test_platform_signaling.py": [
+      "real pidfd tests are marked needs_real_pidfd",
+      "strict pidfd wrapper and identity refusal behavior remains"
+    ],
+    "tests/test_door_routes.py": [
+      "project selection PUT is admitted",
+      "wrong methods are refused",
+      "exact reserved paths cannot fall through to parameterized IDs",
+      "existing commit/history/auth route coverage remains"
+    ],
+    "tests/test_managed_output_public_api.py": [
+      "settled object uses output filename rather than output port",
+      "logical output-port behavior remains"
+    ],
+    "tests/test_timeline_commit_contract.py": [
+      "C0 request/reply wire shapes, accepted/merged, preview and idempotency headers remain"
+    ],
+    "tests/test_timeline_legacy_authority.py": [
+      "legacy writer refusals, 410/refusal guards, history protection and no-write behavior remain"
+    ],
+    "incoming_upstream_families": [
+      "O_PATH ancestor walk",
+      "sandbox process-control fixtures and declarations",
+      "Windows and worker-handoff CI lanes",
+      "daemon startup process-control configure/probe/announce",
+      "door route reservation and project selection",
+      "managed-output filename identity"
+    ]
+  },
+  "no_test_weakening": true,
+  "no_invisible_skips": true,
+  "local_pytest": "not run below 5 GiB free-space threshold",
+  "recommended_next_step": "rerun the exact six-file targeted suite with a valid ASTRID_CHECKOUT"
+}
