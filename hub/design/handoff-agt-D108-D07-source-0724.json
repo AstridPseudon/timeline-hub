@@ -1,0 +1,164 @@
+{
+  "task": "F-D108 D69 D07 exact predicate source disposition",
+  "mode": "source-only",
+  "base": {
+    "ref": "tl/integration",
+    "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "captured_root": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "source_rehearsal_old_tree": "c456b3281497653cecf44f61acd6fa30565d83c8"
+  },
+  "path_correction": {
+    "requested_path": "tests/timeline/test_inverses.py",
+    "requested_path_present_at_base": false,
+    "actual_d07_path": "tests/test_timeline_editing_helpers.py",
+    "old_source_rehearsal_file_blob": "6a483b5aa36d53d853d882cd3782c8517db4d476",
+    "current_captured_file_blob": "0bd2bf1bf9688ab05acb84a39192672c65d976e6",
+    "reason": "tests/timeline/test_inverses.py is a separate D05 deletion; the D07 exact bodies are the three selectors in tests/test_timeline_editing_helpers.py"
+  },
+  "approval": {
+    "specific_review": "agent-review-d07-current.md:18-37",
+    "ledger": "deletion-ledger.agent.md:53",
+    "crosswalk_verdict": "RESTORE_NEEDED_APPROVAL_GAP",
+    "rule": "The D07 interface retirement does not override the specific current review; no row is cleared by broad retirement or operator counts."
+  },
+  "rows": [
+    {
+      "id": "D07-1",
+      "old_selector": "tests/test_timeline_editing_helpers.py::test_ripple_is_track_scoped_and_never_moves_audio",
+      "old_source": {
+        "tree": "c456b328",
+        "lines": "93-111",
+        "file_blob": "6a483b5aa36d53d853d882cd3782c8517db4d476",
+        "body_sha256": "2fa51658762c0efbbb6ba9384067d293729c7ec5abd779f1a4a425eb6c1435d3"
+      },
+      "old_predicate": "Visual first [0,1) grows to [0,1.5); later same-track visual moves to 1.5 while retaining source [0,1); unrelated audio remains (at,from,to)=(0,0,2); parent extends 2 to 2.5; audio-target ripple and parent_duration=preserve are refused with the named errors.",
+      "current_mappings": [
+        {
+          "selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_replaces_track_ripple_and_compiles_parent_extension",
+          "source_lines": "97-130",
+          "file_blob": "62384aad61494c67a614ad1a7122fee4119e0829",
+          "body_sha256": "f00b333665e159afc1bfa17f500e16343b39b15465d37b533834bd267517014c",
+          "predicate": "Current capture_clip_trim + capture_move + execute proves visual playback [0,1.5) and [1.5,2.5), later source [8,9), audio [0,2), and compiled parent duration 2.5; it lacks the old literal first source tuple, inverse/no-write, and retired-policy refusals.",
+          "approval": "D07 ledger lists this as the replacement, but agent-review-d07-current:18-37 and the D108 crosswalk keep the exact row as RESTORE_NEEDED_APPROVAL_GAP."
+        },
+        {
+          "selector": "tests/packs/timeline/test_cli_edit_flags.py::test_insert_time_moves_everything_after_it_later",
+          "source_lines": "356-361",
+          "file_blob": "81ff077be92f6de6bc012bd607e18f7044030ce1",
+          "body_sha256": "3a01d8932dcdcc2ac6052e5570b8001dde0b5df0fe58de02048dab0ef4a3c833",
+          "predicate": "Only global insertion moves a later clip and extends duration; no track/audio/window/inverse equivalence.",
+          "approval": "D07 specific review cited by D108 crosswalk; partial only."
+        },
+        {
+          "selector": "tests/sdk/test_timeline_checkout.py::test_close_gap_before_a_word_ripples_everything_after",
+          "source_lines": "211-218",
+          "file_blob": "75a9fae98485d8b0e71261039664c4bdcaf9f7a5",
+          "body_sha256": "65299912c5edaea637439dd84fcebf02d37867893ab2e0c6ed62c3c690a1da84",
+          "predicate": "Only close-gap later word/clip timing is asserted; no track/audio/window/parent extension/inverse equivalence.",
+          "approval": "D07 specific review cited by D108 crosswalk; partial only."
+        }
+      ],
+      "disposition": "live_missing_coverage plus approved_interface_retirement",
+      "proposal": "Extend the existing native grouped test only in tests/editing_conformance/test_recipe_m2_clip_trim.py using capture_clip_trim, capture_move, execute, document_from_bundle, timeline_duration_seconds and the existing inverse helper. Assert the old literal tuples and exact 2.5 duration, then inverse/redo and unchanged audio. Do not add a ripple flag or revive retime_with_ripple; retain its audio-target and parent-preserve calls as retired-interface ledger facts unless an already registered command has exact refusal semantics."
+    },
+    {
+      "id": "D07-2",
+      "old_selector": "tests/test_timeline_editing_helpers.py::test_canonical_source_trim_speed_move_and_retime_intervals",
+      "old_source": {
+        "tree": "c456b328",
+        "lines": "114-131",
+        "file_blob": "6a483b5aa36d53d853d882cd3782c8517db4d476",
+        "body_sha256": "7c2a1ce6e8a400421422a6cd93aef8b8c06cee1f501c96213516af64690b3f74"
+      },
+      "old_predicate": "Speed-2 clip at 4 with source [2,4], canonical fields and no helper aliases, quantized frames (120,150), inconsistent placement refusal, move to 10 preserving window, start move to 20 preserving window, endpoint 21.5 changing source to 5 with speed 2.",
+      "current_mappings": [
+        {
+          "selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_trim_hold_is_source_time_and_playback_duration_applies_speed",
+          "source_lines": "84-94",
+          "file_blob": "62384aad61494c67a614ad1a7122fee4119e0829",
+          "body_sha256": "832c3327ca00455eba181f14a8e124a27beea008e514a64312fe641d449e16ae",
+          "predicate": "Current clip.trim source hold and speed/playback duration; no combined move or endpoint-length proof.",
+          "approval": "D07 specific review cited by D108 crosswalk; partial only."
+        },
+        {
+          "selector": "tests/editing_conformance/test_recipe_m1_commands.py::test_trimmed_positive_speed_nonzero_occurrence_and_sibling_isolation",
+          "source_lines": "147-162",
+          "file_blob": "e70ad97b413c224d5471c065237ec9ca8f52254a",
+          "body_sha256": "796c81e844ab0401a1ebe98a2020beb3d5ab31442e9fe465e4e2142072477078",
+          "predicate": "Current occurrence clip.move preserves source [2,6], speed 2, sibling isolation and inverse; it is not the old combined parent endpoint sequence.",
+          "approval": "D07 specific review cited by D108 crosswalk; partial only."
+        },
+        {
+          "selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_rational_fps_source_contact_and_half_open_intervals_are_not_requantized",
+          "source_lines": "165-178",
+          "file_blob": "62384aad61494c67a614ad1a7122fee4119e0829",
+          "body_sha256": "f3d8eea47e045f192284dff4fe8c70b87bf39fed877433040839a68cc284b7ac",
+          "predicate": "Current rational-FPS source contact, half-open frame boundary, duration and no-unwanted-output-read proof; no move/endpoint combination.",
+          "approval": "D07 specific review cited by D108 crosswalk; partial only."
+        },
+        {
+          "selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_replaces_track_ripple_and_compiles_parent_extension",
+          "source_lines": "97-130",
+          "file_blob": "62384aad61494c67a614ad1a7122fee4119e0829",
+          "body_sha256": "f00b333665e159afc1bfa17f500e16343b39b15465d37b533834bd267517014c",
+          "predicate": "Current grouped trim endpoint change plus move; speed is 1, frame quantization and exact inverse are absent.",
+          "approval": "D07 ledger candidate only; current D07 review/crosswalk does not approve one-to-one equivalence."
+        }
+      ],
+      "disposition": "live_missing_coverage plus approved_interface_retirement",
+      "proposal": "Add one current-API conformance case beside the existing trim cases in tests/editing_conformance/test_recipe_m2_clip_trim.py. Use bundle, capture_move, capture_clip_trim and execute for the exact speed-2 sequence; assert source/window/speed after each command, frames (120,150), inverse/redo equality, and atomic no-write on the existing invalid-trim path. Do not add a replacement retime API or alter the command contract."
+    },
+    {
+      "id": "D07-3",
+      "old_selector": "tests/test_timeline_editing_helpers.py::test_ripple_shifts_canonical_intervals_without_touching_audio",
+      "old_source": {
+        "tree": "c456b328",
+        "lines": "145-155",
+        "file_blob": "6a483b5aa36d53d853d882cd3782c8517db4d476",
+        "body_sha256": "b825f19f314baa5561afdac2f82c6bab8577d0fecd4543cbaa2818775271a2b0"
+      },
+      "old_predicate": "First visual grows to 1.5; later visual shifts to at 1.5 while retaining literal source [8,9]; unrelated audio remains byte-for-byte unchanged.",
+      "current_mappings": [
+        {
+          "selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_replaces_track_ripple_and_compiles_parent_extension",
+          "source_lines": "97-130",
+          "file_blob": "62384aad61494c67a614ad1a7122fee4119e0829",
+          "body_sha256": "f00b333665e159afc1bfa17f500e16343b39b15465d37b533834bd267517014c",
+          "predicate": "Exact current positive later source [8,9], audio [0,2], visual playback [0,1.5)/[1.5,2.5), and parent 2.5; no inverse/no-write assertion.",
+          "approval": "D07 ledger lists the candidate; specific D07 review and D108 crosswalk retain this row as an approval gap."
+        },
+        {
+          "selector": "tests/sdk/test_timeline_media_verbs.py::test_trim_slip_and_move_keep_the_window_equal_to_the_hold",
+          "source_lines": "152-159",
+          "file_blob": "3cf3ea92225113204835ba6a74f796aed0eadbaf",
+          "body_sha256": "3cd35f2ab38f5daa40f4101401dc45bcddbd6fd54c937d97d8ded733c9c1e1b5",
+          "predicate": "Single-clip window/hold invariant through trim, slip and nudge; no ripple/audio isolation.",
+          "approval": "D07 specific review cited by D108 crosswalk; partial only."
+        },
+        {
+          "selector": "tests/editing_conformance/test_recipe_m1_commands.py::test_trimmed_positive_speed_nonzero_occurrence_and_sibling_isolation",
+          "source_lines": "147-162",
+          "file_blob": "e70ad97b413c224d5471c065237ec9ca8f52254a",
+          "body_sha256": "796c81e844ab0401a1ebe98a2020beb3d5ab31442e9fe465e4e2142072477078",
+          "predicate": "Sibling/source-window/inverse coverage without unrelated audio or grouped parent extension.",
+          "approval": "D07 specific review cited by D108 crosswalk; partial only."
+        }
+      ],
+      "disposition": "approval_gap",
+      "proposal": "Review the existing grouped native test in tests/editing_conformance/test_recipe_m2_clip_trim.py against this selector, extending only if the protected review requires the old literal first/source tuple and exact inverse/no-write check. Record approval for this selector separately; do not clear D07-1 or D07-2 by aggregate counts and do not invent a ripple command."
+    }
+  ],
+  "retired_interface": {
+    "status": "approved_interface_retirement",
+    "apis": ["retime", "retime_with_ripple", "old place_media/move/retime recipe path"],
+    "approval": "deletion-ledger.agent.md:53",
+    "constraint": "No revived writer, alias, new contract, auth/history/pin behavior, or arbitrary scope."
+  },
+  "static_checks": {
+    "ast_parse_and_in_memory_compile": "PASS",
+    "json_parse": "PASS",
+    "unique_old_selector_mapping": "PASS; 3 unique old selectors",
+    "git_diff_check": "PASS",
+    "runtime_tests": "NOT RUN; source-only task"
+  }
+}

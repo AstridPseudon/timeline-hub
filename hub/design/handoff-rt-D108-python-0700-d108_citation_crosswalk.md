@@ -7,10 +7,10 @@ Git-object reads and Python AST parsing only; no imports, tests, builds, renders
 
 | scope | mechanical missing | raw AST missing | excluded raw selectors | cited rows | verdict |
 |---|---:|---:|---:|---:|---|
-| Agent | 104 declared | 105 | 2 | 103 | 1 declared-map delta is unidentified; 3 D07 gaps and 5 viewer retirements are individually classified |
+| Agent | 104 declared | 105 | 2 reviewed (1 approved scope exclusion, 1 required gap) | 103 | D18 is excluded by approved scope; the Windows registration selector remains an explicit required F-final gap |
 | Runtime | 10 | 10 | 0 | 10 | 10 reconciled by exact relevant file/function equivalence and ledger decisions |
 
-The raw Agent walk finds 105 selectors. The durable audit declares 104, while its family table accounts for only 103 selectors after the two explicit raw exclusions below. The remaining one-selector delta is not guessed or silently cleared; the exact raw selector is listed below as an accounting discrepancy.
+The raw Agent walk finds 105 selectors. The durable audit declares 104 because the approved D18 scope exclusion is outside this census. The family table reconstructs 103: it also omits the Windows registration selector, which is not retired or approved for exclusion. This is an exact set difference, not subtraction by family counts.
 
 ## Crosswalk table
 
@@ -136,8 +136,23 @@ Columns: old selector; applied replacement or approved retirement; old/captured 
 
 | selector | reason/disposition | upstream blob | captured status |
 |---|---|---|---|
-| `tests/core/execution/test_generic_host_child_bridge_d18.py::test_output_above_persisted_retention_budget_is_refused_before_any_read` | Existing mechanical map excludes unrelated D18 scope; no D108 citation verdict assigned. | `9ac7292e50831c29002a94d2d13be48a7c4780f7` | modified, captured `4f3da5e83c4413c9a44a7d1a2329032a44f7de10` |
-| `tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string` | This Windows-only installer selector is the unidentified one-selector delta between the declared 104 and reconstructed 103; no approval is guessed. | `ef1b2ca9d7b95056826baf1323394dbf15f2a913` | modified, captured `be0dc5e501f2b75f4e1d63596e2b0304a8a997bc` |
+| `tests/core/execution/test_generic_host_child_bridge_d18.py::test_output_above_persisted_retention_budget_is_refused_before_any_read` | Approved D18 scope exclusion. The fresh upstream selector is present in raw AST, but D18 is a separate harness/safety decision; this is not guessed retirement. Captured current selector is `tests/core/execution/test_generic_host_child_bridge_d18.py::test_materialization_rejects_above_persisted_retention_budget_before_reread`; its predicate is not exact-equivalent (it first reads the descriptor, then refuses reread). | `9ac7292e50831c29002a94d2d13be48a7c4780f7`<br>fresh body `a591a4fa5540daeac8df031f4b16ddb16d1fd2513798fdd3eef18d224efc9848`<br>captured current body `5cb6e6811fab503b754cffc9a92689f90df08317aaec55659bf60b588f841485` | approved scope: `design/peer-runtime-to-agent-20261023T1041-D18-invocation-unblock.md`; `design/agent-F-D18-supported-invocation-1045.md`; `design/agent-F-D18-node-return-1049.md`<br>captured file `4f3da5e83c4413c9a44a7d1a2329032a44f7de10` | APPROVED_SCOPE_EXCLUSION_D18 |
+| `tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string` | Fresh upstream adds a real Windows Task Scheduler XML boundary test. No approved retirement, source-only equivalence, or exclusion exists. It remains required for F-final; source-only work does not execute or reproduce the Windows body. | `ef1b2ca9d7b95056826baf1323394dbf15f2a913`<br>fresh body `deb4ceb835cb0cfcc3ad596214293b7cdc68356cf35d5e4c2cf2b63a1f52797d`<br>captured file `be0dc5e501f2b75f4e1d63596e2b0304a8a997bc` | installer decisions retain the installer integrity scope and do not retire this test: `design/rt-D72-installer-review-1722.md`; `design/peer-runtime-to-agent-20261024T1750Z-installer-reviewed-D77.md` | UNRESOLVED_REQUIRED_F_FINAL |
+
+The sibling Windows cleanup set is also required and is present in both trees:
+`tests/test_installer_windows_tasks.py::test_task_cleanup_preserves_powershell_success_and_failure`, full function hash `277c9825fd2c69ee415d6f16650ac92a4037472792fcd954feb978f35c239120` (captured and fresh file context). The two Windows selectors must not be collapsed into one source row.
+
+## Exact census reconciliation
+
+Selector sets were computed from git objects only: `fresh = selectors(08e6b905114a3ee2b05c3e7980421f26b4abf15c) - selectors(d6294843286c18e57af3c1874cf1996be42212d2)`, where selectors are top-level or class-member Python functions whose name starts with `test`; helper methods are not selectors. The JSON `agent` rows equal `raw - {D18, Windows}` exactly.
+
+| set | exact operation | count | SHA-256 of sorted selector lines plus final newline |
+|---|---|---:|---|
+| raw AST missing | fresh upstream minus captured d629 | 105 | `99a03feaf7d0343ad08837609df17bdd19b0af88ce671ef50bd4fb85b63c0714` |
+| declared durable census | raw minus approved D18 scope exclusion | 104 | `468170f22ffa162ad5543ff70f9c72aecb084b4f8f54cc9dbc1d5fc6bd40f912` |
+| reconstructed family rows | raw minus D18 minus Windows registration | 103 | `235833c98214b57d7255cb422e1d0340d9d0b386e679cb475e86449428fcf310` |
+
+Thus `105 - 1 approved D18 exclusion = 104 declared`, and `104 - 1 Windows registration omission = 103 reconstructed`. The latter is unresolved, not a retirement. No durable source corruption is proven: the durable source blobs are readable and hash-stable; the proven error is the one-row reconciliation/accounting gap. Both Windows selectors remain F-final requirements, and no Windows body was run or generated in this source-only pass.
 
 ## Changed-assertion signals
 

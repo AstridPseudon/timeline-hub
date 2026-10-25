@@ -1,4 +1,88 @@
 {
+  "d108_census_reconciliation": {
+    "method": "git-object-only AST selector identity: fresh upstream minus captured d629; top-level or class-member Python functions whose name starts with test; helper methods excluded",
+    "captured_agent": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "fresh_upstream_agent": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "sets": {
+      "raw_ast_missing": {
+        "count": 105,
+        "sha256_sorted_selector_lines": "99a03feaf7d0343ad08837609df17bdd19b0af88ce671ef50bd4fb85b63c0714"
+      },
+      "declared_durable_census": {
+        "operation": "raw_ast_missing - {approved D18 scope exclusion}",
+        "count": 104,
+        "sha256_sorted_selector_lines": "468170f22ffa162ad5543ff70f9c72aecb084b4f8f54cc9dbc1d5fc6bd40f912"
+      },
+      "reconstructed_family_rows": {
+        "operation": "raw_ast_missing - {D18 scope exclusion, Windows registration selector}",
+        "count": 103,
+        "sha256_sorted_selector_lines": "235833c98214b57d7255cb422e1d0340d9d0b386e679cb475e86449428fcf310"
+      },
+      "identity_check": {
+        "json_agent_rows_equal_reconstructed": true,
+        "json_agent_row_count": 103,
+        "declared_minus_reconstructed": [
+          "tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string"
+        ]
+      }
+    },
+    "discrepancies": [
+      {
+        "selector": "tests/core/execution/test_generic_host_child_bridge_d18.py::test_output_above_persisted_retention_budget_is_refused_before_any_read",
+        "raw_membership": true,
+        "declared_membership": false,
+        "reconstructed_membership": false,
+        "disposition": "APPROVED_SCOPE_EXCLUSION_D18_NOT_RETIREMENT",
+        "fresh_upstream_file_blob": "9ac7292e50831c29002a94d2d13be48a7c4780f7",
+        "fresh_upstream_function_sha256": "a591a4fa5540daeac8df031f4b16ddb16d1fd2513798fdd3eef18d224efc9848",
+        "captured_file_blob": "4f3da5e83c4413c9a44a7d1a2329032a44f7de10",
+        "captured_current_selector": "tests/core/execution/test_generic_host_child_bridge_d18.py::test_materialization_rejects_above_persisted_retention_budget_before_reread",
+        "captured_current_function_sha256": "5cb6e6811fab503b754cffc9a92689f90df08317aaec55659bf60b588f841485",
+        "predicate_comparison": "not exact-equivalent: fresh selector refuses at identity dispatch before get_object; captured current selector first reads the descriptor, then refuses materialization reread",
+        "decision_sources": [
+          "design/peer-runtime-to-agent-20261023T1041-D18-invocation-unblock.md",
+          "design/agent-F-D18-supported-invocation-1045.md",
+          "design/agent-F-D18-node-return-1049.md"
+        ]
+      },
+      {
+        "selector": "tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string",
+        "raw_membership": true,
+        "declared_membership": true,
+        "reconstructed_membership": false,
+        "disposition": "UNRESOLVED_REQUIRED_F_FINAL",
+        "fresh_upstream_file_blob": "ef1b2ca9d7b95056826baf1323394dbf15f2a913",
+        "fresh_upstream_function_sha256": "deb4ceb835cb0cfcc3ad596214293b7cdc68356cf35d5e4c2cf2b63a1f52797d",
+        "captured_file_blob": "be0dc5e501f2b75f4e1d63596e2b0304a8a997bc",
+        "captured_current_selector": null,
+        "captured_current_function_sha256": null,
+        "predicate": "Windows-only rendered UTF-8 Task XML to PowerShell to Task Scheduler registration boundary; checks inert registration, XML spelling, query, and cleanup",
+        "windows_body_run": false,
+        "decision_sources_checked": [
+          "design/rt-D72-installer-review-1722.md",
+          "design/peer-runtime-to-agent-20261024T1750Z-installer-reviewed-D77.md"
+        ],
+        "approved_exclusion": false,
+        "durable_source_corruption_proven": false
+      }
+    ],
+    "required_windows_selectors": [
+      {
+        "selector": "tests/test_installer_windows_tasks.py::test_task_cleanup_preserves_powershell_success_and_failure",
+        "captured_and_fresh_function_sha256": "277c9825fd2c69ee415d6f16650ac92a4037472792fcd954feb978f35c239120"
+      },
+      {
+        "selector": "tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string",
+        "fresh_only_function_sha256": "deb4ceb835cb0cfcc3ad596214293b7cdc68356cf35d5e4c2cf2b63a1f52797d"
+      }
+    ],
+    "durable_source_error": {
+      "proven": false,
+      "finding": "Durable source blobs are readable and hash-stable. The proven defect is the one-selector reconstruction/accounting gap: declared 104 versus reconstructed 103 after the approved D18 exclusion."
+    },
+    "source_only": true,
+    "no_windows_body_executed": true
+  },
   "agent": [
     {
       "applied_replacements": [
