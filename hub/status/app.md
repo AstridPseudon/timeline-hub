@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T07:28:01Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 12 | status age 1m -->
-# app board, 2026-10-25T07:26Z
+<!-- app | 2026-10-25T07:32:30Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-25T07:32Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -251,9 +251,9 @@
 | D108-P3-current-GO | Qualify current Gate5 original | Luna independent | Actual31792 GO | merged | app-D108-P3-31792-GO-review-0706 | Readiness1/original1 PASS,zero failure/error/skip. Exact tuple/source93c2/manifests/XML/full recovery and Undo tail qualified; ephemeral source limit disclosed. | f7201/d629/c916/635f |
 | U4p-D110 | Adopt released Agent inverse fix | Luna normal tools | Acceptance 0721 PASS | merged | app-U4p-D110-adoption-0717 | Normal tools and 17 vendor/skew PASS; focused manifest 2 PASS. Normal home tree equals tested author; only Agent installer SHA changed. | Home 6e21b74ff9 |
 
-| P2-phase-portability-path | Challenge fresh delivery capture path | Luna read only | Second source review FAIL | doing | app-P2-phase-sink-portability-path-0726 | Frozen source audit and focused source-snapshot experiment; no source changes or live body. | Evidence pending |
-| D108-App-canonical-audit | Map canonical history and restore predicates | Luna read only | Runtime audit 0715 | doing | app-D108-App-predicate-citations-0726 | Six historical positive assertions need exact approved replacement mapping. No automatic retirement or source edit. | Evidence pending |
-| D108-App-signature-audit | Map label and signature predicates | Luna read only | Runtime audit 0715 | doing | app-D108-App-predicate-citations-0726 | Explicit label and signature predicates need exact current source and approval mapping. Disjoint finite audit in same worker. | Evidence pending |
+| P2-phase-portability-path | Challenge fresh delivery capture path | Luna read only | Frozen source challenge complete | merged | app-P2-phase-sink-portability-path-0726 | Fresh source snapshot fails before caller execution on missing Git objects. D102 and D105 history dependencies confirmed; Sol owns correction. | Evidence only |
+| D108-App-canonical-audit | Map canonical history and restore predicates | Luna read only | Exact source mapping complete | merged | app-D108-App-predicate-citations-0726 | Six positives and negatives map to current history/restore tests, guarded production caller and baacef approval. Runtime audit review owns final applied-source check. | Evidence only |
+| D108-App-signature-audit | Map label and signature predicates | Luna read only | Exact source mapping complete | merged | app-D108-App-predicate-citations-0726 | Label/signature positives and negatives map to approved display-only label boundary and current tests. Exact report returned to Runtime audit reviewer. | Evidence only |
 
 Integration: Normal App6e21b74ff9 adopts released Agent070dfc D110, tree exactly equals tested adoption author. It includes D105a scoped oracle398489, reviewed seed-log retention51239, and normal provenance to Runtimec916/Agent070dfc. c916 production bytes equal released1daca; Agent070dfc is the reviewed inverse correction plus already integrated source. Captured diagnostics/placement stay immutable older tuples.
 core open: 4 — SWAP, ADD, element and placement lack current GO. Four isolated GO retained on recorded tuples. CORRECTION: ADD18021 has retained KeyError in apply_inverse to remember. Element29218 stack shows schema validation in accepted-history replay. Agent D110 owns inverse; Runtime D111 owns validation cost. Full P2 after BOTH qualified releases/adoption; P1/P3 continue meanwhile. Placement31962 hit setup phase-sink collision, App0653 owns minimal harness repair.
@@ -261,8 +261,8 @@ regressions: Runtime689 request_id regression fixed in1daca. Inverse KeyError so
 
 Blockers: Runtime D111 — Qualified release and adoption before full P2. D110 is adopted; capture portability Sol 0726 is the independent App prerequisite. No singles.
 Blockers: Final cut — Four recorded isolated GO; current full P2 and final pinned P1–P5/core plus genuine installed render required before ZIP.
-Next ready: Sol portable capture repair -> one independent review and normal merge. D111 release -> normal tool adoption -> one full P2. D108 two finite audit gaps are assigned.
-live 3 / cap 6; ready-undispatched 0; core open: 4. Sol capture author and two independent Luna audits are assigned; no App heavy body. Current P1/P3 GO retain exact tuple scope.
+Next ready: Sol portable capture repair -> one independent review and normal merge. D111 release -> normal tool adoption -> one full P2. D108 two finite audit mappings returned to Runtime reviewer.
+live 1 / cap 6; ready-undispatched 0; core open: 4. Sol capture author active; both finite predicate mappings and independent portability finding returned; no App heavy body. Current P1/P3 GO retain exact tuple scope.
 Capacity: Seven host-cleared stale pins recycled after fresh static guards, zero refusals; net867MB, free6.30GB at receipt0642. Four additional host-cleared pins recycled0700,zero refusals/net481MB; free5.78GB at receipt,6.14 GB at 07:14Z; fresh ended clean non-KEEP scan found no eligible trees. All outputs/branches/reports/current pins retained; prior dirty/refused targets untouched. Source cap6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB.
 Inbox consumed through2013921 bytes. D110 normal release 070dfc and independent 0658 consumed; adoption 0717 merged 6e21b74ff9. D111 author 79 controls and smoke 2 PASS, first finite N-curve returned once after no measured gain; source remains held. P1/P3 current independent GO are complete. Latest 07:24 directive to adopt D110 is already fulfilled; full P2 awaits D111 and portable capture review. No safety or permission refusal.
 
