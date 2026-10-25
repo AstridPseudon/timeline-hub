@@ -248,10 +248,15 @@ class RequestCommitPort:
 
     def history(self, through, after_publication_id=None, cursor=None, limit=100):
         def read():
-            if self._ancestor(through["publication_id"])["revision_id"] != through["revision_id"]:
+            bound = self._ancestor(through["publication_id"])
+            if bound["revision_id"] != through["revision_id"]:
                 raise refused("history_unavailable", "history bounds disagree")
-            return self.__store.history(self.__project, self.__timeline, through,
-                                        after_publication_id=after_publication_id, cursor=cursor, limit=limit)
+            if type(limit) is not int or not 1 <= limit <= 200:
+                raise ValidationError("history limit must be 1–200")
+            # The bound was authenticated in this locked read; the enclosing
+            # history scope rechecks its inputs after pagination and pin reads.
+            return self.__store._history_page(self.__project, self.__timeline, through, bound,
+                                             after_publication_id=after_publication_id, cursor=cursor, limit=limit)
         return self._read(read)
 
     def revision_closure(self, revision_id):
