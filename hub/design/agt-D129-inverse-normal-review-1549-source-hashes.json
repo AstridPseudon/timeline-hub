@@ -1,0 +1,29 @@
+{
+  "agent_entries_match_manifest_and_parent": {
+    "astrid/sdk/timeline/inverse.py": "6c794734cb763c21cec386f764bc63b94f3a74b4dd9f8464136a285c628d0423",
+    "astrid/sdk/timeline/_step_undo.py": "a38bb078ecd2579399f131fa0a08a9bedd339226f92b9d8ac27de2b6d27827a6",
+    "astrid/sdk/timeline/_recording.py": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+    "astrid/sdk/timeline/_doc_patch_materialize.py": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252",
+    "astrid/sdk/timeline/_commit_patch.py": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+    "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "astrid/sdk/timeline/_commit_preview.py": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+    "astrid/sdk/timeline/native_occurrence_create.py": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22",
+    "astrid/sdk/timeline/native_occurrence_media_commands.py": "419149d2092e271e8a2f82754843f381e1e70b5a892b9f8fe13820f04effac4c",
+    "tests/editing_conformance/test_commit_runtime_occurrence_create.py": "f1d86c7a95140a3f69a60e3ac348511eedf2eca52d75da135eb04450f9935ca1",
+    "runtime.lock.json": "4a3d51004d022b4c4adc77a15ac919f9716e7c01b37e30eba7d16031aa51d0be"
+  },
+  "genuine_runtime_pin_entries_match_manifest": {
+    "runtime_protocol/service.py": "7277fc12e502a419ccd9eea9dfd2b3693bc8b2c8963e9fdf7224402d8a03a529",
+    "runtime_protocol/timeline_commit_auth.py": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+    "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+  },
+  "new_test": {
+    "path": "tests/sdk/test_d124_grouped_inverse_boundary.py",
+    "sha256": "3edecac062ecd2a066dc04c7034ec927d9a8bca318718d2962d0346be91551ca"
+  },
+  "runtime_pin": {
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true
+  }
+}
