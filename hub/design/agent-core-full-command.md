@@ -8,14 +8,19 @@ The Agent worker did not collect, execute, submit, register, or write a body.
 MAIN binds these variables through the normal request-checkout path. They are
 not the mutable `/home/user/work/{agent,runtime,app,composition}` worktrees:
 
-```sh
-AGENT_CHECKOUT='<immutable checkout returned by MAIN request-checkout>'
-RUNTIME_CHECKOUT='<immutable checkout returned by MAIN request-checkout>'
-APP_CHECKOUT='<immutable checkout returned by MAIN request-checkout>'
-COMPOSITION_CHECKOUT='<immutable checkout returned by MAIN request-checkout>'
-P4_D73_MANIFEST='<MAIN-owned existing manifest path>'
-P4_D73_EVIDENCE='<MAIN-owned existing evidence directory>'
+```text
+AGENT_CHECKOUT  # MAIN-bound immutable Agent checkout
+RUNTIME_CHECKOUT  # MAIN-bound immutable Runtime checkout
+APP_CHECKOUT  # MAIN-bound immutable App checkout
+COMPOSITION_CHECKOUT  # MAIN-bound immutable Composition checkout
+P4_D73_MANIFEST  # MAIN-bound existing D73 manifest
+P4_D73_EVIDENCE  # MAIN-bound existing evidence directory
 ```
+
+The six names above are inputs to the published fragment, not assignments to
+invent. The profile, schema, and Node paths are deliberately absent here:
+`p4-d73-pinned-launch.sh` reads and validates them from `P4_D73_MANIFEST` and
+exports the corresponding values for both its preflight and body.
 
 Exact fixed guards:
 
@@ -40,7 +45,7 @@ venv=/home/user/work/venv-agent
 schema=/home/user/work/venv-agent/lib/python3.13/site-packages
 node=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
 node_version=v20.19.4
-profile=<existing immutable profile bound by MAIN; no profile creation>
+profile=existing immutable profile bound by MAIN; no profile creation
 schema_digest=sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
 composition_version=0.0.14
 profile_lock_sha=f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d
@@ -77,18 +82,15 @@ exec env -i \
   PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin \
   VIRTUAL_ENV=/home/user/work/venv-agent \
   ASTRID_RUNTIME_CHECKOUT="$RUNTIME_CHECKOUT" ASTRID_RUNTIME_SOURCE_ROOT="$RUNTIME_CHECKOUT" \
-  ASTRID_REMOTION_PROJECT_DIR='<MAIN manifest profile path>' \
-  ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node \
-  ASTRID_TEST_NODE_MODULES='<MAIN manifest profile path>/node_modules' \
-  ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages \
   P4_D73_MANIFEST="$P4_D73_MANIFEST" P4_D73_EVIDENCE="$P4_D73_EVIDENCE" \
   P4_D73_REQUEST_ID=agent-core-full /bin/bash --noprofile --norc -c \
   'exec "$0/tools/p4-d73-pinned-launch.sh" "$1" run -- -m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$2/agent-core-full.xml" tests/editing_conformance tests/sdk tests/timeline tests/core/timeline tests/core/test_timeline_element_orphan_cleanup.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/core/rendering/test_timeline_visualize_cli_grammar.py tests/core/rendering/test_local_schema.py tests/packs/timeline tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_live_scene_composition.py tests/packs/rendering/test_render_export_task_adapter.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/video_editing/test_runtime_publication_chain.py tests/stage1/test_cold_launch_autobootstrap.py tests/test_installer_schema.py tests/test_installer_sources.py tests/test_installer_bootstrap_schema.py tests/test_timeline_clip_replacement.py tests/v10/test_timelines_create.py' "$AGENT_CHECKOUT" "$P4_D73_MANIFEST" "$P4_D73_EVIDENCE"
 ```
 
 The `python` field is the existing launcher manifest binding; the launcher
-executes `/home/user/work/venv-agent/bin/python -P`. The profile value and its
-node_modules path remain manifest-bound, not fabricated here.
+executes `/home/user/work/venv-agent/bin/python -P`. The profile, schema, Node,
+and node_modules values remain manifest-bound, not duplicated or fabricated
+here. The fixed PATH and VIRTUAL_ENV above remain part of the published ABI.
 
 ## Expanded root inventory and source-consistency finding
 
@@ -170,19 +172,56 @@ counts=12396 passed, 91 failed, 14 errors, 16 skipped, 566 subtests; root total 
 
 ## Preflight, central row, and ownership
 
-The existing parsed preflight form is required once by MAIN:
+The existing parsed preflight form is required once by MAIN. MAIN binds the
+actual existing control commands and fresh counter files; this document does
+not guess or publish the historical stub path:
 
-```text
-positive-once(body17): parse the published row, submit exactly once, require nonzero control exit 17 and body_count=1
-poison-zero: parse the poison input through the same existing entrypoint, require nonzero exit (2) and body_count=0
+```sh
+: "${MAIN_POSITIVE_CONTROL:?MAIN must bind the existing positive parsed-row control command}"
+: "${MAIN_POSITIVE_COUNTER:?MAIN must bind the positive control counter path}"
+: "${MAIN_POISON_CONTROL:?MAIN must bind the existing poison input for the same control entrypoint}"
+: "${MAIN_POISON_COUNTER:?MAIN must bind the poison control counter path}"
+
+set +e
+env -i \
+  HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 \
+  PYTHONPATH="$AGENT_CHECKOUT:$RUNTIME_CHECKOUT" \
+  PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin \
+  VIRTUAL_ENV=/home/user/work/venv-agent \
+  P4_D73_MANIFEST="$P4_D73_MANIFEST" P4_D73_EVIDENCE="$P4_D73_EVIDENCE" \
+  P4_D73_REQUEST_ID=agent-core-full-preflight-positive \
+  P4_STUB_COUNT="$MAIN_POSITIVE_COUNTER" /bin/bash --noprofile --norc -c \
+  'set -eu; test "$(git -C "$0" remote get-url origin)" = https://github.com/peteromallet/astrid-agent; exec "$0/tools/p4-d73-pinned-launch.sh" "$1" dry -- "$2"' \
+  "$AGENT_CHECKOUT" "$P4_D73_MANIFEST" "$MAIN_POSITIVE_CONTROL"
+positive_rc=$?
+set -e
+test "$positive_rc" != 0
+test "$positive_rc" = 17
+test "$(wc -l < "$MAIN_POSITIVE_COUNTER")" = 1
+
+set +e
+env -i \
+  HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 \
+  PYTHONPATH="$AGENT_CHECKOUT:$RUNTIME_CHECKOUT" \
+  PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin \
+  VIRTUAL_ENV=/home/user/work/venv-agent \
+  P4_D73_MANIFEST="$P4_D73_MANIFEST" P4_D73_EVIDENCE="$P4_D73_EVIDENCE" \
+  P4_D73_REQUEST_ID=agent-core-full-preflight-poison \
+  P4_STUB_COUNT="$MAIN_POISON_COUNTER" /bin/bash --noprofile --norc -c \
+  'set -eu; test "$(git -C "$0" remote get-url origin)" = https://github.com/peteromallet/astrid-agent; exec "$0/tools/p4-d73-pinned-launch.sh" "$1" dry -- "$2"' \
+  "$AGENT_CHECKOUT" "$P4_D73_MANIFEST" "$MAIN_POISON_CONTROL"
+poison_rc=$?
+set -e
+test "$poison_rc" != 0
+test "$(wc -l < "$MAIN_POISON_COUNTER")" = 0
 ```
 
-These are central registry proofs, not a new local helper or gate. MAIN alone
-installs the parsed central registry row, proves CAS plus positive-once and
-poison-zero, and submits the full body. The Agent worker writes no body and does
-not perform collection. The published command is distinct from the actual
-parsed row: this document publishes the source recipe, while MAIN's existing
-registry machinery parses, installs, and proves the row it actually used.
+The two fragments use the existing launcher dry mode and its existing control
+entrypoint. MAIN parses the published row, installs the actual central row,
+proves CAS, runs positive-once (nonzero control exit 17 and exactly one counter
+line), runs poison-zero (nonzero exit and zero counter lines), and submits the
+full body. These controls are specified here, not claimed as run by this
+worker. The Agent worker writes no body and does not perform collection.
 
 ## Production Timeline commit contract reminder
 
