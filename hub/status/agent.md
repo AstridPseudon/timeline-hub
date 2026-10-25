@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T05:03:57Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 17 | status age 0m -->
+<!-- agent | 2026-10-25T05:07:10Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 0m -->
 # agent board, 2026-10-25T05:02:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -11,7 +11,7 @@
 | G2 / G3 | Public commit, emitter, CLI and sheet | Sol / Luna | R1, R2 | merged | G234 integrated0549 | Joined131 and live Runtime controls passed. P4 retains actual HTTP scope. | ea302e0f5 |
 | G4 | Remaining production writers | Sol / Luna | G2 | merged | G234; video; media admission0832 | Writer migration qualified; media admission20 passed on0ff3. Managed duck original remains held. | ea302e0f5; 0ff3d103fb |
 | G5 | Retire superseded writers | Luna / Sol | H24 criteria | merged | Custody review2155 | 350 cases, four SDK and c271 passed. Historical raw packet loss remains disclosed. | c36ca8c94 |
-| P4 owner | Qualify unchanged ten-note original | MAIN Luna / independent Luna | Single independent GO verdict0450 | review | Producer0445; actual22560; review0450 | SERVICE PASS1 in28.101s versus45s on786/0c62/1e34/635f. Per-note Undo times requested from existing evidence; no new original. | Fixed786 /0c62 |
+| P4 owner | Qualify unchanged ten-note original | MAIN Luna / independent Luna | Exact recorded original proof complete | merged | Actual22560; independentGO0450 | Unchanged original PASS28.101s versus45s on786/0c62/1e34/635f. Header recording requested0510; existing-only Undo times0454 still pending. | Fixed786 /0c62 |
 | F original census | Keep exact historical267 records | Sol / Luna | Independent accounting | merged | Count0818; review0827 | 263 closed,4 open;123 exact mappings. Current full9758 remains a separate failed checkpoint. | Census e13d65ba |
 | F checkpoint9758 | Retain failed full checkpoint | Service / Luna | Exact census complete | merged | 9758; census 1052 and 1058 | Historical FAIL: 17673 passed, 231 failed, 45 errors. All 276 bad IDs exact. This is retained evidence, never full PASS. | ba55 / tree c13 |
 | F checkpoint setup | Correct profile setup | Luna / Luna | Source1052; review1105 | merged | Install1118; review1124 | All45 errors classified:3 loops and42 artifact mismatches. Actual registry18de/row0bdf verified; no full retry. | Candidate4a2a3472d1 |
@@ -204,7 +204,7 @@
 | F later source delta | Publish later setup corrections | Luna | Existing MAIN targeted runner | merging | Inputs 0209 PASS | Exact 69 extra: sheet 13, M1 10, word 46; combined 230. Flat packet published; all original dispositions kept. | Captured 3b8f |
 | R2 net-zero oracle | Bind exact native recorder expectation | Luna | MAIN exact net-zero proof | merging | Author 0210; review 0215 PASS | Seven-line test-only correction now home cef8. All original predicates preserved. Matching NumPy mypy limit; functional proof still owed. | cef8a5be53 |
 
-| D91 inverse window | Preserve complete authored inverse sequence | Runtime Luna / Agent product | Reviewed D100 fixture and product | doing | Runtime host0447; Agent source0458 | Latest2966 has5FAIL5ERROR. D100 exact minimum host windows and two product fixes precede one MAIN10 proof; all authored inputs retained. | Latest12c4 historical |
+| D91 inverse window | Preserve complete authored inverse sequence | Runtime Luna / Agent product | Reviewed D100 product and MAIN10 | doing | Host0447; protected0450 PASS; homed540 | Exact hosts5800/9800 preserve all29 original assertions. Capture source reviewed; shared-itemSol0458 active. No meaningful ten proof yet. | Homed540651f9a |
 
 | P4 cross-process sample | Measure actual ten-note process costs | MAIN Luna | Complete corrected measurement | merged | Corrected0242; actual25257 | All432 samples captured, one process, zero Python CLI children. Main42.63 CPU/46.32 wall; Runtime digest121 and cursor106 samples. | d407 /6634 /4b984 /635f |
 
@@ -245,27 +245,27 @@
 
 | U4a D97 adoption | Adopt released permission-gated Runtime | Luna | Normal tools and receipt verified | merged | agt-U4a-D97-adopt-0435 | Lock-only source6634 to0c62; refresh, vendor, artifact and diff checks pass. All15 mappings unchanged; actual home readback matches. | 49f66cf62c; now786385 |
 
-| G3 D100 exact time | Use exact move local-time arithmetic | Luna / independent Luna | Protected review then MAIN RED and GREEN | review | Author0458; review0502 | Candidate capture59e2 and exact-fit regression5cfd returned. No functional execution; exact boundary and out-of-bounds controls required. | Source held |
+| G3 D100 exact time | Use exact move local-time arithmetic | Luna / independent Luna | MAIN old RED and new GREEN | review | Author0458; review0502 PASS | Exact404044 source and new at/at_ms/dual boundary controls source-reviewed. No functional execution; waits reviewed shared-item source and combined proof. | 404044 held |
 | R1 D100 shared items | Resolve sequential shared item provenance | HARD Sol | C0 sequential physical identity | doing | agt-R1-D100-sequential-items-sol-0458 | Owns only _command_state and new control. No fake item map or provenance; Runtime host fixture and capture owner are disjoint. | No candidate yet |
-| F6058 word bootstrap46 | Preserve exact original word inputs | Luna | Safe inner subprocess source facts | doing | agt-F-6058-word46-source-0502 | Actual37 word and9 cohort errors hide inner exception. Source-only caller check active; MAIN existing-artifact ask0502, no new collector or body. | Current f518 |
+| F6058 word bootstrap46 | Preserve exact original word inputs | Luna / independent Luna | Fresh protected review then MAIN46 | review | Author0502; reviewer0507 | Child selected stale Runtime80973d34 with3ops; candidate reuses parent-selected current provider30ops. Inputs intact; actual inner cause still UNKNOWN. | Source0502 held |
 | F6058 opaque6 | Preserve exact step patch claims | MAIN Luna requested | Exact source followthrough | blocked:runtime | Existing opaque family owner; peer0502 | Actual6058 six ERROR mismatch submitted step patch. Faithful source correction requested from exclusive MAIN owner; no local duplicate. | Source eb5c |
 | F6058 script4 | Preserve script promotion and command claims | MAIN Luna requested | Exact source followthrough | blocked:runtime | Existing script family owner; peer0502 | Actual6058 two physical-promotion failures, one command mismatch, one assertion. Separate exact source causes requested; no unchanged retry. | Source b4a |
 
-Integration: Actual normalef6db3be0f contains D97 tool-only adoption0c62, exact D99role source0a955 and latest D92catalog/A-B fixture9b46. Held product candidates remain absent. All15 canonical mappings unchanged.
-core open: P4 sole actual22560 SERVICE PASS1 in28.101s versus45s, fixed786/0c62/1e34/635f. Single independent GO review0450 pending; per-note Undo times requested from existing evidence, no duplicate.
+Integration: Actual normald540651f9a includes D97lock0c62,D99role0a955,D92catalog9b46,ordinarysheetccfe and reviewed D100host010d exact33e3. Product candidates remain held; all15 canonical mappings unchanged.
+core open: Sole P4actual22560 independentGO0450,1PASS28.101s versus45. Header recording requested0510; exact existing per-noteUndo interval handback0454 pending. No finalcut credit or repeated original.
 Gates: P1/P3 historical GO. D59 final P1-P5/core,D69 and genuine installed render required. No full PASS,core0,finaltuple or ZIP claim.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later18 ENV passes retain exact scope.
 Families: Actual6058 all96=14PASS7FAIL75ERROR. Numeric6 and video8 exact PASS scope recorded; nine other groups have named source/input owners. Historical9211/11789/18575 remain separate, no unchanged repeat.
 Candidate: Parent4dcb and word2154 remain held after b415 mandatory8 NO-GO. D101 is decided: Runtime-owned paired lossless both-mirror field union, explicit broad caller scopes unchanged. No Agent competing author.
-D100: Runtime host0447 preserves full authored sequences. Agent capture0458 returned, review0502 active; shared-item HARD Sol0458 active. One combined MAIN10 proof only after source reviews and RED/GREEN controls.
+D100: Reviewed host010d normald540. Capture404044 sourcePASS0502, shared-itemSol0458 active. One combined candidate/MAIN10 after both source reviews and exact-boundary RED/GREEN controls.
 Restore: Product72a sourcePASS0415, genuine final test a67e sourcePASS0447. Clean candidate8aa672 sent MAIN0500 for oldRED/newGREEN, originalID5 and strict controls; product remains held.
-Admission: D92 actualnormalef6d fixes genuine catalog consumer and A/B setup, protected sourcePASS; three meaningful proof and existing6058 phase still owed. D99 exact13 and D95NEW2 packet0443 published; receiver coalesces.
+Admission: D92normalef6d and ordinarysheetnormalad7a need exact new-source proof. D99MAIN13/D95NEW2 packet0443 published; existing receiver coalesces. Old failed outcomes remain source-specific.
 Safety: Withdrawn D88 denied action/prototype remain stopped. D93 original fixture/session/scopes/calls only. No new sample or denied-route retry. D98 first Runtime observer owns unspent bounded3 diagnostic; local0427 inactive.
-Disk: D89 source/review6 above5.0GB; heavy1 above5.2GB; nothing below4.5GB. Measured5.764GB. Sweep3 removed0; compact running. Ended worktrees auto-recycled; KEEP/current and old dirty/refused targets untouched.
+Disk: D89 source/review6 above5.0GB; heavy1 above5.2GB; nothing below4.5GB. Free5.870GB. Sweep3 removed0; compact packed0/gzipped2logs. Ended trees auto-recycled; KEEP/current and old refused targets untouched.
 Blockers: Runtime D101 — Actual paired HARD Sol0450 owns both sides. Required security/protected reviews and MAINsix proof precede normal merge; old decision wait cleared.
 Blockers: MAIN proof — Critical P4original0445, D98bounded3, reviewed restore8aa672 and exact source family receivers retain serial ownership. D100 source not yet ready.
 Blockers: Source inputs — Word46 inner exception and D92phase requested from existing6058 artifacts. Projection published item source requested0506. CLItrim3 exact media scope escalated0506; no guard changes.
 Blockers: Final cut — D59 pinned P1-P5/core,D69 and genuine installed render required.
 Next ready: Protected source reviews follow returns immediately. No eligible local source task waits; MAIN exclusive opaque/script followthrough requested0502. D100 source and word46 run independently of P4.
-live3 / cap6; ready-undispatched0 eligible local starts. Live D100shared0458, exact-time review0502, word46source0502. MAIN D101paired author0450 and sole P4GO reviewer retain ownership.
-Inbox consumed through1399297 bytes. Updated 2026-10-25T05:03:43Z. No manager product/test/generated/pin edits or test bodies.
+live2 / cap6; ready-undispatched0 eligible local starts. Shared-itemSol0458 and word46review0507 active. MAIN D101paired author and sole P4times/D98/family/restore controllers retain ownership.
+Inbox consumed through1403559 bytes. Updated 2026-10-25T05:06:42Z. No manager product/test/generated/pin edits or test bodies.
