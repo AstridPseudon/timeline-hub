@@ -1,0 +1,7 @@
+input	sha256	role
+/home/user/timeline-hub/hub/design/handoff-agt-F-next32-0314-flat-ready-source-selector-manifest.tsv	f1b95e8a05cdffc9c4e8862dc242f48d0967fcedcc840f1308c210406fb3a4de	nominal32 source selector authority
+/home/user/timeline-hub/hub/design/handoff-agt-F-next32-0314-per-id-eligibility.tsv	b1e7849c9d0535a26be000d7239634de397c00336f39fcf9d19a7a4332564d3e	per-ID eligibility and holds
+/home/user/timeline-hub/hub/design/handoff-agt-F-next32-0314-set-accounting.tsv	b025b8811bc964a35fe6ca8b61b38c90369b5c45aa6b78d32bd3fc40e83f064e	set accounting and preservation boundaries
+/home/user/timeline-hub/hub/design/handoff-agt-F-next32-0314-packet-metadata.json	6cc5cc68077fb7f47240996fbc51c66f7224d7c98ebee85e3605050dd8e3bfd7	packet metadata and source receipts
+/home/user/timeline-hub/hub/design/handoff-rt-D86-next10-source-0306-inputs__selector-argv.txt	a9d68dfbc0028b7e9a247378ab0aefc628823c541d567e70c478266bf3d341bc	prior exact-new10 route input
+/home/user/timeline-hub/hub/design/handoff-rt-D86-next10-source-0306-static__source-hashes.tsv	6382686da786cd6c16b7ca495b333f1da0eb9ed9a6ea4ab968646167e0e3a217	prior four-source hash boundary

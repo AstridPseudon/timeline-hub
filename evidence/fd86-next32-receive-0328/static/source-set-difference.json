@@ -1,0 +1,11 @@
+{
+  "method": "exact canonical selector set comparison; membership governs",
+  "nominal_packet": {"count": 32, "families": {"media20": 20, "auto2": 2, "inverse7": 7, "D92_compound3": 3}},
+  "excluded_actual_first20": {"count": 10, "families": {"inverse7": 7, "D92_compound3": 3}, "service": "18575", "outcomes": {"inverse7": "PASS", "D92_compound3": "FAIL"}},
+  "excluded_scheduled_elsewhere": {"count": 10, "family": "D91-shared-inverse10", "service": "18575", "outcome": "ERROR", "overlap_with_nominal": 0},
+  "receiving_packet": {"count": 22, "families": {"D86-parent-media20": 20, "D86-parent-auto2": 2}},
+  "prior_boundaries": {"executed161": {"count": 161, "overlap": 0}, "later102": {"count": 102, "overlap": 0}},
+  "preserved": ["original550", "NO_JUNIT_CASE-23", "D87-ledger", "held-predicates"],
+  "excluded_live": ["D92-atomic", "D92-ABA"],
+  "status": "PASS_STATIC_ONLY"
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "astrid.timeline.fd86-next32-receiving-joins/v1",
+  "agent": {"commit": "657bc2e8dba066df1c7d21851315bdb6b0f16a3a", "tree": "9dee25d783fbb7d70a4eaf76e66de2db1743663f", "source_files": 4},
+  "runtime": {"commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4", "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a", "production_sources_unchanged": true},
+  "app": {"commit": "5465100844483f4299825816b0fba66e5e5d3b24", "tree": "190cfca7977ec3c63a11a7f505037f3dba1717c6"},
+  "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+  "normal_ancestry": {"media20": true, "auto2": true, "inverse7": true, "d92_compound3": true},
+  "source_identity": "HASH_MATCH_REVIEWED_BLOBS",
+  "fresh_fourtuple": "PENDING",
+  "path_sensitive_preflight": "PENDING",
+  "body": "PENDING",
+  "actual_first20": {"service": "18575", "D91": "10 ERROR", "inverse7": "7 PASS", "D92_compound3": "3 FAIL"}
+}

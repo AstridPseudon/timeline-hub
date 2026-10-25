@@ -1,0 +1,18 @@
+[source hashes]
+PASS: current Agent source files match all four reviewed blobs and exact SHA-256 values; Runtime production source remains 6634a17f3.
+[source ancestry]
+PASS: media 2a04d92fca, auto 824e03f6a2, inverse7 e6ffc8f62b, and D92 57ad7d2987 are ancestors of current Agent 657bc2e8db.
+[AST/in-memory compile]
+PASS: all 22 receiving selectors resolve to existing functions; all four selected source files compile in memory.
+[set accounting]
+PASS: nominal 32 minus the ten inverse7/D92 canonical IDs executed in immutable FIRST20 service18575 yields exactly 22; D91 ten are separately recorded and not duplicated.
+[prior boundaries]
+PASS: existing executed161 and later102 set boundaries remain disjoint; original550, 23 NO_JUNIT_CASE rows, D87 ledger/retirements, and held predicates remain preserved.
+[guard identity]
+PASS: no current source identity or guard literal conflict; six auto guarded-address failures remain held and no pin/hash was changed.
+[path-sensitive preflight]
+PENDING: no fresh preflight was run.
+[body]
+PENDING: no test collection or body execution was run.
+[behavior]
+OPEN: media20 and auto2 MAIN behavior; inverse7 and D92 compound3 are already executed FIRST20 and are not rerun.

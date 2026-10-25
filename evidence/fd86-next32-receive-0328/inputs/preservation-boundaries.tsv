@@ -1,0 +1,11 @@
+scope	count	status	authority	hash_or_rule
+nominal-next32	32	SOURCE_UNION_ONLY	handoff-agt-F-next32-0314-packet-metadata.json	media20 + auto2 + inverse7 + D92 compound3; membership governs
+actual-FIRST20	20	IMMUTABLE_EXECUTED_NO_DUPLICATE	service18575; rt-D91-next10-immutable20-0313-report.md	D91 ten ERROR; inverse7 seven PASS; D92 compound3 three FAIL; no unchanged retry
+receiving-next22	22	SOURCE_READY_ONLY	handoff-agt-F-next32-0314-flat-ready-source-selector-manifest.tsv	set difference after actual FIRST20 subtraction
+executed161	161	IMMUTABLE_NOT_REBOUND	rt-D86-successor161-exact-home-0254; service9211	set difference only; no unchanged retry
+later102	102	IMMUTABLE_RECEIVING_SET	rt-D86-later-receipts-0256; service11789	set difference only; no count sum
+D91-shared-inverse	10	SCHEDULED_ELSEWHERE_AND_EXECUTED	rt-D91-next10-immutable20-0313; service18575	D91 ten ERROR; no unchanged retry
+original550	550	PRESERVED	flat normal original550 rollup	no rows retired, rewritten, or reclassified
+NO_JUNIT_CASE	23	PRESERVED	flat normal unexecuted-23	no inferred proof
+D87-ledger-retirements	25	PRESERVED	inverse7 review log append-CAS	original ledger and retirements unchanged
+held-predicates	PRESERVED	PRESERVED	prior D86 boundary records	no held row is promoted by count

@@ -1,0 +1,25 @@
+{
+  "api_version": 1,
+  "caller": "genuine Runtime commitTimeline and Agent SDK/provider",
+  "request": {
+    "project_id": "<project_id>",
+    "timeline_id": "<timeline_id>",
+    "base_revision_id": "<base_revision_id>",
+    "base_publication_id": "<base_publication_id>",
+    "commands": {"schema_version": "<schema_version>", "op": "<op>", "version": "<version>", "select": "<select>", "args": "<args>", "created": "<created>"},
+    "label": "<label>",
+    "steps": [{"id": "<id>", "label": "<label>", "intent": "<intent>", "tags": ["<tag>"], "command_ordinals": [0], "patch": "<patch>", "reads": "<reads>"}],
+    "merge": "fields | atomic",
+    "reads": "<optional declared reads>",
+    "source": "<source>",
+    "rationale": "<rationale>",
+    "group_id": "<group_id>",
+    "dry_run": false,
+    "HTTP Idempotency-Key": "<idempotency_key>"
+  },
+  "success": {"status": "accepted | merged", "data": {"full_canonical": "<full canonical>", "digest": "<digest>", "id_map": "<id_map>", "authoritative_commands": "<commands>", "steps": "<steps>", "dependencies": "<dependencies>", "effects": "<effects>", "base_previous_accepted_pairs": "<pairs>", "versions": "<versions>", "publisher": "<publisher>", "history": "<history>", "guarded_undo": "<undo>", "receipt_id": "<receipt_id>"}, "receipt": "<receipt>"},
+  "preview": {"would_status": "accepted | merged", "receipt": null},
+  "conflict": {"reason": "<reason>", "head": "<head>"},
+  "invalid": {"code": "<code>", "path": "<path>", "hint": "<hint>", "suggested_command": "<suggested_command>"},
+  "guards": ["fresh authority", "ABI", "ABA", "no-write", "no-leak", "original 45s"]
+}

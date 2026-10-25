@@ -1,0 +1,27 @@
+{
+  "schema": "astrid.timeline.fd86-next32-receive-source/v1",
+  "scope": "source/static only; no behavior or final-gate credit",
+  "captured_source_packet": {
+    "branch": "tl/agt-F-next-inputs-0314",
+    "commit": "7e23790248f17b8a4492fc9aee88d2c4e1df328d",
+    "tree": "2f6468bfc2534643400add3647e087e770d8a2b1"
+  },
+  "current_four_repo_custody": {
+    "agent": {"branch": "tl/integration", "commit": "657bc2e8dba066df1c7d21851315bdb6b0f16a3a", "tree": "9dee25d783fbb7d70a4eaf76e66de2db1743663f"},
+    "runtime": {"branch": "tl/integration", "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4", "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a"},
+    "app": {"branch": "tl/integration", "commit": "5465100844483f4299825816b0fba66e5e5d3b24", "tree": "190cfca7977ec3c63a11a7f505037f3dba1717c6"},
+    "composition": {"branch": "tl/integration", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "normal_source_receipts": {
+    "media20": {"source_commit": "2a04d92fca1e6b4f86f33609bb4391accae93aa0", "normal_receipt": "7f4ea9ce7d7915a5e99bc803fceaedb1ec402c0c", "reviewed_blob": "98c25406a5c12cbb3285d820b32128e08b28c58b", "sha256": "6f68086f887b8c984597b5a7940261ae6fd18564f1da4dccff96351c03afdf76"},
+    "auto2": {"source_commit": "824e03f6a2139561af65a9c69779ea7a1a7a0a4c", "normal_receipt": "7e23790248f17b8a4492fc9aee88d2c4e1df328d", "reviewed_blob": "30ed39e4d9d53c4d7f9ea65b273dfe89008d2d48", "sha256": "3138f2ac264cf3a5e52bdd44677eb6f8cf9f70d362a0630e5b16490307a6b22c"},
+    "inverse7": {"source_commit": "e6ffc8f62b", "normal_receipt": "caffef8d93", "reviewed_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b", "sha256": "6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1"},
+    "D92_compound3": {"source_commit": "57ad7d2987", "normal_receipt": "562ee30b6e", "reviewed_blob": "113994232e2c21279967c3954811f095d9e7ffef", "sha256": "dd18f9bce71355a655413c6534c66300e29c2da1e42ff59bc3515b5727f8f634"}
+  },
+  "source_identity": "CURRENT_AGENT_HASH_MATCHES_REVIEWED_BLOBS; NO_PIN_OR_HASH_UPDATE",
+  "fresh_receiving_fourtuple": "PENDING",
+  "path_sensitive_preflight": "PENDING",
+  "body": "PENDING",
+  "behavior": {"media20": "OPEN", "auto2": "OPEN", "inverse7": "EXECUTED_FIRST20_PASS_NO_RERUN", "D92_compound3": "EXECUTED_FIRST20_FAIL_NO_RERUN"},
+  "held": {"auto_guard_addresses": "six guarded-address failures remain held; no per-ID guard conflict promoted", "D92_atomic_and_ABA": "separate LIVE and unqualified"}
+}
