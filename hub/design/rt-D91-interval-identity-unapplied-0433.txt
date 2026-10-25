@@ -1,0 +1,180 @@
+D91 FINITE SCOPE HANDBACK — UNAPPLIED
+
+Disposition
+No source edit. No faithful one-file current-API fixture correction is established.
+The approved EXACT 2000 ms host bound and EXACT 13000 ms authored-first placement
+are preserved. All five original test bodies and all 29 assertions are unchanged.
+No test, collection, helper, fixture, product CLI, Runtime service, browser, body,
+build, or new collector/probe was executed. No test-service request was made.
+
+Exact source tuple
+Agent HEAD 12c4efdd8603480f0d72024e29a55c6ef73c9dd7
+Agent tree 7a37b062da5ecfe732da6618f81028f222573a93
+Allowed test blob 621110f87f0af576097aeeaa92574f18f29e999b
+Allowed test SHA256 9a44e345bef8de79e66d8ff23626863434b8038ba57b2e7cd6ed3287f7d35097
+Baseline and candidate are byte-identical. There is no proposed new source tree.
+Retained proof Runtime 6634a17f3ffd885567ba3c91b6c7a560df7375a4.
+Current Runtime integration HEAD 0c62dfa63db9ff608ac9338388431e31a814e080 was read
+only for identity. This handback makes no D97 regression or fresh-tuple claim.
+
+Real input
+Read tests/fixtures/precut-v31.tar.gz in place from the retained Runtime tuple:
+archive SHA256 e304773208ff96cea0dca545c69cfa3fcb7ef605c01c306017ed8bcfc654a6b5,
+original SQLite SHA256 49fbca3d0fc2285c398eb9e8060d5706251399676446ec48015eda18d5bb433c.
+Only an in-memory SQLite journal-mode view was needed for SELECTs (WAL header
+2/2 to in-memory 1/1); no file was extracted/restored/copied or written, no row,
+ID, pin, timestamp, history, or payload was changed. The initial plain memory
+view could not open WAL mode; the corrected read-only view succeeded. All seven
+pinned closure payload digests and all five CAS-member hashes matched.
+Project 7b6f2bae8ffe42bf925216c38249ed79; timeline film; parent film-parent-v1.
+Parent digest sha256:3df0dbb371b6add88b147b444f6ee01006b12655d9bde5f67f184f05be38f750.
+Original occurrence starts: 0/1650/3300 ms; all original durations 1800 ms.
+All three original clips: at=0, hold=1.8, no speed; fps=24 on parent output.
+Shot-3 -> film-shot-revision-3 -> film-internal-3; items=[];
+internal digest sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192.
+Shot-1 -> film-shot-revision-1 -> film-internal-1; items=[]; its transcript
+anchor/elementRef/text binding are retained in captured-physical-input.json.
+
+Actual proof (not rerun)
+Central 2966 raw XML: ten cases, five failure elements (original-third), five
+error elements (authored-first), zero skips. Its terminal body is 5 failed,
+5 errors in 6.99s. Every raw XML trace was inspected and correlated by selector;
+actual-2966-traces.json records each trace hash and first source divergence.
+The raw log does not serialize the complete candidate payload or the source
+preparation response's revision IDs. Values below are explicitly source-derived
+from the hashed captured input and unchanged production code, not new execution
+or invented accepted receipts. Retained old 17648/18575 results are untouched;
+neither is substituted for 2966 or claimed as a new test result.
+
+First divergence: all five original-third cases
+Fixture line 73 changes occurrence-3 duration_ms 1800 -> EXACT 2000. Native
+occurrence.place-shared adds repeated-third at EXACT 6000 ms from that same
+published shot/internal pair; both placement durations become 2000 ms. No item
+remapping is needed: physical items=[], authenticated item_id_map={}.
+Setup succeeds in 2966. All five first test commands are clip.move on
+occurrence:occurrence-3/clip:clip-3, args.on=3.5.
+First numerical source divergence: capture.py:178 retains rational quantized
+84/24, but :200 obtains float origin 3300/1000 and :217 subtracts floats;
+:222-223 writes local at=0.20000000000000018 instead of mathematical 1/5.
+Canonical child payload field at: 0 -> 0.20000000000000018; hold remains 1.8;
+parent occurrence duration remains 2000, placement start remains 3300.
+units.py:41-44 interprets decimal str values as exact Fractions. validation.py:
+166-198 computes end = 2.00000000000000018 > duration_ms/1000 = 2, then :251-252
+rejects. The shared adapter at commit.py:1402-1410 preserves this field through
+canonical compile/reopen; it does not replace the physical shared topology.
+The observed failing shot-placement-96f3e4829dd24d83fda944c26dc090557c5c7ee3a8b0724f5255511d2da50e46
+matches authoring_bundle.py:180-182,264-275 exactly for occurrence-3/shot-3,
+NOT repeated-third. Runtime service.py:2518 only surfaces the provider rejection.
+No stale history memo, source-window override, alias ambiguity, step omission,
+or Runtime-only validation change is needed to explain this first failure.
+
+Further unchanged promised commands are a real scope conflict, not only float
+noise. The following are SOURCE-ARITHMETIC implications, not exercised results:
+- original-third on=3.6: frame 86/24; mathematical local end 25/12 > bound 2.
+- original-third ABA on=4: local at 0.7, end 2.5 > bound 2.
+- original-third repeated-third on=14: local at 8, end 9.8 > bound 2.
+- authored-first on=3.5: source start 0, local end 5.3 > bound 1.8.
+- authored-first on=3.6: frame 86/24, local end 323/60 > bound 1.8.
+- authored-first ABA on=4: local end 5.8 > bound 1.8.
+- authored-first repeated-third on=14: source start EXACT 13, local end 2.8 > 1.8.
+source_window={start:4,end:9} is preserved opaque input to this bound check; it
+is not read by validation._clip_duration and cannot be treated as a longer bound.
+
+First divergence: all five authored-first cases
+Fixture :59-66 genuinely commits shot.set(name=source title) through the current
+provider and uses that accepted canonical_document. The actual source revision
+ID must be read from that response; no guessed replacement is supplied here.
+Fixture :92-97 captures and locally compiles occurrence.place-shared for literal
+occurrence:repeated-third at EXACT 13 s; then :101-107 asks to change the one
+shared physical shot's items from [] to [{item_id:'shared-source-item',
+media_id:fixture.media_ids[0],metadata:{literal:'shared-source-item',keep:[null,false]}}].
+The same shot/internal payload edits must affect occurrence-1 and repeated-third.
+That physical diff uses its actual source revision ref, not a manufactured alias.
+The actual source-level failure chain in every 2966 authored-first trace is:
+commit.py:1331 -> commands.py:255 -> _doc_patch.py:504 -> _recording.py:94 ->
+_command_state.py:438 -> shot_item_map:342 -> one:154 (repeated-third missing).
+Closure.native_sites (:183-222) properly includes both owners of that physical
+image, including the new sequential occurrence. State.shot_item_map instead
+reopens the batch's _runtime_document, whose placements contain only occurrence-1,
+occurrence-2, occurrence-3. New shared birth exists in sequential state but not
+that authenticated input document. This is the first source mismatch; it occurs
+before prepared response construction or the interval guard.
+The command's created claim is literal occurrence:repeated-third. Receipt id_map
+is not an authoring alias map: commit.py:1433 emits {}, and C0 forbids nonidentity
+pairs. No successful authored-first setup receipt/materialization exists in 2966.
+A made-up id_map, history row, item map, fork, or sibling omission cannot repair it.
+Publishing the birth separately alone is insufficient by source: State.
+project_shot_items :377-384 then requires the new item identity set to equal the
+existing authenticated map keys (empty). Thus [] -> [shared-source-item] also
+requires a genuine supported membership/provenance path, not a manual map edit.
+This latter point is a source constraint, not a claimed later observed exception.
+
+Steps/claims and normative C0
+submit_setup :41-49 supplies one ordered step per command, exact ordered
+args.changes for doc.patch and [] for native calls, plus conservative timeline
+scope reads. _commit_patch.normalize_steps :71-85 enforces those claims; actual
+2966 traces progress beyond it. The source/fixture seam is therefore distinct
+from old missing-step-claim failures. The original helper's commit_timeline call
+passes the current full envelope and idempotency key/publisher to Runtime, which
+validates it and invokes the registered astrid provider; no retired save is used.
+The supplied design/commit-v2.md spelling is absent from this checkout and the
+retained Runtime checkout. The actual C0 document is Runtime contract/commit-v2.md
+(hash in traced-source-hashes.json); it supplies these normative constraints:
+- lines 82-92: commands sequential, final timing validation mandatory, any failure
+  rejects the whole batch. The current D12a occurrence half-open bound is enforced
+  at validation.py:244-252,598-615; unrelated unchanged legacy overrun exemption
+  does not cover clip.move writing at.
+- lines 287-319: physical image identity via verified pins, shared revision edits
+  affect every occurrence, sequential operands see preceding creations.
+- lines 355-365: closure birth/fork through semantic commands, later patches may
+  address those roots, entity membership inside an existing root supported.
+- lines 569-579: real created claims/reservations; id_map only identity pairs or {}.
+- lines 1307-1315: modified invalid declarations reject; unchanged legacy values
+  cannot be stripped or silently repaired.
+
+Comparators (source only; not new proof)
+test_commit_runtime_occurrence_media.py:75-100: accept typed birth, reopen the
+returned canonical source, patch physical payloads, accept source, then share.
+test_commit_runtime_clip_scalar_fields.py:124-138: finish/publish a real source
+and reopen it before sharing. test_commit_runtime_video_unplace.py:139-163:
+submit source and shared placement separately, compare returned exact physical
+pins and payloads. None demonstrates this precise [] -> item membership change
+on a shared published input, the unchanged D91 3.5/4/14 sequence, or immunity
+from the new alias baseline constraint. These are useful input patterns, not
+proof that D91 is passing or permission to rebuild/remove its physical source.
+
+Finite owner decisions / exact unapplied scope
+1. Interval compatibility: decide how the original promised D91 moves relate to
+   the current bound when 2000 ms / 13000 ms / 1800 ms clips / every numeric move
+   and physical topology are all fixed. These inputs cannot all satisfy the current
+   local-end <= duration_ms/1000 rule. Do not relabel a rejection as a passing
+   behavior, extend a host, trim a hold, shift a placement, round a fixture value,
+   or delete a repeated placement. Owner resolution is required before code.
+2. Separate precision issue: provider owner should assess capture.py:217 against
+   units.py:41-44 and validation.py:251 for the exact-at-end 3.5 move. Any product
+   arithmetic correction is outside this worker's sole allowed test file; no
+   epsilon, clamp, guard relaxation, or arithmetic patch is applied/proven here.
+   Fixing it alone cannot restore the later interval behavior above.
+3. Identity/membership compatibility: owner/provider review of State.shot_item_map
+   :341-359 plus project_shot_items :377-384, fed by Closure.native_sites :183-222.
+   Required behavior is authenticating the new sequential repeated-third against
+   its genuine shared-source creation and permitting the exact authored membership
+   through current API provenance while retaining both owners and all guards.
+   A source provenance correction needs explicit file scope; this report does not
+   authorize product/auth/store changes or assert an untested implementation.
+No bounded fixture-only edit meets all three requirements. The previous proposed
+D72 phrase 'fixture made valid under C0 finite intervals' is contradicted by the
+actual 2966 evidence and later source arithmetic; do not record it as achieved.
+Proposed replacement status ONLY: D91 remains unqualified, 2966=5F/5E, interval
+scope and genuine item-membership provenance require owner decisions; no new MAIN
+run is justified until those are settled and a reviewed source change exists.
+
+Verification
+python3 /tmp/w-bb45420810/d91_source_audit.py: PASS (AST compile only, archived
+physical input digests and XML/source data inspection, no project code execution).
+Scoped Ruff baseline via stdin and candidate: exit 0 / exit 0.
+Scoped mypy baseline via --shadow-file on the true target path and candidate,
+separate private caches: exit 0 / exit 0, no issues in 1 source file each.
+Exact argv/stdout/stderr in baseline-ruff.json, candidate-ruff.json,
+baseline-mypy.json, candidate-mypy.json. git diff --check and git diff --exit-code:
+exit 0; git status --short empty. Static checks are not behavioral qualification.
