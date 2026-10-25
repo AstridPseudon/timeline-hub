@@ -74,11 +74,15 @@ jobs:
       - name: Install the Runtime and client from the checkout
         run: python -m pip install --no-deps -e ./astrid-runtime -e ./astrid-runtime/packages/python
 
+      - name: Read the pinned VibeComfy revision
+        id: vibecomfy-pin
+        run: rev=$(python3 scripts/vibecomfy_pin.py) && echo "revision=$rev" >> "$GITHUB_OUTPUT"
+
       - name: Check out VibeComfy at the pinned engine revision
         uses: actions/checkout@v4
         with:
           repository: peteromallet/VibeComfy
-          ref: 31f90bb03d330283b76e7dbdda51197be787090d
+          ref: ${{ steps.vibecomfy-pin.outputs.revision }}
           path: vibecomfy-checkout
 
       - name: Install VibeComfy
@@ -152,11 +156,15 @@ jobs:
       - name: Install the Runtime and client from the checkout
         run: python -m pip install --no-deps -e ./astrid-runtime -e ./astrid-runtime/packages/python
 
+      - name: Read the pinned VibeComfy revision
+        id: vibecomfy-pin
+        run: rev=$(python3 scripts/vibecomfy_pin.py) && echo "revision=$rev" >> "$GITHUB_OUTPUT"
+
       - name: Check out VibeComfy at the pinned engine revision
         uses: actions/checkout@v4
         with:
           repository: peteromallet/VibeComfy
-          ref: 31f90bb03d330283b76e7dbdda51197be787090d
+          ref: ${{ steps.vibecomfy-pin.outputs.revision }}
           path: vibecomfy-checkout
 
       - name: Install VibeComfy

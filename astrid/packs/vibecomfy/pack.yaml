@@ -145,8 +145,6 @@ actions:
       path: actions/import/STAGE.md
     - kind: implementation
       path: actions/import/__init__.py
-    - kind: requirements
-      path: actions/import/requirements.txt
     - kind: implementation
       path: actions/import/run.py
   inspect:
@@ -255,8 +253,6 @@ actions:
       path: actions/inspect/STAGE.md
     - kind: implementation
       path: actions/inspect/__init__.py
-    - kind: requirements
-      path: actions/inspect/requirements.txt
     - kind: implementation
       path: actions/inspect/run.py
   edit:
@@ -441,8 +437,6 @@ actions:
       path: actions/edit/STAGE.md
     - kind: implementation
       path: actions/edit/__init__.py
-    - kind: requirements
-      path: actions/edit/requirements.txt
     - kind: implementation
       path: actions/edit/run.py
   run:
@@ -570,7 +564,6 @@ actions:
       prompts: []
       requirements:
       - vibecomfy
-      requirements_source: actions/run/requirements.txt
       runtime_file: actions/run/run.py
       runtime_module: astrid.packs.vibecomfy.actions.run.run
       output_result_manifest: true
@@ -653,8 +646,6 @@ actions:
       path: actions/run/STAGE.md
     - kind: implementation
       path: actions/run/__init__.py
-    - kind: requirements
-      path: actions/run/requirements.txt
     - kind: implementation
       path: actions/run/run.py
   validate:
@@ -741,7 +732,6 @@ actions:
       prompts: []
       requirements:
       - vibecomfy
-      requirements_source: actions/validate/requirements.txt
       runtime_file: actions/validate/run.py
       runtime_module: astrid.packs.vibecomfy.actions.validate.run
       vibecomfy_command: validate
@@ -787,8 +777,6 @@ actions:
       path: actions/validate/STAGE.md
     - kind: implementation
       path: actions/validate/__init__.py
-    - kind: requirements
-      path: actions/validate/requirements.txt
     - kind: implementation
       path: actions/validate/run.py
   video_enhance:

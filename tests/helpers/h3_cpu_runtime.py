@@ -26,6 +26,7 @@ import tarfile
 import uuid
 from typing import Any, Mapping
 
+from astrid.core.generation.vibecomfy_dependency import VIBECOMFY_ENGINE_REVISION
 from tests.helpers.runtime import locate_runtime
 
 ASTRID_ROOT = Path(__file__).resolve().parents[2]
@@ -40,7 +41,7 @@ VIBECOMFY_SOURCE_ROOT = VIBECOMFY_ROOT
 # The derived candidate must launch the VibeComfy revision selected by this
 # Astrid integration checkout. The older pinned revision below describes only
 # the preserved H3 object_info capture, not the runtime dependency.
-PINNED_VIBECOMFY_REVISION = "31f90bb03d330283b76e7dbdda51197be787090d"
+PINNED_VIBECOMFY_REVISION = VIBECOMFY_ENGINE_REVISION
 H3_SCHEMA_CAPTURE_VIBECOMFY_REVISION = "01f38461d633651c8857712b2331650aedaee461"
 BEHAVIORAL_SOURCE_SHA256 = "9ff48550d4cdf1547bc10e58c5677b9606b35bb25988bef6259530b51cccc48e"
 H3_RUNPOD_SCHEMA_SHA256 = "1133daa166d646db626e05d9aba1c8d5b689fa0a19216e3d10ea08e7a9fb6810"
