@@ -770,6 +770,8 @@ def _validate_timeline_visualize_inputs(
     except ValueError as exc:
         raise CapabilityValidationError(str(exc)) from exc
     context = prepare_filmstrip(values, project=project, client=_client)
+    if values.get("mode") == "scene_only":
+        context = {**context, "mode": "scene_only"}
     from copy import deepcopy
     # These snapshots are host-prepared immutable closures. Carry resource
     # identity in derived metadata; never rewrite their authored config.
@@ -2736,7 +2738,7 @@ def _kernel_invoke(
     # renders source previews.
     if (str(capability.id) == "rendering.timeline_visualize"
             and isinstance(idempotency_context, Mapping)
-            and idempotency_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}):
+            and idempotency_context.get("mode") in {"filmstrip", "input_only", "composed_capture", "scene_only"}):
         authority_snapshot = (
             idempotency_context.get("filmstrip_snapshot")
             or idempotency_context.get("input_snapshot")
@@ -2865,13 +2867,29 @@ def _kernel_invoke(
     # Admission has already used the projected documents to derive media and
     # storage bounds. Persist each exact projection once in Runtime CAS and
     # send only its digest/revision identity in the task request.
-    spec_inputs = spec.get("inputs") if isinstance(spec.get("inputs"), dict) else {}
-    snapshot_context = spec.get("authority_context") if isinstance(spec.get("authority_context"), dict) else {}
+    spec_inputs: dict[str, Any] = spec.get("inputs") if isinstance(spec.get("inputs"), dict) else {}
+    snapshot_context: dict[str, Any] = spec.get("authority_context") if isinstance(spec.get("authority_context"), dict) else {}
     has_inline_snapshot = isinstance(spec_inputs.get("timeline_snapshot"), Mapping) or any(
         isinstance(snapshot_context.get(key), Mapping)
         for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot")
     )
-    if str(capability.id) in {"rendering.render", "rendering.timeline_visualize"} and has_inline_snapshot:
+    # Capture admission must validate the candidate and every duplicate before
+    # Runtime publishes anything. Leave its inline snapshot for that publisher.
+    capture_snapshot = snapshot_context.get("capture_snapshot")
+    capture_authority = capture_snapshot.get("metadata", {}).get("capture_authority", {}) if isinstance(capture_snapshot, Mapping) else {}
+    # A working copy whose candidate was not forwarded cannot be certified: it
+    # is sent as explicit CAS-only data, never as a revision or working copy.
+    candidate_forwarded = isinstance(spec_inputs.get("authoring_preview"), Mapping)
+
+    def uncertified(snapshot: Any) -> bool:
+        metadata = snapshot.get("metadata") if isinstance(snapshot, Mapping) else None
+        return (isinstance(metadata, Mapping) and isinstance(metadata.get("working_copy"), Mapping)
+                and not candidate_forwarded)
+
+    runtime_capture = (str(capability.id) == "rendering.timeline_visualize"
+                       and bool(capture_authority.get("parent_revision_id"))
+                       and not uncertified(capture_snapshot))
+    if str(capability.id) in {"rendering.render", "rendering.timeline_visualize"} and has_inline_snapshot and not runtime_capture:
         remote = getattr(_client, "_remote", _client)
         transport = getattr(remote, "_transport", remote)
         ingest = getattr(transport, "ingest_project_object", None)
@@ -2889,6 +2907,9 @@ def _kernel_invoke(
                 raise CapabilityInvocationError("Runtime snapshot object digest differs from prepared snapshot")
             if digest not in input_manifest:
                 input_manifest.append(digest)
+            if uncertified(snapshot):
+                return {"digest": digest, "project_id": provenance.get("project_id"),
+                        "timeline_id": provenance.get("timeline_id"), "source_kind": "cas"}
             revision_id = provenance.get("revision_id")
             metadata = snapshot.get("metadata") if isinstance(snapshot.get("metadata"), Mapping) else {}
             working_copy = metadata.get("working_copy") if isinstance(metadata.get("working_copy"), Mapping) else None
@@ -3820,7 +3841,7 @@ def _invoke_bridge_child(
     from astrid.core.foundation.hash import executor_definition_digest
     from ._child_bridge import (
         _BridgeRejected, _BridgeReplyTimeout, _BridgeTimeout, _ChildOutputBinding,
-        _child_request, _valid_id, _validate_output_page,
+        _child_request, _child_status_error, _valid_id, _validate_output_page,
     )
 
     digest = executor_definition_digest(registries[0].get(capability.id))
@@ -3849,9 +3870,8 @@ def _invoke_bridge_child(
 
         def validate_status(observed: Any) -> None:
             nonlocal protocol_error
-            if not isinstance(observed, Mapping) or observed.get("task_id") != task_id or observed.get("run_id") != run_id:
-                bridge.close()
-                protocol_error = CapabilityInvocationError("child bridge status returned a foreign task resource")
+            protocol_error = _child_status_error(observed, task_id=task_id, run_id=run_id, close=bridge.close)
+            if protocol_error is not None:
                 raise protocol_error
 
         def status(observed_id: str) -> Any:
@@ -4085,6 +4105,13 @@ def invoke(
 
     intent_modality = _generation_capability_modality(capability)
     request_inputs = dict(inputs or {})
+    if capability.id in {"rendering.render", "rendering.timeline_visualize"}:
+        from astrid.core.rendering.verified_source import reject_source_keys
+
+        try:
+            reject_source_keys(request_inputs)
+        except ValueError as exc:
+            raise CapabilityValidationError(str(exc)) from exc
     if capability.id == "rendering.render":
         # Apply caller/mode checks before delegated child dispatch as well as
         # top-level preflight. Child file custody still belongs to the bridge.
@@ -4245,6 +4272,13 @@ def invoke(
     # a project tree or materialize a render snapshot.
     if not dry_run:
         if capability.id == "rendering.timeline_visualize":
+            inputs = dict(inputs or {})
+            preview = inputs.get("authoring_preview")
+            if preview is not None:
+                if not isinstance(preview, Mapping):
+                    raise CapabilityValidationError("authoring_preview must be a frozen candidate artifact")
+                # Keep the authored task data identical to what preflight projects.
+                inputs["authoring_preview"] = _json_safe_mapping(preview)
             invocation_authority_context = _validate_timeline_visualize_inputs(
                 inputs,
                 project=project,
@@ -4263,7 +4297,7 @@ def invoke(
                         "transcript input is host-owned; config.app.transcript supplies the CAS object"
                     )
                 inputs["transcript.json"] = transcript_input
-            if invocation_authority_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}:
+            if invocation_authority_context.get("mode") in {"filmstrip", "input_only", "composed_capture", "scene_only"}:
                 # Only preflight may turn a successful project-owned render
                 # into a file input. Public paths were rejected above.
                 inputs = dict(inputs or {})
@@ -4288,11 +4322,16 @@ def invoke(
                 # and the admission receipt. Store the authority and the
                 # snapshot's timeline and registry as managed objects instead;
                 # the host materializes them as the executor's input files.
-                stored = _store_visualize_objects(
+                # Runtime must see a canonical capture before publishing it;
+                # objectifying authority first hides its binding from admission.
+                capture_authority = authority_snapshot.get("metadata", {}).get("capture_authority", {})
+                canonical_capture = (isinstance(invocation_authority_context.get("capture_snapshot"), Mapping)
+                                     and bool(capture_authority.get("parent_revision_id")))
+                stored = None if canonical_capture else _store_visualize_objects(
                     _client, project, authority_json, authority_snapshot,
                 )
                 if stored is None:
-                    inputs["filmstrip_authority"] = authority_json  # a client without import_bytes
+                    inputs["filmstrip_authority"] = authority_json  # admission publishes snapshot refs
                 else:
                     inputs.update(stored)
                     invocation_authority_context = {

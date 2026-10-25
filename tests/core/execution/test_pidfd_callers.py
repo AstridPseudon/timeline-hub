@@ -177,3 +177,4 @@ def test_pack_host_and_retained_custody_without_stdlib_pidfds(tmp_path, without_
         child.wait(timeout=5)
         owner.release_pidfds()
         host.shutdown()
+

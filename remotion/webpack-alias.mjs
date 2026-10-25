@@ -177,7 +177,7 @@ export const packElementAliases = ({env = process.env, astridDir = repoRootOf()}
   };
 };
 
-const primitiveAliases = (projectDir, packAliases) => {
+const primitiveAliases = (projectDir) => {
   const activeThemeDir = path.resolve(projectDir, '_active_theme');
   const aliases = {
     '@theme-elements-effects': path.resolve(activeThemeDir, 'elements/effects'),
@@ -187,14 +187,6 @@ const primitiveAliases = (projectDir, packAliases) => {
     '@theme-elements-transitions': path.resolve(activeThemeDir, 'elements/transitions'),
     '@theme-transitions': path.resolve(activeThemeDir, 'transitions'),
   };
-  const renderingAliases = {
-    effects: packAliases['@pack-rendering-elements-effects'],
-    animations: packAliases['@pack-rendering-elements-animations'],
-    transitions: packAliases['@pack-rendering-elements-transitions'],
-  };
-  for (const kind of Object.keys(renderingAliases)) {
-    if (renderingAliases[kind]) aliases[`@workspace-${kind}`] = renderingAliases[kind];
-  }
   return aliases;
 };
 
@@ -208,7 +200,7 @@ const applyAliasesForRoot = (currentConfiguration, remotionRoot) => {
       alias: {
         ...currentConfiguration.resolve?.alias,
         ...packAliases,
-        ...primitiveAliases(repoRoot, packAliases),
+        ...primitiveAliases(repoRoot),
       },
       modules: [
         ...(currentConfiguration.resolve?.modules ?? ['node_modules']),
@@ -228,5 +220,3 @@ export const remotionPrimitiveAliasesFor = (remotionRoot) => {
 
 export const applyRemotionPrimitiveAliases = (configuration) =>
   applyAliasesForRoot(configuration, nativeModuleDir());
-
-export const applyWorkspaceEffectsAlias = applyRemotionPrimitiveAliases;

@@ -70,3 +70,4 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,
     chat = next(row for row in value["declaration"]["services"] if row["name"] == "chat")
     assert chat["argv"] == [bun, str(installed / "astrid" / "chat" / "service.mjs")]
     assert Path(chat["argv"][1]).is_file()
+

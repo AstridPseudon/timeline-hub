@@ -237,3 +237,4 @@ export function SceneSurface({ source, sourceTime, width, height, view, worldTim
     style: { position: 'absolute', left: 8, top: 8, background: '#000b', color: 'white', font: '12px monospace', padding: 6 },
   }, `${status.phase} · displayed ${displayedStatus?.revision ?? '…'} · requested ${requested.revision} · source ${displayedStatus?.sourceTime?.toFixed(3) ?? '…'}s · requested ${sourceTime.toFixed(3)}s${status.error ? ` · ${status.error}` : ''}`) : null);
 }
+

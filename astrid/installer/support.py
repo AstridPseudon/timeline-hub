@@ -32,3 +32,4 @@ def reveal_bundle(bundle: Path) -> None:
                          stderr=subprocess.DEVNULL, close_fds=True)
     except OSError:
         pass  # The printed path remains usable without a desktop session.
+

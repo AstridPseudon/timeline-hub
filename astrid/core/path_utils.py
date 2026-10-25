@@ -53,3 +53,4 @@ def file_uri_to_path(value: str, *, windows: bool | None = None) -> Path:
 
         decoded_path = url2pathname(parsed.path)
     return Path(decoded_path)
+

@@ -218,3 +218,4 @@ describe('ProjectChatRegistry', () => {
     } finally { rmSync(store.claimDirectory, { recursive: true, force: true }); }
   });
 });
+

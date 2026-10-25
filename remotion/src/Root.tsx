@@ -2,6 +2,7 @@ import type {ReactElement} from 'react';
 import {Composition, Sequence, useVideoConfig} from 'remotion';
 import {Video} from '@remotion/media';
 import {
+  DEFAULT_THEME,
   TimelineComposition,
   getTimelineDurationInFrames,
 } from '@banodoco/timeline-composition';
@@ -12,6 +13,7 @@ import type {
   VisualOverrides,
 } from './types.augmentations';
 import {FontProvider} from './fonts';
+import {resolveHostRegistries} from './host-registries';
 import {ReviewOverlay} from './ReviewOverlay';
 import {FrameDiagnostics} from './FrameDiagnostics';
 import {BoundsProbe} from './BoundsProbe';
@@ -19,6 +21,7 @@ import type {ReviewContext} from './ReviewOverlay';
 import {resolveInvocationAsset} from './asset-source';
 
 type ReviewProps = TimelineCompositionProps & {
+  astridCompositionDurationInFrames?: number;
   review?: ReviewContext | null;
   astridFrameDiagnostics?: boolean;
   astridBounds?: boolean;
@@ -79,7 +82,7 @@ const RenderClockTail = ({props}: {props: TimelineCompositionProps}): ReactEleme
 };
 
 const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
-  <TimelineComposition {...props} />
+  <TimelineComposition {...props} registries={resolveHostRegistries(props.theme ?? DEFAULT_THEME)} />
   <RenderClockTail props={props} />
   <ReviewOverlay review={props.review} />
   {props.astridFrameDiagnostics && <FrameDiagnostics />}
@@ -90,7 +93,7 @@ const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
 // the Three.js scene out of the 2D film's page load and JS parse path.
 const loadReviewedThree = () => import('./ThreeTimelineComposition').then(({ThreeTimelineComposition}) => ({
   default: (props: ReviewProps): ReactElement => <>
-    <ThreeTimelineComposition {...props} />
+    <ThreeTimelineComposition {...props} registries={resolveHostRegistries(props.theme ?? DEFAULT_THEME)} />
     <RenderClockTail props={props} />
     <ReviewOverlay review={props.review} />
     {props.astridFrameDiagnostics && <FrameDiagnostics />}
@@ -137,7 +140,7 @@ const getCanvas = (props: TimelineCompositionProps): CanvasOverride => {
 const getMetadata = async ({
   props,
 }: {
-  props: TimelineCompositionProps;
+  props: ReviewProps;
 }): Promise<{
   width: number;
   height: number;
@@ -151,11 +154,27 @@ const getMetadata = async ({
   const windowDuration = metadata?.source_window_start_seconds !== undefined
     && typeof metadata.duration_seconds === 'number'
     ? Math.round(metadata.duration_seconds * fps) : undefined;
+  const originalDuration = props.astridCompositionDurationInFrames;
+  if (originalDuration !== undefined) {
+    if (!Number.isSafeInteger(originalDuration) || originalDuration < 1
+      || originalDuration < getTimelineDurationInFrames(props.timeline, fps)) {
+      throw new Error('composition duration must be a positive safe integer covering the isolated clips');
+    }
+    const app = (props.timeline as typeof props.timeline & {app?: Record<string, unknown>}).app;
+    if (metadata?.source_window_start_seconds !== undefined
+      || (app?.astrid_render_clock !== undefined && (!clock
+        || clock.render_duration_frames !== originalDuration
+        || !Number.isSafeInteger(clock.authored_duration_frames)
+        || clock.authored_duration_frames < getTimelineDurationInFrames(props.timeline, fps)
+        || clock.authored_duration_frames >= originalDuration))) {
+      throw new Error('composition duration conflicts with an existing render clock');
+    }
+  }
   return {
     width: canvas.width ?? 1920,
     height: canvas.height ?? 1080,
     fps,
-    durationInFrames: Math.max(1, windowDuration ?? clock?.render_duration_frames ?? getTimelineDurationInFrames(props.timeline, fps)),
+    durationInFrames: Math.max(1, originalDuration ?? windowDuration ?? clock?.render_duration_frames ?? getTimelineDurationInFrames(props.timeline, fps)),
   };
 };
 

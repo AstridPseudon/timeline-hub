@@ -143,3 +143,4 @@ def test_windows_branch_real_child_handles_its_own_interrupt(monkeypatch):
         _process.replace_process([sys.executable, "-c", script])
     assert exc.value.code == 29
     assert signal.getsignal(signal.SIGINT) is previous_handler
+

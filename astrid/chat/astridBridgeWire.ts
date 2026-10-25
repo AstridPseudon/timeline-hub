@@ -10,3 +10,4 @@ export const ASTRID_BRIDGE_PROTOCOL_HEADER = 'X-Astrid-Bridge-Version';
 export const ASTRID_BRIDGE_REQUEST_TIMEOUT_MS = 30_000;
 /** ACP prompts can include generation/edit work and are not ordinary REST reads. */
 export const ASTRID_ACP_REQUEST_TIMEOUT_MS = 5 * 60_000;
+

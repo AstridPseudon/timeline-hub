@@ -10,6 +10,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tarfile
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -18,7 +19,7 @@ import pytest
 
 
 from astrid.core.foundation.hash import sha256_file
-from astrid.core.rendering import remotion_runtime
+from astrid.core.rendering import _local_schema, remotion_runtime
 from astrid.core.rendering.remotion_runtime import (
     NODE_EXECUTABLE_ENV,
     REMOTION_CLI_RELATIVE_PATH,
@@ -39,6 +40,30 @@ from astrid.sdk.workspace_client import WorkspaceClient
 
 FIXTURE_VIDEO = Path(__file__).resolve().parents[2] / "fixtures" / "reshape" / "hype_regression" / "broll.mp4"
 TS = "2026-08-25T00:00:00.000000+00:00"
+REMOTION_ROOT = Path(remotion_runtime.REPO_ROOT) / "remotion"
+COMPOSITION_ARTIFACT = REMOTION_ROOT / json.loads(
+    (REMOTION_ROOT / "package.json").read_text(encoding="utf-8")
+)["dependencies"]["@banodoco/timeline-composition"].removeprefix("file:")
+
+
+def _stage_schema(source: Path, *, missing: str | None = None) -> Path:
+    for relative in (_local_schema.SCHEMA_RELATIVE_PATH, Path('runtime.lock.json'),
+                     *_local_schema.READER_INPUTS):
+        target = source / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if relative.as_posix() == missing:
+            continue
+        target.write_bytes((REMOTION_ROOT.parent / relative).read_bytes())
+    return source / _local_schema.SCHEMA_RELATIVE_PATH
+
+
+def _install_composition_package(runtime: Path) -> Path:
+    package = runtime / "node_modules/@banodoco/timeline-composition"
+    package.parent.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(COMPOSITION_ARTIFACT) as archive:
+        archive.extractall(runtime)
+    (runtime / "package").rename(package)
+    return package
 
 
 def _timeline_config() -> dict:
@@ -174,6 +199,79 @@ def test_media_timeline_selects_ffmpeg_without_remotion_configuration(
     }
 
 
+def test_admitted_theme_reaches_executor_without_changing_materialized_handoff(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
+    task = _task(root=tmp_path)
+    theme_path = tmp_path / "staging" / "managed-objects" / "theme.json"
+    theme_path.write_text('{"id":"admitted-theme"}\n', encoding="utf-8")
+    materialized_objects = dict(task.spec["params"]["materialized_objects"])
+    materialized_objects["theme"] = str(theme_path)
+    task.spec["params"] = {
+        **task.spec["params"],
+        "materialized_objects": materialized_objects,
+    }
+    captured: dict[str, Any] = {}
+
+    def fake_run_executor(request: Any, _registry: Any) -> Any:
+        captured.update(request.inputs)
+        output = Path(request.out) / request.inputs["output_name"]
+        output.write_bytes(b"\x00\x00\x00\x18ftyp")
+        return SimpleNamespace(ok=True, error=None, payload={}, outputs={"video": output})
+
+    monkeypatch.setattr(task_adapter_module, "run_executor", fake_run_executor)
+    monkeypatch.setattr(task_adapter_module, "load_default_registry", lambda: object())
+
+    execute_render_export_task(task=task, staging_dir=tmp_path / "staging")
+
+    assert captured["theme"] == str(theme_path)
+    assert captured["materialized_objects"] == materialized_objects
+
+
+def test_unbound_theme_path_does_not_override_builtin_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
+    task = _task(root=tmp_path)
+    forged_theme = tmp_path / "forged-theme.json"
+    forged_theme.write_text('{"id":"forged-theme"}\n', encoding="utf-8")
+    task.spec["params"] = {
+        **task.spec["params"],
+        "theme": str(forged_theme),
+    }
+    captured: dict[str, Any] = {}
+
+    def fake_run_executor(request: Any, _registry: Any) -> Any:
+        captured.update(request.inputs)
+        output = Path(request.out) / request.inputs["output_name"]
+        output.write_bytes(b"\x00\x00\x00\x18ftyp")
+        return SimpleNamespace(ok=True, error=None, payload={}, outputs={"video": output})
+
+    monkeypatch.setattr(task_adapter_module, "run_executor", fake_run_executor)
+    monkeypatch.setattr(task_adapter_module, "load_default_registry", lambda: object())
+
+    execute_render_export_task(task=task, staging_dir=tmp_path / "staging")
+
+    assert "theme" not in captured
+
+
+def test_theme_outside_materialization_root_is_refused(tmp_path: Path) -> None:
+    (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
+    task = _task(root=tmp_path)
+    forged_theme = tmp_path / "outside-theme.json"
+    forged_theme.write_text('{"id":"forged-theme"}\n', encoding="utf-8")
+    materialized_objects = dict(task.spec["params"]["materialized_objects"])
+    materialized_objects["theme"] = str(forged_theme)
+    task.spec["params"] = {
+        **task.spec["params"],
+        "materialized_objects": materialized_objects,
+    }
+
+    with pytest.raises(RenderExportRefused, match="beneath the host materialization root"):
+        RenderExportTaskAdapter().execute(task=task, staging_dir=tmp_path / "staging")
+
+
 def test_renderer_inputs_are_inode_isolated_and_cleaned(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -254,26 +352,13 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
 
     (tmp_path / "render-project").mkdir(parents=True, exist_ok=True)
     runtime = tmp_path / "installed-remotion"
-    (runtime / "node_modules" / "@banodoco").mkdir(parents=True)
-    for package in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
-        package_dir = runtime / "node_modules" / "@banodoco" / package
-        package_dir.mkdir()
-        package_dir.joinpath("package.json").write_text(
-            json.dumps({"name": f"@banodoco/{package}", "version": "0.0.0"}),
-            encoding="utf-8",
-        )
-    generated_src = runtime / "node_modules" / "@banodoco" / "timeline-composition" / "typescript" / "src"
+    _install_composition_package(runtime)
+    generated_src = runtime / "src"
     generated_src.mkdir(parents=True)
-    generated_runtime_src = runtime / "src"
-    generated_runtime_src.mkdir()
     for kind in ("effects", "animations", "transitions"):
-        provisioned = Path(remotion_runtime.REPO_ROOT) / 'remotion/node_modules/@banodoco/timeline-composition/typescript/src' / f'{kind}.generated.ts'
+        provisioned = Path(remotion_runtime.REPO_ROOT) / 'remotion/src' / f'{kind}.generated.ts'
         assert provisioned.is_file(), 'the pinned provisioned registry is required'
         (generated_src / f"{kind}.generated.ts").write_bytes(provisioned.read_bytes())
-        for extension in (".ts", ".js", ".d.ts", ".js.map", ".d.ts.map"):
-            (generated_runtime_src / f"{kind}.generated{extension}").write_text(
-                "export {};\n", encoding="utf-8"
-            )
     (runtime / "package.json").write_text('{"private":true}\n', encoding="utf-8")
     cli = runtime / REMOTION_CLI_RELATIVE_PATH
     cli.parent.mkdir(parents=True)
@@ -330,56 +415,26 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
     assert shutil.which("python3") is not None
     assert shutil.which("ffprobe") is not None
     assert shutil.which("node") is None
-    schema_spec = importlib.util.find_spec("banodoco_timeline_schema")
-    if schema_spec is None or schema_spec.origin is None:
-        pytest.fail("the pinned timeline-schema dependency is required for this integration test")
-    schema_install = tmp_path / "installed-python"
-    schema_package = schema_install / "banodoco_timeline_schema"
-    shutil.copytree(Path(schema_spec.origin).parent, schema_package)
-    # The clean readiness probe intentionally ignores ambient/user site
-    # packages. Provision the small jsonschema dependency closure beside the
-    # trusted schema so this test models an installed runtime rather than an
-    # editable checkout.
-    for dependency in (
-        "jsonschema",
-        "jsonschema_specifications",
-        "referencing",
-        "rpds",
-        "attrs",
-        "attr",
-    ):
-        dependency_spec = importlib.util.find_spec(dependency)
-        if dependency_spec is None or dependency_spec.submodule_search_locations is None:
-            pytest.fail(f"the pinned {dependency} dependency is required for this integration test")
-        shutil.copytree(
-            Path(next(iter(dependency_spec.submodule_search_locations))),
-            schema_install / dependency,
-        )
-    monkeypatch.setenv(TIMELINE_SCHEMA_PYTHONPATH_ENV, str(schema_install))
-    monkeypatch.setenv(
-        "PYTHONPATH",
-        os.pathsep.join(
-            path for path in (str(schema_install), os.environ.get("PYTHONPATH")) if path
-        ),
-    )
+    # The source-profile probe selects the actual canonical reader and the
+    # already installed standards validator, without an external model tree.
+    schema = REMOTION_ROOT.parent / _local_schema.SCHEMA_RELATIVE_PATH
+    monkeypatch.setenv(TIMELINE_SCHEMA_PYTHONPATH_ENV, str(schema))
     probe_env = os.environ.copy()
     probe_env.pop("PYTHONPATH", None)
     schema_origin = subprocess.check_output(
         [
             sys.executable,
-            "-c",
-            "import astrid.core.timeline.banodoco_schema; "
-            "import banodoco_timeline_schema; "
-            "print(banodoco_timeline_schema.__file__)",
+            "-I", "-c", remotion_runtime._SCHEMA_PROBE,
+            str(schema), str(REMOTION_ROOT.parent), 'source',
         ],
         text=True,
         env=probe_env,
     ).strip()
-    assert Path(schema_origin).resolve().is_relative_to(schema_package.resolve())
+    assert Path(schema_origin).resolve() == schema.resolve()
     import banodoco_timeline_schema as ambient_schema
 
     ambient_origin = Path(ambient_schema.__file__).resolve()
-    assert not ambient_origin.is_relative_to(schema_package.resolve())
+    assert not ambient_origin.is_relative_to(schema.parent.resolve())
     (runtime / "package-lock.json").write_text('{"lockfileVersion":3}\n')
     monkeypatch.setattr(remotion_run, "gen_effect_registry", None)
     for control in remotion_runtime._UNSUPPORTED_PYTHON_STARTUP:
@@ -455,28 +510,19 @@ def test_forced_caption_fails_before_renderer_without_server_runtime(
 
 @pytest.mark.parametrize(
     "missing_file",
-    ("__init__.py", "generated.py", "materialize.py", "theme.py", "timeline.schema.json", "validate.py"),
+    (_local_schema.SCHEMA_RELATIVE_PATH.as_posix(), 'runtime.lock.json',
+     *(p.as_posix() for p in _local_schema.READER_INPUTS)),
 )
 def test_trusted_schema_readiness_requires_complete_install(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     missing_file: str,
 ) -> None:
-    import banodoco_timeline_schema
-
-    schema_install = tmp_path / "installed-python"
-    schema_package = schema_install / "banodoco_timeline_schema"
-    schema_package.mkdir(parents=True)
-    source_package = Path(banodoco_timeline_schema.__file__).resolve().parent
-    for source in source_package.iterdir():
-        if source.name != missing_file and source.is_file():
-            shutil.copy2(source, schema_package / source.name)
+    source = tmp_path / "agent"
+    schema = _stage_schema(source, missing=missing_file)
+    monkeypatch.setattr(remotion_runtime, 'REPO_ROOT', source)
     runtime = tmp_path / "installed-remotion"
-    (runtime / "node_modules" / "@banodoco").mkdir(parents=True)
-    for package in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
-        package_dir = runtime / "node_modules" / "@banodoco" / package
-        package_dir.mkdir()
-        package_dir.joinpath("package.json").write_text("{}", encoding="utf-8")
+    _install_composition_package(runtime)
     (runtime / "package.json").write_text("{}", encoding="utf-8")
     cli = runtime / REMOTION_CLI_RELATIVE_PATH
     cli.parent.mkdir(parents=True)
@@ -493,7 +539,7 @@ def test_trusted_schema_readiness_requires_complete_install(
     trusted_node.chmod(0o755)
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
     monkeypatch.setenv(NODE_EXECUTABLE_ENV, str(trusted_node))
-    monkeypatch.setenv(TIMELINE_SCHEMA_PYTHONPATH_ENV, str(schema_install))
+    monkeypatch.setenv(TIMELINE_SCHEMA_PYTHONPATH_ENV, str(schema))
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
     status = remotion_runtime_status()
     assert not status.available
@@ -502,11 +548,7 @@ def test_trusted_schema_readiness_requires_complete_install(
 
 def _runtime_with_locked_packages(tmp_path: Path) -> Path:
     runtime = tmp_path / "runtime"
-    packages_root = runtime / "node_modules" / "@banodoco"
-    for package in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
-        package_dir = packages_root / package
-        package_dir.mkdir(parents=True)
-        (package_dir / "package.json").write_text("{}", encoding="utf-8")
+    _install_composition_package(runtime)
     (runtime / "package.json").write_text("{}", encoding="utf-8")
     return runtime
 
@@ -684,13 +726,9 @@ def test_generated_runtime_attempt_settlement_round_trip(monkeypatch: pytest.Mon
 def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=None, schema_result_transform=None, worker_contexts=None):
     """Production-shaped inputs and successful original wait receipts; no launch."""
     runtime = tmp_path / 'runtime'
-    for name in remotion_runtime._REQUIRED_PACKAGES:
-        path = runtime / 'node_modules' / '@banodoco' / name / 'package.json'
-        path.parent.mkdir(parents=True)
-        path.write_text('{}')
+    _install_composition_package(runtime)
     from astrid.packs.rendering.rendering.renderers.remotion import run as registry_run
     monkeypatch.setattr(registry_run, 'gen_effect_registry', None)
-    (runtime / 'node_modules/@banodoco/timeline-composition/typescript/src').mkdir(parents=True)
     for output in registry_run._registry_output_paths(runtime):
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text('// provisioned registry')
@@ -699,11 +737,9 @@ def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=No
     cli.write_text('// exact CLI')
     (runtime / 'package.json').write_text('{}')
     (runtime / 'package-lock.json').write_text('{}')
-    schema = tmp_path / 'schema'
-    for name in remotion_runtime._REQUIRED_SCHEMA_FILES:
-        path = schema / 'banodoco_timeline_schema' / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text('{}' if name.endswith('.json') else '# schema')
+    source = tmp_path / 'agent'
+    schema = _stage_schema(source)
+    monkeypatch.setattr(remotion_runtime, 'REPO_ROOT', source)
     node = tmp_path / 'node'
     node.write_text('server-owned Node')
     node.chmod(0o700)
@@ -728,7 +764,7 @@ def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=No
                    'custody_admitted': True, 'original_child_pid': 500 + len(calls)}
         if argv[-1] == '--version':
             return subprocess.CompletedProcess(argv, 0, 'v20.19.4\n', ''), receipt
-        closure = {'origin': str(schema / 'banodoco_timeline_schema/__init__.py'),
+        closure = {'origin': str(schema),
                    'package_roots': [str(dep)], 'module_files': [str(site / 'safe_finder.py'), str(site / 'safe_finder.pyc')], 'search_paths': [str(site)],
                    'startup': {'executable': sys.executable, 'prefix': sys.prefix, 'exec_prefix': sys.exec_prefix,
                                'base_prefix': sys.base_prefix, 'base_exec_prefix': sys.base_exec_prefix,
@@ -780,12 +816,61 @@ def test_launch_validation_rejects_context_or_foreign_launch_without_fallback(tm
 def test_launch_validation_rejects_changed_installed_content(tmp_path, monkeypatch, which):
     runtime, schema, node, env, ref, calls = _owned_validation_fixture(tmp_path, monkeypatch)
     paths = {'node': node, 'cli': runtime / REMOTION_CLI_RELATIVE_PATH,
-             'schema': schema / 'banodoco_timeline_schema/timeline.schema.json',
+             'schema': schema,
              'lock': runtime / 'package-lock.json', 'package': runtime / 'package.json',
              'added_package_file': runtime / 'node_modules/new-runtime-code.js'}
     paths[which].write_text('changed')
     with pytest.raises(remotion_runtime.RemotionValidationError, match='inputs changed'):
         remotion_runtime._validated_runtime(runtime, environment={**env, **ref})
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize('origin', ['/foreign/timeline-config.schema.json', '/foreign', 'relative'])
+def test_launch_validation_refuses_foreign_schema_origin(tmp_path, monkeypatch, origin):
+    def foreign(closure, _count):
+        closure['origin'] = origin
+    with pytest.raises(remotion_runtime.RemotionValidationError, match='invalid identity'):
+        _owned_validation_fixture(tmp_path, monkeypatch, schema_result_transform=foreign)
+    assert not list((tmp_path / 'artifacts').glob('remotion-validation-*.json'))
+
+
+@pytest.mark.parametrize('change', ['lock', 'schema_and_lock', 'reader_mode'])
+def test_launch_validation_refuses_changed_canonical_authority(tmp_path, monkeypatch, change):
+    runtime, schema, _, env, ref, calls = _owned_validation_fixture(tmp_path, monkeypatch)
+    lock_path = remotion_runtime.REPO_ROOT / 'runtime.lock.json'
+    lock = json.loads(lock_path.read_text())
+    pin = lock['files'][_local_schema.SCHEMA_RELATIVE_PATH.as_posix()]
+    if change == 'lock':
+        pin['sha256'] = 'sha256:' + '0' * 64
+    elif change == 'schema_and_lock':
+        schema.write_text('{}')
+        pin['sha256'] = 'sha256:' + hashlib.sha256(schema.read_bytes()).hexdigest()
+    else:
+        (remotion_runtime.REPO_ROOT / _local_schema.READER_INPUTS[0]).chmod(0o666)
+    lock_path.write_text(json.dumps(lock))
+    with pytest.raises(remotion_runtime.RemotionValidationError, match='inputs changed'):
+        remotion_runtime._validated_runtime(runtime, environment={**env, **ref})
+    assert len(calls) == 3
+
+
+def test_launch_validation_rejects_changed_extracted_helper_source(tmp_path, monkeypatch):
+    helper_source = Path(remotion_runtime._remotion_package.__file__).resolve()
+    owned_source = tmp_path / 'owned-source' / helper_source.name
+    owned_source.parent.mkdir()
+    shutil.copy2(helper_source, owned_source)
+    spec = importlib.util.spec_from_file_location('owned_remotion_package', owned_source)
+    assert spec is not None and spec.loader is not None
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    monkeypatch.setattr(remotion_runtime, '_remotion_package', helper)
+    monkeypatch.setattr(remotion_runtime, '_composition_package_problem', helper.composition_package_problem)
+
+    runtime, _, _, env, ref, calls = _owned_validation_fixture(tmp_path, monkeypatch)
+    actual = {**env, **ref}
+    remotion_runtime._validated_runtime(runtime, environment=actual)
+    owned_source.write_bytes(owned_source.read_bytes() + b'\n')
+    with pytest.raises(remotion_runtime.RemotionValidationError, match='inputs changed'):
+        remotion_runtime._validated_runtime(runtime, environment=actual)
     assert len(calls) == 3
 
 
@@ -1018,7 +1103,7 @@ def test_launch_validation_loaded_bytecode_change_refuses_without_fallback(tmp_p
 def _registry_settling_fixture(tmp_path, monkeypatch):
     from astrid.packs.rendering.rendering.renderers.remotion import run, lock
     project = tmp_path / 'remotion'
-    src = project / 'node_modules/@banodoco/timeline-composition/typescript/src'
+    src = project / 'src'
     src.mkdir(parents=True)
     corpus = tmp_path / 'packs'
     corpus.mkdir()
@@ -1412,7 +1497,7 @@ def test_launch_validation_changed_schema_configuration_is_not_reused(tmp_path, 
     def workers(environment):
         import shutil
         alternative = tmp_path / 'other-schema'
-        shutil.copytree(environment['ASTRID_TIMELINE_SCHEMA_PYTHONPATH'], alternative)
+        shutil.copyfile(environment['ASTRID_TIMELINE_SCHEMA_PYTHONPATH'], alternative)
         return [{**environment, 'ASTRID_TIMELINE_SCHEMA_PYTHONPATH': str(alternative)}]
     # The fixture probe still reports the original origin: a cached proof must
     # not turn this foreign origin into readiness for the second configured root.

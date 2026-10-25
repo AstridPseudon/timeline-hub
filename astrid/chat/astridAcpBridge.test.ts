@@ -530,3 +530,4 @@ describe('Astrid App ACP HTTP bridge', () => {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   });
 });
+

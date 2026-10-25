@@ -204,3 +204,4 @@ def test_launcher_must_resolve_inside_the_owned_prefix(tmp_path, monkeypatch):
     monkeypatch.setattr(tools, "_install_omp_package", redirect)
     with pytest.raises(ValueError, match="launcher escapes"):
         tools.install_tools(manifest(), root, TARGET, run)
+

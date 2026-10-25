@@ -121,3 +121,4 @@ def main(argv: list[str] | None = None) -> int:
             print(str(failure))
         print(f"Details: {log}")
         return 1
+

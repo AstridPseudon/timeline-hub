@@ -42,3 +42,4 @@ def test_doctor_bundle_reports_recorded_media_selection_without_other_environmen
     }
     for secret in ("must-not-export", "private-environment", "must-not-export-assets", "OPENAI_API_KEY"):
         assert secret not in all_text
+

@@ -29,3 +29,4 @@ export interface JsonRpcProcessLike {
   removeListener?(event: 'error', listener: (error: Error) => void): unknown;
 }
 
+

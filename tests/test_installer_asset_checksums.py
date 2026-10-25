@@ -153,3 +153,4 @@ def test_multi_archive_manifest_preserves_digest_order():
     pins = manifest(value)
     assert tools.validate_manifest(pins) is pins
     assert tools.asset_downloads(value) == list(zip(value["urls"], value["sha256"]))
+

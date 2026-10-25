@@ -20,3 +20,4 @@ export const modelCatalogSchema = z.strictObject({
   currentModel: z.string().nullable(),
 });
 export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;
+

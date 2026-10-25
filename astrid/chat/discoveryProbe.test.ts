@@ -47,3 +47,4 @@ process.exit(7);
 test('an unavailable discovery command rejects promptly', async () => {
   await assert.rejects(discoveryProbe(join(tmpdir(), 'astrid-missing-probe-command'), []), { code: 'ENOENT' });
 });
+

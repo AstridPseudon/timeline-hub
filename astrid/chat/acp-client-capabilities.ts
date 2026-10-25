@@ -6,3 +6,4 @@ export function acpClientCapabilities(agent: LocalAgentId, platform: NodeJS.Plat
   return { ...(platform === 'win32' && agent === 'astrid' ? {} : { terminal: true as const }),
     _meta: { jetbrains: { air: { version: 1, capabilities: ['recommendedValue'] } } } };
 }
+
