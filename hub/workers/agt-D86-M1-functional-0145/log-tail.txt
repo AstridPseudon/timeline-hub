@@ -1,0 +1,400 @@
+   133	            kind, identity = entity.split(':', 1)
+   134	            return internal, [kind + 's', 'id:' + identity, *path]
+   135	        if entity == 'source':
+   136	            return internal, path
+   137	        if entity == 'registry':
+   138	            return internal, ['registry', *path]
+   139	        if entity.startswith('asset:'):
+   140	            return internal, ['registry', 'assets', entity[6:], *path]
+   141	        if entity == 'shot':
+   142	            if path[:1] == ['payload']:
+   143	                return shot_ref, path[1:]
+   144	            return 'parent', ['occurrences', 'occurrence_id:' + occurrence, *path]
+   145	    return 'timeline', []
+   146	
+   147	
+   148	def _prefix(a, b):
+   149	    return a[:len(b)] == b[:len(a)]
+   150	
+   151	
+   152	def effect_diff(before, after):
+   153	    """Complete closure-union effects; wrappers and manifests are never targets."""
+   154	    old, new = before.images, after.images
+   155	    result = []
+   156	    # A child must exist before its owner attaches it.
+   157	    for prefix in ('internal-revision:', 'shot-revision:'):
+   158	        for ref in sorted(new.keys() - old.keys()):
+   159	            if ref.startswith(prefix):
+   160	                result.append({'op': 'set', 'ref': ref, 'path': [], 'before': ABSENT.copy(),
+   161	                               'value': copy.deepcopy(new[ref]['payload'])})
+   162	
+   163	    def walk(ref, path, left, right):
+   164	        if equal(left, right):
+   165	            return
+   166	        if left != ABSENT and right != ABSENT and isinstance(left['value'], dict) and isinstance(right['value'], dict):
+   167	            a, b = left['value'], right['value']
+   168	            for key in sorted(a.keys() | b.keys()):
+   169	                walk(ref, [*path, key], present(a[key]) if key in a else ABSENT,
+   170	                     present(b[key]) if key in b else ABSENT)
+   171	            return
+   172	        key = identity_key(ref, path)
+   173	        if key and left != ABSENT and right != ABSENT and isinstance(left['value'], list) and isinstance(right['value'], list):
+   174	            a, b = left['value'], right['value']
+   175	            a_ids, b_ids = identities(a, key, ref=ref, path=path), identities(b, key, ref=ref, path=path)
+   176	            if a_ids == b_ids:
+   177	                for identity, first, second in zip(a_ids, a, b):
+   178	                    walk(ref, [*path, key + ':' + identity], present(first), present(second))
+   179	                return
+   180	        item = {'op': 'remove' if right == ABSENT else 'set', 'ref': ref, 'path': path,
+   181	                'before': copy.deepcopy(left)}
+   182	        if right != ABSENT:
+   183	            item['value'] = copy.deepcopy(right['value'])
+   184	        result.append(item)
+   185	
+   186	    def logical_parent(image):
+   187	        payload = copy.deepcopy(image['payload'])
+   188	        for mirror in ('clips', 'registry'):
+   189	            if mirror not in payload:
+   190	                continue
+   191	            value = payload.pop(mirror)
+   192	            config = payload.setdefault('config', {})
+   193	            if mirror in config and not equal(present(config[mirror]), present(value)):
+   194	                other = config[mirror]
+   195	                if mirror != 'clips' or not (
+   196	                        other is None and isinstance(value, list)
+   197	                        or value is None and isinstance(other, list)):
+   198	                    raise CommandError('contradictory parent mirrors', kind='capture_mismatch',
+   199	                                       ref='parent', path=['config', mirror])
+   200	                value = other if isinstance(other, list) else value
+   201	            config[mirror] = value
+   202	        return payload
+   203	
+   204	    def topology(image):
+   205	        payload = image['payload']
+   206	        config = payload.get('config', {})
+   207	        return [(key in payload, isinstance(config, dict) and key in config)
+   208	                for key in ('clips', 'registry')]
+   209	
+   210	    old_parent, new_parent = logical_parent(old['parent']), logical_parent(new['parent'])
+   211	    if topology(old['parent']) != topology(new['parent']):
+   212	        # Alias paths cannot express a change in raw mirror presence. Bind the
+   213	        # complete parent image so projection preserves each storage location.
+   214	        result.append({'op': 'set', 'ref': 'parent', 'path': [],
+   215	                       'before': present(copy.deepcopy(old['parent']['payload'])),
+   216	                       'value': copy.deepcopy(new['parent']['payload'])})
+   217	    else:
+   218	        walk('parent', [], present(old_parent), present(new_parent))
+   219	    for ref in sorted(old.keys() & new.keys() - {'parent'}):
+   220	        walk(ref, [], present(old[ref]['payload']), present(new[ref]['payload']))
+   220	        walk(ref, [], present(old[ref]['payload']), present(new[ref]['payload']))
+   221	    for prefix in ('shot-revision:', 'internal-revision:'):
+   222	        for ref in sorted(old.keys() - new.keys()):
+   223	            if ref.startswith(prefix):
+   224	                result.append({'op': 'remove', 'ref': ref, 'path': [],
+   225	                               'before': present(old[ref]['payload'])})
+   226	    return result
+   227	
+   228	
+   229	def _restore_inverse_baselines(bundle, sources):
+   230	    from astrid.core.timeline.authoring_bundle import _RestoredShot
+   231	
+   232	    from .commit import _verify_document, bundle_from_document
+   233	
+   234	    for source in sources:
+   235	        document = source['source_mapping']['_runtime_document']
+   236	        _verify_document(document)
+   237	        if (document['project_id'], document['timeline_id']) != (bundle['project_id'], bundle['timeline_id']):
+   238	            raise CommandError('foreign inverse source', kind='history_unavailable')
+   239	        historical = bundle_from_document(document)
+   240	        for identity, shot in bundle['shots'].items():
+   241	            if (shot.get('_created') is not True or identity in bundle['source_mapping']['shots']
+   242	                    or isinstance(shot, _RestoredShot)):
+   243	                continue
+   244	            prior = historical['shots'].get(identity)
+   245	            owners = {row['occurrence_id'] for row in bundle['placements'] if row['shot_id'] == identity}
+   246	            if (prior is not None and owners
+   247	                    and owners == {row['occurrence_id'] for row in historical['placements'] if row['shot_id'] == identity}
+   248	                    and equal(shot['payload'], prior['payload'])
+   249	                    and equal(shot['internal_timeline'], prior['internal_timeline'])):
+   250	                bundle['shots'][identity] = _RestoredShot(shot, copy.deepcopy(document))
+   251	
+   252	
+   253	def inverse_closure(bundle, sources, *, inverse_records=()):
+   254	    """Compile inverse effects using the same authenticated immutable reuse as acceptance."""
+   255	    _restore_inverse_baselines(bundle, sources)
+   256	    return Closure(bundle, source_bundles=sources, inverse_records=inverse_records)
+   257	
+   258	
+   259	class CommitPatch:
+   260	    def __init__(self, request, calls, bundle, *, evaluated_head=None):
+   261	        self.active = request is not None
+   262	        self.v2 = self.active and (any(call.get('op') == 'doc.patch' for call in calls)
+   263	                                  or any(key in request for key in ('label', 'steps', 'merge', 'reads')))
+   264	        self.request = request or {}
+   265	        self.calls = calls
+   266	        allowed = {'api_version', 'project_id', 'timeline_id', 'base_revision_id', 'base_publication_id',
+   267	                   'commands', 'source', 'rationale', 'group_id', 'dry_run', 'label', 'steps', 'merge', 'reads'}
+   268	        if self.request.keys() - allowed:
+   269	            raise CommandError('unknown commit control fields')
+   270	        self.label, self.steps = normalize_steps(self.request, calls)
+   271	        merge = self.request.get('merge', 'fields')
+   272	        if merge not in ('fields', 'atomic'):
+   273	            raise CommandError('merge must be fields or atomic')
+   274	        validate_reads(self.request.get('reads', []))
+   275	        self.merge_mode = ('atomic' if any(call['op'] == 'doc.patch' for call in calls)
+   276	                           and 'reads' not in self.request else merge)
+   277	        self.head = evaluated_head or {'revision_id': bundle['base_parent']['revision_id'], 'publication_id': None}
+   278	        self.inputs, self.outputs, self.dependencies = {}, {}, {}
+   279	        self.batch_dependencies = []
+   280	        self.closures = {}
+   281	        self.records = {}
+   282	        self.boundaries = {}
+   283	        self.compiler_effects = []
+   284	        self.inverse_stages = {}
+   285	        self.inverse_effects = {}
+   286	        self.inverse_sources = {}
+   287	        self.inverse_records = {}
+   288	        self.execution_boundaries = []
+   289	
+   290	    def step(self, ordinal):
+   291	        return next(step for step in self.steps if ordinal in step['command_ordinals'])
+   292	
+   293	    def capture(self, closure, read, ctx, boundary):
+   294	        if read['ref'] == 'timeline':
+   295	            dependency = copy.deepcopy(read)
+   296	            bindings = [closure.binding('timeline', ref, **boundary) for ref in closure.images]
+   297	            for binding in bindings:
+   298	                binding.update(key='commit.read', policy='fixed', dependencies=[], path=[])
+   299	                ctx.record['bindings'].append(binding)
+   300	            ctx.read('timeline')
+   301	            return dependency
+   302	        expected = getattr(ctx, 'patch_replay_bindings', {}).get((ctx.record['ordinal'], 'read',
+   303	                   read['ref'], tuple(normalized_path(read['ref'], read['path'])), boundary['phase']))
+   304	        if expected is not None and read['ref'].startswith(('shot-revision:', 'internal-revision:')) and read['ref'] not in closure.images:
+   305	            physical = expected
+   306	        else:
+   307	            physical = closure.resolve(read['ref'])
+   308	        if expected is not None and physical != expected:
+   309	            raise CommandError('declared read changed physical binding', kind='binding_changed', ref=read['ref'])
+   310	        payload = closure.payload(physical)
+   311	        actual = value_at(payload, physical, read['path'])
+   312	        if read['kind'] == 'field':
+   313	            if not equal(actual, read['state']):
+   314	                raise CommandError('declared field read does not match', kind='previous_value_mismatch',
+   315	                                   ref=read['ref'], path=read['path'], base=read['state'], theirs=actual)
+   316	        elif read['kind'] == 'collection':
+   317	            ids = identities(actual.get('value'), identity_key(physical, read['path']),
+   318	                             ref=read['ref'], path=read['path'])
+   319	            if sorted(ids) != read['members'] or read['order'] is not None and ids != read['order']:
+   320	                error = CommandError('declared collection read does not match', kind='previous_value_mismatch',
+   321	                                     ref=read['ref'], path=read['path'])
+   322	                error.dependency_kind = 'collection'
+   323	                raise error
+   324	        dependency = {**copy.deepcopy(read), 'ref': physical, 'path': normalized_path(physical, read['path'])}
+   325	        binding = closure.binding(read['ref'], physical, **boundary)
+   326	        binding.update(key='commit.read', policy='fixed', dependencies=[], path=dependency['path'],
+   327	                       dependency=copy.deepcopy(dependency))
+   328	        ctx.record['bindings'].append(binding)
+   329	        # Exact captures stay separate from the normalized step dependency index.
+   330	        if read['kind'] != 'collection':
+   331	            for ref, path in closure.native_sites(physical, read['path']):
+   332	                if path or ref == 'parent':
+   333	                    ctx.read(ref, path)
+   334	        return dependency
+   335	
+   336	    def before(self, ctx):
+   337	        if not self.active:
+   338	            return
+   339	        ordinal = ctx.record['ordinal']
+   340	        step = self.step(ordinal)
+   341	        boundary = {'base_revision_id': self.request.get('base_revision_id'),
+   342	                    'base_publication_id': self.request.get('base_publication_id'),
+   343	                    'evaluated_head': copy.deepcopy(self.head), 'step_id': step['id'],
+   344	                    'command_ordinal': ordinal, 'phase': 'input'}
+   345	        self.boundaries[ordinal] = boundary
+   346	        self.closures[ordinal] = Closure(copy.deepcopy(ctx.state.bundle))
+   347	        def replay_binding(expected):
+   348	            if isinstance(expected, str):
+   349	                return expected
+   350	            step_id, source, owner, owners = expected
+   351	            source = replay_binding(source)
+   352	            prior = next(step for step in self.steps if step['id'] == step_id)
+   353	            if prior['command_ordinals'][-1] >= ordinal or step_id not in self.outputs:
+   354	                raise CommandError('sequential binding precedes its source', kind='binding_changed')
+   355	            before, after = Closure(self.inputs[step_id]), Closure(self.outputs[step_id])
+   356	            record = {'bindings': []}
+   357	            self.materializations(record, before, after,
+   358	                self.boundaries[prior['command_ordinals'][-1]], prior,
+   359	                [write for index in prior['command_ordinals'] for write in self.records[index]['writes']])
+   360	            successors = {binding['successor'] for binding in record['bindings']
+   361	                          if binding['physical_ref'] == source and binding['owner'] == owner
+   362	                          and binding['owners'] == owners}
+   363	            if len(successors) != 1:
+   364	                raise CommandError('sequential image has no unique authenticated successor',
+   365	                                   kind='binding_changed', ref=source)
+   366	            return successors.pop()
+   367	
+   368	        # Staged IDs name the original execution. Resolve only through a completed
+   369	        # step's actual source-bound materialization at this replay boundary.
+   370	        ctx.patch_replay_bindings = {key: replay_binding(value) if key[0] == ordinal else value
+   371	                                     for key, value in getattr(ctx, 'patch_replay_bindings', {}).items()}
+   372	        # Runtime authenticates the next input against the preceding command's observations.
+   373	        if ordinal > step['command_ordinals'][0]:
+   374	            previous = self.closures[ordinal - 1]
+   375	            current = self.closures[ordinal]
+   376	            for ref in sorted(previous.images.keys() & current.images.keys()):
+   377	                if previous.images[ref]['content_digest'] != current.images[ref]['content_digest']:
+   378	                    binding = current.binding(ref, ref, **boundary)
+   379	                    binding.update(key='commit.input', policy='fixed', dependencies=[], path=[])
+   380	                    ctx.record['bindings'].append(binding)
+   381	        if ordinal == 0:
+   382	            self.batch_dependencies = [self.capture(self.closures[ordinal], read, ctx,
+   383	                                       {**boundary, 'phase': 'batch-read'})
+   384	                                       for read in self.request.get('reads', [])]
+   385	        if ordinal == step['command_ordinals'][0]:
+   386	            self.inputs[step['id']] = copy.deepcopy(ctx.state.bundle)
+   387	            self.dependencies[step['id']] = copy.deepcopy(self.batch_dependencies)
+   388	            self.dependencies[step['id']].extend(self.capture(self.closures[ordinal], read, ctx, boundary)
+   389	                                                 for read in step.get('reads', []))
+   390	
+   391	    def compiler(self, ctx, prior_records):
+   392	        if not self.active:
+   393	            return
+   394	        from .native_word_anchor import PATH
+   395	
+   396	        records = [*prior_records, ctx.record]
+   397	        for effect in ctx.record['derived_writes']:
+   398	            if effect['path'] not in (['at'], ['hold']) or '/clip:' not in effect['ref']:
+   399	                continue
+   400	            row = ctx.state.entity(effect['ref'])
+   401	            namespace = (row.get('app') or {}).get('astrid') or {}
+   402	            anchors = namespace.get('word_anchors', {})
+   403	            inputs = [(effect['ref'], [*PATH, key]) for key in ('on', 'until', 'for', 'word_anchors')]
+   404	            inputs.extend((effect['ref'], [key]) for key in ('speed', 'from', 'to'))
+   405	            inputs.extend([('parent', ['config', 'output']), ('parent', ['config', 'theme_overrides'])])
+   406	            for choice in anchors.values():
+   407	                source = choice['source']
+   408	                owner = source.split('/')[0]
+   409	                inputs.extend([(source, []), (owner, []), (owner + '/source', ['tracks']),
+   410	                               (owner + '/source', ['registry'])])
+   411	            contributors = []
+   412	            for record in records:
+   413	                closure = self.closures[record['ordinal']]
+   414	                reads = [canonical_site(closure, ref, path) for ref, path in inputs]
+   415	                for write in record['writes']:
+   416	                    ref, path = canonical_site(closure, write['ref'], write['path'])
+   417	                    if not equal(write['before'], write['after']) and any(
+   418	                            ref == source_ref and _prefix(path, source_path) for source_ref, source_path in reads):
+   419	                        contributors.append(record['ordinal'])
+   420	                        break
+   421	            # Unknown compiler causes retain a conservative closure dependency on
+   422	            # every possible contributing step, as required for safe partial undo.
+   423	            if not anchors or not contributors:
+   424	                contributors = list(range(len(records)))
+   425	                for step in self.steps:
+   426	                    dependency = {'kind': 'scope', 'ref': 'timeline', 'path': []}
+   427	                    if dependency not in self.dependencies[step['id']]:
+   428	                        self.dependencies[step['id']].append(dependency)
+   429	            cause = max(contributors)
+   430	            effect['cause'] = cause
+   431	            self.compiler_effects.append((cause, copy.deepcopy(effect)))
+   432	            contributing_steps = {self.step(ordinal)['id'] for ordinal in contributors}
+   433	            if len(contributing_steps) > 1:
+   434	                for step_id in contributing_steps:
+   435	                    dependency = {'kind': 'scope', 'ref': 'timeline', 'path': []}
+   436	                    if dependency not in self.dependencies[step_id]:
+   437	                        self.dependencies[step_id].append(dependency)
+   438	
+   439	    def after(self, ctx, *, inverse_records=()):
+   440	        if not self.active:
+   441	            return
+   442	        ordinal = ctx.record['ordinal']
+   443	        mapping = ctx.state.bundle['source_mapping']
+   444	        if '_copy_manifest' in mapping and ctx.record['command']['op'] not in ('timeline.inverse', 'timeline.restore'):
+   445	            documents = mapping['_copy_manifest']['documents']
+   446	            for dependency in ctx.record['dependencies']:
+   447	                if dependency['kind'] in ('source', 'transcript'):
+   448	                    pin = dependency['pin']
+   449	                    if pin not in documents and any(
+   450	                            capture['pin'] == pin for capture in mapping.get('pinned_documents', [])):
+   451	                        documents.append(copy.deepcopy(pin))
+   452	        self.records[ordinal] = ctx.record
+   453	        step = self.step(ordinal)
+   454	        if hasattr(ctx, 'inverse_stages'):
+   455	            self.inverse_sources[ordinal] = ctx.inverse_sources
+   456	            self.inverse_records[ordinal] = inverse_records
+   457	            self.inverse_effects[ordinal] = getattr(ctx, 'inverse_effects', [])
+   458	            _restore_inverse_baselines(ctx.state.bundle, ctx.inverse_sources)
+   459	            stages = self.inverse_stages[ordinal] = []
+   460	            # Equal historical bytes must not replace the authenticated input revision.
+   461	            before = self.closures[ordinal]
+   462	            for index, (_, bundle) in enumerate(ctx.inverse_stages):
+   463	                # The last native stage precedes retained-input reconciliation.
+   464	                # Project its completed boundary, including the authenticated
+   465	                # manifest used by acceptance to reuse a historical parent pin.
+   466	                completed = index == len(ctx.inverse_stages) - 1
+   467	                if completed:
+   468	                    bundle = ctx.state.bundle
+   469	                after = inverse_closure(bundle, ctx.inverse_sources,
+   470	                                        inverse_records=inverse_records if completed else ())
+   471	                stages.append((before, after))
+   472	                before = after
+   473	        for binding in ctx.record['bindings']:
+   474	            if binding['key'] == 'inverse.stage':
+   475	                continue
+   476	            if self.v2 and 'physical_ref' not in binding:
+   477	                physical, path = canonical_site(self.closures[ordinal], binding['ref'], [])
+   478	                if physical != 'timeline':
+   479	                    binding.update({key: value for key, value in self.closures[ordinal].binding(
+   480	                        binding['ref'], physical, **self.boundaries[ordinal]).items() if key != 'ref'})
+   481	                    binding['path'] = path
+   482	            if binding['key'].startswith('doc.patch:'):
+   483	                binding['boundary'] = {**self.boundaries[ordinal], **binding['boundary']}
+   484	        if ordinal == step['command_ordinals'][-1]:
+   485	            self.outputs[step['id']] = copy.deepcopy(ctx.state.bundle)
+   486	        if self.v2 and (len(self.calls) > 1 or ordinal in self.inverse_stages):
+   487	            self.execution_boundaries.append({
+   488	                'boundary': copy.deepcopy(self.boundaries[ordinal]),
+   489	                'input': copy.deepcopy(self.closures[ordinal].document),
+   490	                'output': inverse_closure(ctx.state.bundle, self.inverse_sources.get(ordinal, []),
+   491	                                          inverse_records=self.inverse_records.get(ordinal, ())).document,
+   492	            })
+   493	
+   494	    def finish(self, plan):
+   495	        if not self.active:
+   496	            return plan
+   497	        for step in self.steps:
+   498	            before = Closure(self.inputs[step['id']])
+   499	            ordinal = step['command_ordinals'][-1]
+   500	            after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []),
+   501	                                    inverse_records=self.inverse_records.get(ordinal, ()))
+   502	            dependencies = self.dependencies[step['id']]
+   503	            for ordinal in step['command_ordinals']:
+   504	                closure = self.closures[ordinal]
+   505	                record = plan.records[ordinal]
+   506	                for binding in record['bindings']:
+   507	                    if not binding.get('key', '').startswith('doc.patch:'):
+   508	                        continue
+   509	                    change = binding['change']
+   510	                    item = {'kind': 'field', 'ref': binding['physical_ref'],
+   511	                            'path': binding['path'], 'state': copy.deepcopy(change['before'])}
+   512	                    if change['op'].startswith('list.'):
+   513	                        item['path'] = [*item['path'], 'id:' + change['id']]
+   514	                        shape = {'kind': 'collection', 'ref': binding['physical_ref'], 'path': binding['path'],
+   515	                                 'members': sorted(change['order_before']), 'order': change['order_before']}
+   516	                        if shape not in dependencies:
+   517	                            dependencies.append(shape)
+   518	                    if item not in dependencies:
+   519	                        dependencies.append(item)
+   520	                created_refs = {item['ref'] for item in record['created']}
+   521	                for read in record['reads']:
+   522	                    if read['ref'] in created_refs and read['state'] == ABSENT:
+   523	                        continue  # Allocation history guards absence; this is not a closure read.
+   524	                    ref, path = canonical_site(closure, read['ref'], read['path'])
+   525	                    if '/collection:' in read['ref']:
+   526	                        try:
+   527	                            value = value_at(closure.payload(ref), ref, path)
+   528	                            ids = identities(value.get('value'), identity_key(ref, path), ref=ref, path=path)
+   529	                            item = {'kind': 'collection', 'ref': ref, 'path': path, 'members': sorted(ids), 'order': ids}
+   530	                        except (CommandError, KeyError):
+

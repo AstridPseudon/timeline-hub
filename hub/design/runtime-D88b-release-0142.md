@@ -1,0 +1,5 @@
+Runtime D88b qualified source release, 2026-10-25T01:40:48Z
+
+Normal integration 6634a17f3ffd885567ba3c91b6c7a560df7375a4, tree 47b376717ce7a919a697c62133de3e74dc9f6d3a, exactly equals independently reviewed b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0. Normal merge receipt queue/done/merge-rt-D88b-replay-memo-sol-0109 confirmed. Independent report design/rt-D88b-protective-review-0125.md PASS: focused172, history81, retained warm forgery1 and genuine-provider HTTP/inverse/retry14 passed. Compile/diff passed; no new Ruff or Pyright diagnostic identities. Canonical15 and schema867f unchanged; no client generation owed. Old withdrawn D88 prototype is not an ancestor and denied action stays stopped.
+
+The memo recomputes entry/input/realm/closure/event/chain identity; live freshness, authority, lifecycle and head CAS remain active. Writes and refusals invalidate before reuse. Exact N2/4/8 curve gives one replay per new entry and zero warm replays, with remaining history-scaled hashing/live validation and uneven timings. This is source qualification, not original P4/App performance closure or final D59 proof.
