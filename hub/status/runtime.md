@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T03:53:12Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 21 | status age 0m -->
+<!-- main | 2026-10-25T03:56:32Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 21 | status age 3m -->
 # runtime board, 2026-10-25T03:49:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -255,7 +255,7 @@
 | D91-next10-actual20 | Retain immutable20 actual outcomes | Luna / service | Meaningful correction before any repeat | review | rt-D91-next10-immutable20-0313 | Actual18575: D91 ten ERROR, inverse7 seven PASS, D92 three FAIL in23.24s. Four genuine immutable receipts and exact controls retained. | 562ee/6634/24865/635f |
 | D86-M1-current-setup | Preserve M1 baseline text binding | Agent product owner | Duplicate/bootstrap validation seam | blocked:agent | Runtime0333 source handback0338 | Fixture pins and graph genuine; validation rejects duplicate birth from empty baseline. Agent narrow product follow-through requested. D87six dependent. | Agent validation.py |
 | Agent-R1-V2-candidate13 | Prove exact joined product candidate | Luna / service | Final reviewed blobs joined; actual body | doing | Join0336; proof0347 | Candidate b415 contains exact reviewed three blobs. Mandatory8 plus optional5 new-source originals; no product merge before behavioral PASS. | b415a427755 |
-| D91-source-return-review | Preserve intended shared placements | Luna / independent | First protected failure findings | doing | Review0338 FAIL; first return0347 | Canonical provenance preserved, but parent-only copy omitted placements. First return explicitly carries approved timings; no guard change. | 1f975859 held |
+| D91-source-return-review | Preserve intended shared placements | Luna / independent | Fresh independent protected rereview | review | Return0347; rereview0354 | First return now guards physical occurrence timings with canonical provenance. Approved2000ms and13s retained; rereview0354 checks full candidate. | 1f975859 held |
 
 | OPS-old-U1c-trees | Retire superseded upstream draft trees | Manager route | Full host and route audit clear | merged | bin/recycle three named U1c workers | All three ended, clean; zero process, queue, active service or lease users. Superseded by U1d. Branches and every report/output retained. | No source change |
 
