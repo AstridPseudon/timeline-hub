@@ -1,0 +1,40 @@
+{
+  "candidate": {
+    "commit": "5747c48931839356b049a8fb6ddaf8f30b5b6d1a",
+    "tree": "1f715fecd6a91ac47acee8c32c3667689b88db6b",
+    "base": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "permitted_paths": [
+      "tests/helpers/p2_commit_phase_capture.py",
+      "tests/test_p2_commit_phase_capture.py"
+    ],
+    "sha256": {
+      "tests/helpers/p2_commit_phase_capture.py": "a92122c24afc581f71687d25ffc6a4bd8bb7c2e7381e5b47a6be861d23594a1c",
+      "tests/test_p2_commit_phase_capture.py": "ce9a3ad22f9c813171d103413b24e12b5969cd1aceef2fc4a6f2806379d98320"
+    }
+  },
+  "diff_audit": {
+    "changed_file_count": 2,
+    "product_files_changed": false,
+    "removed_behavioral_lines": false,
+    "parent_function_preservation": "PASS",
+    "outside_blobs": "none"
+  },
+  "read_only_path_evidence": {
+    "protected_app_test": "app/tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "protected_app_test_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "app_d66_launcher": "app/scripts/testing/d66-plain-stack.mjs",
+    "app_d66_launcher_sha256": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def",
+    "app_strict_validator": "app/tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+    "app_strict_validator_sha256": "92586e7fb9603bec32b6fbee03aeb0fff9176d7cf16a35534ae8a2287e4ad48c",
+    "normal_runtime_helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "candidate_helper_is_distinct_from_normal": true
+  },
+  "actual_runtime_route": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+  "actual_element_first_command": "doc.patch",
+  "actual_element_later_params_command": "doc.patch",
+  "actual_undo_command": "timeline.inverse",
+  "candidate_profile_command": "clip.set-element",
+  "external_source_heads": {
+    "app": "d5a1d1ab6550187e377fd7387d300102b8b82ece"
+  }
+}

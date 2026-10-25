@@ -1,0 +1,1455 @@
+{
+  "task": "app-F-App16-conflict-review-1926",
+  "reviewed_task": "app-F-App16-conflict-classify-1921",
+  "summary": {
+    "files": 16,
+    "preview_hunks": 81,
+    "author_semantic": 81,
+    "true_conflict_hunks": 14,
+    "semantic_true_conflicts": 13,
+    "trivial_textual_true_conflicts": 1,
+    "clean_nonconflicting_hunks": 67
+  },
+  "hunks": [
+    {
+      "path": "package.json",
+      "header": "@@ -9,6 +9,9 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a91b81dbbba7c2e00a1e0a22b57e9da91abeca87",
+        "ours": "84e4f6e61ae28f094f159c4869a5b20899b98e8c",
+        "upstream": "5bdc5b0aaab190884feea72120b3d9d12ab926f4",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "public/install-manifest.json",
+      "header": "@@ -1,11 +1,22 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Regenerate the manifest after the selected integrated Agent and Runtime commits are final; preserve upstream vibecomfy/OMP additions and publish only hashes/digests computed from the chosen sources.",
+      "blob_citation": {
+        "base": "52f4898421560448a383afd516c1c6b9a3828565",
+        "ours": "47df36d127f0b04517e24756cd87147512bbda94",
+        "upstream": "4ba29b084df42dc1dfa41d2b23549b05752568e2",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "public/install-manifest.json",
+      "header": "@@ -42,7 +53,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "52f4898421560448a383afd516c1c6b9a3828565",
+        "ours": "47df36d127f0b04517e24756cd87147512bbda94",
+        "upstream": "4ba29b084df42dc1dfa41d2b23549b05752568e2",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/app/onboarding/WelcomeConnection.test.tsx",
+      "header": "@@ -18,6 +18,11 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "30fdfd9527f2da15bbaced1c792f44f1ec96ee41",
+        "ours": "26df345b4496372cc93d2e805976e89ccca4bb56",
+        "upstream": "b685a48015b52de2e382d710e21de4725b80a587",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/app/onboarding/WelcomeConnection.test.tsx",
+      "header": "@@ -154,7 +159,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "30fdfd9527f2da15bbaced1c792f44f1ec96ee41",
+        "ours": "26df345b4496372cc93d2e805976e89ccca4bb56",
+        "upstream": "b685a48015b52de2e382d710e21de4725b80a587",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/integrations/astrid/localAgents.ts",
+      "header": "@@ -32,20 +32,66 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "7cb0a23ec932716eef4e99f8dad6eaf1e769ec10",
+        "ours": "d0e540ea595be85c644c2273942a05a76624fcb2",
+        "upstream": "4dd520e91bafce42277ba859b92bc37933ea440f",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/integrations/astrid/localAgents.ts",
+      "header": "@@ -57,11 +103,18 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "7cb0a23ec932716eef4e99f8dad6eaf1e769ec10",
+        "ours": "d0e540ea595be85c644c2273942a05a76624fcb2",
+        "upstream": "4dd520e91bafce42277ba859b92bc37933ea440f",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/integrations/paired/pairedRoutePolicy.test.ts",
+      "header": "@@ -21,6 +21,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "ba560ef0f59d65ac034933ef111419aed2fbd755",
+        "ours": "3e920fffa81bd88877f66bd60d5b81fda96810ce",
+        "upstream": "f66fdbaf5a700b0eb0eac1082aa8578b4ba923e6",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/integrations/paired/pairedRoutePolicy.test.ts",
+      "header": "@@ -74,6 +75,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "ba560ef0f59d65ac034933ef111419aed2fbd755",
+        "ours": "3e920fffa81bd88877f66bd60d5b81fda96810ce",
+        "upstream": "f66fdbaf5a700b0eb0eac1082aa8578b4ba923e6",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/integrations/runtime/client.ts",
+      "header": "@@ -620,6 +620,10 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "35f523c35ed8fd56f0a42da5a484e029aa881564",
+        "ours": "9f1050799bd86a46d35cf5c07daa4ed05187e6b5",
+        "upstream": "126ef1d1cbc6fb71b301b6c0f6e0f213e3f24174",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx",
+      "header": "@@ -1,7 +1,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "7f36f6c12c64e523324dfb7eecbdb76b66ef8e98",
+        "ours": "d3b24fdccbed282fd63f5aaaa8a3dfe3393328d6",
+        "upstream": "9e7f4f342491110ccdfafe8bd82ab6a590aef07a",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx",
+      "header": "@@ -54,8 +54,14 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "7f36f6c12c64e523324dfb7eecbdb76b66ef8e98",
+        "ours": "d3b24fdccbed282fd63f5aaaa8a3dfe3393328d6",
+        "upstream": "9e7f4f342491110ccdfafe8bd82ab6a590aef07a",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "header": "@@ -4,6 +4,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "header": "@@ -33,6 +34,9 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "header": "@@ -43,6 +47,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "header": "@@ -65,8 +70,10 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "header": "@@ -103,6 +110,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "header": "@@ -119,6 +127,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "header": "@@ -186,6 +195,121 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -6,7 +6,11 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "trivial_textual",
+      "decision": "Ours adds CHAT_VOICE_ENABLED and upstream adds LocalAgentChoice; both independent imports are used by preserved test families, so retaining both is a mechanical union.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -175,6 +179,8 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -182,6 +188,8 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -265,6 +273,13 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -314,7 +329,219 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -452,7 +679,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -513,6 +740,12 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -1365,7 +1598,11 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -1374,8 +1611,16 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "blob_citation": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -3,7 +3,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -45,7 +45,12 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -315,8 +320,15 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -521,9 +533,11 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -534,7 +548,17 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -546,11 +570,69 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -657,6 +739,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -668,11 +751,10 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -683,7 +765,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -882,6 +964,8 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -906,49 +990,57 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1017,7 +1109,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1038,10 +1130,17 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1057,7 +1156,36 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1080,7 +1208,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1142,20 +1270,48 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1185,7 +1341,8 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1201,7 +1358,8 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1373,7 +1531,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1396,6 +1554,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1461,6 +1620,35 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -1,3 +1,4 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "blob_citation": {
+        "base": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+        "ours": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+        "upstream": "9305a1690c661242812032fc950eefa7105aaf43",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -9,6 +10,14 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+        "ours": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+        "upstream": "9305a1690c661242812032fc950eefa7105aaf43",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -55,6 +64,8 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+        "ours": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+        "upstream": "9305a1690c661242812032fc950eefa7105aaf43",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -84,9 +95,14 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "blob_citation": {
+        "base": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+        "ours": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+        "upstream": "9305a1690c661242812032fc950eefa7105aaf43",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -299,6 +315,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "blob_citation": {
+        "base": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+        "ours": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+        "upstream": "9305a1690c661242812032fc950eefa7105aaf43",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -365,6 +382,26 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+        "ours": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+        "upstream": "9305a1690c661242812032fc950eefa7105aaf43",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatModelLine.tsx",
+      "header": "@@ -6,7 +6,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "bafb8fdc879b10da663a90a70b8a6be925771e74",
+        "ours": "a851a9bc80d20f2ef3ed28792dfbe9fc312388ca",
+        "upstream": "831f3bb0144b9d1eeb8aee1b974c155560f5396c",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+      "header": "@@ -152,8 +152,18 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": true,
+      "review_class": "semantic_true_conflict",
+      "decision": "Keep the current source's static tour/no-session behavior and unified AgentChatMenu; add only the upstream coarse-pointer styling after verifying tour anchors and scripted predicates remain intact.",
+      "blob_citation": {
+        "base": "cba152e0a30c55dd0f62aa756497095838382317",
+        "ours": "3d8001013ad1a70253fe28f251f0376f5373e4a7",
+        "upstream": "d4c5e76ff7c6b54365f9c6537337e97cf0acaf18",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -1,4 +1,4 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -13,7 +13,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -71,6 +71,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -91,7 +92,9 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -352,7 +355,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -363,7 +366,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -388,6 +391,10 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -416,7 +423,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -430,7 +437,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -443,7 +450,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -464,14 +471,14 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -497,18 +504,18 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -536,7 +543,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -550,7 +557,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -589,6 +596,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -616,7 +624,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -651,9 +659,11 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -784,7 +794,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "header": "@@ -1324,7 +1334,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx",
+      "header": "@@ -1212,9 +1212,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "f7546db6121de17afebe7eb972489105bc4ebfb5",
+        "ours": "9cb4d5da89cf82258f17bca96175f06342c3ff38",
+        "upstream": "7565bdcfd6db01c3e3feee2f85d4f7bd68d158f9",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx",
+      "header": "@@ -1542,6 +1540,21 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "f7546db6121de17afebe7eb972489105bc4ebfb5",
+        "ours": "9cb4d5da89cf82258f17bca96175f06342c3ff38",
+        "upstream": "7565bdcfd6db01c3e3feee2f85d4f7bd68d158f9",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "tests/e2e/fake-runtime/server.contract.test.mjs",
+      "header": "@@ -103,7 +103,7 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "d519e7437e73b3a465a989e97555946d48ad12bc",
+        "ours": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+        "upstream": "ab92ec3028eb4a94d163469f3e44b48efaca6cce",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "tests/e2e/fake-runtime/server.contract.test.mjs",
+      "header": "@@ -335,6 +335,23 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "d519e7437e73b3a465a989e97555946d48ad12bc",
+        "ours": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+        "upstream": "ab92ec3028eb4a94d163469f3e44b48efaca6cce",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    },
+    {
+      "path": "tests/e2e/fake-runtime/server.contract.test.mjs",
+      "header": "@@ -584,8 +601,11 @@",
+      "author_class": "semantic",
+      "true_conflict_marker": false,
+      "review_class": "clean_nonconflicting",
+      "decision": "Preview merged this header without conflict markers; no owner resolution is required.",
+      "blob_citation": {
+        "base": "d519e7437e73b3a465a989e97555946d48ad12bc",
+        "ours": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+        "upstream": "ab92ec3028eb4a94d163469f3e44b48efaca6cce",
+        "preview_command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a"
+      }
+    }
+  ],
+  "blob_checks": [
+    {
+      "path": "package.json",
+      "expected": {
+        "base": "a91b81dbbba7c2e00a1e0a22b57e9da91abeca87",
+        "ours": "84e4f6e61ae28f094f159c4869a5b20899b98e8c",
+        "upstream": "5bdc5b0aaab190884feea72120b3d9d12ab926f4"
+      },
+      "actual": {
+        "base": "a91b81dbbba7c2e00a1e0a22b57e9da91abeca87",
+        "ours": "84e4f6e61ae28f094f159c4869a5b20899b98e8c",
+        "upstream": "5bdc5b0aaab190884feea72120b3d9d12ab926f4"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "public/install-manifest.json",
+      "expected": {
+        "base": "52f4898421560448a383afd516c1c6b9a3828565",
+        "ours": "47df36d127f0b04517e24756cd87147512bbda94",
+        "upstream": "4ba29b084df42dc1dfa41d2b23549b05752568e2"
+      },
+      "actual": {
+        "base": "52f4898421560448a383afd516c1c6b9a3828565",
+        "ours": "47df36d127f0b04517e24756cd87147512bbda94",
+        "upstream": "4ba29b084df42dc1dfa41d2b23549b05752568e2"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/app/onboarding/WelcomeConnection.test.tsx",
+      "expected": {
+        "base": "30fdfd9527f2da15bbaced1c792f44f1ec96ee41",
+        "ours": "26df345b4496372cc93d2e805976e89ccca4bb56",
+        "upstream": "b685a48015b52de2e382d710e21de4725b80a587"
+      },
+      "actual": {
+        "base": "30fdfd9527f2da15bbaced1c792f44f1ec96ee41",
+        "ours": "26df345b4496372cc93d2e805976e89ccca4bb56",
+        "upstream": "b685a48015b52de2e382d710e21de4725b80a587"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/integrations/astrid/localAgents.ts",
+      "expected": {
+        "base": "7cb0a23ec932716eef4e99f8dad6eaf1e769ec10",
+        "ours": "d0e540ea595be85c644c2273942a05a76624fcb2",
+        "upstream": "4dd520e91bafce42277ba859b92bc37933ea440f"
+      },
+      "actual": {
+        "base": "7cb0a23ec932716eef4e99f8dad6eaf1e769ec10",
+        "ours": "d0e540ea595be85c644c2273942a05a76624fcb2",
+        "upstream": "4dd520e91bafce42277ba859b92bc37933ea440f"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/integrations/paired/pairedRoutePolicy.test.ts",
+      "expected": {
+        "base": "ba560ef0f59d65ac034933ef111419aed2fbd755",
+        "ours": "3e920fffa81bd88877f66bd60d5b81fda96810ce",
+        "upstream": "f66fdbaf5a700b0eb0eac1082aa8578b4ba923e6"
+      },
+      "actual": {
+        "base": "ba560ef0f59d65ac034933ef111419aed2fbd755",
+        "ours": "3e920fffa81bd88877f66bd60d5b81fda96810ce",
+        "upstream": "f66fdbaf5a700b0eb0eac1082aa8578b4ba923e6"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/integrations/runtime/client.ts",
+      "expected": {
+        "base": "35f523c35ed8fd56f0a42da5a484e029aa881564",
+        "ours": "9f1050799bd86a46d35cf5c07daa4ed05187e6b5",
+        "upstream": "126ef1d1cbc6fb71b301b6c0f6e0f213e3f24174"
+      },
+      "actual": {
+        "base": "35f523c35ed8fd56f0a42da5a484e029aa881564",
+        "ours": "9f1050799bd86a46d35cf5c07daa4ed05187e6b5",
+        "upstream": "126ef1d1cbc6fb71b301b6c0f6e0f213e3f24174"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx",
+      "expected": {
+        "base": "7f36f6c12c64e523324dfb7eecbdb76b66ef8e98",
+        "ours": "d3b24fdccbed282fd63f5aaaa8a3dfe3393328d6",
+        "upstream": "9e7f4f342491110ccdfafe8bd82ab6a590aef07a"
+      },
+      "actual": {
+        "base": "7f36f6c12c64e523324dfb7eecbdb76b66ef8e98",
+        "ours": "d3b24fdccbed282fd63f5aaaa8a3dfe3393328d6",
+        "upstream": "9e7f4f342491110ccdfafe8bd82ab6a590aef07a"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "expected": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810"
+      },
+      "actual": {
+        "base": "6ccf2f8679385f5ee7e81fa151b92406e81911b0",
+        "ours": "3b25e68e194d2826529fd9048515ae197cbdf7cc",
+        "upstream": "aff454f75905cbe6eb01314ec02504844a445810"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "expected": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d"
+      },
+      "actual": {
+        "base": "162e62562d6bb5256d0c60fefea92edd39b6becc",
+        "ours": "06c5ef55809f67a4fb19925f71dd11a1fe551fd1",
+        "upstream": "e48139a8e4f6d9c0a3fef9bd37b359c76c02ea3d"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "expected": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb"
+      },
+      "actual": {
+        "base": "a82ace6b6a75d4a0f34f54ad71685925adecae02",
+        "ours": "db6cf3f86d6996d2c2f3ee5dbcc58851fac2ed02",
+        "upstream": "7c0fc8efc38edd61df9a8f2dea61330dff48bebb"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "expected": {
+        "base": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+        "ours": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+        "upstream": "9305a1690c661242812032fc950eefa7105aaf43"
+      },
+      "actual": {
+        "base": "1f8ec360ccaa22b9523f51039a8e7b2be1121792",
+        "ours": "fa386e33b828ea613da3a8114df7991a89d92ae2",
+        "upstream": "9305a1690c661242812032fc950eefa7105aaf43"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatModelLine.tsx",
+      "expected": {
+        "base": "bafb8fdc879b10da663a90a70b8a6be925771e74",
+        "ours": "a851a9bc80d20f2ef3ed28792dfbe9fc312388ca",
+        "upstream": "831f3bb0144b9d1eeb8aee1b974c155560f5396c"
+      },
+      "actual": {
+        "base": "bafb8fdc879b10da663a90a70b8a6be925771e74",
+        "ours": "a851a9bc80d20f2ef3ed28792dfbe9fc312388ca",
+        "upstream": "831f3bb0144b9d1eeb8aee1b974c155560f5396c"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+      "expected": {
+        "base": "cba152e0a30c55dd0f62aa756497095838382317",
+        "ours": "3d8001013ad1a70253fe28f251f0376f5373e4a7",
+        "upstream": "d4c5e76ff7c6b54365f9c6537337e97cf0acaf18"
+      },
+      "actual": {
+        "base": "cba152e0a30c55dd0f62aa756497095838382317",
+        "ours": "3d8001013ad1a70253fe28f251f0376f5373e4a7",
+        "upstream": "d4c5e76ff7c6b54365f9c6537337e97cf0acaf18"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "expected": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160"
+      },
+      "actual": {
+        "base": "33297d969f64f1bdefe107a7dcb949a70dde2b2f",
+        "ours": "08bb37ddcbc1b8faac87f8b59f96c1eb0f72f53e",
+        "upstream": "2f250db12d21659166c6243939f5f911fbb3a160"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx",
+      "expected": {
+        "base": "f7546db6121de17afebe7eb972489105bc4ebfb5",
+        "ours": "9cb4d5da89cf82258f17bca96175f06342c3ff38",
+        "upstream": "7565bdcfd6db01c3e3feee2f85d4f7bd68d158f9"
+      },
+      "actual": {
+        "base": "f7546db6121de17afebe7eb972489105bc4ebfb5",
+        "ours": "9cb4d5da89cf82258f17bca96175f06342c3ff38",
+        "upstream": "7565bdcfd6db01c3e3feee2f85d4f7bd68d158f9"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    },
+    {
+      "path": "tests/e2e/fake-runtime/server.contract.test.mjs",
+      "expected": {
+        "base": "d519e7437e73b3a465a989e97555946d48ad12bc",
+        "ours": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+        "upstream": "ab92ec3028eb4a94d163469f3e44b48efaca6cce"
+      },
+      "actual": {
+        "base": "d519e7437e73b3a465a989e97555946d48ad12bc",
+        "ours": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+        "upstream": "ab92ec3028eb4a94d163469f3e44b48efaca6cce"
+      },
+      "types": {
+        "base": "blob",
+        "ours": "blob",
+        "upstream": "blob"
+      },
+      "match": true
+    }
+  ]
+}

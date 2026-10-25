@@ -1,0 +1,29 @@
+{
+  "task": "D127c-cProfile-cumulative-review-1929",
+  "candidate": "5747c48931839356b049a8fb6ddaf8f30b5b6d1a",
+  "base": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "verdict": "FAIL",
+  "source_status": "FAIL",
+  "activation_status": "STOP_UNAPPLIED",
+  "body_status": "UNQUALIFIED",
+  "changed_paths": [
+    "tests/helpers/p2_commit_phase_capture.py",
+    "tests/test_p2_commit_phase_capture.py"
+  ],
+  "blocking_findings": [
+    "D127C-SEL-1: the candidate selects clip.set-element, while the protected mounted first element POST is doc.patch",
+    "D127C-PROV-2: direct _timeline_commit calls with manually populated prefetch can create a profile request without _dispatch provenance",
+    "D127C-TYPE-3: scoped mypy reports a new candidate error at helper line 704",
+    "D127C-APP-4: strict App capture validation rejects the new cprofile summary field and does not allow the candidate helper hash"
+  ],
+  "central_targeted": {
+    "request": "20838",
+    "tree": "1f715fecd6a91ac47acee8c32c3667689b88db6b",
+    "command": "python -m pytest -q tests/test_p2_commit_phase_capture.py",
+    "result": "PASS",
+    "counts": "31 passed in 3.02s",
+    "scope_note": "This is the already queued exact Runtime test-file run; it does not prove the mounted App element selector or App validator compatibility."
+  },
+  "no_product_change": true,
+  "no_candidate_changes_made": true
+}

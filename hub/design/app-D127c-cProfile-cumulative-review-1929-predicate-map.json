@@ -1,0 +1,66 @@
+{
+  "candidate": "5747c48931839356b049a8fb6ddaf8f30b5b6d1a",
+  "predicates": [
+    {
+      "id": "selection-handler-route",
+      "source": "tests/helpers/p2_commit_phase_capture.py:P2CommitPhaseCapture._profile_body:449-473",
+      "result": "PASS_PARTIAL",
+      "evidence": "Exact RuntimeHandler module/qualname, POST, no query, commit route, prefetched bytes, API version 1, and non-dry-run checks are present.",
+      "caveat": "Does not prove dispatch provenance and is paired with the wrong element command discriminator."
+    },
+    {
+      "id": "first-element-command",
+      "source": "tests/helpers/p2_commit_phase_capture.py:P2CommitPhaseCapture._is_element_request:485-498",
+      "result": "FAIL",
+      "evidence": "Requires one clip.set-element command; protected App first Apply is one doc.patch command with a list.insert."
+    },
+    {
+      "id": "mixed-retry-setup",
+      "source": "tests/helpers/p2_commit_phase_capture.py:P2CommitPhaseCapture._start_profile:500-515",
+      "result": "PASS_FOR_SYNTHETIC_SHAPE",
+      "evidence": "One-shot selection closes after any matching command and exact one-command check rejects mixed batches; does not establish the real App first-element shape."
+    },
+    {
+      "id": "mounted-dispatch-provenance",
+      "source": "tests/helpers/p2_commit_phase_capture.py:P2CommitPhaseCapture._trace_inner:1254-1270",
+      "result": "FAIL",
+      "evidence": "Missing dispatch request state falls back to _new_request at handler entry; manually populated prefetch can make direct _timeline_commit eligible."
+    },
+    {
+      "id": "profile-finally-restoration",
+      "source": "tests/helpers/p2_commit_phase_capture.py:P2CommitPhaseCapture._start_profile:500-539; _stop_profile:542-560",
+      "result": "PASS",
+      "evidence": "Partial enable, handler return/exception, and capture stop restore the previous profile binding and mark stopped."
+    },
+    {
+      "id": "private-raw-pstats",
+      "source": "tests/helpers/p2_commit_phase_capture.py:P2CommitPhaseCapture._raw_profile_path:610-642",
+      "result": "PASS",
+      "evidence": "Private temporary child, owner-only non-symlink directory, exclusive no-follow 0600 file creation, no parent chmod."
+    },
+    {
+      "id": "projection-meaning-bounds-privacy",
+      "source": "tests/helpers/p2_commit_phase_capture.py:P2CommitPhaseCapture._profile_projection:644-767",
+      "result": "PASS",
+      "evidence": "Uses ncalls/primitive calls/tottime/cumtime with cumulative-time ranking, 40-function and 1600-edge caps, dropped counters, and sanitized relative fields; timing note is observational."
+    },
+    {
+      "id": "old-behavior-lineage",
+      "source": "candidate diff plus AST comparison with e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "result": "PASS",
+      "evidence": "Only two permitted test files changed; all parent helper/test functions remain; no behavioral deletion was found."
+    },
+    {
+      "id": "typecheck-zero-new",
+      "source": "tests/helpers/p2_commit_phase_capture.py:704",
+      "result": "FAIL",
+      "evidence": "Scoped mypy reports optional tuple assignment/indexing at stats_data.get(callee_key), in addition to two pre-existing test import diagnostics."
+    },
+    {
+      "id": "app-strict-summary-and-pin",
+      "source": "app/tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts:304-378, 419-427",
+      "result": "FAIL",
+      "evidence": "Reviewed-new exact summary keys omit cprofile; unknown fields are refused; allowed helper hashes do not include the candidate."
+    }
+  ]
+}

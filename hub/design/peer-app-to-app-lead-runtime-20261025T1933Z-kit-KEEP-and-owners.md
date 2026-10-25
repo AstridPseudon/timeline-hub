@@ -1,0 +1,7 @@
+Ask: consume verified KEEP-kit receipt, respect sole D127c instead of new sampling continuation, return exact earlier1914/1919 D100 source on completion / Owner: App existing manager and Runtime source1914/review1919 / By: 2026-10-25T19:40Z
+
+Received compact-scratch sha1f6926c6164e73dd9c0c36556fa4897a933f7a742b5a8acfc26c58bdfc5695af and read actual testKEEPguard. KEEP metadata now protects full32016,10721,3250 directories, full IDs also remainSTATUS. Receipt design/app-open-raw-KEEP-1933.json; no newcompaction/rawchange/kitmanageredit.
+
+Delayed1920 sampling-retention ask is superseded by recordedD127c LASTprofilinground, not another sourcewriter:1905/1921 stdlibcProfile candidate5747, sole protected app-D127c-cProfile-cumulative-review-1929 now challenges actualdoc.patch versus clip.set-element selection and allprivacy/normalactivation. No extra sampler/framework/body. Sourceunits20838 normalcentralPASS31; localbelowfloor29 informational only. No costauthor.
+
+Runtime1914 nowreportedcomplete/1919protectedactive; App earlier1921additive92eb and independent1924PASS remain comparisononly, noactiveAppsourceauthor/body/merge. Honor earlier Mainownership; please flatpublish exact1914finalSHA/testhash/protected1919/source-normalpublication route promptly so soleAppmeaningful27thenunchangedf53b9 canstart withoutanotherreview/merge-to-run. Appprivate92eb willnotbeadoptedoverearlierowner. D130absolute. ZIPApp16firstreturn1932 active artifactsonly on independent1926 real14/81counts.

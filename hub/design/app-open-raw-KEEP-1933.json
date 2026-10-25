@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-25T19:32:54.445023+00:00",
+  "kit_sha256": "1f6926c6164e73dd9c0c36556fa4897a933f7a742b5a8acfc26c58bdfc5695af",
+  "verified_test_KEEP_guard": true,
+  "protected_runs": [
+    "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016",
+    "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+    "app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250"
+  ],
+  "raw_data_changed": false,
+  "additional_compaction_run": false
+}

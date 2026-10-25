@@ -1,0 +1,116 @@
+{
+  "task": "app-F-App16-conflict-review-1926",
+  "verdict": "FAIL",
+  "reason": "The prior classification labels all 81 merge-preview hunks semantic, but the read-only preview has only 14 true conflict-marker hunks; 67 are cleanly merged, and the import-only AgentChat.test.tsx hunk is a provably mechanical textual union.",
+  "counts": {
+    "files": 16,
+    "preview_hunks": 81,
+    "author_semantic": 81,
+    "true_conflict_hunks": 14,
+    "semantic_true_conflicts": 13,
+    "trivial_textual_true_conflicts": 1,
+    "clean_nonconflicting_hunks": 67
+  },
+  "owner_choices": [
+    {
+      "path": "public/install-manifest.json",
+      "header": "@@ -1,11 +1,22 @@",
+      "owner": "App lead with Agent/Runtime release owners",
+      "choice": "Regenerate the manifest after the selected integrated Agent and Runtime commits are final; preserve upstream vibecomfy/OMP additions and publish only hashes/digests computed from the chosen sources."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -1365,7 +1598,11 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -1374,8 +1611,16 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -314,7 +329,219 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -513,6 +740,12 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1038,10 +1130,17 @@",
+      "owner": "App AgentChat owner with Timeline lead",
+      "choice": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1057,7 +1156,36 @@",
+      "owner": "App AgentChat owner with Timeline lead",
+      "choice": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1396,6 +1554,7 @@",
+      "owner": "App AgentChat owner with Timeline lead",
+      "choice": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -534,7 +548,17 @@",
+      "owner": "App AgentChat owner with Timeline lead",
+      "choice": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -1,3 +1,4 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -299,6 +315,7 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -84,9 +95,14 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+      "header": "@@ -152,8 +152,18 @@",
+      "owner": "App tour owner",
+      "choice": "Keep the current source's static tour/no-session behavior and unified AgentChatMenu; add only the upstream coarse-pointer styling after verifying tour anchors and scripted predicates remain intact."
+    }
+  ],
+  "trivial_counterexamples": [
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -6,7 +6,11 @@",
+      "citation": "Base has the shared import boundary; ours adds CHAT_VOICE_ENABLED, upstream adds LocalAgentChoice. Both symbols are used by preserved test families. Include both imports; no behavior or ownership choice."
+    }
+  ],
+  "source_route": {
+    "delivery_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "observed_route": "git am -q at delivery-build lines 195-198",
+    "git_apply_whitespace_error_flag": false,
+    "git_am_source_citation": "delivery-build:195-198"
+  },
+  "dry_run": {
+    "attempted": false,
+    "claimed": false,
+    "reason": "Task forbids direct clone/fetch/merge and no permitted service route was available."
+  },
+  "tests": {
+    "status": "NOTRUN",
+    "reason": "Read-only artifact review; typecheck/lint/tests/body/acquisition/service are not meaningful or authorized."
+  }
+}
