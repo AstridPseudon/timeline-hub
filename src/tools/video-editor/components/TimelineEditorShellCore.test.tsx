@@ -771,7 +771,7 @@ describe('TimelineEditorShellCore surface slots', () => {
     const main = container.querySelector('main');
     expect(main).toBeTruthy();
     const style = main?.getAttribute('style') ?? '';
-    expect(style).toContain('min(420px, 32vw, calc(100vw - 24px))');
+    expect(style).toContain('min(360px, 32vw, calc(100vw - 24px))');
     const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]') as HTMLElement;
     expect(dock.getAttribute('data-layout')).toBe('dock');
     expect(dock.style.gridColumn).toBe('2');
@@ -787,7 +787,7 @@ describe('TimelineEditorShellCore surface slots', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
 
     const main = document.querySelector('main') as HTMLElement;
-    expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))');
+    expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, calc(min(360px, 32vw, calc(100vw - 24px)) + 12px))');
     const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]') as HTMLElement;
     expect(dock.getAttribute('data-layout')).toBe('compact');
     expect(dock).toHaveAttribute('data-placement', 'upper-right-grid');
@@ -817,11 +817,11 @@ describe('TimelineEditorShellCore surface slots', () => {
     const main = container.querySelector('main') as HTMLElement;
     const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]') as HTMLElement;
     expect(dock).toHaveAttribute('data-placement', expected);
-    expect(main.style.gridTemplateColumns).toContain('min(420px, 32vw, calc(100vw - 24px))');
+    expect(main.style.gridTemplateColumns).toContain('min(360px, 32vw, calc(100vw - 24px))');
     expect(dock.style.width).toBe('calc(100% - 12px)');
     expect(dock.style.marginInlineStart).toBe('12px');
     if (shared === 'compact') {
-      expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))');
+      expect(main.style.gridTemplateColumns).toBe('minmax(0,1fr) minmax(0, calc(min(360px, 32vw, calc(100vw - 24px)) + 12px))');
       expect(dock.style.gridRow).toBe('1 / -1');
     } else {
       expect(dock.style.gridRow).toBe('1 / -1');
@@ -1017,7 +1017,7 @@ describe('TimelineEditorShellCore with registered slot renderers', () => {
     // When leftPanel is registered, grid columns should include an auto column for it
     expect(style).toContain('auto');
     expect(style).toContain('minmax(0,1fr)');
-    expect(style).toContain('min(420px');
+    expect(style).toContain('min(360px');
   });
 
 
@@ -1881,11 +1881,12 @@ describe('TimelineEditorShellCore — phone layout', () => {
   it.each([
     ['the full desktop layout', false],
     ['the condensed desktop layout', true],
-  ] as const)('reserves the right and bottom pane-tab bands on %s, where the tabs are drawn', (_name, forceCondensed) => {
+  ] as const)('keeps symmetric side padding and reserves the bottom gallery band on %s', (_name, forceCondensed) => {
     __deviceClass = 'desktop';
     render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed={forceCondensed} />);
     const main = document.querySelector('main') as HTMLElement;
-    expect(main.style.paddingInlineEnd).toBe('52px');
+    expect(main).toHaveClass('p-3');
+    expect(main.style.paddingInlineEnd).toBe('');
     expect(main.style.paddingInlineStart).toBe('');
     // jsdom rewrites env(); the browser resolves it to the safe-area inset.
     expect(main.style.paddingBottom).toMatch(/^calc\(56px \+ env\(/);

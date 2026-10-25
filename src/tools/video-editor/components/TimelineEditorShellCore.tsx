@@ -151,15 +151,11 @@ export interface TimelineEditorRenderActions {
 }
 
 /**
- * Desktop layouts reserve the bands the host app's fixed pane-control tabs occupy (`shared/components/PaneControlTab.tsx`),
- * because the editor is the app's only full-bleed page and would otherwise put interactive chrome under them. The right
- * tab (TasksPane, vertically centred, 46px plus breathing room) sat on the Inspector dock's right edge; the bottom pill
- * (the GenerationsPane lock/gallery pill, horizontally centred, 46px plus breathing room) sat on the timeline panel's
- * bottom border. The pill is centred, so its band is only a pill wide, but the editor reserves it across the whole
- * width. The left tab is not mounted in the editor shell. The touch shell reserves nothing: it holds
- * `acquirePaneControlsHost()` and hosts the gallery and chat entry points in its own thumb bar.
+ * Desktop reserves the bottom band for the host app's fixed gallery pill. The Tasks tab rests as a 10px
+ * edge grip, which fits within the shell's regular 12px padding; its expanded hover controls overlay the editor.
+ * Keeping the same padding on both sides avoids a permanent empty strip beside the Inspector.
+ * The touch shell hosts gallery and chat entry points in its own thumb bar and reserves no band.
  */
-const PANE_TAB_BAND_END_PX = 52;
 const PANE_TAB_BAND_BOTTOM_PX = 56;
 
 /** The save conflict dialog and its inline banner say the same thing with the same two buttons. */
@@ -587,7 +583,7 @@ function TimelineEditorShellCoreComponent({
     && rightPanelLayout === 'compact';
   const workAreaGridColumn = leftPanelSlot ? '2 / span 2' : '1 / span 2';
   const hostPanelInset = showFullHeightHostDock
-    ? 'calc(min(420px, 32vw, calc(100vw - 24px)) + 12px)'
+    ? 'calc(min(360px, 32vw, calc(100vw - 24px)) + 12px)'
     : '0px';
   const previewAreaRef = useRef<HTMLDivElement>(null);
   const layoutSettling = useLayoutSettlingUntilInput();
@@ -659,12 +655,10 @@ function TimelineEditorShellCoreComponent({
     setCondensedRightPanel('inspector');
   }, [armedGesture, releaseArmedGesture]);
 
-  /** Desktop only: keeps editor chrome out of the bands the host app's fixed pane-control tabs occupy at the right
-   *  and bottom viewport edges (see `PANE_TAB_BAND_END_PX`). The touch main keeps its own padding. */
+  /** Desktop keeps the timeline above the fixed gallery pill; touch uses its own bottom bar. */
   const mainPadding: CSSProperties | undefined = touchChrome
     ? undefined
     : {
-      paddingInlineEnd: PANE_TAB_BAND_END_PX,
       paddingBottom: safeAreaCalc.paddingBottom(`${PANE_TAB_BAND_BOTTOM_PX}px`),
     };
 
@@ -750,8 +744,7 @@ function TimelineEditorShellCoreComponent({
     <div
       className={cn(
         'pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-3 py-3',
-        // Desktop reserves the end gutter (`mainPadding`); a touch layout does not, so in the
-        // sidebar the app's right-hand pane tab floats over the dock's right edge. Keep Render clear of it.
+        // Keep Render clear of the app's pane tab in the touch sidebar.
         sidebarVideo && touchChrome && 'pr-10',
       )}
       data-shell-interaction="true"
@@ -1046,7 +1039,7 @@ function TimelineEditorShellCoreComponent({
             )}
             style={{
               ...mainPadding,
-              gridTemplateColumns: 'minmax(0,1fr) minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))',
+              gridTemplateColumns: 'minmax(0,1fr) minmax(0, calc(min(360px, 32vw, calc(100vw - 24px)) + 12px))',
             }}
           >
             <div style={{ gridColumn: 1, gridRow: 1 }}>
@@ -1096,7 +1089,7 @@ function TimelineEditorShellCoreComponent({
               gridTemplateColumns: hasCustomRightPanelSlot
                 ? (leftPanelSlot ? 'auto minmax(0,1fr) 360px' : 'minmax(0,1fr) 360px')
                 : `${leftPanelSlot ? 'auto ' : ''}minmax(0,1fr) ${showFullHeightHostDock || showCompactHostDock
-                  ? 'minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))'
+                  ? 'minmax(0, calc(min(360px, 32vw, calc(100vw - 24px)) + 12px))'
                   : 'minmax(0, 0px)'}`,
               // Keep the trailing track in both states so CSS can interpolate
               // its width. Its 12px gutter is inside the track, not a phantom
