@@ -1,0 +1,21 @@
+{
+  "candidate": "app-pin-50cfedd8",
+  "sha": "50cfedd8890ba4ac0863c6e6bd8d92605f64a42e",
+  "clean": true,
+  "is_current": false,
+  "refs": [],
+  "process_pids": [],
+  "unreadable_pids": [],
+  "inspection_ancestor_pids": [
+    1,
+    2,
+    8
+  ],
+  "terminal": {
+    "app-pin-50cfedd8-p2-geometry-asset-0019-1025002256-20057": "fail",
+    "app-pin-50cfedd8-p2-provider-add-0028-1025003016-5211": "fail"
+  },
+  "eligible": true,
+  "recycle_stdout": "recycled app-pin-50cfedd8\n",
+  "recycle_exit": 0
+}

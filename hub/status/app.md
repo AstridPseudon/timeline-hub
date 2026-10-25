@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T01:00:34Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
-# app board, 2026-10-25T00:56Z
+<!-- app | 2026-10-25T01:04:28Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-25T01:04Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -146,7 +146,10 @@
 | P2-ADD-5211 | Use exact projected clip identity | Luna; independent | Actual 5211 and mounted source | merged | Author0038; review submit0042 | Independent selector review merged exact source. Preflight28266 PASS; actual ADD6954 submitted00:50:11 on c9d71b/0d142/a3cd/635f. Same ID only; result pending. | Home c9d71b651d |
 
 | P2-ADD-6954 | Prove exact selected clip label | Luna | Actual6954 selected label874 | doing | app-P2-ADD-6954-selected-label-return-0056 | Readiness1 PASS; original FAIL62s at selected label. Projected clip and preceding canvas checks advance. Later history/Undo NOTRUN. | Appc9d71b |
-| P2-asset-import-current | Qualify exact import and catalogue ABI | Luna; service | Reviewed import home913686 | doing | Actual32587; launcher0055 ended | Preflight27154 PASS; one asset body running00:58:26 on fixed913686/0d142/a3cd/635f. Same ID only; result pending. | App913686448c |
+| P2-asset-import-current | Qualify exact import and catalogue ABI | Luna; service | Actual32587 terminal | gated:strict-oracle | Launcher0055; registry author0064 | Readiness1 PASS; original FAIL36s at missing config.registry527. Raw import, semantic request, acceptance and canonical readback advance. Later tail NOTRUN. | App913686448c |
+
+| P2-placement-import-current | Qualify embedded geometry and exact ABI | Luna; service | Asset32587 terminal | doing | app-P2-import-placement-submit-0062 | First original on reviewed embedded geometry and import ABI. Fixed913686/0d142/a3cd/635f; genuine request pending. | App913686448c |
+| P2-asset-registry | Prove canonical registry boundary | Luna | Actual32587 registry527 | doing | app-P2-asset-32587-registry-oracle-0064 | Retained accepted before/after and authoritative source first; preserve every asset/identity/isolation/tail predicate. No new body. | Source pending |
 
 Integration: App913686448c now includes import merge over independently reviewed Undo5f4ce933ec and popup selectorsc9d71b. Import reviewer0048 PASS25+7/types/lint; exact three blobs home, no browser credit. Exact reviewed Undo source blobs match home. ADD6954 terminal NO-GO at selected label874; later history/Undo remain unqualified.
 
@@ -158,10 +161,10 @@ Blockers: Runtime venue — SWAP/bulk0039 assigned fixedfd2f after terminal P4. 
 Blockers: Final cut — eight isolated P2, one full App tour, final pinned P1–P5/core and genuine installed render remain required. Runtime coordinates matrix and ZIP.
 Next ready: Asset0055 submitted to dispatcher after ADD6954 terminal; placement follows free App body slot. Label source0056 assigned; one independent review follows. Parent/single reviewed5f handed to Runtime0053. No P3, D79 or E work.
 
-live 2 / cap 6; ready-undispatched 0. Dispatcher header00:56:38 reports2; launcher0055 now ended, label0056 remains active. Asset32587 is sole App body. Placement is next body slot; no idle waiting worker.
+live 1 / cap 6; ready-undispatched 0. Dispatcher header01:00:34 reports1; label0056 active. Placement0062 and registry0064 dispatched after asset32587 terminal. One App body only; no idle wait worker.
 Capacity: Source authors and completed reviewers auto-recycle; no idle worker holds a body wait. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
 Disk: 6.641GB at00:58. Newly stale clean c9 pin recycled after terminal6954 and head/queue/lease/process checks; no refusal, all run outputs retained. Source cap6 above6.5GB; one body below7.5GB; floor5.2/stop4.5.
 Safety: No new safety or permission refusal. No direct product, test or pin edits by manager. All source and review work assigned to Codex workers.
-Inbox consumed through1840231 bytes. Runtime0040 source continuation0039 and assigned SWAP/bulk0039 consumed. New ORCH00:42 upstream App d11417a59 is deferred from gating under D68; fresh F-final rehearsal uses it with Agent08e6 and reports patch conflicts/full-suite result. This is a later final-cut entry, not a new upstream merge.
+Inbox consumed through1841848 bytes. Runtime0040 source continuation0039 and assigned SWAP/bulk0039 consumed. New ORCH00:42 upstream App d11417a59 is deferred from gating under D68; fresh F-final rehearsal uses it with Agent08e6 and reports patch conflicts/full-suite result. This is a later final-cut entry, not a new upstream merge.
 Later: F-final App upstream d11417a59 refresh and applied-result full suite are Runtime final coordinator-owned, gated on D59 cut. Gating App keeps frozen upstream3881.
 Evidence: [ADD review and submission](../../workers/app-P2-ADD-selector-review-submit-0042/report.md), [Undo author](../../workers/app-A2-Undo-reads-current-sol-0033/report.md), [import author](../../workers/app-P2-assets-import-ABI-0038/report.md), [element facts](../../design/app-P2-element-8897-safe-facts-0019.md).
