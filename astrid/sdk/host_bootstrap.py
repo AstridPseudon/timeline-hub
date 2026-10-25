@@ -485,7 +485,7 @@ def _provision_render_runtime_env(
     from astrid.core.rendering._local_schema import SCHEMA_RELATIVE_PATH, verified_schema_path
 
     schema = source_path.absolute() / SCHEMA_RELATIVE_PATH
-    if ASTRID_TIMELINE_SCHEMA_PYTHONPATH not in child_env and schema.is_file():
+    if schema.is_file():
         try:
             child_env[ASTRID_TIMELINE_SCHEMA_PYTHONPATH] = str(
                 verified_schema_path(source_path, str(schema)))
