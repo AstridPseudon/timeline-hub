@@ -17,6 +17,7 @@ import threading
 from collections import deque
 from contextlib import contextmanager
 from functools import wraps
+from typing import cast
 
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
@@ -352,8 +353,9 @@ class TimelineCommitStore:
             raise ProtocolError("accepted commit database is missing; reopen required")
         if self._wal_identity is None and files[1] is not None:
             self._wal_identity = files[1][:2]
-        return (id(self._connection), self._connection.total_changes,
-                self._connection.execute("PRAGMA data_version").fetchone()[0], tuple(files), package_owner)
+        connection = cast(sqlite3.Connection, self._connection)
+        return (id(connection), connection.total_changes,
+                connection.execute("PRAGMA data_version").fetchone()[0], tuple(files), package_owner)
 
     def _memo_failure(self, version):
         if version[4] is None:
@@ -374,9 +376,10 @@ class TimelineCommitStore:
         with self.store._mutex:
             try:
                 self._store_version()
-                owned = not self._connection.in_transaction
+                connection = cast(sqlite3.Connection, self._connection)
+                owned = not connection.in_transaction
                 if owned:
-                    self._connection.execute("BEGIN")
+                    connection.execute("BEGIN")
                 self._reading = True
                 try:
                     # Compare after entering the snapshot, before any cache hit.
@@ -386,7 +389,7 @@ class TimelineCommitStore:
                 finally:
                     self._reading = False
                     if owned:
-                        self._connection.rollback()
+                        connection.rollback()
                     elif not self._acceptance_transaction:
                         # An unrelated caller transaction may still roll back.
                         # Its provisional rows cannot become retained proofs.
