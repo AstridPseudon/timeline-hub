@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, ChevronLeft, ChevronRight, ExternalLink, Loader2, Search } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Copy, ExternalLink, Loader2, Search, Terminal } from 'lucide-react';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { isAgentSetupError } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
-import { AGENT_CHAT_COPY as copy } from '@/integrations/astrid/chatCopy.ts';
+import { AGENT_CHAT_COPY as copy, AGENT_INTEGRATION_PROMPT } from '@/integrations/astrid/chatCopy.ts';
 import { LOCAL_AGENT_IDS, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { CopyFallback, useCopyAction } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Input } from '@/shared/components/ui/input.tsx';
 import { AgentIcon, agentNames, isAgentUsable } from './agentIdentity';
@@ -18,6 +19,8 @@ const client = new AstridLocalClient({ projectSlug: 'astrid-acp', timeoutMs: 120
 const selectorOf = (providerId: string, modelId: string) => `${providerId}/${modelId}`;
 const setupName = (agent: LocalAgentId) => agent === 'astrid' ? copy.astridAgent : agentNames[agent];
 const setupState = (agent: LocalAgentChoice | undefined) => JSON.stringify([agent?.state, agent?.signIn, agent?.steps?.map(({ kind, command, label }) => [kind, command, label])]);
+const SETUP_CHOICES = [...LOCAL_AGENT_IDS, 'other'] as const;
+type SetupChoice = typeof SETUP_CHOICES[number];
 
 type Props = {
   agents: LocalAgentChoice[];
@@ -45,7 +48,10 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
     return initialAgent ?? (isAgentUsable(agents.find(agent => agent.id === last)) ? last
       : LOCAL_AGENT_IDS.find(id => id !== 'astrid' && agents.some(agent => agent.id === id && agent.signIn === 'signed-in')) ?? 'astrid');
   });
-  const [step, setStep] = useState<'choose' | 'setup' | 'starting' | 'failed'>(initialAgent ? 'setup' : 'choose');
+  const [otherSelected, setOtherSelected] = useState(false);
+  const selectedChoice = otherSelected ? 'other' : selected;
+  const [step, setStep] = useState<'choose' | 'setup' | 'starting' | 'failed' | 'other'>(initialAgent ? 'setup' : 'choose');
+  const integrationCopy = useCopyAction(AGENT_INTEGRATION_PROMPT);
   const [agentFailure, setAgentFailure] = useState({ agent: initialAgent ?? selected, error: initialError });
   const failure = agentFailure.agent === selected ? agentFailure.error : null;
   const [failedRow, setFailedRow] = useState(() => initialError ? { id: initialAgent, state: setupState(agents.find(row => row.id === initialAgent)) } : null);
@@ -58,7 +64,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   const keyId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const shownStep = useRef(step);
-  const rows = useRef<Partial<Record<LocalAgentId, HTMLDivElement | null>>>({});
+  const rows = useRef<Partial<Record<SetupChoice, HTMLDivElement | null>>>({});
   const inFlight = useRef(false);
   const attempt = useRef(0);
   const mounted = useRef(true);
@@ -66,6 +72,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   useEffect(() => {
     if (!initialAgent || inFlight.current) return;
     setSelected(initialAgent);
+    setOtherSelected(false);
     if (initialError) {
       setAgentFailure({ agent: initialAgent, error: initialError });
       setFailedRow({ id: initialAgent, state: setupState(agents.find(row => row.id === initialAgent)) });
@@ -118,8 +125,8 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   }, [step]);
 
   useEffect(() => {
-    if (step === 'choose') rows.current[selected]?.focus({ preventScroll: true });
-  }, [step, selected]);
+    if (step === 'choose') rows.current[selectedChoice]?.focus({ preventScroll: true });
+  }, [step, selectedChoice]);
   // A new step moves focus to its heading, so keyboard and screen reader users land on what changed.
   useEffect(() => {
     if (shownStep.current === step) return;
@@ -169,7 +176,12 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
     {row.creditUrl ? <a href={row.creditUrl} target="_blank" rel="noreferrer" className="underline decoration-border underline-offset-2 hover:text-foreground"
       {...(inRow ? { onClick: (event: React.MouseEvent) => event.stopPropagation(), onKeyDown: (event: React.KeyboardEvent) => event.stopPropagation() } : {})}>{row.creditLine}</a> : row.creditLine}
   </span> : null;
-  const pick = (id: LocalAgentId) => { setSelected(id); setStep('setup'); onSetup?.(id); };
+  const selectChoice = (id: SetupChoice) => { setOtherSelected(id === 'other'); if (id !== 'other') setSelected(id); };
+  const pick = (id: SetupChoice) => {
+    selectChoice(id);
+    if (id === 'other') setStep('other');
+    else { setStep('setup'); onSetup?.(id); }
+  };
 
   return <section aria-label={copy.setupTitle} className="@container space-y-3 rounded-xl border border-border/70 bg-card p-3 text-sm shadow-sm">
     {step === 'choose' ? <>
@@ -178,26 +190,42 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
         <p className="text-xs text-muted-foreground">{copy.setupHint}</p>
       </div>
       <div role="listbox" aria-label={copy.setupTitle} className="-mx-1 space-y-0.5">
-        {LOCAL_AGENT_IDS.map((id, index) => {
+        {SETUP_CHOICES.map((id, index) => {
           const row = agents.find(item => item.id === id);
-          const label = status(row, id);
-          return <div key={id} ref={node => { rows.current[id] = node; }} role="option" aria-selected={selected === id} tabIndex={selected === id ? 0 : -1}
+          const label = id === 'other' ? null : status(row, id);
+          return <div key={id} ref={node => { rows.current[id] = node; }} role="option" aria-selected={selectedChoice === id} tabIndex={selectedChoice === id ? 0 : -1}
             className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-muted [@media(pointer:coarse)]:min-h-11"
-            onFocus={() => setSelected(id)} onClick={() => pick(id)}
+            onFocus={() => selectChoice(id)} onClick={() => pick(id)}
             onKeyDown={event => {
               if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); pick(id); return; }
-              const next = event.key === 'ArrowDown' ? (index + 1) % LOCAL_AGENT_IDS.length : event.key === 'ArrowUp' ? (index + LOCAL_AGENT_IDS.length - 1) % LOCAL_AGENT_IDS.length : event.key === 'Home' ? 0 : event.key === 'End' ? LOCAL_AGENT_IDS.length - 1 : null;
-              if (next !== null) { event.preventDefault(); setSelected(LOCAL_AGENT_IDS[next]); }
+              const next = event.key === 'ArrowDown' ? (index + 1) % SETUP_CHOICES.length : event.key === 'ArrowUp' ? (index + SETUP_CHOICES.length - 1) % SETUP_CHOICES.length : event.key === 'Home' ? 0 : event.key === 'End' ? SETUP_CHOICES.length - 1 : null;
+              if (next !== null) { event.preventDefault(); selectChoice(SETUP_CHOICES[next]); }
             }}>
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background"><AgentIcon agent={id} className="h-4 w-4" /></span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background">{id === 'other' ? <Terminal aria-hidden="true" className="h-4 w-4" /> : <AgentIcon agent={id} className="h-4 w-4" />}</span>
             <span className="min-w-0 flex-1">
-              <span className="block leading-5">{setupName(id)}</span>
-              <span className="block text-xs leading-4 text-muted-foreground">{id === 'astrid' ? copy.astridSubtitle : copy.computerSubtitle(agentNames[id])}</span>
+              <span className="block leading-5">{id === 'other' ? copy.anotherAgent : setupName(id)}</span>
+              <span className="block text-xs leading-4 text-muted-foreground">{id === 'other' ? copy.anotherAgentSubtitle : id === 'astrid' ? copy.astridSubtitle : copy.computerSubtitle(agentNames[id])}</span>
               {id === 'astrid' && credit(row, true)}
             </span>
-            <StatusBadge label={label} ready={label === copy.ready} />
+            {label && <StatusBadge label={label} ready={label === copy.ready} />}
           </div>;
         })}
+      </div>
+    </> : step === 'other' ? <>
+      <BackButton onClick={back} />
+      <div className="space-y-2">
+        <h2 ref={headingRef} tabIndex={-1} className="text-base leading-snug outline-none">{copy.anotherAgentTerminal}</h2>
+        <p className="text-xs text-muted-foreground">{copy.anotherAgentTerminalHint}</p>
+        <CommandStep command={copy.anotherAgentInstruction(agents.find(row => row.id === 'astrid')?.terminal?.command || 'astrid')} label={copy.copyAgentInstruction} />
+      </div>
+      <div className="space-y-2 border-t border-border/70 pt-3">
+        <h3 className="text-base leading-snug">{copy.anotherAgentIntegration}</h3>
+        <p className="text-xs text-muted-foreground">{copy.anotherAgentIntegrationHint}</p>
+        <Button type="button" className="h-auto min-h-9 w-full gap-2 whitespace-normal py-2 text-left" onClick={() => void integrationCopy.copy()}>
+          {integrationCopy.status === 'copied' ? <Check aria-hidden="true" className="h-4 w-4 shrink-0" /> : <Copy aria-hidden="true" className="h-4 w-4 shrink-0" />}
+          <span aria-live="polite">{integrationCopy.status === 'copied' ? copy.integrationPromptCopied : copy.copyIntegrationPrompt}</span>
+        </Button>
+        {integrationCopy.status === 'failed' && <CopyFallback text={AGENT_INTEGRATION_PROMPT} label={copy.copyIntegrationPrompt} />}
       </div>
     </> : step === 'starting' ? <>
       <div role="status" aria-live="polite" className="flex items-center gap-2.5">

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import type { AcpModelCatalog } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
+import { AGENT_INTEGRATION_PROMPT } from '@/integrations/astrid/chatCopy.ts';
 import { AgentSetupCard } from './AgentSetupCard';
 
 const mocks = vi.hoisted(() => ({ models: vi.fn(), saveKey: vi.fn(), readChoice: vi.fn(), remember: vi.fn() }));
@@ -56,6 +57,8 @@ describe('AgentSetupCard choices', () => {
   it('supports arrows, Home, End and Enter', async () => {
     mount();
     fireEvent.keyDown(screen.getByRole('option', { selected: true }), { key: 'End' });
+    expect(screen.getByRole('option', { name: /Another agent/ })).toHaveFocus();
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowUp' });
     expect(screen.getByRole('option', { name: /Hermes/ })).toHaveFocus();
     fireEvent.keyDown(document.activeElement!, { key: 'ArrowUp' });
     expect(screen.getByRole('option', { name: /Use Codex/ })).toHaveFocus();
@@ -64,6 +67,54 @@ describe('AgentSetupCard choices', () => {
     fireEvent.keyDown(document.activeElement!, { key: 'ArrowDown' });
     fireEvent.keyDown(document.activeElement!, { key: 'Enter' });
     await screen.findByText('Getting Claude Code ready…');
+  });
+});
+
+describe('another agent setup', () => {
+  it.each(['astrid', "'/custom Astrid/run-astrid'", undefined])('offers terminal instructions using %s and returns to the fifth row', async command => {
+    const agents = ready();
+    if (command) agents[0].terminal = { command, skillSynced: false };
+    agents[2].terminal = { command: 'codex', skillSynced: true };
+    const view = mount({ agents, onSetup: vi.fn() });
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(5);
+    expect(options[4]).toHaveTextContent('Another agentUse a different agent, like Gemini CLI or OpenCode');
+    expect(within(options[4]).queryByText(/Ready|Set up|Sign in|Not installed/)).toBeNull();
+    choose('Another agent');
+    expect(screen.getByRole('heading', { name: 'Use it from your terminal' })).toHaveFocus();
+    expect(screen.getByText('Run your agent in a terminal and ask it to use Astrid. Edits, tasks and generations show up right here.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Or build an integration so it chats right here' })).toBeInTheDocument();
+    expect(screen.getByText("Your coding agent can add it to Astrid's chat. Copy this prompt into it.")).toBeInTheDocument();
+    const instruction = `Use Astrid to edit my video project. Run "${command ?? 'astrid'} --help" to see what it can do.`;
+    expect(screen.getByText(instruction)).toBeInTheDocument();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    fireEvent.click(screen.getByRole('button', { name: 'Copy instruction for your agent' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(instruction));
+    expect(view.startChatWith).not.toHaveBeenCalled();
+    expect(view.onSetup).not.toHaveBeenCalled();
+    expect(mocks.models).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByRole('option', { name: /Another agent/ })).toHaveFocus();
+    expect(screen.getByRole('option', { name: /Another agent/ })).toHaveAttribute('aria-selected', 'true');
+  });
+  it('copies the integration prompt without rendering it', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const view = mount(); choose('Another agent');
+    expect(view.container.innerHTML).not.toContain(AGENT_INTEGRATION_PROMPT.split('\n')[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Copy a prompt to build the integration' }));
+    expect(await screen.findByRole('button', { name: 'Prompt copied' })).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledExactlyOnceWith(AGENT_INTEGRATION_PROMPT);
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(view.container.innerHTML).not.toContain(AGENT_INTEGRATION_PROMPT.split('\n')[0]);
+  });
+  it('offers a selectable prompt when copying fails', async () => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) } });
+    mount(); choose('Another agent');
+    fireEvent.click(screen.getByRole('button', { name: 'Copy a prompt to build the integration' }));
+    expect(await screen.findByRole('textbox', { name: 'Copy a prompt to build the integration' })).toHaveValue(AGENT_INTEGRATION_PROMPT);
+    expect(screen.getByRole('status')).toHaveTextContent(/Copying didn't work/i);
   });
 });
 
