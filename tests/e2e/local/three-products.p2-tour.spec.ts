@@ -254,7 +254,7 @@ function assertNormalizedCommands(commands: EditCommand[], submitted: EditComman
   }
 }
 
-function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): CommitAcceptedMutation {
+function assertReplyShape(post: CommitPost, before: HeadPin): CommitAcceptedMutation {
   expect(post.response.status(), JSON.stringify(post.json)).toBe(200);
   const envelope = object(post.json, 'commit reply');
   const data = object(envelope.data, 'commit reply data');
@@ -267,7 +267,8 @@ function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): Com
   expect(data.canonical_document).toBeTruthy();
   expect(data.document_digest).toEqual(expect.any(String));
   assertNormalizedCommands(data.commands as EditCommand[], post.body.commands);
-  expect(data.label).toBe(modern ? post.body.label : 'Timeline edit');
+  const expectedLabel = Object.hasOwn(post.body, 'label') ? post.body.label : 'Timeline edit';
+  expect(data.label).toBe(expectedLabel);
   expect(data.id_map).toEqual(expect.any(Object));
   expect(data.provider_version).toEqual(expect.any(String));
   expect(data.compiler_version).toEqual(expect.any(String));
@@ -287,9 +288,15 @@ function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): Com
     expect(step.dependencies).toEqual(expect.any(Array));
     expect((step.dependencies as unknown[]).length).toBeGreaterThan(0);
   }
-  if (!modern) {
+  if (Object.hasOwn(post.body, 'steps')) {
+    expect(data.steps).toEqual(post.body.steps!.map((step, index) => ({
+      ...step,
+      patch: (data.steps as Array<JsonObject>)[index].patch,
+      dependencies: (data.steps as Array<JsonObject>)[index].dependencies,
+    })));
+  } else {
     expect(data.steps).toEqual([{
-      id: 'edit', label: 'Timeline edit', intent: '', tags: [], command_ordinals: [0],
+      id: 'edit', label: expectedLabel, intent: '', tags: [], command_ordinals: [0],
       patch: (data.steps as Array<JsonObject>)[0].patch,
       dependencies: (data.steps as Array<JsonObject>)[0].dependencies,
     }]);
@@ -330,8 +337,7 @@ function assertUndoHistoryPublication(entry: HistoryEntry, publicationId: string
 function assertRequestV2(
   post: CommitPost,
   before: HeadPin,
-  modern = true,
-  undoExpectation?: { projectId: string; timelineId: string; publicationId: string },
+  inverseExpectation?: { projectId: string; timelineId: string; publicationId: string; action: 'Undo' | 'Redo' },
 ): void {
   expect(post.key).toBeTruthy();
   expect(post.body).toMatchObject({
@@ -343,23 +349,22 @@ function assertRequestV2(
     commands: expect.any(Array),
   });
   expect(post.body.commands.length).toBeGreaterThan(0);
-  if (!modern) {
-    expect(undoExpectation).toBeTruthy();
+  if (inverseExpectation) {
     const command = {
       schema_version: 1,
       op: 'timeline.inverse',
       version: '1',
       select: null,
-      args: { publications: [undoExpectation!.publicationId] },
+      args: { publications: [inverseExpectation.publicationId] },
     };
     expect(post.body).toEqual({
-      api_version: 1, project_id: undoExpectation!.projectId, timeline_id: undoExpectation!.timelineId,
+      api_version: 1, project_id: inverseExpectation.projectId, timeline_id: inverseExpectation.timelineId,
       base_revision_id: before.revision_id, base_publication_id: before.publication_id,
       commands: [command],
-      label: 'Undo timeline',
+      label: `${inverseExpectation.action} timeline`,
       steps: [{
         id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/),
-        label: 'Undo timeline', intent: 'Undo timeline', tags: [], command_ordinals: [0], patch: [],
+        label: `${inverseExpectation.action} timeline`, intent: `${inverseExpectation.action} timeline`, tags: [], command_ordinals: [0], patch: [],
       }],
       merge: 'fields', reads: [], dry_run: false, source: { via: 'app' },
     });
@@ -545,7 +550,7 @@ function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: Co
   expect(result.data.commands).toEqual(entry.records!.commands.map((record) => record.command));
   assertNormalizedCommands(result.data.commands, post.body.commands);
   expect(entry.records!.commands.map((record) => record.ordinal)).toEqual(post.body.commands.map((_, ordinal) => ordinal));
-  if (post.body.steps) {
+  if (Object.hasOwn(post.body, 'steps')) {
     expect(result.data.steps).toEqual(post.body.steps.map((step, index) => ({
       ...step, patch: result.data.steps![index].patch, dependencies: result.data.steps![index].dependencies,
     })));
@@ -710,13 +715,14 @@ async function proveGestureAndUndo(
   const inverse = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
-  assertRequestV2(inverse, pinOf(result), false, {
+  assertRequestV2(inverse, pinOf(result), {
     projectId: original.project_id,
     timelineId: original.timeline_id,
     publicationId: result.receipt.receipt_id,
+    action: 'Undo',
   });
   assertInverseTargetsPublication(inverse, result.receipt.receipt_id);
-  const inverseResult = assertReplyShape(inverse, pinOf(result), false);
+  const inverseResult = assertReplyShape(inverse, pinOf(result));
   const undone = inverseResult.data.canonical_document;
   const actualUndone = await canonicalDocumentAt(harness, seed, inverseResult.data.accepted_revision_id);
   assertAuthoritativeCanonical(inverseResult, actualUndone, harness, seed);
