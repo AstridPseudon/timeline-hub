@@ -1,0 +1,56 @@
+{
+  "schema": "timeline.ops-child-custody.canonical-check.independent-review.v1",
+  "verdict": "PASS",
+  "qualification": "source/unit PASS; genuine Agent-only whole-maker E2E remains NOTRUN",
+  "reviewed_commit": "b855b8a082153a12ca3a59383c4a08387b201bdd",
+  "reviewed_tree": "ffb9c5ee22c6d7b138ab2bfc1dbd83188d9fc2fb",
+  "settled_base_commit": "60753548ebc8e69f3c84fbb28fa2e09b1ca78316",
+  "settled_base_tree": "dd4347a933103bbfc17c3e3237d52ea13ac1f677",
+  "changed_paths_from_settled_base": [
+    "ops-child-custody/tests/canonical_check.py"
+  ],
+  "canonical_invocation": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python ops-child-custody/tests/canonical_check.py .",
+    "exit": 0,
+    "stdout_bytes_preserved": true,
+    "stderr_bytes_preserved": true,
+    "script_hash_before_after_equal": true
+  },
+  "controls": {
+    "governing_ruff_0_16_8": "PASS",
+    "repository_ruff_0_12_0": "PASS",
+    "existing_unittest_count_64": "PASS",
+    "private_cache_py_compile": "PASS",
+    "source_scoped_whitespace": "PASS",
+    "negative_real_check_only_census": "PASS; exit 2, complete missing census, all mutation flags false",
+    "historical_frozen_maker_eof": "PASS; exactly two disclosed diagnostics, separate from authored findings",
+    "working_tree_clean": "PASS",
+    "base_commit_and_tree_authentication": "PASS",
+    "protected_file_modes": "PASS",
+    "protected_file_bytes_against_607535": "PASS",
+    "canonical_script_mode": "PASS; 755",
+    "supported_agent_and_child_interpreters": "PASS",
+    "no_install_or_fallback": "PASS"
+  },
+  "findings_map": [
+    {"id": "1903/new-test-ruff", "status": "fixed and covered by the canonical governing Ruff check"},
+    {"id": "1903/malformed-role-early-exception", "status": "fixed and covered by complete census controls"},
+    {"id": "1909/uncaught-wheel-role-shape", "status": "fixed and covered by malformed-role controls"},
+    {"id": "1909/uncaught-maker-path-type", "status": "fixed and covered by malformed-path controls"},
+    {"id": "1909/missing-required-source-roles", "status": "fixed and covered by required-role controls"},
+    {"id": "1909/ambient-python3-not-censused", "status": "fixed and covered by interpreter/required-command controls"},
+    {"id": "1909/tmpdir-writability-not-censused", "status": "fixed and covered by TMPDIR controls"}
+  ],
+  "historical_maker_eof": [
+    "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv:1224: new blank line at EOF.",
+    "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv:1201: new blank line at EOF."
+  ],
+  "e2e": {
+    "whole_maker": "NOTRUN",
+    "reason": "This review is source/unit-only; the Agent-only venue, 5905580032-byte admission, and result review remain separately gated.",
+    "production_store": "NOTRUN",
+    "production_child": "NOTRUN",
+    "network": "NOTRUN"
+  },
+  "review_findings": []
+}

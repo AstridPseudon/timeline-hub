@@ -1,0 +1,382 @@
+CANONICAL OPS CHECK: one invocation; read-only source/unit qualification
+REPOSITORY: /home/user/work/wt/rt-OPS-canonical-review-1953
+PRIVATE CACHE: /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece
+RUNNER: /home/user/work/venv-agent/bin/python
+CHILD PYTHON: /usr/bin/python3.13
+COMMAND governing Ruff version: /root/.local/bin/ruff --version
+STDOUT governing Ruff version BEGIN
+ruff 0.16.8
+STDOUT governing Ruff version END
+STDERR governing Ruff version BEGIN
+STDERR governing Ruff version END
+EXIT governing Ruff version: 0
+COMMAND governing Ruff scoped check: /root/.local/bin/ruff check --no-cache /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/e2e_inventory.py /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/test_e2e_inventory.py /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/canonical_check.py
+STDOUT governing Ruff scoped check BEGIN
+All checks passed!
+STDOUT governing Ruff scoped check END
+STDERR governing Ruff scoped check BEGIN
+STDERR governing Ruff scoped check END
+EXIT governing Ruff scoped check: 0
+COMMAND repository Ruff version: /home/user/work/venv-agent/bin/ruff --version
+STDOUT repository Ruff version BEGIN
+ruff 0.12.0
+STDOUT repository Ruff version END
+STDERR repository Ruff version BEGIN
+STDERR repository Ruff version END
+EXIT repository Ruff version: 0
+COMMAND repository Ruff scoped check: /home/user/work/venv-agent/bin/ruff check --no-cache /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests
+STDOUT repository Ruff scoped check BEGIN
+All checks passed!
+STDOUT repository Ruff scoped check END
+STDERR repository Ruff scoped check BEGIN
+STDERR repository Ruff scoped check END
+EXIT repository Ruff scoped check: 0
+COMMAND existing unittest suite (64 tests): /home/user/work/venv-agent/bin/python -m unittest -v ops-child-custody/tests/test_e2e_inventory.py ops-child-custody/tests/test_custody.py ops-child-custody/tests/test_inventory.py
+STDOUT existing unittest suite (64 tests) BEGIN
+STDOUT existing unittest suite (64 tests) END
+STDERR existing unittest suite (64 tests) BEGIN
+test_actual_manifest_helper_and_frozen_makers_pass_readonly_component_checks (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_actual_manifest_helper_and_frozen_makers_pass_readonly_component_checks) ... ok
+test_check_only_accumulates_missing_and_malformed_sources_with_other_prerequisites (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_check_only_accumulates_missing_and_malformed_sources_with_other_prerequisites) ... ok
+test_check_only_refuses_altered_clean_committed_source_bytes (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_check_only_refuses_altered_clean_committed_source_bytes) ... ok
+test_existing_result_and_symlink_result_are_never_overwritten (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_existing_result_and_symlink_result_are_never_overwritten) ... ok
+test_fixture_helpers_refuse_malformed_manifest_with_runtime_error (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_fixture_helpers_refuse_malformed_manifest_with_runtime_error) ... ok
+test_git_timeout_and_malformed_python_facts_accumulate (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_git_timeout_and_malformed_python_facts_accumulate) ... ok
+test_invalid_optional_result_path_and_tmpdir_are_refused (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_invalid_optional_result_path_and_tmpdir_are_refused) ... ok
+test_maker_map_entry_and_field_shapes_are_censused (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_maker_map_entry_and_field_shapes_are_censused) ... ok
+test_malformed_role_variants_accumulate_with_simultaneous_missing_prerequisites (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_malformed_role_variants_accumulate_with_simultaneous_missing_prerequisites) ... ok
+test_missing_changed_wrong_mode_or_symlink_fixture_files_refuse (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_missing_changed_wrong_mode_or_symlink_fixture_files_refuse) ... ok
+test_missing_malformed_or_wrong_schema_manifest_still_checks_other_inputs (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_missing_malformed_or_wrong_schema_manifest_still_checks_other_inputs) ... ok
+test_missing_roles_and_malformed_role_maps_are_not_an_empty_success (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_missing_roles_and_malformed_role_maps_are_not_an_empty_success) ... ok
+test_missing_wrong_hash_mode_or_symlink_makers_refuse_without_verifier_crash (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_missing_wrong_hash_mode_or_symlink_makers_refuse_without_verifier_crash) ... ok
+test_nonphysical_relative_or_wrong_type_paths_are_structured_missing (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_nonphysical_relative_or_wrong_type_paths_are_structured_missing) ... ok
+test_nonregular_manifest_still_emits_all_independent_missing_inputs (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_nonregular_manifest_still_emits_all_independent_missing_inputs) ... ok
+test_overlapping_private_roots_and_unsafe_source_path_are_refused (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_overlapping_private_roots_and_unsafe_source_path_are_refused) ... ok
+test_prepare_cli_requires_successful_complete_census_before_setup (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_prepare_cli_requires_successful_complete_census_before_setup) ... ok
+test_required_commands_and_tmpdir_write_capability_join_the_census (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_required_commands_and_tmpdir_write_capability_join_the_census) ... ok
+test_source_file_maps_names_and_hash_types_are_explicitly_validated (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_source_file_maps_names_and_hash_types_are_explicitly_validated) ... ok
+test_supported_venv_python_symlinks_remain_valid (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_supported_venv_python_symlinks_remain_valid) ... ok
+test_valid_census_authenticates_sources_wheels_makers_and_all_prerequisites (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_valid_census_authenticates_sources_wheels_makers_and_all_prerequisites) ... ok
+test_wheel_shapes_and_pins_are_checked_even_without_wheelhouse (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_wheel_shapes_and_pins_are_checked_even_without_wheelhouse) ... ok
+test_wrong_git_head_dirty_checkout_and_committed_modes_are_refused (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_wrong_git_head_dirty_checkout_and_committed_modes_are_refused) ... ok
+test_wrong_wheel_hash_and_missing_helper_and_artifact_accumulate (ops-child-custody.tests.test_e2e_inventory.PortableCensusTests.test_wrong_wheel_hash_and_missing_helper_and_artifact_accumulate) ... ok
+test_bad_unknown_duplicate_and_missing_option_arguments_refuse (ops-child-custody.tests.test_custody.RetentionLifecycleTests.test_bad_unknown_duplicate_and_missing_option_arguments_refuse) ... ok
+test_diagnostic_reserve_refuses_before_build (ops-child-custody.tests.test_custody.RetentionLifecycleTests.test_diagnostic_reserve_refuses_before_build) ... ok
+test_normal_dispatch_keeps_store_ensure_and_diagnostic_has_no_registration (ops-child-custody.tests.test_custody.RetentionLifecycleTests.test_normal_dispatch_keeps_store_ensure_and_diagnostic_has_no_registration) ... ok
+test_real_verify_function_uses_exact_embedded_verifier_staging_argv (ops-child-custody.tests.test_custody.RetentionLifecycleTests.test_real_verify_function_uses_exact_embedded_verifier_staging_argv) ... ok
+test_success_failure_cancellation_and_seal_failure_keep_stage_only (ops-child-custody.tests.test_custody.RetentionLifecycleTests.test_success_failure_cancellation_and_seal_failure_keep_stage_only) ... ok
+test_every_embedded_python_compiles_in_memory (ops-child-custody.tests.test_custody.SourceCallerTests.test_every_embedded_python_compiles_in_memory) ... ok
+test_exact_parent_red_candidate_green_through_real_build_and_verifier (ops-child-custody.tests.test_custody.SourceCallerTests.test_exact_parent_red_candidate_green_through_real_build_and_verifier) ... ok
+test_parent_census_lists_all_generated_paths_in_one_read_only_walk (ops-child-custody.tests.test_custody.SourceCallerTests.test_parent_census_lists_all_generated_paths_in_one_read_only_walk) ... ok
+test_real_source_state_requires_exact_clean_checkout (ops-child-custody.tests.test_custody.SourceCallerTests.test_real_source_state_requires_exact_clean_checkout) ... ok
+test_seeded_caller_keeps_supported_archive_route (ops-child-custody.tests.test_custody.SourceCallerTests.test_seeded_caller_keeps_supported_archive_route) ... ok
+test_verifier_and_outer_production_caller_are_byte_exact (ops-child-custody.tests.test_custody.SourceCallerTests.test_verifier_and_outer_production_caller_are_byte_exact) ... ok
+test_archive_bytes_hash_and_location_are_authenticated (ops-child-custody.tests.test_custody.VerifierTests.test_archive_bytes_hash_and_location_are_authenticated) ... ok
+test_archive_ownership_and_complete_ancestry (ops-child-custody.tests.test_custody.VerifierTests.test_archive_ownership_and_complete_ancestry) ... ok
+test_commit_argument_mismatch_never_reads_near_match (ops-child-custody.tests.test_custody.VerifierTests.test_commit_argument_mismatch_never_reads_near_match) ... ok
+test_distribution_name_and_import_provenance_refuse_mismatch (ops-child-custody.tests.test_custody.VerifierTests.test_distribution_name_and_import_provenance_refuse_mismatch) ... ok
+test_every_empty_generated_and_foreign_source_path_is_refused (ops-child-custody.tests.test_custody.VerifierTests.test_every_empty_generated_and_foreign_source_path_is_refused) ... ok
+test_extra_snapshot_and_editable_provenance_refuse (ops-child-custody.tests.test_custody.VerifierTests.test_extra_snapshot_and_editable_provenance_refuse) ... ok
+test_generated_metadata_license_ownership_stays_exact (ops-child-custody.tests.test_custody.VerifierTests.test_generated_metadata_license_ownership_stays_exact) ... ok
+test_identity_marker_mismatch_is_refused (ops-child-custody.tests.test_custody.VerifierTests.test_identity_marker_mismatch_is_refused) ... ok
+test_missing_committed_source_file_is_refused (ops-child-custody.tests.test_custody.VerifierTests.test_missing_committed_source_file_is_refused) ... ok
+test_record_digest_and_unowned_record_additions_refuse (ops-child-custody.tests.test_custody.VerifierTests.test_record_digest_and_unowned_record_additions_refuse) ... ok
+test_source_bytes_missing_and_mismatched_are_refused (ops-child-custody.tests.test_custody.VerifierTests.test_source_bytes_missing_and_mismatched_are_refused) ... ok
+test_source_hardlinks_and_foreign_owner_refuse (ops-child-custody.tests.test_custody.VerifierTests.test_source_hardlinks_and_foreign_owner_refuse) ... ok
+test_supported_clean_directory_provenance_remains_accepted (ops-child-custody.tests.test_custody.VerifierTests.test_supported_clean_directory_provenance_remains_accepted) ... ok
+test_symlink_replacement_of_carrier_and_metadata_refuses (ops-child-custody.tests.test_custody.VerifierTests.test_symlink_replacement_of_carrier_and_metadata_refuses) ... ok
+test_symlink_replacement_of_each_complete_source_ancestor_refuses (ops-child-custody.tests.test_custody.VerifierTests.test_symlink_replacement_of_each_complete_source_ancestor_refuses) ... ok
+test_symlinks_at_every_source_ancestry_depth_and_archive_refuse (ops-child-custody.tests.test_custody.VerifierTests.test_symlinks_at_every_source_ancestry_depth_and_archive_refuse) ... ok
+test_unsupported_committed_symlink_is_refused (ops-child-custody.tests.test_custody.VerifierTests.test_unsupported_committed_symlink_is_refused) ... ok
+test_writable_final_refuses_and_exact_lib64_exception_remains (ops-child-custody.tests.test_custody.VerifierTests.test_writable_final_refuses_and_exact_lib64_exception_remains) ... ok
+test_both_supported_source_provenance_kinds_use_installed_distribution_metadata (ops-child-custody.tests.test_inventory.InventoryTests.test_both_supported_source_provenance_kinds_use_installed_distribution_metadata) ... ok
+test_each_executable_metadata_file_refuses_after_exact_content_checks (ops-child-custody.tests.test_inventory.InventoryTests.test_each_executable_metadata_file_refuses_after_exact_content_checks) ... ok
+test_every_distribution_metadata_field_order_and_trailing_newline_refuses (ops-child-custody.tests.test_inventory.InventoryTests.test_every_distribution_metadata_field_order_and_trailing_newline_refuses) ... ok
+test_every_report_header_section_path_hash_order_and_content_mismatch_refuses (ops-child-custody.tests.test_inventory.InventoryTests.test_every_report_header_section_path_hash_order_and_content_mismatch_refuses) ... ok
+test_exact_shell_freeze_stage_uses_one_inventory_and_writes_private_reports (ops-child-custody.tests.test_inventory.InventoryTests.test_exact_shell_freeze_stage_uses_one_inventory_and_writes_private_reports) ... ok
+test_installed_inventory_preserves_duplicate_dependency_rows_and_canonical_order (ops-child-custody.tests.test_inventory.InventoryTests.test_installed_inventory_preserves_duplicate_dependency_rows_and_canonical_order) ... ok
+test_optional_farm_schema_metadata_and_inventory_order (ops-child-custody.tests.test_inventory.InventoryTests.test_optional_farm_schema_metadata_and_inventory_order) ... ok
+test_producer_bounds_whole_report_before_granting_metadata (ops-child-custody.tests.test_inventory.InventoryTests.test_producer_bounds_whole_report_before_granting_metadata) ... ok
+test_producer_inventory_is_same_scope_as_verifier (ops-child-custody.tests.test_inventory.InventoryTests.test_producer_inventory_is_same_scope_as_verifier) ... ok
+test_real_pip_freeze_contract_is_red_installed_inventory_producer_green (ops-child-custody.tests.test_inventory.InventoryTests.test_real_pip_freeze_contract_is_red_installed_inventory_producer_green) ... ok
+test_source_name_identity_is_not_normalized_to_accept_mismatch (ops-child-custody.tests.test_inventory.InventoryTests.test_source_name_identity_is_not_normalized_to_accept_mismatch) ... ok
+
+----------------------------------------------------------------------
+Ran 64 tests in 8.147s
+
+OK
+STDERR existing unittest suite (64 tests) END
+EXIT existing unittest suite (64 tests): 0
+COMMAND private-cache py_compile: /home/user/work/venv-agent/bin/python -m py_compile /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/e2e_inventory.py /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/test_e2e_inventory.py /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/canonical_check.py
+STDOUT private-cache py_compile BEGIN
+STDOUT private-cache py_compile END
+STDERR private-cache py_compile BEGIN
+STDERR private-cache py_compile END
+EXIT private-cache py_compile: 0
+COMMAND current commit: git rev-parse HEAD
+STDOUT current commit BEGIN
+b855b8a082153a12ca3a59383c4a08387b201bdd
+STDOUT current commit END
+STDERR current commit BEGIN
+STDERR current commit END
+EXIT current commit: 0
+COMMAND current tree: git rev-parse 'HEAD^{tree}'
+STDOUT current tree BEGIN
+ffb9c5ee22c6d7b138ab2bfc1dbd83188d9fc2fb
+STDOUT current tree END
+STDERR current tree BEGIN
+STDERR current tree END
+EXIT current tree: 0
+BASE COMMIT: 60753548ebc8e69f3c84fbb28fa2e09b1ca78316
+BASE TREE: dd4347a933103bbfc17c3e3237d52ea13ac1f677
+CURRENT COMMIT: b855b8a082153a12ca3a59383c4a08387b201bdd
+CURRENT TREE: ffb9c5ee22c6d7b138ab2bfc1dbd83188d9fc2fb
+COMMAND base tree authentication: git rev-parse '60753548ebc8e69f3c84fbb28fa2e09b1ca78316^{tree}'
+STDOUT base tree authentication BEGIN
+dd4347a933103bbfc17c3e3237d52ea13ac1f677
+STDOUT base tree authentication END
+STDERR base tree authentication BEGIN
+STDERR base tree authentication END
+EXIT base tree authentication: 0
+HARNESS FINAL COMMIT: PENDING (harness commits after worker exit)
+HARNESS FINAL TREE: PENDING (harness commits after worker exit)
+COMMAND owned source scoped diff check: git diff --check 60753548ebc8e69f3c84fbb28fa2e09b1ca78316 -- /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/e2e_inventory.py /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/test_e2e_inventory.py
+STDOUT owned source scoped diff check BEGIN
+STDOUT owned source scoped diff check END
+STDERR owned source scoped diff check BEGIN
+STDERR owned source scoped diff check END
+EXIT owned source scoped diff check: 0
+COMMAND canonical script scoped diff check: git diff --no-index --check /dev/null /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/canonical_check.py
+STDOUT canonical script scoped diff check BEGIN
+STDOUT canonical script scoped diff check END
+STDERR canonical script scoped diff check BEGIN
+STDERR canonical script scoped diff check END
+EXIT canonical script scoped diff check: 1
+COMMAND historical maker EOF diagnostics: git diff --check f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe -- /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv
+STDOUT historical maker EOF diagnostics BEGIN
+ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv:1224: new blank line at EOF.
+ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv:1201: new blank line at EOF.
+STDOUT historical maker EOF diagnostics END
+STDERR historical maker EOF diagnostics BEGIN
+STDERR historical maker EOF diagnostics END
+EXIT historical maker EOF diagnostics: 2
+HISTORICAL MAKER EOF DIAGNOSTICS: preserved and separately reported; not authored failures
+AUTHENTICATED ops-child-custody/tests/canonical_check.py mode=755 sha256=d8e47bd0b98990d614ad755f69cd21e74fa72bbe55231c10df020d498e7ed0bc
+AUTHENTICATED ops-child-custody/tests/e2e_inventory.py mode=644 sha256=1498a1597c058f92176a0d447b372b4791e6af345c479445b9027e0521d75085
+AUTHENTICATED ops-child-custody/tests/support.py mode=644 sha256=e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581
+AUTHENTICATED ops-child-custody/e2e-fixtures/tiny/manifest.json mode=644 sha256=cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8
+AUTHENTICATED ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv mode=755 sha256=0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39
+AUTHENTICATED ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv mode=755 sha256=c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e
+COMMAND negative census: /home/user/work/venv-agent/bin/python /home/user/work/wt/rt-OPS-canonical-review-1953/ops-child-custody/tests/e2e_inventory.py --check-only --helper /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/missing/bench_store.py --bootstrap-artifact /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/missing/bootstrap.tgz --runner-python /home/user/work/venv-agent/bin/python --build-python /home/user/work/venv-agent/bin/python --python /usr/bin/python3.13 --wheelhouse /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/missing/wheelhouse --agent /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/missing/agent --runtime /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/missing/runtime --orch-root /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/missing/orch --parent-work /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/missing/parent --candidate-work /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/missing/candidate --result /tmp/w-ada2be55d5/timeline-canonical-check-6f17eece/negative-census.json
+STDOUT negative census BEGIN
+{
+  "schema": "timeline.ops-child-custody.check-only.v1",
+  "mode": "check-only",
+  "ok": false,
+  "checked": [
+    "TMPDIR is an existing physical absolute directory",
+    "TMPDIR is writable and searchable",
+    "fixture manifest is a regular non-symlink file",
+    "fixture manifest is valid JSON with expected schema",
+    "fixture manifest source commit is valid",
+    "fixture source manifest has exactly the four required roles",
+    "fixture source manifest role is valid: agent",
+    "fixture source manifest files map is valid: agent",
+    "fixture source manifest required file set is valid: agent",
+    "fixture source manifest filename is valid: agent/LICENSE",
+    "fixture source manifest hash is valid: agent/LICENSE",
+    "fixture source manifest filename is valid: agent/astrid/__init__.py",
+    "fixture source manifest hash is valid: agent/astrid/__init__.py",
+    "fixture source manifest filename is valid: agent/astrid_runtime_client/__init__.py",
+    "fixture source manifest hash is valid: agent/astrid_runtime_client/__init__.py",
+    "fixture source manifest filename is valid: agent/pyproject.toml",
+    "fixture source manifest hash is valid: agent/pyproject.toml",
+    "fixture source manifest filename is valid: agent/requirements/proof.lock",
+    "fixture source manifest hash is valid: agent/requirements/proof.lock",
+    "fixture source manifest role is valid: runtime",
+    "fixture source manifest files map is valid: runtime",
+    "fixture source manifest required file set is valid: runtime",
+    "fixture source manifest filename is valid: runtime/LICENSE",
+    "fixture source manifest hash is valid: runtime/LICENSE",
+    "fixture source manifest filename is valid: runtime/astrid_runtime/__init__.py",
+    "fixture source manifest hash is valid: runtime/astrid_runtime/__init__.py",
+    "fixture source manifest filename is valid: runtime/astrid_runtime/__main__.py",
+    "fixture source manifest hash is valid: runtime/astrid_runtime/__main__.py",
+    "fixture source manifest filename is valid: runtime/packages/python/astrid_runtime_client/__init__.py",
+    "fixture source manifest hash is valid: runtime/packages/python/astrid_runtime_client/__init__.py",
+    "fixture source manifest filename is valid: runtime/pyproject.toml",
+    "fixture source manifest hash is valid: runtime/pyproject.toml",
+    "fixture source manifest filename is valid: runtime/runtime_protocol/__init__.py",
+    "fixture source manifest hash is valid: runtime/runtime_protocol/__init__.py",
+    "fixture source manifest role is valid: dependency-dot",
+    "fixture source manifest files map is valid: dependency-dot",
+    "fixture source manifest required file set is valid: dependency-dot",
+    "fixture source manifest filename is valid: dependency-dot/custody_b/__init__.py",
+    "fixture source manifest hash is valid: dependency-dot/custody_b/__init__.py",
+    "fixture source manifest filename is valid: dependency-dot/pyproject.toml",
+    "fixture source manifest hash is valid: dependency-dot/pyproject.toml",
+    "fixture source manifest role is valid: dependency-underscore",
+    "fixture source manifest files map is valid: dependency-underscore",
+    "fixture source manifest required file set is valid: dependency-underscore",
+    "fixture source manifest filename is valid: dependency-underscore/custody_a/__init__.py",
+    "fixture source manifest hash is valid: dependency-underscore/custody_a/__init__.py",
+    "fixture source manifest filename is valid: dependency-underscore/pyproject.toml",
+    "fixture source manifest hash is valid: dependency-underscore/pyproject.toml",
+    "fixture maker manifest has exactly parent and candidate",
+    "fixture maker entry is valid: parent",
+    "fixture maker path is valid: parent",
+    "fixture maker hash is valid: parent",
+    "fixture maker mode is 755: parent",
+    "fixture maker identity is pinned: parent",
+    "fixture maker commit is valid: parent",
+    "fixture maker entry is valid: candidate",
+    "fixture maker path is valid: candidate",
+    "fixture maker hash is valid: candidate",
+    "fixture maker mode is 755: candidate",
+    "fixture maker identity is pinned: candidate",
+    "fixture maker commit is valid: candidate",
+    "tiny dependency wheel entry is valid: dependency-dot",
+    "tiny dependency wheel filename pin is valid: dependency-dot",
+    "tiny dependency wheel hash pin is valid: dependency-dot",
+    "tiny dependency wheel pin is unique: dependency-dot",
+    "tiny dependency wheel entry is valid: dependency-underscore",
+    "tiny dependency wheel filename pin is valid: dependency-underscore",
+    "tiny dependency wheel hash pin is valid: dependency-underscore",
+    "tiny dependency wheel pin is unique: dependency-underscore",
+    "fixture source agent/LICENSE",
+    "fixture source agent/astrid/__init__.py",
+    "fixture source agent/astrid_runtime_client/__init__.py",
+    "fixture source agent/pyproject.toml",
+    "fixture source agent/requirements/proof.lock",
+    "fixture source runtime/LICENSE",
+    "fixture source runtime/astrid_runtime/__init__.py",
+    "fixture source runtime/astrid_runtime/__main__.py",
+    "fixture source runtime/packages/python/astrid_runtime_client/__init__.py",
+    "fixture source runtime/pyproject.toml",
+    "fixture source runtime/runtime_protocol/__init__.py",
+    "fixture source dependency-dot/custody_b/__init__.py",
+    "fixture source dependency-dot/pyproject.toml",
+    "fixture source dependency-underscore/custody_a/__init__.py",
+    "fixture source dependency-underscore/pyproject.toml",
+    "packaged parent maker bytes and mode",
+    "packaged candidate maker bytes and mode",
+    "protected Store helper is supplied as an absolute physical path",
+    "private wheelhouse is supplied as an absolute physical path",
+    "Agent source carrier checkout is supplied as an absolute physical path",
+    "Runtime source carrier checkout is supplied as an absolute physical path",
+    "protected Store helper hash",
+    "local wheel pip-26.2.1-py3-none-any.whl",
+    "local wheel setuptools-80.9.0-py3-none-any.whl",
+    "local wheel wheel-0.46.3-py3-none-any.whl",
+    "local wheel custody_b-0.1.0-py3-none-any.whl",
+    "local wheel custody_a-0.1.0-py3-none-any.whl",
+    "local bootstrap artifact hash",
+    "local bootstrap artifact has the maker-supported basename",
+    "runner Agent Python exists and is executable",
+    "runner Agent Python reports Python 3.13 with required imports",
+    "runner Agent Python provides build, setuptools, and wheel",
+    "offline build Python exists and is executable",
+    "offline build Python reports Python 3.13 with required imports",
+    "offline build Python provides build, setuptools, and wheel",
+    "child Python exists and is executable",
+    "child Python reports Python 3.13 with required imports",
+    "required command python3",
+    "required command dirname",
+    "required command date",
+    "required command mkdir",
+    "required command cat",
+    "required command bash",
+    "required command git",
+    "required command tar",
+    "required command mktemp",
+    "required command sha256sum",
+    "required command cut",
+    "required command grep",
+    "required command sed",
+    "required command find",
+    "required command chmod",
+    "required command mv",
+    "required command df",
+    "required command awk",
+    "required command timeout",
+    "required command readlink",
+    "maker PATH python3 provides Python 3.11+ and required stdlib imports",
+    "free space is above unchanged start reserve",
+    "free space is above unchanged 4GB stop line",
+    "orchestration root is a fresh path inside TMPDIR",
+    "parent work root is a fresh path inside TMPDIR",
+    "candidate work root is a fresh path inside TMPDIR",
+    "private setup roots are disjoint",
+    "agent source path is accepted by the frozen maker",
+    "agent input is private inside TMPDIR",
+    "agent input is outside private setup roots",
+    "runtime source path is accepted by the frozen maker",
+    "runtime input is private inside TMPDIR",
+    "runtime input is outside private setup roots",
+    "wheelhouse input is private inside TMPDIR",
+    "wheelhouse input is outside private setup roots",
+    "Agent source carrier checkout Git history and exact committed source are readable",
+    "Runtime source carrier checkout Git history and exact committed source are readable",
+    "Store API initialize is present in the protected helper",
+    "Store API ensure is present in the protected helper",
+    "Store API registration is present in the protected helper",
+    "parent maker has exactly one verifier block",
+    "candidate maker has exactly one verifier block",
+    "candidate and parent maker verifier blocks are byte-identical",
+    "check-only result path is inside TMPDIR"
+  ],
+  "missing": [
+    "protected Store helper is supplied as an absolute physical path",
+    "private wheelhouse is supplied as an absolute physical path",
+    "Agent source carrier checkout is supplied as an absolute physical path",
+    "Runtime source carrier checkout is supplied as an absolute physical path",
+    "protected Store helper hash",
+    "local wheel pip-26.2.1-py3-none-any.whl",
+    "local wheel setuptools-80.9.0-py3-none-any.whl",
+    "local wheel wheel-0.46.3-py3-none-any.whl",
+    "local wheel custody_b-0.1.0-py3-none-any.whl",
+    "local wheel custody_a-0.1.0-py3-none-any.whl",
+    "local bootstrap artifact hash",
+    "local bootstrap artifact has the maker-supported basename",
+    "free space is above unchanged start reserve",
+    "orchestration root is a fresh path inside TMPDIR",
+    "parent work root is a fresh path inside TMPDIR",
+    "candidate work root is a fresh path inside TMPDIR",
+    "Agent source carrier checkout Git history and exact committed source are readable",
+    "Runtime source carrier checkout Git history and exact committed source are readable",
+    "Store API initialize is present in the protected helper",
+    "Store API ensure is present in the protected helper",
+    "Store API registration is present in the protected helper"
+  ],
+  "mutating_setup_started": false,
+  "maker_started": false,
+  "store_initialized": false,
+  "git_mutated": false
+}
+STDOUT negative census END
+STDERR negative census BEGIN
+MISSING: protected Store helper is supplied as an absolute physical path
+MISSING: private wheelhouse is supplied as an absolute physical path
+MISSING: Agent source carrier checkout is supplied as an absolute physical path
+MISSING: Runtime source carrier checkout is supplied as an absolute physical path
+MISSING: protected Store helper hash
+MISSING: local wheel pip-26.2.1-py3-none-any.whl
+MISSING: local wheel setuptools-80.9.0-py3-none-any.whl
+MISSING: local wheel wheel-0.46.3-py3-none-any.whl
+MISSING: local wheel custody_b-0.1.0-py3-none-any.whl
+MISSING: local wheel custody_a-0.1.0-py3-none-any.whl
+MISSING: local bootstrap artifact hash
+MISSING: local bootstrap artifact has the maker-supported basename
+MISSING: free space is above unchanged start reserve
+MISSING: orchestration root is a fresh path inside TMPDIR
+MISSING: parent work root is a fresh path inside TMPDIR
+MISSING: candidate work root is a fresh path inside TMPDIR
+MISSING: Agent source carrier checkout Git history and exact committed source are readable
+MISSING: Runtime source carrier checkout Git history and exact committed source are readable
+MISSING: Store API initialize is present in the protected helper
+MISSING: Store API ensure is present in the protected helper
+MISSING: Store API registration is present in the protected helper
+STDERR negative census END
+EXIT negative census: 2
+SOURCE HASH ops-child-custody/tests/e2e_inventory.py: 1498a1597c058f92176a0d447b372b4791e6af345c479445b9027e0521d75085
+SCRIPT HASH ops-child-custody/tests/canonical_check.py: d8e47bd0b98990d614ad755f69cd21e74fa72bbe55231c10df020d498e7ed0bc
+CANONICAL OPS CHECK: PASS (source/unit only; genuine whole-maker E2E remains NOTRUN)

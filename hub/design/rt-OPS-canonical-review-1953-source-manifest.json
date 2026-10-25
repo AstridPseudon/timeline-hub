@@ -1,0 +1,29 @@
+{
+  "schema": "timeline.ops-child-custody.canonical-check.independent-source-manifest.v1",
+  "reviewed_commit": "b855b8a082153a12ca3a59383c4a08387b201bdd",
+  "reviewed_tree": "ffb9c5ee22c6d7b138ab2bfc1dbd83188d9fc2fb",
+  "settled_base_commit": "60753548ebc8e69f3c84fbb28fa2e09b1ca78316",
+  "settled_base_tree": "dd4347a933103bbfc17c3e3237d52ea13ac1f677",
+  "worktree_status": "clean",
+  "changed_paths_from_settled_base": [
+    "ops-child-custody/tests/canonical_check.py"
+  ],
+  "files": {
+    "ops-child-custody/tests/canonical_check.py": {"mode": "755", "sha256": "d8e47bd0b98990d614ad755f69cd21e74fa72bbe55231c10df020d498e7ed0bc"},
+    "ops-child-custody/tests/e2e_inventory.py": {"mode": "644", "sha256": "1498a1597c058f92176a0d447b372b4791e6af345c479445b9027e0521d75085"},
+    "ops-child-custody/tests/test_e2e_inventory.py": {"mode": "644", "sha256": "eeeddb0fcac8863a364c4814fac82830f3fb70b7505a311eb10acc954fdd0137"},
+    "ops-child-custody/tests/test_custody.py": {"mode": "644", "sha256": "d6be27f90288a00880eefbe1873200e4bb688d26aa1a493aeb0692685a2a5a55"},
+    "ops-child-custody/tests/test_inventory.py": {"mode": "644", "sha256": "016469c6ac1e5baddc1c60f7b8ff7cbff6d3c9e43b3ba1d3c317ac9e4f1c5534"},
+    "ops-child-custody/tests/support.py": {"mode": "644", "sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581"},
+    "ops-child-custody/e2e-fixtures/tiny/manifest.json": {"mode": "644", "sha256": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8"},
+    "ops-child-custody/source-manifest.json": {"mode": "644", "sha256": "08641d74ceed5a65022eb90e369681e12ce145a32fc06bcc7d25d525b49b4b1a"},
+    "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv": {"mode": "755", "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39"},
+    "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv": {"mode": "755", "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e"}
+  },
+  "runners": {
+    "agent_runner": {"path": "/home/user/work/venv-agent/bin/python", "realpath": "/usr/bin/python3.13", "version": "Python 3.13.16", "sha256": "a35753ccb97941cce1467786cce892e608141f09d717188a3235d4f51a754446"},
+    "child_python": {"path": "/usr/bin/python3.13", "version": "Python 3.13.16", "sha256": "a35753ccb97941cce1467786cce892e608141f09d717188a3235d4f51a754446"},
+    "governing_ruff": {"path": "/root/.local/bin/ruff", "realpath": "/root/.local/share/uv/tools/ruff/bin/ruff", "version": "ruff 0.16.8"},
+    "secondary_ruff": {"path": "/home/user/work/venv-agent/bin/ruff", "version": "ruff 0.12.0", "sha256": "bc4a4145ff8a2caee4ef71e7f50e27b3d48bca60c1aceee8ad0ad6d434b97195"}
+  }
+}
