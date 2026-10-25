@@ -48,6 +48,7 @@ def _summary_rows(monkeypatch, spans):
 
 
 def test_real_public_scene_answers_reach_rle_summary(native_host, monkeypatch):  # noqa: F811
+    monkeypatch.delenv("PYTHONNOUSERSITE", raising=False)
     source = props(
         [
             {"id": "content", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1},
