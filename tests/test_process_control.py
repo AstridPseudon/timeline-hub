@@ -279,6 +279,25 @@ def test_group_walk_refuses_our_own_group(mode):
         platform.signal_observed_group(os.getpgrp(), 0)
 
 
+@linux_only
+@pytest.mark.needs_real_pidfd
+def test_strict_group_recovery_signals_members_without_a_sandbox_note(mode, capsys):
+    mode("strict")
+    process = _group_with_children()
+    pgid = process.pid
+    try:
+        platform.signal_observed_group(pgid, signal.SIGKILL)
+        assert process.wait(timeout=10) == -signal.SIGKILL
+        deadline = time.monotonic() + 10
+        while _members(pgid) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert not _members(pgid)
+        assert "sandbox process control" not in capsys.readouterr().err
+    finally:
+        if process.poll() is None:
+            platform.stop_tree(process, grace=2)
+
+
 # --- probe -------------------------------------------------------------------
 
 @linux_only

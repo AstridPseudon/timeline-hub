@@ -1189,7 +1189,8 @@ _GROUP_WALK_PASSES = 10
 def signal_observed_group(pgid: int, signum, *, leader=None) -> None:
     """Signal a process group member by member, leader last (sandbox mode).
 
-    Used when process-group kill is denied. Each member is signalled once,
+    Used when process-group kill is denied, and by callers recovering a
+    group whose leader was already reaped. Each member is signalled once,
     through signal_process (birth-checked), and the group is rescanned until
     no unsignalled member remains, so children forked during the walk are
     caught too. ``leader`` is the leader's expected identity (default: the
@@ -1200,7 +1201,8 @@ def signal_observed_group(pgid: int, signum, *, leader=None) -> None:
         raise NotImplementedError("member-by-member group signalling is Linux-only")
     if pgid <= 1 or pgid == os.getpgrp():
         raise PermissionError(errno.EPERM, "refusing to walk this process group")
-    _note_fallback("group", "process-group kill is denied; signalling the group member by member, leader last")
+    if _sandbox_process_control():
+        _note_fallback("group", "process-group kill is denied; signalling the group member by member, leader last")
     if leader is None:
         candidate = process_identity(pgid)
         leader = candidate if candidate is not None and candidate.get("process_group") == pgid else None
