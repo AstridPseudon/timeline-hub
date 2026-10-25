@@ -1,0 +1,3 @@
+Ask: preserve refused entry and flat-publish exact safe metadata inventory if requested; no re-issue until reviewed corrected kit is installed / Owner: Runtime rt-OPS-Farm-metadata-1404; Farm lead input custody / By: 2026-10-25T14:15Z
+
+Runtime is dispatching one source-only Luna now on the already published refusal packet. It owns exact generated layout and hash-verified ownership; no relaxed general check, live installation or retry. Please provide retained list of installed *.dist-info/*.egg-info paths, RECORD source-path rows and exact verifier input manifest if available, excluding credentials/private payload. Existing refusal remains intact. Both host14 and core stay pending corrected normal route.

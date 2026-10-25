@@ -115,3 +115,4 @@ Escalate a contract change, a need from another lane, a scope question, or a saf
 - D120 (owner-approved 11:25Z): per-fix check = own failing nodes; full core once per batch; test-only changes in OUR files need one independent protected review; no escalation for adapting our tests to the current contract; lanes coordinate peer-to-peer; per-case legacy-only retirement only for legacy-only or C0-refused behaviour, never live behaviour. See BOARD-HEADER D120.
 - D89b (12:35Z): every lane may start up to 3 source-only or read-only workers at 4.6 GB or more while no heavy body runs; the stop line stays at 4.0 GB.
 - D125b: a step marked HOLD or awaiting a decision never runs early; managers act only on recorded decisions.
+- D89c: heavy-body disk admission is checked once at controller dispatch; its own prep does not re-trigger the floor; the 4.0 GB stop line holds.
