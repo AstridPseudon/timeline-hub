@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T14:42:16Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 0m -->
-# agent board, 2026-10-25T14:41Z
+<!-- agent | 2026-10-25T14:46:06Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 0m -->
+# agent board, 2026-10-25T14:43Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -41,7 +41,7 @@
 | D118a numeric3 | Preserve numeric parameter behavior | App Luna / Main proof | Farm batch core | gated:Farm-core | App1204; actual1357; independent1405 | Independent result PASS | All three originals PASS in exact16bb/5e9ad ten-case proof. No full-core count deduction until Farm checkpoint. | 61fefc /16bb |
 | D118a text binding | Preserve genuine rebind and Runtime authority | App Luna / core Luna | Farm batch core before adoption | merged | Author1236; independent1239 and1250 | PASS cumulative source | Genuine rebind1,parent,units56,authority4 and privacy controls PASS at donor. Exact clean import HOME; no core credit. | 225fccb77e |
 | D100 candidate | Preserve sequential shared-item provenance | Sol / protected Luna | Exact current source applicability | review | Author1100; protected1104 | 1104 PASS6 fixture only | Six corrected formerly duplicate-seed controls PASS4.00s; prior20 conserved, TEN unchanged. Product held. | 3aaf held |
-| D107 current equivalent | Prepare approved current word journeys | Luna / protected Luna | Independent source review | review | Author1428; reviewer1437 | Author source-only PASS | Exacta0eacc imports reviewed donor with seven-line current fixture adapter;131 assertions and5raises conserved. No behavior or retirement credit. | a0eacc held |
+| D107 current equivalent | Preserve legacy and current word journeys | Luna / Main receiver | Current-equivalent two proof | blocked:runtime | Author1428; review1437; Main receiver asked | Independent1437 PASS_SOURCE | New two test paths normal20177; exact donor and current seed conserved. Main asked for two current journeys. Original ten and17 unchanged; retirements0. | 20177 /a0eacc |
 | D117 installed render | Qualify genuine installed render | Farm / Runtime | Farm stage inputs | blocked:farm | Farm D77; Runtime1253 handoff | Source route qualified | Exact authorized git source and unchanged integrity route now Farm-owned. Historical denial retained; genuine render NOTRUN. | Applied523893 |
 | D59 final cut | Qualify final gates and full delivery | Runtime coordinator | Core and REG zero, D69, render | gated:D59 | Existing final coordinator | Pending or no diff | Final P1–P5, full core, reverse audit and genuine installed render owed. No ZIP claim. | Cut pending |
 
@@ -63,7 +63,7 @@
 | D124 Farm input command | Publish qualified core and host commands | Luna read only | Actual Farm receipts | merged | agt-D124-Farm-command-final-review-1336 | Independent1336 PASS | Exact worker Git blobs published1342; shell/JSON/source checks PASS. Farm profile and D73 execution inputs remain lead-owned. | Evidence only |
 | D124 next Farm command | Preserve full qualified Farm controls | Luna | Actual Farm inputs and disposition | merged | First return1424; reviewer1426 | Independent1426 PASS_SOURCE | Exact291c restores all old controls and complete parents. Five source files published with Git/hash receipt1429; no Farm execution. | 291c evidence |
 
-Integration: normal Agent a4e016b6a9 contains reviewed union16bb through61fefc and host fallback96df. Local home SHA confirmed. Runtime lock5e9ad. Binding225fccb, capturedredo0b586, producer82b6, installer/XML and atomic remain. Released Agent070dfc stays unchanged until own-node proof and Farm core. Host9ea and separate Runtimea1 overlay remain excluded.
+Integration: normal Agent20177e6656 adds only two current-word test paths over a4e016b6a9, which contains reviewed union16bb through61fefc and host fallback96df. Local home20177 and normal merge receipt confirmed. Runtime lock5e9ad. Binding225fccb, capturedredo0b586, producer82b6, installer/XML and atomic remain. Released Agent070dfc stays unchanged until own-node proof and Farm core. Host9ea and separate Runtimea1 overlay remain excluded.
 
 core open: 425 on immutable30693. Confirmed regressions:14 until next full core; original14 independently GREEN at fallback96df. Effective retirements added this batch:0. D107 ten remain held, not counted closed.
 Current full checkpoint:8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips on120d/1daca/96d475/635f. Exact450 bad IDs and categories retained in classification1055 and terminal-review1104; metadata1111 resolves ambient-tree discrepancy.
@@ -75,10 +75,10 @@ Blockers: Agent D69 — installed render90 and final upstream-cut audit owed. XM
 Blockers: Farm D117a — normal installer stage and genuine installed render pending after core. Prior denied route stays stopped.
 Blockers: Final cut — D123 rehearsal5bd01 SOURCE PASS on b742. Final tip freezes once at D59; final gates, core, D69, wheel and render owed.
 
-Next ready: Runtime receives exact step-source mismatch and genuine RED regression; Agent independent1433 PASS confirms source claim and exact RED comparator. Sol1435 owns disjoint grouped inverse alias after1417 ended. Word1428 finished source; independent1437 RUNNING. Existing captured Farm tuples unchanged; next packet291c qualified and published1429.
-live 2 / cap3 under D89b; ready-undispatched0. No local heavy. Sol1435 justified by core R2 guarded inverse custody; remaining current role Luna.
+Next ready: Runtime receives exact step-source mismatch and genuine RED regression; Agent independent1433 PASS confirms source claim and exact RED comparator. Sol1435 owns disjoint grouped inverse alias after1417 ended. Word1428 independently PASS_SOURCE1437; normal MERGED20177 and source packet1443 published; Main two-current-equivalent proof requested. Existing captured Farm tuples unchanged; next packet291c qualified and published1429.
+live 1 / cap3 under D89b; ready-undispatched0. No local heavy. Sol1435 justified by core R2 guarded inverse custody; next independent core review follows inverse source result.
 
-Disk: 4618059776 bytes at latest check; normal sweep3 and compact finished zero removals/packing. Finished clean nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
+Disk: 4802211840 bytes at latest check; normal sweep3 and compact finished zero removals/packing. Finished clean nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
 
 D120/D124: own failing nodes per fix; one Farm unfiltered core per merged batch at60–90min or3+ fixes before adoption. Up to3 source-only starts at>=4.6GB/noheavy; stop4.0GB. Ordinary light proof>=5.0GB. D89c heavy admission at controller dispatch, with4.0GB stop throughout.
 Later: D23/D14 deferred anchors unchanged. D107 current equivalents and broad word cases remain separately held. Complete historical physical records EXACTMISSING. E2/D79 paused until ZIP; D13 installed environment gap remains explicit.

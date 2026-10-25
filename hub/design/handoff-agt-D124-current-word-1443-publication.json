@@ -1,0 +1,38 @@
+{
+  "author_commit": "a0eacc676c",
+  "review": "PASS_SOURCE1437",
+  "files": [
+    {
+      "path": "design/handoff-agt-D124-current-word-1443-author-source-manifest.json",
+      "source_path": "workers/agt-D124-current-word-root-1428/evidence/source-manifest.json",
+      "sha256": "e04b785f7d92383d8a815e74f7077dec0a54b065b1272cfe1a0086e5fc103772"
+    },
+    {
+      "path": "design/handoff-agt-D124-current-word-1443-author-current-node-recipe.md",
+      "source_path": "workers/agt-D124-current-word-root-1428/evidence/current-node-recipe.md",
+      "sha256": "d420d13872e33036915a033ff505c305591509aaa6bd9742659b403306b1c05c"
+    },
+    {
+      "path": "design/handoff-agt-D124-current-word-1443-author-validation.md",
+      "source_path": "workers/agt-D124-current-word-root-1428/evidence/validation.md",
+      "sha256": "8878481644683c62e2fe42d33d4e1c864d0a75ee7cd62b41d162afaf15d53f84"
+    },
+    {
+      "path": "design/handoff-agt-D124-current-word-1443-author-predicate-map.md",
+      "source_path": "workers/agt-D124-current-word-root-1428/evidence/predicate-map.md",
+      "sha256": "8654db75b0ff89b074fea5cdfd87a4e689946decf09e06fbdc9e780c7458e4e7"
+    },
+    {
+      "path": "design/handoff-agt-D124-current-word-1443-review-review.md",
+      "source_path": "workers/agt-D124-current-word-review-1437/evidence/review.md",
+      "sha256": "bd77e3a94cfe03d49129352aeeaf451d1d1490fcb7702a210d75839752122fc3"
+    },
+    {
+      "path": "design/handoff-agt-D124-current-word-1443-review-validation.json",
+      "source_path": "workers/agt-D124-current-word-review-1437/evidence/validation.json",
+      "sha256": "5df29b09489734220c4a4016ea7e5b8c353ee7527d4b2bbc18695fbbbed94c10"
+    }
+  ],
+  "behavior": "NOTRUN",
+  "retirements": 0
+}

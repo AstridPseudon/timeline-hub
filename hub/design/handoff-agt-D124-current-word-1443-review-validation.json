@@ -1,0 +1,70 @@
+{
+  "verdict": "PASS_SOURCE",
+  "candidate": "a0eacc676c71945de7fb08e99c2d511141d4aeb4",
+  "normal_parent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+  "donor": "2e3331ee2f035e302f5ca52488832cd0e22bb3aa",
+  "allowed_paths": [
+    "tests/editing_conformance/test_m1_current_equivalent.py",
+    "tests/editing_conformance/current_word_baseline_fixture.py"
+  ],
+  "ast": {
+    "donor_current_equal_after_fixture_import_normalization": true,
+    "candidate_assert_nodes": 131,
+    "donor_assert_nodes": 131,
+    "candidate_pytest_raises_contexts": 5,
+    "donor_pytest_raises_contexts": 5,
+    "protected_original_selector_count": 10,
+    "new_current_ids": ["disjoint-rebase-undo", "touched-basis-conflict"]
+  },
+  "predicate_tsv": {
+    "rows": 111,
+    "kind_counts": {
+      "assert": 87,
+      "helper-call": 9,
+      "input": 2,
+      "raises": 8,
+      "review-demand": 3,
+      "scope-distinction": 2
+    },
+    "disposition_counts": {
+      "STATIC_CURRENT_MAPPING_HELD": 80,
+      "EXPLICIT_CURRENT_SCOPE_MAPPING_HELD": 9,
+      "ORIGINAL_UNCHANGED_OUTSIDE_COMBINATION": 21,
+      "NOT_AN_ORIGINAL_M1_PREDICATE": 1
+    }
+  },
+  "commands": [
+    {
+      "command": "PYTHONPYCACHEPREFIX=/tmp/w-cc17652cf7/agt-D124-current-word-review-1437/pycache python3 -m py_compile tests/editing_conformance/test_m1_current_equivalent.py tests/editing_conformance/current_word_baseline_fixture.py",
+      "result": "PASS"
+    },
+    {
+      "command": "/home/user/work/venv-agent/bin/ruff check --no-cache tests/editing_conformance/test_m1_current_equivalent.py tests/editing_conformance/current_word_baseline_fixture.py",
+      "result": "PASS: All checks passed"
+    },
+    {
+      "command": "/home/user/work/venv-agent/bin/python -m scripts.reshape.compare_ruff_baseline",
+      "result": "PASS: current=2143 baseline=2143"
+    },
+    {
+      "command": "/home/user/work/venv-agent-typecheck-v2/bin/python -m scripts.reshape.compare_mypy_baseline",
+      "result": "PASS: current=1902 baseline=1902"
+    },
+    {
+      "command": "git diff --check HEAD^ HEAD && git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "AST/source scope/outside-blob invariance checker",
+      "result": "PASS: direct own-only parent; exactly two changed paths; all outside blobs invariant"
+    }
+  ],
+  "sha256": {
+    "tests/editing_conformance/test_m1_current_equivalent.py": "fd317d2504360411ba7e2af9997074cbc4d308098fc2d1ffc78a51494cf66b50",
+    "tests/editing_conformance/current_word_baseline_fixture.py": "c219e1a2bd5e04e7e68825552cbb1e85e12b3d77f4124609ce1942b1679b40d5",
+    "tests/editing_conformance/test_commit_runtime_m1.py": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+    "tests/editing_conformance/native_word_anchor_fixture.py": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+    "tests/editing_conformance/test_native_word_anchor.py": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8"
+  },
+  "behavioral_qualification": "NOT_RUN_BY_SCOPE"
+}
