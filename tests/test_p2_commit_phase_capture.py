@@ -148,7 +148,7 @@ def test_capture_allowlist_redacts_by_not_retaining_transport_values(tmp_path):
                               "capture_namespace", "pid", "birth_ticks", "method", "route_template",
                               "idempotency_key_sha256", "dispatch_start_ms", "sampling",
                               "capture_anchor", "unknown_boundaries", "unsupported_boundaries",
-                              "truncated", "retention"}
+                              "truncated", "retention", "lifecycle"}
                for event in capture.events)
 
 
@@ -162,6 +162,7 @@ def test_ring_retains_late_failing_request_after_successful_setup_events():
             capture._begin(setup, "provider")
         capture._end(setup, "provider")
         capture._requests[setup]["dispatch_finished"] = True
+        capture._requests[setup]["dispatch_returned"] = True
 
         failing = capture._new_request()
         assert failing is not None
@@ -169,6 +170,8 @@ def test_ring_retains_late_failing_request_after_successful_setup_events():
             capture._begin(failing, "provider")
         capture._end(failing, "provider", error=True)
         capture._requests[failing]["dispatch_finished"] = True
+        capture._requests[failing]["dispatch_returned"] = True
+        capture._requests[failing]["dispatch_raised"] = True
     finally:
         capture.stop()
 
@@ -177,9 +180,10 @@ def test_ring_retains_late_failing_request_after_successful_setup_events():
     assert len(final_events) == capture._requests[failing]["events_seen"]
     assert capture.retention["final_request"] == {
         "request": failing,
-        "outcome": "failed",
+        "outcome": "raised",
         "events_seen": capture._requests[failing]["events_seen"],
         "events_retained": len(final_events),
+        "buffer_complete": True,
         "complete": True,
         "incomplete_limit": None,
     }
@@ -198,12 +202,15 @@ def test_final_request_byte_bound_reports_exact_incomplete_limit():
             capture._begin(request, "provider")
         capture._end(request, "provider", error=True)
         capture._requests[request]["dispatch_finished"] = True
+        capture._requests[request]["dispatch_returned"] = True
+        capture._requests[request]["dispatch_raised"] = True
     finally:
         capture.stop()
 
     final = capture.retention["final_request"]
     assert final["request"] == request
-    assert final["outcome"] == "failed"
+    assert final["outcome"] == "raised"
+    assert final["buffer_complete"] is False
     assert not final["complete"]
     limit = final["incomplete_limit"]
     assert limit["reason"] == "max_bytes"
@@ -243,10 +250,119 @@ def test_pending_request_is_the_final_correlated_request_and_shutdown_is_determi
     assert without_restart_identity(first_events) == without_restart_identity(second_events)
     assert first_namespace != second_namespace
     assert first_retention["final_request"]["request"] == 1
-    assert first_retention["final_request"]["outcome"] == "pending"
+    assert first_retention["final_request"]["outcome"] == "pending_at_stop"
+    assert first_retention["final_request"]["buffer_complete"] is True
     first_retention["output"].pop("bytes")
     second_retention["output"].pop("bytes")
     assert first_retention == second_retention
+
+
+def test_nearest_safe_leaf_is_projected_separately_from_routing_frames(monkeypatch):
+    capture = P2CommitPhaseCapture(enabled=True)
+    request = capture._new_request()
+    assert request is not None
+
+    routing = SimpleNamespace(
+        f_code=SimpleNamespace(co_filename="/checkout/runtime_protocol/server.py",
+                               co_name="_dispatch"),
+        f_lineno=20,
+        f_back=None,
+    )
+    leaf = SimpleNamespace(
+        f_code=SimpleNamespace(co_filename="/checkout/runtime_protocol/provider.py",
+                               co_name="commit"),
+        f_lineno=42,
+        f_back=routing,
+    )
+    monkeypatch.setattr(sys, "_current_frames", lambda: {threading.get_ident(): leaf})
+    capture._sample_once()
+    request_state = capture._requests[request]
+    request_state["lost_samples"] = 2
+
+    sampling = capture._sampling_summary(request_state, None)
+    assert sampling["top_inclusive_frames"] == [
+        {"file": "<runtime>/provider.py", "function": "commit", "line": 42,
+         "sample_count": 1, "sample_total": 1, "lost_samples": 2,
+         "sample_share": 1.0, "dispatch_wall_share": None},
+        {"file": "<runtime>/server.py", "function": "_dispatch", "line": 20,
+         "sample_count": 1, "sample_total": 1, "lost_samples": 2,
+         "sample_share": 1.0, "dispatch_wall_share": None},
+    ]
+    assert sampling["top_leaf_frames"] == [
+        {"file": "<runtime>/provider.py", "function": "commit", "line": 42,
+         "sample_count": 1, "sample_total": 1, "lost_samples": 2,
+         "sample_share": 1.0, "dispatch_wall_share": None},
+    ]
+
+
+def test_leaf_projection_counter_and_output_remain_bounded():
+    capture = P2CommitPhaseCapture(enabled=True, max_events=2, max_bytes=512)
+    request = capture._new_request()
+    assert request is not None
+    request_state = capture._requests[request]
+    request_state["sample_total"] = 20
+    request_state["leaf_counts"] = {
+        ("<runtime>/provider.py", f"leaf_{index}", index): 20 - index
+        for index in range(20)
+    }
+    rows = capture._sample_rows(request_state, None, interval=0.02, counter="leaf_counts")
+    assert len(rows) == 10
+    assert rows[0]["sample_total"] == 20
+    assert rows[0]["lost_samples"] == 0
+    request_state["leaf_counts"] = {}
+    assert capture._sampling_summary(request_state, None)["top_leaf_frames"] == []
+
+
+def test_return_without_response_is_not_buffer_completion_or_request_completion():
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        request = capture._new_request()
+        assert request is not None
+        capture._begin(request, "handler_entry")
+        request_state = capture._requests[request]
+        request_state["dispatch_finished"] = True
+        request_state["dispatch_returned"] = True
+    finally:
+        capture.stop()
+
+    final = capture.retention["final_request"]
+    assert final["outcome"] == "returned_without_response"
+    assert final["buffer_complete"] is True
+    assert final["complete"] is True
+    assert _summary(capture)[0]["lifecycle"] == "returned_without_response"
+
+
+def test_raised_dispatch_is_labeled_without_inventing_a_duration(tmp_path):
+    marker = RuntimeError("original raised dispatch")
+    capture = P2CommitPhaseCapture(tmp_path / "raised-dispatch.jsonl", enabled=True)
+    handler = _handler(object(), {
+        "api_version": 1,
+        "project_id": "project-raised-dispatch",
+        "timeline_id": "timeline-raised-dispatch",
+        "base_revision_id": "revision-1",
+        "base_publication_id": "publication-1",
+        "commands": [],
+    })
+
+    def raise_from_error(_exc):
+        raise marker
+
+    handler._error = raise_from_error
+    capture.start()
+    try:
+        with pytest.raises(RuntimeError) as caught:
+            handler._dispatch()
+    finally:
+        capture.stop()
+
+    assert caught.value is marker
+    final = capture.retention["final_request"]
+    assert final["outcome"] == "raised"
+    summary = _summary(capture)[0]
+    assert summary["lifecycle"] == "raised"
+    assert summary["durations_ms"]["handler_ms"] is None
+    assert "original raised dispatch" not in json.dumps(capture.events)
 
 
 def test_observer_failure_does_not_replace_original_exception():
@@ -504,7 +620,9 @@ def test_observer_avoids_line_events_and_unrelated_request_lookups(service):
 
     assert handler.sent_status == 200
     assert json.loads(handler.wfile.getvalue())["data"]["status"] == "accepted"
-    assert _summary(capture)[0]["phases"]["receipt"]["status"] == "observed"
+    summary = _summary(capture)[0]
+    assert summary["phases"]["receipt"]["status"] == "observed"
+    assert summary["lifecycle"] == "completed"
     assert capture.failures == 0
     assert counts == {"line": 0, "unrelated_lookup": 0}
 
