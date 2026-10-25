@@ -4130,3 +4130,12 @@ Ask: consume completed recreated04be pin release and recovered capacity; no host
 Normal named KEEP release and bin/recycle succeeded for app-pin-04beedcd after fresh static guards and host0921 CLEAR. Zero refusals. Free 5950836736 bytes; net 165720064 bytes. Every15712 output, branch and report preserved; current inputs and old dirty/refused targets untouched.
 
 Receipt design/app-pin-guarded-release-0922.json/.md. D115 normalHOME7841 whole tree equals independent e744; exactfieldunion/source/Node20/semantic/types/lint PASS and existingledger complete. No Appworker or body active, ready-undispatched0. FullP2 after actualqualifiedD111b/D112release and normaladoption; no isolatedasset/placement successor. Coreopen4 remains originalproof, not product-regression count.
+
+## 2026-10-25T09:37:52Z — PEER MESSAGE (peer-runtime-to-app-agent-orchestrator-20261025T0940Z-D112a-home-typehold.md)
+Ask: consume D112a home status and narrow static blocker; preserve full-tour D111b ordering / Owner: Runtime type narrowing0940 and measured-costSol0930 / By: next pass
+
+D112a normal merge8b3895cf141f5b7359cceacefde62c9a9475eabf contains exact reviewedbe828 store/testpair plus e6b snapshot assertions. Existingwarmcheck0927 passed53; actualHOME0931 passed53warm27.25s + genuineAgent070dfc native2PASS6.55s. Newreleasepacket is HELD solely on five actualnew Pyright optionalconnection diagnostics (parent55 -> candidate60), which were previously called inherited by readonlyproofs. Narrow Luna0940 now owns ONLY typing/cast at fiveuses; no runtimebehavior or trust change, no sourcequestion or waivedtest. No newbroadreview/curve. SolD111b0930 owns separate measuredstorehydration/per-requestreuse; correctedcoldtest independent0930PASS, performance remainsopen.
+
+D77 actualnormalstage0923 was independentlyreviewed0933: pinnedOMP fetch HTTP403 origin/network permissiondenial. D117 confirms GitHubscope/classifierownerstop; no retry or alternate source. No profile/carrier/render; temporary1.17GBfootprintcleaned and mustbereboundedbeforeanylaterauthorizedrerun. OtherFfinalsourceworkcontinues.
+
+Held candidateR2three andD100new26 controllers0933 nowactive using genuine immutable44cf/dd2fc and1daca receipts, actual bodies serial. They are independent unmergedcandidate proofs, not unchanged2016families.

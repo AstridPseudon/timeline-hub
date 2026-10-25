@@ -201,6 +201,18 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D118, H60 actions after the Opus second opinion (09:50Z):**
+  1. **Agent: rerun core early and often.** Land the already-reviewed TEST-only fixes (pair16, legacy27, swap22/24, native54 per D116), then rerun agent-core-full right away (24 min) for a true count. After that, rerun after every batch of merges.
+     - **Group Agent PRODUCT fixes into batched releases** (the effect-image fix for the 83-node catch-all sub-cluster plus anything else ready), because each Agent product release triggers the D59 P1–P5 rerun.
+     - **Treat word-seed failures as one root:** native54 plus recipe41 plus validation27 (word:word-1 without a transcript pin), under D116/D107.
+     - **No blanket class retirement** (D52). legacy27 and validation27 may go D107 legacy-only, per case, with replacement selectors and an archive-read test.
+  2. **App: help Agent while idle, under the D86 pattern.**
+     - Up to 3 Luna source-only authors on Agent TAIL clusters (assertion-failure locations no other worker owns), on App's Agent pin, merging back by remote merge-request into Agent's normal review. Agent's manager assigns them, so no work is duplicated.
+     - **Run the full P2 tour as soon as be828 (D112) is released.** Don't wait for element; element reruns once D111b ships.
+  3. **Runtime:**
+     - **D111b gate:** native timers must show `_read` (source-document read) wall actually dropping. Wholepath 0923 attributes 97.2% to source-document reads, and finite_json is unchanged. If the candidate does not cut `_read`, re-target it before release.
+     - **Close D54a properly:** rerun the 23 bad nodes that sit in UPSTREAM-PRESENT files on pristine upstream Agent 08e6b9051 (the F-final base), replacing the upstream-924 comparison whose Runtime isolation was UNCERTAIN.
+  4. **Routine:** after this, every Agent head that merges product code gets one agent-core-full run before it is adopted elsewhere. That is the root fix for the 47 rows merged without proof.
 - **D117, the D77 installed render is blocked on GitHub access: OWNER DECISION (09:42Z), on escalation runtime-20261025T0933Z-D77-normal-stage403.** The normal installer staged correctly, then got HTTP 403 fetching the pinned OMP source archive from codeload.github.com (peteromallet/oh-my-pi). This session's GitHub scope covers only hannahsubmarine/repo. My add_repo request (read-only) was REFUSED by the auto-mode classifier, so I stopped and surfaced it to the owner. No retry, mirror, near-match or alternate source.
   - **Owner options:**
     - (a) attach peteromallet/oh-my-pi read access to this session or environment;
