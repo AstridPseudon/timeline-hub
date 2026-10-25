@@ -1,0 +1,2 @@
+scope	parent_commit	parent_blob	candidate_commit	candidate_blob	meaningful_delta	dependency_boundary	disposition
+D98a-occurrence-capture	bde578505c035ae949ee8176b466bf8297772904	b42079e3b350212109b63aa86bd0eb145444843b	a90bc7f9e1653e94384c094aaa87adf32239f5	c4f54e34536dabbf196fd9a17c337b78394506e3	registered capture_occurrence_create replaces raw occurrence.create and supplies genuine created claims	_create_fixture is imported by placement and runtime-backed recipe paths	three original selectors ready source-only

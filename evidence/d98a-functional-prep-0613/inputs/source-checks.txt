@@ -1,0 +1,18 @@
+check=Agent candidate blob and SHA256
+command=git -C /home/user/peteromallet/astrid-agent rev-parse 01d51620a6:tests/editing_conformance/test_commit_runtime_occurrence_media.py
+result=c4f54e34536dabbf196fd9a17c337b78394506e3
+command=git -C /home/user/peteromallet/astrid-agent show 01d51620a6:tests/editing_conformance/test_commit_runtime_occurrence_media.py | sha256sum
+result=cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1
+check=source inputs and created claims
+result=PASS; capture_occurrence_create(bundle, occ-a, chapter-shot, Chapter One, picture, on=8, duration=10); no hand-authored created claim
+check=AST conservation
+result=PASS; parent bde578505c and candidate 01d51620a6 have the same four test-function ASTs; only _create_fixture changed
+check=dependency reachability
+result=PASS; placement imports/calls _create_fixture; recipe imports runtime_occurrence and calls its genuine editing wrapper
+check=canonical selector count
+result=PASS; selectors.txt contains exactly three original selectors
+check=Runtime D102c future source
+result=PASS_SOURCE only; reviewed ab7ebb424 is recorded as a required future body gate, not applied to this base
+check=working-tree hygiene
+command=git diff --check
+result=run after packet creation; no product/test/pin/generated/schema changes

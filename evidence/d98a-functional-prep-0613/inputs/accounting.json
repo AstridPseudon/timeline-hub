@@ -1,0 +1,30 @@
+{
+  "packet": "d98a-functional-prep-0613",
+  "mode": "source-only preparation; no functional credit",
+  "selected_unique": 3,
+  "selectors": {
+    "occurrence": 1,
+    "placement": 1,
+    "recipe": 1
+  },
+  "selection_rule": "exact unchanged handoff selector set; canonical count is three, never a family-count addition",
+  "source_change": "registered occurrence.create capture replaces the raw missing-created claim",
+  "source_receipt": {
+    "protected_review": "agt-F-D98a-capture-review-0550 PASS_SOURCE",
+    "normal_source": "a90bc7f9e1",
+    "latest_agent_source": "01d51620a6",
+    "candidate_blob": "c4f54e34536dabbf196fd9a17c337b78394506e3",
+    "candidate_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1"
+  },
+  "historical_actual": {
+    "id": "rt-D98a-route-submit-0517-rt-D98a-route-submit-0517-1025052025-32278",
+    "selected": 3,
+    "ERROR": 3,
+    "FAIL": 0,
+    "SKIP": 0,
+    "policy": "immutable; active observer evidence remains diagnostic only"
+  },
+  "unqualified": "all other 48/shared-family cases remain functional-but-unqualified; no blanket cure",
+  "body_status": "not run; requires fresh tuple after reviewed D102c fixed Runtime release and Agent normal adoption",
+  "excluded_runtime": "689352013ef516a224033ba58820759a96504e68 is known bad and cannot be substituted"
+}

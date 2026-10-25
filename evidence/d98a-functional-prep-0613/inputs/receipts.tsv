@@ -1,0 +1,2 @@
+scope	protected_receipt	normal_source	source_status	selector_count	disposition
+D98a-occurrence-capture	handoff-agt-D98a-review-0550 PASS_SOURCE; a09ebcbd80	a90bc7f9e1653e94384c094aaa87adf32239f5bc; latest 01d51620a6f92288bd6b90a38ad4f69f5dfadef5	PASS_SOURCE; normal source present; body pending future tuple	3	ready source-only; no functional credit

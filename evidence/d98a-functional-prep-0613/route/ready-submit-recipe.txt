@@ -1,0 +1,19 @@
+# Existing D73 route recipe; bounded instructions only, not executed here.
+route=existing D73 central Runtime/Agent route/profile
+selector_file=inputs/selectors.txt
+selector_count=3
+selector_scope=one occurrence + one placement + one recipe original
+excluded_scope=all other 48/shared-family cases; old 32278 body; observer/repeateddiagnostic; current 689 tuple
+agent_source=01d51620a6f92288bd6b90a38ad4f69f5dfadef5
+runtime_body_source=reviewed D102c fixed release only; capture future tuple after normal adoption
+runtime_known_bad=689352013ef516a224033ba58820759a96504e68; do not substitute
+default_marker=no -m override
+cache=off (no pytest cacheprovider)
+parallelism=-n 3
+timeout=45s
+positive_control=existing runner positive parsed control exactly once
+poison_control=existing runner poison control exactly zero times
+preflight=fresh tuple, authority, ABI/ABA, CAS/UTC, outside-byte, no-write/no-leak, canonical set
+submit=one genuine future normal four-tuple; persist central ID immediately; same ID after restart
+receipt=accepted/merged/refused per-ID receipt required before accounting; preview/null receipt is not body evidence
+private=raw XML, logs, request/body, media, auth keys, and URLs remain private
