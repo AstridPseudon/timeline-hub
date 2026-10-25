@@ -1,9 +1,25 @@
 # D140 Farm commands
 
-These are manager commands, not execution evidence. They are run by the Farm
-owner only after `receive-farm.sh --check-only` returns `READY` and every
-receipt binding is re-read under its normal receiving route. If any gate is
-missing, stop with `NOT_READY` and its owner.
+These are manager commands, not execution evidence. Run the receiver in two
+phases: `D140_PHASE=pre-child receive-farm.sh --check-only` admits only
+preexisting inputs; after the normal child request, run
+`D140_PHASE=post-child receive-farm.sh --check-only` with the produced child,
+manifest, controls, receipts, and output roots. A missing gate is finite
+`NOT_READY`; do not continue or substitute another route.
+
+The receiver never starts a body. The post-child census authenticates the
+registered child, tuple receipts, key/value D73 manifest, exact poison
+comparison, and durable output roots before the sequence below.
+The existing `p4-d73-pinned-launch.sh` route is the only launcher named here.
+
+## 0. Pre-child census
+
+```sh
+D140_PHASE=pre-child ops-d140-farm/receive-farm.sh --check-only
+```
+
+The pre-child census must not require `CHILD_PYTHON`, `CHILD_BOOTSTRAP`, a new
+D73 manifest/evidence directory, fresh controls, or post-child output roots.
 
 ## 1. Normal child request — exactly once
 
@@ -20,10 +36,15 @@ or a legacy retained child.
 ```
 
 The normal route must return the registered child receipt. Bind its actual
-`bin/python` as `CHILD_PYTHON`; it must be the maker-selected interpreter and
-must not be replaced by Main's interpreter.
+`bin/python` as `CHILD_PYTHON` and its maker-selected bootstrap as
+`CHILD_BOOTSTRAP`; neither may be replaced by Main's interpreter or a copied
+venv. Then run the post-child census and stop unless it is `READY`.
 
-## 2. Registered child import census
+```sh
+D140_PHASE=post-child ops-d140-farm/receive-farm.sh --check-only
+```
+
+## 2. Registered child import census — mandatory stop gate
 
 Run the existing checker inside the registered child, with the authenticated
 canonical census. Its 1,146-row `4c/ab1e` packet is supporting evidence only;
@@ -32,6 +53,9 @@ the result must report unconditional-required failures separately from the
 be relabelled as a current `41ad/f103` census without a named new receipt.
 
 ```sh
+test -f "$POSITIVE_COUNTER" && test ! -s "$POSITIVE_COUNTER"
+test -f "$POISON_COUNTER" && test ! -s "$POISON_COUNTER"
+set +e
 "$IMPORT_CHECK_ROUTE" \
   --child "$CHILD_PYTHON" \
   --launcher "$D73_LAUNCHER" \
@@ -41,7 +65,56 @@ be relabelled as a current `41ad/f103` census without a named new receipt.
   --root "$RUNTIME_CHECKOUT/packages/python/astrid_runtime_client" \
   --census-file "$CANONICAL_CENSUS" \
   --output "$RAW_ROOT/d140-child-imports.json"
+imports_rc=$?
+set -e
+if [ "$imports_rc" -ne 0 ]; then
+  "$P4_PYTHON" - "$RAW_ROOT/d140-child-imports.json" <<'PY'
+import json
+import sys
+
+report = json.load(open(sys.argv[1], encoding="utf-8"))
+print("IMPORT_NOT_READY mandatory=%d diagnostic=%d" % (
+    len(report.get("missing_installed_distributions", [])),
+    len(report.get("missing_census_modules", []))), file=sys.stderr)
+PY
+  printf '%s\n' "IMPORT_NOT_READY: checker rc=$imports_rc; exact owner must resolve classified misses" >&2
+  exit "$imports_rc"
+fi
+test "$(python3 - "$RAW_ROOT/d140-child-imports.json" <<'PY'
+import json
+import sys
+print(json.load(open(sys.argv[1], encoding="utf-8")).get("status", ""))
+PY
+)" = passed
 ```
+
+The checker’s nonzero exit is never ignored. Mandatory and diagnostic misses
+remain separately reported, but either leaves the sequence on a finite hold;
+no control or core call follows a checker failure.
+
+## C0 wire names retained by the receiving handoff
+
+The Runtime `f103bb46` `contract/schemas/timeline-commit.json` request is the
+actual ABI: `api_version`, `project_id`, `timeline_id`,
+`base_revision_id`, `base_publication_id`, `commands`, optional `label`,
+`steps`, `merge`, `reads`, `dry_run`, `source`, `rationale`, and `group_id`.
+Each requested step uses `id`, `label`, `intent`, `tags`,
+`command_ordinals`, `patch`, and optional `reads`; accepted steps may also
+contain `dependencies`. The request is carried by the existing normal route
+with its `Idempotency-Key` header; this packet does not rename or synthesize
+that contract.
+
+The accepted result uses `status` (`accepted`, `rebased`, or `merged` in the
+f103 acceptance shape), `base_revision_id`, `base_publication_id`,
+`previous_revision_id`, `previous_publication_id`, `accepted_revision_id`,
+`rebased_onto`, `canonical_document`, `document_digest`, `commands`,
+`id_map`, `provider_version`, `compiler_version`, `merge_mode`, `steps`, and
+`publisher`. Durable acceptance nests the existing `receipt` in each history
+record; record details use the `records`/`Recorder` shape. Conflict/refusal
+details use `base`, `current`, and `conflicts`; the current head is a
+`HeadPin` with `revision_id` and `publication_id`. `canonical_document` is
+not a synonym for a generic canonical/base/landing field, and history is a
+separate `HistoryPage` shape.
 
 ## 3. D73 dry controls — positive then poison
 
@@ -54,7 +127,7 @@ counter at zero. These are pre-body controls, not a body result.
 set +e
 P4_STUB_COUNT="$POSITIVE_COUNTER" P4_D73_MANIFEST="$P4_D73_MANIFEST" \
   P4_D73_EVIDENCE="$P4_D73_EVIDENCE" P4_D73_REQUEST_ID=d140-positive \
-  "$D73_LAUNCHER" "$P4_D73_MANIFEST" dry -- "$POSITIVE_CONTROL"
+  "$D73_DRY_ROUTE" "$P4_D73_MANIFEST" dry -- "$POSITIVE_CONTROL"
 positive_rc=$?
 set -e
 test "$positive_rc" = 17
@@ -63,7 +136,7 @@ test "$(wc -l < "$POSITIVE_COUNTER")" = 1
 set +e
 P4_STUB_COUNT="$POISON_COUNTER" P4_D73_MANIFEST="$POISON_MANIFEST" \
   P4_D73_EVIDENCE="$P4_D73_EVIDENCE" P4_D73_REQUEST_ID=d140-poison \
-  "$D73_LAUNCHER" "$P4_D73_MANIFEST" dry -- "$POISON_CONTROL"
+  "$D73_DRY_ROUTE" "$POISON_MANIFEST" dry -- "$POISON_CONTROL"
 poison_rc=$?
 set -e
 test "$poison_rc" -ne 0
@@ -74,25 +147,47 @@ test "$(wc -l < "$POISON_COUNTER")" = 0
 manifest with only `agent_sha=0000000000000000000000000000000000000000`.
 Do not hand-edit a production manifest or silently recapture a changed head.
 
-## 4. One unfiltered Agent core body
+## 4. agent-core-full — one unfiltered Agent core body with durable evidence
 
 Only after the registered child, import census, positive and poison controls,
 disk admission, profile, manifest and service gates pass, invoke the existing
-launcher once. Preserve JUnit, raw runner output, start/stop/disk evidence and
-the `KEEP` directory before harness cleanup. Do not count membership in an
-unrelated historical suite and do not invent a PASS total.
+launcher once through the bound `CORE_ROUTE`. The existing launcher writes its
+request-scoped manifest, request id, runmanifest and body/preflight logs under
+`P4_D73_EVIDENCE`; bind that variable to `KEEP_ROOT`. The outer route captures
+raw stdout/stderr in `RAW_ROOT`, pytest writes XML to the exact `JUNIT_ROOT`
+path, and the route writes start/stop and `df` witnesses to `STARTSTOP_ROOT`
+and `DISK_ADMISSION` before returning. Re-read `RETAINED_ROOT` before cleanup.
+Declarations without these files are not evidence.
 
 ```sh
+start_stop="$STARTSTOP_ROOT/$P4_D73_REQUEST_ID.start-stop.txt"
+raw_log="$RAW_ROOT/$P4_D73_REQUEST_ID.launcher.log"
+junit="$JUNIT_ROOT/$P4_D73_REQUEST_ID.xml"
+printf 'start=%s\n' "$(date --iso-8601=seconds)" > "$start_stop"
+df -P "$OUTPUT_ROOT" > "$DISK_ADMISSION"
+set +e
 env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 \
   PYTHONPATH="$AGENT_CHECKOUT:$RUNTIME_CHECKOUT" \
   PATH="$(dirname "$NODE_BIN"):/usr/local/bin:/usr/bin:/bin" \
   VIRTUAL_ENV="$(dirname "$(dirname "$P4_PYTHON")")" \
   ASTRID_RUNTIME_CHECKOUT="$RUNTIME_CHECKOUT" \
   ASTRID_RUNTIME_SOURCE_ROOT="$RUNTIME_CHECKOUT" \
-  P4_D73_MANIFEST="$P4_D73_MANIFEST" P4_D73_EVIDENCE="$P4_D73_EVIDENCE" \
-  P4_D73_REQUEST_ID=agent-core-full /bin/bash --noprofile --norc -c \
-  'exec "$0/tools/p4-d73-pinned-launch.sh" "$1" run -- -m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$2/agent-core-full.xml" tests/editing_conformance tests/sdk tests/timeline tests/core/timeline tests/core/test_timeline_element_orphan_cleanup.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/core/rendering/test_timeline_visualize_cli_grammar.py tests/core/rendering/test_local_schema.py tests/packs/timeline tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_live_scene_composition.py tests/packs/rendering/test_render_export_task_adapter.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/video_editing/test_runtime_publication_chain.py tests/stage1/test_cold_launch_autobootstrap.py tests/test_installer_schema.py tests/test_installer_sources.py tests/test_installer_bootstrap_schema.py tests/test_timeline_clip_replacement.py tests/v10/test_timelines_create.py' \
-  "$AGENT_CHECKOUT" "$P4_D73_MANIFEST" "$P4_D73_EVIDENCE"
+  P4_D73_MANIFEST="$P4_D73_MANIFEST" P4_D73_EVIDENCE="$KEEP_ROOT" \
+  P4_D73_REQUEST_ID="$P4_D73_REQUEST_ID" CORE_ROUTE="$CORE_ROUTE" /bin/bash --noprofile --norc -c \
+  'exec "$CORE_ROUTE" "$1" run -- -m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$2" tests/editing_conformance tests/sdk tests/timeline tests/core/timeline tests/core/test_timeline_element_orphan_cleanup.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/core/rendering/test_timeline_visualize_cli_grammar.py tests/core/rendering/test_local_schema.py tests/packs/timeline tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_live_scene_composition.py tests/packs/rendering/test_render_export_task_adapter.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/video_editing/test_runtime_publication_chain.py tests/stage1/test_cold_launch_autobootstrap.py tests/test_installer_schema.py tests/test_installer_sources.py tests/test_installer_bootstrap_schema.py tests/test_timeline_clip_replacement.py tests/v10/test_timelines_create.py' \
+  core-route "$P4_D73_MANIFEST" "$junit" > "$raw_log" 2>&1
+core_rc=$?
+set -e
+printf 'stop=%s\nrc=%s\n' "$(date --iso-8601=seconds)" "$core_rc" >> "$start_stop"
+df -P "$OUTPUT_ROOT" >> "$DISK_ADMISSION"
+test -s "$raw_log"
+test -s "$junit"
+test -s "$start_stop"
+test -s "$DISK_ADMISSION"
+test -f "$KEEP_ROOT/$P4_D73_REQUEST_ID.manifest"
+test -f "$KEEP_ROOT/$P4_D73_REQUEST_ID.runmanifest"
+test -d "$RETAINED_ROOT"
+test "$core_rc" = 0
 ```
 
 The selector above is exactly 22 roots and has no marker, `-k`, row filter or

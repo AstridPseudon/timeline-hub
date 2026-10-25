@@ -34,6 +34,7 @@ readonly LAUNCHER_SHA=9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc
 readonly SUITE_SHA=782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c
 readonly LOCK_BLOB=01559de71798c40ba6da1e12c7fba0643902d3e2
 readonly LOCK_SHA=073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a
+readonly PROOF_LOCK_SHA=6f6e3843fbb39d91e80d5be952cb3d589053503541b61202d341f9757902c110
 readonly CLIENT_BLOB=b8dd84cf35db2420ba23bb560abcbd5d6115a77b
 readonly CLIENT_SHA=952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b
 readonly CLIENT_TYPES_BLOB=92bf7890a84c69e009e4b471ed4ef45049b95fe8
@@ -46,6 +47,13 @@ readonly COMMIT_SCHEMA_BLOB=d94415a7d57e7d113223a425c076af7b1a8a4248
 readonly COMMIT_SCHEMA_SHA=3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815
 readonly LAUNCHER_BLOB=f1bde17ea107a8b669cb6924fbdbd2f3979da988
 readonly SUITE_BLOB=fbde96168dca681a76cff1526c23b8d0b74001eb
+readonly SCHEMA_MANIFEST_CANONICAL_SHA=c9a87be9485f79878262cc9a193bfa9e4932cf0a942a62b32e272b46c7b60a2d
+
+readonly D140_PHASE=${D140_PHASE:-pre-child}
+case "$D140_PHASE" in
+    pre-child|post-child) ;;
+    *) printf '%s\n' 'D140_PHASE must be pre-child or post-child' >&2; exit 2 ;;
+esac
 
 checks=()
 missing=0
@@ -176,6 +184,11 @@ check_d139a_schema() {
     else
         add_check schema.dist-info-name PASS 'D139a schema owner' 'pinned dist-info directory name'
     fi
+    if [ "$record" = "$dist/RECORD" ] && [ "$direct" = "$dist/direct_url.json" ]; then
+        add_check schema.bound-paths PASS 'D139a schema owner' 'RECORD and direct_url are the physical files in the bound dist-info directory'
+    else
+        add_check schema.bound-paths MISMATCH 'D139a schema owner' "RECORD/direct_url are detached from $dist"
+    fi
     record_sha=$(sha256sum "$record" | awk '{print $1}')
     row_count=$(awk 'END {print NR}' "$record")
     hashed=$(awk -F, 'NF == 3 && $2 != "" {count += 1} END {print count + 0}' "$record")
@@ -195,24 +208,299 @@ check_d139a_schema() {
     else
         add_check schema.direct-url-content MISMATCH 'D139a schema owner' "direct_url sha=$direct_sha or pinned fields differ"
     fi
-    if grep -Fq '"url": "https://github.com/banodoco/ArtAgents.git"' "$manifest" \
-        && grep -Fq '"commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85"' "$manifest" \
-        && grep -Fq '"subdirectory": "packages/timeline-schema/python"' "$manifest" \
-        && grep -Fq '"source_tree": "75a5a697f630affee40632e500b3f5b704a9b834"' "$manifest"; then
-        add_check schema.trusted-manifest-content PASS 'D139a schema owner' 'trusted manifest fields match the fixed identity'
+    manifest_sha=$(python3 - "$manifest" <<'PY'
+import hashlib
+import json
+import sys
+
+expected = {
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+}
+try:
+    value = json.loads(open(sys.argv[1], encoding="utf-8").read())
+except (OSError, ValueError):
+    raise SystemExit(2)
+if value != expected:
+    raise SystemExit(1)
+print(hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest())
+PY
+    )
+    if [ "$manifest_sha" = "$SCHEMA_MANIFEST_CANONICAL_SHA" ]; then
+        add_check schema.trusted-manifest-content PASS 'D139a schema owner' "trusted manifest canonical sha=$manifest_sha and fixed source identity match"
     else
-        add_check schema.trusted-manifest-content MISMATCH 'D139a schema owner' 'trusted manifest fields are missing or changed'
+        add_check schema.trusted-manifest-content MISMATCH 'D139a schema owner' "trusted manifest canonical sha=$manifest_sha expected=$SCHEMA_MANIFEST_CANONICAL_SHA"
     fi
 }
 
-check_readonly_receipt() {
-    local id=$1 name=$2 owner=$3 path=
+check_source_receipt() {
+    local id=$1 name=$2 repo=$3 commit=$4 tree=$5 owner='Farm receipt owner' path=
     if [[ -v $name ]]; then path=${!name}; fi
     if ! physical_path "$path" file; then
-        add_check "$id" MISSING "$owner" "$name must bind a current authenticated receipt"
+        add_check "$id" MISSING "$owner" "$name must bind a current authenticated source receipt"
         return
     fi
-    add_check "$id" PASS "$owner" "$name=$path (contents are retained for Farm owner review)"
+    local receipt_sha
+    receipt_sha=$(sha256sum "$path" | awk '{print $1}')
+    if python3 - "$path" "$repo" "$commit" "$tree" <<'PY'
+import json
+import subprocess
+import sys
+
+path, repo, commit, tree = sys.argv[1:]
+try:
+    value = json.loads(open(path, encoding="utf-8").read())
+except (OSError, ValueError):
+    raise SystemExit(1)
+if not isinstance(value, dict):
+    raise SystemExit(1)
+if value.get("status") not in {
+    "passed", "PASS", "ready", "READY",
+    "SOURCE_STATIC_READY_DRY_MANIFEST_GENERATED",
+    "FINITE_SOURCE_FACTS_PRESERVED",
+}:
+    raise SystemExit(1)
+if not isinstance(value.get("schema"), str) or not value["schema"].startswith("timeline."):
+    raise SystemExit(1)
+def strings(node):
+    if isinstance(node, dict):
+        for key, item in node.items():
+            yield key, item
+            yield from strings(item)
+    elif isinstance(node, list):
+        for item in node:
+            yield from strings(item)
+items = list(strings(value))
+def has(key, wanted):
+    return any(name == key and item == wanted for name, item in items)
+if not (has("commit", commit) or has("sha", commit) or has("agent_sha", commit) or has("runtime_sha", commit)):
+    raise SystemExit(1)
+if not (has("tree", tree) or has("source_tree", tree) or has("agent_tree", tree) or has("runtime_tree", tree)):
+    raise SystemExit(1)
+if not any(item == repo for _, item in items):
+    raise SystemExit(1)
+actual = subprocess.check_output(["git", "-C", repo, "rev-parse", "HEAD"], text=True).strip()
+actual_tree = subprocess.check_output(["git", "-C", repo, "rev-parse", "HEAD^{tree}"], text=True).strip()
+if actual != commit or actual_tree != tree:
+    raise SystemExit(1)
+PY
+    then
+        add_check "$id" PASS "$owner" "$name sha256=$receipt_sha authenticates local $repo at $commit/$tree"
+    else
+        add_check "$id" MISMATCH "$owner" "$name sha256=$receipt_sha does not authenticate local $repo at $commit/$tree"
+    fi
+}
+
+check_child_receipt() {
+    local id=$1 name=$2 path=
+    if [[ -v $name ]]; then path=${!name}; fi
+    if ! physical_path "$path" file; then
+        add_check "$id" MISSING 'normal child route owner' "$name must bind the registered child receipt"
+        return
+    fi
+    local receipt_sha
+    receipt_sha=$(sha256sum "$path" | awk '{print $1}')
+    if python3 - "$path" "$AGENT_SHA" "$RUNTIME_SHA" "$PROOF_LOCK_SHA" <<'PY'
+import json
+import pathlib
+import sys
+
+path, agent, runtime, lock = sys.argv[1:]
+raw = pathlib.Path(path).read_text()
+try:
+    parsed = json.loads(raw)
+except json.JSONDecodeError:
+    values = {}
+    for line in raw.splitlines():
+        if not line or line.startswith('#'):
+            continue
+        if line == 'installed_import_origins:':
+            values['installed_import_origins'] = line
+            continue
+        if '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        if key in values:
+            raise SystemExit(1)
+        values[key] = value
+else:
+    if not isinstance(parsed, dict):
+        raise SystemExit(1)
+    values = parsed.get('allowlisted_fields', parsed)
+    if not isinstance(values, dict):
+        raise SystemExit(1)
+if values.get('status') not in {'created', 'reused', 'verified'}:
+    if values.get('status') != 'passed':
+        raise SystemExit(1)
+if values.get('reuse') not in {None, 'verified'}:
+    raise SystemExit(1)
+if values.get('requested_agent_sha', values.get('agent_sha')) != agent:
+    raise SystemExit(1)
+if values.get('requested_runtime_sha', values.get('runtime_sha')) != runtime:
+    raise SystemExit(1)
+if values.get('lock_sha256', values.get('requirements_lock_sha256')) != lock:
+    raise SystemExit(1)
+if not (values.get('runtime_client_identity_sha256') or values.get('installed_import_origins')):
+    raise SystemExit(1)
+PY
+    then
+        add_check "$id" PASS 'normal child route owner' "$name sha256=$receipt_sha authenticates the registered child tuple and lock"
+    else
+        add_check "$id" MISMATCH 'normal child route owner' "$name sha256=$receipt_sha is not the existing key/value child receipt for the bound tuple"
+    fi
+}
+
+check_farm_kit_receipt() {
+    local id=$1 name=$2 path=
+    if [[ -v $name ]]; then path=${!name}; fi
+    if ! physical_path "$path" file; then
+        add_check "$id" MISSING 'Farm distribution-input owner' "$name must bind a current authenticated kit receipt"
+        return
+    fi
+    local receipt_sha
+    receipt_sha=$(sha256sum "$path" | awk '{print $1}')
+    if python3 - "$path" "$AGENT_SHA" "$AGENT_TREE" "$RUNTIME_SHA" "$MAKER_SHA" "$PROOF_LOCK_SHA" <<'PY'
+import json
+import pathlib
+import sys
+
+path, agent, agent_tree, runtime, maker, lock = sys.argv[1:]
+raw = pathlib.Path(path).read_text()
+try:
+    parsed = json.loads(raw)
+except json.JSONDecodeError:
+    parsed = None
+if isinstance(parsed, dict):
+    source = parsed.get('source', {})
+    installer = parsed.get('installer', {})
+    if not isinstance(source, dict) or not isinstance(installer, dict):
+        raise SystemExit(1)
+    if not str(parsed.get('schema', '')).startswith('timeline.ops.') or 'installed-kit' not in parsed.get('schema', ''):
+        raise SystemExit(1)
+    if parsed.get('status') not in {'qualified_for_one_request', 'PASS_SOURCE_ONLY_INSTALL', 'PASS'}:
+        raise SystemExit(1)
+    if source.get('commit') != agent or source.get('tree') != agent_tree:
+        raise SystemExit(1)
+    if installer.get('sha256') != maker or installer.get('mode') != '0755' or installer.get('regular_nonsymlink') is False:
+        raise SystemExit(1)
+    raise SystemExit(0)
+values = {}
+for line in raw.splitlines():
+    if not line or line.startswith('#'):
+        continue
+    if '=' not in line:
+        raise SystemExit(1)
+    key, value = line.split('=', 1)
+    if key in values:
+        raise SystemExit(1)
+    values[key] = value
+if values.get('status') not in {'created', 'reused', 'verified'} or values.get('reuse') != 'verified':
+    raise SystemExit(1)
+if values.get('build_origin_agent_sha') != agent:
+    raise SystemExit(1)
+if values.get('requested_runtime_sha', values.get('runtime_sha')) != runtime:
+    raise SystemExit(1)
+if values.get('lock_sha256') != lock:
+    raise SystemExit(1)
+for key in ('component_identity', 'key'):
+    value = values.get(key, '')
+    if len(value) != 64 or any(char not in '0123456789abcdef' for char in value):
+        raise SystemExit(1)
+PY
+    then
+        add_check "$id" PASS 'Farm distribution-input owner' "$name sha256=$receipt_sha authenticates the existing kit receipt format and merged tuple"
+    else
+        add_check "$id" MISMATCH 'Farm distribution-input owner' "$name sha256=$receipt_sha is not an authenticated existing kit receipt for the bound tuple"
+    fi
+}
+
+check_d73_receipt() {
+    local id=$1 name=$2 path=
+    if [[ -v $name ]]; then path=${!name}; fi
+    if ! physical_path "$path" file; then
+        add_check "$id" MISSING 'D73 launcher owner' "$name must bind the retained positive manifest receipt"
+    elif cmp -s "$path" "$P4_D73_MANIFEST"; then
+        add_check "$id" PASS 'D73 launcher owner' "$name is byte-identical to the authenticated positive manifest"
+    else
+        add_check "$id" MISMATCH 'D73 launcher owner' "$name is not byte-identical to the authenticated positive manifest"
+    fi
+}
+
+check_d73_manifest() {
+    local path=${P4_D73_MANIFEST-}
+    if ! physical_path "$path" file; then
+        return
+    fi
+    if python3 - "$path" "${AGENT_CHECKOUT-}" "${RUNTIME_CHECKOUT-}" "${APP_CHECKOUT-}" "${COMPOSITION_CHECKOUT-}" "$AGENT_SHA" "$AGENT_TREE" "$RUNTIME_SHA" "$RUNTIME_TREE" "$APP_SHA" "$APP_TREE" "$COMPOSITION_SHA" "$COMPOSITION_TREE" <<'PY'
+import pathlib
+import subprocess
+import sys
+
+path, *args = sys.argv[1:]
+agent, runtime, app, composition, *wanted = args
+names = ("agent", "runtime", "app", "composition")
+values = {}
+for line in pathlib.Path(path).read_text().splitlines():
+    if not line or line.startswith("#"):
+        continue
+    if "=" not in line:
+        raise SystemExit(1)
+    key, value = line.split("=", 1)
+    if not key or key in values:
+        raise SystemExit(1)
+    values[key] = value
+if values.get("format") != "p4-d73-v1":
+    raise SystemExit(1)
+for name, checkout, commit, tree in zip(names, (agent, runtime, app, composition), wanted[::2], wanted[1::2]):
+    if values.get(name + "_sha") != commit or values.get(name + "_tree") != tree:
+        raise SystemExit(1)
+    if values.get(name + "_path") != checkout or pathlib.Path(checkout).resolve() != pathlib.Path(checkout):
+        raise SystemExit(1)
+    if subprocess.check_output(["git", "-C", checkout, "rev-parse", "HEAD"], text=True).strip() != commit:
+        raise SystemExit(1)
+    if subprocess.check_output(["git", "-C", checkout, "rev-parse", "HEAD^{tree}"], text=True).strip() != tree:
+        raise SystemExit(1)
+for key in ("python", "node", "profile", "schema", "profile_lock_sha", "profile_archive_sha", "profile_registry_sha", "junit_paths"):
+    if not values.get(key):
+        raise SystemExit(1)
+PY
+    then
+        add_check manifest.d73-content PASS 'D73 launcher owner' 'key=value manifest authenticates all four local source checkouts and required launcher inputs'
+    else
+        add_check manifest.d73-content MISMATCH 'D73 launcher owner' 'manifest is not the existing p4-d73-v1 key=value manifest for the bound tuple'
+    fi
+}
+
+check_poison_manifest() {
+    local positive=${P4_D73_MANIFEST-} poison=${POISON_MANIFEST-}
+    if ! physical_path "$positive" file || ! physical_path "$poison" file; then
+        return
+    fi
+    if python3 - "$positive" "$poison" "$AGENT_SHA" <<'PY'
+import pathlib
+import sys
+
+positive, poison = map(pathlib.Path, sys.argv[1:3])
+agent_sha = sys.argv[3]
+positive_lines = positive.read_text().splitlines(keepends=True)
+poison_lines = poison.read_text().splitlines(keepends=True)
+indexes = [index for index, line in enumerate(positive_lines) if line.startswith("agent_sha=")]
+if len(indexes) != 1 or positive_lines[indexes[0]].split("=", 1)[1].rstrip("\r\n") != agent_sha:
+    raise SystemExit(1)
+expected = list(positive_lines)
+suffix = expected[indexes[0]][len("agent_sha="):]
+newline = "\r\n" if suffix.endswith("\r\n") else "\n" if suffix.endswith("\n") else ""
+expected[indexes[0]] = "agent_sha=" + "0" * 40 + newline
+if poison_lines != expected:
+    raise SystemExit(1)
+PY
+    then
+        add_check control.poison-content PASS 'D134 control owner' 'poison is the positive key=value manifest with only agent_sha replaced by forty zeroes'
+    else
+        add_check control.poison-content MISMATCH 'D134 control owner' 'poison manifest is not an exact positive-manifest byte comparison with only agent_sha zeroed'
+    fi
 }
 
 require_env AGENT_CHECKOUT 'Farm source owner'
@@ -262,35 +550,50 @@ else
     add_check schema.canonical-census-hash MISSING 'D139 census owner' 'supporting canonical census is not available on this venue'
 fi
 
-for binding in P4_PYTHON CHILD_BOOTSTRAP DEPENDENCY_SEED CENTRAL_SERVICE CENTRAL_SUITE D73_LAUNCHER NODE_BIN PROFILE P4_D73_MANIFEST P4_D73_EVIDENCE RETAINED_ROOT DISK_ADMISSION OUTPUT_ROOT JUNIT_ROOT RAW_ROOT STARTSTOP_ROOT KEEP_ROOT NORMAL_REQUEST_ROUTE IMPORT_CHECK_ROUTE D73_DRY_ROUTE CORE_ROUTE POSITIVE_CONTROL POSITIVE_COUNTER POISON_CONTROL POISON_COUNTER POISON_MANIFEST; do
+for binding in DEPENDENCY_SEED CENTRAL_SERVICE CENTRAL_SUITE D73_LAUNCHER NODE_BIN NORMAL_REQUEST_ROUTE IMPORT_CHECK_ROUTE D73_DRY_ROUTE CORE_ROUTE; do
     require_env "$binding" 'Farm receiving owner'
 done
-check_bound_path interpreter.normal P4_PYTHON executable 'Farm receiving owner'
-check_bound_path bootstrap.normal CHILD_BOOTSTRAP executable 'Farm receiving owner'
 check_bound_path dependency.seed DEPENDENCY_SEED dir 'Farm receiving owner'
 check_bound_path service.central CENTRAL_SERVICE executable 'central test service owner'
 check_bound_path suite.central CENTRAL_SUITE file 'central test service owner'
 check_bound_path launcher.d73 D73_LAUNCHER executable 'D73 launcher owner'
 check_hash_mode launcher.d73-hash D73_LAUNCHER "$LAUNCHER_SHA" 8487 755 'D73 launcher owner'
-check_bound_path profile.remotion PROFILE dir 'Farm profile owner'
-check_bound_path manifest.d73 P4_D73_MANIFEST file 'D73 manifest owner'
-check_bound_path evidence.d73 P4_D73_EVIDENCE dir 'D73 evidence owner'
 check_bound_path admission.disk DISK_ADMISSION file 'Farm admission owner'
 check_bound_path retained.root RETAINED_ROOT dir 'Farm retained-state owner'
-check_bound_path output.root OUTPUT_ROOT dir 'Farm receiving owner'
-check_bound_path output.junit JUNIT_ROOT dir 'Farm receiving owner'
-check_bound_path output.raw RAW_ROOT dir 'Farm receiving owner'
-check_bound_path output.startstop STARTSTOP_ROOT dir 'Farm receiving owner'
-check_bound_path output.keep KEEP_ROOT dir 'Farm receiving owner'
 check_bound_path route.request NORMAL_REQUEST_ROUTE executable 'normal receiving route owner'
 check_bound_path route.imports IMPORT_CHECK_ROUTE executable 'normal receiving route owner'
 check_bound_path route.dry D73_DRY_ROUTE executable 'normal receiving route owner'
 check_bound_path route.core CORE_ROUTE executable 'normal receiving route owner'
-check_bound_path control.positive POSITIVE_CONTROL file 'D134 control owner'
-check_bound_path control.poison POISON_CONTROL file 'D134 control owner'
-check_bound_path control.positive-counter POSITIVE_COUNTER file 'D134 control owner'
-check_bound_path control.poison-counter POISON_COUNTER file 'D134 control owner'
-check_bound_path control.poison-manifest POISON_MANIFEST file 'D134 control owner'
+if [ "$D140_PHASE" = pre-child ]; then
+    for binding in PROFILE; do
+        require_env "$binding" 'Farm receiving owner'
+    done
+    check_bound_path profile.remotion PROFILE dir 'Farm profile owner'
+else
+    for binding in P4_PYTHON CHILD_PYTHON CHILD_BOOTSTRAP PROFILE P4_D73_MANIFEST P4_D73_EVIDENCE P4_D73_REQUEST_ID OUTPUT_ROOT JUNIT_ROOT RAW_ROOT STARTSTOP_ROOT KEEP_ROOT POSITIVE_CONTROL POSITIVE_COUNTER POISON_CONTROL POISON_COUNTER POISON_MANIFEST; do
+        require_env "$binding" 'Farm receiving owner'
+    done
+    require_env CHILD_RECEIPT 'normal child route owner'
+    check_bound_path interpreter.child CHILD_PYTHON executable 'Farm receiving owner'
+    check_bound_path interpreter.normal P4_PYTHON executable 'Farm receiving owner'
+    check_bound_path bootstrap.child CHILD_BOOTSTRAP executable 'Farm receiving owner'
+    check_bound_path profile.remotion PROFILE dir 'Farm profile owner'
+    check_bound_path manifest.d73 P4_D73_MANIFEST file 'D73 manifest owner'
+    check_bound_path evidence.d73 P4_D73_EVIDENCE dir 'D73 evidence owner'
+    check_bound_path output.root OUTPUT_ROOT dir 'Farm receiving owner'
+    check_bound_path output.junit JUNIT_ROOT dir 'Farm receiving owner'
+    check_bound_path output.raw RAW_ROOT dir 'Farm receiving owner'
+    check_bound_path output.startstop STARTSTOP_ROOT dir 'Farm receiving owner'
+    check_bound_path output.keep KEEP_ROOT dir 'Farm receiving owner'
+    check_bound_path control.positive POSITIVE_CONTROL file 'D134 control owner'
+    check_bound_path control.poison POISON_CONTROL file 'D134 control owner'
+    check_bound_path control.positive-counter POSITIVE_COUNTER file 'D134 control owner'
+    check_bound_path control.poison-counter POISON_COUNTER file 'D134 control owner'
+    check_bound_path control.poison-manifest POISON_MANIFEST file 'D134 control owner'
+    check_d73_manifest
+    check_poison_manifest
+    check_child_receipt receipt.CHILD_RECEIPT CHILD_RECEIPT
+fi
 
 if [ -n "${NODE_BIN-}" ] && physical_path "$NODE_BIN" executable; then
     node_version=$($NODE_BIN --version 2>/dev/null || true)
@@ -303,13 +606,25 @@ else
     add_check toolchain.node MISSING 'D73 launcher owner' 'Node 20.19.4 executable is not available'
 fi
 
-for receipt in FARM_CURRENT_AGENT_RECEIPT FARM_CURRENT_RUNTIME_RECEIPT FARM_CURRENT_APP_RECEIPT FARM_CURRENT_COMPOSITION_RECEIPT FARM_D139A_KIT_RECEIPT FARM_D73_RECEIPT; do
-    check_readonly_receipt "receipt.$receipt" "$receipt" 'Farm receipt owner'
-done
+if [ "$D140_PHASE" = pre-child ]; then
+    check_source_receipt receipt.FARM_CURRENT_AGENT_RECEIPT FARM_CURRENT_AGENT_RECEIPT "${AGENT_CHECKOUT-}" "$AGENT_SHA" "$AGENT_TREE"
+    check_source_receipt receipt.FARM_CURRENT_RUNTIME_RECEIPT FARM_CURRENT_RUNTIME_RECEIPT "${RUNTIME_CHECKOUT-}" "$RUNTIME_SHA" "$RUNTIME_TREE"
+    check_source_receipt receipt.FARM_CURRENT_APP_RECEIPT FARM_CURRENT_APP_RECEIPT "${APP_CHECKOUT-}" "$APP_SHA" "$APP_TREE"
+    check_source_receipt receipt.FARM_CURRENT_COMPOSITION_RECEIPT FARM_CURRENT_COMPOSITION_RECEIPT "${COMPOSITION_CHECKOUT-}" "$COMPOSITION_SHA" "$COMPOSITION_TREE"
+    check_farm_kit_receipt receipt.FARM_D139A_KIT_RECEIPT FARM_D139A_KIT_RECEIPT
+else
+    check_source_receipt receipt.FARM_CURRENT_AGENT_RECEIPT FARM_CURRENT_AGENT_RECEIPT "${AGENT_CHECKOUT-}" "$AGENT_SHA" "$AGENT_TREE"
+    check_source_receipt receipt.FARM_CURRENT_RUNTIME_RECEIPT FARM_CURRENT_RUNTIME_RECEIPT "${RUNTIME_CHECKOUT-}" "$RUNTIME_SHA" "$RUNTIME_TREE"
+    check_source_receipt receipt.FARM_CURRENT_APP_RECEIPT FARM_CURRENT_APP_RECEIPT "${APP_CHECKOUT-}" "$APP_SHA" "$APP_TREE"
+    check_source_receipt receipt.FARM_CURRENT_COMPOSITION_RECEIPT FARM_CURRENT_COMPOSITION_RECEIPT "${COMPOSITION_CHECKOUT-}" "$COMPOSITION_SHA" "$COMPOSITION_TREE"
+    check_farm_kit_receipt receipt.FARM_D139A_KIT_RECEIPT FARM_D139A_KIT_RECEIPT
+    check_d73_receipt receipt.FARM_D73_RECEIPT FARM_D73_RECEIPT
+fi
 
 printf '{\n'
-printf '  "schema": "timeline.d140.farm-prerequisite-census/v1",\n'
+printf '  "schema": "timeline.d140.farm-prerequisite-census/v2",\n'
 printf '  "mode": "check-only",\n'
+printf '  "phase": %s,\n' "$(json_quote "$D140_PHASE")"
 printf '  "status": %s,\n' "$(json_quote "$([ "$missing" -eq 0 ] && echo READY || echo NOT_READY)")"
 printf '  "side_effects": {"child": false, "pytest": false, "installer": false, "import": false, "store": false, "queue": false, "acquisition": false},\n'
 printf '  "source_tuple": {"agent": %s, "runtime": %s, "app": %s, "composition": %s},\n' "$(json_quote "$AGENT_SHA/$AGENT_TREE")" "$(json_quote "$RUNTIME_SHA/$RUNTIME_TREE")" "$(json_quote "$APP_SHA/$APP_TREE")" "$(json_quote "$COMPOSITION_SHA/$COMPOSITION_TREE")"
@@ -319,7 +634,9 @@ for i in "${!checks[@]}"; do
     printf '    %s' "${checks[$i]}"
 done
 printf '\n  ],\n'
-printf '  "next": %s\n' "$(json_quote 'If NOT_READY, stop and name each owner; after every required gate is PASS, run the literal sequence in commands.md exactly once.')"
+next_step='If NOT_READY, stop and name every owner. When pre-child is READY, run only the normal child request and repeat with D140_PHASE=post-child.'
+[ "$D140_PHASE" = post-child ] && next_step='If NOT_READY, stop and name every owner. When READY, run commands.md exactly once in order; check-only never starts bodies.'
+printf '  "next": %s\n' "$(json_quote "$next_step")"
 printf '}\n'
 
 [ "$missing" -eq 0 ]

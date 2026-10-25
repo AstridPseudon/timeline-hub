@@ -20,7 +20,19 @@ venue is `EXACTMISSING`; the old shared venv, arbitrary old child, alternate
 mirror, package acquisition, source invention, and `--farm-schema-source`
 substitution are not substitutes.
 
-Run the sequence in [commands.md](commands.md) only after the census is
-`READY`. The command file preserves the normal request wrapper, registered
-child import checker, D134 positive/poison accounting, and the unfiltered D124
-22-root core selector. The existing reviewed D73 launcher is the sole launcher.
+Run the sequence in [commands.md](commands.md) only after the pre-child census
+is `READY`; the post-child census is a separate admission after the normal
+request returns its registered child receipt. The command file preserves the
+normal request wrapper, registered-child import checker, D134
+positive/poison accounting, and the unfiltered D124 22-root core selector.
+The existing reviewed D73 launcher remains the sole launcher. `CORE_ROUTE`
+must be the existing D73-compatible Farm route and is invoked with
+the launcher’s exact manifest/`run` argv; no wrapper or alternate launcher is
+defined here. Its outer command binds the exact JUnit path, raw log,
+start/stop, disk witness, and retained KEEP root before cleanup.
+
+The handoff names the f103 C0 request/reply fields literally. Request `reads`
+are not `optionalreads`; accepted output uses `canonical_document`, explicit
+base/previous/accepted IDs and `rebased_onto`, while conflict details use
+`current` and `conflicts`. Record nesting, `receipt`, and the separate
+history/head shapes remain the Runtime schema’s shapes.
