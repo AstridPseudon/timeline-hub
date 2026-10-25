@@ -1,0 +1,48 @@
+{
+  "schema": "F-D86-R1-G3-D100-cleanjoin/v1",
+  "task": "R1/G3 D100 exact reviewed candidate join, source only",
+  "commit_message": "fix(timeline): clean join reviewed D100 sources (F-D86)",
+  "source_only": true,
+  "captured_normal": {
+    "repo": "Agent",
+    "branch": "tl/agt-R1-D100-clean-join-0619",
+    "base_commit": "8c88ea8f06b65f9b79fb7810af04720845c5cc6f",
+    "base_tree": "cd2a51721f07b447215f4084980d385de3842fd9",
+    "state": "clean normal source captured at dispatch; only four assigned paths added/changed"
+  },
+  "reviewed_sources": [
+    {"path": "astrid/sdk/timeline/capture.py", "commit": "7f6e9db7435c55135e398cd745762189c8b14eb0", "git_blob": "03fc10e75cf389e540cc2ad207d67c8998daccc8", "sha256": "741e3de381b5cc363c5aa827a87b467ac49995eba2823231390c02f027914e1c", "review": "review0610PASS"},
+    {"path": "astrid/sdk/timeline/_command_state.py", "commit": "d3b5cfef76b4b3abef5db5f8288abc214a61354f", "git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40", "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3", "review": "review0513PASS; unchanged0604/0614"},
+    {"path": "tests/sdk/test_capture_move_exact_time.py", "commit": "d3b5cfef76b4b3abef5db5f8288abc214a61354f", "git_blob": "5cfd53d3ca1b65166150262074158cce0a8f3157", "sha256": "2653bc441cc5e6ddf16414dbfc071f177e98332e3867294e73567de03d0deba6", "review": "held exact tracked d3b5 source path"},
+    {"path": "tests/sdk/test_sequential_shared_item_provenance.py", "commit": "fb9a47c2fc873e9ef388bfccec54de650ce2d308", "git_blob": "237494add9ffc5e246886c9bdd0a46ed3006b439", "sha256": "8b9d0b2d48ce09faa66ace3c9769e79508f2ed648457b56a02821bc4b7da6279", "review": "review0614PASS"}
+  ],
+  "new_controls": {
+    "selector_file": "handoff-agt-D100-0619-new-controls.txt",
+    "count": 26,
+    "membership": {"newexacttime": 4, "newshareditem": 22},
+    "membership_basis": "AST of exact reviewed tests cross-checked one-for-one against existing 7351 old-RED and 30890 candidate packet IDs",
+    "behavior_status": "source-selected; changed-source MAIN proof required; no GREEN claim"
+  },
+  "old_baseline": {
+    "packet": "handoff-rt-D100-30890-0543",
+    "run": "7351",
+    "product_commit": "6aefd11766c019f8deff0ca5a1bfe18e9e730822",
+    "product_tree": "6f6aee59e510a0d6baea023486b97302db58477b",
+    "selected": 26,
+    "outcomes": {"PASS": 12, "FAIL": 14, "ERROR": 0},
+    "corrected_fixture_identity": "private exact-time/shared-item temp fixtures retained one-for-one for genuine old-RED/new-GREEN comparison"
+  },
+  "original_ten": {
+    "path": "tests/editing_conformance/test_commit_runtime_shared_inverse.py",
+    "selected": 10,
+    "assertions": 29,
+    "treatment": "exact original source excluded from 26 new controls and left untouched",
+    "dependencies": ["inverse-materialization finding", "historical-text-binding finding"],
+    "claims": "no original-TEN cure and no unchanged-TEN repeat required"
+  },
+  "preserved_contract": ["C0 v2 request/reply shape", "historical rebased retries", "opaque inputs", "refusal", "retry", "inverse", "ABA", "no-write guards", "inverse/materialization and historical-text-binding findings remain distinct"],
+  "scope": {"changed_paths": ["astrid/sdk/timeline/capture.py", "astrid/sdk/timeline/_command_state.py", "tests/sdk/test_capture_move_exact_time.py", "tests/sdk/test_sequential_shared_item_provenance.py"], "other_tracked_bytes": "preserved", "policy_or_authority_change": false},
+  "validation": {"ast_compile": "PASS", "ast_predicates_and_call_trace": "PASS", "ruff_candidate": "PASS", "ruff_parent_existing_files": "PASS", "mypy_candidate_production": "PASS", "mypy_parent": "PASS in prior reviewed static evidence; private baseline temp tests not rerun", "git_diff_check": "PASS", "behavioral_tests": "NOT RUN by source-only instruction"},
+  "not_performed": ["pytest", "collection", "imports", "helper/fixture/function execution", "probe", "services", "browsers", "render", "package install", "full suites", "body/collection/import/helper/function/fixture/probe/service/source acquisition"],
+  "artifacts": {"new_controls": "ABSOLUTE handoff-agt-D100-0619-new-controls.txt", "source_hashes": "ABSOLUTE handoff-agt-D100-0619-source-hashes.tsv", "evidence": "ABSOLUTE worker evidence directory"}
+}

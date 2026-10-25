@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T06:17:42Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 22 | status age 2m -->
-# agent board, 2026-10-25T06:15:43Z
+<!-- agent | 2026-10-25T06:20:53Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 1m -->
+# agent board, 2026-10-25T06:19:44Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -259,8 +259,9 @@
 | D100 actual candidate | Retain exact failed candidate outcomes | Luna / MAIN | Corrected source and exact proof | doing | Actual30890; exporter0543; source0604 | Exact16FAIL38PASS5ERROR retained; wholepath0555 complete. No GREEN, normal merge or unchanged originalten repeat. | d3b5 held |
 | F M1 scope | Bind legacy declarations to current C0 | Luna read only / orchestrator | Exact legacy-only scope decision | blocked:orchestrator | Scope0610; escalation0613 | Exact ten selectors and original authority preserved. Replacement tests cover separate predicates; historical combined-source coverage missing. No retirement. | Evidence only |
 | F graph clean import | Import exact reviewed graph setup | Luna | Meaningful MAIN two proof | merging | Import0610; normal8c88 | Exact reviewed6cb631 file now normal; true pre-bde source plus one genuine chapter-1 registration. Functional proof still owed. | 8c88ea8f06 |
-| F new source inputs | Bind media sheet and graph proof inputs | Luna read only | Existing Runtime MAIN receiver | doing | agt-F-new-source-inputs-0612 | Exact affected selectors and source deltas from actual tested heads; unchanged and already-owned cases excluded. No body. | Normal8c88 capture |
-| F native word mirrors | Preserve genuine seed and exact inputs | Luna | Actual1023 and1565 source comparison | doing | agt-F-word-mirror-source-0617 | One fixture owner traces contradictory parent mirrors; setup-only fix requires exact original inputs, caller audit, protected review and new-source proof. | Normal8c88 capture |
+| F new source inputs | Bind media sheet and graph proof inputs | Luna read only | Existing Runtime MAIN receiver | merged | agt-F-new-source-inputs-0612 PASS | Exact21:18historical media,2CLI semanticbatch,1graph. Source hashes, AST and historical outcomes retained; metadata only. | Normal8c88 capture |
+| F native word mirrors | Preserve genuine seed and exact inputs | Luna / independent Luna | Protected0620 then normal source and proof | review | Source0617; protected0620 active | Raw/config parent clip mirror synchronized before emitter. Every original input and guard retained; no executed cure for ID5 or60. | Source candidate held |
+| D100 current clean join | Bind exact reviewed four files | Luna | Source review0610 and0614 PASS | doing | agt-R1-D100-clean-join-0619 | Own-only join on current normal; new26 controls and originalTEN dependencies stay separate. No product merge or body. | Held candidate |
 Integration: Normal01d51620a6 contains exact D101 Agent e021, reviewed media lane1a977, sheetCLI b948, D102 adoption825d, D98a capturea90b and prior source joins. D100 d3b5 and restore7e775 remain held.
 core open: P4 independent GO28.101s on786/0c62/1e34/635f; every per-note duration UNKNOWN. P2 remains open; D59 final tuple gates/core,D69 and genuine installed render required.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later named proofs retain their exact sources; no full/core-zero/ZIP claim.
@@ -269,10 +270,10 @@ D100: Wholepath0555 complete. Exact at_ms product boundary source0604 now under 
 Restore: Prior new regression and three strict controls PASS. Actual1023 remainingID5 on7e775 now parent-mirror setup ERROR; exact fixture source0617 active. No unchanged ID5 or four-control repeat.
 Admission: Projection a55a remains gated on real D100 proof/normal merge. New graph setup source imported only after exact cumulative source verification. M1 original scope proposal0610 follows rejected authority-changing archive.
 Safety: Withdrawn D88 denied action stays stopped. D93 original credentials/session/scopes only. D98a spent; no extra observer/body. D106 never retries hub write; authorized new ORCH-only worker active.
-Disk: D89 source/review cap6 above5.0GB; heavy1 above5.2GB; nothing below4.5GB. Current free5.82GB. Sweep3 in progress; no clean ended nonKEEP worktree remains to recycle.
+Disk: D89 source/review cap6 above5.0GB; heavy1 above5.2GB; nothing below4.5GB. Free5.77GB. Sweep3 completed; compact refreshed; all eligible ended worktrees already recycled.
 Blockers: D100 source — Capture source review0610 PASS and shared-owner0604 active; original ten inverse/history failures remain separate. Runtime already owns later MAIN controls; no unchanged retry.
 Blockers: Orchestrator M1 scope — Exact proposal0610 and escalation0613 ask legacy-only disposition for baseline ten or a preserving current route. Original source and all assertions unchanged.
 Blockers: Final cut — D59 final P1-P5/core,D69 and genuine installed render still required.
-Next ready: Shared protected review0614, exact new source input0612 and current word-choice cleanjoin0616 assigned. Time review PASS; graph normal and D106 ledger complete.
-live 4 / cap 6; ready-undispatched 0 eligible local starts. Shared review0614, input0612, word-choice join0616 and word mirror0617 assigned; no manager code or test bodies.
-Inbox consumed through1436257 bytes. Updated 2026-10-25T06:15:43Z.
+Next ready: D100 exact cleanjoin0619 and protected word mirror0620 active. Exact21 handback published to existing Runtime receiver. Word-choice candidate source ready; proof waits reviewed mirror.
+live 2 / cap 6; ready-undispatched 0 eligible local starts. Cleanjoin and mirror review assigned; later proof/input work depends on their exact results. No manager code or bodies.
+Inbox consumed through1437955 bytes. Updated 2026-10-25T06:19:44Z.
