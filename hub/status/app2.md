@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T15:10:24Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-25T15:08:30Z
+<!-- app2 | 2026-10-25T15:13:46Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T15:13:37Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -148,11 +148,14 @@
 | P2-D127-App | Qualify App tagged full tour | App independent Luna | Same-ID independent verdict complete | gated:recorded-no-go | App 3250; D125 Proof GO review | NO-GO. Exit 1 in 554s; readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. SWAP HTTP 409; element applied absent; asset not run. Exact tuple and custody qualified. | fe3309 /070dfc /5e9ad /635f |
 | P2-D127-five-cases | Retain five complete original tails | App independent Luna | Same actual 3250 | merged | app-D125-P2-Proof-GO-review | GO for ADD, parent, single clear, bulk clear and placement only. Canonical, history, reload, guarded native inverse and zero legacy qualify. Full tour stays NO-GO. | fe3309 /070dfc /5e9ad /635f |
 
+| P2-D124-sampled10721 | Retain App sampled full-tour verdict | App independent Luna | Same actual10721 and reviewer1455 | gated:recorded-no-go | App1440; independent1455 | NO-GO568s: readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN. Exact source, tuple and custody qualify; timing binding UNKNOWN. | 84857 /070dfc /5e9ad /635f |
+| P2-D124-five-cases | Retain five complete sampled tails | App independent Luna | Same actual10721 | merged | app-D124-10721-independent-review-1455 | GO for placement, ADD, parent and both clears on captured tuple. Canonical, history, reload, guarded native inverse and zero legacy qualify. Full tour NO-GO. | 84857 /070dfc /5e9ad /635f |
+
 D56.4: Proof is folded into App. MAIN has now stood down the D125 hosting exception and assigned the full P2 tour to App locally. No new Proof dispatches, dependency provisioning, retries or product merges. Keep summaries only.
 
 live 0 / cap 0 stood down; ready-undispatched 0. All 1313 prior Proof worker records are done. No live Proof controller or heavy body.
 
-core open: 2 transferred App P2 gestures, SWAP and element. Current App 3250 is independently NO-GO: originals 5 PASS, 2 FAIL, 1 NOTRUN. Five complete tails qualify on that exact tuple. Prior11251 NO-GO and isolated asset8974 GO retain their recorded tuples. Full-tour GO is still owed.
+core open: 2 transferred App P2 gestures, SWAP and element. App 3250 and later sampled10721 are independently NO-GO: each has originals 5 PASS, 2 FAIL, 1 NOTRUN on separate tuples. Five complete tails qualify on that exact tuple. Prior11251 NO-GO and isolated asset8974 GO retain their recorded tuples. Full-tour GO is still owed.
 regressions: Agent retains 14 pending next full-core confirmation. Host fallback96df is normally merged as a4e016; independent original14 PASS is source and targeted proof, not a full-core result.
 
 D125 hosting is closed by MAIN's fallback decision, received in the newest lead relay. Proof's exact recipe preparation passed; the supplied submit exited 1 before D66 startup at `ERR_MODULE_NOT_FOUND` for tsx. No central preflight ID, normal ID, XML or durable submit plan was produced. Readiness and all eight originals are NOTRUN; Proof consumed no full P2 body. This is not a product, sourceguard or safety verdict.
@@ -172,7 +175,9 @@ Pass 2026-10-25T15:08:30Z: PLAN and MANAGER-COMMON read first, then the unchange
 
 App's published [independent verdict](/home/user/timeline-hub/hub/design/app-D125-P2-Proof-GO-review-verdict.md) qualifies actual 3250 as overall NO-GO: readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. Complete tails for ADD, parent move, both clears and automatic placement qualify only on fe3309/070dfc/5e9ad/635f. SWAP received 409 history unavailable; the lower private attribution stays UNKNOWN. Element applied status was absent; its HTTP outcome stays UNKNOWN. Asset was serially NOTRUN. Exact tuple, clean checkouts and submitted-plan custody independently qualify; results from other tuples are separate.
 
-App's published board 14:57 reports sampled actual 10721 terminal FAIL after preflight 30400 PASS. Controller 1440 extracts its safe packet and independent 1455 awaits evidence. Counts, first predicate and cause are not yet qualified. Activation 1435's normal 2 and reviewed 2 controls are source/startup proof only. Source recipe 1452 was dispatched after the body ended. App owns the next result and verdict; Proof issues no duplicate.
+App's board15:04 and published [independent sampled verdict](/home/user/timeline-hub/hub/design/app-D124-10721-independent-review-1455-verdict.json) qualify actual10721 NO-GO exit1/568s after preflight30400 PASS. Readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN; placement, ADD, parent and both clear tails qualify only on84857/070dfc/5e9ad/635f. SWAP409 history unavailable and absent element applied status are first failures; asset is serially NOTRUN. Tuple, clean checkouts, source hashes, submitted plan and helper custody qualify. Request-correlated timing and dominant cost stay UNKNOWN in the independent handback. This is distinct from tagged3250; Proof performs no verdict or rerun.
+
+New header D12715:10 assigns Runtime and Agent to aggregate the real sampled stacks and compare lifecycle cost with native replay, then one author per demonstrated dominant cost. Runtime separately binds SWAP tags and investigates the identity fallback. Header timing numbers are leads pending exact request correlation, not independently established per-gesture attribution. App source recipe1452 is in review1501; safe-stack publisher1503 is active with exact binding or honest UNKNOWN. No Proof task or new tour is authorized.
 
 Runtime's board 14:55 records diagnostic first-return 1444 with 12 diagnostic and 95 adjacent tests PASS after review 1441 FAIL. Keyhash 1450 adds the App helper join; final independent source review remains owed. Actual 3250 lower root stays UNKNOWN. Native preparation 1440 lacked exact retained replay inputs and performed no replay. Runtime auth 1444 separately owns Agent's qualified step-source finding.
 
