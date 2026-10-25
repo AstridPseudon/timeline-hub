@@ -32,6 +32,46 @@ from support import (
 
 
 class SourceCallerTests(unittest.TestCase):
+    def test_failing_stage_retains_exact_private_stderr_and_exit_status(self):
+        fixture = scratch()
+        text = MAKER.read_text()
+        functions = (text[text.index('progress() {'):text.index('\nN=${1:-}')]
+                     + text[text.index('failure() {'):text.index('\nmissing=()')])
+        env = {**os.environ, 'T': str(fixture), 'N': 'venv-agent-child-stderr',
+               'S': AGENT, 'RUNTIME_SHA': RUNTIME, 'REQUIREMENTS_PATH': 'requirements/proof.lock',
+               'LOCK_SHA': 'a' * 64, 'TIMEOUT_BIN': 'timeout', 'KILL_AFTER_SECONDS': '1'}
+        result = subprocess.run(
+            ['bash', '-u', '-o', 'pipefail', '-c', functions + '''\nrun_stage install-agent 20 bash -c 'printf "%s\\n" "private first error" >&2; exit 17'\n'''],
+            env=env, capture_output=True, text=True, timeout=10,
+        )
+        self.assertEqual(result.returncode, 17)
+        log = fixture / '.provision-stderr/install-agent.stderr'
+        self.assertEqual(log.read_bytes(), b'private first error\n')
+        self.assertEqual(log.stat().st_mode & 0o777, 0o600)
+        marker = (fixture / '.provision-failure').read_text()
+        self.assertIn('stage=install-agent\n', marker)
+        self.assertIn('rc=17\n', marker)
+        self.assertIn('private first error', log.read_text())
+        self.assertNotIn('private first error', result.stderr)
+
+    def test_timed_out_stage_keeps_first_stderr_and_timeout_status(self):
+        fixture = scratch()
+        text = MAKER.read_text()
+        functions = (text[text.index('progress() {'):text.index('\nN=${1:-}')]
+                     + text[text.index('failure() {'):text.index('\nmissing=()')])
+        env = {**os.environ, 'T': str(fixture), 'N': 'venv-agent-child-timeout',
+               'S': AGENT, 'RUNTIME_SHA': RUNTIME, 'REQUIREMENTS_PATH': 'requirements/proof.lock',
+               'LOCK_SHA': 'b' * 64, 'TIMEOUT_BIN': 'timeout', 'KILL_AFTER_SECONDS': '1'}
+        result = subprocess.run(
+            ['bash', '-u', '-o', 'pipefail', '-c', functions + '''\nrun_stage pinned-requirements 1 bash -c 'printf "%s\\n" "timeout first error" >&2; sleep 5'\n'''],
+            env=env, capture_output=True, text=True, timeout=10,
+        )
+        self.assertEqual(result.returncode, 124)
+        log = fixture / '.provision-stderr/pinned-requirements.stderr'
+        self.assertEqual(log.read_bytes(), b'timeout first error\n')
+        self.assertEqual(log.stat().st_mode & 0o777, 0o600)
+        self.assertIn('stage=pinned-requirements\n', (fixture / '.provision-failure').read_text())
+
     def test_real_source_state_requires_exact_clean_checkout(self):
         text = MAKER.read_text()
         function = text[text.index('source_state() {'):text.index('\nsource_state "$A" "$S"')]

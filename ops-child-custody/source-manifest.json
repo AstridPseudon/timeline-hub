@@ -1,7 +1,7 @@
 {
-  "task": "rt-OPS-child-inventory-contract-sol-1725",
-  "base_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
-  "observed_utc": "2026-10-25T17:39:26.697926+00:00",
+  "task": "rt-OPS-D137-stderr-retention-2006",
+  "base_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+  "observed_utc": "2026-10-25T20:06:00Z",
   "live_sources_read_only": {
     "make-child-venv": {
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
@@ -23,12 +23,18 @@
     }
   },
   "candidate": {
-    "path": "/home/user/work/wt/rt-OPS-child-inventory-contract-sol-1725/ops-child-custody/make-child-venv",
-    "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
-    "bytes": 69516,
+    "path": "/home/user/work/wt/rt-OPS-D137-stderr-retention-2006/ops-child-custody/make-child-venv",
+    "sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
+    "bytes": 70119,
     "mode": "0o755"
   },
   "blocks": {
+    "STAGE_STDERR_CAPTURE": {
+      "sha256": "642c89d470faa8068ca639c27df2f7c9a453824f71f04b9d877c261d922eb47d",
+      "private_log_mode": "0600",
+      "path": ".provision-stderr/<stage>.stderr",
+      "exit_status_preserved": true
+    },
     "STORE_PY": {
       "preimage_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
       "postimage_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
@@ -83,8 +89,8 @@
     },
     {
       "path": "ops-child-custody/tests/test_custody.py",
-      "sha256": "d6be27f90288a00880eefbe1873200e4bb688d26aa1a493aeb0692685a2a5a55",
-      "bytes": 23845,
+      "sha256": "b1fab206271f9c9e47d9c12d9136747244b0578f01da5b04b0d2099ee4c036f6",
+      "bytes": 26403,
       "mode": "0o644"
     },
     {
@@ -94,9 +100,9 @@
       "mode": "0o644"
     }
   ],
-  "inherited_29_test_source_and_support_unchanged": true,
-  "new_controls": 11,
-  "total_unittest_tests": 40,
+  "existing_controls_preserved": true,
+  "new_controls": 2,
+  "total_unittest_tests": 42,
   "embedded_python_blocks_compiled_in_memory": 7,
   "admission": {
     "free_bytes": 5027573760,
@@ -122,6 +128,20 @@
     "network_acquisition": false,
     "new_fixture_Store_initialized": false
   },
-  "e2e_result": "NOTRUN / BLOCKED on supplied fixture venue and preserved admission",
-  "prior_candidate_preserved": "All source archive installation and diagnostic lifecycle fixes remain; only report producer and its private tests/docs differ."
+  "e2e_result": "NOTRUN / WITHDRAWN by D137 owner",
+  "installer_route": {
+    "reviewed_reference": "a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4",
+    "gate": "D137 decision input; no E2E PASS fabricated",
+    "cas": "descriptor-bound lock, no-follow/no-clobber backup, identity CAS, atomic rename",
+    "candidate_sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
+    "candidate_bytes": 70119,
+    "source_commit": "bound exactly by the later D137 decision input"
+  },
+  "protected_unchanged": {
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "STORE_PY_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+    "STORE_VERIFY_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209"
+  },
+  "prior_candidate": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e / 69516 bytes; superseded by D137 stderr-retention source"
 }

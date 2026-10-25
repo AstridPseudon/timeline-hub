@@ -131,18 +131,33 @@ failure() {
   exit "$rc"
 }
 
+stage_stderr_path() {
+  local stage=$1
+  local directory=${T:?}
+  directory="$directory/.provision-stderr"
+  if [ ! -e "$directory" ]; then
+    (umask 077; mkdir -- "$directory") || return 1
+  fi
+  [ -d "$directory" ] && [ ! -L "$directory" ] || return 1
+  chmod 700 -- "$directory" || return 1
+  printf '%s/%s.stderr\n' "$directory" "$stage"
+}
+
 run_stage() {
   stage=$1
   budget=$2
   shift 2
   CURRENT_STAGE=$stage
   STAGE_STARTED=$SECONDS
+  STAGE_STDERR=$(stage_stderr_path "$stage") || failure 2 "$stage-log-setup"
+  (umask 077; : > "$STAGE_STDERR"; chmod 600 -- "$STAGE_STDERR") || failure 2 "$stage-log-setup"
   progress "stage=$stage start budget=${budget}s"
   # Do not use foreground mode: it deliberately leaves descendants outside the
   # timeout's process-group termination and can wedge the inline dispatcher.
-  # Stage output can contain credentials or index URLs.  The permanent
-  # failure marker records only the allowlisted fields above.
-  CHILD_VENV_STAGE=$stage "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$budget" "$@" >/dev/null 2>&1
+  # Stage stderr can contain credentials or index URLs.  Retain it only in the
+  # maker-owned, mode-0600 staging log; the public failure marker and summary
+  # record only the allowlisted fields above.
+  CHILD_VENV_STAGE=$stage "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$budget" "$@" >/dev/null 2>"$STAGE_STDERR"
   rc=$?
   if [ "$rc" -ne 0 ]; then
     failure "$rc" "$stage"
