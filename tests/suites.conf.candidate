@@ -1,4 +1,7 @@
 # D73 final candidate. The manager renders every token from one exact four-repo
+# D90 exact Agent candidate proof; render this one owned row from the captured
+# tuple before CAS-installing it into the normal service registry.
+agent d90-r2-legacy-proof env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 P4_D73_MANIFEST=__D90_P4_D73_MANIFEST__ P4_D73_EVIDENCE=__D90_P4_D73_EVIDENCE__ P4_D73_REQUEST_ID=__D90_P4_D73_REQUEST_ID__ /bin/bash --noprofile --norc -c 'set -eu; exec __D90_AGENT_PATH__/tools/p4-d73-pinned-launch.sh "$P4_D73_MANIFEST" run -- -m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$P4_D73_EVIDENCE/d90-r2-legacy-proof.xml" tests/sdk/test_timeline_commit_provider.py::test_restore_undo_redo_exact_full_closure_and_unknown_fields tests/sdk/test_timeline_commit_provider.py::test_restore_inverse_proof_representations_allow_preview_and_redo tests/sdk/test_timeline_semantic_reservations.py::test_aggregate_children_are_retired_in_their_occurrence_scope tests/sdk/test_timeline_inverse_fork_guard.py'
 # tuple manifest after all four normal checkout receipts are verified. The
 # final-core selector currently collects 8,817 nodes in 392 files; it is only a
 # prepared row until D72 completion and the D59 cut authorize the body.

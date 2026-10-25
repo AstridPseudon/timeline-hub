@@ -1,0 +1,5 @@
+backup /home/user/work/wt/rt-D90-candidate-proof-0200/evidence/rt-D90-candidate-proof-0200/suites.conf.pre-20261025T020206.161446Z.bak
+before 4854f840cf9bc68bf4e1ad00f47f288739101d7c33af28fc35895bd623a3bfc8
+after 1ee43d947a275e489f84dc5aecef0865a64d96f1c47fa2bcbe135ba34dd91bbc
+outside 4854f840cf9bc68bf4e1ad00f47f288739101d7c33af28fc35895bd623a3bfc8 byte-identical
+mode 0600; only the requested owned D73 rows changed
