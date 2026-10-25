@@ -1,0 +1,57 @@
+{
+  "schema": "timeline.ops.d139-store-retirement-independent-review/v1",
+  "task": "D139",
+  "candidate_commit": "02b6a412a47bd2f884b823271b8ddd0de544539d",
+  "base_ref": "tl/rt-OPS-D131-kind-reserve-1558",
+  "base_commit": "4ec5b05960af6008542037f74e757b02ca548bcf",
+  "result": "FAIL",
+  "verdict": "FAIL_SOURCE",
+  "findings": [
+    {
+      "id": "D139-1",
+      "severity": "critical",
+      "title": "Age authorization and production now are caller-controlled",
+      "locations": ["ops-d131/bench_store.py:192-199", "ops-d131/bench_store.py:604-625", "ops-d131/bench_store.py:638-653", "ops-d131/retire_entry.py:18-19"],
+      "evidence": "Entry state has no persisted registered_at/not_before fields; Store only parses those values from authorization JSON and accepts the CLI --now. A private fixture retired an entry with caller-supplied 2099 timestamps and 2099 now, while the real entry contained no persisted age field.",
+      "impact": "A caller can self-assert that a young entry is old enough, and the production route can pass a future --now to defeat age checks.",
+      "required_fix": "Derive age/not-before from authenticated Store state or a Store-issued audit bound to persisted state; make deterministic time fixture-only and reject caller-controlled production clock overrides."
+    },
+    {
+      "id": "D139-2",
+      "severity": "critical",
+      "title": "Reference and KEEP/ACTIVE authorization fields are self-asserted",
+      "locations": ["ops-d131/bench_store.py:604-630", "ops-d131/bench_store.py:632-636", "ops-d131/bench_store.py:677-695"],
+      "evidence": "worker_refs, queue_refs, registration_refs, suite_refs, keep, and active are accepted only as caller JSON values. The implementation requires reference lists to be empty and booleans false, but has no actual worker/queue/service audit and no persisted KEEP/ACTIVE state. It derives only the Store index registrations/suite projections after accepting the caller claims.",
+      "impact": "A fabricated authorization can claim no live external consumer and inactive state; the required actual-audit boundary is absent.",
+      "required_fix": "Have Store-owned lifecycle audits derive every reference and state from live registries/leases/markers, bind the audit to the current Store generation, and refuse when any required audit source is unavailable. Do not treat caller lists/booleans as evidence."
+    },
+    {
+      "id": "D139-3",
+      "severity": "critical",
+      "title": "Process-reference audit has a deletion race",
+      "locations": ["ops-d131/bench_store.py:664-675", "ops-d131/bench_store.py:747-760"],
+      "evidence": "The final /proc audit returns before journal creation and deletion, with no guard preventing a process from acquiring cwd/fd/cmdline reference afterward. A private fixture started a process in the entry directory after the second audit returned; retirement still returned retired and deleted the directory.",
+      "impact": "A live process reference can appear between the audit and destructive deletion, violating the concurrent guard requirement.",
+      "required_fix": "Use an authenticated lifecycle/lease guard that closes the admission race for new process references, or refuse unless the existing lifecycle can provide such a guard; a second scan alone is insufficient."
+    },
+    {
+      "id": "D139-4",
+      "severity": "high",
+      "title": "Corrupt retirement receipts are accepted",
+      "locations": ["ops-d131/bench_store.py:230-238"],
+      "evidence": "_validate_index checks only receipt key-set, derived entry/key/owner identity, and that registrations/suites are lists. It accepts arbitrary path, node, lock, seq, and list element values. A private fixture injected path=7, node=null, lock='corrupt', seq='not-an-int', and suites=[null]; Store.registered() still accepted the index.",
+      "impact": "Corrupted evidence can be treated as valid Store state instead of failing closed, weakening receipt/recovery integrity.",
+      "required_fix": "Validate receipt field types and exact ownership/path/inode/lease relationships, list element schemas, uniqueness, and consistency with retirement history; refuse malformed or unreadable receipts."
+    }
+  ],
+  "controls": {
+    "author_tests": "PASS",
+    "private_age_override": "FAIL: caller timestamp accepted",
+    "private_process_race": "FAIL: live cwd process raced deletion",
+    "private_corrupt_receipt": "FAIL: malformed receipt accepted",
+    "private_fixed_two_retention": "PASS",
+    "live_store_operation": false,
+    "live_cleanup": false,
+    "installation": false
+  }
+}

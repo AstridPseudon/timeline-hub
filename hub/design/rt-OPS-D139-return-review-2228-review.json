@@ -1,0 +1,61 @@
+{
+  "schema": "timeline.ops.d139.return-review/v1",
+  "task": "rt-OPS-D139-return-review-2228",
+  "decision": "FAIL",
+  "source_decision": "FAIL",
+  "source_not_ready": true,
+  "candidate": {
+    "commit": "4e0fa7afeeee5ee380c6e063c09bc1c63aa98aee",
+    "tree": "ddbfe9d176a4db401a75f5a36bee06d752b421b0",
+    "parent": "86a1a97617445905694e63ca6bb118879a7ecedd",
+    "maker_path": "ops-child-custody/make-child-venv",
+    "maker_sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+    "maker_bytes": 93300,
+    "maker_mode": "0755",
+    "maker_blob": "5546173fd0aa197d374c50af93cc0f0f7b37d2a5"
+  },
+  "f07_preimage": {
+    "commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "blob": "898b58792566da4a1721f00c70530eb438173b7c",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bytes": 75541,
+    "mode": "0755"
+  },
+  "trusted_schema": {
+    "origin": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "carrier": "ABSENT",
+    "revision_object_in_known_repos": false,
+    "source_status": "sourceNOT_READY"
+  },
+  "findings": [
+    {
+      "id": "CENSUS-005",
+      "severity": "blocker",
+      "status": "open",
+      "summary": "Canonical Agent 2149 census is not consumable by check-child-imports --census-file",
+      "evidence": "The exact 1146-row input uses module/category rows; the checker requires each row to contain a string name and exits 2 with 'census rows require a string name'.",
+      "impact": "The claimed exhaustive merged-census coverage is not exercised; no canonical missing census or child preflight result can be accepted."
+    }
+  ],
+  "resolved_security_findings": [
+    "SRC-001/SRC-002/SRC-003",
+    "AUTH-003",
+    "CAS-001",
+    "CENSUS-001/CENSUS-002",
+    "EVID-001"
+  ],
+  "remaining_input_gates": [
+    "AUTH-002: exact owner-supplied authenticated D73 source carrier and manifest are absent",
+    "EXEC-001/EXEC-002: genuine registered-child receipt and in-child acceptance remain NOTRUN"
+  ],
+  "live_actions": {
+    "install": false,
+    "child": false,
+    "store_mutation": false,
+    "network": false,
+    "source_edit": false
+  }
+}

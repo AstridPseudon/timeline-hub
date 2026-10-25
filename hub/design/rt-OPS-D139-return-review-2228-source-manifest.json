@@ -1,0 +1,56 @@
+{
+  "schema": "timeline.ops.d139.review-source-manifest/v1",
+  "task": "rt-OPS-D139-return-review-2228",
+  "repository": "composition",
+  "branch": "tl/rt-OPS-D139-return-review-2228",
+  "head": {
+    "commit": "4e0fa7afeeee5ee380c6e063c09bc1c63aa98aee",
+    "tree": "ddbfe9d176a4db401a75f5a36bee06d752b421b0",
+    "parent": "86a1a97617445905694e63ca6bb118879a7ecedd"
+  },
+  "candidate_maker": {
+    "path": "ops-child-custody/make-child-venv",
+    "blob": "5546173fd0aa197d374c50af93cc0f0f7b37d2a5",
+    "sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+    "bytes": 93300,
+    "mode": "0755"
+  },
+  "f07_preimage": {
+    "commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "path": "ops-child-custody/make-child-venv",
+    "blob": "898b58792566da4a1721f00c70530eb438173b7c",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bytes": 75541,
+    "mode": "0755"
+  },
+  "trusted_schema_pin": {
+    "origin": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "independent_pin_evidence": [
+      "frozen Agent candidate pyproject.toml exact dependency declaration",
+      "D73 qualified direct_url/RECORD evidence"
+    ],
+    "carrier_status": "ABSENT",
+    "known_repo_revision_object": false
+  },
+  "protected_inputs": {
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "baseline_test_custody_sha256": "0961ba695b256b9522917636781b988fed7d1c59b844a165d18de7e1a1b95850",
+    "baseline_test_inventory_sha256": "016469c6ac1e5baddc1c60f7b8ff7cbff6d3c9e43b3ba1d3c317ac9e4f1c5534"
+  },
+  "review_scope": {
+    "production_files_read": [
+      "ops-child-custody/make-child-venv",
+      "ops-child-custody/check-child-imports",
+      "ops-child-custody/source-manifest.json",
+      "ops-child-custody/install-prep/apply-reviewed-maker.sh",
+      "ops-child-custody/install-prep/verify_gate_artifacts.py",
+      "ops-child-custody/install-prep/dry_run_controls.py"
+    ],
+    "tests_untouched": true,
+    "product_edits": false
+  }
+}
