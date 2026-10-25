@@ -2519,6 +2519,7 @@ class RuntimeService:
                 if replay is not None:
                     return replay
                 require_active()
+                _emit_redacted_diagnostic(context["request_id"], reason="provider_none")
                 raise CommitUnavailable()
             outcome = coordinator.execute(context, provider, port_factory, authorize=check)
             if "http_status" in outcome:

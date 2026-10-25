@@ -22,6 +22,7 @@ _SAFE_CLASS_RE = re.compile(
     r"^[A-Za-z_][A-Za-z0-9_]*(?:\.(?:[A-Za-z_][A-Za-z0-9_]*|<locals>))*$"
 )
 _SAFE_FILENAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+|<[^<>\r\n]{1,64}>)$")
+_SAFE_REASON_RE = re.compile(r"^(?:[a-z_]+|catchall:[A-Za-z0-9_.<>:-]{1,256})$")
 
 
 def _new_request_id():
@@ -134,12 +135,23 @@ def _diagnostic_line(payload):
     )
 
 
-def _emit_redacted_diagnostic(request_id, error):
+def _diagnostic_reason(error, reason):
+    if reason is None:
+        if error is None:
+            return "catchall:unknown"
+        return "catchall:" + _exception_class(type(error))
+    if isinstance(reason, str) and _SAFE_REASON_RE.fullmatch(reason):
+        return reason
+    return "catchall:invalid"
+
+
+def _emit_redacted_diagnostic(request_id, error=None, *, reason=None):
     """Write one bounded, source-only diagnostic without inspecting exception data."""
     try:
         payload = {
             "event": "timeline_commit_error",
             "request_id": _validated_request_id(request_id),
+            "reason": _diagnostic_reason(error, reason),
             "exception_class_chain": _exception_class_chain(error),
             "frames": _exception_frames(error),
         }

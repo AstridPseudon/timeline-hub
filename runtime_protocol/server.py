@@ -301,7 +301,9 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         key = self._commit_idempotency_key()
         commit = getattr(self.runtime, "commit_timeline", None)
         if not callable(commit):
+            from .timeline_commit_execution import _emit_redacted_diagnostic
             from .timeline_commit_provider import TimelineCommitUnavailable
+            _emit_redacted_diagnostic(self._request_id(), reason="timeline_commit_unavailable")
             raise TimelineCommitUnavailable()
         publisher = identity["actor"]
 
