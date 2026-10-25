@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T17:56:38Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
-# app board, 2026-10-25T17:56Z
+<!-- app | 2026-10-25T18:01:50Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 1m -->
+# app board, 2026-10-25T18:00Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -94,7 +94,7 @@
 | D132a-graph-source | Land reviewed graph v2 caller source | Luna; independent1720 | Normal receipt verified | merged | Agent normala30e; receipt1754 | Exact two reviewed donor blobs HOME. Own9 retained8 PASS1 FAIL at child birth; source merge grants no behavior closure. | a30e74e901 |
 | D127-bootstrap-custody | Qualify retained actual helper bootstrap | Luna independent read only | Exact retained1731 log and source | merged | app-D127-bootstrap-custody-return-1738 | Actual selector PASS1/0FAIL with source and tuple verified. Capture absent;102 events/mode/privacy remain retained-log assertions. No new body. | Evidence only |
 | D127-request3-inputs | Feed existing element profile inputs | Luna1518; custodySol1524 | Owner D57 nudge | merged | Existing qualified packet1518 and1524 | Exact d22 request3 binding and all available safe summaries/stacks sent peer1742. Own launch stacks/provider leaf/wall denominator remain absent. | Evidence only |
-| D116-Gate3-setup | Correct managed membership setup caller | Luna and independent Luna | Agent peer1736 | review | Author1756; protected1755 | Semantic occurrence.delete and clip.add proposed; AST/types/lint PASS author. Sole protected review then exactown1 if real5GB. | 65d1dead09 |
+| D116-Gate3-setup | Correct managed membership setup caller | Luna and independent Luna | Source-only first return | doing | Firstreturn1800; wholepath1800 | StaticPASS then actualown1 setupERROR at dangling word anchor. No predicates ran. One fixture-only return and independent path diagnosis; no body. | 65d1 held |
 
 Integration: App d5a1d1ab6550187e377fd7387d300102b8b82ece; tree7be73e2cbbcf89d627bf7b9da940b4ce17968c20. Entire tree equals independent1723 reviewed54c91d77 and tested import9bf46528. Source, D78, types and lint PASS. Qualified Runtime ab1e provenance; Agent070dfc/Composition635f exact. Receipt design/app-D127-normal-home-1738.json. Actual new-helper bootstrap retained execution independently PASS1738; raw capture absent, retained-log assertions only.
 
@@ -107,9 +107,9 @@ Blockers: Projection source — Agent D100 product remains held and unqualified 
 Blockers: Agent core — Actual changed0857 child refuses report versus installed inventory. Runtime sole Sol1725 correction and independent1726 own root; no App duplicate body.
 Blockers: Final render — Farm17:43 records same report/inventory refusal and cleaned717e staging. Runtime1725 owns correction. Farm core dropped; D77 only.
 Blockers: Final cut — FullP2, finalP1-P5/core/D69 and genuine installed render owed. No ZIP claim.
-Next ready: Consume helper normal home result. Finish protected Gate3 review1755 then exactown1 only on sourcePASS and genuine5GB. Graph source home; Runtime first-boundary intake requested. No tour.
-live 1 / cap 6; ready-undispatched 0. Sole Luna protected1755 queued after author1756 ended; actual count updates next pass. Dispatcher hub live1 agrees; review1753 just completed. Source4.6GB, own-node5GB, stop4GB. No heavy.
-INBOX consumed through2313061 bytes. New nudge is stale, superseded by source HOME and independent boundary1753. Native hash caveat already recorded and actualown4/1719 retained. H6 Agent17:38, Runtime17:31, Farm17:43; no cleared ready row waits.
+Next ready: Consume helper home result. Finish Gate3 source-only return and independent path1800; no body until protected sourcePASS. Runtime graph1744 owns source intake; App independent1753 complete.
+live 2 / cap 6; ready-undispatched 0. Actual queued Luna sourcefirstreturn1800 and readonlywholepath1800; no heavy. Fresh5.297GB each start, source4.6/ownnode5/stop4GB. Dispatcher next publication may lag.
+INBOX consumed through2327515 bytes. New nudge is stale, superseded by source HOME and independent boundary1753. Native hash caveat already recorded and actualown4/1719 retained. H6 Agent17:46, Runtime17:47, Farm17:43; no cleared ready row waits.
 Safety: D130 absolute hold. No manager product/test/generated/pin edits, Git writes, upstream push, M5, credentials or refused-route retry. Current inputs/outputs/branches/reports retained; historical dirty/orphan guarded targets untouched.
 Later: Parentlabels2/native originals4/trackbatch1 retain word-source errors. Three current native companions need exact transcript authority records; no unchanged rerun. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Current17 and pair16 source equality grants no current behavior credit.
 Pass17:52: finite child-boundary1744 report and four safe files published byte-exact. Independent Luna1753 dispatched immediately; preliminary peer to Runtime names initial birth versus inverse/redo applicability without claiming guard fault. Agent1736 Gate3 ready row consumed, claim posted first and source-only Luna1756 dispatched on normal a30e. Protected review before any body; all authored topology/predicates conserved. Normal sweep3 and compact running, no eligible ended nonKEEP worktrees found; no protected cleanup target touched.
@@ -117,3 +117,7 @@ Pass17:52: finite child-boundary1744 report and four safe files published byte-e
 Pass17:54: independent1753 PASS source review, ab1e NOT_APPLICABLE. Safe exact files published and corrected Recording.read wording sent Runtime immediately. Graph remote MERGEDa30e official receipt consumed, both donor blobs exact at normal. Graph source merge wait cleared; live P2 auth156 remains blocked on Runtime source assessment. No product/test/generated/pin edits or new body.
 
 Pass17:55: Gate3 author1756 completed one-file source65d1, static/type/lint PASS, no body. Independent Luna1755 dispatched immediately at5.302GB; protected source verdict must precede exactone Gate3 node at actual5GB. Author commit message omitted taskID, so any clean intake will preserve exact reviewed blob with D116 message. Sweep3 removed0; compact0scratch/0testdirs,gzipped5oldlogs. No eligible ended nonKEEP trees; all outputs and refused targets kept.
+
+Pass17:58: consumed delayed peer1736 (already dispatched), native source HOME (already actual1711/1719), and Runtime1745 ownership note. Runtime graph1744 now visible, App reader complete; independent1753 packet handed existing receiver, no further App duplicate. Runtime board stale App1731/bootstrap wait cleared by exact independent1738 handback again; actual remote request8faff PENDING ownerreview. No new body or tour. ProtectedGate3 sourcePASS durably precedes own1 admission.
+
+Pass18:00: Gate3 protected1755 staticPASS then actualone setupERROR, no Gate3 assertion executed. Remaining anchored card references semantically deleted occurrence. Evidence safe exact published; raw own1 retained private. Samebranch Luna firstreturn1800 and independent readonlywholepath1800 dispatched immediately, no body/product/compiler/guard edit. Exact topology/purpose fidelity required; if impossible return UNAPPLIED source dependency. No repeated otherthree/original17.

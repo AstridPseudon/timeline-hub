@@ -1,0 +1,53 @@
+{
+  "schema": "app-d116-gate3-protected-predicate-map-v1",
+  "selector": "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+  "source_verdict": "FAIL",
+  "static_source_verdict": "PASS",
+  "author_change": {
+    "old_route": "emit_document_commands(authored, desired)",
+    "old_refused_change": "parent.occurrences: one existing occurrence -> []",
+    "new_route": [
+      "capture_occurrence_delete(authored, occurrence:occ)",
+      "execute(authored, [delete_occurrence]).bundle",
+      "capture_clip_add(without_occurrence, parent, gate3_title)",
+      "registered two-command commit"
+    ]
+  },
+  "exact_gate3_input": {
+    "title": {
+      "id": "gate3-title",
+      "at": 0,
+      "track": "picture",
+      "clipType": "text-card",
+      "hold": 1,
+      "params": {"content": "Gate3"},
+      "elementRef": {"packId": "rendering", "kind": "effects", "id": "text-card"}
+    },
+    "label": "native-checkout-current-gate3",
+    "command_order": ["occurrence.delete", "clip.add"]
+  },
+  "unchanged_final_predicates": [
+    "parent['occurrences'] == []",
+    "parent['clips'][-1]['elementRef']['id'] == 'text-card'"
+  ],
+  "preserved_inputs": [
+    "current_bundle(case)",
+    "case.source content media_id",
+    "current picker index 1",
+    "DECLARATION",
+    "case.pin",
+    "music-bed/music-other tracks and opaque values",
+    "renderer-off tripwire and visualize unavailable assertions"
+  ],
+  "read_only_hashes_match_author_manifest": true,
+  "original_behavior_test_unchanged": true,
+  "no_loss_or_weakening_found": true,
+  "qualification_failure": {
+    "file": "tests/editing_conformance/native_checkout_current_fixture.py",
+    "line": 91,
+    "seam": "capture_occurrence_delete -> commands.execute -> compile_recorded -> compile_authored",
+    "reason": "clearing occurrence:occ leaves the authored parent card's word anchor pointing at the removed occurrence during recorder compilation",
+    "exception": "bound source occurrence/clip is missing or ambiguous",
+    "retry": "forbidden"
+  }
+}

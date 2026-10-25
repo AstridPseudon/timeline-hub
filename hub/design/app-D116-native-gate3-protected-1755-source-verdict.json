@@ -1,0 +1,42 @@
+{
+  "schema": "app-d116-gate3-protected-source-verdict-v1",
+  "task": "D116/G3 independent protected review",
+  "verdict": "FAIL",
+  "static_source_checks": "PASS",
+  "behavior": "FAIL_SETUP",
+  "author_head": "65d1dead09331f2615d5649c9a2ede8191799724",
+  "author_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "protected_baseline": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "source_scope": {
+    "author_commit_delta": [
+      "tests/editing_conformance/native_checkout_current_fixture.py"
+    ],
+    "worktree_clean": true,
+    "no_source_fix": true,
+    "no_author_self_review_credit": true
+  },
+  "semantic_route": {
+    "commands": ["occurrence.delete", "clip.add"],
+    "capture_preview": "commands.execute(authored, [delete_occurrence]).bundle",
+    "provider_factory": "astrid.sdk.timeline.commit.create_runtime_commit_service",
+    "runtime_registration": "RuntimeService.register_timeline_commit_provider",
+    "registered_operations": true,
+    "occurrence_delete_scope": "explicit occurrence owner only; handler clears the selected occurrence after guarded reads"
+  },
+  "checks": {
+    "python311_ast_compile": "PASS",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "body_authorized": false,
+  "body_reason": "The semantic route is unsupported for the authored word-anchor topology: capture_occurrence_delete fails inside commands.execute after the occurrence is cleared, when compile_recorded recompiles the remaining card anchor.",
+  "first_failure": {
+    "file": "tests/editing_conformance/native_checkout_current_fixture.py",
+    "line": 91,
+    "call": "capture_occurrence_delete(authored, \"occurrence:occ\")",
+    "exception": "CommandError: bound source occurrence/clip is missing or ambiguous",
+    "root_frame": "astrid/sdk/timeline/native_word_anchor.py:71",
+    "wrapper_frame": "astrid/sdk/timeline/commands.py:381"
+  }
+}

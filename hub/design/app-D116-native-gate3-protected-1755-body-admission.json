@@ -1,0 +1,21 @@
+{
+  "schema": "app-d116-gate3-protected-body-admission-v1",
+  "source_verdict_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D116-native-gate3-protected-1755/evidence/source-verdict.json",
+  "source_verdict": "PASS_AT_ADMISSION",
+  "candidate_head": "65d1dead09331f2615d5649c9a2ede8191799724",
+  "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "runtime_checkout_used": "/home/user/work/wt/rt-pin-5e9ad1c6",
+  "brief_literal_runtime_checkout": "/home/user/work/wt/rt-pin5e9ad1c6",
+  "brief_literal_runtime_checkout_exists": false,
+  "fresh_available_bytes": 5158891520,
+  "required_floor_bytes": 5000000000,
+  "shortfall_bytes": 0,
+  "admitted": true,
+  "authorized_run": "one own Gate3 node only",
+  "suite": "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+  "run_count_before": 0,
+  "run_count_after_authorized": 1,
+  "result": "FAIL_SETUP",
+  "retry": "forbidden"
+}

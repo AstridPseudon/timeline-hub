@@ -1,0 +1,24 @@
+{
+  "schema": "app-d116-gate3-protected-facts-v1",
+  "agent_head": "65d1dead09331f2615d5649c9a2ede8191799724",
+  "agent_tree": "cca8202a39d17744a30675646078253c6cd3ea9b",
+  "author_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "protected_baseline": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "runtime_pin": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "runtime_checkout": "/home/user/work/wt/rt-pin-5e9ad1c6",
+  "fresh_available_bytes_at_source_decision": 5158891520,
+  "body_floor_bytes": 5000000000,
+  "body_floor_status": "ADMITTED_AT_SOURCE_DECISION",
+  "source_checks": {
+    "ast_compile": "PASS",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "diff_check": "PASS"
+  },
+  "behavior": "FAIL_SETUP",
+  "body_run_count": 1,
+  "body_result": "ERROR during gate3_current fixture setup; no Gate3 assertions executed",
+  "first_failure": "tests/editing_conformance/native_checkout_current_fixture.py:91 -> CommandError: bound source occurrence/clip is missing or ambiguous",
+  "worktree_clean": true
+}
