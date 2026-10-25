@@ -1,252 +1,3 @@
-        if entity == 'shot':
-            if path[:1] == ['payload']:
-                return shot_ref, path[1:]
-            return 'parent', ['occurrences', 'occurrence_id:' + occurrence, *path]
-    return 'timeline', []
-
-
-def _prefix(a, b):
-    return a[:len(b)] == b[:len(a)]
-
-
-exec
-/bin/bash -lc "rg -n 'submitted|step\\[.patch|claim|assertion' astrid/sdk/timeline/_commit_patch.py | tail -38 && sed -n '1050,1145p' astrid/core/timeline/authoring_bundle.py && rg -n 'ruff|mypy|shadow-file|baseline' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/*" in /home/user/work/wt/agt-D86-video-repair-sol-0107
- succeeded in 0ms:
-68:        if not isinstance(step['patch'], list):
-71:        submitted = [change for i in indices if calls[i]['op'] == 'doc.patch' for change in calls[i]['args']['changes']]
-73:            if 'steps' in request and not equal(step['patch'], submitted):
-78:            for claim in step['patch']:
-79:                errors = list(validator.iter_errors(claim))
-82:                from ._doc_patch import validate_submitted_change
-83:                validate_submitted_change(claim)
-84:            if submitted and not all(change in step['patch'] for change in submitted):
-565:                # normalized submitted paths cannot represent.
-575:            elif step['patch'] and any({**claim, 'path': normalized_path(claim['ref'], claim['path'])}
-576:                                      not in effects for claim in step['patch']):
-577:                raise CommandError('semantic step assertion differs from execution', kind='capture_mismatch')
-578:            step['patch'] = effects
-584:                step['patch'][:] = [change for change in step['patch'] if not (
-597:                for index, effect in enumerate(step['patch']):
-757:            if start < cursor or not start <= end <= len(step['patch']):
-760:                segments.append((step, step['patch'][cursor:start]))
-761:            segments.append(({**step, '_inverse_stage': binding}, step['patch'][start:end]))
-763:        if not stages or cursor < len(step['patch']):
-764:            segments.append((step, step['patch'][cursor:]))
-810:    staged_roots = {effect['ref'] for step in plan.steps for effect in step['patch']
-816:    # a submitted ref or an equal payload is never allocation authority.
-1071:                                            for effect in step['patch'][start:end]))
-1120:                # commit.materialization claims at the outer input boundary.
-        raise AuthoringBundleError(
-            "candidate.source_mapping.shots must include every candidate shot identity"
-        )
-    if created_shots - {row.get("shot_id") for row in placements if isinstance(row, Mapping)}:
-        raise AuthoringBundleError("recorded new shots require an occurrence in the same candidate")
-
-    # Exact closures occasionally store a clip's selected registry key in the
-    # parent/shot authority while the child timeline payload omits its local
-    # registry.  Keep that source authority validation-only and never merge it
-    # into the authored publication bytes.
-    # Only the pinned parent is a shared fallback authority.  Do not union
-    # sibling shot registries: that would let one shot's local key validate a
-    # different shot, and it would resurrect a selected asset deliberately
-    # removed from its owning candidate registry.
-    source_assets = _effective_parent_assets(parent_payload)
-
-    candidate_digest = _digest(root)
-    compiled_shots: dict[str, dict[str, Any]] = {}
-    internal_revisions: list[dict[str, Any]] = []
-    shot_revisions: list[dict[str, Any]] = []
-    changed: list[dict[str, Any]] = []
-    reused: list[dict[str, Any]] = []
-    identity_mapping: dict[str, Any] = {"placements": {}, "shots": {}}
-
-    for authoring_shot_id in sorted(shots):
-        shot = _mapping(shots[authoring_shot_id], f"candidate.shots[{authoring_shot_id!r}]")
-        if shot.get("shot_id") != authoring_shot_id:
-            raise AuthoringBundleError(
-                f"candidate.shots[{authoring_shot_id!r}].shot_id must match its key"
-            )
-        source = _mapping(
-            source_shots.get(authoring_shot_id, {}),
-            f"candidate.source_mapping.shots[{authoring_shot_id!r}]",
-        )
-        created = authoring_shot_id in created_shots
-        if isinstance(shot, _CopiedShot) and not created:
-            raise AuthoringBundleError("copied shot requires a recorded creation")
-        copied_baseline = (_copied_shot_baseline(root, shot, authoring_shot_id)
-                           if isinstance(shot, _CopiedShot) else None)
-        source_shot_id = None if created else _string(source.get("shot_id"), "source shot_id")
-        base_shot = _mapping(
-            copied_baseline[0] if copied_baseline else {} if created else shot.get("base_payload"),
-            f"candidate.shots[{authoring_shot_id!r}].base_payload",
-        )
-        if "meta" in base_shot:
-            validate_meta(
-                base_shot["meta"],
-                path=f"candidate.shots[{authoring_shot_id!r}].base_payload.meta",
-            )
-        candidate_shot = _mapping(
-            shot.get("payload"), f"candidate.shots[{authoring_shot_id!r}].payload"
-        )
-        if "meta" in candidate_shot:
-            validate_meta(
-                candidate_shot["meta"],
-                path=f"candidate.shots[{authoring_shot_id!r}].payload.meta",
-            )
-        base_internal = _mapping(
-            copied_baseline[1] if copied_baseline else {} if created else shot.get("base_internal_timeline"),
-            f"candidate.shots[{authoring_shot_id!r}].base_internal_timeline",
-        )
-        _validate_timeline_payload_meta(
-            base_internal,
-            path=f"candidate.shots[{authoring_shot_id!r}].base_internal_timeline",
-        )
-        candidate_internal = _mapping(
-            shot.get("internal_timeline"),
-            f"candidate.shots[{authoring_shot_id!r}].internal_timeline",
-        )
-        _validate_timeline_payload_meta(
-            candidate_internal,
-            path=f"candidate.shots[{authoring_shot_id!r}].internal_timeline",
-        )
-        shot_media = _assert_shot_edit_supported(
-            base_shot, candidate_shot, path=f"shots[{authoring_shot_id}].payload"
-        )
-        shot_media_mutations = _shot_media_mutations(
-            base_shot,
-            candidate_shot,
-            f"shots[{authoring_shot_id}].payload",
-        )
-        internal_media = _assert_internal_edit_supported(
-            base_internal,
-            candidate_internal,
-            path=f"shots[{authoring_shot_id}].internal_timeline",
-            source_assets=source_assets,
-            preserve_legacy_missing=preserve_legacy_missing,
-        )
-        base_shot_media = _shot_media_set(base_shot, f"shots[{authoring_shot_id}].base_payload")
-        base_internal_media = _internal_media_set(
-            base_internal,
-            f"shots[{authoring_shot_id}].base_internal_timeline",
-            source_assets=source_assets,
-            preserve_legacy_missing=preserve_legacy_missing,
-        )
-        shot_additions = shot_media - base_shot_media
-12:- baseline runtime test: `8e2d51862651b801159b7449e0848090e104d0fb`
-28:- candidate and baseline Ruff pass with the existing agent venv;
-29:- candidate and baseline mypy pass with the existing agent venv;
-
-exec
-/bin/bash -lc "sed -n '510,585p' astrid/sdk/timeline/_commit_patch.py && cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-review.md && ls /tmp/w-c62c9e2f9b" in /home/user/work/wt/agt-D86-video-repair-sol-0107
- exited 1 in 0ms:
-                    item = {'kind': 'field', 'ref': binding['physical_ref'],
-                            'path': binding['path'], 'state': copy.deepcopy(change['before'])}
-                    if change['op'].startswith('list.'):
-                        item['path'] = [*item['path'], 'id:' + change['id']]
-                        shape = {'kind': 'collection', 'ref': binding['physical_ref'], 'path': binding['path'],
-                                 'members': sorted(change['order_before']), 'order': change['order_before']}
-                        if shape not in dependencies:
-                            dependencies.append(shape)
-                    if item not in dependencies:
-                        dependencies.append(item)
-                created_refs = {item['ref'] for item in record['created']}
-                for read in record['reads']:
-                    if read['ref'] in created_refs and read['state'] == ABSENT:
-                        continue  # Allocation history guards absence; this is not a closure read.
-                    ref, path = canonical_site(closure, read['ref'], read['path'])
-                    if '/collection:' in read['ref']:
-                        try:
-                            value = value_at(closure.payload(ref), ref, path)
-                            ids = identities(value.get('value'), identity_key(ref, path), ref=ref, path=path)
-                            item = {'kind': 'collection', 'ref': ref, 'path': path, 'members': sorted(ids), 'order': ids}
-                        except (CommandError, KeyError):
-                            item = {'kind': 'scope', 'ref': ref, 'path': []}
-                    elif ref == 'timeline' or not path:
-                        item = {'kind': 'scope', 'ref': ref, 'path': []}
-                    else:
-                        item = {'kind': 'field', 'ref': ref, 'path': path, 'state': copy.deepcopy(read['state'])}
-                    if item not in dependencies:
-                        dependencies.append(item)
-            effects = effect_diff(before, after)
-            segments = [(ordinal, first, second) for ordinal in step['command_ordinals']
-                        for first, second in self.inverse_stages.get(ordinal, [])]
-            if segments:
-                effects = []
-                previous = before
-                for ordinal, first, second in segments:
-                    effects.extend(effect_diff(previous, first))
-                    record = plan.records[ordinal]
-                    stages = [binding for binding in record['bindings'] if binding['key'] == 'inverse.stage']
-                    index = sum(1 for binding in stages if 'effect_range' in binding['boundary'])
-                    start_effect = len(effects)
-                    changes = effect_diff(first, second)
-                    inherited = self.inverse_effects.get(ordinal, [])
-                    if index < len(inherited) and inherited[index] is not None:
-                        captured = inherited[index]
-                        if sorted(map(_effect_key, changes)) != sorted(map(_effect_key, captured)):
-                            raise CommandError('nested inverse effects differ from execution', kind='capture_mismatch')
-                        changes = copy.deepcopy(captured)
-                    effects.extend(changes)
-                    if index < len(stages):
-                        stages[index]['boundary']['effect_range'] = [start_effect, len(effects)]
-                    previous = second
-                effects.extend(effect_diff(segments[-1][2], after))
-            # Byte-equal sequential edits still carry intent, history and exact inverse guards.
-            if all(self.calls[i]['op'] == 'doc.patch' for i in step['command_ordinals']):
-                # A whole-parent effect preserves raw mirror presence, which
-                # normalized submitted paths cannot represent.
-                mirror_effect = any(effect['ref'] == 'parent' and not effect['path'] for effect in effects)
-                if not mirror_effect and (before.document == after.document or all(
-                        change['ref'] == 'parent' for i in step['command_ordinals']
-                        for change in self.calls[i]['args']['changes'])):
-                    effects = [{**copy.deepcopy(binding['change']),
-                                'path': normalized_path(binding['physical_ref'], binding['change']['path'])}
-                               for i in step['command_ordinals']
-                               for binding in plan.records[i]['bindings']
-                               if binding.get('key', '').startswith('doc.patch:')]
-            elif step['patch'] and any({**claim, 'path': normalized_path(claim['ref'], claim['path'])}
-                                      not in effects for claim in step['patch']):
-                raise CommandError('semantic step assertion differs from execution', kind='capture_mismatch')
-            step['patch'] = effects
-            step['dependencies'] = dependencies
-        for cause, effect in self.compiler_effects:
-            destination = self.step(cause)
-            ref, path = canonical_site(self.closures[cause], effect['ref'], effect['path'])
-            for step in self.steps:
-                step['patch'][:] = [change for change in step['patch'] if not (
-                    change['ref'] == ref and normalized_path(ref, change['path']) == path)]
-cat: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-return-0034/evidence/source-review.md: No such file or directory
-
-apply patch
-patch: completed
-/home/user/work/wt/agt-D86-video-repair-sol-0107/tests/editing_conformance/test_commit_runtime_video_unplace.py
-diff --git a/tests/editing_conformance/test_commit_runtime_video_unplace.py b/tests/editing_conformance/test_commit_runtime_video_unplace.py
-index bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a..4d0a0658bcfefa9f3e203017e68aca46fb03d90d
---- a/tests/editing_conformance/test_commit_runtime_video_unplace.py
-+++ b/tests/editing_conformance/test_commit_runtime_video_unplace.py
-@@ -2,6 +2,7 @@
- from __future__ import annotations
- 
- import copy
-+import json
- from types import SimpleNamespace
- 
- import pytest
-@@ -9,10 +10,12 @@
- from astrid.sdk.timeline._command_state import State
- from astrid.sdk.timeline.commit import (
-     bundle_from_document,
-+    document_from_bundle,
- )
- from astrid.sdk.timeline.native_auto_placement import unplace_shared
- from tests.editing_conformance.test_recipe_occurrence_media import inputs
- from tests.helpers.runtime import use_runtime
-+from tests.sdk.test_timeline_commit_provider_document import MEDIA
- 
- pytestmark = pytest.mark.integration
- OWNER = 'occurrence:occ-a'
-@@ -33,7 +36,7 @@
-     from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
      from test_timeline_commit_acceptance import validate_prepared
  
 -    from astrid.sdk.timeline.capture import capture_track_create
@@ -397,4 +148,253 @@ index bcb2f03f83092d775e3f2506cb26b86e4f2a2c1a..4d0a0658bcfefa9f3e203017e68aca46
          real_selected = RequestCommitPort.selected_media
  
          def selected(port, pin):
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import ast
+import json
+import os
+import shlex
+import subprocess
+
+worker = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video-repair-sol-0107')
+ev = worker / 'evidence'
+manifest = json.loads((ev / 'source-manifest.json').read_text())
+path = manifest['changed_files'][0]
+source = subprocess.check_output(['git', 'show', manifest['original'] + ':' + path], text=True)
+node = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name.startswith('test_capture_commit'))
+manifest['runtime_original_raises'] = sum(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+    and isinstance(n.func.value, ast.Name) and n.func.value.id == 'pytest' and n.func.attr == 'raises'
+    for n in ast.walk(node))
+(ev / 'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\\n')
+files = list(manifest['files'])
+baseline = Path(os.environ['TMPDIR']) / 'video12-source'
+commands = [
+    ('compile-ast', ['python3', str(ev / 'check_source.py')], None),
+    ('ruff-candidate', ['/home/user/work/venv-agent/bin/ruff', 'check', '--no-cache', *files], None),
+    *[('ruff-baseline-' + str(i), ['/home/user/work/venv-agent/bin/ruff', 'check', '--no-cache',
+        '--stdin-filename', name, '-'], (baseline / Path(name).name).read_bytes()) for i, name in enumerate(files)],
+    ('mypy-candidate', ['/home/user/work/venv-agent/bin/mypy', '--cache-dir=' + os.environ['TMPDIR'] + '/mypy-candidate', *files], None),
+    ('mypy-baseline', ['/home/user/work/venv-agent/bin/mypy', '--cache-dir=' + os.environ['TMPDIR'] + '/mypy-baseline',
+        '--shadow-file', files[0], str(baseline / Path(files[0]).name), *files], None),
+    ('diff-check', ['git', 'diff', '--check'], None),
+]
+results = []
+for name, command, data in commands:
+    result = subprocess.run(command, input=data, capture_output=True)
+    output = result.stdout.decode() + result.stderr.decode()
+    exact = shlex.join(command)
+    (ev / (name + '.log')).write_text('"'$ '"' + exact + '\\n' + output + '\\nexit=' + str(result.returncode) + '\\n')
+    results.append({'check': name, 'command': exact, 'exit_code': result.returncode,
+                    'stdin': str(baseline / Path(files[int(name[-1])]).name) if name.startswith('ruff-baseline') else None,
+                    'output': output})
+    print(name + ': exit=' + str(result.returncode) + '; ' + output.strip())
+(ev / 'validation.json').write_text(json.dumps(results, indent=2) + '\\n')
+assert all(result['exit_code'] == 0 for result in results)
+PY" in /home/user/work/wt/agt-D86-video-repair-sol-0107
+ succeeded in 3468ms:
+compile-ast: exit=0; PASS original/base/candidate parse, in-memory compile and AST conservation: tests/editing_conformance/test_commit_runtime_video_unplace.py
+PASS original/base/candidate parse, in-memory compile and AST conservation: tests/editing_conformance/test_recipe_m2_video_unplace.py
+PASS complete original fixture source snapshots; fixture providers unchanged
+PASS 12 original selector mappings; original decorators, parameters, predicates and branches
+PASS allowed scope and git diff --check; no repository code executed
+ruff-candidate: exit=0; All checks passed!
+ruff-baseline-0: exit=0; All checks passed!
+ruff-baseline-1: exit=0; All checks passed!
+mypy-candidate: exit=0; Success: no issues found in 2 source files
+mypy-baseline: exit=0; Success: no issues found in 2 source files
+diff-check: exit=0; 
+
+exec
+/bin/bash -lc "sed -n '28,105p' /home/user/work/runtime/runtime_protocol/timeline_commit_execution.py && sed -n '230,270p' /home/user/work/runtime/runtime_protocol/timeline_commit_port.py && sed -n '1250,1300p' astrid/sdk/timeline/commit.py && rg -n '"'^def (inputs|document_fixture|capture_occurrence_create|capture_occurrence_place_shared|capture_occurrence_add_media|unplace_shared|patch|allocations|value_at)|''^    def commit'"' tests/editing_conformance/test_recipe_occurrence_media.py tests/sdk/test_timeline_commit_provider_document.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/native_occurrence_create.py astrid/sdk/timeline/native_occurrence_shared.py astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/native_auto_placement.py astrid/sdk/timeline/_doc_patch.py" in /home/user/work/wt/agt-D86-video-repair-sol-0107
+ succeeded in 0ms:
+class CommitExecutionCoordinator:
+    def __init__(self, commit_store):
+        self.commit_store = commit_store
+        self._guard = threading.Lock()
+        self._entries = {}
+
+    @contextmanager
+    def _execution(self, context):
+        key = (scope(context), context["idempotency_key"])
+        with self._guard:
+            entry = self._entries.get(key)
+            if entry is None:
+                entry = self._entries[key] = _Entry(context["request_hash"])
+            mismatch = entry.request_hash != context["request_hash"]
+            if not mismatch:
+                entry.users += 1
+        if mismatch:
+            # A changed request may have entered after the original accepted.
+            # The durable winner takes precedence over this transient hash.
+            yield False
+            return
+        try:
+            with entry.lock:
+                yield True
+        finally:
+            with self._guard:
+                entry.users -= 1
+                if entry.users == 0:
+                    del self._entries[key]
+
+    def _lookup(self, context, authorize):
+        from .timeline_commit import CommitRejected
+        from .errors import AuthorizationError, ForbiddenError
+
+        try:
+            return self.commit_store.lookup(context, authorize=authorize)
+        except (CommitRejected, AuthorizationError, ForbiddenError):
+            raise
+        except Exception as exc:
+            raise CommitOutcomeUnknown() from exc
+
+    def execute(self, context, provider, port_factory, *, authorize):
+        with self.commit_store.verification_scope():
+            return self._execute(context, provider, port_factory, authorize=authorize)
+
+    def _execute(self, context, provider, port_factory, *, authorize):
+        context = detached(context)
+        if request_identity(context) != context["request_hash"]:
+            reject("invocation_mismatch", status=422)
+        # There is intentionally no optimistic dependency/head read here. Even
+        # callers with an earlier cache miss repeat this lookup after waiting.
+        with self._execution(context) as acquired:
+            replay = self._lookup(context, authorize)
+            if replay is not None:
+                return replay
+            if not acquired:
+                reject("idempotency_mismatch")
+            outcome = error = port = None
+            try:
+                port = port_factory(detached(context))
+                provider_context = detached(port._provider_context()) if hasattr(port, "_provider_context") else detached(context)
+                if any(provider_context[k] != context[k] for k in ("invocation", "idempotency_key", "request_hash", "realm_id", "publisher")):
+                    raise ProtocolError("request port changed invocation identity")
+                outcome = detached(provider.commit(provider_context, port))
+                if hasattr(port, "verify_outcome"):
+                    port.verify_outcome(outcome)
+            except BaseException as exc:
+                error = exc
+            finally:
+                if port is not None:
+                    try:
+                        port.close()
+                    except BaseException as exc:
+                        if error is None:
+                            error = exc
+            # No provider completion, including a close/hook exception, can
+            # supersede a committed winner. A failed read is an unknown outcome.
+            replay = self._lookup(context, authorize)
+        for root in roots:
+            current, seen = root, set()
+            while current and current["publication_id"] not in seen:
+                seen.add(current["publication_id"])
+                entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+                if entry["revision_id"] != current["revision_id"]:
+                    raise refused("history_unavailable", "publication/revision pins disagree")
+                if current["publication_id"] == publication_id:
+                    from .timeline_commit_inputs import reachable_document_input_pins
+                    pins = reachable_document_input_pins(self.__store.conn, self.__project, self.__timeline,
+                                                         publication_ids=[publication_id])
+                    self.__history_pins.extend(pin for pin in pins if pin not in self.__history_pins)
+                    return entry
+                current = entry["previous"]
+        raise refused("history_unavailable", "publication is outside request ancestry")
+
+    def history_entry(self, publication_id):
+        return self._read(lambda: self._ancestor(publication_id))
+
+    def history(self, through, after_publication_id=None, cursor=None, limit=100):
+        def read():
+            if self._ancestor(through["publication_id"])["revision_id"] != through["revision_id"]:
+                raise refused("history_unavailable", "history bounds disagree")
+            return self.__store.history(self.__project, self.__timeline, through,
+                                        after_publication_id=after_publication_id, cursor=cursor, limit=limit)
+        return self._read(read)
+
+    def revision_closure(self, revision_id):
+        if isinstance(revision_id, dict):
+            return self.source_revision_closure(revision_id)
+
+        def read():
+            if revision_id in self.__closures:
+                return self.__closures[revision_id]
+            allowed = {self.__request["base_revision_id"]}
+            allowed.update(pin["revision_id"] for pin in self.__observed.values())
+            allowed.update(item["revision_id"] for item in self.__declared
+                           if "revision_id" in item and "content_digest" in item)
+            if revision_id not in allowed:
+                current = self.head()
+                cursor = current
+                            undo_of.append(publication)
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
+            if undo_of:
+                targets = [port.history_entry(publication) for publication in undo_of]
+                segments = []
+                for target in targets:
+                    pin = {"revision_id": target["revision_id"],
+                           "publication_id": target["publication_id"]}
+                    # Loading the exact target also verifies source scope; no
+                    # client-provided inverse writes enter the core engine.
+                    _load(port, context, target["revision_id"])
+                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+                    segments.append(segment)
+                # The longest segment begins at the earliest targeted edge.
+                ordered = max(segments, key=len)
+                if undo_of != [entry["publication_id"] for entry in ordered
+                               if entry["publication_id"] in undo_of]:
+                    raise CommitRejected(_failure("invalid_inverse_order",
+                                                  "inverse publications must be oldest to newest",
+                                                  base, current))
+                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+
+                def load_boundary(entry):
+                    previous = entry.get('previous')
+                    if not previous:
+                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+                    prior = port.history_entry(previous['publication_id'])
+                    if prior['revision_id'] != previous['revision_id']:
+                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+                    _history(port, pin, previous, CommitRejected, base)
+                    return (_load(port, context, previous['revision_id']),
+                            _load(port, context, entry['revision_id']))
+
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+                _records(ordered, CommitRejected, base, current)
+                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
+                    for record in entry['records']['commands']], load_boundary)
+                inverse_history = ordered
+
+                def select_at(head_bundle, history):
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary,
+                                                        load_history=port.history_entry)
+                        if any('physical_ref' in binding for record in accepted_records
+                               for binding in record['bindings']) else None)
+                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
+                    check_later_steps(selected, history, state=State(head_bundle))
+                    return selected
+
+                inverse_records = select_at(bundle, inverse_history)
+            closures, restored_from = {}, None
+astrid/sdk/timeline/native_occurrence_create.py:53:def capture_occurrence_create(bundle, occurrence_id, shot_id, *, name, track, on, duration):
+astrid/sdk/timeline/_doc_patch.py:79:def value_at(root, ref, path):
+astrid/sdk/timeline/_doc_patch.py:303:def allocations(closure, physical, before, after):
+astrid/sdk/timeline/_doc_patch.py:478:def patch(ctx, command):
+astrid/sdk/timeline/native_auto_placement.py:282:def unplace_shared(bundle, owner, clip_id, *, ownership, keep_as_pooled=False, media=None,
+astrid/sdk/timeline/commit.py:1160:    def commit(self, context, port):
+astrid/sdk/timeline/native_occurrence_shared.py:328:def capture_occurrence_place_shared(bundle, owner, occurrence_id, *, on):
+tests/editing_conformance/test_recipe_occurrence_media.py:40:def inputs(kind='image'):
+tests/sdk/test_timeline_commit_provider_document.py:22:def document_fixture(*, shared=True):
+astrid/sdk/timeline/native_occurrence_media_commands.py:277:def capture_occurrence_add_media(bundle, owner, row, media, *, verified_media, consumed=()):
+
+codex
+Static checks passed for both baseline and candidate: Ruff, scoped mypy, in-memory compilation, AST conservation, and `git diff --check`. All 12 selectors remain, and the recipe file is byte-identical. I’m recording the source hashes and fixture mapping for the required independent review before the remote Agent queue.
+
+exec
+/bin/bash -lc "ls /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-inputs-0055/evidence && sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-incremental-0055-README.md && git diff --check && git status --short" in /home/user/work/wt/agt-D86-video-repair-sol-0107
+ exited 2 in 0ms:
+ls: cannot access '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-incremental-inputs-0055/evidence': No such file or directory
 
