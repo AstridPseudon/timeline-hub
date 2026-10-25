@@ -1,0 +1,74 @@
+{
+  "task": "rt-OPS-child-custody-resume-sol-1643",
+  "outcome": "PRIVATE_SOURCE_CANDIDATE_READY_FOR_INDEPENDENT_REVIEW; ACTUAL_LAYOUT_UNVERIFIED",
+  "tuple": {
+    "agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344"
+  },
+  "existing_maker_preimage_sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+  "candidate_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+  "generator": "No-seed pip directory installation invokes setuptools metadata/build writes inside retained committed-only snapshots. Independent1637 identifies egg_info; actual generated path is not observed here.",
+  "root_correction": "Reuse the already-supported seeded archive route for both branches: retain exact Git archives at .source-inputs/{agent,runtime}.tar and install those archives, allowing pip to unpack/build outside retained source snapshots. No generated metadata whitelist is added.",
+  "call_chain": [
+    "exact clean source_state for Agent and Runtime",
+    "STORE_PY.build executes STORE_BUILD",
+    "archive-agent/archive-runtime create committed-only retained source",
+    "build-agent-input/build-runtime-input retain exact commit archive carriers",
+    "install-agent/install-runtime receive archive paths in both seeded and unseeded cases",
+    "unchanged provenance, freeze, relocation and readonly-source stages",
+    "normal Store.ensure child calls unchanged verify; diagnostic uses existing --staging",
+    "STORE_VERIFY authenticates original archives, source bytes, direct_url hashes, distribution metadata, RECORD, license, import origins, canonical client and every source ancestor",
+    "Store.ensure registration occurs only after verification; diagnostic branch never calls ensure or registration"
+  ],
+  "ownership": {
+    "source_files": "Only authenticated committed bytes enter root_inventory.",
+    "source_directories": "Only complete parent ancestry of authenticated files is permitted; empty/generated/foreign directories remain refused.",
+    "archive_carriers": "Existing verifier requires exact .source-inputs/{agent,runtime}.tar location, exact Git archive bytes and direct_url SHA-256.",
+    "generated_install_metadata": "Existing finite dist-info metadata rules; licenses/LICENSE must equal committed LICENSE; RECORD additions do not grant ownership.",
+    "safety": "Existing ownership, hash, mode, symlink, hardlink, source identity and registration controls remain unchanged."
+  },
+  "private_controls": {
+    "tests": 29,
+    "parent": "unowned retained source directory",
+    "candidate": "PASS",
+    "all_modeled_parent_paths": 10,
+    "candidate_generated_paths": 0,
+    "scope_limit": "Real source/install shell branch with mocked Git and installer boundaries, followed by unmodified embedded verifier. No real package installation/build/body."
+  },
+  "actual_layout": {
+    "status": "UNVERIFIED / EXACTMISSING",
+    "actual_paths": null,
+    "independent_source_diagnosis": "rt-Agent-D128-custody-wholepath-1637",
+    "farm_census_actual_input": "EXACTMISSING; original refusals preserved"
+  },
+  "admission": {
+    "observed_at_utc": "2026-10-25T16:48:06.359866+00:00",
+    "free_bytes": 5221408768,
+    "child_normal_reserve_bytes": 5905580032,
+    "diagnostic_reserve_bytes": 8589934592,
+    "normal_gap_bytes": 684171264,
+    "diagnostic_gap_bytes": 3368525824,
+    "build": "NOTRUN",
+    "body_admitted": false
+  },
+  "not_run": [
+    "live diagnostic/build",
+    "registration/adoption/reuse/publication/READY",
+    "package acquisition or profile substitution",
+    "full/core/browser/P4/original bodies",
+    "SWAP WAL/recovery"
+  ],
+  "next_steps": [
+    "Independent Luna custody review of this exact candidate.",
+    "Separate exact-hash installer, with live preimage compare-and-swap.",
+    "Manager admits required disk/body/resources before any authorized exact diagnostic; then actual retained layout census.",
+    "Agent alone issues ONE new normal request only after publication."
+  ],
+  "flat_export": "Not written: worker rule D30 prohibits worker writes to design/ or report.md; harness captures final report and manager can publish safe evidence.",
+  "missing_actual_diagnostic_inputs": [
+    "Main default /home/user/work/bench-store absent; authenticated Store custody not supplied",
+    "disk below unchanged 8589934592-byte diagnostic reserve",
+    "manager disk/body resource admission not supplied",
+    "no-acquisition constraint remains; no alternate package/bootstrap inputs introduced"
+  ]
+}
