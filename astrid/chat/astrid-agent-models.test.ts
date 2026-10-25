@@ -68,6 +68,17 @@ function readCalls(path: string): unknown[] {
   return readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
 }
 
+test('model discovery allows both OMP metadata startups to finish', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-slow-models-'));
+  try {
+    const command = join(directory, 'astrid');
+    writeFileSync(command, `#!${process.execPath}\nsetTimeout(() => process.stdout.write(${JSON.stringify(JSON.stringify(catalog))}), 5_100);\n`, { mode: 0o755 });
+    const result = await getAstridAgentModelCatalog({ command, cwd: directory });
+    assert.equal(result.currentModel, catalog.currentModel);
+    assert.equal(result.providers.length, catalog.providers.length);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+}, 12_000);
+
 test('agent model catalog maps the CLI response to the safe ACP projection and preserves CLI state', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-agent-models-'));
   try {
@@ -156,7 +167,7 @@ setInterval(() => {}, 1000);
       assert.equal((error as Error).message, 'Astrid model operation failed. Try again.');
       return true;
     });
-    assert.ok(Date.now() - started < 9_000, 'a hanging catalog must finish before the browser deadline');
+    assert.ok(Date.now() - started < 12_000, 'a hanging catalog must finish before the browser deadline');
     const pid = Number(readFileSync(pidFile, 'utf8'));
     assert.equal(processHasExited(pid), true, `process ${pid} must have exited`);
   } finally {

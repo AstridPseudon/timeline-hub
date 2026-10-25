@@ -579,6 +579,28 @@ def test_usage_failure_or_unavailable_usage_is_optional(tmp_path: Path) -> None:
     assert "usage" not in json.loads(malformed.stdout)["providers"][0]
 
 
+def test_usage_timeout_keeps_model_discovery_available(monkeypatch) -> None:
+    from astrid import omp_agent
+
+    def timeout(*args, **kwargs):
+        assert kwargs["timeout"] == 3
+        raise subprocess.TimeoutExpired(args[0], kwargs["timeout"])
+
+    monkeypatch.setattr(subprocess, "run", timeout)
+    snapshot = {"providers": [{"id": "openrouter", "signedIn": True, "models": []}]}
+    omp_agent._add_model_usage("omp", snapshot)
+    assert "usage" not in snapshot["providers"][0]
+
+
+def test_usage_skips_accounts_that_are_not_signed_in(monkeypatch) -> None:
+    from astrid import omp_agent
+
+    calls = []
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: calls.append(args))
+    omp_agent._add_model_usage("omp", {"providers": [{"id": "openrouter", "signedIn": False}]})
+    assert calls == []
+
+
 def test_missing_or_malformed_snapshot_and_nonzero_omp_are_errors(tmp_path: Path) -> None:
     for mode, exit_code in (("no-result", "0"), ("malformed", "0"), ("ok", "2")):
         env, _log, _state = _setup(tmp_path / mode)

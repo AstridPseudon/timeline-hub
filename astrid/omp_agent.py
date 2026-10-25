@@ -399,13 +399,15 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any], profile: str 
 
 def _add_model_usage(omp_bin: str, snapshot: dict[str, Any], profile: str | None = None) -> None:
     """Attach OMP's optional quota reports, retaining only non-identity fields."""
+    if not any(provider.get("signedIn") for provider in snapshot["providers"]):
+        return
     try:
         command = [omp_bin, "usage", "--json", "--redact"]
         if profile:
             command[1:1] = ["--profile", profile]
         result = subprocess.run(
             command, capture_output=True, text=True,
-            encoding="utf-8", errors="replace", check=False,
+            encoding="utf-8", errors="replace", check=False, timeout=3,
         )
         if result.returncode:
             return
@@ -425,7 +427,7 @@ def _add_model_usage(omp_bin: str, snapshot: dict[str, Any], profile: str | None
                 })
             if safe_reports:
                 provider["usage"] = safe_reports
-    except (OSError, ValueError):
+    except (OSError, ValueError, subprocess.TimeoutExpired):
         # Usage support/availability varies by OMP provider and build. The model
         # registry remains authoritative when no quota report can be obtained.
         return

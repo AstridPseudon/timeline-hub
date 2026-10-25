@@ -13,7 +13,7 @@ export class LocalAgentSkills {
   private readonly attempts = new Map<ExternalAgent, Promise<SkillStatus>>();
   private readonly results = new Map<ExternalAgent, SkillStatus>();
 
-  constructor(private readonly env: NodeJS.ProcessEnv = process.env, private readonly cwd?: string, private readonly timeoutMs = 3_000) {}
+  constructor(private readonly env: NodeJS.ProcessEnv = process.env, private readonly cwd?: string, private readonly timeoutMs = 15_000) {}
 
   private check(agent: ExternalAgent): SkillStatus {
     const harness = HARNESSES[agent];
