@@ -69,9 +69,10 @@ for (const theme of ['light', 'dark'] as const) {
       await expect(nudge).toBeVisible();
     }
 
-    test('A: nothing configured locks the composer and reports all four agents honestly', async ({ page }) => {
+    test('A: nothing configured locks the composer and reports all four agents honestly and offers another', async ({ page }) => {
       await open(page, 'A');
-      await expect(card(page).getByRole('option')).toHaveCount(4);
+      await expect(card(page).getByRole('option')).toHaveCount(5); // the four catalog agents plus "Another agent" (c77c8971f)
+      await expect(card(page).getByRole('option', { name: /Another agent/ })).toBeVisible();
       await expect(card(page).getByRole('option', { name: /Astrid's agent/ })).toContainText('Set up');
       for (const name of ['Claude Code', 'Codex', 'Hermes']) await expect(card(page).getByRole('option', { name: new RegExp(name) })).toContainText('Not installed');
       await expect(composer(page)).toBeDisabled();
@@ -145,7 +146,7 @@ for (const theme of ['light', 'dark'] as const) {
       await card(page).getByRole('button', { name: 'Use Claude Sonnet 4', exact: true }).click();
       await done(page, 'E', "Astrid's agent");
       await hi(page, 'E', 'astrid');
-      await expect(page.getByText('Uses the same OpenRouter key and model as here.')).toBeVisible();
+      await expect(page.getByText('Uses the same sign-in as here.')).toBeVisible();
       const dom = await page.content();
       const history = await page.evaluate(() => (window as Window & { setupDomHistory: string[] }).setupDomHistory);
       for (const key of keys) {
