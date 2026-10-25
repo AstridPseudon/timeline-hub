@@ -282,8 +282,17 @@ class RequestCommitPort:
                 return self.__closures[revision_id]
             allowed = {self.__request["base_revision_id"]}
             allowed.update(pin["revision_id"] for pin in self.__observed.values())
-            allowed.update(item["revision_id"] for item in self.__declared
-                           if "revision_id" in item and "content_digest" in item)
+            # Reachability belongs to this live read identity. Reauthenticate
+            # its exact target rather than walking every ancestor again for
+            # each historical closure in a provider's history page.
+            publication = next((publication for publication, revision in self.__ancestry.items()
+                                if revision == revision_id), None)
+            if publication is not None:
+                self._ancestor(publication)
+                allowed.add(revision_id)
+            if revision_id not in allowed:
+                allowed.update(item["revision_id"] for item in self.__declared
+                               if "revision_id" in item and "content_digest" in item)
             if revision_id not in allowed:
                 current = self.head()
                 cursor = current
