@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "controller": "D66",
+  "plan": {"path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-profile-controller-1840/submission/p2-element/p2-element-submit-plan.json","sha256":"21c1e9471c61d3e7925062f3e0a0bf3b943d988dad200d789dcb4018bd1b403c","version":1},
+  "target": "app-pin-d5a1d1ab",
+  "preflight": {"id":"app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-preflight-1025183946-29958","result":"PASS","exit":0,"result_dir":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-preflight-1025183946-29958"},
+  "normal": {"id":"app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016","result":"FAIL","exit":1,"wait_seconds":286,"result_dir":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016","junit":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016/d66/p2-element.xml","readiness_junit":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016/d66/readiness.xml"},
+  "counts": {"readiness_passed":1,"element_passed":0,"element_failed":1,"skipped":0},
+  "dispatch": {"invocations":1,"normal_submissions":1,"retries":0,"resubmissions":0,"alternate_routes":0},
+  "exact_command": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2-element --submit",
+  "first_failed_predicate": {"file":"tests/e2e/local/three-products.p2-elements-assets.spec.ts","line":1052,"assertion":"dialog.getByRole('status').toContainText('applied')","timeout_ms":5000},
+  "source_changes": "none",
+  "full_suite": "NOTRUN"
+}

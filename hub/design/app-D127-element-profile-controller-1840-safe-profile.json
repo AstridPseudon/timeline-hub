@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "publication": "safe_aggregate_only",
+  "source": {"app":"d5a1d1ab6550187e377fd7387d300102b8b82ece","agent":"070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2","runtime":"ab1e4f6141987706132916e2da16477f5a019464","composition":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40"},
+  "service": {"target":"app-pin-d5a1d1ab","suite":"p2-element","normal_id":"app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016","request_ordinal":1,"method":"POST","route_class":"timeline_commit","capture_namespace":"pid-18571-birth-20416744-capture-1","pid":18571,"birth_ticks":20416744,"idempotency_key_sha256":"18ac05fb924bc2495b6ba84917f2936d6308317cd66cd585e5a5bca227ebb4f9"},
+  "outcome": {"source_preflight":"PASS","readiness":"PASS","original_element_body":"FAIL","normal_exit":1,"first_failed_file":"tests/e2e/local/three-products.p2-elements-assets.spec.ts","first_failed_line":1052,"first_failed_predicate":"dialog.getByRole('status').toContainText('applied')","first_failed_timeout_ms":5000,"app_response":"UNKNOWN","provider_response":"UNKNOWN","caller_receipt":"UNKNOWN","element_wall_denominator":"UNKNOWN"},
+  "runtime_lifecycle": {"lifecycle":"completed","dispatch_queue_ms":0.901,"handler_ms":21740.631,"provider_wall_ms":13780.929,"dispatch_wall_denominator_ms":21741.532,"response_write_wall_ms":3.44,"caller_receipt_ms":"UNKNOWN","network_arrival_ms":"UNKNOWN","request_body_receive_ms":"UNKNOWN","execution_lock_wait_ms":"UNKNOWN"},
+  "sampling": {"sample_total":828,"lost_samples":15,"sampling_interval_ms":20.0,"observer_cpu_ms":877.038,"observer_cpu_attribution":"capture-wide; not attributed to request","truncated":false,"events":57,"max_events":128,"max_bytes":65536},
+  "phase_counts":[{"phase":"accept","count":2},{"phase":"authorization","count":38},{"phase":"coordinator_admission","count":2},{"phase":"coordinator_lock","count":2},{"phase":"dispatch_queue","count":2},{"phase":"handler_entry","count":2},{"phase":"http_response","count":4},{"phase":"provider","count":2},{"phase":"receipt","count":2},{"phase":"summary","count":1}],
+  "state_counts":[{"state":"start","count":28},{"state":"end","count":28},{"state":null,"count":1}],
+  "top_inclusive_frames":[
+    {"file":"<runtime>/server.py","function":"_dispatch","line":1229,"sample_count":828,"sample_total":828,"lost_samples":15},
+    {"file":"<runtime>/server.py","function":"_route","line":547,"sample_count":828,"sample_total":828,"lost_samples":15},
+    {"file":"<runtime>/server.py","function":"_timeline_commit","line":332,"sample_count":828,"sample_total":828,"lost_samples":15},
+    {"file":"<runtime>/server.py","function":"do_POST","line":1264,"sample_count":828,"sample_total":828,"lost_samples":15},
+    {"file":"<runtime>/service.py","function":"wrapped","line":438,"sample_count":828,"sample_total":828,"lost_samples":15}
+  ],
+  "top_leaf_frames":[
+    {"file":"<stdlib>/copy.py","function":"deepcopy","line":125,"sample_count":39,"sample_total":828,"lost_samples":15},
+    {"file":"<stdlib>/copy.py","function":"deepcopy","line":119,"sample_count":33,"sample_total":828,"lost_samples":15},
+    {"file":"<runtime>/timeline_commit_validation.py","function":"reuse","line":120,"sample_count":27,"sample_total":828,"lost_samples":15},
+    {"file":"<runtime>/timeline_commit_validation.py","function":"reuse","line":116,"sample_count":24,"sample_total":828,"lost_samples":15}
+  ],
+  "private_raw_data_retained": ["payload","idempotency_key_value","auth","URL","headers","exception_text","locals","raw_stacks","private_service_logs"]
+}
