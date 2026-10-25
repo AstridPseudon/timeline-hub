@@ -1,0 +1,55 @@
+{
+  "task": "F-D108 D07 exact source receipt and handoff-target correction",
+  "mode": "docs-only",
+  "status": "SOURCE-QUALIFIED/BEHAVIOR-PENDING",
+  "functional_coverage": "UNPROVED",
+  "candidate": {
+    "ref": "tl/agt-F-D108-D07-coverage-0732",
+    "sha": "f45e6c732d35dc7a04cd6fc0d019f5f67bcc522b",
+    "base": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "candidate_blob": "1b34745fca1dcc21f15267f744711eb16d4b5700",
+    "parent_blob": "62384aad61494c67a614ad1a7122fee4119e0829",
+    "normal_merge": "b943270a9ed42bb968dbaeace7b296d9898ea21b",
+    "normal_receipt": "queue/done/merge-agt-F-D108-D07-coverage-0732"
+  },
+  "review": {
+    "handoff": "handoff-agt-D108-batch-review-0737.md/.json",
+    "scope": "A",
+    "verdict": "PASS_SOURCE"
+  },
+  "source_basis": "handoff-agt-D108-D07-source-0724.md/.json",
+  "mappings": [
+    {
+      "id": "D07-1",
+      "original": "tests/test_timeline_editing_helpers.py::test_ripple_is_track_scoped_and_never_moves_audio",
+      "current": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_exact_track_scoped_ripple_timing_and_audio",
+      "status": "SOURCE-QUALIFIED/BEHAVIOR-PENDING"
+    },
+    {
+      "id": "D07-2",
+      "original": "tests/test_timeline_editing_helpers.py::test_canonical_source_trim_speed_move_and_retime_intervals",
+      "current": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_speed_two_preserves_source_window_move_and_endpoint_length",
+      "status": "SOURCE-QUALIFIED/BEHAVIOR-PENDING"
+    },
+    {
+      "id": "D07-3",
+      "original": "tests/test_timeline_editing_helpers.py::test_ripple_shifts_canonical_intervals_without_touching_audio",
+      "current": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_shifted_source_window_and_audio_bytes",
+      "status": "SOURCE-QUALIFIED/BEHAVIOR-PENDING"
+    }
+  ],
+  "boundary": {
+    "d69_effective_closure": false,
+    "static_test_pass": false,
+    "legacy_retirement": false,
+    "new_scope": false,
+    "retired_policy_flags": "separately approved D07 interface scope only",
+    "full_core_tuple": "immutable; not retargeted or repeated; may not contain the three new selectors",
+    "post_core_coverage": "meaningful coverage remains required if the selectors are absent"
+  },
+  "handoff_copy": {
+    "source": "handoff-agt-F-D108-D07-coverage-0732.md/.json",
+    "target": "handoff-agt-D108-D07-coverage-0732.md/.json",
+    "operation": "exact byte copy; authored source unchanged"
+  }
+}

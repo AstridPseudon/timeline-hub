@@ -429,3 +429,20 @@ outcomes, including the D108 full-core terminal. The archive read is not
 combination proof. D100 and D110 remain separate; the original M1 source has
 no ABA tail, and genuine separate ABA tests remain unchanged.
 
+## F-D108 D07 source-qualified receipt — 0743
+
+<!-- source-receipt-marker: D108-D07-SOURCE-RECEIPT-0743 -->
+
+| Receipt | Exact original positive helper selectors | Exact current selectors | Source/review/normal receipt | Status |
+| --- | --- | --- | --- | --- |
+| F-D108-D07-source-0743 | `tests/test_timeline_editing_helpers.py::test_ripple_is_track_scoped_and_never_moves_audio`; `tests/test_timeline_editing_helpers.py::test_canonical_source_trim_speed_move_and_retime_intervals`; `tests/test_timeline_editing_helpers.py::test_ripple_shifts_canonical_intervals_without_touching_audio` | `tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_exact_track_scoped_ripple_timing_and_audio`; `tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_speed_two_preserves_source_window_move_and_endpoint_length`; `tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_shifted_source_window_and_audio_bytes` | Authentic authored source handoff `handoff-agt-F-D108-D07-coverage-0732.md/.json`, corrected byte-copy target `handoff-agt-D108-D07-coverage-0732.md/.json`; candidate `tl/agt-F-D108-D07-coverage-0732` `f45e6c732d35dc7a04cd6fc0d019f5f67bcc522b`, candidate blob `1b34745fca1dcc21f15267f744711eb16d4b5700`, parent blob `62384aad61494c67a614ad1a7122fee4119e0829`; independent `handoff-agt-D108-batch-review-0737.md/.json` Scope A `PASS_SOURCE`; normal queue receipt `queue/done/merge-agt-F-D108-D07-coverage-0732` and `merges.log` record `b943270a9ed42bb968dbaeace7b296d9898ea21b` merging onto `070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2` (source proof only) | SOURCE-QUALIFIED / BEHAVIOR-PENDING; D108 actual functional coverage is UNPROVED. No D69 effective closure, static-test PASS, legacy retirement, or new scope is claimed. |
+
+This receipt preserves the three original positive helper selectors and their
+three exact current selectors individually. The separately approved D07
+retired-policy flags remain interface-scope facts only; they are not broad
+blanket clearance. The immutable full-core captured tuple is not retargeted
+or repeated and may not contain these three new selectors; if they are absent
+from that capture, meaningful post-core coverage remains required. No product,
+guard, authority, pin, source body, or test-body edit is implied by this
+source receipt.
+

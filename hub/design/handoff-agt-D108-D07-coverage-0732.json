@@ -1,0 +1,117 @@
+{
+  "task": "F-D108 D07 faithful current coverage",
+  "mode": "source-only",
+  "status": "SOURCE_QUALIFIED_HELD_FOR_PROTECTED_REVIEW",
+  "base": {
+    "ref": "tl/integration",
+    "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "allowed_file": "tests/editing_conformance/test_recipe_m2_clip_trim.py",
+    "parent_blob": "62384aad61494c67a614ad1a7122fee4119e0829",
+    "candidate_blob": "1b34745fca1dcc21f15267f744711eb16d4b5700",
+    "diff": {"additions": 94, "deletions": 0}
+  },
+  "source_preservation": {
+    "existing_bodies_args_assertions_markers": "BYTE_CONSERVED",
+    "ast_parse_and_in_memory_compile": "PASS_PARENT_AND_CANDIDATE",
+    "new_selectors": [
+      {
+        "selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_exact_track_scoped_ripple_timing_and_audio",
+        "lines": "133-158",
+        "body_sha256": "a7b2497917104be830e6a1fcc0105c20b1b01d11a56f67ac98d63e33032c8e5b"
+      },
+      {
+        "selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_speed_two_preserves_source_window_move_and_endpoint_length",
+        "lines": "161-191",
+        "body_sha256": "8c971cd5f011d28ffec6b33cfb607eb44ef7683466cab69ccc08db4bd4488a2a6"
+      },
+      {
+        "selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_shifted_source_window_and_audio_bytes",
+        "lines": "194-224",
+        "body_sha256": "958988f8e601107d89d856b1251037c6ca11e3e4bda617eb50ba4fc9633d83a6"
+      }
+    ]
+  },
+  "predicate_map": [
+    {
+      "id": "D07-1",
+      "old_selector": "tests/test_timeline_editing_helpers.py::test_ripple_is_track_scoped_and_never_moves_audio",
+      "old_source": {
+        "tree": "c456b328",
+        "lines": "93-111",
+        "body_sha256": "2fa51658762c0efbbb6ba9384067d293729c7ec5abd779f1a4a425eb6c1435d3"
+      },
+      "new_selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_exact_track_scoped_ripple_timing_and_audio",
+      "asserted": [
+        "input first visual (at,from,to)=(0,0,1)",
+        "first visual (at,from,to)=(0,0,1.5), playback [0,1)->[0,1.5)",
+        "later same-track visual at=1.5 with source [0,1)",
+        "unrelated audio (at,from,to)=(0,0,2)",
+        "compiled parent duration 2.5 from original 2"
+      ],
+      "disposition": "LIVE_MISSING_COVERAGE_CANDIDATE",
+      "retired_refusals": "approved_interface_retirement; audio-target ripple and parent_duration=preserve are not reintroduced"
+    },
+    {
+      "id": "D07-2",
+      "old_selector": "tests/test_timeline_editing_helpers.py::test_canonical_source_trim_speed_move_and_retime_intervals",
+      "old_source": {
+        "tree": "c456b328",
+        "lines": "114-131",
+        "body_sha256": "7c2a1ce6e8a400421422a6cd93aef8b8c06cee1f501c96213516af64690b3f74"
+      },
+      "new_selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_speed_two_preserves_source_window_move_and_endpoint_length",
+      "asserted": [
+        "speed 2 at=4 with source [2,4] and canonical from/to fields",
+        "source_start/source_end helper aliases absent",
+        "half-open frames (120,150) at 30 fps",
+        "current canonical inconsistent duration/window placement refuses before mutation",
+        "move to 10 preserves source [2,4] and speed 2",
+        "move to 20 preserves source [2,4] and speed 2",
+        "source-time trim out_s=5 at=20 yields source [2,5], speed 2, playback endpoint 21.5"
+      ],
+      "disposition": "LIVE_MISSING_COVERAGE_CANDIDATE_WITH_RETIRED_INPUT_TRANSLATION",
+      "retired_interface": "old place_media/move/retime construction is not restored; current refusal is a clip.move duration/window guard analogue",
+      "extra_obligations": "no extra ABA or inverse obligation added; absent from original selector"
+    },
+    {
+      "id": "D07-3",
+      "old_selector": "tests/test_timeline_editing_helpers.py::test_ripple_shifts_canonical_intervals_without_touching_audio",
+      "old_source": {
+        "tree": "c456b328",
+        "lines": "145-155",
+        "body_sha256": "b825f19f314baa5561afdac2f82c6bab8577d0fecd4543cbaa2818775271a2b0"
+      },
+      "new_selector": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_native_group_preserves_shifted_source_window_and_audio_bytes",
+      "asserted": [
+        "first visual playback [0,1)->[0,1.5)",
+        "later visual at=1.5 with literal source [8,9] preserved",
+        "unrelated audio row byte-exact equal to pre-edit deep copy",
+        "compiled parent duration 2.5"
+      ],
+      "disposition": "LIVE_APPROVAL_GAP_CANDIDATE_SEPARATE_FROM_D07-1"
+    }
+  ],
+  "supported_production_path": [
+    "astrid/sdk/timeline/_trim_commands.py:95 capture_clip_trim",
+    "astrid/sdk/timeline/capture.py:252 capture_move",
+    "astrid/sdk/timeline/commands.py:84,106 registered clip.move and clip.trim",
+    "astrid/sdk/timeline/commands.py:201 execute",
+    "astrid/sdk/timeline/commit.py:302 document_from_bundle"
+  ],
+  "static_checks": {
+    "ruff_candidate": "PASS: All checks passed!",
+    "ruff_parent": "PASS: All checks passed!",
+    "mypy_candidate": "PASS: Success: no issues found in 1 source file",
+    "mypy_parent": "PASS: Success: no issues found in 1 source file",
+    "git_diff_check": "PASS",
+    "runtime_tests": "NOT_RUN: D108 source-only family-body pause",
+    "evidence": "workers/agt-F-D108-D07-coverage-0732/evidence/static-source.md"
+  },
+  "constraints": {
+    "product_source_changed": false,
+    "retired_apis_resurrected": false,
+    "new_command_flags": false,
+    "protected_review_then_main": true,
+    "normal_merge": false
+  }
+}
