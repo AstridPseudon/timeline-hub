@@ -1,0 +1,18 @@
+{
+  "task": "rt-OPS-inventory-install-return-1821",
+  "prior_review": {
+    "commit": "a5c39e412b8974932bb20a726ef08f8853c594a4",
+    "verdict": "FAIL",
+    "result_code": "FAIL_SOURCE_SECURITY"
+  },
+  "responses": {
+    "F1": "install_atomic.py reserves backup and replacement with O_EXCL|O_NOFOLLOW and copies through the open descriptor; controls reject pre-existing adversarial symlink destinations for both paths.",
+    "F2": "installer requires ORCH, ORCH/bin, ORCH/backups, TMPDIR, extraction root, source checkout, and source ancestry to be physical and owner/mode safe; symlinked receiving parents refuse.",
+    "F3": "installer takes an atomic receiving lock, rechecks target hash and device/inode under the lock, and uses an O_NOFOLLOW directory fd for the identity-checked rename; changed identity refuses in controls.",
+    "F4": "post-replacement readback checks target and both helpers for regular non-symlink single-link shape, owner, mode, bytes, hashes, and cmp; any postcommit failure reports INSTALLED_BUT_UNVERIFIED without retry or alternate route.",
+    "F5": "TMPDIR must be an existing owned physical non-broadly-writable directory outside ORCH and SOURCE_CHECKOUT; the fresh extraction root is revalidated before archive extraction.",
+    "F6": "source checkout ownership and physical ancestry are enforced before git status/archive use; source commit and clean status remain exact.",
+    "F7": "installer requires exact E2E_RESULT and INDEPENDENT_REVIEW JSON artifacts before any receiving write; review binds result path/hash, candidate hash, source commit, and receiver identity. Missing or malformed gates refuse and D125b remains HOLD."
+  },
+  "context_boundary": "The receiving lock is the approved manager boundary. An uncoordinated writer that ignores that boundary is not an allowed route; the script does not claim to serialize such a writer."
+}

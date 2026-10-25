@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T18:22:31Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 0m -->
-# runtime board, 2026-10-25T18:22:07Z
+<!-- main | 2026-10-25T18:27:24Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 2m -->
+# runtime board, 2026-10-25T18:25:10Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -434,7 +434,7 @@
 
 | R2-graph-boundary | Assess current graph child inverse | Luna | Authentic stage and physical records | later | Author1744; independent1749 PASS | Current track-only fix does not cover clip aliases. Causal owner UNKNOWN; exact accepted/stage/physical records absent. No body. | PASS SOURCE ASSESSMENT1749 | Source unchanged |
 | D127-leaf-current | Preserve exact helper import evidence | Luna | App1734 is first intake owner | gated:duplicate | rt-D127-leaf-retention-ready-1741 | Exact231ddb import completed. Offline21PASS and prior23 reused; three parent E402 diagnostics retained. No duplicate merge; App1734 owns intake. | Prior helper review reused | Duplicate source only |
-| OPS-inventory-E2E | Prove whole tiny-package make | Luna | Actual fixture proof and independent result | doing | Agent1805 same WIP1800 | Source1747 received; normal service fixture setup owns sole parent RED and candidate GREEN body. No production request. | Result review follows | f6b9d4d528 held |
+| OPS-inventory-E2E | Prove whole tiny-package make | Luna | Actual fixture proof and independent result | doing | Agent1810 same WIP1805 | Prior disk parser exited before fixture body; corrected numeric preflight continuation owns sole genuine proof. No production request. | Result review follows | f6b9d4d528 held |
 
 | D100-provider-birth | Preserve authenticated item birth | Sol / Luna | App genuine regression and own9 | blocked:app | Author1742; independent1803 PASS | Exact two-file candidate source/security PASS; statics and origins PASS. Behavior NOTRUN below5GB; App owns admitted proof. | PASS SOURCE SECURITY1803 | 9486cbb06e held |
 
@@ -445,7 +445,7 @@
 Runtime producer: Normal e319 adds exact leaf-helper tests only; product remains qualified ab1e step, inverse/redo and safe diagnostic source. Home1550 genuine3/native2 PASS. Held SWAP WAL1537 excluded; broader original-four behavior remains unqualified.
 core open:425 and REG14 from immutable30693. Agent child1610 passed D131 reserve then refused source ownership, zero core body. No bounded-proof deduction. Agent a4e016/5e9ad/d8a1/635f capture stays exact.
 Gates: P1/P3 recorded GO; P4 independent GO28.101seconds. FullP2 NO-GO for element/SWAP; no cut, build or ZIP.
-Blockers: Agent core — maker source1725 independently PASS1744. Agent1805 owns genuine whole-make fixture E2E; independent result and installer correction/review required before install or production request.
+Blockers: Agent core — source1725 and security1744 PASS. Agent1810 resumes sole fixture E2E after zero-body numeric parser correction; result review and private installer repair/review required before install.
 Blockers: Main reproduction — missing Store and unchanged8GiB diagnostic gate; free about5.2GB. No real diagnostic or actual-path census. Fixture10paths versus0 remains explicitly modeled.
 Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after automatic classifier refusal1537. No retry/rephrase/transfer/review/alternate test/rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
 Blockers: Agent roots — scalar/compound still UNKNOWN; transcriptpin317 two cases FAIL, owner UNKNOWN and persisted private records EXACTMISSING. No guard writer inferred.
@@ -459,8 +459,8 @@ Kit: Installed0857 unchanged. Candidatec3226b/source09ed independentlyPASS1744. 
 Venues: No Main heavy body; Farm core dropped, D77 only. Agent sole local core stopped at new report mismatch; zero service ID/body. New exact kit required. Historical tuples and failures never retargeted.
 Delivery: Private100Python+TS/41matrix and D123 current patch source qualified; final cut remains gated. D126 App owns migration prose/ZIP line. R2c81b/D116 source-only seeds held; no D79 or competing small-file writers.
 Safety: All D130 and prior D88/D111/retirement refusals stay held. D106 ORCH-only output; no hub writes, Git mutations, credentials, upstream push, M5 or permission-file changes by manager.
-Disk: Sweep3 removed0. Compact packed0 scratch/test directories and losslessly gzipped8 old logs. Current free5.10GB; completed workers auto-recycled, branches/evidence retained. Dirty/refused targets held.
-live 1 / cap 6 at5.04GB; ready-undispatched 0. One local Luna installer firstreturn1821. Agent1805 sole E2E; App element1809 and D100 exact held-source receiving allocated. No local heavy body.
-INBOX consumed through1408775bytes. Updated 2026-10-25T18:22:07Z.
+Disk: Sweep3 removed0; compact packed0 scratch/test directories and losslessly gzipped2 old logs. Free5.052GB. Three finished current workers already auto-recycled; no dirty, KEEP or refused targets retried.
+live 1 / cap 6 at5.05GB; ready-undispatched 0. One local Luna installer firstreturn1821. Agent1810 sole E2E; App element1813 route review and D100 receiving allocated. No Main heavy body.
+INBOX consumed through1408775bytes. Updated 2026-10-25T18:25:10Z.
 Later: OriginalTrue redo-birth still fails on d4ba/ab1e. Independent1712 verified custody and traced full path; exact authenticated redo records and stage pairs absent, owner UNKNOWN. No unchanged retry or guard author.
 Later: Graph applicability1744 and independent1749 PASS source assessment; ab1e track-only correction does not cover clip aliases. Accepted/stage/physical pairs EXACTMISSING; owner UNKNOWN, no auth author.

@@ -1,0 +1,43 @@
+{
+  "task": "rt-OPS-inventory-install-return-1821",
+  "held_wip": "a5c39e412b8974932bb20a726ef08f8853c594a4",
+  "scope": "private installer, runbook, and controls only",
+  "source": {
+    "commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "bytes": 69516,
+    "mode": "0755"
+  },
+  "preimage": {
+    "commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755"
+  },
+  "protected_helpers": {
+    "bench_store.py": {
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "bytes": 43403,
+      "mode": "0755"
+    },
+    "verify_dependency_seed.py": {
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "bytes": 52731,
+      "mode": "0755"
+    }
+  },
+  "route": {
+    "receiving_lock": "ORCH/bin/.make-child-venv.install.lock",
+    "backup": "ORCH/backups/make-child-venv.<UTC timestamp>.bak",
+    "temporary_copy": "O_EXCL|O_NOFOLLOW descriptor-bound copy",
+    "replacement": "directory-fd-bound identity-checked atomic rename",
+    "postcommit_failure": "INSTALLED_BUT_UNVERIFIED; no retry or alternate route"
+  },
+  "gates": {
+    "agent_e2e_1800": "required exact E2E_RESULT artifact; pending",
+    "independent_result_review": "required exact INDEPENDENT_REVIEW artifact after E2E; pending",
+    "d125b": "HOLD",
+    "live_install": false
+  }
+}
