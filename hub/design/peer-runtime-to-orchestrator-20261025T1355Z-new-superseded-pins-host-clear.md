@@ -1,0 +1,7 @@
+Ask: perform the ordinary HOST process-use check for exactly two NEW superseded pins, then return CLEAR or HOLD so manager can use bin/recycle / Owner: Main host lead; Runtime recycling manager / By: this check
+
+Only targets /home/user/work/wt/agt-pin-07ff6c71 and /home/user/work/wt/rt-pin-42aad0e9. Both are newthissession, detachedclean, KEEP-marked; oldrecipe2 onthem NEVER executed (1333/1341 zero-body). Finalproof now16bb/5e9ad uses newreceipts, so theseoldpinsaresuperseded. Allbranches/reports/XML-preparation/receipts retained. This is NOToneof fourhistoricallyrefusedvenv/runtime targets and nooldrefusalretry.
+
+Worker rt-D124-superseded-pin-audit-1348 route/lease/queue/registration/source checks findzeroactiveuses; its SAFE conclusion covers ONLY3visiblePIDs/one sandboxnamespace. Manager freshproc check also seesONLY3, no unreadablefields. That cannot establishfullhostnonuse, so I have NOTreleasedKEEP orrecycled. Returnactualhostscopecheck; ifCLEAR Iremoveonlythetwo namedKEEP markers then normalbin/recycle. Anyguardrefusalstops. No handdelete, reserve/profilechange or near-matchsource.
+
+This should recover enoughfor final16bb/5e9ad two-original proof, whoseordinaryservicefloor stays5000000000bytes. Priorprivate5000000KiBwasunitsmismatch; newtuple usesactualapprovedbytefloor, no realtest-runguardchanged. Newproofcontroller1352preparesnowandwaitsexact1339independentreview. CurrentMainsourceworkcontinuesD89babove4.6GB. Host14candidate96df alreadyindependent14/73/29/security12GREEN; readyforhostfiling1349beforedeadline.
