@@ -522,8 +522,19 @@ function accepted(post: CommitPost, before: HeadPin): CommitAcceptedMutation {
 
 async function assertSharedMediaCommands(
   post: CommitPost, seed: PopupSeed, wire: PopupWire, op: 'occurrence.add-media' | 'occurrence.swap-media',
+  before: CanonicalDocument,
 ): Promise<void> {
   const owner = `occurrence:${seed.sharedOccurrenceId}`;
+  const occurrence = array(before.parent_revision.payload.occurrences, 'source-derived occurrence')
+    .find((row) => row.occurrence_id === seed.sharedOccurrenceId);
+  expect(occurrence, 'source-derived occurrence').toBeTruthy();
+  const shot = before.shot_revisions.find((row) => row.revision_id === occurrence!.shot_revision_id);
+  expect(shot, 'source-derived shot').toBeTruthy();
+  const internal = before.internal_timeline_revisions.find((row) => row.revision_id === shot!.internal_timeline_revision_id);
+  expect(internal, 'source-derived internal timeline').toBeTruthy();
+  const beforeAssets = object(object(internal!.payload.registry, 'source-derived registry').assets,
+    'source-derived registry assets');
+  const expectedAsset = sha256Hex(seed.file.buffer);
   expect(post.body.commands.map((command) => command.op)).toEqual(['occurrence.fork', op]);
   const fork = post.body.commands[0];
   expect(fork).toEqual({ schema_version: 1, op: 'occurrence.fork', version: '1', select: owner,
@@ -546,6 +557,7 @@ async function assertSharedMediaCommands(
     catalog_digest: object(selected.find((value) => value.asset === imported.asset_id), 'selected imported asset').catalog_digest };
   expect(media).toMatchObject({ asset: expect.any(String), generation_id: expect.any(String), variant_id: expect.any(String),
     object_id: expect.stringMatching(/^sha256:[0-9a-f]{64}$/), catalog_digest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) });
+  expect(media.asset).toBe(expectedAsset);
   expect(media.asset).not.toBe(seed.oldMedia.asset);
   expect(media.generation_id).not.toBe(seed.oldMedia.generation_id);
   expect(media.variant_id).not.toBe(seed.oldMedia.variant_id);
@@ -556,15 +568,21 @@ async function assertSharedMediaCommands(
   const args = op === 'occurrence.swap-media'
     ? { old_media: { asset: seed.oldMedia.asset, generation_id: seed.oldMedia.generation_id,
       variant_id: seed.oldMedia.variant_id, object_id: seed.oldMedia.object_id, catalog_digest: seed.oldMedia.catalog_digest }, media }
-    : { row: expectedAddedRow(command, media.asset), media };
+    : { row: expectedAddedRow(command, expectedAsset), media };
   expect(command).toEqual({ schema_version: 1, op, version: '1',
     select: op === 'occurrence.swap-media' ? `${owner}/clip:${TARGET_CLIP_ID}` : owner,
     args, intent: { ownership: 'occurrence' },
-    ...(op === 'occurrence.add-media' ? { created: [
-      `${owner}/asset:${media.asset}`,
-      `${owner}/clip:${String(object(args.row, 'reserved added row').id)}`,
-    ] } : {}) });
+    created: expectedPopupCreatedClaims(beforeAssets, owner, op, expectedAsset,
+      op === 'occurrence.add-media' ? String(object(args.row, 'reserved added row').id) : TARGET_CLIP_ID) });
   if (op === 'occurrence.swap-media') expect(selected).toContainEqual(args.old_media);
+}
+
+function expectedPopupCreatedClaims(
+  beforeAssets: JsonObject, owner: string, op: 'occurrence.add-media' | 'occurrence.swap-media',
+  asset: string, clipId: string,
+): string[] {
+  const created = Object.prototype.hasOwnProperty.call(beforeAssets, asset) ? [] : [`${owner}/asset:${asset}`];
+  return op === 'occurrence.add-media' ? [...created, `${owner}/clip:${clipId}`] : created;
 }
 
 function expectedAddedRow(command: CommitRequest['commands'][number], asset: unknown): JsonObject {
@@ -911,7 +929,7 @@ async function runPopupCase(
   const original = await canonicalAt(harness, seed, before.head.revision_id);
   const post = await commitFromGesture(page, wire, () => action(dialog, seed.file));
   assertFullRequest(post, before.head, seed, harness);
-  await assertSharedMediaCommands(post, seed, wire, op);
+  await assertSharedMediaCommands(post, seed, wire, op, original);
   const result = accepted(post, before.head);
   const expected = expectedPopupDocument(original, seed, post, beforeRaw);
   // Whole-document equality preserves every sibling, registry entry, ordered

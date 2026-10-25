@@ -10,18 +10,21 @@ import ts from 'typescript';
 
 const source = readFileSync(new URL('../three-products.p2-popup.spec.ts', import.meta.url), 'utf8');
 const trafficHelper = source.match(/^function isReadOnlyInspection\([^]*?^}/m)?.[0];
+const createdClaimsHelper = source.match(/^function expectedPopupCreatedClaims\([^]*?^}/m)?.[0];
 const publicationHelper = source.match(/^function authoritativePublicationId\([^]*?^}/m)?.[0];
 const historyHelper = source.match(/^function assertAuthoritativeHistoryPublication\([^]*?^}/m)?.[0];
 const headHelper = source.match(/^function assertAuthoritativeHead\([^]*?^}/m)?.[0];
 const inverseHelper = source.match(/^function assertInverseTargetsPublication\([^]*?^}/m)?.[0];
 const undoHelper = source.match(/^function assertUndoHistoryPublication\([^]*?^}/m)?.[0];
 assert.ok(trafficHelper, 'exercise the actual popup traffic classifier');
+assert.ok(createdClaimsHelper, 'exercise the actual popup created-claims helper');
 assert.ok(publicationHelper, 'exercise the actual popup reply helper');
 assert.ok(historyHelper && headHelper && inverseHelper && undoHelper, 'exercise actual popup publication helpers');
 const compile = (body, returnName, names, values) => compileFunction(
   `${ts.transpileModule(body, {}).outputText}\nreturn ${returnName};`, names,
 )(...values);
 const readOnlyInspection = compile(trafficHelper, 'isReadOnlyInspection', ['Request'], [undefined]);
+const expectedPopupCreatedClaims = compile(createdClaimsHelper, 'expectedPopupCreatedClaims', [], []);
 const publicationId = compile(publicationHelper, 'authoritativePublicationId', ['expect'], [expect]);
 const checkBindings = compile(
   [historyHelper, headHelper, inverseHelper, undoHelper]
@@ -63,6 +66,25 @@ test('actual popup traffic classifier accepts only the exact read-only inspect P
     ['GET', '/v1/projects/project/timelines/timeline/inspect'],
     ['POST', '/v1/projects/project/timelines/timeline/inspect?limit=1'],
   ]) assert.equal(readOnlyInspection(request(method, path)), false, `${method} ${path}`);
+});
+
+test('actual popup created-claims helper distinguishes new and reused aliases exactly', () => {
+  const owner = 'occurrence:occ-shared';
+  const asset = 'sha256:new-asset';
+  const clip = 'clip-target';
+  assert.deepEqual(expectedPopupCreatedClaims({}, owner, 'occurrence.swap-media', asset, clip), [`${owner}/asset:${asset}`]);
+  assert.deepEqual(expectedPopupCreatedClaims({ [asset]: {} }, owner, 'occurrence.swap-media', asset, clip), []);
+  assert.deepEqual(expectedPopupCreatedClaims({}, owner, 'occurrence.add-media', asset, clip), [
+    `${owner}/asset:${asset}`, `${owner}/clip:${clip}`,
+  ]);
+  const expected = [`${owner}/asset:${asset}`];
+  for (const wrong of [
+    [],
+    [`${owner}/asset:${asset}`, `${owner}/clip:${clip}`],
+    [`parent/asset:${asset}`],
+    [`${owner}/asset:wrong`],
+    [`${owner}/asset:${asset}:1`],
+  ]) assert.notDeepEqual(wrong, expected);
 });
 
 test('actual popup helpers accept distinct UUID request and txn receipt identities', () => {
