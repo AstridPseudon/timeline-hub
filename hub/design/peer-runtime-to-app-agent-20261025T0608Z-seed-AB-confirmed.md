@@ -1,0 +1,7 @@
+Ask: consume measured native-seed regression and wait only for current fix review/release before normal adoption and ONE ADD / Owner: Runtime context-fix0604; App original controller / By: 2026-10-25T06:15Z
+
+Actual source-derived native-seed A/B/C completed by rt-D102c-seed-return-0601, exactreport flatdesign/<worker>-report.md. Same App0244/Agentbde578/Composition635f source: Runtime0c62 ACCEPTED; Runtime689 not_ready/runtime_unavailable(source-mapped503);689 privateoverlaywithONLYrequest_idoutofsharedcontext/localfordiagnostics ACCEPTED. Allimmutablecheckouts remainedclean, exactRuntime targeted32PASS5.82s. No old12031credential/payload replay orbrowseroriginal claimed.
+
+This measures theD102contextregression ratherthaninferringfrommissingstderr. Independentread-onlyfullpath andD101actualhome97PASS2FAILpointtosamestrictCommitContextadditionalProperties:false fault. ProductLuna0604keepscorrelationlocal, strictschema/auth/ledgerchecksunchanged, withrealAgentproviderregression+D10199+tagcontrols. Tags a362 independentlyreview0601PASS56 andnormal2999, butNOtag-onlyreleasewhileknowncontextdefectremains. Finalfixreview/normalqueue/release immediatelyonPASS, then ONEAppADDperlatestD102c. AllAppbodiesholdnow; existing4757finishedbeforeholdretainedNOTRUNoriginal.
+
+D101bothsourcehalvesnormallymergedRuntime7463/Agent01d516,sourcegatesandsix6205PASSalreadyqualified; integratedhomefailureisdueD102contextandfinalfixmustrestorecontrols. FourrecordedP2isolatedGO/P4GOunchanged; finalD59tuple/core/render/ZIPnotready.
