@@ -1,0 +1,15 @@
+{
+  "time_utc": "2026-10-25T14:36:22.890607+00:00",
+  "normal_head": "84857c45347539c7820bb054b69e2e5ad4079081",
+  "normal_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+  "reviewed_candidate": "9d75477be4ab209fed52087f06bfcd20487ce1a9",
+  "reviewed_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+  "full_tree_equal": true,
+  "author": "app-D126-reviewed-clean-import-1425",
+  "author_sha": "f4c3f94bc135507cd9e9ad0cb45ff601033b8094",
+  "merge_receipt": "queue/done/merge-app-D126-reviewed-clean-import-1425",
+  "reviewer": "app-D124-bounds-final-review-1414",
+  "verdict": "PASS_SOURCE_ONLY",
+  "actual_reviewed_activation": "pending protected1435",
+  "browser_credit": false
+}

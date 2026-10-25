@@ -1,0 +1,7 @@
+{
+  "exception_class": "SystemExit",
+  "message": "P2 Runtime phase helper is unavailable at the selected Runtime source",
+  "callsite": "scripts/testing/sitecustomize.py:_start_capture:51",
+  "source": "existing helper basename guard",
+  "normal_startup_exit": 78
+}

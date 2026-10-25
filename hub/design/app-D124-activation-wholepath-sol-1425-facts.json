@@ -1,0 +1,108 @@
+{
+  "verdict": "ROOT_PROVED_CONFIGURATION_ONLY; fresh socket controls pending central runner",
+  "app_head": "af5fe0a2748ce6df65fb36ce9cd435fc1df0502a",
+  "app_tree": "2afa38ba9e8ebfcefb23c81dbc1af3b1b9eabe0c",
+  "source_changes": [],
+  "source_sha256": {
+    "/home/user/work/wt/app-D124-activation-wholepath-sol-1425/scripts/testing/sitecustomize.py": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e",
+    "/home/user/work/wt/app-D124-activation-wholepath-sol-1425/tests/e2e/local/support/harness.ts": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e",
+    "/home/user/work/wt/app-D124-activation-wholepath-sol-1425/tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": "b02699f153afebe6b1f26384e565aab396d4017c12b7efb34e5992aa6e8d5ee8",
+    "/home/user/work/wt/app-D124-activation-wholepath-sol-1425/tests/e2e/fake-runtime/server.contract.test.mjs": "d828318c032f6d256589c4c62669b9452107181bcc0caedaf4579ecdeb9f8955",
+    "/home/user/work/wt/rt-pin-5e9ad1c6/tests/helpers/p2_commit_phase_capture.py": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D124-helper-final-review-1315-helper.py": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/server.py": "5188ad162296d7abd121d79abd2f6d1c89ef655fc30b9e24ae3c80628c974832",
+    "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/service.py": "7277fc12e502a419ccd9eea9dfd2b3693bc8b2c8963e9fdf7224402d8a03a529",
+    "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_execution.py": "75b8c8a214e4c54482046a59e7d051646bce22ed3ebcc2b62726e53f5a59d744"
+  },
+  "first_sanitized_exception": {
+    "exception_class": "SystemExit",
+    "message": "P2 Runtime phase helper is unavailable at the selected Runtime source",
+    "callsite": "scripts/testing/sitecustomize.py:_start_capture:51",
+    "source": "existing helper basename guard",
+    "normal_startup_exit": 78
+  },
+  "root": "1402/1414 selected app-D124-helper-final-review-1315-helper.py; existing Python bootstrap requires basename p2_commit_phase_capture.py. D66 path/hash acceptance does not waive that guard.",
+  "protected_reviewed_helper": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-activation-wholepath-sol-1425/evidence/p2_commit_phase_capture.py",
+    "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "byte_exact_copy": true
+  },
+  "comparison": {
+    "1354": "retained exact same helper hash with canonical basename passed 2 controls; 102-row 30758-byte real capture remains readable",
+    "1402": "both D66 and ASTRID override commands used noncanonical design basename",
+    "1414": "D66 override command used noncanonical design basename; PASS_SOURCE_ONLY, no activation GO",
+    "bootstrap_and_harness_sha_equal_across_af5fe0_4b4e0558_9d75477": true
+  },
+  "effective_environment_field_names": {
+    "runner_selection": [
+      "TMPDIR",
+      "ASTRID_RUNTIME_CHECKOUT",
+      "ASTRID_RUNTIME_PYTHON",
+      "ASTRID_CHECKOUT",
+      "ASTRID_PYTHON",
+      "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+      "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS",
+      "D66_RUNTIME_LOG_DIR",
+      "D66_RUNTIME_PHASE_LAUNCH_ORDINAL"
+    ],
+    "runtimeEnv_overlay": [
+      "PYTHONDONTWRITEBYTECODE",
+      "PYTHONUNBUFFERED",
+      "PYTHONPATH",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS"
+    ],
+    "after_successful_bootstrap_removed": [
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS"
+    ],
+    "note": "D66 log directory/ordinal select the sink; the existing two-control test creates its own private log directory and temporarily uses watchdog seconds 2. startRuntime overlays runtimeEnv on cleanProcessEnv; listed fields are the source-proved activation fields, not private inherited environment. SHA256 is retained after startup."
+  },
+  "bounds": {
+    "max_requests": 8,
+    "max_events": 128,
+    "max_bytes": 65536,
+    "sampling_interval_seconds": 0.02,
+    "unchanged": true
+  },
+  "correlation": {
+    "existing_capture_fields": [
+      "request",
+      "capture_namespace",
+      "pid",
+      "birth_ticks",
+      "utc",
+      "at_ms",
+      "method",
+      "route_template",
+      "idempotency_key_sha256"
+    ],
+    "public_http_id_source": "RuntimeHandler._request_id; valid X-Request-ID or uuid.uuid4().hex; returned by _error and X-Request-ID response header",
+    "logged_commit_id_source": "RuntimeService._execute_timeline_commit creates _new_request_id via secrets.token_hex(16); passed as diagnostic_request_id to coordinator and _emit_redacted_diagnostic",
+    "ids_equivalent": false,
+    "existing_hash": "lowercase hexadecimal SHA256 of UTF-8 exact Idempotency-Key header; no prefix or normalization",
+    "exact_join": "same observed key bytes join browser and helper requests, including retries; pair with capture/process namespace and request ordinal to distinguish attempts",
+    "not_an_exact_join_to_current_error_log": true,
+    "reason": "timeline_commit_error log has request_id but no idempotency-key hash; helper emits neither HTTP nor diagnostic request_id",
+    "exception": "server missing commit callable and door refusals log the HTTP _request_id directly; do not generalize those branches to service failures",
+    "proposed_helper_delta": "No bootstrap repair. If owner requires log correlation, next sole helper worker may add bounded SHA256 mappings from observed RuntimeHandler._request_id return and actual _emit_redacted_diagnostic request_id argument, associated with the existing request ordinal. No raw ids, no calls that generate ids, no product changes or new collector. Absent observations remain null."
+  },
+  "checks": {
+    "guard_only_existing_start_capture": "PASS SystemExit expected; no sink, helper import, trace hook, daemon or sockets",
+    "D66_offline_config": "PASS canonical retained path and exact SHA accepted",
+    "retained_1354_capture": "PASS readable metadata; prior evidence only",
+    "git_diff_check": "PASS",
+    "git_status": "clean",
+    "lint_typecheck": "N/A no App source changes",
+    "requested_normal_reviewed_controls": "NOT RUN: sockets require central service; no exact Node suite registered; async clarification pending"
+  },
+  "fresh_activation": false,
+  "full_tour_go": false,
+  "candidate_1414": "9d75477be4ab209fed52087f06bfcd20487ce1a9; two test files remain read only; separate clean importer owns adoption"
+}
