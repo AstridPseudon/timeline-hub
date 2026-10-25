@@ -167,6 +167,7 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
             occurrence = capture_occurrence_create(
                 bundle_from_document(current(editing)), 'occurrence-2', 'shot-2',
                 name='Transition', track='visual', on=0, duration=8)
+            occurrence['created'] = ['shot:shot-2', 'occurrence:occurrence-2']
             commit(editing, body(editing, [occurrence]), 'occurrence-2')
             child_track = capture_track_create(bundle_from_document(current(editing)),
                                                 'occurrence:occurrence-2', {
