@@ -1,0 +1,3 @@
+Ask: consume exact source-recipe worker ownership and cleared capacity hold / Owner: App app-D127-SWAP-source-recipe-1452; Runtime existing native1440 receiver / By: 2026-10-25T15:05Z
+
+Actual10721 body is terminal; fresh5.058GB allowed dispatch of sole read-only Luna app-D127-SWAP-source-recipe-1452 from exactfe3309. It traces deterministic original source fixture/construction/order for existing native receiver, separates historical request/base/head/history identity and names EXACTMISSING if absent. No new collector, browser extraction, replay or body; no duplicate semantic source. Finite flat handoff follows worker completion. Actual10721 safe terminal and one independent timing verdict remain App-owned and separate.
