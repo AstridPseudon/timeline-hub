@@ -76,31 +76,3 @@ describe('welcome entry', () => {
     expect(freshProgress.entryFor(new URL(`https://astrid.haus${target}`), freshProgress.readWelcomePhase())).toBe('editor');
   });
 });
-
-describe('connection step with a return address', () => {
-  const ORIGIN = 'https://astrid.haus';
-
-  it('carries the editor deep link, drops the one-shot connect flag, and is resumed at connection', async () => {
-    const { connectionStepFor, returnTargetFor, entryFor } = await import('./welcomeProgress');
-    const step = connectionStepFor({ pathname: '/tools/video-editor', search: '?project=p1&timeline=t%202&connect=1', hash: '#frame-42' });
-    const url = new URL(step, ORIGIN);
-    expect(url.pathname).toBe('/tools/video-editor');
-    expect(url.searchParams.get('connect')).toBe('1');
-    // The deep link rides in one parameter, so the work-link keys never make the step look like the editor.
-    expect(url.searchParams.has('project')).toBe(false);
-    expect(entryFor(url, 'complete')).toBe('connection');
-    expect(entryFor(url, 'tour')).toBe('connection');
-    expect(returnTargetFor(url)).toBe('/tools/video-editor?project=p1&timeline=t+2#frame-42');
-  });
-
-  it('returns only to a workspace page on this origin', async () => {
-    const { returnTargetFor } = await import('./welcomeProgress');
-    const at = (value: string) => returnTargetFor(new URL(`${ORIGIN}/tools/video-editor?connect=1&return=${encodeURIComponent(value)}`));
-    expect(at('/tools/video-editor?project=p')).toBe('/tools/video-editor?project=p');
-    expect(at('https://evil.example/tools/video-editor')).toBeNull();
-    expect(at('//evil.example/tools/video-editor')).toBeNull();
-    expect(at('javascript:alert(1)')).toBeNull();
-    expect(at('/home')).toBeNull();
-    expect(returnTargetFor(new URL(`${ORIGIN}/tools/video-editor?connect=1`))).toBeNull();
-  });
-});

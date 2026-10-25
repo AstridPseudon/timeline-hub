@@ -533,6 +533,7 @@ export function RuntimeConnectionGate({
   // The last connection the panel was drawn with. While it is set and Astrid is connected, the panel is on its way
   // out over the app; `left` clears it.
   const shownRef = useRef<RuntimeConnectionValue | null>(null);
+  const everConnectedRef = useRef(false);
   const [, panelLeft] = useReducer((count: number) => count + 1, 0);
   const exit = useMemo<RuntimeConnectionPanelExit>(() => ({
     left: () => {
@@ -560,6 +561,9 @@ export function RuntimeConnectionGate({
     if (needsPermission) connect();
   }, [gated, autoConnect, needsPermission, isBooting, isConnected, connect]);
   if (!gated) return <>{children}</>;
+  // Once Astrid has answered in this page load the app stays mounted for good: a later loss of the permission covers
+  // it with the panel (inert) rather than unmounting it, so unsaved work, undo history and the unload guard survive.
+  if (isConnected) everConnectedRef.current = true;
   let overlay: React.ReactNode = null;
   if (!isConnected) {
     // While the flag is waiting for its effect, the panel shows Chrome's prompt screen, not the explainer.
@@ -572,7 +576,7 @@ export function RuntimeConnectionGate({
   // Keyed, so the panel stays the same element while the app mounts beneath it; the app is inert until it has left.
   return (
     <>
-      {isConnected ? (
+      {isConnected || everConnectedRef.current ? (
         <div key="app" className="contents" {...(overlay ? { inert: '' } : {})}>
           <RuntimeGateOpenProvider open={!overlay}>
             {pill(connection)}

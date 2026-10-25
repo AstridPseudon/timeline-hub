@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { RuntimeConnectionGate, type RuntimeConnectionPanelExit, type RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider';
-import { connectionStepFor } from '@/app/onboarding/welcomeProgress';
 import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel';
 import { RuntimeConnectionPill } from '@/shared/components/RuntimeConnection/RuntimeConnectionPill';
 import { RuntimeAuthorityProvider } from './RuntimeAuthorityProvider';
@@ -9,24 +8,26 @@ import { resolveRuntimeAuthority } from './runtimeAuthority';
 import { RuntimeDocumentNormalizationGate } from './RuntimeDocumentNormalizationGate';
 import { isWorkspaceRoute } from './runtimeDocument';
 
-/** States where the person has to do something before Astrid can connect: the onboarding connection step owns those screens. */
-const NEEDS_THE_CONNECTION_STEP: ReadonlySet<string> = new Set([
-  'needs_permission', 'blocked', 'not_running', 'refused', 'browser_update_needed', 'unsupported',
-]);
-
 /**
- * The editor's panel. Until Astrid has connected in this page load, a state that needs the person to act sends the page
- * to the onboarding connection step (which explains the permission, points at Chrome's prompt and asks on entry), with
- * this address as the return. Everything else (looking, a phone, a restart, an update) keeps its own screen, and once
- * connected a later drop is the pill's business, never this.
+ * The editor's panel: the same connection step the onboarding shows (the card, Chrome's prompt pointer, the site-settings
+ * steps), drawn in place of the editor before it has connected and over the still-mounted editor after. On entering the
+ * permission step it asks Chrome once, as onboarding does; Connect stays for asking again. It never navigates.
  */
 export function EditorConnectionPanel({ connection, exit }: { connection: RuntimeConnectionValue; exit: RuntimeConnectionPanelExit | null }) {
-  const redirect = !exit && NEEDS_THE_CONNECTION_STEP.has(connection.state.status);
+  const { connect, isChecking } = connection;
+  const needsPermission = connection.state.status === 'needs_permission';
+  const asked = useRef(false);
   useEffect(() => {
-    if (redirect) window.location.replace(connectionStepFor(window.location));
-  }, [redirect]);
-  // While the page changes, the boot screen stays up rather than flashing a card.
-  return <RuntimeConnectionPanel connection={redirect ? { ...connection, state: { status: 'connecting' } } : connection} exit={exit} />;
+    if (!needsPermission) {
+      asked.current = false;
+      return;
+    }
+    if (asked.current) return;
+    asked.current = true;
+    // The gate already asked (installer or landing-page entry): Chrome's prompt is up, so this entry has been answered.
+    if (!exit && !isChecking) connect();
+  }, [needsPermission, exit, isChecking, connect]);
+  return <RuntimeConnectionPanel connection={connection} exit={exit} />;
 }
 
 /** Holds data providers until Runtime is connected and the opening document identity is canonical. */

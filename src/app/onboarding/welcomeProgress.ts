@@ -1,5 +1,4 @@
 import { APP_ENTRY_PATH } from '@/app/entryClassification.ts';
-import { isWorkspaceRoute } from '@/app/runtime/runtimeDocument.ts';
 
 export const WELCOME_PROGRESS_KEY = 'astrid:welcome-v1';
 export type WelcomePhase = 'tour' | 'choose' | 'connection' | 'local' | 'complete';
@@ -57,31 +56,4 @@ export function completeWelcome(selection?: {projectId: string; timelineId: stri
     if (selection.timelineId) params.set('timeline', selection.timelineId);
   } else params.set('entry', 'editor');
   return `${APP_ENTRY_PATH}${params.size ? `?${params}` : ''}`;
-}
-
-const RETURN_PARAM = 'return';
-
-/**
- * The onboarding connection step for an editor page that cannot reach Astrid, carrying the page (project and timeline
- * deep link included) to come back to. `connect=1` is what `entryFor` resumes at connection; the one-shot `connect`
- * flag is dropped from the return address so it cannot start a second prompt on the way back.
- */
-export function connectionStepFor(current: Pick<Location, 'pathname' | 'search' | 'hash'>): string {
-  const back = new URLSearchParams(current.search);
-  back.delete('connect');
-  const here = `${current.pathname}${back.size ? `?${back}` : ''}${current.hash}`;
-  return `${APP_ENTRY_PATH}?${new URLSearchParams({ connect: '1', [RETURN_PARAM]: here })}`;
-}
-
-/** The editor page the connection step was asked to return to: same origin and a workspace route only, else null. */
-export function returnTargetFor(url: URL): string | null {
-  const value = url.searchParams.get(RETURN_PARAM);
-  if (!value) return null;
-  try {
-    const target = new URL(value, url.origin);
-    if (target.origin !== url.origin || !isWorkspaceRoute(target.pathname)) return null;
-    return `${target.pathname}${target.search}${target.hash}`;
-  } catch {
-    return null;
-  }
 }
