@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T19:41:39Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 0m -->
+<!-- main | 2026-10-25T19:45:45Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 1m -->
 # runtime board, 2026-10-25T19:41:01Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -463,10 +463,12 @@
 
 | F-D135-Agent-retarget | Bind real Agent home source | Luna | Actual a30e home object | doing | rt-F-tail-Agent-retarget-1939 | Old547e proof pin is historical. Recompute actual-home census and active input corrections; no normal merge. | Independent review next | a30e74e901 |
 
+| OPS-canonical-check | Unify fixture author and review checks | Luna | Disk cleanup and source slot | ready | Next sole source return on607535 | Branch-owned exact Ruff/config, unit, compile, scoped diff and negative census. Author and reviewer run identical script. | One independent review next | Source pending |
+
 Runtime producer: Normal e319 helper/tests only; product ab1e step/inverse plus safe diagnostics. Captured core tuple remains a4e016/5e9ad/d8a1/635f.
 core open:425 and REG14 from immutable30693. D134 measurement18455 RUNNING since19:11:28; no newer count or ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO for element/SWAP. No D59 cut, final build or ZIP.
-Blockers: Agent custody — independent1926 PASS published with exact607535/runner1498/supporte85b and command. Genuine E2E waits Agent18455 terminal and check-only PASS; reserve unchanged. Installer1826 held.
+Blockers: Agent custody — source1926 PASS607535 retained; new19:46 canonical branch checkscript plus one same-script review now required before Agent E2E. Installer1826 held; reserve unchanged.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
 Blockers: Element — actual32016 FAIL. Retained raw lacks sample chains/counters, independently checked1902. App D127c source return1921 owns last cProfile round; no measured cost author yet.
 Blockers: Final render — genuine E2E/result and installed/receiving maker required before D77 request. Farm core remains dropped.
@@ -480,7 +482,7 @@ Safety: D130 and prior D88/D111/retirement refusals held. ORCH-only manager boar
 Venues: Agent sole genuine E2E venue. Main no heavy or production child. D134 measurement18455 has no ship credit; frozen historical tuples never retargeted. Cancelled control-binding request remains unstarted.
 Later: Shared scalar/compound, Gate3 deferred and graph initial child alias remain visible. No unchanged retry or speculative guard author. D133 installed exact worker paragraph in both docs.
 Disk: Fresh4.629GB before second source review dispatch; cleanup restored admission from4.584GB. Sweep3/compact in progress; no protected or refused target retried. Stop4GB.
-live 3 / cap 3; ready-undispatched 1 Runtime private join at capacity and lead freshness. Guard1938, Agentretarget1939, notes1940 live. OldB stopped; D100receipt done.
+live 3 / cap 3; ready-undispatched 2, canonicalcheck and Runtime private join. Source starts pause for requested guarded disk sweep; target5.2GB, fresh4.71GB.
 INBOX consumed through1463437bytes. Updated 2026-10-25T19:31:53Z.
 
 

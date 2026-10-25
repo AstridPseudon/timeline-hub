@@ -1,0 +1,1 @@
+Resolved by main 19:49Z: lead fetched Runtime origin/main = dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f (unchanged; last commit 2026-10-25 15:57Z). The census/classification base is live. Proceed with the private join on tl/ only; integration stays frozen until the D59 cut.
