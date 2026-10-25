@@ -1,0 +1,137 @@
+{
+  "task": "D139",
+  "audited_at_utc": "2026-10-25T21:56:57Z",
+  "eligible_candidates": [],
+  "result": "no_eligible_candidate",
+  "exclusions": [
+    {
+      "kind": "worktree",
+      "name": "agt-G2-open-commit",
+      "path": "/home/user/work/wt/agt-G2-open-commit",
+      "size_bytes": 119992320,
+      "head": "a086cc6db7928dc4a3516d304dd9a472b050f1cf",
+      "branch": "tl/agt-G2-open-commit",
+      "finished": true,
+      "merged_into_integration": true,
+      "dirty": true,
+      "active_process_cwd_or_fd": false,
+      "queue_reference": false,
+      "lease_reference": false,
+      "keep": false,
+      "normal_authorization": "bin/recycle only after clean status",
+      "disposition": "ineligible_dirty_recycle_guard",
+      "witness": "git status --short reports M astrid/sdk/timeline/sync.py; the normal recycle guard therefore refuses"
+    },
+    {
+      "kind": "worktree",
+      "name": "agt-F-final-source-join-0816",
+      "path": "/home/user/work/wt/agt-F-final-source-join-0816",
+      "size_bytes": 126955520,
+      "head": "0c2c28da4f9733a1becc134f95219ae3079fc50e",
+      "branch": "tl/agt-F-final-source-join-0816",
+      "finished": true,
+      "merged_or_registered_source": true,
+      "dirty": false,
+      "active_process_cwd_or_fd": false,
+      "queue_reference": false,
+      "lease_reference": false,
+      "keep": true,
+      "normal_authorization": "recycle is refused by KEEP marker",
+      "disposition": "protected_keep_source"
+    },
+    {
+      "kind": "bench",
+      "name": "venv-agent-child-d137-a4e016",
+      "path": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "size_bytes": 848089088,
+      "entry_key": "child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "agent_sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "runtime_sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "registered_at_receipt": "2026-10-25T21:24:50Z",
+      "age_at_audit_seconds": 1327,
+      "process_cwd_or_fd": false,
+      "bench_lock_fd": false,
+      "queue_reference": false,
+      "lease_reference": false,
+      "keep": false,
+      "source_and_metadata": "bench-store index, .bench-owner.json, provision report, source and client markers present",
+      "normal_authorization": "request-retire-venv only after ordinary age/registration guard",
+      "disposition": "ineligible_registered_under_one_hour_guard",
+      "prior_refusal_check": "no prior refusal for this exact name; age guard is independently binding"
+    },
+    {
+      "kind": "bench",
+      "name": "venv-agent-child-d40-ba8f-f320",
+      "path": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+      "size_bytes": 772354048,
+      "entry_key": "child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+      "agent_sha": "ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+      "runtime_sha": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+      "registered_at_receipt": "2026-10-24T04:46:35Z",
+      "process_cwd_or_fd": false,
+      "bench_lock_fd": false,
+      "queue_reference": false,
+      "lease_reference": false,
+      "keep": false,
+      "source_and_metadata": "bench-store entry and retained source markers present",
+      "suite_reference": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:173",
+      "normal_authorization": "request-retire-venv only through referenced-suite guard",
+      "disposition": "ineligible_registered_suite_reference",
+      "prior_refusal_check": "no retry; current suite reference is a live protection"
+    },
+    {
+      "kind": "protected_venv",
+      "name": "d22",
+      "path": "/home/user/work/venv-agent-child-d22-8c3b926e",
+      "size_bytes": 517910528,
+      "process_cwd_or_fd": false,
+      "disposition": "absolute_protected_target_never_recommend"
+    },
+    {
+      "kind": "protected_venv",
+      "name": "f1012",
+      "path": "/home/user/work/venv-agent-child-f1012-installed",
+      "size_bytes": 1054433280,
+      "process_cwd_or_fd": false,
+      "disposition": "absolute_protected_target_never_recommend"
+    },
+    {
+      "kind": "runtime_prior_refusal",
+      "name": "agent-remotion-main95bd",
+      "path": "/home/user/work/runtimes/agent-remotion-main95bd",
+      "size_bytes": 987136,
+      "process_cwd_or_fd": false,
+      "prior_refusal": "queue/refused/retire-venv-agent-remotion-main95bd: target is referenced",
+      "disposition": "STOPPED_prior_refusal_no_retry"
+    },
+    {
+      "kind": "runtime_prior_refusal",
+      "name": "agent-remotion-published14-091aa23e",
+      "path": "/home/user/work/runtimes/agent-remotion-published14-091aa23e",
+      "size_bytes": 987136,
+      "process_cwd_or_fd": false,
+      "prior_refusal": "queue/refused/retire-venv-agent-remotion-published14-091aa23e: target is referenced",
+      "disposition": "STOPPED_prior_refusal_no_retry"
+    },
+    {
+      "kind": "runtime_prior_refusal",
+      "name": "agent-remotion-0013",
+      "path": "/home/user/work/runtimes/agent-remotion-0013",
+      "size_bytes": 394014720,
+      "process_cwd_or_fd": false,
+      "prior_refusal": "queue/refused/retire-venv-agent-remotion-0013: target is referenced",
+      "disposition": "STOPPED_prior_refusal_no_retry"
+    }
+  ],
+  "scan_summary": {
+    "clean_nonkeep_finished_worktrees_available_to_recycle": 0,
+    "pending_queue_entries": 0,
+    "running_queue_entries": 0,
+    "bench_store_active_entries": 2,
+    "bench_store_retired_registrations": [
+      "venv-agent-child-f-post-g5-c36-abd47-store",
+      "venv-agent-child-render-current-0134"
+    ],
+    "optional_sweep_tmp_duplicate": false
+  }
+}

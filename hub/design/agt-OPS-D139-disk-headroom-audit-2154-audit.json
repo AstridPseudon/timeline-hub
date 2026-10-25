@@ -1,0 +1,45 @@
+{
+  "task": "D139",
+  "audited_at_utc": "2026-10-25T21:56:57Z",
+  "result": "finite_no_eligible_normal_cleanup_candidate",
+  "normal_child_admission": {
+    "threshold_available_bytes": 5905580032,
+    "available_bytes": 5310427136,
+    "deficit_bytes": 595152896,
+    "source_worker_finish_restore_estimate_bytes": 200000000,
+    "post_estimate_deficit_bytes": 395152896,
+    "estimate_status": "brief-input-only-unverified"
+  },
+  "filesystem_witness": {
+    "filesystem": "/dev/vda",
+    "filesystem_bytes": 270553174016,
+    "used_bytes": 36289114112,
+    "available_bytes": 5310427136,
+    "command": "df -B1 /home/user/work"
+  },
+  "bounded_top_directory_du_bytes": {
+    "/home/user/work/bench-store": 1620480000,
+    "/home/user/work/runtimes": 1971752960,
+    "/home/user/work/venv-agent-child-f1012-installed": 1054433280,
+    "/home/user/work/venv-agent": 675598336,
+    "/home/user/work/venv-agent-child-d22-8c3b926e": 517910528,
+    "/home/user/work/venv-agent-typecheck-v2": 400019456,
+    "/home/user/work/deps": 393244672,
+    "/home/user/work/fixtures": 292560896
+  },
+  "candidate_count": 0,
+  "operational_mutation": false,
+  "tests_run": false,
+  "protected_absolute_targets": [
+    "/home/user/work/venv-agent-child-d22-8c3b926e",
+    "/home/user/work/venv-agent-child-f1012-installed",
+    "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30"
+  ],
+  "witness_hashes": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/recycle": "b3a0e1687954d3dd46eb47ad6807726ef2f4584ed4e64508fcaa8f6c14823ddb",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-retire-venv": "21f61833a6718794ab2a06a3a96d34ca58c050ccd0151622e16866ac78758139",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf": "84d3045878ea806439b73b0a5ca983c06371fcac2d42bc8c7e8add0ebfbd3988",
+    "/home/user/work/bench-store/index.json": "6ea9e569f623784a3dfbd53c5ecff37c22fde4587a495a89f394d14f0af899f6"
+  }
+}

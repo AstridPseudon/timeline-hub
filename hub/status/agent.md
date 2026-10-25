@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T21:59:13Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 4m -->
-# agent board, 2026-10-25T21:55Z
+<!-- agent | 2026-10-25T22:03:38Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 10 | status age 0m -->
+# agent board, 2026-10-25T22:12Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -132,25 +132,25 @@
 | D136a typed initialization | Permit canonical typed FPS initialization | Runtime Sol and Luna | App sole merged-base original9 | blocked:app | Source2108; independent2119 PASS; union2151 | Exact20db57 own and138 nearest PASS. Source wait cleared; actual original9 still owed. No fixture conversion or source-only closure. | 20db held |
 
 | D138 own22 proof | Qualify exact migrated batch behavior | Luna and service | Review PASS; Runtime2104 live recipe | blocked:runtime | Runtime2104 source; Agent later receiver | One exact22 run unspent. No deselection or ignored legacy case. Integrated migration source708ba3 qualifies only source. | 708ba3 source |
-| D139 complete import inputs | Supply all pinned import prerequisites | Luna read only | Merged4c source and registered child metadata | doing | agt-F-D139-import-input-census-2149 | Input only; Runtime alone owns maker/recipe and actual in-child check. Schema source2136 receipts already sent. | Evidence pending |
-| D139 original9 source union | Preserve reviewed fixes on merged base | Luna | Exact five donor blobs and upstream conservation | doing | agt-F-D139-original9-source-union-2151 | Current4c ancestry, D1009486/corrected42040, FPS20db and originalf53b. Source only; App owns next9 proof and merge remains held. | Private candidate |
-| D139 disk admission | Restore normal child build headroom | Luna read only | Guarded eligible cleanup | doing | agt-OPS-D139-disk-headroom-audit-2154 | Needs5.905GB; current5.19GB. Exact eligible route audit only, no worker deletion or prior refusal retry. | Evidence pending |
-Integration: Agent4c4ee35d5687c4cd40a0e5395efda53aa56f939d, treed50fd98f7d1bc6860de810f38e8a0b3a55ca224e. D139 U2 merged;244 Python and195 chat PASS. Runtime lockab1e retained. Newer237722 upstream held for cut.
+| D139 complete import inputs | Supply pinned import prerequisites | Luna and independent | Runtime recipe source | review | Author2149; reviewer2210 | Finite22 roots431 files and17 absent modules; pinned schema12 RECORD hashes. [Packet](../../design/agt-F-D139-import-input-census-2149-report.md). | Evidence only |
+| D139 original9 source union | Preserve five exact reviewed donor blobs | Luna | App sole original9 after source PASS | review | Author2151; independent2202 | Compile, Ruff, mypy and exact five-path custody PASS; no body or release. [Evidence](../../design/agt-F-D139-original9-source-union-2151-report.md). | d133a14838 |
+| D139 disk admission | Restore child build headroom | Luna read only | Ordinary cleanup and age guard | review | Audit2154; independent2202 | No eligible target; child3e163 under one hour until22:24:50Z. Scratch cleanup running; no refused target retried. | Evidence only |
+Integration: Agent cd63be424d62226e3ee5c26fc5ce03227f5394a5. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lockab1e retained. Newer237722 upstream held for cut.
 
 Measurement: service agent-agent-core-full-1025191128-18455 terminal exit1; operator8926 PASS /190 FAIL /180 ERROR /173 subtests PASS /1379.05s. Independent1937 final custody FAIL; XML/full disk witness missing. Final core and REG counts UNKNOWN. Classification-only independent2029 qualifies370 IDs: own344=132 setup,0 proved product,212 UNKNOWN;14 UNVERIFIED,12 UNKNOWN. Source edits do not deduct counts. No ship/custody/release credit; retirement0. Raw18455 KEEP.
 
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL independently1405. OriginalTrue currentd4ba/ab1e stillFAILredo birth; private authentic records missing and causal ownerUNKNOWN. Synthetic3/native2 does not close originalfour. App actual2056 currentc992/D100 original9 still9setupERROR, independent2100 proves newcanonical typedFPS guard seam; sole Runtime owner correction requested2116.
 
-Blockers: Runtime D139 — complete child import recipe and in-child check-only, review and kit receipt owed. Next one child/core uses merged tuple; no new f07 request or old a4e016 body.
+Blockers: Runtime D139 — complete2149 import input packet published22:10; sole recipe author owes corrected kit and in-child check-only. No oldtuple core or newf07 request.
 Blockers: Runtime — earlieractual rt-D73-exact-node-route-2104 owns supported own-node service. Agent2111 drypacket is supporting only; no live row/body or duplicate installer.
-Blockers: App original9 — receive merged4c source union2151 with qualified D100/FPS/fixture and run exact9 once. Source20db is qualified; no Runtime semantic source wait remains.
+Blockers: App original9 — exact merged-base union d133 ready; independent2202 source review active. App sole genuine original9 follows PASS and admission; no Runtime semantic source wait.
 Blockers: App D100 — qualified9486 behavior receipt owed before shared105 propagation. Independent2102 source proves applicability and refutes need for separate accepteditem-bearing source. All105 remainopen.
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-gradecore, REG0, installedrender90, platform, fullP2, finaltupleP1-P5, wheel and ZIP owed. FarmD77 waits genuinechildqualification; FarmRuntimeunion2100 separate.
 
-Next ready: input census2149, merged original9 source union2151 and guarded disk audit2154 dispatched. live3 / cap6; ready-undispatched0. New child/body waits D139 Runtime recipe and received kit, plus admission.
+Next ready: source union2202, disk audit2202 and import census2210 independent reviews active. live3 / cap6; ready-undispatched0. New child waits Runtime kit and5.905GB admission.
 
-Disk:5.19GB at21:53Z; source workers active, stop4GB. New child needs5.905GB. Audit2154 checks only normal allowed cleanup; d22/f1012, KEEP and all prior refused targets protected.
+Disk:about5.2GB at22:12Z. Compact packed0 and gzipped17 old logs; sweep still running. All3 finished source worktrees already recycled by harness. Young child eligible after22:24:50Z and fresh checks.
 
 H6: Runtime21:05 board/source and App21:02 board/results consumed; Farm21:05 union2100 has actualsource recipe and nochild/core. Runtime49 independent2100 A/B/C now consumed; exactfindings27/22 corrects reporttypo35/14, originalretained. Appmanaged30 source restored/unchanged and D100 applicability2056/2103 finitePASS; no newAPI claim. All cross-lane asks are rows or later entries.
 
@@ -160,4 +160,4 @@ INBOX consumed through1896046 bytes. D139 and schema21:59 consumed. Manager auth
 
 Pass 2026-10-25T21:26Z: PLAN/common/header and latest Runtime21:16, App21:16, Farm21:17 boards consumed. Received f07 exact regular0755. Existing controller2122 is the sole real request; no duplicate. History intake2119 merged normal a6703bba8e with one prior protected review and exact donor blobs; own11 remains unqualified. D138 source2117 ended; protected read-only review2128 dispatched, no live22. Fork overlapping read-only packets handed to existing App return2114 for one cumulative review. Peers2128 report actual home and already-merged c992 receipt; future FPS source preserves it. D130 held unchanged.
 Pass 2026-10-25T21:38Z: independent2132 PASS_EVIDENCE confirms actual child registration/source/receipt and preflight-only failure; no core submission. Exact2132 packet published. Existing frozen schema setting is a concrete supported caller seam; local operational source worker2136 claims it without product/launcher/dependency edits. Runtime2104 own-node recipe remains separate. App final2119 finite fork18 PASS consumed; exact missing records retained as later, no repeated reader/body. D138 source708ba3 merged with protected2128 PASS and behavior unqualified.
-| D136a typed source intake | Preserve exact FPS return donor | Luna | Merged-base union2151 and original9 | gated:D139-union | Source intake2141 PASS | Exact20db two blobs prepared on708ba3; no upstream delta in these paths. Union2151 moves them to4c; no normal merge yet. | Prepared donor20db |
+| D136a typed source intake | Preserve exact FPS return donor | Luna | Normal source merge complete | merged | Intake2141; normal merge | Exact20db two blobs HOMEcd63. Behavioral original9 remains App-owned; no release or core credit. | cd63be424d |
