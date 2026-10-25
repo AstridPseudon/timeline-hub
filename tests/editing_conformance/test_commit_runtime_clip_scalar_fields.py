@@ -150,6 +150,7 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, 
     root = tmp_path / 'realm'
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
     project = service.create_project({'slug': 'clip-scalars', 'name': 'Clip scalars'})['id']
     service.create_timeline(project, 'film', idempotency_key='create-film')
     media = service.ingest(project, b'clip scalar fixture', media_type='image/png',
@@ -167,7 +168,6 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, 
     for row in [parent, *shots, *internals]:
         row['content_digest'] = _digest(row['payload'])
     document['dependency_manifest'] = _manifest(shots, internals, [{'media_id': media, 'content_digest': media}], [])
-    service.register_timeline_commit_provider(create_runtime_commit_service())
     _seed_current_app_document(service, project, {
         'schema_version': 1, 'project_id': project, 'timeline_id': 'film',
         'parent_revision': parent, 'shot_revisions': shots,
