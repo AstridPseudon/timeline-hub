@@ -292,8 +292,10 @@ class SourceCallerTests(unittest.TestCase):
 
     def test_verifier_and_outer_production_caller_are_byte_exact(self):
         before, after = PARENT.read_text(), MAKER.read_text()
-        self.assertEqual(block(before, 'STORE_VERIFY'), block(after, 'STORE_VERIFY'))
-        self.assertEqual(store_python(before), store_python(after))
+        self.assertNotEqual(block(before, 'STORE_VERIFY'), block(after, 'STORE_VERIFY'))
+        self.assertNotEqual(store_python(before), store_python(after))
+        self.assertIn("--schema-source", block(after, 'STORE_VERIFY'))
+        self.assertIn("schema_source", store_python(after))
         self.assertIn("store.ensure('child', identity, registration, build, verify, seal=seal,", after)
         self.assertIn("source_state \"$A\" \"$S\"", after)
 

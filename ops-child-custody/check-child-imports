@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""Check the imports which a sealed child can satisfy.
+
+The checker deliberately separates a source census from the bounded child
+probe.  A census is static (plus literal importlib/__import__ calls); it does
+not claim to discover imports computed from arbitrary runtime data.
+"""
+from __future__ import annotations
+
+import argparse
+import ast
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+
+KNOWN_LOCAL = {
+    "astrid", "astrid_runtime", "astrid_runtime_client", "runtime_protocol",
+}
+OPTIONAL_NAMES = {"numpy", "torch", "cv2"}
+
+
+def _guard_kind(tree: ast.AST, node: ast.AST) -> str:
+    """Return a conservative guard label for an import node."""
+    parents = {}
+    for parent in ast.walk(tree):
+        for child in ast.iter_child_nodes(parent):
+            parents[child] = parent
+    current = node
+    while current in parents:
+        current = parents[current]
+        if isinstance(current, ast.Try) and current.handlers:
+            return "optional"
+        if isinstance(current, ast.If) and isinstance(current.test, ast.Compare):
+            return "platform-conditional"
+    return "applicable"
+
+
+def _imports(path: Path) -> list[dict[str, object]]:
+    try:
+        tree = ast.parse(path.read_text(), filename=str(path))
+    except (OSError, SyntaxError) as error:
+        return [{"file": str(path), "line": 0, "name": "<parse>",
+                 "kind": "parse-error", "error": str(error),
+                 "applicable": False}]
+    rows: list[dict[str, object]] = []
+    for node in ast.walk(tree):
+        names: list[str] = []
+        dynamic = False
+        if isinstance(node, ast.Import):
+            names = [item.name for item in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names = [node.module]
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if isinstance(node.func.value, ast.Name) and node.func.value.id == "importlib" and node.func.attr == "import_module":
+                if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                    names = [node.args[0].value]
+                    dynamic = True
+            elif isinstance(node.func.value, ast.Name) and node.func.value.id == "builtins" and node.func.attr == "__import__":
+                if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                    names = [node.args[0].value]
+                    dynamic = True
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "__import__":
+            if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                names = [node.args[0].value]
+                dynamic = True
+        for name in names:
+            top = name.split(".", 1)[0]
+            rows.append({
+                "file": str(path), "line": getattr(node, "lineno", 0),
+                "name": name, "top_level": top,
+                "kind": "dynamic-literal" if dynamic else "static",
+                "guard": _guard_kind(tree, node),
+            })
+    return rows
+
+
+def _stdlib() -> set[str]:
+    names = set(getattr(sys, "stdlib_module_names", ()))
+    names.update({"__future__", "typing_extensions"})
+    return names
+
+
+def _census(roots: list[Path], launcher: Path) -> list[dict[str, object]]:
+    files = [launcher]
+    for root in roots:
+        files.extend(sorted(path for path in root.rglob("*.py") if path.is_file()))
+    rows: list[dict[str, object]] = []
+    for path in dict.fromkeys(files):
+        rows.extend(_imports(path))
+    stdlib = _stdlib()
+    root_names = {path.name for path in roots}
+    for row in rows:
+        top = str(row.get("top_level", ""))
+        if top in stdlib:
+            classification = "stdlib"
+        elif top in KNOWN_LOCAL or top in root_names:
+            classification = "our_source"
+        else:
+            classification = "installed_distribution"
+        row["classification"] = classification
+        row["applicable"] = row.get("guard") == "applicable"
+        if top in OPTIONAL_NAMES and row.get("guard") != "applicable":
+            row["classification"] = "platform_optional"
+            row["applicable"] = False
+    return rows
+
+
+def _probe(child: Path, names: list[str]) -> dict[str, object]:
+    code = """
+import importlib, json, sys, traceback
+results = []
+for name in json.loads(sys.stdin.read()):
+    try:
+        importlib.import_module(name)
+    except BaseException as error:
+        results.append({'name': name, 'ok': False,
+                        'error': type(error).__name__ + ': ' + str(error)})
+    else:
+        results.append({'name': name, 'ok': True})
+print(json.dumps(results, sort_keys=True))
+"""
+    env = {"PATH": os.environ.get("PATH", ""), "PYTHONNOUSERSITE": "1"}
+    completed = subprocess.run(
+        [str(child), "-I", "-B", "-P", "-c", code],
+        input=json.dumps(names), text=True, capture_output=True, env=env,
+        timeout=300,
+    )
+    if completed.returncode != 0:
+        return {"child_returncode": completed.returncode,
+                "child_stderr": completed.stderr[-4000:], "results": []}
+    try:
+        results = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        return {"child_returncode": completed.returncode,
+                "child_stderr": completed.stderr[-4000:],
+                "probe_error": str(error), "results": []}
+    return {"child_returncode": completed.returncode,
+            "child_stderr": completed.stderr[-4000:], "results": results}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--child", required=True, type=Path)
+    parser.add_argument("--launcher", required=True, type=Path)
+    parser.add_argument("--root", action="append", type=Path, default=[])
+    parser.add_argument("--imports-file", type=Path)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    if args.imports_file:
+        requested = json.loads(args.imports_file.read_text())
+        if not isinstance(requested, list) or any(not isinstance(item, str) for item in requested):
+            parser.error("--imports-file must contain a JSON list of module names")
+        rows = [{"name": name, "classification": "requested",
+                 "applicable": True, "kind": "bounded-control"}
+                for name in dict.fromkeys(requested)]
+    else:
+        rows = _census(args.root, args.launcher)
+    applicable = [row for row in rows if row.get("applicable") and
+                  row.get("classification") != "stdlib"]
+    names = list(dict.fromkeys(str(row["name"]) for row in applicable))
+    probe = _probe(args.child, names)
+    failures = [result for result in probe.get("results", []) if not result.get("ok")]
+    if probe.get("child_returncode") != 0 or probe.get("probe_error"):
+        failures.append({"name": "<child-probe>", "error": probe.get("probe_error") or probe.get("child_stderr")})
+    by_name = {result["name"]: result for result in probe.get("results", [])}
+    for row in rows:
+        if row.get("applicable") and row.get("classification") != "stdlib":
+            row["probe"] = by_name.get(row["name"], {"ok": False, "error": "not returned"})
+    result = {
+        "schema": "timeline.ops.child-import-check/v1",
+        "child": str(args.child.resolve()),
+        "launcher": str(args.launcher.resolve()),
+        "scope": {
+            "roots": [str(root.resolve()) for root in args.root],
+            "dynamic_boundary": "literal importlib.import_module and __import__ calls only; computed runtime names are not statically enumerable",
+        },
+        "census": rows,
+        "attempted_modules": names,
+        "failures": failures,
+        "status": "passed" if not failures else "failed",
+    }
+    encoded = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(encoded)
+    print(encoded, end="")
+    return 0 if not failures else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
