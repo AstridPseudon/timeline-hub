@@ -1,0 +1,65 @@
+{
+  "schema": "timeline.agent.d108.baseline-custody-review.v1",
+  "task": "agt-F-D108-baseline-custody-review-0830",
+  "status": "PASS",
+  "scope": "independent narrow read-only custody review of Sol0820 repair",
+  "independent_evidence": "workers/agt-F-D108-baseline-custody-review-0830/evidence/independent-review.json",
+  "canonical_index": {
+    "sha256": "d6ed7dc547645742c405e9b9288e00617f33e5f8ee378233b46fc621affd226a",
+    "published_author_review_byte_equal": true,
+    "changed_rows": 23,
+    "changed_ordinals": [12309, 12310, 12311, 12312, 12313, 12314, 12315, 12316, 12317, 12318, 12319, 12320, 12321, 12322, 12323, 12324, 12325, 12326, 12327, 12328, 12329, 12330, 12331],
+    "changed_columns_only": ["file", "line", "source_location_method"]
+  },
+  "source_custody": {
+    "upstream_commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "git_source_files": 762,
+    "canonical_mappings": 12517,
+    "source_pairs_verified": 23,
+    "source_ambiguity": {
+      "exact": 12515,
+      "ambiguous": 2,
+      "ambiguous_ordinals": [9439, 9440]
+    },
+    "in_memory_compile": "PASS"
+  },
+  "xml": {
+    "sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+    "testcase_nodes": 12517,
+    "outcomes": {"PASSED": 12396, "FAILED": 91, "ERROR": 14, "SKIPPED": 16},
+    "subtests": 566,
+    "suite_total": 13083
+  },
+  "current_joins": {
+    "sha256": "0fbcdf46e9272a2a3bd1e3f275cfa09f2887e50bef848f41c68c2c71a8ef12c5",
+    "rows": 9268,
+    "exact": 2956,
+    "absent": 6312,
+    "ambiguous": 0
+  },
+  "preservation": {
+    "original_summary_sha256": "7af40efb74bc171142e5a89f7cc25b17c710001c7dba61bb8e04c971764dbfd7",
+    "historical_rows": 276,
+    "dependent_hashes_truthful": true,
+    "stale_0813_hashes_in_successors": false,
+    "author_outputs_edited": false,
+    "product_or_repo_edited": false
+  },
+  "boundaries": {
+    "upstream": "FAIL/exit 1",
+    "runtime_isolation": "UNCERTAIN",
+    "current_failure_classification": "WITHHELD_UNTIL_D108_TERMINAL",
+    "current_core_open_count": "WITHHELD_UNTIL_D108_TERMINAL",
+    "baseline_fail_promoted": false
+  },
+  "checks": {
+    "author_validation_command": {
+      "result": "FAIL",
+      "reason": "hard-coded Sol worktree /home/user/work/wt/agt-F-D108-baseline-custody-sol-0820 is absent at git diff --check"
+    },
+    "independent_review": "PASS",
+    "review_checkout_git_diff_check": "PASS",
+    "product_tests_typecheck_lint": "N/A by read-only evidence scope",
+    "full_suite": "not run"
+  }
+}
