@@ -1,57 +1,68 @@
-# F/D134 validation and disposition
+# F/D134 independent dry-review validation
 
-## Source conservation
+## Result
 
-- The four frozen checkouts are clean and match the bound SHA, tree, parents,
-  and official origin recorded in `source-review.json`.
-- The normal D73 maker is the unchanged Agent
-  `tests/suites.conf.candidate.request.md`; the pinned launcher is the
-  unchanged `tools/p4-d73-pinned-launch.sh`. Their Git blob and SHA-256
-  witnesses are recorded in `source-review.json`.
-- The generated positive manifest binds Agent `a4e016b6`, Runtime `5e9ad1c6`,
-  App `d8a1cd40`, Composition `635f4de0`, existing `venv-agent`, the exact
-  profile/schema, and Node `v20.19.4`. The poison copy changes only
-  `agent_sha`; `manifest-diff.json` records the parsed comparison.
-- The existing 0811/2234 positive stub was independently hashed in full as
+PASS for readiness for the owner-authorized conditional 20:00Z measurement
+only. This review grants no ship, behavior, full-body, or custody credit and
+did not run a body.
+
+## Read-only checks
+
+- The four frozen checkouts independently matched the recorded SHA, tree,
+  parents, official origin, and clean status.
+- The normal maker and pinned launcher matched their recorded SHA-256 values
+  and Git blob witnesses.
+- Runtime lock, profile lock/archive/registry, schema copies, client/schema
+  metadata, Python, Node, and Composition version matched the exact manifest
+  bindings.
+- `positive.manifest` and `poison.manifest` have 36 lines and differ only in
+  `agent_sha`; their SHA-256 values are the required
+  `b539c6bda83f...` and `f41fef0062e...` values.
+- The existing 0811/2234 positive stub hash is the required full
   `38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0`.
-- The old 070dfc/f4d6 manifests were not reused. No package, profile, child,
-  kit, suite, product, or test change was made.
+- The retained positive counter parses to one line (`called`); the poison
+  counter parses to zero lines.
+- The retained structured preflight result records positive `0/17/1` and
+  poison `1/0`, with the deliberate `D73 launcher: agent SHA mismatch` guard.
+- The recipe retains 22 selector roots, `-n 3`, cleared `addopts`, disabled
+  cache provider, and `--timeout=45`.
 
-## Recipe conservation
-
-`evidence/measurement-command.sh` retains the canonical 22 selector roots,
-`-n 3`, cleared `addopts`, `-p no:cacheprovider`, and `--timeout=45`. This
-worker did not run that body, request-test, collection, provider, or suite.
-
-## Authorized DRY controls
-
-The ordinary launcher was run exactly twice in `dry` mode. The positive path
-passed launcher preflight (`preflight_exit=0`), reached the existing stub,
-returned 17, and recorded one call. The poison path stopped at the deliberate
-`D73 launcher: agent SHA mismatch` guard with exit 1 and zero calls. Raw
-stdout/stderr and launcher records remain in the private scratch directory;
-only hashes and safe outcomes are published in `preflight.json`.
-
-## Validation commands
+## Commands run
 
 ```text
 bash -n evidence/measurement-command.sh evidence/preflight-command.sh
-python3.11 -m json.tool evidence/source-review.json
-python3.11 -m json.tool evidence/source-manifest.json
-python3.11 -m json.tool evidence/manifest-diff.json
-python3.11 -m json.tool evidence/preflight.json
-python3.11 -m json.tool evidence/readiness.json
-python3.11 -m json.tool evidence/missing-inputs.json
+python3.13 -P -m json.tool evidence/review.json
+python3.13 -P -m json.tool evidence/source-custody.json
+python3.13 -P -m json.tool evidence/source-review.json
+python3.13 -P -m json.tool evidence/source-manifest.json
+python3.13 -P -m json.tool evidence/manifest-diff.json
+python3.13 -P -m json.tool evidence/preflight.json
+python3.13 -P -m json.tool evidence/readiness.json
+python3.13 -P -m json.tool evidence/missing-inputs.json
 git diff --check
 ```
 
-All commands above are source/evidence checks only; no full suite or body was
-requested. No own Python, TypeScript, or production code was added, so compile,
-Ruff, and typecheck lanes are not applicable.
+All checks are source/evidence checks. No request-test, collection, pytest
+body, provider, fixture, package acquisition, installation, child/profile
+build, alternate environment, or full suite was run. The two DRY controls were
+not rerun.
 
-## Gate disposition
+## Durability and bounded missing evidence
 
-D128's child-maker custody refusal remains immutable and is not a route for this
-worker. The dry controls are accepted only for the exact positive/poison
-preflight assertions; they provide no full-body, behavior, or ship-grade
-custody credit.
+The usable scripts, manifests, counters, and structured results are tracked in
+`evidence/` and are the durable receiving source for this review. The manager’s
+byte-exact publication destination is the requested
+`$ORCH/design/agt-F-D134-dry-review-1857-*` prefix. The prior private raw DRY
+directories were recycled, so their raw stdout/stderr is unavailable; this is
+bounded because the retained evidence includes the actual counter contents,
+manifest hashes, receipt hashes, and guard/outcome fields.
+
+The Agent-local design path named by the preparation brief is absent. The
+available hub design copy was used only as a reference, while the normal maker
+and launcher were verified directly from the frozen Agent checkout.
+
+At 20:00Z, the manager must bind the recorded owner clock/verdict and check
+the genuine D128 custody result, free-space start/stop limits, and ordinary
+preflight acceptance. If custody is GREEN or any real safety/classifier/
+permission guard refuses, the conditional measurement does not proceed and
+there is no retry or alternate route.
