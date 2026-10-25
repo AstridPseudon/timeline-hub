@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T11:16:30Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 16 | status age 10m -->
-# agent board, 2026-10-25T11:05Z
+<!-- agent | 2026-10-25T11:19:56Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 2m -->
+# agent board, 2026-10-25T11:17Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -331,8 +331,8 @@
 | D115 producer input | Preserve sealed predecessor manifest | HARD Sol / Luna | Runtime output projection correction | blocked:runtime | Agent82b6; Runtime1037 | Review1020 PASS_SOURCE/HOLD;32 originals PASS. Genuine mounted regression still fails auth2864; no Agent merge yet. | 82b6d00d7f held |
 | D118 validation17 | Preserve exact remaining word purposes | Luna read only | Genuine D116 baseline | merged | Source1005 PASS evidence | Exact17 mapped separately from approvedten; named current companion proposed after genuine seed. Original17 remain live. | Evidence only |
 | D118 App audio2 | Preserve exact prepared audio source | App Luna / independent | Actual future core on corrected source | merging | Author1015; review1017; homee8b1 | Source-only correction keeps52 original AST assertions, genuine managed WAV and strictprobe. Current30693 predates it; functionalproof owed. | e8b1a517f6 |
-| D118 App sheet15 | Preserve current HTTP sheet behavior | App Luna / Agent input | Proved current verified-media caller shape | blocked:app | Author1015; inputs1040; peer1040 | Exact15 classes/frames recovered. Thirteen KeyErrors at verified object_id fixture; all248 assertions unchanged. Completepreparedrecords EXACTMISSING. | Source unchanged |
-| D118 App WC6three | Preserve mounted provider capture | App Luna / independent | Narrow expanded App continuation | blocked:app | Normal7b96; peer1055 | Two-line SOURCEPASS;12 offline PASS3 FAIL. App owns fixtureStore, wrapped-source identity and exact helper hash audit. | 7b96e1effa |
+| D118 App sheet15 | Preserve current HTTP sheet behavior | App Luna / Agent Luna | Exact clean import and normal proof | doing | App cumulativec3be; import1111 | Four supported verified-selection reads reviewed1056;248 assertions exact. Clean import avoids foreign ancestry; other2 retained failures remain open. | c3be5da91 |
+| D118 App WC6three | Preserve mounted provider capture | App Luna / independent | Next genuine full proof | merging | App return1050; protected1054 | Exactfff96 source reviewed;15 offline PASS,59 assertions conserved. Normal merge done; no core credit yet. | fff96c7d7f |
 
 | D115 safe peer inputs | Publish existing exact source packets | Luna | Existing immutable artifacts | merged | agt-F-D118-peer-inputs-1020 PASS | Exact effect83 and producer packets published with full hashes; App reserved20 tail IDs and commands handed back1026. No body or source claim. | Evidence only |
 | D118 host bootstrap14 | Fix pristine-upstream regressions | App Luna / independent Luna | Exclusive App host author | blocked:app | Allocation1048; priority1055 | Root1022: inherited startup overrides refused before launch.14 original assertions protected; actual writer ID requested. | Product unchanged |
@@ -343,7 +343,7 @@
 | D118c App video1 | Preserve prepared video behavior | App Luna requested | Exact supported setup or source pairing | blocked:app | Allocation1048 | Original ordinal3116, prepared-video file251. Exact source/failure hashes and file-only scope supplied; no full or body claim. | Source pending |
 
 Integration: Normal7b96 contains reviewed audio and WC6 test corrections plus tool-only Runtimed23a provenance. Product remains070dfc. Normal369 adopter1055 queued after core terminal. Historical0277 added tool-only Runtimed23a provenance to120d reviewed tests. All Agent product bytes remain070dfc. Actual30693 terminal FAIL stays fixed120d/1daca/96d475/635f; original2016 immutable.
-core open: 425 on actual30693 by two exact disjoint classifiers; independent terminal review1104 pending. REG14 remains open. Previous measurement: actual2016 had438 on070dfc/1daca/04beed/635f. One D110 setup node now resolves to2 actual add/swap PASS on exact home treef3c0.  Exact506bad=438 NEWcore+59 ENV+8non-core+1D23deferred; Original924 PRE0/REG0 is historical; D118 pristine23 independently proves14 REG,8 NEW,1 UNKNOWN. Exact506 recategorization assigned1022. All506 have per-node924 comparison; Runtime baseline isolation UNCERTAIN.
+core open: 425 on actual30693, independently verified terminal-review1104. REG14 remains open. Metadata1111 traces service summary tree mismatch; pinned preflight/manifest/import source agree9a65. Previous measurement: actual2016 had438 on070dfc/1daca/04beed/635f. One D110 setup node now resolves to2 actual add/swap PASS on exact home treef3c0.  Exact506bad=438 NEWcore+59 ENV+8non-core+1D23deferred; Original924 PRE0/REG0 is historical; D118 pristine23 independently proves14 REG,8 NEW,1 UNKNOWN. Exact506 recategorization assigned1022. All506 have per-node924 comparison; Runtime baseline isolation UNCERTAIN.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later named proofs retain exact source scope; no full/core-zero/ZIP claim.
 Families: Actual6058 14PASS7FAIL75ERROR;19214 13PASS21FAIL27ERROR;1565 3FAIL57ERROR. Actual17724 original13 remains4FAIL9ERROR; source returns never imply behavior PASS.
 D100: Runtime receiver0634 has exact dd2fc new26 with lock1daca; actual old30890 failures retained. Four reviewed blobs unchanged; originalTEN not selected, normal product held. Projection a55a remains gated on real D100 proof and normal merge.
@@ -356,7 +356,7 @@ Blockers: Agent prior core437 and14 bounded regressions — D115 cluster workers
 Blockers: Agent D69 — Exact129/113/287 membership mapped in two0902 partitions. Predicate purpose and approved replacement receipts remain uncleared; two manifest blob mismatches remain explicit.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed. D117 GitHub auto-classifier refusal stays stopped; no retry or alternate source.
 Next ready: D69 scopes57/59 read-only approval search; D100 duplicate fixture correction; R2 current seed join. Start in freed slots above5.0GB. App host14 priority is exclusive. Product batches require full before adoption.
-live 4 / cap 6; ready-undispatched 0 eligible starts. D100 and D116 protected reviews, terminal accounting review, XML product author1104 live. Disk4.91GB below5.0GB source/review floor; two next rows wait autorecycle.
+live 4 queued / cap 6; ready-undispatched 0 eligible starts. XML review, terminal metadata, D116 wholepath and sheet clean import1111. Admitted at5.035GB; next starts wait5.0GB after autorecycle.
 Inbox consumed through1528270 bytes. Updated 2026-10-25T10:28Z. D89a core floor4.7GB consumed; no second full body requested before reviewed source batch.
 Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
 Later: MAIN profile input — Resolved by D108b local venue. Runtime confirms MAIN0759 unsubmitted and retained; no duplicate body. Local0811 uses genuine819acf/lockf4fc/registryd609.
@@ -374,7 +374,7 @@ App tail handoff1026: Exact20 retained nodes allocated to the existing audio2, s
 D118 accounting overlay1022: Exact506 now PRE0 / deferred1 / ENV45 / REG14 / NEW core438 / noncore7 / UNKNOWN1. The14 REG were previously ENV and are noncore in the original scope; none disappears. Core438 historical,437 after independently qualified D110 setup; new count awaits30693.
 D69 five1032: Readonly odd groups5,11,13,29,31;37,39,47,57,59;69,75,81,85,89;101,105,113,125; even0,4,6,12,14. Each scope gets its own semantic verdict; no new body during core.
 Blockers: Runtime output projection — Agent producer82b6 independent1020 PASS_SOURCE/HOLD; original32 PASS, unchanged mounted regression fails auth2864 when consumed manifest changes without payload change. Exact safe packet1020 supplied.
-Blockers: Full current count — actual30693 FAIL450bad; classifiers1055 give core425 andREG14. Independent terminal review1104 checks exact per-ID map and custody; no full PASS.
+Blockers: Current core425 andREG14 — terminal-review1104 verifies450bad exact partitions. Source metadata1111 traces summarytree mismatch. No full PASS; App host14 fix and word/provider roots remain live.
 
 | U4a D115 adoption | Adopt released ordinal-boundary producer | Luna | Next full tuple proof | merged | agt-U4a-D115-adopt-1055 | Normal tools PASS;15 mappings unchanged. Own-only lock delta c78de normally merged; receipt verified. No83 behavioral closure. | c78de166c9 |
 
@@ -396,3 +396,9 @@ D69 XML product author1104 now owns only installer/service.py and additive platf
 D100 author1100 exactsix formerly duplicate-seed controls PASS3.42s; protected1104 checks all inherited candidate/source purposes. OriginalTEN and product merge remain held; no unchanged20 repeat.
 
 U4a369 normal942855e56e merges own-onlyc78de lock delta;15 canonical mappings/schema/product/test bytes unchanged. Actual30693 remains original captured120d/1daca.
+
+D116 protected1104 PASS_SOURCE: full request envelopes/masks corrected,6PASS2 genuine recipeFAIL. Readonly R1wholepath1111 traces exact raw/config producer seam before any additional writer. No95 repeat or source-onlycure.
+
+Runtime output42aad RELEASED1050 with genuine82b6 regression GREEN/security. Existing Runtime adopter97a52 is published; branch not locally available yet. No duplicate adopter or refused hub-write retry. Normal home queue follows actual publication.
+
+Sheet first1050 branch name unavailable locally; one erroneous request refused missingworker metadata, source untouched. Exact reviewed cumulativec3be is imported by own-only worker1111 before normal queue. WC6fff96 merge completed normally.
