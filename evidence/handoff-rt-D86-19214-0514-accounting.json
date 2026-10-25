@@ -1,0 +1,102 @@
+{
+  "packet": "handoff-rt-D86-19214-0514",
+  "accounting_mode": "direct body outcomes only; counts are not inferred from source review",
+  "actual_outcomes": {
+    "selected": 61,
+    "PASS": 13,
+    "FAIL": 21,
+    "ERROR": 27,
+    "SKIPPED": 0
+  },
+  "family_totals": {
+    "CLI-document8": {
+      "PASS": 8,
+      "FAIL": 0,
+      "ERROR": 0
+    },
+    "D86-parent-media20": {
+      "PASS": 0,
+      "FAIL": 18,
+      "ERROR": 0
+    },
+    "D87-live-frontends6": {
+      "PASS": 0,
+      "FAIL": 0,
+      "ERROR": 6
+    },
+    "D95-NEW-two": {
+      "PASS": 2,
+      "FAIL": 0,
+      "ERROR": 0
+    },
+    "M1-baseline10": {
+      "PASS": 0,
+      "FAIL": 0,
+      "ERROR": 10
+    },
+    "current-sheet-retired-cli": {
+      "PASS": 2,
+      "FAIL": 1,
+      "ERROR": 0
+    },
+    "graph2": {
+      "PASS": 0,
+      "FAIL": 1,
+      "ERROR": 0
+    },
+    "ownedmove8": {
+      "PASS": 1,
+      "FAIL": 1,
+      "ERROR": 6
+    },
+    "retained-input2": {
+      "PASS": 0,
+      "FAIL": 0,
+      "ERROR": 2
+    },
+    "scalar11": {
+      "PASS": 0,
+      "FAIL": 0,
+      "ERROR": 1
+    },
+    "word-bootstrap46": {
+      "PASS": 0,
+      "FAIL": 0,
+      "ERROR": 2
+    }
+  },
+  "preserved_boundaries": {
+    "original550": {
+      "count": 550,
+      "treatment": "preserve separately; not reclassified"
+    },
+    "disjoint96": {
+      "count": 96,
+      "treatment": "preserve separately; not reclassified"
+    },
+    "161": {
+      "count": 161,
+      "treatment": "preserve separately; not reclassified"
+    },
+    "102": {
+      "count": 102,
+      "treatment": "preserve separately; not reclassified"
+    },
+    "20": {
+      "count": 20,
+      "treatment": "preserve separately; not reclassified"
+    },
+    "22": {
+      "count": 22,
+      "treatment": "preserve separately; not reclassified"
+    },
+    "D95-NEW-two": {
+      "count": 2,
+      "treatment": "separate source-only family; no behavior credit"
+    }
+  },
+  "first_exception_limit": "durable JUnit/body log exposed no traceback frames; all file/function/line values are UNKNOWN",
+  "source_hash_limit": "prepared-video and graph source hashes were not present in the sole durable source bindings and remain UNKNOWN; parent-media source commit is abbreviated 2a04d92fca",
+  "semantic_verdict": "not produced by this mechanical export",
+  "collection": "no collection, rerun, repeat, or collector operation performed"
+}
