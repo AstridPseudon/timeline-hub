@@ -11,6 +11,15 @@ const python = process.env.ASTRID_RUNTIME_PYTHON ?? 'python3';
 const runtimeCheckout = RUNTIME_CHECKOUT;
 const bootstrapDirectory = path.resolve('scripts/testing');
 
+test('D105 launch ownership gives each retained DirectHarness start a distinct sink while keeping ordinal one unchanged', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'p2-runtime-launch-ordinal-'));
+  const first = p2CommitPhaseCaptureConfig(root, 1)!;
+  const second = p2CommitPhaseCaptureConfig(root, 2)!;
+  assert.equal(path.basename(first.sink), P2_PHASE_CAPTURE_FILE);
+  assert.equal(path.basename(second.sink), 'p2-commit-phase-2.jsonl');
+  assert.notEqual(first.sink, second.sink);
+});
+
 function readCapture(sink: string): string {
   const text = readFileSync(sink, 'utf8');
   assert.ok(text.length <= 64 * 1024);

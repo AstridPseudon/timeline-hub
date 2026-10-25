@@ -52,6 +52,7 @@ export const THREE_PRODUCTS_REFERENCE_AT = 15;
 const P2_PHASE_BOOTSTRAP_DIR = path.resolve(REPO_ROOT, 'scripts/testing');
 const P2_PHASE_CAPTURE_HELPER = 'tests/helpers/p2_commit_phase_capture.py';
 export const P2_PHASE_CAPTURE_FILE = 'p2-commit-phase.jsonl';
+const P2_PHASE_LAUNCH_ORDINAL_ENV = 'D66_RUNTIME_PHASE_LAUNCH_ORDINAL';
 
 /** Selected-parameter child processes receive a private credential path, never its bearer value. */
 export function selectedParamCliEnv(base: NodeJS.ProcessEnv, credentialFile: string): NodeJS.ProcessEnv {
@@ -110,8 +111,17 @@ export function p2CommitPhaseCaptureConfig(runtimeLogDir: string | undefined, la
   };
 }
 
-function prepareP2CommitPhaseCapture(runtimeLogDir: string | undefined): string | undefined {
-  const config = p2CommitPhaseCaptureConfig(runtimeLogDir);
+function p2PhaseLaunchOrdinal(runtimeLogDir: string | undefined): number {
+  if (!runtimeLogDir?.trim()) return 1;
+  const raw = process.env[P2_PHASE_LAUNCH_ORDINAL_ENV]?.trim();
+  if (!raw) return 1;
+  const launchOrdinal = Number(raw);
+  if (!Number.isInteger(launchOrdinal) || launchOrdinal < 1) throw new Error('D66 Runtime phase launch ordinal must be a positive integer');
+  return launchOrdinal;
+}
+
+function prepareP2CommitPhaseCapture(runtimeLogDir: string | undefined, launchOrdinal: number): string | undefined {
+  const config = p2CommitPhaseCaptureConfig(runtimeLogDir, launchOrdinal);
   if (!config) return undefined;
   mkdirSync(config.directory, { recursive: true, mode: 0o700 });
   const directory = lstatSync(config.directory);
@@ -124,6 +134,11 @@ function prepareP2CommitPhaseCapture(runtimeLogDir: string | undefined): string 
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
   return config.directory;
+}
+
+function runtimeStreamLogName(stream: 'stdout' | 'stderr', launchOrdinal: number): string {
+  const suffix = launchOrdinal === 1 ? '' : `-${launchOrdinal}`;
+  return `runtime.${stream}${suffix}.log`;
 }
 
 /** Why the harness cannot run here, or null when it can. */
@@ -554,6 +569,8 @@ export class DirectHarness {
   private runtimeLifecycle?: RuntimeLifecycleObservation;
   private phaseCaptureDirectory?: string;
   private phaseCaptureLaunchOrdinal = 0;
+  private runtimeLogDirectory?: string;
+  private runtimeLogLaunchOrdinal = 1;
   private seedInitialized = false;
   private hungStackCapture?: HungRequestStackCapture;
   private hungStackRunId?: string;
@@ -597,6 +614,9 @@ export class DirectHarness {
   async start(options: { deferTimelineInitialization?: boolean } = {}): Promise<this> {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
+      this.runtimeLogDirectory = process.env.D66_RUNTIME_LOG_DIR?.trim() || undefined;
+      this.runtimeLogLaunchOrdinal = p2PhaseLaunchOrdinal(this.runtimeLogDirectory);
+      this.phaseCaptureLaunchOrdinal = this.runtimeLogLaunchOrdinal - 1;
       const descriptorText = process.env.ASTRID_QUICK_DESCRIPTOR;
       if (descriptorText !== undefined) this.attachment = loadQuickDescriptor(descriptorText);
       this.tmp = mkdtempSync(path.join(tmpdir(), 'astrid-direct-'));
@@ -627,8 +647,8 @@ export class DirectHarness {
         this.seed = { ...this.quickSeed, image: undefined, video: undefined, big: undefined } as unknown as Seed;
       } else {
         mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
+        this.phaseCaptureDirectory = prepareP2CommitPhaseCapture(this.runtimeLogDirectory, this.runtimeLogLaunchOrdinal);
         this.realmId = await this.createRealm();
-        this.phaseCaptureDirectory = prepareP2CommitPhaseCapture(process.env.D66_RUNTIME_LOG_DIR);
         const hungEvidence = process.env.D79_HUNG_STACK_EVIDENCE_DIR?.trim();
         if (hungEvidence) {
           this.hungStackRunId = process.env.D79_HUNG_STACK_RUN_ID?.trim() || path.basename(hungEvidence);
@@ -652,7 +672,7 @@ export class DirectHarness {
     const agent = path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
     const env: NodeJS.ProcessEnv = { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
     if (captureSink) {
-      const config = p2CommitPhaseCaptureConfig(this.phaseCaptureDirectory);
+      const config = p2CommitPhaseCaptureConfig(this.phaseCaptureDirectory, this.phaseCaptureLaunchOrdinal);
       if (!config) throw new Error('P2 Runtime phase capture sink requested without its private directory');
       env.PYTHONPATH = [P2_PHASE_BOOTSTRAP_DIR, RUNTIME_CHECKOUT, agent].join(path.delimiter);
       env.ASTRID_P2_COMMIT_PHASE_CAPTURE = '1';
@@ -1406,7 +1426,7 @@ print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': r
     this.stopped = true;
     let cleanupError: unknown;
     this.hungStackCapture?.abortAll();
-    const runtimeLogDir = process.env.D66_RUNTIME_LOG_DIR?.trim();
+    const runtimeLogDir = this.runtimeLogDirectory;
     const runtime = this.runtime;
     if (!this.attachment) await stopGroup(runtime).catch((error) => { cleanupError ??= error; });
     // D66's focused element route keeps the daemon streams private so a later
@@ -1416,8 +1436,8 @@ print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': r
       try {
         await runtime.closed;
         mkdirSync(runtimeLogDir, { recursive: true, mode: 0o700 });
-        writeFileSync(path.join(runtimeLogDir, 'runtime.stdout.log'), runtime.stdout, { mode: 0o600 });
-        writeFileSync(path.join(runtimeLogDir, 'runtime.stderr.log'), runtime.stderr, { mode: 0o600 });
+        writeFileSync(path.join(runtimeLogDir, runtimeStreamLogName('stdout', this.runtimeLogLaunchOrdinal)), runtime.stdout, { flag: 'wx', mode: 0o600 });
+        writeFileSync(path.join(runtimeLogDir, runtimeStreamLogName('stderr', this.runtimeLogLaunchOrdinal)), runtime.stderr, { flag: 'wx', mode: 0o600 });
       } catch (error) {
         cleanupError = error;
       }
