@@ -124,16 +124,36 @@ function prepareP2CommitPhaseCapture(runtimeLogDir: string | undefined, launchOr
   const config = p2CommitPhaseCaptureConfig(runtimeLogDir, launchOrdinal);
   if (!config) return undefined;
   mkdirSync(config.directory, { recursive: true, mode: 0o700 });
-  const directory = lstatSync(config.directory);
-  if (!directory.isDirectory() || directory.isSymbolicLink()) throw new Error(`D66 Runtime log directory is not a private directory: ${config.directory}`);
+  const rootDirectory = lstatSync(config.directory);
+  if (!rootDirectory.isDirectory() || rootDirectory.isSymbolicLink()) throw new Error(`D66 Runtime log directory is not a private directory: ${config.directory}`);
   chmodSync(config.directory, 0o700);
+  let allocatedDirectory = config.directory;
+  if (launchOrdinal > 1) {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const candidate = path.join(config.directory, `launch-${randomUUID()}`);
+      try {
+        mkdirSync(candidate, { mode: 0o700 });
+        const candidateStat = lstatSync(candidate);
+        if (!candidateStat.isDirectory() || candidateStat.isSymbolicLink()) {
+          throw new Error(`D66 Runtime launch directory is not a private directory: ${candidate}`);
+        }
+        chmodSync(candidate, 0o700);
+        allocatedDirectory = candidate;
+        break;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+        if (attempt === 7) throw new Error('D66 Runtime launch directory allocation collided repeatedly');
+      }
+    }
+  }
+  const launchConfig = p2CommitPhaseCaptureConfig(allocatedDirectory, launchOrdinal);
   try {
-    const sink = lstatSync(config.sink);
-    throw new Error(`P2 Runtime phase sink already exists: ${config.sink} (${sink.isSymbolicLink() ? 'symlink' : 'file'})`);
+    const sink = lstatSync(launchConfig.sink);
+    throw new Error(`P2 Runtime phase sink already exists: ${launchConfig.sink} (${sink.isSymbolicLink() ? 'symlink' : 'file'})`);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
-  return config.directory;
+  return allocatedDirectory;
 }
 
 function runtimeStreamLogName(stream: 'stdout' | 'stderr', launchOrdinal: number): string {
@@ -614,8 +634,8 @@ export class DirectHarness {
   async start(options: { deferTimelineInitialization?: boolean } = {}): Promise<this> {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
-      this.runtimeLogDirectory = process.env.D66_RUNTIME_LOG_DIR?.trim() || undefined;
-      this.runtimeLogLaunchOrdinal = p2PhaseLaunchOrdinal(this.runtimeLogDirectory);
+      const configuredRuntimeLogDirectory = process.env.D66_RUNTIME_LOG_DIR?.trim() || undefined;
+      this.runtimeLogLaunchOrdinal = p2PhaseLaunchOrdinal(configuredRuntimeLogDirectory);
       this.phaseCaptureLaunchOrdinal = this.runtimeLogLaunchOrdinal - 1;
       const descriptorText = process.env.ASTRID_QUICK_DESCRIPTOR;
       if (descriptorText !== undefined) this.attachment = loadQuickDescriptor(descriptorText);
@@ -647,7 +667,8 @@ export class DirectHarness {
         this.seed = { ...this.quickSeed, image: undefined, video: undefined, big: undefined } as unknown as Seed;
       } else {
         mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
-        this.phaseCaptureDirectory = prepareP2CommitPhaseCapture(this.runtimeLogDirectory, this.runtimeLogLaunchOrdinal);
+        this.phaseCaptureDirectory = prepareP2CommitPhaseCapture(configuredRuntimeLogDirectory, this.runtimeLogLaunchOrdinal);
+        this.runtimeLogDirectory = this.phaseCaptureDirectory;
         this.realmId = await this.createRealm();
         const hungEvidence = process.env.D79_HUNG_STACK_EVIDENCE_DIR?.trim();
         if (hungEvidence) {

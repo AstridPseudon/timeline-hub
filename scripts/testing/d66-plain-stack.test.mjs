@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,6 +11,8 @@ import ts from 'typescript';
 import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, configureRuntimeLogEnv, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const require = createRequire(import.meta.url);
+const BASE_HARNESS_COMMIT = 'f7201e02dc53ca7b1e70e38894284528fc78aa70';
+const BASE_HARNESS_BLOB = '9fccbff7ca874d5c86fa71daf85587a036d5f0ba';
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
@@ -259,7 +261,9 @@ test('D105 actual two-start production caller refuses old sink reuse and keeps i
   const f = serviceFixture();
   const launcherSource = readFileSync(new URL('./d66-plain-stack.mjs', import.meta.url), 'utf8');
   const harnessUrl = new URL('../../tests/e2e/local/support/harness.ts', import.meta.url);
-  const oldHarnessSource = execFileSync('git', ['show', 'HEAD:tests/e2e/local/support/harness.ts'], { encoding: 'utf8' });
+  const baseBlob = execFileSync('git', ['ls-tree', BASE_HARNESS_COMMIT, 'tests/e2e/local/support/harness.ts'], { encoding: 'utf8' }).trim();
+  assert.equal(baseBlob, `100644 blob ${BASE_HARNESS_BLOB}\ttests/e2e/local/support/harness.ts`);
+  const oldHarnessSource = execFileSync('git', ['cat-file', 'blob', BASE_HARNESS_BLOB], { encoding: 'utf8' });
   const newHarnessSource = readFileSync(harnessUrl, 'utf8');
 
   for (const [label, harnessSource] of [['old', oldHarnessSource], ['new', newHarnessSource]]) {
@@ -267,26 +271,43 @@ test('D105 actual two-start production caller refuses old sink reuse and keeps i
     const phaseOne = path.join(control.runtimeLogDir, 'p2-commit-phase.jsonl');
     assert.equal(existsSync(phaseOne), true, `${label} first production start must create its phase sink`);
     control.env.D66_RUNTIME_PHASE_LAUNCH_ORDINAL = '2';
-    let second;
-    let secondError;
-    try {
-      second = await control.harnessNamespace.startDirectHarness({ deferTimelineInitialization: true });
-      await second.enableTimelineAuthoring(process.execPath);
-    } catch (error) {
-      secondError = error;
-    } finally {
-      await second?.stop();
+    const stageStarts = [];
+    for (let start = 0; start < 2; start += 1) {
+      let harness;
+      let error;
+      try {
+        harness = await control.harnessNamespace.startDirectHarness({ deferTimelineInitialization: true });
+        await harness.enableTimelineAuthoring(process.execPath);
+      } catch (caught) {
+        error = caught;
+      } finally {
+        await harness?.stop();
+      }
+      stageStarts.push({ harness, error });
     }
     if (label === 'old') {
-      assert.match(String(secondError), /P2 Runtime phase sink already exists/);
+      assert.match(String(stageStarts[0].error), /P2 Runtime phase sink already exists/);
+      assert.match(String(stageStarts[1].error), /P2 Runtime phase sink already exists/);
       assert.equal(existsSync(path.join(control.runtimeLogDir, 'p2-commit-phase-2.jsonl')), false);
     } else {
-      assert.equal(secondError, undefined);
-      assert.equal(existsSync(path.join(control.runtimeLogDir, 'p2-commit-phase-2.jsonl')), true);
-      assert.equal(existsSync(path.join(control.runtimeLogDir, 'runtime.stderr-2.log')), true);
+      assert.equal(stageStarts.every(({ error }) => error === undefined), true);
+      const launchDirectories = readdirSync(control.runtimeLogDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && entry.name.startsWith('launch-'))
+        .map((entry) => path.join(control.runtimeLogDir, entry.name));
+      assert.equal(launchDirectories.length, 2);
+      for (const launchDirectory of launchDirectories) {
+        assert.equal(statSync(launchDirectory).mode & 0o777, 0o700);
+        assert.equal(existsSync(path.join(launchDirectory, 'p2-commit-phase-2.jsonl')), true);
+        assert.equal(statSync(path.join(launchDirectory, 'p2-commit-phase-2.jsonl')).mode & 0o777, 0o600);
+        assert.equal(existsSync(path.join(launchDirectory, 'runtime.stdout-2.log')), true);
+        assert.equal(existsSync(path.join(launchDirectory, 'runtime.stderr-2.log')), true);
+        assert.equal(statSync(path.join(launchDirectory, 'runtime.stdout-2.log')).mode & 0o777, 0o600);
+        assert.equal(statSync(path.join(launchDirectory, 'runtime.stderr-2.log')).mode & 0o777, 0o600);
+      }
       assert.equal(existsSync(path.join(control.runtimeLogDir, 'runtime.stderr.log')), true);
+      assert.equal(existsSync(path.join(control.runtimeLogDir, 'runtime.stdout.log')), true);
       assert.equal(readFileSync(path.join(control.runtimeLogDir, 'runtime.stderr.log'), 'utf8'), control.stderr);
-      assert.equal(readFileSync(path.join(control.runtimeLogDir, 'runtime.stderr-2.log'), 'utf8'), control.stderr);
+      assert.equal(new Set(launchDirectories).size, 2);
     }
     t.diagnostic(`${label} source two-start collision control completed`);
   }
