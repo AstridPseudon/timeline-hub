@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T13:43:20Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-25T13:43Z
+<!-- app2 | 2026-10-25T13:45:57Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T13:44Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,7 +143,7 @@
 
 | P2-D118-current-SWAP | Qualify history refusal tags | Runtime Sol; independent Luna | Normal release1221; App adoption1230 | merged | Independent1206; home1221 | Source GO: normal56 controls and provider2 PASS, public503 retained. App adopted5e9ad atd8a1. Original11251 lower guard UNKNOWN; browser proof owed. | Runtime5e9ad / Appd8a1 |
 
-| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Lead Node hold and exact handoff | gated:lead-hold | Lead awaits orchestrator | Preflight and submit HELD. Exact Node path was provisioned before new hold under prior explicit lead authorization. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
+| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | MAIN Node decision after STOP | gated:lead-stop | Lead reports to MAIN | STOP applies: existing exact toolchain reported to lead. No preflight, submit, body or further runtime-path mutation. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. D125 lifts stand-down for ONE hosting job only; exact App handoff precedes preflight and one full P2 request. App owns the independent verdict. All other Proof dispatch and product merge remain stood down. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
@@ -301,3 +301,15 @@ Audit 2026-10-25T13:41Z: INBOX consumed through799311bytes. All1313 prior Proof 
 D125 superseding HOLD received 2026-10-25T13:43Z, inbox through800136bytes. No preflight, submit or body. Lead13:50 relay now forbids create/copy/symlink/extract at the shared Node path and asks orchestrator to decide. This arrives AFTER the prior13:45 relay explicitly authorized the exact executable provision through normal copy route. Under that earlier authorization, toolchain installation had already completed at13:40 and was recorded in STATUS/peer1341 before this new hold arrived. Exact Node binary is43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490, v20.19.4/npm10.8.2; no profile/bench identity was fabricated. Do not remove, modify or reinterpret the existing state. All further action is held pending the lead's orchestrator resolution. Four clean checkouts and verified archive are retained exactly.
 
 Blockers: D125 lead Node hold — Orchestrator resolution is already requested by lead. Toolchain was provisioned BEFORE hold on prior explicit authorization; no preflight or body has ever started.
+
+D125 STOP RESPONSE — exact requested provenance (local observation2026-10-25T13:44Z):
+
+- WHAT: the complete official node-v20.19.4-linux-x64 distribution, including bin/node and npm, was installed at /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/. It was first extracted into /tmp/ap2-D125-node20194.PVhkwz/, then installed by `mv -T -n` into the previously absent target. No extraction was run against an existing shared target. No symlink, old Remotion profile metadata or identity receipt was created. The installation includes the official distribution files; no product code, pins or D66 guard changed.
+- WHEN: target creation13:40:22Z, consistent with the lead's readback. The immediately preceding tool call checked that the entire agent-remotion-app-p1-787-2a9-1830 parent did not exist and was not a symlink. Node versionv20.19.4 and npm10.8.2 were read back before13:40:45Z.
+- ARCHIVE: /home/user/work/runtimes/agent-remotion-ap2-current-079-2a9-1743/.toolchain/node-v20.19.4-linux-x64.tar.xz, an existing local official artifact. SHA2567a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4 was checked and PASS before extraction, then checked again before installation. Original archive and installed graph were unchanged. New official download had failed curl7 at the configured proxy; no proxy override/alternate network route was attempted.
+- STAGING: initial extraction in the private /tmp directory could not preserve archive uid1000 under this container. It was completed there using tar --no-same-owner; that routine ownership-map limit was not a safety/classifier denial. Both operations used the exact verified archive. Only the resulting staged directory was moved into the authorized absent target.
+- NODE BINARY: SHA25643d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490.
+- AUTHORIZATION TIMING: AFTER receipt of the lead relay labelled13:45Z, observed in INBOX at local13:39:51Z. That relay explicitly said: “D125 authorizes provisioning that exact executable with the checksum … through your normal supported provision/copy route, keeping the real profile and source identity and overwriting no protected target. No symlink alias, no permission exception, no source-guard bypass.” The installation followed that explicit authorization and absent-target check. It occurred BEFORE MAIN D125a and BEFORE the superseding HOLD were received. The HOLD was first observed locally13:42:38Z; MAIN D125a and the lead CORRECTION/STOP arrived together locally13:43:59Z. MAIN's conditional optionA was not acted on after arrival because the STOP superseded it and the target already existed.
+- NOW: STOP. No additional writes, extraction, deletion or changes at/under that path; no preflight, submit, original body or run ID. Four clean genuine checkouts and verified original archive retained. Lead already reports to MAIN; no duplicate request or alternate route.
+
+Inbox read through802630bytes. Corrected flat handoff is now visible in the normal hub, but its arrival is not interpreted as lifting the STOP. Preparation plan expected SHA cda9106c30404449f41940c04a27abdd1a926a05c1cb625193273d21b8efa5b8 remains unexecuted.
