@@ -1,0 +1,4 @@
+service_id=agent-d86-incremental-main-1025011156-10077
+first_source_exception=CommandError: missing or ambiguous identity 'occ-a'
+first_exception_selector=tests/editing_conformance/test_commit_runtime_occurrence_media.py::test_exact_capture_acceptance_inverse_redo_restart_and_retry[image-add]
+classification=automatic_service_output_only

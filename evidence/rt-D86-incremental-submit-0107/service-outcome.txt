@@ -1,0 +1,14 @@
+service_id=agent-d86-incremental-main-1025011156-10077
+request_id=d86-incremental-main-0107-body
+tuple_agent=0ae146e1b0acc6e4a82ba6b4f905d88bad48320c
+tuple_runtime=a3cd1a3214fa1632879c21d82d1abb9ea720b1de
+tuple_app=913686448cafbb63dfba5d8053cb725e1140bb07
+tuple_composition=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+selector_count=268
+pytest_summary=39 failed, 30 passed, 176 errors in 111.59s
+service_wall_seconds=115
+body_exit=1
+automatic_verdict=NO-GO
+verdict_scope=automatic service summary only; no independent failure-verdict chain
+qualification_scope=incremental affected-node batch only
+excluded_from_credit=P4 originals; SWAP/bulk terminal bodies; held D88 capture; D59; full suite

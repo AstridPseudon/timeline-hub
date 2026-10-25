@@ -1,0 +1,14 @@
+astrid_origin=/home/user/work/wt/agt-pin-0ae146e1/astrid/__init__.py
+astrid_runtime_client_origin=/home/user/work/wt/agt-pin-0ae146e1/astrid_runtime_client/__init__.py
+runtime_protocol_origin=/home/user/work/wt/rt-pin-a3cd1a32/runtime_protocol/__init__.py
+provider_class=astrid.sdk.timeline.commit.RuntimeCommitService
+provider_module_origin=/home/user/work/wt/rt-pin-a3cd1a32/runtime_protocol/timeline_commit_provider.py
+contract_version=0.2.14
+schema_digest=sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
+profile=/home/user/work/runtimes/agent-remotion-0013
+profile_node_modules=/home/user/work/runtimes/agent-remotion-0013/node_modules
+profile_node_modules_symlink=false
+node_version=v20.19.4
+profile_lock_sha256=c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24
+profile_registry_sha256=b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d
+runtime_lock_source=a3cd1a3214fa1632879c21d82d1abb9ea720b1de

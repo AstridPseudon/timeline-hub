@@ -1,0 +1,6 @@
+service_id=agent-d86-incremental-main-1025011106-14394
+status=NO_BODY_ROUTE_FAILURE
+exit=1
+first_source_exception=main-affected-batch-recipe.sh:6: P4_LAUNCHER: set P4_LAUNCHER to the pinned launcher
+pytest_body=not_started
+disposition=private_route_input_repaired; failed_id_not_retried

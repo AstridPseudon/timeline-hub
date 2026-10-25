@@ -1,0 +1,3 @@
+normal_runtime_observed=/home/user/work/wt/rt-pin-766fd670
+normal_runtime_sha=766fd6700c3128ea9fc833086a517de2acb535e2
+normal_runtime_disposition=not_bound; released_product_a3cd_bound_due_to_Agent_runtime.lock
