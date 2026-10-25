@@ -1,0 +1,73 @@
+{
+  "task": "D117",
+  "assessment": "D77 source-only footprint",
+  "date": "2026-10-25 UTC",
+  "result": {
+    "safe_750mb": false,
+    "retained_reported_bytes": 1168669468,
+    "requested_bound_bytes": 750000000,
+    "over_bound_bytes": 418669468,
+    "reported_ratio": 1.5582259573333333,
+    "reported_measurement_semantics": "unknown_apparent_or_allocated;not_a_retained_peak_sample",
+    "complete_finite_peak_bound": "UNKNOWN_UNBOUNDED_FROM_RETAINED_EVIDENCE"
+  },
+  "known_source_arithmetic": {
+    "runtime": {
+      "commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "tracked_blobs": 528,
+      "tracked_apparent_bytes": 19938578
+    },
+    "vibecomfy": {
+      "commit": "31f90bb03d330283b76e7dbdda51197be787090d",
+      "tree": "101744f0d87eebe5ddf6752c10f01f52dc94e3e9",
+      "tracked_blobs": 3857,
+      "tracked_apparent_bytes": 169901555
+    },
+    "agent": {
+      "commit": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+      "tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+      "tracked_apparent_bytes": "UNKNOWN_EXACT_OBJECT_UNAVAILABLE"
+    },
+    "known_source_sum_bytes": 189840133,
+    "known_only_additive_planning_bytes": 1358509601,
+    "formula": "1168669468 + 19938578 + 169901555 = 1358509601"
+  },
+  "admission": {
+    "existing_d89_heavy_floor_bytes": 5200000000,
+    "required_free_bytes_operator": ">5200000000",
+    "strict_integer_minimum_bytes": 5200000001,
+    "headroom_at_floor_over_known_only_bytes": 3841490399,
+    "headroom_at_strict_minimum_over_known_only_bytes": 3841490400,
+    "start_source_floor_bytes": 5000000000,
+    "stop_floor_bytes": 4500000000,
+    "bench_store_reserve": "fixed_8GiB_no_init"
+  },
+  "unmeasured_or_unknown": [
+    "exact_applied_Agent_source_tree_size",
+    "apparent_bytes_vs_allocated_blocks_for_retained_run",
+    "source_archive_and_extraction_transient_duplication",
+    "uv_wheel_or_build_temporaries",
+    "venv_and_locked_dependency_closure",
+    "Bun_Node_ffmpeg_and_other_tool_archives_and_extractions",
+    "OMP_source_Bun_install_native_archive_and_generated_outputs",
+    "Remotion_node_modules",
+    "cache_hardlink_shared_dependency_provenance",
+    "later_profile_service_or_render_phase"
+  ],
+  "future_preflight": {
+    "authorization": "owner_authorized_exact_source_input_required;actual_403_and_classifier_refusal_stay_stopped",
+    "root": "private_staging_root_on_intended_filesystem",
+    "shared_state": "no_borrowed_env_cache_or_near_match;no_cache_credit_without_exact_provenance",
+    "checks": [
+      "verify_exact_applied_source_identities_and_hashes",
+      "verify_existing_heavy_slot_is_free",
+      "verify_free_bytes_strictly_greater_than_5200000000",
+      "preserve_5000000000_start_floor_4500000000_stop_floor_and_fixed_8GiB_reserve",
+      "record_apparent_and_allocated_measurements_before_and_during_authorized_run",
+      "stop_on_invalid_df_identity_provenance_or_bound_result"
+    ]
+  },
+  "status": "future_actual_rerun_source_permission_held_and_stopped",
+  "changes": "read_only_assessment_only"
+}
