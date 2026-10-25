@@ -12,12 +12,12 @@ import hashlib
 import importlib.util
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import stat
 import subprocess
 import sys
+from pathlib import Path
 
 from support import MAKER, PORTABLE_PARENT, block
 
@@ -39,80 +39,142 @@ BOOTSTRAP_WHEELS = {
     'setuptools-80.9.0-py3-none-any.whl': '062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922',
     'wheel-0.46.3-py3-none-any.whl': '4b399d56c9d9338230118d705d9737a2a468ccca63d5e813e2a4fc7815d8bc4d',
 }
-REQUIRED_COMMANDS = ('bash', 'git', 'tar', 'mktemp', 'sha256sum', 'cut', 'grep',
+REQUIRED_SOURCE_FILES = {
+    'agent': ('LICENSE', 'astrid/__init__.py', 'astrid_runtime_client/__init__.py',
+              'pyproject.toml', 'requirements/proof.lock'),
+    'runtime': ('LICENSE', 'astrid_runtime/__init__.py', 'astrid_runtime/__main__.py',
+                'packages/python/astrid_runtime_client/__init__.py', 'pyproject.toml', 'runtime_protocol/__init__.py'),
+    'dependency-dot': ('custody_b/__init__.py', 'pyproject.toml'),
+    'dependency-underscore': ('custody_a/__init__.py', 'pyproject.toml'),
+}
+REQUIRED_COMMANDS = ('python3', 'dirname', 'date', 'mkdir', 'cat', 'bash', 'git', 'tar', 'mktemp', 'sha256sum', 'cut', 'grep',
                      'sed', 'find', 'chmod', 'mv', 'df', 'awk', 'timeout', 'readlink')
 
 
-def fixture_sources():
-    manifest = json.loads(FIXTURE_MANIFEST.read_text())
-    require(manifest.get('schema') == 'timeline.ops-child-custody.tiny-source.v1',
-            'tiny fixture source manifest schema mismatch')
-    result = {}
-    for role, entry in manifest['roles'].items():
-        files = {}
-        for name, expected in entry['files'].items():
-            path = FIXTURE_ROOT / role / name
-            require(path.is_file() and not path.is_symlink(), 'missing tiny fixture source: ' + role + '/' + name)
-            data = path.read_bytes()
-            require(hashlib.sha256(data).hexdigest() == expected,
-                    'tiny fixture source hash mismatch: ' + role + '/' + name)
-            files[name] = data.decode('utf-8')
-        result[role] = files
-    return result
+def relative_file(value):
+    return (isinstance(value, str) and re.fullmatch(r'[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*', value) is not None
+            and all(part not in ('.', '..') for part in value.split('/')))
+
+
+def digest(value):
+    return isinstance(value, str) and re.fullmatch(r'[0-9a-f]{64}', value) is not None
+
+
+def fixture_metadata(check):
+    """Validate every manifest field, retaining independent valid entries."""
+    manifest = None
+    regular_manifest = (census_path(FIXTURE_MANIFEST) is not None
+                        and FIXTURE_MANIFEST.is_file() and not FIXTURE_MANIFEST.is_symlink())
+    check('fixture manifest is a regular non-symlink file', regular_manifest)
+    try:
+        manifest = json.loads(FIXTURE_MANIFEST.read_text()) if regular_manifest else None
+    except (OSError, ValueError, UnicodeError):
+        manifest = None
+    check('fixture manifest is valid JSON with expected schema',
+          isinstance(manifest, dict) and manifest.get('schema') == 'timeline.ops-child-custody.tiny-source.v1')
+    manifest = manifest if isinstance(manifest, dict) else {}
+    commit = manifest.get('source_commit')
+    check('fixture manifest source commit is valid',
+          isinstance(commit, str) and re.fullmatch(r'[0-9a-f]{40}', commit) is not None)
+    sources = source_hashes_from_manifest(manifest, check)
+    entries = manifest.get('makers')
+    check('fixture maker manifest has exactly parent and candidate',
+          isinstance(entries, dict) and set(entries) == {'parent', 'candidate'})
+    entries = entries if isinstance(entries, dict) else {}
+    makers = {}
+    for role in ('parent', 'candidate'):
+        entry = entries.get(role)
+        check('fixture maker entry is valid: ' + role, isinstance(entry, dict))
+        entry = entry if isinstance(entry, dict) else {}
+        path, sha, mode, commit = (entry.get(key) for key in ('path', 'sha256', 'mode', 'commit'))
+        valid_path = relative_file(path)
+        valid_hash = digest(sha)
+        valid_mode = isinstance(mode, str) and mode in ('755', '0755')
+        check('fixture maker path is valid: ' + role, valid_path)
+        check('fixture maker hash is valid: ' + role, valid_hash)
+        check('fixture maker mode is 755: ' + role, valid_mode)
+        maker_path, maker_hash = ((PORTABLE_PARENT, PARENT_MAKER_SHA256) if role == 'parent' else (MAKER, MAKER_SHA256))
+        check('fixture maker identity is pinned: ' + role,
+              valid_path and isinstance(path, str) and FIXTURE_ROOT / path == maker_path and sha == maker_hash)
+        check('fixture maker commit is valid: ' + role,
+              isinstance(commit, str) and re.fullmatch(r'[0-9a-f]{40}', commit) is not None)
+        if valid_path and valid_hash and valid_mode:
+            makers[role] = entry
+    roles = manifest.get('roles')
+    roles = roles if isinstance(roles, dict) else {}
+    pins = dict(BOOTSTRAP_WHEELS)
+    for role in ('dependency-dot', 'dependency-underscore'):
+        entry = roles.get(role)
+        wheel = entry.get('wheel') if isinstance(entry, dict) else None
+        check('tiny dependency wheel entry is valid: ' + role, isinstance(wheel, dict))
+        wheel = wheel if isinstance(wheel, dict) else {}
+        name, sha = wheel.get('filename'), wheel.get('sha256')
+        valid_name = isinstance(name, str) and re.fullmatch(r'[A-Za-z0-9_.-]+\.whl', name) is not None
+        valid_hash = digest(sha)
+        check('tiny dependency wheel filename pin is valid: ' + role, valid_name)
+        check('tiny dependency wheel hash pin is valid: ' + role, valid_hash)
+        check('tiny dependency wheel pin is unique: ' + role, not valid_name or name not in pins)
+        if valid_name and valid_hash and isinstance(name, str) and isinstance(sha, str) and name not in pins:
+            pins[name] = sha
+    return sources, makers, pins
 
 
 def source_hashes_from_manifest(manifest, check):
-    """Return manifest source hashes while recording malformed entries."""
+    """Return only safe source entries, recording all malformed roles/files."""
     result = {}
     roles = manifest.get('roles') if isinstance(manifest, dict) else None
-    if not isinstance(roles, dict):
-        check('fixture source manifest has a roles map', False)
-        return result
-    for role, entry in roles.items():
+    required = REQUIRED_SOURCE_FILES
+    check('fixture source manifest has exactly the four required roles',
+          isinstance(roles, dict) and set(roles) == set(required))
+    roles = roles if isinstance(roles, dict) else {}
+    for role in required:
+        entry = roles.get(role)
+        check('fixture source manifest role is valid: ' + role, isinstance(entry, dict))
         files = entry.get('files') if isinstance(entry, dict) else None
-        if not isinstance(files, dict):
-            check('fixture source manifest files map is valid: ' + str(role), False)
-            continue
+        check('fixture source manifest files map is valid: ' + role, isinstance(files, dict) and bool(files))
+        check('fixture source manifest required file set is valid: ' + role,
+              isinstance(files, dict) and set(files) == set(REQUIRED_SOURCE_FILES[role]))
         result[role] = {}
+        if not isinstance(files, dict):
+            continue
         for name, expected in files.items():
-            if not isinstance(name, str) or not isinstance(expected, str):
-                check('fixture source manifest entry is valid: ' + str(role), False)
-                continue
-            result[role][name] = expected
+            valid_name, valid_hash = relative_file(name), digest(expected)
+            check('fixture source manifest filename is valid: ' + role + '/' + str(name), valid_name)
+            check('fixture source manifest hash is valid: ' + role + '/' + str(name), valid_hash)
+            if valid_name and valid_hash:
+                result[role][name] = expected
     return result
+
+
+def authenticated_file(path, expected, mode):
+    require(path.is_file() and not path.is_symlink() and path == path.resolve(),
+            'missing/nonphysical fixture file: ' + str(path))
+    data = path.read_bytes()
+    require(hashlib.sha256(data).hexdigest() == expected, 'fixture file hash mismatch: ' + str(path))
+    require(stat.S_IMODE(path.stat().st_mode) == mode, 'fixture file mode mismatch: ' + str(path))
+    return data
+
+
+def fixture_sources():
+    sources, _, _ = fixture_metadata(lambda label, condition: require(condition, label))
+    return {role: {name: authenticated_file(FIXTURE_ROOT / role / name, sha, 0o644).decode('utf-8')
+                   for name, sha in files.items()} for role, files in sources.items()}
 
 
 def fixture_makers():
-    manifest = json.loads(FIXTURE_MANIFEST.read_text())
-    result = {}
-    for role, entry in manifest['makers'].items():
-        path = FIXTURE_ROOT / entry['path']
-        require(path.is_file() and not path.is_symlink(), 'missing tiny maker: ' + role)
-        data = path.read_bytes()
-        require(hashlib.sha256(data).hexdigest() == entry['sha256'],
-                'tiny maker hash mismatch: ' + role)
-        require(stat.S_IMODE(path.stat().st_mode) == int(entry['mode'], 8),
-                'tiny maker mode mismatch: ' + role)
-        result[role] = {'path': path, 'bytes': data, 'sha256': entry['sha256'],
-                        'commit': entry['commit']}
-    return result
+    _, makers, _ = fixture_metadata(lambda label, condition: require(condition, label))
+    return {role: {'path': FIXTURE_ROOT / entry['path'],
+                   'bytes': authenticated_file(FIXTURE_ROOT / entry['path'], entry['sha256'], 0o755),
+                   'sha256': entry['sha256'], 'commit': entry['commit']}
+            for role, entry in makers.items()}
 
 
 def fixture_wheel_pins():
-    manifest = json.loads(FIXTURE_MANIFEST.read_text())
-    pins = dict(BOOTSTRAP_WHEELS)
-    for role in ('dependency-dot', 'dependency-underscore'):
-        wheel = manifest['roles'][role].get('wheel', {})
-        require(re.fullmatch(r'[A-Za-z0-9_.-]+\.whl', wheel.get('filename', '')),
-                'tiny dependency wheel filename pin missing')
-        require(re.fullmatch(r'[0-9a-f]{64}', wheel.get('sha256', '')),
-                'tiny dependency wheel hash pin missing')
-        pins[wheel['filename']] = wheel['sha256']
-    return pins
+    return fixture_metadata(lambda label, condition: require(condition, label))[2]
 
 
 def command(argv, **kwargs):
-    return subprocess.run(argv, capture_output=True, text=True, timeout=600, **kwargs)
+    return subprocess.run(argv, capture_output=True, text=True, timeout=600, check=False, **kwargs)
 
 
 def require(condition, reason):
@@ -124,7 +186,7 @@ def committed_source_bytes(path, revision, name):
     """Read one committed source blob without decoding or checking it out."""
     result = subprocess.run(
         ['git', '-C', str(path), 'cat-file', 'blob', revision + ':' + name],
-        capture_output=True, timeout=600,
+        capture_output=True, timeout=600, check=False,
     )
     if result.returncode:
         raise RuntimeError('committed source blob is unreadable: ' + name)
@@ -149,16 +211,15 @@ def df_free_bytes(path):
 
 def python_facts(path, need_build):
     code = (
-        'import importlib, importlib.metadata, json, sys, venv, ensurepip, fcntl, unittest.mock\n'
+        'import importlib, importlib.metadata, json, sys, venv, ensurepip, fcntl, unittest.mock, tomllib\n'
         'facts = {"version": sys.version, "executable": sys.executable}\n'
-        'for name in ("setuptools", "wheel"):\n'
-        '    facts[name] = importlib.metadata.version(name)\n'
         'if NEED_BUILD:\n'
-        '    facts["build"] = importlib.metadata.version("build")\n'
+        '    for name in ("build", "setuptools", "wheel"):\n'
+        '        facts[name] = importlib.metadata.version(name)\n'
         'print(json.dumps(facts, sort_keys=True))\n'
     ).replace('NEED_BUILD', repr(need_build))
     try:
-        result = command([str(path), '-I', '-c', code])
+        result = command([str(path), '-B', '-I', '-c', code])
     except (OSError, subprocess.TimeoutExpired):
         return None
     if result.returncode:
@@ -179,175 +240,194 @@ def check_only(args):
         if not condition:
             missing.append(label)
 
-    scratch_value = os.environ.get('TMPDIR', '')
-    scratch = Path(scratch_value)
-    check('TMPDIR is an existing physical absolute directory',
-          scratch.is_absolute() and scratch == scratch.resolve() and scratch.is_dir())
-    check('fixture manifest is a regular non-symlink file',
-          FIXTURE_MANIFEST.is_file() and not FIXTURE_MANIFEST.is_symlink())
-    manifest = None
-    try:
-        manifest = json.loads(FIXTURE_MANIFEST.read_text())
-    except (OSError, ValueError):
-        pass
-    check('fixture manifest is valid JSON with expected schema',
-          isinstance(manifest, dict) and manifest.get('schema') == 'timeline.ops-child-custody.tiny-source.v1')
-
-    source_hashes = source_hashes_from_manifest(manifest, check)
-    if isinstance(manifest, dict):
-        roles = manifest.get('roles', {})
-        if not isinstance(roles, dict):
-            roles = {}
-        for role, entry in roles.items():
-            files = entry.get('files', {}) if isinstance(entry, dict) else {}
-            if not isinstance(files, dict):
-                files = {}
-            for name, expected in files.items():
-                if not isinstance(name, str) or not isinstance(expected, str):
-                    continue
-                path = FIXTURE_ROOT / role / name
-                try:
-                    matches = (path.is_file() and not path.is_symlink()
-                               and hashlib.sha256(path.read_bytes()).hexdigest() == expected
-                               and stat.S_IMODE(path.stat().st_mode) == 0o644)
-                except OSError:
-                    matches = False
-                check('fixture source ' + role + '/' + name, matches)
-        makers = manifest.get('makers', {})
-        if not isinstance(makers, dict):
-            makers = {}
-        for role, entry in makers.items():
-            entry = entry if isinstance(entry, dict) else {}
-            path = FIXTURE_ROOT / entry.get('path', '')
+    scratch = census_path(os.environ.get('TMPDIR'))
+    check('TMPDIR is an existing physical absolute directory', scratch is not None and scratch.is_dir())
+    check('TMPDIR is writable and searchable',
+          scratch is not None and scratch.is_dir() and os.access(scratch, os.W_OK | os.X_OK))
+    source_hashes, makers, pins = fixture_metadata(check)
+    for role, files in source_hashes.items():
+        for name, expected in files.items():
             try:
-                matches = (path.is_file() and not path.is_symlink()
-                           and hashlib.sha256(path.read_bytes()).hexdigest() == entry.get('sha256')
-                           and stat.S_IMODE(path.stat().st_mode) == int(entry.get('mode', '0'), 8))
-            except (OSError, ValueError):
+                authenticated_file(FIXTURE_ROOT / role / name, expected, 0o644).decode('utf-8')
+                matches = True
+            except (OSError, ValueError, RuntimeError, UnicodeError):
                 matches = False
-            check('packaged ' + role + ' maker bytes and mode', matches)
-    else:
-        check('all fixture source and maker manifest entries are readable', False)
+            check('fixture source ' + role + '/' + name, matches)
+    for role, entry in makers.items():
+        try:
+            authenticated_file(FIXTURE_ROOT / entry['path'], entry['sha256'], 0o755)
+            matches = True
+        except (OSError, ValueError, RuntimeError):
+            matches = False
+        check('packaged ' + role + ' maker bytes and mode', matches)
 
-    for label, path in (('protected Store helper', args.helper),
-                        ('private wheelhouse', args.wheelhouse),
-                        ('Agent source carrier checkout', args.agent),
-                        ('Runtime source carrier checkout', args.runtime)):
-        candidate = Path(path) if path else Path('')
+    paths = {name: census_path(getattr(args, name)) for name in (
+        'helper', 'wheelhouse', 'agent', 'runtime', 'bootstrap_artifact',
+        'orch_root', 'parent_work', 'candidate_work', 'result',
+    )}
+    for label, name, directory in (('protected Store helper', 'helper', False),
+                                    ('private wheelhouse', 'wheelhouse', True),
+                                    ('Agent source carrier checkout', 'agent', True),
+                                    ('Runtime source carrier checkout', 'runtime', True)):
+        path = paths[name]
         check(label + ' is supplied as an absolute physical path',
-              bool(path) and candidate.is_absolute() and candidate == candidate.resolve()
-              and candidate.exists() and not candidate.is_symlink())
-    if args.helper:
-        helper = Path(args.helper)
+              path is not None and (path.is_dir() if directory else path.is_file()))
+    helper = paths['helper']
+    helper_data = b''
+    if helper is not None and helper.is_file():
         try:
-            helper_matches = helper.is_file() and hashlib.sha256(helper.read_bytes()).hexdigest() == HELPER_SHA256
+            helper_data = helper.read_bytes()
         except OSError:
-            helper_matches = False
-        check('protected Store helper hash', helper_matches)
-    if args.wheelhouse:
-        wheelhouse = Path(args.wheelhouse)
+            helper_data = b''
+    check('protected Store helper hash', hashlib.sha256(helper_data).hexdigest() == HELPER_SHA256)
+    wheelhouse = paths['wheelhouse']
+    for name, expected in pins.items():
+        wheel = wheelhouse / name if wheelhouse is not None else None
         try:
-            pins = fixture_wheel_pins()
-        except (OSError, KeyError, TypeError, ValueError, RuntimeError):
-            pins = {}
-            check('all local wheel pins are valid', False)
-        for name, expected in pins.items():
-            wheel = wheelhouse / name
-            try:
-                matches = wheel.is_file() and not wheel.is_symlink() and hashlib.sha256(wheel.read_bytes()).hexdigest() == expected
-            except OSError:
-                matches = False
-            check('local wheel ' + name, matches)
-    artifact = Path(args.bootstrap_artifact) if args.bootstrap_artifact else Path('')
+            matches = (wheel is not None and wheel.is_file() and not wheel.is_symlink()
+                       and wheel == wheel.resolve() and hashlib.sha256(wheel.read_bytes()).hexdigest() == expected)
+        except (OSError, ValueError, RuntimeError):
+            matches = False
+        check('local wheel ' + name, matches)
+    artifact = paths['bootstrap_artifact']
     try:
-        artifact_matches = (artifact.is_file() and not artifact.is_symlink()
+        artifact_matches = (artifact is not None and artifact.is_file()
                             and hashlib.sha256(artifact.read_bytes()).hexdigest() == BOOTSTRAP_ARTIFACT_SHA256)
     except OSError:
         artifact_matches = False
     check('local bootstrap artifact hash', artifact_matches)
+    check('local bootstrap artifact has the maker-supported basename',
+          artifact is not None and artifact.name == DEFAULT_BOOTSTRAP_ARTIFACT.name)
 
-    for label, path, needs_build in (('runner Agent Python', args.runner_python, True),
+    for label, value, needs_build in (('runner Agent Python', args.runner_python, True),
                                      ('offline build Python', args.build_python, True),
                                      ('child Python', args.python, False)):
-        candidate = Path(path) if path else Path('')
-        check(label + ' exists and is executable', bool(path) and candidate.is_file()
-              and not candidate.is_symlink() and os.access(candidate, os.X_OK))
-        facts = python_facts(candidate, needs_build) if candidate.is_file() else None
+        # A venv's supported bin/python is normally a symlink. Preserve its
+        # invocation path so Python discovers the venv rather than the base env.
+        candidate = census_path(value, allow_symlink=needs_build)
+        runnable = candidate is not None and candidate.is_file() and os.access(candidate, os.X_OK)
+        check(label + ' exists and is executable', runnable)
+        facts = python_facts(candidate, needs_build) if runnable else None
+        version = facts.get('version') if isinstance(facts, dict) else None
         check(label + ' reports Python 3.13 with required imports',
-              facts is not None and facts.get('version', '').startswith('3.13.'))
+              isinstance(version, str) and version.startswith('3.13.'))
         if needs_build:
             check(label + ' provides build, setuptools, and wheel',
-                  facts is not None and facts.get('build') == '1.4.0'
+                  isinstance(facts, dict) and facts.get('build') == '1.4.0'
                   and facts.get('setuptools') == '80.9.0' and facts.get('wheel') == '0.46.3')
 
     for name in REQUIRED_COMMANDS:
         check('required command ' + name, shutil.which(name) is not None)
+    ambient = shutil.which('python3')
+    facts = python_facts(Path(ambient), False) if ambient is not None else None
+    version = facts.get('version') if isinstance(facts, dict) else None
+    check('maker PATH python3 provides Python 3.11+ and required stdlib imports',
+          isinstance(version, str) and re.match(r'3\.(?:1[1-9]|[2-9][0-9])\.', version) is not None)
     try:
-        available = df_free_bytes(scratch if scratch.is_dir() else Path.cwd())
+        available = df_free_bytes(scratch if scratch is not None and scratch.is_dir() else Path.cwd())
         check('free space is above unchanged start reserve', available >= RESERVE)
         check('free space is above unchanged 4GB stop line', available >= STOP_LINE)
-    except (OSError, RuntimeError, ValueError):
+    except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired):
         check('df output has one numeric Available field', False)
 
-    for label, path in (('orchestration root', args.orch_root),
-                        ('parent work root', args.parent_work),
-                        ('candidate work root', args.candidate_work)):
-        candidate = Path(path) if path else Path('')
-        check(label + ' is a fresh path inside TMPDIR', bool(path) and candidate.is_absolute()
-              and candidate == candidate.resolve() and candidate.is_relative_to(scratch)
-              and not candidate.exists())
+    private = [paths[name] for name in ('orch_root', 'parent_work', 'candidate_work')]
+    for label, candidate in zip(('orchestration root', 'parent work root', 'candidate work root'), private, strict=True):
+        check(label + ' is a fresh path inside TMPDIR',
+              scratch is not None and candidate is not None and candidate != scratch
+              and candidate.is_relative_to(scratch) and not candidate.exists() and os.access(candidate.parent, os.W_OK | os.X_OK))
+    check('private setup roots are disjoint', all(
+        left is not None and right is not None and not left.is_relative_to(right) and not right.is_relative_to(left)
+        for index, left in enumerate(private) for right in private[index + 1:]))
+    for name in ('agent', 'runtime', 'wheelhouse'):
+        path = paths[name]
+        if name in ('agent', 'runtime'):
+            check(name + ' source path is accepted by the frozen maker',
+                  path is not None and re.fullmatch(r'/[A-Za-z0-9._/-]+', str(path)) is not None)
+        check(name + ' input is private inside TMPDIR',
+              scratch is not None and path is not None and path != scratch and path.is_relative_to(scratch))
+        check(name + ' input is outside private setup roots', path is not None and all(
+            root is not None and not path.is_relative_to(root) and not root.is_relative_to(path) for root in private))
 
-    for label, path in (('Agent source carrier checkout', args.agent),
-                        ('Runtime source carrier checkout', args.runtime)):
-        candidate = Path(path) if path else Path('')
-        if candidate.is_dir():
-            role = 'agent' if label.startswith('Agent') else 'runtime'
-            expected = source_hashes.get(role, {})
-            head = command(['git', '-C', str(candidate), 'rev-parse', '--verify', 'HEAD^{commit}'])
-            status = command(['git', '-C', str(candidate), 'status', '--porcelain', '--untracked-files=all'])
-            names = command(['git', '-C', str(candidate), 'ls-tree', '-r', '--name-only', 'HEAD'])
-            modes = command(['git', '-C', str(candidate), 'ls-tree', '-r', 'HEAD'])
-            mode_map = {line.split('\t', 1)[1]: line.split()[0]
-                        for line in modes.stdout.splitlines() if '\t' in line}
-            check(label + ' has a clean receiving-service Git commit', head.returncode == 0 and status.returncode == 0
-                  and status.stdout == '' and names.returncode == 0 and modes.returncode == 0
-                  and set(names.stdout.splitlines()) == set(expected)
-                  and all(mode_map.get(name) == '100644' for name in expected))
-            if head.returncode == 0 and re.fullmatch('[0-9a-f]{40}\n', head.stdout):
-                revision = head.stdout.strip()
-                for name, expected_hash in expected.items():
-                    try:
-                        actual = committed_source_bytes(candidate, revision, name)
-                        matches = hashlib.sha256(actual).hexdigest() == expected_hash
-                    except (OSError, RuntimeError, subprocess.TimeoutExpired):
-                        matches = False
-                    check(label + ' committed source bytes ' + name, matches)
-        else:
+    for label, role in (('Agent source carrier checkout', 'agent'), ('Runtime source carrier checkout', 'runtime')):
+        candidate = paths[role]
+        expected = source_hashes.get(role, {})
+        if candidate is None or not candidate.is_dir():
             check(label + ' Git history and exact committed source are readable', False)
+            continue
+        revision = ''
+        try:
+            git_env = {**os.environ, 'GIT_OPTIONAL_LOCKS': '0'}
+            head = command(['git', '-C', str(candidate), 'rev-parse', '--verify', 'HEAD^{commit}'], env=git_env)
+            status = command(['git', '-C', str(candidate), 'status', '--porcelain', '--untracked-files=all'], env=git_env)
+            names = command(['git', '-C', str(candidate), 'ls-tree', '-r', '--name-only', 'HEAD'], env=git_env)
+            modes = command(['git', '-C', str(candidate), 'ls-tree', '-r', 'HEAD'], env=git_env)
+            mode_map = {line.split('\t', 1)[1]: line.split('\t', 1)[0]
+                        for line in modes.stdout.splitlines() if '\t' in line}
+            valid_head = head.returncode == 0 and re.fullmatch('[0-9a-f]{40}\n', head.stdout) is not None
+            revision = head.stdout.strip() if valid_head else ''
+            check(label + ' has a clean receiving-service Git commit', valid_head and status.returncode == 0
+                  and status.stdout == '' and names.returncode == 0 and modes.returncode == 0 and bool(expected)
+                  and set(names.stdout.splitlines()) == set(expected)
+                  and all(re.fullmatch(r'100644 blob [0-9a-f]{40}', mode_map.get(name, '')) for name in expected))
+        except (OSError, subprocess.TimeoutExpired):
+            check(label + ' Git history and exact committed source are readable', False)
+            valid_head = False
+        for name, expected_hash in expected.items():
+            try:
+                actual = committed_source_bytes(candidate, revision, name) if valid_head else b''
+                matches = valid_head and hashlib.sha256(actual).hexdigest() == expected_hash
+            except (OSError, RuntimeError, subprocess.TimeoutExpired):
+                matches = False
+            check(label + ' committed source bytes ' + name, matches)
+            try:
+                authenticated_file(candidate / name, expected_hash, 0o644)
+                matches = True
+            except (OSError, ValueError, RuntimeError):
+                matches = False
+            check(label + ' working source bytes and mode ' + name, matches)
 
-    try:
-        helper_text = Path(args.helper).read_text() if args.helper and Path(args.helper).is_file() else ''
-    except OSError:
-        helper_text = ''
-    for label, needle in (('Store API initialize', 'Store.initialize'),
-                          ('Store API ensure', 'def ensure'),
-                          ('Store API registration', 'register')):
-        check(label + ' is present in the protected helper', needle in helper_text)
+    for label, needle in (('Store API initialize', b'def initialize('),
+                          ('Store API ensure', b'def ensure'), ('Store API registration', b'register')):
+        check(label + ' is present in the protected helper', needle in helper_data)
+    verifier_blocks = []
+    for role, path, expected in (('parent', PORTABLE_PARENT, PARENT_MAKER_SHA256), ('candidate', MAKER, MAKER_SHA256)):
+        try:
+            text = authenticated_file(path, expected, 0o755).decode('utf-8')
+            valid_block = text.splitlines().count('# STORE_VERIFY_BEGIN') == 1 and text.splitlines().count('# STORE_VERIFY_END') == 1
+            check(role + ' maker has exactly one verifier block', valid_block)
+            if valid_block:
+                verifier_blocks.append(block(text, 'STORE_VERIFY'))
+        except (OSError, ValueError, RuntimeError, UnicodeError):
+            check(role + ' frozen maker hash, mode and verifier are readable', False)
     check('candidate and parent maker verifier blocks are byte-identical',
-          PORTABLE_PARENT.is_file() and MAKER.is_file()
-          and block(PORTABLE_PARENT.read_text(), 'STORE_VERIFY') == block(MAKER.read_text(), 'STORE_VERIFY'))
+          len(verifier_blocks) == 2 and verifier_blocks[0] == verifier_blocks[1])
 
-    if args.result:
-        output = Path(args.result)
-        check('check-only result path is inside TMPDIR', output.is_absolute() and output == output.resolve()
-              and output.parent.is_relative_to(scratch) and output.parent.is_dir()
-              and not output.exists())
+    venue = getattr(args, 'prepare_venue', None)
+    if venue is not None:
+        target = census_path(venue)
+        check('venue manifest is a fresh private path outside setup roots',
+              scratch is not None and target is not None and target != scratch
+              and target.is_relative_to(scratch) and not target.exists() and target != paths['result']
+              and target.parent.is_dir() and os.access(target.parent, os.W_OK | os.X_OK)
+              and all(root is not None and not target.is_relative_to(root) for root in private))
+
+    output = paths['result']
+    safe_output = (scratch is not None and output is not None and output.parent.is_relative_to(scratch)
+                   and output.parent.is_dir() and not output.exists() and not output.is_symlink()
+                   and os.access(output.parent, os.W_OK | os.X_OK))
+    if args.result is not None:
+        check('check-only result path is inside TMPDIR', safe_output)
     result = {'schema': 'timeline.ops-child-custody.check-only.v1', 'mode': 'check-only',
               'ok': not missing, 'checked': checked, 'missing': missing,
               'mutating_setup_started': False, 'maker_started': False,
               'store_initialized': False, 'git_mutated': False}
-    if args.result and Path(args.result).parent.is_relative_to(scratch) and Path(args.result).parent.is_dir():
-        Path(args.result).write_text(json.dumps(result, indent=2) + '\n')
+    if safe_output and output is not None:
+        try:
+            with output.open('x') as stream:
+                stream.write(json.dumps(result, indent=2) + '\n')
+        except OSError:
+            check('check-only result file is writable', False)
+            result['ok'] = False
     print(json.dumps(result, indent=2))
     if missing:
         for item in missing:
@@ -355,6 +435,22 @@ def check_only(args):
         return 2
     print('check-only PASS')
     return 0
+
+
+def census_path(value, allow_symlink=False):
+    if not isinstance(value, (str, Path)) or not str(value) or '\x00' in str(value):
+        return None
+    path = Path(value)
+    try:
+        if path.is_absolute() and (allow_symlink or path == path.resolve()):
+            try:
+                path.stat()
+            except FileNotFoundError:
+                return path
+            return path
+    except (OSError, ValueError, RuntimeError):
+        return None
+    return None
 
 
 def physical(value):
@@ -411,10 +507,11 @@ def build_wheels(destination, build_python):
     scratch = physical(os.environ['TMPDIR'])
     destination = private_path(destination, scratch, 'wheel output')
     require(not destination.exists(), 'wheel output already exists; use a fresh TMPDIR path')
+    sources = fixture_sources()
     destination.mkdir(parents=True)
     source_root = destination / 'sources'
     source_root.mkdir()
-    for role, files in fixture_sources().items():
+    for role, files in sources.items():
         for name, content in files.items():
             target = source_root / role / name
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -662,8 +759,9 @@ def main():
         return check_only(args)
     if args.write_inputs:
         require(args.write_inputs.resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()), 'fixture inputs must be in TMPDIR')
+        sources = fixture_sources()
         args.write_inputs.mkdir(parents=True)
-        for role, files in fixture_sources().items():
+        for role, files in sources.items():
             for name, content in files.items():
                 path = args.write_inputs / role / name
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -674,9 +772,8 @@ def main():
         build_wheels(args.build_wheels, args.build_python)
         return 0
     if args.prepare_venue:
-        required = (args.helper, args.orch_root, args.python, args.wheelhouse, args.agent, args.runtime,
-                    args.parent_work, args.candidate_work)
-        require(all(required), '--prepare-venue requires all private venue paths and source checkouts')
+        if check_only(args) != 0:
+            return 2
         prepare_venue(args)
         return 0
     require(args.result is not None, '--result required')
