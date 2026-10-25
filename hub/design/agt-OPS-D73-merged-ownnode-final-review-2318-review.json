@@ -1,0 +1,53 @@
+{
+  "schema": "timeline.agent.d73.merged_ownnode_final_review.v1",
+  "task": "D73/D139/D140",
+  "candidate": {
+    "repo": "composition",
+    "branch": "tl/agt-OPS-D73-merged-ownnode-final-review-2318",
+    "commit": "cf7faa0054b21ddb746dc400b74ef1d24bb62b41",
+    "scope": "ops-d73-exact-nodes only"
+  },
+  "verdict": "PASS",
+  "receiving_status": "NOT_READY",
+  "findings": [
+    {
+      "id": "D73-REVIEW-001",
+      "severity": "BLOCKING",
+      "status": "RESOLVED",
+      "summary": "Both candidate named rows execute pre-dispatch admission before the unchanged pinned launcher and before launcher artifact creation.",
+      "evidence": [
+        "Both ops-d73-exact-nodes/suites.conf rows call pre-dispatch.py, then the exact Agent launcher, in run mode.",
+        "pre-dispatch.py rejects duplicate/malformed/missing manifest input, current Agent/Runtime tuple mismatch, runtime-lock provenance/count/hash mismatch, wrong launcher, wrong mode, and missing launcher inputs before exec.",
+        "Positive selected4 and fork1 controls reached the unchanged launcher stub exactly once, returned 17, and produced the expected bounded artifacts."
+      ]
+    },
+    {
+      "id": "D73-REVIEW-002",
+      "severity": "BLOCKING",
+      "status": "RESOLVED",
+      "summary": "The actual rendered central parser/row path exercises all refusal classes with zero additional launcher/preflight calls and zero D66 output directories.",
+      "evidence": [
+        "Seven-test unittest control rendered each real suites.conf row through the extracted test-run parser.",
+        "For each row, wrong-source, wrong-lock, Agent-SHA poison, duplicate, and malformed manifests were rejected by pre-admission; the stub call count and preflight witness did not change and each invalid output path remained absent.",
+        "Alternate suite spellings selected zero rows; request-test's *-nodes guard still requires --files; hostile external D73 environment values did not bypass env -i row admission."
+      ]
+    }
+  ],
+  "preserved": [
+    "selected4 four selectors and fork1 one selector",
+    "integration marker, run -- argv, per-ID JUnit binding, no-cache, timeout45",
+    "current Agent 41ad and Runtime f103 identities and canonical 15-file lock",
+    "launcher, selected4, fork1, focused launcher-control, and runtime helper bytes exact versus Agent 2eca",
+    "historical Agent 2eca / Runtime ab1e evidence without retargeting",
+    "C0 request/reply shape notes without product or DTO edits"
+  ],
+  "receiving_missing": [
+    "current Agent checkout receipt",
+    "current Runtime checkout receipt",
+    "genuine rendered receipt-backed manifest",
+    "App and Composition receipt-derived identities and environment/schema/profile inputs",
+    "central installation of both rows",
+    "fresh per-ID XML/raw logs and submit/end disk witnesses",
+    "real interpreter import and product preflight evidence"
+  ]
+}

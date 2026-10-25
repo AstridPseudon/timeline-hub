@@ -1,0 +1,66 @@
+{
+  "schema": "timeline.agent.d73.final_review_source_manifest.v1",
+  "candidate": {
+    "repo": "composition",
+    "commit": "cf7faa0054b21ddb746dc400b74ef1d24bb62b41",
+    "parent": "c068b6a5e10c3029f3355f65404323b776bc2ac8",
+    "changed_files": [
+      "ops-d73-exact-nodes/README.md",
+      "ops-d73-exact-nodes/pre-dispatch.py",
+      "ops-d73-exact-nodes/suites.conf",
+      "ops-d73-exact-nodes/test_recipe.py"
+    ],
+    "worktree_clean_after_controls": true
+  },
+  "agent": {
+    "path": "/home/user/work/agent",
+    "commit": "41ad656529fa8489829de9078b1b6e157c7433c8",
+    "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+    "origin": "https://github.com/peteromallet/astrid-agent"
+  },
+  "runtime": {
+    "path": "/home/user/work/runtime",
+    "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
+  },
+  "runtime_lock": {
+    "source_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "producer": "astrid-runtime",
+    "canonical_file_count": 15,
+    "canonical_hashes_match": true
+  },
+  "historical": {
+    "agent_commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "status": "preserved historical evidence only"
+  },
+  "protected_hashes_exact_vs_2eca": {
+    "tools/p4-d73-pinned-launch.sh": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "tests/sdk/test_timeline_selected_schema_runtime.py": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+    "tests/editing_conformance/test_occurrence_fork_source_baseline.py": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+    "tests/sdk/test_p4_d73_pinned_launcher.py": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600",
+    "tests/helpers/runtime.py": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f"
+  },
+  "suites": {
+    "selected4": {
+      "name": "d73-f103-selected4-exact-nodes",
+      "selector_count": 4,
+      "marker": "integration"
+    },
+    "fork1": {
+      "name": "d73-f103-fork-exact-nodes",
+      "selector_count": 1,
+      "marker": "integration"
+    },
+    "argv": ["run", "--", "-m", "pytest", "-q", "-o", "addopts=", "-m", "integration", "-p", "no:cacheprovider", "--timeout=45"],
+    "per_id_junit": true,
+    "alternate_spelling_rows": 0
+  },
+  "receiving": {
+    "status": "NOT_READY",
+    "central_rows_installed": false,
+    "manifest": false,
+    "fresh_results": false
+  }
+}
