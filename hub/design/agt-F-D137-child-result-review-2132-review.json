@@ -1,0 +1,85 @@
+{
+  "review": "D137 independent source/result custody review",
+  "worker": "agt-F-D137-shell-child-core-2122",
+  "reviewer": "agt-F-D137-child-result-review-2132",
+  "verdict": "PASS_EVIDENCE",
+  "scope": "Read-only source, registration, retained-result, provenance, and closure review; no imports, controls, body, tests, or new request replayed.",
+  "child_provisioning": {
+    "result": "PASS",
+    "requested_name": "venv-agent-child-d137-a4e016",
+    "registered_key": "3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "agent_sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime_sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "provision_status": "passed",
+    "regular_child_interpreter": true,
+    "registered_module_origins": [
+      "astrid",
+      "astrid_runtime",
+      "runtime_protocol",
+      "astrid_runtime_client"
+    ],
+    "shared_schema_in_registered_child": false
+  },
+  "admission": {
+    "positive_preflight_exit": 1,
+    "positive_calls": 0,
+    "poison_exit": 1,
+    "poison_calls": 0,
+    "positive_error": {
+      "type": "ModuleNotFoundError",
+      "module": "banodoco_timeline_schema",
+      "file": "<stdin>",
+      "line": 17,
+      "stderr_sha256": "04f4cca6d893b40c8249d137253bcafaa9d83b1655be4c33ae04b7e15b768f5b"
+    },
+    "agent_core_full_submitted": false,
+    "ship_grade_core_pass": false
+  },
+  "findings": [
+    {
+      "id": "D137-F1",
+      "classification": "launcher-manifest-binding",
+      "result": "The retained failure is attributable to the effective launcher binding, not evidence of a normal-child provisioning failure.",
+      "basis": "The corrected manifest names /home/user/work/venv-agent/lib/python3.13/site-packages as schema, but the frozen launcher exports PYTHONPATH as only the pinned Agent and Runtime checkouts before its import preflight. The child site-packages has no shared schema module; the historical path does.",
+      "owner_boundary": "No source correction or new child request is authorized by this review."
+    },
+    {
+      "id": "D137-F2",
+      "classification": "not-ship-grade",
+      "result": "The result is a preflight block only; no agent-core-full service, body, XML, or production acceptance exists.",
+      "basis": "The positive exit is 1 before the launcher writes its command/body records; service.json is empty and no JUnit XML is present."
+    },
+    {
+      "id": "D137-F3",
+      "classification": "retention-gap",
+      "result": "Exact missing records are retained as absence, not reconstructed.",
+      "missing": [
+        "d73-admission/agent-core-full-preflight-positive-d137-corrected.command",
+        "d73-admission/agent-core-full-preflight-positive-d137-corrected.body.log",
+        "d73-admission/agent-core-full-preflight-positive-d137-corrected.body.exit",
+        "d73-admission/agent-core-full.xml",
+        "d73-admission/agent-core-full-preflight-poison-d137-corrected.request-id",
+        "d73-admission/agent-core-full-preflight-poison-d137-corrected.runmanifest",
+        "d73-admission/agent-core-full-preflight-poison-d137-corrected.preflight.log",
+        "d73-admission/agent-core-full-preflight-poison-d137-corrected.preflight.exit"
+      ],
+      "explanation": "Positive command/body records are after the preflight gate; poison records are after the launcher source guard; neither path reached those stages."
+    },
+    {
+      "id": "D137-F4",
+      "classification": "distinct-preparation-failure",
+      "result": "The retained shell preparation failure is separate from the actual D73 admission result.",
+      "basis": "The log records a stat failure for the absent rehearsal stub /home/user/work/wt/agt-F-core-rehearsal-2234/evidence/positive-stub.sh. Later retained admission outputs independently record positive rc=1/calls=0 and poison rc=1/calls=0."
+    }
+  ],
+  "closure": {
+    "source_membership_conserved": true,
+    "result_membership_conserved": true,
+    "command_membership": "not reached; exact missing records listed",
+    "initial_schema_copies_match_actual_attempt": true,
+    "prior_2044_refusal_preserved": true,
+    "repository_status_clean": true,
+    "tests_run": false,
+    "new_request": false
+  }
+}

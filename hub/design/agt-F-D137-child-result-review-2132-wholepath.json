@@ -1,0 +1,42 @@
+{
+  "review": "D137 source/command/result membership conservation",
+  "verdict": "PASS_EVIDENCE",
+  "stages": [
+    {
+      "stage": "normal-child-provisioning",
+      "source_records": ["cas-source-manifest.json", "cas-installation.json", "cas-receiving-note.md", "cas-report.md", "child-done.txt"],
+      "result_records": ["/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.provision-report", "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.bench-owner.json", "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.astrid-import-origins"],
+      "status": "PASS"
+    },
+    {
+      "stage": "positive-d73-preflight",
+      "source_records": ["d73-admission/agent-core-full-preflight-positive-d137-corrected.manifest", "d73-admission/agent-core-full-preflight-positive-d137-corrected.runmanifest", "d73-admission/agent-core-full-preflight-positive-d137-corrected.request-id"],
+      "command_records": [],
+      "result_records": ["d73-admission/agent-core-full-preflight-positive-d137-corrected.preflight.log", "d73-admission/agent-core-full-preflight-positive-d137-corrected.preflight.exit", "d73-admission/positive.stdout", "d73-admission/positive.stderr", "admission-result.txt", "preflight.json"],
+      "status": "BLOCKED_EXIT_1",
+      "command_absence_reason": "The launcher writes the command record only after preflight passes; no body was reached."
+    },
+    {
+      "stage": "poison-d73-preflight",
+      "source_records": ["poison.manifest"],
+      "command_records": [],
+      "result_records": ["d73-admission/poison.stdout", "d73-admission/poison.stderr"],
+      "status": "REFUSED_EXIT_1",
+      "command_absence_reason": "The launcher rejected the poisoned Agent SHA before request-id/runmanifest/preflight/body records."
+    },
+    {
+      "stage": "agent-core-full-service",
+      "source_records": [],
+      "command_records": [],
+      "result_records": ["service.json (empty placeholder)"],
+      "status": "NOT_SUBMITTED",
+      "missing_records": ["agent-core-full.xml", "runner receipt", "body log", "body exit", "service id", "outcomes", "disk witnesses"]
+    }
+  ],
+  "attribution": {
+    "initial_schema_preflight_positive_is_byte_equal_to": "d73-admission/positive.stdout",
+    "initial_schema_preflight_poison_is_byte_equal_to": "d73-admission/poison.stderr",
+    "prior_refusal": "refusal-venv-agent-child-d137-a4e016.txt and prior-refusal-venv-agent-child-d137-a4e016.txt preserved and byte-equal",
+    "no_reconstruction": true
+  }
+}

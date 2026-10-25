@@ -1,0 +1,60 @@
+{
+  "review": "D137 independent source/result custody review",
+  "verdict": "PASS_EVIDENCE",
+  "source_candidate": {
+    "repo": "composition",
+    "commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "tree": "363a551a00e9dc081da9760e21a6383296135c06",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "mode": "0755",
+    "installed_target_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "installed_target_regular_single_link": true
+  },
+  "protected_helpers": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "child_registration": {
+    "key": "3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "name": "venv-agent-child-d137-a4e016",
+    "agent_sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime_sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "requirements_lock_sha256": "6f6e3843fbb39d91e80d5be952cb3d589053503541b61202d341f9757902c110",
+    "status": "passed",
+    "child_site_packages": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/lib/python3.13/site-packages",
+    "registered_import_origins_file": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/.astrid-import-origins",
+    "registered_import_origins": {
+      "astrid": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/lib/python3.13/site-packages/astrid/__init__.py",
+      "astrid_runtime": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/lib/python3.13/site-packages/astrid_runtime/__init__.py",
+      "runtime_protocol": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/lib/python3.13/site-packages/runtime_protocol/__init__.py",
+      "astrid_runtime_client": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30/lib/python3.13/site-packages/astrid_runtime_client/__init__.py"
+    },
+    "registered_shared_schema_origin": "absent"
+  },
+  "frozen_source_tuple": {
+    "agent": {"sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186", "tree": "60d45288145414ee4702fcce61af7c7810c2a3df"},
+    "runtime": {"sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "app": {"sha": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7", "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "launcher": {
+    "path": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+    "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "mode": "0755",
+    "bash_n": "PASS",
+    "embedded_python_ast_blocks": 2,
+    "manifest_schema_argument_line": 94,
+    "preflight_pythonpath_lines": [128, 129],
+    "body_pythonpath_lines": [149, 150],
+    "command_record_line": 143,
+    "body_record_lines": [145, 146, 165]
+  },
+  "schema_binding": {
+    "historical_manifest_path": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "historical_module_origin": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+    "effective_launcher_pythonpath": "agent-checkout:runtime-checkout",
+    "child_module_present": false,
+    "conclusion": "The retained positive failure is caused by launcher/manifest binding; it does not establish a child provisioning failure."
+  }
+}
