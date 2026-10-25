@@ -1,0 +1,170 @@
+{
+  "packet": "runtime-P2-tags-release-1221",
+  "status": "RELEASE_PACKET_READY",
+  "scope": "P2 normal integrated verification/release packet; read-only product verification",
+  "normal": {
+    "sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "first_parent": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+    "second_parent_clean_authored": "ef4728a1c07b7d3909d5027fbf1e673f6aec0030",
+    "second_parent_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "branch": "tl/integration",
+    "worktree_clean": true
+  },
+  "ancestry": {
+    "clean_authored_one_commit_over_7070": true,
+    "authored_commit": "ef4728a1c07b7d3909d5027fbf1e673f6aec0030",
+    "independent_1206_candidate": "8d81148de5134f0725dab0201d9a03d1636f73f6",
+    "independent_1206_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "normal_tree_equals_independent_candidate": true,
+    "integrated_merge_receipt": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344"
+  },
+  "source_sha256": {
+    "runtime_protocol/service.py": "7277fc12e502a419ccd9eea9dfd2b3693bc8b2c8963e9fdf7224402d8a03a529",
+    "runtime_protocol/timeline_commit_execution.py": "75b8c8a214e4c54482046a59e7d051646bce22ed3ebcc2b62726e53f5a59d744",
+    "runtime_protocol/timeline_commit_port.py": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+    "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+  },
+  "changed_paths_from_7070": [
+    "runtime_protocol/service.py",
+    "runtime_protocol/timeline_commit_execution.py",
+    "runtime_protocol/timeline_commit_port.py",
+    "runtime_protocol/timeline_commit_store.py",
+    "tests/test_timeline_history_diagnostics.py",
+    "tests/test_timeline_history_emitter_boundaries.py"
+  ],
+  "canonical15_schema_unchanged_from_7070": true,
+  "contract_schema_generated_client_changed_paths_from_7070": [],
+  "public_envelope": {
+    "status": "PASS",
+    "reference_apply_history_fault": {
+      "http_status": 503,
+      "body": {
+        "code": "not_ready",
+        "message": "Timeline commit outcome unavailable; retry the exact request",
+        "details": {"reason": "runtime_unavailable"}
+      }
+    },
+    "byte_equivalent_to_independent_1206": true,
+    "other_parent_candidate_envelopes_byte_equivalent": 55
+  },
+  "tags": {
+    "count": 44,
+    "unique": 44,
+    "allowlisted_static": true,
+    "values": [
+      "history_baseline_corrupt_publication_facts",
+      "history_baseline_publication_dependency",
+      "history_baseline_source_publication_missing",
+      "history_baseline_unretained_document_dependency",
+      "history_provider_or_store_guard",
+      "port_ancestor_outside_request",
+      "port_ancestor_pin_mismatch",
+      "port_base_pins_mismatch",
+      "port_candidate_head_unobserved",
+      "port_history_bounds_mismatch",
+      "port_revision_outside_ancestry",
+      "store_adopt_existing_head",
+      "store_adopt_existing_parent",
+      "store_adopt_legacy_shell_mismatch",
+      "store_adopt_nonempty_scope",
+      "store_adopt_prior_publication",
+      "store_archived_scope_missing",
+      "store_bootstrap_unpublished_head",
+      "store_dependency_rows_mismatch",
+      "store_head_canonical_mismatch",
+      "store_head_catalog_corrupt",
+      "store_head_missing",
+      "store_head_revision_mismatch",
+      "store_history_ancestry_cycle",
+      "store_history_base_outside_ancestry",
+      "store_history_bound_order_invalid",
+      "store_history_bound_revision_mismatch",
+      "store_history_chain_break",
+      "store_history_entry_missing",
+      "store_history_ledger_mismatch",
+      "store_history_through_mismatch",
+      "store_inverse_stage_targets_unavailable",
+      "store_membership_missing",
+      "store_occurrence_row_mismatch",
+      "store_occurrence_rows_mismatch",
+      "store_reference_projection_apply_history",
+      "store_reference_projection_prepare_history",
+      "store_request_base_mismatch",
+      "store_revision_dependency_missing",
+      "store_revision_missing",
+      "store_revision_scope_missing",
+      "store_shot_input_closure_ambiguous",
+      "store_shot_parent_missing",
+      "store_shot_revision_scope_missing"
+    ]
+  },
+  "tests": [
+    {
+      "command": "/home/user/work/venv-runtime/bin/python -m pytest -q -ra -p no:cacheprovider -o addopts= tests/test_timeline_history_diagnostics.py tests/test_timeline_history_emitter_boundaries.py",
+      "result": "PASS: 56 passed in 8.45s",
+      "scope": "exact 56 diagnostics/boundary cases"
+    },
+    {
+      "command": "ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=\"$PWD:$PWD/packages/python:/home/user/work/agent\" /home/user/work/venv-runtime/bin/python -m pytest -q -ra -p no:cacheprovider -o addopts= tests/test_timeline_commit_acceptance.py::test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated tests/test_timeline_fresh_bootstrap_scope.py::test_real_provider_fresh_create_uses_normal_bootstrap",
+      "result": "PASS: 2 passed in 12.77s",
+      "scope": "genuine real-Agent provider/native seed controls"
+    },
+    {
+      "command": "python -m py_compile [four changed Runtime modules + two changed test files] && git diff --check 7070f1378d1917fcce69857ebd33cd2b3015568b HEAD",
+      "result": "PASS",
+      "scope": "scoped compile and whitespace"
+    },
+    {
+      "command": "ruff check [four changed Runtime modules + two changed test files]",
+      "result": "54 baseline findings; no new findings by exact independent-1206 comparison",
+      "scope": "scoped lint; no unrelated cleanup"
+    },
+    {
+      "command": "pyright --outputjson [four changed Runtime modules]",
+      "result": "432 baseline errors / 0 warnings; no new findings by exact independent-1206 comparison",
+      "scope": "scoped typing; no unrelated cleanup"
+    }
+  ],
+  "limits": {
+    "diagnostic_stderr_max_bytes": 4096,
+    "diagnostic_request_id": "32 lowercase hexadecimal characters",
+    "diagnostic_payload_export": false,
+    "stack_or_locals_or_message_leak": false,
+    "shared_commit_context_diagnostic_id": false,
+    "full_suite_browser_socket_replay_p4": "not run by scope",
+    "new_security_review_cycle": "not run by scope",
+    "original_11251_swap_status": "UNKNOWN",
+    "original_11251_swap_root_cause_claim": false,
+    "root_claim": false,
+    "credentials_or_private_payloads_exported": false
+  },
+  "c0v2_shape_preserved": {
+    "request": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands",
+      "label",
+      "steps(id,label,intent,tags,command_ordinals,patch,reads)",
+      "merge",
+      "reads",
+      "dry_run",
+      "Idempotency-Key"
+    ],
+    "accepted_or_merged": [
+      "canonical_document",
+      "receipt",
+      "head",
+      "effects",
+      "bindings",
+      "dependencies"
+    ],
+    "conflict": ["head", "reason"],
+    "invalid": ["code", "path", "hint"]
+  },
+  "product_mutation": false,
+  "release_note": "Immediate packet only; no broad regression/full/browser/replay/P4 claim."
+}
