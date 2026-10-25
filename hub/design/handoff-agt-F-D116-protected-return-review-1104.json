@@ -1,0 +1,54 @@
+{
+  "task": "agt-F-D116-protected-return-review-1104",
+  "verdict": "PASS_SOURCE",
+  "downstream_status": "FAIL",
+  "candidate": {
+    "branch": "tl/agt-F-D116-first-return-1040",
+    "commit": "7c717062128f61adacf613b6ee05a0992abb9024",
+    "parent": "21146cd6decaa1c15bca1753ca719f6937040798",
+    "baseline": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "source_scope": {
+    "files": [
+      "tests/editing_conformance/native_word_anchor_fixture.py",
+      "tests/editing_conformance/test_native_word_anchor.py",
+      "tests/editing_conformance/test_word_binding_recipe.py"
+    ],
+    "c0_envelope_restored": true,
+    "legacy_omission_removed": true,
+    "canonical_masks_removed": true,
+    "approved_input_and_negative_purposes_preserved": true,
+    "product_changes": false,
+    "sol_escalation": false
+  },
+  "sample": {
+    "tests": 8,
+    "passed": 6,
+    "failed": 2,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 37.325,
+    "passed_controls": [
+      "first-use retention and exact retry after restart",
+      "missing-version refusal",
+      "wrong-digest refusal",
+      "foreign-document refusal",
+      "short-occurrence refusal",
+      "raw-source-window refusal"
+    ],
+    "downstream_failures": [
+      "phrase binding",
+      "fresh-process canonical compilation"
+    ],
+    "failure_seam": "bundle_from_document -> lookup._parent_clip_list rejects divergent parent.clips/config.clips"
+  },
+  "checks": {
+    "ruff": "PASS",
+    "ast": "PASS",
+    "mypy": "PASS (exact candidate evidence)",
+    "py_compile": "PASS (exact candidate evidence)",
+    "git_diff_check": "PASS"
+  },
+  "evidence": "scratchpad/orch/workers/agt-F-D116-protected-return-review-1104/evidence/",
+  "next_step": "Keep source-qualified candidate and downstream recipe seam visible; do not claim full GREEN or add a normalizer."
+}
