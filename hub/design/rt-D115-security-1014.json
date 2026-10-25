@@ -1,0 +1,58 @@
+{
+  "task": "rt-D115-security-1014",
+  "result": "PASS",
+  "qualification": "runtime-source-security-pass",
+  "reviewed_commit": "274bbf7d73c543d72058ce3563eba2af5cdc4bd1",
+  "parent_commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+  "changed_files": [
+    "runtime_protocol/timeline_commit_auth.py",
+    "tests/test_timeline_intermediate_image_auth.py"
+  ],
+  "agent": {
+    "checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+    "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "provider_id": "astrid-v1",
+    "provider_origin_verified_inside_checkout": true
+  },
+  "hashes": {
+    "candidate_auth_sha256": "68e594537c09cc1c49f02ab9657fb8c76166763098b6932fc6c75741b957d9dc",
+    "candidate_new_test_sha256": "90c09fa44d098333e6b7dcbbd20ed0af5c653ebd5c37f7667d0d9883e18ad6c1",
+    "parent_auth_sha256": "357d7c473d8e1af42646aea57657222123cc039adde16f2700629991d25beafd",
+    "protected_neighbors_equal_parent": true
+  },
+  "tests": {
+    "candidate_regression": "5 passed",
+    "parent_regression": "1 failed genuine RED, 4 passed strict refusals",
+    "native_provider_smoke": "2 passed, no skips or deselections",
+    "strict_neighbors": "321 passed, 74 deselected",
+    "auth_integration_candidate": "39 passed, 1 baseline-identical failure out of 40",
+    "auth_integration_parent": "39 passed, 1 same failure out of 40",
+    "sequential_verifier_candidate": "66 passed, 1 known excluded failure out of 67",
+    "sequential_verifier_parent": "66 passed, 1 same known excluded failure out of 67",
+    "release_smoke_controls": "1 passed"
+  },
+  "known_exclusions": [
+    {
+      "test": "test_created_child_public_captured_transcript_advances_sequential_manifest[None-True]",
+      "reason": "sequential original or landing input does not match its authenticated head",
+      "baseline_identical": true
+    },
+    {
+      "test": "test_moved_history_replays_authenticated_original_and_landing",
+      "reason": "TimelineCommitStore synthetic SimpleNamespace lacks db_path",
+      "baseline_identical": true
+    }
+  ],
+  "security_findings": {
+    "per_step_authenticated_projection": true,
+    "final_endpoint_unchanged": true,
+    "empty_media_admit_has_no_manufactured_effect_ordinal": true,
+    "forged_image_refused": true,
+    "forged_effect_ordinal_refused": true,
+    "changed_pin_refused": true,
+    "wrong_owner_refused": true,
+    "cross_step_authority_or_snapshot_bypass_found": false
+  },
+  "worktree_product_or_test_edits": false,
+  "evidence_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-security-1014/evidence"
+}
