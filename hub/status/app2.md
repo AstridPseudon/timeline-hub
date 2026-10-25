@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T14:02:38Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-25T14:01:06Z
+<!-- app2 | 2026-10-25T14:05:28Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-25T14:03:13Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -165,4 +165,4 @@ EPERM on an extra Node-git step I added; refused, not retried.
 Blockers: Final cut — owner lanes owe current full P2, Agent core and regressions, D69, final pinned gates and genuine installed render. No Proof action remains authorized.
 Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Pass 2026-10-25T14:01:06Z: PLAN, manager rules, current header and inbox checked through 810016 bytes; no new inbox items. bin/workers ap2- returned all 1313 records done, with no live workers. MAIN stand-down remains controlling. Disk is 5.9 GiB free; no cleanup authorized under the stand-down. Peer status mirrors are absent here, so no new owner-lane result is claimed. No dispatch, run, provisioning, cleanup, Node/checkouts write, receipt edit, source/test/pin edit or Git mutation.
+Pass 2026-10-25T14:03:13Z: PLAN, manager rules, current header and inbox checked through 810016 bytes; no new inbox items. bin/workers ap2- returned all 1313 records done, with no live workers. MAIN stand-down remains controlling. Disk is 5.9 GiB free; no cleanup authorized under the stand-down. Peer status mirrors are absent here, so no new owner-lane result is claimed. No dispatch, run, provisioning, cleanup, Node/checkouts write, receipt edit, source/test/pin edit or Git mutation.
