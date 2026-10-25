@@ -69,6 +69,7 @@ class Bounds:
         self.active = True
         self.executed = set()
         self.code_files = set()
+        self.refusal_calls = []
 
     def tick(self):
         if time.monotonic() >= self.end:
@@ -86,6 +87,21 @@ class Bounds:
         if event == "call" and frame.f_code.co_filename in self.code_files:
             self.executed.add((frame.f_code.co_filename, frame.f_code.co_name,
                                frame.f_code.co_firstlineno))
+            if frame.f_code.co_name == "fail" or (frame.f_code.co_name == "check" and
+                                                 frame.f_locals.get("ok") is False):
+                caller = frame.f_back
+                paths = {}
+                if caller is not None:
+                    for key in ("path", "installed", "carrier", "source", "root"):
+                        value = caller.f_locals.get(key)
+                        if isinstance(value, Path) and value.is_absolute():
+                            paths[key] = str(value)
+                if len(self.refusal_calls) >= 128:
+                    raise Incomplete("production refusal trace budget exhausted")
+                self.refusal_calls.append({"source": frame.f_code.co_filename,
+                                           "line": caller.f_lineno if caller else None,
+                                           "reason": message(frame.f_locals.get("message", "")),
+                                           "caller_paths": paths})
         return self.trace
 
     def audit(self, event, args):
@@ -310,8 +326,12 @@ def run(args, bounds):
                 record("Store._verify_projection", "SKIPPED", reason="valid index prerequisite unavailable")
         else:
             record("Store index/ownership/projection", "SKIPPED", reason="Store constructor prerequisite unavailable")
-        record("Store mutex/lease/journal/ensure/new registration", "SKIPPED",
-               reason="production path opens writable lock handles, locks and writes; forbidden in this diagnostic; Store reads lack transactional lock consistency")
+        record("Store mutex/lease ownership guards", "SKIPPED",
+               reason="exact production context requires writable lock handles/locking; Store reads lack transactional lock consistency")
+        record("Store._registration candidate binding", "SKIPPED",
+               reason="candidate requires successful full verify()/report_bytes()/registration callback; authenticated candidate unavailable")
+        record("Store mutation bodies", "OUT_OF_SCOPE",
+               reason="ensure journal/build/eviction/publication/projection writes are excluded actions, not missing census coverage to pad a static count")
 
         # main(local_inventory=...) is reached only after successful STORE_VERIFY.
         # Farm mode precedes it with retained_farm(), which calls farm_inputs()
@@ -321,6 +341,8 @@ def run(args, bounds):
         record("dependency main(--installed, local_inventory=...)", "SKIPPED",
                reason=("authenticated embedded local_inventory prerequisite unavailable" if inventory is None else
                        "Farm authority prerequisite not executed read-only"))
+        record("dependency store_metadata retained staging key/owner/bootstrap binding", "SKIPPED",
+               reason="requires authenticated bootstrap identity and Farm authority; a staging tree is not an indexed published entry")
         record("maker verify() child freeze-identity/registration callback", "SKIPPED",
                reason="production executes child Python/imports; forbidden installed-code execution; registration is not authorized")
         record("source authentication via committed_files/git archive", "SKIPPED",
@@ -345,6 +367,7 @@ def run(args, bounds):
                                          for path, name, line in sorted(bounds.executed)]
         report["limits_used"] = {"file_bytes_charged": bounds.bytes, "operations": bounds.operations,
                                  "trace_events": bounds.events}
+        report["production_refusal_calls"] = bounds.refusal_calls
     return report
 
 
