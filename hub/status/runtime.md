@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T20:07:28Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 16 | status age 0m -->
+<!-- main | 2026-10-25T20:12:08Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 4m -->
 # runtime board, 2026-10-25T20:08:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -474,6 +474,8 @@
 | U1-D135-union-review | Review private upstream source union | Luna | Finished1952 two-parent candidate | review | rt-U1-D135-union-review-2006 | Actual0bb3 includes e319 and dbc. Author tests NOTRUN; union proof still owed. | Independent pending | 0bb3bc45c |
 | F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
+| D136a-fps-regression | Restore upstream fps input acceptance | Luna | Next source slot after D137 install | ready | Runtime next source owner | Owner decision20:16: blame first, exact array regression and same-commit input audit. Original9 fixture unchanged. | Independent review owed | No source change yet |
+
 Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and fresh dbc, not merged to integration.
 Core: D13418455 measurement8926PASS190FAIL180ERROR173subtests. Independent1937 custody FAIL: missing XML and disk witness. Known344 new-file core,14 prior REG still FAIL,12 UNKNOWN. No ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element/SWAP. No D59 cut, final build or ZIP.
@@ -488,5 +490,5 @@ D77: Farm changed child request follows Agent actual D137 result; no Farm fixtur
 Delivery: Current cut integration tuple only, no stale547e proof pin. App16 final1941PASS:14 true conflicts,13semantic/1textual. Old Agent halves reference stale proof pin; new actuala30e census1947 qualified.
 Safety: D130 and prior refusals held. Managers write ORCH boards/briefs/peers only; no direct product/test/pin/Git writes or credentials.
 Disk: Fresh4.877GB; source cap3 under D89b, stop4GB. Cleanup target5.2GB unmet; preserve all open proof evidence and KEEP.
-live 0 / cap 3; queued 3 source workers; ready-undispatched 0. Initial relative brief path returned launcher usage error, zero workers; corrected absolute paths requeued same IDs.
+live 3 / cap 3; queued 0; ready-undispatched 0. Absolute brief paths corrected; all three workers running since20:06:53Z.
 INBOX consumed through1497613bytes including explicit20:13 D137. Updated20:08Z.

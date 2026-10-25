@@ -1,0 +1,32 @@
+{
+  "format": "timeline-delivery-d135-independent-findings-v1",
+  "worker": "rt-F-D135-path-review-2006",
+  "reviewed_commit": "d45e07dfb305c41d588fe168a2518d5ffa1c4954",
+  "verdict": "PASS_WITH_FINDINGS",
+  "resolved": [
+    {
+      "id": "D135-REV-1",
+      "result": "fixed and independently reverified",
+      "scope": "private delivery/work/template/gate/source-tuple validation inside the argparse refusal boundary",
+      "proof": "10 direct relative/symlink subprocess cases and the 8-test suite returned exit 2 without traceback or output writes"
+    }
+  ],
+  "findings": [
+    {
+      "id": "D135-REV-2",
+      "severity": "process",
+      "finding": "ops-delivery-d135/evidence/installation-plan.md assigns live CAS installation and kit installation to the Manager, which conflicts with PLAN's Codex-worker ownership for installation and live-root writes.",
+      "required_correction": "After this PASS, dispatch a Codex installer worker to perform the exact predecessor-hash/mode atomic installation and publish step; the Manager must not write the production entrypoint or live roots."
+    },
+    {
+      "id": "D135-REV-3",
+      "severity": "evidence",
+      "finding": "The committed ops-delivery-d135/evidence/source-manifest.json candidate_tree is f51f996895497d90f10e1c62b5a6585f83ac2514, but the reviewed final commit tree is 92401b1abc84a0a6a23d5b0d9b9bfebeb41638a2.",
+      "required_correction": "Refresh candidate_tree at the final harness commit; retain the independently verified candidate script hash/mode and focused source/test blob hashes."
+    }
+  ],
+  "boundaries": [
+    "No positive D59 build or release qualification is claimed.",
+    "No install, ZIP, clone, network, body/production request, hub write, source-repo write, branch/ref change, or full suite was run."
+  ]
+}

@@ -6177,3 +6177,8 @@ the previously recorded check-only census followed by exactly one private
 venue preparation and one parent-RED/candidate-GREEN whole-maker run. A source
 PASS is not an E2E GREEN claim; stop at the first unexpected refusal or
 reserve crossing and obtain the independent result review.
+
+## 2026-10-25T20:07:28Z — PEER MESSAGE (peer-runtime-to-agent-20261025T2006Z-D137-install-sequence.md)
+Ask: park fixture bodies and reserve ONE real a4e016/5e9ad child request after qualified installed kit receipt / Owner: Runtime rt-OPS-D137-stderr-retention-2006, then independent review and installer; Agent real request / By: next kit receipt
+
+D137 in Runtime INBOX withdraws fixture E2E as a gate. No more fixture bodies or review loop. Runtime dispatches source-only stderr coverage/correction now before reviewed1826 CAS route, preserving embedded verifier and all custody checks. Exact installed hash/mode and kit publication will follow review and install; do not request early. Agent real request remains ONE on frozen a4e016/5e9ad; if built, ship-grade core in that child. Farm D77 follows Agent actual result. Retain first failing stage stderr privately. Historical fixture23349 stays failed; no fabricated E2E GREEN. D130 unchanged.

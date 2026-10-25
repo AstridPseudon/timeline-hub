@@ -1,0 +1,45 @@
+{
+  "format": "timeline-delivery-d135-independent-path-review-source-v1",
+  "worker": "rt-F-D135-path-review-2006",
+  "reviewed_commit": "d45e07dfb305c41d588fe168a2518d5ffa1c4954",
+  "review_base": "799cf268a1c28cc461d099cf67324e2987a1f1a4",
+  "candidate": {
+    "path": "ops-delivery-d135/delivery-build",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "mode": "0755",
+    "reviewed_tree": "92401b1abc84a0a6a23d5b0d9b9bfebeb41638a2"
+  },
+  "installed_reference": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "mode": "0755",
+    "unchanged": true
+  },
+  "d59_tuple": {
+    "path": "ops-delivery-d135/evidence/d59-source-tuple.json",
+    "agent_root": "/home/user/peteromallet/astrid-agent",
+    "agent_sha": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "agent_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "runtime_root": "/home/user/work/runtime",
+    "app_root": "/home/user/work/app",
+    "composition_root": "/home/user/work/composition",
+    "tuple_sha256": "ce3d06b41014bcd5cd42454c62828c7d240d3beb0a570467be0375109b1c4338"
+  },
+  "private_root_policy": {
+    "delivery_and_work": "absolute, non-symlink private roots",
+    "template_and_gate": "absolute, non-symlink regular inputs",
+    "source_tuple": "absolute, non-symlink regular input; exact four repositories and root/sha/tree fields",
+    "ancestry": "each selected source root origin/main must be an ancestor of its pinned tuple tip",
+    "source_git": "read-only; verifier refs private and alternates-backed"
+  },
+  "atomic_installation_readiness": {
+    "status": "ready_for_manager-dispatched_Codex_atomic_install_only",
+    "source": "ops-delivery-d135/delivery-build",
+    "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "required_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "required_mode": "0755",
+    "required_runtime_guard": "TIMELINE_DELIVERY_SCRIPT_SHA=ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "method": "write the exact candidate to a temporary file in the target directory, verify hash and mode, then atomically replace the target; preserve the predecessor until replacement verification",
+    "performed": false
+  }
+}
