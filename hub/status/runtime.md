@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T11:08:49Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 16 | status age 1m -->
-# runtime board, 2026-10-25T11:07:50Z
+<!-- main | 2026-10-25T11:13:00Z | dispatcher heartbeat 3s | live 5 (sol 1, luna 4, other 0) | busy30 17 | status age 3m -->
+# runtime board, 2026-10-25T11:09:40Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Reduce actual element request reads | HARD Sol / Luna | D118 measured read-time gate | doing | rt-D111b-actual-read-sol-1016 | Previous source label was positional; actualdoc.patch generic read cost remains. Source-only snapshots held; exact-path retarget assigned. | Normald23a base |
+| R-P2-element-docpatch-hang | Reduce measured closure read growth | HARD Sol / Luna | Actual native1.971x failure | doing | Sol1115; wholepath1115 | New source measured; closure reads29.34 to122.79ms dominate remaining growth. Earlier positional source label remains corrected. No release. | 8ca89 base held |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -415,28 +415,31 @@
 | OPS-D89a-kit | Preserve named full-core admission | Luna | Installed guard proof | merged | rt-OPS-D89a-kit-install-1040 | Exact0be installed0755; eight guards before and after PASS. Original5df backed up; zero actual bodies or tuple changes. | 0be17b74 installed |
 | D118-host-Runtime | Locate Runtime host bootstrap boundary | Luna read only | Agent1022 source owner | later | Runtime1046 exhausted output; Agent1022 | No valid Runtime return. Agent1022 identifies Agent host_bootstrap.py environment preparation; no Runtime-owned fault proved. | Source unchanged |
 | D111b-current-curve | Verify remaining measured growth | Luna read only | New source post-change native | merged | Wholepath1038; source1047 | Old plain source grows76.4 to261.8ms,3.43x. Ancestry15 to498 calls; strict lifetime identified. No new-source timing credit. | Source facts only |
-| D111b-final-source | Join ancestry reuse and released auth | Luna / independent Luna | New native and security results | review | Native1057; security1100; clean1104 | Exact clean8ca89 imports three reviewed blobs. Native setup failure retained; no current timing GO. Security controls complete, verdict pending. | 8ca89d830 held |
+| D111b-final-source | Preserve held ancestry candidate | Luna / independent Luna | Native growth failed | review | Native1057 FAIL; security1100 | Eight commits and isolation PASS; _read94.563 to186.383ms1.971x exceeds1.5x. Source8ca89 held; next repair owns remaining closure cost. | 8ca89d830 held |
 | U4a-D115-main | Adopt qualified Runtime producer | Luna | Agent home merge route | merging | rt-U4a-D115-output-adopt-1051 | Lock-only97a52;15 bytes exact,29 focused PASS. Direct worker hub write refused and stopped; normal ORCH handback to Agent home. | Agent97a52 held |
 
 | D111b-clean-candidate | Preserve reviewed production-only source | Luna | Native1057 and security1100 | review | rt-D111b-clean-candidate-1104 | Exact three-file import8ca89; all outside42aad blobs equal. Three focused cases passed. No diagnostics imported; held for existing qualification. | 8ca89d830 held |
 | F-final-qualified-join | Join current inventory and Agent matrix | Luna | Reviewed1008/1018 and2252 | doing | rt-F-final-qualified-join-1110 | Private source-only join; no install, render, service body, tuple or ZIP. Genuine released missing core targets only. | Private candidate |
 
+| D111b-remaining-cost | Remove measured closure repetition | HARD Sol | Actual1057 growth failure | doing | rt-D111b-closure-growth-sol-1115 | Base clean8ca89; sole port/store writer. Native and independent security required before release. | Held |
+| D111b-remaining-path | Compare failed and passing read paths | Luna read only | Exact1057 evidence | doing | rt-D111b-remaining-wholepath-1115 | Independent source/evidence comparison; no new native or original body. | Source unchanged |
+
 Runtime producer: RELEASED42aad0e92f6da8ea83dd0a382a87e3acd12651b0/tree085a5be70b56353deb41ae7d743336a4ccb7f29c exact independent e654. Both D115 auth fixes qualified with real-provider smoke. App15203 retains recordedd23a8.
 core open: Actual generic-read growth and current SWAP history refusal remain open. Clean performance candidate8ca89 is production-only; native1057 and security1100 qualify exact same product blobs. Agent30693 is terminal; exact450-node classification pending.
 regressions: Fourteen upstream-identical-body host regressions remain Agent-owned. Agent1022 identifies host_bootstrap.py environment validation; Runtime owns no demonstrated fault.
 Gates: P1/P3 recorded GO; P4 independent GO28.101s. Current15203 NO-GO: readiness1PASS; originals2PASS2FAIL1ERROR3NOTRUN. Placement and ADD independently GO; no final cut.
-Blockers: D111b — Native1057 must qualify actual NEW ancestry source and read wall/growth; security1100 verdict pending. Clean1104 candidate remains held. Prior native setup failure cannot count as timing.
+Blockers: D111b — Actual new native1057 FAIL1.971x versus1.5x; eight commits/isolation PASS. Sol1115 repairs measured closure/history cost while independent1115 compares whole path. Source stays held.
 Blockers: SWAP — Initial409 history_unavailable has no retained lower tag. Return1055 replay24256 failed canonical setup before target; existing controller corrects setup. Independent1052 tag FAIL remains open.
-Blockers: Agent U4a — Tool-only97a52 finalized and handed to Agent home via ORCH. Direct hub write refusal stays stopped; no new adopter or target retry. Agent board has normal369 adoption queued; exact receipt pending.
+Blockers: Agent U4a — Agent own adopter1055 handles normal369 after core terminal. Runtime97a52 finalized source is only a prior handback; direct hub refusal stays stopped, no duplicate author.
 Blockers: Final render — D117 GitHub scope/classifier denial remains stopped; no retry, alternate archive or stage. Footprint source bounds reviewed; installed render NOTRUN.
 Blockers: D69 — Runtime113-function JOIN and snapshot20PASS qualified. Agent exact400-unit independent join1042 pending; no whole-audit closure from lexical totals.
 Blockers: R2 and D100 — Exact44cf three0PASS3ERROR needs genuine Agent seed successor. Exactdd2fc26 remains20PASS6FAIL; duplicate chapter correction is Agent-owned. No unchanged retries.
 Blockers: Final cut — Current green core, D69, current fullP2, final pinnedP1-P5 and genuine installed render owed. No tuple, delivery build or ZIP.
-Next ready: Existing native1057/security1100/SWAP1055. Source-only final join1110 and safe disk audit1110 assigned. No independent ready row left unassigned.
+Next ready: Sol1115 and wholepath1115 queued immediately after new native failure. Existing security1100/SWAP1055/final join1110/disk audit1110 assigned. No independent ready row left unassigned.
 Venues: Main SWAP/native serialize through named heavy service. Agent30693 terminal on immutable120d/1daca/96d475/635f; never retarget. No duplicate full, browser or P4 proof.
 Delivery: Applied rehearsal and patches retained. Private96Python+TS inventory1018 PASS; Luna1110 joins exact Agent2252 matrix privately and checks released D115 additions. No install/body/ZIP.
 Later: D107 held2154. Agent owns genuine R2 seed and D100 duplicate setup; historical originals stay live. Three Remotion copies await owner disposition.
 Safety: WithdrawnD88/D111memo stay stopped. D106 ORCH outputs only, never worker hub writes or request-merge-remote. Prior direct hub refusal and D117 remain recorded, not retried.
 Disk: About5.7GB free. Sweep3 running through guarded route; read-only1110 audit excludes previously refused/dirty/registered/KEEP targets and Codex sessions. No compact-scratch invocation because it touches prohibited sessions.
-live 3 plus 2 queued / cap 6; ready-undispatched 0. Last dispatcher sample from workers: native1057, security1100, replay1055; all Luna. Source-only1110 requests queued. No duplicate source writer.
-INBOX consumed through1135155 bytes. Updated 2026-10-25T11:07:50Z.
+live 4 plus 2 queued / cap 6; ready-undispatched 0. Worker sample: security1100,SWAP1055,finaljoin1110,disk1110. Sol1115 HARD repeated gate failure; Luna wholepath1115 queued.
+INBOX consumed through1138887 bytes. Updated 2026-10-25T11:09:40Z.
