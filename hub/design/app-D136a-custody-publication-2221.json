@@ -1,0 +1,60 @@
+{
+  "time": "2026-10-25T22:21:49.366725+00:00",
+  "scope": "Exact author-nominated SAFE artifacts; independent final check pending; dynamic NO_GO retained",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-report.md",
+      "sha256": "91c6b90b98a6e40dd79fd8bbe5402d7a922e3b00f87ba8bcc4ee352ac0add5bc",
+      "bytes": 1306
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/correction.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-correction.json",
+      "sha256": "b6f31ca3c3b5d51dd28a3021c04750d8411b22512b4ba03b02efb995864d0d0d",
+      "bytes": 6266
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-review.json",
+      "sha256": "fa9523f51b438aec05c26ffb601bff7be9e4f06a1fb0b0b08b38704d49d3dfc4",
+      "bytes": 2743
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/table.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-table.json",
+      "sha256": "22b6a94523098092aa4eed93d37953a0963794db4c96231c8e1ff0f20966d337",
+      "bytes": 671230
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/boundaries.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-boundaries.md",
+      "sha256": "6c359efa340be14193bef4472a1da46bc05b37c3d4a5cb30be50bdfbaabe5383",
+      "bytes": 11309
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-source-manifest.json",
+      "sha256": "c820174ec267ed4d43c33cd442e4b596967737c00aa50e4bc4fad28ece217b25",
+      "bytes": 23477
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-validation.md",
+      "sha256": "3cf915914c297193171db4bf2326caec83d55e574c54299c9a0fe459cb3fa6ec",
+      "bytes": 2775
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-findings.md",
+      "sha256": "007677458ecc52508b3f10edb3b296c70ba5066b5034cd78961e0b27a7c92842",
+      "bytes": 2158
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/span-validation.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-boundary-custody-sol-2211-span-validation.json",
+      "sha256": "b78efc1333d39fddb65742fe88487953a8f4f1a4ff409ed7c457f03dcab21cf6",
+      "bytes": 20191
+    }
+  ]
+}

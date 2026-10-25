@@ -1,0 +1,54 @@
+{
+  "b022": {
+    "causal_owner": "UNKNOWN",
+    "d54a_reg": "NOT_PROVED",
+    "message": "provider intermediate command lacks an authenticated physical observation",
+    "missing": "exact physical record/ref/path/ordinal or valid pristine behavior/source-equivalence comparison",
+    "regression": "UNKNOWN",
+    "setup_failure": "NOT_PROVED",
+    "source": "runtime_protocol/timeline_commit_auth.py:2209",
+    "status": "observed current Runtime fail-closed refusal"
+  },
+  "counts": {
+    "ast_blocks": 31,
+    "boundaries": 45,
+    "condition_maps": 30,
+    "final_predicates": 9,
+    "function_definition_records": 75,
+    "group_helper_call_records": 307,
+    "groups": 6,
+    "source_files": 16
+  },
+  "custody_2144": {
+    "d100_protected_exact": true,
+    "limit": "Source custody PASS retained; original overall NO_GO/FAIL and nine ERROR retained.",
+    "overall_original_verdict": "FAIL_ALL_FINDINGS_ONCE",
+    "received_blobs_exact": true,
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-2136-result-wholepath-review-2144/evidence/review.json"
+  },
+  "downstream": "B023-B036 and B-FINAL-001..009 actual outcomes UNKNOWN/unreached.",
+  "dynamic_evidence": {
+    "first_message": "provider intermediate command lacks an authenticated physical observation",
+    "first_seam": "runtime_protocol/timeline_commit_auth.py:2209",
+    "private_artifacts": {
+      "log_sha256": "1cca4d88094de9022219b0be0a9e4e432a2a1bcaef6cec0519c6b08d8b675351",
+      "metadata_sha256": "3efd96b9217532e6ccfc50a2ee14979c3e7bfd0c48172f417252168b05898b56",
+      "mode": "0600",
+      "publication": "hashes and safe source paths only; raw XML/log/private payload withheld",
+      "xml_sha256": "bf6b273e5747804ad2d5675704b2395661f488fcdfbae00750fc386687695fdc"
+    },
+    "result": "9 collected; 9 setup errors; 0 failures, 0 passes, 0 skips; exit 1",
+    "run": "final20db original9 exact harness run, retained from prior D136a review"
+  },
+  "qualification": "FINITE_CITATION_IDENTITY_CHECKED; INDEPENDENT_REVIEW_PENDING; DYNAMIC_NO_GO",
+  "release": {
+    "d130": "all holds retained",
+    "held": true,
+    "next": "ONE final independent static check by manager; then controlling list to Runtime and App leads. No next body before source qualifies."
+  },
+  "schema": "timeline.app.d136a.custody-review.v1",
+  "scope": "No source/test/fixture/schema/pin changes or execution, test collection, typecheck, lint, browser, service, profile, collector, bench, child, acquisition, retry, release, hub/upstream/Git writes, credentials or M5.",
+  "source_change": "none",
+  "task": "app-D136a-boundary-custody-sol-2211",
+  "verdict": "PASS_STATIC_IDENTITY_CHECKS_PENDING_INDEPENDENT_REVIEW"
+}

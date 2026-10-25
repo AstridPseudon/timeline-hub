@@ -1,0 +1,23 @@
+{
+  "time": "2026-10-25T22:23:33.691519+00:00",
+  "free_bytes": 5410246656,
+  "sweep_tmp_hours": 3,
+  "sweep_dirs_removed": 0,
+  "compact_scratch_sha256": "1f6926c6164e73dd9c0c36556fa4897a933f7a742b5a8acfc26c58bdfc5695af",
+  "scratch_dirs_packed": 0,
+  "test_dirs_packed": 0,
+  "old_logs_gzipped": 7,
+  "protected_tests": [
+    "32016",
+    "10721",
+    "3250",
+    "15200",
+    "4786",
+    "30318",
+    "30876",
+    "11856"
+  ],
+  "original2136_worker_KEEP": true,
+  "ended_nonKEEP_worktrees": "only two prior dirty/refused U3 targets, left untouched",
+  "source_mutations": false
+}

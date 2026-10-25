@@ -1,0 +1,684 @@
+{
+  "boundary_source_window_checks": [
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B001",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B002",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 3
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B003",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B004",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B005",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 6
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B006",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 6
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B007",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 6
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B008",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 3
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B009",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 6
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B010",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B011",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B012",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B013",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 3
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B014",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B015",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B016",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B017",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B018",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 8
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B019",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 7
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B020",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B021",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 4
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B022",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 4
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B023",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 4
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B024",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 4
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B025",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 4
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B026",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B027",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B028",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B029",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 4
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B030",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 2
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B031",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B032",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 4
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B033",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "PASS",
+      "id": "B034",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 10
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B035",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B036",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-001",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-002",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-003",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-004",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-005",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-006",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-007",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-008",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    },
+    {
+      "ast_owner_identity": "PASS",
+      "helper_group_containment": "NOT_APPLICABLE",
+      "id": "B-FINAL-009",
+      "line_bounds": "PASS",
+      "source_hash": "PASS",
+      "source_windows": 1
+    }
+  ],
+  "condition_call_records": 1414,
+  "counts": {
+    "ast_blocks": 31,
+    "boundaries": 45,
+    "condition_maps": 30,
+    "final_predicates": 9,
+    "function_definition_records": 75,
+    "group_helper_call_records": 307,
+    "groups": 6,
+    "source_files": 16
+  },
+  "final_predicate_functions": [
+    {
+      "boundary": "B-FINAL-001",
+      "function": {
+        "end_line": 463,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_projection_config_registry_and_full_pins_golden",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 445
+      },
+      "selector": "test_real_saved_projection_config_registry_and_full_pins_golden"
+    },
+    {
+      "boundary": "B-FINAL-002",
+      "function": {
+        "end_line": 477,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_saved_entire_expansion_golden",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 467
+      },
+      "selector": "test_real_saved_entire_expansion_golden"
+    },
+    {
+      "boundary": "B-FINAL-003",
+      "function": {
+        "end_line": 529,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 481
+      },
+      "selector": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+    },
+    {
+      "boundary": "B-FINAL-004",
+      "function": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "selector": "test_real_candidate_matches_sdk_opener_exactly[parent]"
+    },
+    {
+      "boundary": "B-FINAL-005",
+      "function": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "selector": "test_real_candidate_matches_sdk_opener_exactly[child]"
+    },
+    {
+      "boundary": "B-FINAL-006",
+      "function": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "selector": "test_real_candidate_matches_sdk_opener_exactly[new_shot]"
+    },
+    {
+      "boundary": "B-FINAL-007",
+      "function": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "selector": "test_real_candidate_matches_sdk_opener_exactly[duplicate]"
+    },
+    {
+      "boundary": "B-FINAL-008",
+      "function": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "selector": "test_real_candidate_matches_sdk_opener_exactly[remove]"
+    },
+    {
+      "boundary": "B-FINAL-009",
+      "function": {
+        "end_line": 569,
+        "path": "tests/sdk/test_timeline_capture_projection.py",
+        "qualified_name": "test_real_candidate_matches_sdk_opener_exactly",
+        "source_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+        "start_line": 534
+      },
+      "selector": "test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+    }
+  ],
+  "group_results": [
+    {
+      "ast_blocks": 5,
+      "caller_identity": "PASS",
+      "condition_maps": 6,
+      "definition_identity": "PASS",
+      "group": "MGC-01",
+      "helper_call_ast_identity": "PASS",
+      "helper_calls": 84,
+      "range_containment": "PASS",
+      "rows": [
+        "B005",
+        "B006",
+        "B007"
+      ],
+      "source_ranges": [
+        "185-244",
+        "541-772",
+        "775-820",
+        "823-887",
+        "948-997"
+      ],
+      "source_sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+      "status": "PASS"
+    },
+    {
+      "ast_blocks": 2,
+      "caller_identity": "PASS",
+      "condition_maps": 4,
+      "definition_identity": "PASS",
+      "group": "MGC-02",
+      "helper_call_ast_identity": "PASS",
+      "helper_calls": 2,
+      "range_containment": "PASS",
+      "rows": [
+        "B008"
+      ],
+      "source_ranges": [
+        "190-325"
+      ],
+      "source_sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac",
+      "status": "PASS"
+    },
+    {
+      "ast_blocks": 4,
+      "caller_identity": "PASS",
+      "condition_maps": 4,
+      "definition_identity": "PASS",
+      "group": "MGC-03",
+      "helper_call_ast_identity": "PASS",
+      "helper_calls": 3,
+      "range_containment": "PASS",
+      "rows": [
+        "B014",
+        "B015"
+      ],
+      "source_ranges": [
+        "1206-1398"
+      ],
+      "source_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "status": "PASS"
+    },
+    {
+      "ast_blocks": 8,
+      "caller_identity": "PASS",
+      "condition_maps": 5,
+      "definition_identity": "PASS",
+      "group": "MGC-04",
+      "helper_call_ast_identity": "PASS",
+      "helper_calls": 175,
+      "range_containment": "PASS",
+      "rows": [
+        "B021",
+        "B022",
+        "B023",
+        "B024",
+        "B025",
+        "B029",
+        "B032"
+      ],
+      "source_ranges": [
+        "18-264",
+        "608-795",
+        "1833-2335"
+      ],
+      "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "status": "PASS"
+    },
+    {
+      "ast_blocks": 6,
+      "caller_identity": "PASS",
+      "condition_maps": 5,
+      "definition_identity": "PASS",
+      "group": "MGC-05",
+      "helper_call_ast_identity": "PASS",
+      "helper_calls": 29,
+      "range_containment": "PASS",
+      "rows": [
+        "B020",
+        "B026",
+        "B027",
+        "B028"
+      ],
+      "source_ranges": [
+        "2338-2560"
+      ],
+      "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "status": "PASS"
+    },
+    {
+      "ast_blocks": 6,
+      "caller_identity": "PASS",
+      "condition_maps": 6,
+      "definition_identity": "PASS",
+      "group": "MGC-06",
+      "helper_call_ast_identity": "PASS",
+      "helper_calls": 14,
+      "range_containment": "PASS",
+      "rows": [
+        "B018",
+        "B019",
+        "B034"
+      ],
+      "source_ranges": [
+        "1491-1565",
+        "1567-1597",
+        "1599-1761",
+        "1764-1787",
+        "1790-1829",
+        "1832-1915"
+      ],
+      "source_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+      "status": "PASS"
+    }
+  ],
+  "invariants": {
+    "all_30_condition_maps_contained": "PASS",
+    "all_31_AST_blocks_checked": "PASS",
+    "all_definition_names_and_start_end_exact": "PASS",
+    "all_six_groups": "PASS",
+    "all_source_hashes": "PASS",
+    "boundary_semantics_and_outcomes_unchanged": "PASS",
+    "caller_function_identity": "PASS",
+    "helper_call_ast_identity": "PASS",
+    "nine_final_selectors": "PASS",
+    "original_row_ids_order_and_45_count": "PASS",
+    "prior_packet_hashes_unchanged": "PASS",
+    "qualified_02_03_05_condition_facts_unchanged": "PASS",
+    "source_only_diff_empty": "PASS",
+    "table_group_range_equality": "PASS"
+  },
+  "method": "stdlib ast.parse only; no product imports, compile, eval, execution or test collection. ast.literal_eval only the parametrization literal.",
+  "output_artifacts": [
+    {
+      "bytes": 6266,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/correction.json",
+      "sha256": "b6f31ca3c3b5d51dd28a3021c04750d8411b22512b4ba03b02efb995864d0d0d"
+    },
+    {
+      "bytes": 2743,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/review.json",
+      "sha256": "fa9523f51b438aec05c26ffb601bff7be9e4f06a1fb0b0b08b38704d49d3dfc4"
+    },
+    {
+      "bytes": 671230,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/table.json",
+      "sha256": "22b6a94523098092aa4eed93d37953a0963794db4c96231c8e1ff0f20966d337"
+    },
+    {
+      "bytes": 11309,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/boundaries.md",
+      "sha256": "6c359efa340be14193bef4472a1da46bc05b37c3d4a5cb30be50bdfbaabe5383"
+    },
+    {
+      "bytes": 23477,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/source-manifest.json",
+      "sha256": "c820174ec267ed4d43c33cd442e4b596967737c00aa50e4bc4fad28ece217b25"
+    },
+    {
+      "bytes": 2775,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/validation.md",
+      "sha256": "3cf915914c297193171db4bf2326caec83d55e574c54299c9a0fe459cb3fa6ec"
+    },
+    {
+      "bytes": 2158,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-custody-sol-2211/evidence/findings.md",
+      "sha256": "007677458ecc52508b3f10edb3b296c70ba5066b5034cd78961e0b27a7c92842"
+    }
+  ],
+  "parametrized_values": [
+    "parent",
+    "child",
+    "new_shot",
+    "duplicate",
+    "remove",
+    "sdk_bundle"
+  ],
+  "remaining_identity_errors": [],
+  "schema": "timeline.app.d136a.span-validation.v1",
+  "self_hash_rule": "span-validation.json SHA-256 emitted by final absolute-path verification; no circular self hash.",
+  "status": "PASS_STATIC_IDENTITY_CHECKS",
+  "task": "app-D136a-boundary-custody-sol-2211",
+  "unqualified_conditions": [
+    "Dynamic branch outcomes beyond retained B022 refusal",
+    "Regression and causal owner UNKNOWN; setup failure and D54a REG NOT_PROVED",
+    "Pristine 886a absence supplies no behavior",
+    "Independent review pending"
+  ]
+}

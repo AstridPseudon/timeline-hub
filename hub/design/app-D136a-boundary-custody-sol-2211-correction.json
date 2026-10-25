@@ -1,0 +1,151 @@
+{
+  "b022": {
+    "causal_owner": "UNKNOWN",
+    "d54a_reg": "NOT_PROVED",
+    "message": "provider intermediate command lacks an authenticated physical observation",
+    "missing": "exact physical record/ref/path/ordinal or valid pristine behavior/source-equivalence comparison",
+    "regression": "UNKNOWN",
+    "setup_failure": "NOT_PROVED",
+    "source": "runtime_protocol/timeline_commit_auth.py:2209",
+    "status": "observed current Runtime fail-closed refusal"
+  },
+  "corrections": [
+    {
+      "group": "MGC-01",
+      "id": "F-D136A-FINAL-001",
+      "rows": [
+        "B005",
+        "B006",
+        "B007"
+      ],
+      "source_ranges": [
+        "185-244",
+        "541-772",
+        "775-820",
+        "823-887",
+        "948-997"
+      ],
+      "status": "CORRECTED_AST_IDENTITY_AND_CONTAINMENT"
+    },
+    {
+      "group": "MGC-04",
+      "id": "F-D136A-FINAL-002",
+      "rows": [
+        "B021",
+        "B022",
+        "B023",
+        "B024",
+        "B025",
+        "B029",
+        "B032"
+      ],
+      "source_ranges": [
+        "18-264",
+        "608-795",
+        "1833-2335"
+      ],
+      "status": "CORRECTED_AST_IDENTITY_AND_CONTAINMENT"
+    },
+    {
+      "group": "MGC-06",
+      "id": "F-D136A-FINAL-003",
+      "rows": [
+        "B018",
+        "B019",
+        "B034"
+      ],
+      "source_ranges": [
+        "1491-1565",
+        "1567-1597",
+        "1599-1761",
+        "1764-1787",
+        "1790-1829",
+        "1832-1915"
+      ],
+      "status": "CORRECTED_AST_IDENTITY_AND_CONTAINMENT"
+    }
+  ],
+  "counts": {
+    "ast_blocks": 31,
+    "boundaries": 45,
+    "condition_maps": 30,
+    "final_predicates": 9,
+    "function_definition_records": 75,
+    "group_helper_call_records": 307,
+    "groups": 6,
+    "source_files": 16
+  },
+  "input_contradictions": [
+    {
+      "actual": "897c318f237fbb78bebb3185c133f43ffc4fa38e",
+      "condition": "Full review tree equality to joined source tree is false; only source-only equivalence qualifies. Five evidence-only paths explain the difference.",
+      "field": "agent.review_tree",
+      "input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/source-manifest.json",
+      "prior": "0b66c7a0c1b1af0400055cce16827e42a2908dd9"
+    },
+    {
+      "actual": "current Runtime refusal only; regression UNKNOWN",
+      "condition": "Regression, causal owner, setup failure and D54a REG remain unqualified.",
+      "field": "summary.proven_product_reg_ids and B009.classification",
+      "input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/table.json",
+      "prior": "B022 product REG / downstream Runtime REG"
+    },
+    {
+      "actual": {
+        "end_line": 574,
+        "path": "astrid/core/timeline/authoring_bundle.py",
+        "qualified_name": "_clip_selected_media",
+        "source_sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+        "start_line": 552
+      },
+      "condition": "575 is whitespace; the FunctionDef ends at 574.",
+      "field": "remaining_findings[0].citation",
+      "input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-final-review-2205/evidence/coverage.json",
+      "prior": "_clip_selected_media 552-575"
+    },
+    {
+      "actual": {
+        "end_line": 2335,
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "qualified_name": "command_output",
+        "source_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "start_line": 2189
+      },
+      "condition": "2189-2215 qualifies the initial refusal window only; full FunctionDef identity is 2189-2335.",
+      "field": "command_output partial window 2189-2215",
+      "input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-final-review-2205/evidence/coverage.json",
+      "prior": "2189-2215"
+    },
+    {
+      "actual": {
+        "end_line": 1469,
+        "path": "astrid/sdk/timeline/commit.py",
+        "qualified_name": "RuntimeCommitService.commit",
+        "source_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "start_line": 1160
+      },
+      "condition": "Slices remain unchanged; they are call-site regions with exact AST Call records, not claimed helper definitions. Full commit end is 1469.",
+      "field": "MGC-03 AST labels and caller end 1450",
+      "input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/table.json",
+      "prior": "four source slices labeled as helper definitions; capture_producer is outside first slice; load is _load"
+    },
+    {
+      "actual": "AST-derived helper envelope 823-887; final body spans 445-463, 467-477, 481-529, 534-569",
+      "condition": "Identity metadata corrected only; original assertions, selectors and UNKNOWN outcomes retained.",
+      "field": "MGC-01 placement/helper and B-FINAL source metadata",
+      "input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/table.json",
+      "prior": "default-speed/default-offset labels outside 837-888; final citations truncate/overlap bodies"
+    },
+    {
+      "actual": "190-325",
+      "condition": "The source file ends at 325. The prior citation exceeds EOF; actual AST definitions and all four condition facts are unchanged.",
+      "field": "MGC-02.source_ranges",
+      "input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-boundary-first-return-2159/evidence/table.json",
+      "prior": "190-335"
+    }
+  ],
+  "qualified_02_03_05": "Condition facts unchanged; MGC-03/05 primary windows unchanged. MGC-02 envelope corrected from beyond-EOF 335 to actual AST/file end 325. AST/caller shared identity metadata corrected.",
+  "schema": "timeline.app.d136a.custody-correction.v1",
+  "status": "PASS_STATIC_IDENTITY_CHECKS_PENDING_INDEPENDENT_REVIEW",
+  "task": "app-D136a-boundary-custody-sol-2211"
+}
