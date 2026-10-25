@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T23:26:57Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 5m -->
+<!-- agent | 2026-10-25T23:30:58Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 3m -->
 # agent board, 2026-10-25T23:22Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -153,7 +153,7 @@
 | D140 Farm controls | Supply exact fresh-manifest recipe | Agent manager and Runtime | D140 recorded decision | merged | Handoff2312 | Historical1848 controls and stub hashes supplied. Farm must regenerate manifests for actual merged tuple; no frozen receipt retarget. | [Peer](../../design/peer-agent-to-runtime-20261025T2312Z-D140-Farm-controls.md) |
 
 | D100a source intake | Receive qualified first item birth source | Agent and Runtime Luna | Runtime bounded release check | blocked:runtime | Runtime D100a release owner | New owner decision permits normal release after27/security/B022 independence check. Agent ready at41ad; no old nine GREEN gate. | 9486 /42040 held |
-| D134 identity16 | Map sixteen source identity boundaries | Luna | Recorded owner23:18 decision | doing | agt-F-D134-identity16-source-2322 | Read-only first;11 source-proved and5 UNKNOWN. Reuse already homed setup fixes; assertions/pins/guards exact. No body. | Base41ad |
+| D134 identity16 | Qualify sixteen source identity boundaries | Luna | Independent no-pin-refresh review | review | Author2322; protected2327 | Exact16 mapped; two-file setup delta proposed. Eleven prior fixes reused; inverse6634 and five UNKNOWN exact. All16 behavior NOTRUN. | 1ae468a0ba held |
 
 Integration: Agent 41ad656529fa8489829de9078b1b6e157c7433c8. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lock now names qualified normalf103; all canonical15 bytes retained. Latest owner-reported0cd0398fe9 upstream held for the small second join at cut; no chasing.
 
@@ -169,7 +169,7 @@ Blockers: Runtime D100a — one bounded read-only release check now replaces old
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-grade core, REG0, final P1-P5/fullP2, installed render90, platform, wheel and ZIP owed. Farm old union stopped; D77 waits complete final merged-tuple inputs.
 
-Next ready: identity16 source2322 dispatched; D100a normal intake awaits Runtime bounded release. D73 final2318 PASS and controller2315 PASS supplied. live 1 / cap 6; ready-undispatched 0. Heavy proof is Farm-owned under D140.
+Next ready: identity16 protected2327 active; D100a normal intake awaits Runtime bounded release. D73 final2318 PASS and controller2315 PASS supplied. live 1 / cap 6; ready-undispatched 0. Heavy proof is Farm-owned under D140.
 
 Disk: 5.19 GB available. D140 preserves superseded3e163 and defers Store retirement. All KEEP pins, dirtyG2 and active suite targets remain protected. Sweep3 removed1 stale tempdir; compact packed0 directories and gzipped7 logs; no new child or manual deletion.
 
