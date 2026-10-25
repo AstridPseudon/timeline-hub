@@ -1,0 +1,31 @@
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-Farm-metadata-return-1423/evidence/make-child-venv.reviewed-1417	2026-10-25 14:24:43.176452562 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-Farm-metadata-return-1423/evidence/make-child-venv.candidate	2026-10-25 14:24:23.012007206 +0000
+@@ -782,6 +782,19 @@
+         return True
+     return metadata_rel == 'licenses/LICENSE' and source_files.get('LICENSE') == content
+ 
++def metadata_diagnostic_ref(distribution, metadata_rel):
++    raw = f'{distribution}:{metadata_rel}'
++    safe_chars = frozenset('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._/-:')
++    safe = ''.join(char if char in safe_chars else '_' for char in raw)
++    digest = hashlib.sha256(raw.encode('utf-8', 'surrogatepass')).hexdigest()[:12]
++    if raw and len(raw) <= 96 and safe == raw:
++        return raw
++    prefix_length = 96 - len(digest) - 1
++    return safe[:prefix_length] + '~' + digest
++
++def fail_unowned_metadata(distribution, metadata_rel):
++    fail('unowned local distribution metadata: ' + metadata_diagnostic_ref(distribution, metadata_rel))
++
+ staging = sys.argv[-1] == '--staging'
+ farm_source = sys.argv[sys.argv.index('--farm-source') + 1] if '--farm-source' in sys.argv else None
+ 
+@@ -953,7 +966,7 @@
+         metadata_rel = path.relative_to(dist_path).as_posix() if path.is_relative_to(dist_path) else None
+         if metadata_rel is not None:
+             if not owned_local_metadata(metadata_rel, content, files):
+-                fail('unowned local distribution metadata')
++                fail_unowned_metadata(name, metadata_rel)
+             if metadata_rel in {'INSTALLER', 'REQUESTED'} and content != (b'pip\n' if metadata_rel == 'INSTALLER' else b''):
+                 fail('unexpected local installer bookkeeping')
+         elif rel in files and content == files[rel]:

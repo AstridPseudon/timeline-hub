@@ -1,0 +1,27 @@
+{
+  "disposition": "SOURCE_ONLY",
+  "observed_root": false,
+  "actual_record": "unavailable_after_stage_cleanup",
+  "reviewed_candidate_sha256": "d2da4aecd759999fe1d7c929b82403533746df746c50b9928f97d083605b2a3a",
+  "installed_preimage_sha256": "ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8",
+  "delta": {
+    "successor_behavior": "bounded safe refusal reason for existing unowned metadata rejection",
+    "fixed_reason": "unowned local distribution metadata",
+    "max_diagnostic_ref_chars": 96,
+    "hash_suffix_hex_chars": 12,
+    "accepted_source_license_row": "licenses/LICENSE",
+    "content_leakage": false,
+    "absolute_hostpath": false,
+    "path_normalization": false,
+    "new_collector_or_persistence": false
+  },
+  "checks": {
+    "prior_ownership_controls": "PASS",
+    "new_diagnostic_controls": "PASS",
+    "bash_n": "PASS",
+    "embedded_python_compile": "PASS",
+    "ruff": "baseline-normalized; no new findings",
+    "mypy": "baseline-normalized; no new findings"
+  },
+  "installation": "not performed; independent review then exact atomic kit install and one Farm normal re-issue"
+}
