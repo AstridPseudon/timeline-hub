@@ -34,7 +34,8 @@ regenerating the complete transitive lock.
 The installer installs VibeComfy with `--no-deps` beside the Runtime and agent.
 The published `install-manifest.json` may pin a `vibecomfy` source entry; when
 it is absent, the installer uses `peteromallet/VibeComfy` at
-`31f90bb03d330283b76e7dbdda51197be787090d`. Before publishing this release,
+the revision in `VIBECOMFY_ENGINE_REVISION`
+(`astrid/core/generation/vibecomfy_dependency.py`). Before publishing this release,
 the release owner should:
 
 - Publish the agent commit and confirm the pinned VibeComfy commit is

@@ -12,8 +12,7 @@
     "revision": "ee71d5c4993f29086b27fde1629a945ae48425bf"
   },
   "vibecomfy_source": {
-    "repository": "https://github.com/peteromallet/VibeComfy.git",
-    "revision": "31f90bb03d330283b76e7dbdda51197be787090d"
+    "repository": "https://github.com/peteromallet/VibeComfy.git"
   },
   "custom_nodes": [
     {

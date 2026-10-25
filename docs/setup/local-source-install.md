@@ -89,7 +89,7 @@ entry. For example:
     "repo": "file:///absolute/path/to/scratch/astrid-runtime"
   },
   "vibecomfy": {
-    "sha": "31f90bb03d330283b76e7dbdda51197be787090d",
+    "sha": "<40-character VibeComfy commit>",
     "repo": "/absolute/path/to/scratch/VibeComfy"
   }
 }
@@ -103,7 +103,8 @@ repository; branch names, abbreviated IDs, tree IDs, and annotated tag IDs fail.
 Omitting `repo` keeps the pinned GitHub archive download for that source. The
 optional `vibecomfy` entry follows the same validation and `git archive` rules
 as `agent` and `runtime`. If it is absent, the installer uses the default
-VibeComfy commit `31f90bb03d330283b76e7dbdda51197be787090d` from
+VibeComfy commit (`VIBECOMFY_ENGINE_REVISION` in
+`astrid/core/generation/vibecomfy_dependency.py`) from
 `peteromallet/VibeComfy`. The resolved manifest, including the selected source
 revision, is recorded with the installed version.
 

@@ -77,8 +77,6 @@ actions:
         path: actions/run/run.py
       - kind: documentation
         path: actions/run/STAGE.md
-      - kind: dependency
-        path: actions/run/requirements.txt
     cache:
       mode: none
     conditions:
@@ -98,7 +96,6 @@ actions:
       runtime_entrypoint: main
       runtime_file: actions/run/run.py
       runtime_module: astrid.packs.comfy_wrap.actions.run.run
-      requirements_source: actions/run/requirements.txt
       workflow_source: /tmp/example_comfy.json
       prompt_node_id: "6"
       prompt_node_field: text
