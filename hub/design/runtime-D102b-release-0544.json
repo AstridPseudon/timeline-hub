@@ -1,0 +1,23 @@
+{
+  "status": "RELEASED normal D102 plus D102b",
+  "head": "c97a12456c9583351d3e05dcdd5bd5235ff05d11",
+  "tree": "a931c7c931e85309f25f47b03987e91b3bcfebd4",
+  "base_D102": "689352013ef516a224033ba58820759a96504e68",
+  "ring_candidate": "e1bb5140aeac65911e6b97b91473c6d35a4801a1",
+  "ring_reviewer": "app-P2-D102b-ring-review-0529",
+  "ring_targeted_passed": 17,
+  "App_importer_smoke": "independent PASS",
+  "exact_blobs": {
+    "tests/helpers/p2_commit_phase_capture.py": "65850646f260f2214aaa90d94355ce788776aec5",
+    "tests/test_p2_commit_phase_capture.py": "26ca4039aa1d3bcd183689d522186a5689220b23",
+    "runtime_protocol/service.py": "cfaf76c99c3a9ced32e94c63c32adafa49a85e71",
+    "runtime_protocol/timeline_commit_execution.py": "12f773cffb1d9785b21b72b4ffd2d1a61dc6fda7",
+    "tests/test_timeline_commit_redacted_diagnostics.py": "7d8afb360158ea90abda70382e6dc495d58e7878"
+  },
+  "only_delta_since_D102": [
+    "tests/helpers/p2_commit_phase_capture.py",
+    "tests/test_p2_commit_phase_capture.py"
+  ],
+  "canonical15_schema867f": "unchanged by exact file inventory",
+  "time": "2026-10-25T05:44:32.640162+00:00"
+}
