@@ -178,6 +178,44 @@ async function openTimeline(page: Page, harness: DirectHarness, seed: ThreeProdu
 
 function assertRequestV2(post: CommitPost, before: HeadPin): void {
   expect(post.key).toMatch(/\S/);
+  if (post.body.commands[0]?.op === 'timeline.inverse') {
+    expect(Object.keys(post.body).sort()).toEqual([
+      'api_version', 'base_publication_id', 'base_revision_id', 'commands', 'dry_run',
+      'label', 'merge', 'project_id', 'reads', 'source', 'steps', 'timeline_id',
+    ].sort());
+    expect(post.body).toEqual(expect.objectContaining({
+      api_version: 1,
+      project_id: expect.any(String),
+      timeline_id: expect.any(String),
+      base_revision_id: before.revision_id,
+      base_publication_id: before.publication_id,
+      label: 'Undo timeline',
+      merge: 'fields',
+      reads: [],
+      dry_run: false,
+      source: { via: 'app' },
+    }));
+    expect(post.body.commands).toHaveLength(1);
+    const command = object(post.body.commands[0], 'native inverse command');
+    expect(Object.keys(command).sort()).toEqual(['args', 'op', 'schema_version', 'select', 'version'].sort());
+    expect(command).toEqual({
+      schema_version: 1,
+      op: 'timeline.inverse',
+      version: '1',
+      select: null,
+      args: { publications: [before.publication_id] },
+    });
+    expect(post.body.steps).toHaveLength(1);
+    const step = object(post.body.steps![0], 'native inverse step');
+    expect(Object.keys(step).sort()).toEqual(['command_ordinals', 'id', 'intent', 'label', 'patch', 'tags'].sort());
+    expect(step.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(step.label).toBe('Undo timeline');
+    expect(step.intent).toBe('Undo timeline');
+    expect(step.tags).toEqual([]);
+    expect(step.command_ordinals).toEqual([0]);
+    expect(step.patch).toEqual([]);
+    return;
+  }
   expect(post.body).toMatchObject({
     api_version: 1,
     project_id: expect.any(String),
@@ -210,6 +248,7 @@ function assertRequestV2(post: CommitPost, before: HeadPin): void {
 }
 
 function assertAcceptedReply(post: CommitPost, before: HeadPin): CommitAcceptedMutation {
+  if (post.body.commands[0]?.op === 'timeline.inverse') return assertNativeAcceptedReply(post, before);
   expect(post.response.status(), JSON.stringify(post.json)).toBe(200);
   const envelope = object(post.json, 'commit envelope');
   const data = object(envelope.data, 'commit data');
@@ -257,6 +296,77 @@ function assertAcceptedReply(post: CommitPost, before: HeadPin): CommitAcceptedM
   return envelope as unknown as CommitAcceptedMutation;
 }
 
+function assertNativeAcceptedReply(post: CommitPost, before: HeadPin): CommitAcceptedMutation {
+  expect(post.response.status(), JSON.stringify(post.json)).toBe(200);
+  const envelope = object(post.json, 'native commit envelope');
+  expect(Object.keys(envelope).sort()).toEqual(['data', 'receipt']);
+  const data = object(envelope.data, 'native commit data');
+  expect(data.status).toBe('accepted');
+  expect(data.base_revision_id).toBe(before.revision_id);
+  expect(data.base_publication_id).toBe(before.publication_id);
+  expect(data.previous_revision_id).toBe(before.revision_id);
+  expect(data.previous_publication_id).toBe(before.publication_id);
+  expect(data.rebased_onto).toBeNull();
+  expect(data.accepted_revision_id).toEqual(expect.any(String));
+  expect(data.canonical_document).toEqual(expect.any(Object));
+  expect(data.document_digest).toEqual(expect.any(String));
+  expect(data.id_map).toEqual(expect.any(Object));
+  expect(data.provider_version).toEqual(expect.any(String));
+  expect(data.compiler_version).toEqual(expect.any(String));
+  expect(data.publisher).toEqual(expect.any(String));
+  expect(data.label).toBe(post.body.label);
+  expect(data.source).toEqual(post.body.source);
+  expect(data.merge_mode).toBe('fields');
+
+  expect(data.commands).toHaveLength(1);
+  const command = object((data.commands as Array<JsonObject>)[0], 'normalized native inverse command');
+  expect(Object.keys(command).sort()).toEqual([
+    'args', 'authorship', 'bindings', 'created', 'expect', 'intent', 'op',
+    'reads', 'resolved', 'schema_version', 'select', 'selections', 'version',
+  ].sort());
+  expect(command.schema_version).toBe(1);
+  expect(command.op).toBe('timeline.inverse');
+  expect(command.version).toBe('1');
+  expect(command.select).toBeNull();
+  expect(command.args).toEqual((post.body.commands[0] as unknown as JsonObject).args);
+  expect(command.intent).toEqual({});
+  expect(command.resolved).toEqual(expect.any(Array));
+  expect(command.expect).toEqual(expect.any(Object));
+  expect(command.authorship).toEqual(expect.any(Object));
+  expect(command.reads).toEqual(expect.any(Array));
+  expect((command.reads as unknown[]).length).toBeGreaterThan(0);
+  expect(command.selections).toEqual(expect.any(Array));
+  expect(command.bindings).toEqual(expect.any(Object));
+  expect(command.created).toEqual(expect.any(Array));
+
+  expect(data.steps).toHaveLength(1);
+  const step = object((data.steps as Array<JsonObject>)[0], 'authoritative native inverse step');
+  expect(Object.keys(step).sort()).toEqual([
+    'command_ordinals', 'dependencies', 'id', 'intent', 'label', 'patch', 'tags',
+  ].sort());
+  const submittedStep = object(post.body.steps![0], 'submitted native inverse step');
+  expect(step.id).toBe(submittedStep.id);
+  expect(step.label).toBe(submittedStep.label);
+  expect(step.intent).toBe(submittedStep.intent);
+  expect(step.tags).toEqual(submittedStep.tags);
+  expect(step.command_ordinals).toEqual(submittedStep.command_ordinals);
+  expect(step.patch).toEqual(expect.any(Array));
+  expect((step.patch as unknown[]).length).toBeGreaterThan(0);
+  expect(step.dependencies).toEqual(expect.any(Array));
+  expect((step.dependencies as unknown[]).length).toBeGreaterThan(0);
+
+  const receipt = object(envelope.receipt, 'native commit receipt');
+  expect(receipt.receipt_id).toEqual(expect.any(String));
+  expect(receipt.receipt_id).not.toBe(post.key);
+  expect(receipt.idempotency_key).toBe(post.key);
+  expect(receipt.result).toEqual(envelope.data);
+  expect(Object.keys(receipt).sort()).toEqual([
+    'command_kind', 'created_at', 'event_ids', 'idempotency_key', 'project_id',
+    'project_seq', 'receipt_id', 'request_hash', 'result',
+  ].sort());
+  return envelope as unknown as CommitAcceptedMutation;
+}
+
 function acceptedMutation(post: CommitPost): CommitAcceptedMutation {
   return post.json as CommitAcceptedMutation;
 }
@@ -274,6 +384,10 @@ function assertCanonicalResult(result: CommitAcceptedMutation, actual: Canonical
 }
 
 function assertHistoryEntry(page: HistoryPage, post: CommitPost, result: CommitAcceptedMutation): void {
+  if (post.body.commands[0]?.op === 'timeline.inverse') {
+    assertNativeHistoryEntry(page, post, result);
+    return;
+  }
   const publication = result.receipt.receipt_id;
   expect(publication).not.toBe(post.key);
   expect(page.head).toEqual({ revision_id: result.data.accepted_revision_id, publication_id: publication });
@@ -303,7 +417,48 @@ function assertHistoryEntry(page: HistoryPage, post: CommitPost, result: CommitA
   }
 }
 
+function assertNativeHistoryEntry(page: HistoryPage, post: CommitPost, result: CommitAcceptedMutation): void {
+  const publication = result.receipt.receipt_id;
+  expect(page.head).toEqual({ revision_id: result.data.accepted_revision_id, publication_id: publication });
+  const entry = page.items.find((candidate) => candidate.publication_id === publication);
+  expect(entry, 'native commit is recorded in /commits').toBeTruthy();
+  expect(entry!.intent).toBe('recorded');
+  expect(entry!.records).not.toBeNull();
+  expect(entry!.publication_id).toBe(publication);
+  expect(entry!.revision_id).toBe(result.data.accepted_revision_id);
+  expect(entry!.previous).toEqual({ revision_id: result.data.previous_revision_id, publication_id: result.data.previous_publication_id });
+  expect(entry!.receipt).toEqual(result.receipt);
+  expect(entry!.publisher).toBe(result.data.publisher);
+  expect(entry!.provider_version).toBe(result.data.provider_version);
+  expect(entry!.compiler_version).toBe(result.data.compiler_version);
+  expect(entry!.label).toBe(post.body.label);
+  expect(entry!.merge).toBe('fields');
+  expect(entry!.merge_mode).toBe(result.data.merge_mode);
+  expect(entry!.source).toEqual(post.body.source);
+  expect(Object.hasOwn(entry!, 'reads')).toBe(true);
+  expect(entry!.reads).toEqual(post.body.reads);
+  expect(entry!.steps).toEqual(result.data.steps);
+  expect(entry!.records!.label).toBe(result.data.label);
+  expect(entry!.records!.merge_mode).toBe(result.data.merge_mode);
+  expect(entry!.records!.steps).toEqual(result.data.steps);
+  expect(entry!.records!.commands).toHaveLength(1);
+  expect(entry!.records!.commands.map((record) => record.command)).toEqual(result.data.commands);
+  expect(entry!.records!.commands[0]!.ordinal).toBe(0);
+  expect(entry!.records!.commands[0]!.writes.length).toBeGreaterThan(0);
+  expect(entry!.records!.commands[0]!.reads.length).toBeGreaterThan(0);
+  expect(entry!.records!.commands[0]!.bindings.length).toBeGreaterThan(0);
+  expect(entry!.records!.commands[0]!.dependencies).toEqual(expect.any(Array));
+  expect(entry!.records!.commands[0]!.derived_writes).toEqual(expect.any(Array));
+  expect(entry!.records!.undo_of).toEqual([]);
+  expect(entry!.records!.undo_steps).toBeNull();
+}
+
 function assertUndoHistoryEntry(page: HistoryPage, undo: CommitPost, target: CommitPost): void {
+  expect(undo.body.commands[0]?.op).toBe('timeline.inverse');
+  const result = assertNativeAcceptedReply(undo, {
+    revision_id: undo.body.base_revision_id,
+    publication_id: undo.body.base_publication_id,
+  });
   const undoPublication = publicationId(undo);
   const targetPublication = publicationId(target);
   expect(undoPublication).not.toBe(undo.key);
@@ -314,6 +469,27 @@ function assertUndoHistoryEntry(page: HistoryPage, undo: CommitPost, target: Com
   expect(entry!.publication_id).toBe(undoPublication);
   expect(entry!.receipt.receipt_id).toBe(undoPublication);
   expect(entry!.receipt.idempotency_key).toBe(undo.key);
+  expect(entry!.previous).toEqual({ revision_id: result.data.previous_revision_id, publication_id: result.data.previous_publication_id });
+  expect(entry!.publisher).toBe(result.data.publisher);
+  expect(entry!.provider_version).toBe(result.data.provider_version);
+  expect(entry!.compiler_version).toBe(result.data.compiler_version);
+  expect(entry!.label).toBe(undo.body.label);
+  expect(entry!.merge).toBe('fields');
+  expect(entry!.merge_mode).toBe(result.data.merge_mode);
+  expect(entry!.source).toEqual(undo.body.source);
+  expect(Object.hasOwn(entry!, 'reads')).toBe(true);
+  expect(entry!.reads).toEqual(undo.body.reads);
+  expect(entry!.steps).toEqual(result.data.steps);
+  expect(entry!.records?.label).toBe(result.data.label);
+  expect(entry!.records?.merge_mode).toBe(result.data.merge_mode);
+  expect(entry!.records?.steps).toEqual(result.data.steps);
+  expect(entry!.records?.commands.map((record) => record.command)).toEqual(result.data.commands);
+  expect(entry!.records?.commands[0]?.ordinal).toBe(0);
+  expect(entry!.records?.commands[0]?.writes.length).toBeGreaterThan(0);
+  expect(entry!.records?.commands[0]?.reads.length).toBeGreaterThan(0);
+  expect(entry!.records?.commands[0]?.bindings.length).toBeGreaterThan(0);
+  expect(entry!.records?.commands[0]?.dependencies).toEqual(expect.any(Array));
+  expect(entry!.records?.commands[0]?.derived_writes).toEqual(expect.any(Array));
   expect(entry!.records?.undo_of).toEqual([targetPublication]);
   expect(entry!.records?.undo_steps).toBeNull();
 }

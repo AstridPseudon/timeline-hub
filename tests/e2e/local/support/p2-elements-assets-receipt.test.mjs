@@ -12,15 +12,20 @@ const extract = (name) => {
   assert.ok(match, `exercise the actual ${name} helper`);
   return match[0];
 };
+const requestHelper = extract('assertRequestV2');
 const helperSource = [
   extract('object'),
+  requestHelper,
   extract('acceptedMutation'),
   extract('publicationId'),
+  extract('assertNativeAcceptedReply'),
+  extract('assertNativeHistoryEntry'),
   extract('assertAcceptedReply'),
   extract('assertHistoryEntry'),
   extract('assertUndoHistoryEntry'),
 ].join('\n');
 const helpers = compileFunction(`${ts.transpileModule(helperSource, {}).outputText}\nreturn { assertAcceptedReply, assertHistoryEntry, assertUndoHistoryEntry };`, ['expect'])(expect);
+const checkRequest = compileFunction(`${ts.transpileModule([extract('object'), requestHelper].join('\n'), {}).outputText}\nreturn assertRequestV2;`, ['expect'])(expect);
 
 const command = {
   schema_version: 1,
@@ -38,8 +43,12 @@ const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}
 const receiptPattern = /^txn-[0-9a-f]{32}$/i;
 
 function acceptedPost({ requestKey = requestId1, publication = receiptId1, revision = 'revision-1', baseRevision = 'revision-0', basePublication = 'publication-0', inverse = false } = {}) {
-  const acceptedCommand = inverse ? { schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [basePublication] } } : command;
-  const acceptedStep = inverse ? { ...step, patch: [] } : step;
+  const acceptedCommand = inverse ? {
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [basePublication] }, intent: {}, resolved: [], expect: {},
+    authorship: {}, reads: [{ kind: 'scope', ref: 'parent', path: [] }], selections: [], bindings: {}, created: [],
+  } : command;
+  const acceptedStep = inverse ? { ...step, patch: [{ op: 'set' }], dependencies: [{ kind: 'scope' }] } : step;
   const data = {
     status: 'accepted',
     base_revision_id: baseRevision,
@@ -54,11 +63,11 @@ function acceptedPost({ requestKey = requestId1, publication = receiptId1, revis
     id_map: {},
     provider_version: 'provider',
     compiler_version: 'compiler',
-    merge_mode: 'atomic',
+    merge_mode: inverse ? 'fields' : 'atomic',
     steps: [acceptedStep],
     publisher: 'publisher',
     source: { via: 'app' },
-    label: 'Edit timeline',
+    label: inverse ? 'Undo timeline' : 'Edit timeline',
   };
   const receipt = {
     receipt_id: publication,
@@ -74,8 +83,8 @@ function acceptedPost({ requestKey = requestId1, publication = receiptId1, revis
   const body = {
     api_version: 1, project_id: 'project', timeline_id: 'timeline',
     base_revision_id: baseRevision, base_publication_id: basePublication,
-    commands: [acceptedCommand], label: 'Edit timeline', steps: [acceptedStep],
-    merge: 'atomic', dry_run: false, source: { via: 'app' },
+    commands: [acceptedCommand], label: inverse ? 'Undo timeline' : 'Edit timeline', steps: [acceptedStep],
+    merge: inverse ? 'fields' : 'atomic', ...(inverse ? { reads: [] } : {}), dry_run: false, source: { via: 'app' },
   };
   return { request: {}, response: { status: () => 200 }, body, json: { data, receipt }, key: requestKey };
 }
@@ -91,13 +100,18 @@ function historyFor(post, { publication = post.json.receipt.receipt_id, receipt 
       receipt,
       intent: 'recorded',
       records: {
-        commands: [{ command: post.json.data.commands[0], writes: ['parent'], reads: ['parent'], bindings: ['parent'], dependencies: ['parent'], derived_writes: [] }],
-        steps: [{ patch: [{ op: 'set' }], dependencies: ['parent'] }],
+        commands: [{ ordinal: 0, command: post.json.data.commands[0], writes: ['parent'], reads: ['parent'], bindings: ['parent'], dependencies: [], derived_writes: [] }],
+        steps: post.body.commands[0].op === 'timeline.inverse'
+          ? post.json.data.steps
+          : [{ patch: [{ op: 'set' }], dependencies: ['parent'] }],
+        ...(post.body.commands[0].op === 'timeline.inverse' ? { label: post.json.data.label, merge_mode: post.json.data.merge_mode } : {}),
         undo_steps: undoSteps,
         ...(undoOf ? { undo_of: undoOf } : {}),
       },
-      provider_version: 'provider', compiler_version: 'compiler', merge_mode: 'atomic',
-      steps: post.json.data.steps, publisher: 'publisher', source: { via: 'app' }, label: 'Edit timeline',
+      previous: { revision_id: post.json.data.previous_revision_id, publication_id: post.json.data.previous_publication_id },
+      provider_version: 'provider', compiler_version: 'compiler', merge: post.json.data.merge_mode, merge_mode: post.json.data.merge_mode,
+      steps: post.json.data.steps, publisher: 'publisher', source: { via: 'app' }, label: post.json.data.label,
+      ...(post.body.reads ? { reads: post.body.reads } : {}),
     }],
   };
 }
@@ -130,4 +144,38 @@ test('actual undo history helper joins both inverse and target by receipt public
   assert.throws(() => helpers.assertUndoHistoryEntry(historyFor(undo, { publication: undo.key, undoOf: [targetPublication], undoSteps: null }), undo, target));
   assert.throws(() => helpers.assertUndoHistoryEntry(historyFor(undo, { undoOf: [target.key], undoSteps: null }), undo, target));
   assert.throws(() => helpers.assertUndoHistoryEntry(historyFor(undo, { undoOf: [targetPublication] }), undo, target));
+});
+
+test('actual mounted asset helper accepts the exact native inverse envelope and rejects policy drift', () => {
+  const post = {
+    key: requestId2,
+    body: {
+      api_version: 1, project_id: 'project', timeline_id: 'timeline',
+      base_revision_id: 'revision-1', base_publication_id: receiptId1,
+      commands: [{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [receiptId1] } }],
+      label: 'Undo timeline',
+      steps: [{ id: '6d8f4e2a-7c41-4b9e-8d03-5a6f1c2e7b90', label: 'Undo timeline', intent: 'Undo timeline', tags: [], command_ordinals: [0], patch: [] }],
+      merge: 'fields', reads: [], dry_run: false, source: { via: 'app' },
+    },
+  };
+  assert.doesNotThrow(() => checkRequest(post, { revision_id: 'revision-1', publication_id: receiptId1 }));
+  const variants = [
+    (candidate) => { candidate.body.merge = 'atomic'; },
+    (candidate) => { delete candidate.body.reads; },
+    (candidate) => { candidate.body.reads = [{ kind: 'scope', ref: 'timeline', path: [] }]; },
+    (candidate) => { candidate.body.commands[0].args.publications[0] = 'wrong-publication'; },
+    (candidate) => { candidate.body.commands[0].extra = true; },
+    (candidate) => { candidate.body.commands[0].select = {}; },
+    (candidate) => { candidate.body.steps[0].patch = [{ op: 'set' }]; },
+    (candidate) => { candidate.body.steps[0].reads = []; },
+    (candidate) => { candidate.body.steps[0].label = 'Edit timeline'; },
+    (candidate) => { candidate.body.base_revision_id = 'wrong-revision'; },
+    (candidate) => { candidate.body.base_publication_id = 'wrong-publication'; },
+    (candidate) => { candidate.body.extra = true; },
+  ];
+  for (const mutate of variants) {
+    const candidate = structuredClone(post);
+    mutate(candidate);
+    assert.throws(() => checkRequest(candidate, { revision_id: 'revision-1', publication_id: receiptId1 }));
+  }
 });
