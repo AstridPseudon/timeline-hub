@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-D135-home-census-review-1947",
+  "result": "PASS",
+  "source": {
+    "repository": "/home/user/peteromallet/astrid-agent",
+    "base": {
+      "ref": "common-base",
+      "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"
+    },
+    "ours_actual_home": {
+      "ref": "refs/remotes/hub/timeline/agent/tl/integration",
+      "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+      "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0"
+    },
+    "upstream": {
+      "ref": "refs/remotes/origin/main",
+      "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "tree": "f53cc8426ccef8760021ef6207303bce7b80e777"
+    },
+    "frozen_r4": {
+      "ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+      "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610",
+      "historical_only": true
+    },
+    "local_stale": {
+      "ref": "refs/heads/tl/integration",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+      "historical_only": true
+    }
+  },
+  "merge_tree": {
+    "command": "git -C /home/user/peteromallet/astrid-agent merge-tree --trivial-merge 92443771676ef2bbb547d0a103d708fa8bec4c63 a30e74e901a28b39c28facba3deb00d76f186e23 886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "bytes": 583973,
+    "sha256": "641d298edc9a34bd0618b5d0f1e07d7c5fba6ee67a8e2101edc9c593ee888284"
+  },
+  "interpretation": {
+    "changed_in_both_paths": 41,
+    "preview_hunk_headers_on_changed_in_both": 107,
+    "literal_marker_blocks": 7,
+    "literal_marker_paths": 6,
+    "note": "Only literal .our/.their marker blocks below are actual conflict-marker hunks; changed-in-both and preview hunk counts are not equivalent to marker conflicts."
+  },
+  "actual_marker_paths": [
+    {
+      "path": "astrid/chat/astrid-local-agents.test.ts",
+      "blocks": [
+        {
+          "start_line": 1008,
+          "separator_line": 1009,
+          "end_line": 1066
+        }
+      ],
+      "base_blob": "31c8f3fe305e134b1362c880b58568e632c4f775",
+      "ours_blob": "0fcbe2999d13bf0590644067cbf9fe3aa71b2df1",
+      "upstream_blob": "6e614214b69905a65999f6c0048fc6124d8582e8",
+      "merge_tree_hunks": 10
+    },
+    {
+      "path": "astrid/chat/service.mjs",
+      "blocks": [
+        {
+          "start_line": 1468,
+          "separator_line": 1476,
+          "end_line": 1485
+        },
+        {
+          "start_line": 1490,
+          "separator_line": 1498,
+          "end_line": 1544
+        }
+      ],
+      "base_blob": "c04a5c992684d30378f07c09c977f4af869fe13e",
+      "ours_blob": "945a9bcf8d0dd7ba0237afc0229ac31b3f816f23",
+      "upstream_blob": "011689ea7756036fe71dd725e64de7f0f68a03d9",
+      "merge_tree_hunks": 3
+    },
+    {
+      "path": "astrid/installer/backend.py",
+      "blocks": [
+        {
+          "start_line": 1758,
+          "separator_line": 1760,
+          "end_line": 1763
+        }
+      ],
+      "base_blob": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+      "ours_blob": "73930778510cb08d5a50f86767ffea0098fc2007",
+      "upstream_blob": "a609940892e8d2507fe77e661a4018f6e9fd5c1e",
+      "merge_tree_hunks": 5
+    },
+    {
+      "path": "docs/install/OMP-LANDING.md",
+      "blocks": [
+        {
+          "start_line": 3436,
+          "separator_line": 3439,
+          "end_line": 3477
+        }
+      ],
+      "base_blob": "726609bfa437190c051e9023a645160b5fb0310e",
+      "ours_blob": "7e425adf1c8eb666a462d4961927ddd6ce64be68",
+      "upstream_blob": "e4ade615a2b8cd010884248a6acb61ec8eac64d7",
+      "merge_tree_hunks": 1
+    },
+    {
+      "path": "tests/test_installer_omp_source.py",
+      "blocks": [
+        {
+          "start_line": 4087,
+          "separator_line": 4088,
+          "end_line": 4143
+        }
+      ],
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4",
+      "merge_tree_hunks": 8
+    },
+    {
+      "path": "tests/test_installer_platforms.py",
+      "blocks": [
+        {
+          "start_line": 4152,
+          "separator_line": 4154,
+          "end_line": 4156
+        }
+      ],
+      "base_blob": "791311144204eec7d33d73fda7b89dc38502c669",
+      "ours_blob": "ac69059c2b31d5e2ce968e697b1df68e5ed40232",
+      "upstream_blob": "94a7e05012357ba4d906cc611716e8f18b38d250",
+      "merge_tree_hunks": 1
+    }
+  ],
+  "new_current_tail": {
+    "path": "tests/test_installer_windows_tasks.py",
+    "merge_tree_hunks": [
+      "@@ -1,4 +1,4 @@"
+    ],
+    "literal_marker_blocks": 0,
+    "classification": "preview-only shared path; do not call it a marker conflict"
+  },
+  "marker_line_convention": "Line numbers refer to the captured merge-tree output; each block is +<<<<<<< .our through +>>>>>>> .their with +======= separator."
+}
