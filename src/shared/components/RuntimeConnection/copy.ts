@@ -11,7 +11,7 @@ import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection
  * - Screen headings, body text, command lines and Copy labels live here.
  * - Routine recovery text says Astrid; first-run explanation names Runtime so people understand what they are connecting.
  * - Straight apostrophes only: the journey matches card headings exactly.
- * - Gate states name their screens: connecting, needs_permission (permission/pending), blocked, phone, unsupported, not_running,
+ * - Gate states name their screens: connecting, needs_permission (permission/pending), blocked, phone, unsupported, not_running, refused,
  *   update_needed and connected.
  *   Permission/pending share a state; device and browser capability are decided by the provider. Polling never adds a checking indicator.
  * - The setup, repair and update screens all show the command that matches the state and OS, and nothing about opening a terminal.
@@ -147,6 +147,27 @@ export function agentInstructions(mode: CommandMode, pageOrigin: string, localBu
   ].filter((part): part is string => part !== null).join('\n\n');
 }
 
+/**
+ * The handoff for a running Astrid that refuses this page's origin: no install, no reset, a check the agent can run,
+ * and the one fix there is (update) when the page is astrid.haus.
+ */
+export function refusedAgentInstructions(pageOrigin: string, apiBase: string): string {
+  const windows = detectPlatform() === 'windows';
+  return [
+    `Astrid is running on this computer and answering at ${apiBase}, but it refuses requests from the page at ${pageOrigin}, so that page can't connect. Do the work yourself and verify the result.`,
+    `Check it: \`curl -s -H "Origin: ${pageOrigin}" ${apiBase}/v1/health\`. A refusal answers 403 with no Access-Control-Allow-Origin header. Compare with \`curl -s -H "Origin: https://astrid.haus" ${apiBase}/v1/health\`, which should answer with health JSON.`,
+    'Astrid is installed and running: do not reinstall it, and do not reset, delete or replace my workspace, projects, media, credentials or agent instructions.',
+    `If the page is https://astrid.haus, this Astrid is probably out of date. Update it with the official installer's update command; read the script before running it. ${windows ? `In PowerShell: ${ASTRID_COMMANDS.windowsUpdate}\nFrom Git Bash or another shell: ${ASTRID_COMMANDS.windowsAgentUpdate}\nUpdate from Windows, not inside WSL.` : `The command: ${ASTRID_COMMANDS.macLinuxUpdate}`} If you run Astrid from source checkouts instead, update those checkouts to their main branches and restart Astrid; don't run the installer over them.`,
+    `If the page is not https://astrid.haus, ${pageOrigin} isn't an address this Astrid serves. Tell me to open https://astrid.haus instead; don't change Astrid's allowed origins unless I ask.`,
+    'My tab connects by itself once Astrid accepts the page; if it shows a Connect button, click it.',
+  ].join('\n\n');
+}
+
+/** `{origin}` in a card's text filled with the page's origin. */
+export function withOrigin(text: string, origin: string): string {
+  return text.split('{origin}').join(origin);
+}
+
 /** Names the shell that matches the command shown on setup, repair and recovery cards. */
 export function withCommandShell(sentence: string): string {
   return detectPlatform() === 'windows' ? sentence.replace('in a terminal', 'in PowerShell') : sentence;
@@ -172,6 +193,8 @@ export interface RuntimeConnectionCopy {
     readonly allowTitle: string;
     readonly allowDetails: string;
     readonly installTitle: string;
+    /** Connect was pressed and Chrome did not ask or was dismissed: the way on that does not depend on its prompt. */
+    readonly unanswered: { readonly lead: string };
     /** The browser's prompt is open: nothing to press, so no button. */
     readonly pending: Message & { readonly pointer: string };
   };
@@ -182,6 +205,8 @@ export interface RuntimeConnectionCopy {
   };
   /** Repeated probes went unanswered with permission granted. */
   readonly notRunning: Message & { readonly retry: string };
+  /** Astrid answered the browser but would not let this page read the answer (it serves other origins only). */
+  readonly refused: Message & { readonly retry: string };
   readonly updateNeeded: Message;
   /** Lead-in above the update screen when a chat reply from this computer's Astrid is out of date. */
   readonly chatNeedsUpdate: string;
@@ -234,6 +259,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     connect: 'Connect',
     allowTitle: 'What does this allow?',
     installTitle: "Don't have Astrid yet?",
+    unanswered: { lead: "If {browser} didn't ask, allow it here:" },
     allowDetails: "This page can talk to Astrid running on your computer, and nothing else. Astrid only lets it work with your Astrid projects, media and jobs. It can't open your other files or apps. Chat messages go to your own agent on this computer. Your work never passes through our servers.",
     pending: {
       title: 'Choose Allow in {browser}',
@@ -257,6 +283,12 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     title: "Astrid isn't answering on this computer",
     retry: 'Try again',
     sentence: "Your coding agent can start it, or install it if it isn't there yet.",
+  },
+
+  refused: {
+    title: "Astrid is running but won't connect to this page",
+    sentence: 'Astrid on this computer answered, but refused requests from {origin}. Open astrid.haus, or update Astrid if this keeps happening.',
+    retry: 'Try again',
   },
 
   updateNeeded: {

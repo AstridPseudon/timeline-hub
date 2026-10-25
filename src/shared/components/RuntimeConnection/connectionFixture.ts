@@ -17,6 +17,8 @@ export function connectionFor(state: RuntimeConnectionValue['state'], overrides:
     localServiceOutOfDate: false,
     setLocalServiceOutOfDate: () => {},
     connect: () => {},
+    askUnanswered: false,
+    confirmPermission: async () => true,
     ...overrides,
   };
 }

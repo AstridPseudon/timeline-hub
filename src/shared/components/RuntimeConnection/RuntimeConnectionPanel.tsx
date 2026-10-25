@@ -10,7 +10,8 @@ import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyFallback, CopyInstallCommand, useCopyAction } from './CopyInstallCommand.tsx';
 import { CardDisclosure, EditorCard, EditorCardFoot } from './EditorCard.tsx';
 import { EditorCardLayer } from './EditorCardLayer.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from './copy.ts';
+import { CopyRefusedInstructions } from './CopyRefusedInstructions.tsx';
+import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withOrigin } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
   /** The gate's value: the screen to show (on the way out, the last one shown). */
@@ -257,8 +258,22 @@ function PermissionCard({ connection, onBack }: { connection: RuntimeConnectionV
       title={withBrowser(permission.title)}
       sentence={withBrowser(permission.sentence)}
       onBack={onBack}
+      // Connect was pressed and Chrome did not answer (dismissed, or it never asked): point at the prompt again and give
+      // the site-settings route, so the button is never the only way on.
+      pointer={connection.askUnanswered ? permission.pending.pointer : undefined}
       action={<div className="space-y-2">
         <Button type="button" className="h-11 w-full rounded-xl" onClick={() => connection.connect()}>{permission.connect}</Button>
+        {connection.askUnanswered && <div role="status" className="space-y-2 pt-1 text-left text-sm leading-6 text-foreground">
+          <p>{withBrowser(permission.unanswered.lead)}</p>
+          <ol className="space-y-2">
+            {COPY.blocked.steps.map((step, index) => (
+              <li key={step} className="flex gap-2.5">
+                <span aria-hidden="true" className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">{index + 1}</span>
+                <span className="text-pretty">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>}
         <CardDisclosure label={permission.allowTitle}>{permission.allowDetails}</CardDisclosure>
         <CardDisclosure label={permission.installTitle}><CopyInstallCommand mode="install" /></CardDisclosure>
       </div>}
@@ -291,6 +306,15 @@ function NotRunningCard({ connection, onBack }: { readonly connection: RuntimeCo
   return <Card title={notRunning.title} sentence={notRunning.sentence} onBack={onBack} action={<div className="space-y-2"><CopyInstallCommand mode="install" /><Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
 }
 
+/** Astrid answered, but not this page: no install help, because Astrid is already running. Polling continues. */
+function RefusedCard({ connection, onBack }: { readonly connection: RuntimeConnectionValue; readonly onBack?: () => void }) {
+  const { refused } = COPY;
+  return <Card title={refused.title} sentence={withOrigin(refused.sentence, window.location.origin)} onBack={onBack} status={COPY.waiting} showHelp action={<div className="space-y-2">
+    <CopyRefusedInstructions />
+    <Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{refused.retry}</Button>
+  </div>} />;
+}
+
 function UpdateNeededCard({ onBack }: { readonly onBack?: () => void }) {
   const { updateNeeded } = COPY;
   return <Card title={updateNeeded.title} sentence={updateNeeded.sentence} onBack={onBack} action={<CopyInstallCommand mode="update" />} status={COPY.waiting} showHelp />;
@@ -306,6 +330,7 @@ function screenFor(connection: RuntimeConnectionValue, onBack?: () => void): { n
     case 'browser_update_needed': return { name: 'browser_update_needed', card: <UnsupportedCard updateNeeded onBack={onBack} /> };
     case 'restart': return { name: 'restart', card: <Card title={COPY.restarted.title} sentence={COPY.restarted.sentence} onBack={onBack} action={<Button type="button" className="w-full" onClick={() => window.location.reload()}>{COPY.restarted.reload}</Button>} /> };
     case 'not_running': return { name: 'not_running', card: <NotRunningCard connection={connection} onBack={onBack} /> };
+    case 'refused': return { name: 'refused', card: <RefusedCard connection={connection} onBack={onBack} /> };
     case 'blocked': return { name: 'blocked', card: <BlockedCard onBack={onBack} /> };
     case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard onBack={onBack} /> };
     default: return null;

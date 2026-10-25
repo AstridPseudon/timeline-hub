@@ -34,6 +34,7 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
   ['permission pending', () => connectionFor({ status: 'needs_permission' }, { isChecking: true })],
   ['blocked', () => connectionFor({ status: 'blocked' })],
   ['not running', () => connectionFor({ status: 'not_running' })],
+  ['refused', () => connectionFor({ status: 'refused' })],
   ['phone', () => connectionFor({ status: 'phone' })],
   ['unsupported browser', () => connectionFor({ status: 'unsupported' })],
 ];
@@ -286,6 +287,37 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
     expect(shownText()).not.toMatch(/reload/i);
     expect(screen.queryByText('Set up Astrid on this computer')).not.toBeInTheDocument();
+  });
+
+  describe('refused', () => {
+    it('says Astrid is running, names this page, and offers no install command', () => {
+      panel(connectionFor({ status: 'refused' }));
+      expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'refused');
+      expect(screen.getByRole('heading', { name: "Astrid is running but won't connect to this page" })).toBeInTheDocument();
+      expect(screen.getByText(`Astrid on this computer answered, but refused requests from ${window.location.origin}. Open astrid.haus, or update Astrid if this keeps happening.`)).toBeInTheDocument();
+      expect(screen.queryByRole('code')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: COPY.agent.commandCopy })).not.toBeInTheDocument();
+      expect(shownText()).not.toMatch(/isn't answering|install|curl -fsSL|irm /i);
+      expect(screen.getByRole('button', { name: 'Copy agent instructions' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+      expect(screen.getByText(COPY.waiting)).toBeInTheDocument();
+    });
+
+    it('copies the refusal brief, not the install brief, and Try again reconnects', async () => {
+      const writeText = vi.fn(async (_text: string) => undefined);
+      stubClipboard(writeText);
+      const connect = vi.fn();
+      panel(connectionFor({ status: 'refused' }, { connect }));
+      fireEvent.click(screen.getByRole('button', { name: 'Copy agent instructions' }));
+      await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
+      const text = writeText.mock.calls[0]![0];
+      expect(text).toContain(`refuses requests from the page at ${window.location.origin}`);
+      expect(text).toContain(`curl -s -H "Origin: ${window.location.origin}"`);
+      expect(text).toContain('/api/runtime/v1/health');
+      expect(text).not.toMatch(/set up or restart Astrid/);
+      fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+      expect(connect).toHaveBeenCalledOnce();
+    });
   });
 
   describe('unsupported browser', () => {

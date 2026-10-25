@@ -29,7 +29,7 @@ vi.mock('./sections/PreferencesSection', () => ({ PreferencesSection: () => <div
 
 import { SettingsModal } from './SettingsModal';
 
-type Status = 'connected' | 'connecting' | 'needs_permission' | 'blocked' | 'not_running' | 'update_needed';
+type Status = 'connected' | 'connecting' | 'needs_permission' | 'blocked' | 'not_running' | 'refused' | 'update_needed';
 
 function connection(status: Status, overrides: Record<string, unknown> = {}) {
   const state = status === 'connected'
@@ -91,6 +91,16 @@ describe('SettingsModal Astrid status', () => {
     expect(within(section).getByRole('status')).toHaveTextContent(STATUS_COPY.updateNeeded);
     expect(within(section).getByText(COPY.updateNeeded.sentence)).toBeTruthy();
     expect(within(section).queryByText(STATUS_COPY.connected)).toBeNull();
+    expect(readStatusMock).not.toHaveBeenCalled();
+  });
+
+  it('says Astrid is running but refused this page, while the marks keep looking', () => {
+    connectionMock.value = connection('refused');
+    const section = renderSettings();
+
+    expect(within(section).getByRole('status')).toHaveTextContent(STATUS_COPY.refused);
+    expect(STATUS_COPY.refused).toBe('Running, but refused this page');
+    expect(within(section).queryByText(STATUS_COPY.notRunning)).toBeNull();
     expect(readStatusMock).not.toHaveBeenCalled();
   });
 

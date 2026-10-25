@@ -34,25 +34,47 @@ function fakeGateway() {
     '/v1/health': () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST }),
     '/v1/realm': () => json(REALM),
   };
-  const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+  /** The door answers every request but refuses this page's origin: a CORS read fails, a `no-cors` request still resolves (opaque). */
+  let refusing = false;
+  const noCorsCalls: string[] = [];
+  /** Counts the CORS reads only; the `no-cors` follow-up that tells a refusal from a closed port is tracked in `noCorsCalls`. */
+  const cors = vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     calls.push(url);
     const path = Object.keys(routes).find((candidate) => url.endsWith(candidate));
     if (!path) throw new Error(`unexpected request ${url}`);
     return routes[path]!();
   }) as unknown as typeof fetch;
+  const fetchImpl = ((input: RequestInfo | URL, init?: RequestInit) => {
+    if (init?.mode !== 'no-cors') return cors(input);
+    noCorsCalls.push(String(input));
+    if (refusing) return Promise.resolve(new Response(null, { status: 200 }));
+    return Promise.reject(new TypeError('Failed to fetch'));
+  }) as unknown as typeof fetch;
   const down = () => {
     routes['/v1/health'] = () => {
       throw new TypeError('Failed to fetch');
     };
   };
+  const refuse = () => {
+    refusing = true;
+    down();
+  };
   const up = () => {
+    refusing = false;
     routes['/v1/health'] = () => json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST });
   };
   const gatewayDown = (error: string, status = 503) => {
     routes['/v1/health'] = () => json({ error }, status);
   };
-  return { calls, fetchImpl, routes, down, up, gatewayDown };
+  return { calls, noCorsCalls, cors, fetchImpl, routes, down, refuse, up, gatewayDown };
+}
+
+/** `counted` sees only CORS reads; a `no-cors` follow-up (the refusal check) fails as a closed port would, uncounted. */
+function corsOnly(counted: typeof fetch): typeof fetch {
+  return ((input: RequestInfo | URL, init?: RequestInit) => init?.mode === 'no-cors'
+    ? Promise.reject(new TypeError('Failed to fetch'))
+    : counted(input, init)) as typeof fetch;
 }
 
 /** Flush React's queued work without tying the test to the probe's internal promise chain. */
@@ -285,13 +307,99 @@ describe('granted', () => {
     const gateway = fakeGateway();
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     expect(status()).toBe('connecting');
     await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('not_running'));
     expect(latest.state).toMatchObject({ status: 'not_running' });
     expect(latest.isBooting).toBe(false);
+  });
+
+  it('a failed CORS read followed by an opaque no-cors answer reaches refused, not not_running', async () => {
+    const gateway = fakeGateway();
+    gateway.refuse();
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
+    expect(status()).toBe('connecting');
+    await flushReactWork();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('refused'));
+    expect(latest.state).toEqual({ status: 'refused' });
+    expect(latest.isBooting).toBe(false);
+    // One no-cors request per failed reading, to the same URL the CORS read used, and nothing else.
+    expect(gateway.noCorsCalls).toEqual(gateway.calls);
+    expect(gateway.calls.every((url) => url.endsWith('/v1/health'))).toBe(true);
+  });
+
+  it('a failed CORS read and a failed no-cors follow-up (nothing listening) stays not_running', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
+    await flushReactWork();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('not_running'));
+    expect(gateway.noCorsCalls).toHaveLength(2);
+  });
+
+  it('keeps polling while refused and connects by itself once the door accepts the page', async () => {
+    const gateway = fakeGateway();
+    gateway.refuse();
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
+    await flushReactWork();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('refused'));
+    gateway.up();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('connected'));
+  });
+
+  it('refused after a slow reading and its untimed follow-up both fail the CORS read', async () => {
+    const gateway = fakeGateway();
+    gateway.refuse();
+    let expireProbe: () => void = () => {};
+    const realSetTimeout = window.setTimeout.bind(window);
+    vi.spyOn(window, 'setTimeout').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (ms === PROBE_TIMEOUT_MS) {
+        expireProbe = () => typeof handler === 'function' ? handler(...args) : undefined;
+        return realSetTimeout(() => {}, ms);
+      }
+      return realSetTimeout(handler, ms, ...args);
+    }) as typeof window.setTimeout);
+    let calls = 0;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.mode !== 'no-cors' && calls++ === 0) {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+        });
+      }
+      return gateway.fetchImpl(input, init);
+    }) as unknown as typeof fetch;
+    renderProvider({ ...gateway, fetchImpl }, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(calls).toBe(1));
+    act(() => expireProbe());
+    await waitFor(() => expect(latest.isBooting).toBe(false));
+    await waitFor(() => expect(status()).toBe('refused'));
+    // The timed-out read never asks the no-cors question: only the follow-up's failure did.
+    expect(gateway.noCorsCalls).toHaveLength(1);
+  });
+
+  it.each(['prompt', 'denied'] as const)('sends no no-cors probe when permission is %s', async (state) => {
+    const gateway = fakeGateway();
+    gateway.refuse();
+    const permission = fakePermissions(state);
+    renderProvider(gateway, permission.permissions, { pollIntervalMs: 10 });
+    await waitFor(() => expect(status()).toBe(state === 'denied' ? 'blocked' : 'needs_permission'));
+    if (state === 'prompt') {
+      // Chrome refuses the explicit Connect probe (the person said no), and the permission is still not granted.
+      await act(async () => { latest.connect(); });
+      await flushReactWork();
+      expect(gateway.cors).toHaveBeenCalledTimes(1);
+    }
+    expect(gateway.noCorsCalls).toHaveLength(0);
+    expect(status()).not.toBe('refused');
   });
 
   it('a slow reading and its failed follow-up show help without another reading', async () => {
@@ -313,7 +421,7 @@ describe('granted', () => {
         init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
       });
     }) as unknown as typeof fetch;
-    renderProvider({ ...gateway, fetchImpl }, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    renderProvider({ ...gateway, fetchImpl: corsOnly(fetchImpl) }, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
 
     await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
     act(() => expireProbe());
@@ -527,7 +635,7 @@ describe('granted', () => {
     renderProvider(gateway, permissions.permissions);
     await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
     expect(permissions.permissions.query).toHaveBeenCalled();
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
   });
 
   it('classifies a real Firefox user agent as unsupported without querying permission or probing', async () => {
@@ -539,7 +647,7 @@ describe('granted', () => {
     await waitFor(() => expect(latest.state.status).toBe('unsupported'));
     act(() => latest.connect());
     expect(permissions.permissions.query).not.toHaveBeenCalled();
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
   });
 
   it.each([true, false])('classifies a phone without permission queries or probes (requireLocalNetworkPermission=%s)', async (requireLocalNetworkPermission) => {
@@ -552,7 +660,7 @@ describe('granted', () => {
     expect(screen.getByRole('heading', { name: CONNECTION_COPY.phone.title })).toBeInTheDocument();
     act(() => latest.connect());
     expect(permissions.permissions.query).not.toHaveBeenCalled();
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
   });
 
   it('background polls do not change the rendered panel while a reading is pending', async () => {
@@ -587,7 +695,7 @@ describe('granted', () => {
     const gateway = fakeGateway();
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     expect(status()).toBe('connecting');
     await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
@@ -600,7 +708,7 @@ describe('granted', () => {
     const gateway = fakeGateway();
     gateway.gatewayDown('runtime_unavailable', httpStatus);
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('not_running'));
@@ -611,7 +719,7 @@ describe('granted', () => {
     const gateway = fakeGateway();
     gateway.gatewayDown('runtime_unavailable');
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     expect(status()).toBe('connecting');
 
     gateway.down();
@@ -635,7 +743,7 @@ describe('granted', () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => new Response('<html></html>', { status: 503 });
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
 
@@ -647,7 +755,7 @@ describe('granted', () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => json({ error: 'Not found' }, 404);
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     expect(status()).toBe('connecting');
     await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
@@ -667,7 +775,7 @@ describe('granted', () => {
       return realSetInterval(() => {}, ms);
     }) as typeof window.setInterval);
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: POLL_MS });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('not_running'));
@@ -685,7 +793,7 @@ describe('granted', () => {
     const gateway = fakeGateway();
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('not_running'));
@@ -779,7 +887,7 @@ describe('prompt', () => {
     expect(screen.queryByText(CONNECTION_COPY.waiting)).not.toBeInTheDocument();
     await flushReactWork();
     window.dispatchEvent(new Event('focus'));
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
   });
 
   it('Connect on the permission screen starts the prompt probe and connects', async () => {
@@ -790,11 +898,11 @@ describe('prompt', () => {
 
     await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'permission');
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await waitFor(() => expect(latest.isChecking).toBe(true));
-    expect(gateway.fetchImpl).toHaveBeenCalledTimes(1);
+    expect(gateway.cors).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
     expect(screen.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeInTheDocument();
     expect(screen.queryByText(CONNECTION_COPY.waiting)).not.toBeInTheDocument();
@@ -820,7 +928,7 @@ describe('prompt', () => {
     renderPanelProvider(gateway, fakePermissions('prompt').permissions);
 
     await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
 
     await waitFor(() => expect(latest.isChecking).toBe(false));
@@ -842,7 +950,7 @@ describe('prompt', () => {
     expect(latest.isBooting).toBe(false);
     expect(latest.isChecking).toBe(true);
     act(() => latest.connect());
-    expect(gateway.fetchImpl).toHaveBeenCalledTimes(1);
+    expect(gateway.cors).toHaveBeenCalledTimes(1);
 
     release(json({ status: 'ok', schema_digest: RUNTIME_SCHEMA_DIGEST }));
     await waitFor(() => expect(status()).toBe('connected'));
@@ -865,7 +973,7 @@ describe('prompt', () => {
     const permission = fakePermissions('prompt');
     renderProvider(gateway, permission.permissions);
     await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
 
     act(() => permission.change('granted'));
     await waitFor(() => expect(status()).toBe('connected'));
@@ -908,7 +1016,7 @@ describe('prompt', () => {
 
     await waitFor(() => expect(latest.state.status).toBe('browser_update_needed'));
     expect(throwing.query).toHaveBeenCalled();
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
   });
 
   it('a refusal during connect() is read from the permission: denied becomes blocked', async () => {
@@ -932,7 +1040,7 @@ describe('denied', () => {
     await waitFor(() => expect(status()).toBe('blocked'));
     act(() => latest.connect());
     window.dispatchEvent(new Event('focus'));
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -947,7 +1055,7 @@ describe('denied', () => {
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
     await act(async () => { (event === 'focus' ? window : document).dispatchEvent(new Event(event)); });
     await waitFor(() => expect(status()).toBe(next === 'granted' ? 'connected' : 'needs_permission'));
-    if (next === 'prompt') expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    if (next === 'prompt') expect(gateway.cors).not.toHaveBeenCalled();
     view.unmount();
     const queries = vi.mocked(permission.permissions.query).mock.calls.length;
     window.dispatchEvent(new Event('focus'));
@@ -1197,7 +1305,7 @@ describe('gate: the landing page already asked to go in', () => {
 
     await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
     expect(screen.queryByTestId('permission')).toBeNull();
-    expect(gateway.fetchImpl).toHaveBeenCalled();
+    expect(gateway.cors).toHaveBeenCalled();
     // One-shot: the flag is used up.
     expect(autoConnectRequested()).toBe(false);
   });
@@ -1209,7 +1317,7 @@ describe('gate: the landing page already asked to go in', () => {
     await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
     expect(window.location.href).toContain('/tools/video-editor?timeline=timeline-7#frame-42');
     expect(window.location.search).not.toContain('connect=1');
-    expect(gateway.fetchImpl).toHaveBeenCalledTimes(2);
+    expect(gateway.cors).toHaveBeenCalledTimes(2);
     expect(autoConnectRequested()).toBe(false);
   });
 
@@ -1228,7 +1336,7 @@ describe('gate: the landing page already asked to go in', () => {
     renderGate(gateway, 'prompt');
 
     await waitFor(() => expect(screen.getByTestId('panel-state')).toHaveTextContent('pending'));
-    expect(gateway.fetchImpl).toHaveBeenCalledTimes(1);
+    expect(gateway.cors).toHaveBeenCalledTimes(1);
     expect(window.location.search).toBe('?timeline=timeline-7');
     expect(window.location.hash).toBe('#frame-42');
     expect(autoConnectRequested()).toBe(false);
@@ -1252,7 +1360,7 @@ describe('gate: the landing page already asked to go in', () => {
 
     await waitFor(() => expect(screen.getByTestId('permission')).toHaveTextContent('permission'));
     expect(latest.state).toEqual({ status: 'needs_permission' });
-    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    expect(gateway.cors).not.toHaveBeenCalled();
     await flushReactWork();
     expect(latest.state).toEqual({ status: 'needs_permission' });
     expect(screen.getByTestId('permission')).toBeInTheDocument();
@@ -1296,7 +1404,7 @@ describe('gate: the landing page already asked to go in', () => {
 describe('permission and setup evidence matrix', () => {
   const permissions = ['prompt', 'granted', 'denied'] as const;
   const entries = ['none', 'onboarding-continue', 'installer-query'] as const;
-  const outcomes = ['answers', 'no-answer', 'slow'] as const;
+  const outcomes = ['answers', 'no-answer', 'refused', 'slow'] as const;
   const cases = permissions.flatMap((permission) => [false, true].flatMap((connectedBefore) => entries.flatMap((entry) => outcomes.map((outcome) => ({
     permission,
     connectedBefore,
@@ -1314,7 +1422,8 @@ describe('permission and setup evidence matrix', () => {
     if (entry === 'installer-query') window.history.replaceState({}, '', '/tools/video-editor?timeline=timeline-7&connect=1#frame-42');
 
     const gateway = fakeGateway();
-    if (outcome !== 'answers') gateway.down();
+    if (outcome === 'refused') gateway.refuse();
+    else if (outcome !== 'answers') gateway.down();
     const permission = fakePermissions(initialPermission);
     const expireProbes: (() => void)[] = [];
     let timedOutProbes = 0;
@@ -1344,11 +1453,13 @@ describe('permission and setup evidence matrix', () => {
           init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
         });
       }
-      return gateway.fetchImpl(input);
+      return gateway.fetchImpl(input, init);
     }) as unknown as typeof fetch;
+    // The refusal check is not a reading: it is counted on the gateway, and never sent before permission is granted.
+    const providerFetch = ((input: RequestInfo | URL, init?: RequestInit) => init?.mode === 'no-cors' ? gateway.fetchImpl(input, init) : fetchImpl(input, init)) as typeof fetch;
 
     render(
-      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={fetchImpl} permissions={permission.permissions} pollIntervalMs={600_000}>
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={providerFetch} permissions={permission.permissions} pollIntervalMs={600_000}>
         <RecordingProbe states={observedStates} />
       <RuntimeConnectionGate connectOnEntry={entry === 'onboarding-continue'} panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} />}>
           <div data-testid="app" />
@@ -1364,6 +1475,7 @@ describe('permission and setup evidence matrix', () => {
     if (initialPermission === 'denied') {
       await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'blocked'));
       expect(fetchImpl).not.toHaveBeenCalled();
+      expect(gateway.noCorsCalls).toHaveLength(0);
       expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
       expect(screen.queryByRole('heading', { name: /Set up Astrid|Astrid isn't (?:running|answering)/ })).not.toBeInTheDocument();
       assertNoEvidencePayload(observedStates);
@@ -1420,14 +1532,22 @@ describe('permission and setup evidence matrix', () => {
     expect(screen.queryByRole('heading', { name: /Set up Astrid|Astrid isn't (?:running|answering)/ })).not.toBeInTheDocument();
     assertNoEvidencePayload(observedStates);
     await act(async () => { window.dispatchEvent(new Event('focus')); });
-    await waitFor(() => expect(latest.state.status).toBe('not_running'));
-    const finalStatus = 'not_running';
+    const finalStatus = outcome === 'refused' ? 'refused' : 'not_running';
+    await waitFor(() => expect(latest.state.status).toBe(finalStatus));
     expect(latest.state).toEqual({ status: finalStatus });
     expect(latest.connectedBefore).toBe(connectedBefore);
     assertNoEvidencePayload(observedStates);
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', finalStatus);
     expect(screen.queryByTestId('app')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeInTheDocument();
+    if (outcome === 'refused') {
+      // Astrid answered: the card says so, and offers no install.
+      expect(screen.getByRole('heading', { name: CONNECTION_COPY.refused.title })).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /Set up Astrid|Astrid isn't (?:running|answering)/ })).not.toBeInTheDocument();
+      expect(screen.queryByText(/curl -fsSL|irm https/)).not.toBeInTheDocument();
+      expect(gateway.noCorsCalls.length).toBeGreaterThan(0);
+    } else {
+      expect(screen.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeInTheDocument();
+    }
   });
 
   it('resets failed readings when permission leaves and returns to granted', async () => {
@@ -1436,7 +1556,7 @@ describe('permission and setup evidence matrix', () => {
     const permission = fakePermissions('granted');
     renderProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
 
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
     await flushReactWork();
     expect(latest.state.status).toBe('connecting');
 
@@ -1446,7 +1566,7 @@ describe('permission and setup evidence matrix', () => {
     await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
     act(() => permission.change('granted'));
 
-    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(2));
     await flushReactWork();
     expect(latest.state.status).toBe('connecting');
     expect(latest.state).not.toHaveProperty('evidence');
@@ -1573,5 +1693,138 @@ describe('useRuntimeConnection', () => {
   it('throws outside its provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Probe />)).toThrow('useRuntimeConnection must be used within a RuntimeConnectionProvider');
+  });
+});
+
+describe('permission transitions, before and after a connection', () => {
+  const transitions = [
+    ['granted', 'prompt'],
+    ['granted', 'denied'],
+    ['denied', 'granted'],
+    ['prompt', 'granted'],
+  ] as const;
+  const screenFor = { prompt: 'needs_permission', denied: 'blocked' } as const;
+  const phases = ['before', 'after'] as const;
+  const cases = phases.flatMap((phase) => transitions.map(([from, to]) => ({ phase, from, to })));
+
+  it.each(cases)('$phase a connection: $from -> $to', async ({ phase, from, to }) => {
+    const gateway = fakeGateway();
+    const permission = fakePermissions(phase === 'after' ? 'granted' : from);
+    const seen: string[] = [];
+    const watchStatus = () => seen.push(status() ?? '');
+    const record = () => { watchStatus(); };
+
+    // Before a connection the door is down while the permission is granted (so nothing is connected yet) and up otherwise,
+    // so that a grant can connect; after a connection it is up throughout.
+    if (phase === 'before' && from === 'granted') gateway.down();
+    renderProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
+    if (phase === 'after') {
+      await waitFor(() => expect(status()).toBe('connected'));
+    } else if (from === 'granted') {
+      await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(1));
+    } else {
+      await waitFor(() => expect(status()).toBe(screenFor[from]));
+      // Not granted: nothing is sent, and no screen speaks about the Runtime.
+      expect(gateway.cors).not.toHaveBeenCalled();
+      expect(gateway.noCorsCalls).toHaveLength(0);
+    }
+    record();
+
+    // After a connection a "regain" transition is first a loss to its starting state.
+    if (phase === 'after' && from !== 'granted') {
+      act(() => permission.change(from));
+      await waitFor(() => expect(status()).toBe(screenFor[from]));
+      expect(latest.isConnected).toBe(false);
+      record();
+    }
+    const requestsBefore = gateway.cors.mock.calls.length + gateway.noCorsCalls.length;
+
+    act(() => permission.change(to));
+    if (to === 'granted') {
+      gateway.up();
+      await waitFor(() => expect(status()).toBe('connected'));
+      expect(latest.isConnected).toBe(true);
+      // The grant is what lets probing start again.
+      if (phase === 'after' || from !== 'granted') expect(gateway.cors.mock.calls.length).toBeGreaterThan(requestsBefore);
+    } else {
+      await waitFor(() => expect(status()).toBe(screenFor[to]));
+      expect(latest.isConnected).toBe(false);
+      await flushReactWork();
+      // Nothing more is sent once the permission is gone, however long the poll interval has run.
+      await act(async () => { await new Promise((resolve) => setTimeout(resolve, 80)); });
+      expect(gateway.cors.mock.calls.length + gateway.noCorsCalls.length).toBe(requestsBefore);
+    }
+    record();
+    // No claim about the Runtime was ever made without the permission: never stopped, never not running, never refused.
+    expect(seen).not.toContain('not_running');
+    expect(seen).not.toContain('refused');
+    expect(seen).not.toContain('restart');
+  });
+
+  it('a reset that Chrome never announces is found when the tab resumes, and reconnects once granted again', async () => {
+    const gateway = fakeGateway();
+    const permission = fakePermissions('granted');
+    renderProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(status()).toBe('connected'));
+    // Site data cleared in another tab: the state changes, `onchange` does not fire.
+    permission.status.state = 'prompt';
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('needs_permission'));
+    expect(latest.isConnected).toBe(false);
+    permission.status.state = 'granted';
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('connected'));
+  });
+
+  it('confirmPermission re-reads the browser, and says no while it is not granted', async () => {
+    const gateway = fakeGateway();
+    const permission = fakePermissions('granted');
+    renderProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(status()).toBe('connected'));
+    await expect(latest.confirmPermission()).resolves.toBe(true);
+    permission.status.state = 'denied';
+    await expect(latest.confirmPermission()).resolves.toBe(false);
+    await waitFor(() => expect(status()).toBe('blocked'));
+  });
+
+  it('Connect answered by nothing (Chrome dismissed or never asked) keeps Connect and adds the site-settings steps', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    const permission = fakePermissions('prompt');
+    renderPanelProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(status()).toBe('needs_permission'));
+    expect(latest.askUnanswered).toBe(false);
+    expect(screen.queryByText(/didn't ask, allow it here/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    await waitFor(() => expect(latest.askUnanswered).toBe(true));
+    expect(status()).toBe('needs_permission');
+    expect(screen.getByRole('button', { name: 'Connect' })).toBeInTheDocument();
+    expect(screen.getByText(/didn't ask, allow it here/)).toBeInTheDocument();
+    for (const step of CONNECTION_COPY.blocked.steps) expect(screen.getByText(step)).toBeInTheDocument();
+    // It never claims anything about Astrid, and sent no refusal check while the permission was not granted.
+    expect(gateway.noCorsCalls).toHaveLength(0);
+    expect(screen.queryByRole('heading', { name: /isn't answering|running but/ })).not.toBeInTheDocument();
+    // Pressing Connect again starts a fresh attempt.
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    await waitFor(() => expect(gateway.cors).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('the local path never touches the permission', () => {
+  it.each([
+    ['gated, no permission required (a loopback page)', { gated: true, requireLocalNetworkPermission: false }],
+    ['ungated (no VITE_RUNTIME_ORIGIN)', { gated: false }],
+  ] as const)('%s', async (_name, props) => {
+    const query = vi.fn();
+    const gateway = fakeGateway();
+    render(
+      <RuntimeConnectionProvider {...props} fetchImpl={gateway.fetchImpl} permissions={{ query }} pollIntervalMs={600_000}>
+        <Probe />
+      </RuntimeConnectionProvider>,
+    );
+    await waitFor(() => expect(status()).toBe('connected'));
+    await act(async () => { window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); });
+    await expect(latest.confirmPermission()).resolves.toBe(true);
+    expect(query).not.toHaveBeenCalled();
   });
 });

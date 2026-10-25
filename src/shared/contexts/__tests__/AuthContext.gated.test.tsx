@@ -24,7 +24,10 @@ function stubGateway(health: () => Response) {
     if (url.endsWith('/v1/realm')) return new Response(JSON.stringify({ realm_id: 'r1', display_name: 'Direct Journey' }), { status: 200 });
     throw new Error(`unexpected ${url}`);
   });
-  vi.stubGlobal('fetch', fetchMock);
+  // The refusal check (a `no-cors` follow-up to a failed read) fails like a closed port here and is not a counted request.
+  vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => init?.mode === 'no-cors'
+    ? Promise.reject(new TypeError('Failed to fetch'))
+    : fetchMock(input));
   return fetchMock;
 }
 
