@@ -392,6 +392,9 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         return commit or restore
 
     def _error(self, exc):
+        commits = getattr(self.runtime, "_timeline_commit_store", None)
+        if commits is not None:
+            commits.clear_replay_memo()
         if isinstance(exc, RuntimeErrorBase):
             payload = exc.as_dict()
             payload["request_id"] = self._request_id()

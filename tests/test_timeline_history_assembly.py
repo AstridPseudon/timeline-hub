@@ -293,6 +293,10 @@ def test_provider_refuses_inputs_changed_after_ancestor_check(editing, monkeypat
         else:
             monkeypatch.setattr(commits, "_verify_accepted_record" if boundary == "collection" else "_verify_accepted_replay",
                                 after_ancestor)
+        if boundary == "replay":
+            # Exercise the existing mid-replay mutation on a cold D88b memo.
+            # Collection and pin cases still exercise the warm read path.
+            commits.clear_replay_memo()
         with pytest.raises(RuntimeErrorBase):
             port.history_entry(target)
         assert mutated == [seed]
@@ -350,6 +354,8 @@ def test_provider_refuses_retained_inputs_changed_after_check(retained, monkeypa
 
     def read_only(self, context, port):
         monkeypatch.setattr(owner, method, after_check)
+        if boundary == "replay":
+            commits.clear_replay_memo()
         with pytest.raises(RuntimeErrorBase):
             port.history_entry(target)
         assert mutated == [True]

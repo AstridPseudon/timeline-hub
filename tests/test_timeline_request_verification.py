@@ -1,4 +1,4 @@
-"""Request-local replay reuse never replaces fresh authority reads."""
+"""Process replay reuse never replaces fresh authority reads."""
 from __future__ import annotations
 
 import threading
@@ -19,6 +19,7 @@ def accepted(service, monkeypatch):
     auth.provider(service)
     result = commit(service, auth.body(service))
     commits, _ = service._timeline_commits()
+    commits.clear_replay_memo()
     publication = result["receipt"]["receipt_id"]
     calls = Counter()
     original = commits._verify_accepted_replay
@@ -35,7 +36,7 @@ def read(service, commits, publication):
     return commits.history_entry(service.test_project, "main", publication)
 
 
-def test_replay_reused_only_in_exact_evaluation_and_returns_detached_values(service, monkeypatch):
+def test_replay_reused_across_evaluations_and_returns_detached_values(service, monkeypatch):
     commits, publication, calls = accepted(service, monkeypatch)
     with commits.verification_scope():
         expected = read(service, commits, publication)
@@ -47,18 +48,18 @@ def test_replay_reused_only_in_exact_evaluation_and_returns_detached_values(serv
         outer = commits._verification.current
         with commits.verification_scope():
             read(service, commits, publication)
-            assert list(calls.values()) == [2]
+            assert list(calls.values()) == [1]
         assert commits._verification.current is outer
         read(service, commits, publication)
-        assert list(calls.values()) == [2]
+        assert list(calls.values()) == [1]
     assert commits._verification.current is None
     assert not outer["verified"] and not outer["active"]
     read(service, commits, publication)
     read(service, commits, publication)
-    assert list(calls.values()) == [4]
+    assert list(calls.values()) == [1]
 
 
-def test_concurrent_evaluations_have_independent_proofs(service, monkeypatch):
+def test_concurrent_evaluations_share_replay_but_keep_independent_scopes(service, monkeypatch):
     commits, publication, calls = accepted(service, monkeypatch)
     barrier = threading.Barrier(2)
 
@@ -73,7 +74,7 @@ def test_concurrent_evaluations_have_independent_proofs(service, monkeypatch):
         futures = [pool.submit(evaluate) for _ in range(2)]
         for future in futures:
             future.result(timeout=10)
-    assert sorted(calls.values()) == [1, 1]
+    assert list(calls.values()) == [1]
 
 
 def test_failure_never_memoized_and_baseexception_cleans_scope(service, monkeypatch):
@@ -181,7 +182,7 @@ def test_consistent_source_rewrite_invalidates_entry_only_digest(service, monkey
         commits.revision_closure(service.test_project, "main", source_id)
         with pytest.raises(ProtocolError):
             read(service, commits, publication)
-        assert list(calls.values()) == [3]
+        assert list(calls.values()) == [2]
 
 
 def test_nested_public_history_api_has_fresh_scope(service, monkeypatch):
@@ -190,4 +191,66 @@ def test_nested_public_history_api_has_fresh_scope(service, monkeypatch):
         read(service, commits, publication)
         service.list_timeline_commits(service.test_project, "main", authorize=lambda: None)
         read(service, commits, publication)
-        assert list(calls.values()) == [2]
+        assert list(calls.values()) == [1]
+
+
+def test_store_write_outside_accept_discards_successful_replay(service, monkeypatch):
+    commits, publication, calls = accepted(service, monkeypatch)
+    expected = read(service, commits, publication)
+    assert commits._replay_memo
+    service.create_timeline(service.test_project, "another", idempotency_key="another")
+    assert read(service, commits, publication) == expected
+    assert list(calls.values()) == [2]
+
+
+def test_public_authorization_refusal_discards_successful_replay(service, monkeypatch):
+    from runtime_protocol.errors import ForbiddenError
+
+    commits, publication, calls = accepted(service, monkeypatch)
+    expected = read(service, commits, publication)
+    assert commits._replay_memo
+
+    def refuse():
+        raise ForbiddenError("authority changed")
+
+    with pytest.raises(ForbiddenError):
+        service.list_timeline_commits(service.test_project, "main", authorize=refuse)
+    assert not commits._replay_memo
+    assert read(service, commits, publication) == expected
+    assert list(calls.values()) == [2]
+
+
+def test_retained_rehashed_step_forgery_refuses_with_warm_memo(service, monkeypatch):
+    # Reuse D88's retained security-test_d88_review.py witness unchanged in
+    # substance. Only its withdrawn persisted attestation is absent here.
+    import json
+
+    from runtime_protocol.timeline_commit_validation import digest
+
+    commits, publication, _ = accepted(service, monkeypatch)
+    read(service, commits, publication)
+    assert commits._replay_memo
+    conn = service.store.conn
+    row = conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication,)).fetchone()
+    edge = conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=?", (publication,)).fetchone()
+    records = json.loads(edge["records_json"])
+    result = json.loads(row["result_json"])
+    records["steps"][0]["patch"] = []
+    result["steps"][0]["patch"] = []
+    conn.execute("UPDATE timeline_commit_history SET records_json=? WHERE publication_id=?",
+                 (canonical_json(records), publication))
+    conn.execute("UPDATE command_idempotency SET result_json=? WHERE txn_id=?",
+                 (canonical_json(result), publication))
+    event_id = json.loads(row["event_ids_json"])[-1]
+    event = conn.execute("SELECT * FROM timeline_events WHERE id=?", (event_id,)).fetchone()
+    payload = json.loads(event["payload_json"])
+    payload["records_digest"] = digest(records)
+    hashed = {"timeline_id": "main", "kind": event["kind"], "payload": payload,
+              "previous_hash": event["previous_hash"], "created_at": event["created_at"]}
+    conn.execute("UPDATE timeline_events SET payload_json=?, event_hash=? WHERE id=?",
+                 (canonical_json(payload), digest(hashed)[7:], event_id))
+    before = list(conn.iterdump())
+    with pytest.raises(ProtocolError):
+        read(service, commits, publication)
+    assert not commits._replay_memo
+    assert list(conn.iterdump()) == before

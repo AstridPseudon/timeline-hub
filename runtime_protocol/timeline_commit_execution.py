@@ -116,4 +116,6 @@ class CommitExecutionCoordinator:
                     raise ProtocolError("provider returned an invalid preview")
             elif outcome.get("details", {}).get("status") not in {"conflict", "refused", "invalid"}:
                 raise ProtocolError("provider returned an invalid commit failure")
+            else:
+                self.commit_store.clear_replay_memo()
             return outcome
