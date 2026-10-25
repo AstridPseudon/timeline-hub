@@ -1,0 +1,26 @@
+{
+  "runtime_predicates": {
+    "mounted_source_shape": "PASS: exact App shape is doc.patch/list.insert under parent/clips with source via app and timeline.apply_element step",
+    "first_element_only": "PASS: one-shot closes on first element-shaped attempt",
+    "setup_mixed_dryrun_parameter_undo_retry_other_handler": "PASS: setup/parameter/undo do not consume; mixed/dry-run consumes and refuses; retry and other handler do not arm",
+    "dispatch_prefetch_provenance": "PASS: _dispatch request_scope plus same-frame bounded prefetch is required; forged direct prefetch cannot arm",
+    "profile_scope": "PASS: only selected RuntimeHandler._timeline_commit dynamic handler is wrapped",
+    "projection": "PASS: top 40 by cumtime with deterministic tie rank, exact pstats call/time fields, caller edges among emitted functions capped at 1600",
+    "safety": "PASS: safe tokens only; no raw request ids/args/payload/auth/URLs/locals/absolute private paths/stacks in projection",
+    "private_pstats": "PASS: TMPDIR child, owner/private mode, no symlink, no overwrite, O_EXCL/O_NOFOLLOW, raw sink 0600 and parent 0700",
+    "restoration": "PASS: try/finally normal return, handler exception, and partial enable restoration are covered",
+    "overhead_and_bounds": "PASS: bounded capture and cProfile overhead note are present",
+    "runtime_result": "PASS: central corrected request 30318 exact 61 tests"
+  },
+  "app_predicates": {
+    "old_lifecycle_arms": "PASS: normal/reviewed/reviewed-new arms retained",
+    "reviewed_profiler_schema": "PASS in unit validator: exact allowlist, status/rank/count/time/edge/bounds/mutation negatives",
+    "helper_hash_allowlist": "PASS in readCapture: final 095c252b... is allowlisted",
+    "source_provenance_resolution": "FAIL: normal D66 bootstrap guard has no final-helper branch",
+    "final_helper_basename_guard": "UNREACHABLE_FOR_FINAL_HASH: final hash enters else and fails old REVIEWED_NEW hash assertion first",
+    "mounted_element_transport": "PASS from final committed source and staging assertions: local save/outbox to provider commitTimeline to generated POST /commit with Idempotency-Key",
+    "prepared_ad57_outside_identity": "PASS: final App commit differs from prepared ad57 only in the profiler helper hash constant",
+    "app_result": "FAIL: source guard defect D127c-F001"
+  },
+  "qualification_boundary": "No live product/source activation is qualified; D130 entire hold remains."
+}

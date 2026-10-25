@@ -1,0 +1,39 @@
+{
+  "review": "D127c final coupled protected SOURCE/whole-path review",
+  "verdict": "FAIL",
+  "source_verdict": "FAIL",
+  "decision": "STOP_UNAPPLIED",
+  "runtime_component": "PASS",
+  "app_component": "FAIL",
+  "coupled_result": "FAIL",
+  "runtime": {
+    "commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "central_targeted_result": "61 passed in 3.62s (reused; not rerun)"
+  },
+  "app": {
+    "commit": "6c0329334797b42565918114f2e760a606b026b6",
+    "tree": "8b9a12d2d77708d260db8a9bd6b9fadff611bf44",
+    "validator_blob_sha256": "558963ebdb25c22713b18d8b32600da6e4af79fd81759925181bae68ca8e19ff",
+    "prepared_validator_commit": "ad57ece9df7890e6d644cc246d4d3bb865129cc1",
+    "prepared_validator_blob_sha256": "556594ff981bb6c1251ecd04e0178d5f5ec36d9fbfc819aa1272306eef205645"
+  },
+  "findings": [
+    {
+      "id": "D127c-F001",
+      "severity": "blocker",
+      "status": "confirmed",
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "line": 1076,
+      "summary": "The final helper hash is accepted by readCapture but rejected by the normal D66 source-pin guard.",
+      "effect": "With the final Runtime helper selected, the bootstrap/source-guard branch enters its else arm and asserts REVIEWED_NEW_HELPER_SHA256 (4ee0424b...), while the actual final helper is 095c252b.... The normal source-pinned bootstrap recipe therefore fails before final-helper validation can pass.",
+      "required_disposition": "Fix the guard's final-helper branch in a later authorized change, then rerun the bounded source guard. No fix was applied here."
+    }
+  ],
+  "author_metadata": {
+    "binder1950_evidence_directory": "ABSENT",
+    "classification": "The binder report was read, but no authored binder evidence directory is claimed. This packet reconstructs hashes and facts from committed Git blobs."
+  },
+  "body_status": "UNQUALIFIED: no live bootstrap, element body, browser, activation, or full suite was run."
+}

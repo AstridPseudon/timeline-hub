@@ -1,0 +1,50 @@
+{
+  "format_version": 1,
+  "scope": "RuntimeHandler._timeline_commit",
+  "status": ["captured", "unavailable"],
+  "captured": {
+    "functions": {
+      "max_items": 40,
+      "ordering": "descending cumtime, then file/line/function",
+      "fields": ["rank", "file", "line", "function", "ncalls", "primitive_calls", "tottime", "cumtime"],
+      "file_form": "<runtime|agent|stdlib|package>/relative/path",
+      "line": "nonnegative integer",
+      "calls": "nonnegative integers copied from cProfile/pstats",
+      "times": "finite nonnegative numbers copied from cProfile/pstats"
+    },
+    "edges": {
+      "max_items": 1600,
+      "fields": ["caller", "callee", "ncalls"],
+      "endpoints": "only emitted top-function identities",
+      "calls": "nonnegative integer caller-to-callee count"
+    },
+    "limits": ["max_functions", "max_edges", "dropped_rows", "dropped_edges"],
+    "rank_meaning": "functions sorted descending cumtime, then file/line/function",
+    "timing_note": "cProfile overhead inflates absolute times; use ranking and call counts observationally, never as the original budget"
+  },
+  "unavailable": {
+    "functions": [],
+    "edges": [],
+    "rank_meaning": "unavailable",
+    "dropped_rows": 0,
+    "dropped_edges": 0
+  },
+  "forbidden_output": [
+    "raw request ids",
+    "raw args",
+    "raw payload/body",
+    "authentication or idempotency values",
+    "URLs or query data",
+    "locals",
+    "absolute private paths",
+    "stacks",
+    "unknown fields",
+    "arbitrary helper hashes"
+  ],
+  "private_raw_pstats": {
+    "optional": true,
+    "parent": "private TMPDIR child, owner 0700, no symlink",
+    "file": "new O_EXCL/O_NOFOLLOW file, mode 0600",
+    "never": ["shared directory", "overwrite", "symlink target"]
+  }
+}
