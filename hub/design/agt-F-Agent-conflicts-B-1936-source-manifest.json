@@ -1,0 +1,198 @@
+{
+  "c0_contract": {
+    "path": "/home/user/work/runtime/contract/commit-v2.md",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "bytes": 210581
+  },
+  "coordination_evidence": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-app-agent-lead-20261025T1901Z-ZIP-conflict-allocation.md",
+    "sha256": "9ff7d26d5af941016a209a64972ef8175a70204374eee239f001a055d5854577",
+    "allocation": "lead19:16 source-only Agent 40 split 20+20 via hosted Codex"
+  },
+  "assigned_paths": [
+    "astrid/core/generation/gpu_environment.py",
+    "astrid/installer/backend.py",
+    "astrid/installer/core.py",
+    "astrid/installer/launcher.py",
+    "astrid/installer/omp/recipe.json",
+    "astrid/installer/service.py",
+    "astrid/installer/tools.py",
+    "astrid/packs/rendering/docs/SKILL.md",
+    "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+    "docs/install/OMP-LANDING.md",
+    "docs/reference/services.md",
+    "docs/testing/TESTING.md",
+    "scripts/refresh_omp_recipe.py",
+    "tests/core/generation/test_gpu_environment.py",
+    "tests/test_installer_acl.py",
+    "tests/test_installer_cleanup.py",
+    "tests/test_installer_lifecycle.py",
+    "tests/test_installer_omp_source.py",
+    "tests/test_installer_platforms.py",
+    "tests/test_installer_wheel.py"
+  ],
+  "blob_bindings": {
+    "astrid/core/generation/gpu_environment.py": {
+      "base": "da1b528d46e3504e54b3024c16a84a04336986f9",
+      "ours": "f42e84cce1a9dccf50dadd2f53b3c193890b5f4f",
+      "upstream": "9bccdf3fdeb510c687e971930c8f96ec0729f4c3"
+    },
+    "astrid/installer/backend.py": {
+      "base": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+      "ours": "73930778510cb08d5a50f86767ffea0098fc2007",
+      "upstream": "a609940892e8d2507fe77e661a4018f6e9fd5c1e"
+    },
+    "astrid/installer/core.py": {
+      "base": "2db5d9f8b16f058cd728596e15542653d01c2c10",
+      "ours": "15feb564a12299642b168c3aa6bf9a555bee0716",
+      "upstream": "8b7c68acd64654d46309046c0c3c69d7266d7cf7"
+    },
+    "astrid/installer/launcher.py": {
+      "base": "c803aadda87f7e9f9b0dd59d6eb020d1993c3d0a",
+      "ours": "2d9b58ea07588c5058b213ee99da9a03926fea5e",
+      "upstream": "6537e27183aee0d09c8c03f10c057b0e307dd415"
+    },
+    "astrid/installer/omp/recipe.json": {
+      "base": "3a3c3290ba1fd0a2c68d78b19afab9ab1a8b4359",
+      "ours": "e1ac1cfe00bcad6a40daf1a015b77c4a43548031",
+      "upstream": "0cbf40c60a51b5d62e0db80dfb7030ee6a1e7299"
+    },
+    "astrid/installer/service.py": {
+      "base": "2974b81ddc0f7213d1a30a1e3354b5e577dc32b6",
+      "ours": "a916575d476a7dc60501151ad824aa778683cb5b",
+      "upstream": "a3aa8e5ba45e98e3f124b909541ce8683a68fd22"
+    },
+    "astrid/installer/tools.py": {
+      "base": "868f7179bc673e67484180c76ae065316c2ce051",
+      "ours": "8a456b340050be5eff7678cbd5db9645f79e4fb9",
+      "upstream": "3efcc8dfd64b24eb7e79023ed95886af86466252"
+    },
+    "astrid/packs/rendering/docs/SKILL.md": {
+      "base": "f5c18de30093a3013dcf8c9951445f25d55e7ef2",
+      "ours": "7dee1d8c84afc9a1f8b15150f55db0642d2be142",
+      "upstream": "715b37ce9b3d10dda3fd0a1c048967e86ffd3249"
+    },
+    "astrid/packs/vibecomfy/environment.windows-nvidia.json": {
+      "base": "e553ad26f259f64b9723b7c35551b5dc539ee7b6",
+      "ours": "3242b3bedb504c636b1486943aef7626fe5986c4",
+      "upstream": "1eb15b7c4b5ba5c92a1882953d0f728d8d928880"
+    },
+    "docs/install/OMP-LANDING.md": {
+      "base": "726609bfa437190c051e9023a645160b5fb0310e",
+      "ours": "7e425adf1c8eb666a462d4961927ddd6ce64be68",
+      "upstream": "e4ade615a2b8cd010884248a6acb61ec8eac64d7"
+    },
+    "docs/reference/services.md": {
+      "base": "99f72358b32f7caad7732714f0a8c6bfabe61381",
+      "ours": "1cd0d382bdc335c17d63a18f1a91a8ab3981e66b",
+      "upstream": "24ebff2bab996fd09401b5cd3bcc0bdfffff7273"
+    },
+    "docs/testing/TESTING.md": {
+      "base": "c54152de6586cbf60daebb83264a9dfb4d66def8",
+      "ours": "fbcfcddc4c0276b8f3418180ebe4f31e8f693c26",
+      "upstream": "df416ca4ed5f82bf30251191239e26834ce1dd5e"
+    },
+    "scripts/refresh_omp_recipe.py": {
+      "base": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+      "ours": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+      "upstream": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d"
+    },
+    "tests/core/generation/test_gpu_environment.py": {
+      "base": "bac871fb2f2f25d7643921dbbed47d5599cdc721",
+      "ours": "f1b0783bb2badb5b094a3ed0bdbc058bd33c5ae9",
+      "upstream": "76f2ec69264eb03b4ad843ddead8d8bf091eed7c"
+    },
+    "tests/test_installer_acl.py": {
+      "base": "ca328ec1ee9f25d35f22ce52a2593a0a6ce04889",
+      "ours": "67bb7505c0f270ad55952360f11bb12962f83806",
+      "upstream": "88dd45748db6677ed9dd9f602c060cb4de68a219"
+    },
+    "tests/test_installer_cleanup.py": {
+      "base": "e5ea5450114e2b96700368a992e2ea1f47f581c3",
+      "ours": "c4381c3140282cce74a94cb9e5d09de04c3cc62b",
+      "upstream": "f030558f1aa47eed8e896116ce7bc296c05e232c"
+    },
+    "tests/test_installer_lifecycle.py": {
+      "base": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+      "ours": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+      "upstream": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+    },
+    "tests/test_installer_omp_source.py": {
+      "base": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "ours": "18b560d48889ca6462778a49282413196b9e6488",
+      "upstream": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    "tests/test_installer_platforms.py": {
+      "base": "791311144204eec7d33d73fda7b89dc38502c669",
+      "ours": "55d0bbfd4200756d1a5322ed63e52ada32a44560",
+      "upstream": "94a7e05012357ba4d906cc611716e8f18b38d250"
+    },
+    "tests/test_installer_wheel.py": {
+      "base": "a21f3238ccb2071c9955b3980272ed51600f94ea",
+      "ours": "cfe1729e4188eecfc14387e07e4abf7a7bb96880",
+      "upstream": "549e079eb4fcbac9cea9ebb7324dc86e20e6f012"
+    }
+  },
+  "immutable_inputs": {
+    "rt-F-tail-census-review-1850-report.md": {
+      "bytes": 1497,
+      "sha256": "570de6aa369fbe559d04657577a6b90cae1f9346d17af3fcc077d2436b6f21cd"
+    },
+    "rt-F-tail-census-review-1850-review.json": {
+      "bytes": 6650,
+      "sha256": "9079685af5809474fe9e2655a93fd25e2b339ecebea65eef3cfdd540ba1b9f72"
+    },
+    "rt-F-tail-upstream-census-1844-already-upstream.json": {
+      "bytes": 457912,
+      "sha256": "3ec7a337b6f7e13db39b005a711e47272ba056b9a0021feca80cbbb84b7681c9"
+    },
+    "rt-F-tail-upstream-census-1844-census.json": {
+      "bytes": 127515,
+      "sha256": "2adbabd4a8e9f93dbc1d60b3c1489f611b527e402dc40629597d49f5502c0e16"
+    },
+    "rt-F-tail-upstream-census-1844-conflicts.md": {
+      "bytes": 19161,
+      "sha256": "3c03a417eb6d9a3a52c496b2d919348b0171aa34dfa0ac005f72d2805b312025"
+    },
+    "rt-F-tail-upstream-census-1844-source-manifest.json": {
+      "bytes": 11330,
+      "sha256": "d4a449ebac4509e3d5cff094d6e69f3ccac7ab8b46ba6fcf3062a7ab2f09b535"
+    }
+  },
+  "object_tuple": {
+    "base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "ours": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "ours_tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+    "repo": "/home/user/work/agent",
+    "upstream": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "upstream_tree": "f53cc8426ccef8760021ef6207303bce7b80e777"
+  },
+  "path_partition": {
+    "assigned_not_in_census": [],
+    "census_not_assigned": [
+      "astrid/chat/acpProcessHost.test.ts",
+      "astrid/chat/acpProcessHost.ts",
+      "astrid/chat/astrid-acp-bridge.ts",
+      "astrid/chat/astrid-acp-models.test.ts",
+      "astrid/chat/astrid-agent-models.test.ts",
+      "astrid/chat/astrid-agent-models.ts",
+      "astrid/chat/astrid-local-agent-host.ts",
+      "astrid/chat/astrid-local-agents.test.ts",
+      "astrid/chat/astrid-local-agents.ts",
+      "astrid/chat/astrid-project-chat.test.ts",
+      "astrid/chat/astrid-project-chat.ts",
+      "astrid/chat/astrid-shared-acp-sessions.test.ts",
+      "astrid/chat/astrid-shared-acp-sessions.ts",
+      "astrid/chat/discoveryProbe.ts",
+      "astrid/chat/localAgents.ts",
+      "astrid/chat/modelCatalog.ts",
+      "astrid/chat/service.mjs",
+      "astrid/chat/service.test.ts",
+      "astrid/chat/service.ts",
+      "astrid/core/gateway/dispatch.py"
+    ]
+  },
+  "schema_version": 1,
+  "source_only": true,
+  "task": "agt-F-Agent-conflicts-B-1936"
+}

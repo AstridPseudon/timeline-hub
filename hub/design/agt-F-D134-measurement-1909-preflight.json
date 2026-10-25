@@ -1,0 +1,60 @@
+{
+  "schema": "timeline.agent.d134.preflight.v1",
+  "status": "PASS_EXPECTED_DRY_CONTROLS",
+  "mode": "dry",
+  "launcher": "/home/user/work/wt/agt-pin-a4e016b6/tools/p4-d73-pinned-launch.sh",
+  "launcher_sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+  "positive": {
+    "manifest": "evidence/positive.manifest",
+    "manifest_sha256": "b539c6bda83fcef7222a3be667a74465317fe05b8de359dc6e7784db5d9b676d",
+    "control": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh",
+    "control_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "preflight_exit": 0,
+    "body_stub_exit": 17,
+    "counter_calls": 1,
+    "counter_sha256": "04d540922ee4c86ca1c488ee84bd212f8ec5deceb222eef48701938a669394c3",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "receipt_hashes": {
+      "runmanifest": "a9b9c994c885af37a7c186a34bccc4c27ae2378fa08b7007750184dac71c2ee2",
+      "preflight_exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "body_exit": "54183f4323f377b737433a1e98229ead0fdc686f93bab057ecb612daa94002b5",
+      "command": "21cabbbb14b67f0be0ab861b6b87faf740964c4e0fa5ebb44acefe6f22fca089"
+    },
+    "private_evidence_dir": "/tmp/w-17bdcf2b40/dry.EG3ZhE/launcher-evidence"
+  },
+  "poison": {
+    "manifest": "evidence/poison.manifest",
+    "manifest_sha256": "f41fef0062e6c1c3ceb766ca9fdb144d649d1408221a0ac35d4163f6525e6dad",
+    "control_same_as_positive": true,
+    "preflight_exit": 1,
+    "body_stub_called": false,
+    "counter_calls": 0,
+    "counter_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "bc85d8762dfb2215099766272d96b8934c29188224dbfb80b14f5cdd0f4395ae",
+    "private_evidence_dir": "/tmp/w-17bdcf2b40/dry.EG3ZhE",
+    "deliberate_refusal": "D73 launcher: agent SHA mismatch"
+  },
+  "guards": {
+    "unexpected_positive_refusal": false,
+    "unexpected_poison_refusal": false,
+    "package_acquisition": false,
+    "child_build": false,
+    "suite_body": false,
+    "request_test": false
+  },
+  "measurement": {
+    "service_id": "agent-agent-core-full-1025191128-18455",
+    "normal_launcher_preflight_exit": 0,
+    "body_exit": 1,
+    "private_runmanifest": "/tmp/w-bfe074b7cd/launcher-evidence/agent-core-full.runmanifest",
+    "private_body_log": "/tmp/w-bfe074b7cd/launcher-evidence/agent-core-full.body.log",
+    "private_xml": "/tmp/w-bfe074b7cd/launcher-evidence/agent-core-full.xml",
+    "xml_sha256": "f5759f48e82d209051611736d15ea625c84fdaebb210d9a5f23b046b84c0abf3",
+    "unexpected_guard_refusal": false,
+    "package_acquisition": false,
+    "child_build": false,
+    "environment_fallback": false
+  }
+}

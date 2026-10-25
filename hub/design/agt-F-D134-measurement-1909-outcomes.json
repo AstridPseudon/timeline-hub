@@ -1,0 +1,95 @@
+{
+  "schema": "timeline.agent.d134.outcomes.v1",
+  "service_id": "agent-agent-core-full-1025191128-18455",
+  "body_exit": 1,
+  "terminal_counts": {
+    "tests_declared": 9469,
+    "passed": 8926,
+    "failed": 190,
+    "errors": 180,
+    "skipped": 0,
+    "warnings": 86,
+    "subtests_passed": 173,
+    "xml_testcase_elements": 9296
+  },
+  "xml": {
+    "private_path": "/tmp/w-bfe074b7cd/launcher-evidence/agent-core-full.xml",
+    "sha256": "f5759f48e82d209051611736d15ea625c84fdaebb210d9a5f23b046b84c0abf3",
+    "duration_seconds": 1378.081,
+    "junit_declared_tests": 9469,
+    "unique_testcase_nodeids": 9296,
+    "subtests_not_individually_represented": 173
+  },
+  "root_inventory_from_xml_testcase_nodes": {
+    "tests/editing_conformance": {"passed": 4131, "failed": 122, "error": 168},
+    "tests/sdk": {"passed": 3032, "failed": 56, "error": 10},
+    "tests/timeline": {"passed": 561, "failed": 6},
+    "tests/core/timeline": {"passed": 304},
+    "tests/core/test_timeline_element_orphan_cleanup.py": {"passed": 48},
+    "tests/core/test_timeline_element_publication.py": {"passed": 45},
+    "tests/core/test_timeline_element_publication_runtime.py": {"passed": 57, "failed": 3},
+    "tests/core/rendering/test_timeline_visualize_cli_grammar.py": {"passed": 11},
+    "tests/core/rendering/test_local_schema.py": {"passed": 29},
+    "tests/packs/timeline": {"passed": 365},
+    "tests/packs/rendering/test_composition_package.py": {"passed": 7},
+    "tests/packs/rendering/test_live_scene_composition.py": {"passed": 19, "error": 1},
+    "tests/packs/rendering/test_render_export_task_adapter.py": {"passed": 135, "failed": 2},
+    "tests/packs/rendering/test_timeline_filmstrip_cards.py": {"passed": 39},
+    "tests/packs/rendering/test_timeline_filmstrip_execution.py": {"passed": 28},
+    "tests/packs/video_editing/test_runtime_publication_chain.py": {"passed": 12, "failed": 1, "error": 1},
+    "tests/stage1/test_cold_launch_autobootstrap.py": {"passed": 30},
+    "tests/test_installer_schema.py": {"passed": 4},
+    "tests/test_installer_sources.py": {"passed": 44},
+    "tests/test_timeline_clip_replacement.py": {"passed": 8},
+    "tests/v10/test_timelines_create.py": {"passed": 16},
+    "tests/test_installer_bootstrap_schema.py": {"passed": 1}
+  },
+  "d54a_exact_node_comparison": {
+    "immutable_baseline": {
+      "service_id": "agent-agent-core-full-1025102421-30693",
+      "xml_sha256": "483e5c13c3443147488da436acc49d0c0f322f7e4d3f020fbd656a548459139c",
+      "exact_nodeids": 9273,
+      "current_only_nodeids": 23,
+      "baseline_only_nodeids": 0,
+      "status_pairs_current_then_baseline": {
+        "error/error": 180,
+        "failed/error": 36,
+        "failed/failed": 111,
+        "failed/passed": 43,
+        "passed/error": 75,
+        "passed/failed": 48,
+        "passed/passed": 8780
+      },
+      "current_only_status": {"passed": 23},
+      "classification": "UNKNOWN_PENDING_INDEPENDENT_REVIEW"
+    },
+    "retained_upstream": {
+      "evidence": "agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+      "xml_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+      "exact_nodeids": 2956,
+      "current_only_nodeids": 6340,
+      "upstream_only_nodeids": 9561,
+      "status_pairs_current_then_upstream": {
+        "failed/failed": 16,
+        "failed/passed": 2,
+        "passed/error": 14,
+        "passed/failed": 1,
+        "passed/passed": 2923
+      },
+      "classification": "UNKNOWN_PENDING_INDEPENDENT_REVIEW"
+    }
+  },
+  "node_inventory_limits": {
+    "complete_finite_per_node_accounting": false,
+    "reason": "JUnit contains 9296 unique testcase nodeids; 173 reported subtests are not individual XML testcase elements, and xdist worker attribution is not a complete XML field",
+    "core_open_n": "UNKNOWN",
+    "reg_open_n": "UNKNOWN"
+  },
+  "disposition": {
+    "independent_result_review_required": true,
+    "independent_classification_required": true,
+    "retirement": 0,
+    "ship_credit": false,
+    "custody_credit": false
+  }
+}

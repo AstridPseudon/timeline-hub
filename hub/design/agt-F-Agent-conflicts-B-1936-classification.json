@@ -1,0 +1,1358 @@
+{
+  "c0_contract": {
+    "path": "/home/user/work/runtime/contract/commit-v2.md",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "scope": "current approved C0 contract read for live request/merge/reply predicates"
+  },
+  "coordination": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-app-agent-lead-20261025T1901Z-ZIP-conflict-allocation.md",
+    "sha256": "9ff7d26d5af941016a209a64972ef8175a70204374eee239f001a055d5854577",
+    "allocation": "lead19:16 source-only Agent 40 split 20+20 via hosted Codex"
+  },
+  "hunks": [
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "da1b528d46e3504e54b3024c16a84a04336986f9",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -18,6 +18,8 @@",
+      "ours_blob": "f42e84cce1a9dccf50dadd2f53b3c193890b5f4f",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/core/generation/gpu_environment.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -279,0 +280 @@ if __name__ == \"__main__\":"
+        ],
+        "upstream": [
+          "@@ -20,0 +21,2 @@ from typing import Any",
+          "@@ -107 +109,4 @@ def _description(pack: str) -> tuple[Path, dict[str, Any]]:"
+        ]
+      },
+      "source_evidence": "upstream adds dynamic VibeComfy revision import/injection; ours is EOF-only and disjoint.",
+      "upstream_blob": "9bccdf3fdeb510c687e971930c8f96ec0729f4c3"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "da1b528d46e3504e54b3024c16a84a04336986f9",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 1,
+      "merge_tree_header": "@@ -104,7 +106,10 @@",
+      "ours_blob": "f42e84cce1a9dccf50dadd2f53b3c193890b5f4f",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/core/generation/gpu_environment.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -279,0 +280 @@ if __name__ == \"__main__\":"
+        ],
+        "upstream": [
+          "@@ -20,0 +21,2 @@ from typing import Any",
+          "@@ -107 +109,4 @@ def _description(pack: str) -> tuple[Path, dict[str, Any]]:"
+        ]
+      },
+      "source_evidence": "upstream adds dynamic VibeComfy revision import/injection; ours is EOF-only and disjoint.",
+      "upstream_blob": "9bccdf3fdeb510c687e971930c8f96ec0729f4c3"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -30,6 +30,7 @@",
+      "ours_blob": "73930778510cb08d5a50f86767ffea0098fc2007",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/backend.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -171,0 +172,17 @@ class Backend:",
+          "@@ -382,0 +400 @@ class Backend:",
+          "@@ -399,6 +416,0 @@ class Backend:",
+          "@@ -634,0 +647 @@ class Backend:"
+        ],
+        "upstream": [
+          "@@ -32,0 +33 @@ from .core import (",
+          "@@ -500,0 +502,20 @@ class Backend:",
+          "@@ -581,0 +603 @@ class Backend:",
+          "@@ -589,0 +612,3 @@ class Backend:",
+          "@@ -630,0 +656,13 @@ class Backend:",
+          "@@ -634,0 +673,2 @@ class Backend:"
+        ]
+      },
+      "source_evidence": "upstream adds managed command-shim and skill-sync behavior; ours adds separate local-schema verification. Only final marker is ours EOF whitespace versus upstream hint.",
+      "upstream_blob": "a609940892e8d2507fe77e661a4018f6e9fd5c1e"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 1,
+      "merge_tree_header": "@@ -510,6 +511,26 @@",
+      "ours_blob": "73930778510cb08d5a50f86767ffea0098fc2007",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/backend.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -171,0 +172,17 @@ class Backend:",
+          "@@ -382,0 +400 @@ class Backend:",
+          "@@ -399,6 +416,0 @@ class Backend:",
+          "@@ -634,0 +647 @@ class Backend:"
+        ],
+        "upstream": [
+          "@@ -32,0 +33 @@ from .core import (",
+          "@@ -500,0 +502,20 @@ class Backend:",
+          "@@ -581,0 +603 @@ class Backend:",
+          "@@ -589,0 +612,3 @@ class Backend:",
+          "@@ -630,0 +656,13 @@ class Backend:",
+          "@@ -634,0 +673,2 @@ class Backend:"
+        ]
+      },
+      "source_evidence": "upstream adds managed command-shim and skill-sync behavior; ours adds separate local-schema verification. Only final marker is ours EOF whitespace versus upstream hint.",
+      "upstream_blob": "a609940892e8d2507fe77e661a4018f6e9fd5c1e"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 2,
+      "merge_tree_header": "@@ -591,6 +612,7 @@",
+      "ours_blob": "73930778510cb08d5a50f86767ffea0098fc2007",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/backend.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -171,0 +172,17 @@ class Backend:",
+          "@@ -382,0 +400 @@ class Backend:",
+          "@@ -399,6 +416,0 @@ class Backend:",
+          "@@ -634,0 +647 @@ class Backend:"
+        ],
+        "upstream": [
+          "@@ -32,0 +33 @@ from .core import (",
+          "@@ -500,0 +502,20 @@ class Backend:",
+          "@@ -581,0 +603 @@ class Backend:",
+          "@@ -589,0 +612,3 @@ class Backend:",
+          "@@ -630,0 +656,13 @@ class Backend:",
+          "@@ -634,0 +673,2 @@ class Backend:"
+        ]
+      },
+      "source_evidence": "upstream adds managed command-shim and skill-sync behavior; ours adds separate local-schema verification. Only final marker is ours EOF whitespace versus upstream hint.",
+      "upstream_blob": "a609940892e8d2507fe77e661a4018f6e9fd5c1e"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 3,
+      "merge_tree_header": "@@ -599,6 +621,9 @@",
+      "ours_blob": "73930778510cb08d5a50f86767ffea0098fc2007",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/backend.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -171,0 +172,17 @@ class Backend:",
+          "@@ -382,0 +400 @@ class Backend:",
+          "@@ -399,6 +416,0 @@ class Backend:",
+          "@@ -634,0 +647 @@ class Backend:"
+        ],
+        "upstream": [
+          "@@ -32,0 +33 @@ from .core import (",
+          "@@ -500,0 +502,20 @@ class Backend:",
+          "@@ -581,0 +603 @@ class Backend:",
+          "@@ -589,0 +612,3 @@ class Backend:",
+          "@@ -630,0 +656,13 @@ class Backend:",
+          "@@ -634,0 +673,2 @@ class Backend:"
+        ]
+      },
+      "source_evidence": "upstream adds managed command-shim and skill-sync behavior; ours adds separate local-schema verification. Only final marker is ours EOF whitespace versus upstream hint.",
+      "upstream_blob": "a609940892e8d2507fe77e661a4018f6e9fd5c1e"
+    },
+    {
+      "actual_merge_marker_overlap": true,
+      "base_blob": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 4,
+      "merge_tree_header": "@@ -640,8 +665,26 @@",
+      "ours_blob": "73930778510cb08d5a50f86767ffea0098fc2007",
+      "overlap_kind": "actual_whitespace_append_overlap",
+      "path": "astrid/installer/backend.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -171,0 +172,17 @@ class Backend:",
+          "@@ -382,0 +400 @@ class Backend:",
+          "@@ -399,6 +416,0 @@ class Backend:",
+          "@@ -634,0 +647 @@ class Backend:"
+        ],
+        "upstream": [
+          "@@ -32,0 +33 @@ from .core import (",
+          "@@ -500,0 +502,20 @@ class Backend:",
+          "@@ -581,0 +603 @@ class Backend:",
+          "@@ -589,0 +612,3 @@ class Backend:",
+          "@@ -630,0 +656,13 @@ class Backend:",
+          "@@ -634,0 +673,2 @@ class Backend:"
+        ]
+      },
+      "source_evidence": "upstream adds managed command-shim and skill-sync behavior; ours adds separate local-schema verification. Only final marker is ours EOF whitespace versus upstream hint.",
+      "upstream_blob": "a609940892e8d2507fe77e661a4018f6e9fd5c1e"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "2db5d9f8b16f058cd728596e15542653d01c2c10",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -204,16 +204,16 @@",
+      "ours_blob": "15feb564a12299642b168c3aa6bf9a555bee0716",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/core.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -309,0 +310 @@ def new_version_id(manifest: dict) -> str:"
+        ],
+        "upstream": [
+          "@@ -207 +206,0 @@ class Installer:",
+          "@@ -208,0 +208 @@ class Installer:",
+          "@@ -215 +214,0 @@ class Installer:",
+          "@@ -216,0 +216 @@ class Installer:",
+          "@@ -273,0 +274,4 @@ class Installer:",
+          "@@ -303 +306,0 @@ class Installer:",
+          "@@ -304,0 +308 @@ class Installer:"
+        ]
+      },
+      "source_evidence": "upstream reorders open() and adds skill sync after verification; ours is EOF-only.",
+      "upstream_blob": "8b7c68acd64654d46309046c0c3c69d7266d7cf7"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "2db5d9f8b16f058cd728596e15542653d01c2c10",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 1,
+      "merge_tree_header": "@@ -271,6 +271,10 @@",
+      "ours_blob": "15feb564a12299642b168c3aa6bf9a555bee0716",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/core.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -309,0 +310 @@ def new_version_id(manifest: dict) -> str:"
+        ],
+        "upstream": [
+          "@@ -207 +206,0 @@ class Installer:",
+          "@@ -208,0 +208 @@ class Installer:",
+          "@@ -215 +214,0 @@ class Installer:",
+          "@@ -216,0 +216 @@ class Installer:",
+          "@@ -273,0 +274,4 @@ class Installer:",
+          "@@ -303 +306,0 @@ class Installer:",
+          "@@ -304,0 +308 @@ class Installer:"
+        ]
+      },
+      "source_evidence": "upstream reorders open() and adds skill sync after verification; ours is EOF-only.",
+      "upstream_blob": "8b7c68acd64654d46309046c0c3c69d7266d7cf7"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "2db5d9f8b16f058cd728596e15542653d01c2c10",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 2,
+      "merge_tree_header": "@@ -300,8 +304,8 @@",
+      "ours_blob": "15feb564a12299642b168c3aa6bf9a555bee0716",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/core.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -309,0 +310 @@ def new_version_id(manifest: dict) -> str:"
+        ],
+        "upstream": [
+          "@@ -207 +206,0 @@ class Installer:",
+          "@@ -208,0 +208 @@ class Installer:",
+          "@@ -215 +214,0 @@ class Installer:",
+          "@@ -216,0 +216 @@ class Installer:",
+          "@@ -273,0 +274,4 @@ class Installer:",
+          "@@ -303 +306,0 @@ class Installer:",
+          "@@ -304,0 +308 @@ class Installer:"
+        ]
+      },
+      "source_evidence": "upstream reorders open() and adds skill sync after verification; ours is EOF-only.",
+      "upstream_blob": "8b7c68acd64654d46309046c0c3c69d7266d7cf7"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "c803aadda87f7e9f9b0dd59d6eb020d1993c3d0a",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -2,11 +2,121 @@",
+      "ours_blob": "2d9b58ea07588c5058b213ee99da9a03926fea5e",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/launcher.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -63,0 +64 @@ def install(root: Path) -> tuple[Path, ...]:"
+        ],
+        "upstream": [
+          "@@ -4,0 +5,2 @@ from __future__ import annotations",
+          "@@ -5,0 +8 @@ import os",
+          "@@ -6,0 +10 @@ from pathlib import Path",
+          "@@ -9,0 +14,106 @@ from ..core.util import process as _process"
+        ]
+      },
+      "source_evidence": "upstream adds the complete managed command-shim implementation; ours is EOF-only.",
+      "upstream_blob": "6537e27183aee0d09c8c03f10c057b0e307dd415"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "3a3c3290ba1fd0a2c68d78b19afab9ab1a8b4359",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -1,46 +1,46 @@",
+      "ours_blob": "e1ac1cfe00bcad6a40daf1a015b77c4a43548031",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/omp/recipe.json",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -49,0 +50 @@"
+        ],
+        "upstream": [
+          "@@ -3 +3 @@",
+          "@@ -5 +5 @@",
+          "@@ -8,3 +8,3 @@",
+          "@@ -17,3 +17,3 @@",
+          "@@ -25,3 +25,3 @@",
+          "@@ -33,3 +33,3 @@",
+          "@@ -41,3 +41,3 @@"
+        ]
+      },
+      "source_evidence": "upstream replaces OMP 17.4.0 native recipe with 18.12.6 pins/digests; generated/pin semantics.",
+      "upstream_blob": "0cbf40c60a51b5d62e0db80dfb7030ee6a1e7299"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "2974b81ddc0f7213d1a30a1e3354b5e577dc32b6",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -110,8 +110,10 @@",
+      "ours_blob": "a916575d476a7dc60501151ad824aa778683cb5b",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/service.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -299,0 +300 @@ class Service:"
+        ],
+        "upstream": [
+          "@@ -113,2 +113,4 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str ="
+        ]
+      },
+      "source_evidence": "upstream removes the XML encoding declaration for PowerShell string registration; ours is EOF-only.",
+      "upstream_blob": "a3aa8e5ba45e98e3f124b909541ce8683a68fd22"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "868f7179bc673e67484180c76ae065316c2ce051",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -20,7 +20,7 @@",
+      "ours_blob": "8a456b340050be5eff7678cbd5db9645f79e4fb9",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/tools.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -517,0 +518 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str"
+        ],
+        "upstream": [
+          "@@ -23 +23 @@ FILTERS = {\"ebur128\", \"silencedetect\", \"astats\", \"signalstats\", \"blackdetect\",",
+          "@@ -320 +320 @@ def load_omp_recipe() -> dict:",
+          "@@ -391 +391 @@ def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, r"
+        ]
+      },
+      "source_evidence": "upstream changes OMP default/version guard/native ABI probe to 18.12.6; live installer predicates.",
+      "upstream_blob": "3efcc8dfd64b24eb7e79023ed95886af86466252"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "868f7179bc673e67484180c76ae065316c2ce051",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 1,
+      "merge_tree_header": "@@ -317,7 +317,7 @@",
+      "ours_blob": "8a456b340050be5eff7678cbd5db9645f79e4fb9",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/tools.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -517,0 +518 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str"
+        ],
+        "upstream": [
+          "@@ -23 +23 @@ FILTERS = {\"ebur128\", \"silencedetect\", \"astats\", \"signalstats\", \"blackdetect\",",
+          "@@ -320 +320 @@ def load_omp_recipe() -> dict:",
+          "@@ -391 +391 @@ def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, r"
+        ]
+      },
+      "source_evidence": "upstream changes OMP default/version guard/native ABI probe to 18.12.6; live installer predicates.",
+      "upstream_blob": "3efcc8dfd64b24eb7e79023ed95886af86466252"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "868f7179bc673e67484180c76ae065316c2ce051",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 2,
+      "merge_tree_header": "@@ -388,7 +388,7 @@",
+      "ours_blob": "8a456b340050be5eff7678cbd5db9645f79e4fb9",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/installer/tools.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -517,0 +518 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str"
+        ],
+        "upstream": [
+          "@@ -23 +23 @@ FILTERS = {\"ebur128\", \"silencedetect\", \"astats\", \"signalstats\", \"blackdetect\",",
+          "@@ -320 +320 @@ def load_omp_recipe() -> dict:",
+          "@@ -391 +391 @@ def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, r"
+        ]
+      },
+      "source_evidence": "upstream changes OMP default/version guard/native ABI probe to 18.12.6; live installer predicates.",
+      "upstream_blob": "3efcc8dfd64b24eb7e79023ed95886af86466252"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "f5c18de30093a3013dcf8c9951445f25d55e7ef2",
+      "classification": "trivial_textual",
+      "decision": "bound documentation-only textual patch; no runtime behavior",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -535,8 +535,8 @@",
+      "ours_blob": "7dee1d8c84afc9a1f8b15150f55db0642d2be142",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/packs/rendering/docs/SKILL.md",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -176,27 +176,28 @@ lane.",
+          "@@ -212,2 +213 @@ Use `timelines log <timeline> --project <project> --verify --json` to verify the",
+          "@@ -216,7 +216,16 @@ SDK checkout operations:",
+          "@@ -225,9 +234,47 @@ python3 -m astrid timelines publish <timeline> --project <project> -m \"<what cha",
+          "@@ -287,11 +334,16 @@ Use this loop for every inspection or edit:",
+          "@@ -307,4 +359,6 @@ The short agent preamble is:",
+          "@@ -345,2 +399,2 @@ unregistered top-level `config.structure` is invalid. These maps are retained",
+          "@@ -353,4 +407,4 @@ shared shot metadata.",
+          "@@ -359 +413,3 @@ coordinator-issued target as a detached bundle. The target's",
+          "@@ -361,24 +417,2 @@ assert shown.ok",
+          "@@ -387,6 +421,5 @@ receipt = bound.publish(work, idempotency_key=frozen[\"candidate_digest\"])",
+          "@@ -396,2 +429,2 @@ report = []",
+          "@@ -407,5 +440 @@ for placement in work[\"placements\"]:",
+          "@@ -414,3 +443,3 @@ bound.validate(work)",
+          "@@ -654 +683 @@ that import/runtime capability as unavailable rather than inventing it.",
+          "@@ -657,5 +686,2 @@ Use the same pinned parent composition for direct edits and code-driven batch",
+          "@@ -664,5 +690 @@ supported edits, use ordinary Python against the detached same-schema bundle:",
+          "@@ -670,3 +692,5 @@ from astrid.sdk.authoring_bundle import (",
+          "@@ -674,6 +697,0 @@ candidate = open_authoring_bundle(",
+          "@@ -682,21 +700,21 @@ publication = publish_authoring_candidate(candidate, writer, idempotency_key=run",
+          "@@ -714,5 +732,5 @@ Do not reconstruct or save a legacy whole-document `config`/`registry` payload",
+          "@@ -736,2 +754,6 @@ project-level shot records. They do not rewrite a timeline document or replace",
+          "@@ -764,3 +786,4 @@ Inspect its detached plan and diff before deciding whether to apply it. It does",
+          "@@ -779 +802,2 @@ reconciliation, never substitution of the latest text.",
+          "@@ -786 +810 @@ python3 scripts/timeline_document.py check --file /tmp/edit.json",
+          "@@ -788 +812 @@ python3 -m astrid timelines script <timeline> --project <project> --json",
+          "@@ -791,0 +816,5 @@ python3 -m astrid timelines script <timeline> --project <project> --revision <pa",
+          "@@ -920,4 +949,4 @@ composition without requiring a video render; use `rendering.render` when an"
+        ],
+        "upstream": [
+          "@@ -509,2 +509,2 @@ crop, effects, or appearance in the composition. Use the installed Astrid"
+        ]
+      },
+      "source_evidence": "one documentation command changes from checkout-local .venv to python3 -m astrid; textual-only.",
+      "upstream_blob": "715b37ce9b3d10dda3fd0a1c048967e86ffd3249"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "e553ad26f259f64b9723b7c35551b5dc539ee7b6",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -12,8 +12,7 @@",
+      "ours_blob": "3242b3bedb504c636b1486943aef7626fe5986c4",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -30,0 +31 @@"
+        ],
+        "upstream": [
+          "@@ -15,2 +15 @@"
+        ]
+      },
+      "source_evidence": "upstream removes static VibeComfy revision because loader supplies it dynamically; semantic source predicate.",
+      "upstream_blob": "1eb15b7c4b5ba5c92a1882953d0f728d8d928880"
+    },
+    {
+      "actual_merge_marker_overlap": true,
+      "base_blob": "726609bfa437190c051e9023a645160b5fb0310e",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -1,67 +1,161 @@",
+      "ours_blob": "7e425adf1c8eb666a462d4961927ddd6ce64be68",
+      "overlap_kind": "actual_substantive_conflict",
+      "path": "docs/install/OMP-LANDING.md",
+      "semantic_conflict": true,
+      "side_hunks": {
+        "ours": [
+          "@@ -66,0 +67 @@ The live installer qualification also used this exact producer commit locally. I"
+        ],
+        "upstream": [
+          "@@ -3,3 +3,18 @@",
+          "@@ -9 +24 @@ The fixed commit is `9e282751c0059e37d2f6fbc14ffa0b450710bd23`, based on `9962a4",
+          "@@ -12,3 +27,5 @@ Use a clean clone of `peteromallet/oh-my-pi` that contains base commit `9962a46d",
+          "@@ -17 +34,3 @@ git show -s --format='%H%n%T' 9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+          "@@ -20 +39 @@ The first command must show `9e282751c0059e37d2f6fbc14ffa0b450710bd23 refs/heads",
+          "@@ -23 +42,3 @@ git push origin 9e282751c0059e37d2f6fbc14ffa0b450710bd23:refs/heads/astrid-acp-s",
+          "@@ -27 +48,3 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+          "@@ -30,4 +53,8 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+          "@@ -38 +65,11 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+          "@@ -42 +79,5 @@ Keep the app deployment gate closed until GitHub serves that commit and the app",
+          "@@ -45 +86 @@ Use Bun **1.3.14**. The reviewed fork uses the unchanged frozen Bun lock with SH",
+          "@@ -50 +91,3 @@ sha256sum bun.lock",
+          "@@ -54,2 +97,2 @@ native_scratch=\"$(mktemp -d)\"",
+          "@@ -60 +103,2 @@ rm -rf \"$native_scratch\"",
+          "@@ -64 +108,11 @@ sha256sum bun.lock",
+          "@@ -66 +120,37 @@ The latest run passed **67 tests, 0 failed, 316 assertions across two files in 1"
+        ]
+      },
+      "source_evidence": "upstream replaces old release/qualification procedure with 18.12.6 fork/closure/ledger guidance while ours retains a prior qualification tail; substantive documentation conflict.",
+      "upstream_blob": "e4ade615a2b8cd010884248a6acb61ec8eac64d7"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "99f72358b32f7caad7732714f0a8c6bfabe61381",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -25,8 +25,10 @@",
+      "ours_blob": "1cd0d382bdc335c17d63a18f1a91a8ab3981e66b",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "docs/reference/services.md",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -71,0 +72 @@ The app launcher no longer owns a chat process or its credential."
+        ],
+        "upstream": [
+          "@@ -28,2 +28,4 @@ manifest field. It names either an exact npm package and version or a fork"
+        ]
+      },
+      "source_evidence": "upstream documents reviewed fork and 18.12.6 fallback; release-selection documentation.",
+      "upstream_blob": "24ebff2bab996fd09401b5cd3bcc0bdfffff7273"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "c54152de6586cbf60daebb83264a9dfb4d66def8",
+      "classification": "trivial_textual",
+      "decision": "bound documentation-only textual patch; no runtime behavior",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -396,7 +396,7 @@",
+      "ours_blob": "fbcfcddc4c0276b8f3418180ebe4f31e8f693c26",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "docs/testing/TESTING.md",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -649,0 +650 @@ These are known. Report what you see, but don't stop testing for them."
+        ],
+        "upstream": [
+          "@@ -399 +399 @@ Record its title and a sentence you can find again.",
+          "@@ -588,9 +588,12 @@ These are known. Report what you see, but don't stop testing for them."
+        ]
+      },
+      "source_evidence": "upstream updates fallback version and known-gap wording; documentation-only.",
+      "upstream_blob": "df416ca4ed5f82bf30251191239e26834ce1dd5e"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "c54152de6586cbf60daebb83264a9dfb4d66def8",
+      "classification": "trivial_textual",
+      "decision": "bound documentation-only textual patch; no runtime behavior",
+      "hunk_index": 1,
+      "merge_tree_header": "@@ -585,15 +585,18 @@",
+      "ours_blob": "fbcfcddc4c0276b8f3418180ebe4f31e8f693c26",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "docs/testing/TESTING.md",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -649,0 +650 @@ These are known. Report what you see, but don't stop testing for them."
+        ],
+        "upstream": [
+          "@@ -399 +399 @@ Record its title and a sentence you can find again.",
+          "@@ -588,9 +588,12 @@ These are known. Report what you see, but don't stop testing for them."
+        ]
+      },
+      "source_evidence": "upstream updates fallback version and known-gap wording; documentation-only.",
+      "upstream_blob": "df416ca4ed5f82bf30251191239e26834ce1dd5e"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -1,38 +1,24 @@",
+      "ours_blob": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "scripts/refresh_omp_recipe.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -119,0 +120 @@ if __name__ == \"__main__\":"
+        ],
+        "upstream": [
+          "@@ -2 +2 @@",
+          "@@ -5 +5 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -7,2 +7,2 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -15 +14,0 @@ import base64",
+          "@@ -19 +17,0 @@ import subprocess",
+          "@@ -21 +18,0 @@ import tarfile",
+          "@@ -25,11 +21,0 @@ from pathlib import Path",
+          "@@ -47,0 +34,2 @@ def main() -> None:",
+          "@@ -59,26 +47,5 @@ def main() -> None:",
+          "@@ -87 +54 @@ def main() -> None:",
+          "@@ -90 +57 @@ def main() -> None:",
+          "@@ -92 +59 @@ def main() -> None:",
+          "@@ -112 +78,0 @@ def main() -> None:",
+          "@@ -114,2 +80 @@ def main() -> None:"
+        ]
+      },
+      "source_evidence": "upstream changes patch-emitting script to candidate build-closure recipe generation; semantic script contract.",
+      "upstream_blob": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 1,
+      "merge_tree_header": "@@ -45,6 +31,8 @@",
+      "ours_blob": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "scripts/refresh_omp_recipe.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -119,0 +120 @@ if __name__ == \"__main__\":"
+        ],
+        "upstream": [
+          "@@ -2 +2 @@",
+          "@@ -5 +5 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -7,2 +7,2 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -15 +14,0 @@ import base64",
+          "@@ -19 +17,0 @@ import subprocess",
+          "@@ -21 +18,0 @@ import tarfile",
+          "@@ -25,11 +21,0 @@ from pathlib import Path",
+          "@@ -47,0 +34,2 @@ def main() -> None:",
+          "@@ -59,26 +47,5 @@ def main() -> None:",
+          "@@ -87 +54 @@ def main() -> None:",
+          "@@ -90 +57 @@ def main() -> None:",
+          "@@ -92 +59 @@ def main() -> None:",
+          "@@ -112 +78,0 @@ def main() -> None:",
+          "@@ -114,2 +80 @@ def main() -> None:"
+        ]
+      },
+      "source_evidence": "upstream changes patch-emitting script to candidate build-closure recipe generation; semantic script contract.",
+      "upstream_blob": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 2,
+      "merge_tree_header": "@@ -56,40 +44,19 @@",
+      "ours_blob": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "scripts/refresh_omp_recipe.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -119,0 +120 @@ if __name__ == \"__main__\":"
+        ],
+        "upstream": [
+          "@@ -2 +2 @@",
+          "@@ -5 +5 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -7,2 +7,2 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -15 +14,0 @@ import base64",
+          "@@ -19 +17,0 @@ import subprocess",
+          "@@ -21 +18,0 @@ import tarfile",
+          "@@ -25,11 +21,0 @@ from pathlib import Path",
+          "@@ -47,0 +34,2 @@ def main() -> None:",
+          "@@ -59,26 +47,5 @@ def main() -> None:",
+          "@@ -87 +54 @@ def main() -> None:",
+          "@@ -90 +57 @@ def main() -> None:",
+          "@@ -92 +59 @@ def main() -> None:",
+          "@@ -112 +78,0 @@ def main() -> None:",
+          "@@ -114,2 +80 @@ def main() -> None:"
+        ]
+      },
+      "source_evidence": "upstream changes patch-emitting script to candidate build-closure recipe generation; semantic script contract.",
+      "upstream_blob": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 3,
+      "merge_tree_header": "@@ -109,10 +76,8 @@",
+      "ours_blob": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "scripts/refresh_omp_recipe.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -119,0 +120 @@ if __name__ == \"__main__\":"
+        ],
+        "upstream": [
+          "@@ -2 +2 @@",
+          "@@ -5 +5 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -7,2 +7,2 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -15 +14,0 @@ import base64",
+          "@@ -19 +17,0 @@ import subprocess",
+          "@@ -21 +18,0 @@ import tarfile",
+          "@@ -25,11 +21,0 @@ from pathlib import Path",
+          "@@ -47,0 +34,2 @@ def main() -> None:",
+          "@@ -59,26 +47,5 @@ def main() -> None:",
+          "@@ -87 +54 @@ def main() -> None:",
+          "@@ -90 +57 @@ def main() -> None:",
+          "@@ -92 +59 @@ def main() -> None:",
+          "@@ -112 +78,0 @@ def main() -> None:",
+          "@@ -114,2 +80 @@ def main() -> None:"
+        ]
+      },
+      "source_evidence": "upstream changes patch-emitting script to candidate build-closure recipe generation; semantic script contract.",
+      "upstream_blob": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "bac871fb2f2f25d7643921dbbed47d5599cdc721",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -52,11 +52,9 @@",
+      "ours_blob": "f1b0783bb2badb5b094a3ed0bdbc058bd33c5ae9",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/core/generation/test_gpu_environment.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -289,0 +290 @@ def test_solver_version_must_match_before_environment_creation(tmp_path, monkeyp"
+        ],
+        "upstream": [
+          "@@ -55 +54,0 @@ def test_environment_source_pins_match_existing_admission():",
+          "@@ -59 +57,0 @@ def test_environment_source_pins_match_existing_admission():"
+        ]
+      },
+      "source_evidence": "upstream removes direct revision assertion because loader injection is authoritative; live test behavior.",
+      "upstream_blob": "76f2ec69264eb03b4ad843ddead8d8bf091eed7c"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "ca328ec1ee9f25d35f22ce52a2593a0a6ce04889",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -128,8 +128,9 @@",
+      "ours_blob": "67bb7505c0f270ad55952360f11bb12962f83806",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_acl.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -217,0 +218 @@ def test_unix_installer_retains_original_per_user_lock(tmp_path, monkeypatch, sy"
+        ],
+        "upstream": [
+          "@@ -131 +131 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path",
+          "@@ -132,0 +133 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path"
+        ]
+      },
+      "source_evidence": "upstream adapts Windows ACL test for service root and PATH-update mocking; live installer test.",
+      "upstream_blob": "88dd45748db6677ed9dd9f602c060cb4de68a219"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "e5ea5450114e2b96700368a992e2ea1f47f581c3",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -25,6 +25,7 @@",
+      "ours_blob": "c4381c3140282cce74a94cb9e5d09de04c3cc62b",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_cleanup.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -307,0 +308 @@ def test_windows_program_cleanup_includes_retained_ownership_marker(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -27,0 +28 @@ def installation(tmp_path, monkeypatch, system=None):"
+        ]
+      },
+      "source_evidence": "upstream adapts Windows cleanup fixture for PATH-update mocking; live installer test.",
+      "upstream_blob": "f030558f1aa47eed8e896116ce7bc296c05e232c"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -39,6 +39,7 @@",
+      "ours_blob": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_lifecycle.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+        ],
+        "upstream": [
+          "@@ -41,0 +42 @@ class LifecycleBackend:",
+          "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+          "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+          "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+          "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+        ]
+      },
+      "source_evidence": "upstream adds sync-skills lifecycle support, ordering, failure logging and backend tests; live test family.",
+      "upstream_blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 1,
+      "merge_tree_header": "@@ -65,6 +66,16 @@",
+      "ours_blob": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_lifecycle.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+        ],
+        "upstream": [
+          "@@ -41,0 +42 @@ class LifecycleBackend:",
+          "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+          "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+          "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+          "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+        ]
+      },
+      "source_evidence": "upstream adds sync-skills lifecycle support, ordering, failure logging and backend tests; live test family.",
+      "upstream_blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 2,
+      "merge_tree_header": "@@ -78,6 +89,11 @@",
+      "ours_blob": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_lifecycle.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+        ],
+        "upstream": [
+          "@@ -41,0 +42 @@ class LifecycleBackend:",
+          "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+          "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+          "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+          "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+        ]
+      },
+      "source_evidence": "upstream adds sync-skills lifecycle support, ordering, failure logging and backend tests; live test family.",
+      "upstream_blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 3,
+      "merge_tree_header": "@@ -98,10 +114,6 @@",
+      "ours_blob": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_lifecycle.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+        ],
+        "upstream": [
+          "@@ -41,0 +42 @@ class LifecycleBackend:",
+          "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+          "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+          "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+          "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+        ]
+      },
+      "source_evidence": "upstream adds sync-skills lifecycle support, ordering, failure logging and backend tests; live test family.",
+      "upstream_blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 4,
+      "merge_tree_header": "@@ -116,13 +128,81 @@",
+      "ours_blob": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_lifecycle.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+        ],
+        "upstream": [
+          "@@ -41,0 +42 @@ class LifecycleBackend:",
+          "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+          "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+          "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+          "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+        ]
+      },
+      "source_evidence": "upstream adds sync-skills lifecycle support, ordering, failure logging and backend tests; live test family.",
+      "upstream_blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 5,
+      "merge_tree_header": "@@ -164,7 +244,7 @@",
+      "ours_blob": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_lifecycle.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+        ],
+        "upstream": [
+          "@@ -41,0 +42 @@ class LifecycleBackend:",
+          "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+          "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+          "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+          "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+        ]
+      },
+      "source_evidence": "upstream adds sync-skills lifecycle support, ordering, failure logging and backend tests; live test family.",
+      "upstream_blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -38,11 +38,11 @@",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_omp_source.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "source_evidence": "upstream updates 18.12.6 source/pin assertions and appends recipe-refresh/SRI tests; ours final edit is EOF whitespace.",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 1,
+      "merge_tree_header": "@@ -90,13 +90,13 @@",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_omp_source.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "source_evidence": "upstream updates 18.12.6 source/pin assertions and appends recipe-refresh/SRI tests; ours final edit is EOF whitespace.",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 2,
+      "merge_tree_header": "@@ -104,9 +104,9 @@",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_omp_source.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "source_evidence": "upstream updates 18.12.6 source/pin assertions and appends recipe-refresh/SRI tests; ours final edit is EOF whitespace.",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 3,
+      "merge_tree_header": "@@ -185,7 +185,7 @@",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_omp_source.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "source_evidence": "upstream updates 18.12.6 source/pin assertions and appends recipe-refresh/SRI tests; ours final edit is EOF whitespace.",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 4,
+      "merge_tree_header": "@@ -199,7 +199,7 @@",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_omp_source.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "source_evidence": "upstream updates 18.12.6 source/pin assertions and appends recipe-refresh/SRI tests; ours final edit is EOF whitespace.",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 5,
+      "merge_tree_header": "@@ -252,12 +252,12 @@",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_omp_source.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "source_evidence": "upstream updates 18.12.6 source/pin assertions and appends recipe-refresh/SRI tests; ours final edit is EOF whitespace.",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 6,
+      "merge_tree_header": "@@ -268,7 +268,7 @@",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_omp_source.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "source_evidence": "upstream updates 18.12.6 source/pin assertions and appends recipe-refresh/SRI tests; ours final edit is EOF whitespace.",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    {
+      "actual_merge_marker_overlap": true,
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 7,
+      "merge_tree_header": "@@ -384,3 +384,60 @@",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "overlap_kind": "actual_whitespace_append_overlap",
+      "path": "tests/test_installer_omp_source.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "source_evidence": "upstream updates 18.12.6 source/pin assertions and appends recipe-refresh/SRI tests; ours final edit is EOF whitespace.",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "791311144204eec7d33d73fda7b89dc38502c669",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -134,7 +134,10 @@",
+      "ours_blob": "55d0bbfd4200756d1a5322ed63e52ada32a44560",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_platforms.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -596,0 +597 @@ def test_chat_declaration_failure_can_retry_without_claiming_fresh_workspace(tmp"
+        ],
+        "upstream": [
+          "@@ -137 +137,4 @@ def test_windows_task_settings_and_no_console_executable():"
+        ]
+      },
+      "source_evidence": "upstream asserts Windows Task XML has no encoding declaration; live platform test.",
+      "upstream_blob": "94a7e05012357ba4d906cc611716e8f18b38d250"
+    },
+    {
+      "actual_merge_marker_overlap": false,
+      "base_blob": "a21f3238ccb2071c9955b3980272ed51600f94ea",
+      "classification": "semantic_owner_decision",
+      "decision": "keep upstream behavior; no semantic resolution patch",
+      "hunk_index": 0,
+      "merge_tree_header": "@@ -65,7 +65,7 @@",
+      "ours_blob": "cfe1729e4188eecfc14387e07e4abf7a7bb96880",
+      "overlap_kind": "changed_in_both_disjoint_hunk",
+      "path": "tests/test_installer_wheel.py",
+      "semantic_conflict": false,
+      "side_hunks": {
+        "ours": [
+          "@@ -72,0 +73 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,"
+        ],
+        "upstream": [
+          "@@ -68 +68 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,"
+        ]
+      },
+      "source_evidence": "upstream updates wheel declaration expectation to 18.12.6; live installer test.",
+      "upstream_blob": "549e079eb4fcbac9cea9ebb7324dc86e20e6f012"
+    }
+  ],
+  "inputs": {
+    "base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "census": "rt-F-tail-upstream-census-1844",
+    "independent_review": "rt-F-tail-census-review-1850",
+    "ours": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "upstream": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55"
+  },
+  "mode": "provisional/source-only",
+  "rules_applied": [
+    "Exact immutable source tuple only; no current-ref or frozen-core retargeting.",
+    "Changed-in-both is not a semantic conflict unless source contents substantively compete.",
+    "Keep upstream behavior by default; semantic decisions are recorded, never patched.",
+    "Both live test families remain represented; no tests were removed or weakened.",
+    "No whitespace proposal: no supported gitam/gitapply delivery script with a verified whitespace flag was found."
+  ],
+  "schema_version": 1,
+  "scope": {
+    "actual_marker_overlaps": 3,
+    "actual_substantive_conflicts": 1,
+    "agent_conflict_path_count": 40,
+    "assigned_path_count": 20,
+    "assigned_paths": [
+      "astrid/core/generation/gpu_environment.py",
+      "astrid/installer/backend.py",
+      "astrid/installer/core.py",
+      "astrid/installer/launcher.py",
+      "astrid/installer/omp/recipe.json",
+      "astrid/installer/service.py",
+      "astrid/installer/tools.py",
+      "astrid/packs/rendering/docs/SKILL.md",
+      "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+      "docs/install/OMP-LANDING.md",
+      "docs/reference/services.md",
+      "docs/testing/TESTING.md",
+      "scripts/refresh_omp_recipe.py",
+      "tests/core/generation/test_gpu_environment.py",
+      "tests/test_installer_acl.py",
+      "tests/test_installer_cleanup.py",
+      "tests/test_installer_lifecycle.py",
+      "tests/test_installer_omp_source.py",
+      "tests/test_installer_platforms.py",
+      "tests/test_installer_wheel.py"
+    ],
+    "merge_tree_hunk_count": 45,
+    "semantic_hunk_count": 42,
+    "trivial_textual_hunk_count": 3
+  },
+  "task": "agt-F-Agent-conflicts-B-1936",
+  "trivial_resolution_patch": {
+    "base_blob": "f5c18de30093a3013dcf8c9951445f25d55e7ef2",
+    "merge_tree_header": "@@ -535,8 +535,8 @@",
+    "ours_blob": "7dee1d8c84afc9a1f8b15150f55db0642d2be142",
+    "patch_sha256": "dea387264d5a574ca46a1da38f73533c934bdf05ee8a6c83465edaedf535bd0f",
+    "path": "astrid/packs/rendering/docs/SKILL.md",
+    "reason": "documentation-only command spelling; no runtime behavior",
+    "upstream_blob": "715b37ce9b3d10dda3fd0a1c048967e86ffd3249"
+  }
+}
