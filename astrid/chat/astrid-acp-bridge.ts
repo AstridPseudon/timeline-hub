@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { delimiter } from 'node:path';
 import { isAbsolutePath, isPathWithin } from './paths.ts';
 import { getAstridAgentModelCatalog } from './astrid-agent-models.ts';
+import { setAstridAgentKey } from './astrid-agent-key.ts';
 import { AgentModelState } from './agent-model-state.ts';
 import { acpClientCapabilities } from './acp-client-capabilities.ts';
 import { discoverLocalAgents } from './astrid-local-agents.ts';
@@ -456,6 +457,19 @@ export class AstridAcpBridge {
       if (request.method === 'GET' && url.pathname === '/models') {
         const catalog = await this.astridModelCatalog({ command: this.config.command, cwd: this.config.cwd, profile: this.config.profile });
         jsonResponse(response, 200, catalog);
+        return;
+      }
+      if (request.method === 'POST' && url.pathname === '/astrid/api-key') {
+        const body = asRecord(await readJson(request));
+        if (body?.provider !== 'openrouter' || typeof body.key !== 'string'
+          || body.key.length < 20 || body.key.length > 512 || /\s/u.test(body.key)) {
+          throw new ChatError(400, 'invalid_key', 'Enter an OpenRouter key with 20 to 512 characters and no whitespace.');
+        }
+        const result = await setAstridAgentKey({ command: this.config.command, cwd: this.config.cwd, profile: this.config.profile }, body.key);
+        this.modelState.catalogs.delete('astrid');
+        this.bootstrapped.delete('astrid');
+        if (result.currentModel !== null) this.modelState.remember('astrid', result.currentModel);
+        jsonResponse(response, 200, result);
         return;
       }
       if (request.method === 'POST' && url.pathname === '/model') {

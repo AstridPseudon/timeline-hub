@@ -15,6 +15,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +25,7 @@ from .core.util.process import replace_process
 from .version import ASTRID_VERSION
 
 DEFAULT_AGENT = "astrid"
+ASTRID_OPENROUTER_DEFAULT_MODEL: str | None = None
 _AGENT_PROFILE_FILE = Path(__file__).resolve().parent / "agent_profiles" / "astrid.md"
 
 # ``astrid`` is the single user-facing command. Product families are stable
@@ -115,6 +118,7 @@ when you want to make the agent route explicit.
   astrid agent [flags] [message] interactive/one-shot Astrid agent
   astrid agent models [--json] [--profile NAME] list OMP providers, models, and current default
   astrid agent use PROVIDER/MODEL [--profile NAME] set the default for the next Astrid launch
+  astrid agent key set openrouter save an OpenRouter key read from stdin
   astrid <toolkit> ...           product toolkit gateway
   astrid login                   log in for Hivemind contributions
   astrid status                  show Hivemind contributor login status
@@ -300,7 +304,7 @@ def _omp_model_snapshot(omp_bin: str, profile: str | None = None) -> dict[str, A
     return snapshot
 
 
-def _save_default_model(omp_bin: str, selector: str, profile: str | None = None) -> None:
+def _save_default_model(omp_bin: str, selector: str, profile: str | None = None, *, only_if_unset: bool = False) -> None:
     """Persist OMP's global default without copying project roles into it."""
     with tempfile.TemporaryDirectory(prefix="astrid-agent-config-") as directory:
         # OMP's config CLI reads effective settings for its cwd. An empty cwd
@@ -318,6 +322,8 @@ def _save_default_model(omp_bin: str, selector: str, profile: str | None = None)
         roles = payload.get("value") if isinstance(payload, dict) else None
         if not isinstance(roles, dict):
             raise ValueError("OMP returned invalid modelRoles")
+        if only_if_unset and roles.get("default"):
+            return
         command = [omp_bin, "config", "set", "modelRoles", json.dumps({**roles, "default": selector}), "--json"]
         if profile:
             command[1:1] = ["--profile", profile]
@@ -469,6 +475,58 @@ def _run_model_command(argv: list[str]) -> int:
                 print(f"  Sign in: run `omp`, then /login and pick {provider['name']}")
             elif not provider["usable"]:
                 print("  No available models in OMP")
+    return 0
+
+
+def _run_key_command(argv: list[str]) -> int:
+    if argv != ["set", "openrouter"]:
+        print("usage: astrid agent key set openrouter (key on stdin)", file=sys.stderr)
+        return 2
+    key = sys.stdin.read(515).rstrip("\r\n")
+    if not 20 <= len(key) <= 512 or any(character.isspace() for character in key):
+        print(json.dumps({"error": "invalid_key"}))
+        return 3
+    base = os.environ.get("ASTRID_OPENROUTER_API_BASE", "https://openrouter.ai")
+    try:
+        request = urllib.request.Request(base.rstrip("/") + "/api/v1/auth/key", headers={"Authorization": f"Bearer {key}"})
+        with urllib.request.urlopen(request, timeout=10):
+            pass
+    except urllib.error.HTTPError as exc:
+        rejected = exc.code in (401, 403)
+        exc.close()
+        print(json.dumps({"error": "invalid_key" if rejected else "provider_unreachable"}))
+        return 3 if rejected else 4
+    except (OSError, ValueError):
+        print(json.dumps({"error": "provider_unreachable"}))
+        return 4
+    try:
+        omp_bin = _resolve_omp_bin()
+        if omp_bin is None:
+            raise ValueError("OMP is unavailable")
+        profile = _service_profile()
+        with tempfile.TemporaryDirectory(prefix="astrid-agent-key-") as directory:
+            credential_file = Path(directory) / "credentials.json"
+            with open(credential_file, "x", encoding="utf-8", opener=lambda path, flags: os.open(path, flags, 0o600)) as stream:
+                json.dump({"version": 1, "credentials": [{"provider": "openrouter", "credential": {
+                    "type": "api_key", "key": key, "source": "login",
+                }}]}, stream)
+            command = [omp_bin, "auth", "import", str(credential_file)]
+            if profile:
+                command[1:1] = ["--profile", profile]
+            result = subprocess.run(command, capture_output=True, timeout=15, check=False)
+            if result.returncode:
+                raise ValueError("OMP auth import failed")
+        if ASTRID_OPENROUTER_DEFAULT_MODEL is not None:
+            _save_default_model(omp_bin, ASTRID_OPENROUTER_DEFAULT_MODEL, profile, only_if_unset=True)
+        snapshot = _omp_model_snapshot(omp_bin, profile)
+        current_model = snapshot.get("currentModel")
+        if current_model is not None and (not isinstance(current_model, str) or key in current_model):
+            raise ValueError("Invalid current model")
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        # Neither provider responses nor OMP diagnostics may expose credentials.
+        print(json.dumps({"error": "acp_bridge_error"}))
+        return 1
+    print(json.dumps({"provider": "openrouter", "signedIn": True, "currentModel": current_model}))
     return 0
 
 
@@ -639,6 +697,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if len(rest) > 1 and rest[0] == "agent" and rest[1] in {"models", "use"}:
         return _run_model_command(rest[1:])
+    if len(rest) > 1 and rest[0] == "agent" and rest[1] == "key":
+        return _run_key_command(rest[2:])
     if rest and rest[0] == "help":
         return _dispatch_toolkit(rest)
     if rest and rest[0] == "auth":
