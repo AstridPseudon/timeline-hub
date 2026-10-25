@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T15:53:56Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 1m -->
-# runtime board, 2026-10-25T15:51:53Z
+<!-- main | 2026-10-25T15:58:28Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 2m -->
+# runtime board, 2026-10-25T15:55:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -411,29 +411,29 @@
 | OPS-Farm-ownership-census | Preserve stopped Farm census | Sol / Luna | Owner drops Farm core | gated:D128-dropped | Sol1530 ended | Partial source diagnostic only; actual layout EXACTMISSING. No more census, fix, build or reissue. | Prior failures retained | Source only |
 | OPS-finite-pin-headroom | Audit five finite source pins | Luna read only | Manager purpose disposition | review | Audit1453 | Five clean pins total417MB; host process and route guards clear. KEEP purposes remain; no removals or retry. | No removal authorized | Evidence only |
 | D127-recovery | Hold physical identity recovery | Sol / Luna | Owner D130 safety disposition | blocked:orchestrator | WALSol1537 ended; D130 hold | Automatic safety classifier refused scoped recovery tests. WIP held; no review, retry, merge or release. | Prior1533 FAIL | Held1537 |
-| R2-inverse-boundary | Authenticate grouped inverse and redo | Sol / Luna | Normal integrated proof | review | Author1523; security1537; home1550 | Independent93+77, genuine3 and native2 PASS. Normalab1e source merged; exact home proof active. | Independent1537 PASS | a5fc9 / ab1e4f6141 |
+| R2-inverse-boundary | Authenticate grouped inverse and redo | Sol / Luna | Exact integrated proof passed | merged | Author1523; security1537; home1550 | Exactab1e genuine3/native2 PASS;1501Agent blobs exact. [Receipt](../../design/rt-R2-redo-home-1550.md). Other roots UNKNOWN. | Independent1537 PASS | a5fc9 / ab1e4f6141 |
 | R2-step-home | Verify integrated step correction | Luna | Exact integratedbc487 | merged | rt-R2-step-home-proof-1519 | Actualbc487 genuine2 and native2 PASS, scoped static PASS. Durable XML and before/after origins retained. | Prior1514 PASS | bc487974a5 |
 | Agent-inverse-diagnosis | Challenge grouped inverse diagnosis | Luna read only | Exact source review complete | merged | rt-Agent-inverse-diagnosis-review-1519 | Formal source PASS; exact genuine3 reproduces2PASS1specificRED on5e9ad. No product edits or original-four closure. | Independent1519 PASS source | Agent a0d839 |
-| D107-current-two | Preserve current replacement journeys | Luna / Luna | Protected purpose and source seam | review | Author1530; reviewer1550 | Count8 traces3bootstrap+5scenario entries; two next fail transcript pin. Protected purpose and whole path review active. | Independent1550 active | b4b380 held |
+| D107-current-two | Preserve current replacement journeys | Luna / Luna | Protected purpose and source seam | review | Author1530; reviewer1550 | Protected purpose PASS131assert/5raises. Exacttwo still transcriptpinFAIL; ownershipUNKNOWN. Normal source intake requested, behavior open. | Independent1550 purposePASS | b4b380 held |
 | OPS-census-layout | Preserve reviewed retention option | Luna / Luna | Owner drops Farm core | gated:D128-dropped | Author1535; review1540; install1544 | Installed1243cb6c with controls PASS. Retained as ordinary kit improvement; no diagnostic build or further cycle. | Independent1540 PASS | Installed1243cb6c |
 
-Runtime producer: RELEASED5e9ad. Normalab1e includes independently qualified step, inverse and redo source plus reviewed safe diagnostic correlation. Home1550 verifies exact integrated genuine3/native2; no broader original-four closure.
+Runtime producer: RELEASED5e9ad. Normalab1e includes independently qualified step, inverse and redo source plus reviewed safe diagnostic correlation. Home1550 exact genuine3/native2 PASS, all1501Agent package blobs exact. Qualified bounded release; no broader original-four closure.
 core open:425 on immutable30693;450 bad and REG14 retained. Latest recorded owner16:00 DROPS Farm core; Agent runs local agent-core-full with restored6.1GB. No historical tuple retarget.
 regressions: NormalAgenta4e016 has reviewed96df upstream host fallback and original14 PASS; REG14 remains until current full core.
 Gates: P1/P3 recordedGO; P4 independentGO28.101s. P2 six of eight case GOs on recorded34d464/070dfc/7070/635f;10721 and3250 remain full-tourNO-GO.
 Blockers: SWAP safety — automatic classifier refused worker1537 scoped recovery tests; source held and related1545 stopped. [Escalation](../../escalations/runtime-20261025T1553Z-D127-safety-refusal.md). No retry or alternate route.
-Blockers: Agent roots — normalab1e redo source independentsecurityPASS; integrated home1550 active. Scalar and compound roots UNKNOWN; no original-four closure.
+Blockers: Agent roots — scalar and compound roots remain UNKNOWN. Normalab1e grouped inverse/redo exact genuine3/native2 PASS1550; no original-four closure.
 Blockers: Element profile — exact request3 matched, but only outer top10 frames retained, pending with no wall denominator or provider leaf. No specific dominant operation proved; no speculative author or new body.
 Blockers: Final render — Farm owns soleD77 genuine ordinary installer stage and installed render. Farm child/core work stopped by latest owner; render no longer waits core.
 Blockers: D69 — normalXML107 applicability/full-core and genuine installed render90 remain. No whole-auditPASS.
 Blockers: Final cut — current core, REG0, fullP2, D69, finaltupleP1–P5 and genuine installed render remain. No build or ZIP.
 
-Next ready: IntegratedR2 receipt1550 and protectedD107 review1550 are active. SWAP recovery and related acceptance held on actual safety refusal. No ready critical source author remains unassigned.
-Ready for host filing: None. D107 protected source verdict pending; priora1 donor superseded by reviewedAgent16bb.
+Next ready: IntegratedR2 receipt1550 PASS and published. ProtectedD107 purposePASS; Agent source intake requested, actual behavior remains failed. SWAP recovery and related acceptance held on actual safety refusal. No ready critical source author remains unassigned.
+Ready for host filing: Agent tl/rt-D107-current-baseline-1530 b4b3805da5, source-only purpose PASS1550 over recorded20177; actual home owns freshness/import. Two behaviors remain failed. Priora1 donor superseded by16bb.
 Venues: No Main heavy body. Agent local core authorized; Farm keepsD77 only. All prior Farm0b586/42aad,9ea/369,a4e016/5e9ad captures immutable and zero corebody.
 Delivery: Private100Python+TS/41matrix qualified; D1235bd01/b0ffSOURCE_PASS. Final upstream refresh onlyD59. Wheel,matrix,Windows,installedrender pending.
 Later: R2c81b/D1160643 exactseedSOURCE_PASS. D126 App owns approved paragraph/ZIPline. No small-file Agent writers or D79 until critical gates clear.
 Safety: NewD1271537 refusal held and reported. PriorD88/D111 and retirement denials remain stopped. D106ORCHonly. Four historical retirement targets held; no retry.
-Disk: About5.08GB after two source starts. Guarded sweep3 removed0; compact active; no new target retirement. Prior host-CLEARed pins already recycled; all branch/report/proof evidence retained.
-live2 / cap6; queued0; ready-undispatched0. Source>=4.6GB/noheavy; ordinaryprovider>=5GB, ongoingstop4GB. Two new requests first rejected for relative brief paths, corrected to absolute; both genuinely running.
-INBOX consumed through1308413 bytes. Updated 2026-10-25T15:51:53Z.
+Disk: About5.24GB. Guarded sweep3 removed0; compact packed0 scratch/test directories and gzipped5 old logs; no new target retirement. Prior host-CLEARed pins already recycled; all branch/report/proof evidence retained.
+live0 / cap6; queued0; ready-undispatched0. Source>=4.6GB/noheavy; ordinaryprovider>=5GB, ongoingstop4GB. Both1550 workers ended successfully; no ready critical row unassigned. SWAP heldD130; element awaits operation evidence.
+INBOX consumed through1309776 bytes. Updated 2026-10-25T15:55:28Z.

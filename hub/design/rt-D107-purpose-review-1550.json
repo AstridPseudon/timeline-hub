@@ -1,0 +1,67 @@
+{
+  "candidate": "tl/rt-D107-current-baseline-1530",
+  "candidate_commit": "b4b3805da5e8611490401122f986e203f67f21b4",
+  "base": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "approved_source": "2e3331ee2f035e302f5ca52488832cd0e22bb3aa",
+  "protected_file": "tests/editing_conformance/test_m1_current_equivalent.py",
+  "source_edit_in_this_review": false,
+  "diff": {
+    "paths": ["tests/editing_conformance/test_m1_current_equivalent.py"],
+    "stat": "1 file changed, 6 insertions(+), 2 deletions(-)",
+    "requested_delta": "base history assertion 5 -> 8 plus three-bootstrap/five-authored comment",
+    "diff_check": "PASS"
+  },
+  "ast": {
+    "candidate_assertions": 131,
+    "base_assertions": 131,
+    "approved_assertions": 131,
+    "candidate_pytest_raises": 5,
+    "base_pytest_raises": 5,
+    "approved_pytest_raises": 5,
+    "python311_in_memory_compile": "PASS"
+  },
+  "ruff": {
+    "candidate": "PASS",
+    "base_from_git_show_stdin": "PASS",
+    "approved_from_git_show_stdin": "PASS"
+  },
+  "protected_identity": {
+    "original_file": "tests/editing_conformance/test_commit_runtime_m1.py",
+    "base_sha256": "23451aa80279f47d126e5e5699f51272a6418402ba559617c243bcd6b15041",
+    "candidate_sha256": "23451aa80279f47d126e5e5699f51272a6418402ba559617c243bcd6b15041"
+  },
+  "history_verification": {
+    "observed_count": 8,
+    "evidence": "prior authorized XML reached candidate line 317 after the count/first/last history assertions passed in both parameter cases",
+    "bootstrap_entries": [
+      "Runtime bootstrap",
+      "initial document admission (initial-commit)",
+      "first-use word anchor (initial-word-anchor)"
+    ],
+    "authored_setup_entries_in_source_order": [
+      "retain-and-clear-word-anchor",
+      "current-baseline-corrections",
+      "Timeline conformance edit",
+      "NEW-OURS current word binding",
+      "NEW-OURS independent clip"
+    ],
+    "source_evidence": {
+      "runtime_bootstrap": "runtime_protocol/timeline_commit_baseline.py:426-440; runtime_protocol/timeline_commit_store.py:2168-2205",
+      "current_fixture": "tests/editing_conformance/native_word_anchor_fixture.py:253-303, 361-388, 406-408",
+      "current_equivalent": "tests/editing_conformance/test_m1_current_equivalent.py:210-251"
+    }
+  },
+  "authorized_behavior_observation": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D107-current-baseline-1530/evidence/current-equivalents.xml",
+    "cases": 2,
+    "result": "both fail at test_m1_current_equivalent.py:317",
+    "error": "exact transcript pin is missing or revoked or ambiguous",
+    "no_provider_rerun_in_this_review": true
+  },
+  "verdict": {
+    "protected_purpose": "PASS",
+    "whole_path": "FAIL_BEHAVIOR_PENDING",
+    "functional_go": false,
+    "source_cause": "UNKNOWN"
+  }
+}

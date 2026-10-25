@@ -1,0 +1,49 @@
+{
+  "status": "PASS",
+  "task": "rt-R2-redo-home-1550",
+  "runtime": {
+    "head_before": "ab1e4f6141987706132916e2da16477f5a019464",
+    "head_after": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree_before": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "tree_after": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "reviewed_candidate_tree": "61a4a8fcded65bf2785dc64b8133922b1e48e470",
+    "reviewed_auth_and_test_equal": true,
+    "auth_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+    "redo_test_blob": "0cbf2318ae70fc7d35b3e1dedbe38b8a730002b3",
+    "auth_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+    "redo_test_sha256": "83ace65bd00081b3ff3928972c0d83c08e00c902768fa8f00900e09d69bd6a89",
+    "status_clean_after": true,
+    "ambient_5e9ad_used": false
+  },
+  "agent": {
+    "source_commit": "a0d8398604780c01cb4213e91af1fedb49b17afd",
+    "source_tree": "d3c5ca7349ca89bd484260b132485573fdedbacc",
+    "provider_package_blobs": 1501,
+    "projection_before_mismatches": 0,
+    "projection_after_mismatches": 0
+  },
+  "module_origins": {
+    "before": {
+      "agent_commit": "/tmp/w-4c49a2f0ca/r2-redo-home-1550-v1/agent-source/astrid/sdk/timeline/commit.py",
+      "agent_patch": "/tmp/w-4c49a2f0ca/r2-redo-home-1550-v1/agent-source/astrid/sdk/timeline/_commit_patch.py",
+      "runtime_auth": "/home/user/work/wt/rt-R2-redo-home-1550/runtime_protocol/timeline_commit_auth.py",
+      "runtime_store": "/home/user/work/wt/rt-R2-redo-home-1550/runtime_protocol/timeline_commit_store.py"
+    },
+    "after": {
+      "agent_commit": "/tmp/w-4c49a2f0ca/r2-redo-home-1550-v1/agent-source/astrid/sdk/timeline/commit.py",
+      "agent_patch": "/tmp/w-4c49a2f0ca/r2-redo-home-1550-v1/agent-source/astrid/sdk/timeline/_commit_patch.py",
+      "runtime_auth": "/home/user/work/wt/rt-R2-redo-home-1550/runtime_protocol/timeline_commit_auth.py",
+      "runtime_store": "/home/user/work/wt/rt-R2-redo-home-1550/runtime_protocol/timeline_commit_store.py"
+    }
+  },
+  "tests": {
+    "genuine_d124": {"exit": 0, "passed": 3, "failed": 0, "xml": "genuine3.xml"},
+    "native_provider_original": {"exit": 0, "passed": 2, "failed": 0},
+    "native_junit": {"exit": 0, "passed": 2, "failed": 0, "xml": "native.xml"},
+    "ruff": {"exit": 0},
+    "pyright": {"exit": 0, "files": 2, "errors": 0, "warnings": 0},
+    "compile": {"exit": 0, "files": 2},
+    "diff_check": {"exit": 0}
+  },
+  "qualification_boundary": "No original-four closure inferred; no 93+77 repeat; no full suite. This receipt proves only the integrated genuine grouped inverse/redo three-case path plus native provider smoke and scoped static checks."
+}

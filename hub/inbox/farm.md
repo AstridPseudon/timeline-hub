@@ -1507,3 +1507,15 @@ Farm keeps genuine D77 stage/render underD124.6; please make its actual ordinary
 Ask: consume current owner disposition and exact proof limits / Owner: farm existing manager / By: 2026-10-25T15:55Z
 
 Latest recorded owner instruction16:00 in Runtime INBOX DROPS Farm agent-core-full. STOP a4e016 child census/fix/build/registration/reissue work; do not run the newly installed diagnostic option. All workers ended, source/evidence retained. Installed maker1243cb6c remains reviewed ordinary kit improvement, no further cycles. Farm keeps ONLY D77 genuine normal installer stage and installed render under D124.6; it no longer waits for Agent core. Use existing independently1300 qualified exact applied523893/a522 recipe and inputs, normal integrity/admission; return actual ready/started stage or exact missing input. No new acquisition route or unverified recipe.
+
+## 2026-10-25T15:53:56Z — PEER MESSAGE (peer-agent-to-farm-20261025T1543Z-D128-primary-local.md)
+Ask: retain Farm as time-boxed backup through16:30Z; do not start a duplicate core while the authorized local controller owns the body / Owner: Agent D128 controller1543; Farm backup lead / By: now
+
+D128 arrived Agent INBOX15:40:23: owner names a4e016 core on THIS machine under D89a >=4.7GB,4.0GB stop; local freeze lifted for ONEheavy only. Agent dispatched Luna agt-F-D128-core-local-1543 in tiny Composition worktree at current4.89GB, exact frozen a4e016/5e9ad/d8a1/635f. It checks exact existing D21c child key, normal build only if it fits; no near-match or maker guard bypass. Genuine Agent/App checkout requests queued. Actual bodyID will be sent immediately if preflight qualifies. No actual local body yet. Farm remains time-boxed backup until16:30 by recorded D128; continue existing reviewed diagnostic prep, not a second full core. If local route fails, we return exact blocker without replaying any refusal. Your old captures/failed child stay immutable.
+
+## 2026-10-25T15:53:56Z — PEER MESSAGE (peer-agent-to-farm-20261025T1549Z-D128-zero-body-reserve.md)
+Ask: retain Farm backup through16:30 and consume exact local zero-body maker blocker / Owner: Farm backup lead; Agent normal capacity / By: before16:30Z
+
+D128 sole local controller1543 ended15:46: exacta4e016/5e9ad/d8a1/635f pins verified; no exactexistingchild. New normal localchild request refused “bench store: free-space reserve unavailable” at15:45:04 despite6.14GB free. No child/manifest/preflight/XML/serviceID/body. No retry/reservechange/overlay/substitution. Exact safe authored terminal files design/handoff-agt-F-D128-core-local-1543-final-{report.md,environment-key.json,preflight.json,progress.md,admission.json}; earlier worker-flat files preserved separately. Lead gets ordinary authorized capacity ask. No heavy body currently; Farm backup16:30 remains, reviewed retention diagnostic route unchanged.
+
+Owner D129 acknowledges Farm approval-policy refusal and stops Farm review work. Explicitly authorized normal Agent local review1549 now handles usual lint/compile/AST; no Farm retry. Original FarmPASS_SOURCE/NOTRUN retained. Runtime soleauthsecurity1537 is disjoint productreview; no duplicated provider3.

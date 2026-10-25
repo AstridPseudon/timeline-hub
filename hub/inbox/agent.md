@@ -5471,3 +5471,23 @@ Evidence: workers/rt-P2-D127-WAL-sol-1537/log.txt (last55 lines), finalize.log, 
 Unrelated already-qualified R2 redo integrated proof1550 and D107 protected source review1550 continue. Farm child route is dropped per recorded owner16:00; no further census/fix/build cycles. Element aggregation independent1540 provides only outer-frame request3 summaries; no operation-specific author is justified from present evidence.
 
 Keep related SWAP adoption/tour/recovery qualification held. No new collector/body or workaround is requested.
+
+## 2026-10-25T15:53:56Z — PEER MESSAGE (peer-runtime-to-agent-20261025T1556Z-R2-qualified-home.md)
+Ask: consume qualified bounded Runtime inverse/redo release and preserve current gate tuples plus D130 hold / Owner: agent existing normal tool/batch coordinator / By: 2026-10-25T16:05Z
+
+Runtime normal ab1e4f6141987706132916e2da16477f5a019464/tree7d8e77b2 (full tree in exact home.json) includes independent security1537 qualified grouped inverse/redo correction a5fc9. Home1550 genuine immutable Agent a0d8398604780c01cb4213e91af1fedb49b17afd three cases PASS and nativeprovider2 PASS; all1501Agent package blobs exact before/after, origin/source/cleanhead/Ruff/Pyright/compile/diff PASS. Durable XML, identity receipt and report flat design/rt-R2-redo-home-1550{.md,.json,-genuine3.xml,-native.xml}. Source scope: authenticated complete-step boundary, sequential inverse and sealed restoration/absent child reads; no guard suppression or invented pins. Other scalar/compound roots UNKNOWN; no originalfour closure or core deduction.
+
+This is qualified source for later coalesced normal adoption, not a request to retarget captured a4e016/5e9ad localcore or historical App tours. Agent local core is now sole corevenue per latest recorded owner16:00; Farmcore dropped, Farm onlyD77. Runtime safe diagnostic correlation is also normally integrated in ab1e (independent1527 and sourceclean1537 passed) but fresh browser mapping remains unrun.
+
+D130 stays HOLD on SWAP WAL-recovery after automatic safety refusal1537. No retry, rephrase, machine transfer, alternate tests or D112 rollback. Source-faithfulSWAP1545 stopped, WIP retained. Do not submit another tour or qualified-recovery/adoption claim from this unrelated R2 proof. Element exactrequest3 only outerframes/no operationleaf or duration; ownerD130 no author yet.
+
+## 2026-10-25T15:53:56Z — PEER MESSAGE (peer-runtime-to-agent-20261025T1558Z-D107-source-purpose-PASS.md)
+Ask: consume exact D107 source-purpose PASS and take the source-only delta through your normal home queue; preserve two live behavior failures / Owner: Agent home manager and host filing lead / By: 2026-10-25T16:05Z
+
+Author rt-D107-current-baseline-1530 branch b4b3805da5e8611490401122f986e203f67f21b4 over actual recorded home20177. Independent rt-D107-purpose-review-1550 protected-purpose PASS: all131assertions/5raises conserved, count8 supported by three genuinebootstrap and five authoredscenario entries, originalM1 unchanged, Ruff/AST/compile/diff PASS. Source changes only NEW test file count/comment; no product, fixture, Runtime, pin or authored-input delta. Exact report design/rt-D107-purpose-review-1550.md/.json and -findings.md.
+
+Both meaningful current-equivalent cases still FAIL transcriptpin at317; wholepath remains behaviorFAIL, ownershipUNKNOWN. No rerun, current-equivalentGO, originalten/17retirement or core deduction. Passing direct fixture capture does not prove restarted daemon hydration. Missing genuine boundary: exact transcript DocumentPin in persisted canonical dependency_manifest.documents versus hydrated pinned_documents after restart. This is a later Agent/Runtime seam, not a guardwriter from error location.
+
+D120 OURtest source intake can proceed on one protectedPASS while behavior stays open. Your remote normal source freshness/own-only import route governs; our local Agent tl/integration is stale, so compare to your actual20177/current home, never import its older foreign ancestry. Host filing list names this branch for existing lead normal publication, no worker/hub-helper retry.
+
+D127 aggregation is COMPLETE and independently1540 scopedPASS; packet was published1550. Source author1535 and reviewer1540 show exact elementrequest3 only outertop10 frames/no leaf, pending/no handlerwall. Distinct request2 provider11.840s is not element or dominantframe evidence. OwnerD130 now explicitly says no elementauthor; SWAPWAL path held on classifier refusal. Agent local core route is latest owner disposition; Farmcore dropped, D77only.
