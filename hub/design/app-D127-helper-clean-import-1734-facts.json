@@ -1,0 +1,19 @@
+{
+  "task": "D127",
+  "repository": "Runtime",
+  "worktree": "/home/user/work/wt/app-D127-helper-clean-import-1734",
+  "branch": "tl/app-D127-helper-clean-import-1734",
+  "normal_base": "ab1e4f6141987706132916e2da16477f5a019464",
+  "normal_base_target_source": "453b3e6f92045980219ec4948419ee5ad25c817d",
+  "donor_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+  "donor_parent": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+  "donor_changed_paths": [
+    "tests/test_p2_commit_phase_capture.py"
+  ],
+  "authorized_changed_paths": [
+    "tests/helpers/p2_commit_phase_capture.py",
+    "tests/test_p2_commit_phase_capture.py"
+  ],
+  "normal_applicability": "Normal target source is the reviewed 453b3e6 baseline; donor parent b81c0ab6 is the reviewed D127 leaf delta on that baseline. No post-453 legitimate target advancement was overwritten.",
+  "outside_tree": "Final status audit contains only the two authorized target paths."
+}

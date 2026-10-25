@@ -1,0 +1,14 @@
+{
+  "observed_at": "2026-10-25T17:38:32.843338+00:00",
+  "normal_head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+  "normal_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+  "reviewed_donor": "54c91d77fa51cb8d21dd86a76d8297d13d8d19e9",
+  "tested_import": "9bf465285ccf57be31570c800d4a1f86855ebc4e",
+  "entire_tree_equals_reviewed_and_tested": true,
+  "independent_source_review": "app-D127-lifecycle-final-review-1723 SOURCE PASS",
+  "qualified_source_checks": "Node20 D127/D105, D78, scoped lint, App and Node TypeScript PASS",
+  "bootstrap_custody": "Worker1731 reports PASS; required evidence directory missing, read-only custody1738 active",
+  "original_tour_or_element_outcome_credit": false,
+  "d130_hold": "absolute; no recovery qualification or tours",
+  "merge_receipt": "merged tl/app-D127-reviewed-clean-bootstrap-1731 into app tl/integration -> d5a1d1ab65"
+}

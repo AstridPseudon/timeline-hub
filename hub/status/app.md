@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T17:35:24Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 2m -->
-# app board, 2026-10-25T17:35Z
+<!-- app | 2026-10-25T17:40:42Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 2m -->
+# app board, 2026-10-25T17:38Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -111,29 +111,31 @@
 
 | D118d-graph9 | Prove typed roots and child inverse redo | Luna and independent Luna | Runtime exact child boundary | blocked:runtime | app-D132a-graph-created-review-1720 | Cumulative source PASS123 predicates; exact own9:8 PASS1 FAIL/8.15s. Child alias outside boundary at auth156; no guard change or full-case GO. | 160c675a2 held |
 
-| D127-leaf-retention | Import reviewed leaf and lifecycle helper | Luna; independent1630 reused | App1723 SOURCE PASS; bootstrap1731 pending | doing | app-D127-helper-clean-import-1734 | Exact helper4ee and test donor231ddb only. Original160 predicates and central23 PASS retained. No source request before remaining App control. | Donor231ddb5 |
+| D127-leaf-retention | Land reviewed leaf and lifecycle helper | Luna; independent1630 reused | Bootstrap custody1738 | review | app-D127-helper-clean-import-1734 | Exact two donor blobs and statics PASS; helper4ee and original160 predicates/central23 retained. Host request waits custody handback. | 8faff00d4 held |
 
 | U4p-R2-diagnostic | Adopt qualified inverse redo and diagnostics | Luna | Qualified ab1e normal receipt | merged | Adopter1615; normal1624 | Entire normal tree equals tested author. Vendor17/artifact3/lint PASS; mappings14/protected8 exact. D130 recovery excluded; no gate claim. | d4e5284dfc |
 
-| D127-App-validator | Validate actual helper lifecycle schema | HARD Sol and protected Luna | Independent1723 SOURCE PASS | doing | app-D127-reviewed-clean-bootstrap-1731 | Source, D78, types and lint PASS. Clean import plus sole remaining4ee bootstrap uses supported Agent interpreter; prior missing Python retained. | Donor54c91d77 |
+| D127-App-validator | Validate actual helper lifecycle schema | HARD Sol and independent Luna | Independent1723 PASS | merged | Normal import1731; custody1738 | Normal whole tree equals independently reviewed and tested donor. Source, D78, types/lint PASS. Bootstrap durable custody remains separate. | d5a1d1ab65 |
 
 | D116-native-topology4 | Prove four current checkout companions | Luna and independent Luna | Independent1705 SOURCE PASS | blocked:agent | app-D116-native4-result-wholepath-1719 | Independent evidence PASS; actual3 FAIL1 ERROR. Transcript record missing; gate3 membership needs semantic commands. No valid companion-only fix established. | 795608e1b held |
 
-| D132a-graph-source | Land reviewed graph v2 caller source | Luna; review1720 reused | Host remote request | merging | app-D132a-graph-clean-import-1726 | Exact two donor blobs, own-only commit and statics PASS. Host request asked1731; source-only home pending. Live child failure retained. | 224de4697 |
+| D132a-graph-source | Land reviewed graph v2 caller source | Luna; review1720 reused | Host remote request | merging | app-D132a-graph-clean-import-1726 | Exact two donor blobs, own-only commit and statics PASS. Host request filed by lead17:36; source-only home pending. Live child failure retained. | 224de4697 |
 
-Integration: App d4e5284dfcc20801977cef12253b12f9cc8798fd; tree5efca939546f30b039cb9cacba7a29d7db690f2a. Entire tree equals tested adopter1615. Qualified Runtime ab1e adoption passed vendor17, artifacts3 and lint; mappings14 and protected8 exact. Receipt design/app-U4p-R2-normal-home-1624.json.
+| D127-bootstrap-custody | Qualify retained actual helper bootstrap | Luna read only | Actual1731 reported PASS | review | app-D127-bootstrap-custody-return-1738 | Promised evidence directory absent after cleanup; exact report/log retained. Recover safe execution receipt only; no new body or fabricated capture. | Source unchanged |
+
+Integration: App d5a1d1ab6550187e377fd7387d300102b8b82ece; tree7be73e2cbbcf89d627bf7b9da940b4ce17968c20. Entire tree equals independent1723 reviewed54c91d77 and tested import9bf46528. Source, D78, types and lint PASS. Qualified Runtime ab1e provenance remains; Agent070dfc/Composition635f exact. Receipt design/app-D127-normal-home-1738.json. Actual new-helper bootstrap reported PASS; durable execution custody is pending1738.
 
 Current P2 is NO-GO; core open 2 gestures. Six cases qualified across named historical runs, but no full eight-case tour GO. Actual10721 readiness PASS; originals5 PASS,2 FAIL,1 NOTRUN. Exact element joins d22 request3:352 samples,3 lost,PENDING. Provider leaf, response, duration and denominator UNKNOWN. Request2 is distinct. Final tuple proof remains owed.
 
 Blockers: SWAP safety — D130 holds recovery, related qualification, release, adoption and tours after automatic classifier refusal. No retry, alternate route, machine transfer or rollback.
-Blockers: Element source — Independent1723 SOURCE PASS and D78 PASS; sole App1731 imports exact blob and qualifies4ee bootstrap with supported Python. Helper4ee frozen; no new tour or cost author.
+Blockers: Element diagnostic custody — App source HOME and independent SOURCE PASS; sole reader1738 qualifies retained bootstrap execution after missing evidence directory. Helper4ee frozen; no new tour or cost author.
 Blockers: Projection source — Agent D100 owner owes qualified normal applicability at first item birth. Both independent traces sent in peer1655; no valid test-only fix or unchanged rerun.
 Blockers: Agent core — Agent17:18 records changed maker0857 passes archive installation then refuses report versus inventory. Runtime sole source owner requested1718. No App duplicate body.
 Blockers: Final render — Farm17:27 has corrected maker0857 and exact91398/1daca checkouts; awaits lead runtime/child requests and authentic stage. No App input owed.
 Blockers: Final cut — Full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
 Next ready: Final App review when Sol1705 finishes; graph protected review after created declaration; consume native4 actual result. Normal imports only after required reviews. No tour or SWAP qualification.
-live 2 / cap 3; ready-undispatched 0. App import/bootstrap1731 and Runtime exact helper import1734 active. Graph source awaits host remote request; other rows have peer dependencies. Source starts require4.6GB with no heavy; own-node proof requires5GB; stop4GB. No heavy body.
-INBOX consumed through2305237 bytes. H6 checked Agent17:00, Runtime17:04 and Farm16:53 actual hub boards. Farm core dropped. Runtime maker installation is a peer-owned receiving step, not an App dispatch.
+live 1 / cap 3; ready-undispatched 0. Sole read-only bootstrap custody1738 active. Graph remote request filed; Runtime helper source ready but request waits custody. Other rows have peer dependencies. Source starts require4.6GB with no heavy; own-node proof requires5GB; stop4GB. No heavy body.
+INBOX consumed through2305981 bytes, including lead-reported17:36 graph remote filing. H6 checked Agent17:00, Runtime17:04 and Farm16:53 actual hub boards. Farm core dropped. Runtime maker installation is a peer-owned receiving step, not an App dispatch.
 Safety: D130 absolute hold. No manager product/test/generated/pin edits, Git writes, upstream push, M5, credentials or refused-route retry. All current inputs, outputs, branches and reports preserved; historical dirty/orphan guard targets untouched.
 Later: Parent labels2, native checkout originals4 and trackbatch1 retain word-source setup errors; new native companions are separate. D79 waits ZIP; E4 dropped. Applicability17 and pair16 historical source equality grant no current behavior credit.
 Pass17:16: graph1705 read-only trace SOURCE PASS identifies request.created absent versus recorded two-root claim. Ordinary OUR-test caller correction1713 dispatched on same136c source after native4 actual admission. No authored roots or predicates may change. Native4 source reviewer1705 PASS; proof1711 actually admitted at5005950976 bytes after earlier capacity-only NOTRUN. App Sol1705 continues comprehensive helper-derived validator; no competing writer. Exact safe graph and native review evidence copied to flat design.
@@ -150,3 +152,5 @@ Pass17:26: App source54c91d77 completed, all12 original helper projections and53
 Pass17:32: App independent1723 SOURCE PASS, D78 PASS,4ee bootstrap failed before startup at absent Agent-pin .venv Python. No safety or permission refusal; supported interpreter env was omitted. Exact clean import plus targeted control1731 dispatched immediately, no new source semantics or D78 repeat. Graph clean224de4697 exact two reviewed blobs and own-only log PASS; host remote request asked via peer1731 without retrying known worker boundary. Agent/Rt/Farm H6 updated; no cleared gate was left waiting.
 
 Pass17:35: independent App SOURCE PASS clears combined source wait for frozen helper. Sole source-only Runtime helper/test clean import1734 started at5153374208 bytes, exact donor two blobs and reused160/23 proof only. Remote request stays held until sole App1731 positive control; no new activation, test suite, tour or product guard work. Runtime ownership note1734 published before further merge routing.
+
+Pass17:38: normal Appd5a1 whole tree7be equals independent reviewed54c and tested clean9bf, ordinary merge DONE. Worker1731 reports exact4ee bootstrap PASS with supported ASTRID_PYTHON and102 events, but promised absolute evidence directory absent; no durable bootstrap credit yet. Read-only custody1738 dispatched immediately from retained log/report, no new test or synthetic capture. Runtime clean8faff two reviewed blobs/statics PASS, source-only host request held for custody. Lead-reported17:36 graph224de remote request filed; actual home result pending.

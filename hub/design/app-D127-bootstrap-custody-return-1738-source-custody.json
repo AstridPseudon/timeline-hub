@@ -1,0 +1,49 @@
+{
+  "task": "D127",
+  "source_custody_status": "PASS_FOR_SOURCE_AND_SELECTOR_INVOCATION; RAW_CAPTURE_NOT_CUSTODIED",
+  "app": {
+    "commit": "9bf465285ccf57be31570c800d4a1f86855ebc4e",
+    "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "target": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+    "target_size_bytes": 49511,
+    "target_sha256": "92586e7fb9603bec32b6fbee03aeb0fff9176d7cf16a35534ae8a2287e4ad48c",
+    "donor_commit": "54c91d77fa51cb8d21dd86a76d8297d13d8d19e9",
+    "donor_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "donor_target_sha256": "92586e7fb9603bec32b6fbee03aeb0fff9176d7cf16a35534ae8a2287e4ad48c",
+    "whole_tree_equal": true,
+    "normal_baseline_commit": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+    "normal_baseline_target_sha256": "9b255149cf3821e9fd6a9e688cc0a4e74b353e7d059feeb56993f20d4140c7d8",
+    "source_verification": "independently checked with git object/tree and blob SHA256 commands"
+  },
+  "agent": {
+    "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "checkout_recorded_by_1731": "/home/user/work/wt/agt-pin-070dfc5e",
+    "python_recorded_by_1731": "/home/user/work/venv-agent/bin/python",
+    "module_origins_recorded_by_1731": {
+      "astrid": "/home/user/work/wt/agt-pin-070dfc5e/astrid/__init__.py",
+      "astrid_runtime_client": "/home/user/work/wt/agt-pin-070dfc5e/astrid_runtime_client/__init__.py"
+    },
+    "commit_tree_object_verified": true
+  },
+  "runtime": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "checkout_recorded_by_1731": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "python_recorded_by_1731": "/home/user/work/venv-runtime/bin/python",
+    "module_origins_recorded_by_1731": {
+      "runtime_protocol": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/__init__.py",
+      "astrid_overlay": "/home/user/work/wt/agt-pin-070dfc5e/astrid/__init__.py"
+    },
+    "commit_tree_object_verified": true
+  },
+  "helper": {
+    "source_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "source_path": "tests/helpers/p2_commit_phase_capture.py",
+    "source_blob_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "helper_path_recorded_by_1731": "/tmp/w-52d29f4d54/app-D127-p2-helper/p2_commit_phase_capture.py",
+    "source_blob_hash_independently_verified": true,
+    "private_helper_copy_currently_present": false
+  },
+  "module_and_interpreter_scope": "The selector invocation and module origins are retained execution facts from 1731/log.txt; this worker did not rerun Python or Node."
+}

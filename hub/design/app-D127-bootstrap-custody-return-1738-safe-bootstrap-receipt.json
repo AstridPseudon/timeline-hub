@@ -1,0 +1,51 @@
+{
+  "task": "D127",
+  "receipt_kind": "safe_retained_result_summary",
+  "status": "PASS_WITH_RAW_CAPTURE_CUSTODY_LIMIT",
+  "basis": {
+    "retained_worker": "app-D127-reviewed-clean-bootstrap-1731",
+    "retained_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-reviewed-clean-bootstrap-1731/log.txt",
+    "retained_log_sha256": "1bccc8103b83a11cd7fafdb5e38013859def4420b48ffde0139f6a5fba8dd9eb",
+    "raw_capture_available_now": false,
+    "raw_capture_path_recorded_by_1731": "/tmp/w-52d29f4d54/p2-runtime-cli-smoke-LTLcBf/p2-commit-phase.jsonl"
+  },
+  "selector": "P2 Runtime observer bootstrap",
+  "command": "/opt/node20/bin/node --import tsx --test --test-name-pattern='P2 Runtime observer bootstrap' tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+  "exit_code": 0,
+  "node": "/opt/node20/bin/node",
+  "node_version": "v20.20.0",
+  "source": {
+    "app_commit": "9bf465285ccf57be31570c800d4a1f86855ebc4e",
+    "app_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "target_sha256": "92586e7fb9603bec32b6fbee03aeb0fff9176d7cf16a35534ae8a2287e4ad48c",
+    "agent_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "helper_source_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e"
+  },
+  "environment": {
+    "ASTRID_CHECKOUT": "/home/user/work/wt/agt-pin-070dfc5e",
+    "ASTRID_PYTHON": "/home/user/work/venv-agent/bin/python",
+    "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "ASTRID_RUNTIME_PYTHON": "/home/user/work/venv-runtime/bin/python"
+  },
+  "tap": {
+    "tests": 5,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 4,
+    "duration_ms": 14606
+  },
+  "capture_claims_retained_only": {
+    "events": 102,
+    "bytes": 34670,
+    "mode": "0600",
+    "sha256": "51cd6d3ba29707d2d6e88d605861757fc3608b459f9f1fd999f502a3884a1f3e",
+    "phases": ["accept", "authorization", "coordinator_admission", "coordinator_lock", "dispatch_queue", "handler_entry", "http_response", "provider", "receipt", "summary"],
+    "summary_lifecycles": ["completed", "completed"],
+    "contains_private_markers": false,
+    "raw_bytes_custodied": false
+  },
+  "retry_count": 0,
+  "safe_publication_note": "This receipt contains only command/source/hash/count/outcome lines; it does not reproduce the missing raw log, helper, or capture."
+}

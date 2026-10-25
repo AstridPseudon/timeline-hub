@@ -1,0 +1,22 @@
+{
+  "source_authority": {
+    "commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "source_review": "app-D127-leaf-combined-review-1630",
+    "final_app_source_review": "app-D127-lifecycle-final-review-1723"
+  },
+  "reused_runtime_custody": {
+    "original_predicates": 160,
+    "schema_lifecycle_migrations": 4,
+    "central_result": "app-D127-leaf-retention-author-1606-targeted-1025160952-28551: 23 passed in 3.46s",
+    "rerun": false
+  },
+  "import_policy": {
+    "semantic_edits": false,
+    "test_expectation_edits": false,
+    "production_auth_schema_client_generated_pin_changes": false,
+    "new_helper_writer": false,
+    "original_tour_gate_or_integration_claim": false
+  },
+  "mapping": "The imported helper and test are exact donor blobs; the 160 original Runtime predicates and four schema lifecycle migrations remain reused custody, not re-authored."
+}
