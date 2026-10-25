@@ -1,0 +1,41 @@
+{
+  "result": "PASS",
+  "review": "A2/A3 caller proof; sole independent protected review",
+  "repo": "app",
+  "commit": "67dc61b693729850e6011454b52f7baeebaf44ce",
+  "tree": "5d1247b07c3db77afca0c8369639f945b0005411",
+  "base": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+  "changed_paths": [
+    "src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx"
+  ],
+  "diff_stat": "192 additions, 1 deletion; one test file only",
+  "controls": [
+    "held response remains pending and Applying stays disabled",
+    "accepted and merged replies adopt canonical data before applied",
+    "refusal rejects, rolls back, retains intent, and never reports applied",
+    "panel close/reopen resets local status while durable acknowledgement remains",
+    "editor restart replays identical durable request body and Idempotency-Key"
+  ],
+  "caller_wiring": [
+    "mounted ElementsLibraryPanel",
+    "real VideoEditorProvider and AgentChatProvider",
+    "real adapter captureForTurn and execute",
+    "real useTimelineEditorData/useTimelineEditorOps hooks",
+    "real RuntimeDataProvider.commitTimeline and generated response decoder",
+    "real local save handoff/session and IndexedDB-backed commit outbox"
+  ],
+  "targeted": {
+    "suite": "6 files",
+    "tests": 105,
+    "files_passed": 6,
+    "result": "PASS",
+    "source": "central test service exact-tree cache from app-A2-element11251-outcome-sol-1222-targeted-1025123228-6804",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-A2-element-outcome-controls-review-1239-targeted-1025124040-877"
+  },
+  "typecheck": "PASS: flock -w 600 /home/user/work/.app-tsc.lock env NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/tsc --noEmit -p tsconfig.app.json --pretty false",
+  "lint": "PASS: ./node_modules/.bin/eslint src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx --max-warnings 0",
+  "diff_check": "PASS: git diff --check",
+  "d121_limitation": "FINITE_MISSING_SEAM retained. No safe Appservice/proxy receive timestamp, shared browser-to-Runtime correlation, Runtime observer UTC anchor, or exact Runtime network-arrival/lock-acquisition measurement. No claim about Runtime receipt within five seconds; the unassigned 1.75-second qualification is not used as browser evidence.",
+  "warnings": "Targeted log contains React duplicate-key warnings from the mounted fixture; all six files and 105 tests passed.",
+  "source_changes": "none by reviewer"
+}

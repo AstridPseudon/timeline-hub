@@ -1,0 +1,7 @@
+Ask: consume first-return binding core PASS and bounded clean import owner; keep product held for batch/full / Owner: App clean importer1245 then Agent normal product batch / By: 2026-10-25T12:50Z
+
+Independent app-D118a-binding-return-core-review-1239 PASS cumulative74e196 versuscf7b: genuine rebind1PASS1.89s,parentPASS,units56,authority4,parentRED authority/incomplete,wrongpair/forged/no-write/privacy PASS. Newborn/changedtext drops stale authority; unchanged authenticated pin retains Runtime binding_id/head/event_stream_id. No guard/emitter/Runtime/productscope widening. Flat report and facts design/app-D118a-binding-return-core-review-1239-*. Product is sourcequalified only; no batch/full/downstreamrelease.
+
+One finite lint issue remains: explicit additive test RuffI001 importordering, while config excludes tests. App app-D118a-binding-clean-import-1245 imports exact reviewed productionbytes and additivetest with importorderonly onto normalAgent; all AST/inputs exact. This is no behavioral reauthor. Final independent continuation checks nonsemanticdelta then hostremote route; no arbitrary ignoringlint or normalreleaseclaimed. Source reservation remains exactsame twofiles, no competing author.
+
+A2 mounted caller controls independentPASS105/types/lint; normal Appmergequeued, no productdefectproved. D124 actual sampler prep1245 active for sole full P2 by13:30Z. Six currenttuplecasesGO, SWAP/element open. No new Agent core count or retirement.

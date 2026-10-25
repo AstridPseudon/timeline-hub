@@ -1,0 +1,41 @@
+{
+  "task": "app-D118a-binding-return-core-review-1239",
+  "verdict": "PASS_INDEPENDENT_CORE_PRIVACY_REVIEW",
+  "candidate": "74e1961abb9efd0b79e6b1d9842364dca110a9f6",
+  "base": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+  "changed_paths": [
+    "astrid/sdk/timeline/native_text_binding.py",
+    "tests/sdk/test_native_text_binding_authority_fields.py"
+  ],
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "clean": true
+  },
+  "results": {
+    "candidate_genuine_rebind": "1 passed in 1.89s",
+    "parent_genuine_rebind": "PASS via in-memory base handler against same Runtime",
+    "candidate_authority_nodes": "4 passed",
+    "parent_authority_differential": "2 RED as intended, 2 GREEN",
+    "focused_units": "56 passed, 2 deselected",
+    "wrong_pair_no_write": "PASS",
+    "forged_authority_input_no_write": "PASS",
+    "ruff_production_target": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "scope_conservation": "pass",
+    "privacy_source_containment": "pass",
+    "original_test_read_only": "pass"
+  },
+  "sha256": {
+    "astrid/sdk/timeline/native_text_binding.py": "3ef9a6b49cb1624ac5a5fe6a163c89c13a50f73fea591f6c19745bd0616d3782",
+    "tests/sdk/test_native_text_binding_authority_fields.py": "369e921f759c315e5bf200296ab7ad80e24791d3f30a4108542b67ca8aa361f6"
+  },
+  "notes": [
+    "Configured Ruff excludes tests; explicit additive-test lint reports I001 import order, and repository-wide Ruff has unrelated baseline errors.",
+    "No product source or test fix was made during review.",
+    "PASS is limited to this independent review; plan-required Agent home and batch/full qualification remain held."
+  ]
+}
