@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T06:24:28Z | dispatcher heartbeat 1s | live 3 (sol 1, luna 2, other 0) | busy30 11 | status age 1m -->
-# app board, 2026-10-25T06:22Z
+<!-- app | 2026-10-25T06:28:29Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-25T06:28Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -235,16 +235,17 @@
 | P2-D105a-oracle | Qualify strict scoped reload and inverse identity | Luna; independent | Author0614 complete | review | app-P2-D105a-protected-review-0622 | Author139 Node and37 mounted/projection checks, three types/lint PASS. Independent five-case and inverse residue challenge before ledger and merge. | Branch0614 |
 | P2-D102-retention-wiring | Retain existing Runtime logs before native seed | HARD Sol after two failures | Independent0616 second FAIL | doing | app-P2-D102-retention-causal-sol-0619 | Test bypasses real start and preconfigures sink separately. Sol must prove actual caller-env to existing teardown causality. Non-gating; body does not wait. | Branch0609 |
 | P2-D102-seed-packet | Return existing safe native setup facts | Luna authored; manager links | Runtime peer0555 | merged | Controller0544; return0606 | Existing ADD12031 and element4757 JSON/MD republished by exact paths and SHA256; no new body or collector. | Evidence only |
-| U4p-D102c-fixed | Adopt released context correction and reason tags | Luna normal tools | Author0618 PASS on Node22 | doing | app-U4p-D102c-node20-check-0622 | Only lock and manifest changed. Focused missing Node20 acceptance uses installed toolchain; no extra adoption review. Merge original0618 after PASS. | Target1daca2a33 |
-Integration: App f0fcd remains normal. Qualified Runtime1daca2a33f6d7b10053e07c539a54843e3984e19 is local with exact checkout receipt; tool-only adoption0618 complete, installed Node20 acceptance0622 before normal merge.
+| U4p-D102c-fixed | Adopt released context correction and reason tags | Luna normal tools | Node20 acceptance0622 PASS | merged | app-U4p-D102c-fixed-adoption-0618 | Actual normal receipt0b6cee; eight strict,15 vendor,14 mappings,3 artifacts/lint/protected six PASS. Only lock and manifest. | Home0b6cee269f |
+| P2-D102c-diagnostics | Qualify fixed-source ADD then element | Luna; service | Actual adoption HOME0b6cee | doing | app-P2-D102c-ADD-element-diagnostics-0628 | One tuple captured0b6cee/8c88/1daca/635f, source preflight then actual bodies serial. Retention repair does not hold diagnostics. | Fixed tuple |
+Integration: Normal App0b6cee269f32079c5446036bbca8a484176799bc adopts qualified Runtime1daca2a33 through normal tools. Actual merge receipt complete; Node20 acceptance0622 PASS. Only lock/manifest changed, protected six and product source exact.
 core open: Four isolated gestures retain GO on recorded tuples. Runtime measured A/B/C confirms689 shared-context request_id regression; qualified1daca fixes it without schema widening and adds reason tags. After adoption HOME, ONE ADD then ONE element serial; seed retention repair does not hold bodies. D105a keeps upstream product and changes our scoped reload/inverse oracle: author139/37/types PASS, independent0622 active. Placement body follows ADD/element; SWAP follows diagnostic results.
 regressions: Runtime1daca source fixes confirmed releasedD102 context regression; actual App native seed and original behavior remain to be qualified. P1 actual31083 and P3 actual15493 retain GO only on recorded tuples.
 
 Blockers: Final cut — Four recorded isolated GO; current full P2 and final pinned P1–P5/core plus genuine installed render still required before ZIP.
-Next ready: Node20 acceptance0622 -> normal merge original0618 -> ONE ADD then ONE element. D105a review0622 -> existing ledger and normal merge. Sol retention0619 -> independent review; no diagnostic hold for it.
-live 3 / cap 6; ready-undispatched 0. Node20 acceptance0622, D105a protected review0622 and HARD Sol retention0619 active. No App service body.
+Next ready: Controller0628 authentic preflight/ADD ID, then element serial on same fixed tuple. D105a review0622 -> existing ledger and normal merge. Sol retention0619 -> independent review; no diagnostic hold for it.
+live 3 / cap 6; ready-undispatched 0. D105a review0622, HARD Sol retention0619 and sole diagnostic controller0628 active. Sole App service controller0628 preparing ADD, then element.
 Capacity: Free about6.1GB before two review checkouts. Exact current source tuple and all outputs retained; ended clean non-KEEP App tree scan found zero. Prior dirty/refused targets untouched. Source cap6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB.
-Inbox consumed through1983694 bytes. D105a answered escalation0607, product0558 stopped unchanged; D102c qualified release adopted in worker0618, normal merge pending required Node20 acceptance. No safety or permission refusal.
+Inbox consumed through1985685 bytes. D105a answered escalation0607, product0558 stopped unchanged; D102c qualified release HOME0b6cee after Node20 acceptance; controller0628 dispatched immediately. No safety or permission refusal.
 
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59 and Agent08e6 applied-result suites belong to Runtime final coordinator. Gating stays frozen upstream3881. Withdrawn D88 and denied actions stay held.
 Evidence: [Bulk GO](../../design/app-P2-bulk21852-GO-return-0339.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md), [Single GO](../../design/app-P2-single5678-GO-resume-0255.md), [Parent GO](../../design/app-P2-parent20481-GO-review-0507.md).
