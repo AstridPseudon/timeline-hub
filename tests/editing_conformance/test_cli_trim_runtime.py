@@ -68,11 +68,18 @@ def film(runtime):  # noqa: F811
     row = {
         'id': 'literal', 'track': 'picture', 'clipType': 'media', 'asset': selection['asset'],
         'at': 0, 'from': 1, 'to': 6, 'hold': 5, 'speed': 2,
-        'app': {'astrid': {'for': 2.5, 'opaque': [None, False]}, 'extension': {'keep': True}},
+        'app': {'astrid': {'opaque': [None, False]}, 'extension': {'keep': True}},
     }
     added = session.commit(capture_clip_add_media(bundle, row, selection, verified_media=[verified]),
                            idempotency_key='trim-clip', verified_media=[verified])
     bundle = bundle_from_document(added['data']['canonical_document'])
+    child_timing = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                    'args': {'changes': [{
+                        'op': 'set', 'ref': 'parent/clip:literal', 'path': ['app', 'astrid', 'for'],
+                        'before': {'state': 'absent'}, 'value': 2.5,
+                    }]}}
+    timed = session.commit(child_timing, idempotency_key='trim-clip-timing')
+    bundle = bundle_from_document(timed['data']['canonical_document'])
     duration = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
                 'args': {'changes': [{
                     'op': 'set', 'ref': 'parent',
