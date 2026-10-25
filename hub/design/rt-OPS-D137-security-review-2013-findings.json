@@ -1,0 +1,38 @@
+{
+  "task": "rt-OPS-D137-security-review-2013",
+  "verdict": "FAIL",
+  "findings": [
+    {
+      "id": "D137-001",
+      "severity": "blocker",
+      "status": "open",
+      "title": "Normal Store cleanup deletes the retained stage stderr before failure recording",
+      "evidence": [
+        {
+          "path": "ops-child-custody/make-child-venv:134-163",
+          "observation": "run_stage redirects child stderr to T/.provision-stderr/<stage>.stderr, creates the file mode 0600, preserves the child return code, and writes only bounded public diagnostics."
+        },
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py:718-730",
+          "observation": "Store.ensure catches the build failure, calls _roll(journal, False) first, and only then calls _record_failure(failure_name, evidence)."
+        },
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py:427-497,538-551",
+          "observation": "_roll deletes the new staging entry through _delete_owned; the recursive deletion removes .provision-stderr before the bounded failure record is written."
+        },
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon:7-14,22",
+          "observation": "The production dispatcher invokes make-child-venv in the background and publishes only its bounded command output; it does not preserve the deleted staging tree."
+        }
+      ],
+      "impact": "The required exact first stderr is available only during the maker's isolated run or diagnostic-retention path, not after an ordinary failed dispatcher -> maker -> Store request. Timeout and non-timeout stage failures therefore remain EXACTMISSING at the required handoff.",
+      "minimum_fix": "At the existing Store failure/cleanup boundary, atomically preserve the maker-owned stage stderr (or a private bounded copy with its stage and digest) before _roll deletes staging, enforce regular-file ownership, 0600 mode, size and safe stage-name checks, and keep it out of the public failure marker. This requires a reviewed Store/STORE_PY interface change or an equivalent pre-cleanup handoff; do not add a second investigator, expose raw stderr publicly, or weaken the unchanged verifier."
+    }
+  ],
+  "non_findings": [
+    "Current STORE_PY and STORE_VERIFY embedded blocks are byte-exact against the parent candidate.",
+    "Protected bench_store.py and verify_dependency_seed.py hashes match the recorded kit values.",
+    "The private CAS installer accepted only the exact WITHDRAWN/NOTRUN D137 decision and passed target preimage CAS, no-clobber backup, identity lock, atomic replacement, and helper readback.",
+    "No generic environment bypass, synthetic E2E PASS, live install, Store initialization, child request, acquisition, or production target write was performed."
+  ]
+}

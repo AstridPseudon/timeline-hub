@@ -1,0 +1,33 @@
+{
+  "task": "D136a",
+  "repository": "Agent",
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+  "worktree_branch": "tl/rt-D136a-fps-regression-2014",
+  "changed_files": [
+    {
+      "path": "astrid/sdk/timeline/validation.py",
+      "change": "accept positive two-integer list/tuple FPS spelling as an exact internal Fraction",
+      "sha256": "91cdfa6b0b0adf602cbae9d43f51995aad175f03cd39fe14c84bc93c808b6f3"
+    },
+    {
+      "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+      "change": "add production-provider acceptance/retention and strict-invalid regression",
+      "sha256": "ab94e6564005ffee14fe2176f136bc5e9a2517d7623678f279b7b5b57364d649"
+    }
+  ],
+  "introducing_commit": "6f4baa07603776840f0a78cc0cf459831bc026af",
+  "introducing_commit_subject": "feat(timeline): validate final commit candidates",
+  "upstream_agent_ref": {
+    "ref": "origin/main",
+    "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "schema_path": "astrid/core/timeline/schema/timeline-config.schema.json",
+    "validator_path": "astrid/core/timeline/validators/timeline.py"
+  },
+  "frozen_r4_sdk_ref": {
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a"
+  },
+  "runtime_route": "astrid.sdk.timeline.commit.RuntimeCommitService.commit -> validate_final_candidate",
+  "scope_guard": "No schema, generated client, pin, Runtime, App, fixture, source_mapping, authority, or protocol files changed."
+}

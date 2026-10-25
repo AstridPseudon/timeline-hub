@@ -1,0 +1,62 @@
+{
+  "format": "timeline-delivery-d135-independent-install-review-v1",
+  "worker": "rt-F-D135-install-review-2015",
+  "verdict": "PASS",
+  "reviewed_commit": "d45e07dfb305c41d588fe168a2518d5ffa1c4954",
+  "reviewed_tree": "92401b1abc84a0a6a23d5b0d9b9bfebeb41638a2",
+  "source": {
+    "path": "/home/user/work/wt/rt-F-D135-install-review-2015/ops-delivery-d135/delivery-build",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "git_mode": "100755",
+    "mode": "0755",
+    "regular": true,
+    "single_link": true,
+    "matches_reviewed_commit": true
+  },
+  "focused_test": {
+    "path": "/home/user/work/wt/rt-F-D135-install-review-2015/ops-delivery-d135/tests/test_delivery_build.py",
+    "sha256": "c00401bb11401ffaa8929f887c4ccf69600bcf6f312c81ba41d4d54c9e3286bf",
+    "matches_reviewed_commit": true,
+    "unchanged_from_installer_receipt": true
+  },
+  "installed_receipt": {
+    "receipt_worker": "rt-F-D135-install-2010",
+    "installed_utc": "2026-10-25T20:10:50.406844708Z",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "mode": "0755",
+    "regular": true,
+    "single_link": true,
+    "matches_source": true,
+    "no_second_install": true
+  },
+  "backup_custody": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build.20261025T201050.398733Z.bak",
+    "sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "mode": "0755",
+    "regular": true,
+    "single_link": true,
+    "no_clobber": true,
+    "is_exact_predecessor": true
+  },
+  "d59_tuple": {
+    "agent_sha": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "agent_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "tuple_sha256": "ce3d06b41014bcd5cd42454c62828c7d240d3beb0a570467be0375109b1c4338"
+  },
+  "integrity": {
+    "source_vs_installed_byte_compare": "PASS",
+    "installed_sha256_readback": "PASS",
+    "backup_sha256_readback": "PASS",
+    "pre_existing_bin_neighbors_unchanged": true,
+    "authorized_new_live_artifact_only": "predecessor backup",
+    "candidate_source_unchanged": true,
+    "focused_test_unchanged": true
+  },
+  "scope": {
+    "timeline_delivery_script_sha": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "positive_delivery": "not run; remains D59-gated",
+    "normal_tuple_movement": "none",
+    "source_readonly": true
+  }
+}

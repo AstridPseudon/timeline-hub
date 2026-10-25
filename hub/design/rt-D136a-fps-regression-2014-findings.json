@@ -1,0 +1,19 @@
+{
+  "verdict": "PASS_AGENT_OWNER_MINIMAL_FIX",
+  "owner": "Agent",
+  "source_fix": "astrid/sdk/timeline/validation.py:_fps",
+  "source_fix_summary": "accept exact positive two-integer list/tuple FPS spelling without rewriting authored data",
+  "regression": "tests/sdk/test_d136_fps_upstream_compat.py",
+  "parent": "FAILS exact production regression with must-be-a-finite-number",
+  "candidate": "PASSES 5 own tests",
+  "strict_controls": "PASSES malformed list and zero-rational refusal with no writes",
+  "upstream_comparison": "pristine _timeline_fps accepts open canvas values and falls back to 30.0 for non-positive/non-scalar forms",
+  "audit_disposition": "positive two-integer list/tuple fixed; malformed forms remain strict as typed FPS controls; no broad validator disable",
+  "unverified": [
+    "full Agent suite",
+    "App original nine after source qualification",
+    "Runtime/App live or browser suites",
+    "5 GB actual testbody admission"
+  ],
+  "scope": "No Runtime/App/schema/generated/pin/fixture/source_mapping/authority/protocol changes"
+}

@@ -1,0 +1,55 @@
+{
+  "task": "rt-OPS-D137-security-review-2013",
+  "verdict": "FAIL",
+  "review_target": {
+    "commit": "4932c0f8e2e02ce6a203bf41fe014f9c3a7db5fa",
+    "tree": "2416d249840c7ca94cb4f1666ec3e435f5599c58",
+    "parent": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1"
+  },
+  "source": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
+    "bytes": 70119,
+    "mode": "0755"
+  },
+  "installed_preimage": {
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755"
+  },
+  "protected_inputs": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "embedded_STORE_PY": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+    "embedded_STORE_VERIFY": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209"
+  },
+  "stderr_retention": {
+    "candidate_log": ".provision-stderr/<stage>.stderr",
+    "candidate_mode": "0600",
+    "public_marker": "bounded allowlisted fields only",
+    "normal_store_cleanup": "FAIL: Store._roll deletes staging before _record_failure"
+  },
+  "e2e": {
+    "fixture_gate": "WITHDRAWN",
+    "result": "NOTRUN",
+    "production_install": false,
+    "production_child": false,
+    "store_init": false
+  },
+  "private_installer": {
+    "result": "PASS",
+    "reviewed_installer": "installer1826",
+    "candidate_sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
+    "decision": {
+      "authorization": "D137",
+      "fixture_e2e_gate": "WITHDRAWN",
+      "e2e_result": "NOTRUN",
+      "e2e_pass": false,
+      "install_route": "CAS_MANAGER_ONLY",
+      "production_install": false,
+      "source_commit": "4932c0f8e2e02ce6a203bf41fe014f9c3a7db5fa",
+      "candidate_bytes": 70119,
+      "reviewed_installer": "installer1826"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "same_introducing_commit": "6f4baa07603776840f0a78cc0cf459831bc026af",
+  "paths": {
+    "candidate.parent.config.theme_overrides.visual.canvas.fps": {
+      "upstream_source": "astrid/core/timeline/validators/timeline.py:_timeline_fps",
+      "upstream_behavior": "positive scalar is used; all other JSON forms are accepted by this helper and fall back to 30.0",
+      "receiving_before_fix": "positive scalar or exact positive integer numerator/denominator mapping only",
+      "additional_form_rejected_before_fix": [
+        {"form": "[30000, 1001]", "status": "fixed", "behavior": "accepted as exact Fraction(30000, 1001), authored list retained"},
+        {"form": "(30000, 1001)", "status": "fixed for in-memory callers", "behavior": "accepted as exact Fraction(30000, 1001)"},
+        {"form": "positive two-integer list/tuple with other values", "status": "still rejected", "fix_needed": "none; malformed typed FPS remains strict"},
+        {"form": "wrong-length list/tuple, non-integer pair, zero/negative pair", "status": "still rejected", "fix_needed": "none; invalid typed FPS controls remain strict"},
+        {"form": "null/string/arbitrary mapping/nonpositive or nonfinite scalar", "status": "still rejected", "fix_needed": "none under C0 typed-parameter guard; upstream fallback is a best-effort transition helper, not a typed admission"}
+      ],
+      "preserved_forms": [
+        "positive finite scalar",
+        "exact positive integer {numerator, denominator} mapping"
+      ]
+    },
+    "candidate.parent.config.output.fps": {
+      "upstream_comparator": "not read by pristine _timeline_fps",
+      "receiving_policy": "strict typed FPS declaration",
+      "audit": "positive scalar and exact positive integer mapping remain accepted; malformed, zero, negative, nonfinite and wrong-shape values remain refused"
+    },
+    "candidate.shots[*].internal_timeline.output.fps": {
+      "upstream_comparator": "not read by pristine _timeline_fps",
+      "receiving_policy": "strict typed FPS declaration",
+      "audit": "positive scalar and exact positive integer mapping remain accepted; malformed, zero, negative, nonfinite and wrong-shape values remain refused"
+    }
+  },
+  "no_coercion": "The authored list remains [30000, 1001]; Fraction is validation arithmetic only.",
+  "strict_controls_tested": "[30000], [30000, 0], and {numerator: 0, denominator: 1001} are refused atomically through the production provider."
+}

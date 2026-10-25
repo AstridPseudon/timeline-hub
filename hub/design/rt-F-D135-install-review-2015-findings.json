@@ -1,0 +1,39 @@
+{
+  "format": "timeline-delivery-d135-independent-install-findings-v1",
+  "worker": "rt-F-D135-install-review-2015",
+  "reviewed_commit": "d45e07dfb305c41d588fe168a2518d5ffa1c4954",
+  "reviewed_tree": "92401b1abc84a0a6a23d5b0d9b9bfebeb41638a2",
+  "verdict": "PASS",
+  "result": "actual installed bytes, custody, receipt, and source identity verified",
+  "checks": {
+    "installed_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "installed_mode": "0755",
+    "backup_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "backup_mode": "0755",
+    "source_installed_match": true,
+    "pre_existing_neighbors_unchanged": true,
+    "source_test_unchanged": true,
+    "installed_help": "PASS",
+    "installed_compile": "PASS",
+    "installed_caller_receipt": "PASS — 8 passed"
+  },
+  "resolved_observations": [
+    {
+      "id": "postcheck-scope",
+      "severity": "process",
+      "result": "resolved; no install retry",
+      "detail": "The installer’s first neighbor comparison included the newly authorized predecessor backup. Read-only receipt/read-back evidence confirms the atomic replacement, exact predecessor backup, unchanged pre-existing neighbors, and no second installation."
+    },
+    {
+      "id": "stale-tree-derivative-evidence",
+      "severity": "evidence",
+      "result": "resolved",
+      "detail": "This derivative evidence names the actual reviewed commit d45e07df and tree 92401b1 rather than relying on stale candidate metadata."
+    }
+  ],
+  "boundaries": [
+    "No new installation, fallback, backup rewrite, source/product-code change, or test weakening",
+    "No positive D59 delivery qualification is claimed; positive delivery remains D59-gated",
+    "No normal tuple movement"
+  ]
+}

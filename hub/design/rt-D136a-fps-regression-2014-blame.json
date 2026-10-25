@@ -1,0 +1,28 @@
+{
+  "target": "parent.config.theme_overrides.visual.canvas.fps",
+  "agent_file": "astrid/sdk/timeline/validation.py",
+  "introducing_commit": "6f4baa07603776840f0a78cc0cf459831bc026af",
+  "introducing_commit_parent": "a086cc6db7928dc4a3516d304dd9a472b050f1cf",
+  "blamed_lines": {
+    "fps_parser": [53, 64],
+    "canvas_collection": [81, 92],
+    "final_call": [537]
+  },
+  "first_rejection": "_fps(list_value, path) falls through to _validation_number and raises '<path>: must be a finite number'",
+  "production_caller": "astrid/sdk/timeline/commit.py:1399-1417",
+  "owner": "Agent",
+  "runtime_role": "dispatches the registered provider; it does not introduce the rejection",
+  "parent_probe": {
+    "exact_source": "git show HEAD:astrid/sdk/timeline/validation.py loaded in memory",
+    "own_node": "tests/sdk/test_d136_fps_upstream_compat.py::test_production_caller_accepts_and_retains_upstream_fps_list[False]",
+    "result": "FAIL",
+    "error": "candidate.parent.config.theme_overrides.visual.canvas.fps: must be a finite number"
+  },
+  "candidate_probe": {
+    "own_nodes": [
+      "tests/sdk/test_d136_fps_upstream_compat.py::test_production_caller_accepts_and_retains_upstream_fps_list[False]",
+      "tests/sdk/test_d136_fps_upstream_compat.py::test_production_caller_accepts_and_retains_upstream_fps_list[True]"
+    ],
+    "result": "PASS"
+  }
+}
