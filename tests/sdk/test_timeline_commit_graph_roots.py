@@ -67,6 +67,7 @@ class RuntimeRealm:
             {'slug': 'graph-roots', 'name': 'Graph roots'}, idempotency_key='project')['id']
         self.timeline = 'film'
         self.service.create_timeline(self.project, self.timeline, idempotency_key='timeline')
+        self.service.create_timeline(self.project, 'chapter-1', idempotency_key='internal-timeline')
         media = self.service.ingest(
             self.project, b'graph-root-media', media_type='image/png',
             idempotency_key='graph-media')['data']['object_id']
