@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -26,28 +25,19 @@ def _write_executable(path: Path, contents: str) -> None:
     path.chmod(0o700)
 
 
-def _make_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, dict[str, str]]:
-    agent = tmp_path / "agent"
+def _make_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, dict[str, str], Path]:
+    agent = Path(__file__).resolve().parents[2]
     runtime = tmp_path / "runtime"
     app = tmp_path / "app"
     composition = tmp_path / "composition"
-    for checkout in (agent, runtime, app, composition):
+    for checkout in (runtime, app, composition):
         checkout.mkdir()
 
-    tools = agent / "tools"
-    tools.mkdir()
-    shutil.copyfile(LAUNCHER, tools / LAUNCHER.name)
-    (tools / LAUNCHER.name).chmod(0o700)
     test_paths = [
         agent / "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
         agent / "tests/editing_conformance/test_p4_ten_note_v2_runtime.py",
         agent / "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py",
     ]
-    for test_path in test_paths:
-        test_path.parent.mkdir(parents=True, exist_ok=True)
-        test_path.write_text("# launcher control fixture\n", encoding="utf-8")
-    lock = agent / "runtime.lock.json"
-    lock.write_text(json.dumps({"source_commit": HEX["runtime"], "producer": "astrid-runtime", "files": {}}), encoding="utf-8")
 
     profile = tmp_path / "profile"
     (profile / "node_modules").mkdir(parents=True)
@@ -63,6 +53,7 @@ def _make_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, dict[str, str
     )
     schema = tmp_path / "schema"
     schema.mkdir()
+    preflight_marker = tmp_path / "preflight-env"
 
     fake_git = tmp_path / "git"
     git_mapping = {
@@ -90,6 +81,8 @@ def _make_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, dict[str, str
         fake_python,
         "#!/usr/bin/env python3\n"
         "import sys\n"
+        f"with open({str(preflight_marker)!r}, 'a', encoding='utf-8') as marker:\n"
+        "    marker.write(f'PYTHONNOUSERSITE={__import__(\"os\").environ.get(\"PYTHONNOUSERSITE\")!r}\\n')\n"
         "if len(sys.argv) == 3 and sys.argv[1:2] == ['-P'] and sys.argv[2] == '-':\n"
         "    raise SystemExit(0)\n"
         "if len(sys.argv) == 4 and sys.argv[1:3] == ['-P', '-']:\n"
@@ -133,7 +126,14 @@ def _make_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, dict[str, str
     }
     manifest = tmp_path / "manifest"
     manifest.write_text("".join(f"{key}={value}\n" for key, value in values.items()), encoding="utf-8")
-    return agent, runtime, profile, manifest, {"PATH": f"{tmp_path}:{os.environ['PATH']}"}
+    return (
+        agent,
+        runtime,
+        profile,
+        manifest,
+        {"PATH": f"{tmp_path}:{os.environ['PATH']}"},
+        preflight_marker,
+    )
 
 
 def _run_launcher(
@@ -147,6 +147,7 @@ def _run_launcher(
         **env,
         "HOME": "/private/home",
         "PYTHONNOUSERSITE": "1",
+        "D73_UNKNOWN": "preserved",
         "P4_D73_EVIDENCE": str(evidence),
         "P4_D73_REQUEST_ID": request_id,
     }
@@ -167,7 +168,7 @@ def _run_launcher(
 
 
 def test_launcher_clears_rejected_startup_key_and_preserves_private_origins(tmp_path: Path) -> None:
-    agent, runtime, profile, manifest, env = _make_fixture(tmp_path)
+    agent, runtime, profile, manifest, env, preflight_marker = _make_fixture(tmp_path)
     evidence = tmp_path / "positive-evidence"
     marker = tmp_path / "positive.marker"
     command = tmp_path / "positive-command"
@@ -181,6 +182,7 @@ def test_launcher_clears_rejected_startup_key_and_preserves_private_origins(tmp_
         "test \"$ASTRID_NODE_EXECUTABLE\" = \"$EXPECTED_NODE\"\n"
         "test \"$ASTRID_TEST_NODE_MODULES\" = \"$EXPECTED_PROFILE/node_modules\"\n"
         "test \"$PYTHONPATH\" = \"$EXPECTED_AGENT:$EXPECTED_RUNTIME\"\n"
+        "test \"$D73_UNKNOWN\" = preserved\n"
         "test \"$PWD\" = \"$EXPECTED_AGENT\"\n"
         f"printf 'called\\n' >> {marker!s}\n"
         "exit 17\n",
@@ -191,12 +193,16 @@ def test_launcher_clears_rejected_startup_key_and_preserves_private_origins(tmp_
     )
     assert result.returncode == 17, result.stderr
     assert marker.read_text(encoding="utf-8").splitlines() == ["called"]
+    assert preflight_marker.read_text(encoding="utf-8").splitlines() == [
+        "PYTHONNOUSERSITE=None",
+        "PYTHONNOUSERSITE=None",
+    ]
     assert (evidence / "positive.preflight.exit").read_text(encoding="utf-8").strip() == "0"
     assert (evidence / "positive.body.exit").read_text(encoding="utf-8").strip() == "17"
 
 
 def test_launcher_rejects_poisoned_manifest_before_body(tmp_path: Path) -> None:
-    agent, runtime, profile, manifest, env = _make_fixture(tmp_path)
+    agent, runtime, profile, manifest, env, _ = _make_fixture(tmp_path)
     poisoned = tmp_path / "poisoned-manifest"
     poisoned.write_text(
         manifest.read_text(encoding="utf-8").replace(f"agent_sha={HEX['agent']}", "agent_sha=" + "0" * 40),
