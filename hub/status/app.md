@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T07:43:42Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+<!-- app | 2026-10-26T07:49:26Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
 # app board, 2026-10-26T07:40:23.360828+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
@@ -14,7 +14,7 @@
 | D141 notes | Retain reviewed installed notes | Runtime Luna and Luna | 0203;0243 and Runtime reviews | merged | 0215;0225;0254;0258 | Exact upstream mock and placement lines installed;568 outside files and gap paragraphs exact; render PASS. | Evidence only |
 | U4p postREG | Adopt actual Runtime95d producer | Luna | Qualified Runtime0515 handoff | merged | Author0535; independent0540 PASS | HOME4de54 tree equals reviewedfdea. Only Runtime source lock and installer SHA changed;6 tests/all14mappings/verifier PASS. | 4de54db14bdc |
 | D141 final binding | Retain historical postREG builder packet | Luna | Normal U4p reviewed merge | merged | Source0545; publication0556 | Six originals and all8 pairs retained; registration false. Paired kit dropped; no registration or format conversion. | Source4de54 |
-| D141 final recipes | Qualify ordinary journey controller plan | Luna and independent Luna | Genuine source0736 terminal | review | Source0736; review0740 | All8 builder rows generated; reviewer checks real submit ownership, full pin environment and separate normal floor gates. No registration or body. | Source82e9 |
+| D141 final recipes | Correct ordinary journey controller plan | Luna and independent Luna | Review0740 binding PASS; plan FAIL3 | doing | First return0747 on same0736 branch | Fix all12 pin fields, one submit owner and genuine full-prefix rows for existing normal heavy classification. No kit change, registration or body. | Source82e9 |
 | D141 source | Retain reviewed freeze2 home | Luna and independent Luna | Agent8585 and0454 PASS | merged | 0448;0454;home0459 | Clean5344 tree dd989 equals reviewed dc1a; d822 frozen ancestor. No later upstream chase. | 5344c53e3063 |
 | D141 receiving | Retain qualified execution recipes | Luna and Luna | Independent0425 PASS | merged | 0420;0425 | 13 byte-published originals; all8 findings cleared; no body or source merge. | Composition635f |
 | D141 binding | Supply genuine freeze2 paired rows | Luna | Actual source5344 | merged | 0459 | All8 pairs published0503. First command hashes98522/97277; registration false. | 5344c53e3063 |
@@ -36,6 +36,7 @@
 | D141 core | Receive definitive same-kind comparison | Agent and service | Main D141u | blocked:agent | 0455;0507;0500;0508 | Early17 candidates,376 UNKNOWN retained; freeze2 identical full pair definitive. Farm only for undecidable environment need. | Pending8585 pair |
 | D141 REG author | Reserve newly proved product repairs | HARD Sol | Genuine new per-ID proof | gated:REG-proof | Reserved app-A2-D141l-proved-REG-sol | Existing approved0149 lineage. No speculative writer or own-test investigation. | Not dispatched |
 | D74 headroom | Recycle obsolete source pins | Manager and lead | Host0550/0702/0718 CLEAR; repeated guards | merged | Recycle5344;867; oldAgent28e andRuntime6a | Four exact superseded source pins recycled normally; old28e/6a freed150MB. All proof rawKEEP and Git source objects retained. | No source edit |
+| D74 completed pins | Release two completed source checkouts | Manager and lead | Lead host process audit | blocked:applead | Static0748; host audit requested | Pristined822 unit comparison closed; actual Agentecdc supersedes8585. Both clean, no live references or hardlinks, empty sourceKEEP; no removal yet. | No source edit |
 | D74 holds | Preserve refused or unowned targets | Manager and lead | Existing owner dispositions | gated:owner-holds | Existing guarded holds | DirtyU3, lockedU3c, missing metadata bundles, hardlink cache and refused orphan graph untouched. | No source edit |
 | D141 SWAP | Retain documented safety-held gap | Existing owner | D130 absolute hold | gated:safety-D130 | Actual3250;refusal1537 | Original NO GO. No retry, transfer or alternate qualification. | Historical tuple |
 | D141 stopped | Retain other known gaps and failures | Existing owners | D141 stop | gated:D141-stop | Existing stopped lineages | Element32016/15200 FAIL;B0222330 nine setup errors;D77 unqualified;own tests visible unchanged. | Historical tuples |
@@ -69,8 +70,8 @@ Blockers: App journeys — Normal5.0/5.2GB floors after pairedDROP; no journey-k
 Blockers: Agent — Current board0714 assigns binding0718 then operational review; ecdc full pair and changed-CLI P4 still need4714564096 bytes. No App duplicate.
 Blockers: Safety — D130 absolute hold; owner-gated hub lead only after explicit owner approval. Refused, dirty, unowned and hardlinked targets retained.
 
-Next ready: Ordinary journey recipe review0740; final genuine builder0736 complete. App finite REG JOIN qualified0736. Journeys bind actual82e9 after normal admission; no second heavy body or paired exception. Final pin pass D141v waits all-lane REG closure. Reserved HARD Sol0149 lineage app-A2-D141l-proved-REG-sol remains undispatched until independently proved new REG.
-live 1 / cap 3; ready-undispatched 0. Unit JOIN0736 terminal qualified; ordinary recipe reviewer0740 active. All four unit phases terminal; no heavy body. Normal journey headroom still absent.
+Next ready: First ordinary recipe return0747 then one review; lead host audit0748 for completed source pins. App finite REG JOIN qualified0736. Journeys bind actual82e9 after normal admission; no second heavy body or paired exception. Final pin pass D141v waits all-lane REG closure. Reserved HARD Sol0149 lineage app-A2-D141l-proved-REG-sol remains undispatched until independently proved new REG.
+live 1 / cap 3; ready-undispatched 0. First recipe return0747 active; unit JOIN0736 independently closed. No heavy body. All four unit phases terminal; no heavy body. Normal journey headroom still absent.
 
 Later: Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 

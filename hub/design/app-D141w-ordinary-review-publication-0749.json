@@ -1,0 +1,35 @@
+{
+  "utc": "2026-10-26T07:49:36.339769+00:00",
+  "files": [
+    {
+      "source": "workers/app-P-D141w-ordinary-recipe-review-0740/evidence/review.json",
+      "destination": "design/app-P-D141w-ordinary-recipe-review-0740-review.json",
+      "sha256": "6dce6b371178b663c40ad1c4fd933df220a241d32ddf78d34dbbd063be629835",
+      "bytes": 7264
+    },
+    {
+      "source": "workers/app-P-D141w-ordinary-recipe-review-0740/evidence/findings.md",
+      "destination": "design/app-P-D141w-ordinary-recipe-review-0740-findings.md",
+      "sha256": "75a621703a67dcba9db79ea300e97502b4a88b77bb418c0a627f42cb917a891c",
+      "bytes": 5493
+    },
+    {
+      "source": "workers/app-P-D141w-ordinary-recipe-review-0740/evidence/source-manifest.json",
+      "destination": "design/app-P-D141w-ordinary-recipe-review-0740-source-manifest.json",
+      "sha256": "b84b13539f30b2aedc19a6c3bff4b3e9a4a09f046d40e3c976126787c4b05514",
+      "bytes": 6676
+    },
+    {
+      "source": "workers/app-P-D141w-ordinary-recipe-review-0740/evidence/validation.md",
+      "destination": "design/app-P-D141w-ordinary-recipe-review-0740-validation.md",
+      "sha256": "824909257d5f7122458ae5ac839acb3b89c506fcb506098f326dc07109c9e96f",
+      "bytes": 4231
+    },
+    {
+      "source": "workers/app-P-D141w-ordinary-recipe-review-0740/evidence/handoff.md",
+      "destination": "design/app-P-D141w-ordinary-recipe-review-0740-handoff.md",
+      "sha256": "a16614d0347228d3d0f9ba33d1fd6e059212acabf2fb219ca83bd4e75a682599",
+      "bytes": 1870
+    }
+  ]
+}

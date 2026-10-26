@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "task": "app-P-D141w-ordinary-recipe-review-0740",
+  "status": "REVIEW_COMPLETE",
+  "review_scope": "independent read-only operational review of the D141w final-head source-only packet",
+  "base_composition": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "source_only": true,
+  "pure_builder_binding": {
+    "status": "PASS",
+    "builder": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "historical_blob_equal": true,
+    "node": "v20.19.4",
+    "exports_checked": ["buildSubmitPlan", "serviceRecipe", "exactCheckoutPath"],
+    "selectors": 8,
+    "commands": 16,
+    "one_lf_rows": 16,
+    "helper_override": null,
+    "source_spec_blobs": 8,
+    "source_guards": {
+      "original_tails_inputs_predicates_unchanged": true,
+      "all_eight_spec_blobs_match_5344": true,
+      "corrected_placement_first": true,
+      "popup_add_unchanged": true,
+      "no_popup_swap": true,
+      "no_element_selector": true,
+      "no_duplicate_p4_or_p5": true,
+      "no_d141s_pairedkit": true,
+      "no_manual_row_or_command_construction": true
+    }
+  },
+  "controller_plan": {
+    "status": "FAIL",
+    "finding_ids": ["D141w-C1", "D141w-C2", "D141w-C3"],
+    "registration": false,
+    "execution": "not_run",
+    "exact_app_pin": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "exact_agent_pin": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "exact_app_checkout_materialized": false,
+    "exact_agent_checkout_materialized": false,
+    "metadata_8585_drift": "expected and not a defect; current prospective producer is ecdc242e"
+  },
+  "findings": [
+    {
+      "id": "D141w-C1",
+      "severity": "blocking",
+      "title": "The documented --submit argv does not bind the reviewed tuple or a unique artifact path",
+      "evidence": [
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs:345-359",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs:361-372",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs:642-669",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/controller-plan.md"
+      ],
+      "observation": "With only D66_SUBMIT_TARGET and D66_SUBMIT_SUITE, --submit calls captureSubmitPins(normalHomes). It therefore binds whatever mutable normal homes contain at invocation time, not the reviewed App 82e9e13d, Agent ecdc242e, Runtime 95d98f03, and Composition 635f4de0 tuple. The plan also leaves D66_OUTPUT_DIR/D66_SUBMIT_PLAN_PATH at the shared default derived from TMPDIR and selector name.",
+      "narrow_fix": "After exact App and Agent checkouts are materialized and verified, include all twelve D66_*_SHA, D66_*_TREE, and D66_*_CHECKOUT values from the packet plus a per-selector unique absolute D66_OUTPUT_DIR or D66_SUBMIT_PLAN_PATH. Keep D66_SUBMIT_TARGET and D66_SUBMIT_SUITE. Do not derive or reuse 8585ed9c."
+    },
+    {
+      "id": "D141w-C2",
+      "severity": "blocking",
+      "title": "The manual request-test continuation duplicates work already owned by --submit",
+      "evidence": [
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs:638-701",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs:624-635",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test:1-16",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test:1-8"
+      ],
+      "observation": "A fresh --submit requests exact checkouts, registers both rows, requests preflight, waits for preflight PASS, then requests the normal suite before returning. Its printed submitPlainPlan is explanatory but repeats those request commands. On a prior partial artifact, resume waits/re-requests according to artifact state. request-test creates a new ID on every call, so manually following the printed preflight and normal requests can duplicate bodies; a crash after the normal request and before artifact save also has a duplicate-body window.",
+      "narrow_fix": "The manager must run one owner only: --submit performs registration, preflight request/wait, and normal request. After it returns, wait only the recorded artifact.normal ID. Do not run the printed request-test continuation. Treat the existing artifact/lock resume as the only supported continuation and retain the first refusal/error; no alternate route."
+    },
+    {
+      "id": "D141w-C3",
+      "severity": "blocking",
+      "title": "Admission and trace wording does not match the installed test-run seam",
+      "evidence": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:19-57",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:88-106",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-disk-trace.py:16-17",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/controller-plan.md"
+      ],
+      "observation": "The plan calls preflight/body a paired admission unit and promises one continuous 5-second KEEP trace across it. request-test/test-run admits each request independently: light is 5,000,000,000 bytes; default heavy is 5,200,000,000 bytes; and the installed hard refusal is at or below 4,500,000,000 bytes, not 4,000,000,000. The trace is started only for a heavy body, samples every five seconds, and is not started for a light preflight or a current journey with no measured-floor receipt. The current 82e9 suite name is not the old 520d7e4f heavy special case.",
+      "narrow_fix": "Describe preflight and body as separate ordinary admissions: light preflight at 5 GB and the applicable body admission at its actual test-run class (default heavy 5.2 GB only when classified heavy). State that the existing route provides a 5-second KEEP trace only for heavy bodies and retains the installed 4.5-GB refusal seam; it cannot promise a trace or a 4.0-GB stop for a no-receipt light journey. Do not add a paired kit, exception, or new admission condition."
+    }
+  ],
+  "preserved_decisions": [
+    "C0 v2 request/reply wire fields and enums are unchanged.",
+    "D141s-c paired kit is dropped; no adapter, format step, paired exception, or 0545 registration.",
+    "Modern schema 4 is not rejected because the dropped kit expected schema 2; the dropped kit never reads it.",
+    "D141j popup ADD remains NOT REPRODUCED/cause unknown; repeat-failure diagnostics remain the four required preconditions.",
+    "App 82e9e13d and Agent ecdc242e are prospective only; no actual checkout claim.",
+    "Historical 8585 metadata drift, held IDs 8912/19479, and cancelled originals 18617 are not defects or targets."
+  ],
+  "tests": {
+    "product_tests": "not_run_by_scope",
+    "source_review_checks": "PASS",
+    "full_suite": "not_run",
+    "live_request_or_body": "not_run"
+  }
+}

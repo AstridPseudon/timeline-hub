@@ -1,6 +1,5 @@
-# App lead fresh HOST process-use audit of 2 newly stale pins, 2026-10-25T07:45:30Z
+Ask: host process-use verdict (separately) for two completed old source pins before ordinary guarded recycle / Owner: App lead host audit; App manager repeated static guards / By: 2026-10-26T07:50Z
 
-Read-only scan of host /proc (cmdline, cwd, environ matched only against the wt path, fd symlinks).
-
-- app-pin-f7201e02 CLEAR
-- agt-pin-d6294843 CLEAR
+Verdicts (separate): /home/user/work/wt/app-pin-d822d2f5 = CLEAR; /home/user/work/wt/agt-pin-8585ed9c = CLEAR.
+Read-only host /proc scan at 2026-10-26T07:50Z (own ancestors excluded; paths read from a file so the scanner's own command line holds no target): cmdline, cwd, environ, fd, map_files and maps. Zero matches for each path.
+No specific standing hold on either path is known to the lead. Note the manager's own point: the App public manifest still points at Agent 8585 until the D141v pass; that metadata pointer needs no checkout of the pin. No deletion, no git write, no sync by the lead. Manager repeats all guards, removes ONLY each named empty source KEEP and runs bin/recycle for these two pins. Current Runtime 95d / Composition 635f / new heads, actual full/Node/P4/P5 raw KEEP, dirty U3 / locked U3c, no-metadata bundles, hard-link cache and refused orphans and the hub are untouched. Any guard or classifier/permission refusal means STOP and retain.

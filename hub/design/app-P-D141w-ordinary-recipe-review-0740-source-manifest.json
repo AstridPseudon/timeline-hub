@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "task": "app-P-D141w-ordinary-recipe-review-0740",
+  "review_type": "independent_read_only_operational_review",
+  "source_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence",
+  "source_packet_outputs": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/binding.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/controller-plan.md",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/normal-command.txt",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/preflight-command.txt",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/source-manifest.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/validation.md",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence/handoff.md"
+  ],
+  "base_composition": {
+    "repository": "/home/user/work/composition",
+    "branch": "tl/integration",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "status": "clean"
+  },
+  "actual_tuple": {
+    "app": {
+      "repository": "/home/user/work/app",
+      "branch": "tl/integration",
+      "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "status": "clean",
+      "exact_checkout": "/home/user/work/wt/app-pin-82e9e13d",
+      "exact_checkout_materialized": false
+    },
+    "agent": {
+      "repository": "/home/user/work/agent",
+      "branch": "tl/integration",
+      "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "status": "clean",
+      "exact_checkout": "/home/user/work/wt/agt-pin-ecdc242e",
+      "exact_checkout_materialized": false
+    },
+    "runtime": {
+      "repository": "/home/user/work/runtime",
+      "branch": "tl/integration",
+      "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "status": "clean",
+      "exact_checkout": "/home/user/work/wt/rt-pin-95d98f03",
+      "exact_checkout_materialized": true
+    },
+    "composition": {
+      "repository": "/home/user/work/composition",
+      "branch": "tl/integration",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "status": "clean",
+      "exact_checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "exact_checkout_materialized": true
+    }
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "historical_git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "historical_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "node": "v20.19.4",
+    "pure_exports": ["buildSubmitPlan", "serviceRecipe", "exactCheckoutPath"],
+    "pure_builder_result": {
+      "selectors": 8,
+      "commands": 16,
+      "rows": 16,
+      "row_encoding": "UTF-8 command row plus exactly one LF",
+      "status": "PASS"
+    }
+  },
+  "selector_order": [
+    "p2-automatic-child-placement",
+    "p2-popup-add",
+    "p2-parent-move",
+    "p2-transition-none-single",
+    "p2-transition-none-bulk",
+    "p2-register-asset",
+    "p1",
+    "p3"
+  ],
+  "source_specs": {
+    "count": 8,
+    "all_original_tails_inputs_predicates_unchanged": true,
+    "all_eight_spec_blobs_match_5344": true,
+    "placement_first": true,
+    "popup_add_unchanged": true,
+    "popup_swap_absent": true,
+    "element_selector_absent": true,
+    "duplicate_p4_p5_absent": true
+  },
+  "registry_preimage": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "bytes": 733192,
+    "sha256": "e100f177f029aedc17b5e4ad3fb697e1c9e98142ca88e6c91101c5f0046ac5f7",
+    "prospective_82e9_names_present": false,
+    "historical_0545_names_present": false,
+    "registry_written": false
+  },
+  "receipts": {
+    "app": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "exists": false
+    },
+    "agent": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "exists": false
+    },
+    "runtime": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-95d98f038320d5d46bd679ac000ab3e15825c935",
+      "exists": true,
+      "selected_path": "/home/user/work/wt/rt-pin-95d98f03"
+    },
+    "composition": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "exists": true,
+      "selected_path": "/home/user/work/wt/vw-pin-635f4de0"
+    }
+  },
+  "source_receipts": {
+    "app_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141w-final-catchup-source-home-0734.json",
+    "app_qualification": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141w-final-catchup-review-0707/evidence/review.json",
+    "agent_handoff": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-agent-lead-runtime-20261026T0654Z-D141w-dry-run-and-pin-pass.md",
+    "runtime_handoff": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-P5-D141-ecdc-applicability-0637-handoff.md"
+  },
+  "preserved": {
+    "metadata_8585_drift_expected": true,
+    "historical_0545_unregistered": true,
+    "d141s_c_paired_kit_dropped": true,
+    "modern_schema_4_not_rejected": true,
+    "d141j_wording_and_diagnostics_retained": true
+  }
+}
