@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "status": "node_terminal_fail_exact_same_id_consumed",
+  "updated_at": "2026-10-26T07:27:14Z",
+  "job_id": "app-pin-d822d2f5-full-d141-node-phase-1026072325-11111",
+  "request": {
+    "target": "app-pin-d822d2f5",
+    "repo": "app",
+    "suite": "full-d141-node-phase",
+    "nocache": true,
+    "request_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/request",
+    "request_sha256": "7f0e9942b561dc5db0d41df2f5e2ceceb74fab22f1729c79921856073973279d",
+    "keep_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/KEEP",
+    "status_at_capture": "queued",
+    "status_terminal": "fail",
+    "exit": 1,
+    "duration_seconds": 95
+  },
+  "source": {
+    "checkout": "/home/user/work/wt/app-pin-d822d2f5",
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "package_json_bytes": 1666,
+    "command": "npm run test:node",
+    "phase_row": "full-d141-node-phase"
+  },
+  "policy": {
+    "one_node_request": true,
+    "same_id_wait_only": true,
+    "no_full_rerun": true,
+    "receipt_floor_bytes": 4600000000
+  },
+  "outcome": {
+    "tests": 317,
+    "suites": 33,
+    "passed": 289,
+    "failed": 2,
+    "actual_skipped": 26,
+    "declared_skip_entries": 27,
+    "trace_validation": "trace PASS: 21 actual samples",
+    "body_pid": 18199,
+    "node_version": "v22.22.0",
+    "failure_kind": "environment-type ssh-keygen ENOENT at two independent callsites"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "purpose": "Source-only attachment custody and hash manifest",
+  "target": {
+    "job_id": "app-pin-d822d2f5-full-d141-node-phase-1026072325-11111",
+    "request_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/request",
+    "request_sha256": "7f0e9942b561dc5db0d41df2f5e2ceceb74fab22f1729c79921856073973279d",
+    "keep_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/KEEP",
+    "status_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/status",
+    "status": "running",
+    "receipt_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/recorded-measured-floor.json",
+    "receipt_sha256": "d0616b60bcbf6e622f812fabd765d5c4d3d0e3c208165adff7e19959d5500172"
+  },
+  "source": {
+    "worktree": "/home/user/work/wt/app-pin-d822d2f5",
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "clean": true,
+    "git_diff_exit": 0,
+    "command": "npm run test:node",
+    "command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef",
+    "package_json": {
+      "path": "/home/user/work/wt/app-pin-d822d2f5/package.json",
+      "sha256": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6",
+      "bytes": 16880,
+      "test_node_script_bytes": 1666
+    }
+  },
+  "derived_data_inputs": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-node-kind-witness-0653/evidence/normalized-start.df",
+      "role": "start",
+      "sha256": "2be38b1dae19abd9a85600fe68ea33acd6adf089fd39fe96cfabfabdfc263b02",
+      "value_bytes": 4814028800
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-node-kind-witness-0653/evidence/normalized-stop.df",
+      "role": "stop",
+      "sha256": "1e865eaf7f4729573c7490e87f50b87b3ba40c50dbd19db16545f85ee1dd538f",
+      "value_bytes": 4625068032
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-node-kind-witness-0653/evidence/measurement.json",
+      "sha256": "90b1a60c02cc8b0864316d4aa7af7417e745f399570389874a760b88ee207b05"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-node-kind-witness-0653/evidence/normalization.json",
+      "sha256": "3d8bf6e1d68f3bb082ed6e5336e1a97d91717b67311c5e93f292a9faff08ef6c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-node-data-independent-0705/evidence/review.json",
+      "sha256": "34f86c37d92d0b9f5c7200eb2df4f81421054408a01f52fd064de925ce6b33c1",
+      "node_data": "PASS",
+      "qualified_for_future_node_only": true
+    }
+  ],
+  "measurement": {
+    "growth_bytes": 188960768,
+    "floor_bytes": 4600000000,
+    "minimum_bytes": 4600000000,
+    "stop_bytes": 4000000000,
+    "margin_bytes": 200000000,
+    "start_bytes": 4814028800,
+    "stop_observed_bytes": 4625068032,
+    "sampling_seconds": 5,
+    "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT"
+  }
+}

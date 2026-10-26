@@ -1,0 +1,66 @@
+{
+  "utc": "2026-10-26T07:41:58.692519+00:00",
+  "kind": "byte-exact committed evidence recovery and publication",
+  "reason": "reviewer wrote relative evidence despite required absolute output paths; harness committed and auto-recycled source; no rewritten original",
+  "worker": "app-F-D141l-pristine-join-independent-0736",
+  "source_repo": "/home/user/work/composition",
+  "source_commit": "2a08bc82919e8158cb478fb6c3b89b42f67dca6e",
+  "files": [
+    {
+      "original_git_commit": "2a08bc82919e8158cb478fb6c3b89b42f67dca6e",
+      "original_git_path": "evidence/review.json",
+      "blob": "ff322813477e4e25c267b622b7073ce9723c57bf",
+      "recovered_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-join-independent-0736/evidence/review.json",
+      "published_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-join-independent-0736-review.json",
+      "sha256": "775998f3eac3cf3ff361d8fd87d21e192470ad1cf94d96e73b166231b21df6d0",
+      "bytes": 1803
+    },
+    {
+      "original_git_commit": "2a08bc82919e8158cb478fb6c3b89b42f67dca6e",
+      "original_git_path": "evidence/findings.md",
+      "blob": "ed4f7f349fe3c4023082264b837ff163b75b7a6e",
+      "recovered_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-join-independent-0736/evidence/findings.md",
+      "published_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-join-independent-0736-findings.md",
+      "sha256": "33c08943d21564035e018b589ee8eba9b6387b2f172845f05db4cddf05e2f01a",
+      "bytes": 1896
+    },
+    {
+      "original_git_commit": "2a08bc82919e8158cb478fb6c3b89b42f67dca6e",
+      "original_git_path": "evidence/source-manifest.json",
+      "blob": "02a9a3bd8e2dd2bdf7f1bf6557da48fa159cbcef",
+      "recovered_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-join-independent-0736/evidence/source-manifest.json",
+      "published_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-join-independent-0736-source-manifest.json",
+      "sha256": "f88d800b26bc73d31489e529d771b07f535eb2a1a20c9a3f65b896e15e23f2c2",
+      "bytes": 5044
+    },
+    {
+      "original_git_commit": "2a08bc82919e8158cb478fb6c3b89b42f67dca6e",
+      "original_git_path": "evidence/environment-kind.json",
+      "blob": "15186d29c6b8cd48dc2aaa9794a5be23160ceb22",
+      "recovered_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-join-independent-0736/evidence/environment-kind.json",
+      "published_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-join-independent-0736-environment-kind.json",
+      "sha256": "45fcf284da70000c2383b7a9c2cd2ec30b4cfb8bb670a4e2d52b55199ad5071c",
+      "bytes": 1784
+    },
+    {
+      "original_git_commit": "2a08bc82919e8158cb478fb6c3b89b42f67dca6e",
+      "original_git_path": "evidence/validation.md",
+      "blob": "2a4012858b538a172b9ac1ba51919ebf162d0374",
+      "recovered_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-join-independent-0736/evidence/validation.md",
+      "published_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-join-independent-0736-validation.md",
+      "sha256": "fcdb37cc84daeca12639f317bf8fda83e6e52fe7f42d301811e0a0f588ad4b46",
+      "bytes": 1205
+    },
+    {
+      "original_git_commit": "2a08bc82919e8158cb478fb6c3b89b42f67dca6e",
+      "original_git_path": "evidence/handoff.md",
+      "blob": "d0567600686b9117ec1a42e1c020b4b12fc17015",
+      "recovered_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-join-independent-0736/evidence/handoff.md",
+      "published_exact_to": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-join-independent-0736-handoff.md",
+      "sha256": "605858101c0c9c81103e6e70d24daa87fdd6423ade12e03d4c1d14deaba37a0e",
+      "bytes": 770
+    }
+  ],
+  "product_change": false,
+  "new_review_or_tests": false
+}

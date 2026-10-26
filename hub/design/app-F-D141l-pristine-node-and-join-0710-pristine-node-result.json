@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "status": "FAIL",
+  "job_id": "app-pin-d822d2f5-full-d141-node-phase-1026072325-11111",
+  "source": {
+    "repo": "app",
+    "checkout": "/home/user/work/wt/app-pin-d822d2f5",
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "parent": "7796159ce89408aa307988ec4cfc29bc99783a25",
+    "clean": true,
+    "package_json_test_node_bytes": 1666,
+    "test_node_script_sha256": "cfe43a224171922de49fe96c4b7647554c63263a090477137430ad4596099455"
+  },
+  "execution": {
+    "service_execution_kind": "normal request-test -> dispatcher/test-run",
+    "suite": "full-d141-node-phase",
+    "command": "npm run test:node",
+    "command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef",
+    "request_no_cache": true,
+    "exit": 1,
+    "duration_seconds": 95,
+    "node_version": "v22.22.0",
+    "node_phase": "standalone actual Node phase"
+  },
+  "counts": {
+    "tests": 317,
+    "suites": 33,
+    "passed": 289,
+    "failed": 2,
+    "cancelled": 0,
+    "actual_skipped": 26,
+    "declared_skip_entries": 27,
+    "todo": 0,
+    "declared_entries_distinct_from_actual_skips": true
+  },
+  "raw": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111",
+    "request_sha256": "7f0e9942b561dc5db0d41df2f5e2ceceb74fab22f1729c79921856073973279d",
+    "snap_sha256": "e683b9f9353d1db70d1d1c598205efe3e08cff10eeb0ef878b6cf9947fead7d8",
+    "summary_sha256": "f0557a00138a0b1cdbec2bd227b62678cef8c2af76a0acd84aa1bae42e2ec203",
+    "log_sha256": "86e0f277c2397a713337fdc327d442bfb795da63d31ec3ab00ac47f34513e6a0",
+    "trace_sha256": "6224f257c2072eab6e15a470570ec706ec42c7025c829c46c782ca326c9bebb2",
+    "receipt_sha256": "d0616b60bcbf6e622f812fabd765d5c4d3d0e3c208165adff7e19959d5500172",
+    "trace_validation": "trace PASS: 21 actual samples",
+    "keep": true
+  },
+  "failures": [
+    {
+      "file": "scripts/quality/capture-extension-external-evidence.test.mjs",
+      "title": "computes and verifies an Ed25519 public-key fingerprint without reading a private key",
+      "callsite": "line 133",
+      "predicate_or_input": "execFileSync('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-f', '<temp>/operator-key'])",
+      "observed_error": "spawnSync ssh-keygen ENOENT",
+      "source_blob": "56150e5b4c3421e01b971e6a80631dcc60390804"
+    },
+    {
+      "file": "scripts/quality/check-extension-ship-evidence.test.mjs",
+      "title": "suite-level uncaught setup failure after external-evidence failure",
+      "callsite": "line 70",
+      "predicate_or_input": "module-level test setup invokes ssh-keygen through the external-evidence path",
+      "observed_error": "spawnSync ssh-keygen ENOENT",
+      "source_blob": "ad87267276e738afed37e076832bc3674c78e379",
+      "causal_relation": "independent second suite-level failure; not collapsed into the first"
+    }
+  ],
+  "result_notes": {
+    "environment_type": true,
+    "same_kind_comparison": "current standalone Node result has the same two exact failure callsites and same source blobs",
+    "no_environment_repair": true,
+    "no_product_author": true
+  }
+}

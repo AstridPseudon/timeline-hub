@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "verdict": "PASS_SOURCE_REVIEW_WITH_TESTS_FAIL",
+  "source_review": "PASS",
+  "tests": "FAIL",
+  "custody": "PASS",
+  "findings": [
+    ["CURRENT_FULL", "FAIL", "8638 genuine FAIL; 19745 pass, 32 fail, 4 files, separate collection error; Node NOTRUN"],
+    ["PRISTINE_FULL", "FAIL", "17524 genuine FAIL; 17866 pass, 18 fail, 3 files; all 18 IDs preserved"],
+    ["NODE", "FAIL", "19156 and 11111 each have two exact ssh-keygen ENOENT failures"],
+    ["CURRENT_IDS", "BOUNDED_NO_REGRESSION", "All 32 current IDs are N/A/OWN: 5 absent files and 27 absent exact frozen titles/predicates; no renamed equivalent found"],
+    ["COLLECTION", "FAIL_SEPARATE", "genericPatch module-level schema-digest collection error; file absent upstream; not a test ID"],
+    ["NODE_ENV", "NONREG_PROVED", "Same normal-service environment kind and same source blobs/callsites; line-70 setup failure is independent"],
+    ["RECEIPT_TRACE", "PASS_CUSTODY", "Hashes, source/tree/parent, validators, traces, floors, gaps, KEEP, and derived-DATA disclosure qualify"],
+    ["OPS_METADATA", "BOUNDED_HISTORICAL", "0705 saw one KEEP absent; final read present; D74 records 161/161, 111/111, 38/38"],
+    ["D141W", "PASS_BOUNDED", "493/tree6a6e49 exact reviewed 21-path upstream delta; 255 tests and both TS configs passed; 3 pre-existing lint errors retained"]
+  ],
+  "author_0710_claims": {
+    "qualify": ["pristine full counts/NOTRUN chain", "pristine Node result/source/command binding", "Node nonREG", "separate collection error", "raw custody/no global REG0", "C0 §§1-7 preservation"],
+    "corrected": ["32 OWN/UNKNOWN -> exact N/A/OWN", "1666/1709 are test:node script bytes, not package file sizes", "full comparison is direct, not Node-only"],
+    "remain_unknown": []
+  }
+}

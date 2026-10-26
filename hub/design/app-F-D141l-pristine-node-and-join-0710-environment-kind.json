@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "comparison": {
+    "current_node_job": "app-full-d141-node-phase-1026063009-19156",
+    "pristine_node_job": "app-pin-d822d2f5-full-d141-node-phase-1026072325-11111",
+    "same_environment_kind": true,
+    "kind": "normal service standalone Node phase",
+    "service_route": "request-test -> dispatcher/test-run",
+    "repo": "app",
+    "suite": "full-d141-node-phase",
+    "request_no_cache": true,
+    "node_version": "v22.22.0",
+    "sampling_seconds": 5,
+    "one_heavy_body": true,
+    "direct_run": false,
+    "environment_repair": false
+  },
+  "source_differences_preserved": {
+    "current_head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "current_tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "pristine_head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "pristine_tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "current_test_node_script_bytes": 1709,
+    "pristine_test_node_script_bytes": 1666,
+    "current_test_node_script_sha256": "74e219373befd25b92f85eb21e84d685c4bf767b0ab969a1e464097766d5363a",
+    "pristine_test_node_script_sha256": "cfe43a224171922de49fe96c4b7647554c63263a090477137430ad4596099455"
+  },
+  "failure_equivalence": [
+    {
+      "file": "scripts/quality/capture-extension-external-evidence.test.mjs",
+      "title": "computes and verifies an Ed25519 public-key fingerprint without reading a private key",
+      "current_callsite": "line 133",
+      "pristine_callsite": "line 133",
+      "current_error": "spawnSync ssh-keygen ENOENT",
+      "pristine_error": "spawnSync ssh-keygen ENOENT",
+      "source_blob_current": "56150e5b4c3421e01b971e6a80631dcc60390804",
+      "source_blob_pristine": "56150e5b4c3421e01b971e6a80631dcc60390804",
+      "classification": "NONREG_PROVED_SAME_ENVIRONMENT_TYPE"
+    },
+    {
+      "file": "scripts/quality/check-extension-ship-evidence.test.mjs",
+      "title": "suite-level uncaught setup failure after external-evidence failure",
+      "current_callsite": "line 70",
+      "pristine_callsite": "line 70",
+      "current_error": "spawnSync ssh-keygen ENOENT",
+      "pristine_error": "spawnSync ssh-keygen ENOENT",
+      "source_blob_current": "ad87267276e738afed37e076832bc3674c78e379",
+      "source_blob_pristine": "ad87267276e738afed37e076832bc3674c78e379",
+      "classification": "NONREG_PROVED_SAME_ENVIRONMENT_TYPE"
+    }
+  ],
+  "scope_limit": {
+    "full_vitest_current_vs_pristine": "not same environment kind as standalone Node; no REG/nonREG inference from full-only differences",
+    "current_32_full_failures": "not classified by Node comparison",
+    "global_reg_zero": "not claimed"
+  }
+}

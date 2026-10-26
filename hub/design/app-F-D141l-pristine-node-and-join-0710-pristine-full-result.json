@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "status": "FAIL",
+  "job_id": "app-pin-d822d2f5-full-1026063854-17524",
+  "source": {
+    "repo": "app",
+    "checkout": "/home/user/work/wt/app-pin-d822d2f5",
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "parent": "7796159ce89408aa307988ec4cfc29bc99783a25",
+    "clean": true
+  },
+  "execution": {
+    "route": "request-test -> dispatcher/test-run",
+    "suite": "full",
+    "command": "npm test -- --maxWorkers=3",
+    "command_sha256": "10ec988435479a2c3967d004429343b8bc5661b8b815d00ad30fbd455a2ca54b",
+    "exit": 1,
+    "duration_seconds": 1000,
+    "vitest_duration_seconds": 993.32,
+    "node_phase": "NOTRUN",
+    "node_phase_reason": "Vitest full phase failed before the &&-chained npm run test:node phase"
+  },
+  "counts": {
+    "test_files_failed": 3,
+    "test_files_passed": 1277,
+    "test_files_total": 1280,
+    "tests_failed": 18,
+    "tests_passed": 17866,
+    "tests_total": 17884,
+    "collection_or_load_failures": 0
+  },
+  "raw": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-1026063854-17524",
+    "request_sha256": "26f6a8d0dfded2d7c96eba9cf2577862da0a841c91e84a26debe7a933a304321",
+    "snap_sha256": "fd854582a7994be1e5238560c938b824ea55d064cf85d95d68c9bb957cf078ab",
+    "summary_sha256": "d363b2833e4ebcf39d6c18b620db088205a887cac8a71143a2748bda1ed4514c",
+    "log_bytes": 1578557,
+    "trace_sha256": "719e51c288ed38d204dc1662934485ab7d2cdd914f7d48cb40ddd5c66d6d3a3d",
+    "trace_samples": 202,
+    "trace_validation": "trace PASS: 202 actual samples",
+    "keep": true
+  },
+  "failed_ids": [
+    "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > uses injected host values at typed effect, typed animation, legacy, and sequence helper callsites",
+    "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > renders canonical defaults and per-clip managed overrides through the installed local owner",
+    "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > rejects installed-only and unknown IDs without substitution and renders a loud typed placeholder",
+    "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > keeps a public owner mismatch unavailable instead of resolving another text-card owner",
+    "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > does not interpret another installed owner’s params as local end-spanning card assets",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > keeps explicit host B through two nested shot levels instead of switching to context host A",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > retains context host A through nested shots when there is no explicit override",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > renders nested content with explicit host B when the provider context has no host",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > updates the cached nested timeline when the explicit host changes without remounting",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > deduplicates repeated sequential mounts: one load, second mount synchronous",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > deduplicates concurrent mounts sharing one in-flight load",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > no loading placeholder when crossing a primed shot boundary (cached config reused synchronously)",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > sequences premount so the next shot mounts before the boundary",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > keeps nested child content mounted while hidden before a canonical shot boundary",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > invalidates a specific timeline after a save so the next mount reloads fresh data",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx > ShotClipSequence referenced-timeline cache > a failed load falls back to the placeholder and retries on a later mount",
+    "src/tools/video-editor/compositions/TimelineRenderer.test.tsx > Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d) > registry includes the four 2rp clip types",
+    "src/tools/video-editor/compositions/TimelineRenderer.test.tsx > Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d) > section-hook entry resolves to a component from @banodoco/timeline-theme-2rp"
+  ],
+  "trace": {
+    "body_pid": 22409,
+    "first_available_bytes": 4863815680,
+    "maximum_available_bytes": 4863815680,
+    "minimum_available_bytes": 4599648256,
+    "final_available_bytes": 4843597824,
+    "sampling_seconds": 5,
+    "sample_count": 202,
+    "gaps": [
+      "Periodic samples are approximately five seconds apart; inter-sample byte peaks are unobserved.",
+      "The trace is a sampled service trace, not a continuous peak measurement."
+    ]
+  }
+}

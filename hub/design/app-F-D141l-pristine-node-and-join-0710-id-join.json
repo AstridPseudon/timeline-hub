@@ -1,0 +1,436 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "comparison_sources": {
+    "current_full": "app-full-1026060654-8638",
+    "current_node": "app-full-d141-node-phase-1026063009-19156",
+    "pristine_full": "app-pin-d822d2f5-full-1026063854-17524",
+    "pristine_node": "app-pin-d822d2f5-full-d141-node-phase-1026072325-11111",
+    "controlling_id_map": "workers/app-F-D141l-current-receipt-return-0643/evidence/id-map-corrected.json",
+    "independent_qualification": "workers/app-F-D141l-current-metadata-final-review-0648/evidence/review.json"
+  },
+  "coverage": {
+    "current_full_failed_ids": 32,
+    "current_full_generic_collection_errors": 1,
+    "current_node_failed_ids": 2,
+    "actual_pristine_full_failed_ids": 18,
+    "actual_pristine_node_failed_ids": 2,
+    "file_presence_is_not_id_presence": true,
+    "absent_upstream_ids_are_not_passes": true
+  },
+  "current_full_failed_ids": {
+    "own_file_absent_upstream": [
+      {
+        "id": "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx > A3 mounted popup full caller > carries a real mounted shared-child add through the accepted v2 commit transport",
+        "file": "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx",
+        "current_source_blob": "fe970149293913a8725481a5af284bf256447cc3",
+        "frozen_file_presence": false,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_ID",
+        "classification": "OWN"
+      },
+      {
+        "id": "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx > A3 mounted popup full caller > carries a real mounted shared-child add through the merged v2 commit transport",
+        "file": "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx",
+        "current_source_blob": "fe970149293913a8725481a5af284bf256447cc3",
+        "frozen_file_presence": false,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_ID",
+        "classification": "OWN"
+      },
+      {
+        "id": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx > routed element save with the class Runtime provider > settles the catalog gesture after the pending history response resolves",
+        "file": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+        "current_source_blob": "f7d5dccf9fbd9dc2d7b50ab097425c1f2511d57f",
+        "frozen_file_presence": false,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_ID",
+        "classification": "OWN"
+      },
+      {
+        "id": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx > routed element save with the class Runtime provider > settles the catalog gesture after the pending commit response resolves",
+        "file": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+        "current_source_blob": "f7d5dccf9fbd9dc2d7b50ab097425c1f2511d57f",
+        "frozen_file_presence": false,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_ID",
+        "classification": "OWN"
+      },
+      {
+        "id": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx > routed element save with the class Runtime provider > settles the catalog gesture after the pending refresh response resolves",
+        "file": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+        "current_source_blob": "f7d5dccf9fbd9dc2d7b50ab097425c1f2511d57f",
+        "frozen_file_presence": false,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_ID",
+        "classification": "OWN"
+      }
+    ],
+    "own_file_present_exact_title_absent": [
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: accepted (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: accepted (children: true)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: merged (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: merged (children: true)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: conflict (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: conflict (children: true)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: retry (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: retry (children: true)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: dependent conflict (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing old selection (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: mismatched old selection (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: extra old selection (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing old metadata (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selector (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: existing asset (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: rebased (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: invalid (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: invalid (children: true)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selection (children: false)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selection (children: true)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (accepted)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (merged)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (lost acknowledgement)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (later_write)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (aba_write)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (history_unavailable)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      },
+      {
+        "id": "src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (invalid)",
+        "classification": "OWN",
+        "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+        "current_source_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+        "frozen_source_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+        "frozen_file_presence": true,
+        "frozen_id_presence": false,
+        "pristine_outcome": "NOT_APPLICABLE_NO_EXACT_TITLE"
+      }
+    ]
+  },
+  "current_full_collection_error": {
+    "file": "src/tools/video-editor/commands/commitSession.genericPatch.test.ts",
+    "current_blob": "f4d3b68d0ae01ee2fdecbc3bb4c88ba9526cc2ca",
+    "observed": "module-level schema digest assertion failed; Vitest reported zero tests for this file",
+    "expected_digest": "sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2",
+    "received_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "frozen_file_presence": false,
+    "pristine_outcome": "NOT_APPLICABLE_NO_FILE",
+    "classification": "OWN_COLLECTION_ERROR"
+  },
+  "pristine_full_failures": {
+    "source_head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "source_tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "outcome": "FAIL",
+    "observed_failure_ids": 18,
+    "files": [
+      {
+        "file": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+        "source_blob": "311f1b6e933af9b22b2f00a439c5c99f494e9062",
+        "failed_ids": [
+          "V009 public host behavior qualification > uses injected host values at typed effect, typed animation, legacy, and sequence helper callsites",
+          "V009 public host behavior qualification > renders canonical defaults and per-clip managed overrides through the installed local owner",
+          "V009 public host behavior qualification > rejects installed-only and unknown IDs without substitution and renders a loud typed placeholder",
+          "V009 public host behavior qualification > keeps a public owner mismatch unavailable instead of resolving another text-card owner",
+          "V009 public host behavior qualification > does not interpret another installed owner’s params as local end-spanning card assets"
+        ],
+        "current_cut_membership": "not among current 32 failed IDs"
+      },
+      {
+        "file": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+        "source_blob": "add4af77a8485b2e113a5275f69c68969095f512",
+        "failed_ids": [
+          "ShotClipSequence referenced-timeline cache > keeps explicit host B through two nested shot levels instead of switching to context host A",
+          "ShotClipSequence referenced-timeline cache > retains context host A through nested shots when there is no explicit override",
+          "ShotClipSequence referenced-timeline cache > renders nested content with explicit host B when the provider context has no host",
+          "ShotClipSequence referenced-timeline cache > updates the cached nested timeline when the explicit host changes without remounting",
+          "ShotClipSequence referenced-timeline cache > deduplicates repeated sequential mounts: one load, second mount synchronous",
+          "ShotClipSequence referenced-timeline cache > deduplicates concurrent mounts sharing one in-flight load",
+          "ShotClipSequence referenced-timeline cache > no loading placeholder when crossing a primed shot boundary (cached config reused synchronously)",
+          "ShotClipSequence referenced-timeline cache > sequences premount so the next shot mounts before the boundary",
+          "ShotClipSequence referenced-timeline cache > keeps nested child content mounted while hidden before a canonical shot boundary",
+          "ShotClipSequence referenced-timeline cache > invalidates a specific timeline after a save so the next mount reloads fresh data",
+          "ShotClipSequence referenced-timeline cache > a failed load falls back to the placeholder and retries on a later mount"
+        ],
+        "current_cut_membership": "not among current 32 failed IDs"
+      },
+      {
+        "file": "src/tools/video-editor/compositions/TimelineRenderer.test.tsx",
+        "source_blob": "f39112206c17b90322c1d92c6ab09fcfdb5d65e2",
+        "failed_ids": [
+          "Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d) > registry includes the four 2rp clip types",
+          "Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d) > section-hook entry resolves to a component from @banodoco/timeline-theme-2rp"
+        ],
+        "current_cut_membership": "same file present with different blob; current full failure list does not contain these IDs"
+      }
+    ],
+    "classification": "PRISTINE_FAILURE_PRESERVED_NOT_A_CURRENT_REG_CANDIDATE"
+  },
+  "node_join": [
+    {
+      "file": "scripts/quality/capture-extension-external-evidence.test.mjs",
+      "title": "computes and verifies an Ed25519 public-key fingerprint without reading a private key",
+      "current_id": "scripts/quality/capture-extension-external-evidence.test.mjs > computes and verifies an Ed25519 public-key fingerprint without reading a private key",
+      "pristine_id": "scripts/quality/capture-extension-external-evidence.test.mjs > computes and verifies an Ed25519 public-key fingerprint without reading a private key",
+      "current_observed": "FAIL: spawnSync ssh-keygen ENOENT at line 133",
+      "pristine_observed": "FAIL: spawnSync ssh-keygen ENOENT at line 133",
+      "same_input_assertion_caller": true,
+      "source_blob_current": "56150e5b4c3421e01b971e6a80631dcc60390804",
+      "source_blob_pristine": "56150e5b4c3421e01b971e6a80631dcc60390804",
+      "same_environment_kind": true,
+      "classification": "NONREG_PROVED"
+    },
+    {
+      "file": "scripts/quality/check-extension-ship-evidence.test.mjs",
+      "title": "suite-level uncaught setup failure after external-evidence failure",
+      "current_id": "scripts/quality/check-extension-ship-evidence.test.mjs > suite-level uncaught setup failure after external-evidence failure",
+      "pristine_id": "scripts/quality/check-extension-ship-evidence.test.mjs > suite-level uncaught setup failure after external-evidence failure",
+      "current_observed": "FAIL: spawnSync ssh-keygen ENOENT at line 70",
+      "pristine_observed": "FAIL: spawnSync ssh-keygen ENOENT at line 70",
+      "same_input_assertion_caller": true,
+      "source_blob_current": "ad87267276e738afed37e076832bc3674c78e379",
+      "source_blob_pristine": "ad87267276e738afed37e076832bc3674c78e379",
+      "same_environment_kind": true,
+      "causal_relation": "independent second suite-level failure; not collapsed into the first",
+      "classification": "NONREG_PROVED"
+    }
+  ],
+  "verdicts": {
+    "current_full_32": "OWN or UNKNOWN pending no exact upstream ID; no invented upstream pass",
+    "current_full_collection_error": "OWN_COLLECTION_ERROR / UNKNOWN; separate from test IDs",
+    "current_node_2": "NONREG_PROVED by exact same failure in same normal-service Node environment",
+    "pristine_full_18": "PRISTINE_FAILURE_PRESERVED; not current REG evidence",
+    "global_reg_zero": false
+  }
+}

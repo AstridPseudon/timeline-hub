@@ -1,0 +1,90 @@
+{
+  "utc": "2026-10-26T07:43:00.713976+00:00",
+  "kind": "safe originals byte-exact publication; author claims qualified or corrected by independent0736",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/progress.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-progress.json",
+      "bytes": 1673,
+      "sha256": "eadc0e5393187475f0ac8c4066dbcfa54c49d29f7cad5b274aea5383dd91d825"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/controller-receipt.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-controller-receipt.json",
+      "bytes": 3220,
+      "sha256": "b7c813b46853fc560b4fecb61cd039fb5281d53dc0289e9750a787318f25a09b"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/pristine-full-result.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-pristine-full-result.json",
+      "bytes": 5913,
+      "sha256": "ec8dd7ee1331dafe55781684119b6b7f825caa4861bcf3d17222773bdd84727e"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/pristine-node-result.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-pristine-node-result.json",
+      "bytes": 3248,
+      "sha256": "1825be71e8c2539d48412f07233ba10c0e51feef97721bcb9b0e8288c5d3560a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/id-join.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-id-join.json",
+      "bytes": 27517,
+      "sha256": "491d694da03de69d5b2af7e4496440771f9d09da3a53305cde0f6f07776a3373"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/environment-kind.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-environment-kind.json",
+      "bytes": 2652,
+      "sha256": "c6176aed339addf27fe520c0148461f829f8a2ec8d54d33fe867c187247e7af2"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/source-manifest.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-source-manifest.json",
+      "bytes": 3822,
+      "sha256": "b9f725726d19b6f19f3c32aac9a72dd60d1cd631b05648503cfcf11a355d6552"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/trace-measurement.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-trace-measurement.json",
+      "bytes": 2881,
+      "sha256": "a860ba7635ddb2e16ef406341e7ab0afac3ad0c17545075c9bbe161e3557c0b1"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/validation.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-validation.md",
+      "bytes": 3275,
+      "sha256": "7c3c12beddf0ac285d6ac219084f6c06ba25816656e9449bd645b5c7a48067b4"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-and-join-0710/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-and-join-0710-handoff.md",
+      "bytes": 2497,
+      "sha256": "6ddb608eb107b7ecfb46e4ccec74825b72f1e04c54777ab2cb885572581520b0"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-receipt-0726/evidence/attachment.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-receipt-0726-attachment.json",
+      "bytes": 1958,
+      "sha256": "edb92736120edc842b50bc797ea7dd9a35f3e959905ad21974175841cfd3ffb6"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-receipt-0726/evidence/source-manifest.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-receipt-0726-source-manifest.json",
+      "bytes": 3601,
+      "sha256": "de9497c0590a0ca89d183abe4f5eb7b75e9e5c909eb968f5bf1b6f1f244712db"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-receipt-0726/evidence/validation.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-receipt-0726-validation.md",
+      "bytes": 2011,
+      "sha256": "7662ff4e22e0062413560f2088663752453da26b34b8181b3aeedd51ce345238"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-pristine-node-receipt-0726/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-pristine-node-receipt-0726-handoff.md",
+      "bytes": 1026,
+      "sha256": "c223794ed87ec0c1362c2158f6ab1db9d98c708ad91a2970aae5429cfe73f68b"
+    }
+  ]
+}

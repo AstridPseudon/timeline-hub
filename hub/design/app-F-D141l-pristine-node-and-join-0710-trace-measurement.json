@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "measurement_status": "service_owned_sampled_traces_preserved",
+  "pristine_full": {
+    "job_id": "app-pin-d822d2f5-full-1026063854-17524",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-1026063854-17524/disk-trace.tsv",
+    "sha256": "719e51c288ed38d204dc1662934485ab7d2cdd914f7d48cb40ddd5c66d6d3a3d",
+    "trace_validation": "trace PASS: 202 actual samples",
+    "body_pid": 22409,
+    "sampling_seconds": 5,
+    "sample_count": 202,
+    "first_available_bytes": 4863815680,
+    "maximum_available_bytes": 4863815680,
+    "minimum_available_bytes": 4599648256,
+    "final_available_bytes": 4843597824,
+    "monotonic_gap_ns_min": 78214867,
+    "monotonic_gap_ns_max": 5020644339,
+    "gaps": [
+      "Periodic observations are approximately five seconds apart.",
+      "Inter-sample byte peaks are unobserved; no continuous peak is claimed.",
+      "The trace is retained by the normal service wrapper with KEEP."
+    ]
+  },
+  "pristine_node": {
+    "job_id": "app-pin-d822d2f5-full-d141-node-phase-1026072325-11111",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/disk-trace.tsv",
+    "sha256": "6224f257c2072eab6e15a470570ec706ec42c7025c829c46c782ca326c9bebb2",
+    "trace_validation": "trace PASS: 21 actual samples",
+    "body_pid": 18199,
+    "sampling_seconds": 5,
+    "sample_count": 21,
+    "first_available_bytes": 4828639232,
+    "maximum_available_bytes": 4828639232,
+    "minimum_available_bytes": 4657029120,
+    "final_available_bytes": 4663476224,
+    "monotonic_gap_ns_min": 88880586,
+    "monotonic_gap_ns_max": 5011429841,
+    "gaps": [
+      "Periodic observations are approximately five seconds apart.",
+      "Inter-sample byte peaks are unobserved; no continuous peak is claimed.",
+      "The trace is retained by the normal service wrapper with KEEP.",
+      "The service stop line is 4000000000 bytes; the run ended above it."
+    ]
+  },
+  "qualified_node_data_provenance": {
+    "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+    "source_trace_job_id": "app-full-d141-node-phase-1026063009-19156",
+    "source_trace_sha256": "b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b",
+    "source_trace_samples": 19,
+    "source_body_pid": 18109,
+    "normalized_start": "df4814028800",
+    "normalized_stop": "df4625068032",
+    "chosen_floor_bytes": 4600000000,
+    "gaps_disclosed": true,
+    "new_measurement": false,
+    "new_sample": false,
+    "original_trace_unchanged": true
+  },
+  "controls": {
+    "normal_service_execution": true,
+    "manual_run": false,
+    "direct_run": false,
+    "continuous_peak_claim": false,
+    "four_gb_stop_claim": true,
+    "one_heavy_body": true
+  }
+}

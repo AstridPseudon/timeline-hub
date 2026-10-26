@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "composition_base": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "clean": true
+  },
+  "current_source": {
+    "repo": "app",
+    "worktree": "/home/user/work/app",
+    "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "parents": [
+      "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+      "fdea805191f466fa67dc0f2ea118da31bf86028f"
+    ],
+    "clean": true,
+    "package_json_blob": "70a005c2c3a4f1c59373ef1c4a404de4b225c37c",
+    "test_node_script_bytes": 1709,
+    "test_node_script_sha256": "74e219373befd25b92f85eb21e84d685c4bf767b0ab969a1e464097766d5363a",
+    "node_command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef"
+  },
+  "pristine_source": {
+    "repo": "app",
+    "worktree": "/home/user/work/wt/app-pin-d822d2f5",
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "parent": "7796159ce89408aa307988ec4cfc29bc99783a25",
+    "clean": true,
+    "package_json_blob": "5bdc5b0aaab190884feea72120b3d9d12ab926f4",
+    "test_node_script_bytes": 1666,
+    "test_node_script_sha256": "cfe43a224171922de49fe96c4b7647554c63263a090477137430ad4596099455",
+    "node_command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef"
+  },
+  "service_registration": {
+    "suite": "full-d141-node-phase",
+    "repo": "app",
+    "literal_command": "npm run test:node",
+    "registration_verified": true,
+    "source_script_not_transplanted": true
+  },
+  "relevant_source_blobs": {
+    "node_capture_external_evidence": {
+      "path": "scripts/quality/capture-extension-external-evidence.test.mjs",
+      "current_blob": "56150e5b4c3421e01b971e6a80631dcc60390804",
+      "pristine_blob": "56150e5b4c3421e01b971e6a80631dcc60390804",
+      "current_bytes": 5818,
+      "pristine_bytes": 5818
+    },
+    "node_check_extension_ship_evidence": {
+      "path": "scripts/quality/check-extension-ship-evidence.test.mjs",
+      "current_blob": "ad87267276e738afed37e076832bc3674c78e379",
+      "pristine_blob": "ad87267276e738afed37e076832bc3674c78e379",
+      "current_bytes": 28638,
+      "pristine_bytes": 28638
+    },
+    "pristine_full_renderer_public_host": {
+      "path": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+      "pristine_blob": "311f1b6e933af9b22b2f00a439c5c99f494e9062",
+      "bytes": 22023
+    },
+    "pristine_full_renderer_shots": {
+      "path": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "pristine_blob": "add4af77a8485b2e113a5275f69c68969095f512",
+      "bytes": 16938
+    },
+    "pristine_full_renderer_registry": {
+      "path": "src/tools/video-editor/compositions/TimelineRenderer.test.tsx",
+      "pristine_blob": "f39112206c17b90322c1d92c6ab09fcfdb5d65e2",
+      "current_blob": "e76770d7aa1d978e003ca849d0feaa295104afc1",
+      "pristine_bytes": 1629,
+      "current_bytes": 1625
+    },
+    "current_collection_error": {
+      "path": "src/tools/video-editor/commands/commitSession.genericPatch.test.ts",
+      "current_blob": "f4d3b68d0ae01ee2fdecbc3bb4c88ba9526cc2ca",
+      "pristine_presence": false
+    },
+    "current_use_timeline_save": {
+      "path": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "current_blob": "5ec79a429784e2492882965f3ca360c8d54869b3",
+      "pristine_blob": "691c67745b750f06571e40530acd9005f2cc0b3b",
+      "pristine_bytes": 12814
+    }
+  },
+  "identity_policy": {
+    "synthetic_service_head_allowed_when_true_parent_and_tree_bind": true,
+    "old_current_head_or_old_pin_retargeted": false,
+    "new_catchup_4937203_substituted": false,
+    "generated_head_claim": false
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "schema": "timeline.d89d.measured-floor.v1",
+  "task": "D141l",
+  "actual_node_receipt": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/recorded-measured-floor.json",
+    "sha256": "d0616b60bcbf6e622f812fabd765d5c4d3d0e3c208165adff7e19959d5500172",
+    "validator": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-validate-receipt.py",
+    "validator_sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6",
+    "validator_supported_argument_count": 9,
+    "validator_exit": 0,
+    "validator_stdout": "4600000000",
+    "scope": {
+      "job_id": "app-pin-d822d2f5-full-d141-node-phase-1026072325-11111",
+      "repo": "app",
+      "suite": "full-d141-node-phase",
+      "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+      "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+      "command": "npm run test:node",
+      "command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef"
+    },
+    "measurement": {
+      "start_bytes": 4814028800,
+      "stop_observed_bytes": 4625068032,
+      "growth_bytes": 188960768,
+      "floor_bytes": 4600000000,
+      "stop_bytes": 4000000000,
+      "margin_bytes": 200000000,
+      "semantics": "start_end_bracket_delta_only_not_continuous_peak"
+    },
+    "witness_provenance": {
+      "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+      "start": {
+        "path": "workers/app-F-D141l-node-kind-witness-0653/evidence/normalized-start.df",
+        "sha256": "2be38b1dae19abd9a85600fe68ea33acd6adf089fd39fe96cfabfabdfc263b02"
+      },
+      "stop": {
+        "path": "workers/app-F-D141l-node-kind-witness-0653/evidence/normalized-stop.df",
+        "sha256": "1e865eaf7f4729573c7490e87f50b87b3ba40c50dbd19db16545f85ee1dd538f"
+      },
+      "original_trace_sha256": "b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b",
+      "original_trace_samples": 19,
+      "original_trace_body_pid": 18109,
+      "gaps_disclosed": true,
+      "new_measurement": false,
+      "new_sample": false
+    }
+  },
+  "pristine_full_receipt": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d822d2f5-full-1026063854-17524/recorded-measured-floor.json",
+    "sha256": "4c01fb145865378a8405f8cdca5e263c9a9a44eac30046113b780e274aa52fbc",
+    "validator_exit": 0,
+    "validator_stdout": "4793895424",
+    "scope": {
+      "job_id": "app-pin-d822d2f5-full-1026063854-17524",
+      "repo": "app",
+      "suite": "full",
+      "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+      "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+      "command": "npm test -- --maxWorkers=3",
+      "command_sha256": "10ec988435479a2c3967d004429343b8bc5661b8b815d00ad30fbd455a2ca54b"
+    },
+    "status": "terminal full result consumed; no further full request"
+  },
+  "service_controls": {
+    "normal_route_only": true,
+    "same_id_wait_only": true,
+    "one_heavy_body": true,
+    "no_direct_run": true,
+    "no_queue_mutation": true,
+    "no_floor_bypass": true,
+    "no_validator_or_kit_edit": true
+  }
+}
