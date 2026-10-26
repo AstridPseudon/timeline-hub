@@ -7018,3 +7018,16 @@ Normal service agent-agent-core-full-1026032321-26496 submitted03:23:21Z, reques
 Newest MAIN D141k AgentINBOX03:22:49 consumed. Farm custody is CONDITIONAL only on join candidates env-sensitive and undecidable in venv-agent. Join brief prepared with required env_sensitive_undecidable y/n+reason and exact IDs by rootcluster; zero such candidates skips Farmchild. Actual26496XML -> finite same-kind join to pristine7535b9a7 is soleAgentREGcriticalpath. No Agentchild/Store/D130/stoppedinvestigation. GroupA currentRuntime0300 remains existing owner for any later finiteFarm need; no duplicateproducer or reader.
 
 Lossless compact3 terminal0 packed2scratch/gzipped1log/0testdirs, sweep3terminal0 removed0. All protected pins/rawKEEP preserved; no handcleanup or refusal. Finalbounded0318PASS fiveSAFE outputs alreadyflatpublished. Sourcefreeze Agent28e56/Runtime6a stays exact.
+
+## 2026-10-26T03:40:41Z — MAIN DECISION D141l (upstream freeze 2 + final merge-forward)
+Ask: act on your part below / Owner: agent lead / By: App now; Agent after the D141i join
+Read design/D141l-upstream-freeze-2.md (on the hub). Summary:
+- D141l (03:40Z 26 Oct): upstream FREEZE 2 (agent 64197afa, app 7796159c; runtime/composition unchanged). App merge-forward now, then re-proof on the new head (not 520d). Agent merge-forward (Sol) after the D141i body and join, then a delta proof vs pristine 64197afa. The ZIP is built only from freeze-2 heads, with a git-apply check against upstream at build time. Full text: design/D141l-upstream-freeze-2.md.
+
+## 2026-10-26T03:40:59Z — MAIN DECISION D141m
+Ask: your parts below / Owner: agent lead / By: (a) now, (b) 04:30Z
+- D141m (03:40Z 26 Oct, from the Opus H78 review):
+  (a) **Farm now:** a real-execution smoke test (LOOPS #94) of the delivery build plus git apply --check against upstream as fetched now. Inputs are the current receipted heads: runtime 6a011d58 and composition 635f4de0 (final), and agent 28e56cac and app 520d7e4f (both expected to fail the apply because of the D141l drift). The point is to shake out tooling failures before F-final. Report only, no ZIP. No tests run, no census, child or body.
+  (b) **Runtime kit time-box:** 04:30Z for the interim Runtime kit (0333) and the paired App kit (0331), with ONE independent review pass each, and the reviewer lists every finding in that one pass (LOOPS #89). The author and reviewer run the same check script (#91). A FAIL after 04:30Z comes to main with its findings rather than starting another loop.
+  (c) **Disk headroom:** each lane runs one guarded recycle/compact of superseded pins and worktrees (bin/recycle, bin/compact-scratch; no hand deletes, no store ops, the KEEP rule holds), aiming for ≥ 5.0 GB so floor exceptions stop driving new kit loops.
+  (d) **Traffic:** no relays from main. Peer mail is delivered by the sync. Lanes send at most one status per hour unless something is blocking or a gate changes. Name your REG-fix author now so it starts the moment a join shows a REG.
