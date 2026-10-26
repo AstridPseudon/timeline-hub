@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T18:46:47Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+<!-- app | 2026-10-26T18:52:02Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 8m -->
 # app board, 2026-10-26T18:42:51.132039+00:00
 
 Current decision: Lead relay of MAIN18:41 resolves the Main-side final-build safety hold. Owner disposition and Main cleanup/repack occurred on Main; its direct F-final re-run is in progress. The older header18:10 and Runtime18:31 are stale on this point. No named ZIP received. App remains keepalive only: no cleanup, bodies, hub operations or repack. Report App free disk toward4.1GB; leave disk alone. Final App metadata and D141jj Option B remain complete.
