@@ -1,0 +1,15 @@
+{
+  "schema": "d141gg-sampler-lifecycle-v1",
+  "first_tool": {
+    "requested": true,
+    "foreground_seconds": 5,
+    "outcome": "FAILED_BEFORE_SAMPLER_START",
+    "exit_code": 1,
+    "reason": "evidence directory was absent when redirection was opened",
+    "sample_count": 0,
+    "stop_wait_reap": "not_applicable",
+    "backfill": false
+  },
+  "coverage": "first-tool disk coverage not met",
+  "standing_stop_bytes": 4000000000
+}

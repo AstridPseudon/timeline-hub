@@ -1,0 +1,3 @@
+FIRST-TOOL GAP: the required foreground 5s sampler could not open this path because the worker evidence directory did not yet exist.
+Command exit=1; shell reported: No such file or directory.
+No sampler session was created, no sample was observed, no stop/wait/reap occurred, and no samples were backfilled.

@@ -1,0 +1,28 @@
+{
+  "schema": "d141gg-source-controls-v1",
+  "checker_sha256": "97d121a783feddabbb0f1b87ad8999af37d892870dc9393702a212fda4ff3a93",
+  "source_ready": true,
+  "pure_builder": true,
+  "source_tuple_conserved": true,
+  "agent_head_loaded_from_original_recipe": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+  "agent_head_matches_original_recipe_pin": true,
+  "original_command_row_conserved": true,
+  "new_namespace": {
+    "suites": {
+      "normal": "full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2",
+      "preflight": "full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight"
+    },
+    "rows_sha256": {
+      "preflight": "5fee419a8a10fe41a2b5ab9fedd611afe188cd62ac0f733a01dde68918085c50",
+      "normal": "aaa3c1b46d4ef2639671ec0b4f58930efaae704a39c72889ce1c4794bba48bca"
+    },
+    "registration": false
+  },
+  "paths_absent": true,
+  "body_ids_absent": true,
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  }
+}
