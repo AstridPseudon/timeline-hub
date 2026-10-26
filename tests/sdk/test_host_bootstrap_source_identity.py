@@ -80,6 +80,50 @@ def test_host_pid_alive_native_failure_does_not_become_absence(monkeypatch):
         host_bootstrap._host_pid_alive(4242)
 
 
+@pytest.mark.parametrize("acl_allows", [True, False])
+def test_parked_grant_uses_owner_only_acl_on_windows_modes(monkeypatch, tmp_path, acl_allows):
+    from astrid.core.execution import generic_host
+
+    credential = tmp_path / "credential"
+    credential.write_text("token")
+    credential.chmod(0o600)
+    real_stat = Path.stat
+    def windows_stat(candidate, *args, **kwargs):
+        result = real_stat(candidate, *args, **kwargs)
+        if candidate == credential:
+            return os.stat_result((__import__("stat").S_IFREG | 0o444, *result[1:]))
+        return result
+    monkeypatch.setattr(Path, "stat", windows_stat)
+    monkeypatch.setattr(host_bootstrap.platform, "is_owner_only", lambda _path: acl_allows)
+    monkeypatch.setattr(host_bootstrap, "_parked_host_identity_matches", lambda _state: True)
+    grant = {"activation_id": "activation", "credential_file": str(credential),
+             "executor_incarnation": "incarnation", "evidence_digest": "digest"}
+    process = SimpleNamespace(pid=4321, poll=lambda: None)
+    control = SimpleNamespace(settimeout=lambda _value: None, recv=lambda _size: b"",
+                              close=lambda: None, shutdown=lambda _how: None)
+    handle = host_bootstrap._ParkedPackHostHandle(
+        process, control, None,
+        {"credential_file": str(credential), "process_birth_id": "birth"}, "op", "channel",
+    )
+    preparer = host_bootstrap._ParkedPackHostPreparer(lambda *_args: None)
+    preparer._handle = handle
+    sent = []
+    monkeypatch.setattr(generic_host, "_send_activation_frame", lambda _control, frame: sent.append(frame))
+    monkeypatch.setattr(generic_host, "_read_activation_frame", lambda _control: {
+        "version": generic_host._ACTIVATION_ACCEPTED_VERSION, "operation_id": "op",
+        "channel_id": "channel", "activation_id": "activation",
+        "executor_incarnation": "incarnation", "evidence_digest": "digest",
+        "host": {"pid": 4321, "birth_id": "birth"},
+    })
+    if acl_allows:
+        assert preparer.acknowledge(handle, grant)["activation_id"] == "activation"
+        assert sent
+    else:
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="credential reference is unsafe"):
+            preparer.acknowledge(handle, grant)
+        assert not sent
+
+
 def test_selected_python_matches_its_live_process_executable(tmp_path) -> None:
     """Framework Python re-execs Python.app; the selected launcher stays valid."""
     import shlex
@@ -116,7 +160,8 @@ def test_executable_probe_failure_does_not_accept_another_python(monkeypatch, tm
     assert not host_bootstrap._host_executable_matches("/unrelated/Python", tmp_path / "python")
 
 
-def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path: Path) -> None:
+@pytest.mark.parametrize("windows_acl", [None, True, False])
+def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path: Path, windows_acl) -> None:
     source = tmp_path / "source"
     (source / "astrid" / "packs").mkdir(parents=True)
     (source / "astrid" / "packs" / "marker.txt").write_text("pack", encoding="utf-8")
@@ -128,6 +173,15 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     credential = support.parent / "worker.token"
     credential.write_text("worker", encoding="utf-8")
     os.chmod(credential, 0o600)
+    if windows_acl is not None:
+        real_stat = Path.stat
+        def windows_stat(candidate, *args, **kwargs):
+            result = real_stat(candidate, *args, **kwargs)
+            if candidate == credential:
+                return os.stat_result((__import__("stat").S_IFREG | 0o666, *result[1:]))
+            return result
+        monkeypatch.setattr(Path, "stat", windows_stat)
+        monkeypatch.setattr(host_bootstrap.platform, "is_owner_only", lambda _path: windows_acl)
     value = {
         "worker_credential_file": str(credential),
         "source_checkout": str(source),
@@ -213,6 +267,11 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     monkeypatch.setattr(host_bootstrap, "_IDLE_CHECK_INTERVAL_SECONDS", 0.0)
     monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda current: terminated.append(dict(current)))
 
+    if windows_acl is False:
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="handoff is unavailable"):
+            host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+        assert launches == []
+        return
     result = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert result["host_status"] == "ready"
     assert result["host_source_inventory_identity"] == "inventory-1"

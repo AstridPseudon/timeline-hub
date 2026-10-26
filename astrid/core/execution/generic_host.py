@@ -13706,7 +13706,7 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
         try:
             if (not credential_path.is_absolute() or credential_path.is_symlink()
                     or not credential_path.is_file()
-                    or credential_path.stat().st_mode & 0o777 != 0o600):
+                    or not platform.is_owner_only(credential_path)):
                 raise OSError("credential file must be an absolute owner-only regular file")
             credential = credential_path.read_text(encoding="utf-8").strip()
         except OSError as exc:
