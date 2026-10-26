@@ -520,7 +520,7 @@ export async function importTimelineArchive(file: File, projectId: string, optio
     const preparedAction = await getActionJson(client, projectId, 'rendering.timeline_prepare_import', actionInputs, 'prepared', fetchImpl, options.client !== undefined);
     validatePreparedMedia(preparedAction.value, media, transcripts);
     const inlineRequest = { ...preparedAction.value, source: { via: 'app' } };
-    const preparedBytes = encoder.encode(JSON.stringify(inlineRequest));
+    const preparedBytes = encoder.encode(JSON.stringify(preparedAction.value));
     if (preparedBytes.byteLength > MAX_JSON_ENTRY) throw new Error('Prepared timeline metadata exceeds 64 MiB.');
     let receipt: Record<string, unknown>;
     if (preparedBytes.byteLength <= INLINE_COMMIT_LIMIT) {

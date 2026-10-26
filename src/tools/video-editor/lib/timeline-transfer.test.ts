@@ -262,6 +262,10 @@ describe('timeline transfer workflows', () => {
     expect(commits).toHaveLength(1);
     expect(commits[0]).toMatchObject({ prepared_object_id: `sha256:${'c'.repeat(64)}`, source: { via: 'app' } });
     expect(commits[0]).not.toHaveProperty('timeline_id');
+    const staged = JSON.parse(await client.ingestProjectObject.mock.calls.at(-1)![1].text());
+    expect(staged.timeline_id).toBe('prepared-id');
+    // Runtime validates the prepared object separately from request provenance.
+    expect(staged).not.toHaveProperty('source');
   });
 
   it('numbers a taken timeline name like "Timeline N"', () => {
