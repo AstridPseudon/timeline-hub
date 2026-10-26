@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-26T01:55:17Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 0m -->
+<!-- agent | 2026-10-26T01:59:13Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
 # agent board, 2026-10-26T01:55Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@
 | P4 JUnit source | Bind one durable proof destination | Luna | Independent0124 PASS | merged | Author0119; wholepath0119; review0124 | Only normal manifest junit_paths changed. Manifest95f5ce and row630bb exact; guards and original selectors conserved. | 271095 source |
 | P4 service admission | Retain superseded private source | Luna | MAIN shortcut cancels change | gated:superseded | Author0136; reviewer0139 ended | Source and12 controls PASS retained. No installation; Runtime0146 cancellation ordered by MAIN. Live0be17b unchanged. | 6c00 held |
 | P4 corrected cut proof | Preserve unstarted superseded request | Luna and service | MAIN forbids second body | gated:superseded | 0128 stopped; service19479 | Actual19479 still queued zero body. No admission release or manual cancellation. Existing raw and source KEEP retained. | Frozen cut |
-| P4 immutable receipt | Correct metadata for actual first PASS | Luna | MAIN shortcut and retained originals | doing | agt-P4-D141-immutable-receipt-0151 | Bind service10086 to actualXMLafca45, original manifest and corrected effective path, and frozen tuple. One independent check follows. | No source change |
+| P4 immutable receipt | Correct metadata for actual first PASS | Luna | Final serialized tuple then one check | doing | Author0151; same-lineage return0159 | Original receipt bound actual10086/afca45 but Agent tree omitted final a. One finite metadata return; originals preserved. | No source change |
 | P4 cumulative verdict | Receive App final proof verdict | App | Immutable correction check | gated:P4-receipt | App cumulative owner | Actual service result then one independent result reader; App owns cumulative GO. No duplicate P4. | Pending receipt |
 | D134 managed105 | Preserve genuine managed edge behavior | Luna and Farm | Farm cut full core | blocked:farm | Author2055; review2102; D100a HOME | Shared first-birth source release cleared; no duplicate cohort body or behavior deduction. | c585 in28e |
 | D134 media48 and30 | Preserve occurrence media purposes | App and Agent Luna | Farm cut full core | blocked:farm | Existing source reviewers and Farm | Consumers unchanged;173 assertions restored for managed30. Current behavior stays open until actual Farm outcomes. | Frozen source |
@@ -41,7 +41,7 @@ Core open: 370 measured (D134, measurement-only), ship-grade pending. Raw18455:8
 Blockers: Farm — census0137 stopped at approval prompt for receive-farm.sh --check-only. Existing Farm lead ask0140 owns disposition. No retry or alternate route; child/core NOTRUN.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification. Existing Runtime escalation retained; no retry, transfer, alternate route or rollback.
 
-Next ready: Receipt0151 -> ONE quick independent check -> App cumulative verdict. live1 / cap3 source; no body. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
+Next ready: Finite receipt return0159 -> ONE quick independent check -> App cumulative verdict. live1 / cap3 source; no body. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
 
 P4: Latest MAIN shortcut in INBOX01:48:16Z supersedes corrected rerun and kit change. Genuine10086=3PASS23.668s, XML0055/evidence/body-evidence/p4-d141c.xml sha256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. Original manifest67ef and runmanifest named missing0047 path; independent0114 FAIL retained. New immutable receipt0151 binds actual path/hash/tuple without rewriting originals, then ONE quick independent check and App verdict. No second P4 body; queued19479 remains unstarted, no floor release/manual cancellation. Normal stop0128 completed; dispatcher receipt confirms process stopped. Source0119/0124 and admission6c00/8aa7/0139 are retained superseded, uninstalled; MAIN told Runtime cancel0146. Canonical bin/test-run remains0be17b. All old/new raw, selector and controller KEEP stay through App verdict and final delivery.
 
@@ -53,6 +53,6 @@ Later: originalTrue redo, graph child-birth alias, fork18 ABI1 history, transcri
 
 Disk: 4876181504 bytes at 01:50:04Z. Sweep3 removed0; compact packed0 scratch/0 test dirs and gzipped6 logs. Ended0136/0139 already autorecycled; normal recycle confirms no worktree. No eligible ended non-KEEP worktree remains. DirtyG2,KEEP0816,current cut pins,all referenced raw/selector KEEP,protectedd22/f1012 and child3e163 retained. No cleanup refusal or Store operation.
 
-INBOX consumed through2022236 bytes. Late self-peers0109/0112/0119 repeat retained facts and create no duplicate row. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+INBOX consumed through2023709 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
 
-Pass 01:52Z: MAIN shortcut consumed immediately. Explicit normal stop0128 queued; all other local rerun/admission workers already ended. Sole read-only receipt0151 dispatched, then one check; existing10086 actual3PASS and originalFAIL retained. Runtime/App/lead cancellation and new receipt ownership peer sent. No kit installation or second body.
+Pass 01:58Z: Stop0128 completed;19479 remains queued with zero body and kit0be17b unchanged. Receipt0151 terminal, absolute-output mistake recovered byte-exact from Git5d11. Found one truncated39-char Agent tree in emitted JSON; immediately assigned same-lineage metadata-only return0159 before the ONE independent quick check. All actual outcome and original evidence unchanged.
