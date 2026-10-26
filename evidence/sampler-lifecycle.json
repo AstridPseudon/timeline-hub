@@ -1,0 +1,14 @@
+{
+  "format": "timeline-d141jj-review-sampler-v1",
+  "sampler_pid": 3,
+  "started": "2026-10-26T16:21:45Z",
+  "stopped": "2026-10-26T16:22:01Z",
+  "interval_seconds": 5,
+  "observations": 4,
+  "minimum_available_bytes": 5221281792,
+  "kill_status": 0,
+  "wait_status": 143,
+  "reaped": true,
+  "whole_group_stop": false,
+  "note": "The candidate’s own unchanged lifecycle script separately passed its real five-second trace and whole-group stop controls; this reviewer sampler was only for admission evidence."
+}
