@@ -1,0 +1,42 @@
+{
+  "recorded_at": "2026-10-26T11:54:45.476395+00:00",
+  "kind": "Exact terminal independent originals; PASS_EVIDENCE only, all15 REG pending",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-return-review-1148/evidence/review.json",
+      "destination": "design/agt-F-D141ee-writers15-return-review-1148-review.json",
+      "sha256": "271fcbdee528e29a1490c9ce442a6f386e9387793af932a85c389ed57a8ffc1e",
+      "bytes": 13479
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-return-review-1148/evidence/findings.md",
+      "destination": "design/agt-F-D141ee-writers15-return-review-1148-findings.md",
+      "sha256": "054a6691979f2ab24a95637c9cc9feae6474e9bee6eda82a42773fcb03800121",
+      "bytes": 2992
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-return-review-1148/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141ee-writers15-return-review-1148-source-manifest.json",
+      "sha256": "a2b0080bd002c5c5c89a611e32c81e8a359626bedd0d185602889bc179ded208",
+      "bytes": 5497
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-return-review-1148/evidence/validation.md",
+      "destination": "design/agt-F-D141ee-writers15-return-review-1148-validation.md",
+      "sha256": "c0c4c2c94aeacbaae69f39b142244e0340c2ea7c8a2c32523f3e38f1083f89ea",
+      "bytes": 1590
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-return-review-1148/evidence/handoff.md",
+      "destination": "design/agt-F-D141ee-writers15-return-review-1148-handoff.md",
+      "sha256": "032162df25bcc96c20218450779db33c5dee7a618b051c59c91761634aa7d309",
+      "bytes": 1379
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-return-review-1148/evidence/disk-trace.txt",
+      "destination": "design/agt-F-D141ee-writers15-return-review-1148-disk-trace.txt",
+      "sha256": "f9324a020ea73008c07f27acc078611b5475a167470ab3dd83a63e4103c5a160",
+      "bytes": 2380
+    }
+  ]
+}

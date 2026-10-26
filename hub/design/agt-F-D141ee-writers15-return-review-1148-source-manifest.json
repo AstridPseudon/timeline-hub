@@ -1,0 +1,50 @@
+{
+  "schema": "timeline.f.d141ee.writers15.independent-source-manifest.v1",
+  "agent": {
+    "path": "/home/user/work/wt/agt-F-D141ee-writers15-return-review-1148",
+    "commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+    "status": "clean"
+  },
+  "runtime": {
+    "path": "/home/user/work/runtime",
+    "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+  },
+  "original_ids": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+  "unique_original_ids": 15,
+  "original_git_blobs": {
+    "4": "71b61a296d8b23b1c5d69209fc6d9315cdb8a71a",
+    "5": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "6": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "7": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "8": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "9": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "10": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "11": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "12": "e44aed75ad8e97e761e795acb820854888a845d0",
+    "13": "e44aed75ad8e97e761e795acb820854888a845d0",
+    "14": "b17c8d1b622a84eda1a076c00ffd17697f1260a9",
+    "15": "6fc678313f25caffb4796af986116b22523a1115",
+    "16": "c6084c424890fba59f2786439ad492efaff789d8",
+    "17": "c6084c424890fba59f2786439ad492efaff789d8",
+    "18": "64623003fdc83f2be8eb5637e57602fc6de9b423"
+  },
+  "test_files": [
+    {"path": "tests/packs/timeline/test_cli_parity.py", "sha256": "14b1ff737adef334f2c8c0539f10921bf73ea1dcf054d805240901376fda1dcf", "ast": {"test_publish_requires_a_message": [86, 92], "test_commit_requires_a_message": [74, 83]}},
+    {"path": "tests/packs/timeline/test_cli_status_publish.py", "sha256": "e45d12255310ea94bea1741227a4907517d83f448df2d71ab0cde5a710a83c25", "ast": {"test_publish_forwards_key_and_force_to_sdk_once": [29, 55], "test_normal_commit_forwards_key_through_the_authenticated_closure": [455, 469], "test_publish_partial_narration_error_preserves_receipt_and_does_not_retry": [59, 102], "test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry": [473, 511], "test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope": [105, 156], "test_normal_commit_output_keeps_summary_and_receipt": [536, 547], "test_publish_cas_refusal_is_not_retried_or_reported_as_success": [160, 184], "test_normal_commit_cas_refusal_preserves_file_and_does_not_retry": [551, 574], "test_publish_of_a_clean_working_copy_publishes_nothing": [187, 217], "test_normal_commit_of_a_clean_working_copy_writes_nothing": [577, 585]}},
+    {"path": "tests/packs/timeline/test_verbs_working_copy.py", "sha256": "d27db2ce9ceda654af0ac722e45b358a33077a458b097a9f5adcdcb7f6686ce0", "ast": {"test_publish_conflict_names_the_writer_and_offers_discard_first": [599, 621], "test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite": [556, 592]}},
+    {"path": "tests/packs/video_editing/test_runtime_publication_chain.py", "sha256": "8dfd78a379e40842f5e3c074b1799b37d2d3851f1b10d1f624dda65124c6b253", "ast": {"test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke": [1100, 1136], "test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke": [1141, 1168]}},
+    {"path": "tests/sdk/test_runtime_response_conformance.py", "sha256": "97394b5598f746e313221cd613afc8a43138b68c90cb408776e1cc0f186888a2", "ast": {"test_publish_conflict_409_maps_to_conflict_and_keeps_its_details": [237, 246], "test_commit_conflict_409_maps_to_conflict_and_keeps_its_details": [220, 234]}},
+    {"path": "tests/timeline/test_authoring_bundle.py", "sha256": "767420f61f794132ee58ff2ba3e31483ad2a46efb51577239dc535991920b0b0", "ast": {"test_approval_is_bound_to_candidate_and_base_revision": [1479, 1501], "test_d66_upstream_approval_is_bound_to_candidate_and_base_revision": [1688, 1718], "test_frozen_render_restart_then_approval_promotion_is_single_generation": [1504, 1648], "test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation": [1723, 1869]}},
+    {"path": "tests/v10/test_timelines_create.py", "sha256": "883d70ffd18ae6d5396e60bac7667610b4c6e44316d37bdf423b27c192491c2a", "ast": {"test_remote_create_empty_creates_shell_then_empty_head": [517, 552], "test_d66_upstream_remote_create_empty_creates_shell_then_empty_head": [444, 514]}}
+  ],
+  "production_ast_and_source": {
+    "astrid/sdk/timeline/publish.py": {"_PublishMixin.publish": [119, 186], "_PublishMixin._commit_document": [188, 343], "_PublishMixin._commit_restructure": [345, 455], "_PublishMixin._publish_narration": [483, 585]},
+    "astrid/sdk/workspace_client.py": {"WorkspaceClient.publish_parent_composition": [429, 444], "WorkspaceClient.commit_timeline": [485, 500]},
+    "astrid/sdk/remote.py": {"_RemoteFamily._typed": [335, 445], "RemoteTimelines.create_empty": [489, 622], "RemoteTimelines.replace_parent_media": [1345, 1604]},
+    "/home/user/work/runtime/runtime_protocol/server.py": {"_timeline_commit": [301, 341], "old_composition_refusal": [619, 621], "old_replace_media_refusal": [634, 636]},
+    "/home/user/work/runtime/runtime_protocol/service.py": {"_require_timeline_command": [1665, 1672], "commit_timeline": [2469, 2483], "_execute_timeline_commit": [2486, 2565], "publish_parent_composition": [2943, 2944]}
+  },
+  "checks": {"exact_15_unique": true, "all_ast_names_present": true, "all_original_blobs_present": true, "source_hashes_recorded": true, "git_clean": true}
+}

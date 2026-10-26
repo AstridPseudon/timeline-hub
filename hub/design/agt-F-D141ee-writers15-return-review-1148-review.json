@@ -1,0 +1,127 @@
+{
+  "schema": "timeline.f.d141ee.writers15.independent-return-review.v1",
+  "verdict": "PASS_EVIDENCE",
+  "behavior_verdict": "REG_PENDING",
+  "scope": "Independent source review of corrected return author for exact IDs 4-18 against review 1137 F1-F7, PLAN U2/G4/G5/F, C0, and MAIN D141ee.",
+  "assigned_count": 15,
+  "assigned_unique_count": 15,
+  "behavior_pass_claim": false,
+  "reg0_claim": false,
+  "retirement_approval_claim": false,
+  "source_checks": {
+    "agent_commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "agent_tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+    "agent_worktree_status": "clean",
+    "runtime_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "c0": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md",
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "git_diff_clean": true,
+    "tests_restored_again": false,
+    "production_files_changed": false
+  },
+  "exact_scope": {
+    "n": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+    "duplicates": [],
+    "missing": [],
+    "ast_source_git_json_checks": "PASS; see source-manifest.json and validation.md"
+  },
+  "call_graph": [
+    {
+      "claim": "checkout publish/restructure",
+      "source": "astrid/packs/timeline/cli_working.py:470-504; astrid/sdk/timeline/publish.py:119-186",
+      "path": "_cmd_restructure -> Checkout.publish(restructure=True) -> _commit_restructure; ordinary publish -> _commit_document; narration follow-up -> _publish_narration",
+      "result": "The public publish wrapper remains live. Its mutation branches call TimelineSession.submit/flush, not a local store writer, but the old publish method name/caller remains a G4/G5 migration defect."
+    },
+    {
+      "claim": "document commit",
+      "source": "astrid/sdk/timeline/publish.py:188-343; astrid/sdk/timeline/sync.py:494-601; astrid/sdk/workspace_client.py:485-500",
+      "path": "_commit_document -> session.submit -> session._flush -> client.timelines.commit -> WorkspaceClient.commit_timeline",
+      "result": "Supported commitTimeline path with durable outbox, idempotency key, receipt and no ambiguous retry replacement."
+    },
+    {
+      "claim": "restructure and narration",
+      "source": "astrid/sdk/timeline/publish.py:345-455 and 483-585",
+      "path": "_commit_restructure/_publish_narration -> TimelineSession.submit or flush -> client.timelines.commit -> WorkspaceClient.commit_timeline",
+      "result": "Both actual mutations delegate through the supported commit route; receipt and partial-follow-up logic still sits behind the live publish wrapper."
+    },
+    {
+      "claim": "old parent composition surface",
+      "source": "astrid/sdk/workspace_client.py:429-444; astrid/sdk/remote.py:335-445, 418; runtime_protocol/server.py:552-553, 619-621, 634-636; runtime_protocol/service.py:1665-1672, 2469-2483, 2943-2944",
+      "path": "WorkspaceClient.publish_parent_composition -> generated operation -> Runtime old composition route -> _require_timeline_command refusal; RemoteTimelines dispatches the same operation",
+      "result": "Runtime refuses the old route. The Agent/Remote method and dispatch surface are still exposed, so refusal does not prove surface retirement and does not provide behavior credit."
+    },
+    {
+      "claim": "media replacement",
+      "source": "astrid/sdk/remote.py:1345-1604",
+      "path": "RemoteTimelines.replace_parent_media -> pinned closure reads -> publish_authoring_candidate -> inner writer.commit_timeline -> _typed(commit_timeline)",
+      "result": "The production replacement writer uses commitTimeline; no second parent-document writer body was found."
+    },
+    {
+      "claim": "render publication",
+      "source": "astrid/packs/rendering/shared/runtime_stitch.py:104-175; astrid/packs/video_editing/shared/runtime_orchestration.py:426-464",
+      "path": "publish_authoring_proposal -> tasks.publish_timeline_render requester checkpoint -> Runtime-authorized render task after commit",
+      "result": "Current source preserves requester-owned commit and exact-revision render admission; original behavior remains REG pending until its assertions execute."
+    }
+  ],
+  "finite_findings": [
+    {
+      "id": "F1",
+      "status": "ADJUDICATED",
+      "decision": "Do not credit the prior author trace. This review owns the fresh sampler at disk-trace.txt, running at five-second intervals and stopping only below 4000000000 available bytes or review termination."
+    },
+    {
+      "id": "F2",
+      "status": "ADJUDICATED",
+      "decision": "The stale restore instruction is rejected as obsolete. The 445b9c1 restoration and HOME merge 14ccf296f3 are treated as immutable source evidence; no tests were restored or edited again."
+    },
+    {
+      "id": "F3",
+      "status": "ADJUDICATED",
+      "decision": "All live purposes remain REG_PENDING. Supported commit callers are source mappings only; no old literal, selector rename, or C0/G5 route retirement earns PASS."
+    },
+    {
+      "id": "F4",
+      "status": "ADJUDICATED",
+      "decision": "Row 7 is split: preserve key propagation, one-call, success/head and authenticated authority; force=True forwarding is not adapted. A commit-path invalid/refused-force assertion remains required."
+    },
+    {
+      "id": "F5",
+      "status": "ADJUDICATED",
+      "decision": "The live _cmd_restructure -> tl.publish call is explicitly retained as a source defect. Its actual restructure/narration mutations use commitTimeline, so no second writer is proven; migration must preserve receipt, partial details, idempotency, no-retry and both JSON/human cases."
+    },
+    {
+      "id": "F6",
+      "status": "ADJUDICATED",
+      "decision": "Row 8 remains owner-scope pending for exact three-line human output and exact JSON envelope. Rows 12 and 13 remain separate editor-head and generic-head presenter decisions using only C0 reason/head and no force option."
+    },
+    {
+      "id": "F7",
+      "status": "ADJUDICATED",
+      "decision": "The commit 409 mapping is preserved as a proposed replacement; the exposed publish_parent_composition Agent/Remote surface remains separately unresolved despite Runtime refusal. No old writer or replacement compatibility route is added."
+    }
+  ],
+  "cases": [
+    {"n": 4, "id": "tests/packs/timeline/test_cli_parity.py::test_publish_requires_a_message", "status": "REG_PENDING_LIVE_PURPOSE", "replacement": "tests/packs/timeline/test_cli_parity.py::test_commit_requires_a_message", "assertion_scope": "nonempty message, -m/--message diagnostic, unchanged parsed label", "credit": false},
+    {"n": 5, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[False]", "status": "REG_PENDING_LIVE_PURPOSE", "replacement": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[False]", "assertion_scope": "human refusal, no write, no retry, no success, one attempt", "credit": false},
+    {"n": 6, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[True]", "status": "REG_PENDING_LIVE_PURPOSE", "replacement": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[True]", "assertion_scope": "JSON refusal, no write, no retry, no success, one attempt", "credit": false},
+    {"n": 7, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_forwards_key_and_force_to_sdk_once", "status": "REG_PENDING_SPLIT_SCOPE", "replacement": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_forwards_key_through_the_authenticated_closure plus explicit force-refusal selector", "assertion_scope": "key, one call, success/head and authority retained; force forwarding deliberately differs", "credit": false},
+    {"n": 8, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope", "status": "REG_PENDING_OWNER_SCOPE", "replacement": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_output_keeps_summary_and_receipt", "assertion_scope": "exact three human lines and exact JSON keys/data-receipt identity remain undecided", "credit": false},
+    {"n": 9, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_of_a_clean_working_copy_publishes_nothing", "status": "REG_PENDING_LIVE_PURPOSE", "replacement": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_of_a_clean_working_copy_writes_nothing", "assertion_scope": "successful no-op, null receipt, no history/write", "credit": false},
+    {"n": 10, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False]", "status": "REG_PENDING_CALLER_CONFLICT", "replacement": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[False]", "assertion_scope": "human partial error, durable receipt, no retry, one call", "credit": false},
+    {"n": 11, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True]", "status": "REG_PENDING_CALLER_CONFLICT", "replacement": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[True]", "assertion_scope": "JSON partial error, receipt details, idempotency, no retry, one call", "credit": false},
+    {"n": 12, "id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]", "status": "REG_PENDING_OWNER_SCOPE", "replacement": "tests/packs/timeline/test_verbs_working_copy.py::test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite plus editor-head presenter selector", "assertion_scope": "editor actor, changed path, discard-first guidance, no overwrite", "credit": false},
+    {"n": 13, "id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]", "status": "REG_PENDING_OWNER_SCOPE", "replacement": "tests/packs/timeline/test_verbs_working_copy.py::test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite plus generic-head presenter selector", "assertion_scope": "generic actor, changed path, discard-first guidance, no overwrite", "credit": false},
+    {"n": 14, "id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke", "status": "REG_PENDING_LIVE_PURPOSE", "replacement": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke", "assertion_scope": "one render publication, attempt/lease/timeline/version authority, no local save/invoke", "credit": false},
+    {"n": 15, "id": "tests/sdk/test_runtime_response_conformance.py::test_publish_conflict_409_maps_to_conflict_and_keeps_its_details", "status": "REG_PENDING_ROUTE_CONFLICT", "replacement": "tests/sdk/test_runtime_response_conformance.py::test_commit_conflict_409_maps_to_conflict_and_keeps_its_details", "assertion_scope": "typed 409 conflict, details and request-id on commit; old endpoint retirement separate", "credit": false},
+    {"n": 16, "id": "tests/timeline/test_authoring_bundle.py::test_approval_is_bound_to_candidate_and_base_revision", "status": "REG_PENDING_LIVE_PURPOSE", "replacement": "tests/timeline/test_authoring_bundle.py::test_d66_upstream_approval_is_bound_to_candidate_and_base_revision", "assertion_scope": "candidate/base binding, refusal without write, approval identity, one commit", "credit": false},
+    {"n": 17, "id": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation", "status": "REG_PENDING_LIVE_PURPOSE", "replacement": "tests/timeline/test_authoring_bundle.py::test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation", "assertion_scope": "restart recovery, one render/claim, digest binding, one requester commit", "credit": false},
+    {"n": 18, "id": "tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_empty_head", "status": "REG_PENDING_LIVE_PURPOSE", "replacement": "tests/v10/test_timelines_create.py::test_d66_upstream_remote_create_empty_creates_shell_then_empty_head", "assertion_scope": "shell, empty canonical head, defaults, project identity, idempotency and native commit", "credit": false}
+  ],
+  "non_claims": [
+    "No pytest, collection, typecheck, lint, vitest, browser, render, install, request, CAS, registry, body, child, or full-suite execution.",
+    "No product/test/generated/pin/Git/hub/ledger changes.",
+    "Retained XML hashes/counts are disclosed by manager correction 1146 but are not republished or rerun here.",
+    "Historical author gaps are not backfilled; source inspection does not establish behavior PASS."
+  ]
+}
