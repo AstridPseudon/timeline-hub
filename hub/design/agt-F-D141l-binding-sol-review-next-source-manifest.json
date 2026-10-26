@@ -1,0 +1,36 @@
+{
+  "kind": "independent source review manifest",
+  "review_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence",
+  "reviewed_author_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence",
+  "reviewed_author_files": {
+    "check-source.py": "20e96545c90849ecfe8203f872987337d4d81d6ab4817fe5e97197b7f952185f",
+    "controller-continuation.sh": "b41b2238c058b727de2c77f4e0ec069d88897d18c32a016fb0ac498347845881",
+    "binding-source.py": "cdc3e306c3d38b77214d3be72916548b0ddf68172ab5f06627f60cad27bcac18",
+    "command-cut.sh": "4f95915edd9b65cc5b903a406c7853faeb3899ac9833744cfa771411e6b07816",
+    "command-pristine.sh": "7e3a589dadbd077ca72bce9d936526f2897caf86f2eba5695b86833c2dc36c82",
+    "source-manifest.json": "9d31a8cce8a0912af92b3358ebcf6e77e8a9245a63a510597de961491593cba3",
+    "readiness.json": "cc7dcde9d5cc217c74dddeaa9ce3892d46d310ce1919f77e64acdaadf55d0689",
+    "validation.md": "51f6d3f33c05ffee8006f586233ed88261e2232d70524e9ab85396bf465d03d6",
+    "handoff.md": "776840a057ee6f7070578020f9c9e6d5e232915e73813b1d3abb5c7407b2c8bd"
+  },
+  "supporting_publications": {
+    "native0828_findings": "69fb13b5d1be2afd57896e8ebb263855ca01ff071cdd23df996157b3c647ab5d",
+    "native0828_source_map": "8e9637a5be29c351e912eaca6d21b7ef7ec53f3d4436df88f32ff689f3c29864",
+    "runtime0640_findings": "75d94ac4ee2819fbe0abeb31a348665eae1ac4d60ee081ae74d617e0884b3a35",
+    "runtime0640_source_map": "b2c2db030e86a48f9955bebf40ccc3d7f57f9b9003218d6f9e91a9a30b8f2c61",
+    "manager0835_disposition": "0cf8db7165a290edb1e78b3790052a577844e775e50d67c704f37e480f2c4696",
+    "runtime0752_findings": "c8b84d9213ada8a74fc393620e7d0bbebb5247423cccb074015a9fc898b624b1"
+  },
+  "review_trace": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence/disk-trace.txt",
+    "sha256": "4038b781cad75cdb96c1545d4560d57632810ff16149f2954decc72a339437ad",
+    "samples": 5,
+    "cadence_seconds": 1,
+    "minimum_available_bytes": 4652023808,
+    "stop_bytes": 4000000000,
+    "belongs_to_this_worker": true
+  },
+  "source_only": true,
+  "live_outputs": false,
+  "distinct_from_command_manifest": true
+}

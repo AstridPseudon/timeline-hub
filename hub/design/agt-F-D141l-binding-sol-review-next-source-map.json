@@ -1,0 +1,37 @@
+{
+  "verdict": "FAIL_SOURCE",
+  "reviewed_base": {
+    "composition_commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+    "composition_tree": "57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847"
+  },
+  "author_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence",
+  "native_routes": {
+    "request_test": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test", "lines": "10-15"},
+    "dispatcher": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon", "lines": "19-20"},
+    "test_run": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run", "lines": "16,45-59,303-312"},
+    "wait_test": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test", "lines": "5-8"},
+    "row_cas": {"path": "/home/user/work/agent/tools/install_p4_launcher.py", "lines": "37-84"}
+  },
+  "author_source": {
+    "controller": {"path": "evidence/controller-continuation.sh", "lines": "58-109,112-143", "sha256": "b41b2238c058b727de2c77f4e0ec069d88897d18c32a016fb0ac498347845881"},
+    "binding": {"path": "evidence/binding-source.py", "lines": "90-103,117-209", "sha256": "cdc3e306c3d38b77214d3be72916548b0ddf68172ab5f06627f60cad27bcac18"},
+    "checker": {"path": "evidence/check-source.py", "sha256": "20e96545c90849ecfe8203f872987337d4d81d6ab4817fe5e97197b7f952185f"},
+    "cut": {"path": "evidence/command-cut.sh", "sha256": "4f95915edd9b65cc5b903a406c7853faeb3899ac9833744cfa771411e6b07816"},
+    "pristine": {"path": "evidence/command-pristine.sh", "sha256": "7e3a589dadbd077ca72bce9d936526f2897caf86f2eba5695b86833c2dc36c82"},
+    "source_manifest": {"path": "evidence/source-manifest.json", "sha256": "9d31a8cce8a0912af92b3358ebcf6e77e8a9245a63a510597de961491593cba3"}
+  },
+  "tuple_mismatch": {
+    "author_composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "required_composition": {"sha": "6a2d1c22ec800229812f4d756d7198aece8111ed", "tree": "57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847"},
+    "app_is_correct": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"}
+  },
+  "findings": {
+    "U2-001": {"status": "closed_source", "evidence": "controller queue_and_wait lines 58-83"},
+    "U2-002": {"status": "closed_source", "evidence": "controller dispatch_pair lines 112-125"},
+    "U2-003": {"status": "fail_narrowed", "evidence": "dispatch-readiness refusal lines 130-143; row lock ends before request/dispatcher; no brief producer"},
+    "U2-004": {"status": "closed_source", "evidence": "source manifest native heavy floor and controller one-time floor"},
+    "U2-005": {"status": "source_only_association_present", "evidence": "binding-source inspect_result lines 147-209"}
+  },
+  "plain_artifact_route": ["request", "returned service ID/result directory", "snap", "summary resolved command", "log/status/exit", "command terminal JUnit", "D73 request-id/runmanifest"],
+  "not_claimed": ["live admission", "body", "behavior", "REG0", "ship", "Runtime v2 service-request schema"]
+}

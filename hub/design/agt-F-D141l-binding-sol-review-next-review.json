@@ -1,0 +1,65 @@
+{
+  "task": "F D141l independent binding Sol source review",
+  "verdict": "FAIL_SOURCE",
+  "reviewed_base": {
+    "composition_commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+    "composition_tree": "57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847",
+    "author_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence",
+    "author_source_manifest": "9d31a8cce8a0912af92b3358ebcf6e77e8a9245a63a510597de961491593cba3"
+  },
+  "current_tuple": {
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "composition": {"sha": "6a2d1c22ec800229812f4d756d7198aece8111ed", "tree": "57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847"}
+  },
+  "author_manifest_tuple": {
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"}
+  },
+  "controls": {
+    "checker_command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/check-source.py check",
+    "checker_exit": 0,
+    "control_status": "PASS",
+    "pair_status": "BLOCKED_U2_003_NATIVE_CUSTODY",
+    "admission_cases": 10,
+    "lifecycle_cases": 38,
+    "shell_syntax_exit": 0,
+    "python_ast_exit": 0,
+    "tiny_positive": {"exit": 17, "calls": 1},
+    "tiny_poison": {"exit": 1, "calls": 0},
+    "live_request_test": false,
+    "live_test_run": false,
+    "live_wait_test": false,
+    "live_body": false
+  },
+  "prior_findings_0731": {
+    "F1_missing_absolute_review_delivery": "CLOSED_SOURCE: current author packet is present at the named absolute root",
+    "F2_undefined_binding_producer": "CLOSED_PARTIAL: row-CAS/request-test/dispatcher/wait/inspect functions exist; dispatch still refuses before using them",
+    "F3_self_authored_json_authority": "CLOSED_NARROWED: inspect-result consumes plain native artifacts and admission/consume refuse; no Runtime v2 validator invented",
+    "F4_stale_rows": "EXPECTED_UNINSTALLED_STATE_WITH_LIVE_HISTORICAL_ROW: source-only review did not mutate registry; current controller can CAS-replace the existing row",
+    "F5_fixture_only_checker": "EXPECTED_LIMITATION: fixtures do not claim live admission; source path remains unqualified until its real route can run",
+    "F6_historical_trace": "CLOSED_WITH_DISCLOSURE: author has a current trace, but its recorded gaps remain non-qualification evidence"
+  },
+  "native_findings_0828": {
+    "U2-001_direct_test_run_race": "CLOSED_SOURCE: queue_and_wait calls request-test then wait-test; dispatcher owns test-run",
+    "U2-002_cut_failure_skips_pristine": "CLOSED_SOURCE: dispatch_phase records nonzero native exit and dispatch_pair still enters pristine",
+    "U2-003_native_custody": "FAIL_NARROWED: plain native artifacts are sufficient in principle; current source still has a pre-body row race, no immutable brief producer, and an explicit dispatch-readiness refusal",
+    "U2-004_heavy_floor": "CLOSED_SOURCE: both phases use agent-core-full heavy classification, native 4700000000 floor, one 4714564096 controller witness, and 4000000000 sampler stop",
+    "U2-005_launcher_association": "PASS_SOURCE_ONLY: inspect-result binds returned service ID, request, snapshot, resolved command, terminal exit, D73 runmanifest and JUnit/terminal custody; no live artifact exists"
+  },
+  "remaining_blockers": [
+    "Author source-manifest binds Composition tree 5ab5191a296980a0a6bcd1178ab6902d6478a148, not required review tree 57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847.",
+    "controller-continuation.sh dispatch-readiness intentionally exits 78 before row/request/brief/dispatch work; no genuine future request, row, immutable brief, witness and terminal chain is runnable from this packet.",
+    "The controller writes dispatch-witness.txt but has no immutable owner-brief path/bytes/hash and binding-source.py does not bind one.",
+    "The installer lock ends before request-test/dispatcher test-run resolves the row; another registry edit can make test-run execute a stale command. inspect-result detects a command mismatch only after the body, so this is a concrete stale-row race.",
+    "No live native request ID, request bytes, terminal result, runmanifest, JUnit or exit association was produced; all fixture checks are explicitly non-admission."
+  ],
+  "scope": {
+    "runtime_v2_request_validation": "not applicable to request-test orchestration request",
+    "new_crypto_or_atomic_protocol": "not required and not inferred",
+    "behavioral_qualification": false,
+    "product_change": false,
+    "lint_typecheck": "N/A: operational-only evidence shell/Python, no product source"
+  }
+}

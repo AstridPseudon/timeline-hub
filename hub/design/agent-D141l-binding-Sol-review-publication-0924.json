@@ -1,0 +1,203 @@
+{
+  "utc": "2026-10-26T09:24:59.940684+00:00",
+  "kind": "manager byte-exact SAFE operational source and independent review publication; no private control logs or raw body transferred",
+  "author_status": "BLOCKED_U2_003_NATIVE_CUSTODY",
+  "independent_verdict": "FAIL_SOURCE",
+  "manager_adjudication": "Composition635f/tree5ab519 remains genuine product tuple. Operational base6a2d/tree57f68 is separate; reviewer demand to repin product to evidence branch is inapplicable. No original changed.",
+  "source_only": true,
+  "real_request_or_body": false,
+  "entries": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/controller-continuation.sh",
+      "published": "design/agt-F-D141l-binding-sol-next-controller-continuation.sh",
+      "sha256": "b41b2238c058b727de2c77f4e0ec069d88897d18c32a016fb0ac498347845881",
+      "bytes": 6707,
+      "mode": "0o700",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/binding-source.py",
+      "published": "design/agt-F-D141l-binding-sol-next-binding-source.py",
+      "sha256": "cdc3e306c3d38b77214d3be72916548b0ddf68172ab5f06627f60cad27bcac18",
+      "bytes": 10701,
+      "mode": "0o600",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/check-source.py",
+      "published": "design/agt-F-D141l-binding-sol-next-check-source.py",
+      "sha256": "20e96545c90849ecfe8203f872987337d4d81d6ab4817fe5e97197b7f952185f",
+      "bytes": 42604,
+      "mode": "0o600",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/command-cut.sh",
+      "published": "design/agt-F-D141l-binding-sol-next-command-cut.sh",
+      "sha256": "4f95915edd9b65cc5b903a406c7853faeb3899ac9833744cfa771411e6b07816",
+      "bytes": 10787,
+      "mode": "0o700",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/command-pristine.sh",
+      "published": "design/agt-F-D141l-binding-sol-next-command-pristine.sh",
+      "sha256": "7e3a589dadbd077ca72bce9d936526f2897caf86f2eba5695b86833c2dc36c82",
+      "bytes": 10567,
+      "mode": "0o700",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/source-manifest.json",
+      "published": "design/agt-F-D141l-binding-sol-next-source-manifest.json",
+      "sha256": "9d31a8cce8a0912af92b3358ebcf6e77e8a9245a63a510597de961491593cba3",
+      "bytes": 22359,
+      "mode": "0o600",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/rows.txt",
+      "published": "design/agt-F-D141l-binding-sol-next-rows.txt",
+      "sha256": "02641c4dd7ebcf0b961d5d29f3e639ac1532327b9410aa8a084e87a601c70b70",
+      "bytes": 496,
+      "mode": "0o600",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/readiness.json",
+      "published": "design/agt-F-D141l-binding-sol-next-readiness.json",
+      "sha256": "cc7dcde9d5cc217c74dddeaa9ce3892d46d310ce1919f77e64acdaadf55d0689",
+      "bytes": 3890,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/controller-plan.md",
+      "published": "design/agt-F-D141l-binding-sol-next-controller-plan.md",
+      "sha256": "e26cbe7e0cf2c875acf1a1704a62c2f5242a19df31b4100e38547fecbaf4d8e4",
+      "bytes": 5301,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/validation.md",
+      "published": "design/agt-F-D141l-binding-sol-next-validation.md",
+      "sha256": "51f6d3f33c05ffee8006f586233ed88261e2232d70524e9ab85396bf465d03d6",
+      "bytes": 6638,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/handoff.md",
+      "published": "design/agt-F-D141l-binding-sol-next-handoff.md",
+      "sha256": "776840a057ee6f7070578020f9c9e6d5e232915e73813b1d3abb5c7407b2c8bd",
+      "bytes": 3221,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/disk-trace.txt",
+      "published": "design/agt-F-D141l-binding-sol-next-disk-trace.txt",
+      "sha256": "e66d6035181c58981298df91f8321f66e47959375f5cac8eb945e929da4a90fd",
+      "bytes": 37073,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/admission-derivation.json",
+      "published": "design/agt-F-D141l-binding-sol-next-admission-derivation.json",
+      "sha256": "39410ae8083b1900cebf74a802882a1fe7f6b762939e7ec7b29fb3cef525c8b4",
+      "bytes": 882,
+      "mode": "0o600",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/positive.manifest",
+      "published": "design/agt-F-D141l-binding-sol-next-positive.manifest",
+      "sha256": "d8fdc9e9d4054c2d3e207efd47346975e206175a9499a7501a85abc9847ba83c",
+      "bytes": 2657,
+      "mode": "0o600",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/poison.manifest",
+      "published": "design/agt-F-D141l-binding-sol-next-poison.manifest",
+      "sha256": "7521531fe7dd2024f21738fa97e08642c42932fefe7e49ca4bb7f9e177df78f1",
+      "bytes": 2657,
+      "mode": "0o600",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/positive-stub.sh",
+      "published": "design/agt-F-D141l-binding-sol-next-positive-stub.sh",
+      "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+      "bytes": 67,
+      "mode": "0o700",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-next/evidence/tiny-controls.sh",
+      "published": "design/agt-F-D141l-binding-sol-next-tiny-controls.sh",
+      "sha256": "ce33d1a048ef3d6c03232cb391ab77879b11f0451f1dc6fcfbb696017efc35e8",
+      "bytes": 1297,
+      "mode": "0o700",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence/review.json",
+      "published": "design/agt-F-D141l-binding-sol-review-next-review.json",
+      "sha256": "e4f099200771848b0db555f7d6ca79eddaa3e29c0f5dbb609ac43de0074c8fa4",
+      "bytes": 5140,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence/findings.md",
+      "published": "design/agt-F-D141l-binding-sol-review-next-findings.md",
+      "sha256": "afeb969edc1b9683944f728f052b7d5854e4a6014acfadc36a4c9105d2b2e5b3",
+      "bytes": 5084,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence/source-map.json",
+      "published": "design/agt-F-D141l-binding-sol-review-next-source-map.json",
+      "sha256": "4e6e2e2fc2120e9248a58834f5c9dd68542a144ca6463e8f6238d4af267284f6",
+      "bytes": 3293,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence/source-manifest.json",
+      "published": "design/agt-F-D141l-binding-sol-review-next-source-manifest.json",
+      "sha256": "efbf8471f833a898425823444e2903c3b4c50b0a27a8f6e7645cf90a1a30e134",
+      "bytes": 2361,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence/validation.md",
+      "published": "design/agt-F-D141l-binding-sol-review-next-validation.md",
+      "sha256": "fc93c72dd757f1cc6866f38ea65c2479aff4fdb9efc1a3cbba5b931c128d07f8",
+      "bytes": 2319,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence/handoff.md",
+      "published": "design/agt-F-D141l-binding-sol-review-next-handoff.md",
+      "sha256": "4c3e5a0b746cc5712a3f2aec368e22fcbbae737b0b0219b4e027efdfbf57b1c8",
+      "bytes": 1862,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence/disk-trace.txt",
+      "published": "design/agt-F-D141l-binding-sol-review-next-disk-trace.txt",
+      "sha256": "4038b781cad75cdb96c1545d4560d57632810ff16149f2954decc72a339437ad",
+      "bytes": 2275,
+      "mode": "0o644",
+      "byte_exact": true
+    }
+  ]
+}

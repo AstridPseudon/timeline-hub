@@ -1,0 +1,30 @@
+2026-10-26T09:18:43Z
+Filesystem     1024-blocks     Used Available Capacity Mounted on
+/dev/vda         264212084 36071560   4552992      89% /home/user/work/wt/agt-F-D141l-binding-sol-review-next
+/dev/vda         264212084 36071560   4552992      89% /tmp
+1392	/home/user/work/wt/agt-F-D141l-binding-sol-review-next
+8	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence
+2026-10-26T09:18:44Z
+Filesystem     1024-blocks     Used Available Capacity Mounted on
+/dev/vda         264212084 36071560   4552992      89% /home/user/work/wt/agt-F-D141l-binding-sol-review-next
+/dev/vda         264212084 36071560   4552992      89% /tmp
+1392	/home/user/work/wt/agt-F-D141l-binding-sol-review-next
+8	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence
+2026-10-26T09:18:45Z
+Filesystem     1024-blocks     Used Available Capacity Mounted on
+/dev/vda         264212084 36071560   4552992      89% /home/user/work/wt/agt-F-D141l-binding-sol-review-next
+/dev/vda         264212084 36071560   4552992      89% /tmp
+1392	/home/user/work/wt/agt-F-D141l-binding-sol-review-next
+8	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence
+2026-10-26T09:18:46Z
+Filesystem     1024-blocks     Used Available Capacity Mounted on
+/dev/vda         264212084 36071560   4552992      89% /home/user/work/wt/agt-F-D141l-binding-sol-review-next
+/dev/vda         264212084 36071560   4552992      89% /tmp
+1392	/home/user/work/wt/agt-F-D141l-binding-sol-review-next
+8	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence
+2026-10-26T09:18:47Z
+Filesystem     1024-blocks     Used Available Capacity Mounted on
+/dev/vda         264212084 36071560   4552992      89% /home/user/work/wt/agt-F-D141l-binding-sol-review-next
+/dev/vda         264212084 36071560   4552992      89% /tmp
+1392	/home/user/work/wt/agt-F-D141l-binding-sol-review-next
+8	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-sol-review-next/evidence
