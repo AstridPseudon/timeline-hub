@@ -1,0 +1,58 @@
+{
+  "utc": "2026-10-26T12:23:23.865134+00:00",
+  "worker": "app-P-D141hh-p1-custody-review-1218",
+  "verdict": "PASS_CUSTODY_TEST_PASS",
+  "normal": "32161 PASS0/200s",
+  "counts": "Two original P1 cases plusreadiness;0fail0skip",
+  "limits": "Reviewer first sampler parse error/no sideeffects, corrected secondtool sampler3samples; no whole-review monitor coverage claim. Actual fullhash source field correct, minor abbreviated prose hash typo is nonauthoritative.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p1-custody-review-1218/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p1-custody-review-1218-report.md",
+      "sha256": "b7d41c004954c8c55a79e5a3ab961056ce6d403d9fe472e5855bf8933ebcaaaf",
+      "bytes": 705
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p1-custody-review-1218/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p1-custody-review-1218-review.json",
+      "sha256": "210455eb0b84804d05ab8c736a3d3c8ccc49eeb76fee7c86241a58e4cc737243",
+      "bytes": 5988
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p1-custody-review-1218/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p1-custody-review-1218-findings.md",
+      "sha256": "fd537a54eb40a5bf5c8b5ae842a59095e7a52bba269fc8290bb54e938292d9c6",
+      "bytes": 1401
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p1-custody-review-1218/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p1-custody-review-1218-source-manifest.json",
+      "sha256": "cfc736f91d71a97e1649b305853352576f56745f96c85b79ebe822f87abe08df",
+      "bytes": 3006
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p1-custody-review-1218/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p1-custody-review-1218-validation.md",
+      "sha256": "e4e84c25394f6333d3a10e8f081c7c0be29d2d4c57ce88de469bdbd6003e3a8b",
+      "bytes": 2167
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p1-custody-review-1218/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p1-custody-review-1218-handoff.md",
+      "sha256": "f7a2f6cbe88aac48ee98de0d7e7a4f4fe082e1b33660fe9c08b427f47057e795",
+      "bytes": 672
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p1-custody-review-1218/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p1-custody-review-1218-disk-trace.txt",
+      "sha256": "1b1bf6c48951309d50d4446e02f41abea7ed75c27cb0c2f358c0ecb2663aa67c",
+      "bytes": 675
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p1-custody-review-1218/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p1-custody-review-1218-sampler-lifecycle.json",
+      "sha256": "f7d741e826c0ffcbb45978ade6b8a3e60f05059f3a5fd7a46f3526e2821dbeb8",
+      "bytes": 766
+    }
+  ]
+}

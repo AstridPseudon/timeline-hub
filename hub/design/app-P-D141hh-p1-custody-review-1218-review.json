@@ -1,0 +1,92 @@
+{
+  "schema": "d141hh-p1-custody-review-v1",
+  "verdict": "PASS_CUSTODY_TEST_PASS",
+  "scope": "One independent read-only custody review of the original P1 selector; no body rerun.",
+  "reviewed_at": "2026-10-26T12:21:42Z",
+  "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+  "source_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141dd-final-review-publication-1110.json",
+  "dispatch": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+    "index": 5,
+    "selector": "p1",
+    "attempt_scope": "original",
+    "recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "request_test_sha256": "9408dc44636db0e69ee64c59c373f5cd09cf7c82196a83167182227706d443cb",
+    "builder_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "builder_git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "extra_authorized_environment": {"TEST_KEEP": "D141hh p1"},
+    "pin_fields_per_recipe": 12
+  },
+  "native_paths": {
+    "artifact": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/submit-plan.json",
+    "output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/output",
+    "stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/native-submit.stdout.log",
+    "stderr": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/native-submit.stderr.log",
+    "stdout_sha256": "20309e775e479dc6cde3a6a5b0ccbe3ed31d931a1b5d3cdcc92db07b7209cbb4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "pins": {
+    "app": ["82e9e13ddf1d7ec6c736521b2eb091dca9877598", "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"],
+    "agent": ["ecdc242ed9b673f641759ecf029f95e89a2c6f92", "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"],
+    "runtime": ["95d98f038320d5d46bd679ac000ab3e15825c935", "78df31d62c5b9ba4c84dee4ea346e43a767718c1"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+  },
+  "terminal": {
+    "preflight": {
+      "id": "app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-preflight-1026121110-31121",
+      "status": "pass",
+      "exit": 0,
+      "request_sha256": "7154e42c9ca8ff9e6e391fa5d0ad0cdfc57b1ea5008657b50033356ed4641ab7",
+      "snap_sha256": "0f3c5b6ef9c9030bc20febd0d81d0997fd25a56dc79a829908e003163c426bb3",
+      "trace_samples": 3,
+      "raw_keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-preflight-1026121110-31121/KEEP"
+    },
+    "normal": {
+      "id": "app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161",
+      "status": "pass",
+      "exit": 0,
+      "request_sha256": "f25ce40e1a7c187e2d754c67a902abdb29f00ba41f9854cf4d60d73ce92800ab",
+      "snap_sha256": "e494876b85a744353e2d4453d43ad3e408bc176c3a502a695226058aea6c41ed",
+      "trace_samples": 42,
+      "raw_keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161/KEEP"
+    },
+    "same_id_wait": {"id": "app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161", "exit": 0, "reported": "pass exit=0 in 200s"}
+  },
+  "tests": {
+    "readiness": 1,
+    "p1_cases": 2,
+    "p1_xml": {"tests": 2, "failures": 0, "skipped": 0, "errors": 0},
+    "cases": [
+      "accepted split -> merged trim after Agent edit -> lost ACK/restart/exact retry",
+      "stale trim after real Agent move -> refused conflict -> App rollback/message"
+    ],
+    "source_hashes": {
+      "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+      "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+    }
+  },
+  "custody": {
+    "native_submit_session": 9556,
+    "native_submit_invocations": 1,
+    "normal_wait_session": 7742,
+    "same_id_wait": true,
+    "no_alternate_route": true,
+    "no_second_submit": true,
+    "source_recipe_edited": false,
+    "native_submit_argv": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "/home/user/work/app/scripts/testing/d66-plain-stack.mjs", "p1", "--submit"],
+    "native_submit_cwd": "/home/user/work/app",
+    "raw_keep_at_creation": true,
+    "four_pins_clean_detached": true
+  },
+  "traces": {
+    "native_preflight": {"samples": 3, "min_available_bytes": 5061656576, "max_gap_seconds": 2.110925033},
+    "native_normal": {"samples": 42, "min_available_bytes": 4840955904, "max_gap_seconds": 5.006692319},
+    "author_sampler": {"samples": 64, "min_available_bytes": 4855148544, "max_gap_seconds": 5.031, "standing_4gb_stop_reached": false},
+    "reviewer_sampler": {"samples": 3, "min_available_bytes": 5205938176, "standing_4gb_stop_reached": false, "session_reaped": true}
+  },
+  "findings": [],
+  "limitations": [
+    "This review did not rerun product, browser, service, full, private-control, typecheck, or lint tests.",
+    "The reviewer sampler's first shell invocation had a quoting parse error; the corrected foreground sampler began on the second tool invocation and is retained with three samples."
+  ]
+}

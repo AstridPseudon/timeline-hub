@@ -1,0 +1,48 @@
+{
+  "schema": "d141hh-p1-custody-source-manifest-v1",
+  "verdict": "PASS_SOURCE_CUSTODY",
+  "source_recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+    "dispatch_index": 5,
+    "sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d"
+  },
+  "native_command": {
+    "cwd": "/home/user/work/app",
+    "argv": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "/home/user/work/app/scripts/testing/d66-plain-stack.mjs", "p1", "--submit"],
+    "preflight_command_sha256": "dd370bf2089f971b7f53eab596a740fefd764079ffb93e71b9c74b13b7bd7cc2",
+    "normal_command_sha256": "513dd6421d52e745bb3ba54daaa79eb4c05cfa0d1bd464c27cb03997969245e6",
+    "preflight_row_sha256": "83dfca368dc296f95d9e4c16f3c4585206a3713958cd4d88241e9a0c65e5d88c",
+    "normal_row_sha256": "890320b6c6608fc53e356268bce7cb8890d144b8c4d8151cf2fc6dfc8c730db6"
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  },
+  "request_test": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+    "sha256": "9408dc44636db0e69ee64c59c373f5cd09cf7c82196a83167182227706d443cb",
+    "keep_order_source_line": "KEEP is written before the request is queued"
+  },
+  "qualified_private_sources": {
+    "controller.py": "86020cad9608be7abc5285dfca72e1373ba066f9ac30c2d1be5486dcb3dd3c66",
+    "check.sh": "9afb576cfa7c4408c192931f019e571976647957f9a8f2143a95394595a38ee1",
+    "cases.json": "94b90398d3956bf67cad7808fc17cb8464264586ce2c47f8328b7d278bf05156"
+  },
+  "pins": {
+    "app": {"head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d"},
+    "agent": {"head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "checks": {
+    "recipe_loaded_programmatically": true,
+    "both_recipes_have_exact_12_pin_fields": true,
+    "TEST_KEEP_absent_from_recipe_commands": true,
+    "command_hashes_match_rows": true,
+    "row_hashes_match_with_lf": true,
+    "builder_hash_and_blob_match": true,
+    "final_source_review": "PASS_SOURCE_ONLY / 43 controls",
+    "historical_other_target_p1_excluded": true
+  }
+}
