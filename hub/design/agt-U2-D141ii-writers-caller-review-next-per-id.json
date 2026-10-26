@@ -1,0 +1,134 @@
+{
+  "schema": "timeline.d141ii.writers-caller.per-id.v1",
+  "original_purpose_count": 15,
+  "source_base": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "reviewed_commit": "66720e11e8daa26a4e192a83d592cbe5caafc109",
+  "actual_final_actor_selectors": 2,
+  "ids": [
+    {
+      "n": 4,
+      "original": "tests/packs/timeline/test_cli_parity.py::test_publish_requires_a_message",
+      "current": "tests/packs/timeline/test_cli_parity.py::test_commit_migration_preserves_message_contract",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS",
+      "purpose": "message-required parser refusal and accepted commit message"
+    },
+    {
+      "n": 5,
+      "original": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[False]",
+      "current": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[False]",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS",
+      "purpose": "human conflict refusal, unchanged file/history, one commit attempt"
+    },
+    {
+      "n": 6,
+      "original": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[True]",
+      "current": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[True]",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS",
+      "purpose": "JSON conflict refusal, unchanged file/history, one commit attempt"
+    },
+    {
+      "n": 7,
+      "original": "tests/packs/timeline/test_cli_status_publish.py::test_publish_forwards_key_and_force_to_sdk_once",
+      "current": "tests/packs/timeline/test_cli_status_publish.py::test_commit_migration_forwards_key_once_and_refuses_force",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS",
+      "purpose": "authenticated key, accepted head/receipt identity, one call, force parser refusal",
+      "force_companion": true
+    },
+    {
+      "n": 8,
+      "original": "tests/packs/timeline/test_cli_status_publish.py::test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope",
+      "current": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_output_keeps_summary_and_receipt",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS_WITH_APPROVED_C0_REPLY_SHAPE",
+      "purpose": "bounded human summary, JSON envelope, receipt-result identity, edits/cuts before write"
+    },
+    {
+      "n": 9,
+      "original": "tests/packs/timeline/test_cli_status_publish.py::test_publish_of_a_clean_working_copy_publishes_nothing",
+      "current": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_of_a_clean_working_copy_writes_nothing",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS",
+      "purpose": "unchanged status, null receipt, unchanged bytes/history, zero mutation calls"
+    },
+    {
+      "n": 10,
+      "original": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False]",
+      "current": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[False]",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS",
+      "purpose": "human partial-publication error, durable receipt/idempotency, one call, no history write"
+    },
+    {
+      "n": 11,
+      "original": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True]",
+      "current": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[True]",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS",
+      "purpose": "JSON partial-publication error, exact receipt/idempotency, one call, no history write"
+    },
+    {
+      "n": 12,
+      "original": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "current": "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "execution": "PASS",
+      "protected": "PASS_SUPPORTED_CALLER",
+      "purpose": "editor revision-namespace diagnostic, conflict path, changed path, discard-first guidance, no overwrite",
+      "caller": "public CLI -> commit_document -> TimelineSession -> generated commit_timeline -> Runtime/provider 409 -> public JSON"
+    },
+    {
+      "n": 13,
+      "original": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "current": "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "execution": "PASS",
+      "protected": "PASS_SUPPORTED_CALLER",
+      "purpose": "generic revision-namespace diagnostic, conflict path, changed path, discard-first guidance, no overwrite",
+      "caller": "public CLI -> commit_document -> TimelineSession -> generated commit_timeline -> Runtime/provider 409 -> public JSON"
+    },
+    {
+      "n": 14,
+      "original": "tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke",
+      "current": "tests/packs/video_editing/test_runtime_publication_chain.py::test_commit_render_publication_preserves_runtime_authority_without_local_save_or_invoke",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS_WITH_APPROVED_ROUTE_CHANGE",
+      "purpose": "guarded Runtime commit/render path, attempt/lease/timeline/version authority, no local save/invoke"
+    },
+    {
+      "n": 15,
+      "original": "tests/sdk/test_runtime_response_conformance.py::test_publish_conflict_409_maps_to_conflict_and_keeps_its_details",
+      "current": "tests/sdk/test_runtime_response_conformance.py::test_commit_conflict_409_migration_keeps_details_request_id_and_request",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS_WITH_APPROVED_ROUTE_CHANGE",
+      "purpose": "typed conflict, exact details/request ID/request/idempotency preservation"
+    },
+    {
+      "n": 16,
+      "original": "tests/timeline/test_authoring_bundle.py::test_approval_is_bound_to_candidate_and_base_revision",
+      "current": "tests/timeline/test_authoring_bundle.py::test_approval_migration_is_bound_to_candidate_and_base_revision",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS_WITH_APPROVED_ROUTE_CHANGE",
+      "purpose": "stale refusal before write, candidate/base/approval binding, one supported commit"
+    },
+    {
+      "n": 17,
+      "original": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation",
+      "current": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS_WITH_APPROVED_ROUTE_CHANGE",
+      "purpose": "restart recovery, one render/claim generation, digest binding, one supported commit"
+    },
+    {
+      "n": 18,
+      "original": "tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_empty_head",
+      "current": "tests/v10/test_timelines_create.py::test_remote_create_empty_migration_preserves_shell_and_empty_head",
+      "execution": "PASS_RETAINED_PRIOR",
+      "protected": "PASS_WITH_APPROVED_COMMIT_REPLY_SHAPE",
+      "purpose": "shell/idempotency, init/default output, full config/registry/occurrences/empty lists, history/bootstrap/base pair, step reads"
+    }
+  ],
+  "execution_summary": {"final_actor_passed": 2, "final_actor_failed": 0, "final_actor_errors": 0, "prior_union_passed": 29},
+  "honesty_note": "The two actor nodes were independently executed here. Other protected nodes were retained only through exact prior evidence and conservation, not rerun."
+}

@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-26T13:53:05.329279+00:00",
+  "files": [
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+      "published": "design/agt-U2-D141ii-writers-caller-review-next-review.json",
+      "sha256": "b3eed8591ddb611c18abad079e77beb5e0c42cfd6004014d405e4ff2552af0cb",
+      "bytes": 2478
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-review-next/evidence/findings.md",
+      "published": "design/agt-U2-D141ii-writers-caller-review-next-findings.md",
+      "sha256": "660002fd5a82b771a103950eb6471a49ac66511b797c7151e6faee242fb72bf1",
+      "bytes": 3285
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+      "published": "design/agt-U2-D141ii-writers-caller-review-next-per-id.json",
+      "sha256": "ae3aed23704bb1352fe7a77b370eea1ff3c1e0b78f1eb4430518b39f2073b54a",
+      "bytes": 8547
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-review-next/evidence/final-selectors.json",
+      "published": "design/agt-U2-D141ii-writers-caller-review-next-final-selectors.json",
+      "sha256": "0ed23f5c9b9cb2aee276312d8f144524654b4550bcf48a6df09d3ad9f7efe295",
+      "bytes": 7681
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-review-next/evidence/disposition.json",
+      "published": "design/agt-U2-D141ii-writers-caller-review-next-disposition.json",
+      "sha256": "a62a980f1ffbac899313bad33d95d5fa562b6b16dea20273cdfdb6113f464f2c",
+      "bytes": 1517
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-review-next/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ii-writers-caller-review-next-source-manifest.json",
+      "sha256": "3e82f6ccb1b7ddf4bad711dfc08a6c0bca4bf63604ae6f6ecba216ca7cf2d1f2",
+      "bytes": 1631
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-review-next/evidence/validation.md",
+      "published": "design/agt-U2-D141ii-writers-caller-review-next-validation.md",
+      "sha256": "0d8eaa85ce03171e907d30849ab2a5c7628b1ed013a0c9d9a5cfd61a4e9748f9",
+      "bytes": 3267
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-review-next/evidence/handoff.md",
+      "published": "design/agt-U2-D141ii-writers-caller-review-next-handoff.md",
+      "sha256": "d35c169c224cd38f1de01d0af17274974c8f4bb05ee37c9f56001596b3e5386d",
+      "bytes": 1363
+    }
+  ],
+  "head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+  "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+  "result": "Protected writer PASS; whole lineage independently reviewed. Normal HOME merge ec0a9f5bae. Integrated53 pending; no REG0.",
+  "limits": "Default mypy same baseline/candidate FAIL_ENVIRONMENT; explicit3.12 both PASS. Actual two final nodes PASS2.99s. Live HTTP authorization and SQLite unclaimed."
+}

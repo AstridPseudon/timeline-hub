@@ -1,0 +1,37 @@
+{
+  "schema": "timeline.d141ii.writers-caller.source-manifest.v1",
+  "base_commit": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "intermediate_commits": [
+    "c61c56d2f2b926febde4dad67d83d114790766ab",
+    "3638da72332dee5ffccacb704c9ac3c794b7c959"
+  ],
+  "reviewed_commit": "66720e11e8daa26a4e192a83d592cbe5caafc109",
+  "reviewed_tree": "a302a0bca0cc941dafd0122bdbdc38430ad7c33d",
+  "runtime_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+  "final_delta": [
+    {
+      "path": "tests/packs/timeline/test_verbs_working_copy.py",
+      "status": "M",
+      "sha256": "1b19462c34d45952825bbbb03302bb5c2eec631841232e46632d6d47178a0eee"
+    }
+  ],
+  "inherited_product_blobs": {
+    "astrid/packs/timeline/cli_native.py": "fec5b6df32fac8394c1ae9d6b3b82df0b61c3ee699bbb10fd17103d05b032fe4",
+    "pyproject.toml": "3b1d9057b5bba99acf07fe5f591fd84e48de6857a9844e4347b3ddb4e821b8ad"
+  },
+  "final_delta_product_files": [],
+  "whole_lineage_allowed_files": [
+    "astrid/packs/timeline/cli_native.py",
+    "tests/packs/timeline/test_cli_parity.py",
+    "tests/packs/timeline/test_cli_status_publish.py",
+    "tests/packs/timeline/test_verbs_working_copy.py",
+    "tests/packs/video_editing/test_runtime_publication_chain.py",
+    "tests/sdk/test_runtime_response_conformance.py",
+    "tests/timeline/test_authoring_bundle.py",
+    "tests/v10/test_timelines_create.py"
+  ],
+  "original_test_blobs_present": true,
+  "wholepath_findings_sha256": "ae4fc480c46e28b9e0ff34a9efa47479301434df983aaa6c4e2948baa857d69a",
+  "no_shared_configuration_or_environment_change": true
+}

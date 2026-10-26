@@ -1,0 +1,24 @@
+{
+  "schema": "timeline.d141ii.writers-caller.disposition.v1",
+  "verdict": "PASS",
+  "behavior": "PASS",
+  "F5": "CLOSED: both exact actor-namespace selectors use the public CLI and actual generated/runtime/provider conflict path.",
+  "F7": "FAIL_ENVIRONMENT: exact default mypy fails identically on baseline and candidate at NumPy __init__.pyi:737; explicit Python 3.12 target passes both.",
+  "product_fix": false,
+  "test_fix_scope": "tests/packs/timeline/test_verbs_working_copy.py only",
+  "reply_shapes_for_owner": [
+    "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+    "bounded human summary plus C0 JSON envelope/receipt identity",
+    "partial-publication error retaining receipt/idempotency details without retry",
+    "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+    "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+    "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+  ],
+  "limits": [
+    "fixture namespace identities are seeded before invocation",
+    "in-process generated transport is used instead of a live HTTP door",
+    "authenticated publisher is bound in the actual Runtime provider context but live bearer authorization is unclaimed",
+    "SQLite persistence is unclaimed"
+  ],
+  "next_step": "Owner may retain PASS for the protected writer review; carry F7 as environment-limited in integrated qualification."
+}

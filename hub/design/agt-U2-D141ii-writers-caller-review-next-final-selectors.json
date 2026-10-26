@@ -1,0 +1,79 @@
+{
+  "schema": "timeline.d141ii.integrated-kept53.final-selectors.v1",
+  "purpose_count": {
+    "original_retained_purposes": 53,
+    "inverse38_purposes": 38,
+    "writer15_purposes": 15,
+    "actual_unique_selectors": 53,
+    "actual_nodes_run_by_this_review": 2
+  },
+  "source_bindings": {
+    "agent_commit": "66720e11e8daa26a4e192a83d592cbe5caafc109",
+    "agent_tree": "a302a0bca0cc941dafd0122bdbdc38430ad7c33d",
+    "runtime_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+  },
+  "force_companion_selectors": [
+    "tests/packs/timeline/test_cli_status_publish.py::test_commit_migration_forwards_key_once_and_refuses_force"
+  ],
+  "selector_groups": {
+    "inverse38_unchanged_original_selectors": [
+      "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+      "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+      "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+      "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+      "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+      "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+      "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]"
+    ],
+    "writer15_approved_migrated_selectors": [
+      "tests/packs/timeline/test_cli_parity.py::test_commit_migration_preserves_message_contract",
+      "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[False]",
+      "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[True]",
+      "tests/packs/timeline/test_cli_status_publish.py::test_commit_migration_forwards_key_once_and_refuses_force",
+      "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_output_keeps_summary_and_receipt",
+      "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_of_a_clean_working_copy_writes_nothing",
+      "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[False]",
+      "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[True]",
+      "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "tests/packs/video_editing/test_runtime_publication_chain.py::test_commit_render_publication_preserves_runtime_authority_without_local_save_or_invoke",
+      "tests/sdk/test_runtime_response_conformance.py::test_commit_conflict_409_migration_keeps_details_request_id_and_request",
+      "tests/timeline/test_authoring_bundle.py::test_approval_migration_is_bound_to_candidate_and_base_revision",
+      "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation",
+      "tests/v10/test_timelines_create.py::test_remote_create_empty_migration_preserves_shell_and_empty_head"
+    ]
+  },
+  "execution_policy": "The integrated proof may run all 53 selectors later with the exact same-kind command. This review ran only the two final actor selectors, as authorized."
+}
