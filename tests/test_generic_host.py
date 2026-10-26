@@ -4159,12 +4159,6 @@ class _IdleReadinessRuntime(FakeRuntime):
 @pytest.fixture
 def idle_remotion_host(tmp_path, monkeypatch):
     from astrid.core.rendering import remotion_runtime as runtime
-    for name in list(os.environ):
-        if (name.startswith(("GIT_", "DYLD_", "LD_"))
-                or name in runtime._UNSUPPORTED_PYTHON_STARTUP
-                or name in {"PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME",
-                            "NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA", "OPENSSL_CONF"}):
-            monkeypatch.delenv(name, raising=False)
     project, schema = tmp_path / "native-project", tmp_path / "schema"
     project.mkdir(); schema.mkdir()
     node = tmp_path / "node"
@@ -4228,7 +4222,7 @@ def test_idle_remotion_empty_polls_and_canonical_renewal_skip_only_native_walk(i
 
 @pytest.mark.parametrize("change", [
     "project", "node", "schema", "probe_tmp", "registry_context", "validation_role",
-    "validation_launch", "validation_reference", "reference_content", "reference_mode", "unsupported_loader",
+    "validation_launch", "validation_reference", "reference_content", "reference_mode",
 ])
 def test_idle_remotion_changed_or_unknown_context_never_inherits_ready(idle_remotion_host, monkeypatch, change):
     world = idle_remotion_host
@@ -4262,14 +4256,28 @@ def test_idle_remotion_changed_or_unknown_context_never_inherits_ready(idle_remo
         world.reference.write_bytes(b"changed")
     elif change == "reference_mode":
         world.reference.chmod(0o644)
-    else:
-        monkeypatch.setenv("NODE_OPTIONS", "--fixture-forbidden")
     assert host.claim_once() is None
     host._renew_executor_registration()
     assert world.calls["native"] == 1
     assert world.client.claim_calls == 0
     assert world.client.registrations[-1][1]["capabilities"][0]["status"] == "unavailable"
     assert not host.capabilities["test.echo"].ready
+
+
+@pytest.mark.parametrize("name", ["GIT_CONFIG_GLOBAL", "PYTHONNOUSERSITE", "LD_PRELOAD", "NODE_OPTIONS"])
+def test_idle_remotion_ignores_ambient_controls_outside_effective_context(idle_remotion_host, monkeypatch, name):
+    world = idle_remotion_host
+    host = world.host
+    host.register()
+    context = host._remotion_idle_context()
+    value = str(world.project.parent / "ambient-control") if name in {"GIT_CONFIG_GLOBAL", "LD_PRELOAD"} else "1"
+    monkeypatch.setenv(name, value)
+    assert host._remotion_idle_context() == context
+    assert host.claim_once() is None
+    host._renew_executor_registration()
+    assert world.calls["native"] == 1
+    assert world.client.registrations[-1][1]["capabilities"][0]["status"] == "ready"
+    assert host.capabilities["test.echo"].ready
 
 
 @pytest.mark.parametrize("failure", ["unavailable", "exception"])
@@ -4682,6 +4690,82 @@ def test_remotion_only_launch_probes_exclude_unrelated_pack_workers(tmp_path):
     assert len(everything) == 1 + 2 * 4
     assert len(narrowed) == 1 + 2 * 2
     assert narrowed[0] == everything[0]
+
+
+def _remotion_worker_refused_environment_names():
+    from astrid.core.rendering.remotion_runtime import _UNSUPPORTED_PYTHON_STARTUP
+    return tuple(sorted(set(_UNSUPPORTED_PYTHON_STARTUP) | {
+        "PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME", "NODE_OPTIONS", "NODE_PATH",
+        "NODE_ICU_DATA", "OPENSSL_CONF", "LD_PRELOAD", "DYLD_INSERT_LIBRARIES", "GIT_DIR",
+        "GIT_WORK_TREE", "GIT_CONFIG_GLOBAL",
+    }))
+
+
+@pytest.mark.parametrize("declaration", ["env_passthrough", "command_env", "required_env"])
+@pytest.mark.parametrize("name", _remotion_worker_refused_environment_names())
+def test_render_worker_launch_refuses_declared_interpreter_controls(tmp_path, monkeypatch, name, declaration):
+    from astrid.core.rendering.remotion_runtime import RemotionValidationError
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+
+    manifest = _write_manifest(tmp_path / "render-worker", capability_id="test.render")
+    data = json.loads(manifest.read_text())
+    data['metadata']['requires_remotion'] = True
+    if declaration == "env_passthrough":
+        data["isolation"] = {"mode": "subprocess", "env_passthrough": [name]}
+        environment = {"HOME": str(tmp_path), "PATH": "/usr/bin", name: "controlled-value"}
+    elif declaration == 'command_env':
+        data["command"]["env"] = {name: "controlled-value"}
+        environment = {"HOME": str(tmp_path), "PATH": "/usr/bin"}
+    else:
+        data['metadata']['required_env'] = [name]
+        environment = {"HOME": str(tmp_path), "PATH": "/usr/bin", name: "controlled-value"}
+    manifest.write_text(json.dumps(data))
+
+    with pytest.raises(RemotionValidationError) as failure:
+        _launch_worker_probe_environments((tmp_path,), environment, remotion_only=True)
+    message = str(failure.value)
+    assert name in message
+    assert "remove these variables" in message
+    assert "command.env, required_env and env_passthrough" in message
+    monkeypatch.setenv(name, 'controlled-value')
+    host = GenericPackHost(pack_roots=[tmp_path], credential_source=environment)
+    record = host.discover()[0]
+    with pytest.raises(HostError, match=name + '.*remove these variables'):
+        host._child_environment(record, tmp_path / 'attempt', explicit_env=dict(record.definition.command.env))
+
+
+@pytest.mark.parametrize("name", ["GIT_CONFIG_GLOBAL", "PYTHONNOUSERSITE", "LD_PRELOAD", "NODE_OPTIONS"])
+def test_render_worker_launch_and_child_ignore_undeclared_ambient_controls(tmp_path, monkeypatch, name):
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    from astrid.core.subprocess_env import build_child_subprocess_env
+
+    _write_marked_manifest(tmp_path / "render-worker", "test.render", requires_remotion=True)
+    environment = {"HOME": str(tmp_path), "PATH": "/usr/bin", "LANG": "C"}
+    value = str(tmp_path / "ambient-control") if name in {"GIT_CONFIG_GLOBAL", "LD_PRELOAD"} else "1"
+    ambient = {**environment, name: value}
+    clean_candidates = _launch_worker_probe_environments((tmp_path,), environment, remotion_only=True)
+    ambient_candidates = _launch_worker_probe_environments((tmp_path,), ambient, remotion_only=True)
+    assert ambient_candidates == clean_candidates
+
+    for key in ("ASTRID_REMOTION_VALIDATION_PATH", "ASTRID_REMOTION_VALIDATION_SHA256",
+                "ASTRID_REMOTION_VALIDATION_LAUNCH", "ASTRID_REMOTION_VALIDATION_ROLE"):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv(name, value)
+    host = GenericPackHost(pack_roots=[tmp_path], credential_source=ambient)
+    record = host.discover()[0]
+    actual, secrets = host._child_environment(record, tmp_path / "attempt")
+    try:
+        monkeypatch.delenv(name, raising=False)
+        clean_actual, clean_secrets = host._child_environment(record, tmp_path / "attempt-clean")
+        try:
+            assert actual == clean_actual
+            assert name not in actual
+            assert build_child_subprocess_env(base=ambient, parent=ambient) == build_child_subprocess_env(
+                base=environment, parent=environment)
+        finally:
+            clean_secrets.clear()
+    finally:
+        secrets.clear()
 
 
 def test_render_context_outside_validated_set_is_refused(tmp_path, monkeypatch):

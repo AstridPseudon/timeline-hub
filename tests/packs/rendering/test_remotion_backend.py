@@ -1879,25 +1879,38 @@ def test_stamped_top_layer_via_real_service_is_mov_prores_with_alpha(
             assert max(corner[:3]) <= 24, corner
 
 
-@pytest.mark.parametrize('mismatch', ['fresh_state', 'cache_state', 'output'])
+@pytest.mark.parametrize('mismatch', ['corpus', 'cache_state', 'output'])
 def test_launch_bound_registry_drift_refuses_without_write_or_generator(tmp_path, monkeypatch, mismatch):
     from astrid.core.element import registry
     from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
     state = {'version': 1, 'hash': 'a' * 64, 'content_hashes': {kind: kind for kind in ('effects', 'animations', 'transitions')}}
     monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
-    monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project: {'registry': {'mode': 'source_settled', 'expected_state': state}})
+    def validate(project):
+        if mismatch == 'corpus':
+            raise remotion_runtime.RemotionValidationError('launch-bound registry corpus changed')
+        return {'registry': {'mode': 'source_settled', 'expected_state': state}}
+    monkeypatch.setattr(remotion_runtime, '_validated_runtime', validate)
     cleared = []
     monkeypatch.setattr(registry, 'clear_default_registry_cache', lambda: cleared.append(True))
-    monkeypatch.setattr(remotion, '_effective_registry_state', lambda theme: ({**state, 'hash': 'b' * 64} if mismatch == 'fresh_state' else state))
+    monkeypatch.setattr(
+        remotion,
+        '_effective_registry_state',
+        lambda theme: pytest.fail('launch-bound validation already binds registry inputs'),
+    )
     monkeypatch.setattr(remotion, '_read_registry_state', lambda project: ({} if mismatch == 'cache_state' else state))
     monkeypatch.setattr(remotion, '_registry_output_content_hashes', lambda project: ({} if mismatch == 'output' else state['content_hashes']))
     def forbidden(*args, **kwargs):
         pytest.fail('launch-bound mismatch must not regenerate or write state')
     monkeypatch.setattr(remotion.subprocess, 'run', forbidden)
     monkeypatch.setattr(remotion, '_write_registry_state', forbidden)
-    with pytest.raises(RuntimeError, match='drift refuses regeneration'):
-        remotion._regenerate_element_registries_locked(tmp_path, None)
-    assert cleared == [True]
+    if mismatch == 'corpus':
+        with pytest.raises(remotion_runtime.RemotionValidationError, match='launch-bound registry corpus changed'):
+            remotion._regenerate_element_registries_locked(tmp_path, None)
+        assert cleared == []
+    else:
+        with pytest.raises(RuntimeError, match='drift refuses regeneration'):
+            remotion._regenerate_element_registries_locked(tmp_path, None)
+        assert cleared == [True]
 
 
 def test_launch_bound_unchanged_registry_refreshes_lru_then_skips_all_writes(tmp_path, monkeypatch):
@@ -1908,12 +1921,17 @@ def test_launch_bound_unchanged_registry_refreshes_lru_then_skips_all_writes(tmp
     monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project: {'registry': {'mode': 'source_settled', 'expected_state': state}})
     current = {'state': {'hash': 'stale LRU'}}
     monkeypatch.setattr(registry, 'clear_default_registry_cache', lambda: current.update(state=state))
-    monkeypatch.setattr(remotion, '_effective_registry_state', lambda theme: current['state'])
+    monkeypatch.setattr(
+        remotion,
+        '_effective_registry_state',
+        lambda theme: pytest.fail('launch-bound validation already binds registry inputs'),
+    )
     monkeypatch.setattr(remotion, '_read_registry_state', lambda project: state)
     monkeypatch.setattr(remotion, '_registry_output_content_hashes', lambda project: state['content_hashes'])
     monkeypatch.setattr(remotion.subprocess, 'run', lambda *a, **kw: pytest.fail('unchanged launch must not regenerate'))
     monkeypatch.setattr(remotion, '_write_registry_state', lambda *a, **kw: pytest.fail('unchanged launch must not rewrite'))
     remotion._regenerate_element_registries_locked(tmp_path, None)
+    assert current['state'] == state
 
 
 def test_frame_progress_relay_publishes_bound_attempt_and_keeps_codec_stages(tmp_path):

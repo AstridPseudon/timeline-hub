@@ -444,10 +444,12 @@ def _regenerate_element_registries_locked(
         registry = validated['registry']
         if registry['mode'] == 'source_settled':
             clear_default_registry_cache()
-            fresh = _effective_registry_state(theme_path)
-            if (fresh != registry['expected_state']
-                    or _read_registry_state(project_dir) != fresh
-                    or _registry_output_content_hashes(project_dir) != fresh['content_hashes']):
+            # Validation just rechecked the complete corpus and output bindings.
+            # Recomputing here would launch Git with this caller's ambient env
+            # instead of the registry probe's selected environment.
+            expected = registry['expected_state']
+            if (_read_registry_state(project_dir) != expected
+                    or _registry_output_content_hashes(project_dir) != expected['content_hashes']):
                 raise RuntimeError('launch-bound registry drift refuses regeneration')
         # Provisioned wheel output bindings are checked above; never invent a
         # source generator for a wheel. Launch-bound consumers never rewrite.

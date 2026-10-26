@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import argparse
-import ipaddress
+import http.client
 import io
+import ipaddress
 import json
 import threading
 import time
@@ -184,7 +185,7 @@ def _probe_server(
 
     try:
         stats = get_json("/system_stats")
-    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+    except (OSError, urllib.error.URLError, http.client.HTTPException, TimeoutError, ValueError) as exc:
         if not require_comfyui_shape:
             errors.append(_error(port, "/system_stats", exc))
         return None, errors
@@ -224,12 +225,12 @@ def _probe_server(
         server["output_dir"] = _output_directory(argv, base_dir)
         server["manager_present"] = _manager_present(base_dir)
         server["python"] = _python_guess(base_dir, embedded)
-    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+    except (OSError, urllib.error.URLError, http.client.HTTPException, TimeoutError, ValueError) as exc:
         errors.append(_error(port, "/internal/folder_paths", exc))
     try:
         query = urllib.parse.urlencode({"dir": "workflows"})
         workflows = get_json("/userdata?" + query)
-    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+    except (OSError, urllib.error.URLError, http.client.HTTPException, TimeoutError, ValueError) as exc:
         errors.append(_error(port, "/userdata?dir=workflows", exc))
     else:
         if isinstance(workflows, list):
@@ -261,7 +262,7 @@ def _pinokio_discovery(
                     _PINOKIO_INFO_URL,
                     timeout=min(_PINOKIO_REQUEST_TIMEOUT_SECONDS, remaining),
                 )
-            except Exception:
+            except (OSError, urllib.error.URLError, http.client.HTTPException, TimeoutError, ValueError):
                 info = None
         if not isinstance(info, dict):
             return None, {}, [], []
@@ -282,7 +283,15 @@ def _pinokio_discovery(
                 servers.append(server)
                 errors.extend(probe_errors)
         return info, apps_by_port, servers, errors
-    except Exception:
+    except (
+        OSError,
+        urllib.error.URLError,
+        http.client.HTTPException,
+        TimeoutError,
+        ValueError,
+        TypeError,
+        AttributeError,
+    ):
         return None, {}, [], []
 
 
@@ -311,7 +320,7 @@ def _bounded_pinokio_discovery(
     worker = threading.Thread(target=run, daemon=True)
     try:
         worker.start()
-    except Exception:
+    except RuntimeError:
         _PINOKIO_SCAN_LOCK.release()
         return empty
     # urllib's timeout is an inactivity limit, so bound the whole optional phase here.

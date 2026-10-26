@@ -204,19 +204,15 @@ def probe_context(*, environment: Mapping[str, str], python_executable: str) -> 
     """Project the documented effective probes; never copy task secrets."""
     home = environment.get("HOME")
     if not isinstance(home, str) or not home or not Path(home).is_absolute():
-        raise RemotionValidationError("runtime validation needs an explicit absolute HOME")
-    forbidden = {k for k in environment if k.startswith(("DYLD_", "LD_"))}
-    forbidden.update(k for k in ("PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME",
-                                "NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA", "OPENSSL_CONF")
-                     if k in environment)
-    forbidden.update(k for k in _UNSUPPORTED_PYTHON_STARTUP if k in environment)
-    if forbidden:
-        raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+        raise RemotionValidationError("runtime validation needs an explicit absolute HOME; set HOME to your absolute home directory")
+    # Only these projections reach the owned Node/schema probes. Ambient
+    # loader and interpreter controls are neither child inputs nor key inputs.
     python = Path(python_executable)
     if not python.is_absolute():
         raise RemotionValidationError("runtime validation needs an absolute lexical interpreter")
-    if any(not isinstance(environment[k], str) for k in _NODE_ENV_KEYS if k in environment):
-        raise RemotionValidationError("runtime probe environment values must be strings")
+    for name in _NODE_ENV_KEYS:
+        if name in environment and not isinstance(environment[name], str):
+            raise RemotionValidationError(f"{name} must be a string; set it to a valid environment value")
     return {"policy": "clean-schema-env/v1", "python_executable": str(python),
             "node_env": {k: (_dedupe_path(environment[k]) if k == "PATH" else environment[k])
                          for k in _NODE_ENV_KEYS if k in environment},
@@ -404,8 +400,7 @@ print(json.dumps({'origin': str(origin), 'module_files': files, 'package_roots':
 
 _REGISTRY_KINDS = ('effects', 'animations', 'transitions')
 _REGISTRY_SELECTORS = ('ASTRID_PACKS_PATH', 'ASTRID_SOURCE_STATE', 'XDG_STATE_HOME')
-# Git variables that only shape interactive use (editors, pagers, prompts, transport, commit identity):
-# they change nothing Git reads. Agent and editor shells set GIT_EDITOR, so refusing them refused every launch.
+# These Git controls remain supported when explicitly passed to a worker.
 _INTERACTIVE_GIT_ENV = frozenset({
     'GIT_EDITOR', 'GIT_SEQUENCE_EDITOR', 'GIT_PAGER', 'GIT_TERMINAL_PROMPT', 'GIT_ASKPASS',
     'GIT_SSH', 'GIT_SSH_COMMAND', 'GIT_SSH_VARIANT', 'GIT_MERGE_AUTOEDIT',
@@ -413,25 +408,39 @@ _INTERACTIVE_GIT_ENV = frozenset({
 })
 
 
+def _validate_remotion_worker_environment(environment: Mapping[str, str]) -> None:
+    """Check controls delivered to a worker, before its interpreter starts."""
+    forbidden = sorted(k for k in environment
+                       if k.startswith(('DYLD_', 'LD_'))
+                       or (k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV)
+                       or k in _UNSUPPORTED_PYTHON_STARTUP
+                       or k in {'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME',
+                                'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'})
+    if forbidden:
+        raise RemotionValidationError(
+            f"Remotion worker environment refuses {', '.join(forbidden)}; "
+            "remove these variables from command.env, required_env and env_passthrough")
+
+
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
     from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
-    probe_context(environment=environment, python_executable=sys.executable)
-    if any((k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV) or k in {'PYTHONSTARTUP'}
-           for k in environment):
-        # Git overrides that redirect what Git reads (GIT_DIR, GIT_CONFIG*, ...) and startup
-        # hooks are outside this selected launch contract.
-        raise RemotionValidationError('registry validation refuses unsupported startup/Git overrides')
-    for name in ('ASTRID_SOURCE_STATE', 'XDG_STATE_HOME', 'XDG_CONFIG_HOME'):
-        if environment.get(name) and not Path(environment[name]).is_absolute():
-            raise RemotionValidationError('registry selectors require absolute launch-known paths')
-    if environment.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in environment['PYTHONPATH'].split(os.pathsep)):
-        raise RemotionValidationError('registry import paths require absolute launch-known locations')
     keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
     if sys.platform == 'win32':
         keys.update(_WINDOWS_BASE_ENV)
     if not generator:
         keys.update((*_REGISTRY_SELECTORS, 'PYTHONPATH', 'XDG_CONFIG_HOME'))
     context = {k: environment[k] for k in sorted(keys) if k in environment}
+    # This is also the registry child's complete environment. Validate the
+    # selected mapping; ambient Git/startup overrides never reach that child.
+    probe_context(environment=context, python_executable=sys.executable)
+    for name, value in context.items():
+        if not isinstance(value, str):
+            raise RemotionValidationError(f"{name} must be a string; set it to a valid environment value")
+    for name in ('ASTRID_SOURCE_STATE', 'XDG_STATE_HOME', 'XDG_CONFIG_HOME'):
+        if context.get(name) and not Path(context[name]).is_absolute():
+            raise RemotionValidationError(f"{name} must be absolute; set it to an absolute launch-known path")
+    if context.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in context['PYTHONPATH'].split(os.pathsep)):
+        raise RemotionValidationError('PYTHONPATH must contain absolute paths; remove empty or relative entries')
     return _normalize_registry_selectors(context)
 
 

@@ -322,24 +322,33 @@ def test_parked_host_rejects_conflicting_projected_cf_encoding(tmp_path, monkeyp
 
 def test_launch_and_reuse_share_exact_canonical_host_registry_context(tmp_path, monkeypatch):
     from astrid.core.rendering.remotion_runtime import _registry_context, probe_context
-    from astrid.core.rendering.remotion_runtime import _UNSUPPORTED_PYTHON_STARTUP
-    for name in (*_UNSUPPORTED_PYTHON_STARTUP, 'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME', 'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'):
-        monkeypatch.delenv(name, raising=False)
-    for name in tuple(os.environ):
-        if name.startswith(('GIT_', 'DYLD_', 'LD_')):
-            monkeypatch.delenv(name, raising=False)
+    from astrid.core.subprocess_env import build_child_subprocess_env
     monkeypatch.setenv('HOME', str(tmp_path))
     monkeypatch.setenv('ASTRID_PACKS_PATH', str(tmp_path / 'foreign-pack-root'))
     monkeypatch.setenv('PYTHONPATH', str(tmp_path / 'foreign-import'))
     monkeypatch.setattr(host_bootstrap, '_dependency_pythonpath', lambda: (str(tmp_path / 'dependency'),))
     monkeypatch.setattr(host_bootstrap, '_provision_render_runtime_env', lambda source, env: env.update(ASTRID_REMOTION_PROJECT_DIR=str(source / 'remotion')))
     source = tmp_path / 'trusted-source'
+    # These controls are set after imports and any direct interpreter startup. The Node/schema and registry child
+    # projections do not carry them, so ambient values must not split validation context or safe child env.
+    ambient_controls = {
+        'GIT_CONFIG_GLOBAL': str(tmp_path / 'gitconfig'), 'PYTHONNOUSERSITE': '1',
+        'LD_PRELOAD': str(tmp_path / 'loader.so'), 'NODE_OPTIONS': '--require ambient-hook',
+        'PYTHONUTF8': '1',
+    }
+    for name, value in ambient_controls.items():
+        monkeypatch.setenv(name, value)
     launch = host_bootstrap._host_render_environment(source)
     reuse = host_bootstrap._host_render_environment(source)
     assert 'ASTRID_PACKS_PATH' not in launch and launch == reuse
     assert launch['PYTHONPATH'] == os.pathsep.join((str(source), str(tmp_path / 'dependency')))
-    assert _registry_context(launch, generator=False) == _registry_context(reuse, generator=False)
-    assert probe_context(environment=launch, python_executable=sys.executable) == probe_context(environment=reuse, python_executable=sys.executable)
+    clean_launch = {name: value for name, value in launch.items() if name not in ambient_controls}
+    ambient_launch = {**clean_launch, **ambient_controls}
+    assert _registry_context(ambient_launch, generator=False) == _registry_context(clean_launch, generator=False)
+    assert probe_context(environment=ambient_launch, python_executable=sys.executable) == probe_context(
+        environment=clean_launch, python_executable=sys.executable)
+    assert build_child_subprocess_env(base=ambient_launch, parent=ambient_launch) == build_child_subprocess_env(
+        base=clean_launch, parent=clean_launch)
 
 
 @pytest.mark.parametrize("defect", ["missing_project_read", "extra_admin", "reordered", "duplicate", "wrong_actor"])

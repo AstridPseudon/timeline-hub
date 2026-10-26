@@ -382,11 +382,8 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
     assert not ambient_origin.is_relative_to(schema_package.resolve())
     (runtime / "package-lock.json").write_text('{"lockfileVersion":3}\n')
     monkeypatch.setattr(remotion_run, "gen_effect_registry", None)
-    for control in remotion_runtime._UNSUPPORTED_PYTHON_STARTUP:
-        monkeypatch.delenv(control, raising=False)
-    for control in tuple(os.environ):
-        if control.startswith(('GIT_', 'DYLD_', 'LD_')):
-            monkeypatch.delenv(control, raising=False)
+    monkeypatch.setenv('PYTHONNOUSERSITE', '1')
+    monkeypatch.setenv('GIT_CONFIG_GLOBAL', str(tmp_path / 'ambient-gitconfig'))
     reference = remotion_runtime.prepare_remotion_validation(
         artifact_directory=tmp_path / "owned-readiness", host_environment=dict(os.environ),
         python_executable=sys.executable, launch_id="b" * 32,
@@ -558,12 +555,10 @@ def test_remotion_runtime_uses_absolute_node_not_hostile_path(
         tmp_path, monkeypatch, environment_overrides={'PATH': str(tmp_path)})
     cli = runtime / REMOTION_CLI_RELATIVE_PATH
     from astrid.core.subprocess_env import _SAFE_BASE_ENV
-    for key in (*_SAFE_BASE_ENV, *remotion_runtime._REGISTRY_SELECTORS, *remotion_runtime._UNSUPPORTED_PYTHON_STARTUP, 'PYTHONPATH', 'XDG_CONFIG_HOME',
-                'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'):
+    for key in (*_SAFE_BASE_ENV, *remotion_runtime._REGISTRY_SELECTORS, 'PYTHONPATH', 'XDG_CONFIG_HOME'):
         monkeypatch.delenv(key, raising=False)
-    for key in tuple(os.environ):
-        if key.startswith(('GIT_', 'DYLD_', 'LD_')):
-            monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv('PYTHONNOUSERSITE', '1')
+    monkeypatch.setenv('GIT_CONFIG_GLOBAL', str(tmp_path / 'ambient-gitconfig'))
     for key, value in {**env, **reference}.items():
         monkeypatch.setenv(key, value)
     tools, error = resolve_remotion_runtime_tools(runtime)
@@ -799,10 +794,12 @@ def test_clean_probe_home_refuses_before_launch(home):
 @pytest.mark.parametrize('name', ['DYLD_INSERT_LIBRARIES', 'LD_PRELOAD', 'PYTHONHOME',
                                  'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'NODE_OPTIONS',
                                  'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'])
-def test_clean_probe_rejects_unsupported_consuming_overrides(tmp_path, name):
-    with pytest.raises(remotion_runtime.RemotionValidationError, match='unsupported'):
-        remotion_runtime.probe_context(environment={'HOME': str(tmp_path), name: 'override'},
-                                      python_executable=sys.executable)
+def test_clean_probe_ignores_controls_outside_its_projection(tmp_path, name):
+    clean = {'HOME': str(tmp_path)}
+    expected = remotion_runtime.probe_context(environment=clean, python_executable=sys.executable)
+    actual = remotion_runtime.probe_context(environment={**clean, name: 'override'}, python_executable=sys.executable)
+    assert actual == expected
+    assert remotion_runtime._canonical(actual) == remotion_runtime._canonical(expected)
 
 
 def test_clean_probe_projection_preserves_values_absence_and_excludes_task_metadata(tmp_path):
@@ -1139,10 +1136,20 @@ def test_registry_generator_custody_refusal_preserves_primary_and_no_state_publi
     assert not (project / '.astrid-registry-state.json').exists()
 
 
-@pytest.mark.parametrize('control', sorted(remotion_runtime._UNSUPPORTED_PYTHON_STARTUP))
-def test_launch_validation_refuses_unqualified_ordinary_python_startup(tmp_path, control):
-    with pytest.raises(remotion_runtime.RemotionValidationError, match='unsupported loader/interpreter'):
-        remotion_runtime.probe_context(environment={'HOME': str(tmp_path), control: ''}, python_executable=sys.executable)
+@pytest.mark.parametrize('control', sorted(remotion_runtime._UNSUPPORTED_PYTHON_STARTUP) + [
+    'DYLD_INSERT_LIBRARIES', 'LD_PRELOAD', 'LD_LIBRARY_PATH', 'PYTHONHOME',
+    'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA',
+    'OPENSSL_CONF', 'GIT_CONFIG_GLOBAL', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE'])
+def test_launch_validation_ambient_controls_preserve_child_env_and_context_key(tmp_path, monkeypatch, control):
+    runtime, _, _, environment, reference, calls = _owned_validation_fixture(tmp_path, monkeypatch)
+    clean = {**environment, **reference}
+    ambient = {**clean, control: 'ambient-override'}
+    expected = remotion_runtime._validated_runtime(runtime, environment=clean)
+    actual = remotion_runtime._validated_runtime(runtime, environment=ambient)
+    assert remotion_runtime_context_worker(ambient) == remotion_runtime_context_worker(clean)
+    assert actual['context'] == expected['context']
+    assert remotion_runtime._canonical(actual['context']) == remotion_runtime._canonical(expected['context'])
+    assert len(calls) == 3
 
 
 @pytest.mark.parametrize('section', ['include', 'includeIf "gitdir:/any/"'])

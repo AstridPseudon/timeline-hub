@@ -42,20 +42,24 @@ KEPT = {"PATH": "/usr/bin", "HOME": "/home/x", "TMPDIR": "/tmp", "GIT_EDITOR": "
         "GIT_AUTHOR_NAME": "n", "ASTRID_PACKS_PATH": "/packs", "ASTRID_RUNTIME_DATA_ROOT": "/data"}
 
 
-def test_scrub_removes_what_remotion_refuses_and_keeps_the_rest() -> None:
+def test_scrub_removes_overrides_and_keeps_the_rest() -> None:
     scrubbed = journey.scrub_child_env({**POLLUTED, **KEPT})
     assert scrubbed == KEPT
 
 
 @pytest.mark.parametrize("key", sorted(POLLUTED))
-def test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces(key: str) -> None:
-    from astrid.core.rendering.remotion_runtime import RemotionValidationError, _registry_context
+def test_irrelevant_ambient_controls_do_not_change_remotion_projection(key: str) -> None:
+    from astrid.core.rendering.remotion_runtime import _registry_context, probe_context
     env = {"HOME": "/home/x", "PATH": "/usr/bin", key: POLLUTED[key]}
-    if not key.startswith(("ASTRID_", "OTTO_")):
-        with pytest.raises(RemotionValidationError):  # the validation that fails closed on it ...
-            _registry_context(env, generator=True)
+    clean = {name: value for name, value in env.items() if name != key}
+    assert probe_context(environment=env, python_executable=sys.executable) == probe_context(
+        environment=clean, python_executable=sys.executable)
+    context = _registry_context(env, generator=True)
+    expected = _registry_context(clean, generator=True)
+    if key == 'ASTRID_TIMELINE_SCHEMA_PYTHONPATH':
+        assert context.pop(key) == POLLUTED[key]
+    assert context == expected
     assert key not in journey.scrub_child_env(env)
-    _registry_context(journey.scrub_child_env(env), generator=True)  # ... passes once scrubbed
 
 
 def test_scrubbed_env_with_interactive_git_set_still_passes_validation() -> None:

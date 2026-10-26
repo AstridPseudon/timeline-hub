@@ -1836,7 +1836,10 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
     rendering pack itself); the host baseline variant is always present.
     A render in any other context is refused by ``_validated_runtime``.
     """
-    from astrid.core.rendering.remotion_runtime import _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS
+    from astrid.core.rendering.remotion_runtime import (
+        _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS,
+        _validate_remotion_worker_environment,
+    )
     from astrid.core.subprocess_env import (
         _SAFE_BASE_ENV,
         _WINDOWS_BASE_ENV,
@@ -1901,13 +1904,15 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
         fixed = _fixed_worker_environment(record, fixed, environment)
         relevant = {k: v for k, v in fixed.items()
                     if k in set(_NODE_ENV_KEYS) | safe_base_env | set(_REGISTRY_SELECTORS) | set(_UNSUPPORTED_PYTHON_STARTUP) | {'XDG_CONFIG_HOME', 'PYTHONPATH'}
-                    or k.startswith(('DYLD_', 'LD_'))
+                    or k.startswith(('DYLD_', 'LD_', 'GIT_'))
                     or k in {'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME',
                              'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'}}
         projected = build_child_subprocess_env(
             base=environment, parent=environment, explicit_env=relevant,
             passthrough=public_passthrough,
             declared_passthrough=public_passthrough)
+        if _record_may_render(record):
+            _validate_remotion_worker_environment(projected)
         native = dict(projected)
         native[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in pack_roots)
         native['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
@@ -7775,6 +7780,16 @@ class GenericPackHost:
             secret_values=secrets,
             declared_secrets=declared_secrets,
         )
+        if _record_may_render(record):
+            from astrid.core.rendering.remotion_runtime import (
+                RemotionValidationError,
+                _validate_remotion_worker_environment,
+            )
+            try:
+                _validate_remotion_worker_environment(env)
+            except RemotionValidationError as exc:
+                secrets.clear()
+                raise HostError(str(exc)) from exc
         if not allow_runtime_connection:
             # A parent has only its inherited three-operation channel.
             # Also remove manifest passthrough aliases of the worker secret.

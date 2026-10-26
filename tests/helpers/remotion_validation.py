@@ -22,13 +22,6 @@ from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
 
 REMOTION = Path(__file__).resolve().parents[2] / "remotion"
 
-_LOADER_INTERPRETER_OVERRIDES = (
-    "PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME", "NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA",
-    "OPENSSL_CONF", "PYTHONUSERBASE", "PYTHONNOUSERSITE", "PYTHONSAFEPATH", "PYTHONPYCACHEPREFIX",
-    "PYTHONPLATLIBDIR", "PYTHONCASEOK", "PYTHONUTF8", "PYTHONCOERCECLOCALE", "PYTHONSTARTUP",
-)
-
-
 REQUIRED_BINARIES = ("node", "npx", "ffmpeg", "ffprobe")
 REQUIRED_PACKAGES = (
     "@banodoco/timeline-composition",
@@ -65,23 +58,14 @@ def issue_remotion_launch_validation(tmp_path: Path, monkeypatch: pytest.MonkeyP
     ):
         monkeypatch.delenv(name, raising=False)
 
-    # This qualifies the test process's own environment directly, not a launched host's: the product drops
-    # LD_*/DYLD_* only on the host-launch path (_prepare_render_validation), so the loader keys must still go
-    # here, as must the interpreter overrides that probe_context refuses. A CI runner legitimately carries some
-    # (actions/setup-python exports LD_LIBRARY_PATH on Linux); the validator stays strict.
-    for name in list(os.environ):
-        if name.startswith(("DYLD_", "LD_")) or name in _LOADER_INTERPRETER_OVERRIDES:
-            monkeypatch.delenv(name)
-
     monkeypatch.setenv(ASTRID_REMOTION_PROJECT_DIR, str(REMOTION.resolve()))
     node_value = os.environ.get(ASTRID_NODE_EXECUTABLE) or shutil.which("node")
     assert node_value, "the provisioned Remotion environment must provide Node"
     node = Path(node_value).expanduser().resolve(strict=True)
     monkeypatch.setenv(ASTRID_NODE_EXECUTABLE, str(node))
 
-    # The transaction qualifies this process's environment (what an in-process render validates) and its
-    # allowlist projection (what the transport hands the backend child). The process must therefore carry no
-    # loader, interpreter-startup or Git-redirect overrides: the runtime refuses those and so does this fixture.
+    # The transaction qualifies this process's effective probe context and the allowlist projection handed to
+    # the backend child. Ambient controls outside those projections do not affect either context.
     reference = prepare_remotion_validation(
         artifact_directory=tmp_path / "remotion-validation",
         host_environment=dict(os.environ),
