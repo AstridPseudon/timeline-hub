@@ -1,0 +1,100 @@
+{
+  "utc": "2026-10-26T07:10:02.576374+00:00",
+  "scope": "Closed unreferenced22-24Oct Runtime manager stdout only; no26Oct witness, worker/test raw, KEEP, hub or product touched",
+  "guards": "Exit marker, older1h, owner regular nonsymlink singlelink, current design/brief/board/suite/notes reference census, no visible open FD, unchanged source/stat and decoded SHA256/mode",
+  "before_free": 4593745920,
+  "after_free": 4607471616,
+  "saved_bytes": 13721612,
+  "files": [
+    {
+      "source": "managers/runtime/rounds/20261024T1840Z.log",
+      "compressed": "managers/runtime/rounds/20261024T1840Z.log.gz",
+      "original_bytes": 2483990,
+      "compressed_bytes": 667891,
+      "content_sha256": "f376f735886df6b293a63b415fe36ac44740ce12f41d8bf861059d2c7982568f",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T0345Z.log",
+      "compressed": "managers/runtime/rounds/20261024T0345Z.log.gz",
+      "original_bytes": 2269427,
+      "compressed_bytes": 378705,
+      "content_sha256": "8cccad15df40b0e4d3cce0d85b86c4c1b2a259cbf751246fc577e47392172194",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T1729Z.log",
+      "compressed": "managers/runtime/rounds/20261024T1729Z.log.gz",
+      "original_bytes": 1832142,
+      "compressed_bytes": 467427,
+      "content_sha256": "f1922f985871f5fe2f4e6ec1a6edcaf93395cdf3db8a66d5f9f2c65ad399564f",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261023T1918Z.log",
+      "compressed": "managers/runtime/rounds/20261023T1918Z.log.gz",
+      "original_bytes": 1757005,
+      "compressed_bytes": 460941,
+      "content_sha256": "42bc6e089f278a9853908acf6b0c8f8aa774d49b6fcf6cab30ffab98f68d5dcd",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T1508Z.log",
+      "compressed": "managers/runtime/rounds/20261024T1508Z.log.gz",
+      "original_bytes": 1728638,
+      "compressed_bytes": 465925,
+      "content_sha256": "f9064ce038edf923a0b8dea3c7d2b8051740b7aa03d512afeba2331b608a6c71",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T0955Z.log",
+      "compressed": "managers/runtime/rounds/20261024T0955Z.log.gz",
+      "original_bytes": 1696140,
+      "compressed_bytes": 402901,
+      "content_sha256": "b7419e299cad757491f0390ce8a12a6c9a862edb5f9df056db460a77274ac475",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261023T2235Z.log",
+      "compressed": "managers/runtime/rounds/20261023T2235Z.log.gz",
+      "original_bytes": 1672604,
+      "compressed_bytes": 292683,
+      "content_sha256": "c08e0efef1fad97ce7a069757c1b1207e09be0079f7aea33c6cb31ba040258ee",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T0752Z.log",
+      "compressed": "managers/runtime/rounds/20261024T0752Z.log.gz",
+      "original_bytes": 1548942,
+      "compressed_bytes": 380043,
+      "content_sha256": "7177f4d4896640347162c85067a241e6d2f77116af1981093dab4c083bc1d2c9",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T0919Z.log",
+      "compressed": "managers/runtime/rounds/20261024T0919Z.log.gz",
+      "original_bytes": 1528324,
+      "compressed_bytes": 396405,
+      "content_sha256": "d6acc87bb5aebd9de7dd1383e7129e942b731cc96f0a7ea67742d570d44cddf8",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T1915Z.log",
+      "compressed": "managers/runtime/rounds/20261024T1915Z.log.gz",
+      "original_bytes": 1480525,
+      "compressed_bytes": 363204,
+      "content_sha256": "7f977ef242979ce20becc3c556bf4326029f0eedaa447f7461590f3930d135bf",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    }
+  ]
+}
