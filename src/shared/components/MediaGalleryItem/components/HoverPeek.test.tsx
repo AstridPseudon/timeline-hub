@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HoverPeekButton } from './HoverPeek';
 import type { GeneratedImageWithMetadata } from '../../MediaGallery/types';
+import * as peekPlacement from './peekPlacement';
 
 const FULL_URL = 'https://cdn.example/full.png';
 const THUMB_URL = 'https://cdn.example/thumb.png';
@@ -34,7 +35,19 @@ function renderPeek(options: { image?: GeneratedImageWithMetadata; onOpenLightbo
       onOpenLightbox={onOpenLightbox}
     />,
   );
-  return { ...utils, onOpenLightbox, eye: screen.getByLabelText('Preview') };
+  const eye = screen.getByLabelText('Preview');
+  vi.spyOn(eye, 'getBoundingClientRect').mockReturnValue({
+    left: 100,
+    top: 100,
+    right: 128,
+    bottom: 128,
+    width: 28,
+    height: 28,
+    x: 100,
+    y: 100,
+    toJSON: () => ({}),
+  } as DOMRect);
+  return { ...utils, onOpenLightbox, eye };
 }
 
 const peekEl = () => screen.queryByTestId('gallery-tile-peek');
@@ -43,6 +56,8 @@ const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
 describe('HoverPeekButton', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.stubGlobal('innerWidth', 500);
+    vi.stubGlobal('innerHeight', 400);
     preloaded.length = 0;
     vi.stubGlobal('Image', class {
       crossOrigin: string | null = null;
@@ -52,6 +67,7 @@ describe('HoverPeekButton', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
@@ -67,6 +83,7 @@ describe('HoverPeekButton', () => {
 
   it('opens the peek after the open delay, not before', () => {
     const { eye } = renderPeek();
+    expect(eye).not.toHaveAttribute('data-state', 'open');
 
     fireEvent.pointerEnter(eye);
     advance(119);
@@ -74,18 +91,80 @@ describe('HoverPeekButton', () => {
 
     advance(1);
     expect(peekEl()).toBeInTheDocument();
+    expect(eye).toHaveAttribute('data-state', 'open');
+    expect(eye).toHaveClass('data-[state=open]:opacity-100');
+    expect(peekEl()).toHaveStyle({ left: '12px', top: '142px', height: '246px' });
+    expect(peekEl()?.parentElement?.children).toHaveLength(2);
   });
 
-  it('stays open when the pointer moves from the eye onto the peek', () => {
+  it('draws a horizontal connector for a peek placed to the right of the eye', () => {
+    const placementSpy = vi.spyOn(peekPlacement, 'placePeek').mockReturnValue({
+      side: 'right',
+      left: 142,
+      top: 80,
+      width: 100,
+      height: 56,
+    });
+    const { eye } = renderPeek();
+
+    fireEvent.pointerEnter(eye);
+    advance(120);
+    advance(16);
+
+    const bridge = screen.getByTestId('gallery-tile-peek-bridge');
+    const connector = screen.getByTestId('gallery-tile-peek-connector');
+    expect(bridge).toHaveStyle({ left: '128px', top: '100px', width: '14px', height: '28px' });
+    expect(connector).toHaveStyle({ left: '0px', top: '13px', width: '14px', height: '2px' });
+    expect(connector).toHaveStyle({ transformOrigin: 'left center' });
+    expect(connector).toHaveClass('scale-x-100');
+    placementSpy.mockRestore();
+  });
+
+  it('stays open while the pointer moves from the eye through the bridge onto the peek', () => {
     const { eye } = renderPeek();
     fireEvent.pointerEnter(eye);
     advance(120);
 
     fireEvent.pointerLeave(eye);
+    advance(100);
+    const bridge = screen.getByTestId('gallery-tile-peek-bridge');
+    fireEvent.pointerEnter(bridge);
+    advance(500);
+    expect(peekEl()).toBeInTheDocument();
+
+    fireEvent.pointerLeave(bridge);
     fireEvent.pointerEnter(peekEl() as HTMLElement);
     advance(1000);
 
     expect(peekEl()).toBeInTheDocument();
+  });
+
+  it('recomputes the anchored size when the viewport resizes', () => {
+    const { eye } = renderPeek();
+    fireEvent.pointerEnter(eye);
+    advance(120);
+    expect(Number.parseFloat(peekEl()?.style.width ?? '')).toBeCloseTo(437.333333, 3);
+
+    vi.stubGlobal('innerWidth', 800);
+    vi.stubGlobal('innerHeight', 600);
+    fireEvent(window, new Event('resize'));
+
+    expect(peekEl()).toHaveStyle({ width: '776px', height: '436.5px' });
+  });
+
+  it('repositions once the thumbnail natural size is known', () => {
+    const { eye } = renderPeek();
+    fireEvent.pointerEnter(eye);
+    advance(120);
+    expect(peekEl()).toHaveStyle({ left: '12px' });
+
+    const thumbnail = peekEl()?.querySelector('img[alt=""]') as HTMLImageElement;
+    Object.defineProperty(thumbnail, 'naturalWidth', { configurable: true, value: 9 });
+    Object.defineProperty(thumbnail, 'naturalHeight', { configurable: true, value: 16 });
+    fireEvent.load(thumbnail);
+
+    expect(peekEl()).toHaveStyle({ left: '142px' });
+    expect(peekEl()).toHaveStyle({ width: '211.5px', height: '376px' });
   });
 
   it('closes after the grace period once the pointer leaves the peek', () => {
@@ -131,10 +210,12 @@ describe('HoverPeekButton', () => {
     fireEvent.pointerEnter(eye);
     advance(120);
     expect(peekEl()).toBeInTheDocument();
+    expect(eye).toHaveAttribute('data-state', 'open');
 
     fireEvent.keyDown(window, { key: 'Escape' });
 
     expect(peekEl()).toBeNull();
+    expect(eye).not.toHaveAttribute('data-state', 'open');
   });
 
   it('keeps only one peek open: a second one closes the first', () => {
