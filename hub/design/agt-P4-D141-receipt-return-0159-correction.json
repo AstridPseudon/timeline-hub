@@ -1,0 +1,173 @@
+{
+  "schema": "timeline.p4.d141.immutable-correction/v1",
+  "task": "P4 D141 immutable correction receipt",
+  "captured_at_utc": "2026-10-26T02:00:52Z",
+  "verdict_scope": "metadata_correction_only",
+  "result": {
+    "service_id": "agent-p4-current-becfe-http-3legs-1026011042-10086",
+    "request_id": "p4-d141c-normal",
+    "status": "pass",
+    "exit_code": 0,
+    "tests": 3,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": "23.668",
+    "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml",
+    "junit_sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d"
+  },
+  "binding_correction": {
+    "retained_old0055_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.manifest",
+      "sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f",
+      "declared_junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml"
+    },
+    "retained_old0055_runmanifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.runmanifest",
+      "sha256": "86595e66a6739d9d6c9cdaa5fe583c4b7eff50a5f2ba5aec4e620df91104dc71",
+      "declared_junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml"
+    },
+    "effective_junit_binding": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml",
+      "sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d",
+      "basis": "actual production argv and retained 10086 XML"
+    },
+    "stale_declared_path": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml",
+      "exists_at_check": false,
+      "substituted_or_rewritten": false
+    },
+    "correction_delta": [
+      "frozen_tuple.agent.tree metadata only: restore the omitted final character a from the authentic 40-character Git tree"
+    ]
+  },
+  "protected_selectors": [
+    {
+      "selector": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+      "junit": "tests.editing_conformance.test_p4_cli_sheet_v2_runtime::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+      "outcome": "passed",
+      "time_seconds": "2.916"
+    },
+    {
+      "selector": "tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo",
+      "junit": "tests.editing_conformance.test_p4_ten_note_v2_runtime::test_http_ten_note_commit_per_step_inverse_and_redo",
+      "outcome": "passed",
+      "time_seconds": "14.737"
+    },
+    {
+      "selector": "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py::test_http_note_conflict_reruns_public_function_from_verified_peer_document",
+      "junit": "tests.editing_conformance.test_p4_note_rerun_v2_runtime::test_http_note_conflict_reruns_public_function_from_verified_peer_document",
+      "outcome": "passed",
+      "time_seconds": "4.547"
+    }
+  ],
+  "frozen_tuple": {
+    "agent": {
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "qualified_checkout": "/home/user/work/wt/agt-pin-28e56cac"
+    },
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "qualified_checkout": "/home/user/work/wt/rt-pin-6a011d58"
+    },
+    "app": {
+      "commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+      "qualified_checkout": "/home/user/work/wt/app-pin-867cb273"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "qualified_checkout": "/home/user/work/wt/vw-pin-635f4de0"
+    }
+  },
+  "source_receipts": {
+    "controller_0105_source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-P4-D141-body-continuation-0105-source-manifest.json",
+    "controller_0105_source_manifest_sha256": "a97be375458fdb08c7c5041f64cd7097a8408a9175e1ac653345785dbf0734cb",
+    "sources_before": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/sources.before.txt",
+      "sha256": "531ef02ca2c8bc498aff33e1e6b8c583840b207706092db78f99b81e9a318366"
+    },
+    "sources_after": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/sources.after.txt",
+      "sha256": "91b19855c11ec69f9aeefa61147f851ad94e2b545e20a5db250f45f6b8543f74"
+    },
+    "sources_final": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/sources.final.txt",
+      "sha256": "0660f1e7a79d6e274f75796aa4e647a2165cb21d429ea7dcf9862a28f98ece84"
+    },
+    "recorded_clean_before_after": true,
+    "source_controls_rerun": false
+  },
+  "identity_conservation": {
+    "actual_10086": {
+      "status": "pass",
+      "exit": 0,
+      "selectors": 3,
+      "junit": "0055/body-evidence/p4-d141c.xml"
+    },
+    "historical_1347": {
+      "service_id": "agent-p4-current-becfe-http-3legs-1026005145-1347",
+      "status": "fail",
+      "exit": 1,
+      "selectors": 0,
+      "junit_present": false,
+      "log_sha256": "5fab373131e9a30b1b946f4f8e4aa580c84a1734ed3a73dea427b1290dfec6e4"
+    },
+    "queued_19479": {
+      "service_id": "agent-p4-current-becfe-http-3legs-1026012948-19479",
+      "status": "queued",
+      "exit_present": false,
+      "junit_present": false,
+      "request_sha256": "b970290c52768f36e16991cfe68d72d33991c72a48e388c8941dba32e286f2c9",
+      "status_sha256": "baa7ebe58d73e08bf90110a60df9e53255e2f9729df140bc64cb8f71d56a0800"
+    },
+    "distinct_service_ids": true,
+    "stale_control_xml_absent": true,
+    "queued_19479_must_remain_unstarted": true
+  },
+  "historical_authority": {
+    "original_0114_custody_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-P4-D141-result-review-0114-review.json",
+      "sha256": "da6ac1f24ab99c587bf5b67a0a348b6d55b65e24034dc8bfa395d02e1d37cf48",
+      "verdict": "FAIL",
+      "finding": "manifest/runmanifest junit_paths named absent 0047 path while actual argv wrote retained 0055 XML"
+    },
+    "latest_main_shortcut": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-runtime-app-lead-20261026T0152Z-D141-P4-shortcut-applied.md",
+      "sha256": "3a150a7aedd21dab44f2a22789bc4e839320efe26f3b8339253e0350226b68a8",
+      "rule": "one metadata correction receipt, one quick independent check, no second P4 body, no kit admission change; App decides cumulative verdict"
+    }
+  },
+  "immutability": {
+    "new_receipt_only": true,
+    "original_10086_result_and_0114_fail_preserved": true,
+    "originals_rewritten": false,
+    "later_0119_manifest_95f5ce_substituted": false,
+    "body_rerun": false,
+    "controls_rerun": false,
+    "kit_or_registry_change": false,
+    "product_change": false,
+    "author_claims_p4_go": false,
+    "cumulative_verdict_owner": "App",
+    "same_author_lineage_return": true,
+    "prior_0151_receipt_preserved": true
+  },
+  "lineage": {
+    "kind": "same_author_lineage_finite_mechanical_return",
+    "base_branch": "tl/agt-P4-D141-immutable-receipt-0151",
+    "base_commit": "5d11fec5ccf3ce1b314ef5c24216a1d802d56ffd",
+    "prior_receipt": "/home/user/work/wt/agt-P4-D141-receipt-return-0159/evidence/correction.json",
+    "prior_typo": {
+      "field": "frozen_tuple.agent.tree",
+      "reported_hex_digits": 39,
+      "omitted_final_character": "a",
+      "corrected_hex_digits": 40
+    },
+    "correction_scope": "Agent frozen-tree metadata only; no body, kit, source, control, or verdict change",
+    "source_of_correction": "read-only git show of pinned Agent commit^{tree}"
+  }
+}
