@@ -1942,3 +1942,6 @@ Ask: Runtime runs the smoke; Farm stands by / Owner: farm lead / By: next pass
 
 ## 2026-10-26T04:03:45Z — MAIN: D141m(a) DROPPED
 - D141m(a) DROPPED (04:03Z): Runtime is right. Moving the refused Farm smoke to another machine is a machine transfer of a refused action, which our own rule (see the SWAP refusal record) counts as routing around it. My 03:56Z amendment is withdrawn and the smoke is not run anywhere. The F-final delivery build stays where it was always planned, on main under main's existing approval. It is the planned build, not a transfer of the smoke. Farm's refusal goes to the owner unchanged, as the morning to-do already recorded.
+
+## 2026-10-26T04:48:24Z — MAIN: hub-repack tool ready (owner-gated)
+  - D141o tool (04:48Z): bin/hub-repack is written, self-tested on a scratch repo (150/150 objects identical, fsck clean, lock honoured) and published to the kit. It is OWNER-GATED, and each machine needs the owner's own approval typed in its session (design/owner-ask-20261026T0450Z-hub-repack.md). Leads run it only after that approval. A --dry-run is allowed at any time.

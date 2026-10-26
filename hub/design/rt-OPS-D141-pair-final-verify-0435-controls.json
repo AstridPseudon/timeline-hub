@@ -1,0 +1,63 @@
+{
+  "schema": "timeline.ops.d141g-a.controls.v1",
+  "command": "TMPDIR=/tmp/rt-OPS-D141-pair-final-verify-0435.1Wc0oR PYTHONDONTWRITEBYTECODE=1 python3 -I ops-d141-measured-floor/controls/real-controls.py",
+  "exit_code": 0,
+  "case_count": 68,
+  "harness_result": "PASS",
+  "verdict": {
+    "SEC001": "NEEDS",
+    "SEC002": "PASS",
+    "freeze2": "NEEDS",
+    "release": "NOT_READY"
+  },
+  "purpose_conservation": {
+    "all_author_purposes_present": true,
+    "count_assertion": "68",
+    "case_names": [
+      "d89d-app-admission", "d89d-app-terminal", "d141h-targeted15-admission", "d141h-targeted15-terminal",
+      "runtime-d141-p5-cut-1026013331-6934-admission", "runtime-d141-p5-cut-1026013331-6934-terminal",
+      "normal-request-full-id-admission", "normal-request-full-id-terminal", "paired-admission-start",
+      "paired-production-decision-refuses-before-launch", "paired-preflight-failure-start",
+      "paired-preflight-failure-refuses-before-preflight", "paired-cancel-start", "paired-cancel-refuses-before-preflight",
+      "paired-stop-start", "paired-4gb-stop-refuses-before-preflight", "paired-busy-start",
+      "heavy-during-pair-refused", "concurrent-heavy-during-pair-refuses", "paired-wrong-command",
+      "paired-corrupt-receipt-refuses", "prospective-first-pair-binding", "exact-first-placement",
+      "generic-not-first-placement", "preflight-not-first-body", "arbitrary-suite-not-first", "wrong-app-checkout",
+      "wrong-app-source", "wrong-app-command", "wrong-app-repo", "wrong-app-target", "app-extra-files",
+      "floor-at", "floor-below", "floor-above", "default-light-at", "default-core-at", "default-heavy-at",
+      "global-stop", "busy-one-start", "busy-two-refused", "body-failure-start", "body-cancel-start",
+      "body-cancel-self-finalized-reaped", "symlink-before-final", "fifo-before-final", "regular-before-final",
+      "parent-substitution-before-final", "symlink-before-validation", "fifo-before-validation",
+      "regular-before-validation", "wrong-job", "symlink-witness", "witness-mismatch", "duplicate-key",
+      "boolean-growth", "float-floor", "wrong-arithmetic", "wrong-head", "wrong-tree", "wrong-command",
+      "wrong-trace-interval", "malformed-disk", "held-rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+      "held-agent-p4-current-becfe-http-3legs-1026012948-19479", "p5-invalid-6934",
+      "p5-invalid-runtime-d141-p5-cut-1026013331-6934-suffix", "p5-invalid-runtime-d141-p5-cut-1026013331-9999"
+    ]
+  },
+  "positive_and_refusal_summary": {
+    "runtime_target15": "PASS; four trace rows",
+    "runtime_p5_6934": "PASS; four trace rows",
+    "normal_full_id": "PASS",
+    "sec002_matching_hash_wrong_suite_source_twin_command_replay": "PASS; refusal before launch and no artifacts",
+    "held_8912_and_p419479": "PASS; refusal",
+    "default_and_measured_floors_cache_source_snapshot_leases_one_heavy": "PASS",
+    "body_cancel_self_finalize": "PASS",
+    "seven_trace_custody_attacks": "PASS in this run: symlink/FIFO/regular replacement, physical-parent substitution, and validation-stage variants",
+    "mounted_stop_test_and_frozen_sampler_pair_cases": "not present in this 68-case paired harness; therefore SEC001 remains NEEDS"
+  },
+  "app_binding": {
+    "historical_packet": "0309 prospective 520d only; registration=false",
+    "freeze2_head_required": "7796159ce894",
+    "status": "NEEDS",
+    "release": "NOT_READY"
+  },
+  "isolated_layout": {
+    "root": "/tmp/rt-OPS-D141-pair-final-verify-0435.1Wc0oR/d141-controls-m1r7o8yq",
+    "installed_published_received": true,
+    "controls_sibling_in_received_bin": false,
+    "candidate_test_run_source_sha256": "07a617100bebc22faeda9d76f6fdd6fa8c89c8a5607122ee8220dcd6de1c5b81",
+    "received_test_run_sha256": "69ec78afe544e5ed7d6261d0f5e98e2ff58ca1d6b860df90e62beaaa8826d69f",
+    "received_test_run_difference": "private orchestration paths rewritten by isolated harness; source hash checked before rewrite"
+  }
+}

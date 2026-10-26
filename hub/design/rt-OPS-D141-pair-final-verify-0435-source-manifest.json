@@ -1,0 +1,36 @@
+{
+  "schema": "timeline.ops.d141g-a.source-and-installed-predecessor.v1",
+  "status": "PAIRED_SOURCE_ONLY_RUNTIME_PREDECESSOR_INSTALLED",
+  "candidate": {
+    "commit": "06fb2b5d16dd3c93cecf5520bb2a2da613dd1b92",
+    "branch": "tl/rt-OPS-D141-pair-trace-resume-0418",
+    "source_root": "/home/user/work/wt/rt-OPS-D141-pair-final-verify-0435/ops-d141-measured-floor",
+    "manifest_status": "SOURCE_ONLY_NOT_INSTALLED",
+    "files": [
+      {"source":"bin/d141-append-final.py","destination":"bin/d141-append-final.py","sha256":"d638f2974045220e565f0ed476412c7003a077942bf5c792c69611159ee14431","mode":"755","type":"regular","links":1},
+      {"source":"bin/d141-disk-trace.py","destination":"bin/d141-disk-trace.py","sha256":"516eb01f4f5da5ab3b83bb6a8846b4eb0f1b8421492ac6cdc756587888c274e1","mode":"755","type":"regular","links":1},
+      {"source":"bin/d141-validate-receipt.py","destination":"bin/d141-validate-receipt.py","sha256":"c651a436ce0421699456b19e0b0afd31fc7c863a5886cb192e7902317ad424ef","mode":"755","type":"regular","links":1},
+      {"source":"bin/d141-validate-trace.py","destination":"bin/d141-validate-trace.py","sha256":"b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5","mode":"755","type":"regular","links":1},
+      {"source":"bin/test-run","destination":"bin/test-run","sha256":"07a617100bebc22faeda9d76f6fdd6fa8c89c8a5607122ee8220dcd6de1c5b81","mode":"755","type":"regular","links":1}
+    ],
+    "precondition_in_repo_manifest": {
+      "bin/test-run": {"sha256":"0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe","mode":"755","type":"regular_nofollow"},
+      "helpers": "absent_including_dangling_symlink in the candidate manifest; not a live-install assertion"
+    }
+  },
+  "installed_qualified_runtime_interim_predecessor": {
+    "commit": "56f2d56e7d241d303be85df62166570d51602101",
+    "tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin",
+    "status": "READ_ONLY_OBSERVED_INSTALLED_PREDECESSOR",
+    "files": [
+      {"source":"bin/d141-append-final.py","destination":"bin/d141-append-final.py","sha256":"14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398","mode":"755","type":"regular","links":1},
+      {"source":"bin/d141-disk-trace.py","destination":"bin/d141-disk-trace.py","sha256":"d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222","mode":"755","type":"regular","links":1},
+      {"source":"bin/d141-validate-receipt.py","destination":"bin/d141-validate-receipt.py","sha256":"2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6","mode":"755","type":"regular","links":1},
+      {"source":"bin/d141-validate-trace.py","destination":"bin/d141-validate-trace.py","sha256":"b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5","mode":"755","type":"regular","links":1},
+      {"source":"bin/test-run","destination":"bin/test-run","sha256":"f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300","mode":"755","type":"regular","links":1}
+    ],
+    "qualification": "independent 0418 PASS49 bounded source/control scope; no release or gate claim"
+  },
+  "comparison": "The installed five-file predecessor is donor 56f2d56e, not the paired candidate. No CAS, install, forced manifest refresh, or live mutation was performed."
+}

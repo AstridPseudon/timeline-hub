@@ -1,0 +1,42 @@
+{
+  "schema": "timeline.ops.d141g-a.pair-final-verification.v1",
+  "worker": "rt-OPS-D141-pair-final-verify-0435",
+  "candidate": {
+    "repo": "composition",
+    "branch": "tl/rt-OPS-D141-pair-trace-resume-0418",
+    "commit": "06fb2b5d16dd3c93cecf5520bb2a2da613dd1b92",
+    "tree": "06c84f1909f6679fd7235b014e2825a0992e7abe",
+    "terminal": true,
+    "source_status": "clean"
+  },
+  "verdict": "FAIL",
+  "source_control_verdict": "FAIL",
+  "external_release_verdict": "NOT_READY",
+  "author_evidence": {
+    "worker": "rt-OPS-D141-pair-trace-resume-0418",
+    "reported_controls": 68,
+    "reported_verdict": {
+      "SEC001": "NEEDS",
+      "SEC002": "PASS",
+      "freeze2": "NEEDS",
+      "release": "NOT_READY"
+    }
+  },
+  "independent_run": {
+    "command": "TMPDIR=/tmp/rt-OPS-D141-pair-final-verify-0435.1Wc0oR PYTHONDONTWRITEBYTECODE=1 python3 -I ops-d141-measured-floor/controls/real-controls.py",
+    "exit_code": 0,
+    "case_count": 68,
+    "result": "PASS as a controls harness run; its explicit verdict remains SEC001 NEEDS / SEC002 PASS / freeze2 NEEDS / release NOT_READY"
+  },
+  "consumed_reviews": [
+    "rt-OPS-D141-paired-wholepath-review-0344: FAIL; D141H-SEC-001, D141G-SEC-002, D141L-APP-001",
+    "rt-OPS-D141-pair-scope-return-0400: SEC002 source correction PASS, SEC001 and freeze2 NEEDS",
+    "rt-OPS-D141-cancel-finalize-sol-0410 and rt-OPS-D141-cancel-final-verify-0418: immutable Runtime donor 56f2d56e PASS within isolated source/control scope",
+    "rt-OPS-D141-pair-cancel-path-0437: paired receiver cancellation and current custody remained UNKNOWN/NOT_READY"
+  ],
+  "limits": [
+    "No production install, CAS, live dispatcher request, queue, service, product body, full suite, gate, receipt attachment, build, ZIP, network, package/environment provisioning, Store, cleanup, delete, or Git write",
+    "No source or DTO change was made",
+    "The qualified installed Runtime interim predecessor is not evidence that this paired candidate is installed or released"
+  ]
+}
