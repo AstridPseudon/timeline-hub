@@ -1,0 +1,30 @@
+{
+  "schema": "timeline.app.u4p.d141v.independent-sampler-lifecycle.v1",
+  "stop_bytes": 4000000000,
+  "initial_launch": {
+    "attempted_before_review": true,
+    "result": "did_not_persist",
+    "reason": "harness-provided tmpdir entry was a pointer file; shell-bound background process exited after its tool call",
+    "samples_observed": 2
+  },
+  "persistent_review_sampler": {
+    "mechanism": "PTY session",
+    "started": true,
+    "trace_file_start_utc": "2026-10-26T14:31:58Z",
+    "trace_file_end_utc": "2026-10-26T14:32:50Z",
+    "sample_count": 52,
+    "min_available_bytes": 4459376640,
+    "stop_respected": true,
+    "stopped": true,
+    "waited": true,
+    "reaped": true,
+    "termination": "explicit SIGINT; process session then reported unknown process on reap poll"
+  },
+  "author_trace_adjudication": {
+    "sample_count": 5,
+    "first_utc": "2026-10-26T14:26:06Z",
+    "last_utc": "2026-10-26T14:26:10Z",
+    "continuous_whole_worker_evidence": false,
+    "body_credit": false
+  }
+}

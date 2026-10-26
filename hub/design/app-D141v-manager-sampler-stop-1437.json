@@ -1,0 +1,25 @@
+{
+  "utc": "2026-10-26T14:37:16.691139+00:00",
+  "trace": "design/app-D141v-manager-present-disk-trace-1430.jsonl",
+  "scope": "manager present-time supplemental trace only; does not backfill author or reviewer history",
+  "samples": 86,
+  "first": {
+    "utc": "2026-10-26T14:29:37.578065+00:00",
+    "available_bytes": 4631302144,
+    "stop_bytes": 4000000000,
+    "scope": "present manager samples only; no earlier worker coverage"
+  },
+  "last": {
+    "utc": "2026-10-26T14:36:42.680301+00:00",
+    "available_bytes": 4625825792,
+    "stop_bytes": 4000000000,
+    "scope": "present manager samples only; no earlier worker coverage"
+  },
+  "min_available_bytes": 4439187456,
+  "maxgap_seconds": 5.059442,
+  "stop_signal": "explicit tool write_stdin Ctrl-C",
+  "wait_completion_exit": 130,
+  "stopped": true,
+  "reaped": true,
+  "prior_probe": "First stop probe only terminated its own transient probe in its isolated PID namespace; sampler was stopped via its original session. No other worker was signalled."
+}

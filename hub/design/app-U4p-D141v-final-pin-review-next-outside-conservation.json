@@ -1,0 +1,32 @@
+{
+  "schema": "timeline.app.u4p.d141v.independent-outside-conservation.v1",
+  "base": {
+    "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+  },
+  "candidate": {
+    "commit": "beee9d3110fbb4fae73eb2998e1dac5e12f0d1dc",
+    "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd"
+  },
+  "allowed_paths": [
+    "public/install-manifest.json",
+    "runtime.lock.json",
+    "vendor/astrid-browser/provenance.json"
+  ],
+  "changed_paths": [
+    "public/install-manifest.json",
+    "vendor/astrid-browser/provenance.json"
+  ],
+  "outside_allowlist_paths": [],
+  "outside_allowlist_byte_exact": true,
+  "vendor_payload_count": 160,
+  "vendor_payload_bytes_exact_to_base": true,
+  "runtime_lock_changed": false,
+  "runtime_mapping_count": 14,
+  "runtime_mapping_bytes_exact_to_base": true,
+  "metadata_field_delta": {
+    "manifest": ["agent.sha"],
+    "provenance": ["astrid_commit", "astrid_tree", "refresh_command"],
+    "runtime_lock": []
+  }
+}

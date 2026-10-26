@@ -1,0 +1,76 @@
+{
+  "utc": "2026-10-26T14:34:35.402320+00:00",
+  "worker": "app-U4p-D141v-final-pin-review-next",
+  "candidate": {
+    "commit": "beee9d3110fbb4fae73eb2998e1dac5e12f0d1dc",
+    "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+    "parent": "82e9e13ddf1d7ec6c736521b2eb091dca9877598"
+  },
+  "verdict": "PASS metadata source qualification; monitor findings retained",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/evidence/disk-trace.txt",
+      "path": "design/app-U4p-D141v-final-pin-review-next-disk-trace.txt",
+      "sha256": "77a9068104aa40393d5735f73d5e1d8839934e62c169d030ee00c15a7749148f",
+      "bytes": 17472,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/evidence/findings.md",
+      "path": "design/app-U4p-D141v-final-pin-review-next-findings.md",
+      "sha256": "517bed64568470bb692583bbe93a6f5ef6a2d915a410b2016c0a0189d28946a1",
+      "bytes": 1258,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/evidence/handoff.md",
+      "path": "design/app-U4p-D141v-final-pin-review-next-handoff.md",
+      "sha256": "e5b0171b0593671a2bf4667bf98a252acd27e6035d70d0517066a1d1654dee76",
+      "bytes": 1215,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/evidence/outside-conservation.json",
+      "path": "design/app-U4p-D141v-final-pin-review-next-outside-conservation.json",
+      "sha256": "ad75e636dc186ed6a0e7717123c5df19c5e6c6d22e916601cb544303d7317ccc",
+      "bytes": 998,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/evidence/review.json",
+      "path": "design/app-U4p-D141v-final-pin-review-next-review.json",
+      "sha256": "069b94ad6e97516cd3f3e333b7244e7b7384f7c3ee740ae5682a58c76b84c8f4",
+      "bytes": 2911,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/evidence/sampler-lifecycle.json",
+      "path": "design/app-U4p-D141v-final-pin-review-next-sampler-lifecycle.json",
+      "sha256": "e14617df45c1e43879e21c4e27f86ccf3c717cd9151714a5b3b6014cc0d39544",
+      "bytes": 1006,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/evidence/source-manifest.json",
+      "path": "design/app-U4p-D141v-final-pin-review-next-source-manifest.json",
+      "sha256": "90c0ea975718d195f333a21ff6710047206cad8cb6c7684369ef91958430f32c",
+      "bytes": 1486,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/evidence/validation.md",
+      "path": "design/app-U4p-D141v-final-pin-review-next-validation.md",
+      "sha256": "b5f00a80ac97bed6fdece0995ed3194dbf82c1a26cb6c7a106724cee97433d73",
+      "bytes": 1857,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-review-next/report.md",
+      "path": "design/app-U4p-D141v-final-pin-review-next-report.md",
+      "sha256": "2b467a33dce6b7cd7db64ce43451986687da62920b794239a41e242627cc8fb3",
+      "bytes": 874,
+      "mode": 420
+    }
+  ],
+  "adjudication": "Independent source PASS accepted within PLAN U4p / lead14:12 metadata-only scope. No historical continuous disk trace or body credit. Author and reviewer monitor bounds retained; no repair or waiver of original evidence."
+}

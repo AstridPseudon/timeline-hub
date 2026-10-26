@@ -1,0 +1,78 @@
+{
+  "utc": "2026-10-26T14:35:54.162564+00:00",
+  "kind": "actual normal App HOME after independently PASS D141v metadata adoption",
+  "app_final": {
+    "checkout": "/home/user/work/app",
+    "commit": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+    "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+    "parents": [
+      "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "beee9d3110fbb4fae73eb2998e1dac5e12f0d1dc"
+    ],
+    "clean": true,
+    "ref": "timeline/app/tl/integration",
+    "normal_merge_receipt": "queue/done/merge-app-U4p-D141v-final-pin-resume-1426"
+  },
+  "reviewed_candidate": {
+    "commit": "beee9d3110fbb4fae73eb2998e1dac5e12f0d1dc",
+    "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+    "parent": "82e9e13ddf1d7ec6c736521b2eb091dca9877598"
+  },
+  "integrated_tree_equals_independent_tested_tree": true,
+  "test_result": "6 targeted metadata tests PASS; vendor65/160/11;14Runtime mappings; all160payloads; idempotent plan; all outside3metadata exact",
+  "no_repeated_unchanged_source_tests": true,
+  "upstream_base": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+  "owner_choice": "D141jj Option B; privateeac97 stays uninstalled until afterZIP",
+  "qualified_producers": {
+    "agent": {
+      "checkout": "/home/user/work/wt/agt-pin-ec0a9f5b",
+      "commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "clean": true
+    },
+    "runtime": {
+      "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+      "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "clean": true
+    }
+  },
+  "composition": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "files": {
+    "public/install-manifest.json": {
+      "sha256": "76980e42bf0e89b090a16caf7b1808eae842f48246f538e2689998c614a9b483",
+      "bytes": 4765
+    },
+    "runtime.lock.json": {
+      "sha256": "847c58d658e90e319f0c65ff9a780b8937fe96b1aa02732c22c00064741d3d51",
+      "bytes": 3493
+    },
+    "vendor/astrid-browser/provenance.json": {
+      "sha256": "546e746dad5bb8c74aeb3e139cf477ef26e422dc6021e0a406e8ab67f0e90134",
+      "bytes": 24708
+    }
+  },
+  "author_publication": "design/app-D141v-author-publication-1431.json",
+  "independent_publication": "design/app-D141v-independent-PASS-publication-1434.json",
+  "monitor_findings": [
+    {
+      "id": "AUTHOR-SAMPLER-001",
+      "classification": "custody",
+      "status": "FINDING",
+      "description": "Author disk-trace.txt contains only five one-second samples from 14:26:06Z through 14:26:10Z. continuous_stop_respected=true is not continuous whole-worker trace evidence.",
+      "treatment": "Author originals preserved; no continuous-history or body credit assigned; manager present-time trace is not used to repair author history."
+    },
+    {
+      "id": "REVIEW-SAMPLER-001",
+      "classification": "review custody",
+      "status": "PASS_WITH_TRACE_BOUND",
+      "description": "The first background sampler attempt could not persist because the harness tmpdir entry was a pointer file and the shell-bound background process exited. A persistent PTY sampler was then run across tool calls, explicitly stopped, waited, and reaped.",
+      "trace": "52 samples, 14:31:58Z\u201314:32:50Z, minimum available 4459376640 bytes."
+    }
+  ],
+  "proof_scope": "Existing82e9 unit/journeys retain actual measured sources. Finalhome changes metadata only; fulltree equals independently tested candidate; no new fullsuite or journey claim. Original ownfailedtests and allknown gaps visible.",
+  "not_a_build_or_zip": true
+}

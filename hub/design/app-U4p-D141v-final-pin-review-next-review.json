@@ -1,0 +1,68 @@
+{
+  "schema": "timeline.app.u4p.d141v.independent-review.v1",
+  "verdict": "PASS",
+  "qualification": "metadata-only candidate independently qualified; custody finding retained",
+  "candidate": {
+    "commit": "beee9d3110fbb4fae73eb2998e1dac5e12f0d1dc",
+    "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+    "parent": "82e9e13ddf1d7ec6c736521b2eb091dca9877598"
+  },
+  "base": {
+    "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+  },
+  "qualified_producers": {
+    "agent": {
+      "checkout": "/home/user/work/wt/agt-pin-ec0a9f5b",
+      "commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "clean": true
+    },
+    "runtime": {
+      "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+      "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "clean": true
+    }
+  },
+  "metadata_checks": {
+    "changed_paths": ["public/install-manifest.json", "vendor/astrid-browser/provenance.json"],
+    "outside_three_metadata_paths_exact": true,
+    "vendor_payload_count": 160,
+    "vendor_payload_names_exact": true,
+    "vendor_payload_bytes_exact_to_base": true,
+    "runtime_mapping_count": 14,
+    "runtime_mappings_bytes_exact_to_base": true,
+    "runtime_lock_producer_hashes_valid": true,
+    "manifest_agent_pin_exact": true,
+    "manifest_runtime_pin_exact": true,
+    "provenance_agent_pin_exact": true,
+    "json_parse": true,
+    "git_diff_check": true,
+    "manifest_plan_idempotent": true
+  },
+  "tests": {
+    "node": "v20.19.4",
+    "installer_schema_tests": "PASS: 6 passed, 0 failed, 0 skipped",
+    "vendor_source_verifier": "PASS: 65 pinned source files, 160 vendor files, 11 public imports",
+    "vendor_lock": "PASS",
+    "full_suite_type_lint_journey": "NOT RUN: metadata-only scope"
+  },
+  "findings": [
+    {
+      "id": "AUTHOR-SAMPLER-001",
+      "classification": "custody",
+      "status": "FINDING",
+      "description": "Author disk-trace.txt contains only five one-second samples from 14:26:06Z through 14:26:10Z. continuous_stop_respected=true is not continuous whole-worker trace evidence.",
+      "treatment": "Author originals preserved; no continuous-history or body credit assigned; manager present-time trace is not used to repair author history."
+    },
+    {
+      "id": "REVIEW-SAMPLER-001",
+      "classification": "review custody",
+      "status": "PASS_WITH_TRACE_BOUND",
+      "description": "The first background sampler attempt could not persist because the harness tmpdir entry was a pointer file and the shell-bound background process exited. A persistent PTY sampler was then run across tool calls, explicitly stopped, waited, and reaped.",
+      "trace": "52 samples, 14:31:58Z–14:32:50Z, minimum available 4459376640 bytes."
+    }
+  ],
+  "product_changes": false
+}
