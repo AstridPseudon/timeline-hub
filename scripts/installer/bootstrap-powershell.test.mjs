@@ -117,7 +117,11 @@ test('PowerShell decodes UTF-8 stdout and stderr and enables isolated Python UTF
 // creation call and ACL observations are faked; production admission runs.
 async function windowsDirectories(context, env = {}) {
   const harness = await context.powershell();
-  const script = (await readFile(path.join(repo, 'public/install.ps1'), 'utf8'))
+  let script = await readFile(path.join(repo, 'public/install.ps1'), 'utf8');
+  if (process.platform !== 'win32') {
+    script = script.replace('$PowerShell = Join-Path $PSHOME $PowerShellName', '$PowerShell = (Get-Process -Id $PID).Path');
+  }
+  script = script
     .replace('[Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT', '$false')
     .replace('[Security.Principal.WindowsIdentity]::GetCurrent().User.Value', "'S-1-5-21-1234'");
   const target = path.join(context.root, 'windows-bootstrap.ps1');
@@ -126,7 +130,10 @@ async function windowsDirectories(context, env = {}) {
   context.env.MOCK_PRIVATE_DIRS = path.join(context.root, 'private-dirs');
   const bootstrap = path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap');
   await mkdir(bootstrap, { recursive: true });
-  await cp(context.env.MOCK_UV_SOURCE, path.join(bootstrap, 'uv.exe'));
+  const bootstrapUv = path.join(bootstrap, 'uv.exe');
+  if (path.resolve(context.env.MOCK_UV_SOURCE) !== path.resolve(bootstrapUv)) {
+    await cp(context.env.MOCK_UV_SOURCE, bootstrapUv);
+  }
   const prelude = `
 Add-Type -TypeDefinition @'
 using System;

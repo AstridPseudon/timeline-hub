@@ -136,6 +136,7 @@ shutil.copyfile(os.environ['MOCK_MANIFEST'], sys.argv[sys.argv.index('--output')
       const windowsBootstrap = path.join(env.LOCALAPPDATA, 'Astrid Installer/bootstrap');
       env.MOCK_UV_BOOTSTRAP = windowsBootstrap;
       await mkdir(env.LOCALAPPDATA, { recursive: true });
+      const systemPowerShellCommand = '$PowerShell = Join-Path $PSHOME $PowerShellName';
       if (process.platform === 'win32') {
         const mockScript = path.join(root, 'mock-uv.py');
         const launcherSource = path.join(root, 'mock-uv-launcher.cs');
@@ -221,7 +222,6 @@ Add-Type -TypeDefinition ([IO.File]::ReadAllText($env:MOCK_SYSTEM_POWERSHELL_SOU
         await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', launcherScript], { cwd: repo, env });
         await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', systemPowerShellScript], { cwd: repo, env });
         env.MOCK_UV_SOURCE = executable;
-        const systemPowerShellCommand = '$PowerShell = Join-Path $PSHOME $PowerShellName';
         const windowsInstaller = path.join(root, 'windows-install.ps1');
         const installerScript = (await readFile(path.join(repo, 'public/install.ps1'), 'utf8'))
           .replace(systemPowerShellCommand, `$PowerShell = '${systemPowerShell}'`);
@@ -232,6 +232,11 @@ Add-Type -TypeDefinition ([IO.File]::ReadAllText($env:MOCK_SYSTEM_POWERSHELL_SOU
         await mkdir(windowsBootstrap, { recursive: true });
         await cp(path.join(bootstrap, 'uv'), env.MOCK_UV_SOURCE);
         await chmod(env.MOCK_UV_SOURCE, 0o755);
+        const posixInstaller = path.join(root, 'posix-test-install.ps1');
+        const installerScript = (await readFile(path.join(repo, 'public/install.ps1'), 'utf8'))
+          .replace(systemPowerShellCommand, '$PowerShell = (Get-Process -Id $PID).Path');
+        await writeFile(posixInstaller, installerScript);
+        env.MOCK_INSTALL_SCRIPT = posixInstaller;
       }
       const harness = path.join(root, 'invoke.ps1');
       await writeFile(harness, `
@@ -269,7 +274,6 @@ try {
 [Console]::WriteLine('PREFERENCE: ' + $ErrorActionPreference)
 [Console]::WriteLine('NATIVE-STATUS: ' + $global:LASTEXITCODE)
 `);
-      if (process.platform !== 'win32') env.MOCK_INSTALL_SCRIPT = path.join(repo, 'public/install.ps1');
       return harness;
     },
     cleanup() { return rm(root, { recursive: true, force: true }); },
