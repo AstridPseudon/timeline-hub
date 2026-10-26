@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-26T05:47:51.040692+00:00",
+  "target": "/home/user/work/wt/app-pin-5344c53e",
+  "worker": "app-pin-5344c53e",
+  "source_head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+  "superseded_by_actual_home": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+  "normal_HOME_review": "app-U4p-D141s-Runtime-postREG-review-0540 PASS; exact fdea tree",
+  "clean": true,
+  "running_marker": false,
+  "hardlinked_tracked_payloads": [],
+  "active_lease_refs": [],
+  "actual_queued_or_running_test_refs": [],
+  "live_worker_refs": [],
+  "source_KEEP": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "mode": "0o644"
+  },
+  "metadata_files": [
+    "brief.md",
+    "KEEP",
+    "meta"
+  ],
+  "expected_bytes_about": 166723584,
+  "action": "none; manager waits host /proc CLEAR then repeats all static guards before named sourceKEEP release and ordinary bin/recycle",
+  "raw": "all raw test/controller KEEP retained; Git objects and source branches remain; no protected data under this source-only worker record"
+}
