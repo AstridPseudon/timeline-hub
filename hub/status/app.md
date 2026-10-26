@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T03:01:58Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
-# app board, 2026-10-26T02:59Z
+<!-- app | 2026-10-26T03:06:42Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
+# app board, 2026-10-26T03:04Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -72,6 +72,6 @@ Retained raw inputs: complete directories, private modes and KEEP remain unchang
 - app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856
 Current full12174, pristine23581, P1preflight3972/body17879 and placement10335/body3118 all retain raw KEEP. New paired routes receive KEEP while open. Diagnostic worker2331/2330/2136 KEEP and private0700/files0600 remain. Original2330 XML SHA2564cc06cd135004d051d25eeaec87c348b516102f0ba2e38584877acdd152c5b88. No diagnostic rerun or second body.
 
-Current pass 2026-10-26T02:59Z: No new INBOX bytes beyond2704736. Actual clean HOME520d/tree70ad verified. Runtime02:47 kit0220 not installed, P56934 still queued; Farm02:36 local composition receipt corrected, Runtime Group A0245 still owed. Peer0259 sends exact final source and immediate controller readiness plus existing placement note installation. No ready source task waits, no heavy admission invented. Maintenance sweep3 removed0; compact20 packed0scratch/0tests and gzipped2oldlogs. All28 KEEP hashes unchanged; actual receipt design/app-D141-maintenance-result-0300.json. Full inventory has only protected/current/dirty/refused/no-metadata targets; no eligible normal recycle.
+Current pass 2026-10-26T02:59Z: Consumed delayed Agent0243 XML request through2705842; existing P4 row0254 already complete, ack0304 sent without another worker/body. Actual clean HOME520d/tree70ad verified. Runtime02:47 kit0220 not installed, P56934 still queued; Farm02:36 local composition receipt corrected, Runtime Group A0245 still owed. Peer0259 sends exact final source and immediate controller readiness plus existing placement note installation. No ready source task waits, no heavy admission invented. Maintenance sweep3 removed0; compact20 packed0scratch/0tests and gzipped2oldlogs. All28 KEEP hashes unchanged; actual receipt design/app-D141-maintenance-result-0300.json. Full inventory has only protected/current/dirty/refused/no-metadata targets; no eligible normal recycle.
 
-INBOX consumed through 2704736 bytes. Board overwritten 2026-10-26T02:59Z.
+INBOX consumed through 2705842 bytes. Board overwritten 2026-10-26T03:04Z.
