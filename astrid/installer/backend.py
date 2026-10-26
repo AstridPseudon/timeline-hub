@@ -159,7 +159,7 @@ class Backend:
 
     def runtime(self, version: Version | None, data: Path, *args, profile=False, timeout=1800) -> dict:
         python = version.python if version else Path(sys.executable)
-        argv = [python, "-I", "-m", "astrid_runtime", *args, "--data-root", str(data), "--json"]
+        argv = [python, "-X", "utf8", "-I", "-m", "astrid_runtime", *args, "--data-root", str(data), "--json"]
         if profile and version:
             argv += ["--source-manifest", str(version.profile)]
         result = _runtime_json(self.run(argv, extra_env=version.env if version else None, timeout=timeout))
@@ -241,7 +241,7 @@ class Backend:
             "Path(sys.argv[6]).write_text(json.dumps(value, indent=2, sort_keys=True)+'\\n', encoding='utf-8')"
         )
         self.run(
-            [python, "-I", "-c", script, str(agent), str(data), str(python), bun,
+            [python, "-X", "utf8", "-I", "-c", script, str(agent), str(data), str(python), bun,
              str(chat_cwd) if chat_cwd else "", str(services_path)],
             extra_env={**env, **chat_options, "ASTRID_INSTALL_PROGRAM_ROOT": str(self.root)},
         )
@@ -404,7 +404,7 @@ class Backend:
                       "key=Path(sys.argv[3]); "
                       "restore_backup(sys.argv[1],sys.argv[2],**({'key_path':key} if key.is_file() else {}))")
             retained_key = destination / "support" / "runtime" / "backup-auth.key"
-            self.run([old.python, "-I", "-c", script, destination / "realm", restored, retained_key],
+            self.run([old.python, "-X", "utf8", "-I", "-c", script, destination / "realm", restored, retained_key],
                      extra_env=old.env)
         failed = realm_root.with_name(realm_root.name + ".failed-" + uuid.uuid4().hex[:8])
         # Recovery may replay after a process was killed between the two
@@ -498,7 +498,7 @@ class Backend:
         )
         profile = folder / "profile.json"
         # Compute the admitted source identity in the installed environment.
-        digest = self.run([python, "-I", "-c", "from astrid.core.execution.generic_host import source_checkout_digest; import pathlib,sys; print(source_checkout_digest(pathlib.Path(sys.argv[1])))", agent], extra_env=env)
+        digest = self.run([python, "-X", "utf8", "-I", "-c", "from astrid.core.execution.generic_host import source_checkout_digest; import pathlib,sys; print(source_checkout_digest(pathlib.Path(sys.argv[1])))", agent], extra_env=env)
         write_json(profile, {"profile": "astrid", "runtime_checkout": str(runtime),
                              "source_checkout": str(agent), "runtime_environment": str(environment),
                              "source_digest": digest, "service_declaration": str(services_path)})
@@ -531,7 +531,7 @@ class Backend:
     def doctor(self, version: Version, data: Path, bundle: Path) -> Path:
         bundle = absolute(bundle)
         before = bundle.stat() if bundle.exists() else None
-        argv = [version.python, "-I", "-m", "astrid", "doctor", "--bundle", bundle]
+        argv = [version.python, "-X", "utf8", "-I", "-m", "astrid", "doctor", "--bundle", bundle]
         try:
             self.run(argv, extra_env={**version.env, "ASTRID_RUNTIME_DATA_ROOT": str(data)})
         except subprocess.CalledProcessError:
@@ -653,7 +653,7 @@ class Backend:
 
     def sync_skills(self, version: Version) -> None:
         """Best-effort install of Astrid's skill view into detected harnesses."""
-        argv = [version.python, "-I", "-m", "astrid.skills", "sync"]
+        argv = [version.python, "-X", "utf8", "-I", "-m", "astrid.skills", "sync"]
         failed = False
         try:
             self.run(argv, extra_env=version.env, timeout=60)

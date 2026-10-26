@@ -63,7 +63,7 @@ def command(version: Version, data: Path, *, windows: bool = False, log: Path | 
     arguments = ["run", "--profile", "astrid", "--data-root", str(data),
                  "--source-manifest", str(version.profile)]
     if env_file is None and not windows:
-        return [str(python), "-I", "-m", "astrid_runtime", *arguments]
+        return [str(python), "-X", "utf8", "-I", "-m", "astrid_runtime", *arguments]
     # Task Scheduler cannot set an environment and Hidden does not hide a
     # console. pythonw executes the foreground Runtime in this same process.
     script = "import json,os,sys\nfrom pathlib import Path\n"
@@ -81,7 +81,7 @@ def command(version: Version, data: Path, *, windows: bool = False, log: Path | 
                    "    raise ValueError('Invalid Astrid service-env.json; use the documented string settings.')\n"
                    "os.environ.update(settings)\n")
     script += f"from astrid_runtime.cli import main\nsys.exit(main({arguments!r}))"
-    return [str(python), "-I", "-c", script]
+    return [str(python), "-X", "utf8", "-I", "-c", script]
 
 
 def systemd_quote(value: str) -> str:
