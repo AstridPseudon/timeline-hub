@@ -1,0 +1,9 @@
+{
+  "time": "2026-10-26T05:58:42.703740+00:00",
+  "KEEP_count": 30,
+  "KEEP_exact": true,
+  "before": 4820643840,
+  "after": 4820430848,
+  "compact": "terminal PASS: 0 scratch dirs, 1 old worker log gzipped, 0 test dirs",
+  "sweep": "still running; scanner emits broken-pipe diagnostics"
+}

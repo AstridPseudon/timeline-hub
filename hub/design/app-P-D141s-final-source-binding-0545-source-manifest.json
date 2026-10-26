@@ -1,0 +1,85 @@
+{
+  "schema_version": 5,
+  "task": "app-P-D141s-final-source-binding-0545",
+  "status": "PROSPECTIVE_PRODUCTION_BUILDER",
+  "source_only": true,
+  "actual_tuple": {
+    "app": {
+      "repository": "/home/user/work/app",
+      "checkout": "/home/user/work/wt/app-pin-4de54db1",
+      "checkout_materialized": false,
+      "commit": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+      "parents": ["5344c53e3063001bb3255bd0c9cd32cc5e77967f", "fdea805191f466fa67dc0f2ea118da31bf86028f"],
+      "normal_home_branch": "tl/integration",
+      "normal_home_clean": true,
+      "normal_home_ref_equal": true,
+      "source_receipt": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "exists": false, "materialization_claim": false}
+    },
+    "agent": {
+      "repository": "/home/user/work/agent",
+      "checkout": "/home/user/work/wt/agt-pin-8585ed9c",
+      "commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+      "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+      "parents": ["28e56cacb42d3da85b02e5b3543895b44f3d0f70", "5d202569f3af3852476d182ff49683787bb1e881"],
+      "normal_home_branch": "tl/integration",
+      "normal_home_clean": true,
+      "selected_checkout_detached_clean": true,
+      "source_receipt": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-8585ed9c0404d0187b2ce70242d25114a32747c2", "sha256": "4748657fdd9ebc8240f13f0ac8dac6a40dbf404872e00040d0a4e100a41eb05c", "text": "created /home/user/work/wt/agt-pin-8585ed9c (detached at 8585ed9c0404d0187b2ce70242d25114a32747c2, KEEP)\n"}
+    },
+    "runtime": {
+      "repository": "/home/user/work/runtime",
+      "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+      "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "parents": ["857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5", "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"],
+      "normal_home_branch": "tl/integration",
+      "normal_home_clean": true,
+      "selected_checkout_detached_clean": true,
+      "source_receipt": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-95d98f038320d5d46bd679ac000ab3e15825c935", "sha256": "a17539775569556567720118284c8d7d5f8eb1e2441d3306ed493ebfde2ea668", "text": "created /home/user/work/wt/rt-pin-95d98f03 (detached at 95d98f038320d5d46bd679ac000ab3e15825c935, KEEP)\n"}
+    },
+    "composition": {
+      "repository": "/home/user/work/composition",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": ["7a95a40b07ea0d273e17afb69dbc3456b603f2bc", "c05fdb171fe37c1d5817a060ecb716a329ee821a"],
+      "normal_home_branch": "tl/integration",
+      "normal_home_clean": true,
+      "selected_checkout_detached_clean": true,
+      "source_receipt": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1", "text": "exists: /home/user/work/wt/vw-pin-635f4de0 at 635f4de06fda22a85fc2e4cfc764d0153a4c9\n"}
+    }
+  },
+  "app_delta_from_5344": {
+    "final_parent_1": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+    "final_parent_2_reviewed_candidate": "fdea805191f466fa67dc0f2ea118da31bf86028f",
+    "final_tree_equals_reviewed_candidate": true,
+    "only_changed_paths": ["public/install-manifest.json:runtime.sha", "runtime.lock.json:source_commit"],
+    "all_eight_scripts_specs_and_full_tails_byte_exact": true,
+    "old_binding_0459_immutable_and_not_retargeted": true
+  },
+  "builder_source": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "final_head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "final_tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "exports_authenticated_before_import": ["buildSubmitPlan", "serviceRecipe", "exactCheckoutPath"],
+    "diagnostic_helper": null
+  },
+  "selectors": [
+    {"id": "p2-automatic-child-placement", "order": 1, "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "source_lines": "1214-1345 and full file tail", "git_blob": "186ba03b6a8bb5d45d2659cf0a1b647b68e5a149", "sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e", "full_original_tail_and_inputs": true},
+    {"id": "p2-popup-add", "order": 2, "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "source_lines": "941-947 and full file tail", "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6", "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9", "full_original_tail_and_inputs": true, "semantic_note": "unchanged D141j popup ADD"},
+    {"id": "p2-parent-move", "order": 3, "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "source_lines": "746-776 and full file tail", "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4", "full_original_tail_and_inputs": true},
+    {"id": "p2-transition-none-single", "order": 4, "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "source_lines": "778-796 and full file tail", "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4", "full_original_tail_and_inputs": true},
+    {"id": "p2-transition-none-bulk", "order": 5, "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "source_lines": "798-817 and full file tail", "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4", "full_original_tail_and_inputs": true},
+    {"id": "p2-register-asset", "order": 6, "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "source_lines": "1054-1124 and full file tail", "git_blob": "186ba03b6a8bb5d45d2659cf0a1b647b68e5a149", "sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e", "full_original_tail_and_inputs": true},
+    {"id": "p1", "order": 7, "file": "tests/e2e/local/three-products.p1-chain.spec.ts", "source_lines": "1393-1688 and full file tail", "git_blob": "5a2029d5f61a5cb665e1fb59c9fe13c9fff0bfde", "sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17", "full_original_tail_and_inputs": true},
+    {"id": "p3", "order": 8, "file": "tests/e2e/local/three-products.spec.ts", "source_lines": "1670 onward through full file tail", "git_blob": "ed083c0aab1a3c995be14e5b774fbb1cb877111b", "sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b", "full_original_tail_and_inputs": true}
+  ],
+  "supported_toolchain": {"node": "v20.19.4", "path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "mode": "pure import; no main/submit/run/bootstrap/provider"},
+  "c0_shape_preserved": true,
+  "registry_preimage": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf", "bytes": 733192, "sha256": "e100f177f029aedc17b5e4ad3fb697e1c9e98142ca88e6c91101c5f0046ac5f7", "all_16_prospective_rows_absent": true},
+  "registration_and_execution": {"registration": false, "queue_or_request": false, "checkout_request": false, "preflight": false, "body": false, "source_pin_created": false}
+}

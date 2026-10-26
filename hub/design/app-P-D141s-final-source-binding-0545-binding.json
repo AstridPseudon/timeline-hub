@@ -1,0 +1,92 @@
+{
+  "schema_version": 3,
+  "status": "PROSPECTIVE_PRODUCTION_BUILDER",
+  "registration": false,
+  "execution": "none",
+  "target": "app-pin-4de54db1",
+  "repo": "app",
+  "selector": "p2-automatic-child-placement",
+  "suites": {
+    "normal": "d141g-p2-automatic-child-placement-4de54db1-submit",
+    "preflight": "d141g-p2-automatic-child-placement-4de54db1-submit-preflight"
+  },
+  "source_tuple": {
+    "app": {"head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa", "normal_home": "/home/user/work/app", "checkout": "/home/user/work/wt/app-pin-4de54db1", "checkout_materialized": false},
+    "agent": {"head": "8585ed9c0404d0187b2ce70242d25114a32747c2", "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c", "normal_home": "/home/user/work/agent", "checkout": "/home/user/work/wt/agt-pin-8585ed9c"},
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "normal_home": "/home/user/work/runtime", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "normal_home": "/home/user/work/composition", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "full_spec": {
+    "value": {
+      "target": "app-pin-4de54db1",
+      "repo": "app",
+      "selector": "p2-automatic-child-placement",
+      "normal_suite": "d141g-p2-automatic-child-placement-4de54db1-submit",
+      "preflight_suite": "d141g-p2-automatic-child-placement-4de54db1-submit-preflight",
+      "pins": {
+        "app": {"head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"},
+        "agent": {"head": "8585ed9c0404d0187b2ce70242d25114a32747c2", "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"},
+        "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+        "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-4de54db1",
+        "agent": "/home/user/work/wt/agt-pin-8585ed9c",
+        "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      }
+    },
+    "canonical_utf8": "{\"target\":\"app-pin-4de54db1\",\"repo\":\"app\",\"selector\":\"p2-automatic-child-placement\",\"normal_suite\":\"d141g-p2-automatic-child-placement-4de54db1-submit\",\"preflight_suite\":\"d141g-p2-automatic-child-placement-4de54db1-submit-preflight\",\"pins\":{\"app\":{\"head\":\"4de54db14bdc9ddc2ce2e5887258b03acbffd30d\",\"tree\":\"84c3fb7f73f08c22220f8e808962fe3f24aaa0aa\"},\"agent\":{\"head\":\"8585ed9c0404d0187b2ce70242d25114a32747c2\",\"tree\":\"92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c\"},\"runtime\":{\"head\":\"95d98f038320d5d46bd679ac000ab3e15825c935\",\"tree\":\"78df31d62c5b9ba4c84dee4ea346e43a767718c1\"},\"composition\":{\"head\":\"635f4de06fda22a85fc2e4cfc764d0153a4c9f40\",\"tree\":\"5ab5191a296980a0a6bcd1178ab6902d6478a148\"}},\"checkouts\":{\"app\":\"/home/user/work/wt/app-pin-4de54db1\",\"agent\":\"/home/user/work/wt/agt-pin-8585ed9c\",\"runtime\":\"/home/user/work/wt/rt-pin-95d98f03\",\"composition\":\"/home/user/work/wt/vw-pin-635f4de0\"}}",
+    "sha256": "4c3240e7465ead91e24d3adf2aaa7d6ede482ea48f9e2dd6b53625f2c226f51f",
+    "bytes": 890
+  },
+  "builder_source": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "repo": "app",
+    "git_head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "git_tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "historical_git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "historical_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "exports_used": ["buildSubmitPlan", "serviceRecipe", "exactCheckoutPath"],
+    "diagnostic_helper": null,
+    "execution_mode": "pure-builder-only"
+  },
+  "first_pair": {
+    "normal_command": {"file": "normal-command.txt", "bytes_without_terminal_newline": 966, "sha256_without_terminal_newline": "55da9058c938ce4ba362670b1322c49097441007d460677f6f5b2726c7f4c2aa"},
+    "preflight_command": {"file": "preflight-command.txt", "bytes_without_terminal_newline": 978, "sha256_without_terminal_newline": "f20ab22c427e46fb06edbc2f91ea11ad27faf7a1b38c11abbc20895e465471a4"},
+    "normal_row": {"bytes_with_one_terminal_lf": 1022, "sha256_with_one_terminal_lf": "c921243a9fbd154ed5ef16c27154212b6626e59748d7f3d34d5592fc38e32362"},
+    "preflight_row": {"bytes_with_one_terminal_lf": 1044, "sha256_with_one_terminal_lf": "6d69ba5b21658c4f4acf5b6ecfd946089fd442b86bcb9683ac1b9dc63b9f6f83"},
+    "row_encoding": "exact row UTF-8 bytes followed by exactly one LF (0x0a); no CRLF"
+  },
+  "all_eight_pair_summary": {
+    "p2-automatic-child-placement": {"normal": [966, "55da9058c938ce4ba362670b1322c49097441007d460677f6f5b2726c7f4c2aa", 1022, "c921243a9fbd154ed5ef16c27154212b6626e59748d7f3d34d5592fc38e32362"], "preflight": [978, "f20ab22c427e46fb06edbc2f91ea11ad27faf7a1b38c11abbc20895e465471a4", 1044, "6d69ba5b21658c4f4acf5b6ecfd946089fd442b86bcb9683ac1b9dc63b9f6f83"]},
+    "p2-popup-add": {"normal": [950, "4cca2a9ca7143eae2f34a89effce833082d6be0cc92c19a048ff793de32d0208", 990, "d11f1984d4791d16c10d72c41c0099f4e38f09d820855df507266ce39fb00a4d"], "preflight": [962, "7dad14a2522654236d8a3605f81bb6f815fb3be49e6cc3b69021675947c4a7f2", 1012, "5f1e4060d32e4bb000c6b64bd11da29dc03f0ff8f4c135f986776a294c2044c5"]},
+    "p2-parent-move": {"normal": [952, "f778fe9683c7fb3bc7d3da7110e70e18dea132128351bcf14615ea87a76cf824", 994, "16bf9056a3c86a2df62b6fc5771aedd98086050b5f60291c675a8425fc9463c6"], "preflight": [964, "42649e98033986593667b804f4274d312c4e237bf32dbf02b814a5a3e8dac447", 1016, "2dd016735ef2080a3808f3406c47165a4879d29e23aa5aaf1efe267dbf381683"]},
+    "p2-transition-none-single": {"normal": [963, "d7c63284c431cd99cd1504b9f4d3bb5608f6ae8afb515aa52cd0420b2c98f1f5", 1016, "bed3c55173a02e33df6823b5649fa088aa1e31d04b02ea2f5ed09c72f5f32824"], "preflight": [975, "e845afd2822cd8c592f5abb2309033cb7d7f1ad59972efec759c6f5cccc70104", 1038, "ffc86d08d5783927c509a342c7829a69768250ca91b2224cf6f4263dbbc71c88"]},
+    "p2-transition-none-bulk": {"normal": [961, "497bf0c8324dacd5214160215d0ae277e3a8d5b96c4209764cf8cb3c5521818b", 1012, "10a3d6fe7fa417e723b854bc6c32a42e4a367a3df2de658a5b22ab1e84180118"], "preflight": [973, "11979dd76e004abdd33032b446767511de4f37fa55cc09e460220abeb33b02ab", 1034, "bd7e3d89c41615e75de1e23f17a99616862b7858928a0afaacfed7c9760cf642"]},
+    "p2-register-asset": {"normal": [955, "36586fb41cf0af535c7d310b47d07ace74998320eddab5dc550f3a90a45ebabc", 1000, "c4daa8203e61b32754e38e30f86196f2c0ce3be55389520f38e06b9a675bf113"], "preflight": [967, "dcb641711568071cee3ba06e809c0fb297a957076147ee0f67e23c3c42d0787d", 1022, "0bc859fd9c53f4787ce505851264137b6ad626730ba080bb99108fd2a726795e"]},
+    "p1": {"normal": [940, "bc8c2347e1cad647d8eb86b50a35098343b63a22afe03cede6e70d1d9e9b05d2", 970, "0dc310af14079460125c93f576ee76766fc825935a4448d9097361d481e23bcb"], "preflight": [952, "122410ebd04ac1510b8287863e5e29137d48354826c31b2f0e8e16a529e4d563", 992, "271e43909cbd70b964173f9569385c42d29a3b9fe7dd6849cd888cfd82d5b24b"]},
+    "p3": {"normal": [940, "e4973869b1e23cb2901a193dd3bbc1a6a9da9ec13b146c86e9f9127bc1c2a900", 970, "2c12a36f4cc857be59e5fbc5a47b65b641b64d25fd29795d9953ad8525c15858"], "preflight": [952, "28691bcd4334a1dc79138d8d233444a2f948214186b315ad38c53dbd7fcfdc0b", 992, "39138c7cc9f8fa03ec47ea21a11cbd147ca1bea3eaab85a8cd77f103c904bc3e"]}
+  },
+  "registry": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "preimage_bytes": 733192,
+    "preimage_sha256": "e100f177f029aedc17b5e4ad3fb697e1c9e98142ca88e6c91101c5f0046ac5f7",
+    "prospective_rows_absent": true,
+    "names_checked": ["d141g-p2-automatic-child-placement-4de54db1-submit", "d141g-p2-automatic-child-placement-4de54db1-submit-preflight", "d141g-p2-popup-add-4de54db1-submit", "d141g-p2-popup-add-4de54db1-submit-preflight", "d141g-p2-parent-move-4de54db1-submit", "d141g-p2-parent-move-4de54db1-submit-preflight", "d141g-p2-transition-none-single-4de54db1-submit", "d141g-p2-transition-none-single-4de54db1-submit-preflight", "d141g-p2-transition-none-bulk-4de54db1-submit", "d141g-p2-transition-none-bulk-4de54db1-submit-preflight", "d141g-p2-register-asset-4de54db1-submit", "d141g-p2-register-asset-4de54db1-submit-preflight", "d141g-p1-4de54db1-submit", "d141g-p1-4de54db1-submit-preflight", "d141g-p3-4de54db1-submit", "d141g-p3-4de54db1-submit-preflight"]
+  },
+  "source_spec_blobs_and_hashes": [
+    {"selector": "p2-automatic-child-placement", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "git_blob": "186ba03b6a8bb5d45d2659cf0a1b647b68e5a149", "sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e", "unchanged_from_5344": true},
+    {"selector": "p2-popup-add", "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6", "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9", "unchanged_from_5344": true},
+    {"selector": "p2-parent-move", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4", "unchanged_from_5344": true},
+    {"selector": "p2-transition-none-single", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4", "unchanged_from_5344": true},
+    {"selector": "p2-transition-none-bulk", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4", "unchanged_from_5344": true},
+    {"selector": "p2-register-asset", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "git_blob": "186ba03b6a8bb5d45d2659cf0a1b647b68e5a149", "sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e", "unchanged_from_5344": true},
+    {"selector": "p1", "file": "tests/e2e/local/three-products.p1-chain.spec.ts", "git_blob": "5a2029d5f61a5cb665e1fb59c9fe13c9fff0bfde", "sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17", "unchanged_from_5344": true},
+    {"selector": "p3", "file": "tests/e2e/local/three-products.spec.ts", "git_blob": "ed083c0aab1a3c995be14e5b774fbb1cb877111b", "sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b", "unchanged_from_5344": true}
+  ],
+  "contract_preserved": {"request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "idempotency", "dry_run", "source", "rationale", "group_id", "Idempotency-Key"], "command": ["schema_version", "op", "version", "select", "args", "created"], "step": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"], "accepted_merged": ["accepted", "merged", "data", "receipt", "canonical_document", "document_digest", "provider_version", "compiler_version", "normalized_commands", "id_map", "base/previous/accepted revision/publication pairs", "rebased_onto", "merge_mode", "complete", "steps", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "publisher", "annotations"], "conflict": ["reason", "head"], "invalid": ["code", "path", "hint", "suggested_command"], "preview": ["would_status", "receipt"]}, "registration_false": "No registry, queue, preflight, body, service request, kit write, or checkout request was performed. The App exact checkout is a planned normal request-checkout path and is not claimed materialized."
+}

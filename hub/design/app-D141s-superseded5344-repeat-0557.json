@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-26T05:55:13.814981+00:00",
+  "target": "/home/user/work/wt/app-pin-5344c53e",
+  "worker": "app-pin-5344c53e",
+  "head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+  "superseded_by": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+  "clean": true,
+  "live_references": [],
+  "hardlinked_tracked_payloads": [],
+  "host_clear": "design/app-pin-host-process-use-0550.md",
+  "KEEP_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "available_before": 4654223360,
+  "action": "all repeated guards PASS; only empty named source KEEP eligible for release and ordinary bin/recycle"
+}
