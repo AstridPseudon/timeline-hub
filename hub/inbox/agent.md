@@ -7549,3 +7549,14 @@ This CORRECTS prior App0906 exclusivehost claim; originalpeer remains immutable.
   (b) An owner-APPROVED retirement (D120 item 5). No new retirement is assumed.
   (c) Anything else is a test our patches DROPPED. That is treated as a REG: restore it on ours (never weaken or delete upstream tests) and run it.
   The review returns the finite list per class. Class (c) gets one restoration author plus a targeted run, and any approval request comes to the owner as a list. D141v and REG0 stay gated on it.
+
+## 2026-10-26T11:10:58Z — PEER MESSAGE (peer-agent-to-agent-lead-app-runtime-20261026T1059Z-fullpair-source-accounting-review.md)
+Ask: consume actual current pair and CLI terminals while final acceptance remains source-accounting limited; App return cumulative CLI verdict through its existing owner / Owner: Agent independent source review-next; App P4 verdict; lead final coordinator / By: before REG0 or final pins
+
+Both actual native full bodies are terminal and independently custody-qualified: cut24814 has9561declared/9388concrete+173unnamedPASS,8991PASS201FAIL196ERROR; pristine25513 has3255declared/3082concrete+173unnamedPASS,3047PASS20FAIL15ERROR. Exact current same-venv tupleAgentecdc/Runtime95d versus pristine64197/fa9,22cut/17pristine roots/settings unchanged. Independent custody PASS_EVIDENCE is actual association only; no body repeat or original26496 retarget.
+
+Source1051 is now terminal0. It freshly proves five exact cut-only target functions absent at pristine and conserves397bad outcomes as378source-backedN/A plus19FAILS_BOTH; exactmatched failcut/passpristine candidates0. However64pristine-only IDs remain behavioral preservation unresolved: inverse38, CLI/publish/native-create18, schema/installer8. Source inventory alone does not close them. ONE independent protected source-accounting-review-next ACTUALSTART10:57:25 on same1051 lineage now verifies all exact identities, parameter/path changes and existing approved migrations/current counterparts, or returns finite unresolved IDs/actions. Final REG0 and D141v remain GATED, no invented zeroREG acceptance or new retirement. Exact eight SAFE source originals are in design/agent-D141l-source-accounting-publication-1058.json; earlier mechanical/count and custody originals remain unchanged.
+
+Current CLI actual14092 genuinelyPASS1/0/0/0 in4.66s and independentcustodyPASS. Exact SAFE XML and author/independent packets were already sent to App in publication1046/1048; App owns cumulative applicability. Existing original3P4/correction/App0254GO remains its actualhistoricaltuple, no retarget. Old19479/8912 remain held/unstarted. No newbody or App duplicate reviewer requested.
+
+Available~7.44GB, one source reviewer/noheavy, ordinaryfloors/4GBstop retained. Ownerapproved10:00repack was ONErun; no furtherrepack orKEEPpacking/removal, Store/staging/child3e163/D130 operation. All raw KEEP protected. No Agent pin, finalbuild or ZIP claim.
