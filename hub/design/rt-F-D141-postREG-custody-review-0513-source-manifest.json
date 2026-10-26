@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.f.d141.final-custody-source-manifest.v1",
+  "read_only": true,
+  "source_heads": {
+    "runtime": {"path": "/home/user/work/runtime", "ref": "tl/integration", "head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "parents": ["857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5", "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"], "clean": true},
+    "agent": {"path": "/home/user/work/agent", "ref": "tl/integration", "head": "8585ed9c0404d0187b2ce70242d25114a32747c2", "tree": "92a3ffdb5a8bf476f10bfa1bbda3e2856fb9938c", "parents": ["28e56cacb42d3da85b02e5b3543895b44f3d0f70", "5d202569f3af3852476d182ff49683787bb1e881"], "clean": true},
+    "app": {"path": "/home/user/work/app", "ref": "tl/integration", "head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f", "tree": "dd989783046aeff652486a1ba39db42aea86e201", "parents": ["520d7e4fc12a03392afaed3f486aba34a2b5c319", "dc1a86cf4797b6ca3799d9ad1dee7e7d949caf04"], "clean": true}
+  },
+  "original_and_frozen": {
+    "runtime_original": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_original_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "agent_p5_original": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "frozen_r4_runtime": {"commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd", "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"},
+    "frozen_r4_sdk": {"commit": "11caf1d9de291d76f491cf69f7942606b7471d7a", "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"},
+    "frozen_r4_app": {"commit": "8f0c2484463e9b666d184a744d52e252984e551a", "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"},
+    "frozen_r4_composition": {"commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a", "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"}
+  },
+  "runtime_delta": {
+    "changed_paths": ["conformance/typescript/contract-metadata.ts", "conformance/typescript/generated.ts", "runtime_protocol/upgrade.py"],
+    "author_commits": {"typescript": "4a66dee1ab34f260ea64bd58aa30cf7ac66c3ae3", "upgrade": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"},
+    "all_three_integrated_blobs_equal_reviewed_author_blobs": true
+  },
+  "control_sources": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md", "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075", "role": "single source of truth"},
+    {"path": "/home/user/timeline-hub/hub/design/BOARD-HEADER.md", "sha256": "fe8c419d114f36ce9c48280e615a8b1a2fe30182a01af8211a188de939eb89b3", "role": "D141 zeroREG/l control"},
+    {"path": "/home/user/timeline-hub/hub/design/commit-v2.md", "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7", "role": "C0 contract"},
+    {"path": "/home/user/timeline-hub/hub/design/D141-cut-tuple.md", "sha256": "ced42cacebdb325a5c49aaef4b6824a4097a3c6f2c1ff0e9fb13de89aacf58e0", "role": "D141 cut tuple"},
+    {"path": "/home/user/timeline-hub/hub/design/D141l-upstream-freeze-2.md", "sha256": "115d1c668628759b34e6cad87b18e2f8033369653c7bda6c999dc0032def9d02", "role": "D141 freeze2"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/reg.json", "sha256": "bc9a5a8110acee30f81339557fc7ba55bcb20f496210a242e90a848f513861e8", "role": "exact 15 REG census and source-body hashes"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/p5-custody.json", "sha256": "2d5adb2b41ff2e82e7b562f0c2d1092a8cd702dd6c31964a98032141834e53cd", "role": "original 38-case P5 receipt and origins"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-integrated-proof-0508/evidence/proof.json", "sha256": "read in place; prior proof source", "role": "captured exact 15 output and 3-blob equality"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-integrated-proof-0508/evidence/p5-applicability.json", "sha256": "read in place; prior applicability source", "role": "prior P5 path analysis challenged here"}
+  ],
+  "receiving_inputs": {
+    "agent_artifacts": {"path": "/home/user/work/agent/artifacts.json", "sha256": "7f1f27510eaa2b2bb9f013b345b09282e299d10e8ca614af2b028ee8730612b8"},
+    "agent_runtime_lock": {"path": "/home/user/work/agent/runtime.lock.json", "sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3"},
+    "runtime_manifest": {"path": "/home/user/work/runtime/contract/artifacts.json", "sha256": "9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3"},
+    "app_runtime_lock": {"path": "/home/user/work/app/runtime.lock.json", "sha256": "7b630bea187a47350726234a4534a2db7354a29708665b14d8d3c42c4dfaa3a9"},
+    "app_cli_vendor_lock": {"path": "/home/user/work/app/config/astrid-cli-surface/vendor.lock.json", "sha256": "f3c62e8edd6267df0ef1794f818869cca33093185d39d09cb1e73dba9942c1ba"}
+  },
+  "normal_tools": {
+    "agent": "python scripts/vendor_lock.py check runtime.lock.json --producer <Runtime checkout>",
+    "app_runtime": "node scripts/vendor-lock.mjs check runtime.lock.json --producer <Runtime checkout>",
+    "app_browser_vendor": "node scripts/build/verify-astrid-vendor-sources.mjs",
+    "run": false,
+    "reason": "Read-only custody review; no generator, run, install, update, or product write."
+  },
+  "no_changes": {"source_edit": false, "product_write": false, "test_edit": false, "fixture_edit": false, "pin_edit": false, "generated_write": false, "release_or_tag_claim": false, "files_deleted": false}
+}

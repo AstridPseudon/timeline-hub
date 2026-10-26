@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T05:17:23Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
-# runtime board, 2026-10-26T05:14Z
+<!-- main | 2026-10-26T05:22:18Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
+# runtime board, 2026-10-26T05:20Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -14,11 +14,11 @@
 | D141 full receiving | Initialize safe output directory | Luna | Normal production row | merged | rt-F-D141-full-output-fix-0052 | Four real row controls PASS; corrected scoped rows installed. Cut18778 actual result retained; pristine8912 queued. | Cut6a011 / 28e56 |
 | D141 Runtime full | Retain actual cut full result | Service | Output smoke and scoped install PASS | review | Main0052; service18778 | Actual7300 pass35 fail18 error26 skip13 xfail. Raw XML and witnesses KEEP. No REG verdict without pristine. | 6a011 / 28e56 |
 | D141 pristine targeted15 | Retain qualified actual pristine comparator | Luna and service | Independent0445 terminal | merged | Actual11121; independent0445 | All15 PASS2.76s, same environment and exact predicates. Old8912 queued unstarted. | fa9 / 8b6 |
-| D89d measured admission | Port qualified paired lifecycle controls | Luna | Recorded Main D141s | blocked:app | Author0453; independent0503 PASS | Independent73 and all lifecycle cases PASS. Historical520d hardcode needs actual new builder binding before receiving. Deadline06:00. | b168dbb0 |
+| D89d measured admission | Complete actual App binding intake | Luna | Independent0503 PASS73; App packet0503 | doing | rt-OPS-D141s-final-binding-receive-0519 | D141s binding completion only; actual final builder output after normal Runtime95d adoption. No new lifecycle mechanism. Deadline06:00. | b168dbb0 |
 | D141h Runtime split | Retain installed qualified Runtime kit | Sol and Luna | Independent0418 PASS49 | merged | Sol0410; review0418; CAS0422 PASS | [Install](../../design/rt-OPS-D141-runtime-CAS-0422-installation.json). Five files exact in live and normal hub kit. No App exception or gate credit. | 56f2d56e |
 | D141g App binding | Retain historical first placement caller | App Luna | Author0309 terminal | merged | app-P-D141g-first-suite-binding-0309 | Exact520d target suite source and builder command hashes published. Prospective only; actual D66 registered bytes must match before either part. | App520d |
-| D141g paired preflight | Hold App paired admission until closure | Luna | D141s and genuine new binding | gated:D141s | Final0435 FAIL; port0453 active | SEC002 PASS; cancellation NEEDS. No installed pair or App release. Actual freeze2 builder binding stays required. | 06fb2b5d |
-| D141l App new binding | Receive genuine freeze2 placement binding | App Luna | App5344 and Agent8585 normal source | blocked:app | Existing App binding lineage | New HOME recorded05:00; source wait cleared. Exact production builder command and row hashes owed; no520d retarget. | App5344c53e |
+| D141g paired preflight | Hold admission until final binding and CAS | Luna | D141s source intake and review | gated:D141s | Independent0503 PASS73; receiver0519 | All lifecycle and SEC002 closed; authentic current source binding remains. No installed pair or admission release. | b168dbb0 |
+| D141l App new binding | Receive actual final App builder packet | App and Runtime Luna | Genuine5344 packet; postREG receiving | doing | App0459 complete; Runtime0519 intake | Actual5344 builder packet received0503; if Runtime95d adoption moves App, genuine new packet required. No old byte retarget. | App5344c53e |
 | P5 D141 source | Require all passed cases and snapshot key | Luna | Independent0116 PASS | merged | Source0107; review0116 | All eight findings PASS; fourteen controls PASS. Exact38 cases and32hex key required; no normal P5 GO claimed. | c884dcbb53 |
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
 | P5 D141 body | Qualify original38 case proof metadata | Luna and service | Actual6934; derivative0500 | merged | Independent0445; correction0500 PASS | Actual38 PASS31.02s original6a/28e. Exact38 identity derivative and five controller blobs recovered; final applicability0508 owed. | Frozen cut |
@@ -46,16 +46,18 @@
 
 | D141 REG integrated | Prove merged batch and final P5 applicability | Luna | Normal95d98 merge and Agent8585 | review | Proof0508; independent0513 active | Actual15 PASS on95d98 plus Agent8585. Final source custody, true15 client mappings and P5 applicability checked without test repeat. | 95d98f03 |
 
+| D141 old App queue | Keep original18617 unstarted | Luna | Exact authentic App request ID | doing | rt-OPS-D141s-final-binding-receive-0519 | Add only exact stale ID to existing held-job guard. No queue, request or registry edits; same8912/P419479 holds retained. | Private kit |
+
 Blockers: Runtime REG — Independent0445 proves15 REG; both disjoint Luna fixes active. No own nonREG changes. Normal review and merge then real producer handoff.
-Blockers: App — Final paired kit0435 FAIL retained. Main D141s author0453 ports qualified lifecycle cases; one independent review and PASS_INSTALL by06:00 or dropped. New binding waits real freeze2 source.
+Blockers: App binding — D141s final kit independently0503 PASS73; receiver0519 completes authorized genuine binding. Actual5344 packet arrived; final postREG receiving may move App. PASS_INSTALL by06:00 or dropped.
 P5 original metadata cleared: immutable0500 derivative exact38 IDs and original witnesses verified; safe controller blobs recovered. Original38PASS scope retained, final applicability0508 pending.
-Blockers: Safety — D130, old venvs, runtimes/agent-remotion and sealed fixtures remain held. No owner-approved actual hub repack in this session. Dropped smoke stays unrun.
-Next ready: Integrated proof0508 then actual producer handoff to consumers; final paired0503 verdict then bounded CAS only if eligible; metadata0500 derivative. Final build waits actual gates.
-live 1 / cap 3; ready-undispatched 0. Independent integrated custody0513 active. Pair73 PASS waits genuine App source binding. No ready source left idle, no heavy body.
+Blockers: Safety — D130, old venvs and runtimes/agent-remotion held. D141t protects1811 with KEEP after compaction refusal; originals and tgz as found. No actual hub approval; smoke dropped.
+Next ready: Final custody0513; literal binding receiver0519 after authentic final App source; narrow binding qualification and CAS only on eligible result. Final build waits actual freeze2 proofs and tuples.
+live 2 / cap 3; ready-undispatched 0. Final custody0513 and binding completion0519 active. No heavy body. Authenticated source wait covered by existing receiver, no duplicate author.
 Runtime now95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1 after qualified REG normalmerges. Integrated proof pending; Composition635f unchanged. Header04:46 records Agent8585ed9c/tree92a3ffdb freeze2; full matching pair and changed-path P4 Agent-owned. App5344c53e normal source HOME now; genuine new builder binding owed. No upstream chasing.
 Runtime18778 actual7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121 actual15PASS; P56934 actual38PASS. Raw XML and trace KEEP retained. Original receipts keep original scopes. Old8912 and P419479 unstarted.
 Farm child chain conditional on Agent join. Schema verified; original kit pair and67wheel seed EXACT MISSING, no hunt/rebuild. Planned F-final separately gated; no smoke or ZIP.
-INBOX consumed through1786421 bytes. D141t records cleanup refusal and Main protects1811 with KEEP; originals and adjacent archives unchanged. Peer boards checked; authoritative header05:00 records freeze2 Agent8585/App5344. D141q-b allows Agent one actual join at4.5GB; it does not alter Runtime floors. D141s decision applied, prior escalation disposition cleared.
+INBOX consumed through1789337 bytes. Genuine App freeze2 binding0459/publication0503 consumed; no missing packet claim. D141t records cleanup refusal and Main protects1811 with KEEP; originals and adjacent archives unchanged. Peer boards checked; authoritative header05:00 records freeze2 Agent8585/App5344. D141q-b allows Agent one actual join at4.5GB; it does not alter Runtime floors. D141s decision applied, prior escalation disposition cleared.
 Disk: fresh4573106176 bytes. Fresh Runtime recycle census finds only three prior dirty ended trees, no clean eligible nonKEEP worktree. Sweep3 removed0. Compact MIN1 reached held sealed fixtures and got Permission denied; stopped SIGINT130. No retry or alternate cleanup; refusal escalated0459.
 
 

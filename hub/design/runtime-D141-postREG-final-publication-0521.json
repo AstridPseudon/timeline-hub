@@ -1,0 +1,44 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-custody-review-0513/evidence/review.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-review.json",
+    "sha256": "52cd7847d0f8a40472dae60d62fbe5e42c0e87e98a2d2e68bc0e1ed2a284bc06",
+    "size": 6642
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-custody-review-0513/evidence/findings.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-findings.md",
+    "sha256": "0abcf75427907b06983d712453c64c0f8b21e02b263ebfe5ade7139d1e5e6444",
+    "size": 2590
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-custody-review-0513/evidence/producer-corrected.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-producer-corrected.json",
+    "sha256": "05f02ffa87ed9e32a2f92a506b8edb63a1af493a5331d14239ab0b13abd0e465",
+    "size": 7006
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-custody-review-0513/evidence/p5-applicability.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-p5-applicability.json",
+    "sha256": "a46bcb2d7e566b01c54da297968a2236eb81d6598f5ac85bf18c55e70d096389",
+    "size": 8585
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-custody-review-0513/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-source-manifest.json",
+    "sha256": "9eb45d29e3c51ea639835b7aec3526fb4b5532b68e6cd618de37c967a424e5f2",
+    "size": 5686
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-custody-review-0513/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-validation.md",
+    "sha256": "fe477a7bed6b4a2c46a8b5d166ea1ffd9cb6e07e118733aad673ece8559a4e60",
+    "size": 4240
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-custody-review-0513/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-handoff.md",
+    "sha256": "53604c56e3d3083960de700c79160b22e186401732edad734ae1083b320e67cb",
+    "size": 3158
+  }
+]
