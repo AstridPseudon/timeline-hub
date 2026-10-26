@@ -1,4 +1,4 @@
-import { formatActionGroupEntries } from './actionGroupLogs';
+import { formatActionGroupMarkdownEntries } from './actionGroupLogs';
 import type { ConversationToolCallPair, ConversationTurn } from './contracts';
 
 export type ConversationExportTurn = {
@@ -31,7 +31,10 @@ function attachmentLines(turn: ConversationTurn): string[] {
   if (!turn.attachments?.length) return [];
   return ['', 'Attachments:', ...turn.attachments.flatMap((attachment, index) => [
     `- ${attachment.shotName || attachment.clipId || `Attachment ${index + 1}`} (${attachment.mediaType}): ${attachment.url}`,
-    `  Details: ${json(attachment)}`,
+    '  Details:',
+    '  ```json',
+    ...json(attachment).split('\n').map(line => `  ${line}`),
+    '  ```',
   ])];
 }
 
@@ -74,7 +77,7 @@ export function formatConversationExport(exportData: ConversationExport): string
     if (turn.role === 'tool_call') {
       const group = actionPairsAt(turns, index, consumedResults);
       turnNumber += 1;
-      body.push(`## Turn ${turnNumber} — Tool/action calls — ${safeMetadata(turn.timestamp)}`, '', ...formatActionGroupEntries(group.pairs));
+      body.push(`## Turn ${turnNumber} — Tool/action calls — ${safeMetadata(turn.timestamp)}`, '', ...formatActionGroupMarkdownEntries(group.pairs));
       index = group.nextIndex;
       continue;
     }
@@ -88,15 +91,16 @@ export function formatConversationExport(exportData: ConversationExport): string
     const role = turn.role === 'tool_result' ? 'Tool result' : turn.role === 'user' ? 'User' : `Assistant${turns[index].inProgress ? ' (in progress at capture)' : ''}`;
     body.push(`## Turn ${turnNumber} — ${role} — ${safeMetadata(turn.timestamp)}`, '');
     if (turn.role === 'tool_result') {
-      body.push(`Call ID: ${safeMetadata(turn.tool_call_id)}`, `Status: ${safeMetadata(turn.tool_status)}`, 'Result:', turn.content || '(empty result)');
-      if (turn.tool_output_details) body.push('', 'Structured result details:', json(turn.tool_output_details));
+      body.push(`- **Call ID:** ${safeMetadata(turn.tool_call_id)}`, `- **Status:** ${safeMetadata(turn.tool_status)}`, '- **Result:**', '  ```text', ...(turn.content || (turn.tool_output !== undefined ? json(turn.tool_output) : '(empty result)')).split('\n').map(line => `  ${line}`), '  ```');
+      if (turn.tool_output !== undefined) body.push('', '- **Raw output:**', '  ```json', ...json(turn.tool_output).split('\n').map(line => `  ${line}`), '  ```');
+      if (turn.tool_output_details) body.push('', '- **Structured result details:**', '  ```json', ...json(turn.tool_output_details).split('\n').map(line => `  ${line}`), '  ```');
       body.push('');
       index += 1;
       continue;
     }
     body.push(turn.content || '(no text)', ...attachmentLines(turn), '');
     if (editorActions?.length) {
-      body.push('Editor requests:', '', ...formatActionGroupEntries(editorActions));
+      body.push('Editor requests:', '', ...formatActionGroupMarkdownEntries(editorActions));
     }
     index += 1;
   }

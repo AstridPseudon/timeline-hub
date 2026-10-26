@@ -171,6 +171,21 @@ function textFromContent(value: unknown): string {
   return '';
 }
 
+function textFromToolOutput(value: unknown): string {
+  const content = textFromContent(value);
+  if (content) return content;
+  const record = asRecord(value);
+  if (!record) return '';
+
+  const outputFields = ['formatted_output', 'stdout', 'stderr', 'output', 'result', 'text'];
+  return outputFields.flatMap((key) => {
+    const field = record[key];
+    if (typeof field === 'string' && field) return [field];
+    const nested = textFromContent(field);
+    return nested ? [nested] : [];
+  }).join('\n');
+}
+
 /** Keep the transport context model-visible but hide it from the chat UI. */
 export function stripAstridEditorContext(content: string): string {
   if (content.startsWith('<astrid_element_result>')) return '';
@@ -950,10 +965,10 @@ export class AstridAgentSessionStore {
     }
 
     if (updateType === 'tool_call') {
-      // Any assistant text before a tool call is progress narration, not the
-      // completed answer. The next assistant segment becomes the candidate
-      // final response for this turn.
+      // Preserve assistant narration that preceded this action in the visible
+      // transcript. A later assistant chunk starts a separate response.
       if (this.activePrompts.has(notification.sessionId)) {
+        this.commitAssistantDraft(session);
         session.assistantDraft = undefined;
         session.assistantDraftMessageId = undefined;
       }
@@ -982,6 +997,9 @@ export class AstridAgentSessionStore {
     if (updateType === 'tool_call_update') {
       const toolCallId = stringValue(notification.update.toolCallId);
       if (toolCallId) {
+        const rawOutput = notification.update.rawOutput;
+        const outputContent = textFromToolOutput(rawOutput);
+        const resultContent = content || outputContent;
         const projectId = this.sessionProjects.get(notification.sessionId);
         const refs = projectId ? readAstridTaskRefs(notification.update.rawOutput, projectId) : [];
         const existing = session.turns.find(turn => turn.role === 'tool_result' && turn.tool_call_id === toolCallId);
@@ -995,14 +1013,18 @@ export class AstridAgentSessionStore {
           : incomingStatus;
         if (existing) {
           const stalePartial = ['completed', 'failed', 'cancelled'].includes(existing.tool_status ?? '') && incomingStatus === 'in_progress';
-          if (content && !stalePartial) existing.content = content;
+          if (resultContent && !stalePartial) existing.content = resultContent;
           existing.task_refs = merged;
           if (status && !stalePartial) existing.tool_status = status;
-          if (!stalePartial) existing.tool_output_details = asRecord(asRecord(notification.update.rawOutput)?.details) ?? existing.tool_output_details;
+          if (!stalePartial) {
+            existing.tool_output_details = asRecord(asRecord(rawOutput)?.details) ?? existing.tool_output_details;
+            if (rawOutput !== undefined) existing.tool_output = rawOutput === null ? undefined : rawOutput;
+          }
         } else {
-          session.turns.push({ role: 'tool_result', content, timestamp: at, tool_call_id: toolCallId,
+          session.turns.push({ role: 'tool_result', content: resultContent, timestamp: at, tool_call_id: toolCallId,
             tool_status: status, task_refs: merged,
-            tool_output_details: asRecord(asRecord(notification.update.rawOutput)?.details) ?? undefined });
+            tool_output_details: asRecord(asRecord(rawOutput)?.details) ?? undefined,
+            tool_output: rawOutput === null ? undefined : rawOutput });
         }
         if (call) { call.task_refs = mergeAstridTaskRefs(call.task_refs, refs); call.tool_status = existing?.tool_status ?? status; }
         for (const ref of refs) {
