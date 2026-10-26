@@ -279,7 +279,7 @@ def test_live_host_with_stale_source_is_retired_by_registration_when_idle(harnes
     assert len(harness.launches) == 1 and harness.marker()["pid"] == FAKE_PID
 
 
-def test_node_discovery_exception_leaves_host_running_and_render_unconfigured(harness, monkeypatch):
+def test_node_discovery_exception_leaves_host_running_and_render_unconfigured(harness, monkeypatch, caplog):
     project = harness.source / "remotion"
     (project / "node_modules").mkdir(parents=True)
     (project / "package.json").write_text("{}", encoding="utf-8")
@@ -301,6 +301,7 @@ def test_node_discovery_exception_leaves_host_running_and_render_unconfigured(ha
     assert len(retired) == 1
     child_env = harness.launches[0]["env"]
     assert "ASTRID_NODE_EXECUTABLE" not in child_env
+    assert "Node discovery unavailable" in caplog.text
 
 
 def test_busy_prior_host_is_not_replaced(harness, monkeypatch):
