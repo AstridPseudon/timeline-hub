@@ -169,6 +169,7 @@ def validate_recorded_decision(
     repo: str,
     suite: str,
     source: dict[str, Any],
+    worktree: Path,
     auth: Any,
 ) -> None:
     authorization = exact_keys(auth, {"decision", "record_path", "record_sha256"}, "authorization")
@@ -200,8 +201,20 @@ def validate_recorded_decision(
     if record_source != source:
         fail("recorded decision source mismatch")
     validate_trace_binding(record["trace"], manager_root, job_id, repo, suite, source)
-    if decision == "D141g-next-app-journey" and (repo, suite) != ("app", "full-e2e-timeline"):
-        fail("D141g is not bound to the first App journey suite")
+    # App's published 0309 pure production-builder binding; actual row
+    # bytes and checkout identity are checked by the caller at admission.
+    if decision == "D141g-next-app-journey" and (
+        (repo, suite, worktree) != (
+            "app",
+            "d141g-p2-automatic-child-placement-520d7e4f-submit",
+            Path("/home/user/work/wt/app-pin-520d7e4f"),
+        ) or source != {
+            "head": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+            "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+            "command_sha256": "600fca0fa7852eac45179b2a485b9b160d4d807ebb752456e292636b69a85eaa",
+        }
+    ):
+        fail("D141g is not bound to the exact final520d first placement caller")
     if decision == "D141h-runtime-pristine-targeted15" and (repo, suite) != ("runtime", "full-d141-pristine-targeted15"):
         fail("D141h is not bound to the targeted pristine-15 suite")
     if decision == "P5-service6934" and (job_id, repo, suite) != (
@@ -293,7 +306,7 @@ def validate(
         fail("receipt suite command mismatch")
     if root["schema"] == "timeline.d141.measured-floor.v1":
         validate_trace_binding(root["trace"], manager_root, job_id, repo, suite, source)
-        validate_recorded_decision(manager_root, job_id, repo, suite, source, root["authorization"])
+        validate_recorded_decision(manager_root, job_id, repo, suite, source, worktree, root["authorization"])
 
     measurement = exact_keys(
         root["measurement"],

@@ -16,7 +16,7 @@ if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled 
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
-HV=light; case $suite in full*|agent-core-full|d141-p5-cut) HV=heavy;; esac
+HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
 refuse() { echo "$*" | tee "$D/why"; exit 3; }
@@ -24,13 +24,16 @@ case "$ID" in
   rt-pin-fa9cd546-full-d141-pristine-1026005231-8912) refuse "held old pristine full job remains queued and unstarted" ;;
   agent-p4-current-becfe-http-3legs-1026012948-19479) refuse "cancelled P4 job cannot be activated" ;;
 esac
+if [ "$suite" = d141g-p2-automatic-child-placement-520d7e4f-submit ]; then
+  [ "$repo" = app ] && [ "$target" = app-pin-520d7e4f ] && [ -z "$files" ] || refuse "D141g first placement target/repo/files mismatch"
+fi
 if [ -z "$RUN" ]; then
   IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null
   TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
   if [ -e "$RECEIPT" ] || [ -L "$RECEIPT" ]; then
     [ "$HV" = heavy ] || refuse "measured-floor receipt is only valid for heavy suites"
     HEAD=$(git -C "$W" rev-parse HEAD 2>/dev/null) || refuse "source head unavailable; refusing measured-floor receipt"
-    VALIDATOR=$(dirname "$0")/../controls/validate-receipt.py
+    VALIDATOR=$SELF_DIR/d141-validate-receipt.py
     [ -f "$VALIDATOR" ] && [ ! -L "$VALIDATOR" ] || refuse "measured-floor validator missing or symlinked"
     MEASURED_FLOOR=$(python3 -I "$VALIDATOR" "$RECEIPT" "$O" "$ID" "$repo" "$suite" "$W" "$HEAD" "$TREE" "$BASE_CMD") || refuse "invalid measured-floor receipt; refusing admission"
   fi
@@ -64,14 +67,14 @@ stop_trace() {
     wait "$TRACE_PID" 2>/dev/null; TRACE_RC=$?
     TRACE_PID=
   fi
-  if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/../controls/append-final.py" "$TRACE_FILE" "$ID" "$$" "/home/user"; then
+  if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/d141-append-final.py" "$TRACE_FILE" "$ID" "$$" "/home/user"; then
     TRACE_RC=125
   fi
   if [ "$TRACE_RC" -ne 0 ]; then
     echo "disk trace sampler failed for $ID (exit=$TRACE_RC)" > "$D/trace-error"
     [ "$rc" -eq 0 ] && rc=125
   fi
-  if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/../controls/validate-trace.py" "$TRACE_FILE" "$ID" "$$" "$(id -u)" > "$D/trace-validation" 2>&1; then
+  if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/d141-validate-trace.py" "$TRACE_FILE" "$ID" "$$" "$(id -u)" > "$D/trace-validation" 2>&1; then
     TRACE_RC=125
   fi
   TRACE_FINALIZED=1
@@ -89,7 +92,7 @@ finish_trace() {
 if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
   TRACE_FILE=$D/disk-trace.tsv
   BODY_START_TICKS=$(awk '{print $22}' "/proc/$$/stat") || exit 125
-  setsid python3 -I "$SELF_DIR/../controls/disk-trace.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$BODY_START_TICKS" > "$D/trace-runner.log" 2>&1 &
+  setsid python3 -I "$SELF_DIR/d141-disk-trace.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$BODY_START_TICKS" > "$D/trace-runner.log" 2>&1 &
   TRACE_PID=$!
   echo "$TRACE_PID" > "$D/trace.pid"
   trap finish_trace EXIT

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Run the private candidate through isolated, real subprocess controls.
 
-The harness rewrites only the candidate's private orchestration/snapshot roots
-in a temporary copy. It never calls --run, edits the live dispatcher tree, or
-uses a live queue.
+The harness installs only the bin manifest, publishes and receives that layout,
+and rewrites only private orchestration/snapshot roots. It never calls --run,
+edits the live dispatcher tree, or uses a live queue.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CANDIDATE = HERE.parent
+LIVE_ROOT = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
 COMMAND = "python3 -c 'import time; time.sleep(6)'"
 FAIL_COMMAND = "python3 -c 'import sys; sys.exit(7)'"
 CANCEL_COMMAND = "python3 -c 'import time; time.sleep(20)'"
@@ -63,9 +64,11 @@ def receipt(
     decision: str | None = None,
     growth: int = 0,
     command: str = COMMAND,
+    source: dict[str, str] | None = None,
 ) -> None:
-    head, tree = source_identity(worktree)
-    source = {"head": head, "tree": tree, "command_sha256": digest(command.encode())}
+    if source is None:
+        head, tree = source_identity(worktree)
+        source = {"head": head, "tree": tree, "command_sha256": digest(command.encode())}
     start, start_hash = witness(root, job, "start", 4_600_000_000 + growth)
     stop, stop_hash = witness(root, job, "stop", 4_600_000_000)
     value: dict[str, object] = {
@@ -102,6 +105,55 @@ def receipt(
     (root / f"tests/{job}/recorded-measured-floor.json").write_text(json.dumps(value, separators=(",", ":")) + "\n", encoding="utf-8")
 
 
+def install_candidate(root: Path) -> Path:
+    manifest = json.loads((CANDIDATE / "install-manifest.json").read_text())
+    installed = root / "main/bin"
+    published = root / "hub/kit/bin"
+    received = root / "bin"
+    installed.mkdir(parents=True)
+    published.mkdir(parents=True)
+    layout = []
+    for entry in manifest["files"]:
+        source = CANDIDATE / entry["source"]
+        if source.is_symlink() or digest(source.read_bytes()) != entry["sha256"]:
+            raise AssertionError(f"source manifest mismatch: {source}")
+        if format(source.stat().st_mode & 0o777, "03o") != entry["mode"]:
+            raise AssertionError(f"source mode mismatch: {source}")
+        destination = Path(entry["destination"])
+        if destination.parts[:-1] != ("bin",) or destination.name != source.name:
+            raise AssertionError(f"not a direct bin publication: {destination}")
+        shutil.copy2(source, installed / destination.name)
+        layout.append({"source": entry["source"], "destination": str(destination), "source_sha256": entry["sha256"]})
+    script = installed / "test-run"
+    text = script.read_text(encoding="utf-8")
+    text = text.replace("O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch", f"O={root}")
+    text = text.replace("SNAP=/home/user/work/wt/.test-$ID", "SNAP=$O/snapshots/.test-$ID")
+    text = text.replace("/home/user/work/bench-store", "$O/no-bench-store")
+    script.write_text(text, encoding="utf-8")
+    # The normal hub-sync bin publication and atomic receiver operations,
+    # isolated from all live paths; no controls directory is installed.
+    subprocess.run(["bash", "-c", 'cp -p "$1"/* "$2"/', "publish", str(installed), str(published)], check=True)
+    subprocess.run([
+        "bash", "-c",
+        ('for f in "$1"/*; do b=$(basename "$f"); '
+         '[ "$b" = hub-sync ] && continue; [ "$b" = claude-perms.sh ] && continue; '
+         'cmp -s "$f" "$2/$b" || { cp -p "$f" "$2/.$b.new" && mv "$2/.$b.new" "$2/$b"; }; done'),
+        "receive", str(published), str(received),
+    ], check=True)
+    for entry in layout:
+        name = Path(entry["destination"]).name
+        copies = [directory / name for directory in (installed, published, received)]
+        if len({digest(path.read_bytes()) for path in copies}) != 1:
+            raise AssertionError(f"publication hash mismatch: {name}")
+        if any(path.stat().st_mode & 0o777 != 0o755 for path in copies):
+            raise AssertionError(f"publication mode mismatch: {name}")
+        entry["installed_published_received_sha256"] = digest(copies[0].read_bytes())
+    if (root / "controls").exists() or "../controls/" in (received / "test-run").read_text():
+        raise AssertionError("received bin depends on author controls")
+    (root / "installed-layout.json").write_text(json.dumps(layout, indent=2) + "\n")
+    return received / "test-run"
+
+
 def prepare() -> tuple[Path, Path, Path, dict[str, str]]:
     root = Path(tempfile.mkdtemp(prefix="d141-controls-", dir=os.environ.get("TMPDIR", "/tmp")))
     (root / "tests/cache").mkdir(mode=0o700, parents=True)
@@ -114,7 +166,7 @@ def prepare() -> tuple[Path, Path, Path, dict[str, str]]:
     (worktree / "body.txt").write_text("isolated\n", encoding="utf-8")
     subprocess.run(["git", "-C", str(worktree), "add", "body.txt"], check=True)
     subprocess.run(["git", "-C", str(worktree), "-c", "commit.gpgSign=false", "commit", "-qm", "fixture"], check=True)
-    (root / "workers/body/meta").write_text(f"worktree={worktree}\n", encoding="utf-8")
+    (root / "workers/body/meta").write_text(f"repo=runtime\nworktree={worktree}\n", encoding="utf-8")
     (root / "tests/suites.conf").write_text(
         "app full-e2e-timeline " + COMMAND + "\n"
         "runtime full-d141-pristine-targeted15 " + COMMAND + "\n"
@@ -129,14 +181,11 @@ def prepare() -> tuple[Path, Path, Path, dict[str, str]]:
     (root / "bin").mkdir()
     df = root / "bin/df"
     write_df(df, 6_000_000_000)
-    candidate = root / "candidate"
-    shutil.copytree(CANDIDATE, candidate)
-    script = candidate / "bin/test-run"
-    text = script.read_text(encoding="utf-8")
-    text = text.replace("O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch", f"O={root}")
-    text = text.replace("SNAP=/home/user/work/wt/.test-$ID", "SNAP=$O/snapshots/.test-$ID")
-    text = text.replace("/home/user/work/bench-store", "$O/no-bench-store")
-    script.write_text(text, encoding="utf-8")
+    script = install_candidate(root)
+    caller = root / "bin/request-test"
+    caller.write_text((LIVE_ROOT / "bin/request-test").read_text().replace(f"O={LIVE_ROOT}", f"O={root}"))
+    caller.chmod(0o755)
+    (root / "queue/pending").mkdir(parents=True)
     (root / "snapshots").mkdir(mode=0o700)
     env = dict(os.environ, PATH=f"{root / 'bin'}:{os.environ['PATH']}")
     return root, script, worktree, env
@@ -162,17 +211,20 @@ def wait_terminal(root: Path, job: str) -> str:
 
 def main() -> int:
     root, script, worktree, env = prepare()
-    outcomes: dict[str, object] = {"root": str(root), "cases": []}
+    outcomes: dict[str, object] = {
+        "root": str(root), "installed_layout": json.loads((root / "installed-layout.json").read_text()), "cases": [],
+        "app_scope": "exact prospective 0309 binding; validator controls only, no registered App row or body",
+    }
 
     def case(name: str, proc: subprocess.CompletedProcess[str], expected: int) -> None:
         if proc.returncode != expected:
             raise AssertionError(f"{name}: expected {expected}, got {proc.returncode}: {proc.stdout}{proc.stderr}")
         outcomes["cases"].append({"name": name, "returncode": proc.returncode, "stdout": proc.stdout.strip(), "stderr": proc.stderr.strip()})
 
-    # The three authorized receipts exercise the actual dispatcher caller and
+    # The three control receipts exercise the actual dispatcher caller and
     # each body writes a kept trace with first/periodic/final observations.
     authorized = [
-        ("d141g-app", "app", "full-e2e-timeline", "D141g-next-app-journey"),
+        ("d89d-app", "app", "full-e2e-timeline", None),
         ("d141h-targeted15", "runtime", "full-d141-pristine-targeted15", "D141h-runtime-pristine-targeted15"),
         ("runtime-d141-p5-cut-1026013331-6934", "runtime", "d141-p5-cut", "P5-service6934"),
     ]
@@ -183,7 +235,7 @@ def main() -> int:
         proc = run_candidate(script, root, job, env)
         case(f"{job}-admission", proc, 0)
         status = wait_terminal(root, job)
-        if status not in {"pass", "fail", "timeout", "error"}:
+        if status != "pass":
             raise AssertionError(f"unexpected terminal status {status}")
         validation_path = root / "tests" / job / "trace-validation"
         if not validation_path.exists():
@@ -198,6 +250,73 @@ def main() -> int:
         if (root / "tests" / job / "trace-error").exists():
             raise AssertionError(f"{job}: trace-error was recorded")
         outcomes["cases"].append({"name": f"{job}-terminal", "status": status, "trace_rows": len(trace_rows) - 1})
+
+    # The unmodified normal request format and ID generator, with only its
+    # orchestration root relocated, feed the received test-run full-ID path.
+    queued = subprocess.run(
+        [str(root / "bin/request-test"), "body", "full-d141-pristine-targeted15", "--no-cache"],
+        env=env, text=True, capture_output=True, check=True,
+    )
+    directory = Path(queued.stdout.strip())
+    job = directory.name
+    if directory.parent != root / "tests" or not job.startswith("body-full-d141-pristine-targeted15-"):
+        raise AssertionError(f"normal caller returned unexpected full ID: {queued.stdout}")
+    if (root / "queue/pending" / f"test-{job}").read_text() != f"TEST {job}\n":
+        raise AssertionError("normal caller did not retain its full ID in pending TEST")
+    original_request = (directory / "request").read_bytes()
+    receipt(root, job, "runtime", "full-d141-pristine-targeted15", worktree, "D141h-runtime-pristine-targeted15")
+    case("normal-request-full-id-admission", run_candidate(script, root, job, env), 0)
+    if wait_terminal(root, job) != "pass" or (directory / "request").read_bytes() != original_request:
+        raise AssertionError("normal caller failed or its request was rewritten")
+    if "trace PASS" not in (directory / "trace-validation").read_text():
+        raise AssertionError("normal caller did not reach received trace helpers")
+    outcomes["cases"].append({"name": "normal-request-full-id-terminal", "job": job, "status": "pass"})
+
+    # Consume the published production-builder bytes without launching App or
+    # fabricating its unavailable checkout. The actual validator is received
+    # through bin publication; these are authority controls, not App proof.
+    binding_path = LIVE_ROOT / "design/app-P-D141g-first-suite-binding-0309-binding.json"
+    binding_raw = binding_path.read_bytes()
+    if digest(binding_raw) != "a9947b5924c6b0b212b0d1ee7e3de0948cb0b65ec0ff8bd901ea50637cf6caf3":
+        raise AssertionError("published App binding changed")
+    binding = json.loads(binding_raw)
+    app_command = (LIVE_ROOT / "design/app-P-D141g-first-suite-binding-0309-normal-command.txt").read_text()
+    if digest(app_command.encode()) != binding["commands"]["normal"]["sha256_utf8_without_newline"]:
+        raise AssertionError("published App command changed")
+    if " ".join(app_command.split()) != app_command:
+        raise AssertionError("App command differs after test-run awk normalization")
+    app_source = dict(binding["source_tuple"]["app"], command_sha256=digest(app_command.encode()))
+    for label, repo, suite, checkout, source, command, expected in [
+        ("exact-first-placement", "app", binding["suites"]["normal"], binding["checkouts"]["app"], app_source, app_command, 0),
+        ("generic-not-first-placement", "app", "full-e2e-timeline", binding["checkouts"]["app"], app_source, app_command, 1),
+        ("preflight-not-first-body", "app", binding["suites"]["preflight"], binding["checkouts"]["app"], app_source, app_command, 1),
+        ("arbitrary-suite-not-first", "app", binding["suites"]["normal"] + "-other", binding["checkouts"]["app"], app_source, app_command, 1),
+        ("wrong-app-checkout", "app", binding["suites"]["normal"], str(worktree), app_source, app_command, 1),
+        ("wrong-app-source", "app", binding["suites"]["normal"], binding["checkouts"]["app"], dict(app_source, head="0" * 40), app_command, 1),
+        ("wrong-app-command", "app", binding["suites"]["normal"], binding["checkouts"]["app"], dict(app_source, command_sha256=digest(COMMAND.encode())), COMMAND, 1),
+        ("wrong-app-repo", "runtime", binding["suites"]["normal"], binding["checkouts"]["app"], app_source, app_command, 1),
+    ]:
+        receipt(root, label, repo, suite, Path(checkout), "D141g-next-app-journey", command=command, source=source)
+        proc = subprocess.run([
+            "python3", "-I", str(script.parent / "d141-validate-receipt.py"),
+            str(root / "tests" / label / "recorded-measured-floor.json"), str(root), label,
+            repo, suite, checkout, source["head"], source["tree"], command,
+        ], text=True, capture_output=True, check=False)
+        case(label, proc, expected)
+    # Even a genuine command cannot attach this authority to another target
+    # or append file arguments that alter the approved first placement body.
+    with (root / "tests/suites.conf").open("a") as registry:
+        registry.write(binding["rows"]["normal"]["row"] + "\n")
+    for label, target, files in [("wrong-app-target", "body", ""), ("app-extra-files", binding["target"], "other")]:
+        request(root, label, "app", binding["suites"]["normal"])
+        path = root / "tests" / label / "request"
+        path.write_text(path.read_text().replace("target=body", f"target={target}").replace("files=\n", f"files={files}\n"))
+        if target != "body":
+            (root / "workers" / target).mkdir()
+            (root / "workers" / target / "meta").write_text(f"worktree={worktree}\n")
+        case(label, run_candidate(script, root, label, env), 3)
+        if (path.parent / "snap").exists():
+            raise AssertionError("wrong App target/files reached snapshot")
 
     # The computed floor is admitted at equality and refused below it.
     for job, available, expected in [
@@ -277,30 +396,20 @@ def main() -> int:
             time.sleep(0.05)
     else:
         raise AssertionError("cancel body runner disappeared before cancellation")
-    os.kill(body_pid, signal.SIGTERM)
-    try:
-        os.kill(trace_pid, signal.SIGTERM)
-    except ProcessLookupError:
-        pass
+    os.killpg(body_pid, signal.SIGTERM)
     validation = root / "tests/body-cancel/trace-validation"
-    deadline = time.monotonic() + 10
-    while not validation.exists() and not trace_path.read_text().rstrip().endswith("\tfinal") and time.monotonic() < deadline:
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        if validation.exists() and "trace PASS" in validation.read_text():
+            break
         time.sleep(0.05)
     if not validation.exists():
-        subprocess.run(
-            ["python3", "-I", str(CANDIDATE / "controls/append-final.py"), str(trace_path), "body-cancel", str(body_pid), "/home/user"],
-            check=True,
-            env=env,
-        )
-        checked = subprocess.run(
-            ["python3", "-I", str(CANDIDATE / "controls/validate-trace.py"), str(trace_path), "body-cancel", str(body_pid), str(os.getuid())],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        validation.write_text(checked.stdout + checked.stderr, encoding="utf-8")
+        raise AssertionError("cancelled installed runner did not finalize its own trace")
     if "trace PASS" not in validation.read_text():
         raise AssertionError("cancelled body lost trace custody")
+    if Path(f"/proc/{trace_pid}").exists():
+        raise AssertionError("cancelled installed runner did not reap its sampler")
+    outcomes["cases"].append({"name": "body-cancel-self-finalized-reaped", "result": "pass"})
 
     # Fail-closed receipt and disk controls all reach the candidate validator.
     receipt(root, "wrong-job", "runtime", "full-d141-pristine-targeted15", worktree, "D141h-runtime-pristine-targeted15")
@@ -326,6 +435,25 @@ def main() -> int:
     (job_dir / "recorded-measured-floor.json").write_text('{"schema":1,"schema":2}\n')
     request(root, "duplicate-key", "runtime", "full-d141-pristine-targeted15")
     case("duplicate-key", run_candidate(script, root, "duplicate-key", env), 3)
+    for label, section, field, value in [
+        ("boolean-growth", "measurement", "growth_bytes", True),
+        ("float-floor", "measurement", "floor_bytes", 4_600_000_000.0),
+        ("wrong-arithmetic", "measurement", "floor_bytes", 4_600_000_001),
+        ("wrong-head", "source", "head", "0" * 40),
+        ("wrong-tree", "source", "tree", "0" * 40),
+        ("wrong-command", "source", "command_sha256", "0" * 64),
+        ("wrong-trace-interval", "trace", "sampling_seconds", 1),
+    ]:
+        receipt(root, label, "runtime", "full-d141-pristine-targeted15", worktree, "D141h-runtime-pristine-targeted15")
+        path = root / "tests" / label / "recorded-measured-floor.json"
+        invalid = json.loads(path.read_text())
+        selected = invalid["scope"]["source"] if section == "source" else invalid[section]
+        selected[field] = value
+        path.write_text(json.dumps(invalid) + "\n")
+        request(root, label, "runtime", "full-d141-pristine-targeted15")
+        case(label, run_candidate(script, root, label, env), 3)
+        if (path.parent / "snap").exists() or (path.parent / "running").exists():
+            raise AssertionError(f"{label}: invalid receipt reached launch artifacts")
     request(root, "bad-disk", "composition", "targeted-control")
     write_df(root / "bin/df", "not-a-number")
     case("malformed-disk", run_candidate(script, root, "bad-disk", env), 3)

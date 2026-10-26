@@ -1,0 +1,62 @@
+{
+  "schema": "timeline.ops.d141.bin-install.v1",
+  "status": "SOURCE_ONLY_NOT_INSTALLED",
+  "base_commit": "88bb53f12f9f05aaae3357badc431e7f04cd8559",
+  "base_tree": "1dfcf8e66d972999ecde7f42699e9cda85fe5b7d",
+  "destination_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch",
+  "publication": "ORCH/bin/* -> hub/kit/bin/* -> receiving ORCH/bin/*; cp -p, atomic receiver replace",
+  "files": [
+    {
+      "source": "bin/d141-append-final.py",
+      "destination": "bin/d141-append-final.py",
+      "sha256": "67524e434a55cc221336de2b5ca1051ee1dae1ccad8ed32f453ee4a5f13a2671",
+      "mode": "755",
+      "precondition": {
+        "state": "absent_including_dangling_symlink"
+      }
+    },
+    {
+      "source": "bin/d141-disk-trace.py",
+      "destination": "bin/d141-disk-trace.py",
+      "sha256": "e6f0747a908a6097cec71c10fb62bfd661ef2b3fa4891fd3b2f23aaa32575179",
+      "mode": "755",
+      "precondition": {
+        "state": "absent_including_dangling_symlink"
+      }
+    },
+    {
+      "source": "bin/d141-validate-receipt.py",
+      "destination": "bin/d141-validate-receipt.py",
+      "sha256": "5c0a38755a17c55a30997b501419fe8028b9d076bb65fb87eff10defbb6a5cb3",
+      "mode": "755",
+      "precondition": {
+        "state": "absent_including_dangling_symlink"
+      }
+    },
+    {
+      "source": "bin/d141-validate-trace.py",
+      "destination": "bin/d141-validate-trace.py",
+      "sha256": "a535869877130aebc39eb1171757613dd19f3c70ef1c5a3554b9dbd8f440fb27",
+      "mode": "755",
+      "precondition": {
+        "state": "absent_including_dangling_symlink"
+      }
+    },
+    {
+      "source": "bin/test-run",
+      "destination": "bin/test-run",
+      "sha256": "19e19e6d925a03dd0512c29c4638d1b4ff746868b3bf61fd9dfdc93f6226fded",
+      "mode": "755",
+      "precondition": {
+        "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+        "mode": "755",
+        "type": "regular_nofollow"
+      }
+    }
+  ],
+  "private_not_published": [
+    "controls/real-controls.py",
+    "install-manifest.json"
+  ],
+  "activation": "independent security review, then CAS; helpers before test-run; existing hub-sync unchanged"
+}
