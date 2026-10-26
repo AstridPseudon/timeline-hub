@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { FileInput, Plus } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import {
   PickerFooterAction,
@@ -46,6 +46,8 @@ export function ProjectTimelinePicker({
   showProjectLabel = true,
   onOpenChange,
   onRenameTimeline,
+  onExportTimeline,
+  onImportTimeline,
 }: {
   projects: readonly EditorProjectChoice[];
   timelines: readonly EditorTimelineChoice[];
@@ -70,10 +72,13 @@ export function ProjectTimelinePicker({
   showTimelineSelector?: boolean;
   onOpenChange?(open: boolean): void;
   onRenameTimeline?: (timelineId: string, name: string) => Promise<void>;
+  onExportTimeline?: (timelineId: string, timelineName: string) => void;
+  onImportTimeline?: (file: File) => void;
 }) {
   const [projectOpen, setProjectOpen] = useState(false),
     [timelineOpen, setTimelineOpen] = useState(false);
   const [renamingTimeline, setRenamingTimeline] = useState<{ id: string; label: string } | null>(null);
+  const [importInput, setImportInput] = useState<HTMLInputElement | null>(null);
   useEffect(() => {
     onOpenChange?.(projectOpen || timelineOpen);
   }, [onOpenChange, projectOpen, timelineOpen]);
@@ -110,17 +115,19 @@ export function ProjectTimelinePicker({
       footer={
         // New timeline is the picker's own last row, pinned under the list so a long
         // list never scrolls it away: the one way to start a timeline, first or not.
-        kind === 'timeline' && onCreateTimeline && !loading && !error ? (
-          <PickerFooterAction
-            icon={Plus}
-            disabled={disabled || creatingTimeline}
-            onClick={() => {
-              setOpen(false);
-              onCreateTimeline();
-            }}
-          >
-            {creatingTimeline ? 'Creating timeline…' : 'New timeline'}
-          </PickerFooterAction>
+        kind === 'timeline' && (onCreateTimeline || onImportTimeline) && !loading && !error ? (
+          <>
+            {onCreateTimeline && <PickerFooterAction
+              icon={Plus}
+              disabled={disabled || creatingTimeline}
+              onClick={() => { setOpen(false); onCreateTimeline(); }}
+            >{creatingTimeline ? 'Creating timeline…' : 'New timeline'}</PickerFooterAction>}
+            {onImportTimeline && <PickerFooterAction
+              icon={FileInput}
+              disabled={disabled}
+              onClick={() => { setOpen(false); importInput?.click(); }}
+            >Import timeline…</PickerFooterAction>}
+          </>
         ) : undefined
       }
     >
@@ -146,6 +153,8 @@ export function ProjectTimelinePicker({
               setRenamingTimeline({ id: row.id, label: row.name });
             } : undefined}
             renameLabel="Rename timeline"
+            onExport={timeline && selected === row.id && onExportTimeline ? () => onExportTimeline(row.id, name) : undefined}
+            exportLabel="Export timeline"
             onSelect={() => {
               (kind === 'project' ? onSelectProject : onSelectTimeline)(row.id);
               setOpen(false);
@@ -157,6 +166,18 @@ export function ProjectTimelinePicker({
   );
   return (
     <>
+    {onImportTimeline && <input
+      ref={setImportInput}
+      type="file"
+      accept=".astrid,application/zip"
+      aria-label="Import timeline archive"
+      className="sr-only"
+      onChange={(event) => {
+        const file = event.currentTarget.files?.[0];
+        event.currentTarget.value = '';
+        if (file) onImportTimeline(file);
+      }}
+    />}
     <div
       className="flex min-w-0 items-center gap-2"
       data-testid="editor-project-timeline-selectors"

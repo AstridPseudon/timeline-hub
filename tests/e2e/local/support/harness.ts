@@ -50,7 +50,7 @@ export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
 export { DIST_DIR, RUNTIME_CHECKOUT, harnessUnavailableReason };
 
 export function runtimePython(): string | null {
-  const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
+  const python = process.env.ASTRID_PYTHON ?? path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
   return existsSync(python) ? python : null;
 }
 
@@ -476,7 +476,9 @@ export class DirectHarness {
     try {
       const descriptorText = process.env.ASTRID_QUICK_DESCRIPTOR;
       if (descriptorText !== undefined) this.attachment = loadQuickDescriptor(descriptorText);
-      this.tmp = mkdtempSync(path.join(tmpdir(), 'astrid-direct-'));
+      const isolatedTempRoot = process.env.ASTRID_QUICK_TMP_ROOT?.trim() || tmpdir();
+      mkdirSync(isolatedTempRoot, { recursive: true, mode: 0o700 });
+      this.tmp = mkdtempSync(path.join(isolatedTempRoot, 'astrid-direct-'));
       if (!this.attachment) await assertPortFree(this.doorPort, 'door');
       const tls = makeCertificate(this.tmp);
       this.spki = tls.spki;
