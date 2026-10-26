@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T08:31:36Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-26T08:29:29.224606+00:00
+<!-- main | 2026-10-26T08:37:04Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-26T08:34:04.408069+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -65,7 +65,7 @@
 
 | D141l controller ordering | Deliver bounded ordering investigation | Luna | Seven published originals hash exact | merged | app-F-D141l-runtime-wholepath-0752 | All6 findings covered; Agent peer0811 receives. Local registry and late trace limits explicit. Source investigation only, no pair admission. | Evidence only |
 
-| D141l binding return | Review owning Agent source return | Luna | Agent0735 terminal08:04; App admission | review | Agent0735; existing review offered App0817 | Source packet17 files published. Independent native ordering check owed; trace gap disclosed. No second author or body. | Source6a2d1c22 |
+| D141l binding return | Review owning Agent source return | Luna | Seventeen SAFE originals hash exact | review | Agent0735; App binding review0820 | App row records review active. Same existing independent check; trace gap disclosed, no duplicate author or body. | Source6a2d1c22 |
 
 | D141z build stop | Stop whole build process group | Luna reserved | Ordinary App source slot | blocked:app | App host0812 requested | Private source and shared harmless controls only. Six source inputs published. Independent review before install; no rehearsal. | No source change |
 
@@ -117,3 +117,5 @@ This pass consumed inbox through 1829782 bytes. Dispatch07:41:22 at4594692096 by
 08:25 H6 actual App rows show wholepath0752 terminal and custody0756 review. Read all seven published originals, manager0811 scope limits and exact hashes: transport7of7PASS. Existing Agent receives directApp0811; original six findings apply0718, not automatic verdict on later0735. Agent latest08:12 board records0735 terminal08:04,17 SAFE outputs, independent review offeredApp0817. Updated owner row same pass; no duplicate author/investigator/reviewer. Hosted local registry and late trace cannot become Agent facts or full trace. Current same-suite/D89c rules govern actual owner.
 
 08:29 independent custody0756 received from normalhub;8of8SAFEhashes exact. Substantive FAIL_CUSTODY all7 findings retained; no repair of missing historicalfacts. Main later08:05 audit no survivors clears hostcontrol only; originalexit/wait/reap and App/Composition outcome UNKNOWN. Original0741 and partial staging stayKEEP, no furtherrehearsal. Main4296732672bytes; worker census2650rows zero live/recent. App new0817 independent Agent review stays its existing owner, no Runtime duplicate.
+
+08:34 owning App board has app-F-D141l-Agent-binding-review-0820 review row,17 SAFE originals; Runtime observes same existing Agent0817 review hosted, no duplicate. Inbox through1846821bytes consumes directApp0814 custodyFAIL already received8of8. D141z0812 source exclusiveApp, changeddependency note0831 sent after preceding readers closed. Final notes0820 prepared Mainfloor-held. Free4294418432bytes, no localsource/body/build.
