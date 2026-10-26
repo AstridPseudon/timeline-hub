@@ -1,0 +1,27 @@
+{
+  "task": "rt-OPS-D141s-pair-lifecycle-port-0453",
+  "base": {
+    "commit": "06fb2b5d16dd3c93cecf5520bb2a2da613dd1b92",
+    "tree": "06c84f1909f6679fd7235b014e2825a0992e7abe"
+  },
+  "donor": {
+    "commit": "56f2d56e7d241d303be85df62166570d51602101",
+    "tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d",
+    "qualification": "immutable Runtime donor PASS49 bounded source/control scope"
+  },
+  "disposition": {
+    "D141G-A-CANCEL-001": "closed in paired source/control by mounted stop-test control",
+    "D141G-A-CANCEL-002": "closed in paired source/control by timeout-child process witness and sampler reap",
+    "D141H-SEC-001": "PASS; donor lifecycle controls and paired custody attacks retained",
+    "D141G-SEC-002": "PASS; matching-hash suite/source/twin/command/replay refusals retained",
+    "D141L-APP-001": "NEEDS externally; freeze-2 App source/builder binding remains unavailable"
+  },
+  "scope_preserved": [
+    "existing 68 control purposes",
+    "donor mounted request-stop-test semantics",
+    "frozen sampler failure exit 125",
+    "first/periodic/final KEEP trace and five-second sampling",
+    "descriptor/inode/physical-parent/no-follow/0600/single-link/nonblock custody attacks",
+    "normal Runtime/P5 6934, held 8912 and 19479, default/measured floors, cache/source/snapshot/lease and one-heavy guards"
+  ]
+}

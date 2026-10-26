@@ -1,0 +1,89 @@
+{
+  "schema": "timeline.f.d141.integrated-producer-provenance.v1",
+  "read_only": true,
+  "runtime": {
+    "repo": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508",
+    "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "ref": "tl/integration",
+    "branch": "tl/rt-F-D141-postREG-integrated-proof-0508",
+    "parents": [
+      "857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5",
+      "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
+    ],
+    "clean_before": true,
+    "clean_after": true,
+    "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+    "normal_ref_observed": "refs/heads/tl/integration -> 95d98f038320d5d46bd679ac000ab3e15825c935"
+  },
+  "agent": {
+    "repo": "/home/user/work/agent",
+    "head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "ref": "tl/integration",
+    "parents": [
+      "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "5d202569f3af3852476d182ff49683787bb1e881"
+    ],
+    "clean_before": true,
+    "clean_after": true,
+    "origin": "https://github.com/peteromallet/astrid-agent",
+    "normal_ref_observed": "refs/heads/tl/integration -> 8585ed9c0404d0187b2ce70242d25114a32747c2"
+  },
+  "approved_runtime_authors": {
+    "typescript": {
+      "commit": "4a66dee1ab34f260ea64bd58aa30cf7ac66c3ae3",
+      "tree": "caed21305ca483591ed60d5d2bebd8b30b525d5b",
+      "parent": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "review": "PASS",
+      "review_input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-review-0458/evidence/review.json"
+    },
+    "upgrade": {
+      "commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+      "tree": "f71c60df29ab29cbea678794e882db8c0d053214",
+      "parent": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "review": "PASS_CORRECTED_IDENTITY_ONLY",
+      "review_input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-identity-correction-0505/evidence/correction.json"
+    }
+  },
+  "frozen_r4_refs_read_only": {
+    "candidate_runtime": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+    "candidate_sdk": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "candidate_app_qualified": "8f0c2484463e9b666d184a744d52e252984e551a",
+    "candidate_composition": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a"
+  },
+  "supported_normal_receiving_inputs": {
+    "agent_artifacts": {
+      "path": "/home/user/work/agent/artifacts.json",
+      "sha256": "7f1f27510eaa2b2bb9f013b345b09282e299d10e8ca614af2b028ee8730612b8"
+    },
+    "agent_runtime_lock": {
+      "path": "/home/user/work/agent/runtime.lock.json",
+      "sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3"
+    },
+    "normal_tools": [
+      "scripts/artifact_manifest.py --check",
+      "scripts/vendor_lock.py check runtime.lock.json --producer <Runtime checkout>",
+      "App normal browser SDK/vendor/adoption tools and scripts/installer/update-manifest.mjs"
+    ],
+    "handwritten_pins_or_artifacts": false,
+    "install_or_revendor_performed": false
+  },
+  "module_origins_observed_read_only": {
+    "runtime_protocol/__init__.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/__init__.py",
+    "runtime_protocol/contract_metadata.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/contract_metadata.py",
+    "runtime_protocol/upgrade.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/upgrade.py",
+    "runtime_protocol/service.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/service.py",
+    "runtime_protocol/door.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/door.py",
+    "runtime_protocol/store.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/store.py",
+    "runtime_protocol/timeline_commit_port.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/timeline_commit_port.py",
+    "runtime_protocol/timeline_commit_store.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/timeline_commit_store.py",
+    "runtime_protocol/timeline_commit_provider.py": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508/runtime_protocol/timeline_commit_provider.py",
+    "astrid/sdk/timeline/api.py": "/home/user/work/agent/astrid/sdk/timeline/api.py",
+    "astrid/sdk/timeline/capture.py": "/home/user/work/agent/astrid/sdk/timeline/capture.py",
+    "astrid/sdk/timeline/commit.py": "/home/user/work/agent/astrid/sdk/timeline/commit.py",
+    "astrid_runtime_client/generated.py": "/home/user/work/agent/astrid_runtime_client/generated.py",
+    "astrid_runtime_client/contract_metadata.py": "/home/user/work/agent/astrid_runtime_client/contract_metadata.py"
+  },
+  "no_release_or_tag_claim": true
+}

@@ -1,0 +1,106 @@
+{
+  "schema": "timeline.f.d141.integrated-postreg-proof.v1",
+  "task": "rt-F-D141-postREG-integrated-proof-0508",
+  "verdict": "PASS_EXACT15_REG_ONLY",
+  "scope": "one bounded acceptance on the actual integrated Runtime head; no full suite, P5 rerun, service body, registry refresh, pin movement, or generated product write",
+  "source": {
+    "runtime_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "runtime_branch": "tl/rt-F-D141-postREG-integrated-proof-0508",
+    "runtime_normal_ref": "tl/integration",
+    "runtime_parents": [
+      "857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5",
+      "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
+    ],
+    "base_original": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "base_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "clean_before": true,
+    "clean_after": true,
+    "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
+  },
+  "integrated_deltas": [
+    {
+      "path": "conformance/typescript/contract-metadata.ts",
+      "approved_author": "4a66dee1ab34f260ea64bd58aa30cf7ac66c3ae3",
+      "approved_author_blob": "aa994ed64f9905dfd847db7ffce045a8e7c3440f",
+      "integrated_blob": "aa994ed64f9905dfd847db7ffce045a8e7c3440f",
+      "sha256": "954f20745963fe246d27aa6eca810d26541ec77e326b2d44b110468e1f2bc1ce",
+      "equal": true
+    },
+    {
+      "path": "conformance/typescript/generated.ts",
+      "approved_author": "4a66dee1ab34f260ea64bd58aa30cf7ac66c3ae3",
+      "approved_author_blob": "7f16d9d2f2584726cc3942bff30dc586862b1332",
+      "integrated_blob": "7f16d9d2f2584726cc3942bff30dc586862b1332",
+      "sha256": "285dbb51ea89c7b1a6cac6d68e9a4566231ec1b8ceaf9c6c551c4ba3d6ea16f8",
+      "equal": true
+    },
+    {
+      "path": "runtime_protocol/upgrade.py",
+      "approved_author": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+      "approved_author_blob": "4daea429c71a1e96ee2649bd14d9e6b742923162",
+      "integrated_blob": "4daea429c71a1e96ee2649bd14d9e6b742923162",
+      "sha256": "c8787dc29b3fa0097ee7aaa9daa704c1626523498cd2c4574f10e14d7e840d50",
+      "equal": true
+    }
+  ],
+  "acceptance": {
+    "requested_run_count": 1,
+    "command": "PYTHONDONTWRITEBYTECODE=1 ASTRID_CHECKOUT=/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q --basetemp=/tmp/rt-F-D141-postREG-integrated-proof-JfAg26/basetemp -o cache_dir=/tmp/rt-F-D141-postREG-integrated-proof-JfAg26/cache <exact 15 selectors>",
+    "result": "PASS",
+    "counts": {"collected": 15, "passed": 15, "failed": 0, "errors": 0, "skipped": 0, "xfail": 0},
+    "exact_ids": [
+      "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[False]",
+      "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[True]",
+      "tests/test_runtime_upgrade.py::test_upgrade_repairs_missing_historical_object_indexes",
+      "tests/test_runtime_upgrade.py::test_upgrade_is_not_repeatable_and_refuses_live_owner",
+      "tests/test_runtime_upgrade.py::test_upgrade_archives_wal_before_activation",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-checkpoint]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-publication_flush]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-checkpoint]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-publication_flush]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-checkpoint]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-publication_flush]",
+      "tests/test_runtime_upgrade.py::test_upgrade_and_compaction_flush_owned_files_through_writable_handles[upgrade]",
+      "tests/test_runtime_upgrade.py::test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars",
+      "tests/test_typescript_generator.py::test_typescript_conformance_generator_is_byte_stable",
+      "tests/test_typescript_generator.py::test_typescript_generator_check_rejects_client_and_manifest_mutation"
+    ]
+  },
+  "canonical15_artifact_hashes": {
+    "basis": "/home/user/timeline-hub/hub/design/rt-F-D141-REG-join-P5-review-0445-reg.json",
+    "basis_sha256": "bc9a5a8110acee30f81339557fc7ba55bcb20f496210a242e90a848f513861e8",
+    "all_actual_status": "PASS",
+    "all_reg_verdict": "REG_PROVED",
+    "body_sha256_by_source": {
+      "tests/test_runtime_upgrade.py:130": "596585ef6582506c3f6744ee62ac573b131f3daa52ef64ead5f48f5ca6e3bf4",
+      "tests/test_runtime_upgrade.py:534": "c8007f60a795445d7ef87019b08e845733324e6163a69ca64d1977f9d81c5d74",
+      "tests/test_runtime_upgrade.py:638": "9399fe219d47757f00ca349ef11cab15f4d87d2f3216bf1f9e042df722fee580",
+      "tests/test_runtime_upgrade.py:686": "9361627cccfd2da7dbd4a91e6bc2b537a7006a2342249a3d2ca7e80d49aeff2d",
+      "tests/test_runtime_upgrade.py:757": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "tests/test_runtime_upgrade.py:795": "9107c12d33b2d5329c65fa2a726155b78bd89a69d634f93ece02c5f30c3a0ada",
+      "tests/test_runtime_upgrade.py:830": "a847338f646757b5b656df02814d47b90687ce0dff3d234b00c0be8ef272201f",
+      "tests/test_typescript_generator.py:34": "e173341d03c20fa3d14cbe7968140a7460ddaf8a02c933c4851525d2853506e3",
+      "tests/test_typescript_generator.py:50": "09bb60ceaa1ea272940f0c0c33f524a771d6529819f3e025ee76330aad7bd"
+    }
+  },
+  "non_reg": {
+    "cut_bad_count": 53,
+    "exact_reg_count": 15,
+    "new_ours_count": 38,
+    "new_ours_unchanged": true,
+    "full_suite_go": false
+  },
+  "static_checks": {
+    "python_generator_check": "PASS: PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python generators/generate.py --check",
+    "typescript_generator_check": "PASS: node tools/generate_typescript_conformance.mjs --contract contract/openapi/workspace-v1.yaml --schema-manifest contract/manifest.json --component-manifest contract/component-manifest.json --check --source-root $PWD --fixture-root $PWD/conformance/fixtures",
+    "node_syntax": "PASS: node --check tools/generate_typescript_conformance.mjs",
+    "typescript": "PASS: tsc --noEmit -p conformance/tsconfig.json",
+    "diff_check": "PASS: git diff --check"
+  },
+  "limits": [
+    "No full suite, new pristine run, P5 rerun, live gate body, registry refresh, pin movement, install, network acquisition, package or environment change.",
+    "No source, product, test, assertion, input, fixture, generated, contract, generator or pin edit.",
+    "No release, tag, or generated-product claim."
+  ]
+}

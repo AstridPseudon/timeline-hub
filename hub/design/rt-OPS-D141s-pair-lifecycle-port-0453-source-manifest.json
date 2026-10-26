@@ -1,0 +1,19 @@
+{
+  "candidate_head": "06fb2b5d16dd3c93cecf5520bb2a2da613dd1b92",
+  "candidate_tree_with_uncommitted_changes": "aa70f43234e26aa2cdb23031ca0683c3e81da0bd",
+  "base_tree": "06c84f1909f6679fd7235b014e2825a0992e7abe",
+  "installed_predecessor": {
+    "commit": "56f2d56e7d241d303be85df62166570d51602101",
+    "tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin",
+    "read_only": true
+  },
+  "files": [
+    {"path":"bin/d141-append-final.py","sha256":"d638f2974045220e565f0ed476412c7003a077942bf5c792c69611159ee14431","mode":"755","predecessor_sha256":"14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398","predecessor_mode":"755"},
+    {"path":"bin/d141-disk-trace.py","sha256":"d38c89cf71a042e3a721ad2e37ba6bc6f5fc6a51c60ecf4736924e6e2ace0520","mode":"755","predecessor_sha256":"d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222","predecessor_mode":"755"},
+    {"path":"bin/d141-validate-receipt.py","sha256":"c651a436ce0421699456b19e0b0afd31fc7c863a5886cb192e7902317ad424ef","mode":"755","predecessor_sha256":"2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6","predecessor_mode":"755"},
+    {"path":"bin/d141-validate-trace.py","sha256":"b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5","mode":"755","predecessor_sha256":"b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5","predecessor_mode":"755"},
+    {"path":"bin/test-run","sha256":"07a617100bebc22faeda9d76f6fdd6fa8c89c8a5607122ee8220dcd6de1c5b81","mode":"755","predecessor_sha256":"f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300","predecessor_mode":"755"}
+  ],
+  "manifest_precondition": "all five predecessor hashes/modes are bound to the observed installed 56f2d56e donor files"
+}

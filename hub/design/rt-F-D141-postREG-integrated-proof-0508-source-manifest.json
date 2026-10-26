@@ -1,0 +1,73 @@
+{
+  "schema": "timeline.f.d141.integrated-source-manifest.v1",
+  "read_only": true,
+  "source_heads": {
+    "runtime": {
+      "path": "/home/user/work/wt/rt-F-D141-postREG-integrated-proof-0508",
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "parents": ["857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5", "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"],
+      "ref": "tl/integration",
+      "clean_before": true,
+      "clean_after": true
+    },
+    "agent": {
+      "path": "/home/user/work/agent",
+      "head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+      "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+      "parents": ["28e56cacb42d3da85b02e5b3543895b44f3d0f70", "5d202569f3af3852476d182ff49683787bb1e881"],
+      "ref": "tl/integration",
+      "clean_before": true,
+      "clean_after": true
+    }
+  },
+  "runtime_delta": {
+    "base": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "base_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "approved_authors": {
+      "typescript": "4a66dee1ab34f260ea64bd58aa30cf7ac66c3ae3",
+      "upgrade": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
+    },
+    "changed_paths": [
+      "conformance/typescript/contract-metadata.ts",
+      "conformance/typescript/generated.ts",
+      "runtime_protocol/upgrade.py"
+    ],
+    "current_sha256": {
+      "conformance/typescript/contract-metadata.ts": "954f20745963fe246d27aa6eca810d26541ec77e326b2d44b110468e1f2bc1ce",
+      "conformance/typescript/generated.ts": "285dbb51ea89c7b1a6cac6d68e9a4566231ec1b8ceaf9c6c551c4ba3d6ea16f8",
+      "runtime_protocol/upgrade.py": "c8787dc29b3fa0097ee7aaa9daa704c1626523498cd2c4574f10e14d7e840d50"
+    },
+    "approved_author_sha256": {
+      "conformance/typescript/contract-metadata.ts": "954f20745963fe246d27aa6eca810d26541ec77e326b2d44b110468e1f2bc1ce",
+      "conformance/typescript/generated.ts": "285dbb51ea89c7b1a6cac6d68e9a4566231ec1b8ceaf9c6c551c4ba3d6ea16f8",
+      "runtime_protocol/upgrade.py": "c8787dc29b3fa0097ee7aaa9daa704c1626523498cd2c4574f10e14d7e840d50"
+    },
+    "all_three_equal": true
+  },
+  "control_sources": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md", "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075", "role": "single source of truth"},
+    {"path": "/home/user/timeline-hub/hub/design/BOARD-HEADER.md", "sha256": "b98d0ea28689b8c950e315d0e0f14d6b3f9106de30b06afa5409188e65ed410f", "role": "D141 zeroREG/l control"},
+    {"path": "/home/user/timeline-hub/hub/design/commit-v2.md", "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7", "role": "C0 contract"},
+    {"path": "/home/user/timeline-hub/hub/design/rt-F-D141-REG-join-P5-review-0445-reg.json", "sha256": "bc9a5a8110acee30f81339557fc7ba55bcb20f496210a242e90a848f513861e8", "role": "exact 15 REG census and canonical artifact hashes"},
+    {"path": "/home/user/timeline-hub/hub/design/rt-F-D141-REG-join-P5-review-0445-p5-custody.json", "sha256": "2d5adb2b41ff2e82e7b562f0c2d1092a8cd702dd6c31964a98032141834e53cd", "role": "original 38-case P5 receipt and module origins"},
+    {"path": "/home/user/timeline-hub/hub/design/agt-U2-D141m-independent-review-0432-source-manifest.json", "sha256": "12d1ccf43b6348d03d4af6d68053c7d8cb52b00c3024b744f158c7fb876f1c12", "role": "Agent freeze2 changed-path custody"},
+    {"path": "/home/user/timeline-hub/hub/design/agt-U2-D141m-independent-review-0432-p4-path-review.json", "sha256": "f560960912f3ad39891d118f444b05a8fe8ebb670d7bad58ac6c9958d7e656af", "role": "Agent changed import-path applicability"},
+    {"path": "/home/user/timeline-hub/hub/design/agt-U2-D141m-independent-review-0432-delta-scope-review.json", "sha256": "35de627c2ffba2c559647e16e7353bef533268d71d37da794a2700d0f4c57f87", "role": "Agent shared fixture/full rerun trigger"}
+  ],
+  "frozen_r4_objects": {
+    "runtime": {"commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd", "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"},
+    "sdk": {"commit": "11caf1d9de291d76f491cf69f7942606b7471d7a", "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"},
+    "app": {"commit": "8f0c2484463e9b666d184a744d52e252984e551a", "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"},
+    "composition": {"commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a", "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"}
+  },
+  "receiving_inputs": {
+    "agent_artifacts_json_sha256": "7f1f27510eaa2b2bb9f013b345b09282e299d10e8ca614af2b028ee8730612b8",
+    "agent_runtime_lock_json_sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3",
+    "source": "/home/user/work/agent",
+    "supported_tools_only": true,
+    "handwritten_pin_or_artifact": false
+  },
+  "generated_product_write": false,
+  "release_or_tag_claim": false
+}

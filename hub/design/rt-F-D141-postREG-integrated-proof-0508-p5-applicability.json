@@ -1,0 +1,148 @@
+{
+  "schema": "timeline.f.d141.p5-applicability-integrated.v1",
+  "read_only": true,
+  "verdict": "P5_PRIOR_RECEIPT_RETAINED_PATH_APPLICABILITY_PROVED",
+  "prior_p5": {
+    "request_id": "runtime-d141-p5-cut-1026013331-6934",
+    "status": "pass",
+    "summary": "38 passed in 31.02s",
+    "runtime_head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "agent_head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "agent_origin": "/home/user/work/wt/agt-pin-28e56cac",
+    "interpreter": "/home/user/work/venv-runtime/bin/python",
+    "xml_sha256": "04b7bcea10a693d691a4ccaff85df8c94a0e1e634ea14ae1de87f0a25ddca688",
+    "case_set_sha256": "024cd7c2dd2f90c142727b1825bf5d6ee3ee72384547f6cfc925267586c5075c"
+  },
+  "p5_executed_paths": {
+    "tests": [
+      "tests.test_timeline_commit_integration",
+      "tests.test_timeline_commit_crash",
+      "tests.door_helpers",
+      "tests.lanes",
+      "test_timeline_commit_input_integration",
+      "timeline_commit_film_fixture"
+    ],
+    "runtime_modules": [
+      "runtime_protocol/__init__.py",
+      "runtime_protocol/contract_metadata.py",
+      "runtime_protocol/service.py",
+      "runtime_protocol/daemon.py",
+      "runtime_protocol/door.py",
+      "runtime_protocol/store.py",
+      "runtime_protocol/timeline_commit_port.py",
+      "runtime_protocol/timeline_commit_store.py",
+      "runtime_protocol/timeline_commit_provider.py",
+      "runtime_protocol/upgrade.py",
+      "runtime_protocol/util.py",
+      "runtime_protocol/visual_seam.py"
+    ],
+    "agent_modules_from_retained_custody": [
+      "astrid/sdk/timeline/api.py",
+      "astrid/sdk/timeline/capture.py",
+      "astrid/sdk/timeline/commit.py",
+      "astrid_runtime_client/generated.py",
+      "astrid_runtime_client/contract_metadata.py"
+    ],
+    "caller_behaviors": [
+      "renderer-off Runtime commit door and provider registration",
+      "authorization and project-scope admission",
+      "accepted/merged/conflict/invalid/preview store paths",
+      "lost-ack exact retry and restart",
+      "crash boundaries before/after commit and restore",
+      "changed payload under the same idempotency key",
+      "canonical migration setup for the mutable duplicate realm"
+    ]
+  },
+  "runtime_reg_delta_comparison": {
+    "base": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "integrated": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "changed_paths": [
+      {
+        "path": "runtime_protocol/upgrade.py",
+        "integrated_change": "adds threading import and staged RealmStore inspector db_path plus RLock in _validate_candidate",
+        "p5_relation": "module imported by crash setup; _migrate_duplicate_realm calls migrate_canonical_to_current at tests/test_timeline_commit_crash.py:81, while _validate_candidate is called only by upgrade_realm at runtime_protocol/upgrade.py:1349",
+        "executed_changed_hunk": false,
+        "path_independence_basis": "static call-path check: P5 setup calls migrate_canonical_to_current; no P5 node calls upgrade_realm or _validate_candidate",
+        "required_reproof": "none for the retained P5 commit/crash route; the separate upgrade REG selectors are included in and passed by the exact-15 run"
+      },
+      {
+        "path": "conformance/typescript/contract-metadata.ts",
+        "integrated_change": "generated CONTRACT_SHA256 and SCHEMA_DIGEST refresh",
+        "p5_relation": "not imported or executed by P5; P5 uses Python runtime_protocol.contract_metadata.py",
+        "executed_changed_hunk": false,
+        "path_independence_basis": "retained module-origin list and exact P5 source imports",
+        "required_reproof": "none for P5; exact TypeScript generator REG selectors passed in the exact-15 run"
+      },
+      {
+        "path": "conformance/typescript/generated.ts",
+        "integrated_change": "generated CONTRACT_SHA256 and SCHEMA_DIGEST refresh",
+        "p5_relation": "not imported or executed by P5; P5 uses Agent astrid_runtime_client/generated.py",
+        "executed_changed_hunk": false,
+        "path_independence_basis": "retained module-origin list and exact P5 source imports",
+        "required_reproof": "none for P5; exact TypeScript generator REG selectors passed in the exact-15 run"
+      }
+    ]
+  },
+  "agent_freeze2_comparison": {
+    "base": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "freeze2_source": "5d202569f3af3852476d182ff49683787bb1e881",
+    "normal_head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "normal_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "changed_path_facts": {
+      "count": 54,
+      "shared_runtime_p5_paths": [],
+      "paths_requiring_non_p5_attention": [
+        "tests/conftest.py",
+        "tests/lanes.py",
+        "astrid/packs/timeline/cli.py",
+        "astrid/sdk/authoring_media.py",
+        "artifacts.json"
+      ],
+      "full_agent_reproof": "required later because Agent tests/conftest.py and tests/lanes.py changed; not run here",
+      "p4_reproof": "required later for the selected CLI selector because astrid/packs/timeline/cli.py is directly imported there; not run here"
+    },
+    "p5_path_comparison": [
+      {
+        "path": "tests/conftest.py",
+        "p5_loaded": false,
+        "reason": "P5 pytest process loads Runtime tests/conftest.py from the Runtime checkout; ASTRID_CHECKOUT only supplies Agent provider modules",
+        "required_reproof": "none for P5; Agent full suite remains a separate required proof"
+      },
+      {
+        "path": "tests/lanes.py",
+        "p5_loaded": false,
+        "reason": "P5 crash test imports Runtime tests.lanes, not Agent tests/lanes.py",
+        "required_reproof": "none for P5; Agent full suite remains a separate required proof"
+      },
+      {
+        "path": "astrid/packs/timeline/cli.py",
+        "p5_loaded": false,
+        "reason": "P5 retained Agent module origins are timeline api/capture/commit and runtime client; no P5 node invokes the CLI parser",
+        "required_reproof": "none for P5; one bounded P4 CLI selector remains required later"
+      },
+      {
+        "path": "astrid/sdk/authoring_media.py",
+        "p5_loaded": false,
+        "reason": "not in retained P5 Agent module origins or P5 caller paths",
+        "required_reproof": "none for P5; Agent full/P4 obligations remain unchanged"
+      },
+      {
+        "path": "artifacts.json",
+        "p5_loaded": false,
+        "reason": "receiving/manifest input, not an executed P5 provider module",
+        "required_reproof": "no P5 reproof; verify through normal vendor/installer receiving checks"
+      }
+    ]
+  },
+  "conclusion": {
+    "p5_original_scope_preserved": true,
+    "p5_rerun": false,
+    "source_or_registry_refresh": false,
+    "new_runtime_consumer_pins": false,
+    "38_prior_passes_remain_visible": true,
+    "full_suite_go": false,
+    "basis_limit": "path analysis is explicit and function/caller based; no claim is inferred solely from test-blob equality"
+  }
+}

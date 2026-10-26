@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T05:12:32Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 2m -->
-# runtime board, 2026-10-26T05:10Z
+<!-- main | 2026-10-26T05:17:23Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
+# runtime board, 2026-10-26T05:14Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -14,7 +14,7 @@
 | D141 full receiving | Initialize safe output directory | Luna | Normal production row | merged | rt-F-D141-full-output-fix-0052 | Four real row controls PASS; corrected scoped rows installed. Cut18778 actual result retained; pristine8912 queued. | Cut6a011 / 28e56 |
 | D141 Runtime full | Retain actual cut full result | Service | Output smoke and scoped install PASS | review | Main0052; service18778 | Actual7300 pass35 fail18 error26 skip13 xfail. Raw XML and witnesses KEEP. No REG verdict without pristine. | 6a011 / 28e56 |
 | D141 pristine targeted15 | Retain qualified actual pristine comparator | Luna and service | Independent0445 terminal | merged | Actual11121; independent0445 | All15 PASS2.76s, same environment and exact predicates. Old8912 queued unstarted. | fa9 / 8b6 |
-| D89d measured admission | Port qualified paired lifecycle controls | Luna | Recorded Main D141s | review | Author0453; independent0503 | Author73 controls PASS; SEC001 and SEC002 PASS. Final independent0503 active; new binding required. PASS_INSTALL by06:00 or dropped. | b168dbb0 |
+| D89d measured admission | Port qualified paired lifecycle controls | Luna | Recorded Main D141s | blocked:app | Author0453; independent0503 PASS | Independent73 and all lifecycle cases PASS. Historical520d hardcode needs actual new builder binding before receiving. Deadline06:00. | b168dbb0 |
 | D141h Runtime split | Retain installed qualified Runtime kit | Sol and Luna | Independent0418 PASS49 | merged | Sol0410; review0418; CAS0422 PASS | [Install](../../design/rt-OPS-D141-runtime-CAS-0422-installation.json). Five files exact in live and normal hub kit. No App exception or gate credit. | 56f2d56e |
 | D141g App binding | Retain historical first placement caller | App Luna | Author0309 terminal | merged | app-P-D141g-first-suite-binding-0309 | Exact520d target suite source and builder command hashes published. Prospective only; actual D66 registered bytes must match before either part. | App520d |
 | D141g paired preflight | Hold App paired admission until closure | Luna | D141s and genuine new binding | gated:D141s | Final0435 FAIL; port0453 active | SEC002 PASS; cancellation NEEDS. No installed pair or App release. Actual freeze2 builder binding stays required. | 06fb2b5d |
@@ -44,14 +44,14 @@
 | Staging and Store tools | Preserve deferred private source | Existing owners | D140 and D141 | gated:post-ZIP | No new author or cleanup | Source and failed findings retained; no installation, retirement or new cleanup round. | Held candidates |
 | OPS headroom | Preserve guarded cleanup holds | Manager route | Main0123 and0130 decisions | gated:safety | Prior maintenance complete | Sweep removed0; compact packed0 dirs and gzipped5 logs. Sealed fixtures, dirty trees, KEEP data and three old venvs retained. | No product change |
 
-| D141 REG integrated | Prove merged batch and final P5 applicability | Luna | Normal95d98 merge and Agent8585 | doing | rt-F-D141-postREG-integrated-proof-0508 | Exact15 once on final head; canonical producer receipt and P5 executed path applicability. No full suite or new P5 body. | 95d98f03 |
+| D141 REG integrated | Prove merged batch and final P5 applicability | Luna | Normal95d98 merge and Agent8585 | review | Proof0508; independent0513 active | Actual15 PASS on95d98 plus Agent8585. Final source custody, true15 client mappings and P5 applicability checked without test repeat. | 95d98f03 |
 
 Blockers: Runtime REG — Independent0445 proves15 REG; both disjoint Luna fixes active. No own nonREG changes. Normal review and merge then real producer handoff.
 Blockers: App — Final paired kit0435 FAIL retained. Main D141s author0453 ports qualified lifecycle cases; one independent review and PASS_INSTALL by06:00 or dropped. New binding waits real freeze2 source.
 P5 original metadata cleared: immutable0500 derivative exact38 IDs and original witnesses verified; safe controller blobs recovered. Original38PASS scope retained, final applicability0508 pending.
 Blockers: Safety — D130, old venvs, runtimes/agent-remotion and sealed fixtures remain held. No owner-approved actual hub repack in this session. Dropped smoke stays unrun.
 Next ready: Integrated proof0508 then actual producer handoff to consumers; final paired0503 verdict then bounded CAS only if eligible; metadata0500 derivative. Final build waits actual gates.
-live 2 / cap 3; ready-undispatched 0. Integrated0508 and final pair0503 active. Metadata0500 PASS and bytepublished0510; no heavy body.
+live 1 / cap 3; ready-undispatched 0. Independent integrated custody0513 active. Pair73 PASS waits genuine App source binding. No ready source left idle, no heavy body.
 Runtime now95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1 after qualified REG normalmerges. Integrated proof pending; Composition635f unchanged. Header04:46 records Agent8585ed9c/tree92a3ffdb freeze2; full matching pair and changed-path P4 Agent-owned. App5344c53e normal source HOME now; genuine new builder binding owed. No upstream chasing.
 Runtime18778 actual7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121 actual15PASS; P56934 actual38PASS. Raw XML and trace KEEP retained. Original receipts keep original scopes. Old8912 and P419479 unstarted.
 Farm child chain conditional on Agent join. Schema verified; original kit pair and67wheel seed EXACT MISSING, no hunt/rebuild. Planned F-final separately gated; no smoke or ZIP.

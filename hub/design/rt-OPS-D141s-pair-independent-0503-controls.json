@@ -1,0 +1,72 @@
+{
+  "schema": "timeline.ops.d141s.independent-controls.v1",
+  "command": "TMPDIR=/tmp/rt-OPS-D141s-pair-independent-0503.ZUMwzW PYTHONDONTWRITEBYTECODE=1 python3 -I ops-d141-measured-floor/controls/real-controls.py",
+  "exit_code": 0,
+  "result": "PASS",
+  "case_count": 73,
+  "purpose_conservation": {
+    "original_author_case_count": 68,
+    "all_original_purposes_present": true,
+    "added_cases": [
+      "body-stop-test-start",
+      "mounted-stop-test-caller",
+      "mounted-stop-test-finalized-reaped",
+      "body-stopped-sampler-start",
+      "stopped-sampler-bounded-reaped"
+    ],
+    "case_names": [
+      "d89d-app-admission", "d89d-app-terminal", "d141h-targeted15-admission", "d141h-targeted15-terminal",
+      "runtime-d141-p5-cut-1026013331-6934-admission", "runtime-d141-p5-cut-1026013331-6934-terminal",
+      "normal-request-full-id-admission", "normal-request-full-id-terminal", "paired-admission-start",
+      "paired-production-decision-refuses-before-launch", "paired-preflight-failure-start",
+      "paired-preflight-failure-refuses-before-preflight", "paired-cancel-start", "paired-cancel-refuses-before-preflight",
+      "paired-stop-start", "paired-4gb-stop-refuses-before-preflight", "paired-busy-start", "heavy-during-pair-refused",
+      "concurrent-heavy-during-pair-refuses", "paired-wrong-command", "paired-corrupt-receipt-refuses",
+      "prospective-first-pair-binding", "exact-first-placement", "generic-not-first-placement", "preflight-not-first-body",
+      "arbitrary-suite-not-first", "wrong-app-checkout", "wrong-app-source", "wrong-app-command", "wrong-app-repo",
+      "wrong-app-target", "app-extra-files", "floor-at", "floor-below", "floor-above", "default-light-at",
+      "default-core-at", "default-heavy-at", "global-stop", "busy-one-start", "busy-two-refused", "body-failure-start",
+      "body-cancel-start", "body-cancel-self-finalized-reaped", "body-stop-test-start", "mounted-stop-test-caller",
+      "mounted-stop-test-finalized-reaped", "body-stopped-sampler-start", "stopped-sampler-bounded-reaped",
+      "symlink-before-final", "fifo-before-final", "regular-before-final", "parent-substitution-before-final",
+      "symlink-before-validation", "fifo-before-validation", "regular-before-validation", "wrong-job", "symlink-witness",
+      "witness-mismatch", "duplicate-key", "boolean-growth", "float-floor", "wrong-arithmetic", "wrong-head", "wrong-tree",
+      "wrong-command", "wrong-trace-interval", "malformed-disk",
+      "held-rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+      "held-agent-p4-current-becfe-http-3legs-1026012948-19479", "p5-invalid-6934",
+      "p5-invalid-runtime-d141-p5-cut-1026013331-6934-suffix", "p5-invalid-runtime-d141-p5-cut-1026013331-9999"
+    ]
+  },
+  "required_outcomes": {
+    "targeted15": "PASS; four trace rows",
+    "p5_6934": "PASS; four trace rows",
+    "normal_request_and_publication": "PASS; normal full ID, pending TEST, received direct-bin runner",
+    "mounted_stop_test": "PASS; session children selected, runner excluded, cancelled/130, trace PASS, sampler and timeout child reaped",
+    "stopped_sampler": "PASS; bounded failure exit 125 and reaped sampler",
+    "trace_custody": "PASS; symlink/FIFO/regular replacement, physical-parent substitution, and validation-stage variants",
+    "pair_authority": "PASS; synthetic D141g-paired-control and arbitrary matching-hash pairs refuse before launch/artifacts",
+    "floors_and_occupancy": "PASS; 4.6 GB pair admission, 4 GB stop, default floor/cache/source/snapshot/leases, one heavy",
+    "held_jobs": "PASS; 8912 and 19479 remain refused",
+    "p5_identity": "PASS; only exact 6934 accepted"
+  },
+  "app_scope": {
+    "author_script_scope": "prospective 0309 historical binding only; no registered App row, body, or product execution",
+    "freeze2_source": "5344c53e3063001bb3255bd0c9cd32cc5e77967f / dd989783046aeff652486a1ba39db42aea86e201",
+    "agent_source": "8585ed9c0404d0187b2ce70242d25114a32747c2 / 92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "current_production_builder_binding": "absent from reviewed evidence"
+  },
+  "isolated_publication": {
+    "installed_published_received": true,
+    "direct_bin_files": 5,
+    "controls_sibling_in_received_bin": false,
+    "source_hashes_before_harness_path_rewrite": {
+      "d141-append-final.py": "d638f2974045220e565f0ed476412c7003a077942bf5c792c69611159ee14431",
+      "d141-disk-trace.py": "d38c89cf71a042e3a721ad2e37ba6bc6f5fc6a51c60ecf4736924e6e2ace0520",
+      "d141-validate-receipt.py": "c651a436ce0421699456b19e0b0afd31fc7c863a5886cb192e7902317ad424ef",
+      "d141-validate-trace.py": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5",
+      "test-run": "07a617100bebc22faeda9d76f6fdd6fa8c89c8a5607122ee8220dcd6de1c5b81"
+    },
+    "received_test_run_hash": "73daee6aa8f8c3663cea547c2b24064d63ef5157c800d0aef0ebdb41ab74219c",
+    "received_test_run_note": "The isolated harness rewrites private orchestration paths; source hash was checked before rewrite."
+  }
+}

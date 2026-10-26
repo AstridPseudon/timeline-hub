@@ -1,0 +1,104 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-integrated-proof-0508/evidence/proof.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-integrated-proof-0508-proof.json",
+    "sha256": "307c20038e9913195dae03a3848ff3a75fd3dab02c9bde31320fda1010734b68",
+    "size": 6923
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-integrated-proof-0508/evidence/producer.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-integrated-proof-0508-producer.json",
+    "sha256": "cd4c157f842244db8b594fec9f17844e6604a269c00de379ccb69ef63ad315ea",
+    "size": 4983
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-integrated-proof-0508/evidence/p5-applicability.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-integrated-proof-0508-p5-applicability.json",
+    "sha256": "ab2668a4da13c7d6415c48713473fa1403165eac1c41d3ff8112abd55c9f7c67",
+    "size": 7050
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-integrated-proof-0508/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-integrated-proof-0508-source-manifest.json",
+    "sha256": "ffe6dcf36867e7d7a313a6f1de16b05cf1316fea75d53445214012c01179ac7a",
+    "size": 4841
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-integrated-proof-0508/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-integrated-proof-0508-validation.md",
+    "sha256": "3bdcac22ca390aacda5902ed42e7cd34f5d2c5122be52697002ab3c04a4718d5",
+    "size": 4741
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-postREG-integrated-proof-0508/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-integrated-proof-0508-handoff.md",
+    "sha256": "b25e932d03e60a32a9dbb0197f0ab25d721e4dc73c3357401a26af2413c289dc",
+    "size": 1451
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-independent-0503/evidence/review.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-independent-0503-review.json",
+    "sha256": "0093fdaa349bbc7ad006a780be6a4f75967c9e534e4777cad4f048b62ead7ee2",
+    "size": 1889
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-independent-0503/evidence/findings.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-independent-0503-findings.md",
+    "sha256": "5cef11c5603918db45c19bd5c8b2f59ef59357960275962763fdac19bcece640",
+    "size": 3514
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-independent-0503/evidence/controls.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-independent-0503-controls.json",
+    "sha256": "7cf2a880cf6f136a3231eaf2eb555e3c3bfabf75cd3b408f2d14901fcd3fb59e",
+    "size": 5022
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-independent-0503/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-independent-0503-source-manifest.json",
+    "sha256": "caa1ec10927d8816faa6c54a117a282a31b5edef6a53be6284440e8c8b1c9d74",
+    "size": 3514
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-independent-0503/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-independent-0503-validation.md",
+    "sha256": "ad7550f149c3e7d14880a78de34e188f57fe6598d04157055093f9b185725514",
+    "size": 3530
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-independent-0503/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-independent-0503-handoff.md",
+    "sha256": "d6a82ade29606061bbb84d17108b18618414daa66a67499221045c45a73e01dc",
+    "size": 1541
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-lifecycle-port-0453/evidence/findings-map.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-lifecycle-port-0453-findings-map.json",
+    "sha256": "8502f1b57324d4e5af4e7fb6483e5d1a20fbbe000efcf9f92e7361ba89556a75",
+    "size": 1340
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-lifecycle-port-0453/evidence/controls.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-lifecycle-port-0453-controls.json",
+    "sha256": "7a5777d4a3cd4d0efb80fac8e77a82d3ade0cf9c6ac6a99d9f42d3ae903bdc8d",
+    "size": 887
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-lifecycle-port-0453/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-lifecycle-port-0453-source-manifest.json",
+    "sha256": "a8ab8cc957594d7120ee86837faf970d1385f854dd5901c6421ed6ebb9195b68",
+    "size": 1832
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-lifecycle-port-0453/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-lifecycle-port-0453-validation.md",
+    "sha256": "472303f894d31901f561ba8e8111bbfde5b549765fd8d85b2d502fdd7565e3e1",
+    "size": 1314
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141s-pair-lifecycle-port-0453/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D141s-pair-lifecycle-port-0453-handoff.md",
+    "sha256": "2319dd9062c885ee13069dd5223efb79ff7d4ceea7112dd01fa03e0445ed2009",
+    "size": 1062
+  }
+]

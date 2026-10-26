@@ -1,0 +1,22 @@
+{
+  "command": "TMPDIR=/tmp/w-d0794e7d6a/d141-controls-final PYTHONDONTWRITEBYTECODE=1 python3 -I ops-d141-measured-floor/controls/real-controls.py",
+  "exit_code": 0,
+  "case_count": 73,
+  "verdict": {
+    "SEC001": "PASS",
+    "SEC002": "PASS",
+    "freeze2": "NEEDS",
+    "release": "NOT_READY"
+  },
+  "lifecycle_cases": [
+    "body-cancel-self-finalized-reaped",
+    "body-stop-test-start",
+    "mounted-stop-test-caller",
+    "mounted-stop-test-finalized-reaped",
+    "body-stopped-sampler-start",
+    "stopped-sampler-bounded-reaped"
+  ],
+  "publication_smoke": "installed -> published -> received direct bin passed; received bin had no controls sibling",
+  "paired_authority": "synthetic D141g-paired-control receipts refused before launch; no production authority added",
+  "app_scope": "prospective 0309 source binding only; no registered App row, body, or product execution"
+}

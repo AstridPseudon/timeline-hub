@@ -1,0 +1,48 @@
+{
+  "schema": "timeline.ops.d141s.independent-review.v1",
+  "task": "rt-OPS-D141s-pair-independent-0503",
+  "candidate": {
+    "repo": "composition",
+    "commit": "b168dbb05d469941ee57c63190198bb4df852cd7",
+    "tree": "aa70f43234e26aa2cdb23031ca0683c3e81da0bd",
+    "parent_author_precommit": "06fb2b5d16dd3c93cecf5520bb2a2da613dd1b92",
+    "source_status": "clean"
+  },
+  "verdict": {
+    "source_control": "PASS",
+    "freeze2_app_binding": "NEEDS",
+    "external_release": "NOT_READY",
+    "pass_install": "NOT_CLAIMED"
+  },
+  "independent_run": {
+    "command": "TMPDIR=/tmp/rt-OPS-D141s-pair-independent-0503.ZUMwzW PYTHONDONTWRITEBYTECODE=1 python3 -I ops-d141-measured-floor/controls/real-controls.py",
+    "exit_code": 0,
+    "case_count": 73,
+    "author_purposes_68_preserved": true,
+    "added_lifecycle_cases": 5,
+    "harness_verdict": {
+      "SEC001": "PASS",
+      "SEC002": "PASS",
+      "freeze2": "NEEDS",
+      "release": "NOT_READY"
+    }
+  },
+  "consumed_evidence": [
+    "PLAN.md F/P5, C0, BOARD-HEADER D141s and D141g-a decisions",
+    "rt-OPS-D141-pair-final-verify-0435: 68-case FAIL, all prior findings",
+    "rt-OPS-D141-cancel-final-verify-0418: immutable 56f2d56e donor PASS49",
+    "author 0453 port on 06fb2b5d, mechanically reviewed at derivative b168dbb"
+  ],
+  "finding_ids": [
+    "D141H-SEC-001",
+    "D141G-A-CANCEL-001",
+    "D141G-A-CANCEL-002",
+    "D141G-SEC-002",
+    "D141L-APP-001",
+    "D141S-APP-001"
+  ],
+  "scope_limits": [
+    "No live service, queue, D66 request, production body, installation, CAS, receipt attachment, full suite, browser/socket suite, network, package/environment provisioning, Store, cleanup/delete, hub/Git write, build, ZIP, credentials, D130 or stopped-work investigation.",
+    "No source, product, DTO, test fixture/assertion, generated, pin, registry, or production caller edit was made by this review."
+  ]
+}
