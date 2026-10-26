@@ -275,33 +275,33 @@ def validate_recorded_decision(
         if decision == "D141g-next-app-journey":
             if (repo, suite, preflight_suite) != (
                 "app",
-                "d141g-p2-automatic-child-placement-5344c53e-submit",
-                "d141g-p2-automatic-child-placement-5344c53e-submit-preflight",
+                "d141g-p2-automatic-child-placement-4de54db1-submit",
+                "d141g-p2-automatic-child-placement-4de54db1-submit-preflight",
             ):
-                fail("D141g is not bound to the exact 5344 first placement pair")
+                fail("D141g is not bound to the exact 4de54db1 first placement pair")
             if preflight_source != {
-                "head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
-                "tree": "dd989783046aeff652486a1ba39db42aea86e201",
+                "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+                "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
             }:
-                fail("D141g preflight source is not the exact 5344 source")
-            if pair["preflight_command_sha256"] != "97277b3a42e033819b830ff4f1e450616073d6ea3f6d8e4bd598e32681541ad7":
+                fail("D141g preflight source is not the exact 4de54db1 source")
+            if pair["preflight_command_sha256"] != "f20ab22c427e46fb06edbc2f91ea11ad27faf7a1b38c11abbc20895e465471a4":
                 fail("D141g preflight command is not the exact production builder output")
-            if pair["body_command_sha256"] != "98522d5511c5e66fcfeaa68044f84eaf9fb45b22e9a1145613a5262be47f21a6":
+            if pair["body_command_sha256"] != "55da9058c938ce4ba362670b1322c49097441007d460677f6f5b2726c7f4c2aa":
                 fail("D141g body command is not the exact production builder output")
     # App's published freeze2 pure production-builder binding; actual row
     # bytes and checkout identity are checked by the caller at admission.
     if decision == "D141g-next-app-journey" and (
         (repo, suite, worktree) != (
             "app",
-            "d141g-p2-automatic-child-placement-5344c53e-submit",
-            Path("/home/user/work/wt/app-pin-5344c53e"),
+            "d141g-p2-automatic-child-placement-4de54db1-submit",
+            Path("/home/user/work/wt/app-pin-4de54db1"),
         ) or source != {
-            "head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
-            "tree": "dd989783046aeff652486a1ba39db42aea86e201",
-            "command_sha256": "98522d5511c5e66fcfeaa68044f84eaf9fb45b22e9a1145613a5262be47f21a6",
+            "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+            "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+            "command_sha256": "55da9058c938ce4ba362670b1322c49097441007d460677f6f5b2726c7f4c2aa",
         }
     ):
-        fail("D141g is not bound to the exact freeze2 5344 first placement caller")
+        fail("D141g is not bound to the exact final 4de54db1 first placement caller")
     if decision == "D141h-runtime-pristine-targeted15" and (repo, suite) != ("runtime", "full-d141-pristine-targeted15"):
         fail("D141h is not bound to the targeted pristine-15 suite")
     if decision == "P5-service6934" and (job_id, repo, suite) != (

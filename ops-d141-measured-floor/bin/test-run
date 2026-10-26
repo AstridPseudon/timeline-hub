@@ -32,15 +32,15 @@ if [ -n "${pair_preflight_suite:-}" ]; then
   PAIR=1
 fi
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
-HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-5344c53e-submit) HV=heavy;; esac
+HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-4de54db1-submit) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
 if [ "$PAIR" = 1 ]; then
   [ "$HV" = heavy ] || refuse "paired admission body must be a heavy suite"
   [ -f "$D/recorded-measured-floor.json" ] || refuse "paired admission requires a measured-floor receipt"
 fi
-if [ "$suite" = d141g-p2-automatic-child-placement-5344c53e-submit ]; then
-  [ "$repo" = app ] && [ "$target" = app-pin-5344c53e ] && [ -z "$files" ] || refuse "D141g first placement target/repo/files mismatch"
+if [ "$suite" = d141g-p2-automatic-child-placement-4de54db1-submit ]; then
+  [ "$repo" = app ] && [ "$target" = app-pin-4de54db1 ] && [ -z "$files" ] || refuse "D141g first placement target/repo/files mismatch"
 fi
 if [ -z "$RUN" ]; then
   IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null

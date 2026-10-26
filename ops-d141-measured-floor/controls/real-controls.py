@@ -359,7 +359,7 @@ def main() -> int:
     root, script, worktree, env = prepare()
     outcomes: dict[str, object] = {
         "root": str(root), "installed_layout": json.loads((root / "installed-layout.json").read_text()), "cases": [],
-        "app_scope": "prospective freeze2 source binding only; no registered App row, body, or product execution",
+        "app_scope": "prospective final source binding only; no registered App row, body, or product execution",
     }
 
     def case(name: str, proc: subprocess.CompletedProcess[str], expected: int) -> None:
@@ -554,18 +554,18 @@ def main() -> int:
     # Consume the published production-builder bytes without launching App or
     # fabricating its unavailable checkout. The actual validator is received
     # through bin publication; these are authority controls, not App proof.
-    binding_path = LIVE_ROOT / "design/app-P-D141l-freeze2-suite-binding-0459-binding.json"
+    binding_path = LIVE_ROOT / "design/app-P-D141s-final-source-binding-0545-binding.json"
     binding_raw = binding_path.read_bytes()
-    if digest(binding_raw) != "53a145f29602a9c5925ed4782fb1d4d7d4dfe3025f78171eee253896bc52a539":
+    if digest(binding_raw) != "6e9a9a1c611954af6458478ed10c66ae9edb89f6856531b3496dec9e1afa4c28":
         raise AssertionError("published App binding changed")
     binding = json.loads(binding_raw)
-    app_command = (LIVE_ROOT / "design/app-P-D141l-freeze2-suite-binding-0459-normal-command.txt").read_text()
+    app_command = (LIVE_ROOT / "design/app-P-D141s-final-source-binding-0545-normal-command.txt").read_text()
     if digest(app_command.encode()) != binding["commands"]["normal"]["sha256_utf8_without_newline"]:
         raise AssertionError("published App command changed")
-    app_preflight_command = (LIVE_ROOT / "design/app-P-D141l-freeze2-suite-binding-0459-preflight-command.txt").read_text()
+    app_preflight_command = (LIVE_ROOT / "design/app-P-D141s-final-source-binding-0545-preflight-command.txt").read_text()
     if digest(app_preflight_command.encode()) != binding["commands"]["preflight"]["sha256_utf8_without_newline"]:
         raise AssertionError("published App preflight command changed")
-    outcomes["cases"].append({"name": "prospective-freeze2-pair-binding", "status": "pass", "registration": False, "body_command_sha256": digest(app_command.encode()), "preflight_command_sha256": digest(app_preflight_command.encode())})
+    outcomes["cases"].append({"name": "prospective-final-pair-binding", "status": "pass", "registration": False, "body_command_sha256": digest(app_command.encode()), "preflight_command_sha256": digest(app_preflight_command.encode())})
     if " ".join(app_command.split()) != app_command:
         raise AssertionError("App command differs after test-run awk normalization")
     app_source = dict(binding["source_tuple"]["app"], command_sha256=digest(app_command.encode()))

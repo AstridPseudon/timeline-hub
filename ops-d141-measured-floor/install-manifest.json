@@ -31,7 +31,7 @@
     {
       "source": "bin/d141-validate-receipt.py",
       "destination": "bin/d141-validate-receipt.py",
-      "sha256": "16e2592d1307a2567b5e74c6fe018445c428af7c76dbea2b896bfc3fcb06b3df",
+      "sha256": "c85a47127c03b670b2fa9596e4a7118252d51f560236d07077b1b6342883493c",
       "mode": "755",
       "precondition": {
         "sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6",
@@ -53,7 +53,7 @@
     {
       "source": "bin/test-run",
       "destination": "bin/test-run",
-      "sha256": "a8ede576ef763bae3db4c6acfadc7dcc8f444a9a46f46e69744b0118afda6bc7",
+      "sha256": "518b2335516a2cfd1d0a6091d676adc61849b149a6be5d44c823b00d0a9cfcad",
       "mode": "755",
       "precondition": {
         "sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300",
