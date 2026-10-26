@@ -414,6 +414,53 @@ def test_prepared_worker_launch_uses_utf8_interpreter_flag(tmp_path, monkeypatch
     assert captured[0][:4] == [str(profile.worker_executable), "-X", "utf8", "-m"]
 
 
+def test_prepared_relay_and_custody_launches_keep_utf8_flags(tmp_path, monkeypatch):
+    from dataclasses import replace
+    import runtime_protocol.local_worker_composition as composition
+    import runtime_protocol.local_execution_supervisor as supervisor
+    import astrid_runtime.custody_broker as custody
+
+    profile, _handle = _inspector_fixture(tmp_path)
+    profile = replace(profile, engine_launch={"session_root": str(tmp_path / "session")})
+    preparer = CrossProcessWorkerPreparer(
+        profile=profile,
+        config={"runtime_instance_id": "epoch"},
+        environment={},
+    )
+    captured = {}
+    monkeypatch.setattr(composition, "_selected_profile_payload", lambda _profile: {})
+    monkeypatch.setattr(composition, "_actual_executable", lambda _pid: profile.worker_executable)
+    monkeypatch.setattr(composition, "_file_digest", lambda _path: profile.worker_artifact_digest)
+    monkeypatch.setattr(supervisor, "host_prepare_request", lambda **_kwargs: {})
+    monkeypatch.setattr(custody, "default_process_identity", lambda _pid: {"pid": 1, "birth_id": "owner"})
+
+    class Broker:
+        def __init__(self, **_kwargs):
+            pass
+
+        def child_environment(self, argv, **_kwargs):
+            captured["target"] = list(argv)
+            return {}
+
+        def abort_before_spawn(self):
+            pass
+
+    monkeypatch.setattr(custody, "RoleBoundCustodyBroker", Broker)
+
+    def stop_after_capture(argv, **_kwargs):
+        captured["wrapper"] = list(argv)
+        raise RuntimeError("stop after wrapper capture")
+
+    monkeypatch.setattr(runtime_platform, "spawn_tree", stop_after_capture)
+    with pytest.raises(RuntimeError, match="stop after wrapper capture"):
+        preparer.prepare(profile, operation_id="operation", channel_id="channel")
+
+    assert captured["target"][:6] == [
+        sys.executable, "-X", "utf8", "-I", "-m", "runtime_protocol.local_execution_supervisor",
+    ]
+    assert captured["wrapper"][:4] == [sys.executable, "-X", "utf8", "-I"]
+
+
 def test_cancel_current_is_observable_while_spawn_handoff_is_locked(tmp_path):
     profile, _handle = _inspector_fixture(tmp_path)
     preparer = CrossProcessWorkerPreparer(
