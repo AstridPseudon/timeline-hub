@@ -1,0 +1,78 @@
+{
+  "schema": "timeline.f.d141yb.independent-custody-review.v1",
+  "task": "app-F-D141yb-custody-review-0756",
+  "verdict": "FAIL_CUSTODY",
+  "verdict_scope": "interrupted original rehearsal0741 result and custody",
+  "invocation": {
+    "invocation_count": 1,
+    "argv": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+      "--dry-run",
+      "--source-tuple",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/source-tuple.json",
+      "--source-tuple-sha",
+      "63cd645e36569256fad04837b4f32927e1d84ca81186b49315cc18e91c294643",
+      "--delivery-root",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/delivery",
+      "--work-root",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/work",
+      "--template",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "--gate-results",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md"
+    ],
+    "source_tuple_sha256": "63cd645e36569256fad04837b4f32927e1d84ca81186b49315cc18e91c294643",
+    "extract_parent_sha256": "03c2b022a872d47321753e23652bb60a17916f59458240d315a7169028560815",
+    "extract_byte_range": [297154, 302506],
+    "extract_bytes": 5352,
+    "extract_sha256": "0991fa80f48825250a56cc2bc652f4e420d115eb4f28ec251c9643a92e1155c8"
+  },
+  "raw": {
+    "stdout": {"bytes": 165, "sha256": "9dca8647b52b5d09c4eb5b6253fa8c8bbc1494070cca3a01165276763ea57350"},
+    "stderr": {"bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    "exit": {"status": "MISSING", "sha256": null},
+    "command_json": {"status": "MISSING"},
+    "results_json": {"status": "MISSING"}
+  },
+  "tuple": {
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "git_status": "clean"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "git_status": "clean"},
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "git_status": "clean"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "git_status": "clean"}
+  },
+  "partial_actual": {
+    "agent": {"seconds": 29, "patches": 1, "patch": "PASS_PARTIAL", "tree": "PASS_PARTIAL", "bundle": "UNKNOWN", "apply": "UNKNOWN"},
+    "runtime": {"seconds": 7, "patches": 1, "patch": "PASS_PARTIAL", "tree": "PASS_PARTIAL", "bundle": "UNKNOWN", "apply": "UNKNOWN"},
+    "app": {"status": "UNKNOWN", "patch": "UNKNOWN", "tree": "UNKNOWN", "bundle": "UNKNOWN", "apply": "UNKNOWN"},
+    "composition": {"status": "UNKNOWN", "patch": "UNKNOWN", "tree": "UNKNOWN", "bundle": "UNKNOWN", "apply": "UNKNOWN"}
+  },
+  "disk": {
+    "dispatch_available_bytes": 4594692096,
+    "trace_start": "2026-10-26T07:43:11.214010258Z",
+    "trace_first_available_bytes": 4592930816,
+    "terminal_at": "2026-10-26T07:43:36.304196498Z",
+    "terminal_available_bytes": 3930136576,
+    "stop_bytes": 4000000000,
+    "sampler_reason": "below_stop_or_unreadable",
+    "foreground_cli_signalled": "NOT_SIGNALLED_BY_SAMPLER_SOURCE; foreground_cli_exit_remains_UNKNOWN"
+  },
+  "custody": {
+    "manager_stop_ack_pid": 3209,
+    "wrapper_pid": 3191,
+    "wrapper_finalize_at": "2026-10-26T07:43:59Z",
+    "harness_exit": 0,
+    "original_command_exit": "UNKNOWN",
+    "original_child_reaping": "UNKNOWN",
+    "main_process_audit_receipt": "NOT_AVAILABLE"
+  },
+  "controls": {
+    "safe_transport": "PASS_BYTE_EXACT_FOR_10_LISTED_FILES",
+    "parent_log_and_private_staging": "MAIN_INPLACE_KEEP_NOT_PHYSICALLY_AVAILABLE",
+    "tests_typecheck_lint": "NOTRUN",
+    "review_invocations": 0,
+    "review_replay": false,
+    "zip_or_final_build_credit": false,
+    "product_payload_export": false
+  },
+  "findings": ["F1", "F2", "F3", "F4", "F5", "F6", "F7"]
+}

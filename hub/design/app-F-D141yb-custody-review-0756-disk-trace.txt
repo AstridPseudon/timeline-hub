@@ -1,0 +1,5 @@
+OWN_SAMPLER_START utc=2026-10-26T08:10:26.932353099Z pid=5 stop_bytes=4000000000 interval_seconds=5 observation_scope=present_review_only
+SAMPLE utc=2026-10-26T08:10:26.936051915Z available_bytes=4944216064
+SAMPLE utc=2026-10-26T08:10:31.946008172Z available_bytes=4944211968
+SAMPLE utc=2026-10-26T08:10:36.958476711Z available_bytes=4944211968
+OWN_SAMPLER_TERMINAL utc=2026-10-26T08:10:36.958476711Z pid=5 reason=explicit_term_after_safe_sample available_bytes=4944211968 exit=0

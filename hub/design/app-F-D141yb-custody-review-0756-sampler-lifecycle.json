@@ -1,0 +1,19 @@
+{
+  "schema": "timeline.f.d141yb.review-sampler-lifecycle.v1",
+  "observation_scope": "present_review_only",
+  "pid": 5,
+  "started_at_utc": "2026-10-26T08:10:26.928893595Z",
+  "interval_seconds": 5,
+  "stop_bytes": 4000000000,
+  "trace_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141yb-custody-review-0756/evidence/disk-trace.txt",
+  "stop": {
+    "signal": "TERM",
+    "requested_at_utc": "2026-10-26T08:10:32.935238739Z",
+    "kill_return": 0
+  },
+  "wait_return": 0,
+  "reaped_at_utc": "2026-10-26T08:10:36.966714652Z",
+  "reaped": true,
+  "final_probe_available_bytes": 4944211968,
+  "historical_substitution": false
+}

@@ -1,0 +1,54 @@
+{
+  "schema": "timeline.f.d141yb.independent-custody-source-manifest.v1",
+  "task": "app-F-D141yb-custody-review-0756",
+  "transport": {
+    "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141yb-partial-safe-publication-0756.json",
+    "publication_sha256": "7d649888cee7f286a088197a27daf0b2fd48c5aa48277c6dc9afc93b13ea3f82",
+    "listed_files_byte_exact": true,
+    "listed_count": 10,
+    "private_parent_log_and_staging": "not_physically_available_on_App"
+  },
+  "inputs": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md", "bytes": 14837, "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md", "bytes": 234003, "sha256": "dc76752e92a538bc2cea180113382cff063cf4d3d90f9c9e0184dac0c606777e"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141yb-custody-host-0756-brief.md", "bytes": 5287, "sha256": "967ce2c21320c906368305cc1618b7908703b390938a544719216dce8b9ed3d1"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-main-20261026T0741Z-D141yb-fresh-base.md", "bytes": 946, "sha256": "04caba940da8c7f2eb9225b47d5604337394b9c89b735333290af568c7f450ca"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-main-20261026T0744Z-D141yb-disk-stop.md", "bytes": 1339, "sha256": "e4853c3d4df4f9c3a40cfbc2909bf259ecab6ea0270aa1fa9acfc6b0aa848b4d"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-main-20261026T0745Z-D141yb-descendant-custody.md", "bytes": 1605, "sha256": "9f31115a8f71645f06c75b77f2a593985aebcb3d2b485ef805f802856acdee27"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-app-to-runtime-main-20261026T0810Z-interrupted-custody-dispatched.md", "bytes": 774, "sha256": "acd96931ca72f4771e4d6a6160af85a8d85ad9b281804585d0f75c3d0d062cee"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141yb-hosted-custody-admission-0810.json", "bytes": 300, "sha256": "981d94012aa27079511dd25d8243b03ac657b4c82b5322fbf2001c2724a218cf"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-meta", "bytes": 238, "sha256": "d17d4ab0c3b63b526eedb2d1f1b3969570457f9d21fc3c87fda9e8d0371e06c0"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-original-command-extract.txt", "bytes": 5352, "sha256": "0991fa80f48825250a56cc2bc652f4e420d115eb4f28ec251c9643a92e1155c8"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-raw-command.stdout", "bytes": 165, "sha256": "9dca8647b52b5d09c4eb5b6253fa8c8bbc1494070cca3a01165276763ea57350"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-raw-command.stderr", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-sampler.pid", "bytes": 3, "sha256": "917df3320d778ddbaa5c5c7742bc4046bf803c36ed2b050f30844ed206783469"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-source-tuple.json", "bytes": 675, "sha256": "63cd645e36569256fad04837b4f32927e1d84ca81186b49315cc18e91c294643"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-disk-trace.txt", "bytes": 629, "sha256": "3296c2f20bd5942431387caf59d3754c6a9ab9a376617f77b9628fdb0865bc6a"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-disk-trace.sampler.stderr", "bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-wrapper.log", "bytes": 167, "sha256": "415f4cd65710ab71990137b9a9e25e5527916643d576022e56d88c7cb59ce7eb"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-stop-receipt.txt", "bytes": 89, "sha256": "f54080fd3021351eda94401d9df33b5aea8b05161d47f1269f32b03722353e4e"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-report.md", "sha256": "c1e61cf284770c02f167ff63cba8a2865c97c737591604324e9eb57025cefaf0"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-command.json", "sha256": "55d3c0d4f8fe59fa8efa53d6d607d68b3be76da60c958655f54df310a8e3a839"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-results.json", "sha256": "d25eec43c900866c899f721bb731998c54d13c297254e0cff054bbc0bb4790f5"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-review.json", "sha256": "4675bbafcf25b0ef6538980ca7439e8cda0bf775fa6686863b17e23843c61921"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-findings.md", "sha256": "8e494d3806bc40b9fd113152b5fd865b61e1f30c050bba7c1469658df3dba889"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-correction.json", "sha256": "cadcc05567906698251d9913b545130a0da9efbd820fea3b4b417c0b512c2de2"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-review.json", "sha256": "f1cd548e95c0124dd77961237df39d76b5434de29bdcf960f429fd36d4b808e5"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-validation.md", "sha256": "ac17457683a75f0515450846e983e8eed75f64651dcd4c4e3d380ee8ecf17d2e"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build", "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"},
+    {"path": "/home/user/work/runtime/astrid_runtime/runtime_boundary.py", "sha256": "002774d4d6730685bee7cebd1aced7ef7e6f371d4dea42e4ebcadf79ea5ebaf8"},
+    {"path": "/home/user/work/runtime/contract/commit-v2.md", "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"}
+  ],
+  "source_tuple": {
+    "sha256": "63cd645e36569256fad04837b4f32927e1d84ca81186b49315cc18e91c294643",
+    "agent": {"commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "app": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "outputs": [
+    "report.md", "review.json", "findings.md", "source-manifest.json",
+    "validation.md", "handoff.md", "disk-trace.txt", "sampler-lifecycle.json"
+  ],
+  "note": "Output hashes are recorded in validation.md after finalization; this manifest is intentionally not self-hashed to avoid a circular digest."
+}
