@@ -1,0 +1,28 @@
+{
+  "producer": "astrid-runtime",
+  "checkout": "/home/user/work/runtime",
+  "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+  "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+  "clean": true,
+  "required_hashes": {
+    "contract/artifacts.json": "sha256:9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3",
+    "contract/artifacts.json.version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "contract/manifest.json": "sha256:414243ac7ab66ea197571e0ef85dbe8b4049e7a10a662a90870d9b9459aad369",
+    "contract/schemas/timeline-commit.json": "sha256:3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815"
+  },
+  "lock_validation": "PASS",
+  "mapped_files": {
+    "count": 14,
+    "all_consumer_sha256_equal_producer_and_lock": true,
+    "generated_client_schema_config_bytes": "UNCHANGED"
+  },
+  "canonical_protected_set": "UNCHANGED_PER_INDEPENDENT_RT-U1-D141-FINAL-REVIEW-2350",
+  "source_test_receipt": {
+    "tests": 119,
+    "passed": 119,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "receipt": "REUSED_FROM_INDEPENDENT_RT-U1-D141-FINAL-REVIEW-2350"
+  }
+}

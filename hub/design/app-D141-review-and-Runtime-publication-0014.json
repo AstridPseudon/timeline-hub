@@ -1,0 +1,62 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-source-review-0009/evidence/review.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-source-review-0009-review.json",
+    "sha256": "5e7523556aabc0c2a661ba520757cf04fe19a7f5ee35f553adaa6d11f44c09f8",
+    "bytes": 1565
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-source-review-0009/evidence/findings.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-source-review-0009-findings.md",
+    "sha256": "4727b1b3135d5c1075c6ae19a0516a60c18717837a5b4084031c8873f947d5a7",
+    "bytes": 4850
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-source-review-0009/evidence/predicate-map.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-source-review-0009-predicate-map.json",
+    "sha256": "60833392b734ef60c085087966a4ca9b1afdf617f91c76ceaee65a98a8dc655c",
+    "bytes": 3793
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-source-review-0009/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-source-review-0009-source-manifest.json",
+    "sha256": "1e52b522a63210a1112339caecb7ed53b70c198f486d8223aaaefe9a61623ca5",
+    "bytes": 2019
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-source-review-0009/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-source-review-0009-validation.md",
+    "sha256": "6e01fa1f81ca271ef948c2cec29d73c50c2a6bf6d02a010e2a949b8612debe47",
+    "bytes": 4041
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-source-review-0009/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-source-review-0009-handoff.md",
+    "sha256": "39d66493e7025df71dc209d1274b04066fbf4e5613c93ff8675d49760a2a2f2f",
+    "bytes": 1539
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Runtime-adoption-0011/evidence/adoption.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Runtime-adoption-0011-adoption.json",
+    "sha256": "25ccbda02195c85117baecaa049ea79ddaa66eaa8f11f85abacfc2757a53b4bb",
+    "bytes": 973
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Runtime-adoption-0011/evidence/source-custody.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Runtime-adoption-0011-source-custody.json",
+    "sha256": "439c3787faa83b3e3bf1a53bead3babf5f8530250143db7ab110847ecb8341ca",
+    "bytes": 1137
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Runtime-adoption-0011/evidence/commands-results.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Runtime-adoption-0011-commands-results.md",
+    "sha256": "460a0dcf4623221b770302a87072c1fc7fc81f612a51ae68e178872a96e7ab8b",
+    "bytes": 1468
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Runtime-adoption-0011/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Runtime-adoption-0011-handoff.md",
+    "sha256": "71aed4b2d017dbc266db5fb8828a6d29c3cca955ad1a71b309461ba5d7fea81b",
+    "bytes": 1245
+  }
+]

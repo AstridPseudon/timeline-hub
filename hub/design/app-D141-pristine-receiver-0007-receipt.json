@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "task": "D141/F",
+  "packet": "app-D141-pristine-receiver-0007",
+  "kind": "source_receipt",
+  "decision": "PRISTINE_SOURCE_TARGET_PREPARED_BUT_GATED",
+  "execution": {
+    "normal_full": "not_run",
+    "pristine_comparator": "not_run",
+    "tests": "not_run",
+    "imports": "not_run",
+    "collection": "not_run",
+    "build_lint_typecheck_browser_socket": "not_run",
+    "proof_credit": false
+  },
+  "receiving_source": {
+    "repo": "app",
+    "worker": "app-D141-pristine-receiver-0007",
+    "metadata": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-pristine-receiver-0007/meta",
+    "worktree": "/home/user/work/wt/app-D141-pristine-receiver-0007",
+    "branch": "tl/app-D141-pristine-receiver-0007",
+    "head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "clean": true,
+    "base_relative_diff_paths": [],
+    "source_change": false
+  },
+  "manifest_expected": {
+    "frozen_upstream_head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "frozen_upstream_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "frozen_package_json": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6",
+    "frozen_package_lock": "89a3094c58bab686ca620fd239228627659ed19fdc9853b2a86ba42388216000",
+    "frozen_runtime_lock": "34afa8e41aad26c710944193797e96f1aea10accb868554969cedc2bacdd90e6"
+  },
+  "observed_file_hashes": {
+    "package.json": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6",
+    "package-lock.json": "89a3094c58bab686ca620fd239228627659ed19fdc9853b2a86ba42388216000",
+    "runtime.lock.json": "34afa8e41aad26c710944193797e96f1aea10accb868554969cedc2bacdd90e6"
+  },
+  "read_only_checks": [
+    {
+      "id": "source-head",
+      "status": "pass",
+      "expected": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "observed": "7ca61bb3280beca21d98a854af266a382f7ce5df"
+    },
+    {
+      "id": "source-tree",
+      "status": "pass",
+      "expected": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "observed": "974de7cd08900872eeb0bd6f6004d44323e01fab"
+    },
+    {
+      "id": "source-clean",
+      "status": "pass",
+      "observed": "git status --porcelain empty; git diff --quiet"
+    },
+    {
+      "id": "package-and-lock-hashes",
+      "status": "pass",
+      "observed": "package.json, package-lock.json, and runtime.lock.json match the published frozen hashes"
+    },
+    {
+      "id": "review-gate",
+      "status": "pass_with_gate",
+      "observed": "app-D141-packets-final-review-0003-review.json decision PASS_PER_PACKET_WITH_GATES"
+    },
+    {
+      "id": "cut-gate",
+      "status": "pending",
+      "observed": "D141-cut-tuple.md has app integration head pending and no recorded MAIN GO"
+    },
+    {
+      "id": "live-comparator-checkout",
+      "status": "missing_input",
+      "observed": "/home/user/banodoco/reigh-app is clean but is not the required frozen commit/tree and its package/lock hashes differ"
+    }
+  ],
+  "published_inputs": {
+    "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-full-pristine-return-2354-source-manifest.json",
+    "final_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-review.json",
+    "cut_tuple": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141-cut-tuple.md"
+  },
+  "missing_inputs": [
+    "final U3 App integration head recorded in D141-cut-tuple.md",
+    "recorded MAIN GO",
+    "frozen comparator checkout at the required commit/tree with matching package and lock hashes",
+    "actual private cache/output bindings at dispatch",
+    "normal and pristine execution receipts and per-ID counts"
+  ]
+}

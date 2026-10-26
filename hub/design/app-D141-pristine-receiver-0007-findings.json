@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task": "D141/F",
+  "decision": "READY_BUT_GATED",
+  "findings": [
+    {
+      "id": "D141-F-SOURCE",
+      "status": "pass",
+      "detail": "The receiving worker is exactly the frozen App source commit/tree, clean, and has matching package, package-lock, and runtime-lock SHA-256 values."
+    },
+    {
+      "id": "D141-F-ROUTE",
+      "status": "pass_with_gate",
+      "detail": "The existing worker metadata route is executable in template form: request-test app-D141-pristine-receiver-0007 full --no-cache, followed by wait-test on its returned result id."
+    },
+    {
+      "id": "D141-F-SUITE",
+      "status": "pass",
+      "detail": "The existing App full registration and pristine package scripts preserve the complete Vitest plus Node scope with exact argv npm test -- --maxWorkers=3."
+    },
+    {
+      "id": "D141-F-COMPARATOR",
+      "status": "missing_input",
+      "detail": "The live comparator checkout is clean but not at the required frozen commit/tree or package/lock hashes; no checkout or source adaptation is authorized."
+    },
+    {
+      "id": "D141-F-CUT",
+      "status": "blocked_pending_gate",
+      "detail": "Final U3 App integration head, all cut heads, and recorded MAIN GO remain pending."
+    },
+    {
+      "id": "D141-F-RECEIPT",
+      "status": "not_run",
+      "detail": "No normal full receipt, pristine comparator receipt, Vitest count, Node count, or dependency/schema/profile readiness claim exists."
+    }
+  ],
+  "missing_inputs": [
+    "final U3 App integration head",
+    "recorded MAIN GO",
+    "exact frozen comparator checkout",
+    "actual private cache/output bindings at dispatch"
+  ],
+  "conservation": {
+    "worktree": "/home/user/work/wt/app-D141-pristine-receiver-0007",
+    "base_relative_diff_paths": [],
+    "product_test_schema_generated_config_changes": false
+  }
+}

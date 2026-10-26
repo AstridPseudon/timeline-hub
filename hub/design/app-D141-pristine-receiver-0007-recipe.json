@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "task": "D141/F",
+  "packet": "app-D141-pristine-receiver-0007",
+  "status": "READY_BUT_GATED",
+  "source_target": {
+    "worker_metadata": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-pristine-receiver-0007/meta",
+    "ordinary_receiving_worktree": "/home/user/work/wt/app-D141-pristine-receiver-0007",
+    "branch": "tl/app-D141-pristine-receiver-0007",
+    "head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "clean_required": true,
+    "source_pin_postflight": "recheck HEAD, HEAD^{tree}, git status --porcelain, package.json, package-lock.json, and runtime.lock.json before accepting any receipt"
+  },
+  "dispatch": {
+    "do_not_dispatch_until": [
+      "final U3 App integration head is recorded",
+      "all cut heads are frozen",
+      "MAIN GO is recorded"
+    ],
+    "request_test_argv": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "app-D141-pristine-receiver-0007",
+      "full",
+      "--no-cache"
+    ],
+    "request_test_command": "PATH=/opt/node20/bin:/usr/local/bin:/usr/bin:/bin /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test app-D141-pristine-receiver-0007 full --no-cache",
+    "wait_test_template": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test <returned-result-id>",
+    "request_test_route": "existing worker metadata route only; no new suite, row, config, wrapper, or framework",
+    "performed_by_this_worker": false
+  },
+  "registered_suite": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:69",
+    "suite": "app full",
+    "exact_argv": ["npm", "test", "--", "--maxWorkers=3"],
+    "exact_command": "npm test -- --maxWorkers=3",
+    "complete_scope": {
+      "package_test": "npm run test:app && npm run test:node",
+      "vitest": "npm run check:no-smoke-tests && npm run check:known-failures && npm run check:no-raw-skips && npm run check:skip-registry && vitest run --config config/testing/vitest.config.ts",
+      "node": "node --import tsx --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./scripts/quality/node-skip-guard-reporter.mjs --test-reporter-destination=stdout scripts/astrid-landing/offline-verifier/verify.test.mjs scripts/check-before-push.test.mjs scripts/dev-editor.test.mjs scripts/dev-local-workspace.test.mjs scripts/installer/manifest.test.mjs scripts/node-package-manager.test.mjs scripts/quality/check-docs-maturity-sync.test.mjs scripts/quality/check-extension-deferred-claims.test.mjs scripts/quality/check-extension-drift.test.mjs scripts/quality/check-extension-example-readiness.test.mjs scripts/quality/check-extension-family-conformance.test.mjs scripts/quality/check-known-failures.test.mjs scripts/quality/check-sdk-no-barrel-imports.test.mjs scripts/runtime-schema-guard.test.mjs scripts/terminate-process-tree.test.mjs tests/e2e/local/support/quick-descriptor.test.ts scripts/acceptance/verify-local-project-gallery.test.mjs scripts/patches/remotion-4.0.509-audio-resume.semantic.test.mjs scripts/patches/remotion-4.0.509-audio-resume.test.mjs scripts/quality/capture-extension-external-evidence.test.mjs scripts/quality/check-extension-local-rc-preflight.test.mjs scripts/quality/check-extension-release-preflight.test.mjs scripts/quality/check-extension-ship-evidence.test.mjs scripts/quality/check-no-remote-hosts.test.mjs scripts/release/astrid-release-provenance.test.mjs scripts/release/bounded-command.test.mjs scripts/release/native-tool-attestation.test.mjs scripts/release/pinned-node-runtime.test.mjs scripts/release/pinned-python-runtime.test.mjs scripts/release/verify-extension-ship.test.mjs"
+    }
+  },
+  "toolchain": {
+    "path": "/opt/node20/bin",
+    "node": "/opt/node20/bin/node",
+    "node_version_observed": "v20.20.0",
+    "npm": "/opt/node20/bin/npm",
+    "npm_version_observed": "10.8.2",
+    "package_engine": ">=20.19.0",
+    "package_manager": "npm@10.8.2",
+    "node_modules": "/home/user/work/app/node_modules",
+    "worker_node_modules_resolution": "/home/user/work/app/node_modules",
+    "install_policy": "shared install is read-only; no install or mutation performed",
+    "readiness": "not_verified_from symlink/bin presence alone"
+  },
+  "service_owned_results": {
+    "result_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>",
+    "request": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/request",
+    "status": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/status",
+    "exit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/exit",
+    "summary": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/summary",
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/log.txt",
+    "d66_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/d66",
+    "snapshot": "/home/user/work/wt/.test-<result-id>",
+    "cache_control": "--no-cache; no cache hit may be used for the requested body"
+  },
+  "private_runtime_bindings": {
+    "required_at_actual_dispatch": true,
+    "tmpdir": "/tmp/app-D141-pristine-receiver-0007-<result-id>",
+    "npm_config_cache": "/tmp/app-D141-pristine-receiver-0007-<result-id>/npm-cache",
+    "xdg_cache_home": "/tmp/app-D141-pristine-receiver-0007-<result-id>/xdg-cache",
+    "vite_cache_dir": "/tmp/app-D141-pristine-receiver-0007-<result-id>/vite-cache",
+    "vitest_cache_dir": "/tmp/app-D141-pristine-receiver-0007-<result-id>/vitest-cache",
+    "playwright_output_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/playwright-output",
+    "playwright_browsers_path": "/opt/pw-browsers",
+    "shared_install_and_browser_policy": "read-only; do not install, extract, replace, or write into shared node_modules or browser installation"
+  },
+  "pristine_comparator": {
+    "checkout": "/home/user/banodoco/reigh-app",
+    "required_head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "required_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "required_clean": true,
+    "guard_command_template": "test \"$(git rev-parse HEAD)\" = 7ca61bb3280beca21d98a854af266a382f7ce5df && test \"$(git rev-parse HEAD^{tree})\" = 974de7cd08900872eeb0bd6f6004d44323e01fab && test -z \"$(git status --porcelain)\"",
+    "suite_command": "env -u ASTRID_PUBLIC_CHECKOUT -u ASTRID_APP_DIRECT_DIST -u NODE_PATH PATH=/opt/node20/bin:/usr/local/bin:/usr/bin:/bin npm test -- --maxWorkers=3",
+    "receiving_route": "Farm/Main-owned direct execution from the exact guarded checkout or a pre-existing worker metadata route pinned to the same source; request-test integration:app is not the pristine comparator route",
+    "current_checkout_observation": {
+      "head": "580508eed1bf6ed95caaf476c9d69a4672472a2f",
+      "tree": "ab3a5e296b01cc5458c88049c9eb5be402a05ccf",
+      "clean": true,
+      "status": "missing_input; do not checkout or adapt this worker"
+    }
+  },
+  "reconciliation": {
+    "keep_separate": ["Vitest Test Files", "Vitest Tests", "test:node reporter counts", "runner exit/status/summary"],
+    "compare_per_id": ["report files", "tests", "authorized expected failures", "unexpected failures", "exit code", "source/tree postflight guards"],
+    "historical_counts": "not used as D141 evidence"
+  },
+  "production_contract_guard": {
+    "request_scope": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands[schema_version,op,version,select,args,created]", "label", "steps[id,label,intent,tags,command_ordinals,patch,reads]", "merge fields|atomic", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "replies": ["accepted", "merged data+receipt", "canonical", "digest", "normalized commands", "idmap", "base", "previous", "accepted", "landing", "rebased_onto", "merge_mode", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "conflict reason/head", "invalid code/path/hint/suggestedcommand", "preview would_status/nullreceipt"],
+    "caller_or_contract_change": false
+  }
+}

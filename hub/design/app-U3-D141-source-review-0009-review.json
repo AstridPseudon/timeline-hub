@@ -1,0 +1,27 @@
+{
+  "task": "U3/D141",
+  "worker": "app-U3-D141-source-review-0009",
+  "candidate_commit": "0af0ddb59a16ffae8215854a0b9236954c70c882",
+  "candidate_tree": "736026fcdd9ba9fa377a4d06d7fca166c6e3fea8",
+  "verdict": "FAIL_SOURCE",
+  "source_verdict_scope": "independent protected source review; not a whole-cut readiness verdict",
+  "findings": [
+    {
+      "id": "U3-D141-REG-TOUR-GATE",
+      "severity": "blocking_regression",
+      "status": "owner_return_required",
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "candidate_lines": "227-255",
+      "upstream_lines": "56-59,167-180",
+      "details": "Frozen upstream imports TourChatPanel and useEditorTourRunning, then returns TourChatPanel while a tour is running before mounting session hooks. The candidate automatic merge has neither import nor gate and enters isTimelineAgentSessionsAvailable/AvailableAgentChatPanel unconditionally. The protected TourChatPanel suite consequently mounted live session hooks and failed all 13 tests.",
+      "evidence": "central targeted run: 15 files, 497 tests; 14 files passed, 484 passed, 13 failed in TourChatPanel.test.tsx"
+    }
+  ],
+  "deferred_qualification": [
+    "public/install-manifest.json runtime.lock source mismatch remains provisional",
+    "vendor/astrid-browser/provenance.json has two historical hash mismatches and requires qualified Agent regeneration",
+    "Agent final head and final generated inputs remain pending"
+  ],
+  "repo_source_or_test_changes_by_reviewer": false,
+  "full_suite_or_browser_run": false
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-pristine-receiver-0007/evidence/receipt.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-pristine-receiver-0007-receipt.json",
+    "sha256": "e46bc6c3b74526142043980d1b4da5adfe99dcc51effc9f3189421b9994d53c3",
+    "bytes": 3856
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-pristine-receiver-0007/evidence/recipe.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-pristine-receiver-0007-recipe.json",
+    "sha256": "b0a3953b4a8b47c3cc69a466669ea9220408c5bdc6a62689b078fc3536c277f6",
+    "bytes": 8598
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-pristine-receiver-0007/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-pristine-receiver-0007-validation.md",
+    "sha256": "90ce1bc97590606e9aeeeddfbb639a9b1b2dc78b96a8866c45c9be02b43579cb",
+    "bytes": 2159
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-pristine-receiver-0007/evidence/findings.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-pristine-receiver-0007-findings.json",
+    "sha256": "2030b811e6e406add52258e62632e2a3919f27597f497805a3137f59f6a0bfe2",
+    "bytes": 1859
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-pristine-receiver-0007/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-pristine-receiver-0007-handoff.md",
+    "sha256": "14cb9ff7a819e3b34b18e6557d6d6c66f9680605a0162245d06da9cc724b527d",
+    "bytes": 2726
+  }
+]

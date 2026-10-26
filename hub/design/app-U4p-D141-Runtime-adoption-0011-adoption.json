@@ -1,0 +1,27 @@
+{
+  "task": "app-U4p-D141-Runtime-adoption-0011",
+  "result": "PASS_TOOL_ONLY_ADOPTION",
+  "app": {
+    "base": "0af0ddb59a16ffae8215854a0b9236954c70c882",
+    "final_worktree_diff": ["runtime.lock.json"],
+    "diff_stat": "1 insertion, 1 deletion",
+    "git_diff_check": "PASS"
+  },
+  "runtime": {
+    "checkout": "/home/user/work/runtime",
+    "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "clean": true
+  },
+  "lock": {
+    "source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "producer": "astrid-runtime",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "mapping_count": 14,
+    "mapped_bytes_match_producer_and_lock": true,
+    "public_install_manifest_changed": false
+  },
+  "generated_bytes": "UNCHANGED",
+  "source_119_pass_receipt": "REUSED_FROM_INDEPENDENT_RT-U1-D141-FINAL-REVIEW-2350",
+  "full_suite": "NOT_RUN_BY_TASK_SCOPE"
+}

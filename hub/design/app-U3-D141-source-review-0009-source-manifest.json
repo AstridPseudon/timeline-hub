@@ -1,0 +1,49 @@
+{
+  "task": "U3/D141",
+  "worker": "app-U3-D141-source-review-0009",
+  "candidate_commit": "0af0ddb59a16ffae8215854a0b9236954c70c882",
+  "candidate_tree": "736026fcdd9ba9fa377a4d06d7fca166c6e3fea8",
+  "wip_source_parent": "4572bccbedc20b6f39bc486a86d3c088dc32cc69",
+  "wip_parents": [
+    "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "7ca61bb3280beca21d98a854af266a382f7ce5df"
+  ],
+  "frozen_upstream": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+  "verdict": "FAIL_SOURCE",
+  "changed_from_wip_only": [
+    "public/install-manifest.json",
+    "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+    "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx",
+    "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts",
+    "vendor/astrid-browser/provenance.json"
+  ],
+  "test_files_changed_by_review": [],
+  "source_review_scope": [
+    "upstream/current-parent intent and conflict resolution",
+    "persisted v2 outbox and local save chain",
+    "Runtime client/data-provider commit and reply paths",
+    "door/transport refusal and structured failure paths",
+    "dependency/read/merge/receipt/history/undo fields"
+  ],
+  "producer_inputs": {
+    "runtime_observed": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_lock_source": "ab1e4f6141987706132916e2da16477f5a019464",
+    "agent_final": "pending",
+    "status": "PROVISIONAL_NOT_QUALIFIED"
+  },
+  "vendor_provenance": {
+    "historical_generator_reproduced": true,
+    "historical_source_commit": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
+    "known_mismatches": [
+      "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+      "vendor/astrid-browser/astrid/packs/rendering/elements/catalog.ts"
+    ],
+    "status": "PROVISIONAL_NOT_QUALIFIED"
+  },
+  "ancestry": {
+    "current_parent_is_ancestor": true,
+    "frozen_upstream_is_ancestor": true
+  },
+  "working_tree_clean": true,
+  "reviewer_wrote_product_source": false
+}

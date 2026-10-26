@@ -1,0 +1,65 @@
+{
+  "task": "U3/D141",
+  "method": "Exact-token assertion census from author evidence, followed by source/predicate comparison against current parent and frozen upstream; no title-only equivalence claims",
+  "inventory": {
+    "affected_files": 15,
+    "test_declarations_static": 428,
+    "assertion_statements_static": 1495,
+    "current_parent_test_paths_retained": 1455,
+    "frozen_upstream_test_paths_retained": 1322,
+    "worker_modified_test_files": []
+  },
+  "current_parent_tokens_absent_in_wip": [
+    {
+      "file": "src/shared/components/PaneControlTab.test.tsx",
+      "tokens": ["expect(tab.className).toContain('w-[10px]')"],
+      "classification": "intentional_upstream_replacement",
+      "mapping": "upstream PaneControlTab.tsx adds bottom-grip orientation and candidate matches it"
+    },
+    {
+      "file": "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.test.tsx",
+      "tokens": ["layer.querySelector('.max-sm\\:items-end') toBeNull", "runtime-not-connected querySelector('.max-sm\\:items-end') not.toBeNull"],
+      "classification": "intentional_upstream_replacement",
+      "mapping": "upstream removes the old pending-only centered placement prop; candidate keeps unified GateLayer placement"
+    },
+    {
+      "file": "src/tools/video-editor/components/TimelineEditorShellCore.test.tsx",
+      "tokens": ["min(420px, 32vw, calc(100vw - 24px))", "gridTemplateColumns with 420px", "paddingInlineEnd 52px", "paddingBottom calc(56px + env(...)"] ,
+      "classification": "intentional_upstream_replacement",
+      "mapping": "upstream changes the host dock from 420px/pane-tab bands to 360px and regular 12px padding; candidate matches upstream"
+    },
+    {
+      "file": "src/tools/video-editor/tour/runner/cardPlacement.test.ts",
+      "tokens": ["placeCard([], {width:351,height:240}, phone, {edge:12,dock:'bottom'}) top 415"],
+      "classification": "intentional_upstream_replacement",
+      "mapping": "upstream removes dock:'bottom' and centers an empty card; candidate matches upstream"
+    }
+  ],
+  "frozen_upstream_tokens_absent_in_wip": {
+    "file": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "missing_assertions": [
+      "state.createSession.mutateAsync not.toHaveBeenCalled (five occurrences)",
+      "agent-chat-header querySelector('img') toBeNull",
+      "Chat 2 Main-chat image assertion (two occurrences)",
+      "New chat dialog is present",
+      "onSelectorOpenChange(true)"
+    ],
+    "missing_titles": [
+      "does not auto-create when unengaged (pane unlocked, no markEngaged)",
+      "opens the new-chat menu on the chat's agent models from \"Change model for new chats\"",
+      "reports the header overlay open while the chat menu, the model line or the new-chat picker is open",
+      "starts a new chat with the open chat's agent from the + button",
+      "starts the default agent from + with no model, so the service repeats its remembered model"
+    ],
+    "classification": "intentional_current-parent_replacement_for_four_menu_assertion_groups_and_voice-aware_engagement",
+    "mapping": "candidate AgentChat.tsx uses unified AgentChatMenu and voice-aware isEngaged; current-parent tests exercise those APIs"
+  },
+  "proved_lost_behavior": {
+    "file": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+    "candidate_predicate": "AgentChatPanel always proceeds to isTimelineAgentSessionsAvailable/AvailableAgentChatPanel",
+    "upstream_predicate": "useEditorTourRunning() => TourChatPanel before session hooks",
+    "protected_input": "TourChatPanel.test.tsx running editor-tour state",
+    "observed_output": "13/13 TourChatPanel tests fail; live session hooks are called and tour anchors/composer are absent",
+    "classification": "REG; owner return required"
+  }
+}
