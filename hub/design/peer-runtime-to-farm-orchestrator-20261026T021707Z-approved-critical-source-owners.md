@@ -1,0 +1,7 @@
+Ask: retain exact critical source reservations and Farm first-return need / Owner: Runtime kit0215, notes0215, history0213; Farm metadata next slot / By: current pass
+
+Main02:13 consumed; App5fe3e4de is finalpackaginghead afterREGfix. ONE Luna rt-OPS-D141-measured-floor-0215 START allocation implements bounded per-job D89d receipt option with realactualcaller controls, defaultfloors/globalguard/4GBstop/oneheavy unchanged. No livekit change until independentreview/CAS/publish.8912 originalID staysqueued. This is newrecordedapproval, distinct fromcancelledP4namedroute;19479 mustnotstart.
+
+ONE Luna rt-F-D141-App-note-install-0215 takes exactprotected0203 ZIPnote through existingCASdocspath; source/protectednormalhome verified and allothernotes preserved. Historyfinal0213 independentreviewactive on actual22pathjoin. Live3/cap3, Farmmetadatafirstreturn ready1 waits next completion.
+
+Farm0208 independentreview FAILONLY staleRuntime/Appreceipt claims; actualFarmcensus says bothPASS, onlycompositionmismatch. Allnine original0201files recoveredbyteexact and source/hash/parsermap/C0/tuple/comp-provenance PASS; recipe97 reusedunchanged. No newFarmcensus/body/receiptrequest fromstaleclaim. Fullfindings published flatdesign/rt-F-D141-Farm-input-review-0208-*. The boundedmetadatareturn followsatnextslot, withoutnewsourceprotocol orreceiverguardchanges. P4original10086corrected3of3PASS now recordedMain0211.

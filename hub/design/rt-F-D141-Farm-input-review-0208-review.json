@@ -1,0 +1,60 @@
+{
+  "schema": "timeline.f.d141.farm-input-review.v1",
+  "task": "rt-F-D141-Farm-input-review-0208",
+  "base": "1b709a7965",
+  "reviewed_commit": "2912e517da83e087e8cbc31a62a499f5e681b65d",
+  "actual_farm_census": {
+    "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-farm-to-lead-runtime-20261026T0150Z-core-census-NOT_READY-full-packet.md",
+    "census_output_sha256": "8532e8de9f0cf38ae281aa0097e1ab2c0d705d9a6877babc40a0522db45dc7f2",
+    "status": "NOT_READY",
+    "exit": 1,
+    "nonpass_checks": 22,
+    "receipt_result": "Agent/Runtime/App checkout receipts passed; Composition receipt was the remaining receipt mismatch"
+  },
+  "overall": "FAIL_BOUNDED_DOCUMENT_CORRECTION_REQUIRED",
+  "findings": [
+    {
+      "id": "F-D141-REVIEW-001",
+      "status": "FAIL",
+      "severity": "material-documentation",
+      "subject": "stale Runtime/App receipt-closure absence claim",
+      "source_packet_refs": ["evidence/findings.md:8-12", "evidence/findings.md:41-47", "evidence/handoff.md:21-22"],
+      "actual_refs": ["actual census packet receipt summary", "ops-d140-farm/receive-farm.sh:461-464"],
+      "detail": "The packet says the venue has no Runtime/App normal queue receipt closure and asks the owner to obtain those receipts. The actual 01:50Z Farm pre-child census says the Agent, Runtime and App checkout receipts passed; only the Composition receipt was a mismatch caused by the prior 39-hex filename.",
+      "smallest_first_return": "Correct the prose in findings.md and handoff.md to retain the three passed receipt closures and leave only the full-SHA Composition receipt for recheck. Do not change the receiver, receipt protocol, source tuple, or Farm census."
+    },
+    {
+      "id": "F-D141-REVIEW-002",
+      "status": "PASS",
+      "severity": "custody",
+      "subject": "recovered original evidence custody",
+      "detail": "The nine named producer outputs recovered from git show 2912e517 are byte-identical to the external recovered copies. The producer authoring limitation remains: the original outputs were committed under repo-relative evidence/ paths despite the absolute-output instruction; this review does not recreate them just to change paths. Other inherited evidence files are not credited as new producer outputs."
+    },
+    {
+      "id": "F-D141-REVIEW-003",
+      "status": "PASS",
+      "severity": "source-and-parser",
+      "subject": "22-row map and producer closure",
+      "detail": "All 22 actual census non-pass rows are represented once in input-map.json with the receiver binding, exact parser location, required type/shape, concrete owner/next command, and absent-prerequisite statement. The map correctly separates supplied producer artifacts from Farm control-plane observations/output destinations."
+    },
+    {
+      "id": "F-D141-REVIEW-004",
+      "status": "PASS",
+      "severity": "provenance",
+      "subject": "Composition receipt and current source tuple",
+      "detail": "The Composition receipt is a genuine normal make-checkout text artifact with the full 40-hex commit filename, matching SHA-256 and provenance tuple. It is portable evidence only; receiver admission still requires the original queue path, digest, worker meta, KEEP and clean checkout."
+    },
+    {
+      "id": "F-D141-REVIEW-005",
+      "status": "PASS",
+      "severity": "schema-and-history",
+      "subject": "D139/D140/C0 distinctions",
+      "detail": "The packet keeps historical installed-kit evidence separate from current installed schema bytes, preserves the D139a installed-schema route and guard, treats the 2149 census as supporting input rather than a current D141 result, and its C0 v2 request/accepted/failure/preview/history field summary matches the frozen Runtime schema."
+    }
+  ],
+  "verdict_limits": [
+    "No Farm census, child request, imports, controls, service, core, install, acquisition, network, Store, product execution or live-kit action was run by this review.",
+    "No READY, source qualification, behavioral result, REG result or delivery claim is made.",
+    "The single FAIL is a bounded stale-documentation claim; no production delta or integration merge is requested."
+  ]
+}

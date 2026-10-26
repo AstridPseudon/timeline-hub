@@ -1,0 +1,71 @@
+{
+  "schema": "timeline.d141.history-final-independent-review.v2",
+  "task": "rt-P2-D141-history-final-review-0213",
+  "reviewed_task": "rt-P2-D141-history-final-0207",
+  "verdict": "PASS_BOUNDED",
+  "verdict_scope": "The SAFE packet is sufficient for a narrow structural contract-vsREG ruling, but not for exact actual request-predicate or full P2 qualification.",
+  "source_association": {
+    "status": "PASS",
+    "claim": "The 2-object/22-path actual-only shape exactly matches the reviewed D124 commit.materialization binding family plus its Closure.binding base fields.",
+    "strength": "source/path-family association",
+    "not_claimed": "The packet does not prove that this particular run invoked the D124 complete_stage predicate, because it contains no field values, capture state, request body, or raw producer record."
+  },
+  "contract_vs_reg": {
+    "status": "SUFFICIENT_BOUNDED",
+    "ruling": "At the structural key-path level, classify the additions as intended C0 authenticated binding/materialization records, not an unrelated Runtime/App REG field family.",
+    "boundary": "This does not authorize a claim that the actual run satisfied every D124 guard or that the full P2 gate passed."
+  },
+  "actual_packet": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-extra-fields.json",
+    "sha256": "a00e133b60427cba8ec35bdebd792c962629f1edafee8013b0e2d891dce287d1",
+    "run_id": "app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118",
+    "run_status": "FAIL",
+    "actual_binding_objects": 2,
+    "actual_key_paths": 22,
+    "expected_binding_objects": 0,
+    "expected_key_paths": 0,
+    "unknown_paths": [],
+    "values_or_capture_state": "not supplied"
+  },
+  "independent_app0153": {
+    "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-history-independent-publication-0158.json",
+    "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-safe-history-review-0153-review.json",
+    "review_sha256": "f18a18244172ea4973cc9e29c4b266ab178ec2ac6ac537b5fd49792c878cefed",
+    "status": "PASS custody/privacy only",
+    "contribution": "Confirms retained strict-diff structural fidelity, 2 actual-only objects, 22 paths, zero expected-side additions, no unknown paths, and no published values/raw diff.",
+    "limitation": "Explicitly performs no semantic or intended-history classification; it cannot upgrade source/path correspondence into exact producer-predicate proof."
+  },
+  "d124": {
+    "commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a",
+    "direct_parent": "5caa12bda353cc46143d3125bce60f8019cf839d",
+    "source_commit_patch": "/home/user/peteromallet/astrid-agent:astrid/sdk/timeline/_commit_patch.py",
+    "source_blob": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+    "source_sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+    "source_lines": "641-665,701-718",
+    "base_binding_source": "/home/user/peteromallet/astrid-agent:astrid/sdk/timeline/_doc_patch.py:174-181",
+    "base_binding_blob": "e55d400c00ed727a244aecdaef95a67205e623fa",
+    "base_binding_sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+    "predicate_limit": "complete_stage is one inverse stage whose endpoint documents equal before/after; retained bindings additionally require exclusive physical turnover, single ownership, shot preservation, and edge/endpoint nonmembership. The packet does not expose the values needed to check these conditions."
+  },
+  "historical_15203": {
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D118-P2-15203-pass-review-1019-verdict.json",
+    "status": "PARTIAL-GO; overall NO-GO",
+    "service_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203",
+    "automatic_placement": "PASS, 88.780 seconds",
+    "tuple": "App 96d4754b4eef0591a208d6b51b60c30fc44b6915 / Agent 070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2 / Runtime d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e / Composition 635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "spec": "/home/user/banodoco/reigh-app:tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "spec_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "spec_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "spec_assertion_lines": "748-761; placement 1214-1295"
+  },
+  "security_evidence": {
+    "union_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D124-union-security-review-1339-report.md",
+    "union_review_sha256": "7d7d62f621a04b11690cdea18ebec22961cf1e1e999bb43cf9ec1358ad0d604d",
+    "producer_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D124-producer-security-1307-report.md",
+    "producer_review_sha256": "a9f84406b6404b0aeaa7dbddcf1e4bbd6f0eccfff100dadc9eb2a8ad03fadb56",
+    "qualification_boundary": "The union review is source/security PASS but records blocked qualification; the producer review records product HELD. Neither supplies the missing 3118 values/capture state."
+  },
+  "full_gate": "NOT_A_RESULT",
+  "changes": "No product, test, fixture, pin, guard, contract, or repository file changed."
+}

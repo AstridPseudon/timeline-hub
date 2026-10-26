@@ -1,0 +1,153 @@
+{
+  "schema": "timeline.d141.history-final-independent-source-manifest.v2",
+  "task": "rt-P2-D141-history-final-review-0213",
+  "reviewed_task": "rt-P2-D141-history-final-0207",
+  "source_only": true,
+  "review_worktree": {
+    "repo": "runtime",
+    "path": "/home/user/work/wt/rt-P2-D141-history-final-review-0213",
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "status": "clean",
+    "git_diff_check": "PASS"
+  },
+  "current_cut": {
+    "agent": {"repo": "/home/user/peteromallet/astrid-agent", "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "status": "clean"},
+    "app": {"repo": "/home/user/banodoco/reigh-app", "commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd", "status": "clean"},
+    "runtime": {"repo": "/home/user/banodoco/banodoco-workspace-runtime", "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "status": "clean"},
+    "composition": {"repo": "/home/user/peteromallet/timeline-composition", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "status": "clean"}
+  },
+  "historical_15203_tuple": {
+    "app": {"repo": "/home/user/banodoco/reigh-app", "commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915", "tree": "3f9da34c4f116026ec21022421850e0608ba653b"},
+    "agent": {"repo": "/home/user/peteromallet/astrid-agent", "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"repo": "/home/user/banodoco/banodoco-workspace-runtime", "commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e", "tree": "6283b5fbb128447f1b333e0e6af334d35637cf69"},
+    "composition": {"repo": "/home/user/peteromallet/timeline-composition", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "ancestry": {
+    "agent_pass_is_ancestor_of_d124": true,
+    "agent_d124_is_ancestor_of_current_cut": true,
+    "runtime_historical_is_ancestor_of_current_cut": true,
+    "d124": {
+      "repo": "/home/user/peteromallet/astrid-agent",
+      "commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+      "tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a",
+      "direct_parent": "5caa12bda353cc46143d3125bce60f8019cf839d"
+    }
+  },
+  "packet": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-extra-fields.json",
+    "sha256": "a00e133b60427cba8ec35bdebd792c962629f1edafee8013b0e2d891dce287d1",
+    "run_id": "app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118",
+    "status": "FAIL",
+    "actual_binding_objects": 2,
+    "expected_binding_objects": 0,
+    "actual_key_paths": 22,
+    "expected_key_paths": 0,
+    "unknown_paths": [],
+    "values": false,
+    "capture_state": false
+  },
+  "packet_source_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-source-manifest.json",
+    "sha256": "17ade1f2838e075726edd7457bc95e65dbbc6c46ab5193359257ff5769b260c6"
+  },
+  "app0153": {
+    "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-history-independent-publication-0158.json",
+    "publication_sha256": "1d646ce6da07528831c85c4a6ba02c724ab854106422c6d2b51f6a88448c83d0",
+    "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-safe-history-review-0153-review.json",
+    "review_sha256": "f18a18244172ea4973cc9e29c4b266ab178ec2ac6ac537b5fd49792c878cefed",
+    "findings_sha256": "723050a29a63bc4767d0633bddcd42312c77018fada354821c71e0113ca37fdd",
+    "validation_sha256": "abd22f8d9186ae943b5c5b52072e4c0dc32753cc04453ebb2436c3baa66b55d1",
+    "handoff_sha256": "7b10d11323e90d2dcfc7a5944e30647a93b537843febd4f0874f1d23a9937777",
+    "semantic_classification": "not performed"
+  },
+  "app_spec": {
+    "repo": "/home/user/banodoco/reigh-app",
+    "path": "/home/user/banodoco/reigh-app/tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "current_commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "historical_commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "history_helper_lines": "748-761",
+    "placement_lines": "1214-1295"
+  },
+  "agent_sources": {
+    "repo": "/home/user/peteromallet/astrid-agent",
+    "d124_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "d124_tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a",
+    "d124_direct_parent": "5caa12bda353cc46143d3125bce60f8019cf839d",
+    "pass_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "cut_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "commit_patch": {"path": "/home/user/peteromallet/astrid-agent/astrid/sdk/timeline/_commit_patch.py", "blob": "ac72a2cb8c549393869a96d753a04fc2d88b91ec", "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f", "lines": "359-362,641-665,701-718"},
+    "doc_patch": {"path": "/home/user/peteromallet/astrid-agent/astrid/sdk/timeline/_doc_patch.py", "blob": "e55d400c00ed727a244aecdaef95a67205e623fa", "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f", "lines": "174-181"}
+  },
+  "path_union": {
+    "count": 22,
+    "unknown": [],
+    "paths": [
+      "commands[*].bindings[*].boundary",
+      "commands[*].bindings[*].boundary.base_publication_id",
+      "commands[*].bindings[*].boundary.base_revision_id",
+      "commands[*].bindings[*].boundary.command_ordinal",
+      "commands[*].bindings[*].boundary.evaluated_head",
+      "commands[*].bindings[*].boundary.evaluated_head.publication_id",
+      "commands[*].bindings[*].boundary.evaluated_head.revision_id",
+      "commands[*].bindings[*].boundary.phase",
+      "commands[*].bindings[*].boundary.step_id",
+      "commands[*].bindings[*].content_digest",
+      "commands[*].bindings[*].dependencies",
+      "commands[*].bindings[*].edge_after",
+      "commands[*].bindings[*].edge_before",
+      "commands[*].bindings[*].key",
+      "commands[*].bindings[*].owner",
+      "commands[*].bindings[*].owners",
+      "commands[*].bindings[*].physical_ref",
+      "commands[*].bindings[*].policy",
+      "commands[*].bindings[*].ref",
+      "commands[*].bindings[*].revision_id",
+      "commands[*].bindings[*].step_id",
+      "commands[*].bindings[*].successor"
+    ],
+    "base_emitter_fields": ["ref", "physical_ref", "revision_id", "content_digest", "boundary", "owners"],
+    "materialization_emitter_fields": ["key", "policy", "dependencies", "successor", "owner", "edge_before", "edge_after", "step_id"],
+    "boundary_fields": ["base_publication_id", "base_revision_id", "evaluated_head", "evaluated_head.publication_id", "evaluated_head.revision_id", "step_id", "command_ordinal", "phase"]
+  },
+  "runtime": {
+    "repo": "/home/user/banodoco/banodoco-workspace-runtime",
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "role": "validates/projects authenticated provider bindings and persists records/history; no producer writer for this family",
+    "sources": {
+      "runtime_protocol/timeline_commit_auth.py": {"blob": "b2b238a716b55276e63d23d2886ef8542a382faa", "sha256": "6e227fe16740aa93c1880beea0ff741275a195c0e0d460e9b3d186aed6392598"},
+      "runtime_protocol/timeline_commit_store.py": {"blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7", "sha256": "fce6c3ebe916d3a5f6be48125d3214d7cf15b1e51a6f276681a825d0e3925f99"},
+      "runtime_protocol/timeline_commit_execution.py": {"blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896", "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"},
+      "runtime_protocol/timeline_commit_port.py": {"blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3", "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"}
+    }
+  },
+  "contract": {
+    "path": "/home/user/work/wt/rt-P2-D141-history-final-review-0213/contract/commit-v2.md",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "citations": ["§1 lines 60-155", "§2 lines 287-350", "§2 lines 388-438", "§4 lines 703-715", "§5 lines 1563-1642", "§7 lines 4609-4642"]
+  },
+  "historical_receipt": {
+    "verdict": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D118-P2-15203-pass-review-1019-verdict.json",
+    "companion": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D118-P2-15203-pass-review-1019-verdict.md",
+    "service_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203",
+    "overall_status": "NO-GO",
+    "case_status": "automatic child placement PASS",
+    "case_duration_seconds": 88.78,
+    "full_run_counts": {"tests": 8, "pass": 2, "fail": 2, "error": 1, "notrun": 3}
+  },
+  "security_receipts": {
+    "agent_union": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D124-union-security-review-1339-report.md", "sha256": "7d7d62f621a04b11690cdea18ebec22961cf1e1e999bb43cf9ec1358ad0d604d", "scope": "source/security PASS; qualification blocked"},
+    "runtime_producer": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D124-producer-security-1307-report.md", "sha256": "a9f84406b6404b0aeaa7dbddcf1e4bbd6f0eccfff100dadc9eb2a8ad03fadb56", "scope": "source/security PASS; product HELD"},
+    "runtime_producer_author": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D124-producer-sol-1247-report.md", "sha256": "534d7e2477653e224a12432d6486b9b93ce2e43b0d2deb251349ee75ddb74370", "scope": "D124 held"}
+  },
+  "interpretation": {
+    "source_association": "PASS_BOUNDED",
+    "contract_vs_reg": "SUFFICIENT_BOUNDED",
+    "exact_actual_predicate": "NOT_PROVEN",
+    "full_p2": "NOT_A_RESULT",
+    "values_or_capture_state": "absent from supplied SAFE packet"
+  }
+}
