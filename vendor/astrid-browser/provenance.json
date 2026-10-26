@@ -1,7 +1,7 @@
 {
-  "astrid_commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
-  "astrid_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
-  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 8585ed9c0404d0187b2ce70242d25114a32747c2",
+  "astrid_commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+  "astrid_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit ec0a9f5baef2c31bc5179087b83f044524575182",
   "declared_files": "config/astrid-vendor-files.json",
   "excluded_files": [
     "astrid/packs/rendering/editor/live-scenes/diagnostics.ts",
