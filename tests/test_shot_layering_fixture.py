@@ -141,6 +141,26 @@ def test_shared_fixture_preserves_settled_layering_semantics() -> None:
     }]
 
 
+def test_shared_fixture_groups_source_role_visual_track() -> None:
+    fixture = load_shot_layering_fixture()
+    film = next(case for case in fixture["cases"] if case["id"] == "film-picture-over-type")
+    timeline = film["input"]["shot_revisions"][0]["internal_timeline_revision"]["timeline"]
+
+    assert {"id": "source-plate", "kind": "visual", "role": "source"} in timeline["tracks"]
+    source_clip = next(clip for clip in timeline["clips"] if clip["id"] == "vision-source-plate")
+    assert source_clip["track"] == "source-plate"
+    assert source_clip["duration_ms"] > 0
+    assert film["input"]["occurrences"][0]["occurrence_id"] == "occ-vision"
+
+    expected = film["expected"]
+    assert "occ-vision~source-plate" in expected["track_order"]
+    assert {
+        "id": "occ-vision~source-plate",
+        "app": {"group": {"id": "occ-vision", "sourceTrack": "source-plate"}},
+    } in expected["group_tracks"]
+    assert expected["clip_tracks"][source_clip["id"]] == "occ-vision~source-plate"
+
+
 def test_shared_fixture_rejects_unknown_values_at_any_depth() -> None:
     fixture = load_shot_layering_fixture()
     fixture["cases"][0]["input"]["shot_revisions"][0]["internal_timeline_revision"]["timeline"]["clips"][0]["asset_id"] = "UNKNOWN"

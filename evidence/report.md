@@ -1,29 +1,37 @@
-# Fix T1: canonical shared shot-layering fixture
+PASS — B-T1-role-source-2
 
-PASS
+Canonical fixture SHA-256:
 
-The canonical fixture now has one current-shape composition graph per case:
-top-level occurrence records carry `occurrence_id`, `shot_id`, `revision_id`,
-`at_ms`, and `duration_ms`; child timelines are under each pinned shot
-revision's `internal_timeline_revision.timeline`. Parent tracks and loose clips
-are represented in `parent_composition.config`.
+`c779ef38d4f47368967a5afab2704548c70c0f27c646f8ebab6be74ad3cf63a7`
 
-The focused test rejects recursive exact `UNKNOWN` values, rejects the old
-`shots`/`loose_clips`/`main_tracks` case-input shape, validates occurrence and
-revision/timeline links, and asserts the seven settled cases and expectations:
-above/below/same row, transparency, suffix tracks, multiple occurrences,
-merged audio, namespaced visual groups, and missing-row fallback warning.
+Agent and App consumers must vendor `conformance/fixtures/shot-layering-v1.json`
+byte-for-byte and pin this digest.
 
-Updated canonical fixture SHA-256:
+Added the inner visual track `source-plate` with authored `role: source` to
+`film-picture-over-type`. Its `vision-source-plate` media clip reuses the existing
+footage asset and 0–12000 ms timing, preserving the existing transparent window.
+Expected output includes `occ-vision~source-plate`, with
+`app.group = {"id": "occ-vision", "sourceTrack": "source-plate"}`, and maps the
+clip to that namespaced track. The track follows the existing inner visual tracks
+and precedes the occurrence row. This tests provenance without excluding visuals.
 
-`3c75d3ede4f868bedc46bfebe1c6988e159a58d4edf444986509e9a87f8fba1e`
+Added one focused assertion test requiring the authored visual/source track, a
+positive-duration clip on it, and the expected namespaced track, group tag and
+clip mapping. Existing assertions remain intact, including all seven required
+cases, recursive rejection of `UNKNOWN`, ordering, merged audio and transparency.
+No projection product code changed.
 
-T2/T3 must vendor this exact file byte-for-byte and pin this digest in their
-consumer tests. Runtime production code does not load this conformance fixture;
-the Runtime test reads it directly from the checked-in conformance path.
+Validation:
 
-Checks:
+- `PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-o cache_dir=/tmp/w-0fd7cf1fa3/pytest-cache' python -m pytest -q --basetemp=/tmp/w-0fd7cf1fa3/pytest-role-source tests/test_shot_layering_fixture.py`
+  — **4 passed, 1 warning in 0.09s**. The existing warning is
+  `PytestConfigWarning: Unknown config option: timeout`.
+- `git diff --check` — passed, no output.
+- `sha256sum conformance/fixtures/shot-layering-v1.json` — digest above.
+- Read-only Python comparison against `git show HEAD:conformance/fixtures/shot-layering-v1.json`
+  — removing only the new authored track/clip and expected track/group/mapping
+  restores the entire original JSON structure, preserving all seven prior cases.
 
-- `python -m pytest -q --basetemp=/tmp/w-47d479135f-shot-layering-final.jJBs5V tests/test_shot_layering_fixture.py` — `3 passed, 1 warning` (existing `Unknown config option: timeout` warning).
-- `git diff --check` — passed (no output).
-- Read-only cross-check: `PYTHONPATH=/home/user/work/agent python -c '...parse_shot_composition...'` — all 7 case inputs accepted by Agent's canonical validator.
+Blocked: nothing. Full suites, consumer product tests, browsers, sockets and renders
+were outside scope and were not run. Next: Agent and App vendor these exact bytes,
+update their digest pins, and run their fixture consumer tests.
