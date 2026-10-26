@@ -16,7 +16,14 @@ if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled 
 [ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
-OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
+OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do
+  [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"
+  # Python lanes receive changed source and fixture paths; pytest gets test selectors only.
+  case $repo in
+    agent|runtime) case $f in tests/*.py|tests/*.py::*) CMD+=" $f";; esac;;
+    *) CMD+=" $f";;
+  esac
+done; set +f
 HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
@@ -283,12 +290,19 @@ NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $rep
 # agent: link the worktree's installed Remotion runtime (remotion/node_modules), else the integration checkout's, read-only by convention
 if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
   [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
+TEST_PYTHONPATH=$SNAP
+if [ $repo = agent ]; then
+  RUNTIME_SHA=$(sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$SNAP/runtime.lock.json")
+  RUNTIME_SOURCE=$(git -C /home/user/work/runtime worktree list --porcelain | awk -v sha="$RUNTIME_SHA" '/^worktree / {path=$2} /^HEAD / && $2 == sha {print path; exit}')
+  [ -n "$RUNTIME_SOURCE" ] || { echo "matching Runtime source $RUNTIME_SHA not found" >&2; exit 1; }
+  TEST_PYTHONPATH=$SNAP:$RUNTIME_SOURCE
+fi
 if [ -n "$BENCH_CONTROL_FD" ]; then
-  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66" exec timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
+  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" exec timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
   SUITE_PID=$!; printf '%s\n' "$SUITE_PID" >&"$BENCH_CONTROL_FD"; exec {BENCH_CONTROL_FD}>&-
   wait "$SUITE_PID"; RC=$?
 else
-( cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66" timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+( cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
 fi
 [ -n "$LEASED" ] && exit "$RC"
 fi
