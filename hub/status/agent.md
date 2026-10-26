@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T02:26:45Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 2m -->
-# agent board, 2026-10-26T02:24:38Z
+<!-- agent | 2026-10-26T02:30:50Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
+# agent board, 2026-10-26T02:29:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -18,7 +18,8 @@
 | D141 pristine result | Preserve actual comparator outcome | Luna and service | Frozen8b6ed/fa9 | merged | Controller0035; service27388 | 3255 outcomes:3250 PASS4 FAIL1 ERROR0 SKIP;332s. Source and disk custody clean. Four ENV nodes and one UNKNOWN timeout. | Pristine8b6ed/fa9 |
 | D141 pristine inventory | Publish all retained outcomes | Luna | Independent0100 PASS | merged | Reader0045; reviewer0100 | Full3255 records:3082 concrete IDs and173 unnamed subtest PASS. Exact XML/table hashes retained; no invented IDs. | Evidence only |
 | D141 notes template | Prepare failure notes for later Farm join | Luna | Independent0217 PASS | merged | Author0213; reviewer0217 | Flat table and template published. All370 IDs and52 roots conserved; media48 nested. Cut outcomes and verdicts PENDING; no behavior credit. | Evidence only |
-| D141 REG join | Compare Farm cut and pristine per ID | Farm and Runtime | Farm cut XML and conditional reruns | blocked:farm | Existing Runtime REG coordinator | Only pristine bad nodes also failing cut need matching-kind rerun. No Agent body or REG verdict. | Pending Farm |
+| D141i cut measurement | Run same kind cut core on Agent | Luna | MAIN02:26:10 speed up order | doing | agt-F-D141i-cut-measurement-prep-0227 | Fresh controls and exact22 roots; venv-agent, durable XML and5s disk trace. Command review only if beyond tuple substitution. No body yet. | Frozen28e and6a |
+| D141 REG join | Compare same kind cut and pristine per ID | Luna and Runtime | Actual D141i cut XML | blocked:agent | D141i controller next; Runtime coordinator | Restricted17 upstream roots;5 project roots N/A. Fails cut and passes pristine gives candidate. Farm definitive for environment sensitive candidates. | Cut pending |
 | D139 Farm core | Qualify frozen tuple on Farm | Farm and Runtime | Farm receiving artifacts | blocked:farm | Farm census0140; Runtime0201 and0208 | Census permission cleared. Actual census NOT_READY with22 non-pass checks; owners owe artifacts. No child or core body. | Agent28e /Runtime6a |
 | P4 prior cut body | Preserve authentic prior three PASS | Luna and service | Correct bound proof below | gated:superseded-custody | Controller0105; result0114 | Service10086 genuinely3 PASS23.668s; custodyFAIL because manifest named different JUnit path. Original result immutable. | Frozen cut |
 | P4 JUnit source | Bind one durable proof destination | Luna | Independent0124 PASS | merged | Author0119; wholepath0119; review0124 | Only normal manifest junit_paths changed. Manifest95f5ce and row630bb exact; guards and original selectors conserved. | 271095 source |
@@ -43,7 +44,7 @@ Blockers: Farm — owner cleared census permission; actual0140 census NOT_READY 
 Blockers: App — receipt b7be and independent0202 PASS published0207; App cumulative P4 verdict owed. No second body.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification. Existing Runtime escalation retained; no retry, transfer, alternate route or rollback.
 
-Next ready: Runtime notes join after actual Farm XML; App cumulative receipt verdict. live0 / cap3 source; no body. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
+Next ready: D141i prep0227 -> conditional command review -> sole cut measurement -> per ID candidate join. live1 / cap3 source; no body yet. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
 
 P4: Latest MAIN shortcut in INBOX01:48:16Z supersedes corrected rerun and kit change. Genuine10086=3PASS23.668s, XML0055/evidence/body-evidence/p4-d141c.xml sha256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. Original manifest67ef and runmanifest named missing0047 path; independent0114 FAIL retained. New immutable receipt0159 b7be binds actual path/hash/fulltuple without rewriting originals; ONE quick independent0202 check terminal PASS at02:04:50Z; published0207, then App verdict. No second P4 body; queued19479 remains unstarted, no floor release/manual cancellation. Normal stop0128 completed; dispatcher receipt confirms process stopped. Source0119/0124 and admission6c00/8aa7/0139 are retained superseded, uninstalled; MAIN told Runtime cancel0146. Canonical bin/test-run remains0be17b. All old/new raw, selector and controller KEEP stay through App verdict and final delivery.
 
@@ -55,7 +56,7 @@ Later: originalTrue redo, graph child-birth alias, fork18 ABI1 history, transcri
 
 Disk: 4858232832 bytes at02:11Z. Sweep3 removed0; compact packed0 scratch and0 test dirs, gzipped1 old log. Fresh ended non-KEEP census found no remaining worktree. Ended0136/0139 already autorecycled; normal recycle confirms no worktree. No eligible ended non-KEEP worktree remains. DirtyG2,KEEP0816,current cut pins,all referenced raw/selector KEEP,protectedd22/f1012 and child3e163 retained. No cleanup refusal or Store operation.
 
-INBOX consumed through2026515 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+INBOX consumed through2027970 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
 
 Pass 01:58Z: Stop0128 completed;19479 remains queued with zero body and kit0be17b unchanged. Receipt0151 terminal, absolute-output mistake recovered byte-exact from Git5d11. Found one truncated39-char Agent tree in emitted JSON; immediately assigned same-lineage metadata-only return0159 before the ONE independent quick check. All actual outcome and original evidence unchanged.
 
@@ -72,3 +73,5 @@ Pass02:18Z: Notes author0213 terminal exit0; five absolute artifacts exist. Own 
 Pass02:21Z H6: No new inbox items after2026515. Runtime actual producer0201 source2912e517 and independent0208 own all22 Farm input mappings; Farm actual receipt remains NOT_READY. App P4 still awaits receipt consumption; Agent0202 PASS peer0207 already hub-published. MAIN02:11 confirms P4 cleanly done via receipt; App cumulative decision remains its owner. Notes0217 active, no other Agent ready task, live1/cap3, ready-undispatched0. Fresh free4840644608 bytes; no newly eligible ended worktree or need to repeat completed cleanup. Queued19479 remains unstarted.
 
 Pass02:24Z: Notes0217 independent PASS, zero actionable findings; all9 SAFE artifacts byte-published and Runtime/lead handoff sent with hashes. Table d3729a6a retains370/52; Markdown e37accbf. All cut statuses and final classifications pending. Presencey21/n3/UNKNOWN346 explicitly bounded; no-match alone never proves absence. No code merge, body, root-cause work or credit. No Agent task ready after handoff.
+
+Pass02:29Z: MAIN D141i newly authorizes same-kind Agent-box cut measurement now; supersedes Farm-only plan for this measurement. Dispatched0227 immediately, exact frozen tuple and existingvenv-agent. No new child/launcher/admission change. Canonicalagent-core-full already admits4700000000 bytes. Fresh controls and required durable5s trace; one bounded review only for command changes beyond tuple. Farm remains definitive for environment-sensitive candidates. Historical no-Agent-body statements above describe pre-D141i scope.
