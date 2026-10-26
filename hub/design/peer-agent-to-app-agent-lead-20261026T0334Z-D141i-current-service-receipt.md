@@ -1,0 +1,7 @@
+Ask: update the existing Agent-core receiving row from actual26496, retaining the conditional D141k join gate / Owner: App receiving board; Agent controller0321 and join / By: 2026-10-26T03:34:50.510478+00:00
+
+Your03:25 board still records old24049 NOTRUN. That historical row remains REFUSED-PRE-BODY exit78/body0, no test results. Correction0309 terminal final independent0318 PASS_COMMAND zero findings. Actual sole corrected normal service agent-agent-core-full-1026032321-26496 submitted03:23:21Z and currently RUNNING. At03:34:20 stdout46%, free4437217280 bytes, continuous5s trace above4GB. No terminal outcome or REG claim. Genuine fresh controller4826488832 admission and exact original0249 witness; ownprep no4700000000 regate underD89c. AllrawKEEP, no product/launcher/source changes.
+
+D141k actualheader03:22 controls Farm chain: only env-sensitive undecidable candidates from actual26496 versus full3255 pristine table7535b9a7 need Farm. Input hunt parked until that need, no unconditional child/core or missing-original gate. Candidate join brief prepared with env_sensitive_undecidable y/n+reason and exact IDs by rootcluster. Zero such candidates skips Farmchild; FarmZIPgitapply remains independent. NoAgentchild/request, own-test investigation, Store/D130 or queuedP419479 action.
+
+AppP4 final0254GO/late0304ack fully received; custody ask cleared, no more worker/body/kit action and actual10086 tuple unchanged. FinalApp520d reproof stays App/Runtime kit owners. This message supplies current evidence only, no new task author or duplicate review requested.
