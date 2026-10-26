@@ -162,7 +162,7 @@ def run_b11_1(component_rows:Sequence[Mapping[str,Any]],generator_definitions:Se
                 component_path=None
                 if component_manifest_bytes is not None:
                     component_path=inp/"component-manifest.json";component_path.write_bytes(component_manifest_bytes);input_digests[component_path]=hashlib.sha256(component_manifest_bytes).hexdigest()
-                checkout_snapshot=_filesystem_snapshot(checkout);exe=str(d.get("interpreter_path") or d.get("executable") or "python3");argv=[exe,str(ep_run),"--contract",str(cp),"--schema-manifest",str(sp)]
+                checkout_snapshot=_filesystem_snapshot(checkout);exe=str(d.get("interpreter_path") or d.get("executable") or "python3");argv=[exe,"-X","utf8",str(ep_run),"--contract",str(cp),"--schema-manifest",str(sp)]
                 if component_path is not None:argv.extend(["--component-manifest",str(component_path)])
                 argv.extend(["--output-root",str(stage)]);before=_dirty(checkout);res=subprocess.run(_sandbox_command(argv,staging=stage),cwd=str(checkout),capture_output=True,check=False,timeout=300,env={"PATH":os.environ.get("PATH","") ,"PYTHONDONTWRITEBYTECODE":"1","PYTHONNOUSERSITE":"1"});after=_dirty(checkout)
                 if _filesystem_snapshot(source_checkout)!=source_snapshot or _dirty(source_checkout)!=source_status:raise ReleaseIdentityError("B11.1 generator mutated the reviewed source checkout")
@@ -172,7 +172,7 @@ def run_b11_1(component_rows:Sequence[Mapping[str,Any]],generator_definitions:Se
                 if res.returncode!=0:raise ReleaseIdentityError(f"B11.1 generator failed: {gid}")
                 inv=_directory_inventory(stage)
                 if not inv:raise ReleaseIdentityError("B11.1 generator produced no output")
-                stable_argv=["<interpreter>","<component-checkout>/"+str(d["entrypoint_path"]),"--contract","<contract-input>","--schema-manifest","<schema-manifest-input>"]
+                stable_argv=["<interpreter>","-X","utf8","<component-checkout>/"+str(d["entrypoint_path"]),"--contract","<contract-input>","--schema-manifest","<schema-manifest-input>"]
                 if component_path is not None:stable_argv.extend(["--component-manifest","<component-manifest-input>"])
                 stable_argv.extend(["--output-root","<staging-output-root>"]);invs.append(inv);receipts.append({"schema_version":1,"artifact_kind":"generator-run-receipt","generator_id":gid,"run_ordinal":n,"argv":stable_argv,"argv_sha256":framed_hash("astrid_runtime.generator-run-argv.v1",stable_argv),"output_rows":inv,"exit_code":0})
             if invs[0]!=invs[1]:raise ReleaseIdentityError("B11.1 generator runs are not byte-identical")

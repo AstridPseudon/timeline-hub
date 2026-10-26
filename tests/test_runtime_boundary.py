@@ -66,6 +66,61 @@ def test_startup_admission_budget_is_validated_and_forwarded(tmp_path, monkeypat
     assert argv[flag + 1] == "120.0"
 
 
+def test_runtime_start_argv_enables_utf8_mode_and_controls_default_off(tmp_path):
+    profile = SourceProfile(profile="astrid", runtime_checkout=str(tmp_path), source_checkout=str(tmp_path))
+    argv = LocalRuntimeBoundary()._argv(
+        profile,
+        realm_id="realm",
+        realm_root=tmp_path / "realm",
+        support_root=tmp_path / "support",
+        display_name="Astrid Workspace",
+        owner_lock=tmp_path / "support" / "instance.lock",
+        token_file=tmp_path / "support" / "bootstrap-token",
+    )
+    assert argv[:4] == [sys.executable, "-X", "utf8", "-m"]
+    environment = {**os.environ, "PYTHONUTF8": "0"}
+    probe = subprocess.run(
+        [*argv[:3], "-c", "import sys; print(sys.flags.utf8_mode)"],
+        env=environment, capture_output=True, text=True, check=True,
+    )
+    control = subprocess.run(
+        [sys.executable, "-c", "import sys; print(sys.flags.utf8_mode)"],
+        env=environment, capture_output=True, text=True, check=True,
+    )
+    assert probe.stdout.strip() == "1"
+    assert control.stdout.strip() == "0"
+
+
+def test_runtime_create_and_doctor_argv_enable_utf8_mode(tmp_path, monkeypatch):
+    from astrid_runtime import runtime_boundary as module
+
+    calls = []
+    monkeypatch.setattr(module.subprocess, "run", lambda argv, **_kwargs: (
+        calls.append(list(argv)) or SimpleNamespace(stdout='{"created":true}', returncode=0)
+    ))
+    profile = SourceProfile(profile="astrid", runtime_checkout=str(tmp_path), source_checkout=str(tmp_path))
+    boundary = LocalRuntimeBoundary()
+    created = boundary.create(realm_id="realm", realm_root=tmp_path / "new-realm",
+                              display_name="Astrid Workspace", source_profile=profile)
+    assert created == {"created": True}
+    support = tmp_path / "existing-realm"
+    support.mkdir()
+    boundary.inspect(realm_root=support)
+    assert all(argv[:4] == [sys.executable, "-X", "utf8", "-m"] for argv in calls)
+
+
+def test_custody_wrapper_enables_utf8_before_isolation():
+    from astrid_runtime.custody_broker import custody_wrapper_argv
+
+    argv = custody_wrapper_argv(sys.executable)
+    assert argv[:4] == [sys.executable, "-X", "utf8", "-I"]
+    result = subprocess.run(
+        [*argv[:4], "-c", "import sys; print(sys.flags.utf8_mode)"],
+        env={**os.environ, "PYTHONUTF8": "0"}, capture_output=True, text=True, check=True,
+    )
+    assert result.stdout.strip() == "1"
+
+
 def test_worker_profile_is_validated_through_installed_source_boundary(tmp_path):
     worker_profile = tmp_path / "worker-profile.json"
     worker_profile.write_text("{}")
