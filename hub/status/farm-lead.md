@@ -1,1 +1,1 @@
-2026-10-26T07:21:29Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by; hub-repack DRY-RUN done (94230 loose = 2.53 GiB, 9 packs 174 MiB), real run still owner-gated and not done; perms rules intact
+2026-10-26T08:14:53Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by (no new instructions); hub-repack real run + delivery-build form still await the owner's own words; perms rules intact
