@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T02:38:55Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 2m -->
-# agent board, 2026-10-26T02:36:13Z
+<!-- agent | 2026-10-26T02:42:56Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
+# agent board, 2026-10-26T02:40:16Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -18,7 +18,7 @@
 | D141 pristine result | Preserve actual comparator outcome | Luna and service | Frozen8b6ed/fa9 | merged | Controller0035; service27388 | 3255 outcomes:3250 PASS4 FAIL1 ERROR0 SKIP;332s. Source and disk custody clean. Four ENV nodes and one UNKNOWN timeout. | Pristine8b6ed/fa9 |
 | D141 pristine inventory | Publish all retained outcomes | Luna | Independent0100 PASS | merged | Reader0045; reviewer0100 | Full3255 records:3082 concrete IDs and173 unnamed subtest PASS. Exact XML/table hashes retained; no invented IDs. | Evidence only |
 | D141 notes template | Prepare failure notes for later Farm join | Luna | Independent0217 PASS | merged | Author0213; reviewer0217 | Flat table and template published. All370 IDs and52 roots conserved; media48 nested. Cut outcomes and verdicts PENDING; no behavior credit. | Evidence only |
-| D141i cut measurement | Run same kind cut core on Agent | Luna | ONE changed command review0232 | review | Prep0227 PASS controls; reviewer0232 | Positive0 then17 with1 call; poison1 with0 calls. Exact22 roots. Wrapper adds required durable5s trace, so bounded review precedes body. | Frozen28e and6a |
+| D141i cut measurement | Run same kind cut core on Agent | Luna | Correct all4 command findings | doing | Prep0227; review0232 FAIL; return0238 | No body. Refusal exit, JUnit binding, terminal disk custody and profile-lock hash corrected in one return; final controls and command check next. | Frozen28e and6a |
 | D141 REG join | Compare same kind cut and pristine per ID | Luna and Runtime | Actual D141i cut XML | blocked:agent | D141i controller next; Runtime coordinator | Restricted17 upstream roots;5 project roots N/A. Fails cut and passes pristine gives candidate. Farm definitive for environment sensitive candidates. | Cut pending |
 | D139 Farm core | Qualify frozen tuple on Farm | Farm and Runtime | Farm receiving artifacts | blocked:farm | Farm census0140; Runtime0201 and0208 | Census permission cleared. Actual census NOT_READY with22 non-pass checks; owners owe artifacts. No child or core body. | Agent28e /Runtime6a |
 | P4 prior cut body | Preserve authentic prior three PASS | Luna and service | Correct bound proof below | gated:superseded-custody | Controller0105; result0114 | Service10086 genuinely3 PASS23.668s; custodyFAIL because manifest named different JUnit path. Original result immutable. | Frozen cut |
@@ -44,7 +44,7 @@ Blockers: Farm — owner cleared census permission; actual0140 census NOT_READY 
 Blockers: App — receipt b7be and independent0202 PASS published0207; App cumulative P4 verdict owed. No second body.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification. Existing Runtime escalation retained; no retry, transfer, alternate route or rollback.
 
-Next ready: Command0232 PASS -> sole cut measurement -> per ID candidate join. live1 / cap3 source; no body yet. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
+Next ready: Return0238 -> bounded final command check -> sole cut measurement -> per ID candidate join. live1 / cap3 source; no body yet. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
 
 P4: Latest MAIN shortcut in INBOX01:48:16Z supersedes corrected rerun and kit change. Genuine10086=3PASS23.668s, XML0055/evidence/body-evidence/p4-d141c.xml sha256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. Original manifest67ef and runmanifest named missing0047 path; independent0114 FAIL retained. New immutable receipt0159 b7be binds actual path/hash/fulltuple without rewriting originals; ONE quick independent0202 check terminal PASS at02:04:50Z; published0207, then App verdict. No second P4 body; queued19479 remains unstarted, no floor release/manual cancellation. Normal stop0128 completed; dispatcher receipt confirms process stopped. Source0119/0124 and admission6c00/8aa7/0139 are retained superseded, uninstalled; MAIN told Runtime cancel0146. Canonical bin/test-run remains0be17b. All old/new raw, selector and controller KEEP stay through App verdict and final delivery.
 
@@ -79,3 +79,5 @@ Pass02:29Z: MAIN D141i newly authorizes same-kind Agent-box cut measurement now;
 Pass02:33Z: D141i0227 terminal exit0, actualfreshcontrols PASS. Positive ec6c1f75 preflight0/stub17/onecall; poison69168652 changes onlyagent_sha, exit1/zerocalls. Current frozenlauncher9f668 unchanged. Command0486505a adds required durable5s trace/custody/stopwrapper beyondtuple substitution; dispatched ONE independent0232 immediately under MAIN conditionalrule. No body/collection/service request yet.
 
 Pass02:36Z: Command0232 active. Manager packet read notices manifestdeclaredJUnit lacks one directory relative to wrapper actualdestination; independent review already explicitly checks path equality plus entire wrapper. No source edited or body requested. Await complete finite review, then sole same-lineage author return if FAIL; no premature service installation. Controls remain genuine source-only positive17/one andpoison1/zero.
+
+Pass02:40Z: Independent0232 FAIL_COMMAND, four genuine finite issues. Sole Luna0238 firstreturn dispatched immediately on0227branch; fixes allfour, finalserializedhash/control provenance and installable native row without touching protectedsource/profile/launcher/kit. Original0227/0232 preserved and review SAFE files published. No test body or service request.

@@ -1,0 +1,81 @@
+{
+  "schema": "timeline.agent.d141i.command-review.v1",
+  "reviewed_utc": "2026-10-26T02:36:00Z",
+  "verdict": "FAIL_COMMAND",
+  "scope": "one bounded independent review of the D141i Agent-core-full measurement command before body admission",
+  "source_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-measurement-prep-0227/evidence",
+  "candidate_sha256": "0486505ae868d24b871c32575be95341887cfaf8bcae0877e8ac1c41791c1abf",
+  "findings": [
+    {
+      "id": "D141I-COMMAND-001",
+      "severity": "blocking",
+      "status": "FAIL",
+      "evidence": "measurement-command.sh:47-50",
+      "detail": "die() executes exit \"\\${2:-78}\". The escaped parameter expression is passed literally, so refusal paths do not use the intended numeric default 78; all die call sites omit an explicit second argument.",
+      "required_effect": "Every refusal must terminate with the intended bounded numeric status and retain durable terminal handling."
+    },
+    {
+      "id": "D141I-COMMAND-002",
+      "severity": "blocking",
+      "status": "FAIL",
+      "evidence": "positive.manifest:37; measurement-command.sh:33,296-297",
+      "detail": "The manifest declares JUnit at .../private/measurement-runs/agent-core-full.xml, while RUN_ROOT is .../private/measurement-runs/agent-core-full and the actual argv expands --junitxml to .../private/measurement-runs/agent-core-full/agent-core-full.xml.",
+      "required_effect": "manifest-declared JUnit destination must equal the actual argv destination, with no ambiguous receipt join."
+    },
+    {
+      "id": "D141I-COMMAND-003",
+      "severity": "blocking",
+      "status": "FAIL",
+      "evidence": "measurement-command.sh:306",
+      "detail": "record_disk after_body is explicitly ignored with || :. If the terminal disk witness cannot be read or written, the command can continue with body_rc=0 and monitor_rc=0; record_disk does not update evidence_rc, so this terminal custody failure can be hidden from PASS classification.",
+      "required_effect": "Before/during/after disk custody failures must make the run non-PASS and remain represented in terminal evidence."
+    },
+    {
+      "id": "D141I-SOURCE-004",
+      "severity": "blocking",
+      "status": "FAIL",
+      "evidence": "positive.manifest:27; source-manifest.json:13; actual profile package-lock.json",
+      "detail": "positive.manifest and source-manifest.json declare profile_lock_sha ...be18e, but the existing /home/user/work/runtimes/agent-remotion-v3-819acf-1110/package-lock.json hashes to ...be18d. The recorded positive dry preflight is not sufficient to establish the current manifest/profile binding.",
+      "required_effect": "The positive manifest must bind the actual existing profile lock receipt before launcher admission."
+    }
+  ],
+  "finite_checks": {
+    "bash_n_candidate": "PASS",
+    "bash_n_pinned_launcher": "PASS",
+    "json_parse_five_prep_json_files": "PASS",
+    "candidate_hash_matches_command_diff": "PASS",
+    "positive_manifest_hash": "PASS ec6c1f75f3b57825e2302aab904555fc29f4ae74ed600074dedecc37c12dfd7e",
+    "poison_manifest_hash": "PASS 691686527807580a586f67abd4a216a65e37ea0dad56782c823fd4851fb791d3",
+    "positive_poison_changed_field": "PASS agent_sha only; poison is 40 zeroes",
+    "source_tuple_origin_clean_receipts": "PASS for all four exact paths, commits, trees and official origins at review time",
+    "interpreter_receipt": "PASS /usr/bin/python3.13, Python 3.13.16",
+    "node_receipt": "PASS v20.19.4",
+    "profile_archive_registry_receipts": "PASS",
+    "runtime_lock_receipt": "PASS",
+    "schema_copy_receipts": "PASS both 4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "profile_lock_receipt": "FAIL manifest ...be18e versus actual ...be18d",
+    "selector_argv": "PASS exact 22 roots; exact D134 1848 order",
+    "selector_membership": "PASS all 22 roots exist in Agent tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "pytest_settings": "PASS -q -n3 -o addopts= -p no:cacheprovider --timeout=45",
+    "launcher_mode": "PASS launcher run retained with -m pytest",
+    "junit_manifest_argv_join": "FAIL",
+    "admission_stop_thresholds": "PASS 4700000000 admission and 4000000000 stop",
+    "single_heavy_lock": "PASS static one nonblocking heavy.lock",
+    "source_before_after_and_keep": "PASS structurally present; not executed",
+    "request_run_manifest_custody": "PASS launcher source writes request and run manifests; not executed",
+    "after_disk_custody": "FAIL terminal disk write/read result is ignored"
+  },
+  "execution_scope": {
+    "measurement_body": false,
+    "pytest": false,
+    "collection": false,
+    "provider_or_product_import": false,
+    "control_rerun": false,
+    "request_test": false,
+    "acquisition_or_install": false,
+    "source_product_or_pin_write": false,
+    "reg_credit": false,
+    "ship_credit": false
+  },
+  "credit": "command review only; no behavior, REG, count, or ship credit"
+}
