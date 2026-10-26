@@ -839,6 +839,66 @@ describe('AgentChat', () => {
     expect(onSelectorOpenChange).toHaveBeenLastCalledWith(false);
   });
 
+  it('downloads the complete active chat transcript as one Markdown file', async () => {
+    const state = createState();
+    state.projectChats['project-1'].sessions[0] = { id: 'session-1', title: 'Research: Chat 33' };
+    state.activeSessionData.turns = [
+      { role: 'user', content: 'The first message', timestamp: '2026-10-26T09:00:00.000Z' },
+      { role: 'assistant', content: 'The first answer', timestamp: '2026-10-26T09:00:01.000Z' },
+      { role: 'user', content: 'A later follow-up', timestamp: '2026-10-26T09:01:00.000Z' },
+      { role: 'tool_call', content: 'Read the project', tool_name: 'Read', tool_call_id: 'read-1', tool_args: { path: 'notes.md' }, timestamp: '2026-10-26T09:01:01.000Z' },
+      { role: 'tool_result', content: 'Project notes content', tool_call_id: 'read-1', tool_status: 'completed', timestamp: '2026-10-26T09:01:02.000Z' },
+      { role: 'assistant', content: 'The later answer', timestamp: '2026-10-26T09:01:03.000Z' },
+    ];
+    state.activeSessionData.status = 'processing';
+    Object.assign(state.activeSessionData, { assistantDraft: 'Assistant response in progress' });
+    mockFromState(state);
+    let captured: Blob | undefined;
+    let filename = '';
+    const originalCreate = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
+    const create = vi.fn((blob: Blob) => { captured = blob; return 'blob:whole-chat'; });
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: create });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      filename = this.download;
+    });
+    try {
+      renderAgentChat();
+      const downloadButton = screen.getByRole('button', { name: 'Download this chat' });
+      expect(downloadButton).toBeEnabled();
+      fireEvent.click(downloadButton);
+      expect(create).toHaveBeenCalledTimes(1);
+      expect(captured?.type).toBe('text/markdown;charset=utf-8');
+      expect(filename).toMatch(/^research-chat-33-\d{4}-\d{2}-\d{2}-\d{4}\.md$/);
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = reject;
+        reader.readAsText(captured!);
+      });
+      expect(text).toContain('The first message');
+      expect(text).toContain('The first answer');
+      expect(text).toContain('A later follow-up');
+      expect(text).toContain('Project notes content');
+      expect(text).toContain('The later answer');
+      expect(text).toContain('Turn count: 7');
+      expect(text).toContain('In progress at capture: Yes');
+      expect(text).toContain('Assistant response in progress');
+      expect(text).toContain('Assistant (in progress at capture)');
+      expect(click).toHaveBeenCalledTimes(1);
+    } finally {
+      click.mockRestore();
+      if (originalCreate) Object.defineProperty(URL, 'createObjectURL', originalCreate);
+      else Reflect.deleteProperty(URL, 'createObjectURL');
+    }
+  });
+
+  it('disables chat download when the active chat has no turns', () => {
+    const state = createState();
+    mockFromState(state);
+    renderAgentChat();
+    expect(screen.getByRole('button', { name: 'Download this chat' })).toBeDisabled();
+  });
+
   it('uses registry titles and creation numbers even when inventory is reordered or missing a chat', async () => {
     const state = createState();
     state.sessionsData = [{ id: 'unregistered', status: 'waiting_user' }, { id: 'missing', status: 'waiting_user' }, { id: 'session-1', status: 'waiting_user' }];

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Loader2, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
@@ -7,6 +7,8 @@ import { isAcpUnavailable, isAgentSetupError } from '@/integrations/astrid/acpRo
 import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { downloadBlobAsFile } from '@/shared/runtime/browserDownloadRuntime.ts';
+import { conversationExportFilename, formatConversationExport, type ConversationExportTurn } from '@/shared/components/conversation/conversationExport.ts';
 import { useAgentChatBridge, useAgentChatActionsRegistry, type AgentChatActionsHandlers } from '@/shared/contexts/AgentChatContext.tsx';
 import { composerClearAttachments, composerRemoveAttachment } from '@/shared/state/selectionStore.ts';
 import { useCurrentAttachmentSet } from '@/shared/state/currentAttachmentSet.ts';
@@ -57,6 +59,7 @@ import { buildRenderedTurns } from './buildRenderedTurns';
 import { TourChatPanel } from './TourChatPanel';
 import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
 import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video-editor/tour/anchors.ts';
+import { presentEditorRequests } from '../../runtime/editorRequestPresentation';
 
 export { buildRenderedTurns, type RenderedTurn, type ToolCallPair } from './buildRenderedTurns';
 
@@ -1029,6 +1032,38 @@ function AvailableAgentChatPanel({
   // Astrid is answering: the turn is running, being sent or queued behind one. The pane shows
   // it as "Thinking..."; it is published so an editor's own Astrid entry can say so too.
   const agentWorking = isProcessing || sendMessage.isPending || hasQueuedMessages;
+  const activeSessionOption = sessionOptions.find(session => session.id === activeSessionId);
+  const activeChatTitle = activeSessionOption?.title?.trim() || `Chat ${activeSessionOption?.chatNumber ?? Math.max(sessionOptions.length, 1)}`;
+  const downloadChat = () => {
+    if (!activeSessionId || activeSessionData?.id !== activeSessionId || !activeSessionData.turns.length) return;
+    const capturedDate = new Date();
+    const capturedAt = capturedDate.toISOString();
+    const turns: ConversationExportTurn[] = activeSessionData.turns.map(turn => {
+      if (turn.role !== 'assistant') return { turn };
+      const presented = presentEditorRequests(turn.content, turn.timestamp, activeSessionData.recordedEditorResults);
+      return { turn: { ...turn, content: presented.prose }, editorActions: presented.pairs };
+    });
+    if (optimisticMessage && optimisticMessage.sessionId === activeSessionId && !optimisticTurnAlreadyMaterialized) {
+      turns.push({ turn: {
+        role: 'user', content: optimisticMessage.text, timestamp: new Date(optimisticMessage.sentAtMs).toISOString(),
+        attachments: optimisticMessage.attachments,
+      } });
+    }
+    if (activeSessionData.assistantDraft?.trim()) {
+      turns.push({ turn: { role: 'assistant', content: activeSessionData.assistantDraft, timestamp: capturedAt }, inProgress: true });
+    }
+    const markdown = formatConversationExport({
+      title: activeChatTitle,
+      agent: agentNames[chatAgent],
+      model: chatModelName ?? chatModelId,
+      thinkingLevel: chatThoughtLevel?.currentValue,
+      sessionId: activeSessionId,
+      capturedAt,
+      inProgress: isProcessing,
+      turns,
+    });
+    downloadBlobAsFile(new Blob([markdown], { type: 'text/markdown;charset=utf-8' }), conversationExportFilename(activeChatTitle, capturedDate));
+  };
 
   useEffect(() => {
     actionsRegistry.registerHandlers(stableHandlers);
@@ -1097,6 +1132,18 @@ function AvailableAgentChatPanel({
           />
         </div>
         <div className="flex h-7 shrink-0 items-center gap-1 self-start">
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={downloadChat}
+            disabled={!activeSessionId || activeSessionData?.id !== activeSessionId || !activeSessionData.turns.length}
+            title="Download this chat"
+            aria-label="Download this chat"
+          >
+            <Download className="h-3.5 w-3.5" />
+          </Button>
           <NewChatMenu
             ref={chatMenuRef}
             current={activeSessionId && !startingAgent ? {
