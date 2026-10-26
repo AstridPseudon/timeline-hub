@@ -10,6 +10,8 @@ export const RUNTIME_PROTOCOL = PROTOCOL;
 export const RUNTIME_SCHEMA_DIGEST = SCHEMA_DIGEST;
 export const RUNTIME_ACCEPTED_SCHEMA_DIGESTS = [
   RUNTIME_SCHEMA_DIGEST,
+  // Runtime fa9cd546 is still pinned by the installer and predates this generated client refresh.
+  'sha256:3605a9c517d92031d7702307e256223905784e0800bcd09c87005ce21ee53a47',
   // Before app-state: the Runtime without /v1/app-state stays compatible (the editor tour falls back to its local flag).
   'sha256:53bc985a9ab3dba290c3d2a99c7837460f43c9bb0f0ef486d273eec3e2e44ed0',
   // Before the additive starting state: existing service health remains compatible.
