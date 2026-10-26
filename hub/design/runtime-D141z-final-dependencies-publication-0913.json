@@ -1,0 +1,98 @@
+{
+  "utc": "2026-10-26T09:14:17.103095+00:00",
+  "scope": "Exact genuine Main source dependency publication for existing D141z F1; all original source bytes unchanged. No code authoring, install, build, test or missing-Farm-original hunt.",
+  "original_lineage_manifest_sha256": "df8b213ba74b7de580556aa1ff51ab5aaa88a6cd95e23af56fc071d117142883",
+  "files": [
+    {
+      "genuine_main_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/run-final-services.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-final-dependency-0913-run-final-services.py",
+      "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "bytes": 18055,
+      "original_mode": "0o644",
+      "expected_hash_match": true
+    },
+    {
+      "genuine_main_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/core-inventory.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-final-dependency-0913-core-inventory.json",
+      "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "bytes": 25664,
+      "original_mode": "0o644",
+      "expected_hash_match": true
+    },
+    {
+      "genuine_main_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D68-review-1554/evidence/delivery_gate_build.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-final-dependency-0913-delivery_gate_build.py",
+      "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779",
+      "bytes": 14909,
+      "original_mode": "0o755",
+      "expected_hash_match": true
+    }
+  ],
+  "independent_0847_result": "FAIL6",
+  "independent_safe_originals_transport": [
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-report.md",
+      "sha256": "5bad299ef4c7267f87d4b26cfd5773f4c61576ff46d6bd085b8944772d576610",
+      "bytes": 4011,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-review.json",
+      "sha256": "d8eca278eee953c00804e1941581562ced763feba7c82fde858b1769fc551e19",
+      "bytes": 1602,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-findings.md",
+      "sha256": "3acfcb23162d19c2b72989f8034c4b6968160c99f54555fe04c0a45a30ec90ff",
+      "bytes": 3369,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-source-map.json",
+      "sha256": "18cb83d954f68c51650a058bd0184764d5c4b7d14472f3006dfe3a82ea1414ca",
+      "bytes": 1739,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-source-manifest.json",
+      "sha256": "a1c79ae4f4395f8c066db2d9fc203bf699f6e4959820d08822b75145fa642ff3",
+      "bytes": 1560,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-controls.json",
+      "sha256": "073474ee51b5d35c22d7e51f8e8ee7f11312a31be504988ea6956d59fc1c5eb4",
+      "bytes": 1140,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-validation.md",
+      "sha256": "b1d2487bc10b19c499e513215681048787d1a5c1b565b7789a34e75d21e4c8f3",
+      "bytes": 847,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-handoff.md",
+      "sha256": "27a1706b6f9e6402e031b84f833f6917a5bf133c6ee2870b48623b0715dfa2d8",
+      "bytes": 864,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-disk-trace.txt",
+      "sha256": "0eec92fdb7500f4edc7ce226e98db0d2db0f6de60347b6ff0de022eb89da1228",
+      "bytes": 82,
+      "match": true
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/app-F-D141z-build-stop-review-0847-sampler-lifecycle.json",
+      "sha256": "be3ffa1cedef346ef0f99287a30543b9d5c162ca3464595396686db471315627",
+      "bytes": 680,
+      "match": true
+    }
+  ],
+  "repair_owner": "app-F-D141z-build-stop-return-0855",
+  "whole_path_owner": "app-F-D141z-build-stop-wholepath-0855",
+  "install": false,
+  "build": false
+}
