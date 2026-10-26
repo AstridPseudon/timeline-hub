@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T03:11:38Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 2m -->
-# agent board, 2026-10-26T03:09Z
+<!-- agent | 2026-10-26T03:15:35Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 3m -->
+# agent board, 2026-10-26T03:12Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -26,7 +26,7 @@
 | P4 service admission | Retain superseded private source | Luna | MAIN shortcut cancels change | gated:superseded | Author0136; reviewer0139 ended | Source and12 controls PASS retained. No installation; Runtime0146 cancellation ordered by MAIN. Live0be17b unchanged. | 6c00 held |
 | P4 corrected cut proof | Preserve unstarted superseded request | Luna and service | MAIN forbids second body | gated:superseded | 0128 stopped; service19479 | Actual19479 still queued zero body. No admission release or manual cancellation. Existing raw and source KEEP retained. | Frozen cut |
 | P4 immutable receipt | Bind actual first passing proof | Luna | Independent0202 PASS | merged | Author0151; return0159; check0202 | Receipt b7be and review c917 bind actual10086 to XML afca45, all3 PASS and all4 exact trees. Metadata only; originals preserved. | Evidence only |
-| P4 cumulative verdict | Receive App final proof verdict | App | Exact XML readback and path review | blocked:app | App path0219 review0226; peer0243 | Exact original XML safely byte published; afca45 hash verified. Correction and independent0202 PASS retained. App owns cumulative GO. | Frozen cut |
+| P4 cumulative verdict | Retain App original three leg GO | App and Agent | Original XML and path checks PASS | merged | Actual10086; App0254; review0226 | App03:04 confirms scoped GO: exact XML hash and3 identities PASS; final App520d outside executed path. No second body. | Original frozen tuple |
 | D134 managed105 | Preserve genuine managed edge behavior | Luna and Farm | Farm cut full core | blocked:farm | Author2055; review2102; D100a HOME | Shared first-birth source release cleared; no duplicate cohort body or behavior deduction. | c585 in28e |
 | D134 media48 and30 | Preserve occurrence media purposes | App and Agent Luna | Farm cut full core | blocked:farm | Existing source reviewers and Farm | Consumers unchanged;173 assertions restored for managed30. Current behavior stays open until actual Farm outcomes. | Frozen source |
 | D138 CLI22 | Preserve supported batch caller claims | Luna and protected review | Farm cut full core | blocked:farm | Author2117; reviewer2128 | Reviewed source708ba3 HOME; all22 purposes conserved. Prior author body deselected all22; actual outcomes NOTRUN. | 708ba3 in28e |
@@ -41,7 +41,6 @@ Integration: FROZEN Agent28e56cacb42d3da85b02e5b3543895b44f3d0f70, tree2ebe2ddf5
 Core open: 370 measured (D134, measurement-only), ship-grade pending. Raw18455:8926 PASS190 FAIL180 ERROR,173 subtests PASS,1379.05s. Independent1937 final custody FAIL; XML/full disk witness missing. Source2029 classification:344 own=132 setup,0 proved product,212 UNKNOWN;14 host UNVERIFIED,other12 UNKNOWN. No edit deducts counts.
 
 Blockers: Farm — owner cleared census permission; actual0140 census NOT_READY with22 non-pass checks. Runtime0201 source and0208 review own the producer map; actual Farm artifact receipt remains owed. No child/core body.
-Blockers: App — receipt b7be and independent0202 PASS published0207; App cumulative P4 verdict owed. No second body.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification. Existing Runtime escalation retained; no retry, transfer, alternate route or rollback.
 
 Next ready: Sol0253 and wholepath0253 -> bounded final check -> corrected sole body -> per ID join. live1 / cap3; ready-undispatched0. Service24049 zero body;19479 unstarted.
@@ -105,3 +104,5 @@ Pass03:05Z: Sol0253 terminalexit0;14SAFEoutputs bytepublished. Twenty actualwrap
 Pass03:07Z: Lead03:05:44 confirmsD89croute and asks freshguardedrecycle. Applied fullAgent/Appcensus: allremainingpinsKEEP, live0301/dirtyG2/KEEP0816/openrawcustodians excludedstatic; noneeligible forprocess/queue/lease checks. Normalrecyclejust-ended0253Sol/wholepath reportsalreadyautorecycled/no worktree, noguardrefusal. Pre4788162560/post4789088256BYTES; no worktreebytesreleased, noKEEPchange/handdelete/Store. Exactpeer0307sentlead/Runtime. Correctedwrappermakespostprep4.7regatemoot, continuous4GBretained.
 
 Pass03:09Z: MAIN03:07 confirms D89c and sole corrected body path, optional recycle must not delay >=4.7GB dispatch. Service24049 recorded REFUSED-PRE-BODY, never test result. Review0301 terminal FAIL_COMMAND has ONE finite finding: terminal after_body sample recorded but not compared with4GB; simulation3999999999 exited0. All other admission/source/row/manifest/roots/custody checks PASS. Immediate same-lineage HARD Sol0309 fixes only comparison and own new output paths, affected controls and final dry controls; no source policy change or body. Five SAFE failed review outputs published. Existing wholepath0253 retained, no duplicate investigation. live1/cap3 ready-undispatched0.
+
+H6 03:12Z: App03:04 board confirms P4 scoped GO0254 complete: exact original XML hash and3 identities independently read, final App520d outside executed path per0226. Cleared blocked App row and Blockers line this pass. Original10086 tuple unchanged, no retarget or second body. Exact XML normal hub publication verified commit e9717615 at02:46:53Z. App final HOME520d clean; final P1/P2six/P3 await Runtime kit only. Agent sole terminal floor author0309 active, no Agent body yet.
