@@ -92,16 +92,16 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   const appOrigin = appMode === 'hosted' ? harness.origin : process.env.N4_LOCAL_APP_ORIGIN;
   expect(appOrigin, 'local flow requires N4_LOCAL_APP_ORIGIN').toBeTruthy();
   const allowedOrigins = new Set([appOrigin!, harness.origin, sandboxDoor.origin]);
-  await page.route('**/*', async (route) => {
-    const url = new URL(route.request().url());
-    observedRequests.push(`${route.request().method()} ${url.href}`);
-    if (blockedPorts.has(url.port) || !allowedOrigins.has(url.origin)) {
-      forbiddenRequests.push(url.href);
-      await route.abort('blockedbyclient');
-      return;
-    }
-    await route.continue();
+  // Observation never pauses a request: a catch-all route would push every multi-hundred-MB media body through the Node driver.
+  // Only requests that leave the allowed origins (or hit :17340 / :2222) match the blocking route; the rest flow straight through.
+  const isForbidden = (url: URL) => blockedPorts.has(url.port) || !allowedOrigins.has(url.origin);
+  let observedCount = 0;
+  page.on('request', (request) => {
+    observedCount += 1;
+    if (observedRequests.length < 5000) observedRequests.push(`${request.method()} ${request.url()}`);
+    if (isForbidden(new URL(request.url())) && !request.url().startsWith('data:') && !request.url().startsWith('blob:')) forbiddenRequests.push(request.url());
   });
+  await page.route((url) => isForbidden(url) && !['data:', 'blob:'].includes(url.protocol), (route) => route.abort('blockedbyclient'));
 
   // Use a real OPFS-backed file handle so the product exercises its streaming File System Access path.
   // This keeps the archive file-backed in Chromium instead of materializing a multi-gigabyte Blob.
@@ -274,6 +274,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
     playback_position_after: after,
     forbidden_ports: [...blockedPorts],
     requests: observedRequests,
+    requests_observed_total: observedCount,
   };
   writeFileSync(browserEvidencePath(testInfo, 'timeline-transfer/result.json'), `${JSON.stringify(evidence, null, 2)}\n`);
   await page.evaluate(async () => {
