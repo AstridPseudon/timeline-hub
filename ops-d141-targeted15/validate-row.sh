@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -u
+set -euo pipefail
 
 root=$(cd "$(dirname "$0")" && pwd)
 row=$(sed -n 's/^runtime full-d141-pristine-targeted15 //p' "$root/row.txt")
