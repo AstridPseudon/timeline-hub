@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T08:16:53Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 1m -->
-# agent board, 2026-10-26T08:12:29.459691+00:00
+<!-- agent | 2026-10-26T08:21:30Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 2m -->
+# agent board, 2026-10-26T08:18:51.111182+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -22,7 +22,7 @@
 | D141m media | Preserve both metadata behaviors | HARD Sol and Luna | D141r source review | merged | Sol0408 and reviewer0432 | Existing public generationId plus variantId discriminator; unmarked aliases get upstream conversion. Behavior owed. | 8585ed9c0404 |
 | D141l proof source | Qualify repaired full pair controls | Sol and independent Luna | Independent0707 PASS_COMMAND | merged | Sol0638 and reviewer0707 | 10 admission and36 lifecycle; tiny17/1 and1/0 PASS. Source only; actual controller binding owed. | Evidence only |
 | D141l binding | Review existing controller continuation | Luna and independent Luna | Author0735 terminal | review | App host requested0811; review-next reserved | Author source controls claim10 and36 PASS; same checker independent review owed. Source only. | Absolute ORCH packet |
-| D141l whole path | Resolve current controller ordering | Runtime and App Luna | App ordinary source admission | blocked:app | Existing0640 extension; App host0752 offered | Runtime0751 no-slot received. Source findings feed review; no author or body transfer. | Evidence only |
+| D141l whole path | Resolve current controller ordering | App Luna; Runtime0640 lineage | Ordinary App4.951GB admission | doing | app-F-D141l-runtime-wholepath-0752 | App08:06 board shows queued and heartbeat live1. Exact continuation; no source repair or body. | Evidence only |
 | D141u selection | Apply recorded comparable full scope | MAIN and Luna | D141u-a05:13 | merged | Existing command return0515 | Confirmed22 cut/17 pristine roots; same settings, every present ID compared; source-backed N/A for absent own IDs. | Decision only |
 | D141l receiving | Retain genuine new App tuple | App Luna | Review0454 and normal HOME0459 | merged | App0448 and reviewer0454 | Exact HOME5344/treedd989 adopted Agent8585 normally. Source receipt0459 hash qualified; no new gate credit. | 5344c53e3063 |
 | U4a post REG | Adopt qualified Runtime successor normally | Runtime hosted Luna | Independent0549 PASS24 | merged | Author0544; independent0549 | Normal HOMEecdc; only Runtime provenance source95d. All15 payloads and outside source conserved; final full pair still owed. | ecdc242ed9b6 |
@@ -63,9 +63,11 @@ Hub-repack dryrun0653 was read-only104248 loose objects/3.23GiB/free4497534976, 
 Later: original9/B022,Gate3,D118,Element,cost,D77 and own investigations STOPPED. Historical originalTrue redo, graph child birth alias, fork18 ABI1 history, transcript authority and missing word/native records UNKNOWN. Managed105,media48/30,CLI22,fork18,identity16,PARAM/word groups retain actual limits; no weakening or retirement. D23/D14 deferred; D69 Windows/wheel/installed render unqualified; D123 held; D127 no profiling. D130 SWAP classifier refusal absolute: no retry, transfer, alternate qualification or rollback; existing Runtime1537 escalation controls.
 
 Blockers: Agent controller — author0735 source complete; same independent review offered App at ordinary source floor. Local free4475113472 below4500000000.
-Blockers: App — existing0640 finite extension, same binding independent review and independent CLI0733 source offers await actual host admission. No competing local starts.
+Blockers: App — same binding independent review and CLI0733 source offers await host allocation. Existing0640 extension now queuedApp0752; no competing local starts.
 Blockers: Proof headroom — full pair and CLI body require4714564096 bytes; current local floor unmet.
 Blockers: SWAP safety — existing Runtime1537 classifier refusal remains held, no retry or alternate route.
 Next ready: Independent binding review via existing App host offer; CLI0733 source via App hosting offer0815; no competing local start. live0 / cap0 below4.5GB; ready-undispatched2, admitted0. No heavy body.
 
-Inbox consumed through2150885 bytes. Runtime0759 decline consumed; stale author-host offer already moot. H6 read actual Runtime07:59 and App07:56 hub boards: Runtime no source admission, existing0752 host offer; App ordinary source capacity, unitREG0 retained, journeys still headroom-held. No new peer need remains only in prose: review/wholepath rows carry existing owners; stale author-host request is moot. Manager writes only board, briefs, peers, SAFE byte publications and permitted maintenance. No product, test, generated pin, Git internal, hub or upstream mutation; no credentials or M5 action.
+Inbox consumed through2151928 bytes. Runtime0803 author precedence consumed;0735 terminal already published. App08:06 wholepath0752 queued under ordinary4.951GB, clearing its host wait this pass. H6 read Runtime08:05 and App08:06 hub boards: Runtime no source admission; App0752 is the existing wholepath continuation now queued, unitREG0 retained, journeys headroom-held. No new peer need remains only in prose: review/wholepath rows carry existing owners; stale author-host request is moot. Manager writes only board, briefs, peers, SAFE byte publications and permitted maintenance. No product, test, generated pin, Git internal, hub or upstream mutation; no credentials or M5 action.
+
+08:18 maintenance terminal: compact0 packed0 scratch/gzip0/tests0; sweep3 removed0 with known broken-pipe diagnostics, exit0. Free4470763520bytes. No new floor, safety refusal or eligible recycle target.
