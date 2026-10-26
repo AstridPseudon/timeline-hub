@@ -1,0 +1,152 @@
+{
+  "schema": "timeline.agent.d141i.command-return.source-manifest.v1",
+  "status": "SOURCE_STATIC_READY_FRESH_MANIFESTS",
+  "generated_utc": "2026-10-26",
+  "tuple": {
+    "Agent": {
+      "path": "/home/user/work/wt/agt-pin-28e56cac",
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "parents": [
+        "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "c585cb2aa73c5298d474e614cb2144f58f27e605",
+        "b4eb5db76fda523407b90a9dbe820f4e20cc1f1d"
+      ],
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "worktree": "clean"
+    },
+    "Runtime": {
+      "path": "/home/user/work/wt/rt-pin-6a011d58",
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "parents": [
+        "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+        "24107e83b096264e59f64ed5bd65e00650567f22"
+      ],
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "worktree": "clean"
+    },
+    "App": {
+      "path": "/home/user/work/wt/app-pin-867cb273",
+      "commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+      "parents": [
+        "867cb2737af1b46dc608c7cd37c349e920fe9422",
+        "263b728f014040afc9c6b3fdfb54963b93b757eb",
+        "9ada0d906a2efc5cf98b18b112d2d4e9d0657098"
+      ],
+      "origin": "https://github.com/banodoco/reigh-app",
+      "worktree": "clean"
+    },
+    "Composition": {
+      "path": "/home/user/work/wt/vw-pin-635f4de0",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": [
+        "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+        "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+      ],
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "worktree": "clean"
+    }
+  },
+  "environment": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "python_realpath": "/usr/bin/python3.13",
+    "python_version": "Python 3.13.16",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "profile_lock_path": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/package-lock.json",
+    "profile_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "profile_archive": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+    "profile_archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "profile_registry": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/.astrid-registry-state.json",
+    "profile_registry_sha256": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+    "composition_package": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules/@banodoco/timeline-composition/package.json",
+    "composition_package_sha256": "a2435c315fe2235c63d32551f3c38ec85e049f2fc950f3ab556686fd7dab40f7",
+    "composition_version": "0.0.14",
+    "schema_root": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "client_version": "0.2.14",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "runtime_lock_source": "/home/user/work/wt/agt-pin-28e56cac/runtime.lock.json",
+    "runtime_lock_sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3",
+    "runtime_lock_files": 15,
+    "original_p4_test_hash": "b183e62ff08f9a56a9fe074cc84729eb9dba15e29f6590fe177df3ee42f4d6ac"
+  },
+  "physical_source_hashes": {
+    "/home/user/work/wt/agt-pin-28e56cac/astrid/__init__.py": "f5fc47afc0afbd81507fecbb41a6d7405f14596bf09400c287bf1e4624fed578",
+    "/home/user/work/wt/agt-pin-28e56cac/astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+    "/home/user/work/wt/rt-pin-6a011d58/runtime_protocol/__init__.py": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2",
+    "/home/user/work/wt/agt-pin-28e56cac/astrid/core/timeline/schema/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "/home/user/work/wt/rt-pin-6a011d58/contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "/home/user/work/wt/app-pin-867cb273/vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+    "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules/@banodoco/timeline-composition/package.json": "a2435c315fe2235c63d32551f3c38ec85e049f2fc950f3ab556686fd7dab40f7"
+  },
+  "sources": {
+    "normal_manifest_maker": {
+      "path": "/home/user/work/agent/tests/suites.conf.candidate.request.md",
+      "source_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c"
+    },
+    "pinned_launcher": {
+      "path": "/home/user/work/wt/agt-pin-28e56cac/tools/p4-d73-pinned-launch.sh",
+      "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+    }
+  },
+  "controls": {
+    "positive_manifest": "positive.manifest",
+    "poison_manifest": "poison.manifest",
+    "poison_diff": "only agent_sha",
+    "retained_positive_stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0"
+  },
+  "measurement_limits": {
+    "pytest": [
+      "-q",
+      "-n3",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45"
+    ],
+    "roots": 22,
+    "source_admission_bytes": 4700000000,
+    "continuous_stop_bytes": 4000000000,
+    "heavy_body_concurrency": 1,
+    "body_queued_unstarted": true,
+    "body_executed": false
+  },
+  "corrected_bindings": {
+    "junit_paths": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml",
+    "launcher_output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/launcher-evidence",
+    "manifest_input_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence",
+    "disk_api": "python shutil.disk_usage(...).free"
+  },
+  "independent_final_review": {
+    "verdict": "PASS_COMMAND",
+    "review_id": "agt-F-D141i-final-command-review-0246",
+    "wrapper_sha256": "87384df6e825af2e211b67135ec944aa51f855251e195bb955a8832c92ab0381",
+    "service_row_sha256": "e29834abb52af15074269c6b7f00d5549943a966c79a74150a696ad09038a844",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "positive_manifest_sha256": "94d8d5813c7f96259547bc273cad388d6fefe60126c33fc5faa68385c56f8707",
+    "poison_manifest_sha256": "c1e9ae00cc7c4b94262b9277f3079e1234524d90610cbe807945961d5379fb4c",
+    "positive_materialized_manifest": "/tmp/w-9605066ade/d141i-final-controls.6fUdp9/positive/agent-core-full-positive-final.manifest",
+    "positive_materialized_manifest_sha256": "94d8d5813c7f96259547bc273cad388d6fefe60126c33fc5faa68385c56f8707",
+    "positive_preflight_exit": "0",
+    "positive_body_control_exit": "17",
+    "positive_stub_call_lines": 1,
+    "poison_preflight_exit": "1",
+    "poison_refusal": "D73 launcher: agent SHA mismatch",
+    "poison_stub_call_lines": 0,
+    "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "profile_lock_sha256_live": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "body_executed": false,
+    "pytest_executed": false,
+    "collection_executed": false,
+    "request_test_submitted": false
+  }
+}

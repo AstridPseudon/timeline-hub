@@ -1,0 +1,90 @@
+{
+  "schema": "timeline.agent.d141i.final-command-review.v1",
+  "reviewed_utc": "2026-10-26T02:48:38Z",
+  "verdict": "PASS_COMMAND",
+  "scope": "one bounded independent final command check after D141i return0238; command qualification only",
+  "plan_basis": "PLAN \u00a73 F and C0 unchanged; no body or full-suite proof recreated",
+  "source_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence",
+  "wrapper": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/measurement-command.sh",
+    "sha256": "87384df6e825af2e211b67135ec944aa51f855251e195bb955a8832c92ab0381",
+    "bash_n": "PASS",
+    "service_row_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/service-row.txt",
+    "service_row_sha256": "e29834abb52af15074269c6b7f00d5549943a966c79a74150a696ad09038a844",
+    "service_row": "agent agent-core-full /bin/bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/measurement-command.sh",
+    "one_body_invocation": "PASS: one setsid body invocation and one heavy.lock"
+  },
+  "finite_findings": [
+    {
+      "id": "D141I-COMMAND-001",
+      "status": "PASS",
+      "evidence": "measurement-command.sh:48-52; helper control default=78 and explicit=83",
+      "detail": "die uses numeric ${2:-78}, validates a positive decimal, and exits with the selected numeric status."
+    },
+    {
+      "id": "D141I-COMMAND-002",
+      "status": "PASS",
+      "evidence": "positive.manifest:junit_paths; measurement-command.sh:7,34,268,306-307; fresh launcher runmanifest",
+      "detail": "The serialized manifest junit_paths, wrapper JUNIT_XML, actual --junitxml destination, and fresh launcher runmanifest all name the same durable XML path. Manifest input and launcher-output roots are distinct."
+    },
+    {
+      "id": "D141I-COMMAND-003",
+      "status": "PASS",
+      "evidence": "measurement-command.sh:302-304; helper control read=97/write=98",
+      "detail": "after_body disk failure is captured and exits nonzero before terminal success; read and write failure controls remain fail-closed and represented."
+    },
+    {
+      "id": "D141I-SOURCE-004",
+      "status": "PASS",
+      "evidence": "positive.manifest:27; source-manifest.json; live protected package-lock.json",
+      "detail": "profile_lock_sha is f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d, equal to the actual protected package-lock.json hash."
+    }
+  ],
+  "preserved_checks": {
+    "source_tuple": "PASS: Agent 28e56cac/tree 2ebe2ddf; Runtime 6a011d58/tree ac5b8627; App 867cb273/tree 2b44a46c; Composition 635f4de0/tree 5ab5191a; all clean and official origins",
+    "roots": "PASS: exact 22 roots in both command copies",
+    "pytest_settings": "PASS: -q -n3 -o addopts= -p no:cacheprovider --timeout=45",
+    "thresholds": "PASS: admission 4700000000 bytes; stop 4000000000 bytes",
+    "disk_trace": "PASS: continuous monitor sleep 5 with durable before/during/after trace and KEEP",
+    "custody": "PASS: source before/after, clean status, interpreter, XML, raw stdout/stderr, runner exit, actual argv, request/run manifest paths retained",
+    "launcher": "PASS: pinned production launcher sha256 9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "manifest_delta": "PASS: poison differs from positive only in agent_sha, exactly 40 zeroes",
+    "environment_receipts": "PASS: normal manifest maker, launcher, profile archive/registry/package, and runtime lock hashes read back"
+  },
+  "fresh_controls": {
+    "root": "/tmp/w-9605066ade/d141i-final-controls.6fUdp9",
+    "stub_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh",
+    "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "positive": {
+      "manifest_sha256": "94d8d5813c7f96259547bc273cad388d6fefe60126c33fc5faa68385c56f8707",
+      "materialized_manifest_sha256": "94d8d5813c7f96259547bc273cad388d6fefe60126c33fc5faa68385c56f8707",
+      "serialized_equals_materialized": true,
+      "preflight_exit": 0,
+      "stub_exit": 17,
+      "stub_call_lines": 1,
+      "runmanifest_sha256": "a0a383ad16effe14bcb00fde21d2fe08b64ccb8ba64491350aee06cffb1e4e6a",
+      "runmanifest_junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml"
+    },
+    "poison": {
+      "manifest_sha256": "c1e9ae00cc7c4b94262b9277f3079e1234524d90610cbe807945961d5379fb4c",
+      "preflight_exit": 1,
+      "refusal": "D73 launcher: agent SHA mismatch",
+      "stub_call_lines": 0,
+      "materialized_manifest": false
+    }
+  },
+  "execution_scope": {
+    "measurement_body": false,
+    "pytest": false,
+    "collection": false,
+    "request_test": false,
+    "installation": false,
+    "source_product_or_pin_write": false,
+    "queue_or_admission_change": false,
+    "reg_credit": false,
+    "ship_credit": false,
+    "standalone_provider_or_product_import": false,
+    "launcher_preflight_import_guard": true
+  },
+  "credit": "command review only; no body result, behavior, REG, count, admission, or ship result inferred"
+}

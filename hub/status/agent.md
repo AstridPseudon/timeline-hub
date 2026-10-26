@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T02:46:55Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
-# agent board, 2026-10-26T02:46Z
+<!-- agent | 2026-10-26T02:50:57Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
+# agent board, 2026-10-26T02:50Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -18,7 +18,7 @@
 | D141 pristine result | Preserve actual comparator outcome | Luna and service | Frozen8b6ed/fa9 | merged | Controller0035; service27388 | 3255 outcomes:3250 PASS4 FAIL1 ERROR0 SKIP;332s. Source and disk custody clean. Four ENV nodes and one UNKNOWN timeout. | Pristine8b6ed/fa9 |
 | D141 pristine inventory | Publish all retained outcomes | Luna | Independent0100 PASS | merged | Reader0045; reviewer0100 | Full3255 records:3082 concrete IDs and173 unnamed subtest PASS. Exact XML/table hashes retained; no invented IDs. | Evidence only |
 | D141 notes template | Prepare failure notes for later Farm join | Luna | Independent0217 PASS | merged | Author0213; reviewer0217 | Flat table and template published. All370 IDs and52 roots conserved; media48 nested. Cut outcomes and verdicts PENDING; no behavior credit. | Evidence only |
-| D141i cut measurement | Run same kind cut core on Agent | Luna | Final command review0246 | review | Return0238; reviewer0246 | Author fixes all4 findings; positive0 stub17 onecall and poison1 zerocalls PASS. Bounded independent check active; no body yet. | Frozen28e and6a |
+| D141i cut measurement | Run same kind cut core on Agent | Luna | Independent0246 PASS command | doing | Controller0249 | Sole normal service controller dispatched at4821594112 bytes. Same22roots,5second trace and durableXML. Actual service receipt next. | Frozen28e and6a |
 | D141 REG join | Compare same kind cut and pristine per ID | Luna and Runtime | Actual D141i cut XML | blocked:agent | D141i controller next; Runtime coordinator | Restricted17 upstream roots;5 project roots N/A. Fails cut and passes pristine gives candidate. Farm definitive for environment sensitive candidates. | Cut pending |
 | D139 Farm core | Qualify frozen tuple on Farm | Farm and Runtime | Farm receiving artifacts | blocked:farm | Farm census0140; Runtime0201 and0208 | Census permission cleared. Actual census NOT_READY with22 non-pass checks; owners owe artifacts. No child or core body. | Agent28e /Runtime6a |
 | P4 prior cut body | Preserve authentic prior three PASS | Luna and service | Correct bound proof below | gated:superseded-custody | Controller0105; result0114 | Service10086 genuinely3 PASS23.668s; custodyFAIL because manifest named different JUnit path. Original result immutable. | Frozen cut |
@@ -44,7 +44,7 @@ Blockers: Farm — owner cleared census permission; actual0140 census NOT_READY 
 Blockers: App — receipt b7be and independent0202 PASS published0207; App cumulative P4 verdict owed. No second body.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification. Existing Runtime escalation retained; no retry, transfer, alternate route or rollback.
 
-Next ready: Return0238 -> bounded final command check -> sole cut measurement -> per ID candidate join. live1 / cap3 source; no body yet. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
+Next ready: Sole controller0249 -> actual cut XML -> per ID candidate join and evidence review. live1 / cap3; ready-undispatched0. Independent command0246 PASS. Service19479 stays unstarted.
 
 P4: Latest MAIN shortcut in INBOX01:48:16Z supersedes corrected rerun and kit change. Genuine10086=3PASS23.668s, XML0055/evidence/body-evidence/p4-d141c.xml sha256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. Original manifest67ef and runmanifest named missing0047 path; independent0114 FAIL retained. New immutable receipt0159 b7be binds actual path/hash/fulltuple without rewriting originals; ONE quick independent0202 check terminal PASS at02:04:50Z; published0207, then App verdict. No second P4 body; queued19479 remains unstarted, no floor release/manual cancellation. Normal stop0128 completed; dispatcher receipt confirms process stopped. Source0119/0124 and admission6c00/8aa7/0139 are retained superseded, uninstalled; MAIN told Runtime cancel0146. Canonical bin/test-run remains0be17b. All old/new raw, selector and controller KEEP stay through App verdict and final delivery.
 
@@ -56,7 +56,7 @@ Later: originalTrue redo, graph child-birth alias, fork18 ABI1 history, transcri
 
 Disk: 4858232832 bytes at02:11Z. Sweep3 removed0; compact packed0 scratch and0 test dirs, gzipped1 old log. Fresh ended non-KEEP census found no remaining worktree. Ended0136/0139 already autorecycled; normal recycle confirms no worktree. No eligible ended non-KEEP worktree remains. DirtyG2,KEEP0816,current cut pins,all referenced raw/selector KEEP,protectedd22/f1012 and child3e163 retained. No cleanup refusal or Store operation.
 
-INBOX consumed through2029607 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+INBOX consumed through2031262 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
 
 Pass 01:58Z: Stop0128 completed;19479 remains queued with zero body and kit0be17b unchanged. Receipt0151 terminal, absolute-output mistake recovered byte-exact from Git5d11. Found one truncated39-char Agent tree in emitted JSON; immediately assigned same-lineage metadata-only return0159 before the ONE independent quick check. All actual outcome and original evidence unchanged.
 
@@ -87,3 +87,7 @@ Pass02:44Z: App XML peer0219 is now a receiving row, fulfilled immediately. Orig
 H6 02:44Z: Runtime02:30 artifact0229 continues producer0201, no published complete Group A receipt yet. Farm02:36 full40 Composition binding corrected; remaining schema/profile/admission/retained-root inputs still NOT_READY. Source wait not mistaken for decision. D141i firstreturn0238 running since02:39:30; no body/collection. Fresh free4818837504 bytes; no ended non-KEEP worktree remains. Queued19479 still unstarted. live1 / cap3; ready-undispatched0.
 
 Pass02:46Z: Firstreturn0238 terminal exit0; all13 SAFE outputs byte published flat design. Author exact final controls0/17/1 and1/0, numeric refusal78/83, terminal disk controls97/98 PASS. Immediate Luna final independent0246 queued on same branch; no body until PASS. Command/source/control hashes conserved; no new approval gate. Compaction terminal0:0scratch/0tests,3logs gzipped; sweep3 still active with ordinary broken-pipe noise, no refusal. Fresh free4821204992 bytes. live1 / cap3; ready-undispatched0.
+
+Pass02:48Z: Runtime peer023145 consumed: existingartifact0229 owns all groupA and requests a finite Agent physical file only if one is identified; later entry, no competing reader/producer. Complete controls/source packet already provided. Sweep3 terminal0 removed0; compact terminal0 packed0scratch/0tests and3logs. Ordinary brokenpipe diagnostics did not change terminal success. All rawKEEP retained. Review0246 active; body controller brief prepared for immediate PASS dispatch.
+
+Pass02:50Z: Independent0246 terminal PASS_COMMAND, all4findings independentlyclosed and exactsource/control/hash/settings preserved. FiveSAFE outputs bytepublished. Sole Luna net/heavycontroller0249 dispatched immediately at4821594112 bytes; normalCAS exactone agent-core-full row and ONE normalrequest. No body or serviceID yet. No further command review or approvalwait. Existingvenv-agent cut versus same-kindpristine17roots remains measurement only; Farm definitive for environment-sensitive candidates.
