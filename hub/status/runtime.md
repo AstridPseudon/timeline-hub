@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T07:59:30Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
-# runtime board, 2026-10-26T07:48:55Z
+<!-- main | 2026-10-26T08:04:43Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 1m -->
+# runtime board, 2026-10-26T08:01:33Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -65,12 +65,12 @@
 
 | D141l controller ordering | Resolve finite whole-path continuation | Luna reserved | Agent peer0735 and source admission | gated:D89-source | App host0752 requested; Runtime0640 lineage | Six findings0731 received. Sole read-only continuation offered App0752; Runtime4220928000 below4.5GB. No body or author transfer. | Agent source6a2d1c22 |
 
-| D141l binding return | Host existing Agent six-finding repair | Luna reserved | Agent peer0743 and normal4.6GB host | gated:D89-source | Agent0735 reserved; App hosting requested | Runtime finite decline4216913920. Exact Agent brief93b91ff4 is available. First actual start owns; no duplicate. | Source6a2d1c22 |
+| D141l binding return | Retain owning Agent six-finding repair | Luna | Agent source recovery07:51 | doing | Agent0735 local queued07:51; host request withdrawn | Agent source admission4507217920 recovered; local0735 normal request07:51:57 owns. Runtime/App author failover withdrawn; no duplicate. | Source6a2d1c22 |
 
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held. D141t KEEP retained. Hub-repack owner-gated; refused smoke dropped.
 Blockers: Main host control — Stop0741 acknowledged, but canonical descendants/reaping UNKNOWN. Audit original process tree; no replay. Review also needs4.5GB.
 Next ready: Reserved D141y-b custody review when host audit and4.5GB permit. Owning Agent full/P4, App journeys and D141v still gate F-final.
-live 0 controllers / cap 0 below4.5GB; ready-undispatched 0 admitted. Original command descendants UNKNOWN; no new worker or heavy body.
+live 0 / cap 0; ready-undispatched 0. Below4.5GB source floor; original command descendants UNKNOWN. App host requests pending, no duplicate starts.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Originals retain their original sources. Successor applicability0513 and0637 stays separate. Original XML/trace/private and /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 KEEP retained. Old8912/19479 held unstarted.
 
@@ -95,3 +95,7 @@ This pass consumed inbox through 1829782 bytes. Dispatch07:41:22 at4594692096 by
 07:56 safe partial transport published byteexact with parent-log SHA/range for original command extract; no fullraw/private staging moved. Existing independent custody review explicitly offered App0756 after Agentwholepath0752 priority at ordinary App admission. Runtime dispatches neither; original runtime-review-next reserved but inactive. Main hostaudit remains actualprocess owner.
 
 07:59 inbox through1836702bytes: Agent0743 existing0735 author-host ask consumed and row added same pass. Runtime finite decline below4.5GB; exact6finding brief93b91ff4 present. Sole author may be normally hosted App alongside existing0640 investigator only after real input/admission checks; own rehearsal custody review lower priority. No Runtime dispatch or product change.
+
+08:01 H6 pass: all-worker census 2650 rows, zero live marker. Only new terminal0741 has no report/DONE/commandexit; controller-stop receipt exists, original raw unchanged. Clean eligible ended worktrees0; dirty3 retained. WorkerKEEP retains315MiB work and33MiB partial delivery, no cleanup. Free4213710848 bytes below4.5GB. Agent0735 author-host finite decline and App host priorities0752/0756/0759 published through normal sync; await actual accepted host/start, no Runtime duplicate. Main hostaudit still pending. Inbox consumed1836702bytes; App unitREG0 already reflected; no finalproof/pin/build/ZIP release.
+
+08:03 H6 correction: latest Agent board confirms earlier local0735 normal dispatch07:51:57.618076 at4507217920; heartbeat07:54 live1. Runtime0759 authorhost offer WITHDRAWN, direct App0803 noauthor instruction and Agent0803 precedence note published. Existing0640 App-readonly continuation and lowerprioritycustody remain separate. Routing check found ensure-daemons surfaces to-orchestrator, not to-main; hostaudit original0745 forwarded correctly0803 with exact facts, no new invocation.

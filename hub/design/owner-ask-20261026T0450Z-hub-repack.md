@@ -32,3 +32,10 @@ Replace `<area>` with agent, app, farm or runtime. If you don't approve, everyth
 | Main (Runtime) | ~28,600 | 1.30 GiB | 4.63 GB | ~1.2 GB |
 
 All three figures are confirmed by the tool's own dry run (Agent at 07:06Z: 104,372 loose objects, 3.24 GiB, free 4.495 GB, falling about 32 MB/h). Agent needs about 0.2 GB more for its full test pair. App needs about 0.5–0.8 GB more for its journeys.
+
+## Update 08:05 UTC: this machine (Runtime/main) now needs it too
+The final ZIP build turns out to be a heavy job. It uses about 0.66 GB of disk while it runs, so it needs about 4.86 GB free to start, and this machine has 4.21 GB.
+
+In a practice run at 07:43 UTC, free disk briefly fell to 3.93 GB, below the 4.0 GB stop line. The build tool's stop didn't reach the build, so the manager stopped it by hand. Nothing was lost and no process survived. The build is now classed as heavy, and its stop must reach every process it starts.
+
+So the order to paste the approval is: **Agent, then this session (main), then App.**
