@@ -1,1 +1,1 @@
-2026-10-26T05:40:23Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free (was 10); farm stands by (ZIP smoke moved to Runtime/main; custody chain conditional on Agent D141i); hub-repack awaiting the owner's own approval in this session; perms rules intact
+2026-10-26T06:22:45Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by; hub-repack awaiting the owner's own approval in this session; delivery-build form for later git-apply check awaiting the owner; perms rules intact
