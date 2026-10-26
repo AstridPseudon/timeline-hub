@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import base64
 import csv
+import gzip
 import hashlib
 import io
 import json
@@ -48,9 +49,19 @@ TRANSPORT_ROOT = (
     "timeline-d141-schema-record-closure-"
     "c9a87be9485f79878262cc9a193bfa9e4932cf0a942a62b32e272b46c7b60a2d"
 )
+MAX_ARCHIVE_BYTES = 20 * 1024 * 1024
+DIST_INFO = "banodoco_timeline_schema-0.0.2.dist-info"
+RECORD_PATH = f"{DIST_INFO}/RECORD"
+DIRECT_PATH = f"{DIST_INFO}/direct_url.json"
+SAFE_RECEIVER = {
+    "preflight": "python3 -I package_record_closure.py --verify-archive ARCHIVE --expected-sha256 MANAGER_PEER_SHA256",
+    "extract": "tar --extract --gzip --file ARCHIVE --no-same-owner --same-permissions --keep-old-files --directory STAGE",
+    "gate": "independent corrected review PASS; private empty physical STAGE; verified immutable archive; no TAR_OPTIONS",
+    "binding": f"SCHEMA_INSTALLED_DISTRIBUTION=STAGE/{TRANSPORT_ROOT}/site-packages/{DIST_INFO}",
+}
 DIRECT_URL_SECRET = re.compile(
-    rb"(?:token|secret|password|passwd|api[_-]?key|authorization|bearer)\s*[:=]|@"
-    , re.IGNORECASE,
+    rb"(?:token|secret|password|passwd|api[_-]?key|authorization|bearer)\s*[:=]|@",
+    re.IGNORECASE,
 )
 
 
@@ -66,16 +77,37 @@ def json_bytes(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
 
 
-def physical(path: pathlib.Path, kind: str) -> os.stat_result:
+def strict_json(data: bytes) -> dict[str, Any]:
+    def unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise Refusal("duplicate JSON key")
+            result[key] = value
+        return result
+
+    def invalid_constant(value: str) -> None:
+        raise Refusal("nonstandard JSON constant")
+
+    try:
+        result = json.loads(data, object_pairs_hook=unique, parse_constant=invalid_constant)
+    except (ValueError, UnicodeError, RecursionError) as error:
+        raise Refusal("invalid JSON") from error
+    if not isinstance(result, dict):
+        raise Refusal("JSON metadata must be an object")
+    return result
+
+
+def physical(path: pathlib.Path, kind: str, *, directory: bool = False) -> os.stat_result:
     try:
         info = path.lstat()
     except OSError as error:
         raise Refusal(f"missing {kind}: {path}") from error
     if path.resolve() != path or stat.S_ISLNK(info.st_mode):
         raise Refusal(f"{kind} must be a physical path: {path}")
-    if kind == "file" and (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1):
+    if not directory and (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1):
         raise Refusal(f"{kind} must be a regular single-link file: {path}")
-    if kind == "directory" and not stat.S_ISDIR(info.st_mode):
+    if directory and not stat.S_ISDIR(info.st_mode):
         raise Refusal(f"{kind} must be a directory: {path}")
     if info.st_uid not in {0, os.getuid()} or info.st_mode & 0o022:
         raise Refusal(f"{kind} has unsafe ownership or mode: {path}")
@@ -109,18 +141,18 @@ def extract_trusted_schema(maker: pathlib.Path) -> tuple[dict[str, str], str]:
 
 def safe_record_path(value: str) -> None:
     pure = pathlib.PurePosixPath(value)
-    if not value or str(pure) != value or pure.is_absolute() or ".." in pure.parts:
+    if not value or "\\" in value or str(pure) != value or pure.is_absolute() or ".." in pure.parts:
         raise Refusal(f"unsafe RECORD path: {value!r}")
 
 
 def inspect_distribution(dist: pathlib.Path, schema: dict[str, str]) -> dict[str, Any]:
-    physical(dist, "distribution directory")
+    physical(dist, "distribution directory", directory=True)
     if dist.name != "banodoco_timeline_schema-0.0.2.dist-info":
         raise Refusal("unexpected schema dist-info name")
     site = dist.parent
-    physical(site, "site-packages directory")
+    physical(site, "site-packages directory", directory=True)
     package = site / "banodoco_timeline_schema"
-    physical(package, "schema package directory")
+    physical(package, "schema package directory", directory=True)
     record_path = dist / "RECORD"
     direct_path = dist / "direct_url.json"
     record_info = physical(record_path, "RECORD")
@@ -131,10 +163,7 @@ def inspect_distribution(dist: pathlib.Path, schema: dict[str, str]) -> dict[str
         raise Refusal("RECORD digest does not match the approved closure")
     if sha256(direct_bytes) != EXPECTED_DIRECT_URL_SHA256:
         raise Refusal("direct_url digest does not match the approved receipt")
-    try:
-        direct = json.loads(direct_bytes)
-    except json.JSONDecodeError as error:
-        raise Refusal("direct_url.json is not JSON") from error
+    direct = strict_json(direct_bytes)
     expected_direct = {
         "subdirectory": schema["subdirectory"],
         "url": schema["url"],
@@ -207,7 +236,7 @@ def inspect_distribution(dist: pathlib.Path, schema: dict[str, str]) -> dict[str
     directory_entries = []
     for rel in sorted(directories):
         path = site if rel == "." else site / pathlib.PurePosixPath(rel)
-        info = physical(path, f"closure directory {rel}")
+        info = physical(path, f"closure directory {rel}", directory=True)
         directory_entries.append(
             {"path": rel, "mode": format(stat.S_IMODE(info.st_mode), "04o"), "uid": info.st_uid, "gid": info.st_gid}
         )
@@ -290,11 +319,7 @@ def build_archive(
         "closure": closure,
         "payload_root": "site-packages",
         "trusted_manifest_path": "trusted-schema-manifest.json",
-        "safe_receiver": {
-            "preflight": "python3 -I package_record_closure.py --verify-archive ARCHIVE",
-            "extract": "tar --extract --file ARCHIVE --no-absolute-names --no-same-owner --no-same-permissions --keep-old-files --directory STAGE",
-            "binding": f"SCHEMA_INSTALLED_DISTRIBUTION=STAGE/{TRANSPORT_ROOT}/site-packages/banodoco_timeline_schema-0.0.2.dist-info",
-        },
+        "safe_receiver": SAFE_RECEIVER,
         "attestation": "transport only; not an installed child, Farm result, or PASS_INSTALL receipt",
     }
     manifest_data = json_bytes(transport_manifest) + b"\n"
@@ -302,8 +327,6 @@ def build_archive(
     with tempfile.TemporaryDirectory(prefix="d141-transport-") as temp:
         temp_path = pathlib.Path(temp) / "transport.tgz"
         with open(temp_path, "wb") as raw:
-            import gzip
-
             with gzip.GzipFile(fileobj=raw, mode="wb", compresslevel=9, mtime=0) as gz:
                 with tarfile.open(fileobj=gz, mode="w:") as tar:
                     add_tar_dir(tar, root, 0o755, os.getuid(), os.getgid())
@@ -333,96 +356,166 @@ def build_archive(
     return archive, digest, manifest_data
 
 
-def verify_archive(archive: pathlib.Path, schema: dict[str, str], closure: dict[str, Any]) -> None:
-    root = TRANSPORT_ROOT
-    expected_files = {f"{root}/manifest.json", f"{root}/trusted-schema-manifest.json"}
-    expected_files.update(f"{root}/site-packages/{entry['path']}" for entry in closure["files"])
-    with tarfile.open(archive, "r:gz") as tar:
-        members = tar.getmembers()
-        names = {member.name for member in members if member.isfile()}
-        if names != expected_files:
-            raise Refusal("archive file set is not exactly metadata plus the RECORD closure")
-        for member in members:
-            pure = pathlib.PurePosixPath(member.name)
-            if pure.is_absolute() or ".." in pure.parts or member.issym() or member.islnk():
-                raise Refusal("archive contains an unsafe path or link")
-            if not (member.isdir() or member.isfile()):
-                raise Refusal("archive contains a non-file/non-directory member")
-        trusted = tar.extractfile(f"{root}/trusted-schema-manifest.json").read()
-        if trusted != json_bytes(schema):
-            raise Refusal("archive trusted manifest differs from source manifest")
-        if sha256(trusted) != EXPECTED_MANIFEST_SHA256:
-            raise Refusal("archive trusted manifest digest mismatch")
-        for entry in closure["files"]:
-            member_info = tar.getmember(f"{root}/site-packages/{entry['path']}")
-            member = tar.extractfile(member_info)
-            if member_info.mode & 0o7777 != int(entry["mode"], 8) \
-                    or member_info.uid != entry["uid"] or member_info.gid != entry["gid"]:
-                raise Refusal(f"archive mode/ownership mismatch: {entry['path']}")
-            if member is None or sha256(member.read()) != entry["sha256"]:
-                raise Refusal(f"archive closure hash mismatch: {entry['path']}")
+def verify_received_archive(
+    archive: pathlib.Path, expected_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Verify bytes against a digest supplied separately by the trusted manager peer.
 
-
-def verify_received_archive(archive: pathlib.Path) -> dict[str, Any]:
-    """Verify a received archive without access to the original source tree."""
-    physical(archive, "transport archive")
+    A filename, archive manifest, or adjacent sidecar is not an authority for this
+    argument. No extraction or product import is performed.
+    """
+    if not isinstance(expected_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
+        raise Refusal("external manager-peer --expected-sha256 is required")
+    info = physical(archive, "file")
+    if info.st_size > MAX_ARCHIVE_BYTES:
+        raise Refusal("transport exceeds 20 MiB archive limit")
+    # Parse the exact authenticated snapshot, never reopen the path for parsing.
+    with archive.open("rb") as source:
+        archive_bytes = source.read(MAX_ARCHIVE_BYTES + 1)
+    if len(archive_bytes) > MAX_ARCHIVE_BYTES:
+        raise Refusal("transport exceeds 20 MiB archive limit")
+    if sha256(archive_bytes) != expected_sha256:
+        raise Refusal("transport differs from external manager-peer SHA-256")
     sidecar = archive.with_name(archive.name + ".sha256")
-    physical(sidecar, "transport SHA-256 sidecar")
-    sidecar_digest = sidecar.read_text(encoding="utf-8").strip()
-    if not re.fullmatch(r"[0-9a-f]{64}", sidecar_digest) or sidecar_digest != sha256(archive.read_bytes()):
-        raise Refusal("transport SHA-256 sidecar does not match archive bytes")
-    with tarfile.open(archive, "r:gz") as tar:
-        members = tar.getmembers()
-        files = {member.name: member for member in members if member.isfile()}
-        manifest_member = files.get(f"{TRANSPORT_ROOT}/manifest.json")
-        trusted_member = files.get(f"{TRANSPORT_ROOT}/trusted-schema-manifest.json")
-        if manifest_member is None or trusted_member is None:
-            raise Refusal("transport metadata is missing")
-        try:
-            transport = json.loads(tar.extractfile(manifest_member).read())
-            schema = json.loads(tar.extractfile(trusted_member).read())
-        except (json.JSONDecodeError, AttributeError) as error:
-            raise Refusal("transport metadata is invalid JSON") from error
-        if set(schema) != {"url", "commit", "subdirectory", "source_tree"}:
-            raise Refusal("transport trusted manifest does not have four keys")
-        if sha256(json_bytes(schema)) != EXPECTED_MANIFEST_SHA256:
-            raise Refusal("transport trusted manifest digest mismatch")
-        closure = transport.get("closure")
-        if not isinstance(closure, dict) or closure.get("closure_file_count") != 18:
-            raise Refusal("transport closure metadata is incomplete")
-        expected = {
-            f"{TRANSPORT_ROOT}/manifest.json",
-            f"{TRANSPORT_ROOT}/trusted-schema-manifest.json",
-        }
-        expected.update(f"{TRANSPORT_ROOT}/site-packages/{entry['path']}" for entry in closure["files"])
-        if set(files) != expected:
-            raise Refusal("transport file set is not metadata plus the 18 RECORD files")
-        for member in members:
-            pure = pathlib.PurePosixPath(member.name)
-            if pure.is_absolute() or ".." in pure.parts or member.issym() or member.islnk():
-                raise Refusal("transport contains an unsafe path or link")
-            if member.mode & 0o022:
-                raise Refusal("transport contains a group/other-writable member")
-            if not (member.isdir() or member.isfile()):
-                raise Refusal("transport contains an unsupported member")
-        for entry in closure["files"]:
-            member = files[f"{TRANSPORT_ROOT}/site-packages/{entry['path']}"]
-            if member.mode & 0o7777 != int(entry["mode"], 8) \
-                    or member.uid != entry["uid"] or member.gid != entry["gid"]:
-                raise Refusal(f"received mode/ownership mismatch: {entry['path']}")
-            if sha256(tar.extractfile(member).read()) != entry["sha256"]:
-                raise Refusal(f"received closure hash mismatch: {entry['path']}")
-        return {
-            "status": "PASS_TRANSPORT_CLOSURE",
-            "archive": str(archive),
-            "archive_sha256": sidecar_digest,
-            "trusted_manifest_sha256": EXPECTED_MANIFEST_SHA256,
-            "source_identity": schema,
-            "record_rows": closure["record"]["rows"],
-            "record_hashed_rows": closure["record"]["hashed_rows"],
-            "direct_url_sha256": closure["direct_url"]["sha256"],
-            "raw_direct_url_printed": False,
-        }
+    sidecar_info = physical(sidecar, "file")
+    if sidecar_info.st_size != 65 or sidecar.read_bytes() != (expected_sha256 + "\n").encode():
+        raise Refusal("transport SHA-256 sidecar does not match authenticated bytes")
+    try:
+        with gzip.GzipFile(fileobj=io.BytesIO(archive_bytes), mode="rb") as gz:
+            tar_bytes = gz.read(MAX_ARCHIVE_BYTES + 1)
+        if len(tar_bytes) > MAX_ARCHIVE_BYTES:
+            raise Refusal("transport exceeds 20 MiB expanded limit")
+        with tarfile.open(fileobj=io.BytesIO(tar_bytes), mode="r:") as tar:
+            return inspect_received_tar(tar, tar_bytes, archive, expected_sha256)
+    except (tarfile.TarError, OSError, EOFError, ValueError, KeyError, TypeError, csv.Error, RecursionError) as error:
+        raise Refusal("invalid transport structure") from error
+
+
+def inspect_received_tar(
+    tar: tarfile.TarFile, tar_bytes: bytes, archive: pathlib.Path, digest: str,
+) -> dict[str, Any]:
+    root = TRANSPORT_ROOT
+    members: dict[str, tarfile.TarInfo] = {}
+    for member in tar:
+        safe_record_path(member.name)
+        if member.name in members:
+            raise Refusal("duplicate transport member")
+        if len(members) >= 25:
+            raise Refusal("transport has extra members")
+        if member.type not in {tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE} \
+                or member.sparse is not None or set(member.pax_headers) - {"path"}:
+            raise Refusal("transport contains an unsupported member or extension")
+        mode = 0o755 if member.isdir() else 0o644
+        if member.mode != mode or member.uid != 0 or member.gid != 0 \
+                or member.linkname or member.size < 0 or member.size > MAX_ARCHIVE_BYTES \
+                or (member.isdir() and member.size):
+            raise Refusal("transport member mode/ownership/size mismatch")
+        members[member.name] = member
+    if any(tar_bytes[tar.offset:]):
+        raise Refusal("transport contains data after the tar terminator")
+
+    def read(name: str) -> bytes:
+        member = members.get(name)
+        if member is None or not member.isfile():
+            raise Refusal("transport required regular file is missing")
+        data = tar.extractfile(member).read()
+        if len(data) != member.size:
+            raise Refusal("transport member is truncated")
+        return data
+
+    trusted_bytes = read(f"{root}/trusted-schema-manifest.json")
+    schema = strict_json(trusted_bytes)
+    if set(schema) != {"url", "commit", "subdirectory", "source_tree"} \
+            or sha256(trusted_bytes) != EXPECTED_MANIFEST_SHA256 \
+            or sha256(json_bytes(schema)) != EXPECTED_MANIFEST_SHA256:
+        raise Refusal("transport trusted manifest identity mismatch")
+    transport = strict_json(read(f"{root}/manifest.json"))
+    if transport.get("schema") != "timeline.d141.record-exact-installed-schema-transport/v1" \
+            or transport.get("transport_kind") != "record_exact_installed_distribution" \
+            or transport.get("source_identity") != schema \
+            or transport.get("trusted_manifest_sha256") != EXPECTED_MANIFEST_SHA256 \
+            or transport.get("maker_sha256") != EXPECTED_MAKER_SHA256 \
+            or transport.get("payload_root") != "site-packages" \
+            or transport.get("trusted_manifest_path") != "trusted-schema-manifest.json":
+        raise Refusal("transport entry manifest identity mismatch")
+    closure = transport.get("closure")
+    if not isinstance(closure, dict) or closure.get("source_dist_info") != DIST_INFO:
+        raise Refusal("transport closure metadata is incomplete")
+    record = read(f"{root}/site-packages/{RECORD_PATH}")
+    if sha256(record) != EXPECTED_RECORD_SHA256:
+        raise Refusal("received RECORD is not the approved closure")
+    rows = list(csv.reader(io.StringIO(record.decode("utf-8")), strict=True))
+    if len(rows) != 18 or any(len(row) != 3 for row in rows):
+        raise Refusal("received RECORD must have 18 three-column rows")
+    paths = set()
+    entries = []
+    for rel, encoded, size in rows:
+        safe_record_path(rel)
+        if rel in paths:
+            raise Refusal("duplicate RECORD path")
+        paths.add(rel)
+        data = read(f"{root}/site-packages/{rel}")
+        hashed = bool(encoded or size)
+        if hashed:
+            actual = "sha256=" + base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip("=")
+            if encoded != actual or size != str(len(data)):
+                raise Refusal("received RECORD file bytes mismatch")
+        elif rel not in EXPECTED_UNHASHED:
+            raise Refusal("unapproved unhashed RECORD row")
+        entries.append({
+            "path": rel, "bytes": len(data), "sha256": sha256(data),
+            "record_hashed": hashed, "mode": "0644", "uid": 0, "gid": 0, "nlink": 1,
+        })
+    if sum(entry["record_hashed"] for entry in entries) != 12 \
+            or {entry["path"] for entry in entries if not entry["record_hashed"]} != EXPECTED_UNHASHED:
+        raise Refusal("received RECORD must have 12 hashed and the six named unhashed rows")
+    expected_record = {
+        "path": RECORD_PATH, "bytes": len(record), "sha256": EXPECTED_RECORD_SHA256,
+        "rows": 18, "hashed_rows": 12, "unhashed_rows": sorted(EXPECTED_UNHASHED),
+    }
+    if json_bytes(closure.get("files")) != json_bytes(sorted(entries, key=lambda entry: entry["path"])) \
+            or json_bytes(closure.get("record")) != json_bytes(expected_record) \
+            or closure.get("closure_file_count") != 18 \
+            or closure.get("closure_bytes") != sum(entry["bytes"] for entry in entries):
+        raise Refusal("received entry manifest does not match the RECORD closure")
+    directories = {"."}
+    for rel in paths:
+        directories.update(str(parent) for parent in pathlib.PurePosixPath(rel).parents)
+    expected_dirs = [
+        {"path": rel, "mode": "0755", "uid": 0, "gid": 0} for rel in sorted(directories)
+    ]
+    if json_bytes(closure.get("directories")) != json_bytes(expected_dirs):
+        raise Refusal("received directory manifest mismatch")
+    expected_files = {f"{root}/manifest.json", f"{root}/trusted-schema-manifest.json"}
+    expected_files.update(f"{root}/site-packages/{rel}" for rel in paths)
+    expected_directories = {root, f"{root}/site-packages"}
+    expected_directories.update(f"{root}/site-packages/{rel}" for rel in directories if rel != ".")
+    if set(members) != expected_files | expected_directories:
+        raise Refusal("transport member set is not exactly metadata plus RECORD closure")
+    if any(not members[name].isdir() for name in expected_directories):
+        raise Refusal("transport directory has wrong type")
+    direct_bytes = read(f"{root}/site-packages/{DIRECT_PATH}")
+    direct = strict_json(direct_bytes)
+    expected_direct = {
+        "subdirectory": schema["subdirectory"], "url": schema["url"],
+        "vcs_info": {"commit_id": schema["commit"], "requested_revision": schema["commit"], "vcs": "git"},
+    }
+    if sha256(direct_bytes) != EXPECTED_DIRECT_URL_SHA256 or direct != expected_direct \
+            or DIRECT_URL_SECRET.search(direct_bytes):
+        raise Refusal("received direct_url is not the exact approved pinned source")
+    if json_bytes(closure.get("direct_url")) != json_bytes({
+        "path": DIRECT_PATH, "bytes": len(direct_bytes), "sha256": EXPECTED_DIRECT_URL_SHA256,
+        "privacy_checked": True, "raw_content_published": False, "pinned_identity_match": True,
+    }):
+        raise Refusal("received direct_url entry manifest mismatch")
+    return {
+        "status": "PASS_TRANSPORT_CLOSURE", "archive": str(archive), "archive_sha256": digest,
+        "authentication": "external manager-peer SHA-256; sidecar is consistency only",
+        "trusted_manifest_sha256": EXPECTED_MANIFEST_SHA256, "source_identity": schema,
+        "record_rows": 18, "record_hashed_rows": 12,
+        "direct_url_sha256": EXPECTED_DIRECT_URL_SHA256, "raw_direct_url_printed": False,
+        "safe_receiver": SAFE_RECEIVER,
+    }
 
 
 def build(args: argparse.Namespace) -> dict[str, Any]:
@@ -438,7 +531,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     archive, archive_sha, transport_manifest = build_archive(
         dist, schema, closure, maker_sha, pathlib.Path(args.output_dir)
     )
-    verify_archive(archive, schema, closure)
+    verify_received_archive(archive, archive_sha)
     result = {
         "status": "PUBLISHED_TO_ORCH_ARTIFACTS_RECEIVER_PENDING",
         "trusted_manifest": {
@@ -476,10 +569,11 @@ def main() -> int:
     parser.add_argument("--manifest-output")
     parser.add_argument("--report-output")
     parser.add_argument("--verify-archive")
+    parser.add_argument("--expected-sha256", help="required manager-peer digest supplied outside the archive/sidecar")
     args = parser.parse_args()
     try:
         if args.verify_archive:
-            print(json.dumps(verify_received_archive(pathlib.Path(args.verify_archive).resolve()), sort_keys=True))
+            print(json.dumps(verify_received_archive(pathlib.Path(args.verify_archive).absolute(), args.expected_sha256), sort_keys=True))
         elif not args.maker or not args.dist or not args.output_dir:
             parser.error("--maker, --dist and --output-dir are required when building a transport")
         else:
