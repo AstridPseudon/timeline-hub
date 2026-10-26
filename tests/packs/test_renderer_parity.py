@@ -371,7 +371,7 @@ def test_real_remotion_renders_each_semantic_variant(
     service: RenderService,
     tmp_path: Path,
     remotion_static_assets: None,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     expected_output = tmp_path / f"{fixture}-rendering-remotion.mp4"
     try:

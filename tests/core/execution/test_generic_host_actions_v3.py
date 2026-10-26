@@ -771,67 +771,6 @@ def pack(tmp_path, *, code="def run(value='default'):\n    return value\n", path
     return root, host, runtime, definition, admission
 
 
-def _legacy_probe_manifest(tmp_path, names, *, fixed=None, required=()):
-    manifest = _write_manifest(tmp_path / 'legacy-probe')
-    data = json.loads(manifest.read_text())
-    data['isolation'] = {'mode': 'subprocess', 'env_passthrough': list(names)}
-    data['command']['env'] = fixed or {}
-    data['metadata']['required_env'] = list(required)
-    manifest.write_text(json.dumps(data))
-    return manifest
-
-
-@pytest.mark.parametrize('credential,declared', [
-    ('HIVEMIND_CONTRIBUTOR_KEY', True), ('HIVEMIND_ANON_KEY', False),
-])
-def test_startup_probes_omit_legacy_credentials_without_declaring_them(tmp_path, credential, declared):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    from astrid.core.execution.executor.folder import load_folder_executor
-    manifest = _legacy_probe_manifest(
-        tmp_path, ['HIVEMIND_API_URL', credential],
-        required=[credential] if declared else [])
-    # The real legacy definition carries passthrough, not secrets_required.
-    definition = load_folder_executor(manifest.parent)
-    assert definition.isolation.env_passthrough == ('HIVEMIND_API_URL', credential)
-    assert definition.isolation.secrets_required == ()
-    environment = {'PATH': '/usr/bin', 'HIVEMIND_API_URL': 'https://fixture.invalid',
-                   credential: 'credential-sentinel-never-export',
-                   'UNDECLARED_TOKEN': 'ambient-sentinel-never-export'}
-    variants = _launch_worker_probe_environments((tmp_path,), environment)
-    assert len(variants) == 3  # Safe baseline, actual native and command projections.
-    assert 'HIVEMIND_API_URL' not in variants[0]
-    for variant in variants[1:]:
-        assert variant['HIVEMIND_API_URL'] == environment['HIVEMIND_API_URL']
-        assert variant['PYTHONPATH']
-    for variant in variants:
-        assert credential not in variant and 'UNDECLARED_TOKEN' not in variant
-        assert not any('sentinel-never-export' in value for value in variant.values())
-
-
-@pytest.mark.parametrize('invalid', ['9BAD_TOKEN', 'BROKEN-PUBLIC'])
-def test_startup_probe_omission_preserves_environment_name_validation(tmp_path, monkeypatch, invalid):
-    from dataclasses import replace
-    from astrid.core.execution import generic_host
-    from astrid.core.execution.executor import folder
-    from astrid.core.subprocess_env import SubprocessEnvPolicyError
-    _legacy_probe_manifest(tmp_path, ['PUBLIC_VALUE'])
-    original = folder.load_folder_executor
-
-    def loaded_with_invalid_projection(root):
-        definition = original(root)
-        return replace(definition, isolation=replace(definition.isolation, env_passthrough=(invalid,)))
-
-    monkeypatch.setattr(folder, 'load_folder_executor', loaded_with_invalid_projection)
-    with pytest.raises(SubprocessEnvPolicyError, match='valid environment variable name'):
-        generic_host._launch_worker_probe_environments((tmp_path,), {'PATH': '/usr/bin'})
-
-
-def test_startup_probes_keep_explicit_undeclared_credential_rejection(tmp_path):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    _legacy_probe_manifest(tmp_path, ['HIVEMIND_ANON_KEY'], fixed={'UNDECLARED_TOKEN': 'fixture'})
-    with pytest.raises(HostError, match='undeclared secret environment variable'):
-        _launch_worker_probe_environments((tmp_path,), {'PATH': '/usr/bin'})
-
 
 def invoke(tmp_path, host, definition, admission, *, inputs=None, dry_run=False, cancelled=None):
     attempt = tmp_path / "attempt"
@@ -1690,7 +1629,6 @@ def test_cli_retained_host_only_owns_canonical_attempt_namespace(tmp_path, monke
     if case == 'attempt_base': argv += ['--attempt-base', str(tmp_path / 'override')]
     monkeypatch.setenv('ASTRID_OUTPUT_ROOT', str(tmp_path if case == 'wrong_output' else output))
     if case == 'missing_output': monkeypatch.delenv('ASTRID_OUTPUT_ROOT')
-    monkeypatch.delenv('ASTRID_REMOTION_VALIDATION_LAUNCH', raising=False)
     monkeypatch.delenv('ASTRID_EXECUTION_TARGET_JSON', raising=False)
     monkeypatch.setattr(sys, 'argv', argv)
     monkeypatch.setattr(module.signal, 'signal', lambda *args: None)
@@ -1935,7 +1873,7 @@ def test_cli_startup_phase_orders_real_consumer_boundaries(tmp_path, monkeypatch
     ready = tmp_path / 'ready.json'
     argv = ['host', '--pack-root', str(tmp_path / 'packs'), '--ready-file', str(ready)]
     if fault == 'registration': argv.append('--register')
-    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE', 'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT'):
+    for name in ('ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT'):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(sys, 'argv', argv)
     monkeypatch.setattr(module.signal, 'signal', lambda *a: None)
@@ -2005,7 +1943,7 @@ def test_cli_registration_runs_one_real_preflight_inside_fence(tmp_path, monkeyp
         argv += ['--run-task', 'unit-task', '--lease-token', 'unit-lease']
         monkeypatch.setattr(runtime, 'task', lambda task_id: {'id': task_id})
         monkeypatch.setattr(host, 'run_task', lambda task, **kw: {'task': task})
-    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE',
+    for name in (
                  'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT', 'ASTRID_HOST_READINESS_PROFILE_PATH'):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(sys, 'argv', argv)
@@ -2076,7 +2014,7 @@ def test_managed_service_startup_failure_waits_for_requested_cleanup(tmp_path, m
         'host', 'run', '--pack-root', str(root), '--runtime-endpoint', 'http://127.0.0.1:1',
         '--credential-file', str(credential), '--register',
     ])
-    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE',
+    for name in (
                  'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT', 'ASTRID_HOST_READINESS_PROFILE_PATH'):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(module.platform, 'install_stop_handlers', lambda *args: None)
@@ -2148,7 +2086,7 @@ def test_managed_service_registration_failure_does_not_publish_readiness(tmp_pat
         ['host', '--pack-root', str(root), '--ready-file', str(ready),
          '--runtime-endpoint', 'http://127.0.0.1:1', '--credential-file', str(credential), '--register'],
     )
-    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE',
+    for name in (
                  'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT', 'ASTRID_HOST_READINESS_PROFILE_PATH'):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(module.signal, 'signal', lambda *a: None)
@@ -2463,129 +2401,6 @@ def test_local_parent_collision_rejected_across_public_registries(tmp_path, monk
     with pytest.raises(orchestrators.OrchestratorRegistryError, match="collides"):
         orchestrators.load_default_registry(executor_registry=ExecutorRegistry((child,)))
 
-
-@pytest.mark.parametrize("kind", ["native", "command"])
-def test_v3_worker_probe_matches_actual_readiness_context(tmp_path, monkeypatch, kind):
-    from unittest.mock import patch
-    from astrid.core.execution import generic_host
-    from astrid.core.rendering import remotion_runtime
-
-    root, host, _, _, _ = pack(tmp_path)
-    manifest = yaml.safe_load((root / "pack.yaml").read_text())
-    if kind == "command":
-        manifest["actions"]["calculate"]["invocation"] = {
-            "kind": "command", "command": {
-                "argv": ["{python_exec}", "-c", "pass"],
-                "input_args": [{"input": "value", "flag": "--value", "optional": True}],
-                "env": {"LC_ALL": "C.UTF-8"},
-            },
-        }
-        (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
-    record, = host.discover()
-    selected = tmp_path / "host" / "site-packages"
-    ambient = tmp_path / "caller" / "site-packages"
-    selected.mkdir(parents=True)
-    ambient.mkdir(parents=True)
-    launch = {
-        "HOME": str(tmp_path), "PATH": "/usr/bin", "LANG": "C.UTF-8",
-        "PYTHONPATH": str(selected), "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path),
-        "ASTRID_REMOTION_VALIDATION_ROLE": "host",
-    }
-    monkeypatch.setenv("PYTHONPATH", str(ambient))
-    variants = generic_host._launch_worker_probe_environments((root,), launch)
-    assert len(variants) == 3
-    assert all(str(ambient) not in value for variant in variants for value in variant.values())
-    captured = []
-
-    def validated(project, *, environment):
-        assert project == tmp_path
-        assert environment["ASTRID_REMOTION_VALIDATION_ROLE"] == "worker"
-        captured.append(remotion_runtime._registry_context(environment, generator=False))
-
-    monkeypatch.setattr(remotion_runtime, "_validated_runtime", validated)
-    # Only render-capable workers are validated at launch and checked at spawn.
-    monkeypatch.setattr(generic_host, "_record_may_render", lambda _record: True)
-    # Execution sees the explicit host launch, rather than the SDK caller's
-    # ambient imports. Exercise the genuine final child environment builder.
-    with patch.dict(os.environ, launch, clear=True):
-        explicit = None
-        if kind == "command":
-            explicit = {
-                "PYTHONPATH": os.pathsep.join((str(Path(generic_host.__file__).resolve().parents[3]),
-                                              *generic_host._dependency_pythonpath())),
-                **dict(record.definition.command.env),
-            }
-        host._child_environment(record, tmp_path / "attempt", explicit_env=explicit,
-                                readiness_worker_kind=kind)
-    index = 1 if kind == "native" else 2
-    assert captured == [remotion_runtime._registry_context(variants[index], generator=False)]
-    assert str(selected) in variants[index]["PYTHONPATH"]
-    if kind == "command":
-        assert variants[index]["PYTHONPATH"].split(os.pathsep)[:2] == [str(root), str(root.parent)]
-
-
-@pytest.mark.parametrize("credential", ["HIVEMIND_CONTRIBUTOR_KEY", "HIVEMIND_ANON_KEY"])
-def test_v3_startup_probes_omit_credentials_without_task_authority(tmp_path, credential):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    root, _, _, _, _ = pack(tmp_path)
-    manifest = yaml.safe_load((root / "pack.yaml").read_text())
-    manifest["actions"]["calculate"]["isolation"] = {
-        "mode": "subprocess", "env_passthrough": ["PUBLIC_VALUE", credential]}
-    (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
-    variants = _launch_worker_probe_environments((root,), {
-        "PATH": "/usr/bin", "PUBLIC_VALUE": "fixed-public", credential: "never-export-sentinel",
-        "UNDECLARED_TOKEN": "never-export-sentinel"})
-    assert len(variants) == 3
-    for variant in variants[1:]:
-        assert variant["PUBLIC_VALUE"] == "fixed-public"
-    for variant in variants:
-        assert credential not in variant and "UNDECLARED_TOKEN" not in variant
-        assert not any("never-export-sentinel" in value for value in variant.values())
-
-
-def test_v3_startup_probes_reject_fixed_undeclared_secret(tmp_path):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    root, _, _, _, _ = pack(tmp_path)
-    manifest = yaml.safe_load((root / "pack.yaml").read_text())
-    manifest["actions"]["calculate"]["invocation"] = {
-        "kind": "command", "command": {"argv": ["{python_exec}", "-c", "pass"],
-        "input_args": [{"input": "value", "flag": "--value", "optional": True}],
-        "env": {"UNDECLARED_TOKEN": "never-export-sentinel"}}}
-    (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
-    with pytest.raises(HostError, match="undeclared secret environment variable"):
-        _launch_worker_probe_environments((root,), {"PATH": "/usr/bin"})
-
-
-def test_v3_worker_probes_match_exact_host_roots_and_exclusions(tmp_path, monkeypatch):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    root, _, runtime, _, _ = pack(tmp_path)
-    manifest = yaml.safe_load((root / "pack.yaml").read_text())
-    parent = _local_parent_declaration()
-    parent["graph"]["child_actions"] = ["unrelated.calculate"]
-    parent["invocation"]["command"]["env"] = {"PATH": "/excluded-parent"}
-    manifest["actions"]["parent"] = parent
-    ordinary = json.loads(json.dumps(manifest["actions"]["calculate"]))
-    ordinary["metadata"]["local_orchestrator"] = False
-    manifest["actions"]["ordinary"] = ordinary
-    malformed = json.loads(json.dumps(parent))
-    malformed["metadata"]["local_orchestrator"] = "true"
-    manifest["actions"]["malformed"] = malformed
-    (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
-    outside = tmp_path / "outside"
-    outside.mkdir()
-    outside_manifest = json.loads(json.dumps(manifest))
-    outside_manifest["id"] = "outside"
-    outside_manifest["actions"] = {"parent": parent}
-    outside_manifest["actions"]["parent"]["metadata"]["local_orchestrator"] = False
-    outside_manifest["actions"]["parent"]["invocation"]["command"]["env"] = {"PATH": "/outside-root"}
-    (outside / "pack.yaml").write_text(yaml.safe_dump(outside_manifest))
-    host = GenericPackHost(pack_roots=[root], client=runtime)
-    monkeypatch.setenv("ASTRID_PACKS_PATH", str(outside))
-    assert {row.id for row in host.discover()} == {"unrelated.calculate", "unrelated.ordinary"}
-    variants = _launch_worker_probe_environments((root,), {"PATH": "/usr/bin"})
-    assert len(variants) == 5
-    assert all(variant["PATH"] == "/usr/bin" for variant in variants)
-    assert not any(str(outside) in variant.get("PYTHONPATH", "") for variant in variants)
 
 
 @pytest.mark.parametrize("census", ["released", "live-group", "unavailable", "failure"])

@@ -259,7 +259,7 @@ def test_real_ffmpeg_render_through_registered_backend(tmp_path: Path) -> None:
 def test_real_remotion_render_through_registered_backend(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     ffmpeg = shutil.which("ffmpeg")
     assert ffmpeg is not None

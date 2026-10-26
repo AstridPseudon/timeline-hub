@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 
 from astrid.core.rendering import node_pin
 
@@ -79,8 +78,8 @@ def test_node_path_search_uses_which(monkeypatch, tmp_path):
     assert node_pin.candidates(project, "v20.19.4", search_path="", home=tmp_path / "home")[0] == (executable, "PATH")
 
 
-def test_the_host_launch_refuses_a_mismatched_node_and_resolves_the_pinned_one(tmp_path):
-    from astrid.sdk.host_bootstrap import PackHostBootstrapError, _provision_render_runtime_env
+def test_the_host_launch_resolves_the_pin_and_leaves_bad_node_for_render_preflight(tmp_path):
+    from astrid.sdk.host_bootstrap import _provision_render_runtime_env
 
     project = _project(tmp_path)
     source = project.parent
@@ -89,8 +88,9 @@ def test_the_host_launch_refuses_a_mismatched_node_and_resolves_the_pinned_one(t
     env = {"PATH": str(wrong.parent)}
     _provision_render_runtime_env(source, env)  # the shell's Node 26 does not matter
     assert env["ASTRID_NODE_EXECUTABLE"] == str(pinned.resolve())
-    with pytest.raises(PackHostBootstrapError, match="is Node v26.7.0, but .* pins v20.19.4"):
-        _provision_render_runtime_env(source, {"PATH": "", "ASTRID_NODE_EXECUTABLE": str(wrong)})
+    invalid = {"PATH": "", "ASTRID_NODE_EXECUTABLE": str(wrong)}
+    _provision_render_runtime_env(source, invalid)
+    assert invalid["ASTRID_NODE_EXECUTABLE"] == str(wrong)
 
 
 def test_doctor_reports_the_node_in_use_against_the_pin(tmp_path):

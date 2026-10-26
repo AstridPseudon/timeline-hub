@@ -23,7 +23,7 @@ Before anything starts the journey refuses unless the temp volume has free disk 
 (an estimate per backend, `SCRATCH_BYTES_PER_SECOND`; the real figure is the capability's and is unreadable before the
 Runtime is up). The numbers are in the refusal and in the summary (`disk_preflight`). Every child process gets a scrubbed
 environment (`scrub_child_env`): no `NODE_OPTIONS`, `NODE_PATH`, `LD_*`, `DYLD_*`, non-interactive `GIT_*`,
-Python-startup overrides, or the variables the journey replaces itself, because Remotion validation fails closed on them.
+Python-startup overrides, or the variables the journey replaces itself, because Remotion runtime checks fails closed on them.
 
 The summary's `revisions` hold the Astrid HEAD, the imported `runtime_protocol` checkout and its HEAD, the App HEAD
 (when `--app-checkout` is given) and the `version` of Astrid's `artifacts.json` and the Runtime's `contract/artifacts.json`,

@@ -13,7 +13,6 @@ import hashlib
 import json
 import os
 import re
-import signal
 import shutil
 import socket
 import subprocess
@@ -27,14 +26,13 @@ from types import ModuleType
 from typing import Any, Mapping, Sequence
 
 from astrid.core import timeline
-from astrid.core.audit import AuditContext
 from astrid.core.element.registry import load_default_registry
 from astrid.core.element.schema import ElementDefinition
 from astrid.core.foundation.atomic_io import write_json_atomic
-from astrid.core.foundation.paths import REPO_ROOT, WORKSPACE_ROOT
+from astrid.core.foundation.paths import REPO_ROOT, WORKSPACE_ROOT, load_checkout_script
 from astrid.core.rendering import assets as _rendering_assets
+from astrid.core.rendering import remotion_runtime
 from astrid.core.rendering.artifacts import validate_render_result
-from astrid.core.rendering.storage import remotion_frame_format
 from astrid.core.rendering.assets import (
     AssetMaterializer,
     InvocationAssetServer,
@@ -43,8 +41,8 @@ from astrid.core.rendering.contracts import (
     SCHEMA_VERSION,
     AudioOwnership,
     FrameWindow,
-    RenderRequest,
     RenderProfile,
+    RenderRequest,
     RenderResult,
     SupportReport,
     VideoArtifact,
@@ -54,15 +52,14 @@ from astrid.core.rendering.errors import (
     make_renderer_error,
     raise_unsupported_error,
 )
-from astrid.core.rendering.publication import publish_render_result
 from astrid.core.rendering.remotion_runtime import (
     TIMELINE_SCHEMA_PYTHONPATH_ENV,
     RemotionRuntimeTools,
-    resolve_remotion_runtime_tools,
 )
-from astrid.core.rendering.storage import h264_encoder_bitrates
-from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay
+from astrid.core.rendering.storage import h264_encoder_bitrates, remotion_frame_format
 from astrid.core.subprocess_env import build_child_subprocess_env
+from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
+from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay
 from astrid.packs.rendering.shared import rendering_backend as _shared
 from astrid.packs.rendering.shared.rendering_backend import (
     _alpha_output_name,
@@ -73,16 +70,14 @@ from astrid.packs.rendering.shared.rendering_backend import (
     _parse_min_free_gb,
     _profile_mismatches,
     _reject_unknown_config,
-    _remotion_scaled_dimensions,
     _remotion_mux_profile,
-    _review_output_profile,
+    _remotion_scaled_dimensions,
     _render_provenance_payload,
     _resolved_theme_for_render,
+    _review_output_profile,
     _serialize_timeline,
     _timeline_alpha,
 )
-from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
-from astrid.core.foundation.paths import load_checkout_script
 
 # Release wheels intentionally exclude authoring scripts.  A provisioned
 # server-owned Remotion bundle carries its generated registry outputs.
@@ -259,40 +254,20 @@ class PersistentRemotionFrameSession:
 
 
 def _validate_project_dir(project_dir: Path) -> RemotionRuntimeTools:
-    if not project_dir.exists():
-        raise FileNotFoundError(f"Remotion project directory not found: {project_dir}")
-    package_json = project_dir / "package.json"
-    if not package_json.exists():
-        raise FileNotFoundError(f"Remotion project is missing package.json: {package_json}")
-    node_modules = project_dir / "node_modules"
-    if not node_modules.exists():
+    status = remotion_runtime.remotion_runtime_status()
+    if not status.available:
+        raise FileNotFoundError(status.reason or "trusted Remotion runtime is unavailable")
+    selected_project = status.project_dir
+    if selected_project is None or project_dir.resolve() != selected_project.resolve():
         raise FileNotFoundError(
-            f"Remotion project is missing node_modules: {node_modules}; "
-            "see docs/setup/release-recipe.md and docs/reference/render-adapter.md for the selected installed Remotion source and adapter package instructions"
+            f"Remotion project is not the server-owned runtime selected for this process: {project_dir}"
         )
-
-    banodoco_root = node_modules / "@banodoco"
-    required_packages = (
-        "timeline-composition",
-        "timeline-schema",
-        "timeline-theme-2rp",
+    assert status.node_executable is not None
+    assert status.node_version is not None
+    assert status.remotion_cli is not None
+    return RemotionRuntimeTools(
+        status.node_executable, status.node_version, status.remotion_cli
     )
-    missing = [
-        f"@banodoco/{package}"
-        for package in required_packages
-        if not (banodoco_root / package).is_dir()
-    ]
-    if missing:
-        raise FileNotFoundError(
-            f"Missing @banodoco render package(s) in {node_modules}: {', '.join(missing)}. "
-            "These packages are adapter-required and not published to a public npm registry. "
-            "See docs/setup/release-recipe.md and docs/reference/render-adapter.md for the selected installed source and adapter instructions."
-        )
-    runtime_tools, tools_error = resolve_remotion_runtime_tools(project_dir)
-    if tools_error:
-        raise FileNotFoundError(tools_error)
-    assert runtime_tools is not None
-    return runtime_tools
 
 
 def _timeline_composition_src(project_dir: Path) -> Path | None:
@@ -398,7 +373,10 @@ def _registry_outputs_match_state(
 def _effective_registry_state(theme_path: Path | None) -> dict[str, Any]:
     if gen_effect_registry is None:
         return {"version": 1, "hash": "server-provisioned"}
+    from astrid.core.element.registry import clear_default_registry_cache
+
     del theme_path
+    clear_default_registry_cache()
     return gen_effect_registry.compute_generated_registry_state()
 
 
@@ -436,26 +414,12 @@ def _regenerate_element_registries_locked(
 ) -> None:
     """Regenerate shared registries while the caller owns the Remotion lock."""
 
-    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
-    if ASTRID_REMOTION_VALIDATION_LAUNCH in os.environ:
-        from astrid.core.rendering.remotion_runtime import _validated_runtime
-        from astrid.core.element.registry import clear_default_registry_cache
-        validated = _validated_runtime(project_dir)
-        registry = validated['registry']
-        if registry['mode'] == 'source_settled':
-            clear_default_registry_cache()
-            fresh = _effective_registry_state(theme_path)
-            if (fresh != registry['expected_state']
-                    or _read_registry_state(project_dir) != fresh
-                    or _registry_output_content_hashes(project_dir) != fresh['content_hashes']):
-                raise RuntimeError('launch-bound registry drift refuses regeneration')
-        # Provisioned wheel output bindings are checked above; never invent a
-        # source generator for a wheel. Launch-bound consumers never rewrite.
-        return
-
     if gen_effect_registry is None:
         if not _registry_outputs_exist(project_dir):
             raise RuntimeError("installed Remotion bundle is missing generated element registries")
+        state = _read_registry_state(project_dir)
+        if state is not None and not _registry_outputs_match_state(project_dir, state):
+            raise RuntimeError("installed Remotion bundle has stale generated element registries")
         return
 
     state = _effective_registry_state(theme_path)
@@ -482,6 +446,8 @@ def _regenerate_element_registries_locked(
         check=True,
         text=True,
     )
+    if not _registry_outputs_match_state(project_dir, state):
+        raise RuntimeError("generated element registries are missing or stale after regeneration")
     _write_registry_state(project_dir, state)
 
 
@@ -1862,6 +1828,5 @@ __all__ = [
     "BACKEND_VERSION",
     "DEFAULT_COMPOSITION_ID",
     "main",
-    "render",
     "support",
 ]

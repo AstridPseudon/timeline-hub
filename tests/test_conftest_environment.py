@@ -1,4 +1,4 @@
-"""What the test bootstrap leaves in os.environ must stay valid for the Remotion runtime validation."""
+"""The test bootstrap keeps its bytecode cache configuration local."""
 
 from __future__ import annotations
 
@@ -8,13 +8,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-from astrid.core.rendering.remotion_runtime import probe_context
 
 REPO = Path(__file__).resolve().parents[1]
 
 
-def test_bootstrap_environment_is_accepted_by_the_remotion_probe_context(tmp_path: Path) -> None:
-    """In-process renders validate os.environ; a bootstrap-exported PYTHONPYCACHEPREFIX makes them refuse.
+def test_bootstrap_environment_keeps_bytecode_configuration_local(tmp_path: Path) -> None:
+    """The bootstrap does not redirect child bytecode caches.
 
     The bootstrap runs in a child with no PYTHON* variables of its own, so a developer's shell cannot
     change the result.
@@ -27,4 +26,4 @@ def test_bootstrap_environment_is_accepted_by_the_remotion_probe_context(tmp_pat
     bootstrapped = json.loads(result.stdout.splitlines()[-1])
     bootstrapped.pop("PYTHONPATH")
     assert bootstrapped["PYTHONDONTWRITEBYTECODE"] == "1"
-    probe_context(environment=bootstrapped, python_executable=sys.executable)
+    assert "PYTHONPYCACHEPREFIX" not in bootstrapped

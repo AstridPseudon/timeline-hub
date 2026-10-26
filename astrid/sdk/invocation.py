@@ -1188,7 +1188,6 @@ def _render_reuse_toolchain_digest() -> str | None:
             "pack_source": source_checkout_digest(root),
             "core_source": source_checkout_closure_digest(root),
             "remotion": {part: _source_digest(remotion / part) for part in remotion_parts},
-            "validated_runtime": os.environ.get("ASTRID_REMOTION_VALIDATION_SHA256"),
             "external_tools": {
                 name: _source_digest(Path(path).resolve()) if path else None
                 for name, path in binaries.items()

@@ -19,7 +19,7 @@ shared Remotion execution helper + lock.  The test exercises:
   project with three/@remotion/three/@react-three/fiber required).
 
 The real-render cases are integration tests: they need the provisioned
-Remotion install and its launch validation (``remotion_launch_validation`` in
+Remotion install and its runtime environment (``remotion_runtime_environment`` in
 tests/packs/conftest.py) and fail, never skip, when either is missing.
 """
 
@@ -517,7 +517,7 @@ def test_threejs_support_preflight_is_honest_when_environment_missing(
 @pytest.mark.timeout(600)
 def test_threejs_real_render_empty_timeline_through_public_service(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     timeline_path = _empty_timeline(tmp_path)
     assets_path = tmp_path / "threejs-empty.assets.json"
@@ -565,7 +565,7 @@ def test_threejs_real_render_empty_timeline_through_public_service(
 @pytest.mark.timeout(600)
 def test_threejs_real_render_text_timeline_through_public_service(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     # Two clips on the same track, non-overlapping: frame 0..5 shows "A",
     # frame 6..11 shows "B" — so the render is not a uniform background.
@@ -774,7 +774,7 @@ def _set_npm_offline(value: str) -> None:
 @pytest.mark.timeout(600)
 def test_threejs_real_render_works_with_npm_offline(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     """A real direct threejs render with `npm config set offline true` proves
     the runtime needs no package downloads.  The config is restored even on
@@ -886,7 +886,7 @@ def _threejs_direct_request(timeline_path: Path) -> RenderRequest:
 @pytest.mark.timeout(600)
 def test_threejs_unstamped_real_render_corner_is_background_color(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     """Unstamped (no stamp) keeps the opaque path: the corner pixel is the
     theme background #1a1a2e with alpha 255 (frozen behavior)."""
@@ -910,7 +910,7 @@ def test_threejs_unstamped_real_render_corner_is_background_color(
 @pytest.mark.timeout(600)
 def test_threejs_alpha_stamped_real_render_declared_profile_matches_probe(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     """Stamped alpha through _protocol_render: strict validation passes and
     the probed artifact is the recorded batch-4-rework truth --
@@ -942,7 +942,7 @@ def test_threejs_alpha_stamped_real_render_declared_profile_matches_probe(
 @pytest.mark.timeout(600)
 def test_threejs_alpha_stamped_corner_pixel_is_fully_transparent(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     timeline_path = _threejs_stamped_timeline(tmp_path, alpha=True)
     with _execution_env():
