@@ -61,6 +61,12 @@ export const SKIP_REGISTRY = {
     applies: symlinkCreationRefused,
     ci: ['vitest'],
   },
+  'windows-console-interruption-harness': {
+    skipWhen: "process.platform === 'win32'",
+    reason: 'the interruption test uses Python pty.fork, which has no Windows console-event support',
+    applies: isWindows,
+    ci: ['installer-windows'],
+  },
 };
 
 /**
@@ -105,9 +111,9 @@ export const LANES = {
     ci: ['quick-journey'],
   },
   'node-installer-bootstrap': {
-    what: 'scripts/installer/bootstrap.test.mjs (POSIX installer; ubuntu and macOS) and bootstrap-powershell.test.mjs (needs pwsh; ubuntu)',
+    what: 'scripts/installer/bootstrap.test.mjs (POSIX installer; ubuntu and macOS) and bootstrap-powershell.test.mjs (PowerShell 7 on ubuntu; Windows PowerShell 5.1 and PowerShell 7 on Windows; console interruption uses the POSIX PTY harness)',
     command: 'node --test scripts/installer/bootstrap.test.mjs scripts/installer/bootstrap-powershell.test.mjs',
-    ci: ['installer-posix', 'installer-powershell'],
+    ci: ['installer-posix', 'installer-powershell', 'installer-windows'],
   },
   'playwright-direct': {
     what: 'tests/e2e/local/{direct-journey,settings-persist}.spec.ts',

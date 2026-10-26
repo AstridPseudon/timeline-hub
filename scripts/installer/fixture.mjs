@@ -135,8 +135,65 @@ shutil.copyfile(os.environ['MOCK_MANIFEST'], sys.argv[sys.argv.index('--output')
       env.MOCK_LOG = path.join(env.LOCALAPPDATA, 'Astrid Runtime/logs/install.log');
       const windowsBootstrap = path.join(env.LOCALAPPDATA, 'Astrid Installer/bootstrap');
       await mkdir(windowsBootstrap, { recursive: true });
-      await cp(path.join(bootstrap, 'uv'), path.join(windowsBootstrap, 'uv.exe'));
-      await chmod(path.join(windowsBootstrap, 'uv.exe'), 0o755);
+      if (process.platform === 'win32') {
+        const mockScript = path.join(root, 'mock-uv.py');
+        const launcherSource = path.join(root, 'mock-uv-launcher.cs');
+        const launcherScript = path.join(root, 'build-mock-uv.ps1');
+        const executable = path.join(windowsBootstrap, 'uv.exe');
+        await writeFile(mockScript, mockUv);
+        await writeFile(launcherSource, String.raw`
+using System;
+using System.Diagnostics;
+using System.Text;
+public static class AstridMockUvLauncher {
+    private static string Quote(string value) {
+        if (value.Length == 0) return "\"\"";
+        if (value.IndexOfAny(new char[] { ' ', '\t', '\n', '\v', '"' }) < 0) return value;
+        var result = new StringBuilder();
+        result.Append('"');
+        int slashes = 0;
+        foreach (char character in value) {
+            if (character == '\\') { slashes++; continue; }
+            if (character == '"') {
+                result.Append('\\', slashes * 2 + 1);
+                result.Append('"');
+                slashes = 0;
+                continue;
+            }
+            result.Append('\\', slashes);
+            slashes = 0;
+            result.Append(character);
+        }
+        result.Append('\\', slashes * 2);
+        result.Append('"');
+        return result.ToString();
+    }
+    public static int Main(string[] arguments) {
+        var info = new ProcessStartInfo();
+        info.FileName = Environment.GetEnvironmentVariable("MOCK_UV_PYTHON");
+        info.Arguments = Quote(Environment.GetEnvironmentVariable("MOCK_UV_SCRIPT")) +
+            (arguments.Length == 0 ? "" : " " + String.Join(" ", Array.ConvertAll(arguments, Quote)));
+        info.UseShellExecute = false;
+        using (var process = Process.Start(info)) {
+            process.WaitForExit();
+            return process.ExitCode;
+        }
+    }
+}
+`);
+        await writeFile(launcherScript, `
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition ([IO.File]::ReadAllText($env:MOCK_UV_LAUNCHER_SOURCE)) -OutputType ConsoleApplication -OutputAssembly $env:MOCK_UV_EXECUTABLE
+`);
+        env.MOCK_UV_SCRIPT = mockScript;
+        env.MOCK_UV_PYTHON = process.env.ASTRID_TEST_PYTHON || 'python';
+        env.MOCK_UV_LAUNCHER_SOURCE = launcherSource;
+        env.MOCK_UV_EXECUTABLE = executable;
+        await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', launcherScript], { cwd: repo, env });
+      } else {
+        await cp(path.join(bootstrap, 'uv'), path.join(windowsBootstrap, 'uv.exe'));
+        await chmod(path.join(windowsBootstrap, 'uv.exe'), 0o755);
+      }
       const harness = path.join(root, 'invoke.ps1');
       await writeFile(harness, `
 $ErrorActionPreference = 'Continue'

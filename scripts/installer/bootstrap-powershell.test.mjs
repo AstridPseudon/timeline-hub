@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { createPinnedRepo, failure, fixture, observe, preparation, repo, terminalInterrupt } from './fixture.mjs';
+import { declaredSkip } from '../../scripts/quality/declared-skip.mjs';
 
-// Run explicitly with a PowerShell 7 executable on POSIX. Native Windows
-// PowerShell 5.1 also needs qualification on Windows before release.
+// CI selects pwsh on POSIX and both Windows PowerShell 5.1 and pwsh on Windows.
 const powershell = process.env.ASTRID_TEST_PWSH || 'pwsh';
 
 test('PowerShell opens install log appends with sharing compatible with the running service', async () => {
@@ -432,18 +432,39 @@ test('PowerShell drains simultaneous multi-megabyte native output without deadlo
 }));
 
 test('PowerShell handles stderr progress from native uv bootstrap setup', () => scenario(async (context, run) => {
-  await rm(path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe'));
-  context.env.SystemRoot = path.join(context.root, 'system root');
-  context.env.MOCK_SOURCE_UV = path.join(context.bootstrap, 'uv');
+  const executable = path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe');
+  context.env.MOCK_SOURCE_UV = path.join(context.root, 'uv-source.exe');
+  await cp(executable, context.env.MOCK_SOURCE_UV);
+  await rm(executable);
   context.env.MOCK_BOOTSTRAP_ARGS = path.join(context.root, 'bootstrap-args.json');
-  const executable = path.join(context.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe');
-  await mkdir(path.dirname(executable), { recursive: true });
-  await writeFile(executable, `#!/usr/bin/env python3
+  if (process.platform !== 'win32') {
+    context.env.SystemRoot = path.join(context.root, 'system root');
+    const powershellShim = path.join(context.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe');
+    await mkdir(path.dirname(powershellShim), { recursive: true });
+    await writeFile(powershellShim, `#!/usr/bin/env python3
 import json, os, pathlib, shutil, sys
 pathlib.Path(os.environ['MOCK_BOOTSTRAP_ARGS']).write_text(json.dumps(sys.argv[1:]))
 print('bootstrap progress on stderr', file=sys.stderr)
 shutil.copy2(os.environ['MOCK_SOURCE_UV'], pathlib.Path(os.environ['UV_UNMANAGED_INSTALL']) / 'uv.exe')
 `, { mode: 0o755 });
+  }
+  const harness = await readFile(path.join(context.root, 'invoke.ps1'), 'utf8');
+  await writeFile(path.join(context.root, 'invoke.ps1'), harness.replace('\ntry {', `
+function Invoke-WebRequest {
+    param([switch]$UseBasicParsing, [Parameter(Position=0)][string]$Uri, [string]$OutFile)
+    if ($env:MOCK_FETCH_EXIT) { throw 'The fixture download failed.' }
+    if ($Uri.StartsWith('https://astral.sh/')) {
+        [IO.File]::WriteAllText($OutFile, @'
+[IO.File]::WriteAllText($env:MOCK_BOOTSTRAP_ARGS, (ConvertTo-Json -InputObject @($args) -Compress))
+[Console]::Error.WriteLine('bootstrap progress on stderr')
+Copy-Item -LiteralPath $env:MOCK_SOURCE_UV -Destination (Join-Path $env:UV_UNMANAGED_INSTALL 'uv.exe') -Force
+'@)
+    } else {
+        if ($Uri.EndsWith('/developer-manifest.json') -or $Uri.EndsWith('/install-manifest.json')) { [IO.File]::WriteAllText($env:MOCK_FETCHED, $Uri) }
+        Copy-Item $env:MOCK_MANIFEST $OutFile
+    }
+}
+try {`));
   const result = await run();
   alive(result);
   assert.match(result.stdout, /Astrid is ready\./);
@@ -544,7 +565,7 @@ test('PowerShell preserves a native core failure status and logs diagnostics bef
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /raw core diagnostic/);
 }));
 
-test('PowerShell console interruption reaches the child and waits for recovery', () => scenario(async (context) => {
+test('PowerShell console interruption reaches the child and waits for recovery', { skip: declaredSkip('windows-console-interruption-harness') }, () => scenario(async (context) => {
   const harness = await context.powershell();
   const receipt = path.join(context.root, 'interrupted');
   const result = await context.run('python3', ['-c', terminalInterrupt, powershell, '-NoProfile', '-NonInteractive', '-File', harness], {
