@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "first_action_of_write_mode": true,
+  "gap_disclosure": "This private sampler began with --write after worker inspection; parent acceptance relies on the published D141cc evidence and retains its first-tool custody gap.",
+  "interval_seconds": 5,
+  "last_available_bytes": 5599424512,
+  "last_sample_at": "2026-10-26T11:49:48.006654+00:00",
+  "pid": 8,
+  "reaped": true,
+  "samples": 2,
+  "schema": "d141gg-private-sampler-v1",
+  "started_at": "2026-10-26T11:49:42.981506+00:00",
+  "status": "completed",
+  "stop_free_bytes": 4000000000,
+  "waited": true,
+  "worker_first_tool": false
+}
