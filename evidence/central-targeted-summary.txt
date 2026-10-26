@@ -1,0 +1,63 @@
+test B-T3-app-projection-preview-1-targeted-1026225926-30933: pass exit=0 in 16s — targeted on B-T3-app-projection-preview-1 (app tree d8d236235175f20edf37c21702418b676c38d0db)
+cmd: npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/data/shotCompositionProjection.test.ts src/tools/video-editor/data/shotLayeringProjection.test.ts src/tools/video-editor/compositions/TimelineRenderer.groups.test.tsx src/tools/video-editor/data/visualSeamContract.test.ts src/tools/video-editor/data/shotCompositionAdapter.test.ts src/tools/video-editor/data/shotCompositionEditor.test.ts src/tools/video-editor/data/canonicalCompositionState.test.ts src/tools/video-editor/data/visualSeamAcceptance.test.ts src/tools/video-editor/data/visualSeamPerformance.test.ts src/tools/video-editor/compositions/TimelineRenderer.test.tsx src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx config/vite/astridSource.test.ts
+counts:  Test Files  15 passed (15)       Tests  181 passed (181)
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/B-T3-app-projection-preview-1-targeted-1026225926-30933/log.txt ---
+
+stderr | src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > renders canonical defaults and per-clip managed overrides through the installed local owner
+Astrid local fonts need the FontFaceSet API; using system fallbacks.
+
+stderr | src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > does not interpret another installed owner’s params as local end-spanning card assets
+Astrid local fonts need the FontFaceSet API; using system fallbacks.
+
+stderr | src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > rejects installed-only and unknown IDs without substitution and renders a loud typed placeholder
+Astrid local fonts need the FontFaceSet API; using system fallbacks.
+
+stderr | src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx > V009 public host behavior qualification > keeps a public owner mismatch unavailable instead of resolving another text-card owner
+Astrid local fonts need the FontFaceSet API; using system fallbacks.
+
+ ✓ src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx (12 tests) 370ms
+ ✓ src/tools/video-editor/data/visualSeamContract.test.ts (18 tests) 77ms
+ ✓ src/tools/video-editor/data/shotLayeringProjection.test.ts (19 tests) 39ms
+ ✓ src/tools/video-editor/data/shotCompositionAdapter.test.ts (9 tests) 31ms
+stderr | src/tools/video-editor/compositions/TimelineRenderer.groups.test.tsx > TimelineRenderer shot isolation > keeps each transparent isolated stack at its row, with inner blends/opacity/scale and effect layers scoped to that shot
+Astrid local fonts need the FontFaceSet API; using system fallbacks.
+
+stderr | src/tools/video-editor/compositions/TimelineRenderer.groups.test.tsx > TimelineRenderer shot isolation > lets a parent effect layer wrap the completed shot groups
+Astrid local fonts need the FontFaceSet API; using system fallbacks.
+
+stderr | src/tools/video-editor/compositions/TimelineRenderer.groups.test.tsx > TimelineRenderer shot isolation > adds no opaque fill for an empty shot group
+Astrid local fonts need the FontFaceSet API; using system fallbacks.
+
+ ✓ src/tools/video-editor/compositions/TimelineRenderer.groups.test.tsx (4 tests) 326ms
+stderr | src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx > TimelineRenderer — dynamic registry dispatch (FLAG-001/002) > never compiles DB-stored sequence code; the custom clip shows the unsupported placeholder instead
+Warning: React does not recognize the `durationInFrames` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `durationinframes` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at Sequence (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx:14:15)
+    at UnknownClipPlaceholderSequence (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/UnknownClipPlaceholder.tsx:71:43)
+    at div
+    at AbsoluteFill (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx:5:19)
+    at VisualTrack (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.tsx:1088:24)
+    at div
+    at AbsoluteFill (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx:5:19)
+    at div
+    at AbsoluteFill (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx:5:19)
+    at div
+    at AbsoluteFill (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx:5:19)
+    at AudioAnalysisProvider (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx:55:125)
+    at /home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.tsx:1377:64
+    at /home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/compositions/TimelineRenderer.tsx:1606:60
+    at SequenceComponentRegistryProvider (/home/user/work/wt/.test-B-T3-app-projection-preview-1-targeted-1026225926-30933/src/tools/video-editor/sequences/SequenceComponentRegistryContext.tsx:12:46)
+Astrid local fonts need the FontFaceSet API; using system fallbacks.
+
+ ✓ src/tools/video-editor/compositions/TimelineRenderer.dynamic.test.tsx (2 tests) 110ms
+ ✓ config/vite/astridSource.test.ts (2 tests) 11ms
+ ✓ src/tools/video-editor/data/visualSeamAcceptance.test.ts (2 tests) 18ms
+ ✓ src/tools/video-editor/data/canonicalCompositionState.test.ts (5 tests) 20ms
+ ✓ src/tools/video-editor/data/visualSeamPerformance.test.ts (1 test) 358ms
+     ✓ analyzes 500 clips and 100 parent effects from metadata alone, identically on every warm run  355ms
+ ✓ src/tools/video-editor/compositions/TimelineRenderer.test.tsx (3 tests) 6ms
+
+ Test Files  15 passed (15)
+      Tests  181 passed (181)
+   Start at  22:59:44
+   Duration  13.75s (transform 4.51s, setup 3.66s, import 7.55s, tests 2.82s, environment 10.36s)
