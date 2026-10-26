@@ -543,10 +543,42 @@ def test_remote_create_empty_migration_preserves_shell_and_empty_head(runtime_cr
         "resolution": "1280x720", "fps": 30, "file": "output.mp4",
         "background": None, "background_scale": None,
     }
+    assert commit[1][2]["commands"][0]["args"] == {
+        "name": "Main",
+        "slug": "main",
+        "output": {
+            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+    }
     assert commit[1][2]["commands"][1:]
     assert commit[2] == {"idempotency_key": "caller-1-head"}
     payload = result.data["canonical_document"]["parent_revision"]["payload"]
-    assert payload["config"]["tracks"] == DEFAULT_CONFIG["tracks"]
+    assert payload["name"] == "Main"
+    assert payload["slug"] == "main"
+    assert payload["config"] == {
+        **DEFAULT_CONFIG,
+        "output": {
+            "resolution": "1920x1080", "fps": 30, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+        "clips": [],
+    }
+    assert payload["registry"] == {"assets": {}}
     assert payload["clips"] == []
+    assert payload["occurrences"] == []
     assert result.data["canonical_document"]["shot_revisions"] == []
     assert result.data["canonical_document"]["internal_timeline_revisions"] == []
+    history = runtime_create_case.timelines.history(
+        runtime_create_case.project, result.data["timeline_id"], limit=100,
+    )
+    assert history.ok
+    assert result.data["head_revision_id"] == history.data["head"]["revision_id"]
+    assert len(history.data["items"]) == 2
+    assert history.data["items"][0]["intent"] == "bootstrap"
+    assert commit[1][2]["base_revision_id"] == history.data["items"][0]["revision_id"]
+    assert commit[1][2]["base_publication_id"] == history.data["items"][0]["publication_id"]
+    assert len([item for item in history.data["items"] if item["intent"] == "recorded"]) == 1
+    assert history.data["items"][1]["receipt"]["result"]["steps"][0]["reads"] == [
+        {"kind": "scope", "ref": "timeline", "path": []},
+    ]

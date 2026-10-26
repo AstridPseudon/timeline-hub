@@ -35,19 +35,31 @@ def test_commit_migration_forwards_key_once_and_refuses_force(normal_commit, cap
     assert run("--idempotency-key", "edit-42", message="Committed Film") == 0
     payload = _json_result(capsys)
     assert payload["ok"] is True
+    assert set(payload) == {"ok", "data", "error", "receipt", "idempotency_key"}
     assert payload["data"]["status"] == "accepted"
     assert payload["receipt"]["idempotency_key"] == "edit-42"
+    assert payload["receipt"]["receipt_id"] == payload["data"]["accepted_publication_id"]
+    assert payload["receipt"]["result"] == {
+        key: value for key, value in payload["data"].items()
+        if key not in {"accepted_publication_id", "show_command"}
+    }
+    assert payload["data"]["accepted_revision_id"] == (
+        payload["data"]["canonical_document"]["parent_revision"]["revision_id"]
+    )
+    assert payload["data"]["accepted_revision_id"] == realm.entries[-1]["revision_id"]
     assert sent[-1]["label"] == "Committed Film"
     assert len([call for call in sent if call["label"] == "Committed Film"]) == 1
     assert realm.entries[-1]["receipt"]["idempotency_key"] == "edit-42"
 
     parser = timeline_cli.build_parser(client)
+    transport_calls = len(sent)
     with pytest.raises(SystemExit) as refused:
         parser.parse_args([
             "commit", "film", "--project", "project-1", "--file", str(path),
             "-m", "force-attempt", "--idempotency-key", "force-key", "--force",
         ])
     assert refused.value.code == 2
+    assert len(sent) == transport_calls
 
 
 @pytest.fixture
@@ -367,12 +379,24 @@ def test_normal_commit_retry_reuses_the_same_receipt_without_a_second_write(norm
 
 
 def test_normal_commit_output_keeps_summary_and_receipt(normal_commit, monkeypatch, capsys) -> None:
-    run, path, realm, sent, _, _ = normal_commit
+    run, path, realm, sent, _, client = normal_commit
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Summary Film"
     path.write_text(json.dumps(candidate), encoding="utf-8")
-    monkeypatch.setattr(Checkout, "edits", lambda _checkout: {"changes": [{"clip_id": "a"}, {"clip_id": "b"}]})
-    monkeypatch.setattr(Checkout, "changed_cut_ids", lambda _checkout: ["c3"])
+    order = []
+    monkeypatch.setattr(
+        Checkout, "edits",
+        lambda _checkout: order.append("edits") or {"changes": [{"clip_id": "a"}, {"clip_id": "b"}]},
+    )
+    monkeypatch.setattr(Checkout, "changed_cut_ids", lambda _checkout: order.append("cuts") or ["c3"])
+    typed = client.timelines._typed
+
+    def observed(operation, *args, **kwargs):
+        if operation == "commit_timeline":
+            order.append("commit")
+        return typed(operation, *args, **kwargs)
+
+    monkeypatch.setattr(client.timelines, "_typed", observed)
 
     assert run("--idempotency-key", "edit-44", message="Summary Film", as_json=False) == 0
     output = capsys.readouterr().out
@@ -381,15 +405,15 @@ def test_normal_commit_output_keeps_summary_and_receipt(normal_commit, monkeypat
     assert lines[1] == "changed: 2 clips in 1 cut"
     assert lines[2] == "next: timelines edit film --project project-1"
     assert len(output) < 1000 and "canonical_document" not in output and "{" not in output
+    assert order == ["edits", "cuts", "commit"]
     assert sent[-1]["label"] == "Summary Film"
     assert realm.entries[-1]["receipt"]["idempotency_key"] == "edit-44"
-
 
 @pytest.mark.parametrize("as_json", [False, True])
 def test_normal_commit_cas_refusal_preserves_file_and_does_not_retry(normal_commit, capsys, as_json) -> None:
     from tests.sdk.test_timeline_public_command import rename
 
-    run, path, realm, _, opened, _ = normal_commit
+    run, path, realm, sent, opened, _ = normal_commit
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Local Film"
     path.write_text(json.dumps(candidate), encoding="utf-8")
@@ -397,6 +421,7 @@ def test_normal_commit_cas_refusal_preserves_file_and_does_not_retry(normal_comm
     opened.command(rename(value="Peer Film"), reads=[])
     opened.commit("Peer edit", reads=[])
     capsys.readouterr()
+    transport_calls = len(sent)
 
     key = "cas-key-json" if as_json else "cas-key"
     assert run("--idempotency-key", key, as_json=as_json) == 1
@@ -410,16 +435,23 @@ def test_normal_commit_cas_refusal_preserves_file_and_does_not_retry(normal_comm
         assert "error conflict:" in captured.err
     assert path.read_bytes() == before
     assert len(realm.entries) == 2
+    assert len(sent) == transport_calls + 1
 
 
 def test_normal_commit_of_a_clean_working_copy_writes_nothing(normal_commit, capsys) -> None:
-    run, path, realm, _, _, _ = normal_commit
+    run, path, realm, sent, _, _ = normal_commit
     before = path.read_bytes()
+    transport_calls = len(sent)
     assert run("--idempotency-key", "clean-key") == 0
     payload = _json_result(capsys)
     assert payload["ok"] is True
+    assert payload["data"] == {
+        "status": "unchanged", "project_id": "project-1", "timeline_id": "film",
+        "label": "Timeline edit", "commands": [], "steps": [], "merge_mode": "atomic",
+    }
     assert payload["receipt"] is None
     assert len(realm.entries) == 1
+    assert len(sent) == transport_calls
     assert path.read_bytes() == before
 
 

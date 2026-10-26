@@ -599,9 +599,9 @@ def test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite(
 def test_commit_conflict_names_the_writer_and_offers_discard_first(head, who):
     from types import SimpleNamespace
 
-    from astrid.packs.timeline.cli_native import _commit_conflict_message
+    from astrid.packs.timeline.cli_native import _document_error
 
-    parsed = SimpleNamespace(ref="t", project="p")
+    parsed = SimpleNamespace(ref="t", project="p", idempotency_key="conflict-key")
     details = {
         "status": "conflict",
         "reason": "dependency_changed",
@@ -609,7 +609,16 @@ def test_commit_conflict_names_the_writer_and_offers_discard_first(head, who):
         "current": {"revision_id": head, "publication_id": "head"},
         "conflicts": [{"ref": "p/a-rocket (clip) moved 1.8s", "path": ["a-rocket"]}],
     }
-    message = _commit_conflict_message(parsed, details)
+    class Refusal(RuntimeError):
+        code = "conflict"
+
+        def __init__(self):
+            super().__init__("CAS head changed")
+            self.details = details
+
+    result = _document_error(parsed, Refusal())
+    assert result.ok is False and result.error is not None
+    message = result.error.message
 
     assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
     assert "next: timelines discard t --project p, then timelines checkout t --project p --fresh, and re-apply your edit." in message
