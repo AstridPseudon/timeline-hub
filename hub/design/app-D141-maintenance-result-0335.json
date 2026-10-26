@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-26T03:34:13.073822+00:00",
+  "before_available": 4807794688,
+  "helpers": {
+    "sweep-tmp": "c78619cc350d088efab1addd7f63a17e34c6cae7c6aa0d07cbbe38536d19ca53",
+    "compact-scratch": "f8e7953bf4e1e46bb5b9cafe8f0ef25778c74e864505d9e10c4f23d9cd892d84"
+  },
+  "bin/sweep-tmp 3": {
+    "exit": 0,
+    "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4586M -> 4582M\n",
+    "stderr": ""
+  },
+  "bin/compact-scratch 20": {
+    "exit": 0,
+    "stdout": "packed 0 scratch dirs; free 4582M -> 4582M\ngzipped 5 old worker logs; free now 4590M\npacked 0 finished test-run dirs; free now 4590M\n",
+    "stderr": ""
+  },
+  "after_available": 4812070912,
+  "keep_count": 25,
+  "keep_hashes_unchanged": true
+}
