@@ -1,0 +1,4 @@
+timestamp_utc	monotonic_ns	available_bytes	job_id	body_pid	kind
+2026-10-26T08:44:33.773Z	254699280411653	5000000000	delivery-build	23	first
+2026-10-26T08:44:38.767Z	254704274074992	5000000000	delivery-build	23	periodic
+2026-10-26T08:44:39.272Z	254704778923052	5000000000	delivery-build	23	final

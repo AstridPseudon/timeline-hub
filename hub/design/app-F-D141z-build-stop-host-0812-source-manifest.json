@@ -1,0 +1,20 @@
+{
+  "format": "timeline-d141z-source-only-manifest-v1",
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "author_files": {
+    "ops-d141z-build-stop/run-final-delivery.py": "51bd31303eaab1cb91e0ff9af51b74cd55bca0b08a3a208602c96dc69f00fdec",
+    "ops-d141z-build-stop/delivery_lifecycle.py": "84f3e18e56b295f6e751428c929775c7dfccd01a5d2f9230be636beba8227658",
+    "ops-d141z-build-stop/check.sh": "9626a89385b06768ca3f445354964a8cc09493da7dbca65ba71730f026dd6525",
+    "ops-d141z-build-stop/install-map.json": "454fe0e6caf953ff89844b299791010df547d14336f163006a45289b9df8af10"
+  },
+  "safe_inputs": {
+    "run-final-delivery.py": "45a506394d2d0fd025809c921fd446d363bc0d624d7170a049d88b5c6704e191",
+    "delivery_gate_build.py": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779",
+    "lineage-handoff.md": "140300e9d4ec8a7ff086e0a1ba6cb5b21752dee15388e974549108570a35a9a1",
+    "lineage-source-manifest.json": "df8b213ba74b7de580556aa1ff51ab5aaa88a6cd95e23af56fc071d117142883",
+    "runtime-controls.json": "9789f693fd3a072a348ceca0399c7b2fe5225f63ffd62ec4142f999c0a656653",
+    "runtime-handoff.md": "8fccf8454dcf0406393db737faca5e7b5167dae476fb684f02c27fab4029f205"
+  },
+  "real_delivery_build_invoked": false,
+  "canonical_install_performed": false
+}

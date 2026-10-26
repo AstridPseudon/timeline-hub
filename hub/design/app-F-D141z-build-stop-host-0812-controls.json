@@ -1,0 +1,16 @@
+{
+  "result": "PASS",
+  "scope": "bounded source-only lifecycle controls",
+  "cases": [
+    "normal exit through candidate final caller",
+    "descendant TERM then KILL and reap, including early leader exit",
+    "low disk before, during, and after",
+    "invalid, frozen, missing sampler",
+    "timeout, SIGTERM, SIGINT, cancellation",
+    "actual donor 5-second first/periodic/final trace and KEEP",
+    "source/path/hash guard preservation"
+  ],
+  "real_delivery_build": false,
+  "full_suite": false,
+  "browser_or_network": false
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.recipe.v1",
+  "status": "SOURCE_ONLY_PREPARED_PROFILE_INPUT_MISSING",
+  "task": "P4 D141l first bounded Luna return for hosted0733 source preparation",
+  "source": {
+    "agent": {"path": "/home/user/work/wt/agt-pin-ecdc242e", "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "detached": true, "clean": true},
+    "runtime": {"path": "/home/user/work/wt/rt-pin-95d98f03", "commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "detached": true, "clean": true},
+    "app": {"path": "/home/user/work/wt/app-pin-82e9e13d", "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "detached": true, "clean": true},
+    "composition": {"path": "/home/user/work/wt/vw-pin-635f4de0", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "detached": true, "clean": true}
+  },
+  "selection": {
+    "suite": "p4-current-becfe-http-3legs",
+    "selector": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+    "predicates_unchanged": true,
+    "pytest": "run -- -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 -m integration",
+    "candidate_row_selector_count": 1
+  },
+  "custody": {
+    "input_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-return-0838/operational inputs/p4-d141l-cli-selector.manifest",
+    "body_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-return-0838/operational inputs/body-evidence",
+    "junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-return-0838/operational inputs/body-evidence/p4-d141l-cli-selector.xml",
+    "single_junit_path_agrees": true
+  },
+  "controls": {
+    "launcher": "/home/user/work/wt/agt-pin-ecdc242e/tools/p4-d73-pinned-launch.sh",
+    "positive": "original stub 38afc8a5; exit 17; one call",
+    "poison": "Agent-SHA-only poison; nonzero; zero calls",
+    "pytest_or_collection": false,
+    "service_request_or_install": false
+  },
+  "continuation": {
+    "production_profile": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830",
+    "supported_input_missing": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.astrid-registry-state.json",
+    "historical_profile_also_missing": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "status": "SOURCE_QUALIFIED/PRODUCTION_PROFILE_INPUT_MISSING",
+    "future_body_evidence_prospective": true,
+    "no_behavioral_pass_claim": true
+  }
+}

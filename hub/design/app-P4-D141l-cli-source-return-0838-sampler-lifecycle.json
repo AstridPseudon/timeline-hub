@@ -1,0 +1,21 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.sampler-lifecycle.v1",
+  "first_tool": {
+    "started_before_source_reads": true,
+    "trace": "disk-trace.txt",
+    "interval_seconds": 5,
+    "note": "initial keepalive sampler began before source reads"
+  },
+  "threshold_sampler": {
+    "started_before_final_validation": true,
+    "interval_seconds": 5,
+    "stop_threshold_bytes": 4000000000,
+    "sample_count": 1,
+    "minimum_available_bytes": 4781481984,
+    "validation_exit": 0,
+    "kill_exit": 0,
+    "wait_exit": 143,
+    "reaped": true,
+    "note": "SIGTERM wait status 143 is the expected explicit stop; threshold was not reached"
+  }
+}

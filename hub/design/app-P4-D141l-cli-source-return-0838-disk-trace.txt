@@ -1,0 +1,5 @@
+2026-10-26T08:38:17Z
+persistent_trace_start time=2026-10-26T08:40:01Z interval_seconds=5 stop_threshold_bytes=4000000000
+persistent_sampler_pid=9
+persistent_sample time=2026-10-26T08:40:01Z available_bytes=4781481984 threshold_bytes=4000000000
+persistent_sampler_stop kill_rc=0 wait_rc=143 reaped=true

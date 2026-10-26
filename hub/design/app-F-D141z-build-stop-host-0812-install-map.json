@@ -1,0 +1,10 @@
+{
+  "candidate": "ops-d141z-build-stop/run-final-delivery.py",
+  "helper": "ops-d141z-build-stop/delivery_lifecycle.py",
+  "acceptance": "ops-d141z-build-stop/check.sh",
+  "install": "normal hub source export only; no canonical install",
+  "donors": "READONLY installed test-run, d141-disk-trace.py, d141-validate-trace.py",
+  "command": "bash ops-d141z-build-stop/check.sh",
+  "delivery_build": "not invoked",
+  "typescript": "NOTAPPLICABLE"
+}

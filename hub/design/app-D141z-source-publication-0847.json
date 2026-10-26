@@ -1,0 +1,44 @@
+{
+  "utc": "2026-10-26T08:47:20.093641+00:00",
+  "source_commit": "32bc911afcb2648e54be4432c5aa96cbdacf4eae",
+  "safe_originals": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-host-0812/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-host-0812-source-manifest.json",
+      "sha256": "4a2d709bc1f9eaec6332340127c8f20ebedc22eb4d33608ee03c99f0b2fdf2b9",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-host-0812/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-host-0812-validation.md",
+      "sha256": "25dcce52d2e8d7eed61e4e5a81e7a8fc3a56dd9db2df834965a071bca324a552",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-host-0812/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-host-0812-handoff.md",
+      "sha256": "80034e8305def455d207f73cc64732d676a9a72febd1005e21b51b38245e675c",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-host-0812/evidence/controls.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-host-0812-controls.json",
+      "sha256": "77208266b5819c4ef58a0c07d604d5ac70b1a1dd2448db5269cf753aa3c5856d",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-host-0812/evidence/install-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-host-0812-install-map.json",
+      "sha256": "b805ae181e43118397c57d01656480bbc77ebf338c87f039ae1c6cedcee578a6",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-host-0812/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-host-0812-disk-trace.txt",
+      "sha256": "e472282e69384b279dc0ffa1b66cf998cab3077cef8dfabd107a4e2e48ac3a3a",
+      "mode": "0o644"
+    }
+  ],
+  "actual_build": false,
+  "install": false
+}
