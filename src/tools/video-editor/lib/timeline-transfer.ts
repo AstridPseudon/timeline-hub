@@ -1,6 +1,7 @@
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import type { Task } from '@/integrations/runtime/generated.ts';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
+import { getBridgeTaskClient } from '@/integrations/astrid/bridgeTaskReads.ts';
 import { writeStoredZip, readStoredZip, verifyStoredZipEntry, type StoredZipProgress } from './timeline-transfer-zip.ts';
 
 const INLINE_MANIFEST_LIMIT = 256 * 1024;
@@ -11,8 +12,8 @@ const TERMINAL = new Set(['succeeded', 'failed', 'cancelled']);
 const encoder = new TextEncoder();
 
 type TaskClient = Pick<AstridRuntimeClient,
-  'listCapabilities' | 'admitTask' | 'getTask' | 'listManagedOutputs' | 'ingestProjectObject'
-  | 'listProjectObjects' | 'importTimeline'>;
+  'admitTask' | 'getTask' | 'listManagedOutputs' | 'ingestProjectObject'
+  | 'listProjectObjects' | 'importTimeline'> & Partial<Pick<AstridRuntimeClient, 'listCapabilities'>>;
 
 export type TransferProgress = { phase: string; loaded: number; total: number };
 export type TransferToast = { loading(message: string): unknown; update(id: unknown, message: string): void; success(message: string, id?: unknown): void; error(message: string, id?: unknown): void };
@@ -46,11 +47,15 @@ function blobStream(blob: Blob): ReadableStream<Uint8Array> {
   });
 }
 
-async function runAction(client: TaskClient, project: string, id: string, params: Record<string, unknown>): Promise<{ taskId: string; outputs: Awaited<ReturnType<TaskClient['listManagedOutputs']>>['items'] }> {
+async function runAction(client: TaskClient, project: string, id: string, params: Record<string, unknown>, injectedClient: boolean): Promise<{ taskId: string; outputs: Awaited<ReturnType<TaskClient['listManagedOutputs']>>['items'] }> {
   let cursor: string | undefined;
-  let capability: Awaited<ReturnType<TaskClient['listCapabilities']>>['items'][number] | undefined;
+  let capability: Awaited<ReturnType<AstridRuntimeClient['listCapabilities']>>['items'][number] | undefined;
   do {
-    const page = await client.listCapabilities(cursor, 100);
+    // Capability discovery is an Astrid product catalog read (`/api/astrid`),
+    // while admission and task lifecycle remain Runtime routes (`/api/runtime`).
+    const page = injectedClient && client.listCapabilities
+      ? await client.listCapabilities(cursor, 100)
+      : await getBridgeTaskClient(project).catalog.list({ cursor, limit: 100 });
     capability = page.items.find((item) => item.capability_id === id && item.status === 'ready');
     cursor = page.next_cursor ?? undefined;
   } while (!capability && cursor);
@@ -116,8 +121,8 @@ async function fetchObjectJson(digest: string, declaredSize: number | undefined,
   return parseJson(new TextDecoder('utf-8', { fatal: true }).decode(bytes), 'Action artifact');
 }
 
-async function getActionJson(client: TaskClient, project: string, action: string, params: Record<string, unknown>, port: string, fetchImpl: typeof fetch): Promise<{ value: Record<string, unknown>; taskId: string }> {
-  const { taskId, outputs } = await runAction(client, project, action, params);
+async function getActionJson(client: TaskClient, project: string, action: string, params: Record<string, unknown>, port: string, fetchImpl: typeof fetch, injectedClient: boolean): Promise<{ value: Record<string, unknown>; taskId: string }> {
+  const { taskId, outputs } = await runAction(client, project, action, params, injectedClient);
   const output = outputs.find((item) => item.output_port === port);
   if (!output) throw new Error(`Runtime action ${action} completed without its ${port} artifact.`);
   const value = await fetchObjectJson(output.digest, output.size, fetchImpl);
@@ -166,7 +171,7 @@ export async function exportTimelineArchive(input: { projectId: string; timeline
     const client = options.client ?? new AstridRuntimeClient();
     const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
     options.toast?.update(toastId, 'Preparing timeline export…');
-    const { value: plan } = await getActionJson(client, input.projectId, 'timeline.export_plan', { project: input.projectId, timeline: input.timelineId }, 'plan', fetchImpl);
+    const { value: plan } = await getActionJson(client, input.projectId, 'timeline.export_plan', { project: input.projectId, timeline: input.timelineId }, 'plan', fetchImpl, options.client !== undefined);
     const manifest = asRecord(plan.manifest, 'Export manifest');
     const timeline = asRecord(plan.timeline, 'Export timeline');
     if (manifest.format !== 'astrid.timeline/1' || !Array.isArray(manifest.media) || !Array.isArray(manifest.transcripts) || !Array.isArray(plan.media)) throw new Error('Runtime returned an invalid timeline export plan.');
@@ -456,7 +461,7 @@ export async function importTimelineArchive(file: File, projectId: string, optio
     const checkInputs: Record<string, unknown> = { project: projectId, check_only: true };
     if (checkManifestBytes.byteLength <= INLINE_MANIFEST_LIMIT) checkInputs.manifest = checkManifest;
     else checkInputs.manifest_file = await uploadJson(client, projectId, new Blob([checkManifestBytes], { type: 'application/json' }), 'manifest-check.json');
-    const check = await getActionJson(client, projectId, 'timeline.prepare_import', checkInputs, 'result', fetchImpl);
+    const check = await getActionJson(client, projectId, 'timeline.prepare_import', checkInputs, 'result', fetchImpl, options.client !== undefined);
     const missingEffects = effectNames(Array.isArray(check.value.missing_effects) ? check.value.missing_effects : []);
     const differentEffects = effectNames(Array.isArray(check.value.different_effects) ? check.value.different_effects : []);
     options.toast?.update(toastId, 'Checking existing media…');
@@ -497,7 +502,7 @@ export async function importTimelineArchive(file: File, projectId: string, optio
     const payloadObject = await uploadJson(client, projectId, payloadBlob, 'timeline-import-payload.json');
     actionInputs.payload = payloadObject;
     options.toast?.update(toastId, 'Preparing imported timeline…');
-    const preparedAction = await getActionJson(client, projectId, 'timeline.prepare_import', actionInputs, 'prepared', fetchImpl);
+    const preparedAction = await getActionJson(client, projectId, 'timeline.prepare_import', actionInputs, 'prepared', fetchImpl, options.client !== undefined);
     validatePreparedMedia(preparedAction.value, media, transcripts);
     const preparedBytes = encoder.encode(JSON.stringify(preparedAction.value));
     if (preparedBytes.byteLength > MAX_JSON_ENTRY) throw new Error('Prepared timeline metadata exceeds 64 MiB.');
