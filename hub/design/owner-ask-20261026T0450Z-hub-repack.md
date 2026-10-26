@@ -31,4 +31,4 @@ Replace `<area>` with agent, app, farm or runtime. If you don't approve, everyth
 | App | 29,184 | 1.32 GiB | 4.53 GB | ~1.2 GB |
 | Main (Runtime) | ~28,600 | 1.30 GiB | 4.63 GB | ~1.2 GB |
 
-The Agent figure was read straight from the repo with git; its tool dry run will follow. Agent needs about 0.2 GB more for its full test pair. App needs about 0.5–0.8 GB more for its journeys.
+All three figures are confirmed by the tool's own dry run (Agent at 07:06Z: 104,372 loose objects, 3.24 GiB, free 4.495 GB, falling about 32 MB/h). Agent needs about 0.2 GB more for its full test pair. App needs about 0.5–0.8 GB more for its journeys.
