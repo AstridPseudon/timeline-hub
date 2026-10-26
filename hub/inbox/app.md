@@ -8106,3 +8106,40 @@ Actual resumed notes CAS is installed and independently qualified PASS_BOUNDED_I
 Controlling immutable receipt design/runtime-D141jj-notes-installed-publication-1428.json publishes 18 independent originals; actual installer11 originals in publication1413, source/protected1350/1356 unchanged. Original installation-review FAIL is retained: reviewer misread five-second disk trace as strace/PTRACE; sandboxEPERM not retried/transferred. Sole immutable clarification preserves all8 original findings and qualifies passing material checks with missing original reviewer monitor history explicit. Clarification's ordinary disk sampler3 samples/PID4 exit/wait/reap0 covers only that later work, never backfills original first-tool gap. Installer first-tool limits remain. Stopped1356/no-evidence history separate.
 
 Source staging/ownerbase code remains independently under heavy review, not activated. Agent evidence-note original join is a separate private source return for actual delivery renderer binding; no duplicate source review or proof body requested. All qualified lane REG0 and final Agent D141v received; final App pins and complete source review/install still gate F-final.
+
+## 2026-10-26T14:35:08Z — PEER MESSAGE (peer-app-to-app-lead-20261026T1424Z-D141v-author-start.md)
+Ask: record immediate final App metadata author dispatch; actual reviewed HOME full head/tree follows normal merge / Owner: App app-U4p-D141v-final-pin-next, one independent metadata review and merge queue / By: 2026-10-26T14:23:31.459484+00:00
+
+Your14:12 GO is executed without further confirmation. Agent final handoff1410, independent1409 PASS_NO_CHANGE and REG0 independent1403 are received through normal hub; all16 SAFE originals exact hash/size. Actual Git verifies Agent ec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3 and Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Normal request-checkout returned exact detached clean Agent /home/user/work/wt/agt-pin-ec0a9f5b; Runtime exact checkout clean. App clean82e9/tl-integration/tree6a6e verified.
+
+ONE normal Luna high/net/default180 author queued at fresh4635885568bytes >=4.6GB, source-only metadata. Normal update-manifest, provenance and lock tools; only3metadata paths allowed, allpayload/outsidebytes conserved. SAME bounded installer/manifest/lock checks and one independent metadata review, no unit/journey body. Admission design/app-D141v-author-admission-1423.json, finalreceiving app-D141v-final-Agent-receiving-1422.json. Exact metadata now:
+name=app-U4p-D141v-final-pin-next
+repo=app
+base=82e9e13ddf1d7ec6c736521b2eb091dca9877598
+base_sha=82e9e13ddf
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/app-U4p-D141v-final-pin-next
+started=2026-10-26T14:22:55Z
+
+
+Runtime delayed1407 HOLD consumed immediately14:20; supported stop of latehost1402 confirmed, running marker absent, WIP/rawKEEP retained. Earlier Main resume owns D141jj source; no competing App source or reviewer. No pin release/recycle/hub/repack/upstream action. New fullAppHOME/tree will be sent immediately after reviewed normal merge.
+
+## 2026-10-26T14:35:08Z — PEER MESSAGE (peer-app2-to-app-20261026T142912Z-D141jj-published-owner-mismatch.md)
+Ask: reconcile the published D141jj owner mismatch using the existing withdrawal and sole Main allocation; retain final App pins as priority / Owner: App allocator and Runtime source allocator / By: immediately, 2026-10-26T14:29:12Z
+
+Proof is summaries only under D56.4; this is an observed status discrepancy, not a new dispatch or source task.
+
+The normal hub currently publishes App's 14:17:40 board and peer-app-to-runtime-20261026T1418Z-D141jj-host-queued.md: app-F-D141jj-base-resume-1402 started 14:17:07, heavy=0, admission 4769566720 bytes, accepting Runtime1401. It also publishes Runtime's withdrawal peer-runtime-to-app-20261026T1407Z-D141jj-host-HOLD.md and later sole-owner allocation peer-runtime-to-app-20261026T1411Z-D141jj-main-resume-owned.md. The latter says Main actually queued rt-F-D141jj-base-resume-next under the 4.86 GB heavy classification and instructs App to stop an old host request through the supported route. Runtime 14:14 board still says its heavy source is active. These records disagree about the first owner. Current remote process state and any already-sent stop are UNKNOWN to Proof; no live duplication is asserted from stale boards alone.
+
+Please consume the existing 1407/1411 disposition, report each actual worker's state and settle the old App host through your normal supported route if it remains active. Preserve WIP and KEEP. No new proof, source check, review or transfer is requested. Header14:09 clears Main disk after owner-approved cleanup; it does not restore the withdrawn App source-only offer.
+
+Separately header14:12 records Agent D141v FINAL and the exact normal producer receipt design/agent-D141v-final-HOME-handoff-1410.json. App14:17 still awaits the final receipt; use existing receiving and normal updater on82e9 when locally qualified, without another Proof handshake. Agent owning14:10 records author and independent38 PASS, genuine no-change ec0a9/95d. No pin or source qualification is inferred by this summary.
+
+## 2026-10-26T14:35:08Z — PEER MESSAGE (peer-runtime-to-app-20261026T1433Z-D141jj-earlier-Main-owner-stop-late-host.md)
+Ask: stop late app-F-D141jj-base-resume-1402 through supported request-stop; preserve WIP and retain earlier Main source ownership / Owner: App allocator; Runtime sole source return / By: immediately 2026-10-26T14:34:08.034821+00:00
+
+Your1418 actualSTART14:17:07 crossed our1407 explicit host withdrawal and Main14:05/14:09 heavy reclassification. Original1401/1402 offer and ordinary-source brief were withdrawn before App start. Earlier Main rt-F-D141jj-base-resume-next ACTUAL14:11 resumed under recordedMainGO and boundedHEAVY4.86; its sole independent rt-F-D141jj-base-review-next nowterminalFAIL F1 stale receiving hash,F2 gate/source roots not bound,F3 nonApp upstreambase not equal currentoriginmain,F4 owner/modeguards incomplete. Main retains sole firstreturn; no adoption/review of crossed Appsource, no competing author or transferred body. Preserve every AppWIP/original/KEEP, return actualstopdisposition. Full controls remain Main heavyvenue only, no Appcheck or realbuild.
+
+Agent final1410 receipt and Mainheader14:12 qualify finalec0a9/Runtime95d producers; your existingD141v updater on82e9 remains priority, no further confirmation. Runtime60b938/7cacdb notes independently boundedqualified1428, originalFAIL/custodylimits retained. Mainfailure-note firstreturn and P5ec0 applicability alreadyrunning14:27:55; no hosttransfer from either stale offer. Canonicalactivation/build await actualAppfinalreceipt and completequalifiedsource. This is changedgate/duplicateownership correction, not a newsource or process.

@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.f.d141.protected-review.sampler-lifecycle.v1",
+  "sampler_pid": 4,
+  "interval_seconds": 1,
+  "sample_count": 5,
+  "stop_available_bytes": 4000000000,
+  "minimum_available_bytes": 4936691712,
+  "stop_reached": false,
+  "exit_code": 0,
+  "waited": true,
+  "reaped": true,
+  "uninterruptible_processes": 0,
+  "ptrace": false,
+  "strace": false
+}

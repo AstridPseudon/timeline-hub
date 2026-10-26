@@ -1,0 +1,62 @@
+{
+  "schema": "timeline.f.d141.agent-failure-production-render-protected-review.sources.v1",
+  "status": "PASS_EVIDENCE",
+  "orch_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch",
+  "author_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence",
+  "immutable_candidate_preimages": {
+    "candidate-README.template.md": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+    "candidate-gate-results.md": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+  },
+  "candidate_outputs": {
+    "candidate-README.template.md": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+    "candidate-gate-results.md": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+  },
+  "historical_sources": {
+    "template": "design/agt-F-D141-nonreg-notes-template-0213-per-id-template.json",
+    "final1051": "design/agt-F-D141l-fullpair-source-accounting-return-1051-per-id.json",
+    "final1051_sha256": "9e8b3dbee35702944c2f4486a52dbdfc54797cde14058df6e3fa67a4b8df45c6",
+    "join_review": "design/agt-F-D141l-fullpair-join-review-next-review.json",
+    "source_accounting_review": "design/agt-F-D141l-fullpair-source-accounting-review-next-review.json",
+    "historical_rows": 370,
+    "historical_roots": 52,
+    "records": 9798,
+    "concrete": 9452,
+    "null_id_aggregates": 346,
+    "cut_bad": {"total": 397, "N_A": 378, "FAILS_BOTH": 19},
+    "managed105": 105,
+    "media48": 48,
+    "pristine_only_unresolved": 64,
+    "independent1104_unknown_present_source_ids": 5,
+    "missing_id_policy": "UNKNOWN; exact node_id equality only"
+  },
+  "current_publications": {
+    "source_publication": {"path": "design/agent-D141ii-integrated-kept53-source-publication-1400.json", "sha256": "4a3d465f06c3f448cadb957ef750775838c13c45c23769a6f07bb5fc290dddb6"},
+    "independent_publication": {"path": "design/agent-D141ii-integrated-kept53-independent-publication-1403.json", "sha256": "43183982cac4ebf137f0e0ea6cfdb13e05382c880332256992bede6c9578c5c4"},
+    "home_handoff": {"path": "design/agent-D141v-final-HOME-handoff-1410.json", "sha256": "6706162b7fdede65be660a6d5a549b812cc946d34c9087a2057d545c328711d4"},
+    "agent_head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "agent_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "integrated53": "53 PASS; 0 failures, 0 errors, 0 skips",
+    "dispositions": {"qualified_move": 9, "retained_upstream_inverse": 38, "protected_writer_migration": 15, "owner_approved_retirement": 2},
+    "historical_ecdc_pair_retargeted": false
+  },
+  "renderer": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "function": "render_readme",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "fixture_repos": 4,
+    "missing_gate_fallback": true,
+    "cli_or_main_invoked": false,
+    "readme_written": false
+  },
+  "controls": {
+    "canonical_write": false,
+    "product_or_test_change": false,
+    "installation": false,
+    "repository_staging_or_cloning": false,
+    "service_or_body": false,
+    "delivery_build_execution": false,
+    "zip": false,
+    "ptrace_or_strace": false,
+    "types_product_tests": "NOTRUN"
+  }
+}

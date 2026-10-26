@@ -1,0 +1,64 @@
+{
+  "schema": "timeline.f.d141.agent-failure-production-render-protected-review.v1",
+  "verdict": "PASS_EVIDENCE",
+  "scope": "One independent protected review of the exact D141 Agent failure evidence and the first genuine delivery-build render_readme correction.",
+  "join": {
+    "historical_rows": 370,
+    "historical_roots": 52,
+    "managed105": 105,
+    "media48": 48,
+    "records": 9798,
+    "concrete": 9452,
+    "null_id_aggregates": 346,
+    "cut_bad": {"total": 397, "N_A": 378, "FAILS_BOTH": 19},
+    "supplied_join_unknown": 0,
+    "independent1104_unknown_present_source_ids": 5,
+    "missing_id_policy": "UNKNOWN; exact node_id only; no fuzzy or aggregate identity",
+    "pristine_only_unresolved": 64
+  },
+  "current_agent": {
+    "head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "integrated53": "53 PASS; 0 failures, 0 errors, 0 skips",
+    "source_publication_sha256": "4a3d465f06c3f448cadb957ef750775838c13c45c23769a6f07bb5fc290dddb6",
+    "independent_publication_sha256": "43183982cac4ebf137f0e0ea6cfdb13e05382c880332256992bede6c9578c5c4",
+    "home_handoff_sha256": "6706162b7fdede65be660a6d5a549b812cc946d34c9087a2057d545c328711d4",
+    "historical_ecdc_pair_retargeted": false,
+    "dispositions": {
+      "qualified_move": 9,
+      "retained_upstream_inverse": 38,
+      "protected_writer_migration": 15,
+      "owner_approved_retirement": 2
+    }
+  },
+  "candidates": {
+    "candidate-README.template.md": {
+      "canonical_prefix_sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+      "candidate_sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+      "suffix_occurrences": 1
+    },
+    "candidate-gate-results.md": {
+      "canonical_prefix_sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7",
+      "candidate_sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399",
+      "suffix_occurrences": 1
+    },
+    "suffix_identical": true
+  },
+  "renderer": {
+    "module": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "function": "render_readme",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "fixture_repos": 4,
+    "fixture_status": "PASS",
+    "missing_gate_fallback": "PASS",
+    "readme_written": false,
+    "cli_or_main_invoked": false
+  },
+  "validation": {
+    "json_ast_compile_ruff": "PASS",
+    "types_product_tests": "NOTRUN",
+    "full_suite": "NOTRUN",
+    "installation_canonical_write": false,
+    "delivery_build_zip": false
+  }
+}

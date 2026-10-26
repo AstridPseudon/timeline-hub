@@ -1,0 +1,10 @@
+ordinary sampler; no strace/ptrace
+stop_available_bytes=4000000000
+sample=0 utc=2026-10-26T14:37:40Z available_bytes=4936744960
+sample=1 utc=2026-10-26T14:37:41Z available_bytes=4936744960
+sample=2 utc=2026-10-26T14:37:42Z available_bytes=4936744960
+sample=3 utc=2026-10-26T14:37:43Z available_bytes=4936695808
+sample=4 utc=2026-10-26T14:37:44Z available_bytes=4936691712
+sampler_exit=0 waited=true reaped=true
+uninterruptible_processes=0
+elapsed_seconds=5
