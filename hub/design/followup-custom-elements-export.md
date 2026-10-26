@@ -39,3 +39,10 @@ It finishes the existing project-pack loop (init → validate → admit → `upd
 - The shared element contract becomes an allowed import, so copies don't paste it in.
 - A default build command.
 - Cross-machine export needs the snapshot_object upload; re-admit legacy admissions.
+
+## Live playback (3 Haiku traces, verified by main at app abac6c809da2)
+- **Local editor (Vite dev, no Runtime origin):** project elements play live and hot-reload (admitted-elements.ts:41 gate). A missing component renders blank (TimelineRenderer.tsx:375); it should show a message.
+- **Hosted build (Dockerfile:28 sets VITE_RUNTIME_ORIGIN):** only elements compiled into the build play. A missing one shows element_source_missing (TimelineRenderer.tsx:1386).
+- **Not a route:** embedded remotion_source / remotion_module clips are never executed (TimelineRenderer.tsx:1402). The authoring doc rejects that route; do not extend it.
+- **Hosted playback, after export parity:** serve the build-once bundle by pin from the Runtime and load it isolated (separate origin or sandboxed frame).
+- **Untraced:** how the render worker loads external/<pack>/<digest> componentPaths.
