@@ -83,13 +83,15 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
   await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible();
   const picker = page.getByRole('combobox', { name: 'Select timeline' });
+  // The timeline picker's suggestions listbox; page-wide options also match the playback-speed select.
+  const timelineOptions = page.getByRole('listbox', { name: 'Suggestions' }).getByRole('option');
   await expect(picker).toBeVisible();
   await picker.click();
-  await expect(page.getByRole('option').first()).toBeVisible();
+  await expect(timelineOptions.first()).toBeVisible();
   const cliPickerEvidence = browserEvidencePath(testInfo, 'timeline-transfer/cli-imported-picker.png');
   await page.screenshot({ path: cliPickerEvidence, fullPage: true });
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('option')).toHaveCount(0);
+  await expect(timelineOptions).toHaveCount(0);
 
   await picker.click();
   const exportStarted = await page.evaluate(() => performance.now());
@@ -154,11 +156,11 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   expect(diskFreeAfterImport, 'sandbox must retain at least 2 GiB free after UI import').toBeGreaterThanOrEqual(2 * 1024 ** 3);
 
   await picker.click();
-  await expect(page.getByRole('option')).toHaveCount(1);
+  await expect(timelineOptions).toHaveCount(1);
   const roundTripPickerEvidence = browserEvidencePath(testInfo, 'timeline-transfer/ui-round-trip-picker.png');
   await page.screenshot({ path: roundTripPickerEvidence, fullPage: true });
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('option')).toHaveCount(0);
+  await expect(timelineOptions).toHaveCount(0);
 
   const position = page.getByRole('slider', { name: 'Playback position' });
   await expect(position).toBeVisible();
