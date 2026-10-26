@@ -1,0 +1,45 @@
+{
+  "schema": "d141gg-single-custody-source-manifest-v1",
+  "accepted_recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-prep-1137/evidence/dispatch-recipe.json",
+    "sha256": "bdf548ac4498d08dd38f2b7eb0664f7a862c4ad109a39fd48d91db46062f194e"
+  },
+  "author_recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/dispatch-recipe.json",
+    "sha256": "e6b63540d9f8c57643ab184a5306f9742e3a72892f55f84ef05079c1aa07fd85",
+    "deviation": "future artifact/plan/stdout/stderr paths relocated to author root; no other JSON value differs"
+  },
+  "original_recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+    "dispatch_index": 2,
+    "sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d"
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "bytes": 49914
+  },
+  "sources": {
+    "app": {"head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d", "detached_clean": true},
+    "agent": {"head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e", "detached_clean": true},
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03", "detached_clean": true},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0", "detached_clean": true}
+  },
+  "result": {
+    "preflight_id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320",
+    "normal_id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+    "normal_result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+    "normal_status": "pass",
+    "normal_exit": 0,
+    "manifest": "d66/manifest.json",
+    "runmanifest": "d66/manifest.json",
+    "readiness_xml": "d66/readiness.xml",
+    "body_xml": "d66/p2-transition-none-single.xml",
+    "source_spec": "tests/e2e/local/three-products.p2-tour.spec.ts",
+    "source_spec_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4"
+  },
+  "clean_product_sources": true,
+  "native_association_verified": true,
+  "no_product_or_registry_mutation": true
+}

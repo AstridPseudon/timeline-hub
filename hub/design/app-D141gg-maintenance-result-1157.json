@@ -1,0 +1,24 @@
+{
+  "started": "2026-10-26T11:56:10.274547+00:00",
+  "ended": "2026-10-26T12:01:30.971877+00:00",
+  "eligible_census": [],
+  "results": [
+    {
+      "tool": "bin/sweep-tmp 3",
+      "exit": 0,
+      "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 5075M -> 4915M\n",
+      "stderr": ""
+    },
+    {
+      "tool": "bin/compact-scratch 1",
+      "exit": 0,
+      "stdout": "packed 0 scratch dirs; free 4915M -> 4712M\ngzipped 1 old worker logs; free now 4690M\npacked 0 finished test-run dirs; free now 4699M\n",
+      "stderr": ""
+    }
+  ],
+  "baseline_KEEP_count": 78,
+  "baseline_KEEP_changed": [],
+  "available_bytes": 4926406656,
+  "no_raw_KEEP_removal": true,
+  "host_holds_preserved": true
+}

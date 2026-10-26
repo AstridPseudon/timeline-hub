@@ -1,0 +1,77 @@
+{
+  "schema": "d141gg-single-custody-review-v1",
+  "verdict": "FAIL_CUSTODY",
+  "selector": "p2-transition-none-single",
+  "attempt_scope": "single-scope-2",
+  "finding_ids": ["CUSTODY-RAW-KEEP", "CUSTODY-RECIPE-PATH"],
+  "service_result": {
+    "preflight_id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320",
+    "normal_id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+    "preflight_status": "pass",
+    "normal_status": "pass",
+    "normal_exit": 0,
+    "normal_duration_seconds": 257,
+    "readiness_tests": 1,
+    "readiness_failures": 0,
+    "readiness_skipped": 0,
+    "body_tests": 1,
+    "body_failures": 0,
+    "body_skipped": 0,
+    "body_xml": "d66/p2-transition-none-single.xml",
+    "readiness_xml": "d66/readiness.xml"
+  },
+  "custody": {
+    "native_submit_session": 47367,
+    "native_submit_exit": 0,
+    "native_submit_invocations": 1,
+    "wait_session": 67012,
+    "wait_same_id_only": true,
+    "wait_exit": 0,
+    "retry_or_resubmit": false,
+    "raw_keep": {
+      "preflight_preexisting": false,
+      "normal_preexisting": false,
+      "added_at": "2026-10-26T11:49:29.082850+00:00",
+      "retroactive_claim": false
+    },
+    "recipe_path_relocation_only": true
+  },
+  "source": {
+    "accepted_recipe_sha256": "bdf548ac4498d08dd38f2b7eb0664f7a862c4ad109a39fd48d91db46062f194e",
+    "author_packet_sha256": "e6b63540d9f8c57643ab184a5306f9742e3a72892f55f84ef05079c1aa07fd85",
+    "original_sol_recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "builder_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "builder_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "app": {"head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d"},
+    "agent": {"head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"},
+    "all_four_detached_clean": true,
+    "product_sources_changed": false,
+    "native_association_genuine": true
+  },
+  "predicate": {
+    "test_source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "test_name": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo",
+    "v2_request": true,
+    "raw_transition_absence": true,
+    "opaque_fields_preserved": true,
+    "order_preserved": true,
+    "reload": true,
+    "guarded_undo": true,
+    "history": true,
+    "legacy_writes": 0
+  },
+  "trace": {
+    "native_samples": 54,
+    "native_min_available_bytes": 5029826560,
+    "native_max_available_bytes": 5477560320,
+    "native_max_gap_seconds": 5.006048,
+    "native_stop_triggered": false,
+    "author_samples": 158,
+    "author_min_available_bytes": 5029302272,
+    "author_max_available_bytes": 5479276544,
+    "author_coverage_limit": "session-only; no historical body coverage inferred"
+  },
+  "decision": "The body result is PASS, but the missing native raw KEEP at request/body time is a blocking custody failure. The earlier wrong-SHA attempt remains distinct NOTRUN and was not retargeted. No rerun or repair is authorized."
+}

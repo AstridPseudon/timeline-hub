@@ -1,0 +1,15 @@
+{
+  "schema": "d141gg-single-scope-sampler-lifecycle-v1",
+  "session_id": 40483,
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/disk-trace.txt",
+  "first_tool": true,
+  "evidence_directory_created_before_redirection": true,
+  "sample_count": 158,
+  "first_sample_timestamp": "Filesystem        1B-blocks        Used  Available Use% Mounted on",
+  "last_sample_timestamp": "/dev/vda       270553174016 36268466176 5331075072  88% /home/user/work",
+  "body_terminal_observed_before_stop": true,
+  "stop_action": "SIGINT",
+  "reap_result": "session exited 1 from SIGINT",
+  "gap_or_backfill": false,
+  "coverage_limit": "Controller sampler coverage is this session only; no historical body coverage inferred."
+}

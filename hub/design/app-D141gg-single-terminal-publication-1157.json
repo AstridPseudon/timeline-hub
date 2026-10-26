@@ -1,0 +1,60 @@
+{
+  "utc": "2026-10-26T11:55:53.333287+00:00",
+  "worker": "app-P-D141gg-single-scoped-controller-1145",
+  "actual_worker_exit": 0,
+  "body_verdict": "PASS pending independent custody",
+  "normal_short_id": 24271,
+  "preflight_short_id": 9320,
+  "packet_path_deviation": "Private future paths relocated by worker; independent1156 owns exact comparison. No manager source alteration.",
+  "raw_KEEP": "Manager prospective at11:49:29.082850Z; no historical marker claim.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/controller-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-controller-receipt.json",
+      "sha256": "225aa85c7175eccba945c169ff7769e292485510bc74624c442aa937f758e778",
+      "bytes": 7250
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/results.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-results.json",
+      "sha256": "2d992bb92a092d52b822d98927e8e1c890c3e3c6afd7307d75deeaef3082e288",
+      "bytes": 6608
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-source-manifest.json",
+      "sha256": "8c6042b7c8e669b463a89c7db876cfb683a30aba9f8d206e161623e5c908acaf",
+      "bytes": 25056
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/trace-measurement.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-trace-measurement.json",
+      "sha256": "fd1a9fc05fb2ca0956dfca2239fcb0167407863caf5d346445e140407265657d",
+      "bytes": 2367
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-sampler-lifecycle.json",
+      "sha256": "4fc5d69add87cab4fa230b062357b7d382482336e7ef8bdf8e52d222a21d7da0",
+      "bytes": 822
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/progress.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-progress.json",
+      "sha256": "165f5a5c1662cb45c563a91a880293afa6d8226948bd322f0639c6e7c7fde7d8",
+      "bytes": 4915
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-validation.md",
+      "sha256": "d9c9a4e46858ed5f39d1a98d32e4ddede52c88f70e0b75ffdbef9ad900572f88",
+      "bytes": 2719
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-handoff.md",
+      "sha256": "4e7d30788e62a7ca24d2045218b0644a92e86ae517d668c7166e75298e9d74e3",
+      "bytes": 1349
+    }
+  ]
+}

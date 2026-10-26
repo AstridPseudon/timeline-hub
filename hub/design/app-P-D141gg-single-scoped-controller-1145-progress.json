@@ -1,0 +1,107 @@
+{
+  "schema": "d141gg-single-scope-controller-progress-v1",
+  "phase": "terminal",
+  "timestamp_utc": "2026-10-26T11:46:47Z",
+  "packet": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/dispatch-recipe.json",
+    "sha256": "e6b63540d9f8c57643ab184a5306f9742e3a72892f55f84ef05079c1aa07fd85",
+    "source_packet_sha256": "bdf548ac4498d08dd38f2b7eb0664f7a862c4ad109a39fd48d91db46062f194e",
+    "selector": "p2-transition-none-single",
+    "attempt_scope": "single-scope-2"
+  },
+  "source_controls": {
+    "agent_head_matches_original_json_pin": true,
+    "argv_cwd_unset_operational_environment_match_original_json": true,
+    "pins_and_checkouts_match_packet": true,
+    "builder_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "builder_git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "detached_clean_pins": {
+      "app": {
+        "checkout": "/home/user/work/wt/app-pin-82e9e13d",
+        "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "detached": true,
+        "dirty": false
+      },
+      "agent": {
+        "checkout": "/home/user/work/wt/agt-pin-ecdc242e",
+        "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "detached": true,
+        "dirty": false
+      },
+      "runtime": {
+        "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+        "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "detached": true,
+        "dirty": false
+      },
+      "composition": {
+        "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+        "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "detached": true,
+        "dirty": false
+      }
+    }
+  },
+  "custody": {
+    "registry_rows": [],
+    "matching_request_dirs": [],
+    "packet_paths": {
+      "output": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/output",
+        "exists": false,
+        "symlink": false
+      },
+      "plan": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/submit-plan.json",
+        "exists": false,
+        "symlink": false
+      },
+      "lock": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/submit-plan.json.lock",
+        "exists": false,
+        "symlink": false
+      },
+      "stdout": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/native-submit.stdout.log",
+        "exists": false,
+        "symlink": false
+      },
+      "stderr": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/native-submit.stderr.log",
+        "exists": false,
+        "symlink": false
+      }
+    },
+    "preflight_namespace_empty": true,
+    "normal_namespace_empty": true,
+    "duplicate_requests": false,
+    "prior_or_torn_custody": false
+  },
+  "disk": {
+    "mount": "/home/user/work",
+    "available_bytes": 5477650432,
+    "admission_floor_bytes": 5200000000,
+    "admission_floor_pass": true,
+    "stop_bytes": 4000000000
+  },
+  "native_submit_allowed": true,
+  "terminal_timestamp_utc": "2026-10-26T11:52:43Z",
+  "native_submit_exit_code": 0,
+  "preflight_id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320",
+  "normal_id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+  "preflight_status": "pass",
+  "normal_status": "pass",
+  "body_verdict": "PASS",
+  "test_status": "PASS",
+  "native_trace_validation": "trace PASS: 54 actual samples",
+  "native_sample_count": 54,
+  "controller_sampler_samples": 158,
+  "controller_sampler_min_available_bytes": 5029302272,
+  "controller_sampler_max_available_bytes": 5479276544,
+  "controller_sampler_stop": "SIGINT/reaped",
+  "no_retry_or_resubmit": true
+}

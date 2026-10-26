@@ -1,0 +1,83 @@
+{
+  "schema": "d141gg-single-scope-controller-results-v1",
+  "timestamp_utc": "2026-10-26T11:52:43Z",
+  "selector": "p2-transition-none-single",
+  "attempt_scope": "single-scope-2",
+  "packet": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/dispatch-recipe.json",
+    "sha256": "e6b63540d9f8c57643ab184a5306f9742e3a72892f55f84ef05079c1aa07fd85"
+  },
+  "native_submit": {
+    "invocations": 1,
+    "exec_session": 47367,
+    "exit_code": 0,
+    "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/native-submit.stdout.log",
+    "stdout_sha256": "e8469719a5a9b70804adf1c10c08aa0dc140f13893f78551b53f6c26294e33a7",
+    "stdout_bytes": 887,
+    "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/native-submit.stderr.log",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_bytes": 0,
+    "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/submit-plan.json",
+    "plan_sha256": "da979de137e865b313f57b30b86edc38778d94b60cf423d4fe4e4d99be003014",
+    "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/submit-plan.json.lock",
+    "lock_exists_after_terminal": false
+  },
+  "requests": {
+    "preflight": {
+      "id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320",
+      "status": "pass",
+      "exit_code": 0
+    },
+    "normal": {
+      "id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+      "status": "pass",
+      "exit_code": 0
+    }
+  },
+  "wait": {
+    "normal_wait_session": 67012,
+    "wait_command": "wait-test <packet plan normal.id>",
+    "same_id_only": true,
+    "exit_code": 0
+  },
+  "body_verdict": "PASS",
+  "test_status": "PASS",
+  "summary": {
+    "preflight": [
+      "test app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320: pass exit=0 in 3s \u2014 full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight on app-pin-82e9e13d (app tree 6a6e49eb4461b5ca1a7fa1247653bc794f26d710)",
+      "cmd: D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-single' --preflight",
+      "counts: "
+    ],
+    "normal": [
+      "test app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271: pass exit=0 in 257s \u2014 full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2 on app-pin-82e9e13d (app tree 6a6e49eb4461b5ca1a7fa1247653bc794f26d710)",
+      "cmd: D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-single'",
+      "counts:   1 passed (30.1s)   1 passed (1.4m) "
+    ],
+    "normal_passed_tests": [
+      "D28 mounted readiness",
+      "P2 mounted transition None single"
+    ],
+    "normal_counts": "1 passed (30.1s); 1 passed (1.4m)",
+    "normal_duration_seconds": 257
+  },
+  "trace": {
+    "native_trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271/disk-trace.tsv",
+    "native_trace_validation": "trace PASS: 54 actual samples",
+    "native_sample_count": 54,
+    "native_body_pid": [
+      "27004"
+    ],
+    "native_min_available_bytes": 5029826560,
+    "native_max_available_bytes": 5477560320,
+    "stop_line_bytes": 4000000000,
+    "stop_triggered": false
+  },
+  "packet_output_path": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2/output",
+    "exists": true,
+    "note": "The genuine --submit route did not materialize D66_OUTPUT_DIR; the exact assigned empty packet output directory was retained after terminal, while plan/stdout/stderr remain native outputs.",
+    "created_after_terminal": true,
+    "empty": true
+  },
+  "no_retry_or_resubmit": true
+}

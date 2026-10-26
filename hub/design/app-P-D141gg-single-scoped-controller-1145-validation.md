@@ -1,0 +1,13 @@
+# D141gg single-scope-2 validation
+
+- Packet source: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/dispatch-recipe.json`; packet SHA-256 `e6b63540d9f8c57643ab184a5306f9742e3a72892f55f84ef05079c1aa07fd85`. Source packet SHA-256: `bdf548ac4498d08dd38f2b7eb0664f7a862c4ad109a39fd48d91db46062f194e`.
+- Source checker: `node .../app-P-D141gg-single-scope-prep-1137/evidence/check.mjs .../app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/dispatch-recipe.json emit` — exit 0, `status=PASS`.
+- Source checker verification: same checker with `verify` — exit 0, `status=PASS`.
+- Admission inspection: programmatic packet load and read-only checks — exact argv/cwd/unset/operational environment, Agent SHA, four detached clean pins, builder SHA/blob, empty new preflight/normal namespaces, absent plan/lock/stdout/stderr/output paths, and free space `5477650432` bytes > 5,200,000,000 — PASS.
+- Native submit: exact packet argv under packet cwd/environment, one invocation, exec session `47367`, exit 0. No direct request, registry, test-run, retry, or second submit.
+- Authenticated IDs: preflight `app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320` (`pass`, exit 0); normal `app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271` (`pass`, exit 0). Plan, registry rows, request assignments, snapshots, command/row bindings, and result directories matched the packet.
+- Normal wait: `wait-test` loaded `plan.normal.id` programmatically and observed only `app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271` — exit 0.
+- Body result: PASS. Summary: 1 readiness test passed (30.1s), 1 P2 mounted transition None single test passed (1.4m); service duration 257s.
+- Native body trace: `trace PASS: 54 actual samples` with 54 samples; minimum available bytes 5029826560; 4 GB stop line was not reached.
+- Controller sampler: first-tool session `40483`, 158 samples through body terminal, explicitly stopped/reaped. Its minimum available bytes was 5029302272; below-5.2GB observation is disclosed and no historical coverage is claimed.
+- The genuine `--submit` path materialized its authenticated plan and native result directory rather than using the normal-run output directory. The exact assigned `D66_OUTPUT_DIR` packet directory was retained empty after terminal; no output file or artifact was fabricated.
