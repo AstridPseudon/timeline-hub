@@ -150,7 +150,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await page.getByRole('option', { name: new RegExp(targetProjectName, 'i') }).click();
   await expect.poll(() => new URL(page.url()).searchParams.get('project')).toBe(targetProjectId);
   // The editor re-renders while it settles onto the target project's timeline, which closes open menus. Wait for that first.
-  await expect.poll(() => new URL(page.url()).searchParams.get('timeline'), { message: 'the editor selects a timeline in the target project' }).toBeTruthy();
+  await expect.poll(() => { const id = new URL(page.url()).searchParams.get('timeline'); return id && id !== descriptor!.timelineId ? id : null; }, { message: 'the editor selects a timeline in the target project' }).toBeTruthy();
   await expect(picker).toBeVisible();
   let importStarted = 0;
   await expect(async () => {
