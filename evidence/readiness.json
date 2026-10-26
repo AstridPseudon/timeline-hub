@@ -1,0 +1,33 @@
+{
+  "status": "WAITING_FOR_GENUINE_CONTROLLER_BINDING",
+  "control_status": "PASS",
+  "pair_executable_qualified": false,
+  "real_pair_started": false,
+  "request_test_called": false,
+  "test_run_called": false,
+  "rows_installed": false,
+  "source_dispatch_witness": {
+    "utc": "2026-10-26T07:17:49.555834+00:00",
+    "free_bytes": 4512456704,
+    "required_bytes": 4500000000,
+    "comparison": "PASS",
+    "kind": "source-only; not heavy admission"
+  },
+  "future_controller": {
+    "dispatch_floor_bytes": 4714564096,
+    "continuous_stop_bytes": 4000000000,
+    "binding_consumer": "binding-source.py",
+    "materializer": "controller-continuation.sh"
+  },
+  "controls": {
+    "admission_cases": 10,
+    "lifecycle_cases": 36,
+    "tiny_positive_exit": 17,
+    "tiny_positive_calls": 1,
+    "tiny_poison_exit": 1,
+    "tiny_poison_calls": 0
+  },
+  "old_service": "agent-agent-core-full-1026025151-24049",
+  "old_service_status": "terminal refusal; not current admission",
+  "held_unstarted": ["19479", "8912"]
+}

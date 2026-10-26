@@ -1,0 +1,7 @@
+agent_sha=ecdc242ed9b673f641759ecf029f95e89a2c6f92
+runtime_sha=95d98f038320d5d46bd679ac000ab3e15825c935
+app_sha=4de54db14bdc9ddc2ce2e5887258b03acbffd30d
+composition_sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+original_p4_test_hash=acf46e7d51ce8e931ac28a44edf7f7bfa495c72388238f6d90fe19c6e9690d1f
+service_versions=agent:ecdc242ed9b673f641759ecf029f95e89a2c6f92,runtime:95d98f038320d5d46bd679ac000ab3e15825c935,node:v20.19.4,composition:0.0.14,client:0.2.14,schema:sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
+junit_paths=/home/user/work/wt/agt-F-D141l-controller-binding-prep-0718/evidence/control-logs/run-cut/agent-core-full.xml
