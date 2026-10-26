@@ -1,9 +1,9 @@
-import { useEffect, useState, type RefObject } from 'react';
-import { Maximize2, Minimize2, Pause, Play, Repeat, SkipBack, Volume1, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useState, type ReactNode, type RefObject } from 'react';
+import { Gauge, Maximize, Minimize, Pause, Play, SkipBack, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { Slider as SliderPrimitive } from '@base-ui/react/slider';
 import type { PlayerRef } from '@remotion/player';
-import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
 import { CENTISECOND_TIME_OPTIONS, formatTime } from '@/shared/lib/timeFormatting';
 import {
   PREVIEW_PLAYBACK_RATES,
@@ -12,10 +12,32 @@ import {
   usePreviewPlaybackPreferences,
 } from './previewPlaybackPreferences.ts';
 
-/** The stage's round glass buttons: dark over any picture, in either theme. */
-const STAGE_BUTTON_CLASS = 'pointer-events-auto shrink-0 rounded-full border-[color:var(--video-editor-stage-control-border)] bg-[var(--video-editor-stage-control-bg)] text-[color:var(--video-editor-stage-fg)] hover:bg-[var(--video-editor-stage-control-bg-hover)] hover:text-[color:var(--video-editor-stage-fg)]';
-const STAGE_BUTTON_ON_CLASS = 'border-[color:var(--video-editor-accent-border)] bg-[var(--video-editor-accent-bg-strong)] text-[color:var(--video-editor-accent-text)] hover:bg-[var(--video-editor-accent-bg-hover)] hover:text-[color:var(--video-editor-accent-text)]';
-const STAGE_TEXT_CLASS = 'font-mono text-xs tabular-nums tracking-[0.08em] text-[color:var(--video-editor-stage-fg-muted)]';
+/**
+ * The preview's controls sit on the picture, so they stay out of its way: play is the one
+ * control with a body (a soft glass disc), and everything else is a bare glyph that lights up
+ * under the pointer. Light on dark in either theme, since they always sit over the film.
+ */
+const FOCUS_RING_CLASS = 'outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--video-editor-stage-handle-border)]';
+const GLYPH_BUTTON_CLASS = cn(
+  'pointer-events-auto relative inline-flex shrink-0 items-center justify-center rounded-full text-[color:var(--video-editor-stage-fg)] transition-colors duration-150',
+  'hover:bg-[var(--video-editor-stage-glyph-hover)]',
+  'disabled:pointer-events-none disabled:opacity-40 [&_svg]:drop-shadow-[0_1px_1px_rgb(0_0_0/0.45)]',
+  FOCUS_RING_CLASS,
+);
+const PLAY_BUTTON_CLASS = cn(
+  'pointer-events-auto inline-flex shrink-0 items-center justify-center rounded-full bg-[var(--video-editor-stage-dim)] text-[color:var(--video-editor-stage-fg)] backdrop-blur-md transition-colors duration-150',
+  'hover:bg-[var(--video-editor-stage-control-bg-strong)] disabled:pointer-events-none disabled:opacity-40',
+  FOCUS_RING_CLASS,
+);
+const STAGE_TEXT_CLASS = 'font-mono text-xs tabular-nums text-[color:var(--video-editor-stage-fg-muted)] [text-shadow:0_1px_1px_rgb(0_0_0/0.45)]';
+
+/** Hit areas and glyphs: compact for the editor's mouse, larger for full screen and fingers. */
+const SIZES = {
+  editor: { glyph: 'h-8 w-8 [&_svg]:h-[18px] [&_svg]:w-[18px]', speed: 'h-8 min-w-8', spacer: 'w-8', play: 'h-10 w-10', icon: 'h-[18px] w-[18px]', playIcon: 'h-5 w-5', gap: 'gap-1' },
+  fullscreen: { glyph: 'h-11 w-11 [&_svg]:h-[22px] [&_svg]:w-[22px]', speed: 'h-11 min-w-11', spacer: 'w-11', play: 'h-[52px] w-[52px]', icon: 'h-[22px] w-[22px]', playIcon: 'h-6 w-6', gap: 'gap-2' },
+  touch: { glyph: 'h-11 w-11 [&_svg]:h-5 [&_svg]:w-5', speed: 'h-11 min-w-11', spacer: 'w-11', play: 'h-12 w-12', icon: 'h-5 w-5', playIcon: 'h-[22px] w-[22px]', gap: 'gap-2' },
+} as const;
+type TransportSize = (typeof SIZES)[keyof typeof SIZES];
 
 /** A mouse press must not leave focus on the button, so Space keeps meaning play. */
 const keepFocus = (event: { preventDefault: () => void }) => event.preventDefault();
@@ -26,15 +48,18 @@ export interface PreviewTransportProps {
   durationInFrames: number;
   isPlaying: boolean;
   canPlay: boolean;
-  /** Shown in the middle of the bar when set (the full editor's output size). */
-  resolution?: string | null;
-  /** The narrow bar (condensed editor, phone): listening, transport and fullscreen only. */
+  /** The narrow bar (condensed editor, phone): jump, play and full screen. Volume and speed
+   *  wait in full screen, which has the room. */
   compact: boolean;
   /** Phone/tablet: touch-sized buttons, and mute in place of a volume slider (iOS fixes media volume). */
   touchChrome: boolean;
-  /** Volume, speed, loop and fullscreen beside the transport. A staged shell that sizes the
+  /** Volume, speed and full screen beside the transport. A staged shell that sizes the
    *  transport itself (the public homepage) keeps to jump and play. */
   playerControls: boolean;
+  /** The editor with a mouse: the bar rests while the pointer is elsewhere (play alone when
+   *  paused, nothing while playing) and comes up when the pointer is over the preview. It needs a
+   *  `group/preview` ancestor; touch and hosted outlets keep the bar in view instead. */
+  revealOnHover: boolean;
   fullscreen: boolean;
   /** Fullscreen while playing and idle: the bar fades away. */
   idle: boolean;
@@ -50,10 +75,10 @@ export function PreviewTransport({
   durationInFrames,
   isPlaying,
   canPlay,
-  resolution,
   compact,
   touchChrome,
   playerControls,
+  revealOnHover,
   fullscreen,
   idle,
   onTogglePlay,
@@ -61,25 +86,27 @@ export function PreviewTransport({
   onSeekFrame,
   onToggleFullscreen,
 }: PreviewTransportProps) {
-  const { loop, rate } = usePreviewPlaybackPreferences();
-  const large = touchChrome || fullscreen;
-  const buttonSize = large ? 'h-11 w-11' : 'h-8 w-8';
-  const iconSize = large ? 'h-[18px] w-[18px]' : 'h-4 w-4';
-  // Speed and loop are for watching; the narrow bar keeps to the essentials until fullscreen.
-  const showWatchControls = fullscreen || !compact;
+  const { rate } = usePreviewPlaybackPreferences();
+  const size: TransportSize = touchChrome ? SIZES.touch : fullscreen ? SIZES.fullscreen : SIZES.editor;
+  const hover = revealOnHover && !fullscreen;
+  // Shown with the pointer over the preview, or while a control has keyboard focus.
+  const onReveal = hover
+    ? 'opacity-0 transition-[opacity,background-color] duration-200 group-hover/preview:opacity-100 group-has-[:focus-visible]/transport:opacity-100 motion-reduce:transition-none'
+    : undefined;
+  // Volume and speed: the narrow bar keeps to the transport and full screen, and leaves them to
+  // full screen, which has the room.
+  const watchControls = playerControls && (fullscreen || !compact);
 
   return (
     <div
       className={cn(
-        'astrid-preview-transport pointer-events-none absolute inset-x-0 bottom-0 z-10 px-3 transition-[opacity,visibility] duration-300',
-        fullscreen ? 'pb-4 pt-12' : 'py-3',
+        'astrid-preview-transport group/transport pointer-events-none absolute inset-x-0 bottom-0 z-10 transition-[opacity,visibility] duration-300',
+        fullscreen ? 'px-4 pb-4 pt-24' : 'px-2 pb-2 pt-10',
         idle && 'invisible opacity-0',
       )}
       style={{
-        // Fullscreen: a deeper fade, so the scrubber reads over a bright picture.
-        backgroundImage: fullscreen
-          ? 'linear-gradient(to top, var(--video-editor-stage-control-bg-strong), var(--video-editor-stage-control-bg) 55%, transparent)'
-          : 'linear-gradient(to top, var(--video-editor-stage-gradient-start), transparent)',
+        // The bar carries its own stage colours: a host can portal it outside the player.
+        ...VIDEO_EDITOR_THEME_VARS,
         ...(fullscreen ? {
           paddingLeft: 'max(1rem, env(safe-area-inset-left))',
           paddingRight: 'max(1rem, env(safe-area-inset-right))',
@@ -88,89 +115,93 @@ export function PreviewTransport({
       }}
       data-preview-transport
     >
+      {/* A soft shade so the glyphs read over a bright picture; it comes and goes with the bar. */}
+      <div
+        aria-hidden
+        className={cn('astrid-preview-transport-scrim pointer-events-none absolute inset-0', onReveal)}
+        style={{
+          backgroundImage: fullscreen
+            // Deeper in full screen, where the time and scrubber sit over the picture too.
+            ? 'linear-gradient(to top, var(--video-editor-stage-control-bg-strong), var(--video-editor-stage-control-bg) 45%, transparent)'
+            : 'linear-gradient(to top, var(--video-editor-stage-gradient-start), transparent)',
+        }}
+      />
       {fullscreen && (
         <PreviewScrubber playerRef={playerRef} fps={fps} durationInFrames={durationInFrames} touch={touchChrome} onSeekFrame={onSeekFrame} />
       )}
-      {/* Play sits in the middle while there is room; on a narrow screen the sides keep their
-          width and the middle gives way, so nothing overlaps. A phone held upright in fullscreen
-          spreads the whole row evenly instead. */}
-      <div
-        className={cn(
-          'grid grid-cols-[minmax(max-content,1fr)_auto_minmax(max-content,1fr)] items-center gap-2',
-          fullscreen && 'max-sm:flex max-sm:justify-between',
-        )}
-      >
-        <div className={cn('flex min-w-0 items-center gap-2 justify-self-start', fullscreen && 'max-sm:contents')}>
-          {playerControls && <PreviewVolumeControl buttonSize={buttonSize} iconSize={iconSize} slider={!touchChrome} />}
+      {/* Play sits in the middle; the sides keep their width and the middle gives way. */}
+      <div className="relative grid grid-cols-[minmax(max-content,1fr)_auto_minmax(max-content,1fr)] items-center gap-2">
+        <div className={cn('flex min-w-0 items-center justify-self-start', onReveal)}>
+          {watchControls && <PreviewVolumeControl size={size} slider={!touchChrome} />}
         </div>
-        <div className={cn('flex items-center gap-2', fullscreen && 'max-sm:contents')}>
-          <Button
+        <div className={cn('flex items-center', size.gap)}>
+          <GlyphButton size={size} className={onReveal} onClick={onJumpToStart} label="Jump to beginning">
+            <SkipBack />
+          </GlyphButton>
+          <button
             type="button"
-            variant="outline"
-            size="icon"
-            className={cn(STAGE_BUTTON_CLASS, buttonSize)}
-            onMouseDown={keepFocus}
-            onClick={onJumpToStart}
-            title="Jump to beginning"
-            aria-label="Jump to beginning"
-          >
-            <SkipBack className={iconSize} />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className={cn(STAGE_BUTTON_CLASS, large ? 'h-12 w-12' : 'h-10 w-10')}
+            className={cn(PLAY_BUTTON_CLASS, size.play, hover && isPlaying && onReveal)}
             disabled={!canPlay}
             onMouseDown={keepFocus}
             onClick={onTogglePlay}
             title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
-            {isPlaying ? <Pause className={iconSize} /> : <Play className={cn(iconSize, 'fill-current')} />}
-          </Button>
-          {resolution && !compact && !fullscreen && (
-            <div className="pointer-events-none rounded-full bg-background/70 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              {resolution}
-            </div>
-          )}
+            {isPlaying
+              ? <Pause className={cn(size.playIcon, 'fill-current')} strokeWidth={1.5} />
+              // The triangle's weight sits left of its box; nudge it to look centred in the disc.
+              : <Play className={cn(size.playIcon, 'translate-x-px fill-current')} strokeWidth={1.5} />}
+          </button>
+          {/* Balances jump, so play stays at the centre of the bar. */}
+          <span aria-hidden className={cn('shrink-0', size.spacer)} />
         </div>
-        <div className={cn('flex min-w-0 items-center justify-end gap-2 justify-self-end', fullscreen && 'max-sm:contents')}>
-          {playerControls && showWatchControls && (
-            <>
-              <PreviewSpeedSelect rate={rate} large={large} />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className={cn(STAGE_BUTTON_CLASS, buttonSize, loop && STAGE_BUTTON_ON_CLASS)}
-                onMouseDown={keepFocus}
-                onClick={() => setPreviewPlaybackPreferences({ loop: !loop })}
-                aria-pressed={loop}
-                title={loop ? 'Loop on' : 'Loop off'}
-                aria-label="Loop playback"
-              >
-                <Repeat className={iconSize} />
-              </Button>
-            </>
-          )}
+        <div className={cn('flex min-w-0 items-center justify-self-end', size.gap, onReveal)}>
+          {watchControls && <PreviewSpeedSelect rate={rate} size={size} />}
           {playerControls && (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className={cn(STAGE_BUTTON_CLASS, buttonSize)}
-              onMouseDown={keepFocus}
+            <GlyphButton
+              size={size}
               onClick={onToggleFullscreen}
               title={fullscreen ? 'Exit full screen (Esc)' : 'Full screen (F)'}
-              aria-label={fullscreen ? 'Exit full screen' : 'Full screen'}
+              label={fullscreen ? 'Exit full screen' : 'Full screen'}
             >
-              {fullscreen ? <Minimize2 className={iconSize} /> : <Maximize2 className={iconSize} />}
-            </Button>
+              {fullscreen ? <Minimize /> : <Maximize />}
+            </GlyphButton>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function GlyphButton({
+  size,
+  label,
+  title,
+  onClick,
+  className,
+  pressed,
+  children,
+}: {
+  size: TransportSize;
+  label: string;
+  title?: string;
+  onClick: () => void;
+  className?: string;
+  pressed?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      className={cn(GLYPH_BUTTON_CLASS, size.glyph, className)}
+      onMouseDown={keepFocus}
+      onClick={onClick}
+      aria-pressed={pressed}
+      title={title ?? label}
+      aria-label={label}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -204,13 +235,13 @@ function StageSlider({
       className={cn('group/stage-slider pointer-events-auto relative flex touch-none select-none items-center', className)}
     >
       <SliderPrimitive.Control className="flex h-full w-full cursor-pointer items-center">
-        <SliderPrimitive.Track className="relative h-1 w-full rounded-full bg-[var(--video-editor-stage-ghost-border)] transition-[height] duration-150 group-hover/stage-slider:h-1.5 group-data-[dragging]/stage-slider:h-1.5">
+        <SliderPrimitive.Track className="relative h-[3px] w-full rounded-full bg-[var(--video-editor-stage-ghost-border)] shadow-[0_1px_1px_rgb(0_0_0/0.25)] transition-[height] duration-150 group-hover/stage-slider:h-[5px] group-data-[dragging]/stage-slider:h-[5px]">
           <SliderPrimitive.Indicator className="absolute h-full rounded-full bg-[var(--video-editor-stage-fg)]" />
           <SliderPrimitive.Thumb
             getAriaLabel={() => label}
             getAriaValueText={() => valueText}
             className={cn(
-              'h-3 w-3 rounded-full bg-[var(--video-editor-stage-fg)] shadow-[0_0_0_4px_rgb(0_0_0/0.18)] outline-none transition-opacity duration-150 focus-visible:ring-2 focus-visible:ring-[var(--video-editor-accent-border-strong)]',
+              'h-3 w-3 rounded-full bg-[var(--video-editor-stage-fg)] shadow-[0_1px_3px_rgb(0_0_0/0.35)] outline-none transition-opacity duration-150 focus-visible:ring-2 focus-visible:ring-[color:var(--video-editor-stage-handle-border)]',
               thumbClassName,
             )}
           />
@@ -220,7 +251,7 @@ function StageSlider({
   );
 }
 
-function PreviewVolumeControl({ buttonSize, iconSize, slider }: { buttonSize: string; iconSize: string; slider: boolean }) {
+function PreviewVolumeControl({ size, slider }: { size: TransportSize; slider: boolean }) {
   const { volume, muted } = usePreviewPlaybackPreferences();
   const level = muted ? 0 : volume;
   const Icon = level === 0 ? VolumeX : level < 0.5 ? Volume1 : Volume2;
@@ -228,23 +259,13 @@ function PreviewVolumeControl({ buttonSize, iconSize, slider }: { buttonSize: st
   return (
     // Hovering or focusing the group opens the level, as video players do; touch keeps to mute.
     <div className="group/volume pointer-events-auto flex min-w-0 items-center">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className={cn(STAGE_BUTTON_CLASS, buttonSize)}
-        onMouseDown={keepFocus}
-        onClick={togglePreviewMuted}
-        aria-pressed={level === 0}
-        title={level === 0 ? 'Unmute' : 'Mute'}
-        aria-label="Mute preview"
-      >
-        <Icon className={iconSize} />
-      </Button>
+      <GlyphButton size={size} onClick={togglePreviewMuted} pressed={level === 0} title={level === 0 ? 'Unmute' : 'Mute'} label="Mute preview">
+        <Icon />
+      </GlyphButton>
       {slider && (
         <div className="w-0 overflow-hidden opacity-0 transition-[width,opacity] duration-200 ease-out group-hover/volume:w-[5.5rem] group-hover/volume:opacity-100 group-focus-within/volume:w-[5.5rem] group-focus-within/volume:opacity-100">
           <StageSlider
-            className="ml-2.5 mr-1 h-6 w-[4.75rem]"
+            className="ml-1 mr-2 h-6 w-[4.75rem]"
             value={level}
             max={1}
             step={0.01}
@@ -262,19 +283,24 @@ function formatRate(rate: number): string {
   return `${rate}×`;
 }
 
-function PreviewSpeedSelect({ rate, large }: { rate: number; large: boolean }) {
+/** Speed is rarely touched, so it is a quiet glyph; once changed, the glyph becomes the rate, so a
+ *  film playing fast or slow always says so. */
+function PreviewSpeedSelect({ rate, size }: { rate: number; size: TransportSize }) {
+  const changed = rate !== 1;
   return (
     // A native list: it opens over a fullscreen element and on phones, where a portal popover cannot.
     <label
       className={cn(
-        STAGE_BUTTON_CLASS,
-        'relative inline-flex items-center justify-center border px-2.5 text-[11px] font-medium tabular-nums transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background',
-        large ? 'h-11 min-w-11' : 'h-8 min-w-8',
-        rate !== 1 && STAGE_BUTTON_ON_CLASS,
+        GLYPH_BUTTON_CLASS,
+        size.speed,
+        'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[color:var(--video-editor-stage-handle-border)]',
+        changed && 'px-2 text-[color:var(--video-editor-stage-fg)]',
       )}
-      title="Playback speed"
+      title={changed ? `Playback speed: ${formatRate(rate)}` : 'Playback speed'}
     >
-      <span aria-hidden>{formatRate(rate)}</span>
+      {changed
+        ? <span aria-hidden className="text-xs font-medium tabular-nums [text-shadow:0_1px_1px_rgb(0_0_0/0.45)]">{formatRate(rate)}</span>
+        : <Gauge aria-hidden className={size.icon} />}
       <select
         aria-label="Playback speed"
         value={String(rate)}
@@ -317,7 +343,7 @@ function PreviewScrubber({
   const shown = Math.min(frame, lastFrame);
   const time = (value: number) => formatTime(value / fps, CENTISECOND_TIME_OPTIONS);
   return (
-    <div className="mb-3 flex items-center gap-3">
+    <div className="relative mb-1 flex items-center gap-3 px-1">
       <span className={cn(STAGE_TEXT_CLASS, 'shrink-0')}>{time(shown)}</span>
       <StageSlider
         className="h-5 min-w-0 flex-1"
@@ -336,4 +362,3 @@ function PreviewScrubber({
     </div>
   );
 }
-

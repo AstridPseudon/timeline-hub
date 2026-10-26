@@ -982,8 +982,8 @@
   opacity: .48;
   pointer-events: none;
 }
-.astrid-public-site[data-audience="app"] .astrid-preview-transport {
-  background-image: none !important;
+.astrid-public-site[data-audience="app"] .astrid-preview-transport-scrim {
+  display: none;
 }
 /* The inspector keeps the shared surface motion; only the collapse toggle times its visibility. */
 .astrid-public-site[data-audience="app"] .astrid-player-surface {
@@ -1356,10 +1356,8 @@
   color: var(--astrid-ink);
 }
 
-/* Two of the shared editor's small grey labels sit on tinted grounds (the preview's resolution pill and
-   the inspector's chips), where its usual grey falls short of AA by day or by night. On this page they
-   take a firmer tone. */
-.astrid-public-site .astrid-preview-transport .text-muted-foreground { color: hsl(var(--foreground)); }
+/* The inspector's chips sit on tinted grounds, where the shared editor's usual small grey falls short
+   of AA by day or by night. On this page they take a firmer tone. */
 .astrid-public-site .astrid-inspector-surface .text-muted-foreground {
   color: color-mix(in oklab, hsl(var(--muted-foreground)), hsl(var(--foreground)) 45%);
 }

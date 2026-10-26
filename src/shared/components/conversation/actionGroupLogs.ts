@@ -21,22 +21,27 @@ export function actionStatus(pair: ConversationToolCallPair): string {
   return results?.some(result => result.exitCode !== 0 || result.aborted || result.error) ? 'failed' : transport;
 }
 
+/** The shared action entry serializer used by both action-only and whole-chat exports. */
+export function formatActionGroupEntries(pairs: readonly ConversationToolCallPair[]): string[] {
+  return pairs.flatMap((pair, index) => [
+    `Action ${index + 1}: ${pair.call.tool_name || 'Action'}`,
+    `Call ID: ${pair.call.tool_call_id || '(not recorded)'}`,
+    `Call observed at: ${pair.call.timestamp || '(not recorded)'}`,
+    `Status: ${actionStatus(pair)}`,
+    `Transport status: ${pair.result?.tool_status ?? pair.call.tool_status ?? '(not recorded)'}`,
+    'Arguments:', pair.call.tool_args ? JSON.stringify(pair.call.tool_args, null, 2) : '(not recorded)',
+    'Call:', pair.call.content || '(not recorded)',
+    `Result observed at: ${pair.result?.timestamp || '(not recorded)'}`,
+    'Result:', pair.result ? pair.result.content || '(empty result)' : '(pending at capture)',
+    ...(pair.result?.tool_output_details ? ['Structured result details:', JSON.stringify(pair.result.tool_output_details, null, 2)] : []),
+    '',
+  ]);
+}
+
 /** Only the supplied action group; never the surrounding conversation/context. */
 export function formatActionGroupLogs(pairs: readonly ConversationToolCallPair[], capturedAt: string): string {
   return ['Action logs', `Captured at: ${capturedAt}`, `Actions: ${pairs.length}`,
-    'Observation timestamps reflect client receipt/replay, not execution times.', '', ...pairs.flatMap((pair, index) => [
-      `Action ${index + 1}: ${pair.call.tool_name || 'Action'}`,
-      `Call ID: ${pair.call.tool_call_id || '(not recorded)'}`,
-      `Call observed at: ${pair.call.timestamp || '(not recorded)'}`,
-      `Status: ${actionStatus(pair)}`,
-      `Transport status: ${pair.result?.tool_status ?? pair.call.tool_status ?? '(not recorded)'}`,
-      'Arguments:', pair.call.tool_args ? JSON.stringify(pair.call.tool_args, null, 2) : '(not recorded)',
-      'Call:', pair.call.content || '(not recorded)',
-      `Result observed at: ${pair.result?.timestamp || '(not recorded)'}`,
-      'Result:', pair.result ? pair.result.content || '(empty result)' : '(pending at capture)',
-      ...(pair.result?.tool_output_details ? ['Structured result details:', JSON.stringify(pair.result.tool_output_details, null, 2)] : []),
-      '',
-    ])].join('\n');
+    'Observation timestamps reflect client receipt/replay, not execution times.', '', ...formatActionGroupEntries(pairs)].join('\n');
 }
 
 export function downloadActionGroupLogs(pairs: readonly ConversationToolCallPair[]): void {
