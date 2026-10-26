@@ -65,6 +65,10 @@ _STARTUP_OBSERVATION_PHASES = frozenset({
 })
 
 
+def _is_posix() -> bool:
+    return os.name == "posix"
+
+
 def _emit_startup_phase(phase: str) -> None:
     """One best-effort fixed row to an existing owner-only regular fd2.
 
@@ -716,7 +720,7 @@ class _ManagedWanChildAdapter:
         self.spec["init"]["output_dir"] = str(spool)
         # Inherited by the child: a host crash cannot unlock a live orphan.
         # Never read a PID file, adopt an orphan, or terminate a foreign child.
-        fd = os.open(owner_dir / "wan-child.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        fd = os.open(owner_dir / "wan-child.lock", os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
         self._owner_lock = os.fdopen(fd, "a+b")
         try:
             platform.lock_file(fd, blocking=False)
@@ -1598,7 +1602,7 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
     if attempt != attempt.resolve(strict=False):
         raise HostError("review receiver attempt alias")
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | os.O_NONBLOCK)
     except FileNotFoundError:
         return previous
     with os.fdopen(fd, "rb") as stream:
@@ -1641,7 +1645,7 @@ def _retire_owned_review_session(attempt: Path, snapshot: tuple[int, int, bytes]
     """Use only a previously retained observation, after positive child cleanup."""
     path = attempt / _REVIEW_SESSION_NAME
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | os.O_NONBLOCK)
     except FileNotFoundError:
         return  # The action completed its own server-close finalizer.
     with os.fdopen(fd, "rb") as stream:
@@ -12116,11 +12120,12 @@ class LocalExecutionPreparation:
             os.close(descriptor)
             descriptor = None
             os.replace(temporary, path)
-            directory_fd = os.open(parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-            try:
-                os.fsync(directory_fd)
-            finally:
-                os.close(directory_fd)
+            if _is_posix():
+                directory_fd = os.open(parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+                try:
+                    os.fsync(directory_fd)
+                finally:
+                    os.close(directory_fd)
             return True
         except OSError:
             if descriptor is not None:
@@ -13177,9 +13182,10 @@ class _NativeEngineGraph:
                 or "sha256:" + hashlib.sha256((root / "config.json").read_bytes()).hexdigest() != self.profile["session_config_digest"]):
             raise HostError("owned engine readiness registry differs from selected launch")
         endpoint = urlsplit(self.profile["engine_endpoint"])
-        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
-        if observation.returncode != 0 or f":{endpoint.port} (LISTEN)" not in observation.stdout:
-            raise HostError("selected listener socket ownership is uncertain")
+        if _is_posix():
+            observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
+            if observation.returncode != 0 or f":{endpoint.port} (LISTEN)" not in observation.stdout:
+                raise HostError("selected listener socket ownership is uncertain")
         for broker in (self.engine, self.listener):
             if broker.state == "sealed":
                 broker.bind_ready_token(expected_pid=int(broker.registration["pid"]), expected_identity=broker.registration["identity"])
@@ -13227,9 +13233,10 @@ class _NativeEngineGraph:
         verify_tree_absent(self.process)
         root = Path(self.profile["engine_launch"]["session_root"])
         endpoint = urlsplit(self.profile["engine_endpoint"])
-        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
-        if observation.returncode != 1 or observation.stdout.strip() or observation.stderr.strip():
-            raise CleanupUncertainError("engine endpoint cleanup is not verified")
+        if _is_posix():
+            observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
+            if observation.returncode != 1 or observation.stdout.strip() or observation.stderr.strip():
+                raise CleanupUncertainError("engine endpoint cleanup is not verified")
         # Registry files are historical evidence only; successful census and
         # retained child wait proofs reconcile the exact recorded incarnations.
         if isinstance(exit_code, bool) or not isinstance(exit_code, int):
@@ -13454,6 +13461,8 @@ def _await_worker_activation_socket(
     existing SSH command boundary and sends the same bounded activation frame
     used by local parked hosts.
     """
+    if os.name == "nt":
+        raise HostError("parked activation socket is unavailable on Windows")
     path = Path(socket_path).expanduser()
     if not path.is_absolute() or str(path) != socket_path or path.is_symlink():
         raise HostError("parked activation socket path must be canonical and absolute")

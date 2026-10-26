@@ -2600,7 +2600,7 @@ def test_wan_release_darwin_uses_complete_native_census_without_ps(monkeypatch, 
         assert result["released"] is (census == "released")
 
 
-@pytest.mark.parametrize("platform", ["darwin", "linux"])
+@pytest.mark.parametrize("platform", ["darwin", "linux", "win32"])
 @pytest.mark.parametrize("phase", ["registry", "cleanup"])
 def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing(tmp_path, monkeypatch, platform, phase):
     import hashlib, json, subprocess
@@ -2608,6 +2608,8 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     import astrid.core.execution.generic_host as gh
     import astrid.core.execution.custody_broker as cb
     monkeypatch.setattr(gh.sys, "platform", platform)
+    if platform == "win32":
+        monkeypatch.setattr(gh, "_is_posix", lambda: False)
     root = tmp_path / "engine"; root.mkdir()
     birth = "ps-lstart:Mon Oct 12 20:00:00 2026"
     config = b"{}"; digest = "sha256:" + hashlib.sha256(config).hexdigest()
@@ -2637,9 +2639,12 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     monkeypatch.setattr(gh.subprocess,"run",run)
     if phase == "registry": assert graph._measure_registry(root,"nonce",910002)["comfy_pid"] == 910002
     else: assert graph.abort()["engine"]["exit_code"] == 0
-    expected = ["lsof", *(["-O"] if platform == "darwin" else []), "-nP"]
-    expected += ["-a","-p","910002","-iTCP:8188","-sTCP:LISTEN"] if phase == "registry" else ["-t","-iTCP:8188","-sTCP:LISTEN"]
-    assert calls == [expected]
+    if platform == "win32":
+        assert calls == []
+    else:
+        expected = ["lsof", *(["-O"] if platform == "darwin" else []), "-nP"]
+        expected += ["-a","-p","910002","-iTCP:8188","-sTCP:LISTEN"] if phase == "registry" else ["-t","-iTCP:8188","-sTCP:LISTEN"]
+        assert calls == [expected]
 
 
 def test_native_engine_launch_uses_spawn_tree_with_bound_custody_configuration(tmp_path, monkeypatch):

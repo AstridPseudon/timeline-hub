@@ -303,6 +303,19 @@ def test_remote_socket_receiver_rejects_overlong_unix_path(tmp_path) -> None:
     assert not path.parent.exists()
 
 
+def test_remote_socket_receiver_refuses_windows_before_socket_creation(monkeypatch) -> None:
+    monkeypatch.setattr(generic_host.os, "name", "nt")
+    monkeypatch.setattr(
+        generic_host.socket, "socket",
+        lambda *args, **kwargs: pytest.fail("Windows refusal must happen before AF_UNIX allocation"),
+    )
+    with pytest.raises(generic_host.HostError, match="unavailable on Windows"):
+        generic_host._await_worker_activation_socket(
+            "C:/activation.sock", operation_id="operation-1", channel_id="channel-1",
+            credential_file="C:/worker.token", timeout_seconds=1,
+        )
+
+
 @pytest.mark.parametrize(
     "mutation, message",
     [
