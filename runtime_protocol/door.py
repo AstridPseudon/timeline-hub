@@ -168,6 +168,7 @@ WORKSPACE_ROUTES = (
     _entry("GET,POST", "/v1/projects/:/documents"),
     _entry("GET,PATCH", "/v1/projects/:/documents/:"),
     _entry("GET,POST", "/v1/projects/:/thumbnails/source-frame"),
+    _entry("GET", "/v1/projects/:/objects"),
     _entry("POST", "/v1/projects/:/objects"),
     _entry("GET", "/v1/projects/:/objects/:/location"),
     _entry("POST", "/v1/projects/:/media-imports"),

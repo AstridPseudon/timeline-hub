@@ -58,6 +58,7 @@ PRODUCT_CALLS = [
     ("PATCH", runtime(f"/v1/projects/{P}/documents/transcript:{DIGEST}"), "runtime"),
     ("GET", runtime(f"/v1/projects/{P}/thumbnails/source-frame?media_id=m1&time=1"), "runtime"),
     ("POST", runtime(f"/v1/projects/{P}/thumbnails/source-frame"), "runtime"),
+    ("GET", runtime(f"/v1/projects/{P}/objects?limit=50&cursor=c1"), "runtime"),
     ("POST", runtime(f"/v1/projects/{P}/objects"), "runtime"),
     ("GET", runtime(f"/v1/projects/{P}/objects/obj-1/location"), "runtime"),
     ("POST", runtime(f"/v1/projects/{P}/media-imports"), "runtime"),
@@ -298,6 +299,14 @@ def test_compose_and_foreign_prefixes_not_served(path: str) -> None:
 def test_closed_table_allows_inspect_and_composition_revision_get() -> None:
     assert classify(runtime(f"/v1/projects/{P}/timelines/{T}/inspect"), "POST") is not None
     assert classify(runtime(f"/v1/projects/{P}/timelines/{T}/composition-revisions/{R}"), "GET") is not None
+
+
+def test_project_object_catalog_is_get_only() -> None:
+    path = runtime(f"/v1/projects/{P}/objects?limit=50")
+    assert classify(path, "GET") is not None
+    assert classify(runtime(f"/v1/projects/{P}/objects"), "POST") is not None
+    for method in ("PUT", "PATCH", "DELETE", "HEAD"):
+        assert classify(path, method) is None
 
 
 @pytest.mark.parametrize("path", [
