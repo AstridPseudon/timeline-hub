@@ -1,0 +1,6 @@
+
+## NEW 2026-10-26T12:57:17Z ORCH ruling via lead: MAIN relays OWNER DECISION D141ii (owner typed it in the MAIN session 12:50Z; verbatim file design/owner-decision-20261026T1250Z-D141ii.md not yet delivered to this box)
+(1) INVERSE 38: RESTORE upstream astrid/core/timeline/inverses.py (our fc33e0e76c deleted it); bring references back as needed; additive, the authenticated SDK undo path stays; run the 38 IDs targeted. -> PROCEED (scope/order decision; one restoration author, protected independent review).
+(3) WRITERS 15: PROTECTED MIGRATION to the commit path: keep every purpose and assertion; turn the force cases into explicit force-refusal assertions; list each changed reply shape for the owner. -> PROCEED the same way (force stays refused; no weakening).
+(2) INSTALLER 2: RETIRE exactly the two npm-schema IDs, ledger each with the owner quote; our replacement controls stay. -> HOLD: retiring tests is a deletion/test-removal that needs the owner's own typed words in THIS (lead) session; lead has asked MAIN to ask the owner. Do NOT retire or edit those two until the lead relays that; they stay restored-and-FAILING (REG open) meanwhile.
+THEN: one independent protected review, a targeted same-kind run of all kept IDs (53 if (2) is retired, 55 otherwise), REG0 report, then D141v. Disk 6.5 GB; ordinary floors/4 GB stop/5 s trace.
