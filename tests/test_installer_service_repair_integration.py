@@ -22,7 +22,7 @@ def wait_for_service(backend, version, data, expected, timeout=20):
     while time.monotonic() < deadline:
         latest = backend.runtime(version, data, "status").get("health", {})
         states = {row.get("name"): row.get("state") for row in latest.get("services", [])}
-        if states.get("probe") == expected:
+        if states.get("pack-host") == expected:
             return latest
         time.sleep(0.1)
     raise AssertionError(f"Runtime service did not reach {expected}: {latest}")
@@ -49,18 +49,24 @@ def test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_p
     runtime_checkout = Path(runtime_protocol.__file__).resolve().parent.parent
     realm_id = str(uuid.uuid4())
     realm_root = data / "runtime" / "realms" / realm_id
-    pid_file = data / "probe-service.pid"
-    service_script = tmp_path / "probe_service.py"
+    pid_file = data / "pack-host-service.pid"
+    ready_file = data / "runtime" / "generic-host.ready.json"
+    service_script = tmp_path / "pack_host_service.py"
     service_script.write_text(
         "import os, pathlib, time\n"
         "pathlib.Path(os.environ['PROBE_PID_FILE']).write_text(str(os.getpid()))\n"
+        "ready = pathlib.Path(os.environ['READY_FILE'])\n"
+        "ready.parent.mkdir(parents=True, exist_ok=True)\n"
+        "ready.write_text('{}')\n"
         "time.sleep(300)\n",
         encoding="utf-8",
     )
     services = tmp_path / "services.json"
     write_json(services, {"version": 1, "services": [{
-        "name": "probe", "argv": [str(python), str(service_script)],
-        "env": {"PROBE_PID_FILE": str(pid_file)}, "restart": "always",
+        "name": "pack-host", "argv": [str(python), str(service_script)],
+        "env": {"PROBE_PID_FILE": str(pid_file), "READY_FILE": str(ready_file)},
+        "restart": "always",
+        "ready": {"file": "generic-host.ready.json", "timeout_seconds": 5},
     }]})
     profile = tmp_path / "profile.json"
     write_json(profile, {
@@ -87,7 +93,7 @@ def test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_p
         if fail_log_open:
             # Runtime's real service supervisor fails while opening its log,
             # records that declaration as failed, and keeps the daemon healthy.
-            (platform.log_dir() / "service-probe.log").mkdir(parents=True)
+            (platform.log_dir() / "service-pack-host.log").mkdir(parents=True)
         backend.register(version, data)
         backend.start(version, data)
         started = True
@@ -99,12 +105,12 @@ def test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_p
         if fail_log_open:
             assert initial_health["status"] == "ok"
             assert initial_health["services"] == [{
-                "name": "probe", "state": "failed", "last_exit": None,
+                "name": "pack-host", "state": "failed", "last_exit": None,
                 "restart_count": 0, "reason": "supervisor_failed",
             }]
             with pytest.raises(VerificationError, match="An Astrid service stopped while starting"):
                 backend.verify(version, data, realm_id, timeout=0.5)
-            shutil.rmtree(platform.log_dir() / "service-probe.log")
+            shutil.rmtree(platform.log_dir() / "service-pack-host.log")
 
         Installer(root, data, backend, say=lambda _line: None).run("install", {})
         post_health = wait_for_service(backend, version, data, "running")

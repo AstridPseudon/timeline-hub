@@ -547,6 +547,7 @@ def test_pack_host_verification_uses_declared_readiness_timeout(tmp_path, monkey
     monkeypatch.setattr(module.time, "sleep", clock.sleep)
     monkeypatch.setattr(module.platform, "log_dir", lambda: tmp_path)
     (tmp_path / "service-pack-host.log").write_text("host startup detail\n")
+    (tmp_path / "service-chat.log").write_text("chat startup detail\n")
     backend = Backend(program, tmp_path / "install.log", tmp_path / "uv")
     backend.runtime = lambda *_args, **_kwargs: {
         "discovery": {"runtime_instance_id": "owned-instance"}, "support": {"pid_alive": True}}
@@ -557,11 +558,14 @@ def test_pack_host_verification_uses_declared_readiness_timeout(tmp_path, monkey
     elif scenario in {"crash", "failed"}:
         with pytest.raises(RuntimeError, match="An Astrid service stopped while starting") as failure:
             backend.verify(version, data, "selected", timeout=90)
-        assert "host startup detail" in str(failure.value)
         if scenario == "crash":
+            assert "host startup detail" in str(failure.value)
             assert "reason=host exited" in str(failure.value) and "last_exit=1" in str(failure.value)
         else:
             assert "failed_service=chat" in str(failure.value)
+            assert f"log={tmp_path / 'service-chat.log'}" in str(failure.value)
+            assert "chat startup detail" in str(failure.value)
+            assert "host startup detail" not in str(failure.value)
     else:
         with pytest.raises(RuntimeError, match="task host didn't finish starting in time"):
             backend.verify(version, data, "selected", timeout=90)

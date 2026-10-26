@@ -619,7 +619,8 @@ class Backend:
             return
 
         def service_failure(*, crashed: bool) -> VerificationError:
-            service_log = platform.log_dir() / "service-pack-host.log"
+            service_name = failed.get("name") if failed else "pack-host"
+            service_log = platform.log_dir() / f"service-{service_name}.log"
             tail = _last_service_log(service_log)
             service_state = pack_host.get("state", "missing") if pack_host else "missing"
             reason = pack_host.get("reason") if pack_host else None
