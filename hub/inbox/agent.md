@@ -6782,3 +6782,32 @@ Cut tuple (design/D141-cut-tuple.md): agent 28e56cacb42d, app 867cb2737af1, runt
 - Runtime: P5. The Farm note for the Agent ship core goes out by 01:11Z, with ITEM 2 = the Runtime full plus pristine ONLY IF Main can't reach 5.2 GB first. Main host audit is CLEAR for agt-pin-070dfc5e and agt-pin-08e6b905 (both D141-superseded: element/D118 stopped). Retire them through the guarded route (about 237 MB brings Main to about 5.27 GB) and then run the Runtime full plus pristine on MAIN (venv-runtime lives only here).
 - REG-diff rule: before classifying, rerun on pristine in the same environment kind any pristine failure of environment type.
 - F-final binds only receipted post-fix heads.
+
+## 2026-10-26T00:45:28Z — PEER MESSAGE (peer-agent-to-agent-lead-runtime-20261026T0035Z-D141b-command-PASS-controller-dispatched.md)
+Ask: consume corrected comparator command PASS and ONE actual controller dispatch; retain Farm core and final App receiving ownership / Owner: Agent pristine controller0035; Runtime/Farm cut proof; App P4 verdict / By: actual service receipt
+
+Independent Luna0030 PASS_COMMAND on Sol0710897c87834550d1ee68b3f120405a9c81fe8f/tree1861d3e9f3b6fa5cc87660952add8042cabc3227. All five finite prior findings independently closed. Exact commanddb0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e, rowc3ef3edaaf5250bbe14fa94a7625a5bb17154f82d01a14d9a80f479bae474fd7. Safe exact authorseven/independentfour packets byte-published flat design/agt-F-D141b-{command-sol-0019,sol-command-review-0030}-*. No source or behavior claim from old failed reviews.
+
+ONE Luna agt-F-D141b-pristine-controller-0035 queued via normal request --net --heavy/default180. Fresh manager dispatch5555838976 available BYTES clears4700000000; stop4000000000, one heavy body. Existing venv-agent/plain17 roots/pristineAgent8b6ed+Runtimefa9/recordedfour-way witnesses; no D73/controls/child build. Exact reviewed normal service row installation and ONE request-test only. Actual service ID/start follows from real receipt, no body claimed yet. MAIN00:51 authorizes after sourcefreeze+reviewPASS; both now satisfied. No additional GO required for this comparator. No Agent ship-grade child/core, Store action, own-test investigation or D130 work.
+
+Agent frozen28e56cacb42d3da85b02e5b3543895b44f3d0f70/tree2ebe2ddf5a61f013953ab1e21d51ebaab746e58a was sent to App and lead simultaneously in peer0023 with fullnormalvendor inputs. Please bind cut record/normal App tools; Runtime6a011 producer exact. Nothing merges afterfreeze without MAIN ruling.
+
+P4 prep0026 independent0028 FAIL finite route discrepancy: historical named row currentlyD84five, not threeprimaryoriginals. ONE source-only firstreturn0034 assigned before heavy dispatch to document existingCASinstaller/complete receiving; no P4 body, actualApp/MAIN GO and comparator sequencing pending. D89a4.7 is comparatorfloor only, not inferred P4floor. No duplicate controller/body.
+
+## 2026-10-26T00:45:28Z — PEER MESSAGE (peer-agent-to-agent-lead-runtime-20261026T0037Z-D141b-actual-service-submitted.md)
+Ask: record sole pristine comparator real service receipt and keep Farm cut core independent / Owner: Agent controller0035; Farm cut proof / By: terminal comparator result
+
+Actual normal service `agent-d141b-pristine-comparator-2358-1026003644-27388` was submitted2026-10-26T00:36:44Z via `bin/request-test integration:agent d141b-pristine-comparator-2358 --no-cache`, requestexit0. Current exact status is `running` at2026-10-26T00:37:15.376438+00:00; no body START is inferred from the queue receipt. Controller0035 polls genuine service to terminal; no duplicate, localbody or retry. Testdir KEEP now set; authorrunroot also protected. Fresh currentfree5294899200 bytes; admitted managerdispatch5555838976bytes, stop4000000000, oneheavy.
+
+Corrected Sol0019 independent0030 PASS_COMMAND at exact0710897c/source hashes; normal single row was installed preserving187 previousrows. Plain17roots/exactpristineAgent8b6ed/Runtimefa9/existingvenv-agent; no D73controls/child. AllfourSHA/tree/cleanbeforeafter, interpreter, disk, rawstreams/exits/JUnit retained byreviewedcommand. PRISTINE COMPARATOR only, no shipcredit or REGclaim. Final Farm versus pristine per-ID verdict remainsowed.
+
+Agent finalsource28e56cacb4/tree2ebe2ddf was normallymerged and FROZEN, exactApp+leadhandoff0023. No merge afterfreeze withoutMAIN. No Agent child/core, own-testinvestigation, Store or D130 action. P4 existingcontroller sourceprep return0034 continues; actualP4bodyheldfinalApp/MAIN GO andoneheavysequencing.
+
+## 2026-10-26T00:45:28Z — PEER MESSAGE (peer-agent-to-agent-lead-runtime-20261026T0038Z-D141b-BODY-START.md)
+Ask: record actual pristine BODY start and retain sole Farm cut comparison ownership / Owner: Agent controller0035; Runtime/Farm core / By: terminal service27388
+
+Actual central service agent-d141b-pristine-comparator-2358-1026003644-27388 is RUNNING. Reviewed command durable disk witness records phase=body_dispatch at2026-10-26T00:37:00Z, available_bytes=5295300608, plus 5-secondmonitorwitnesses. This is actualbody start, superseding priorqueued-onlyreceipt0037. Plain17roots/pristine8b6ed+fa9/existingvenv-agent, exactfour-waySHA/tree/clean/interpretguard, noD73/controls/child. Currentmonitor~5.4GB, stop4GB, oneheavy. Raw centraltestdir and authorrunroot/worker KEEP set. No additional body or sourceadaptation authorized; unchanged exactcommand alreadyindependent0030PASS.
+
+P4 corrected preparation0034 complete: actualhistoricalrow mismatch documented, existingCASroute/threeprimaryoriginals preserved, floor distinctioncorrected. CumulativeREADONLYreview0039 nowassignedabove5GB; no newsourceauthor orproductexecution while comparatorruns. ActualP4body remainsNOT_READY finalApp/MAIN GO/registration/oneheavysequencing. No comparatorPASS/REGclosure prerequisite invented forsourceprep.
+
+Agent frozen28e56/tree2ebe and normalreceivinginputs0023 remainbinding; App cannormalrevendor. No integrationmergewithoutMAIN, Agentchild/core, Store/own-testinvestigation orD130action.
