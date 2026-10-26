@@ -694,6 +694,76 @@ def main() -> int:
         raise AssertionError("cancelled installed runner did not reap its sampler")
     outcomes["cases"].append({"name": "body-cancel-self-finalized-reaped", "result": "pass"})
 
+    # The mounted caller marks CANCELLED, excludes the runner, and signals its
+    # session children (ps -g), including timeout's separate process group.
+    job = "body-stop-test"
+    receipt(root, job, "composition", "full-cancel-control", worktree, command=CANCEL_COMMAND)
+    request(root, job, "composition", "full-cancel-control")
+    case("body-stop-test-start", run_candidate(script, root, job, env), 0)
+    directory = root / "tests" / job
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        if (directory / "log.txt").exists() and (directory / "disk-trace.tsv").exists():
+            break
+        time.sleep(0.02)
+    else:
+        raise AssertionError("stop-test body never entered the running command")
+    body_pid = int((directory / "running").read_text())
+    process_rows = subprocess.check_output(
+        ["ps", "-o", "pid=,comm=", "-g", str(body_pid)], text=True
+    ).splitlines()
+    timeout_children = {
+        int(fields[0])
+        for row in process_rows
+        if (fields := row.split()) and len(fields) == 2 and fields[1] == "timeout"
+    }
+    if not timeout_children:
+        raise AssertionError("stop-test body did not expose its timeout child")
+    sampler = int((directory / "trace.pid").read_text())
+    caller = root / "stop-test-caller"
+    caller.write_text((LIVE_ROOT / "bin/stop-test").read_text().replace(f"O={LIVE_ROOT}", f"O={root}"))
+    stopped = subprocess.run(
+        ["bash", str(caller), job, "isolated cancellation control"],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    case("mounted-stop-test-caller", stopped, 0)
+    if wait_terminal(root, job) != "cancelled" or (directory / "exit").read_text().strip() != "130":
+        raise AssertionError("stop-test did not preserve cancelled/130")
+    if "trace PASS" not in (directory / "trace-validation").read_text() or Path(f"/proc/{sampler}").exists():
+        raise AssertionError("stop-test did not finalize and reap its sampler")
+    if any(Path(f"/proc/{pid}").exists() for pid in timeout_children):
+        raise AssertionError("stop-test did not reap its timeout child")
+    outcomes["cases"].append({"name": "mounted-stop-test-finalized-reaped", "result": "pass"})
+
+    # A stopped sampler cannot obey TERM. Reaping must escalate within the
+    # existing control deadline and refuse a successful body as exit 125.
+    job = "body-stopped-sampler"
+    receipt(root, job, "composition", "full-trace-control", worktree)
+    request(root, job, "composition", "full-trace-control")
+    case("body-stopped-sampler-start", run_candidate(script, root, job, env), 0)
+    directory = root / "tests" / job
+    trace = directory / "disk-trace.tsv"
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        if trace.exists() and "\tfirst\n" in trace.read_text():
+            break
+        time.sleep(0.02)
+    else:
+        raise AssertionError("stopped sampler never recorded its first sample")
+    sampler = int((directory / "trace.pid").read_text())
+    os.kill(sampler, signal.SIGSTOP)
+    if wait_terminal(root, job) != "fail" or (directory / "exit").read_text().strip() != "125":
+        raise AssertionError("unresponsive sampler did not fail closed within the deadline")
+    if not (directory / "trace-error").exists() or Path(f"/proc/{sampler}").exists():
+        raise AssertionError("unresponsive sampler was not refused and reaped")
+    if "integer expression expected" in (directory / "runner.log").read_text():
+        raise AssertionError("sampler failure used an unset caller exit status")
+    outcomes["cases"].append({"name": "stopped-sampler-bounded-reaped", "result": "pass"})
+
     # Trace custody attacks use the real received runner and are bounded at
     # the sampler-reap/final-append and standalone-validation seams.
     for name, replacement in [
@@ -785,12 +855,12 @@ def main() -> int:
     if not (root / "tests" / p5_job / "status").exists():
         raise AssertionError("exact P5 request did not reach terminal status")
 
-    if len(outcomes["cases"]) != 68:
-        raise AssertionError(f"D141 control purpose count changed: {len(outcomes['cases'])} != 68")
-    outcomes["case_count"] = 68
+    if len(outcomes["cases"]) != 73:
+        raise AssertionError(f"D141 control purpose count changed: {len(outcomes['cases'])} != 73")
+    outcomes["case_count"] = 73
     outcomes["verdict"] = {
         "SEC002": "PASS",
-        "SEC001": "NEEDS",
+        "SEC001": "PASS",
         "freeze2": "NEEDS",
         "release": "NOT_READY",
     }
