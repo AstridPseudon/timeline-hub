@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T01:04:55Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
-# app board, 2026-10-26T01:00Z
+<!-- app | 2026-10-26T01:09:23Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 4m -->
+# app board, 2026-10-26T01:05Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Historical source proofs; cut source below | 263b728f0140 |
@@ -10,7 +10,7 @@
 | U3 D141 | Final source join and tour gate repair | Luna and independent Luna | Review 0017 PASS | merged | Source 0014; review 0017 | [Exact home](../../design/app-U3-D141-source-home-0023.json); 89 tests, types and lint PASS | 263b728f0140 |
 | U4p D141 Runtime | Adopt frozen Runtime through tools | Luna and independent Luna | Runtime 6a011 source PASS | merged | Adopter 0011; review 0017 | Canonical 15 and mappings 14 exact; vendor 17 and schema 2 PASS | 263b728f0140 |
 | U4p D141 Agent | Bind accurate final source identities | Luna and independent Luna | Review 0029 source PASS | merged | Author 0022; review 0029; identity 0033 | [Final home](../../design/app-D141-final-source-home-0039.json); exact reviewed tree and source hashes PASS | 867cb2737af1 |
-| D141 notes | Install reviewed known gap paragraphs | Luna and independent Luna | Runtime notes owner | blocked:runtime | Notes 2354; review 0003; peer 0006 | [Reviewed paragraphs](../../design/app-D141-known-gap-notes-return-2354-known-gaps.md); byte published | Evidence only |
+| D141 notes | Install reviewed known gap paragraphs | Luna and independent Luna | Runtime normal installation | merged | Notes 2354; review 0003; Runtime installer 0038 | Runtime 00:50 board: pair installed, App paragraphs exact, 568 outside files unchanged, render PASS | Evidence only |
 | D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full 2354; review 0003 | Exact recipes qualified; final tuple and MAIN GO required | Evidence only |
 | D141 journeys prep | Bind prepared journeys to final tuple | Luna | MAIN GO; existing recipe PASS | merged | Binding 0047; original review 0003 | All eight selectors and full source identities exact; unique plan paths required in controller | 867cb2737af1 |
 | D141 full | Run cut App full suite | Luna and test service | Pristine REG comparison | gated:D141-comparator | Controller 0043; actual 12174 | Terminal exit 1; Vitest 19734 PASS and 33 FAIL in 5 files; 961 s; REG verdict pending | 867cb2737af1 |
@@ -18,8 +18,8 @@
 | D141 P1 | Qualify original dependent chain | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | NOTRUN on cut; historical chain GO has its original tuple scope | Cut pending |
 | D141 P2 six | Qualify six original passing gestures | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | Placement, ADD, parent, single clear, bulk clear and asset only; NOTRUN | Cut pending |
 | D141 P3 | Qualify original Gate 5 journey | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | Original full tail preserved; NOTRUN on cut | Cut pending |
-| D141 P4 | Receive CLI Python sheet cut proof | Agent and service | MAIN GO D141c | ready | Agent existing prep 0026 | App owns cumulative verdict; no duplicate App controller | Cut pending |
-| D141 P5 | Receive Runtime cut proof | Runtime and service | MAIN GO D141c | ready | Runtime source return 0018 | App owns cumulative verdict; no duplicate App controller | Cut pending |
+| D141 P4 | Receive CLI Python sheet cut proof | Agent and service | Normal receiving and preflight | doing | Agent controller 0047 | All four pins received; normal manifest and CAS qualification active; no body yet | Frozen cut |
+| D141 P5 | Receive Runtime cut proof | Runtime and service | Independent receiver PASS and Main slot | blocked:runtime | Runtime review 0049; later sole controller | MAIN GO clear; source receiver and actual cut body owed; no App duplicate | Frozen cut |
 | D141 core | Receive ship core and REG comparison | Farm and Runtime | Final tuple and complete recipe | blocked:farm | Farm core; Runtime recipe reviewer 0021 | No child or core receipt on current Farm board; no App duplicate | Cut pending |
 | D141 SWAP | Retain documented known gap | Service and Luna | D130 safety disposition | gated:safety-D130 | Actual 3250; refusal 1537 | Original NO GO retained; no recovery retry or alternative qualification | Historical tuple |
 | D141 Element | Retain documented known gap | Service and Luna | D141 stop | gated:D141-stop | Actual 32016 and 15200 | Original 5 s predicate FAIL; Runtime HTTP 200 boundary; caller outcome UNKNOWN | Historical tuples |
@@ -42,7 +42,7 @@ Blockers: SWAP safety — D130 automatic classifier refusal 1537 holds recovery 
 Next ready: Pristine 23581 terminal -> finite per-ID REG verdict; then serial P1, six P2 and P3 via prepared journey controller. Receive Agent P4 and Runtime P5 receipts.
 live 1 / cap 1 heavy; ready-undispatched 1 heavy controller waits occupied slot. Full/pristine 0043 active; final journey binding 0047 complete. No independent ready source work.
 
-H6: Runtime 00:38:26, Agent 00:43 and Farm 00:50 boards read through normal hub/status. Runtime final 6a011 and Agent final 28e56 are frozen. Runtime notes independent 0032 PASS; installer 0038 active with exact App paragraphs. Farm waits complete recipe due about 01:10Z; no body. No decision escalation owed.
+H6: Runtime 00:50:17, Agent 00:52 and Farm 00:55 boards read through normal hub/status. Runtime final 6a011 and Agent final 28e56 are frozen. Runtime notes independent 0032 PASS and installation 0038 merged; App paragraphs exact, notes handoff cleared. Farm waits complete recipe due about 01:10Z; no body. No decision escalation owed.
 
 Safety: Manager writes only ORCH boards, briefs, peers and byte publications of worker authored safe evidence. No manager product, test, generated or pin edits; no direct Git writes, upstream push, M5 or credentials. Dirty U3 and orphan guards and refused targets remain untouched. D130 hold absolute.
 Later: Gate 3 corrected D133B deferred unchanged; D23 and D14 retained; D79 ZIP held; E4 dropped. Shared 105 and media 48 source release is Agent normal c585; behavior awaits Farm core. Missing native records stay UNKNOWN. D141 stops all own test investigations.
@@ -62,7 +62,7 @@ Diagnostic raw: workers/app-D136c-original9-resume-2330/private complete0700/fil
 
 Pass 2026-10-26T00:37Z: Resumed from prior status. Actual 0033 is running with progress, not dead. Read only source identity correction remains sole ready source item. Approved sweep 3 and compact scratch terminal: removed 0 temporary dirs, packed 0 scratch or test dirs, gzipped 0 logs; all raw KEEP unchanged. No eligible merged non KEEP App worktree found for recycle. Final source and functional checks are qualified; final merge 0022 normal HOME/FROZEN867cb reported by peers0039. Manager controller briefs prepared but undispatched until MAIN GO. No proof body started.
 
-INBOX consumed through 2608164 bytes.
+INBOX consumed through 2616738 bytes.
 
 Current pass 2026-10-26T00:43Z: MAIN GO D141c consumed. Controller 0043 queued with exact final head and admission 5433016320 bytes; D89c checked once. REG comparison must rerun any pristine environment failure in the same environment kind before classification. No full-suite result yet.
 
@@ -75,3 +75,5 @@ Pass 2026-10-26T00:57Z: Actual App full app-full-1026004326-12174 is now termina
 Terminal 2026-10-26T01:00Z: Full12174 fail/exit1,19734PASS/33FAIL and5failedfiles; exactcut tree2b44. Reported immediately by peer0100. RawKEEP retained. Source/REG verdict pending pristine, no fixes started. Same controller0043 prepares pristine0007 serially; no duplicated normalrun.
 
 MAIN01:04Z Node ask accepted: static exact package scripts on bothheads prove npm test chains test:app then test:node. Node subcommand is byte equal at bothheads. Sequence full/pristine -> P1/P2six/P3 -> separate Node phase on cut and pristine; no new semantics or Vitestrepeat. Per-ID33 JOIN follows pristine; no fixes until provedREG. Existing service has no full Node-only registration, so Nodecontroller will add only exact npm run test:node row through normal worker-owned service config route, not manager edit.
+
+H6 2026-10-26T01:05Z: Cleared Runtime notes handoff immediately from owner00:50 merged0038 receipt line; exact App paragraphs and568 outside files conserved, no build/ZIP claim. Agent P4controller0047 active on finalpins. Runtime P5 independentreceiver0049 source gate pending, no duplicate. Farm still no corebody. Apppristine23581 growing normally.
